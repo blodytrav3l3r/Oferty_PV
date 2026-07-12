@@ -96,20 +96,54 @@ describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
             const content = fs.readFileSync(fullPath, 'utf-8');
 
             // escapeHtml musi być zdefiniowana lub zaimportowana
-            expect(content).toContain('escapeHtml');
+            // Jeżeli główny plik został splittowany, escapeHtml może być w podplikach
+            if (!content.includes('escapeHtml')) {
+                // Sprawdź order/orderZlecenia.js jako znane rozszerzenie
+                const subPath = path.resolve(
+                    __dirname,
+                    '..',
+                    'public/js/studnie/order/orderZlecenia.js'
+                );
+                expect(fs.existsSync(subPath)).toBe(true);
+                const subContent = fs.readFileSync(subPath, 'utf-8');
+                expect(subContent).toContain('escapeHtml');
+            }
 
             // Znajdź linie innerHTML z interpolacją zmiennych bez escapeHtml
-            const lines = content.split('\n');
-            const suspicious = lines.filter((line) => {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('//') || trimmed.startsWith('*')) return false;
-                if (!trimmed.includes('innerHTML')) return false;
-                if (trimmed.includes('escapeHtml')) return false;
-                // Sprawdź czy zawiera interpolację zmiennej (${} lub konkatenację +)
-                const hasInterpolation = trimmed.includes('${') || /\b\w+\s*\+/.test(trimmed);
-                return hasInterpolation;
-            });
-            expect(suspicious.length).toBe(0);
+            // (w głównym pliku i ewentualnych podplikach)
+            const filesToCheck = [fullPath];
+            const orderDir = path.resolve(__dirname, '..', 'public/js/studnie/order');
+            const excelDir = path.resolve(__dirname, '..', 'public/js/studnie/excel');
+            if (fs.existsSync(orderDir)) {
+                filesToCheck.push(
+                    ...fs
+                        .readdirSync(orderDir)
+                        .filter((f) => f.endsWith('.js'))
+                        .map((f) => path.join(orderDir, f))
+                );
+            }
+            if (fs.existsSync(excelDir)) {
+                filesToCheck.push(
+                    ...fs
+                        .readdirSync(excelDir)
+                        .filter((f) => f.endsWith('.js'))
+                        .map((f) => path.join(excelDir, f))
+                );
+            }
+
+            for (const checkPath of filesToCheck) {
+                const checkContent = fs.readFileSync(checkPath, 'utf-8');
+                const lines = checkContent.split('\n');
+                const suspicious = lines.filter((line) => {
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('//') || trimmed.startsWith('*')) return false;
+                    if (!trimmed.includes('innerHTML')) return false;
+                    if (trimmed.includes('escapeHtml')) return false;
+                    const hasInterpolation = trimmed.includes('${') || /\b\w+\s*\+/.test(trimmed);
+                    return hasInterpolation;
+                });
+                expect(suspicious.length).toBe(0);
+            }
         });
     });
 });
@@ -117,9 +151,9 @@ describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
 // ─── T5.6: userId change guard (static) ─────────────────────
 
 describe('T5.6: Blokada zmiany opiekuna zamówienia', () => {
-    it('ruryOrders.ts powinien zawierać guard zmiany userId', () => {
+    it('rury/crud.ts powinien zawierać guard zmiany userId', () => {
         const content = fs.readFileSync(
-            path.resolve(__dirname, '..', 'src/routes/orders/ruryOrders.ts'),
+            path.resolve(__dirname, '..', 'src/routes/orders/rury/crud.ts'),
             'utf-8'
         );
         expect(content).toContain('req.body.userId');

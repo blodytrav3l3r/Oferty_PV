@@ -103,6 +103,16 @@ function dispatchCspAction(e) {
             : null;
     if (!target) return;
     var name = target.dataset.action;
+    // Przyciski i linki z data-action nie mogą odpalać się na focusin/focusout,
+    // bo pojedyncze kliknięcie generuje focusin -> click -> focusout, co wywołuje
+    // akcję wielokrotnie (podwójnie dla 'click' or 'change', potrójnie z focusout).
+    // Ta zasada dotyczy wszystkich przycisków i linków, nie tylko nawigacji kreatora.
+    if (
+        (e.type === 'focusin' || e.type === 'focusout') &&
+        (target.tagName === 'BUTTON' || target.tagName === 'A')
+    ) {
+        return;
+    }
     _cspInitCounters();
     if (__cspCounts) {
         __cspCounts[name] = (__cspCounts[name] || 0) + 1;

@@ -1313,12 +1313,9 @@ function importStudnieFromExcel(event) {
                                 product[f] = null;
                             }
                         } else if (typeof valValue === 'string') {
-                            valValue = valValue.replace(/\s/g, '').replace(',', '.');
-                            const num = parseFloat(valValue);
-                            product[f] = isNaN(num) ? null : num;
-                        } else {
-                            const num = parseFloat(valValue);
-                            product[f] = isNaN(num) ? null : num;
+                            product[f] = valValue !== '' ? parseDecimal(valValue) : null;
+                        } else if (typeof valValue === 'number') {
+                            product[f] = Number.isFinite(valValue) ? valValue : null;
                         }
                     });
 

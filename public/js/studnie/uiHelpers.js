@@ -320,7 +320,10 @@ function updateStudnieBottomNav() {
 
     if (step === 5) return;
 
-    if (prevBtn) prevBtn.style.display = step === 1 ? 'none' : 'flex';
+    if (prevBtn) {
+        prevBtn.style.display = step === 1 ? 'none' : 'flex';
+        prevBtn.onclick = wizardPrev;
+    }
     if (stepInfo) stepInfo.textContent = 'Krok ' + step + ' z 5';
 
     if (nextBtn) {

@@ -398,12 +398,9 @@ function importRuryFromExcel(event) {
                         if (val === '' || val === undefined || val === null || val === '-') {
                             product[f] = null;
                         } else if (typeof val === 'string') {
-                            val = val.replace(/\s/g, '').replace(',', '.');
-                            const num = parseFloat(val);
-                            product[f] = isNaN(num) ? null : num;
-                        } else {
-                            const num = parseFloat(val);
-                            product[f] = isNaN(num) ? null : num;
+                            product[f] = val !== '' ? parseDecimal(val) : null;
+                        } else if (typeof val === 'number') {
+                            product[f] = Number.isFinite(val) ? val : null;
                         }
                     });
 
