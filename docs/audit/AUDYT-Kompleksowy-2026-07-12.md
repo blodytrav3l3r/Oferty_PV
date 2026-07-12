@@ -11,24 +11,24 @@
 
 ### Wyniki weryfikacji automatycznych (Etap 2)
 
-| Polecenie | Wynik | Szczegóły |
-|-----------|-------|-----------|
-| `npm run typecheck` | ✅ PASS | `tsc --noEmit` — 0 błędów |
-| `npm run lint` | ✅ PASS | `eslint src/**/*.{js,ts}` — 0 błędów |
-| `npm run test:quick` | ✅ PASS | 54 suites, **1272 testów przechodzi**, 0 faili, ~15s |
-| `npm run audit:xss` | ✅ PASS | Scanner Score: **100/100**, Coverage: 100%, 0 findings |
-| `npm run version:check` | ✅ PASS | VERSION = package.json = CHANGELOG = **1.6.0** |
-| `npm run format` (Prettier) | ✅ PASS | Wszystkie pliki zgodne z `.prettierrc` |
+| Polecenie                   | Wynik   | Szczegóły                                              |
+| --------------------------- | ------- | ------------------------------------------------------ |
+| `npm run typecheck`         | ✅ PASS | `tsc --noEmit` — 0 błędów                              |
+| `npm run lint`              | ✅ PASS | `eslint src/**/*.{js,ts}` — 0 błędów                   |
+| `npm run test:quick`        | ✅ PASS | 54 suites, **1272 testów przechodzi**, 0 faili, ~15s   |
+| `npm run audit:xss`         | ✅ PASS | Scanner Score: **100/100**, Coverage: 100%, 0 findings |
+| `npm run version:check`     | ✅ PASS | VERSION = package.json = CHANGELOG = **1.6.0**         |
+| `npm run format` (Prettier) | ✅ PASS | Wszystkie pliki zgodne z `.prettierrc`                 |
 
 ### Liczba znalezionych problemów
 
-| Priorytet | Liczba |
-|-----------|--------|
-| **KRYTYCZNY** | 0 |
-| **WYSOKI** | 5 |
-| **ŚREDNI** | 9 |
-| **NISKI** | 6 |
-| **Razem** | **20** |
+| Priorytet     | Liczba |
+| ------------- | ------ |
+| **KRYTYCZNY** | 0      |
+| **WYSOKI**    | 5      |
+| **ŚREDNI**    | 9      |
+| **NISKI**     | 6      |
+| **Razem**     | **20** |
 
 ### Najważniejsze ryzyka biznesowe
 
@@ -53,6 +53,7 @@ Repozytorium jest **w pełni zgodne z ADR-001..005**:
 - **ADR-005 Graphify**: `graphify-out/` (trudna do oceny, patrz Sekcja 10).
 
 Podział na warstwy jest zachowany:
+
 - **UI**: `public/js/studnie/`, `public/js/rury/`
 - **Logika biznesowa**: `src/services/`, `src/routes/`
 - **Dostęp do danych**: `src/prismaClient.ts`, `prisma/schema.prisma`
@@ -83,9 +84,9 @@ src/services/pdf/
 ```typescript
 // src/services/pdf/pdfStyles.ts
 export const PDF_STYLES = {
-  fontSize: { small: 8, normal: 10, large: 14 },
-  margin: { top: 40, bottom: 40, left: 30, right: 30 },
-  colors: { primary: '#1a56db', muted: '#666', border: '#e5e7eb' }
+    fontSize: { small: 8, normal: 10, large: 14 },
+    margin: { top: 40, bottom: 40, left: 30, right: 30 },
+    colors: { primary: '#1a56db', muted: '#666', border: '#e5e7eb' }
 } as const;
 
 // src/services/pdf/pdfGenerator.ts (nowy, <100 linii)
@@ -93,7 +94,7 @@ import { buildRuryPdf } from './pdfRuryBuilder';
 import { buildStudniePdf } from './pdfStudnieBuilder';
 
 export async function generatePdf(offerType: 'rury' | 'studnie', data: OfferData): Promise<Buffer> {
-  return offerType === 'rury' ? buildRuryPdf(data) : buildStudniePdf(data);
+    return offerType === 'rury' ? buildRuryPdf(data) : buildStudniePdf(data);
 }
 ```
 
@@ -134,33 +135,35 @@ Plik ma **3751 linii** — 7.5× limit.
 ### **[ŚREDNI] Lista plików przekraczających 500 linii**
 
 Backend (5 plików):
-| Plik | Linii | Oversize |
-|------|-------|----------|
-| `src/services/pdfGenerator.ts` | 1533 | +207% |
-| `src/services/docx/studnie/kartaBudowy.ts` | 720 | +44% |
-| `src/validators/offerSchemas.ts` | 592 | +18% |
-| `src/routes/orders/ruryOrders.ts` | 529 | +6% |
-| `src/routes/orders/studnieOrders.ts` | 517 | +3% |
+
+| Plik                                       | Linii | Oversize |
+| ------------------------------------------ | ----- | -------- |
+| `src/services/pdfGenerator.ts`             | 1533  | +207%    |
+| `src/services/docx/studnie/kartaBudowy.ts` | 720   | +44%     |
+| `src/validators/offerSchemas.ts`           | 592   | +18%     |
+| `src/routes/orders/ruryOrders.ts`          | 529   | +6%      |
+| `src/routes/orders/studnieOrders.ts`       | 517   | +3%      |
 
 Frontend (16 plików — wykluczając vendor `xlsx.full.min.js`):
-| Plik | Linii | Oversize |
-|------|-------|----------|
-| `public/js/studnie/excelTableManager.js` | 5689 | +1038% |
-| `public/js/studnie/orderManager.js` | 4770 | +854% |
-| `public/js/studnie/offerManager.js` | 3751 | +650% |
-| `public/js/studnie/wellActions.js` | 2180 | +336% |
-| `public/js/studnie/wellPopups.js` | 1885 | +277% |
-| `public/js/studnie/pricelistManager.js` | 1784 | +257% |
-| `public/js/sales/pvSalesUi.js` | 1743 | +249% |
-| `public/js/studnie/wellManager.js` | 1730 | +246% |
-| `public/js/studnie/wellSolver.js` | 1371 | +174% |
-| `public/js/studnie/wellTransitions.js` | 1303 | +161% |
-| `public/js/spa/zlecenia.js` | 1106 | +121% |
-| `public/js/studnie/wellUI.js` | 1105 | +121% |
-| `public/js/rury/orderManager.js` | 1052 | +110% |
-| `public/js/rury/offerItems.js` | 1004 | +101% |
-| `public/js/rury/offerExports.js` | 754 | +51% |
-| `public/js/rury/offerCrud.js` | 724 | +45% |
+
+| Plik                                     | Linii | Oversize |
+| ---------------------------------------- | ----- | -------- |
+| `public/js/studnie/excelTableManager.js` | 5689  | +1038%   |
+| `public/js/studnie/orderManager.js`      | 4770  | +854%    |
+| `public/js/studnie/offerManager.js`      | 3751  | +650%    |
+| `public/js/studnie/wellActions.js`       | 2180  | +336%    |
+| `public/js/studnie/wellPopups.js`        | 1885  | +277%    |
+| `public/js/studnie/pricelistManager.js`  | 1784  | +257%    |
+| `public/js/sales/pvSalesUi.js`           | 1743  | +249%    |
+| `public/js/studnie/wellManager.js`       | 1730  | +246%    |
+| `public/js/studnie/wellSolver.js`        | 1371  | +174%    |
+| `public/js/studnie/wellTransitions.js`   | 1303  | +161%    |
+| `public/js/spa/zlecenia.js`              | 1106  | +121%    |
+| `public/js/studnie/wellUI.js`            | 1105  | +121%    |
+| `public/js/rury/orderManager.js`         | 1052  | +110%    |
+| `public/js/rury/offerItems.js`           | 1004  | +101%    |
+| `public/js/rury/offerExports.js`         | 754   | +51%     |
+| `public/js/rury/offerCrud.js`            | 724   | +45%     |
 
 ### **[NISKI] src/app.ts:204 — brak spójności rejestru routes**
 
@@ -170,8 +173,8 @@ Niektóre route'y mają `apiLimiter` (auth, users, clients, audit), inne nie (pr
 
 ```typescript
 app.use('/api', (req, res, next) => {
-  if (req.path === '/version') return next();
-  apiLimiter(req, res, next);
+    if (req.path === '/version') return next();
+    apiLimiter(req, res, next);
 });
 ```
 
@@ -263,17 +266,17 @@ import prisma from '../prismaClient';
 // Unieważnij wszystkie sesje użytkownika (poza bieżącą)
 const currentToken = req.cookies?.authToken;
 const allSessions = await prisma.sessions.findMany({
-  where: { userId: authReq.user!.id, revokedAt: null }
+    where: { userId: authReq.user!.id, revokedAt: null }
 });
 await prisma.$transaction(
-  allSessions
-    .filter((s) => s.token !== currentToken)
-    .map((s) =>
-      prisma.sessions.update({
-        where: { token: s.token },
-        data: { revokedAt: Date.now() }
-      })
-    )
+    allSessions
+        .filter((s) => s.token !== currentToken)
+        .map((s) =>
+            prisma.sessions.update({
+                where: { token: s.token },
+                data: { revokedAt: Date.now() }
+            })
+        )
 );
 
 // Rotuj bieżącą sesję
@@ -322,7 +325,7 @@ ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
 const ALLOWED_SORT_COLS = ['createdAt', 'offer_number', 'state'];
 const ALLOWED_SORT_DIRS = ['ASC', 'DESC'];
 if (!ALLOWED_SORT_COLS.includes(sortCol) || !ALLOWED_SORT_DIRS.includes(sortDir)) {
-  return res.status(400).json({ error: 'Invalid sort parameters' });
+    return res.status(400).json({ error: 'Invalid sort parameters' });
 }
 ```
 
@@ -340,6 +343,7 @@ Limit dla API: 300 żądań / 15 min. Limit logowania przez `LOGIN_LIMITER` (rat
 ### **[WYSOKI] Brak CSRF protection**
 
 CSRF (Cross-Site Request Forgery) nie jest zabezpieczony:
+
 - Brak middleware `csurf` lub podobnego.
 - Brak tokenu CSRF w formularzach HTML.
 
@@ -364,22 +368,22 @@ const CSRF_HEADER = 'x-csrf-token';
 const tokens = new Map<string, { token: string; expiresAt: number }>();
 
 export function generateCsrfToken(userId: string): string {
-  const token = crypto.randomBytes(32).toString('hex');
-  tokens.set(userId, { token, expiresAt: Date.now() + 3600 * 1000 });
-  return token;
+    const token = crypto.randomBytes(32).toString('hex');
+    tokens.set(userId, { token, expiresAt: Date.now() + 3600 * 1000 });
+    return token;
 }
 
 export function csrfProtection(req: Request, res: Response, next: NextFunction): void {
-  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
-  const userId = req.user?.id;
-  const provided = req.headers[CSRF_HEADER] as string;
-  const stored = userId ? tokens.get(userId) : null;
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
+    const userId = req.user?.id;
+    const provided = req.headers[CSRF_HEADER] as string;
+    const stored = userId ? tokens.get(userId) : null;
 
-  if (!stored || !provided || provided !== stored.token || stored.expiresAt < Date.now()) {
-    res.status(403).json({ error: 'Invalid CSRF token' });
-    return;
-  }
-  next();
+    if (!stored || !provided || provided !== stored.token || stored.expiresAt < Date.now()) {
+        res.status(403).json({ error: 'Invalid CSRF token' });
+        return;
+    }
+    next();
 }
 
 // src/app.ts — po app.use(cookieParser())
@@ -402,11 +406,13 @@ app.use('/api', csrfProtection);
 ### **[PASSED] Indeks na `createdAt` (audit_logs)**
 
 `schema.prisma:238`:
+
 ```
 @@index([createdAt], map: "idx_audit_created_at")
 ```
 
 Dodatkowo w `src/app.ts:281`:
+
 ```typescript
 await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
 ```
@@ -416,6 +422,7 @@ Idempotentne tworzenie indeksu przy startupie — dobre podejście defensywne.
 ### **[PASSED] busy_timeout i WAL**
 
 `src/startup/databaseCheck.ts:49`:
+
 ```typescript
 await prisma.$queryRaw`PRAGMA busy_timeout=5000;`;
 await prisma.$queryRaw`PRAGMA synchronous=NORMAL;`;
@@ -428,6 +435,7 @@ Wszystkie PRAGMA ustawione w odpowiedniej kolejności. Dobre podstawy dla unikan
 ### **[PASSED] Chunking audit_log cleanup**
 
 `src/services/auditService.ts:139-144`:
+
 ```typescript
 const cutoffDate = new Date(Date.now() - MAX_AUDIT_AGE_DAYS * 24 * 60 * 60 * 1000).toISOString();
 const BATCH_SIZE = 500;
@@ -447,14 +455,15 @@ Czyszczenie w batchach — zapobiega timeout'om. Dobrze.
 // prisma/seed.ts
 const CHUNK_SIZE = 25;
 for (let i = 0; i < studnieProducts.length; i += CHUNK_SIZE) {
-  const chunk = studnieProducts.slice(i, i + CHUNK_SIZE);
-  await tx.productsStudnie.createMany({ data: chunk });
+    const chunk = studnieProducts.slice(i, i + CHUNK_SIZE);
+    await tx.productsStudnie.createMany({ data: chunk });
 }
 ```
 
 ### **[PASSED] Brak race conditions w inicjalizacji**
 
 `src/app.ts:253-308` — `initApp()` uruchamia sekwencyjnie:
+
 1. Startup checks
 2. Seed tabel produktowych (kolejno rury → studnie)
 3. Indeksy
@@ -510,6 +519,7 @@ const ib = CATEGORIES.indexOf(b);
 ### **[PASSED] Sortowanie Studnie**
 
 `offerManager.js:455`:
+
 ```javascript
 const sortedWells = wells
   .map(...)
@@ -529,12 +539,13 @@ Styczne → `Infinity` (przenoszone na koniec) — potwierdzone w testach jednos
 ### **[PASSED] toggleAllItemsForOrder**
 
 `public/js/rury/offerItems.js:903-909`:
+
 ```javascript
 window.toggleAllItemsForOrder = function (checked) {
     const section = document.querySelector('.section.active');
-    if (!section) return;  // ← Guard clause ( zgodnie z #8)
+    if (!section) return; // ← Guard clause ( zgodnie z #8)
     section.querySelectorAll('.item-order-checkbox').forEach((cb) => {
-        if (!cb.disabled) cb.checked = checked;  // ← Guard clause
+        if (!cb.disabled) cb.checked = checked; // ← Guard clause
     });
 };
 ```
@@ -544,6 +555,7 @@ Guard `if (!section) return` zgodny z cheat-sheet #8. Guard `if (!cb.disabled)` 
 ### **[PASSED] Generowanie UID**
 
 `offerItems.js:501`:
+
 ```javascript
 item.uid = 'rur_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 ```
@@ -567,9 +579,9 @@ Dodaj helper `parseDecimal` i stosuj globalnie:
 ```javascript
 // public/js/shared/parseDecimal.js
 function parseDecimal(value) {
-  if (typeof value === 'number') return value;
-  if (typeof value !== 'string') return 0;
-  return parseFloat(value.replace(',', '.')) || 0;
+    if (typeof value === 'number') return value;
+    if (typeof value !== 'string') return 0;
+    return parseFloat(value.replace(',', '.')) || 0;
 }
 window.parseDecimal = parseDecimal;
 
@@ -589,6 +601,7 @@ const total = parseDecimal(unitPrice) * qty;
 ### **[PASSED] Prettier**
 
 Prettier check: wszystkie pliki zgodne. `.prettierrc` wymusza:
+
 - single quotes
 - semicolons
 - 2 spacje indent
@@ -596,17 +609,20 @@ Prettier check: wszystkie pliki zgodne. `.prettierrc` wymusza:
 ### **[PASSED] Konwencje nazewnictwa**
 
 Przykłady dobre:
+
 - `createUser`, `updateRuryOrderSummary`, `generatePdf` (verbNoun).
 - `isLocked`, `hasOrder`, `canEdit`, `isHidden` (booleans).
 - `orderEditMode`, `currentWizardStep`, `editingOfferId` (descriptives).
 
 Pojedyncze odstępstwa (NISKI):
+
 - `src/services/docx/studnie/kartaBudowy.ts` — funkcja `malowanie` (rzeczownik, nie czasownik).
 - `public/js/rury/transport.js` — `totalTransportCostCalc` — zbyt długie, redundancja "total"+"Calc".
 
 ### **[NISKI] Komentarze w kodzie**
 
 AGENTS.md mówi: "nie dodawaj komentarzy, chyba że wyraźnie poproszony". FINDINGS:
+
 - `server.ts:2-4` — komentarz JSDoc opisujący plik.
 - `src/middleware/auth.ts:38-40` — komentarze JSDoc.
 - Wiele innych komentarzy deklaracyjnych.
@@ -624,10 +640,18 @@ Wydziel wspólny `responsive.css` w `public/css/shared/`:
 ```css
 /* public/css/shared/responsive.css */
 @media (max-width: 600px) {
-  .wizard-form-grid, .form-row-2, .form-row-3, .form-row-4 { grid-template-columns: 1fr; }
+    .wizard-form-grid,
+    .form-row-2,
+    .form-row-3,
+    .form-row-4 {
+        grid-template-columns: 1fr;
+    }
 }
 @media (max-width: 768px) {
-  .wizard-nav, .wizard-dot-label { display: none; }
+    .wizard-nav,
+    .wizard-dot-label {
+        display: none;
+    }
 }
 ```
 
@@ -635,24 +659,24 @@ Wydziel wspólny `responsive.css` w `public/css/shared/`:
 
 Weryfikacja wszystkich 16 znanych błędów — potwierdziłem obecność poprawek w kodzie:
 
-| # | Błąd | Status w kodzie |
-|---|------|-----------------|
-| 1 | Seed timeout | `BATCH_SIZE = 500` w auditService, chunking seed.ts ✅ |
-| 2 | SQLITE_BUSY | `busy_timeout=5000`, sekwencyjna inicjalizacja ✅ |
-| 3 | XSS | `escapeHtml()` powszechnie stosowany ✅ |
-| 4 | Przecinek/kropka | ⚠️ Brak — patrz Sekcja 4 |
-| 5 | PEHD inline styles | Klasa `.pehd-btn` (w css) ✅ |
-| 6 | TDZ isLocked | `orderEditMode = false` na początku pliku ✅ |
-| 7 | colspan 13→15 | `buildRuryColgroup()` dynamic ✅ |
-| 8 | toggleAllItemsForOrder | `if (!section) return` guard ✅ |
-| 9 | N+1 Prisma | `findMany` z `in` w pvMarketplace ✅ |
-| 10 | Null DOM | `if (element)` checks w router.js ✅ |
-| 11 | Audit log timeout | `BATCH_SIZE=500`, indeks createdAt ✅ |
-| 12 | ensureAdminExists | Sekwencyjny startup ✅ |
-| 13 | CSP inline onclick | `scriptSrc: ['unsafe-inline']` ✅ |
-| 14 | Spinnery number | CSS `appearance: none` ✅ |
-| 15 | Mutacja przez sort() | `[...arr].sort()` w offerManager ✅ |
-| 16 | colspan Excel | `_excelOverlaySelectHtml(...,true)` ✅ |
+| #   | Błąd                   | Status w kodzie                                        |
+| --- | ---------------------- | ------------------------------------------------------ |
+| 1   | Seed timeout           | `BATCH_SIZE = 500` w auditService, chunking seed.ts ✅ |
+| 2   | SQLITE_BUSY            | `busy_timeout=5000`, sekwencyjna inicjalizacja ✅      |
+| 3   | XSS                    | `escapeHtml()` powszechnie stosowany ✅                |
+| 4   | Przecinek/kropka       | ⚠️ Brak — patrz Sekcja 4                               |
+| 5   | PEHD inline styles     | Klasa `.pehd-btn` (w css) ✅                           |
+| 6   | TDZ isLocked           | `orderEditMode = false` na początku pliku ✅           |
+| 7   | colspan 13→15          | `buildRuryColgroup()` dynamic ✅                       |
+| 8   | toggleAllItemsForOrder | `if (!section) return` guard ✅                        |
+| 9   | N+1 Prisma             | `findMany` z `in` w pvMarketplace ✅                   |
+| 10  | Null DOM               | `if (element)` checks w router.js ✅                   |
+| 11  | Audit log timeout      | `BATCH_SIZE=500`, indeks createdAt ✅                  |
+| 12  | ensureAdminExists      | Sekwencyjny startup ✅                                 |
+| 13  | CSP inline onclick     | `scriptSrc: ['unsafe-inline']` ✅                      |
+| 14  | Spinnery number        | CSS `appearance: none` ✅                              |
+| 15  | Mutacja przez sort()   | `[...arr].sort()` w offerManager ✅                    |
+| 16  | colspan Excel          | `_excelOverlaySelectHtml(...,true)` ✅                 |
 
 **Tylko #4 (przecinek/kropka) nie w pełni zaadresowane** — patrz Sekcja 4.
 
@@ -665,12 +689,12 @@ Weryfikacja wszystkich 16 znanych błędów — potwierdziłem obecność popraw
 Weryfikacja 42 wystąpień `findMany` w `src/`:
 
 - `pvMarketplace.ts:39-41`: ✅ **Komentarz "N+1 fix"** w kodzie:
-  ```typescript
-  // Pobierz WSZYSTKIE itemy dla tych ofert jednym zapytaniem (N+1 fix)
-  const allItems = await prisma.offer_items_rel.findMany({
-    where: { offerId: { in: offerIds } }
-  });
-  ```
+    ```typescript
+    // Pobierz WSZYSTKIE itemy dla tych ofert jednym zapytaniem (N+1 fix)
+    const allItems = await prisma.offer_items_rel.findMany({
+        where: { offerId: { in: offerIds } }
+    });
+    ```
 - `audit.ts:115-166`: używa findMany wielu zapytań, ale w sposób batchowany.
 - `pdfGenerator.ts:66, 124`: findMany z `where: { offerId }` wewnątrz pętli — potencjalnie N+1.
 
@@ -678,7 +702,7 @@ Weryfikacja 42 wystąpień `findMany` w `src/`:
 
 ```typescript
 const offerItems = await prisma.offer_items_rel.findMany({
-  where: { offerId: id }  // wykonane w pętli dla wielu ofert
+    where: { offerId: id } // wykonane w pętli dla wielu ofert
 });
 ```
 
@@ -687,13 +711,11 @@ Jeżeli wywoływane w pętli dla listy ofert → N+1.
 **Rekomendacja** — użyj `in`:
 
 ```typescript
-const offerIds = offers.map(o => o.id);
+const offerIds = offers.map((o) => o.id);
 const allItems = await prisma.offer_items_rel.findMany({
-  where: { offerId: { in: offerIds } }
+    where: { offerId: { in: offerIds } }
 });
-const itemsByOffer = new Map(
-  allItems.map(item => [item.offerId, item])
-);
+const itemsByOffer = new Map(allItems.map((item) => [item.offerId, item]));
 // Dostęp w pętli: itemsByOffer.get(offer.id)
 ```
 
@@ -724,10 +746,10 @@ Standard HTML — nie wymaga JS.
 ```javascript
 let searchTimeout;
 searchInput.addEventListener('input', (e) => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    filterAndRenderOffers(e.target.value);
-  }, 250);
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        filterAndRenderOffers(e.target.value);
+    }, 250);
 });
 ```
 
@@ -766,24 +788,21 @@ Dodaj `tests/rurySort.test.ts`:
 
 ```javascript
 describe('Rury sort', () => {
-  test('categories in CATEGORIES order', () => {
-    const items = [
-      { category: 'Uszczelki', /*...*/ },
-      { category: 'Rury Betonowe', /*...*/ }
-    ];
-    const sorted = [...items].sort(categoryComparator);
-    expect(sorted[0].category).toBe('Rury Betonowe');
-  });
+    test('categories in CATEGORIES order', () => {
+        const items = [{ category: 'Uszczelki' /*...*/ }, { category: 'Rury Betonowe' /*...*/ }];
+        const sorted = [...items].sort(categoryComparator);
+        expect(sorted[0].category).toBe('Rury Betonowe');
+    });
 
-  test('EMPTY diameters first, then ascending length', () => {
-    const items = [
-      { productId: 'r-bosy-1', lengthM: 1.5 },
-      { productId: 'r-uszcz-1', lengthM: 2.0 },
-      { productId: 'r-bosy-2', lengthM: 1.0 }
-    ];
-    const sorted = [...items].sort(lengthComparator);
-    expect(sorted.map(i => i.productId)).toEqual(['r-bosy-2', 'r-bosy-1', 'r-uszcz-1']);
-  });
+    test('EMPTY diameters first, then ascending length', () => {
+        const items = [
+            { productId: 'r-bosy-1', lengthM: 1.5 },
+            { productId: 'r-uszcz-1', lengthM: 2.0 },
+            { productId: 'r-bosy-2', lengthM: 1.0 }
+        ];
+        const sorted = [...items].sort(lengthComparator);
+        expect(sorted.map((i) => i.productId)).toEqual(['r-bosy-2', 'r-bosy-1', 'r-uszcz-1']);
+    });
 });
 ```
 
@@ -798,6 +817,7 @@ describe('Rury sort', () => {
 ### **[PASSED] Feature flag**
 
 `public/js/import-export/shared/featureFlag.js:12`:
+
 ```javascript
 this._cache = !!j.import_export_enabled;
 ```
@@ -811,6 +831,7 @@ Flaga `import_export_enabled` wczytana z bazy `settings`. Zgodne z AGENTS.md.
 ### **[PASSED] Rdzeń niezmodifikowany**
 
 Weryfikacja grep:
+
 - `offerCrud.js` — bez edycji dla importu/eksportu ✅
 - `offerManager.js` — bez edycji ✅
 - `offerItems.js` — bez edycji ✅
@@ -824,6 +845,7 @@ Moduły w `public/js/import-export/` są izolowane i niezależne.
 `public/js/import-export/shared/xlsxImportShared.js:4` — `'NR_STUDNI'` jako jedna z kolumn.
 
 Semantyka:
+
 - `import-export/rury/externalExportTemplate.js:18`: `NR_STUDNI: item.pehdType || ''` ✅
 - `import-export/studnie/externalExportTemplate.js:96`: `NR_STUDNI: well.name || ''` ✅
 - Import rury: `externalImport.js:22`: `pehdType = r['NR_STUDNI'] || ''` ✅
@@ -850,6 +872,7 @@ Zgodne z AGENTS.md.
 `scripts/auto-cache-bust.mjs` — hook `postbump` w `.versionrc.json`. Podmienia `?v=` w HTML na nową wersję release.
 
 Weryfikacja:
+
 - `public/kartoteka.html:406`: `?v=1.6.0`
 - `public/rury.html:2058`: `?v=1.6.0`
 - `public/studnie.html:5110`: `?v=1.6.0`
@@ -864,6 +887,7 @@ Zgodne ✅.
 ### **[ŚREDNI] Znana blokada Husky well.magazyn**
 
 `CONTRIBUTING.md` dokumentuje obejście:
+
 ```bash
 git -c core.hooksPath=/dev/null commit -m "..."
 ```
@@ -887,6 +911,7 @@ Albo dodaj typecast w tym pliku, jeśli `magazyn` to dodatkowe pole runtime.
 ### **[PASSED] Automatyczne tagowanie**
 
 `package.json` contains scripts:
+
 - `release:patch`, `release:minor`, `release:major` — standard-version automatycznie taguje.
 - `git push --follow-tags` zalecany w CONTRIBUTING.md.
 
@@ -905,6 +930,7 @@ Stopniowo migruj `public/js/` do `public/js/*.ts` co month, zaczynając od `shar
 ### **[ŚREDNI] graphify-out/ bywa niedostępny**
 
 `.gitignore:81-82`:
+
 ```
 graphify-out/
 public/graphify-out/
@@ -913,6 +939,7 @@ public/graphify-out/
 Ponieważ `graphify-out/` jest auto-generowany i ignorowany przez git, jest **wyłączony z wersjonowania**. Użytkownicy klonujący repo na nowo nie mają grafu wiedzy.
 
 `AGENTS.md` Sekcja 4 wymaga:
+
 > Procedura przed modyfikacją kodu: użyj `graphify query` do zlokalizowania modułów.
 
 Ale dla nowego uzytkownika `graphify query` zwróci błąd "no graph found".
@@ -940,7 +967,7 @@ Alternatywnie: commit `graphify-out/` do repo. Jest to auto-generated — ale to
 
 **Rekomendacja** — dodaj sekcję w README.md:
 
-```markdown
+````markdown
 ## Graphify Setup
 
 ```bash
@@ -948,6 +975,8 @@ npm install -g @graphify/cli
 graphify update .
 graphify query "GDzie znajduje się sortowanie ofert?"
 ```
+````
+
 ```
 
 ---
@@ -1046,3 +1075,4 @@ graphify query "GDzie znajduje się sortowanie ofert?"
 ---
 
 **Koniec audytu.**
+```

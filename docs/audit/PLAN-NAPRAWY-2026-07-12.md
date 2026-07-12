@@ -163,6 +163,7 @@ npm run audit:xss      # Score = 100/100
 **Podejście:** Double-submit cookie pattern (bezstanowy, bez Redis).
 
 **Impact Analysis:**
+
 - Importy nowego pliku: `src/middleware/csrf.ts` → zaimportowany w `src/app.ts`
 - Endpointy chronione: wszystkie `POST/PUT/DELETE` pod `/api/*`
 - Testy: `tests/csrf.test.ts` (nowy)
@@ -171,6 +172,7 @@ npm run audit:xss      # Score = 100/100
 **Pliki:**
 
 **`src/middleware/csrf.ts`** (nowy):
+
 ```typescript
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
@@ -205,6 +207,7 @@ export function csrfProtection(req: Request, res: Response, next: NextFunction):
 ```
 
 **`src/app.ts`** — insert po `cookieParser()`:
+
 ```typescript
 import { setCsrfCookie, csrfProtection } from './middleware/csrf';
 app.use('/api', setCsrfCookie);
@@ -212,6 +215,7 @@ app.use('/api', csrfProtection);
 ```
 
 **`public/js/shared/csrf.js`** (nowy):
+
 ```javascript
 function getCsrfToken() {
     const match = document.cookie.match(/(?:^|;\s*)csrf-token=([^;]+)/);
@@ -233,6 +237,7 @@ window.withCsrf = withCsrf;
 **Testy:** `tests/csrf.test.ts` (nowy) — 3 case'y: bez tokena → 403, z tokenem → OK, GET bez → 200.
 
 **Rollback:**
+
 ```bash
 git checkout HEAD -- src/middleware/csrf.ts public/js/shared/csrf.js src/app.ts tests/csrf.test.ts
 ```
@@ -248,12 +253,14 @@ git checkout HEAD -- src/middleware/csrf.ts public/js/shared/csrf.js src/app.ts 
 **Plik:** `src/routes/auth.ts:184`
 
 **Impact Analysis:**
+
 - Modyfikacja: `src/routes/auth.ts` (handler change-password)
 - Zależne: `src/middleware/auth.ts` (rotateSession, COOKIE_OPTIONS)
 - Testy: `tests/auth.test.ts` (dodać case)
 - API bez zmian: response nadal `{ ok: true }`
 
 **Poprawka:**
+
 ```typescript
 const hash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 await prisma.users.update({
@@ -275,6 +282,7 @@ res.json({ ok: true });
 ```
 
 **Rollback:**
+
 ```bash
 git checkout HEAD -- src/routes/auth.ts
 ```
@@ -309,7 +317,10 @@ Usuń linię `res.setHeader('X-XSS-Protection', '1; mode=block');`.
 **Plik:** `src/startup/index.ts`
 
 ```typescript
-if (process.env.NODE_ENV === 'production' && (process.env.CSP_MODE || 'report-only') !== 'enforce') {
+if (
+    process.env.NODE_ENV === 'production' &&
+    (process.env.CSP_MODE || 'report-only') !== 'enforce'
+) {
     startupLogger.warn('CSP nie jest w trybie enforce w produkcji!');
 }
 ```
@@ -320,13 +331,13 @@ if (process.env.NODE_ENV === 'production' && (process.env.CSP_MODE || 'report-on
 
 ### Podsumowanie Etapu 1
 
-| Zadanie | Priorytet | Czas | PR |
-|---------|-----------|------|-----|
-| 1.1 CSRF | 🔴 WYSOKI | 2-3 dni | #1 |
-| 1.2 Rotacja sesji | 🔴 WYSOKI | 1 dzień | #2 |
-| 1.3 bcrypt 12 | 🟠 ŚREDNI | 1h | #3 |
-| 1.4 X-XSS-Pol | 🟢 NISKI | 30 min | #3 |
-| 1.5 CSP enforce | 🟠 ŚREDNI | 1h | #3 |
+| Zadanie           | Priorytet | Czas    | PR  |
+| ----------------- | --------- | ------- | --- |
+| 1.1 CSRF          | 🔴 WYSOKI | 2-3 dni | #1  |
+| 1.2 Rotacja sesji | 🔴 WYSOKI | 1 dzień | #2  |
+| 1.3 bcrypt 12     | 🟠 ŚREDNI | 1h      | #3  |
+| 1.4 X-XSS-Pol     | 🟢 NISKI  | 30 min  | #3  |
+| 1.5 CSP enforce   | 🟠 ŚREDNI | 1h      | #3  |
 
 **Rezultat:** bezpieczeństwo aplikacji wzrasta bez dużej ingerencji w architekturę.
 
@@ -339,11 +350,15 @@ if (process.env.NODE_ENV === 'production' && (process.env.CSP_MODE || 'report-on
 ### Zadanie 2.1 — Stworzyć `parseDecimal` 🟠 ŚREDNI
 
 **Plik nowy:** `public/js/shared/parseDecimal.js`
+
 ```javascript
 function parseDecimal(value) {
     if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
     if (value == null) return 0;
-    const normalized = String(value).trim().replace(',', '.').replace(/[^0-9.\-]/g, '');
+    const normalized = String(value)
+        .trim()
+        .replace(',', '.')
+        .replace(/[^0-9.\-]/g, '');
     const result = parseFloat(normalized);
     return Number.isFinite(result) ? result : 0;
 }
@@ -382,13 +397,13 @@ Weryfikacja czy metoda `buildPdfsForOffers` jest wywoływana w pętli. Jeśli ta
 
 ### Zadanie 3.1 — Podział `pdfGenerator.ts` (1533 → 5 plików)
 
-| Krok | Plik docelowy | Zakres | PR |
-|------|--------------|--------|-----|
-| 3.1.1 | `src/services/pdf/pdfStyles.ts` | Stałe stylów | #8 |
-| 3.1.2 | `src/services/pdf/pdfHelpers.ts` | Formatery | #9 |
-| 3.1.3 | `src/services/pdf/pdfRuryBuilder.ts` | Budowa PDF rury | #10 |
-| 3.1.4 | `src/services/pdf/pdfStudnieBuilder.ts` | Budowa PDF studnie | #11 |
-| 3.1.5 | `src/services/pdf/pdfGenerator.ts` | Public API (<100 linii) | #12 |
+| Krok  | Plik docelowy                           | Zakres                  | PR  |
+| ----- | --------------------------------------- | ----------------------- | --- |
+| 3.1.1 | `src/services/pdf/pdfStyles.ts`         | Stałe stylów            | #8  |
+| 3.1.2 | `src/services/pdf/pdfHelpers.ts`        | Formatery               | #9  |
+| 3.1.3 | `src/services/pdf/pdfRuryBuilder.ts`    | Budowa PDF rury         | #10 |
+| 3.1.4 | `src/services/pdf/pdfStudnieBuilder.ts` | Budowa PDF studnie      | #11 |
+| 3.1.5 | `src/services/pdf/pdfGenerator.ts`      | Public API (<100 linii) | #12 |
 
 ### Zadanie 3.2 — Podział `offerSchemas.ts` (592 → 3 pliki)
 
@@ -417,6 +432,7 @@ src/routes/orders/rury/
 ## Etap 4 — Frontend refaktoryzacja (Tydzień 7–14)
 
 **Zasady dla frontendu:**
+
 1. Najpierw testy ekstrakcji — jeśli nie ma, napisz przed refaktoryzacją.
 2. Wydzielenie w obecnym pliku najpierw — potem przenieś.
 3. Jeden split = jeden PR, z checkpointem `node -c` + testy UI.
@@ -424,16 +440,16 @@ src/routes/orders/rury/
 
 ### Zadanie 4.1 — Split `excelTableManager.js` (5689 → 8 plików)
 
-| Sprint | Plik | Linii | PR |
-|--------|------|-------|-----|
-| 7.1 | `excel/excelStyles.js` | ~200 | #16 |
-| 7.2 | `excel/excelState.js` | ~400 | #17 |
-| 8.1 | `excel/excelColumns.js` | ~600 | #18 |
-| 8.2 | `excel/excelRenderer.js` | ~1500 | #19 |
-| 9.1 | `excel/excelHandlers.js` | ~1000 | #20 |
-| 9.2 | `excel/excelModals.js` | ~1000 | #21 |
-| 10.1 | `excel/excelValidation.js` | ~500 | #22 |
-| 10.2 | `excel/excelTableManager.js` | <200 | #22 |
+| Sprint | Plik                         | Linii | PR  |
+| ------ | ---------------------------- | ----- | --- |
+| 7.1    | `excel/excelStyles.js`       | ~200  | #16 |
+| 7.2    | `excel/excelState.js`        | ~400  | #17 |
+| 8.1    | `excel/excelColumns.js`      | ~600  | #18 |
+| 8.2    | `excel/excelRenderer.js`     | ~1500 | #19 |
+| 9.1    | `excel/excelHandlers.js`     | ~1000 | #20 |
+| 9.2    | `excel/excelModals.js`       | ~1000 | #21 |
+| 10.1   | `excel/excelValidation.js`   | ~500  | #22 |
+| 10.2   | `excel/excelTableManager.js` | <200  | #22 |
 
 ### Zadanie 4.2 — Split `orderManager.js` (4770 → 7 plików)
 
@@ -474,6 +490,7 @@ public/js/studnie/offer/
 ### Zadanie 5.2 — Graphify postinstall 🟠 ŚREDNI
 
 **Plik:** `package.json`
+
 ```json
 {
     "scripts": {
@@ -491,6 +508,7 @@ Tylko jeśli wieloinstancyjne wdrożenie. Fallback: obecny in-memory.
 ### Zadanie 5.4 — Walidacja `sortCol/sortDir` 🟢 NISKI
 
 **Plik:** `src/routes/offers/studnieCrud.ts:56`
+
 ```typescript
 const ALLOWED_SORT_COLS = new Set(['createdAt', 'offer_number', 'state', 'updatedAt']);
 const ALLOWED_SORT_DIRS = new Set(['ASC', 'DESC']);
@@ -500,33 +518,40 @@ const ALLOWED_SORT_DIRS = new Set(['ASC', 'DESC']);
 
 ## Etap 6 — Dług techniczny (Tydzień 17+)
 
-| Zadanie | Priorytet | Czas |
-|---------|-----------|------|
-| 6.1 Debounce na wyszukiwarce | 🟢 NISKI | 1h |
-| 6.2 loading="lazy" na iframe | 🟢 NISKI | 1h |
-| 6.3 Centralny responsive.css | 🟢 NISKI | 1 dzień |
-| 6.4 Chunkowanie seed | 🟢 NISKI | 1h |
-| 6.5 Migracja JS→TS | 🟢 NISKI | ciągły |
-| 6.6 Globalny apiLimiter | 🟢 NISKI | 2h |
+| Zadanie                      | Priorytet | Czas    |
+| ---------------------------- | --------- | ------- |
+| 6.1 Debounce na wyszukiwarce | 🟢 NISKI  | 1h      |
+| 6.2 loading="lazy" na iframe | 🟢 NISKI  | 1h      |
+| 6.3 Centralny responsive.css | 🟢 NISKI  | 1 dzień |
+| 6.4 Chunkowanie seed         | 🟢 NISKI  | 1h      |
+| 6.5 Migracja JS→TS           | 🟢 NISKI  | ciągły  |
+| 6.6 Globalny apiLimiter      | 🟢 NISKI  | 2h      |
 
 ---
 
 ## Quality Gates w CI
 
 **Skrypt** `scripts/check-file-size.mjs`:
+
 ```javascript
 import { globSync } from 'glob';
 import { readFileSync } from 'fs';
 
 const MAX_LINES = 500;
-const IGNORE = ['node_modules', 'dist', 'generated', 'coverage', 'graphify-out',
-                'public/js/shared/xlsx.full.min.js', 'public/js/shared/jspdf'];
+const IGNORE = [
+    'node_modules',
+    'dist',
+    'generated',
+    'coverage',
+    'graphify-out',
+    'public/js/shared/xlsx.full.min.js',
+    'public/js/shared/jspdf'
+];
 const EXEMPT = new Set([]);
 
-const files = [
-    ...globSync('src/**/*.ts'),
-    ...globSync('public/js/**/*.js')
-].filter(f => !IGNORE.some(p => f.includes(p)));
+const files = [...globSync('src/**/*.ts'), ...globSync('public/js/**/*.js')].filter(
+    (f) => !IGNORE.some((p) => f.includes(p))
+);
 
 let failed = false;
 for (const file of files) {
@@ -542,6 +567,7 @@ console.log('OK: all files within 500-line limit');
 ```
 
 Dodaj do `.husky/pre-commit`:
+
 ```bash
 npm run lint:file-size
 ```
@@ -550,27 +576,27 @@ npm run lint:file-size
 
 ## Harmonogram łączny
 
-| Tydzień | Etap | Zakres | PR# |
-|---------|------|--------|-----|
-| **0** | 0 | Analiza wstępna, stan początkowy | — |
-| **1** | 1.1 | CSRF protection | #1 |
-| **1** | 1.2 | Rotacja sesji | #2 |
-| **2** | 1.3-1.5 | bcrypt 12, X-XSS-Pol, CSP warn | #3 |
-| **3** | 2.1 | parseDecimal + migracja | #4-5 |
-| **3** | 2.2-2.3 | Testy sortowania + fix N+1 | #6-7 |
-| **4** | 3.1.1-3.1.2 | pdfStyles + pdfHelpers | #8-9 |
-| **5** | 3.1.3-3.1.5 | pdfBuildery + final | #10-12 |
-| **5** | 3.2 | offerSchemas split | #13 |
-| **6** | 3.3 | orders split | #14-15 |
-| **7** | 4.1.1-4.1.2 | excelStyles + excelState | #16-17 |
-| **8** | 4.1.3-4.1.4 | excelColumns + excelRenderer | #18-19 |
-| **9** | 4.1.5-4.1.6 | excelHandlers + excelModals | #20-21 |
-| **10** | 4.1.7 | excelValidation + final | #22 |
-| **11-12** | 4.2 | orderManager split (6 plików) | #23-28 |
-| **13-14** | 4.3 | offerManager split (6 plików) | #29-34 |
-| **15** | 5.1-5.2 | Husky fix + Graphify | #35-36 |
-| **16** | 5.3-5.4 | Redis limiter + sortCol | #37-38 |
-| **17+** | 6.x | Dług techniczny | ciągły |
+| Tydzień   | Etap        | Zakres                           | PR#    |
+| --------- | ----------- | -------------------------------- | ------ |
+| **0**     | 0           | Analiza wstępna, stan początkowy | —      |
+| **1**     | 1.1         | CSRF protection                  | #1     |
+| **1**     | 1.2         | Rotacja sesji                    | #2     |
+| **2**     | 1.3-1.5     | bcrypt 12, X-XSS-Pol, CSP warn   | #3     |
+| **3**     | 2.1         | parseDecimal + migracja          | #4-5   |
+| **3**     | 2.2-2.3     | Testy sortowania + fix N+1       | #6-7   |
+| **4**     | 3.1.1-3.1.2 | pdfStyles + pdfHelpers           | #8-9   |
+| **5**     | 3.1.3-3.1.5 | pdfBuildery + final              | #10-12 |
+| **5**     | 3.2         | offerSchemas split               | #13    |
+| **6**     | 3.3         | orders split                     | #14-15 |
+| **7**     | 4.1.1-4.1.2 | excelStyles + excelState         | #16-17 |
+| **8**     | 4.1.3-4.1.4 | excelColumns + excelRenderer     | #18-19 |
+| **9**     | 4.1.5-4.1.6 | excelHandlers + excelModals      | #20-21 |
+| **10**    | 4.1.7       | excelValidation + final          | #22    |
+| **11-12** | 4.2         | orderManager split (6 plików)    | #23-28 |
+| **13-14** | 4.3         | offerManager split (6 plików)    | #29-34 |
+| **15**    | 5.1-5.2     | Husky fix + Graphify             | #35-36 |
+| **16**    | 5.3-5.4     | Redis limiter + sortCol          | #37-38 |
+| **17+**   | 6.x         | Dług techniczny                  | ciągły |
 
 **Suma:** ~38 PR-ów w ~17 tygodni (~4 miesiące)
 
@@ -598,16 +624,16 @@ Poniższy prompt należy umieścić w instrukcji systemowej AI wykonującego pla
 
 ## Metryki sukcesu
 
-| Metryka | Przed | Po (cel) |
-|---------|-------|----------|
-| Security Score (CSRF, sesje, bcrypt) | ⚠️ 8/10 | ✅ 9.5/10 |
-| Max plik backend | 1533 linii | ≤500 |
-| Max plik frontend | 5689 linii | ≤500 (docelowo) |
-| Test count | 1272 | >1400 |
-| `lint:file-size` gate | ❌ brak | ✅ aktywne |
-| XSS Audit Score | 100/100 | 100/100 |
-| `npm run validate` | ✅ | ✅ |
-| Husky pre-commit | omijany przez `core.hooksPath` | ✅ obowiązkowy |
+| Metryka                              | Przed                          | Po (cel)        |
+| ------------------------------------ | ------------------------------ | --------------- |
+| Security Score (CSRF, sesje, bcrypt) | ⚠️ 8/10                        | ✅ 9.5/10       |
+| Max plik backend                     | 1533 linii                     | ≤500            |
+| Max plik frontend                    | 5689 linii                     | ≤500 (docelowo) |
+| Test count                           | 1272                           | >1400           |
+| `lint:file-size` gate                | ❌ brak                        | ✅ aktywne      |
+| XSS Audit Score                      | 100/100                        | 100/100         |
+| `npm run validate`                   | ✅                             | ✅              |
+| Husky pre-commit                     | omijany przez `core.hooksPath` | ✅ obowiązkowy  |
 
 ---
 
