@@ -5,12 +5,11 @@ import { buildImageHeader, buildImageFooter } from '../headerFooter';
 import {
     buildTitleParagraph,
     buildDateParagraphs,
-    buildClientInvestTable,
     buildNotesParagraph,
     buildPaymentTermsParagraph,
-    buildSummarySection,
-    buildContactSection
+    buildSummarySection
 } from './sections';
+import { buildClientInvestTable, buildContactSection } from './ruryContactSections';
 import { buildItemsTable } from './tables';
 import { buildStaticTerms } from './content';
 
