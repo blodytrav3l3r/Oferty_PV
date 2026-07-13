@@ -110,7 +110,7 @@
         "globals": "^17.4.0",
         "husky": "^9.1.7",
         "jest": "^30.3.0",
-        "js-yaml": "^4.2.0",
+        "js-yaml": "^5.2.1",
         "lint-staged": "^17.0.7",
         "prettier": "^3.9.4",
         "prisma": "^6.0.0",
