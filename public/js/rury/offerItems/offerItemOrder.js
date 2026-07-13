@@ -191,11 +191,11 @@ if (typeof registerCspAction === 'function') {
         params: ['index']
     });
     registerCspAction('pipeLengthStepDown', function () {
-        var input = document.getElementById('pipe-custom-length');
+        var input = /** @type {HTMLInputElement} */ (document.getElementById('pipe-custom-length'));
         if (input) input.stepDown();
     });
     registerCspAction('pipeLengthStepUp', function () {
-        var input = document.getElementById('pipe-custom-length');
+        var input = /** @type {HTMLInputElement} */ (document.getElementById('pipe-custom-length'));
         if (input) input.stepUp();
     });
     registerCspAction('confirmPipeLength', {

@@ -8,7 +8,9 @@ function updateRuryOrderSummary(orderData) {
 
     const isOrderMode = !!(window.orderEditMode && editingRuryOrderId);
     const colCount = isOrderMode
-        ? document.querySelector('#offer-items-table thead tr')?.cells?.length || 13
+        ? /** @type {HTMLTableRowElement|null} */ (
+              document.querySelector('#offer-items-table thead tr')
+          )?.cells?.length || 13
         : 13;
     const orderColgroup = document.getElementById('order-items-colgroup');
 

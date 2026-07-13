@@ -161,7 +161,7 @@ function openExcelTableModal() {
             if (!wrap) return;
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
-                var s = wrap.querySelector('select');
+                var s = /** @type {HTMLInputElement} */ (wrap.querySelector('select'));
                 if (typeof s.showPicker === 'function') {
                     s.showPicker();
                 } else {
@@ -172,7 +172,7 @@ function openExcelTableModal() {
         });
         /* CSP-safe: sync display text dla overlay select */
         container.addEventListener('change', function (e) {
-            var sel = e.target.closest('.excel-sel-wrap select');
+            var sel = /** @type {HTMLSelectElement} */ (e.target.closest('.excel-sel-wrap select'));
             if (sel && sel.nextElementSibling) {
                 sel.nextElementSibling.textContent = sel.options[sel.selectedIndex].text;
             }
@@ -247,14 +247,17 @@ function openExcelTableModal() {
 
         /* CSP-safe: empty row Enter/blur → excelCreateFromEmpty */
         container.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && e.target.id === 'excel-empty-name') {
+            if (
+                e.key === 'Enter' &&
+                /** @type {HTMLElement} */ (e.target).id === 'excel-empty-name'
+            ) {
                 e.preventDefault();
                 excelCreateFromEmpty();
             }
         });
         container.addEventListener('focusout', function (e) {
-            if (e.target.id === 'excel-empty-name') {
-                excelCreateFromEmpty(e);
+            if (/** @type {HTMLElement} */ (e.target).id === 'excel-empty-name') {
+                excelCreateFromEmpty();
             }
         });
     }

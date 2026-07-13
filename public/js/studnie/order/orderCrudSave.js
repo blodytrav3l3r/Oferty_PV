@@ -76,6 +76,7 @@ function freezeWellPrices(wellsArr) {
                             const drillingProducts = studnieProducts.filter(
                                 (x) => x.category === 'Wiercenie'
                             );
+                            /** @type {any} */
                             let bestDrill = null;
                             let bestDnDiff = Infinity;
                             drillingProducts.forEach((drill) => {

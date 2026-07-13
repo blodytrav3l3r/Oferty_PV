@@ -56,8 +56,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     registerCspActions();
 
+    var _el;
     (function _bindWellInputListeners() {
-        var _el;
         _el = document.getElementById('input-well-numer');
         if (_el) _el.addEventListener('input', updateWellNumer);
 

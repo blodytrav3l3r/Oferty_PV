@@ -1,7 +1,6 @@
 // @ts-check
 /* ===== ZAMÓWIENIA RUR — TRYB EDYCJI ZAMÓWIENIA ===== */
 
-var orderEditMode = false;
 window.orderEditMode = false;
 
 async function enterRuryOrderEditMode(orderId) {

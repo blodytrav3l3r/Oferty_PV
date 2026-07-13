@@ -1,6 +1,8 @@
 // @ts-check
 /* ===== EXCEL HELPERS — Funkcje pomocnicze (wyodrębnione z excelTableManager.js) ===== */
 
+const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
+
 function getHasReduction(well, dn) {
     if (!well) return !!dn && ['1200', '1500', '2000', '2500'].includes(String(dn));
     return ['1200', '1500', '2000', '2500'].includes(String(well.dn));

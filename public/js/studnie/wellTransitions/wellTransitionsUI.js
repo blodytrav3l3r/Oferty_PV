@@ -608,9 +608,10 @@ function refreshPrzejsciaVisibilityTiles() {
 let draggedPrzIndex = null;
 
 window.handlePrzDragStart = function (e) {
-    draggedPrzIndex = parseInt(e.currentTarget.getAttribute('data-prz-idx'));
+    var target = /** @type {HTMLElement} */ (e.currentTarget);
+    draggedPrzIndex = parseInt(target.getAttribute('data-prz-idx'));
     e.dataTransfer.effectAllowed = 'move';
-    e.currentTarget.style.opacity = '0.4';
+    target.style.opacity = '0.4';
 };
 
 window.handlePrzDragOver = function (e) {
@@ -654,7 +655,8 @@ window.handlePrzDrop = function (e) {
 };
 
 window.handlePrzDragEnd = function (e) {
-    e.currentTarget.style.opacity = '1';
+    var target = /** @type {HTMLElement} */ (e.currentTarget);
+    target.style.opacity = '1';
     document.querySelectorAll('[data-prz-idx]').forEach((t) => (t.style.borderTop = ''));
     draggedPrzIndex = null;
 };

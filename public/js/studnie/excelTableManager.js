@@ -172,6 +172,7 @@ window.refreshExcelFromConfig = function () {
 
 window._excelSyncAutoManualUI = function () {
     if (!document.getElementById('excel-table-overlay')) return;
+    /** @type {any} */
     var fn = window._excelSyncAutoManualUI;
     if (fn._inProgress) return;
     fn._inProgress = true;

@@ -50,6 +50,16 @@ class PVSalesUI {
         this.init();
     }
 
+    // Stub methods — overwritten by Object.assign mixins (pvSalesOrdersMixin, pvSalesUiRenderMixin)
+    loadOrdersMap() {}
+    getOrderForOffer(offer) {
+        return { hasOrder: false, orders: [], order: null };
+    }
+    renderOffersList(offers, isLocalList) {
+        return '';
+    }
+    attachActionListeners(container) {}
+
     normalizeId(id) {
         if (!id) return '';
         return String(id);
@@ -406,7 +416,7 @@ if (typeof registerCspAction === 'function') {
         params: ['filter']
     });
     registerCspAction('closeHistoryModal', function () {
-        closeModal(document.getElementById('pv-history-modal'));
+        closeModal('pv-history-modal');
     });
     registerCspAction('changeOfferUser', {
         handler: function (p) {

@@ -10,7 +10,6 @@ var pendingOrderCreationData = null;
 let productionOrders = [];
 let zleceniaElementsList = [];
 let zleceniaSelectedIdx = -1;
-let zleceniaActiveFilter = 'all';
 let wellsSnapshotBeforeZlecenia = null;
 
 /* ===== PODGLĄD HISTORYCZNEGO ZAMÓWIENIA ===== */

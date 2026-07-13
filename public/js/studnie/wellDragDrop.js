@@ -172,9 +172,11 @@ function dropWellComponent(ev) {
 let draggedCfgIndex = null;
 
 window.handleCfgDragStart = function (e) {
-    draggedCfgIndex = parseInt(e.currentTarget.getAttribute('data-cfg-idx'));
+    const tile = e.target.closest('[data-action="cfg-tile"]');
+    if (!tile) return;
+    draggedCfgIndex = parseInt(tile.getAttribute('data-cfg-idx'));
     e.dataTransfer.effectAllowed = 'move';
-    e.currentTarget.style.opacity = '0.4';
+    tile.style.opacity = '0.4';
 
     // Robimy z niego ducha na czas ciągnięcia
     const well = getCurrentWell();
@@ -343,7 +345,8 @@ window.handleCfgDrop = function (e) {
 };
 
 window.handleCfgDragEnd = function (e) {
-    e.currentTarget.style.opacity = '1';
+    const tile = e.target.closest('[data-action="cfg-tile"]');
+    if (tile) tile.style.opacity = '1';
     document.querySelectorAll('.config-tile').forEach((t) => (t.style.borderTop = ''));
     draggedCfgIndex = null;
 

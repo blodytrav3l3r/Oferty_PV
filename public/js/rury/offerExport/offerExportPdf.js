@@ -176,8 +176,12 @@ function exportOfferPDF(id) {
   <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
   </body></html>`);
     printWin.document.close();
-    const hdr = printWin.document.querySelector('.letterhead-header');
-    const ftr = printWin.document.querySelector('.letterhead-footer');
+    const hdr = /** @type {HTMLImageElement} */ (
+        printWin.document.querySelector('.letterhead-header')
+    );
+    const ftr = /** @type {HTMLImageElement} */ (
+        printWin.document.querySelector('.letterhead-footer')
+    );
     if (hdr) {
         if (hdr.complete && hdr.naturalWidth > 0) {
             printWin._hLoaded = true;

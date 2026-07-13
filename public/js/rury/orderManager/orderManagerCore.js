@@ -2,9 +2,6 @@
 /* ===== ZAMÓWIENIA RUR — CORE (globalne zmienne, zapis/odczyt) ===== */
 let ordersRury = [];
 var pendingOrderCreationData = null;
-var _customPrzejscieRows = [];
-var _offerPrzejscieRows = [];
-var _przejsciaInitialized = false;
 let orderCurrentItems = [];
 
 function getActiveItemsArray() {

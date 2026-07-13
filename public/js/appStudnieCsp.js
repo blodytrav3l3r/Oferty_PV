@@ -39,9 +39,9 @@ function registerCspActions() {
     registerCspAction('toggle-styczna-1200', toggleStyczna1200);
     registerCspAction('toggle-card', {
         handler: function (p) {
-            toggleCard(p.id);
+            toggleCard(p.contentId, p.iconId);
         },
-        params: ['id']
+        params: ['contentId', 'iconId']
     });
     registerCspAction('switch-builder-tab', {
         handler: function (p) {
