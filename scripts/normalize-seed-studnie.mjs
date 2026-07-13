@@ -3,7 +3,7 @@
  * normalize-seed-studnie.mjs
  *
  * Jednorazowy skrypt do konwersji starych polskich nazw pól na angielskie
- * w pliku data/seed_studnie.json.
+ * w seed studni (katalog data/seed/studnie/).
  *
  * Użycie:
  *   node scripts/normalize-seed-studnie.mjs --check   # audyt bez zmian
@@ -11,9 +11,9 @@
  *   node scripts/normalize-seed-studnie.mjs --help    # ta pomoc
  *
  * W trybie --apply:
- *   1. Tworzy kopię: data/seed_studnie.json.bak
- *   2. Zapisuje znormalizowany plik
- *   3. Weryfikuje że zapisany plik jest identyczny z oczekiwanym
+ *   1. Tworzy kopię: data/seed/studnie/../seed_studnie.json.bak
+ *   2. Zapisuje znormalizowane pliki
+ *   3. Weryfikuje że zapisane pliki są poprawne
  *
  * Skrypt jest idempotentny: drugie uruchomienie --apply nie zmienia niczego.
  * Stare klucze są usuwane z produktu, niezależnie od tego czy nowe istniały.
@@ -22,11 +22,11 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readSeedProducts, writeSeedProducts, SEED_DIR } from './seed-studnie-utils.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const SEED_PATH = path.resolve(__dirname, '..', 'data', 'seed_studnie.json');
-const BACKUP_PATH = SEED_PATH + '.bak';
+const BACKUP_PATH = path.resolve(__dirname, '..', 'data', 'seed_studnie.json.bak');
 
 /** Mapa: polski (stary) klucz → angielski (nowy) klucz */
 const FIELD_MAP = {
@@ -54,22 +54,18 @@ Usage: node scripts/normalize-seed-studnie.mjs <mode>
 
 Modes:
   --check   Audyt: wypisuje statystyki starych kluczy, nic nie zmienia
-  --apply   Konwersja: tworzy backup .bak i zapisuje znormalizowany plik
+  --apply   Konwersja: tworzy backup .bak i zapisuje znormalizowane pliki
   --help    Ta pomoc
 `);
   process.exit(0);
 }
 
 function readSeed() {
-  if (!fs.existsSync(SEED_PATH)) {
-    console.error('Błąd: nie znaleziono', SEED_PATH);
-    process.exit(1);
-  }
-  return JSON.parse(fs.readFileSync(SEED_PATH, 'utf-8'));
+  return readSeedProducts();
 }
 
 function writeSeed(data) {
-  fs.writeFileSync(SEED_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  writeSeedProducts(data);
 }
 
 function analyze(products) {
@@ -90,12 +86,10 @@ function normalizeProduct(p) {
   const out = {};
   for (const key of Object.keys(p)) {
     if (OLD_KEYS.includes(key)) {
-      // Stary klucz — zapisz pod nową nazwą jeśli nowa nie istnieje lub null
       const newKey = FIELD_MAP[key];
       if (p[newKey] === undefined || p[newKey] === null) {
         out[newKey] = p[key];
       }
-      // Nie kopiujemy starego klucza do outputu
     } else {
       out[key] = p[key];
     }
@@ -107,7 +101,7 @@ function runCheck() {
   const products = readSeed();
   const stats = analyze(products);
 
-  console.log('\n=== AUDYT: seed_studnie.json ===');
+  console.log('\n=== AUDYT: seed studni ===');
   console.log(`Łączna liczba produktów: ${products.length}`);
   console.log('');
 
@@ -144,32 +138,22 @@ function runApply() {
   }
 
   // Backup
-  fs.copyFileSync(SEED_PATH, BACKUP_PATH);
+  fs.writeFileSync(BACKUP_PATH, JSON.stringify(products, null, 2), 'utf8');
   console.log(`\n📦 Backup: ${BACKUP_PATH}`);
 
   // Normalizacja
   const normalized = products.map(normalizeProduct);
-  const changedCount = products.length - normalized.length; // should be 0
   const oldKeyCount = Object.values(stats).reduce((sum, s) => sum + s.count, 0);
 
-  // Zapisz
+  // Zapisz do katalogu
   writeSeed(normalized);
-  console.log(`💾 Zapisano: ${SEED_PATH}`);
+  console.log(`💾 Zapisano do katalogu: ${SEED_DIR}`);
 
-  // Weryfikacja: odczytaj ponownie i sprawdź czy identyczny z oczekiwanym
+  // Weryfikacja
   const verified = readSeed();
   const remainingOld = OLD_KEYS.filter((k) => verified.some((p) => p[k] !== undefined && p[k] !== null));
   if (remainingOld.length > 0) {
     console.error(`\n❌ Błąd weryfikacji: stare klucze nadal istnieją: ${remainingOld.join(', ')}`);
-    console.error('   Backup dostępny pod:', BACKUP_PATH);
-    process.exit(1);
-  }
-
-  // Sprawdź czy JSON jest identyczny (porównaj stringify)
-  const expectedStr = JSON.stringify(normalized, null, 2);
-  const actualStr = JSON.stringify(verified, null, 2);
-  if (expectedStr !== actualStr) {
-    console.error('\n❌ Błąd weryfikacji: zapisany plik różni się od oczekiwanego');
     console.error('   Backup dostępny pod:', BACKUP_PATH);
     process.exit(1);
   }

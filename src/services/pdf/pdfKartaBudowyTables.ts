@@ -1,8 +1,7 @@
-import path from 'path';
-import fs from 'fs';
 import { escapeHtml } from './pdfHelpers';
 import { logger } from '../../utils/logger';
 import { TYPE_LABELS, TYPE_ORDER } from './pdfKartaBudowyFields';
+import { readStudnieSeedProducts } from '../studnieSeedUtils';
 
 export function loadAllProducts(): Map<
     string,
@@ -13,15 +12,13 @@ export function loadAllProducts(): Map<
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
-        const raw = fs.readFileSync(jsonPath, 'utf-8');
-        const items: any[] = JSON.parse(raw);
+        const items = readStudnieSeedProducts();
         for (const p of items) {
-            products.set(p.id, {
-                componentType: p.componentType || '',
-                category: p.category || '',
-                dn: p.dn || 0,
-                height: p.height || 0
+            products.set(String(p.id), {
+                componentType: String(p.componentType || ''),
+                category: String(p.category || ''),
+                dn: (p.dn as number | string) || 0,
+                height: (p.height as number) || 0
             });
         }
     } catch (e) {

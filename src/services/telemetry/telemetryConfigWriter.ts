@@ -81,14 +81,17 @@ export async function recordConfig(
                         configVersion: payload.configVersion ?? 1,
                         parentId: payload.parentConfigId || null,
                         configJson: JSON.stringify({
-                            originalConfig: payload.originalConfig || [],
-                            finalConfig: payload.finalConfig || [],
+                            originalConfig: payload.originalConfig ?? [],
+                            finalConfig: payload.finalConfig ?? [],
                             components: payload.allComponentIds || []
                         }),
                         source: payload.solverSource,
                         triggeredBy: userId || null,
                         diffFromParent: JSON.stringify(
-                            computeDiff(payload.originalConfig, payload.finalConfig)
+                            computeDiff(
+                                payload.originalConfig ?? undefined,
+                                payload.finalConfig ?? undefined
+                            )
                         ),
                         isCurrent: true,
                         rankingScore: payload.rankingScore ?? null,

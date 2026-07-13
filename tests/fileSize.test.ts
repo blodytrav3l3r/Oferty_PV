@@ -14,10 +14,10 @@ describe('check-file-size.mjs', () => {
         expect(result).toBeDefined();
     });
 
-    it('raportuje pliki przekraczające 500 linii', () => {
+    it('raportuje pliki przekraczające 500 linii (poza EXEMPT)', () => {
         const result = runScript();
         expect(result).toContain('Znaleziono');
-        expect(result).toContain('wellDiagramRender.js');
+        expect(result).toContain('iconsSlim.js');
     });
 
     it('nie raportuje plików z listy EXEMPT (wellActions.js, wellPopups.js)', () => {

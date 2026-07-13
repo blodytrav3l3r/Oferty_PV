@@ -1,13 +1,22 @@
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-/* ===== Załaduj produkty ===== */
-const productsPath = join(__dirname, '..', '..', 'data', 'seed_studnie.json');
-const studnieProducts = JSON.parse(readFileSync(productsPath, 'utf8'));
-console.log(`Załadowano ${studnieProducts.length} produktów\n`);
+/* ===== Załaduj produkty z katalogu seed ===== */
+const seedDir = join(__dirname, '..', '..', 'data', 'seed', 'studnie');
+if (!existsSync(seedDir)) {
+    console.error('Błąd: nie znaleziono katalogu', seedDir);
+    process.exit(1);
+}
+const files = readdirSync(seedDir).filter(f => f.endsWith('.json')).sort();
+let studnieProducts = [];
+for (const f of files) {
+    const items = JSON.parse(readFileSync(join(seedDir, f), 'utf8'));
+    if (Array.isArray(items)) studnieProducts.push(...items);
+}
+console.log(`Załadowano ${studnieProducts.length} produktów (z ${files.length} plików)\n`);
 
 /* ===== Helpery (kopie z kodu źródłowego) ===== */
 function getFormaField(warehouse) {

@@ -122,6 +122,7 @@ export function toLegacy(p: StudnieProductRaw): StudnieProductLegacy {
 export const PRICELIST_CONFIG_STUDNIE = {
     keyCurrent: 'pricelist_studnie',
     keyDefault: 'pricelist_studnie_default',
-    seedPath: 'data/seed_studnie.json',
+    seedPath: 'data/seed/studnie/01-konstrukcja.json',
+    seedDir: 'data/seed/studnie',
     label: 'studnie'
 } as const;

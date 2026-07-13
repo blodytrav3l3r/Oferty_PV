@@ -41,36 +41,37 @@ function renderComponentSubItems(
             else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1)
                 pehdLabel = well.wkladkaNadbudowa;
         }
+        const q = item.quantity || 1;
         if (bd.pehd > 0 && pehdLabel) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:#0ea5e9;"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
                 pehdLabel +
                 '</td><td class="text-right">' +
-                fmt(bd.pehd) +
+                fmt(bd.pehd * q) +
                 ' PLN</td></tr>';
         }
         if (bd.malowanieW > 0) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
-                fmt(bd.malowanieW) +
+                fmt(bd.malowanieW * q) +
                 ' PLN</td></tr>';
         }
         if (bd.malowanieZ > 0) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:#8b5cf6;"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
-                fmt(bd.malowanieZ) +
+                fmt(bd.malowanieZ * q) +
                 ' PLN</td></tr>';
         }
         if (bd.zelbet > 0) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
-                fmt(bd.zelbet) +
+                fmt(bd.zelbet * q) +
                 ' PLN</td></tr>';
         }
         if (bd.nierdzewna > 0) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:#a855f7;"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
-                fmt(bd.nierdzewna) +
+                fmt(bd.nierdzewna * q) +
                 ' PLN</td></tr>';
         }
     }

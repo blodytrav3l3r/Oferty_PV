@@ -1,6 +1,5 @@
-import fs from 'fs';
-import path from 'path';
 import { logger } from '../../../utils/logger';
+import { readStudnieSeedProducts } from '../../studnieSeedUtils';
 
 export function loadProductsMap(): Map<
     string,
@@ -11,15 +10,13 @@ export function loadProductsMap(): Map<
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
-        const raw = fs.readFileSync(jsonPath, 'utf-8');
-        const products: any[] = JSON.parse(raw);
-        for (const p of products) {
-            allProducts.set(p.id, {
-                componentType: p.componentType || '',
-                category: p.category || '',
-                dn: p.dn || 0,
-                height: p.height || 0
+        const items = readStudnieSeedProducts();
+        for (const p of items) {
+            allProducts.set(String(p.id), {
+                componentType: String(p.componentType || ''),
+                category: String(p.category || ''),
+                dn: (p.dn as number | string) || 0,
+                height: (p.height as number) || 0
             });
         }
     } catch (e) {

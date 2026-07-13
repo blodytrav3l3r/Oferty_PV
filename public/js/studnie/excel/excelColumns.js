@@ -5,26 +5,52 @@
 function _excelUpdateHeaderProdCodes() {
     var container = document.getElementById('excel-table-container');
     if (!container) return;
+    var wellIdx =
+        typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0 ? currentWellIndex : null;
+    if (wellIdx === null || !wells[wellIdx]) return;
 
-    var headerRow = container.querySelector('.excel-header-row');
-    if (!headerRow) return;
+    var fmt =
+        typeof fmtInt === 'function'
+            ? fmtInt
+            : function (n) {
+                  return Math.round(n || 0).toLocaleString('pl-PL');
+              };
+    var spans = container.querySelectorAll('thead tr:first-child .h3-prodcode');
+    spans.forEach(function (span) {
+        var ct = span.getAttribute('data-ct');
+        var height = span.getAttribute('data-height');
+        var perProd = span.getAttribute('data-per-product');
+        var fallback = span.getAttribute('data-fallback');
+        var redDn = span.getAttribute('data-reddn');
+        if (!ct) return;
 
-    var cells = headerRow.querySelectorAll('.excel-header-cell');
-    cells.forEach(function (cell) {
-        var type = cell.getAttribute('data-component-type');
-        var productId = cell.getAttribute('data-product-id');
-        var targetDn = cell.getAttribute('data-target-dn');
+        var code;
+        if (perProd) {
+            code = span.textContent;
+        } else {
+            code =
+                _excelGetWellProdCode(wells[wellIdx], ct, height || null, redDn || null) ||
+                fallback ||
+                null;
+        }
 
-        if (type && productId) {
-            var code = _excelGetWellProdCode(
-                well,
-                type,
-                cell.getAttribute('data-height'),
-                targetDn
+        if (!code) return;
+        span.textContent = code;
+        var priceSpan = span.parentElement.querySelector('.h3-prodprice');
+        if (!priceSpan) return;
+        try {
+            var prod = (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                function (p) {
+                    return p.id === code;
+                }
             );
-            if (code) {
-                cell.setAttribute('data-prod-code', code);
+            if (prod && prod.price) {
+                priceSpan.textContent = fmt(prod.price) + ' PLN';
+            } else {
+                priceSpan.textContent = '';
             }
+        } catch (e) {
+            priceSpan.textContent = '';
         }
     });
 }
@@ -32,6 +58,29 @@ function _excelUpdateHeaderProdCodes() {
 function _excelGetWellProdCode(well, ct, height, targetDn) {
     var prodCode = '';
     if (!well || !ct) return prodCode;
+
+    var prods = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+
+    if (well.config && Array.isArray(well.config)) {
+        for (var ci = 0; ci < well.config.length; ci++) {
+            var item = well.config[ci];
+            if (!item || !item.productId) continue;
+            var p = prods.find(function (pr) {
+                return pr.id === item.productId;
+            });
+            if (!p) continue;
+            if (p.componentType !== ct) continue;
+            if (targetDn && parseInt(p.dn) !== parseInt(targetDn)) continue;
+            if (height !== undefined && height !== null && height !== '') {
+                var ph = parseInt(p.height);
+                var ht = parseInt(height);
+                if (!isNaN(ph) && !isNaN(ht) && ph !== ht) continue;
+            }
+            prodCode = item.productId;
+            break;
+        }
+        if (prodCode) return prodCode;
+    }
 
     var componentData =
         well.components || well.wellsComponents || (well.data && well.data.components) || well.data;
@@ -91,26 +140,8 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
     var prodCode = _excelGetWellProdCode(well, ct, height, targetDn);
     if (!prodCode) return 0;
 
-    if (targetDn) {
-        try {
-            var dnKey = 'DN' + targetDn;
-            var productMap =
-                typeof window.productCacheByDn !== 'undefined' ? window.productCacheByDn : null;
-            if (productMap && productMap[dnKey]) {
-                for (var pi = 0; pi < productMap[dnKey].length; pi++) {
-                    if (productMap[dnKey][pi].id === prodCode) {
-                        return productMap[dnKey][pi].price || 0;
-                    }
-                }
-            }
-        } catch (e) {
-            /* ignore */
-        }
-        return 0;
-    }
-
     try {
-        var allProds = typeof excelProducts !== 'undefined' ? excelProducts : [];
+        var allProds = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
         for (var pi2 = 0; pi2 < allProds.length; pi2++) {
             if (allProds[pi2].id === prodCode) {
                 return allProds[pi2].price || 0;

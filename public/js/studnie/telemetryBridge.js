@@ -58,6 +58,10 @@
     /**
      * Buduje snapshot komponentu z pojedynczego wpisu konfiguracji.
      */
+    function toVal(v) {
+        return v != null ? v : undefined;
+    }
+
     function buildComponentSnapshot(item, studnieProducts) {
         if (!item || !item.productId) return null;
         const prod = studnieProducts.find(function (p) {
@@ -65,9 +69,9 @@
         });
         return {
             productId: item.productId,
-            productName: prod ? prod.name : undefined,
-            componentType: prod ? prod.componentType : undefined,
-            dn: prod ? prod.dn : undefined,
+            productName: prod ? toVal(prod.name) : undefined,
+            componentType: prod ? toVal(prod.componentType) : undefined,
+            dn: prod ? toVal(prod.dn) : undefined,
             height: prod && prod.height ? parseFloat(prod.height) || undefined : undefined
         };
     }
@@ -93,6 +97,11 @@
      * @param {boolean} [options.wasAccepted] - czy konfiguracja została zaakceptowana (default false)
      * @param {string} [options.overrideReason] - powód ręcznej zmiany (override)
      */
+    function safeNum(v, def) {
+        var n = v != null ? v : def;
+        return typeof n === 'number' && Number.isFinite(n) ? n : def;
+    }
+
     window.telemetryRecordConfig = function (options) {
         if (!options || !options.well) return;
         const well = options.well;
@@ -142,7 +151,7 @@
                     dn: dn,
                     transitionType: 'rura_przejściowa',
                     producer: prod ? 'WITROS' : undefined,
-                    heightFromBottomMm:
+                    heightFromBottomMm: safeNum(
                         p.rzednaWlaczenia !== undefined && well.rzednaDna !== undefined
                             ? Math.round(
                                   (parseFloat(p.rzednaWlaczenia) -
@@ -150,6 +159,8 @@
                                       1000
                               )
                             : undefined,
+                        undefined
+                    ),
                     position: 'inline'
                 };
             });
@@ -177,13 +188,15 @@
                 // Parametry
                 rzDna: well.rzednaDna ? parseFloat(well.rzednaDna) : undefined,
                 rzWlazu: well.rzednaWlazu ? parseFloat(well.rzednaWlazu) : undefined,
-                wellHeight:
+                wellHeight: safeNum(
                     well.rzednaDna !== undefined && well.rzednaWlazu !== undefined
                         ? Math.round(
                               (parseFloat(well.rzednaWlazu) - parseFloat(well.rzednaDna || 0)) *
                                   1000
                           )
                         : undefined,
+                    undefined
+                ),
                 wellType: well.psiaBuda
                     ? 'psia_buda'
                     : well.stycznaNadbudowa1200
@@ -206,10 +219,13 @@
                 solverSource: options.solverSource || 'AUTO_JS',
                 solverVersion: SOLVER_VERSION,
                 rulesVersion: RULES_VERSION,
-                computationMs: Math.round(options.computationMs || 0),
+                computationMs: safeNum(
+                    options.computationMs != null ? Math.round(options.computationMs) : undefined,
+                    0
+                ),
                 iterationCount: options.iterationCount || 0,
                 checkedVariants: options.checkedVariants || 0,
-                rankingScore: options.rankingScore,
+                rankingScore: safeNum(options.rankingScore, undefined),
                 selectionReason: options.selectionReason || undefined,
 
                 // Boolean flagi
@@ -232,13 +248,15 @@
                     ringCount: configItems.length,
                     totalPrice: totalPrice,
                     totalWeight: totalWeight,
-                    targetHeightMm:
+                    targetHeightMm: safeNum(
                         well.rzednaWlazu && well.rzednaDna !== undefined
                             ? Math.round(
                                   (parseFloat(well.rzednaWlazu) - parseFloat(well.rzednaDna || 0)) *
                                       1000
                               )
-                            : 0
+                            : 0,
+                        0
+                    )
                 }
             };
 

@@ -30,3 +30,4 @@ var _excelColWidths = {};
 var _excelAddingReliefPair = false;
 var _excelUserEditing = false;
 var _excelAutoSelectEnabled = true;
+var _EXCEL_UNDO_LIMIT = 50;

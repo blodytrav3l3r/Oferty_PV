@@ -1,7 +1,12 @@
 // @ts-check
 /* ===== transitionRenderer — główny renderer + eventy ===== */
 
-function renderTransitionTileHTML(item, globalIndex, product, opts) {
+window.renderTransitionTileHTML = function renderTransitionTileHTML(
+    item,
+    globalIndex,
+    product,
+    opts
+) {
     if (opts === undefined) opts = {};
     var przName = product ? product.category : 'Nieznane';
     var dn = product ? product.dn : '\u2014';
@@ -239,7 +244,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts) {
         actionsHTML +
         '</div>'
     );
-}
+};
 
 // CSP actions
 if (typeof registerCspAction === 'function') {

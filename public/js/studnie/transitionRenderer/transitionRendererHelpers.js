@@ -167,7 +167,6 @@ function renderMirrorTransitions(container, items, well, findProductFn, configMa
         .join('');
 }
 
-window.renderTransitionTileHTML = renderTransitionTileHTML;
 window.buildConfigMap = buildConfigMap;
 window.findAssignedElement = findAssignedElement;
 window.computeHeightFromElement = computeHeightFromElement;

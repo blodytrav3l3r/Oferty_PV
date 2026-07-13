@@ -20,6 +20,21 @@ function readJson(fileName: string): any {
     return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8'));
 }
 
+/** Czyta wszystkie pliki seed studni z katalogu data/seed/studnie/ */
+function readStudnieSeed(): any[] {
+    const dir = path.join(__dirname, '..', 'data', 'seed', 'studnie');
+    const files = fs
+        .readdirSync(dir)
+        .filter((f) => f.endsWith('.json'))
+        .sort();
+    const all: any[] = [];
+    for (const f of files) {
+        const items = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8'));
+        if (Array.isArray(items)) all.push(...items);
+    }
+    return all;
+}
+
 function toBool(val: any): boolean {
     if (val === 1 || val === true) return true;
     return false;
@@ -29,7 +44,7 @@ async function main() {
     console.log('Seeding database...');
 
     const ruryData = readJson('seed_rury.json');
-    const studnieData = readJson('seed_studnie.json');
+    const studnieData = readStudnieSeed();
 
     // ── Wyczyść stare dane ──
     await prisma.productsRury.deleteMany();

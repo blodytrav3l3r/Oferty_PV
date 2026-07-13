@@ -12,6 +12,13 @@ var SINGLE_PREDICT_URL = '/api/telemetry/ai/predict';
 var SETTINGS_URL = '/api/telemetry/ai/settings';
 var FETCH_TIMEOUT = 3000;
 
+/* ===== POMOCNICZE ===== */
+
+function _csrfHeaders() {
+    var tkn = typeof window.getCsrfToken === 'function' ? window.getCsrfToken() : '';
+    return { 'Content-Type': 'application/json', 'x-csrf-token': tkn };
+}
+
 var MAX_AI_CANDIDATES = 10;
 var MIN_AI_CANDIDATES = 3;
 
@@ -123,7 +130,7 @@ async function fetchAiScore(layout, well) {
         var res = await fetch(SINGLE_PREDICT_URL, {
             method: 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
+            headers: _csrfHeaders(),
             body: JSON.stringify({
                 features: features,
                 wellType: well.type || '',
@@ -191,7 +198,7 @@ async function fetchAiScoresBatch(candidates, well) {
         var res = await fetch(BATCH_PREDICT_URL, {
             method: 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
+            headers: _csrfHeaders(),
             body: JSON.stringify({ candidates: toFetch, featureVersion: FEATURE_VERSION }),
             signal: controller.signal
         });

@@ -133,7 +133,7 @@ function _excelBuildThead(dn, maxTr, compCols, hasReduction, dnColor, dnBg) {
         const colCode = codeDisp
             ? (function () {
                   var priceHtml = '';
-                  if (isPerProduct && codeDisp) {
+                  if (codeDisp) {
                       try {
                           var prod = (
                               typeof studnieProducts !== 'undefined' ? studnieProducts : []

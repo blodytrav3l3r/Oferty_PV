@@ -166,10 +166,10 @@ function _excelBuildComponentColumns(dn, well) {
             const lbl = _excelShortLabel(p.name || '', 'konus');
             cols.push({
                 key: 'konus_' + h,
-                label: 'Konus ' + p.name,
+                label: 'Konus H=' + h,
                 shortLabel: lbl.short,
                 detailLabel: lbl.detail,
-                type: 'select',
+                type: 'number',
                 componentType: 'konus',
                 products: matching,
                 height: h
@@ -197,10 +197,10 @@ function _excelBuildComponentColumns(dn, well) {
                 const lbl = _excelShortLabel(p.name || '', ct);
                 cols.push({
                     key: ct + '_' + h,
-                    label: ctLabels[ct].single + ' ' + h + ' mm',
+                    label: ctLabels[ct].single + ' H=' + h,
                     shortLabel: ctLabels[ct].prefix + lbl.short,
                     detailLabel: lbl.detail,
-                    type: 'select',
+                    type: 'number',
                     componentType: ct,
                     products: matching,
                     height: h
@@ -216,7 +216,7 @@ function _excelBuildComponentColumns(dn, well) {
                 label: ctLabels[ct].single + ' (inne)',
                 shortLabel: ctLabels[ct].prefix + lbl.short,
                 detailLabel: lbl.detail,
-                type: 'select',
+                type: 'number',
                 componentType: ct,
                 products: noHeight
             });
@@ -239,21 +239,23 @@ function _excelBuildComponentColumns(dn, well) {
         });
     });
 
-    /* 5. Styczne — osobna sekcja (dedykowane kolumny per product) */
-    const stycznaProducts = groups['styczna'] || [];
-    stycznaProducts.forEach((p) => {
-        const lbl = _excelShortLabel(p.name || '', 'styczna');
-        cols.push({
-            key: 'styczna_' + p.id,
-            label: p.name,
-            shortLabel: lbl.short,
-            detailLabel: lbl.detail,
-            type: 'number',
-            componentType: 'styczna',
-            productId: p.id,
-            height: p.height
+    /* 5. Styczne — osobna sekcja (dedykowane kolumny per product, TYLKO dla zakładki styczne) */
+    if (dn === 'styczna') {
+        const stycznaProducts = groups['styczna'] || [];
+        stycznaProducts.forEach((p) => {
+            const lbl = _excelShortLabel(p.name || '', 'styczna');
+            cols.push({
+                key: 'styczna_' + p.id,
+                label: p.name,
+                shortLabel: lbl.short,
+                detailLabel: lbl.detail,
+                type: 'number',
+                componentType: 'styczna',
+                productId: p.id,
+                height: p.height
+            });
         });
-    });
+    }
 
     /* ===== NOWE: Uszczelki ===== */
     /* R.Uszczelki — dla każdego targetDn (tylko gdy redukcja aktywna) */
