@@ -94,7 +94,7 @@
         "@commitlint/cli": "^21.1.0",
         "@commitlint/config-conventional": "^21.0.2",
         "@eslint/js": "^9.39.4",
-        "@types/bcryptjs": "^2.4.6",
+        "@types/bcryptjs": "^3.0.0",
         "@types/compression": "^1.8.1",
         "@types/cookie-parser": "^1.4.10",
         "@types/express": "^4.17.21",
