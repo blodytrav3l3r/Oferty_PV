@@ -252,6 +252,7 @@ async function resetStudniePriceList() {
             )
                 return;
             studnieProducts = structuredClone(customDefault);
+            recalculatePEHDInternal(pehdPricePerM2);
         } else {
             showToast('Brak zapisanych wartości fabrycznych cennika studni', 'error');
             return;
@@ -292,6 +293,7 @@ async function refreshStudnieData() {
     const result = await api.get('/api/products-studnie', { silent: true });
     if (result && Array.isArray(result.data)) {
         studnieProducts = result.data;
+        recalculatePEHDInternal(pehdPricePerM2);
         renderStudniePriceList();
         renderTiles();
         if (typeof window.refreshExcelFromConfig === 'function') {

@@ -44,8 +44,19 @@
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })
-                .then(function () {
+                .then(function (res) {
                     clearTimeout(timeoutId);
+                    if (!res.ok) {
+                        res.clone()
+                            .json()
+                            .then(function (body) {
+                                console.warn(
+                                    '[Telemetry] AI config failed (' + res.status + '):',
+                                    body.error || '(no error field)',
+                                    body.details || '(no details)'
+                                );
+                            });
+                    }
                 })
                 .catch(function () {
                     /* telemetry pasywna - ignorujemy */
@@ -183,7 +194,7 @@
                 // Kontekst
                 wellId: well.id || undefined,
                 warehouse: well.magazyn || undefined,
-                dn: well.dn || undefined,
+                dn: well.dn != null ? String(well.dn) : undefined,
 
                 // Parametry
                 rzDna: well.rzednaDna ? parseFloat(well.rzednaDna) : undefined,

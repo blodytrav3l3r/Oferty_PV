@@ -197,7 +197,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         else if (['krag', 'krag_ot', 'rura'].includes(p.componentType))
             pehdType = well.wkladkaNadbudowa;
 
-        if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
+        if (pehdType && pehdType !== 'brak' && p.doplataPEHD != null && !item.disablePehd) {
             badgesHtml +=
                 ' <span style="font-size:0.55rem; color:#0ea5e9; border:1px solid rgba(14,165,233,0.4); padding:1px 4px; border-radius:4px; background:rgba(14,165,233,0.1); margin-left:4px; font-weight:700;">PEHD</span>';
         }

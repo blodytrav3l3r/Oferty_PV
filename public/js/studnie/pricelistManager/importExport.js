@@ -412,6 +412,7 @@ function importStudnieFromExcel(event) {
 
             if (normalized.length > 0) {
                 studnieProducts = normalized;
+                recalculatePEHDInternal(pehdPricePerM2);
                 _studniePricelistDirty = true;
                 updateStudnieSaveBtn();
             }

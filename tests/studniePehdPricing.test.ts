@@ -442,3 +442,163 @@ describe('PEHD — kompletny flow: seed → DB → API → frontend', () => {
         kinety.forEach((p: any) => expect(p.doplataPEHD).toBeUndefined());
     });
 });
+
+/* ===== 4. TEST: recalculatePEHDInternal (VM) ===== */
+
+function loadCategoriesFunctions() {
+    const categoriesPath = path.join(
+        __dirname,
+        '..',
+        'public',
+        'js',
+        'studnie',
+        'pricelistManager',
+        'categories.js'
+    );
+    const source = fs.readFileSync(categoriesPath, 'utf8');
+
+    const studnieProducts: any[] = [];
+
+    const sandbox: any = {
+        console,
+        studnieProducts,
+        _studniePricelistDirty: false,
+        showToast: () => {},
+        appConfirm: async () => true,
+        updateStudnieSaveBtn: () => {},
+        renderStudniePriceList: () => {},
+        CENNIK_TAB_FILTERS: {},
+        currentCennikTab: 'dn1000',
+        logger: { info: () => {}, warn: () => {}, error: () => {} },
+        pehdPricePerM2: 270,
+        window: {} as any
+    };
+    sandbox.window = sandbox;
+
+    vm.createContext(sandbox);
+    vm.runInContext(source, sandbox, { filename: 'categories.js' });
+
+    return {
+        recalculatePEHDInternal: sandbox.recalculatePEHDInternal as (price: number) => number,
+        studnieProducts: sandbox.studnieProducts as any[]
+    };
+}
+
+describe('recalculatePEHDInternal — auto-przeliczanie PEHD', () => {
+    it('ustawia doplataPEHD = Math.round(area * price) dla dennicy z area > 0', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'DEN-10-10', componentType: 'dennica', area: 1.732, price: 500 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBe(Math.round(1.732 * 270));
+    });
+
+    it('ustawia doplataPEHD dla krega z area > 0', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'KRG-10-25', componentType: 'krag', area: 2.5, price: 300 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBe(Math.round(2.5 * 270));
+    });
+
+    it('ustawia doplataPEHD dla plyta/konus z area > 0', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'PLY-10', componentType: 'plyta', area: 1.2, price: 200 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBe(Math.round(1.2 * 270));
+    });
+
+    it('pomija przejscia', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'PRZ-1', componentType: 'przejscie', area: 2.0 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBeUndefined();
+    });
+
+    it('pomija kinety', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'KIN-1', componentType: 'kineta', area: 1.5 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBeUndefined();
+    });
+
+    it('pomija produkty z area = 0', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'DEN-0', componentType: 'dennica', area: 0 };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBeUndefined();
+    });
+
+    it('pomija produkty z area = null', () => {
+        const ctx = loadCategoriesFunctions();
+        const p: any = { id: 'DEN-NULL', componentType: 'dennica', area: null };
+        ctx.studnieProducts.push(p);
+
+        ctx.recalculatePEHDInternal(270);
+
+        expect(p.doplataPEHD).toBeUndefined();
+    });
+
+    it('zwraca liczbę przeliczonych produktów', () => {
+        const ctx = loadCategoriesFunctions();
+        ctx.studnieProducts.push(
+            { id: 'DEN-1', componentType: 'dennica', area: 1.0 },
+            { id: 'KRG-1', componentType: 'krag', area: 2.0 },
+            { id: 'PRZ-1', componentType: 'przejscie', area: 3.0 },
+            { id: 'KIN-1', componentType: 'kineta', area: 4.0 }
+        );
+
+        const count = ctx.recalculatePEHDInternal(270);
+
+        expect(count).toBe(2); // tylko DEN-1 i KRG-1
+    });
+});
+
+/* ===== 5. REGRESJA: ścieżka SPA (orchestrator) MUSI wywołać recalculatePEHDInternal =====
+   Poprzedni błąd: appStudnie.js (ścieżka SPA) ładował studnieProducts, ale NIE
+   wywoływał recalculatePEHDInternal → doplataPEHD === null dla ~271 produktów →
+   cena wkładki PEHD nie liczyła się dla większości elementów. */
+
+describe('REGRESJA — SPA orchestrator wywołuje recalculatePEHDInternal', () => {
+    const src = fs.readFileSync(
+        path.join(__dirname, '..', 'public', 'js', 'appStudnie.js'),
+        'utf8'
+    );
+
+    it('loadDataInBackground wywołuje recalculatePEHDInternal po przypisaniu studnieProducts', () => {
+        const idxAssign = src.indexOf('studnieProducts = productsP.value');
+        expect(idxAssign).toBeGreaterThan(-1);
+
+        const idxRecalc = src.indexOf('recalculatePEHDInternal(pehdPricePerM2)', idxAssign);
+        expect(idxRecalc).toBeGreaterThan(-1);
+        expect(idxRecalc).toBeGreaterThan(idxAssign);
+    });
+
+    it('resetStudniePriceList (crud.js) wywołuje recalculatePEHDInternal po structuredClone', () => {
+        const crudSrc = fs.readFileSync(
+            path.join(__dirname, '..', 'public', 'js', 'studnie', 'pricelistManager', 'crud.js'),
+            'utf8'
+        );
+        const idxClone = crudSrc.indexOf('structuredClone');
+        expect(idxClone).toBeGreaterThan(-1);
+
+        const idxRecalc = crudSrc.indexOf('recalculatePEHDInternal(pehdPricePerM2)', idxClone);
+        expect(idxRecalc).toBeGreaterThan(-1);
+    });
+});

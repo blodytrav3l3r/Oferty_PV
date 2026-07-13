@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
         studnieProducts = await loadStudnieProducts();
+        recalculatePEHDInternal(pehdPricePerM2);
 
         if (!studnieProducts.some((p) => p.componentType === 'kineta')) {
             logger.warn('pricelistManager', '[Studnie] Brak kinet w cenniku');

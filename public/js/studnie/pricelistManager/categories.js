@@ -1,4 +1,16 @@
 /* ===== PRZELICZANIE PEHD ===== */
+function recalculatePEHDInternal(price) {
+    let count = 0;
+    studnieProducts.forEach((p) => {
+        if (p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.area > 0) {
+            p.doplataPEHD = Math.round(p.area * price);
+            count++;
+        }
+    });
+    return count;
+}
+window.recalculatePEHDInternal = recalculatePEHDInternal;
+
 window.recalculatePEHD = async function () {
     const input = document.getElementById('pehd-price-input');
     const price = parseFloat(input?.value);
@@ -7,14 +19,9 @@ window.recalculatePEHD = async function () {
         return;
     }
 
-    let count = 0;
-    studnieProducts.forEach((p) => {
-        if (p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.area > 0) {
-            p.doplataPEHD = Math.round(p.area * price);
-            count++;
-        }
-    });
-
+    const count = recalculatePEHDInternal(price);
+    pehdPricePerM2 = price;
+    window.pehdPricePerM2 = price;
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();

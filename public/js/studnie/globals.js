@@ -2,6 +2,7 @@
 /* ===== ZMIENNE GLOBALNE ===== */
 /** @type {any[]} */
 let studnieProducts = [];
+let pehdPricePerM2 = 270;
 let currentUser = null;
 let currentCennikTab = 'dn1000';
 
@@ -173,4 +174,5 @@ function normalizeId(id) {
     return id;
 }
 
+window.pehdPricePerM2 = pehdPricePerM2;
 window.showSection = showSectionStudnie;

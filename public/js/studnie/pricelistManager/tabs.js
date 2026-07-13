@@ -129,11 +129,11 @@ function renderStudniePriceList() {
     }
 
     const pehdInput = document.getElementById('pehd-price-input');
-    const currentPehdPrice = pehdInput ? parseFloat(pehdInput.value) || 270 : 270;
+    const currentPehdPrice = typeof pehdPricePerM2 !== 'undefined' ? pehdPricePerM2 : 270;
 
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-left:0.3rem;">Przelicz</button></div>` : ''}
+        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size:0.8rem; font-weight:600; color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" data-action="handlePehdPriceChange" style="width:70px; padding:0.3rem; font-size:0.8rem; border:1px solid var(--border); border-radius:4px; background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-left:0.3rem;">Przelicz</button></div>` : ''}
         ${isPrzejscia ? `<button class="btn btn-secondary" data-action="addPrzejsciaCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" data-action="addStudnieCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
         <button class="btn btn-secondary" data-action="addStudnieElement" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size:0.8rem; padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
@@ -291,4 +291,20 @@ function renderStudniePriceList() {
 
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons();
+}
+
+function handlePehdPriceChange(target) {
+    const price = parseFloat(target.value);
+    if (isNaN(price) || price <= 0) return;
+    if (price === pehdPricePerM2) return;
+    pehdPricePerM2 = price;
+    window.pehdPricePerM2 = price;
+    recalculatePEHDInternal(price);
+    _studniePricelistDirty = true;
+    updateStudnieSaveBtn();
+    renderStudniePriceList();
+}
+
+if (typeof registerCspAction === 'function') {
+    registerCspAction('handlePehdPriceChange', handlePehdPriceChange);
 }

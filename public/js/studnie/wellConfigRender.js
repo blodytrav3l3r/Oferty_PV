@@ -176,7 +176,7 @@ function renderWellConfig() {
                             pehdType = well.wkladkaNadbudowa;
                         }
 
-                        if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
+                        if (pehdType && pehdType !== 'brak' && p.doplataPEHD != null) {
                             const isPehdDisabled = item.disablePehd;
                             const pehdColor = isPehdDisabled ? 'var(--text-muted)' : '#0ea5e9';
                             const pehdBg = isPehdDisabled

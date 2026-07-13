@@ -246,6 +246,7 @@ async function loadDataInBackground() {
 
     if (productsP.status === 'fulfilled') {
         studnieProducts = productsP.value;
+        recalculatePEHDInternal(pehdPricePerM2);
     } else {
         logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason);
     }

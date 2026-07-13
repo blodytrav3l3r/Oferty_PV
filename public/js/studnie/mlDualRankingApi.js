@@ -143,6 +143,7 @@ async function fetchAiScore(layout, well) {
         clearTimeout(timeoutId);
         if (!res.ok) {
             mlOnline = false;
+            console.warn('[AI] fetchAiScore failed:', res.status, res.statusText);
             return -1;
         }
         var data = await res.json();
@@ -157,6 +158,7 @@ async function fetchAiScore(layout, well) {
         return -1;
     } catch (e) {
         mlOnline = false;
+        console.warn('[AI] fetchAiScore exception:', e);
         return -1;
     }
 }
@@ -205,6 +207,7 @@ async function fetchAiScoresBatch(candidates, well) {
         clearTimeout(timeoutId);
         if (!res.ok) {
             mlOnline = false;
+            console.warn('[AI] fetchAiScoresBatch failed:', res.status, res.statusText);
             for (var j = 0; j < toFetch.length; j++) resultMap.set(toFetch[j].id, -1);
             return resultMap;
         }
@@ -228,10 +231,12 @@ async function fetchAiScoresBatch(candidates, well) {
             }
         } else {
             mlOnline = false;
+            console.warn('[AI] fetchAiScoresBatch empty scores response');
             for (var m = 0; m < toFetch.length; m++) resultMap.set(toFetch[m].id, -1);
         }
     } catch (e) {
         mlOnline = false;
+        console.warn('[AI] fetchAiScoresBatch exception:', e);
         for (var n = 0; n < toFetch.length; n++) resultMap.set(toFetch[n].id, -1);
     }
     return resultMap;
