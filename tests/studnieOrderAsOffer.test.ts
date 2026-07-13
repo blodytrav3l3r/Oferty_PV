@@ -418,9 +418,25 @@ describe('Studnie Order As Offer export — POST /:id/export-offer-pdf|docx', ()
    ============================================================ */
 describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (vm)', () => {
     const PROJECT_ROOT = path.resolve(__dirname, '..');
-    const FILE_PATH = path.join(PROJECT_ROOT, 'public', 'js', 'studnie', 'offerPrintManager.js');
+    const FILE_PATH = path.join(
+        PROJECT_ROOT,
+        'public',
+        'js',
+        'studnie',
+        'offerPrintManager',
+        'offerPrintManagerActions.js'
+    );
 
-    function loadStudniePrintManager(): { context: any; source: string } {
+    function loadStudniePrintManager(): { context: any } {
+        const CORE_PATH = path.join(
+            PROJECT_ROOT,
+            'public',
+            'js',
+            'studnie',
+            'offerPrintManager',
+            'offerPrintManagerCore.js'
+        );
+        const coreSource = fs.readFileSync(CORE_PATH, 'utf8');
         const source = fs.readFileSync(FILE_PATH, 'utf8');
         const mockFetch = jest.fn();
         const sandbox: Record<string, unknown> = {
@@ -477,28 +493,24 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         };
         (sandbox.window as any) = sandbox;
         const context = vm.createContext(sandbox);
-        return { context, source };
+        vm.runInContext(coreSource, context, { filename: 'offerPrintManagerCore.js' });
+        vm.runInContext(source, context, { filename: 'offerPrintManagerActions.js' });
+        return { context };
     }
 
     it('action is exported on window', () => {
         const { context } = loadStudniePrintManager();
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         expect(typeof context.exportStudnieOrderAsOffer_action).toBe('function');
     });
 
     it('rejects empty orderId (toast error)', async () => {
         const { context } = loadStudniePrintManager();
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         await context.exportStudnieOrderAsOffer_action('', 'pdf');
         expect(context.showToast).toHaveBeenCalledWith('Brak ID zamówienia do eksportu', 'error');
     });
 
     it('rejects invalid format (toast error)', async () => {
         const { context } = loadStudniePrintManager();
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
         await context.exportStudnieOrderAsOffer_action('ord-1', 'txt' as any);
         expect(context.showToast).toHaveBeenCalledWith('Nieobsługiwany format eksportu', 'error');
     });
@@ -506,8 +518,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
     it('warns when wells is empty (toast warning)', async () => {
         const { context } = loadStudniePrintManager();
         context.wells = [];
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
+
         await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
         expect(context.showToast).toHaveBeenCalledWith(
             'Brak pozycji w bieżącym zamówieniu',
@@ -531,8 +542,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             ok: true,
             blob: async () => Buffer.from('PDF-X')
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
 
@@ -570,8 +579,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             ok: true,
             blob: async () => Buffer.from('DOCX-X')
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await context.exportStudnieOrderAsOffer_action('ord-1', 'docx');
 
@@ -600,8 +607,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
                 details: ['items: Wymagana co najmniej jedna studnia']
             })
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
 
@@ -627,8 +632,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             status: 404,
             json: async () => ({ error: 'Zamówienie studni nie znalezione' })
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await expect(
             context.exportStudnieOrderAsOffer_action('ord-1', 'pdf')
@@ -671,8 +674,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             ok: true,
             blob: async () => Buffer.from('PDF-X')
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
 
@@ -722,8 +723,6 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             ok: true,
             blob: async () => Buffer.from('PDF-X')
         });
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
-        vm.runInContext(source, context, { filename: 'offerPrintManager.js' });
 
         await context.exportStudnieOrderAsOffer_action('ord-1', 'pdf');
 
