@@ -17,8 +17,8 @@ describe('check-file-size.mjs', () => {
     it('raportuje pliki przekraczające 500 linii', () => {
         const result = runScript();
         expect(result).toContain('Znaleziono');
-        expect(result).toContain('wellUIConfig.js');
         expect(result).toContain('excelHandlers.js');
+        expect(result).toContain('mlDualRanking.js');
     });
 
     it('nie raportuje plików z listy EXEMPT (wellActions.js, wellPopups.js)', () => {
