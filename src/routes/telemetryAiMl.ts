@@ -7,95 +7,17 @@ import { logger } from '../utils/logger';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { logAudit } from '../services/auditService';
-import { z } from 'zod';
 import prisma from '../prismaClient';
+import { predictSchema, batchPredictSchema, rewardSchema } from '../services/telemetryAiSchemas';
+import {
+    checkPredictionCache,
+    setPredictionCache,
+    getCacheSize,
+    runPrediction,
+    runBatchPrediction
+} from '../services/telemetryAiPrediction';
 
 const router = Router();
-
-const FEATURE_COUNT = 16;
-
-const predictSchema = z.object({
-    features: z.array(z.number()).length(FEATURE_COUNT),
-    wellType: z.string().optional(),
-    warehouse: z.string().optional(),
-    dn: z.number().optional(),
-    featureVersion: z.string().optional()
-});
-
-/* ===== BATCH PREDICT ===== */
-
-const batchCandidateSchema = z.object({
-    id: z.number(),
-    features: z.array(z.number()).length(FEATURE_COUNT),
-    wellType: z.string().optional(),
-    warehouse: z.string().optional(),
-    dn: z.number().optional()
-});
-
-const batchPredictSchema = z.object({
-    candidates: z.array(batchCandidateSchema).min(1).max(10),
-    featureVersion: z.string().optional()
-});
-
-const rewardSchema = z.object({
-    action: z.enum(['ACCEPT', 'REJECT', 'MODIFY', 'ADJUST', 'SWAP']),
-    wellId: z.string().optional(),
-    dn: z.number().optional(),
-    scoreBefore: z.number().optional(),
-    scoreAfter: z.number().optional(),
-    wasAiRanked: z.boolean().optional(),
-    configSnapshot: z.record(z.string(), z.unknown()).optional()
-});
-
-interface CacheEntry {
-    result: { score: number; version: string }[];
-    timestamp: number;
-}
-
-const predictionCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 15 * 60 * 1000;
-
-function cacheKey(features: number[], wellType?: string, warehouse?: string, dn?: number): string {
-    return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dn || ''}`;
-}
-
-async function runPrediction(
-    features: number[],
-    featureVersion?: string
-): Promise<{ score: number; version: string; featureVersion: string } | { error: string }> {
-    const activeModel = await modelRegistry.getActiveModel();
-    if (!activeModel) {
-        return { error: 'No active model' };
-    }
-
-    const expectedDim = activeModel.featureMins.length;
-    if (features.length !== expectedDim) {
-        return {
-            error: 'FEATURE_COUNT_MISMATCH',
-            expectedFeatureCount: expectedDim,
-            receivedFeatureCount: features.length
-        } as any;
-    }
-
-    const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
-    const model = new AcceptanceModel(
-        activeModel.weights.length,
-        activeModel.weights,
-        activeModel.bias
-    );
-
-    const normalizedFeatures = features.map((v, i) => {
-        const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
-        return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
-    });
-
-    const score = model.predict(normalizedFeatures);
-    return {
-        score: parseFloat(score.toFixed(4)),
-        version: activeModel.version,
-        featureVersion: featureVersion || 'unknown'
-    };
-}
 
 router.post(
     '/telemetry/ai/predict',
@@ -110,9 +32,8 @@ router.post(
             }
 
             const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
-            const key = cacheKey(features, wellType, warehouse, dn);
-            const cached = predictionCache.get(key);
-            if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            const cached = checkPredictionCache(features, wellType, warehouse, dn);
+            if (cached) {
                 res.json({ scores: cached.result, cached: true });
                 return;
             }
@@ -128,7 +49,7 @@ router.post(
             }
 
             const scoreResult = [result];
-            predictionCache.set(key, { result: scoreResult, timestamp: Date.now() });
+            setPredictionCache(features, scoreResult, wellType, warehouse, dn);
 
             res.json({ scores: scoreResult, cached: false });
         } catch (e) {
@@ -138,8 +59,6 @@ router.post(
         }
     }
 );
-
-/* ===== BATCH PREDICT (dla rankCandidates) ===== */
 
 router.post(
     '/telemetry/ai/predict/batch',
@@ -175,26 +94,7 @@ router.post(
                 }
             }
 
-            const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
-            const model = new AcceptanceModel(
-                activeModel.weights.length,
-                activeModel.weights,
-                activeModel.bias
-            );
-
-            const scores = candidates.map((c) => {
-                const normalizedFeatures = c.features.map((v, i) => {
-                    const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
-                    return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
-                });
-                const score = model.predict(normalizedFeatures);
-                return {
-                    id: c.id,
-                    score: parseFloat(score.toFixed(4)),
-                    version: activeModel.version,
-                    featureVersion: featureVersion || 'unknown'
-                };
-            });
+            const scores = await runBatchPrediction(candidates, featureVersion);
 
             res.json({ scores });
         } catch (e) {
@@ -240,8 +140,6 @@ router.post(
         }
     }
 );
-
-/* ===== FEATURE FLAG: AI influence level ===== */
 
 router.get('/telemetry/ai/settings', requireAuth, async (_req: Request, res: Response) => {
     try {
@@ -297,12 +195,12 @@ router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Re
         res.json({
             mlOnline: !!activeModel,
             modelVersion: activeModel?.version || null,
-            modelFeatureCount: activeModel?.featureMins.length || FEATURE_COUNT,
+            modelFeatureCount: activeModel?.featureMins.length || 16,
             modelCount,
             featureCount,
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
-            cacheSize: predictionCache.size,
+            cacheSize: getCacheSize(),
             aiInfluencePct: parseInt(aiInfluence?.value || '0', 10)
         });
     } catch (e) {
