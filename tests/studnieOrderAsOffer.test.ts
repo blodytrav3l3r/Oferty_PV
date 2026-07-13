@@ -418,13 +418,14 @@ describe('Studnie Order As Offer export — POST /:id/export-offer-pdf|docx', ()
    ============================================================ */
 describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (vm)', () => {
     const PROJECT_ROOT = path.resolve(__dirname, '..');
-    const FILE_PATH = path.join(
+    const EXPORT_PATH = path.join(
         PROJECT_ROOT,
         'public',
         'js',
         'studnie',
         'offerPrintManager',
-        'offerPrintManagerActions.js'
+        'offerPrintManagerActions',
+        'offerPrintManagerExport.js'
     );
 
     function loadStudniePrintManager(): { context: any } {
@@ -437,7 +438,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
             'offerPrintManagerCore.js'
         );
         const coreSource = fs.readFileSync(CORE_PATH, 'utf8');
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
+        const source = fs.readFileSync(EXPORT_PATH, 'utf8');
         const mockFetch = jest.fn();
         const sandbox: Record<string, unknown> = {
             URL: {
@@ -494,7 +495,7 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         (sandbox.window as any) = sandbox;
         const context = vm.createContext(sandbox);
         vm.runInContext(coreSource, context, { filename: 'offerPrintManagerCore.js' });
-        vm.runInContext(source, context, { filename: 'offerPrintManagerActions.js' });
+        vm.runInContext(source, context, { filename: 'offerPrintManagerExport.js' });
         return { context };
     }
 

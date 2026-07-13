@@ -25,12 +25,21 @@ const STUDNIE_PM_CORE = path.join(
     'offerPrintManager',
     'offerPrintManagerCore.js'
 );
-const STUDNIE_PM_ACTIONS = path.join(
+const STUDNIE_PM_MODAL = path.join(
     PUBLIC,
     'js',
     'studnie',
     'offerPrintManager',
-    'offerPrintManagerActions.js'
+    'offerPrintManagerActions',
+    'offerPrintManagerModal.js'
+);
+const STUDNIE_PM_EXPORT = path.join(
+    PUBLIC,
+    'js',
+    'studnie',
+    'offerPrintManager',
+    'offerPrintManagerActions',
+    'offerPrintManagerExport.js'
 );
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
@@ -102,7 +111,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
     describe('Static: error messages include server response (Variant C)', () => {
         it('studnie/offerPrintManager.js — exportOfferDirect_action ma res.text() w error', () => {
-            const src = readFile(STUDNIE_PM_ACTIONS);
+            const src = readFile(STUDNIE_PM_EXPORT);
             // Funkcja ma save-before-export (saveOfferStudnie), więc rozszerzamy limit do 3000 znaków
             const pattern =
                 /window\.exportOfferDirect_action\s*=\s*async function[\s\S]{0,3000}res\.text\(\)[\s\S]{0,200}errText/;
@@ -110,7 +119,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('studnie/offerPrintManager.js — exportKartaDirect_action ma res.text() w error', () => {
-            const src = readFile(STUDNIE_PM_ACTIONS);
+            const src = readFile(STUDNIE_PM_EXPORT);
             const pattern =
                 /window\.exportKartaDirect_action\s*=\s*async function[\s\S]{0,2000}res\.text\(\)[\s\S]{0,200}errText/;
             expect(src).toMatch(pattern);
@@ -300,7 +309,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     describe('Static: showUniversalPrintModal (studnie) akceptuje relatedOrders (legacy fetch usunięty)', () => {
         let src: string;
         beforeAll(() => {
-            src = readFile(STUDNIE_PM_ACTIONS);
+            src = readFile(STUDNIE_PM_MODAL);
         });
 
         it('showUniversalPrintModal ma sygnaturę (offerId, orderId, relatedOrders)', () => {
@@ -414,8 +423,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         }
 
         it('STUDNIE: exportOfferDirect_action wywołuje /api/offers-studnie/{id}/export-pdf', async () => {
-            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () =>
-                okResponse()
+            const { fetchCalls, window } = loadInVm(
+                [STUDNIE_PM_CORE, STUDNIE_PM_MODAL, STUDNIE_PM_EXPORT],
+                () => okResponse()
             );
             const fn = window.exportOfferDirect_action as (
                 id: string,
@@ -430,8 +440,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('STUDNIE: exportOfferDirect_action docx → /api/offers-studnie/{id}/export-docx', async () => {
-            const { fetchCalls, window } = loadInVm([STUDNIE_PM_CORE, STUDNIE_PM_ACTIONS], () =>
-                okResponse()
+            const { fetchCalls, window } = loadInVm(
+                [STUDNIE_PM_CORE, STUDNIE_PM_MODAL, STUDNIE_PM_EXPORT],
+                () => okResponse()
             );
             const fn = window.exportOfferDirect_action as (
                 id: string,
@@ -516,9 +527,13 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             sandbox.globalThis = sandbox;
             const context = vm.createContext(sandbox);
             vm.runInContext(
-                readFile(STUDNIE_PM_CORE) + '\n' + readFile(STUDNIE_PM_ACTIONS),
+                readFile(STUDNIE_PM_CORE) +
+                    '\n' +
+                    readFile(STUDNIE_PM_MODAL) +
+                    '\n' +
+                    readFile(STUDNIE_PM_EXPORT),
                 context,
-                { filename: STUDNIE_PM_CORE + '+' + STUDNIE_PM_ACTIONS }
+                { filename: STUDNIE_PM_CORE + '+' + STUDNIE_PM_MODAL + '+' + STUDNIE_PM_EXPORT }
             );
 
             const fn = (sandbox.window as Record<string, unknown>).exportOfferDirect_action as (
