@@ -84,6 +84,57 @@ export interface RuryOfferData {
     guardianUser?: UserContactInfo | null;
 }
 
+export async function lookupOfferUsers(
+    offerData: Record<string, unknown>,
+    offerUserId?: string | null
+): Promise<{ authorUser: UserContactInfo | null; guardianUser: UserContactInfo | null }> {
+    const formatUserName = (u: Record<string, unknown>): string =>
+        u.firstName && u.lastName
+            ? `${String(u.firstName)} ${String(u.lastName)}`
+            : String(u.username);
+
+    let guardianUser: UserContactInfo | null = null;
+    let authorUser: UserContactInfo | null = null;
+
+    const guardianId = typeof offerData.userId === 'string' ? offerData.userId : offerUserId;
+    if (guardianId) {
+        try {
+            const u = await prisma.users.findUnique({ where: { id: guardianId } });
+            if (u)
+                guardianUser = {
+                    name: formatUserName(u as Record<string, unknown>),
+                    email: String(u.email ?? ''),
+                    phone: String(u.phone ?? '')
+                };
+        } catch (e) {
+            logger.warn('PdfUsers', 'Nie udało się wyszukać opiekuna (guardian)', e);
+        }
+    }
+
+    const authorId =
+        typeof offerData.createdByUserId === 'string' ? offerData.createdByUserId : undefined;
+    if (authorId && authorId !== guardianId) {
+        try {
+            const u = await prisma.users.findUnique({ where: { id: authorId } });
+            if (u)
+                authorUser = {
+                    name: formatUserName(u as Record<string, unknown>),
+                    email: String(u.email ?? ''),
+                    phone: String(u.phone ?? '')
+                };
+        } catch (e) {
+            logger.warn('PdfUsers', 'Nie udało się wyszukać autora', e);
+        }
+    } else if (authorId && authorId === guardianId) {
+        authorUser = null;
+    }
+
+    return { authorUser, guardianUser };
+}
+
+import prisma from '../../prismaClient';
+import { logger } from '../../utils/logger';
+
 export interface StudnieOfferData {
     offerNumber: string;
     documentType?: 'offer' | 'order';
