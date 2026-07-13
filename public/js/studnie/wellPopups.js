@@ -45,10 +45,15 @@ if (typeof registerCspAction === 'function') {
     registerCspAction('recalcToggleRed', function (t) {
         window.recalcToggleRed(parseInt(t.dataset.dn, 10));
     });
-    registerCspAction('tmApplyFilters', tmApplyFilters);
-    registerCspAction('tmToggleSelectAll', tmToggleSelectAll);
+    registerCspAction('tmApplyFilters', function () {
+        if (typeof window.tmApplyFilters === 'function') window.tmApplyFilters();
+    });
+    registerCspAction('tmToggleSelectAll', function () {
+        if (typeof window.tmToggleSelectAll === 'function') window.tmToggleSelectAll();
+    });
     registerCspAction('tmToggleWell', function (t) {
-        tmToggleWell(parseInt(t.dataset.wellIndex, 10), t.checked);
+        if (typeof window.tmToggleWell === 'function')
+            window.tmToggleWell(parseInt(t.dataset.wellIndex, 10), t.checked);
     });
     registerCspAction('showKonusPehdResolver', function () {
         window.showKonusPehdResolverModal(currentWellIndex);

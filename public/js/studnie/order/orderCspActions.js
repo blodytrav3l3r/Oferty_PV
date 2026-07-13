@@ -112,7 +112,7 @@ if (typeof registerCspAction === 'function') {
 
     registerCspAction('exitPreviewMode', window.exitPreviewMode);
 
-    registerCspAction('toggleDaneElementu', window.toggleDaneElementu);
+    registerCspAction('toggleDaneElementu', _onToggleDaneElementu);
 
     registerCspAction('selectZleceniaElement', {
         handler: _onSelectZleceniaElement,

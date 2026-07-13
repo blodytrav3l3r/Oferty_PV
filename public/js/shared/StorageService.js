@@ -23,8 +23,8 @@ class StorageService {
      * @returns {object}
      */
     getHeaders() {
-        // Token jest wysyłany automatycznie przez httpOnly cookie (same-origin)
-        return { 'Content-Type': 'application/json' };
+        const csrfToken = typeof window.getCsrfToken === 'function' ? window.getCsrfToken() : '';
+        return { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken };
     }
 
     /**

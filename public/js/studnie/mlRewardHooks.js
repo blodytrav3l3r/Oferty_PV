@@ -65,10 +65,11 @@
                 controller.abort();
             }, TIMEOUT_MS);
 
+            var csrfToken = typeof window.getCsrfToken === 'function' ? window.getCsrfToken() : '';
             fetch(REWARD_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })

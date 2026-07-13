@@ -1,324 +1,6 @@
 // @ts-check
-/* ===== wellConfigRender.js — tiles, config table, sorting, enforcement ===== */
-
-function renderTiles() {
-    const container = document.getElementById('tiles-container');
-    if (!container) return;
-    const well = getCurrentWell();
-    if (!well) {
-        container.innerHTML =
-            '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
-        return;
-    }
-    const dn = well.dn;
-
-    const groups = [
-        { title: '<i data-lucide="circle-dot"></i> Włazy', icon: '', types: ['wlaz'] },
-        { title: '<i data-lucide="settings"></i> AVR / Pierścienie', icon: '', types: ['avr'] },
-        { title: '<i data-lucide="diamond"></i> Konus / Stożek', icon: '', types: ['konus'] },
-        {
-            title: '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Płyty nakrywające',
-            icon: '',
-            types: ['plyta_din', 'plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy']
-        },
-        { title: '⬛ Płyty redukcyjne', icon: '', types: ['plyta_redukcyjna'] },
-        { title: '<i data-lucide="square"></i> Kręgi', icon: '', types: ['krag'] },
-        {
-            title: '<i data-lucide="square"></i> Kręgi z otworami (OT)',
-            icon: '',
-            types: ['krag_ot']
-        },
-        { title: '<i data-lucide="square"></i> Dennica', icon: '', types: ['dennica'] },
-        { title: 'đźŞŁ Osadniki', icon: '', types: ['osadnik'] },
-        // Studnie styczne widoczne tylko gdy wybrana typu studni Styczna
-        ...(dn === 'styczna'
-            ? (() => {
-                  const variant = well.stycznaVariant || 'standard';
-                  if (variant === 'korek') {
-                      return [
-                          {
-                              title: '<i data-lucide="plug"></i> Studnie Styczne z korkiem',
-                              icon: '',
-                              types: ['styczna'],
-                              filterFn: (p) => p.id.includes('KOREK')
-                          }
-                      ];
-                  }
-                  return [
-                      {
-                          title: '<i data-lucide="cylinder"></i> Studnie Styczne',
-                          icon: '',
-                          types: ['styczna'],
-                          filterFn: (p) => !p.id.includes('KOREK')
-                      }
-                  ];
-              })()
-            : []),
-        { title: '<i data-lucide="circle-check"></i> Uszczelki', icon: '', types: ['uszczelka'] }
-    ];
-
-    let html = '';
-
-    const renderGroup = (group, prods) => {
-        let items = prods.filter((p) => group.types.includes(p.componentType));
-        if (group.filterFn) {
-            items = items.filter(group.filterFn);
-        }
-        if (items.length === 0) return;
-
-        // Niestandardowe sortowanie dla studni stycznych: sortuj wg DN
-        if (group.types.includes('styczna')) {
-            items.sort((a, b) => (a.dn || 0) - (b.dn || 0));
-        }
-
-        // Niestandardowe sortowanie dla dennicy: sortuj wg wysokości od najniższej do najwyższej
-        if (
-            group.types.includes('dennica') ||
-            group.types.includes('krag') ||
-            group.types.includes('krag_ot')
-        ) {
-            items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
-        }
-
-        // Sortowanie wg kolejności zadeklarowanej w group.types
-        if (
-            group.types.length > 1 &&
-            !group.types.includes('dennica') &&
-            !group.types.includes('krag') &&
-            !group.types.includes('krag_ot') &&
-            !group.types.includes('styczna')
-        ) {
-            items.sort((a, b) => {
-                const idxA = group.types.indexOf(a.componentType);
-                const idxB = group.types.indexOf(b.componentType);
-                return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-            });
-        }
-
-        html += `<div class="tiles-section">
-      <div class="tiles-section-title">${group.title}</div>
-      <div class="tiles-grid">`;
-
-        items.forEach((p) => {
-            const isTopClosure = [
-                'plyta_din',
-                'plyta_najazdowa',
-                'plyta_zamykajaca',
-                'konus',
-                'pierscien_odciazajacy'
-            ].includes(p.componentType);
-            const isInConfig = (well.config || []).some((c) => c.productId === p.id);
-            const activeClass = isTopClosure && isInConfig ? 'active-top-closure' : '';
-            const isLocked = isWellLocked();
-            const lockedStyle = isLocked
-                ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                : '';
-
-            // Oblicz cenę z dopłatą
-            let displayPrice = p.price || 0;
-            if (
-                well.stopnie === 'nierdzewna' &&
-                (p.componentType === 'krag_ot' || p.componentType === 'dennica') &&
-                p.doplataDrabNierdzewna
-            ) {
-                displayPrice += parseFloat(p.doplataDrabNierdzewna);
-            }
-            if (
-                (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
-                p.componentType === 'dennica' &&
-                p.doplataZelbet
-            ) {
-                displayPrice += parseFloat(p.doplataZelbet);
-            }
-
-            html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
-        <div class="tile-name">${p.name}</div>
-        <div class="tile-meta">
-          <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-          <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
-        </div>
-      </div>`;
-        });
-        html += `</div></div>`;
-    };
-
-    const availProducts = getAvailableProducts(well);
-    const primaryProducts = availProducts
-        .filter((p) => {
-            if (dn === 'styczna') {
-                // Dla studni stycznych używamy 'styczna' dla dennicy/stycznej bazy
-                if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                    return p.dn === 'styczna' || p.componentType === 'styczna';
-                }
-                // Reszta nadbudowy dla studni stycznej to standardowe DN1000 lub DN1200
-                const effDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
-                return parseInt(p.dn) === effDn || p.dn === null;
-            }
-
-            // Porównanie DN z konwersją typów (p.dn może być string lub number)
-            if (parseInt(p.dn) !== parseInt(dn) && p.dn !== null) return false;
-
-            // Filtrowanie płyt redukcyjnych według wybranej średnicy docelowej
-            if (p.componentType === 'plyta_redukcyjna' && well.redukcjaDN1000) {
-                const tDn = well.redukcjaTargetDN || 1000;
-                const nameUpper = (p.name || '').toUpperCase();
-                const matchesTarget =
-                    nameUpper.includes('/' + tDn) ||
-                    nameUpper.includes(' DN' + tDn) ||
-                    nameUpper.includes('X' + tDn) ||
-                    nameUpper.includes(' NA ' + tDn) ||
-                    nameUpper.includes('→DN' + tDn) ||
-                    nameUpper.includes('→' + tDn) ||
-                    nameUpper.includes('->DN' + tDn) ||
-                    nameUpper.includes('->' + tDn);
-                if (!matchesTarget) return false;
-            }
-
-            return true;
-        })
-        .filter((p) => filterByWellParams(p, well));
-
-    groups.forEach((g) => {
-        // Specjalna logika dla studni stycznych, aby pokazać poprawny parametr uszczelki w kategorii uszczelek
-        if (g.types.includes('uszczelka')) {
-            let items = primaryProducts.filter((p) => g.types.includes(p.componentType));
-            items = filterSealsByWellType(items, well);
-
-            if (items.length > 0) {
-                html += `<div class="tiles-section"><div class="tiles-section-title">${g.title}</div><div class="tiles-grid">`;
-                items.forEach((p) => {
-                    const isLocked = isWellLocked();
-                    const lockedStyle = isLocked
-                        ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                        : '';
-
-                    html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
-                        <div class="tile-name">${p.name}</div>
-                        <div class="tile-meta">
-                          <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-                          <span class="tile-price">${fmtInt(p.price)} PLN</span>
-                        </div>
-                      </div>`;
-                });
-                html += `</div></div>`;
-            }
-        } else {
-            renderGroup(g, primaryProducts);
-        }
-    });
-
-    const hasReduction =
-        well.redukcjaDN1000 ||
-        (well.config || []).some((c) => {
-            const p = studnieProducts.find((pr) => pr.id === c.productId);
-            return p && p.componentType === 'plyta_redukcyjna';
-        });
-
-    if ([1200, 1500, 2000, 2500].includes(parseInt(dn)) && hasReduction) {
-        const tDn = well.redukcjaTargetDN || 1000;
-
-        // Funkcja pomocnicza do sprawdzania czy płyta pasuje do docelowej średnicy
-        const matchesTargetDn = (name, target) => {
-            const n = (name || '').toUpperCase();
-            return (
-                n.includes('/' + target) ||
-                n.includes(' DN' + target) ||
-                n.includes('X' + target) ||
-                n.includes(' NA ' + target) ||
-                n.includes('→DN' + target) ||
-                n.includes('→' + target) ||
-                n.includes('->DN' + target) ||
-                n.includes('->' + target) ||
-                n.includes('DO ' + target)
-            );
-        };
-
-        const redProducts = availProducts
-            .filter((p) => {
-                // 1. Płyta redukcyjna: musi być dla średnicy studni (dn) i pasować do tDn
-                if (p.componentType === 'plyta_redukcyjna') {
-                    if (parseInt(p.dn) !== parseInt(dn)) return false;
-                    return matchesTargetDn(p.name, tDn);
-                }
-                // 2. Inne elementy: muszą być bezpośrednio dla tDn
-                if (parseInt(p.dn) === tDn) {
-                    return p.componentType !== 'dennica' && p.componentType !== 'styczna';
-                }
-                return false;
-            })
-            .filter((p) => filterByWellParams(p, well));
-
-        if (redProducts.length > 0) {
-            html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
-            html += `<h3 class="color-warn" style="margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
-
-            groups.forEach((g) => {
-                // Płyty redukcyjne pomijamy — są dostępne w głównej liście kafelków
-                // (wellActions.js:723 + filtr redukcjaDN1000), nie chcemy duplikatu w sekcji Redukcja
-                if (g.types.includes('plyta_redukcyjna')) return;
-                let items = redProducts.filter((p) => g.types.includes(p.componentType));
-
-                if (g.types.includes('uszczelka')) {
-                    items = filterSealsByWellType(items, well);
-                }
-
-                // Dodano sortowanie dla sekcji redukcji, analogicznie do głównej sekcji
-                if (
-                    g.types.includes('dennica') ||
-                    g.types.includes('krag') ||
-                    g.types.includes('krag_ot')
-                ) {
-                    items.sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
-                }
-
-                // Sortowanie wg kolejności zadeklarowanej w group.types
-                if (
-                    g.types.length > 1 &&
-                    !g.types.includes('dennica') &&
-                    !g.types.includes('krag') &&
-                    !g.types.includes('krag_ot') &&
-                    !g.types.includes('styczna')
-                ) {
-                    items.sort((a, b) => {
-                        const idxA = g.types.indexOf(a.componentType);
-                        const idxB = g.types.indexOf(b.componentType);
-                        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-                    });
-                }
-
-                if (items.length > 0) {
-                    html += `<div class="tiles-section">
-                        <div class="tiles-section-title">${g.title}</div>
-                        <div class="tiles-grid">`;
-
-                    items.forEach((p) => {
-                        const isLocked = isWellLocked();
-                        const lockedStyle = isLocked
-                            ? 'opacity: 0.5; cursor: not-allowed; pointer-events: none;'
-                            : '';
-
-                        let displayPrice = p.price || 0;
-                        if (well.stopnie === 'nierdzewna' && p.doplataDrabNierdzewna) {
-                            displayPrice += parseFloat(p.doplataDrabNierdzewna);
-                        }
-
-                        html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" data-action="add-well-component" data-product-id="${p.id}" draggable="${!isLocked}">
-                            <div class="tile-name">${p.name}</div>
-                            <div class="tile-meta">
-                              <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
-                              <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
-                            </div>
-                          </div>`;
-                    });
-                    html += `</div></div>`;
-                }
-            });
-            html += `</div>`;
-        }
-    }
-
-    container.innerHTML = html;
-}
+/* ===== wellConfigRender.js — config table, sorting, enforcement (barrel) ===== */
+/* renderTiles() przeniesione do wellConfigRenderTiles.js */
 
 function renderWellConfig() {
     const tbody = document.getElementById('well-config-body');
@@ -332,7 +14,6 @@ function renderWellConfig() {
         return;
     }
 
-    // Mapowanie wizualnej kolejności typu komponentu (góra studni → dół)
     const typeOrderMap = {
         wlaz: 0,
         avr: 1,
@@ -348,7 +29,6 @@ function renderWellConfig() {
         kineta: 7
     };
 
-    // Odznaki kolorów typów
     const typeBadge = {
         wlaz: { bg: '#1e293b', label: 'Właz' },
         plyta_din: { bg: '#be185d', label: 'Płyta' },
@@ -369,13 +49,11 @@ function renderWellConfig() {
 
     let html = '';
     well.config.forEach((item, index) => {
-        // Rozwiąż poprawny wariant produktu wg parametrów studni (auto-korekta productId)
         const p =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
                 : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
-        // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
         const itemPrice =
             item.frozenPrice != null && window.isPreviewMode
                 ? item.frozenPrice
@@ -390,7 +68,6 @@ function renderWellConfig() {
             if (kinetaItem) {
                 const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
                 if (kinetaProd) {
-                    // W zamówieniu użyj zamrożonej ceny tylko w podglądzie; w ofercie/edycji przelicz na nowo
                     const rawKinetaPrice =
                         kinetaItem.frozenPrice != null && window.isPreviewMode
                             ? kinetaItem.frozenPrice
@@ -398,7 +75,6 @@ function renderWellConfig() {
                     totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
                 }
             }
-            // PRECO wycena — wliczona w cenę dennicy
             if (well.kineta === 'preco' || well.kineta === 'precotop') {
                 const precoCalc = calcPrecoPricing(well);
                 const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
@@ -406,7 +82,6 @@ function renderWellConfig() {
                 const precoMult = 1 - discPreco / 100;
                 totalPrice += precoCalc.suma * precoMult;
             }
-            // Dopłata wliczona do dennicy / studni stycznej (nie podlega rabatowi)
             if (well.doplata) {
                 totalPrice += well.doplata;
             }
@@ -426,7 +101,7 @@ function renderWellConfig() {
 
         html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" data-action="cfg-tile" data-is-placeholder="${isPlaceholder ? 'true' : 'false'}" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
-            
+
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
                 <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(0,0,0,0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
                   <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} data-action="move-well-up" data-cfg-idx="${index}" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
@@ -441,7 +116,6 @@ function renderWellConfig() {
                     ${(() => {
                         let badgesHtml = '';
 
-                        // PRECO Logic
                         const precoAlloc =
                             typeof calculatePrecoAllocationForItem === 'function'
                                 ? calculatePrecoAllocationForItem(well, index)
@@ -480,7 +154,6 @@ function renderWellConfig() {
                             badgesHtml += `<span data-action="toggle-liner-preco" data-cfg-idx="${index}" style="cursor:pointer; font-size:0.55rem; color:${precoColor}; font-weight:800; margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius:4px; background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
                         }
 
-                        // PEHD Logic
                         let pehdType = null;
                         if (['dennica', 'styczna'].includes(p.componentType)) {
                             pehdType = well.wkladkaDennica;
@@ -517,7 +190,6 @@ function renderWellConfig() {
                             badgesHtml += `<span data-action="toggle-liner-pehd" data-cfg-idx="${index}" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
                         }
 
-                        // Żelbet i Drabinka Nierdzewna
                         if (
                             well.nadbudowa === 'zelbetowa' &&
                             (p.componentType === 'krag' || p.componentType === 'krag_ot')
@@ -555,9 +227,9 @@ function renderWellConfig() {
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
                 <span style="font-size:0.52rem; color:rgba(255,255,255,0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
                 <span style="color:rgba(255,255,255,0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
-                
+
                 <div style="width:60px;"></div>
-                
+
                 <span style="font-size:0.52rem; color:rgba(255,255,255,0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">CENA:</span>
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
@@ -570,7 +242,6 @@ function renderWellConfig() {
         </div>`;
     });
 
-    // Widoczne rozbicie PRECO — pod elementami konfiguracji
     if (
         (well.kineta === 'preco' ||
             well.kineta === 'precotop' ||
@@ -589,12 +260,10 @@ function renderWellConfig() {
             const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
 
             if (precoCalc.error) {
-                // Blok z błędem PRECO
                 html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:10px; color:#ef4444; font-weight:700; font-size:0.85rem; line-height:1.4;">`;
                 html += `⚠️ ${precoCalc.error}`;
                 html += `</div>`;
             } else {
-                // Prawidłowe rozbicie PRECO
                 const precoMult = 1 - discPreco / 100;
                 const precoFinal = precoCalc.suma * precoMult;
 
@@ -733,7 +402,6 @@ function sortWellConfigByOrder() {
     const well = getCurrentWell();
     if (!well || !well.config) return;
 
-    // Automatyczne dodawanie pary odciążającej (płyta + pierścień)
     if (typeof window.ensureReliefRingPair === 'function') {
         window.ensureReliefRingPair(well);
     }
@@ -762,8 +430,6 @@ function sortWellConfigByOrder() {
         let orderA = typeOrder[pA.componentType] ?? 100;
         let orderB = typeOrder[pB.componentType] ?? 100;
 
-        // Reguła redukcji: kręgi nad redukcją (nad płytą redukcyjną = order 4)
-        // Kręgi o DN = redukcjaTargetDN (np. DN1200) powinny być nad płytą
         const targetDn = well.redukcjaDN1000 ? well.redukcjaTargetDN || 1000 : null;
         if (targetDn) {
             if (
@@ -782,8 +448,6 @@ function sortWellConfigByOrder() {
 
         if (orderA !== orderB) return orderA - orderB;
 
-        // Usunięto automatyczne sortowanie po wysokości (pB.height - pA.height).
-        // Pozwala to na ręczne układanie elementów tej samej kategorii (np. kręgów tej samej średnicy) przez użytkownika.
         return 0;
     });
     _moveWlazToTop(well);
@@ -805,10 +469,6 @@ function _moveWlazToTop(well) {
     }
 }
 
-/**
- * Zapewnia, że w studni znajduje się tylko jedno zakończenie górne.
- * Jeśli dodawany produkt jest zakończeniem, usuwa inne elementy tego typu.
- */
 function enforceSingularTopClosures(well, productId) {
     if (!well || !well.config) return;
 
@@ -837,7 +497,6 @@ function enforceSingularTopClosures(well, productId) {
                     'error'
                 );
             }
-            // Usun placeholder poniewaz go blokujemy
             well.config = well.config.filter(
                 (item) => !(item.isPlaceholder && item.productId === productId)
             );
@@ -846,28 +505,23 @@ function enforceSingularTopClosures(well, productId) {
 
         const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
 
-        // Usuwamy inne zakończenia górne (ale NIE usuwamy obecnego placeholder-a jeśli to on jest sprawdzany)
         well.config = well.config.filter((item) => {
-            if (item.isPlaceholder) return true; // Zostawiamy placeholder w spokoju
+            if (item.isPlaceholder) return true;
 
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return true;
 
-            // Jeśli dodajemy element odciążający
             if (reliefTypes.includes(product.componentType)) {
-                // Pozwól na partnera (inny reliefType), ale usuń ten sam typ
                 if (reliefTypes.includes(p.componentType)) {
                     return p.componentType !== product.componentType;
                 }
                 return !topClosureTypes.includes(p.componentType);
             }
 
-            // Jeśli dodajemy element NIE-odciążający (np. konus), usuwamy WSZYSTKIE zakończenia
             return !topClosureTypes.includes(p.componentType);
         });
     }
 
-    // ZASADA: Płyta redukcyjna - tylko 1 na studnię
     if (product.componentType === 'plyta_redukcyjna') {
         well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true;
@@ -877,8 +531,6 @@ function enforceSingularTopClosures(well, productId) {
     }
 }
 
-// Eksport do window dla innych modułów
-window.renderTiles = renderTiles;
 window.renderWellConfig = renderWellConfig;
 window.sortWellConfigByOrder = sortWellConfigByOrder;
 window._moveWlazToTop = _moveWlazToTop;

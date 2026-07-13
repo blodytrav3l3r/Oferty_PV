@@ -6,8 +6,6 @@
 /* saveOffersData z dataService.js; renderSavedOffers z offerCrudLoad.js */
 /* showToast, appConfirm z shared/ui.js; fmt, fmtInt, escapeHtml z shared/formatters.js */
 
-const MAX_TRANSPORT_WEIGHT = 24000;
-
 function importOfferFromFile() {
     const input = document.createElement('input');
     input.type = 'file';

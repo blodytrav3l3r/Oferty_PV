@@ -6,8 +6,6 @@
 /* saveOffersData z dataService.js; renderSavedOffers z offerCrudLoad.js */
 /* showToast, appConfirm z shared/ui.js; fmt z shared/formatters.js */
 
-const MAX_TRANSPORT_WEIGHT = 24000;
-
 function exportOfferXlsx(id) {
     const offer = offers.find((o) => o.id === id);
     if (!offer) return;

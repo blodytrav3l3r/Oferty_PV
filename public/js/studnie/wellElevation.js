@@ -20,6 +20,8 @@ function updateElevations() {
     const wlazInput = document.getElementById('input-rzedna-wlazu');
     const dnaInput = document.getElementById('input-rzedna-dna');
 
+    if (!wlazInput || !dnaInput) return;
+
     const wlazVal = wlazInput.value !== '' ? parseCalcExpression(wlazInput.value) : null;
     const dnaVal = dnaInput.value !== '' ? parseCalcExpression(dnaInput.value) : 0;
 

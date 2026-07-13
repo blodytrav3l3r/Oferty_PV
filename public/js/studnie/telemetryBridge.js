@@ -35,10 +35,12 @@
             if (!window.fetch) return Promise.resolve();
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+            const csrfToken =
+                typeof window.getCsrfToken === 'function' ? window.getCsrfToken() : '';
             return fetch(url, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrfToken },
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })

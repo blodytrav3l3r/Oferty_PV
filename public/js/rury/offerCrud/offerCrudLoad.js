@@ -132,7 +132,7 @@ async function loadOffer(id) {
     let offer = offers.find((o) => o.id === id);
     let srv = null;
     try {
-        const { storageService } = await import('../shared/StorageService.js');
+        const { storageService } = await import('../../shared/StorageService.js');
         srv = storageService;
     } catch (e) {
         logger.warn('offerCrud', 'Could not import storageService', e);

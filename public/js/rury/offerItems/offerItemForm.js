@@ -74,7 +74,6 @@ function setupOfferForm() {
 
 let catalogVisible = true;
 let activeCatalogCategory = null;
-const MAX_TRANSPORT_WEIGHT = 24000;
 
 function toggleCatalog() {
     catalogVisible = !catalogVisible;

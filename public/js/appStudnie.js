@@ -308,6 +308,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     // New-offer path below also depends on data-action handlers.
     registerCspActions();
 
+    // Direct event listeners for well input fields (CSP-safe, no inline handlers)
+    // MUST be bound before new-offer early return (line ~335), otherwise new offers
+    // never get these listeners.
+    (function _bindWellInputListeners() {
+        var _el;
+        _el = document.getElementById('input-well-numer');
+        if (_el) _el.addEventListener('input', updateWellNumer);
+
+        _el = document.getElementById('input-rzedna-wlazu');
+        if (_el) {
+            _el.addEventListener('focusout', function () {
+                resolveFieldValue(this);
+                updateElevations();
+            });
+            _el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') this.blur();
+            });
+        }
+
+        _el = document.getElementById('input-rzedna-dna');
+        if (_el) {
+            _el.addEventListener('focusout', function () {
+                resolveFieldValue(this);
+                updateElevations();
+            });
+            _el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') this.blur();
+            });
+        }
+
+        _el = document.getElementById('input-doplata');
+        if (_el) {
+            _el.addEventListener('focusout', function () {
+                resolveFieldValue(this);
+                updateDoplata();
+            });
+            _el.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') this.blur();
+            });
+        }
+    })();
+
     // NOWA OFERTA: twórz studnię i UI NATYCHMIAST, dane ładuj w tle
     if (!editId && !orderId) {
         showSection(tab || 'builder');
@@ -402,43 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Direct event listeners for well input fields (CSP-safe, no inline handlers)
-    var _el;
-    _el = document.getElementById('input-well-numer');
-    if (_el) _el.addEventListener('input', updateWellNumer);
-
-    _el = document.getElementById('input-rzedna-wlazu');
-    if (_el) {
-        _el.addEventListener('focusout', function () {
-            resolveFieldValue(this);
-            updateElevations();
-        });
-        _el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') this.blur();
-        });
-    }
-
-    _el = document.getElementById('input-rzedna-dna');
-    if (_el) {
-        _el.addEventListener('focusout', function () {
-            resolveFieldValue(this);
-            updateElevations();
-        });
-        _el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') this.blur();
-        });
-    }
-
-    _el = document.getElementById('input-doplata');
-    if (_el) {
-        _el.addEventListener('focusout', function () {
-            resolveFieldValue(this);
-            updateDoplata();
-        });
-        _el.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') this.blur();
-        });
-    }
+    // Direct event listeners for well input fields — bound above before new-offer early return
 
     // svg-trash drag-feedback hover (mouseenter/mouseleave not dispatched by cspActions)
     _el = document.getElementById('svg-trash');

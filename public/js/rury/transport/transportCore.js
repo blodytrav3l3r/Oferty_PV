@@ -5,8 +5,6 @@
 /* fmt(), fmtInt() z shared/formatters.js */
 /* renderTransportBreakdown z transportUI.js */
 
-const MAX_TRANSPORT_WEIGHT = 24000;
-
 let currentRuryTransportMode = 'full';
 
 window.toggleRuryTransportMode = function () {

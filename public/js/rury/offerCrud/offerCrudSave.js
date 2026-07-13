@@ -137,7 +137,7 @@ async function saveOffer() {
 
     let storageService;
     try {
-        const mod = await import('../shared/StorageService.js');
+        const mod = await import('../../shared/StorageService.js');
         storageService = mod.storageService;
     } catch (e) {
         logger.error('offerCrud', '[App] Błąd importu StorageService:', e);

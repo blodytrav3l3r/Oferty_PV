@@ -2431,6 +2431,21 @@ function _onToggleDaneZlecenia(params, target) {
     if (window.lucide) window.lucide.createIcons();
 }
 
+function _onToggleDaneElementu(params, target) {
+    var grid = target.closest('#zl-dane-elementu-grid');
+    if (!grid) return;
+    var headerFull = grid.querySelector('#zl-dane-elementu-header-full');
+    var headerCollapsed = grid.querySelector('#zl-dane-elementu-header-collapsed');
+    var content = grid.querySelector('#zl-dane-elementu-content');
+    if (!headerFull || !headerCollapsed || !content) return;
+    var isExpanded = content.style.display !== 'none';
+    headerFull.style.display = isExpanded ? 'none' : 'flex';
+    headerCollapsed.style.display = isExpanded ? 'flex' : 'none';
+    content.style.display = isExpanded ? 'none' : 'flex';
+    grid.style.gridTemplateColumns = isExpanded ? '36px 1fr' : '230px 1fr';
+    if (window.lucide) window.lucide.createIcons();
+}
+
 function _onSelectAndKatChange(target) {
     target.select();
     onZleceniaKatChange();

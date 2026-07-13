@@ -113,7 +113,7 @@ class PVSalesUI {
         }
 
         try {
-            const data = await storageService.getAllOffers();
+            const data = await storageService.getOffers();
             this.allLocalOffers = data;
             this.isSyncUpToDate = this.allLocalOffers.length === 0 || (data && data.length > 0);
             this.filterLocalOffers();

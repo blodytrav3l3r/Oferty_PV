@@ -679,7 +679,10 @@ async function enterOrderEditMode(orderId) {
         editingOfferIdStudnie = order.offerId || null;
         window.isPreviewMode = false;
 
-        visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
+        visiblePrzejsciaTypes.clear();
+        (order.visiblePrzejsciaTypes || []).forEach(function (t) {
+            visiblePrzejsciaTypes.add(t);
+        });
 
         wells = Array.isArray(order.wells) ? structuredClone(order.wells) : [];
         migrateWellData(wells);
@@ -798,7 +801,10 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         orderEditMode = { orderId: orderId, order: order };
         editingOfferIdStudnie = order.offerId || null;
 
-        visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
+        visiblePrzejsciaTypes.clear();
+        (order.visiblePrzejsciaTypes || []).forEach(function (t) {
+            visiblePrzejsciaTypes.add(t);
+        });
 
         if (order.wellDiscounts) {
             window.wellDiscounts = structuredClone(order.wellDiscounts);
