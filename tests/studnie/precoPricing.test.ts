@@ -11,8 +11,10 @@ import { join } from 'path';
 /* ============================================================
    Załaduj precoCalcCore.js do global scope w Node.js
    ============================================================ */
-const corePath = join(__dirname, '..', '..', 'public', 'js', 'studnie', 'precoCalcCore.js');
-require(corePath);
+// Ładuje fragmenty (precoCalcCore.js barrel to tylko komentarz)
+const precoDir = join(__dirname, '..', '..', 'public', 'js', 'studnie', 'precoCalcCore');
+require(join(precoDir, 'precoCalcCoreHelpers.js'));
+require(join(precoDir, 'precoCalcCoreMain.js'));
 
 const calcFn = () => (global as any).calcPrecoPricingPure;
 
