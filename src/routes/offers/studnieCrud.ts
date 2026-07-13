@@ -10,25 +10,22 @@ import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { paginationQuerySchema } from '../../validators/offerSchemas';
 import { offersStudnieBatchSchema } from '../../validators/studnieSchemas';
+import {
+    ALLOWED_SORT_COLS,
+    ALLOWED_SORT_DIRS,
+    parseStudnieDate,
+    fetchStudnieOffers
+} from '../../services/studnieOfferService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
-
 const writeOffersLimiter = WRITE_LIMITER;
-
-const ALLOWED_SORT_COLS = new Set(['createdAt', 'updatedAt', 'offer_number']);
-const ALLOWED_SORT_DIRS = new Set(['ASC', 'DESC']);
 
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const pq = paginationQuerySchema.parse(req.query);
         const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
-
-        logger.debug('Offers', 'GET /studnie', {
-            userId: authReq.user?.id,
-            role: authReq.user?.role
-        });
 
         const sortColRaw = pq.sort || 'createdAt';
         if (!ALLOWED_SORT_COLS.has(sortColRaw)) {
@@ -41,73 +38,13 @@ router.get('/studnie', requireAuth, async (req, res) => {
             return res.status(400).json({ error: `Invalid sort direction: ${sortDir}` });
         }
 
-        const offers = await prisma.$queryRaw<
-            Array<{
-                id: string;
-                userId: string | null;
-                offer_number: string | null;
-                state: string | null;
-                data: string | null;
-                history: string | null;
-                createdAt: string | null;
-                updatedAt: string | null;
-            }>
-        >`SELECT id, "userId", "offer_number", state, data, history,
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt",
-            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "updatedAt" END as "updatedAt"
-         FROM offers_studnie_rel ${whereCondition}
-         ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
-         LIMIT ${pq.limit} OFFSET ${pq.skip}`;
-
-        const countResult = await prisma.$queryRaw<Array<{ cnt: number }>>`
-            SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
-        const totalCount = Number(countResult[0]?.cnt ?? 0);
-
-        const mapped = offers.map((offer) => {
-            let parsedData: Record<string, unknown> = {};
-            try {
-                if (offer.data) parsedData = JSON.parse(offer.data);
-            } catch (_e) {}
-
-            let studnieHistory: unknown[] = [];
-            try {
-                studnieHistory = JSON.parse(offer.history || '[]');
-            } catch {
-                studnieHistory = [];
-            }
-            let studnieSpread: Record<string, unknown> = {};
-            if (offer.data) {
-                try {
-                    studnieSpread = JSON.parse(offer.data);
-                } catch {
-                    studnieSpread = {};
-                }
-            }
-
-            return {
-                id: offer.id,
-                type: 'studnia_oferta',
-                userId: offer.userId,
-                title: `Oferta Studnia ${offer.offer_number || offer.id}`,
-                price: parsedData.totalPrice || 0,
-                status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt || new Date().toISOString(),
-                updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
-                lastEditedBy: offer.userId,
-                data: parsedData,
-                history: studnieHistory,
-                ...studnieSpread
-            };
-        });
-
-        logger.debug('Offers', 'GET /studnie wynik', {
-            count: mapped.length,
-            ids: mapped.map((o) => o.id)
-        });
+        const { mapped, totalCount } = await fetchStudnieOffers(
+            whereCondition,
+            sortCol,
+            sortDir,
+            pq.skip,
+            pq.limit
+        );
         res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -120,10 +57,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
-
-        const offer = await prisma.offers_studnie_rel.findUnique({
-            where: { id }
-        });
+        const offer = await prisma.offers_studnie_rel.findUnique({ where: { id } });
         if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
 
         if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
@@ -133,14 +67,12 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
         let parsedData: Record<string, unknown> = {};
         try {
             if (offer.data) parsedData = JSON.parse(offer.data);
-        } catch (_e) {}
+        } catch {}
 
         let studnieDetailHistory: unknown[] = [];
         try {
             studnieDetailHistory = JSON.parse(offer.history || '[]');
-        } catch {
-            studnieDetailHistory = [];
-        }
+        } catch {}
 
         res.json({
             data: {
@@ -172,8 +104,8 @@ router.post(
         const authReq = req as AuthenticatedRequest;
         try {
             const incoming = req.body.data || [req.body];
-
             const results: Record<string, unknown>[] = [];
+
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) docId = uuidv4();
@@ -186,7 +118,7 @@ router.post(
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
-                    } catch (_e) {}
+                    } catch {}
                     let snapshotData: Record<string, unknown> = {};
                     try {
                         snapshotData = JSON.parse(old.data || '{}');
@@ -220,17 +152,7 @@ router.post(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = parseStudnieDate(o.createdAt);
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
                 const resolved = resolveWriteUserId(authReq.user, o.userId);
@@ -248,7 +170,7 @@ router.post(
                         id: docId,
                         userId: effectiveUserId,
                         offer_number: offerNumber,
-                        state: state,
+                        state,
                         createdAt: created,
                         updatedAt: updated,
                         data: dataStr,
@@ -257,7 +179,7 @@ router.post(
                     update: {
                         userId: effectiveUserId,
                         offer_number: offerNumber,
-                        state: state,
+                        state,
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr
@@ -288,7 +210,6 @@ router.put(
         const authReq = req as AuthenticatedRequest;
         try {
             const incoming: Array<Record<string, unknown>> = req.body.data || [];
-
             const incomingIds: string[] = incoming
                 .map((o) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
@@ -310,34 +231,24 @@ router.put(
 
             for (const o of incoming) {
                 let docId = typeof o.id === 'string' ? o.id : '';
-                if (!docId) {
+                if (!docId)
                     docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
-                }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = parseStudnieDate(o.createdAt);
 
                 await prisma.offers_studnie_rel.upsert({
                     where: { id: docId },
                     create: {
                         id: docId,
                         userId: authReq.user?.id,
-                        state: state,
+                        state,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     },
                     update: {
                         userId: authReq.user?.id,
-                        state: state,
+                        state,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     }
@@ -356,17 +267,11 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
-        logger.info('Offers', 'DELETE /studnie/:id start', { id, userId: authReq.user?.id });
-
         const offer = await prisma.offers_studnie_rel.findUnique({
             where: { id },
             select: { id: true, userId: true, data: true }
         });
-        if (!offer) {
-            logger.warn('Offers', 'Oferta studni nie istnieje', { id });
-            return res.status(404).json({ error: 'Oferta studni nie istnieje' });
-        }
-
+        if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
         if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
         }
@@ -374,15 +279,9 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         let oldData: Record<string, unknown> = {};
         try {
             oldData = JSON.parse(offer.data || '{}');
-        } catch (_e) {}
+        } catch {}
         logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
-
         await prisma.offers_studnie_rel.delete({ where: { id } });
-
-        logger.info(
-            'Offers',
-            `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`
-        );
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
