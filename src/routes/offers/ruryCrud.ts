@@ -8,31 +8,25 @@ import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
-import { OfferMapped } from '../../types/models';
 import { paginationQuerySchema } from '../../validators/offerSchemas';
 import { offersBatchSchema } from '../../validators/rurySchemas';
+import {
+    ALLOWED_SORT_COLS,
+    ALLOWED_SORT_DIRS,
+    parseOfferDate,
+    mapOffersWithItems,
+    createOfferItems
+} from '../../services/ruryOfferService';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
-
 const writeOffersLimiter = WRITE_LIMITER;
-
-const ALLOWED_SORT_COLS: Record<string, string> = {
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    offer_number: 'offer_number'
-};
-const ALLOWED_SORT_DIRS: Record<string, 'asc' | 'desc'> = {
-    asc: 'asc',
-    desc: 'desc'
-};
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const pq = paginationQuerySchema.parse(req.query);
         const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
-
         const sortCol = ALLOWED_SORT_COLS[pq.sort || 'createdAt'] || 'createdAt';
         const sortDir = ALLOWED_SORT_DIRS[pq.order] || 'desc';
         const orderBy = { [sortCol]: sortDir };
@@ -46,62 +40,7 @@ router.get('/', requireAuth, async (req, res) => {
             prisma.offers_rel.count({ where: roleClause })
         ]);
 
-        const offerIds = offers.map((o) => o.id);
-        const allItemsRaw = await prisma.offer_items_rel.findMany({
-            where: { offerId: { in: offerIds } }
-        });
-        const itemsByOffer = new Map<string, typeof allItemsRaw>();
-        for (const item of allItemsRaw) {
-            if (!item.offerId) continue;
-            const arr = itemsByOffer.get(item.offerId) || [];
-            arr.push(item);
-            itemsByOffer.set(item.offerId, arr);
-        }
-
-        const mapped: OfferMapped[] = [];
-        for (const offer of offers) {
-            const itemsRaw = itemsByOffer.get(offer.id) || [];
-            const items = itemsRaw.map((i) => ({
-                id: i.id,
-                productId: i.productId,
-                quantity: i.quantity,
-                discount: i.discount,
-                price: i.price,
-                unitPrice: i.price ?? 0
-            }));
-
-            let ruryHistory: unknown[] = [];
-            try {
-                ruryHistory = JSON.parse(offer.history || '[]');
-            } catch {
-                ruryHistory = [];
-            }
-            let rurySpread: Record<string, unknown> = {};
-            if (offer.data) {
-                try {
-                    rurySpread = JSON.parse(offer.data);
-                } catch {
-                    rurySpread = {};
-                }
-            }
-
-            mapped.push({
-                id: offer.id,
-                type: 'offer',
-                userId: offer.userId,
-                title: `Oferta ${offer.offer_number || offer.id}`,
-                price: items.reduce((sum, i) => sum + (i.price ?? 0) * (i.quantity ?? 0), 0),
-                status: offer.state === 'final' ? 'active' : 'draft',
-                createdAt: offer.createdAt || null,
-                updatedAt: offer.updatedAt || offer.createdAt || null,
-                lastEditedBy: offer.userId,
-                ...rurySpread,
-                items: items,
-                transportCost: offer.transportCost || 0,
-                history: ruryHistory
-            });
-        }
-
+        const mapped = await mapOffersWithItems(offers as unknown as Record<string, unknown>[]);
         res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
@@ -118,16 +57,14 @@ router.post(
         const authReq = req as AuthenticatedRequest;
         try {
             const incoming = req.body.data || [req.body];
-
             const results: Record<string, unknown>[] = [];
+
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) docId = uuidv4();
 
                 let newHistory: unknown[] = [];
-                const old = await prisma.offers_rel.findUnique({
-                    where: { id: docId }
-                });
+                const old = await prisma.offers_rel.findUnique({ where: { id: docId } });
 
                 let effectiveUserId: string;
                 if (old) {
@@ -150,7 +87,7 @@ router.post(
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
-                    } catch (_e) {}
+                    } catch {}
                     const oldItems = await prisma.offer_items_rel.findMany({
                         where: { offerId: docId }
                     });
@@ -167,7 +104,6 @@ router.post(
                     };
                     newHistory.unshift(snapshot);
                     if (newHistory.length > 5) newHistory = newHistory.slice(0, 5);
-
                     logAudit(
                         'offer',
                         docId,
@@ -189,16 +125,7 @@ router.post(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = parseOfferDate(o.createdAt);
                 const updated = new Date().toISOString();
                 const offerNumber = o.offer_number || o.number || '';
                 const dataStr = JSON.stringify(o);
@@ -209,7 +136,7 @@ router.post(
                         id: docId,
                         userId: effectiveUserId,
                         offer_number: offerNumber,
-                        state: state,
+                        state,
                         createdAt: created,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
@@ -219,7 +146,7 @@ router.post(
                     update: {
                         userId: effectiveUserId,
                         offer_number: offerNumber,
-                        state: state,
+                        state,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
                         history: JSON.stringify(newHistory),
@@ -227,25 +154,8 @@ router.post(
                     }
                 });
 
-                await prisma.offer_items_rel.deleteMany({
-                    where: { offerId: docId }
-                });
-                const items = o.items || [];
-                for (const item of items) {
-                    const itemId = item.id || uuidv4();
-                    const itemPrice =
-                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                    await prisma.offer_items_rel.create({
-                        data: {
-                            id: itemId,
-                            offerId: docId,
-                            productId: item.productId,
-                            quantity: item.quantity || 0,
-                            discount: item.discount || 0,
-                            price: itemPrice
-                        }
-                    });
-                }
+                await prisma.offer_items_rel.deleteMany({ where: { offerId: docId } });
+                await createOfferItems(docId, o.items || [], uuidv4);
                 results.push({ id: docId, ok: true });
             }
 
@@ -282,7 +192,6 @@ router.put(
             }
 
             const incoming = req.body.data || [];
-
             const incomingIds: string[] = incoming
                 .map((o: any) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
@@ -293,8 +202,7 @@ router.put(
                         select: { id: true, userId: true }
                     })) || [];
                 const forbidden = existingDocs.some(
-                    (d: { id: string; userId: string | null }) =>
-                        d.userId && !canWriteDoc(authReq.user, d.userId)
+                    (d) => d.userId && !canWriteDoc(authReq.user, d.userId)
                 );
                 if (forbidden) {
                     return res.status(403).json({
@@ -305,21 +213,10 @@ router.put(
 
             for (const o of incoming) {
                 let docId = o.id;
-                if (!docId) {
-                    docId = crypto.randomUUID();
-                }
+                if (!docId) docId = crypto.randomUUID();
 
                 const state = o.status === 'active' ? 'final' : 'draft';
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = parseOfferDate(o.createdAt);
                 const dataStr = JSON.stringify(o);
 
                 await prisma.offers_rel.upsert({
@@ -327,39 +224,22 @@ router.put(
                     create: {
                         id: docId,
                         userId: authReq.user?.id,
-                        state: state,
+                        state,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
                     },
                     update: {
                         userId: authReq.user?.id,
-                        state: state,
+                        state,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
                     }
                 });
 
-                await prisma.offer_items_rel.deleteMany({
-                    where: { offerId: docId }
-                });
-                const items = o.items || [];
-                for (const item of items) {
-                    const itemId = item.id || uuidv4();
-                    const itemPrice =
-                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                    await prisma.offer_items_rel.create({
-                        data: {
-                            id: itemId,
-                            offerId: docId,
-                            productId: item.productId,
-                            quantity: item.quantity || 0,
-                            discount: item.discount || 0,
-                            price: itemPrice
-                        }
-                    });
-                }
+                await prisma.offer_items_rel.deleteMany({ where: { offerId: docId } });
+                await createOfferItems(docId, o.items || [], uuidv4);
             }
 
             res.json({ ok: true });
@@ -374,22 +254,16 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
-
         const source = await prisma.offers_rel.findUnique({ where: { id } });
-        if (!source) {
-            return res.status(404).json({ error: 'Oferta źródłowa nie istnieje' });
-        }
-        if (!canReadDoc(authReq.user, source.userId)) {
+        if (!source) return res.status(404).json({ error: 'Oferta źródłowa nie istnieje' });
+        if (!canReadDoc(authReq.user, source.userId))
             return res.status(403).json({ error: 'Brak uprawnień do odczytu oferty źródłowej' });
-        }
 
         const sourceItems = await prisma.offer_items_rel.findMany({ where: { offerId: id } });
-
         const newId = uuidv4();
         const resolved = resolveWriteUserId(authReq.user, undefined);
-        if (!resolved.allowed) {
+        if (!resolved.allowed)
             return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty' });
-        }
 
         await prisma.offers_rel.create({
             data: {
@@ -405,26 +279,24 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             }
         });
 
-        for (const item of sourceItems) {
-            await prisma.offer_items_rel.create({
-                data: {
-                    id: uuidv4(),
-                    offerId: newId,
-                    productId: item.productId,
-                    quantity: item.quantity,
-                    discount: item.discount,
-                    price: item.price
-                }
-            });
-        }
+        await createOfferItems(
+            newId,
+            sourceItems.map((i) => ({
+                id: undefined,
+                productId: i.productId ?? '',
+                quantity: i.quantity ?? 0,
+                discount: i.discount ?? 0,
+                price: i.price ?? 0,
+                unitPrice: i.price ?? 0
+            })),
+            uuidv4
+        );
 
         logAudit('offer', newId, authReq.user?.id || '', 'duplicate', null, { sourceId: id });
-
         logger.info(
             'Offers',
             `Oferta ${id} zduplikowana jako ${newId} przez ${authReq.user?.username}`
         );
-
         return res.json({ ok: true, data: { id: newId } });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
