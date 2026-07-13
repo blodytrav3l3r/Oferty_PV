@@ -169,7 +169,7 @@ describe('T5.6: Blokada zmiany opiekuna zamówienia', () => {
 describe('T5.8: Eksport window.debounce', () => {
     it('ui.js powinien eksportować debounce na window', () => {
         const content = fs.readFileSync(
-            path.resolve(__dirname, '..', 'public/js/shared/ui.js'),
+            path.resolve(__dirname, '..', 'public/js/shared/uiCore.js'),
             'utf-8'
         );
         expect(content).toContain('window.debounce');
@@ -178,7 +178,7 @@ describe('T5.8: Eksport window.debounce', () => {
     it('składnia ui.js jest poprawna', () => {
         const { execSync } = require('child_process');
         const result = execSync(
-            `node -c "${path.resolve(__dirname, '..', 'public/js/shared/ui.js')}"`,
+            `node -c "${path.resolve(__dirname, '..', 'public/js/shared/uiCore.js')}"`,
             { encoding: 'utf-8' }
         );
         expect(result).toBeDefined();
