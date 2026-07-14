@@ -50,6 +50,9 @@ build/
 # Database
 data/backup/
 data/migration_backup/
+data/*.sqlite*
+data/*.sqlite-shm
+data/*.sqlite-wal
 
 # Generated
 /generated/prisma
