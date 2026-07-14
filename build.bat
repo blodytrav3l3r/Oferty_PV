@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  build.bat — Budowanie production bundle (final)
+REM  build.bat - Budowanie production bundle (final)
 REM ===========================================================
 
 setlocal

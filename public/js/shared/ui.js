@@ -1,4 +1,4 @@
-﻿// @ts-check
+// @ts-check
 /**
  * Shared UI Module — wspólne komponenty interfejsu.
  * Eliminuje duplikat showToast/closeModal/toggleCard/showSection z app.js i app_studnie.js.

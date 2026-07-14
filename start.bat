@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  start.bat — Jedno wejście: cały system
+REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
 REM    - Backend Express (Prisma + SQLite)
 REM    - Frontend Vite (dev server)
@@ -10,7 +10,7 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 echo ===========================================================
-echo   WITROS Oferty PV — Start
+echo   WITROS Oferty PV - Start
 echo ===========================================================
 echo.
 

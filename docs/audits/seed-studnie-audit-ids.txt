@@ -1,4 +1,4 @@
-﻿Affected IDs:
+Affected IDs:
   DDD-10-045
   DDD-10-055
   DDD-10-060

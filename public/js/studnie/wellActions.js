@@ -1,4 +1,4 @@
-﻿// @ts-check
+// @ts-check
 /* ===== Extracted to wellActions.js ===== */
 
 let elevationDebounceTimer = null;

@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  dev.bat — Development mode (final, 2026-07-01)
+REM  dev.bat - Development mode (final, 2026-07-01)
 REM  Strategia: minimalna zlozonosc, zero zaglebiania w Edge Case.
 REM  Wszystkie krytyczne zadania zlecone sa npm i cyzelnie
 REM  odporne na MSYS bash escape'y.

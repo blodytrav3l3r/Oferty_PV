@@ -89,3 +89,20 @@ npm run lint:fix         # ESLint z auto-naprawą
 - Nowe globalne helpery rejestruj przez `window.mojHelper = mojHelper;`
 - Używaj `escapeHtml(str)` przy interpolacji do `innerHTML` (zapobieganie XSS)
 - Po dynamicznym wstrzyknięciu HTML z ikonami Lucide wywołaj: `lucide.createIcons({root: container})`
+
+### Kodowanie polskich znaków (encoding policy)
+
+| Typ pliku                          | Kodowanie           | Uwagi                                              |
+| ---------------------------------- | ------------------- | -------------------------------------------------- |
+| `.ts`, `.js`, `.mjs`, `.cjs`       | **UTF-8 (bez BOM)** | Standard dla Node.js/TypeScript                    |
+| `.html`, `.css`, `.json`           | **UTF-8 (bez BOM)** | Standard webowy                                    |
+| `.md`, `.txt`                      | **UTF-8 (bez BOM)** | Dokumentacja                                       |
+| `.sh`, `.ps1`                      | **UTF-8 (bez BOM)** | Skrypty powłoki                                    |
+| `.bat`, `.cmd`                     | **ASCII-only**      | Brak polskich znaków — cmd.exe nie obsługuje UTF-8 |
+| `.yaml`, `.yml`, `.sql`, `.prisma` | **UTF-8 (bez BOM)** | Pliki konfiguracyjne i migracje                    |
+
+**Zasady:**
+
+- W plikach `.bat` NIE używaj polskich znaków ani znaków spoza ASCII (np. `—` em dash). Zastąp je odpowiednikami ASCII (`-` zamiast `—`, `l` zamiast `ł`, `s` zamiast `ś` itp.).
+- We wszystkich pozostałych plikach używaj swobodnie polskich znaków w UTF-8.
+- Unikaj BOM (Byte Order Mark) na początku plików UTF-8.

@@ -1,0 +1,237 @@
+[
+  {
+    "name": "Studnie DN1000",
+    "componentType": "plyta_zamykajaca",
+    "order": 0
+  },
+  {
+    "name": "Studnie DN1200",
+    "componentType": "plyta_zamykajaca",
+    "order": 1
+  },
+  {
+    "name": "Studnie DN1500",
+    "componentType": "plyta_zamykajaca",
+    "order": 2
+  },
+  {
+    "name": "Studnie DN2000",
+    "componentType": "plyta_zamykajaca",
+    "order": 3
+  },
+  {
+    "name": "Studnie DN2500",
+    "componentType": "plyta_zamykajaca",
+    "order": 4
+  },
+  {
+    "name": "Akcesoria studni",
+    "componentType": "wlaz",
+    "order": 5
+  },
+  {
+    "name": "Uszczelki studni",
+    "componentType": "uszczelka",
+    "order": 6
+  },
+  {
+    "name": "GRP",
+    "componentType": "przejscie",
+    "order": 7
+  },
+  {
+    "name": "GRP Pecor Quattro",
+    "componentType": "przejscie",
+    "order": 8
+  },
+  {
+    "name": "GRP Plasticor",
+    "componentType": "przejscie",
+    "order": 9
+  },
+  {
+    "name": "GRP Rauvia ID",
+    "componentType": "przejscie",
+    "order": 10
+  },
+  {
+    "name": "Incor",
+    "componentType": "przejscie",
+    "order": 11
+  },
+  {
+    "name": "K2KAN ID",
+    "componentType": "przejscie",
+    "order": 12
+  },
+  {
+    "name": "K2KAN XXL",
+    "componentType": "przejscie",
+    "order": 13
+  },
+  {
+    "name": "K2KAN XXL ID",
+    "componentType": "przejscie",
+    "order": 14
+  },
+  {
+    "name": "Kamionka SKN",
+    "componentType": "przejscie",
+    "order": 15
+  },
+  {
+    "name": "Kamionka SKV",
+    "componentType": "przejscie",
+    "order": 16
+  },
+  {
+    "name": "Kerabase",
+    "componentType": "przejscie",
+    "order": 17
+  },
+  {
+    "name": "Magnacor",
+    "componentType": "przejscie",
+    "order": 18
+  },
+  {
+    "name": "Otwory",
+    "componentType": "przejscie",
+    "order": 19
+  },
+  {
+    "name": "PE",
+    "componentType": "przejscie",
+    "order": 20
+  },
+  {
+    "name": "PE Gładkie",
+    "componentType": "przejscie",
+    "order": 21
+  },
+  {
+    "name": "PEHD 100",
+    "componentType": "przejscie",
+    "order": 22
+  },
+  {
+    "name": "Plasticor",
+    "componentType": "przejscie",
+    "order": 23
+  },
+  {
+    "name": "Pragma ID",
+    "componentType": "przejscie",
+    "order": 24
+  },
+  {
+    "name": "Pragma OD",
+    "componentType": "przejscie",
+    "order": 25
+  },
+  {
+    "name": "Procor PP",
+    "componentType": "przejscie",
+    "order": 26
+  },
+  {
+    "name": "PVC Gładkie",
+    "componentType": "przejscie",
+    "order": 27
+  },
+  {
+    "name": "PVC SN8",
+    "componentType": "przejscie",
+    "order": 28
+  },
+  {
+    "name": "PVC-lite",
+    "componentType": "przejscie",
+    "order": 29
+  },
+  {
+    "name": "Storm-pipe",
+    "componentType": "przejscie",
+    "order": 30
+  },
+  {
+    "name": "Weholite",
+    "componentType": "przejscie",
+    "order": 31
+  },
+  {
+    "name": "X-Stream",
+    "componentType": "przejscie",
+    "order": 32
+  },
+  {
+    "name": "Zinplast ZIN-ZIP SN8",
+    "componentType": "przejscie",
+    "order": 33
+  },
+  {
+    "name": "Żeliwo",
+    "componentType": "przejscie",
+    "order": 34
+  },
+  {
+    "name": "Żeliwo Sferoidalne",
+    "componentType": "przejscie",
+    "order": 35
+  },
+  {
+    "name": "WITROS",
+    "componentType": "przejscie",
+    "order": 36
+  },
+  {
+    "name": "Jajowa",
+    "componentType": "przejscie",
+    "order": 37
+  },
+  {
+    "name": "Wiercenie",
+    "componentType": "przejscie",
+    "order": 38
+  },
+  {
+    "name": "Wiercenie + INSITU",
+    "componentType": "przejscie",
+    "order": 39
+  },
+  {
+    "name": "Otwór KPED",
+    "componentType": "przejscie",
+    "order": 40
+  },
+  {
+    "name": "Kinety DN1000",
+    "componentType": "kineta",
+    "order": 41
+  },
+  {
+    "name": "Kinety DN1200",
+    "componentType": "kineta",
+    "order": 42
+  },
+  {
+    "name": "Kinety DN1500",
+    "componentType": "kineta",
+    "order": 43
+  },
+  {
+    "name": "Kinety DN2000",
+    "componentType": "kineta",
+    "order": 44
+  },
+  {
+    "name": "Kinety DN2500",
+    "componentType": "kineta",
+    "order": 45
+  },
+  {
+    "name": "Studnie styczne",
+    "componentType": "styczna",
+    "order": 46
+  }
+]

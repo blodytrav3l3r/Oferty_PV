@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import prisma, { Prisma } from '../../prismaClient';
 import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';

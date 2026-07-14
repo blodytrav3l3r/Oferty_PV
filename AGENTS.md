@@ -120,6 +120,26 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 - Zapobieganie XSS: Przy interpolacji ciągów znaków do `innerHTML` zawsze używaj funkcji `escapeHtml(str)`.
 - Cache-busting: Wszystkie parametry `?v=` w plikach HTML (w tym `public/templates/*.html`) są automatycznie synchronizowane z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). **Nie edytuj ręcznie** parametrów `?v=` w HTML.
 
+### Kodowanie polskich znaków (encoding policy)
+
+Projekt stosuje jednolite kodowanie dla wszystkich plików tekstowych:
+
+| Typ pliku                          | Kodowanie           | Uwagi                                              |
+| ---------------------------------- | ------------------- | -------------------------------------------------- |
+| `.ts`, `.js`, `.mjs`, `.cjs`       | **UTF-8 (bez BOM)** | Standard dla Node.js/TypeScript                    |
+| `.html`, `.css`, `.json`           | **UTF-8 (bez BOM)** | Standard webowy                                    |
+| `.md`, `.txt`                      | **UTF-8 (bez BOM)** | Dokumentacja                                       |
+| `.sh`, `.ps1`                      | **UTF-8 (bez BOM)** | Skrypty powłoki                                    |
+| `.bat`, `.cmd`                     | **ASCII-only**      | Brak polskich znaków — cmd.exe nie obsługuje UTF-8 |
+| `.yaml`, `.yml`, `.sql`, `.prisma` | **UTF-8 (bez BOM)** | Pliki konfiguracyjne i migracje                    |
+
+**Zasady:**
+
+- W plikach `.bat` NIE używaj polskich znaków (ąćęłńóśźż) ani znaków spoza ASCII (np. `—` em dash). Zastąp je odpowiednikami ASCII (`-` zamiast `—`, `l` zamiast `ł`, `s` zamiast `ś` itp.).
+- We wszystkich pozostałych plikach używaj swobodnie polskich znaków w UTF-8.
+- Unikaj BOM (Byte Order Mark) na początku plików UTF-8 — może powodować problemy z narzędziami Node.js i konsolą.
+- Weryfikacja: `npm run encoding:check` (jeśli skrypt istnieje) lub ręcznie przez `node -c` dla plików JS.
+
 ---
 
 ## 4. Graphify (Zarządzanie Wiedzą o Kodzie)

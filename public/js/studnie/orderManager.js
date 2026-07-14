@@ -1,4 +1,4 @@
-﻿// @ts-check
+// @ts-check
 /* ===== ZAMÓWIENIA STUDNI ===== */
 async function loadOrdersStudnie() {
     try {

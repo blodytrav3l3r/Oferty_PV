@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "CategoriesRury" (
     "name" TEXT NOT NULL PRIMARY KEY,
     "order" INTEGER NOT NULL

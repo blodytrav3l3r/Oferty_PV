@@ -1,4 +1,4 @@
-﻿// Zależności (ładowane przed tym skryptem): shared/auth.js, shared/ui.js
+// Zależności (ładowane przed tym skryptem): shared/auth.js, shared/ui.js
 
 let adminUsers = [];
 let editingUserId = null;

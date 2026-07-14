@@ -1,4 +1,4 @@
-﻿# Audyt seed_studnie.json — 2026-07-05
+# Audyt seed_studnie.json — 2026-07-05
 
 ## Kontekst
 

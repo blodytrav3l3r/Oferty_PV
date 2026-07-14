@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  prod.bat — Production server start (final)
+REM  prod.bat - Production server start (final)
 REM ===========================================================
 
 setlocal ENABLEDELAYEDEXPANSION
@@ -41,7 +41,7 @@ if defined PORT_PID (
     if /i "!KEEP!"=="N" (
         echo [INFO] Kontynuuje pomimo zajetego portu...
     ) else (
-        echo [INFO] Killuję PID !PORT_PID!...
+        echo [INFO] Killuje PID !PORT_PID!...
         powershell -Command "Stop-Process -Id !PORT_PID! -Force" 2>nul
         timeout /t 2 /nobreak >nul 2>&1
     )

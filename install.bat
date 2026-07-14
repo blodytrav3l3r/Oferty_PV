@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  install.bat — Setup srodowiska developer-skiego (final)
+REM  install.bat - Setup srodowiska developer-skiego (final)
 REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
 REM ===========================================================
 
