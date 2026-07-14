@@ -1,0 +1,27 @@
+/**
+ * Zamówienia — indeks zbiorczy (barrel index)
+ *
+ * Montuje sub-routery zamówień, zleceń produkcyjnych i numeracji
+ * w jeden router kompatybilny z istniejącym importem w server.ts.
+ */
+import express from 'express';
+import studnieOrdersRouter from './studnieOrders';
+import ruryOrdersRouter from './ruryOrders';
+import productionRouter from './production';
+import numberingRouter from './numbering';
+
+const router = express.Router();
+
+// Numeracja musi być PRZED parametryzowanymi trasami /:id
+router.use('/', numberingRouter);
+
+// Zlecenia produkcyjne: /production/*
+router.use('/production', productionRouter);
+
+// Zamówienia studni: / (CRUD na zamówieniach)
+router.use('/', studnieOrdersRouter);
+
+// Zamówienia rur: /rury/* (CRUD na zamówieniach rur)
+router.use('/rury', ruryOrdersRouter);
+
+export default router;

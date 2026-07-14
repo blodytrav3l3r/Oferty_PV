@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Pre-commit — sprawdza zgodność z planem Excel przed lint-staged
+. "$(dirname "$0")/_/husky.sh"
+
+python scripts/excel-validator.py
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+    echo ""
+    echo "❌ COMMIT ZABLOKOWANY — zmiany z planu Excel nie są w pełni wdrożone!"
+    echo "   Popraw błędy przed commitem."
+    exit 1
+fi
+
+npx lint-staged

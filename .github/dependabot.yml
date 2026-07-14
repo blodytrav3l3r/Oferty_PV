@@ -1,0 +1,50 @@
+version: 2
+updates:
+    - package-ecosystem: 'npm'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+          day: 'monday'
+          time: '07:00'
+          timezone: 'Europe/Warsaw'
+      open-pull-requests-limit: 5
+      labels:
+          - 'dependencies'
+          - 'automerge'
+      commit-message:
+          prefix: 'chore'
+          include: 'scope'
+      groups:
+          prisma:
+              patterns:
+                  - 'prisma'
+                  - '@prisma/*'
+              update-types:
+                  - 'minor'
+                  - 'patch'
+          eslint:
+              patterns:
+                  - 'eslint'
+                  - '@eslint/*'
+                  - 'typescript-eslint'
+              update-types:
+                  - 'minor'
+                  - 'patch'
+          types:
+              patterns:
+                  - '@types/*'
+              update-types:
+                  - 'minor'
+                  - 'patch'
+
+    - package-ecosystem: 'github-actions'
+      directory: '/'
+      schedule:
+          interval: 'weekly'
+          day: 'monday'
+          time: '07:00'
+          timezone: 'Europe/Warsaw'
+      open-pull-requests-limit: 3
+      labels:
+          - 'dependencies'
+          - 'github-actions'

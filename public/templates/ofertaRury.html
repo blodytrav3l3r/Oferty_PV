@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Oferta {{NR_OFERTY}}</title>
+    <style>
+        @page { size: A4 portrait; margin: 0mm 10mm; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            font-family: Arial, sans-serif;
+            font-size: 10pt;
+            color: #1a1a2e;
+            background: #fff;
+            line-height: 1.4;
+        }
+        .page { width: 100%; max-width: 190mm; margin: 0 auto; }
+
+        .letterhead-header { width: 100%; display: block; margin-bottom: 12px; }
+        .letterhead-footer { width: 100%; display: block; margin-top: 20px; page-break-inside: avoid; }
+
+        .offer-title { font-size: 16pt; font-weight: 700; color: #000; text-align: center; margin: 8px 0 4px; }
+        .offer-meta {
+            display: flex; justify-content: space-between;
+            font-size: 10pt; margin-bottom: 10px;
+            padding-bottom: 6px; border-bottom: 2px solid #999;
+        }
+        .offer-meta strong { color: #333; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .info-box {
+            background: #f9f9f9; border: 1px solid #ddd;
+            border-radius: 4px; padding: 8px 10px; font-size: 9pt;
+        }
+        .info-box h3 {
+            font-size: 8pt; color: #888; text-transform: uppercase;
+            margin-bottom: 4px; letter-spacing: 0.5px;
+        }
+        .info-box div { margin-bottom: 1px; }
+
+        .cat-section { margin-bottom: 14px; }
+        .cat-header {
+            font-size: 10pt; font-weight: 700; color: #999;
+            border-bottom: 1.5px solid #999; padding-bottom: 3px; margin-bottom: 6px;
+        }
+        .diam-header { font-size: 9pt; font-weight: 700; color: #666; margin: 4px 0 3px; }
+
+        table.offer-table { width: 100%; border-collapse: collapse; font-size: 8pt; margin-bottom: 4px; }
+        table.offer-table th {
+            background: #999; color: #fff; padding: 3px 4px;
+            text-align: center; font-size: 7pt; font-weight: 700;
+            border: 0.5pt solid #999;
+        }
+        table.offer-table tr { page-break-inside: avoid; }
+        table.offer-table td { padding: 2px 4px; border: 0.5pt solid #ccc; vertical-align: middle; }
+        table.offer-table tr:nth-child(even) { background: #fafafa; }
+
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .bold { font-weight: 700; }
+        .nowrap { white-space: nowrap; }
+
+        .cat-summary-row td { background: #f0f0f0; font-weight: 700; border-top: 1.5px solid #999; font-size: 8pt; }
+
+        .summary-section { margin-top: 16px; }
+        .summary-section h3 {
+            font-size: 11pt; font-weight: 700; color: #999;
+            border-bottom: 1.5px solid #999; padding-bottom: 3px; margin-bottom: 6px;
+        }
+        table.summary-table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 8px; }
+        table.summary-table td { padding: 4px 8px; border: 0.5pt solid #ccc; }
+        table.summary-table tr.grand-total td {
+            background: #999; color: #fff; font-weight: 800; font-size: 11pt; border: none;
+        }
+
+        .notes-section { margin-top: 12px; font-size: 9pt; page-break-inside: avoid; }
+        .notes-section .note-box { padding: 6px 0; margin-bottom: 6px; }
+        .conditions { font-size: 9pt; margin-top: 6px; }
+        .conditions div { margin-bottom: 2px; }
+
+        .standard-terms { font-size: 8pt; margin-top: 15px; color: #333; line-height: 1.35; text-align: justify; padding-bottom: 20px; }
+        .standard-terms p { margin-top: 6px; }
+
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <table class="report-container" style="width: 100%; border: none">
+            <thead class="report-header" style="display: table-header-group; border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <img src="{{BASE_URL}}/images/letterhead-header.png" class="letterhead-header" />
+                    </td>
+                </tr>
+            </thead>
+            <tfoot class="report-footer" style="display: table-footer-group; border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <img src="{{BASE_URL}}/images/letterhead-footer.png" class="letterhead-footer" />
+                    </td>
+                </tr>
+            </tfoot>
+            <tbody class="report-content" style="border: none">
+                <tr>
+                    <td style="border: none; padding: 0">
+                        <div class="offer-title">{{TYTUL_DOKUMENTU}}</div>
+                        <div class="offer-meta">
+                            <div style="flex-grow: 1">&nbsp;</div>
+                            <div style="text-align: right">
+                                <div><strong>Data przygotowania oferty:</strong> {{DATA_OFERTY}}</div>
+                                {{VALIDITY_SECTION}}
+                            </div>
+                        </div>
+
+                        <div class="info-grid">
+                            <div class="info-box">
+                                <h3>Dane klienta</h3>
+                                {{DANE_KLIENTA}}
+                            </div>
+                            <div class="info-box">
+                                <h3>Dane inwestycji</h3>
+                                {{DANE_INWESTYCJI}}
+                            </div>
+                        </div>
+
+                        {{TABELA_POZYCJI}}
+                        {{TABELA_TRANSPORTU}}
+                        {{PODSUMOWANIE}}
+                        {{SEKCJA_UWAGI}}
+
+                        <div class="standard-terms">
+                            {{WARUNKI_STATYCZNE}}
+                        </div>
+
+                        {{DANE_KONTAKTOWE}}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+
+</html>

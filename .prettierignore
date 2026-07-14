@@ -1,0 +1,9 @@
+1 Pliki przykładowe
+node_modules
+dist
+.next
+.cache
+package-lock.json
+*.htm
+*.html.bak
+*.xlsx

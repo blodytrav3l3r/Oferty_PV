@@ -1,0 +1,17 @@
+{
+    "bumpFiles": [
+        "package.json",
+        {
+            "filename": "VERSION",
+            "updater": "scripts/version-updater.mjs"
+        }
+    ],
+    "infile": "CHANGELOG.md",
+    "header": "# CHANGELOG\n\nWszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.\n\n---\n",
+    "commitUrlFormat": "https://github.com/blodytrav3l3r/Oferty_PV/commit/{{hash}}",
+    "compareUrlFormat": "https://github.com/blodytrav3l3r/Oferty_PV/compare/{{previousTag}}...{{currentTag}}",
+    "tagPrefix": "v",
+    "scripts": {
+        "postbump": "node scripts/auto-cache-bust.mjs"
+    }
+}

@@ -1,0 +1,2242 @@
+/* ═══════════════════════════════════════════════════════════
+   PEŁNA WYSOKOŚĆ LAYOUTU — FLEX CHAIN (scoped: studnie.html)
+   body → .main → .section.active → .well-app-layout → kolumny
+   Wysokość wynika z drzewa DOM, NIE z calc(100vh - N).
+   ═══════════════════════════════════════════════════════════ */
+html,
+body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+}
+
+body > .header {
+    flex: 0 0 auto;
+}
+
+/* .main odbiera resztę wysokości po headerze */
+body.studnie-page > .main {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    /* nadpisuje style.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
+    padding: 0 !important;
+}
+
+/* header full-width w widoku Studnie */
+body.studnie-page .header-inner {
+    max-width: 100%;
+    padding: 0.3rem 0;
+}
+
+/* .section.active — акtywna zakładka */
+body > .main > .section.active {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+/* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
+.well-app-layout {
+    display: grid;
+    grid-template-columns: clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px);
+    gap: 0;
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding-bottom: 60px;
+    width: 100%;
+    max-width: none;
+    background: var(--bg-primary);
+}
+
+.well-center-column,
+.well-diagram-panel,
+.wells-sidebar,
+.wells-sidebar-panel {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+/* Wizard bottom nav — position: fixed; bottom: 0 z style.css */
+.wizard-nav-fixed {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+@media (max-width: 1400px) {
+    .well-app-layout {
+        grid-template-columns: clamp(240px, 16vw, 350px) minmax(0, 1fr) clamp(250px, 18vw, 380px);
+    }
+}
+
+@media (max-width: 1200px) {
+    .well-app-layout {
+        grid-template-columns: 1fr clamp(200px, 22vw, 280px);
+    }
+
+    .well-diagram-panel {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .well-app-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Modyfikator układu dla kroków 1 i 2 ── */
+.well-app-layout.intro-mode {
+    grid-template-columns: 1fr;
+    max-width: min(90vw, 1400px);
+    margin: 0 auto;
+    height: auto;
+    overflow: visible;
+}
+
+.well-app-layout.intro-mode .well-diagram-panel,
+.well-app-layout.intro-mode .wells-sidebar {
+    display: none !important;
+}
+
+/* ── Lewo: Schemat studni ── */
+.well-diagram-panel {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-glass);
+    border-radius: 0;
+    padding: 0.8rem 1.2rem;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.well-diagram-panel h3 {
+    padding: 0.8rem 1.2rem;
+    margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
+    border-bottom: 1px solid var(--border-glass);
+    box-shadow: var(--shadow-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+    min-height: 57px;
+    background: var(--bg-secondary);
+}
+
+.well-diagram-svg {
+    width: 100%;
+    flex: 1;
+    height: auto;
+    min-height: 200px;
+    border-radius: 8px;
+    background: var(--bg-deep);
+    border: 1px solid var(--accent-bg);
+}
+
+.well-summary-mini {
+    margin-top: 0.4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.well-summary-mini .ws-item {
+    background: var(--bg-tile);
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    padding: 0.25rem;
+    text-align: center;
+}
+
+.ws-item .ws-label {
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+.ws-item .ws-value {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 0.05rem;
+}
+
+.ws-item .ws-value.accent {
+    color: var(--success);
+}
+
+/* ── Prawo: Panel boczny studni ── */
+.wells-sidebar {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-glass);
+    overflow: hidden;
+}
+
+.wells-sidebar-panel {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0.8rem 1.2rem;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.well-center-column {
+    height: 100%;
+    width: 100%;
+    justify-self: stretch;
+    min-height: 0;
+    min-width: 0;
+    overflow-y: auto;
+    padding: 0 1rem 4.5rem;
+}
+
+.well-center-column::-webkit-scrollbar,
+#wells-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.well-center-column::-webkit-scrollbar-track,
+#wells-list::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 4px;
+}
+
+.well-center-column::-webkit-scrollbar-thumb,
+#wells-list::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+}
+
+.well-center-column::-webkit-scrollbar-thumb:hover,
+#wells-list::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
+}
+
+.wells-sidebar-header {
+    padding: 0.8rem 1.2rem;
+    margin: -0.8rem -1.2rem 0.6rem -1.2rem;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 0 0 auto;
+    min-height: 57px;
+    box-shadow: var(--shadow-sm);
+    background: var(--bg-secondary);
+}
+
+.wells-sidebar-header h3 {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+#wells-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    /* dla paska przewijania */
+    margin-right: -4px;
+}
+
+.wells-sidebar-header .wells-count {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.wells-add-btn {
+    padding: 0.25rem 0.55rem;
+    border: 1px solid var(--accent-border-dim);
+    border-radius: 6px;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font:
+        600 0.72rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+
+.wells-add-btn:hover {
+    background: var(--accent-bg-hover);
+    border-color: var(--accent-border);
+}
+
+.well-list-item {
+    background: rgba(26, 37, 54, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    border-radius: 8px;
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.25rem;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease-out,
+        background-color 0.15s ease-out,
+        transform 0.15s ease-out;
+    position: relative;
+}
+
+.well-list-item:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    background: rgba(30, 45, 66, 0.6);
+    transform: translateX(2px);
+}
+
+.well-list-item.active {
+    border-color: rgba(99, 102, 241, 0.6);
+    background: rgba(19, 19, 53, 0.8);
+    box-shadow: inset 0 0 12px rgba(99, 102, 241, 0.1);
+}
+
+.well-list-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 15%;
+    height: 70%;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 4px 4px 0;
+}
+
+.well-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.well-list-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.well-list-actions {
+    display: flex;
+    gap: 0.1rem;
+}
+/* hover highlight handled by .well-list-action:hover */
+
+.well-list-action {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.65rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 3px;
+    transition: background 0.15s;
+    color: var(--text-muted);
+}
+
+.well-list-action:hover {
+    background: #1a1e25;
+}
+
+.well-list-action.del:hover {
+    background: #301515;
+    color: var(--danger-hover);
+}
+
+.well-list-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.62rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin-top: 0.2rem;
+}
+
+.well-list-price {
+    font-weight: 800;
+    color: var(--success-hover) !important;
+    font-size: 0.72rem;
+}
+
+.well-list-elevations {
+    font-size: 0.58rem;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 0.1rem;
+    display: flex;
+    gap: 0.4rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    padding-top: 0.15rem;
+}
+
+.well-list-elevations strong {
+    color: rgba(255, 255, 255, 0.6);
+    font-weight: 600;
+}
+
+/* ── Pola informacji o studni ── */
+.well-info-card {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.well-info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.4rem;
+}
+
+.well-info-field label {
+    display: block;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    margin-bottom: 0.2rem;
+}
+
+.well-info-field input {
+    width: 100%;
+    padding: 0.35rem 0.45rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 5px;
+    color: var(--text-primary);
+    font:
+        600 0.8rem 'Inter',
+        sans-serif;
+    text-align: center;
+    transition: border-color 0.2s;
+}
+
+.well-info-field input:focus {
+    border-color: var(--accent-border);
+}
+
+.well-info-field .computed {
+    text-align: center;
+    padding: 0.35rem 0.45rem;
+    font:
+        700 0.85rem 'Inter',
+        sans-serif;
+    color: var(--accent-hover);
+}
+
+/* ── Tiles & Config ── */
+.tiles-section {
+    margin-bottom: 0.6rem;
+}
+
+.tiles-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.tiles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 160px);
+    gap: 0.35rem;
+}
+
+.tile {
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 0.4rem 0.5rem;
+    cursor: pointer;
+    transition:
+        border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 4.2rem;
+    height: 100%;
+}
+
+.tile::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--tile-accent, var(--accent));
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tile:hover {
+    border-color: var(--tile-accent, var(--accent-border-dim));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.tile:hover::before {
+    opacity: 1;
+}
+
+.tile:active {
+    transform: translateY(0);
+}
+
+.tile-name {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.15;
+}
+
+.tile-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.62rem;
+    color: var(--text-muted);
+}
+
+.tile-price {
+    font-weight: 700;
+    color: var(--tile-accent, var(--accent-hover));
+}
+
+/* Selektor DN */
+.dn-selector {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.dn-btn {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    background: var(--bg-tile);
+    color: var(--text-secondary);
+    font:
+        600 0.75rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        color 0.15s;
+}
+
+.dn-btn:hover {
+    border-color: var(--accent-border-dim);
+    color: var(--text-primary);
+}
+
+.dn-btn.active {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+}
+
+/* Tabela konfiguracji */
+.well-config-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.well-config-table th {
+    padding: 0.3rem 0.4rem;
+    text-align: left;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.well-config-table td {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.78rem;
+    border-bottom: 1px solid var(--border-table-subtle);
+    color: var(--text-secondary);
+}
+
+.well-config-table tr:hover td {
+    background: var(--bg-hover-deep);
+}
+
+.config-remove-btn {
+    background: none;
+    border: 1px solid var(--danger-border-deep);
+    color: var(--danger-hover);
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+
+.config-remove-btn:hover {
+    background: var(--danger-bg-hover);
+    border-color: var(--danger-border);
+}
+
+.cfg-move-btn {
+    background: none;
+    border: 1px solid var(--bg-tertiary);
+    color: var(--text-muted);
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+    line-height: 1;
+}
+
+.cfg-move-btn:hover:not(:disabled) {
+    background: var(--bg-hover);
+    border-color: var(--accent-border-medium);
+    color: var(--accent-hover);
+}
+
+.cfg-move-btn:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+/* Kolory typów kafelków */
+.tile[data-type='dennica'] {
+    --tile-accent: #10b981;
+}
+
+.tile[data-type='krag'],
+.tile[data-type='krag_ot'] {
+    --tile-accent: #6366f1;
+}
+
+.tile[data-type='konus'] {
+    --tile-accent: #f59e0b;
+}
+
+.tile.active-top-closure {
+    border-color: #6060d0 !important;
+    box-shadow: 0 0 0 2px var(--accent-border);
+    background: var(--bg-hover) !important;
+}
+
+.tile.active-top-closure::after {
+    content: '✔';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tile[data-type='plyta_din'],
+.tile[data-type='plyta_najazdowa'],
+.tile[data-type='plyta_zamykajaca'] {
+    --tile-accent: #ec4899;
+}
+
+.tile[data-type='plyta_redukcyjna'] {
+    --tile-accent: #8b5cf6;
+}
+
+.tile[data-type='pierscien_odciazajacy'] {
+    --tile-accent: #06b6d4;
+}
+
+.tile[data-type='avr'] {
+    --tile-accent: #64748b;
+}
+
+.tile[data-type='uszczelka'] {
+    --tile-accent: #84cc16;
+}
+
+/* Zakładki cennika */
+.cennik-tab {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    background: var(--bg-tile);
+    color: var(--text-muted);
+    font:
+        600 0.8rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        border-color 0.25s,
+        color 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cennik-tab:hover {
+    border-color: var(--bg-tertiary-alt);
+    color: var(--text-secondary);
+}
+
+.cennik-tab.active {
+    background: var(--bg-tab-active);
+    border-color: var(--accent-border-medium);
+    color: var(--accent-text);
+    box-shadow: 0 0 12px var(--bg-active-deep);
+}
+
+.cennik-tab-icon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Oferta */
+.offer-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.offer-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.offer-stat-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.offer-stat-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-top: 0.2rem;
+}
+
+/* Zakładki kreatora inline */
+.b-tab-btn {
+    flex: 1;
+    padding: 0.45rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        color 0.2s,
+        background-color 0.2s;
+    font-size: 0.75rem;
+}
+
+.b-tab-btn:hover {
+    color: var(--text-primary);
+    background: var(--bg-dark-alt);
+}
+
+.b-tab-btn.active {
+    background: var(--bg-hover);
+    border-color: var(--accent-border-dim);
+    color: var(--text-primary);
+}
+
+/* Zakładki panelu bocznego */
+.s-tab-btn {
+    flex: 1;
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-muted);
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        color 0.2s,
+        background-color 0.2s;
+    font-size: 0.72rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.s-tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.s-tab-btn.active {
+    background: var(--bg-hover);
+    border-color: #3b3b9b;
+    color: var(--accent-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.param-tile {
+    padding: 0.35rem 0.8rem;
+    border-radius: 6px;
+    background: var(--bg-tile);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease-in-out,
+        color 0.15s ease-in-out;
+    white-space: nowrap;
+}
+
+.param-tile:hover {
+    border-color: var(--warn-border);
+    color: var(--text-primary);
+}
+
+.param-tile.active {
+    background: var(--warn-bg);
+    border-color: var(--warn);
+    color: #ffedd5;
+    box-shadow: 0 0 10px var(--warn-bg);
+}
+
+/* Style aplikacji Inline Transitions wykorzystujące nazwy fs-* ale zlokalizowane */
+.fs-sidebar {
+    background: var(--bg-deep);
+    border-right: 1px solid var(--bg-tertiary);
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.fs-type-btn {
+    width: 100%;
+    padding: 1.2rem;
+    margin-bottom: 0.8rem;
+    background: var(--bg-dark-alt);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 12px;
+    color: var(--text-muted);
+    text-align: left;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.fs-type-btn:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent-border-dim);
+    color: var(--text-primary);
+    transform: translateX(4px);
+}
+
+.fs-type-btn.active {
+    background: linear-gradient(135deg, var(--accent-bg-hover), var(--nav-glow-custom));
+    border-color: var(--accent-border);
+    color: #fff;
+    box-shadow: var(--shadow-md);
+}
+
+.fs-main {
+    padding: 2.5rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.fs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 1.2rem;
+}
+
+.fs-dn-tile {
+    background: var(--bg-tile);
+    border: 1px solid var(--bg-tertiary);
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition:
+        border-color 0.3s,
+        transform 0.3s,
+        background-color 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+
+.fs-dn-tile:hover {
+    border-color: var(--accent);
+    transform: translateY(-5px);
+    background: var(--bg-active-deep);
+}
+
+.fs-dn-tile.active {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+    box-shadow: 0 0 20px var(--accent-bg-hover);
+}
+
+.fs-dn-tile .dn-label {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.fs-dn-tile .price-label {
+    font-size: 0.85rem;
+    color: var(--success);
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.fs-inputs-pane {
+    background: var(--bg-input);
+    border: 1px solid var(--accent-bg-hover);
+    border-radius: 20px;
+    padding: 2rem;
+    animation: slideUp 0.4s ease-out;
+    max-width: min(100%, 800px);
+    margin: 0 auto;
+    width: 100%;
+}
+
+@keyframes fadeInSimple {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.main.studnie-view-transitioning::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background: rgba(2, 6, 23, 0.2);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    animation: studnieTransitionFade 0.18s ease both;
+}
+
+@keyframes studnieTransitionFade {
+    from {
+        opacity: 0;
+    }
+
+    35% {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+.wizard-summary-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.45rem 0.75rem;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-glass);
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    font-size: 0.72rem;
+    flex-wrap: wrap;
+}
+
+.wizard-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+    color: var(--text-muted);
+}
+
+.wizard-summary-item strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.wizard-summary-divider {
+    width: 1px;
+    height: 14px;
+    background: var(--border-glass);
+}
+
+.wizard-summary-edit {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--accent-border-dim);
+    border-radius: 5px;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font:
+        600 0.65rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+
+.wizard-summary-edit:first-of-type {
+    margin-left: auto;
+}
+
+.wizard-summary-edit:hover {
+    background: var(--accent-bg-hover);
+    border-color: var(--accent-border);
+}
+
+.wizard-param-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.6rem;
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background: var(--bg-deep);
+    transition:
+        border-color 0.3s,
+        background 0.3s;
+}
+
+.wizard-param-group.needs-selection {
+    border-color: var(--bg-needs-selection);
+    background: var(--danger-bg);
+}
+
+.wizard-param-group.confirmed {
+    border-color: var(--success-bg);
+    background: var(--bg-confirmed);
+}
+
+.wizard-param-label {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.wizard-param-label .status-icon {
+    font-size: 0.7rem;
+    transition: opacity 0.3s;
+}
+
+.wizard-validation-msg {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--danger-hover);
+    margin-top: 0.6rem;
+    transition: opacity 0.3s;
+}
+
+.wizard-validation-msg.hidden {
+    opacity: 0;
+}
+
+/* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
+@keyframes fadeInOverlay {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.przejscia-vis-popup {
+    background: var(--bg-deep);
+    border: 1px solid var(--accent-bg-hover);
+    border-radius: 12px;
+    padding: 1rem;
+    width: 95vw;
+    max-width: 1100px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow:
+        0 20px 60px var(--shadow-color),
+        0 0 40px var(--bg-active-deep);
+    animation: fadeInOverlay 0.15s ease;
+}
+
+.przejscia-vis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.przejscia-vis-actions {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.6rem;
+}
+
+.przejscia-vis-action-btn {
+    padding: 0.25rem 0.6rem;
+    border-radius: 5px;
+    border: 1px solid var(--bg-tertiary);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    font:
+        600 0.6rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.przejscia-vis-action-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-border-dim);
+    color: var(--accent-text);
+}
+
+.przejscia-vis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(var(--tile-min-w, 160px), 1fr));
+    gap: 0.3rem;
+}
+
+.przejscia-vis-tile {
+    padding: 0.4rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+    text-align: center;
+    user-select: none;
+}
+
+.przejscia-vis-tile.visible {
+    background: var(--success-bg-hover);
+    border: 1.5px solid var(--success-bg);
+    box-shadow:
+        0 0 10px var(--success-bg),
+        inset 0 0 12px var(--success-bg);
+}
+
+.przejscia-vis-tile.visible .przejscia-vis-tile-name {
+    color: var(--success-hover);
+}
+
+.przejscia-vis-tile.visible:hover {
+    background: var(--success-bg);
+    border-color: var(--success-bg);
+    box-shadow:
+        0 0 16px var(--success-bg),
+        inset 0 0 16px var(--success-bg);
+    transform: translateY(-1px);
+}
+
+.przejscia-vis-tile.hidden-type {
+    background: var(--bg-tertiary);
+    border: 1.5px solid var(--bg-tertiary);
+    opacity: 0.45;
+}
+
+.przejscia-vis-tile.hidden-type:hover {
+    background: var(--bg-tertiary);
+    border-color: var(--bg-tertiary);
+    opacity: 0.8;
+    transform: translateY(-1px);
+}
+
+.przejscia-vis-tile-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+/* Ogólne okno potwierdzenia */
+.app-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    animation: fadeInOverlay 0.2s ease;
+}
+
+.app-confirm-modal {
+    background: var(--bg-deep);
+    border: 1px solid var(--accent-border-dim);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    padding: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    text-align: center;
+}
+
+.app-confirm-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.8rem;
+}
+
+.app-confirm-message {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+.app-confirm-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.app-confirm-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        transform 0.2s;
+}
+
+.app-confirm-btn-ok {
+    background: var(--scrollbar-thumb-hover);
+    color: white;
+    border: none;
+}
+
+.app-confirm-btn-ok:hover {
+    background: var(--accent);
+    transform: translateY(-1px);
+}
+
+.app-confirm-btn-cancel {
+    background: var(--bg-input);
+    color: var(--text-muted);
+    border: 1px solid var(--border-glass);
+}
+
+.app-confirm-btn-cancel:hover {
+    color: #fff;
+    background: var(--bg-tertiary);
+}
+
+/* ===== ZLECENIA PRODUKCYJNE ===== */
+
+.zlecenia-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    align-items: stretch;
+    justify-content: center;
+    animation: fadeInSimple 0.2s ease;
+}
+
+.zlecenia-overlay.active {
+    display: flex;
+}
+
+.zlecenia-container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 350px 1fr 350px;
+    background: var(--bg-primary);
+    height: calc(100vh - 57px);
+}
+
+.zlecenia-left {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    height: calc(100vh - 57px);
+}
+
+.zlecenia-center {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--bg-primary);
+    height: calc(100vh - 57px);
+}
+
+.zlecenia-right {
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: calc(100vh - 57px);
+}
+
+.zlecenia-left,
+.zlecenia-center,
+.zlecenia-right {
+    box-sizing: border-box;
+}
+
+#zlecenia-modal #well-diagram-title {
+    padding: 0.8rem 1.2rem;
+    margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
+    border-bottom: 1px solid var(--border-glass);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    min-height: 57px;
+    background: var(--bg-secondary);
+}
+
+.zlecenia-right-header {
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 57px;
+    /* dopasowanie do wysokości paska przycisków */
+    box-shadow: var(--shadow-sm);
+}
+
+.zlecenia-right-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.4rem;
+}
+
+.zlecenia-el-item {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.7rem;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.zlecenia-el-item:hover {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+}
+
+.zlecenia-el-item.active {
+    border-color: var(--warn);
+    background: var(--warn-bg);
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.15);
+}
+
+.zlecenia-el-item.saved {
+    border-left: 3px solid var(--success);
+}
+
+.zlecenia-el-item.accepted {
+    border-left: 3px solid var(--danger);
+    background: rgba(239, 68, 68, 0.06);
+}
+
+.zlecenia-header-btn {
+    min-width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    padding: 0.35rem 0.7rem !important;
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+.zlecenia-filter-btn {
+    flex: 1;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.zlecenia-filter-btn:hover {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+}
+
+.zlecenia-filter-btn.active {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: rgba(99, 102, 241, 0.4);
+    color: var(--accent-text);
+    font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+    .zlecenia-container {
+        grid-template-columns: 1fr 300px;
+    }
+
+    .zlecenia-left {
+        display: none;
+    }
+}
+
+@media (max-width: 700px) {
+    .zlecenia-container {
+        grid-template-columns: 1fr;
+    }
+
+    .zlecenia-right {
+        display: none;
+    }
+}
+
+/* --- STAN ŁADOWANIA KREATORA --- */
+.wizard-loading-state .wizard-step {
+    display: none !important;
+}
+
+.wizard-loading-state .wizard-loading-spinner {
+    display: flex !important;
+}
+
+.loading-spinner-inline {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--blue-hover);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─── Studnie: option background ─── */
+select.form-input option {
+    background-color: #1b2334;
+    color: #fff;
+}
+
+/* ─── Klasy narzędziowe do migracji stylów inline ─── */
+/* Font size */
+.fs-085 {
+    font-size: 0.85rem;
+}
+.fs-075 {
+    font-size: 0.75rem;
+}
+.fs-065 {
+    font-size: 0.65rem;
+}
+.fs-09 {
+    font-size: 0.9rem;
+}
+.fs-08 {
+    font-size: 0.8rem;
+}
+.fs-078 {
+    font-size: 0.78rem;
+}
+.fs-07 {
+    font-size: 0.7rem;
+}
+.fs-072 {
+    font-size: 0.72rem;
+}
+.fs-06 {
+    font-size: 0.6rem;
+}
+.fs-055 {
+    font-size: 0.55rem;
+}
+.fs-058 {
+    font-size: 0.58rem;
+}
+.fs-1 {
+    font-size: 1rem;
+}
+.fs-115 {
+    font-size: 1.15rem;
+}
+.fs-14 {
+    font-size: 1.4rem;
+}
+
+/* Font weight */
+.fw-5 {
+    font-weight: 500;
+}
+.fw-6 {
+    font-weight: 600;
+}
+.fw-7 {
+    font-weight: 700;
+}
+.fw-8 {
+    font-weight: 800;
+}
+
+/* Pomocnicze flex */
+.flex-row {
+    display: flex;
+    flex-direction: row;
+}
+.flex-center {
+    display: flex;
+    align-items: center;
+}
+.flex-center-gap-2 {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+}
+.flex-center-gap-5 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Wymiary flex */
+
+/* Wymiary ikon */
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+.icon-check {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+}
+
+/* Styl etykiety dla checkboxów */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    color: #d4d4d8;
+    font-size: 0.85rem;
+}
+
+/* Padding */
+.p-6-8 {
+    padding: 0.6rem 0.8rem;
+}
+.p-5-6 {
+    padding: 0.5rem 0.6rem;
+}
+
+/* Szerokie pola formularza */
+
+/* Kolory tekstu */
+.text-warn {
+    color: var(--warn);
+}
+
+/* Margins - PRZENIESIONE do style.css (shared) */
+
+/* Misc padding */
+.p-2 {
+    padding: 0.2rem;
+}
+
+/* Tekst z nowrap - PRZENIESIONE do style.css (shared) */
+
+/* Misc */
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* ─── Modal transportu oferty: ukryj spinner ─── */
+.spinner-hidden .spinner-border {
+    display: none;
+}
+
+/* Responsywność kreatora */
+
+@media (max-width: 768px) {
+    .wizard-dot-label {
+        display: none;
+    }
+    .wizard-step-dot {
+        gap: 0;
+    }
+    .wizard-step-line {
+        width: 24px;
+    }
+    .wizard-card {
+        padding: 1rem 0.8rem;
+    }
+    /* Przyciski nawigacji kreatora */
+    .wizard-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .wizard-nav .wizard-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .wizard-nav-fixed {
+        padding: 0 0.6rem;
+        column-gap: 0.5rem;
+        height: 56px;
+        box-sizing: border-box;
+    }
+    .wizard-nav-left {
+        gap: 0.4rem;
+    }
+    .wizard-nav-right {
+        gap: 0.4rem;
+    }
+    .wizard-nav-fixed .wizard-btn {
+        min-width: 90px;
+        height: 34px;
+        padding: 0 0.7rem;
+        font-size: 0.75rem;
+    }
+    .wizard-nav-fixed .wizard-step-info {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        height: 26px;
+        letter-spacing: 0.4px;
+    }
+}
+
+@media (max-width: 600px) {
+    .wizard-form-grid {
+        grid-template-columns: 1fr;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-summary-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.4rem;
+    }
+    .wizard-summary-edit {
+        margin-left: 0 !important;
+    }
+
+    /* Panel 3-kolumnowy w parametrach (już po polsku) */
+    div[style*='grid-template-columns: 1fr 1fr 1fr'][style*='gap: 0.7rem'] {
+        grid-template-columns: 1fr !important;
+    }
+}
+#offer-transport-modal input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+#excel-table-container input[type='number']::-webkit-inner-spin-button,
+#excel-table-container input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+#excel-table-container input[type='number'] {
+    -moz-appearance: textfield;
+    appearance: none;
+}
+
+#excel-table-container input[type='text'],
+#excel-table-container input[type='number'] {
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.3rem 0.45rem;
+    background: transparent;
+}
+
+#excel-table-container select {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 0.3rem 0.45rem;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+#excel-table-container select option {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+#excel-table-container .excel-sel-wrap {
+    display: flex !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#excel-table-container .excel-sel-wrap > div {
+    padding: 0.3rem 0.45rem !important;
+    font-size: 0.7rem !important;
+    font-family:
+        Inter,
+        Segoe UI,
+        sans-serif !important;
+    letter-spacing: 0.1px !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+}
+
+#excel-table-container td {
+    padding: 0;
+    height: 1px; /* Trik CSS: pozwala dzieciom z height: 100% wypełnić pełną wysokość wiersza */
+}
+
+#excel-table-container input[type='checkbox'] {
+    display: block;
+    margin: 0.3rem auto;
+}
+
+#excel-table-container tbody tr:focus-within td {
+    position: relative;
+}
+
+/* Górna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-top: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Dolna linia podświetlenia wiersza na wierzchu */
+#excel-table-container tbody tr:focus-within td::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-bottom: 2px solid rgba(99, 102, 241, 0.95);
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* Lewa krawędź na pierwszej komórce */
+#excel-table-container tbody tr:focus-within td:first-child::before {
+    height: 100%;
+    border-left: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Prawa krawędź na ostatniej komórce */
+#excel-table-container tbody tr:focus-within td:last-child::after {
+    height: 100%;
+    border-right: 2px solid rgba(99, 102, 241, 0.95);
+}
+
+/* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
+#excel-table-container tbody tr:focus-within td {
+    color: #e2e8f0 !important;
+}
+
+/* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
+#excel-table-container tbody tr:focus-within td:first-child {
+    color: #a5b4fc !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
+}
+
+/* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
+#excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
+    color: #f8fafc !important;
+}
+
+#excel-table-container td[data-cell] {
+    padding: 0.3rem 0.45rem !important;
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+    .fs-inputs-pane,
+    .wizard-step,
+    .przejscia-vis-popup,
+    .app-confirm-overlay,
+    .main.studnie-view-transitioning::after,
+    .zlecenia-overlay,
+    .loading-spinner-inline {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ── Akcje w dolnym pasku podsumowania ── */
+.summary-card-actions {
+    padding: 0.5rem 0.8rem !important;
+    display: flex;
+    align-items: stretch;
+}
+.summary-card-actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.3rem;
+    width: 100%;
+    height: 100%;
+}
+.summary-action-btn {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font:
+        600 0.72rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        transform 0.15s;
+    white-space: nowrap;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.summary-action-btn:hover {
+    transform: translateY(-1px);
+}
+.summary-action-btn--save {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: var(--success-hover);
+    grid-column: 1;
+    grid-row: 1;
+}
+.summary-action-btn--save:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+    color: #a7f3d0;
+}
+.summary-action-btn--order {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+    grid-column: 2;
+    grid-row: 1 / 3;
+}
+.summary-action-btn--order:hover {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.6);
+    color: #fde68a;
+}
+.summary-action-btn--print {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: #a5b4fc;
+    grid-column: 1;
+    grid-row: 2;
+}
+.summary-action-btn--print:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.6);
+    color: var(--accent-text);
+}
+/* ── Karty w dolnym pasku podsumowania (wzór rury) ── */
+#offer-summary-footer-fixed .summary-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#offer-summary-footer-fixed .summary-card-actions {
+    padding: 0.5rem 0.8rem;
+}
+
+/* ── Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) ── */
+.offer-summary-footer-fixed {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-glass);
+    padding: 0.8rem 1.5rem;
+    z-index: 99;
+    box-shadow: 0 -8px 30px var(--shadow-color);
+}
+
+/* ── Klasy kart w stopce (mirror .rury-summary-*) ── */
+.studnie-summary-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+}
+.studnie-summary-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+.studnie-summary-value.accent {
+    color: var(--accent-hover);
+}
+.studnie-summary-value.success {
+    color: var(--success);
+    font-weight: 800;
+    font-size: 1.6rem;
+}
+.studnie-summary-value.warn {
+    color: var(--warn);
+}
+.studnie-summary-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+@media (max-width: 768px) {
+    .offer-summary-footer-fixed {
+        bottom: 56px;
+        padding: 0.8rem 1rem;
+    }
+}
+
+/* ── Transition Renderer hover classes ── */
+.prz-field {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+}
+.prz-field:hover {
+    color: #60a5fa !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.prz-btn-edit {
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem;
+    color: #60a5fa;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.prz-btn-edit:hover {
+    background: rgba(96, 165, 250, 0.3) !important;
+}
+
+.prz-btn-delete {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.35rem;
+    color: #ef4444;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.prz-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.3) !important;
+}
+
+.prz-field-color {
+    transition: color 0.2s;
+    cursor: pointer;
+}
+.prz-field-color:hover {
+    color: #60a5fa !important;
+}
+
+.prz-field-dn {
+    transition: color 0.2s;
+    cursor: pointer;
+}
+.prz-field-dn:hover {
+    color: #c084fc !important;
+}
+
+.prz-field-height {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+.prz-field-height:hover {
+    color: #fbbf24 !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.prz-field-angle {
+    transition:
+        background-color 0.2s,
+        transform 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    will-change: transform;
+}
+.prz-field-angle:hover {
+    transform: scale(1.15);
+    background: rgba(255, 255, 255, 0.1);
+    transform-origin: center center;
+}
+
+.prz-field-rzedna {
+    transition: background-color 0.2s;
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+}
+.prz-field-rzedna:hover {
+    color: #60a5fa !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.prz-field-doplata {
+    cursor: pointer;
+    padding: 0.15rem 0.4rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.prz-field-doplata:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ── Well Popups hover classes ── */
+.pehd-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+}
+.pehd-card:hover {
+    border-color: #6366f1 !important;
+    background: rgba(99, 102, 241, 0.05) !important;
+    transform: translateY(-3px);
+}
+
+.pehd-btn-cancel {
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #cbd5e1;
+    cursor: pointer;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        color 0.2s;
+}
+.pehd-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+
+/* ── Excel table header aesthetic improvements ── */
+#excel-table-container .h3-prodcode {
+    font-size: 0.5rem;
+    font-weight: 600;
+    color: #a4b3cb;
+    line-height: 1.45;
+}
+#excel-table-container .h3-prodprice {
+    font-size: 0.55rem;
+    color: #34d399;
+    font-weight: 700;
+    line-height: 1.4;
+    white-space: nowrap;
+    background: rgba(52, 211, 153, 0.07);
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-top: 2px;
+    display: inline-block;
+}
+#excel-table-container tbody tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+#excel-table-container .excel-resize-handle {
+    width: 4px !important;
+    background: rgba(255, 255, 255, 0.08);
+}
+#excel-table-container .excel-resize-handle:hover {
+    background: rgba(99, 102, 241, 0.5) !important;
+}
+#excel-table-container thead th {
+    position: relative;
+}
+#excel-table-container table {
+    border-collapse: collapse;
+}
+
+/* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
+.excel-th-h3 {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.excel-th-h1 {
+    position: sticky;
+    top: 1.4rem;
+    z-index: 20;
+}
+.excel-th-h2 {
+    position: sticky;
+    top: 3.2rem;
+    z-index: 20;
+}
+
+/* Wcięcia dla sub-elementów w tabeli oferty studni */
+.pl-lg {
+    padding-left: 1.5rem !important;
+}
+.pl-xl {
+    padding-left: 3.0rem !important;
+}

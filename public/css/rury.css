@@ -1,0 +1,942 @@
+/* ─── RURY — dedykowane style modułu ─── */
+/* Wzorcowane na studnie.css — spójny system wizualny */
+
+/* ── Layout ── */
+.rury-app-layout {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Margins (uzupełnienie shared w style.css dla porządku) */
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: 1rem; }
+
+/* ── Karty ── */
+.rury-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 1.2rem 1.5rem;
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+}
+
+.rury-card:hover {
+    border-color: var(--bg-tertiary);
+}
+
+.rury-card + .rury-card {
+    margin-top: 1rem;
+}
+
+.rury-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.rury-card-title {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0;
+}
+
+.rury-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.rury-card-body {
+    display: block;
+}
+
+.rury-card-body.hidden {
+    display: none !important;
+}
+
+/* ── Formularze (wzorowane na .wizard-form-* z studnie.css) ── */
+.rury-form-grid {
+    display: grid;
+    gap: 0.7rem;
+    margin-bottom: 0.5rem;
+}
+
+.rury-form-grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.rury-form-grid-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.rury-form-grid-4 {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.rury-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.rury-form-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.rury-form-input {
+    width: 100%;
+    padding: 0.45rem 0.65rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font: 500 0.82rem 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.rury-form-input:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.rury-form-input::placeholder {
+    color: var(--text-muted);
+}
+
+.rury-form-textarea {
+    width: 100%;
+    padding: 0.45rem 0.65rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font: 500 0.82rem 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+    min-height: 40px;
+}
+
+.rury-form-textarea:focus {
+    border-color: var(--accent-border);
+    box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* ── Pasek nawigacji sekcji (wzorowany na .cennik-tab) ── */
+.rury-section-nav {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+.rury-section-btn {
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    background: var(--bg-tile);
+    color: var(--text-muted);
+    font: 600 0.8rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: border-color 0.25s, color 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.rury-section-btn:hover {
+    border-color: var(--bg-tertiary-alt);
+    color: var(--text-secondary);
+}
+
+.rury-section-btn.active {
+    background: var(--bg-tab-active);
+    border-color: var(--accent-border-medium);
+    color: var(--accent-text-light);
+    box-shadow: 0 0 12px var(--bg-active-deep);
+}
+
+/* ── Tabela ofert (wzorowana na .well-config-table) ── */
+.rury-table-wrap {
+    overflow-x: auto;
+    border-radius: var(--radius-sm);
+}
+
+/* Scrollable wariant dla tabeli Oferty (max wysokość zostawia miejsce na bottom bars) */
+.table-wrap.table-wrap-scroll {
+    max-height: calc(100vh - 380px);
+    overflow-y: auto;
+}
+
+.rury-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.82rem;
+}
+
+.rury-table thead th {
+    padding: 0.3rem 0.4rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-glass);
+    border-right: 1px solid var(--border-glass);
+    position: sticky;
+    top: 60px;
+    z-index: 50;
+    white-space: nowrap;
+}
+
+.rury-table tbody td {
+    padding: 0.4rem 0.5rem;
+    border-bottom: 1px solid var(--border-table-subtle);
+    border-right: 1px solid transparent;
+    vertical-align: middle;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.rury-table tbody tr {
+    transition: var(--transition);
+}
+
+.rury-table tbody tr:hover {
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.rury-table tbody td input.edit-input:disabled,
+.rury-table tbody td input[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.rury-table tbody td.rury-col-num,
+.rury-table tbody td.rury-col-num span {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.rury-table tbody tr:not(.offer-cat-header):not(.offer-diam-header) td:first-child {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.rury-table .pehd-btn-stack {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.rury-table .pehd-btn {
+    font-size: 0.72rem !important;
+    padding: 0.3rem 0.6rem !important;
+    min-width: 88px;
+    text-align: center;
+    white-space: nowrap;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.rury-table .pehd-btn-active {
+    background: var(--warn);
+    color: #1a1a1a;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 0 12px rgba(var(--warn-rgb), 0.5);
+}
+.rury-table .pehd-btn-inactive {
+    background: var(--bg-hover);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.rury-table .length-editor {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0.15rem 0.5rem;
+    margin-top: 4px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-input);
+    font-size: 0.7rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rury-table .length-editor:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 6px rgba(99, 102, 241, 0.3);
+}
+
+.rury-table .length-editor .length-value {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.rury-table .text-right {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.rury-table .text-center {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.rury-table-empty td {
+    padding: 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Nagłówki kategorii w tabeli */
+.rury-row-category td {
+    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom));
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem !important;
+    border-left: 3px solid var(--accent);
+    color: var(--text-primary);
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+
+.rury-row-category:hover {
+    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom)) !important;
+}
+
+.rury-row-diameter td {
+    background: var(--success-bg);
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.5rem 0.15rem 0.8rem !important;
+    border-left: 2px solid var(--success-bg);
+    color: var(--success);
+    letter-spacing: 0.2px;
+}
+
+.rury-row-diameter:hover {
+    background: var(--success-bg) !important;
+}
+
+.rury-row-1m {
+    background: var(--highlight-bg);
+}
+
+.rury-row-1m:hover {
+    background: var(--highlight-bg) !important;
+}
+
+.rury-row-1m td:first-child {
+    border-left: 2px solid var(--highlight-bg);
+}
+
+/* ── Status ikon w kolumnie wyboru (krok 5) ── */
+.rury-table tbody td[data-status] {
+    text-align: center;
+    white-space: nowrap;
+}
+.rury-table tbody td[data-status="ordered"] i {
+    filter: drop-shadow(0 0 4px rgba(165, 180, 252, 0.3));
+}
+.rury-table tbody td[data-status="available"] {
+    opacity: 0.5;
+}
+.rury-table tbody td[data-status="available"]:hover {
+    opacity: 1;
+}
+
+/* ── Sticky footer z podsumowaniem ── */
+.rury-sticky-footer {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-card, var(--bg-secondary));
+    border-top: 1px solid var(--border-glass);
+    margin: 0 -1.5rem -1.2rem -1.5rem;
+    padding: 1.2rem 1.5rem;
+    z-index: 100;
+    box-shadow: 0 -8px 30px var(--shadow-color);
+}
+
+.rury-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+}
+
+.rury-summary-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.rury-summary-card.has-borders {
+    border-left: 1px solid var(--border-glass);
+    border-right: 1px solid var(--border-glass);
+}
+
+.rury-summary-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--text-muted);
+    margin-bottom: 0.2rem;
+}
+
+.rury-summary-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.rury-summary-value.accent {
+    color: var(--accent-hover);
+}
+
+.rury-summary-value.success {
+    color: var(--success);
+    font-weight: 800;
+}
+
+.rury-summary-value.warn {
+    color: var(--warn);
+}
+
+.rury-summary-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+}
+
+.rury-summary-value-lg {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--success);
+    margin: 0;
+}
+
+/* ── Fixed footer zamówienia (krok 5) ── */
+#rury-order-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg-card, var(--bg-secondary));
+    border-top: 1px solid var(--border-glass);
+    padding: 0.8rem 2rem;
+    z-index: 9999;
+    box-shadow: 0 -8px 30px var(--shadow-color);
+}
+
+#wizard-step-5 {
+    padding-bottom: 220px;
+}
+
+/* ── Przycisk edycji rabatu ── */
+.rury-btn-discount {
+    font-size: 0.82rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--accent-border);
+    color: var(--accent-text);
+    background: var(--bg-hover-deep);
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    width: 100%;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.rury-btn-discount:hover {
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent-hover);
+}
+
+/* ── Podsekcja akcji w summary bar ── */
+.rury-summary-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 0.4rem;
+    padding: 0.5rem 0.8rem;
+    height: 100%;
+}
+
+.rury-action-btn {
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font: 600 0.75rem 'Inter', sans-serif;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    white-space: nowrap;
+    width: 100%;
+    height: 100%;
+}
+
+.rury-action-btn:hover {
+    transform: translateY(-1px);
+}
+
+.rury-action-btn:active {
+    transform: translateY(0);
+}
+
+.rury-action-btn--print {
+    background: rgba(99, 102, 241, 0.15);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    color: var(--accent-text);
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.rury-action-btn--print:hover {
+    background: rgba(99, 102, 241, 0.3);
+    border-color: rgba(99, 102, 241, 0.6);
+    color: var(--accent-text-light);
+}
+
+.rury-action-btn--save {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: var(--success-hover);
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.rury-action-btn--save:hover {
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+    color: #a7f3d0;
+}
+
+.rury-action-btn--order {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    color: #fcd34d;
+    grid-column: 2;
+    grid-row: 1 / 3;
+}
+
+.rury-action-btn--order:hover {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.6);
+    color: #fde68a;
+}
+
+/* ── Przycisk Zmień opiekuna ── */
+.rury-btn-ghost {
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    color: var(--accent-hover);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    display: none;
+}
+
+.rury-btn-ghost.visible {
+    display: inline-flex;
+}
+
+/* ── Przycisk wylogowania ── */
+.rury-btn-logout {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border-glass);
+    border-radius: 6px;
+    background: var(--bg-glass);
+    color: var(--text-muted);
+    font: 500 0.75rem 'Inter', sans-serif;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.rury-btn-logout:hover {
+    color: var(--danger-hover);
+    border-color: var(--danger-border-deep);
+}
+
+/* ── Badge roli użytkownika ── */
+.rury-role-badge {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-right: 0.5rem;
+}
+
+/* ── Pasek narzędzi cennika ── */
+.rury-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.rury-toolbar-title {
+    font-size: 1rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.rury-toolbar-spacer {
+    flex: 1;
+}
+
+/* ── Katalog produktów ── */
+.rury-catalog-tabs {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.3rem;
+    position: sticky;
+    top: 92px;
+    z-index: 39;
+    background: var(--bg-secondary);
+    padding: 0.3rem 0.6rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.rury-catalog-tab {
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    font: 500 0.75rem 'Inter', sans-serif;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary-alt-2);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.rury-catalog-tab:hover {
+    color: var(--text-primary);
+    border-color: var(--bg-tertiary);
+}
+
+.rury-catalog-tab.active {
+    background: var(--accent);
+    color: #ffffff;
+    border-color: var(--accent);
+}
+
+/* ── Header user info ── */
+.rury-header-user {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+}
+
+.rury-header-username {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+/* ── Flex/Grid helpers ── */
+.rury-flex {
+    display: flex;
+}
+
+.rury-flex-center {
+    display: flex;
+    align-items: center;
+}
+
+.rury-flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.rury-flex-gap-4 {
+    gap: 0.4rem;
+}
+
+.rury-flex-gap-5 {
+    gap: 0.5rem;
+}
+
+.rury-flex-gap-8 {
+    gap: 0.8rem;
+}
+
+.rury-flex-gap-10 {
+    gap: 1rem;
+}
+
+.rury-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* ── Transport breakdown ── */
+.rury-transport-info {
+    margin-top: 0.6rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Empty state ── */
+.rury-empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+/* ── Search row ── */
+.rury-search-row {
+    display: flex !important;
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+    align-items: center;
+    position: sticky;
+    top: 49px;
+    z-index: 40;
+    background: var(--bg-secondary);
+    padding: 0.3rem 0.6rem;
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px var(--shadow-color);
+}
+
+.rury-search-row.hidden {
+    display: none !important;
+}
+
+/* ── Animacje (wzorowane na studnie.css) ── */
+@keyframes ruryFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes rurySlideUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.rury-fade-in {
+    animation: ruryFadeIn 0.35s ease-out;
+}
+
+.rury-slide-up {
+    animation: rurySlideUp 0.4s ease-out;
+}
+
+/* ── Rury-specific wizard overrides ── */
+.rury-app-layout .wizard-step.active {
+    padding-bottom: 4rem;
+}
+
+/* W sekcji pricelist wyłączamy animację fadeIn i wymuszamy opacity: 1 */
+#section-pricelist {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* ── Fixed pasek podsumowania oferty (krok 3, nad dolną nawigacją) ── */
+.rury-summary-bar {
+    position: fixed;
+    bottom: 60px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--bg-card, var(--bg-secondary));
+    border-top: 1px solid var(--border-glass);
+    border-bottom: 1px solid transparent;
+    padding: 0.8rem 1.5rem;
+    box-shadow: 0 -8px 30px var(--shadow-color);
+}
+
+/* Większy padding-bottom dla kroku 3, by treść nie chowała się za fixed paskiem i nawigacją */
+.wizard-step#wizard-step-3.active {
+    padding-bottom: 220px;
+}
+
+/* ── Responsywność ── */
+@media (max-width: 768px) {
+    .rury-card {
+        padding: 0.8rem 1rem;
+    }
+
+    .rury-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .rury-form-grid-2,
+    .rury-form-grid-3,
+    .rury-form-grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    .rury-summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .rury-summary-card.has-borders {
+        border-left: none;
+        border-right: none;
+    }
+
+    .rury-sticky-footer {
+        margin: 0 -1rem -0.8rem -1rem;
+        padding: 1rem;
+    }
+
+    .rury-summary-bar {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .wizard-dot-label { display: none; }
+    .wizard-step-dot { gap: 0; }
+    .wizard-step-line { width: 24px; }
+    .wizard-nav { flex-direction: column; gap: 0.5rem; }
+    .wizard-nav .wizard-btn { width: 100%; justify-content: center; }
+    .wizard-nav-fixed { padding: 0 0.6rem; column-gap: 0.5rem; height: 56px; box-sizing: border-box; }
+    .wizard-nav-fixed .wizard-nav-left { gap: 0.4rem; }
+    .wizard-nav-fixed .wizard-nav-right { gap: 0.4rem; }
+    .wizard-nav-fixed .wizard-btn { min-width: 90px; height: 34px; padding: 0 0.7rem; font-size: 0.75rem; }
+    .wizard-nav-fixed .wizard-step-info { font-size: 0.6rem; padding: 0.2rem 0.6rem; height: 26px; letter-spacing: 0.4px; }
+
+    .wizard-card { padding: 1rem 0.8rem; }
+    .wizard-card-header { flex-wrap: wrap; }
+    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
+    .wizard-form-grid[style*="grid-template-columns: 3fr 1fr"] { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 600px) {
+    .rury-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rury-section-btn {
+        font-size: 0.72rem;
+        padding: 0.35rem 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .rury-card {
+        padding: 0.6rem 0.8rem;
+    }
+}
+
+/* ===== KARTA BUDOWY — style identyczne ze Studnie ===== */
+
+/* ===== KARTA BUDOWY — responsywność ===== */
+@media (max-width: 768px) {
+    .flex-wrap-start { gap: 0.6rem; }
+    .flex-1-180, .flex-1-240, .flex-2-240 { min-width: 100%; }
+}
+
+/* prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .rury-fade-in,
+  .rury-slide-up {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ===== ZABEZPIECZENIE TRANSPORTU — TOGGLE TAK/NIE ===== */
+.zt-toggle-wrap {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+}
+.zt-toggle-label {
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+.zt-toggle-group {
+    display: flex;
+    gap: 0.25rem;
+}
+.zt-toggle-btn {
+    padding: 0.35rem 2rem;
+    font: 600 0.78rem 'Inter', sans-serif;
+    border: 1px solid var(--border-glass);
+    border-radius: 5px;
+    background: rgba(239, 68, 68, 0.12);
+    color: rgba(239, 68, 68, 0.6);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    line-height: 1.4;
+}
+.zt-toggle-btn.active {
+    background: rgba(34, 197, 94, 0.18);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.4);
+}
+.zt-toggle-btn:hover:not(.active) {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.35);
+}
