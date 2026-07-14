@@ -28,10 +28,11 @@ const HTML_FILES = [
     'public/studnie.html',
     'public/rury.html',
     'public/kartoteka.html',
-    'public/zlecenia.html'
+    'public/zlecenia.html',
+    'public/templates/etykieta.html',
+    'public/templates/ofertaStudnie.html',
+    'public/templates/zlecenie.html'
 ];
-
-const VER_PATTERN = /v=\d+\.\d+\.\d+/g;
 
 function isLocalPath(url) {
     if (!url) return false;
