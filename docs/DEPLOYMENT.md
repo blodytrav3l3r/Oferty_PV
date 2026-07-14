@@ -283,4 +283,63 @@ Sentry będzie rejestrować:
 
 ---
 
-_Ostatnia aktualizacja: 2026-06-30_
+_Ostatnia aktualizacja: 2026-07-14_
+
+---
+
+## 9. Przenoszenie bazy na inne urządzenie
+
+Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest prostą operacją kopiowania.
+
+### Procedura
+
+#### Na urządzeniu źródłowym (starym):
+
+1. Zatrzymaj serwer (Ctrl+C)
+2. Wykonaj backup:
+
+    ```bash
+    npm run backup
+    ```
+
+    Backup trafi do `data/backups/backup_<timestamp>.sqlite`.
+
+3. Skopiuj plik backupu na nowe urządzenie (pendrive, SCP, chmura).
+
+#### Na urządzeniu docelowym (nowym):
+
+1. Zainstaluj aplikację według instrukcji w README (kroki 1–3, bez seedowania)
+2. Zbuduj projekt: `npm run build`
+3. Przywróć bazę:
+    ```bash
+    npm run backup:restore -- data/backups/backup_*.sqlite
+    ```
+    lub ręcznie:
+    ```bash
+    cp data/backups/backup_*.sqlite data/app_database.sqlite
+    ```
+4. Uruchom serwer: `npm start`
+
+### Co gdy schemat bazy różni się między wersjami?
+
+Po przeniesieniu bazy na nowe urządzenie z nowszą wersją aplikacji uruchom migrację:
+
+```bash
+npx prisma migrate deploy
+```
+
+Jeśli migracje nie są dostępne:
+
+```bash
+npx prisma db push --skip-generate
+```
+
+Prisma automatycznie dostosuje schemat do aktualnego stanu bez utraty danych.
+
+### Weryfikacja
+
+Po przywróceniu bazy sprawdź:
+
+1. Endpoint `/health` zwraca `200 OK`
+2. Lista produktów i ceny zgodne z oczekiwaniami
+3. Historia ofert i klienci dostępni

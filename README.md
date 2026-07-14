@@ -106,6 +106,8 @@ npm run prisma:seed
 npm run build
 ```
 
+> **Jeśli przenosisz bazę z innej instalacji:** pomiń krok 5 (seed) i po zbudowaniu projektu przywróć bazę z backupu (patrz sekcja [Przenoszenie bazy cenników z istniejącej instalacji](#przenoszenie-bazy-cenników-z-istniejącej-instalacji)).
+
 #### 4. Uruchom serwer
 
 **Tryb developerski (z hot-reload):**
@@ -147,10 +149,17 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate dev
+
+# 4. Baza danych — opcje:
+#    a) Zasiej dane początkowe (nowa instalacja):
 npm run prisma:seed
+#    b) LUB przywróć bazę z backupu z innego urządzenia:
+#       npm run backup:restore -- data/backups/backup_*.sqlite
+
+# 5. Zbuduj projekt
 npm run build
 
-# 4. Uruchom (zalecane przez PM2)
+# 6. Uruchom (zalecane przez PM2)
 npm install -g pm2
 pm2 start dist/server.js --name witros-oferty
 pm2 save
@@ -166,6 +175,74 @@ docker compose up --build -d
 ```
 
 Aplikacja: **http://localhost:3000**
+
+---
+
+### Przenoszenie bazy cenników z istniejącej instalacji
+
+Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów, możesz przenieść ją na nowe urządzenie — pozwala to pominąć proces seedowania i zachować wszystkie dane.
+
+#### Krok po kroku:
+
+1. **Na starym urządzeniu** wykonaj backup bazy danych:
+
+    ```powershell
+    npm run backup
+    ```
+
+    Backup zostanie zapisany w `data/backups/backup_<data>.sqlite`.
+
+2. **Skopiuj plik backupu** na nowe urządzenie (przez USB, sieć, chmurę):
+
+    ```
+    data/backups/backup_2026-07-14_*.sqlite
+    ```
+
+3. **Na nowym urządzeniu** wykonaj standardową instalację (kroki 1–4 z sekcji wyżej) — bez seedowania:
+
+    ```powershell
+    .\install.bat
+    ```
+
+4. **Zatrzymaj serwer** (jeśli działa).
+
+5. **Przywróć bazę z backupu**:
+    ```powershell
+    npm run backup:restore -- data/backups/backup_2026-07-14_*.sqlite
+    ```
+    lub ręcznie:
+    ```powershell
+    copy /Y data\backups\backup_2026-07-14_*.sqlite data\app_database.sqlite
+    ```
+
+#### Co zawiera baza?
+
+Plik `data/app_database.sqlite` przechowuje:
+
+| Zawartość                | Opis                                        |
+| ------------------------ | ------------------------------------------- |
+| Produkty (rury, studnie) | Cenniki, kategorie, średnice, długości      |
+| Ceny i stawki            | Bieżące ceny produktów i usług              |
+| Klienci                  | Baza klientów z danymi kontaktowymi         |
+| Oferty i zamówienia      | Historia ofert i zamówień                   |
+| Użytkownicy i sesje      | Konta użytkowników i ich sesje logowania    |
+| Konfiguracja systemu     | Ustawienia, flagi funkcjonalne, preferencje |
+| Logi audytu              | Historia zmian w systemie                   |
+| Dane ML/AI               | Modele, telemetria, rekomendacje rankowania |
+
+> **Uwaga:** Po przeniesieniu bazy upewnij się, że hasło administratora (`DEFAULT_ADMIN_PASSWORD` w `.env`) jest zgodne z poprzednią instalacją — w przeciwnym razie zmień je w bazie lub utwórz nowe konto admina.
+
+#### Weryfikacja po przeniesieniu
+
+1. Uruchom serwer: `.\start.bat`
+2. Sprawdź endpoint `/health`:
+    ```powershell
+    curl http://localhost:10000/health
+    ```
+3. Zaloguj się i zweryfikuj:
+    - Lista produktów i ceny są zgodne z poprzednią instalacją
+    - Historia ofert jest dostępna
+    - Klienci są na swoich miejscach
 
 ---
 
@@ -259,11 +336,12 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run prisma:reset`    | Reset bazy danych              |
 | `npm run prisma:status`   | Status migracji                |
 
-### Backup
+### Backup i przenoszenie bazy
 
 | Komenda                         | Opis                              |
 | ------------------------------- | --------------------------------- |
 | `npm run backup`                | Wykonaj backup bazy SQLite        |
+| `npm run backup:restore`        | Przywróć bazę z pliku backupu     |
 | `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows) |
 | `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows) |
 

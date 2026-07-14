@@ -44,6 +44,21 @@ Proces release:
 
 **Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
 
+## Przenoszenie bazy między urządzeniami
+
+Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
+
+1. Na starym urządzeniu wykonaj `npm run backup`
+2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
+3. Na nowym urządzeniu po standardowej instalacji (bez seedowania) wykonaj:
+    ```bash
+    npm run backup:restore -- data/backups/backup_*.sqlite
+    ```
+4. Jeśli schemat bazy różni się między wersjami, uruchom:
+    ```bash
+    npx prisma db push --skip-generate
+    ```
+
 ## Dependabot
 
 Na GitHubie otwórz PR → zielony przycisk "Squash and merge". Tyle.

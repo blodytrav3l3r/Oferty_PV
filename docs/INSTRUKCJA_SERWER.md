@@ -56,6 +56,8 @@ Aplikacja będzie dostępna pod adresem: **http://localhost:10000**
 
 ### Instalacja ręczna (dowolny system)
 
+**Opcja A — nowa instalacja (z seedem danych początkowych):**
+
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
@@ -66,6 +68,22 @@ npx prisma generate
 npx prisma migrate dev
 npm run prisma:seed
 npm run build
+npm start
+```
+
+**Opcja B — z istniejącą bazą cenników (przeniesiona z innego urządzenia):**
+
+```bash
+git clone https://github.com/blodytrav3l3r/Oferty_PV.git
+cd Oferty_PV
+npm install
+cp .env.example .env
+nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
+npx prisma generate
+npx prisma migrate dev
+npm run build
+# Przywróć bazę z backupu (pomiń seed):
+npm run backup:restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
@@ -125,8 +143,11 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate dev
-npm run prisma:seed
 npm run build
+# Opcja A: nowa instalacja
+npm run prisma:seed
+# Opcja B: jeśli przenosisz bazę z innego urządzenia — zamiast seed:
+# npm run backup:restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
@@ -276,13 +297,17 @@ pm2 monit             # Monitor
 | Błąd bazy danych          | Uruchom `npm run prisma:reset` i `npm run prisma:seed` |
 | Błąd "Cannot find module" | Uruchom `npm run build`                                |
 
-### Backup danych:
+### Backup i przenoszenie danych:
 
 ```powershell
+# Backup
 npm run backup
+
+# Przywrócenie backupu na nowym urządzeniu:
+npm run backup:restore -- data/backups/backup_*.sqlite
 ```
 
-Wszystkie dane w `data/` — regularnie kopiuj ten folder.
+Baza SQLite to jeden plik `data/app_database.sqlite` — backup i przeniesienie na inne urządzenie to kopiowanie tego pliku.
 
 ---
 

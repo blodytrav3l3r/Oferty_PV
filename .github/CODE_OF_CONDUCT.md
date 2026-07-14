@@ -26,6 +26,10 @@ Przykłady niedopuszczalnych zachowań:
 
 Incydenty można zgłaszać na adres **blodytrav3l3r@gmail.com**. Wszystkie skargi zostaną rozpatrzone i doprowadzą do odpowiedniej reakcji.
 
+## Zasięg
+
+Niniejszy kodeks postępowania obowiązuje we wszystkich przestrzeniach projektu — repozytorium kodu, issue trackerze, pull requestach, dyskusjach oraz bezpośredniej komunikacji związanej z projektem.
+
 ---
 
 Źródło: [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html)

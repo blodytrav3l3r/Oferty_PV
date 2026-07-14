@@ -329,16 +329,34 @@ npm run backup:uninstall-cron  # Usuwa zadanie
 
 ## 5. Restore
 
-Aby odtworzyć bazę z backupu:
+### Przywrócenie z backupu (zalecane)
+
+```bash
+npm run backup:restore -- data/backups/backup_2026-06-30_*.sqlite
+```
+
+Skrypt weryfikuje wersję bazy (`PRAGMA user_version`) przed nadpisaniem.
+
+### Ręczne przywrócenie
 
 ```bash
 # Zatrzymaj serwer
-# Skopiuj plik backupu do data/app_database.sqlite
-cp data/backups/backup_2026-06-30_1234567890.sqlite data/app_database.sqlite
+cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 # Uruchom serwer
 ```
 
-Skrypt `scripts/restore-db.js` automatyzuje przywracanie bazy z backupu (z weryfikacją wersji PRAGMA).
+### Przenoszenie bazy na nowe urządzenie
+
+1. Na starym urządzeniu: `npm run backup`
+2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
+3. Na nowym urządzeniu (po standardowej instalacji, bez seedowania):
+    ```bash
+    npm run backup:restore -- data/backups/backup_*.sqlite
+    ```
+4. Jeśli schemat różni się między wersjami:
+    ```bash
+    npx prisma db push --skip-generate
+    ```
 
 ---
 

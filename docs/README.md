@@ -15,18 +15,31 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 | MS Word   | docxtemplater / docx                     |
 | AI/ML     | Logistic Regression (TypeScript, własny) |
 | Testy     | Jest + ts-jest + supertest               |
-| Python    | FastAPI, OR-Tools CP-SAT, SQLAlchemy     |
 | Ikonki    | Lucide (slim build, 76 ikon)             |
 | Font      | Inter (self-hosted)                      |
 
-## Uruchomienie
+## Uruchomienie — nowa instalacja
 
 ```bash
 npm install
 npx prisma generate
 npx prisma migrate dev
-npm run prisma:seed
+npm run prisma:seed   # ← pomiń jeśli przenosisz bazę
 npm run build
+npm start
+```
+
+### Uruchomienie — z istniejącą bazą cenników
+
+Jeśli przenosisz bazę z innego urządzenia, zamiast seedowania przywróć backup:
+
+```bash
+npm install
+npx prisma generate
+npx prisma migrate dev
+npm run build
+# Przywróć bazę z backupu:
+npm run backup:restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
@@ -55,6 +68,7 @@ npm start
 | `npm run validate`       | typecheck + lint + testy            |
 | `npm start`              | Serwer produkcyjny                  |
 | `npm run backup`         | Backup bazy danych                  |
+| `npm run backup:restore` | Przywróć bazę z backupu             |
 | `npm run release`        | Utwórz release (wersja + changelog) |
 
 ## ML Pipeline (TypeScript)
@@ -87,6 +101,14 @@ Własna implementacja Logistic Regression w TypeScript:
 - Schema: `prisma/schema.prisma`
 - Baza: `data/app_database.sqlite`
 - Modele: users, sessions, settings, offers, offer_items, clients, orders, production_orders, products, audit_logs, ai_telemetry_logs
+
+### Przenoszenie bazy między urządzeniami
+
+1. Na starym urządzeniu: `npm run backup`
+2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
+3. Na nowym urządzeniu: `npm run backup:restore -- data/backups/backup_*.sqlite`
+
+Baza SQLite to pojedynczy plik — backup i przywracanie to kopiowanie jednego pliku.
 
 ## Licencja
 

@@ -1,48 +1,54 @@
 # Backup i Restore bazy danych SQLite
 
-## Backup
-
 Baza danych SQLite znajduje się w `data/app_database.sqlite`.
+
+## Backup
 
 ### Ręczny backup
 
 ```bash
-node scripts/backup-db.js
+npm run backup
 ```
 
-Skrypt kopiuje bazę do `data/backup/backup_YYYY-MM-DD_HH-MM-SS.sqlite`.
+Skrypt kopiuje bazę do `data/backups/backup_YYYY-MM-DD_TIMESTAMP.sqlite` przy użyciu `VACUUM INTO` (spójny snapshot, działa podczas zapisu).
 
 ### Automatyczny backup (Windows)
 
-Harmonogram zadań można zainstalować:
-
 ```bash
-npm run backup:install-cron
-```
-
-Odinstalowanie:
-
-```bash
-npm run backup:uninstall-cron
+npm run backup:install-cron    # Instaluje zadanie w Harmonogramie zadań
+npm run backup:uninstall-cron  # Usuwa zadanie
 ```
 
 ## Restore
 
-### Przywrócenie z backupu
+### Przywrócenie z backupu (zalecane)
 
 ```bash
-node scripts/restore-db.js data/backup/backup_2026-06-30_17-00-00.sqlite
+npm run backup:restore -- data/backups/backup_2026-06-30_*.sqlite
 ```
 
-Skrypt zapyta o potwierdzenie przed nadpisaniem.
+Skrypt weryfikuje wersję bazy (`PRAGMA user_version`) przed nadpisaniem.
 
 ### Ręczne przywrócenie
 
 ```bash
 # Zatrzymaj aplikację
-cp data/backup/backup_*.sqlite data/app_database.sqlite
+cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 # Uruchom aplikację
 ```
+
+## Przenoszenie bazy na nowe urządzenie
+
+1. Na starym urządzeniu: `npm run backup`
+2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie (pendrive, SCP, chmura)
+3. Na nowym urządzeniu po standardowej instalacji (pomiń seed):
+    ```bash
+    npm run backup:restore -- data/backups/backup_*.sqlite
+    ```
+4. Jeśli schemat bazy różni się między wersjami:
+    ```bash
+    npx prisma db push --skip-generate
+    ```
 
 ## Wersja bazy
 
@@ -56,6 +62,7 @@ Stan bazy (backup, wersja, rozmiar) można sprawdzić przez `GET /health`.
 
 ## Uwagi
 
-- Backup wykonywany na działającej aplikacji jest bezpieczny (SQLite obsługuje równoczesny odczyt/zapis)
-- **Nie** przywracaj backupu z innej wersji aplikacji bez sprawdzenia kompatybilności schematu (Prisma migrations)
-- Regularne backupy konfiguruje się przez `data/backup/` — np. cron lub Windows Task Scheduler
+- Backup wykonywany na działającej aplikacji jest bezpieczny (SQLite VACUUM INTO tworzy spójny snapshot)
+- **Nie** przywracaj backupu z innej wersji aplikacji bez sprawdzenia kompatybilności schematu (uruchom `npx prisma db push --skip-generate`)
+- Regularne backupy konfiguruje się przez `npm run backup:install-cron` lub cron na Linux
+- Maksymalnie 30 najnowszych backupów jest przechowywanych (automatyczne czyszczenie)

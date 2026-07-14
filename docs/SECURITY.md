@@ -245,4 +245,26 @@ if (process.env.SENTRY_DSN) {
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-07_
+_Ostatnia aktualizacja: 2026-07-14_
+
+---
+
+## 13. Bezpieczeństwo przy przenoszeniu bazy danych
+
+Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki ostrożności:
+
+### Przed transportem
+
+- Wykonaj backup za pomocą `npm run backup` (zawsze najpierw zatrzymaj serwer)
+- Upewnij się, że backup nie zawiera danych wrażliwych, które nie powinny opuszczać urządzenia
+- W przypadku transportu przez sieć rozważ zaszyfrowanie pliku backupu (np. 7-Zip z hasłem)
+
+### Po przywróceniu na nowym urządzeniu
+
+- Zweryfikuj integralność bazy: sprawdź czy endpoint `/health` działa
+- Upewnij się, że hasło `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją
+- Jeśli schemat bazy uległ zmianie, uruchom `npx prisma db push --skip-generate`
+
+### Co NIE jest przenoszone
+
+Plik `.env` zawierający sekrety (SENTRY_DSN, hasła) **nie podlega backupowi** i musi być skonfigurowany ręcznie na nowym urządzeniu.
