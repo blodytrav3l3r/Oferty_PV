@@ -17,7 +17,10 @@ import fs from 'fs';
 import {
     readPricelist,
     writePricelist,
-    ensureProductsSeeded
+    ensureProductsSeeded,
+    syncSeedFile,
+    syncSeedFilePatch,
+    syncSeedFileDelete
 } from '../src/services/pricelistService';
 
 const mockSettings = prisma.settings as jest.Mocked<typeof prisma.settings>;
@@ -117,5 +120,113 @@ describe('ensureProductsSeeded', () => {
         await ensureProductsSeeded(TEST_CONFIG);
         expect(mockSettings.upsert).not.toHaveBeenCalled();
         jest.restoreAllMocks();
+    });
+});
+
+describe('syncSeedFile', () => {
+    const tmp = 'data/test_sync_seed.json';
+    afterEach(() => {
+        try {
+            fs.unlinkSync(tmp);
+        } catch {
+            /* ok */
+        }
+    });
+
+    it('zapisuje dane do pliku', () => {
+        syncSeedFile(tmp, [{ id: 'P1', price: 100 }]);
+        const raw = fs.readFileSync(tmp, 'utf-8');
+        const data = JSON.parse(raw);
+        expect(data).toEqual([{ id: 'P1', price: 100 }]);
+    });
+
+    it('nadpisuje istniejący plik', () => {
+        fs.writeFileSync(tmp, JSON.stringify([{ id: 'OLD' }]));
+        syncSeedFile(tmp, [{ id: 'P2' }]);
+        const data = JSON.parse(fs.readFileSync(tmp, 'utf-8'));
+        expect(data).toEqual([{ id: 'P2' }]);
+    });
+
+    it('nie rzuca błędem gdy brak uprawnień (loguje error)', () => {
+        expect(() => syncSeedFile('/invalid/path/seed.json', [])).not.toThrow();
+    });
+});
+
+describe('syncSeedFilePatch', () => {
+    const tmp = 'data/test_patch_seed.json';
+    beforeEach(() => {
+        fs.writeFileSync(
+            tmp,
+            JSON.stringify([
+                { id: 'P1', price: 100, name: 'A' },
+                { id: 'P2', price: 200, name: 'B' }
+            ])
+        );
+    });
+    afterEach(() => {
+        try {
+            fs.unlinkSync(tmp);
+        } catch {
+            /* ok */
+        }
+    });
+
+    it('aktualizuje istniejący rekord', () => {
+        syncSeedFilePatch(tmp, 'P1', { price: 999 });
+        const data = JSON.parse(fs.readFileSync(tmp, 'utf-8'));
+        expect(data).toEqual([
+            { id: 'P1', price: 999, name: 'A' },
+            { id: 'P2', price: 200, name: 'B' }
+        ]);
+    });
+
+    it('nie zmienia pliku gdy brak ID', () => {
+        syncSeedFilePatch(tmp, 'NONEXIST', { price: 999 });
+        const data = JSON.parse(fs.readFileSync(tmp, 'utf-8'));
+        expect(data).toHaveLength(2);
+    });
+
+    it('nie rzuca błędem gdy plik nie istnieje', () => {
+        expect(() => syncSeedFilePatch('data/nonexist.json', 'P1', {})).not.toThrow();
+    });
+});
+
+describe('syncSeedFileDelete', () => {
+    const tmp = 'data/test_delete_seed.json';
+    beforeEach(() => {
+        fs.writeFileSync(
+            tmp,
+            JSON.stringify([
+                { id: 'P1', price: 100 },
+                { id: 'P2', price: 200 },
+                { id: 'P3', price: 300 }
+            ])
+        );
+    });
+    afterEach(() => {
+        try {
+            fs.unlinkSync(tmp);
+        } catch {
+            /* ok */
+        }
+    });
+
+    it('usuwa rekord po ID', () => {
+        syncSeedFileDelete(tmp, 'P2');
+        const data = JSON.parse(fs.readFileSync(tmp, 'utf-8'));
+        expect(data).toEqual([
+            { id: 'P1', price: 100 },
+            { id: 'P3', price: 300 }
+        ]);
+    });
+
+    it('nic nie robi gdy ID nie istnieje', () => {
+        syncSeedFileDelete(tmp, 'NONEXIST');
+        const data = JSON.parse(fs.readFileSync(tmp, 'utf-8'));
+        expect(data).toHaveLength(3);
+    });
+
+    it('nie rzuca błędem gdy plik nie istnieje', () => {
+        expect(() => syncSeedFileDelete('data/nonexist.json', 'P1')).not.toThrow();
     });
 });

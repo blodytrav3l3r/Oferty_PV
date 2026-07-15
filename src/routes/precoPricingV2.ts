@@ -6,7 +6,7 @@ import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
-import { readPricelist, writePricelist } from '../services/pricelistService';
+import { readPricelist, writePricelist, syncSeedFile } from '../services/pricelistService';
 import prisma from '../prismaClient';
 
 const router = express.Router();
@@ -14,6 +14,7 @@ const writeLimiter = PRECO_PRICING_LIMITER;
 
 const SETTINGS_KEY = 'preco_pricing';
 const SETTINGS_KEY_DEFAULT = 'preco_pricing_default';
+const SEED_PATH = 'data/seed_preco.json';
 
 type PrecoEntry = Record<string, unknown>;
 
@@ -92,6 +93,8 @@ router.put(
 
             await writePricelist(SETTINGS_KEY, [input]);
             res.json({ ok: true });
+
+            syncSeedFile(SEED_PATH, [input]);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PUT error', message);
@@ -133,6 +136,8 @@ router.patch(
 
             await writePricelist(SETTINGS_KEY, [entry]);
             res.json({ ok: true });
+
+            syncSeedFile(SEED_PATH, [entry]);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PATCH error', message);

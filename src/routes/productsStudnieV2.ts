@@ -8,6 +8,9 @@ import {
     ensureProductsSeeded,
     readPricelist,
     writePricelist,
+    syncSeedFile,
+    syncSeedFilePatch,
+    syncSeedFileDelete,
     PricelistConfig
 } from '../services/pricelistService';
 import prisma from '../prismaClient';
@@ -431,6 +434,8 @@ router.put(
             });
 
             res.json({ ok: true, count: arr.length });
+
+            syncSeedFile(config.seedPath, arr);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsStudnieV2', 'PUT error', message);
@@ -464,6 +469,8 @@ router.patch(
 
             const updated = await prisma.productsStudnie.update({ where: { id }, data });
             res.json({ ok: true, data: toLegacy(updated) });
+
+            syncSeedFilePatch(config.seedPath, id, data);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsStudnieV2', 'PATCH error', message);
@@ -480,6 +487,8 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
         const { id } = req.params;
         await prisma.productsStudnie.delete({ where: { id } });
         res.json({ ok: true });
+
+        syncSeedFileDelete(config.seedPath, id);
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsStudnieV2', 'DELETE error', message);

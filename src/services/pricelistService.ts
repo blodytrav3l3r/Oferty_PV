@@ -149,6 +149,65 @@ export async function writePricelist(key: string, data: unknown[]): Promise<numb
     return data.length;
 }
 
+// ─── Sync seed JSON ─────────────────────────────────────────────────
+
+/**
+ * Zapisuje dane do pliku seed JSON w tle, po odpowiedzi API.
+ * Błędy zapisu są logowane ale nie przerywają odpowiedzi.
+ */
+export function syncSeedFile(filePath: string, data: unknown[]): void {
+    try {
+        const absPath = path.resolve(filePath);
+        fs.writeFileSync(absPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+        logger.info('Sync', `Zaktualizowano plik seed: ${filePath}`);
+    } catch (err) {
+        logger.error('Sync', `Błąd zapisu pliku seed ${filePath}:`, err);
+    }
+}
+
+/**
+ * Aktualizuje pojedynczy rekord w pliku seed JSON (dla PATCH).
+ */
+export function syncSeedFilePatch(
+    filePath: string,
+    id: string,
+    patch: Record<string, unknown>
+): void {
+    const absPath = path.resolve(filePath);
+    if (!fs.existsSync(absPath)) return;
+    try {
+        const raw = fs.readFileSync(absPath, 'utf-8');
+        const data: Record<string, unknown>[] = JSON.parse(raw);
+        const idx = data.findIndex((item) => item.id === id);
+        if (idx !== -1) {
+            data[idx] = { ...data[idx], ...patch };
+            fs.writeFileSync(absPath, JSON.stringify(data, null, 2) + '\n', 'utf-8');
+            logger.info('Sync', `Zaktualizowano ${id} w pliku seed: ${filePath}`);
+        }
+    } catch (err) {
+        logger.warn('Sync', `Nie udało się zaktualizować ${id} w ${filePath}:`, err);
+    }
+}
+
+/**
+ * Usuwa rekord z pliku seed JSON (dla DELETE).
+ */
+export function syncSeedFileDelete(filePath: string, id: string): void {
+    const absPath = path.resolve(filePath);
+    if (!fs.existsSync(absPath)) return;
+    try {
+        const raw = fs.readFileSync(absPath, 'utf-8');
+        const data: Record<string, unknown>[] = JSON.parse(raw);
+        const filtered = data.filter((item) => item.id !== id);
+        if (filtered.length < data.length) {
+            fs.writeFileSync(absPath, JSON.stringify(filtered, null, 2) + '\n', 'utf-8');
+            logger.info('Sync', `Usunięto ${id} z pliku seed: ${filePath}`);
+        }
+    } catch (err) {
+        logger.warn('Sync', `Nie udało się usunąć ${id} z ${filePath}:`, err);
+    }
+}
+
 // ─── Pomocnik wewnętrzny ────────────────────────────────────────────────
 
 /**
