@@ -275,27 +275,34 @@ function findAlternativeDPSolution(
  * @param {Array} availableRings - pełna lista kręgów (do mapowania na produkty)
  * @returns {{ success: boolean, selectedRings: Array }}
  */
+var DP_TIMEOUT_MS = 250; // ponytail: global timeout, per-well timeout if DP becomes a bottleneck
+
 function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
-    // Jeśli minAllowed <= 0, puste rozwiązanie jest dopuszczalne
     if (minAllowed <= 0) {
         return { success: true, selectedRings: [] };
     }
 
     const cap = maxAllowed;
+    const startTime = Date.now();
 
-    // dp[h] = { score, prevH, addedHeight }
-    // score = max Σ(count × height²) dla osiągnięcia dokładnej wysokości h
     const dp = new Array(cap + 1).fill(null);
     dp[0] = { score: 0, prevH: -1, addedHeight: 0 };
 
     for (let h = 1; h <= cap; h++) {
+        if (Date.now() - startTime > DP_TIMEOUT_MS) {
+            logger.warn(
+                'ringOptimizer',
+                '[solveDPRings] Timeout po',
+                DP_TIMEOUT_MS,
+                'ms, przejscie do greedy fallback'
+            );
+            return { success: false, selectedRings: [] };
+        }
         for (const ringH of heights) {
             if (ringH > h) continue;
             const prev = dp[h - ringH];
             if (prev === null) continue;
 
-            // Score to Σ(count × height²) — każde dodanie kręgu o wys. ringH
-            // zwiększa score o ringH² (bo to kolejna sztuka)
             const newScore = prev.score + ringH * ringH;
 
             if (dp[h] === null || newScore > dp[h].score) {

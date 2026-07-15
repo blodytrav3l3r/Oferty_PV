@@ -750,12 +750,17 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
      * Wydzialone z solve() — DRY (używane w 2 miejscach).
      * @returns {{ avrItems: Array, avrH: number }}
      */
+    var AVR_TIMEOUT_MS = 100;
     function findBestAvrFill(deficit, maxAvr) {
         let bestAvrCombo = [];
         let bestAvrDiff = deficit;
         let bestAvrH = 0;
+        const avrStartTime = Date.now();
 
         function backtrack(combo, sum, idx) {
+            if (Date.now() - avrStartTime > AVR_TIMEOUT_MS) {
+                return;
+            }
             const d = Math.abs(deficit - sum);
             if (d < bestAvrDiff) {
                 bestAvrDiff = d;
@@ -774,7 +779,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
             }
         }
 
-        if (deficit >= 30) backtrack([], 0, 0); // min 30mm — spójne z generator.py:1043
+        if (deficit >= 30) backtrack([], 0, 0);
 
         const cMap = {};
         for (const a of bestAvrCombo) cMap[a.id] = (cMap[a.id] || 0) + 1;
