@@ -25,6 +25,7 @@ router.get('/', requireAuth, async (req, res) => {
             email: string | null;
             phone: string | null;
             contact: string | null;
+            clientNumber: string | null;
             createdAt: string | null;
             updatedAt: string | null;
         }>;
@@ -118,14 +119,15 @@ router.put(
 
                     // Upsert via raw query
                     await tx.$executeRaw`
-                    INSERT INTO clients_rel (id, userId, name, nip, address, contact, phone, email, createdAt, updatedAt)
-                    VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
+                    INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
+                    VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
                     ON CONFLICT(id) DO UPDATE SET
                         userId = ${userId},
                         name = ${c.name || ''},
                         nip = ${c.nip || ''},
                         address = ${c.address || ''},
                         contact = ${c.contact || ''},
+                        clientNumber = ${c.clientNumber || ''},
                         phone = ${c.phone || ''},
                         email = ${c.email || ''},
                         updatedAt = ${now}

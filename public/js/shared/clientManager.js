@@ -59,6 +59,7 @@ function saveClientToDb() {
     const nip = document.getElementById('client-nip').value.trim();
     const address = document.getElementById('client-address').value.trim();
     const contact = document.getElementById('client-contact').value.trim();
+    const clientNumber = document.getElementById('client-number').value.trim();
 
     if (!name) {
         showToast('Wprowadź nazwę firmy, aby zapisać klienta', 'error');
@@ -87,6 +88,7 @@ function saveClientToDb() {
                         nip,
                         address,
                         contact,
+                        clientNumber,
                         updatedAt: new Date().toISOString()
                     };
                     saveClientsDbData(clientsDb);
@@ -101,6 +103,7 @@ function saveClientToDb() {
             nip,
             address,
             contact,
+            clientNumber,
             createdAt: new Date().toISOString()
         });
         saveClientsDbData(clientsDb);
@@ -149,7 +152,10 @@ function renderClientsDbList(query) {
     const q = (query || '').toLowerCase().trim();
     const filtered = q
         ? clientsDb.filter(
-              (c) => (c.name && c.name.toLowerCase().includes(q)) || (c.nip && c.nip.includes(q))
+              (c) =>
+                  (c.name && c.name.toLowerCase().includes(q)) ||
+                  (c.nip && c.nip.includes(q)) ||
+                  (c.clientNumber && c.clientNumber.toLowerCase().includes(q))
           )
         : clientsDb;
 
@@ -172,6 +178,7 @@ function renderClientsDbList(query) {
 
     const thead = document.createElement('thead');
     thead.innerHTML = `<tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.5px;">
+        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:100px;">Nr klienta</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Firma</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600; width:130px;">NIP</th>
         <th style="padding:0.5rem 0.8rem; text-align:left; font-weight:600;">Adres</th>
@@ -195,7 +202,7 @@ function renderClientsDbList(query) {
 
         if (editingClientId === c.id) {
             tr.style.background = 'rgba(var(--accent-rgb),0.05)';
-            const fields = ['name', 'nip', 'address', 'contact'];
+            const fields = ['clientNumber', 'name', 'nip', 'address', 'contact'];
             fields.forEach((field) => {
                 const td = document.createElement('td');
                 td.style.padding = '0.4rem 0.6rem';
@@ -216,6 +223,12 @@ function renderClientsDbList(query) {
                 <button class="btn-icon" onclick="event.stopPropagation(); cancelEditClient()" title="Anuluj" aria-label="Anuluj" style="color:var(--text-muted); font-size:0.85rem;"><i data-lucide="x" aria-hidden="true"></i></button>`;
             tr.appendChild(actionTd);
         } else {
+            const clientNumberTd = document.createElement('td');
+            clientNumberTd.style.cssText =
+                'padding:0.6rem 0.8rem; color:var(--text-muted); font-size:0.8rem;';
+            clientNumberTd.textContent = c.clientNumber || '—';
+            tr.appendChild(clientNumberTd);
+
             const nameTd = document.createElement('td');
             nameTd.style.cssText = 'padding:0.6rem 0.8rem; font-weight:600; color:var(--text);';
             nameTd.textContent = c.name;
@@ -269,6 +282,7 @@ function saveEditedClientInDb(id) {
     const nip = document.getElementById('edit-client-nip').value.trim();
     const address = document.getElementById('edit-client-address').value.trim();
     const contact = document.getElementById('edit-client-contact').value.trim();
+    const clientNumber = document.getElementById('edit-client-clientNumber').value.trim();
 
     if (!name) {
         showToast('Wprowadź nazwę firmy', 'error');
@@ -281,6 +295,7 @@ function saveEditedClientInDb(id) {
         client.nip = nip;
         client.address = address;
         client.contact = contact;
+        client.clientNumber = clientNumber;
         client.updatedAt = new Date().toISOString();
         saveClientsDbData(clientsDb);
         showToast('Zaktualizowano dane klienta', 'success');
@@ -304,6 +319,7 @@ function selectClientFromDb(id) {
         document.getElementById('client-nip').value = c.nip || '';
         document.getElementById('client-address').value = c.address || '';
         document.getElementById('client-contact').value = c.contact || '';
+        document.getElementById('client-number').value = c.clientNumber || '';
         showToast('Wczytano dane klienta', 'success');
         closeModal();
     }

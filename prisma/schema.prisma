@@ -247,9 +247,10 @@ model clients_rel {
   address   String?
   email     String?
   phone     String?
-  contact   String? @default("")
-  createdAt String?
-  updatedAt String?
+  contact       String? @default("")
+  clientNumber  String? @default("")
+  createdAt     String?
+  updatedAt     String?
 
   @@index([userId], map: "idx_clients_user")
 }

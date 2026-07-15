@@ -30,11 +30,20 @@ function getPehdTooltip(p, pricePerM2) {
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) {
         var sqArea = (p.area * 4) / Math.PI;
         return (
-            'Pow. koła: ' + p.area.toFixed(2) + ' m²' +
-            ' | Wykrój kwadrat: ' + sqArea.toFixed(2) + ' m²' +
-            ' | Wsp. odpadu: ×' + (4 / Math.PI).toFixed(3) +
-            ' | Cena: ' + pricePerM2 + ' PLN/m²' +
-            ' | Dopłata: ' + Math.round(getPehdEffectiveArea(p) * pricePerM2) + ' PLN'
+            'Pow. koła: ' +
+            p.area.toFixed(2) +
+            ' m²' +
+            ' | Wykrój kwadrat: ' +
+            sqArea.toFixed(2) +
+            ' m²' +
+            ' | Wsp. odpadu: ×' +
+            (4 / Math.PI).toFixed(3) +
+            ' | Cena: ' +
+            pricePerM2 +
+            ' PLN/m²' +
+            ' | Dopłata: ' +
+            Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+            ' PLN'
         );
     }
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -42,13 +51,35 @@ function getPehdTooltip(p, pricePerM2) {
         if (d2 > 0) {
             var bArea = Math.PI * Math.pow(d2 / 2000, 2);
             return (
-                'Dno (koło): ' + bArea.toFixed(2) + ' m² × ' + pricePerM2 + ' = ' + Math.round(bArea * (4 / Math.PI) * pricePerM2) + ' PLN' +
-                ' | Ściany: ' + (p.area - bArea).toFixed(2) + ' m² × ' + pricePerM2 + ' = ' + Math.round((p.area - bArea) * pricePerM2) + ' PLN' +
-                ' | Razem: ' + Math.round(getPehdEffectiveArea(p) * pricePerM2) + ' PLN'
+                'Dno (koło): ' +
+                bArea.toFixed(2) +
+                ' m² × ' +
+                pricePerM2 +
+                ' = ' +
+                Math.round(bArea * (4 / Math.PI) * pricePerM2) +
+                ' PLN' +
+                ' | Ściany: ' +
+                (p.area - bArea).toFixed(2) +
+                ' m² × ' +
+                pricePerM2 +
+                ' = ' +
+                Math.round((p.area - bArea) * pricePerM2) +
+                ' PLN' +
+                ' | Razem: ' +
+                Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+                ' PLN'
             );
         }
     }
-    return 'Pow. koła: ' + p.area.toFixed(2) + ' m² | Cena: ' + pricePerM2 + ' PLN/m² | Dopłata: ' + Math.round(getPehdEffectiveArea(p) * pricePerM2) + ' PLN';
+    return (
+        'Pow. koła: ' +
+        p.area.toFixed(2) +
+        ' m² | Cena: ' +
+        pricePerM2 +
+        ' PLN/m² | Dopłata: ' +
+        Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+        ' PLN'
+    );
 }
 
 /** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */

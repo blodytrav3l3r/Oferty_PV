@@ -290,6 +290,7 @@ export const clientSchema = z.object({
         }),
     address: z.string().max(500, 'Adres nie może przekraczać 500 znaków').optional(),
     contact: z.string().max(200, 'Kontakt nie może przekraczać 200 znaków').optional(),
+    clientNumber: z.string().max(50, 'Numer klienta nie może przekraczać 50 znaków').optional(),
     phone: z
         .string()
         .optional()
