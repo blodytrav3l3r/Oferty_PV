@@ -13,7 +13,16 @@ const PLATE_COMPONENT_TYPES = new Set([
 
 function getPehdEffectiveArea(p) {
     if (p.area == null || p.area <= 0) return 0;
-    return PLATE_COMPONENT_TYPES.has(p.componentType) ? p.area * (4 / Math.PI) : p.area;
+    if (PLATE_COMPONENT_TYPES.has(p.componentType)) return p.area * (4 / Math.PI);
+    if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+        const dn = parseInt(p.dn) || 0;
+        if (dn > 0) {
+            var bottomArea = Math.PI * Math.pow(dn / 2000, 2);
+            var wallArea = p.area - bottomArea;
+            if (wallArea > 0) return wallArea + bottomArea * (4 / Math.PI);
+        }
+    }
+    return p.area;
 }
 
 /** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */
