@@ -1,28 +1,6 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni (Excel-style) ===== */
 
-let _excelMaxTransitions = {}; /* per-tab: { '1000': 1, '1200': 1, ... } */
-let _excelActiveTab = '1000';
-let _excelCreatingLock = false;
-let _excelRefreshTimer = null;
-let _excelSelectedCols = [];
-let _excelSelectedCells = []; // [{wIdx, colIdx}] — selekcja pojedynczych komórek
-let _excelLastClickedCell = null; // {wIdx, colIdx} dla Shift+click zakresu
-let _excelLastDataCol = -1; // ostatnia fokusowana kolumna (indeks td.children) dla strzałek do/z empty-row
-let _excelDragState = null; // {anchor: {wIdx,colIdx}, mode: 'new'|'add'}
-let _excelDragThrottle = null;
-let _excelFocusOverlayEl = null; // globalny overlay div nad aktualnie fokusowaną komórką
-let _excelFocusRaf = null; // throttling dla scroll/resize update
-let _excelRowSelectStates = {}; // {wIdx: bool} — checkbox column state w Excelu
-let _excelDirty = false;
-let _excelFullscreen = false;
-let _excelPollInterval = null;
-let _excelLastClickedCol = -1;
-let _excelColWidths = {};
-let _excelAddingReliefPair = false;
-let _excelUserEditing = false; /* blokuje polling gdy user edytuje komórkę */
-let _excelAutoSelectEnabled = true; /* Przełącznik auto-doboru */
-
 function _excelGetWellConfigHash(well) {
     if (!well) return '';
     var wellParams = [
@@ -172,60 +150,6 @@ function _excelDebouncedRefresh() {
         if (typeof window.renderWellsList === 'function') window.renderWellsList();
     }, 800);
 }
-
-const KINETA_OPTIONS = [
-    ['brak', 'Brak'],
-    ['beton', 'Beton'],
-    ['beton_gfk', 'Beton z GFK'],
-    ['klinkier', 'Klinkier'],
-    ['preco', 'Preco'],
-    ['precotop', 'PrecoTop'],
-    ['unolith', 'UnoLith'],
-    ['predl', 'Predl'],
-    ['kamionka', 'Kamionka']
-];
-
-const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
-const DN_COLORS = {
-    1000: {
-        bg: 'rgba(59,130,246,0.12)',
-        border: '#3b82f6',
-        text: '#93c5fd',
-        activeBg: 'rgba(59,130,246,0.25)'
-    },
-    1200: {
-        bg: 'rgba(16,185,129,0.12)',
-        border: '#10b981',
-        text: '#6ee7b7',
-        activeBg: 'rgba(16,185,129,0.25)'
-    },
-    1500: {
-        bg: 'rgba(245,158,11,0.12)',
-        border: '#f59e0b',
-        text: '#fbbf24',
-        activeBg: 'rgba(245,158,11,0.25)'
-    },
-    2000: {
-        bg: 'rgba(168,85,247,0.12)',
-        border: '#a855f7',
-        text: '#c4b5fd',
-        activeBg: 'rgba(168,85,247,0.25)'
-    },
-    2500: {
-        bg: 'rgba(239,68,68,0.12)',
-        border: '#ef4444',
-        text: '#fca5a5',
-        activeBg: 'rgba(239,68,68,0.25)'
-    },
-    styczne: {
-        bg: 'rgba(236,72,153,0.12)',
-        border: '#ec4899',
-        text: '#f9a8d4',
-        activeBg: 'rgba(236,72,153,0.25)'
-    }
-};
-
-const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
 function _excelWellMatchesTab(well, tab) {
     if (tab === 'styczne') return well.dn === 'styczna';
@@ -3593,8 +3517,6 @@ function _excelHandlePaste(e) {
 }
 
 /* ===== BATCH PASTE (async chunked) ===== */
-var _excelPasteCancelFlag = false;
-
 function _excelShowPasteProgress(now, total) {
     var pct = Math.min(100, Math.round((now / total) * 100));
     var el = document.getElementById('excel-paste-progress');
@@ -5516,10 +5438,6 @@ function _excelImportPasteList() {
 }
 
 /* ===== UNDO / REDO (simple snapshot stack) ===== */
-let _excelUndoStack = [];
-let _excelRedoStack = [];
-const _EXCEL_UNDO_LIMIT = 20;
-
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
     _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
