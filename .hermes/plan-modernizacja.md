@@ -79,13 +79,12 @@ Tworzy Release z opisem z CHANGELOG.
 
 ---
 
-## Etap 9 — Dokumentacja (12 plików)
+## Etap 9 — Dokumentacja (11 plików)
 
 | Plik                 | Opis                                               |
 | -------------------- | -------------------------------------------------- |
 | `README.md`          | rozbudowa: instalacja, komendy, wersja, screenshot |
 | `CONTRIBUTING.md`    | PR, commit format, code review                     |
-| `ROADMAP.md`         | plan rozwoju                                       |
 | `ARCHITECTURE.md`    | struktura, diagram, decyzje                        |
 | `API.md`             | lista endpointów                                   |
 | `DATABASE.md`        | schema Prisma, migracje, backup/restore            |

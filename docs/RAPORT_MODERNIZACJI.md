@@ -2,28 +2,28 @@
 
 ## 1. Lista zmian
 
-| #   | Zmiana                                                                                                                                                   | Status |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 1   | Naprawa 7 pre-existing testów (48/48 suites, 1153/1153 tests)                                                                                            | ✅     |
-| 2   | Rozszerzenie commitlint scopes o 14 nowych wartości                                                                                                      | ✅     |
-| 3   | Tłumaczenie komentarzy CSS na polski (style.css)                                                                                                         | ✅     |
-| 4   | Single Source of Truth wersji (VERSION + src/version.ts)                                                                                                 | ✅     |
-| 5   | Endpoint GET /api/version                                                                                                                                | ✅     |
-| 6   | Endpoint GET /health                                                                                                                                     | ✅     |
-| 7   | Refaktor server.ts → src/app.ts (Clean Code)                                                                                                             | ✅     |
-| 8   | Globalny error handler middleware                                                                                                                        | ✅     |
-| 9   | Request logger middleware                                                                                                                                | ✅     |
-| 10  | SQLite PRAGMA user_version                                                                                                                               | ✅     |
-| 11  | Skrypty backup/restore bazy danych                                                                                                                       | ✅     |
-| 12  | CHANGELOG.md z categoriami                                                                                                                               | ✅     |
-| 13  | Git Flow dokument (.github/GIT_FLOW.md)                                                                                                                  | ✅     |
-| 14  | standard-version (auto-wersjonowanie)                                                                                                                    | ✅     |
-| 15  | Wersja w UI (footer + versionDisplay.js)                                                                                                                 | ✅     |
-| 16  | Swagger dynamiczna wersja                                                                                                                                | ✅     |
-| 17  | CI/CD pipeline (ci.yml + release.yml)                                                                                                                    | ✅     |
-| 18  | 11 dokumentów .md (AUDIT, README, CONTRIBUTING, ROADMAP, ARCHITECTURE, API, DATABASE, DEPLOYMENT, SECURITY, VERSIONING, RELEASE_PROCESS, BACKUP_RESTORE) | ✅     |
-| 19  | TECH_STACK.md (zgodność licencyjna)                                                                                                                      | ✅     |
-| 20  | RAPORT_MODERNIZACJI.md                                                                                                                                   | ✅     |
+| #   | Zmiana                                                                                                                                          | Status |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 1   | Naprawa 7 pre-existing testów (48/48 suites, 1153/1153 tests)                                                                                   | ✅     |
+| 2   | Rozszerzenie commitlint scopes o 14 nowych wartości                                                                                             | ✅     |
+| 3   | Tłumaczenie komentarzy CSS na polski (style.css)                                                                                                | ✅     |
+| 4   | Single Source of Truth wersji (VERSION + src/version.ts)                                                                                        | ✅     |
+| 5   | Endpoint GET /api/version                                                                                                                       | ✅     |
+| 6   | Endpoint GET /health                                                                                                                            | ✅     |
+| 7   | Refaktor server.ts → src/app.ts (Clean Code)                                                                                                    | ✅     |
+| 8   | Globalny error handler middleware                                                                                                               | ✅     |
+| 9   | Request logger middleware                                                                                                                       | ✅     |
+| 10  | SQLite PRAGMA user_version                                                                                                                      | ✅     |
+| 11  | Skrypty backup/restore bazy danych                                                                                                              | ✅     |
+| 12  | CHANGELOG.md z categoriami                                                                                                                      | ✅     |
+| 13  | Git Flow dokument (.github/GIT_FLOW.md)                                                                                                         | ✅     |
+| 14  | standard-version (auto-wersjonowanie)                                                                                                           | ✅     |
+| 15  | Wersja w UI (footer + versionDisplay.js)                                                                                                        | ✅     |
+| 16  | Swagger dynamiczna wersja                                                                                                                       | ✅     |
+| 17  | CI/CD pipeline (ci.yml + release.yml)                                                                                                           | ✅     |
+| 18  | 10 dokumentów .md (AUDIT, README, CONTRIBUTING, ARCHITECTURE, API, DATABASE, DEPLOYMENT, SECURITY, VERSIONING, RELEASE_PROCESS, BACKUP_RESTORE) | ✅     |
+| 19  | TECH_STACK.md (zgodność licencyjna)                                                                                                             | ✅     |
+| 20  | RAPORT_MODERNIZACJI.md                                                                                                                          | ✅     |
 
 ## 2. Lista dodanych plików
 
@@ -41,7 +41,6 @@ public/js/versionDisplay.js
 .github/workflows/release.yml
 AUDIT.md
 CONTRIBUTING.md
-ROADMAP.md
 ARCHITECTURE.md
 API.md
 DATABASE.md
