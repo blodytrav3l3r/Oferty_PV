@@ -1628,7 +1628,7 @@ function updateOfferSummaryUI(totals) {
                         p.componentType !== 'przejscie' &&
                         p.componentType !== 'kineta'
                     ) {
-                        basePrice = Math.round(p.doplataPEHD / p.area);
+                        basePrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
                         break;
                     }
                 }
@@ -3570,7 +3570,7 @@ function renderOfferDiscountsPopupContent() {
                 p.componentType !== 'przejscie' &&
                 p.componentType !== 'kineta'
             ) {
-                currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
                 break;
             }
         }

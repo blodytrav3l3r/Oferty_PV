@@ -178,7 +178,7 @@ function renderStudniePriceList() {
           <th class="text-right ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
           <th class="text-right ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
           <th class="text-right" style="width: 4%;" title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
-          <th class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN]">PEHD</th>
+          <th class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN] — elementy płytowe (płyty, pierścienie) doliczane z kwadratowego wykroju (×4/π ≈ +27%)">PEHD <i data-lucide="info" style="width:10px;height:10px;opacity:0.5;cursor:help;" aria-hidden="true"></i></th>
           <th class="text-right ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
           <th class="text-right ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
           <th class="text-right ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
@@ -263,7 +263,7 @@ function renderStudniePriceList() {
         <td class="text-right" onclick="editStudnieCell(this,'area','${p.id}')" style="cursor:pointer;">${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'areaExt','${p.id}')" style="cursor:pointer;">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'transport','${p.id}')" style="cursor:pointer;">${p.transport != null ? fmtInt(p.transport) : '—'}</td>
-        <td class="text-right" style="color:var(--success);">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' ? '+' + fmtInt(Math.round(p.area * currentPehdPrice)) : '—'}</td>
+        <td class="text-right" style="color:var(--success);" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' ? (PLATE_COMPONENT_TYPES.has(p.componentType) ? `Pow. koła: ${p.area.toFixed(2)} m² | Wykrój kwadrat: ${((p.area * 4) / Math.PI).toFixed(2)} m² | Wsp. odpadu: ×${(4 / Math.PI).toFixed(3)} | Cena: ${currentPehdPrice} PLN/m² | Dopłata: ${Math.round(getPehdEffectiveArea(p) * currentPehdPrice)} PLN` : `Pow. koła: ${p.area.toFixed(2)} m² | Cena: ${currentPehdPrice} PLN/m² | Dopłata: ${Math.round(getPehdEffectiveArea(p) * currentPehdPrice)} PLN`) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' ? '+' + fmtInt(Math.round(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'malowanieWewnetrzne','${p.id}')" style="cursor:pointer; color:var(--success);">${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'malowanieZewnetrzne','${p.id}')" style="cursor:pointer; color:var(--success);">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
         <td class="text-right" ${p.componentType === 'dennica' ? `onclick="editStudnieCell(this,'doplataZelbet','${p.id}')" style="cursor:pointer; color:var(--success);"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
@@ -309,7 +309,7 @@ window.recalculatePEHD = async function () {
     let count = 0;
     studnieProducts.forEach((p) => {
         if (p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.area > 0) {
-            p.doplataPEHD = Math.round(p.area * price);
+            p.doplataPEHD = Math.round(getPehdEffectiveArea(p) * price);
             count++;
         }
     });

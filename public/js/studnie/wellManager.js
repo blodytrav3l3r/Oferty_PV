@@ -1,6 +1,22 @@
 // @ts-check
 /* ===== ZARZĄDZANIE STUDNIAMI ===== */
 
+// ponytail: 4/π waste factor for plate elements cut as squares from PEHD sheet
+const PLATE_COMPONENT_TYPES = new Set([
+    'plyta',
+    'plyta_din',
+    'plyta_najazdowa',
+    'plyta_zamykajaca',
+    'plyta_redukcyjna',
+    'plyta_nastudzienna',
+    'pierscien_odciazajacy'
+]);
+
+function getPehdEffectiveArea(p) {
+    if (p.area == null || p.area <= 0) return 0;
+    return PLATE_COMPONENT_TYPES.has(p.componentType) ? p.area * (4 / Math.PI) : p.area;
+}
+
 /** Odczytuje parametry globalne z kroku 2 kreatora z kafelków UI */
 function getWizardGlobalParams() {
     const params = {
@@ -1102,7 +1118,7 @@ function updateGlobalPehdDiscount(value) {
                     p.componentType !== 'przejscie' &&
                     p.componentType !== 'kineta'
                 ) {
-                    currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                    currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
                     break;
                 }
             }

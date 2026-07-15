@@ -693,7 +693,7 @@ function renderDiscountPanel() {
                 p.componentType !== 'przejscie' &&
                 p.componentType !== 'kineta'
             ) {
-                currentPehdPrice = Math.round(p.doplataPEHD / p.area);
+                currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
                 break;
             }
         }
