@@ -282,6 +282,7 @@ async function loadDataInBackground() {
         }
     }
     if (typeof refreshAll === 'function') refreshAll();
+    if (typeof renderInlinePrzejsciaApp === 'function') renderInlinePrzejsciaApp();
     if (typeof buildZleceniaWellList === 'function') buildZleceniaWellList();
     logger.info('appStudnie', '[AppStudnie] Dane załadowane, UI odświeżone.');
 }

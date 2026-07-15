@@ -22,6 +22,10 @@ let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia red
 let offersStudnie = [];
 let ordersStudnie = [];
 let editingOfferIdStudnie = null;
+var editingOfferAssignedUserId = null;
+var editingOfferAssignedUserName = '';
+var editingOfferCreatedByUserId = null;
+var editingOfferCreatedByUserName = '';
 var isSavingOffer = false;
 /** @type {any} */
 var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
