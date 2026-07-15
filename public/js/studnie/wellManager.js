@@ -8,8 +8,7 @@ const PLATE_COMPONENT_TYPES = new Set([
     'plyta_najazdowa',
     'plyta_zamykajaca',
     'plyta_redukcyjna',
-    'plyta_nastudzienna',
-    'pierscien_odciazajacy'
+    'plyta_nastudzienna'
 ]);
 
 function getPehdEffectiveArea(p) {
