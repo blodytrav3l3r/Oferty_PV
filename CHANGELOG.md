@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.6.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.5.0...v1.6.0) (2026-07-15)
+
+
+### Features
+
+* **seed:** auto-sync seed JSON z baza danych po kazdej zmianie cennika ([2011d88](https://github.com/blodytrav3l3r/Oferty_PV/commit/2011d8896abf646b15b52dce2336b10c56f37a86))
+* **studnie:** dymek z rozpiska obliczen wkładki PEHD - dno/sciany dla dennicy, kwadrat dla płyt ([e186577](https://github.com/blodytrav3l3r/Oferty_PV/commit/e18657734c4c12bf0083ce9271904b82d73d933b))
+* **studnie:** uwzględnienie odpadu kwadratowego w wykroju wkładki PEHD dla elementów płytowych ([91ccc4a](https://github.com/blodytrav3l3r/Oferty_PV/commit/91ccc4a315f3f32d9590994edae12d5fbd5745e7))
+
+
+### Bug Fixes
+
+* **studnie:** odpad kwadratowy dna dennicy/stycznej - area dzielone na dno (x4/pi) + sciany (x1) ([a524e4a](https://github.com/blodytrav3l3r/Oferty_PV/commit/a524e4a1217e7fb939b20f739dd967184b2492f2))
+* **studnie:** pierscien_odciazajacy bez wykroju kwadratowego - pierscien to nie plyta ([647a8e6](https://github.com/blodytrav3l3r/Oferty_PV/commit/647a8e615f48528ea203da23598e01c6efb4080e))
+
 ## [1.5.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.4.0...v1.5.0) (2026-07-07)
 
 ### Features
