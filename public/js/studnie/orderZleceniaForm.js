@@ -61,24 +61,31 @@ function populateZleceniaForm(el) {
 
     if (shouldReduce) {
         const reducedH = (product.height || 0) - 100;
-        displayWysokosc = reducedH > 100 ? reducedH : product.height || 0;
+        displayWysokosc = reducedH;
+        displayGlebokosc = reducedH;
+        displayDnoKineta = 0;
+    }
+
+    if (well.dn === 'styczna') {
         const dnMatch = (product.name || '').match(/DN\s*(\d+)/i);
-        if (dnMatch) {
-            displayDN = 'DN' + dnMatch[1];
-        }
-        displayGlebokosc = parsed.glebokosc || '—';
-        dnoKinetaVal = displayWysokosc - (parsed.glebokosc || 0);
-        displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
+        if (dnMatch) displayDN = `Styczna DN${dnMatch[1]}`;
+
+        displayGlebokosc = product.height || '—';
+        displayWysokosc = parsed.wysokosc || displayWysokosc;
+        displayDnoKineta =
+            parsed.wysokosc > 0 && parsed.glebokosc > 0 ? parsed.wysokosc - parsed.glebokosc : '—';
     }
 
     const din = getStudniaDIN(well.dn);
     const todayStr = new Date().toISOString().split('T')[0];
     const orderNumber = orderEditMode
-        ? orderEditMode.order?.orderNumber || orderEditMode.order?.salesOrderNumber || ''
+        ? orderEditMode.order.number
+        : document.getElementById('offer-number')?.value || '';
+
+    const userName = currentUser
+        ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
+          currentUser.username
         : '';
-
-    const userName = currentUser ? currentUser.firstName + ' ' + currentUser.lastName : '—';
-
     const clientName = document.getElementById('client-name')?.value || '';
     const investName = document.getElementById('invest-name')?.value || '';
     const investAddress = document.getElementById('invest-address')?.value || '';
@@ -94,15 +101,10 @@ function populateZleceniaForm(el) {
     const btnDelete = document.getElementById('zl-btn-delete');
     const btnSave = document.getElementById('zl-btn-save');
 
-    if (btnAccept) btnAccept.style.display = isAccepted ? 'none' : 'inline-flex';
-    if (btnRevoke) btnRevoke.style.display = isAccepted ? 'inline-flex' : 'none';
-    if (btnDelete) btnDelete.style.display = isAccepted ? 'none' : 'inline-flex';
-
-    if (btnSave) {
-        btnSave.disabled = isAccepted;
-        btnSave.style.opacity = isAccepted ? '0.5' : '1';
-        btnSave.style.cursor = isAccepted ? 'not-allowed' : 'pointer';
-    }
+    if (btnAccept) btnAccept.style.display = isAccepted ? 'none' : 'block';
+    if (btnRevoke) btnRevoke.style.display = isAccepted ? 'block' : 'none';
+    if (btnDelete) btnDelete.style.display = isAccepted ? 'none' : 'block';
+    if (btnSave) btnSave.style.display = isAccepted ? 'none' : 'block';
 
     const rzDna = parseFloat(well.rzednaDna) || 0;
     const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
@@ -118,13 +120,12 @@ function populateZleceniaForm(el) {
     const przejsciaCount = assignedPrzejscia.length;
 
     const stopnieOptions = [
-        ['', '— Brak —'],
-        ['szlachetna_ocynk', 'Szlachetna ocynk'],
-        ['szlachetna_nierdz', 'Szlachetna nierdz'],
-        ['stalowa_mal', 'Stalowa malowana'],
-        ['stalowa_ocynk', 'Stalowa ocynkowana'],
-        ['stalowa_nierdz', 'Stalowa nierdzewna'],
-        ['inne', 'Inne (opis)']
+        ['', 'Brak'],
+        ['drabinka_a_stalowa', 'Drabinka Typ A/stalowa'],
+        ['drabinka_a_szlachetna', 'Drabinka Typ A/stal szlachetna'],
+        ['drabinka_b_stalowa', 'Drabinka Typ B/stalowa'],
+        ['drabinka_b_szlachetna', 'Drabinka Typ B/stal szlachetna'],
+        ['inne', 'Inne']
     ];
 
     let baseKatStopni = '';
@@ -133,13 +134,26 @@ function populateZleceniaForm(el) {
         const p = findProductFn(c.productId);
         return p && p.componentType === 'dennica';
     });
-    if (dennicaConfigIdx >= 0 && typeof zleceniaElementsList !== 'undefined') {
+
+    if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
         const dennicaPo = (productionOrders || []).find(
             (po) => po.wellId === well.id && po.elementIndex === dennicaConfigIdx
         );
         if (dennicaPo) {
-            baseKatStopni = dennicaPo.katStopni || '';
-            baseRodzajStopni = dennicaPo.rodzajStopni || '';
+            if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
+            if (dennicaPo.rodzajStopni) baseRodzajStopni = dennicaPo.rodzajStopni;
+        }
+    }
+
+    if (!baseRodzajStopni) {
+        if (well._selectedRodzajStopni) {
+            baseRodzajStopni = well._selectedRodzajStopni;
+        } else if (well.stopnie === 'drabinka') {
+            baseRodzajStopni = 'drabinka_a_stalowa';
+        } else if (well.stopnie === 'nierdzewna') {
+            baseRodzajStopni = 'drabinka_a_szlachetna';
+        } else if (well.stopnie === 'brak') {
+            baseRodzajStopni = '';
         }
     }
 
@@ -150,9 +164,8 @@ function populateZleceniaForm(el) {
     const isKragOt = product && product.componentType === 'krag_ot';
     const isAnyKrag = product && product.componentType && product.componentType.startsWith('krag');
     const shouldForceBrak = shouldReduce || isKragOt;
-
     const redKinetyVal =
-        existing?.redukcjaKinety ?? (shouldForceBrak ? 'brak' : (well.redukcjaKinety ?? 'brak'));
+        existing?.redukcjaKinety ?? (shouldForceBrak ? 'nie' : (well.redukcjaKinety ?? ''));
     const spocznikHVal = existing?.spocznikH ?? (shouldForceBrak ? 'brak' : (well.spocznikH ?? ''));
     const usytuowanieVal = existing?.usytuowanie ?? well.usytuowanie ?? '';
     const kinetaVal = existing?.kineta ?? (shouldForceBrak ? 'brak' : (well.kineta ?? ''));
@@ -161,121 +174,120 @@ function populateZleceniaForm(el) {
     const katOptions = ['90', '135', '180', '270'];
 
     const spocznikMatOptions = [
-        ['', '—'],
+        ['brak', 'Brak'],
         ['beton', 'Beton'],
-        ['beton_gfk', 'Beton GFK'],
+        ['beton_gfk', 'Beton z GFK'],
         ['klinkier', 'Klinkier'],
         ['preco', 'Preco'],
-        ['precotop', 'Precotop'],
-        ['unolith', 'Unolith'],
+        ['precotop', 'Preco Top'],
+        ['unolith', 'UnoLith'],
         ['predl', 'Predl'],
-        ['kamionka', 'Kamionka'],
-        ['brak', 'Brak']
+        ['kamionka', 'Kamionka']
     ];
 
     const rodzajStudniOptions = [
-        ['beton', 'Betonowa'],
-        ['zelbet', 'Żelbetowa']
+        ['beton', 'Beton'],
+        ['zelbet', 'Żelbet']
     ];
 
     const dinVal = existing?.din ?? din;
     const spocznikMatVal = existing?.spocznik ?? (shouldForceBrak ? 'brak' : (well.spocznik ?? ''));
 
     let domyslnyRodzajStudni = '';
-    if (product.componentType === 'dennica') {
+    if (product && product.componentType === 'dennica') {
         domyslnyRodzajStudni = well.dennicaMaterial === 'zelbetowa' ? 'zelbet' : 'beton';
     } else {
         domyslnyRodzajStudni = well.nadbudowa === 'zelbetowa' ? 'zelbet' : 'beton';
     }
-
     const rodzajStudniVal = existing?.rodzajStudni || domyslnyRodzajStudni;
 
     const kinetaOptions = [
+        ['brak', 'Brak'],
         ['beton', 'Beton'],
-        ['beton_gfk', 'Beton GFK'],
+        ['beton_gfk', 'Beton z GFK'],
         ['klinkier', 'Klinkier'],
         ['preco', 'Preco'],
-        ['precotop', 'Precotop'],
-        ['unolith', 'Unolith'],
+        ['precotop', 'PrecoTop'],
+        ['unolith', 'UnoLith'],
         ['predl', 'Predl'],
-        ['kamionka', 'Kamionka'],
-        ['brak', 'Brak'],
-        ['zlec', 'Zlecenie']
+        ['kamionka', 'Kamionka']
     ];
-
     const spocznikOptions = [
-        ['', '—'],
-        ['200', '200 mm'],
-        ['300', '300 mm'],
-        ['400', '400 mm'],
+        ['1/2', '1/2'],
+        ['2/3', '2/3'],
+        ['3/4', '3/4'],
+        ['1/1', '1/1'],
         ['brak', 'Brak']
     ];
-
     const usytOptions = [
-        ['', '—'],
-        ['lewa', 'Lewa'],
-        ['prawa', 'Prawa'],
-        ['srodkowa', 'Środkowa'],
-        ['jednostronna', 'Jednostronna']
+        ['linia_dolna', 'Linia dolna'],
+        ['linia_gorna', 'Linia górna'],
+        ['w_osi', 'W osi'],
+        ['patrz_uwagi', 'Patrz uwagi']
     ];
-
     const redKinetyOptions = [
-        ['brak', 'Brak'],
-        ['pelna', 'Pełna'],
-        ['50', 'Połowa']
+        ['tak', 'Tak'],
+        ['nie', 'Nie']
     ];
-
     const klasaBetonuOptions = [
-        ['', '—'],
-        ['C30/37', 'C30/37'],
-        ['C35/45', 'C35/45'],
         ['C40/50', 'C40/50'],
+        ['C40/50(HSR!!!!)', 'C40/50 HSR'],
         ['C45/55', 'C45/55'],
-        ['C50/60', 'C50/60']
+        ['C45/55(HSR!!!!)', 'C45/55 HSR'],
+        ['C70/85', 'C70/85'],
+        ['C70/80(HSR!!!!)', 'C70/80 HSR']
     ];
 
     let autoUwagi = [];
-    if (shouldForceBrak) {
-        autoUwagi.push('REDUKCJA WYSOKOŚCI: podwójna dennica / psia buda');
-    }
-    if (!isAnyKrag && przejsciaCount > 0) {
-        autoUwagi.push('Zabudowa przejść: ' + przejsciaCount + ' szt.');
-    }
+
+    if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3')
+        autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
+
+    if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
+        autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
 
     let wklUwagi = [];
-    if (well.wklRejon && well.wklRejon.trim()) {
-        let malWDesc = '';
-        if (well.wklRodzaj === 'lazik') malWDesc = 'łaź';
-        else if (well.wklRodzaj === 'wklad' || well.wklRodzaj === 'wklad_ocynk') {
-            malWDesc = 'wkład' + (well.wklRodzaj === 'wklad_ocynk' ? ' ocynk' : '');
-        } else if (well.wklRodzaj === 'stopnie_wkl') {
-            malWDesc =
-                'stopnie' +
-                (parseInt(well.wklIlosc || '0') > 0 ? ' (' + well.wklIlosc + ' szt.)' : '');
-        } else if (well.wklRodzaj === 'zlacze') malWDesc = 'złącze';
-        else if (well.wklRodzaj === 'kpv' || well.wklRodzaj === 'kpv_ocynk') {
-            malWDesc = 'KPV' + (well.wklRodzaj === 'kpv_ocynk' ? ' ocynk' : '');
-        } else if (well.wklRodzaj) malWDesc = well.wklRodzaj;
+    if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
+        wklUwagi.push('Dennica ' + well.wkladkaDennica);
+    if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
+        wklUwagi.push('Nadbudowa ' + well.wkladkaNadbudowa);
+    if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
+        wklUwagi.push('Zwieńczenie ' + well.wkladkaZwienczenie);
+    if (wklUwagi.length > 0) autoUwagi.push('PEHD: ' + wklUwagi.join(', '));
 
-        const wklRejonParts = [];
-        if (well.wklRejon && !isNaN(parseFloat(well.wklRejon))) {
-            wklRejonParts.push(well.wklRejon + 'mb');
-        } else if (well.wklRejon) {
-            wklRejonParts.push(well.wklRejon);
+    if (well.malowanieW && well.malowanieW !== 'brak') {
+        let malWDesc = '';
+        if (well.malowanieW === 'kineta') malWDesc = 'Kineta';
+        else if (well.malowanieW === 'kineta_dennica') malWDesc = 'Kineta+denn.';
+        else if (well.malowanieW === 'cale') malWDesc = 'Całość';
+        if (malWDesc) {
+            autoUwagi.push(
+                'Malowanie wew. ' + malWDesc + (well.powlokaNameW ? ' ' + well.powlokaNameW : '')
+            );
         }
-        if (well.wklIlosc && malWDesc !== 'stopnie') {
-            wklRejonParts.push(well.wklIlosc + ' szt.');
-        }
-        const rejonStr = wklRejonParts.join(', ');
-        wklUwagi.push(
-            (malWDesc ? malWDesc + ': ' : '') +
-                rejonStr +
-                ' — DN' +
-                well.dn +
-                ' (' +
-                escapeHtml(well.name) +
-                ')'
+    }
+
+    if (well.malowanieZ === 'zewnatrz') {
+        autoUwagi.push(
+            'Malowanie zew. Zewnątrz' + (well.powlokaNameZ ? ' ' + well.powlokaNameZ : '')
         );
+    }
+
+    if (well.dn === 'styczna') autoUwagi.push('STYCZNA');
+
+    if (well.klasaNosnosci_korpus === 'E600' || well.klasaNosnosci_korpus === 'F900') {
+        autoUwagi.push('Kl. nośn. ' + well.klasaNosnosci_korpus);
+    }
+
+    if (well.psiaBuda && !actualNextProduct) {
+        autoUwagi.push('UWAGA ! PSIA BUDA');
+    }
+    if (
+        product.componentType === 'dennica' &&
+        actualNextProduct &&
+        actualNextProduct.componentType === 'dennica'
+    ) {
+        autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
     }
 
     const defaultUwagiStr = autoUwagi.join(', ');
@@ -283,39 +295,39 @@ function populateZleceniaForm(el) {
 
     let bannerHtml = '';
     if (isAccepted) {
-        bannerHtml =
-            '<div class="zl-accepted-banner"><i data-lucide="check-circle"></i> Zlecenie zaakceptowane — edycja zablokowana</div>';
-    } else if (existing) {
-        bannerHtml =
-            '<div class="zl-banner" style="background:var(--accent-bg, #e8f5e9);color:var(--accent-hover, #256029);padding:0.4rem 0.8rem;border-radius:6px;margin-bottom:0.5rem;font-size:0.85rem;display:flex;align-items:center;gap:0.4rem;"><i data-lucide="file-text"></i> Zapisano jako nr <strong>' +
-            escapeHtml(existing.productionOrderNumber || '—') +
-            '</strong></div>';
+        bannerHtml = `
+            <div style="background:rgba(var(--danger-rgb),0.15); border:2px solid rgba(var(--danger-rgb),0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+                <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
+                <div style="flex:1;">
+                    <div style="font-size:0.85rem; font-weight:800; color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
+                    <div style="font-size:0.7rem; color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
+                </div>
+            </div>
+        `;
     }
 
+    recalculateWellErrors(well);
     const liveErrors = well.configErrors || [];
     let errorsHtml = '';
-    const elementErrors = liveErrors.filter(
-        (e) => e.elementIndex !== undefined && e.elementIndex === elementIndex && e.type !== 'info'
-    );
-    if (elementErrors.length > 0) {
-        errorsHtml =
-            '<div class="zl-errors-banner"><i data-lucide="alert-triangle"></i> <strong>Błędy konfiguracji:</strong><ul>' +
-            elementErrors
-                .map((e) => '<li>' + escapeHtml(e.message || 'Nieznany błąd') + '</li>')
-                .join('') +
-            '</ul></div>';
+    if (liveErrors.length > 0) {
+        errorsHtml = `
+            <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: 6px; color: var(--danger); font-size: 0.75rem; font-weight: 600; line-height: 1.4;">
+                <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
+                ${liveErrors.map((e) => `• ${e}`).join('<br>')}
+            </div>
+        `;
     }
 
     let przejsciaAppVisible = false;
     const existingPrzejsciaContainer = document.getElementById('zl-inline-przejscia-app-container');
-    if (existingPrzejsciaContainer) {
-        przejsciaAppVisible = existingPrzejsciaContainer.style.display !== 'none';
+    if (existingPrzejsciaContainer && existingPrzejsciaContainer.style.display !== 'none') {
+        przejsciaAppVisible = true;
     }
 
     let daneZleceniaVisible = false;
     const existingDaneZlecenia = document.getElementById('zl-dane-zlecenia-container');
-    if (existingDaneZlecenia) {
-        daneZleceniaVisible = existingDaneZlecenia.style.display !== 'none';
+    if (existingDaneZlecenia && existingDaneZlecenia.style.display !== 'none') {
+        daneZleceniaVisible = true;
     }
 
     let daneElementuVisible = true;
@@ -325,134 +337,151 @@ function populateZleceniaForm(el) {
     }
 
     container.innerHTML = `
-    <div class="zl-form-inner">
-        ${bannerHtml}
-        ${errorsHtml}
+    ${bannerHtml}
+    ${errorsHtml}
+    <div class="card card-compact" style="margin-bottom:0.5rem;">
+        <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight:800;">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
+            <span class="zl-toggle" class="text-xs">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
+        </div>
+        <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Obiekt</label>
+                <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${escapeHtml(existing?.obiekt || investName)}" placeholder="Nazwa obiektu...">
+            </div>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Data</label>
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+            </div>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Adres</label>
+                <input type="text" id="zl-adres" class="form-input form-input-sm" value="${escapeHtml(existing?.adres || investAddress)}" placeholder="Adres obiektu...">
+            </div>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+            </div>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Wykonawca</label>
+                <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${escapeHtml(existing?.wykonawca || investContractor)}" placeholder="Wykonawca...">
+            </div>
+            <div class="form-group-sm" style="margin:0;">
+                <label class="form-label-sm ui-text-sec">Data produkcji</label>
+                <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${escapeHtml(existing?.dataProdukcji || '')}">
+            </div>
+            <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
+                <label class="form-label-sm ui-text-sec">Fakturowane na</label>
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+            </div>
+        </div>
+    </div>
 
-        ${
-            !isAccepted &&
-            '<div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">' +
-                '<button type="button" class="ui-btn ui-btn-sm ui-btn-outline" onclick="toggleDaneElementu()">' +
-                '<i data-lucide="columns-2"></i> Panel boczny</button>' +
-                "<button type=\"button\" class=\"ui-btn ui-btn-sm ui-btn-outline\" onclick=\"document.getElementById('zl-inline-przejscia-app-container').style.display = document.getElementById('zl-inline-przejscia-app-container').style.display === 'none' ? '' : 'none'\">" +
-                '<i data-lucide="git-merge"></i> Przejścia</button>' +
-                "<button type=\"button\" class=\"ui-btn ui-btn-sm ui-btn-outline\" onclick=\"document.getElementById('zl-dane-zlecenia-container').style.display = document.getElementById('zl-dane-zlecenia-container').style.display === 'none' ? '' : 'none'\">" +
-                '<i data-lucide="clipboard-list"></i> Dane zlecenia</button>' +
-                '</div>'
-        }
+    <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px' : '36px'} 1fr; gap:0.5rem; margin-bottom:0.5rem; transition:grid-template-columns 0.25s ease;">
+        <div class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
+            <div id="zl-dane-elementu-header-full" class="card-title-sm" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
+                <span><i data-lucide="hard-hat"></i> Dane elementu</span>
+                <span class="text-xs"><i data-lucide="chevron-left"></i></span>
+            </div>
+            <div id="zl-dane-elementu-header-collapsed" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
+                <span class="text-xs"><i data-lucide="chevron-right"></i></span>
+                <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size:0.7rem; font-weight:700; color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
+            </div>
+            <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="color:var(--text-secondary); font-size:0.75rem; text-transform:uppercase; font-weight:600;">Numer studni</span>
+                    <span style="font-weight:bold; color:var(--accent-hover); font-size:0.85rem;">${escapeHtml(well.name || '')}</span>
+                </div>
 
-        <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? '' : 'none'};">
-            <div class="zl-section-card">
-                <div class="zl-section-title"><i data-lucide="clipboard-list"></i> Dane zlecenia</div>
-                <div class="zl-grid zl-grid-2col zl-dane-zlecenia-grid">
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Obiekt</label>
-                        <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${escapeHtml(well.obiekt || '')}" placeholder="Nazwa obiektu...">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayDN}</span>
+                        <input type="hidden" id="zl-srednica" value="${displayDN}">
                     </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Data</label>
-                        <input type="date" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(well.data || todayStr)}">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Głębokość</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayGlebokosc}${typeof displayGlebokosc === 'number' ? ' mm' : ''}</span>
+                        <input type="hidden" id="zl-glebokosc" value="${displayGlebokosc}">
                     </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Adres</label>
-                        <input type="text" id="zl-adres" class="form-input form-input-sm" value="${escapeHtml(well.adres || '')}" placeholder="Adres...">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Wysokość</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayWysokosc}${typeof displayWysokosc === 'number' ? ' mm' : ''}</span>
+                        <input type="hidden" id="zl-wysokosc" value="${displayWysokosc}">
                     </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Nazwisko</label>
-                        <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(well.nazwisko || userName)}" placeholder="Nazwisko...">
-                    </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Wykonawca</label>
-                        <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${escapeHtml(well.wykonawca || '')}" placeholder="Wykonawca...">
-                    </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Data produkcji</label>
-                        <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${escapeHtml(well.dataProdukcji || '')}">
-                    </div>
-                    <div class="form-group-sm">
-                        <label class="form-label-sm">Fakturowane</label>
-                        <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(well.fakturowane || '')}" placeholder="np. TAK / NIE">
+                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
+                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Gr. dna</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayDnoKineta}</span>
+                        <input type="hidden" id="zl-dno-kineta" value="${displayDnoKineta}">
                     </div>
                 </div>
+
+                <div class="form-group-sm" style="margin-top:0.3rem;">
+                    <label class="form-label-sm ui-text-sec">Rodzaj studni</label>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
+                        ${rodzajStudniOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                            )
+                            .join('')}
+                    </div>
+                    <input type="hidden" id="zl-rodzaj-studni" value="${rodzajStudniVal}">
+                </div>
+
             </div>
         </div>
 
-        <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px 1fr' : '36px 1fr'}; gap:0.5rem;">
-            <div id="zl-dane-elementu-header-full" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column;">
-                <div class="zl-section-card" style="flex:1;">
-                    <div class="zl-section-title" style="font-size:0.8rem;"><i data-lucide="info"></i> O elemencie</div>
-                    <div style="font-size:0.8rem; line-height:1.5;">
-                        <div><strong>Nazwa:</strong> ${escapeHtml(product.name || '—')}</div>
-                        <div><strong>Indeks:</strong> ${escapeHtml(product.id || '—')}</div>
-                        <div><strong>Typ:</strong> ${escapeHtml(product.componentType || '—')}</div>
-                        <div><strong>DN:</strong> ${escapeHtml(String(well.dn ?? '—'))}</div>
-                        <div><strong>Nr studni:</strong> ${escapeHtml(well.numer || '—')}</div>
-                        <div><strong>Producent:</strong> ${escapeHtml(product.producer || '—')}</div>
-                        <div><strong>Indeks elem.:</strong> ${elementIndex}</div>
-                    </div>
+        <div style="display:flex; flex-direction:column; gap:0.5rem; min-width:0;">
+            <div class="card card-compact" style="padding:0.5rem 0.6rem;">
+                <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;" onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
+                    <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
+                    <span id="zl-przejscia-app-icon" class="text-xs"><i data-lucide="chevron-up"></i></span>
+                </div>
+                <div id="zl-inline-przejscia-app-container" class="card-content" style="margin-top:0.5rem; display:block;">
+                    <div id="zl-inline-przejscia-app"></div>
                 </div>
             </div>
-            <div id="zl-dane-elementu-header-collapsed" style="display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; cursor:pointer; padding-top:4px;" onclick="toggleDaneElementu()">
-                <i data-lucide="chevron-right" style="width:20px; height:20px; color:var(--text-muted);"></i>
+
+            <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
+                <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
+                    <span><i data-lucide="link"></i> Lista przejść</span>
+                    <span id="zl-przejscia-count" style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
+                </div>
+                <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
+                </div>
             </div>
+        </div>
+    </div>
 
-            <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem;">
-                <div class="zl-section-card">
-                    <div class="zl-section-title"><i data-lucide="sliders-horizontal"></i> Parametry elementu</div>
+    <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
+        <div class="card-title-sm"><i data-lucide="edit"></i> Uwagi</div>
+        <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
+            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${finalUwagi}</textarea>
+        </div>
+    </div>
 
-                    <div class="zl-param-grid">
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">Średnica (mm)</label>
-                            <input type="text" id="zl-srednica" class="form-input form-input-sm" value="${displayDN}" readonly style="font-weight:700;color:var(--accent-hover);">
-                        </div>
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">Wysokość (mm)</label>
-                            <input type="text" id="zl-wysokosc" class="form-input form-input-sm" value="${displayWysokosc}" readonly style="font-weight:700;color:var(--accent-hover);">
-                        </div>
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">Głębokość (mm)</label>
-                            <input type="text" id="zl-glebokosc" class="form-input form-input-sm" value="${displayGlebokosc}" readonly style="font-weight:700;color:var(--accent-hover);">
-                        </div>
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">Dno kinety (mm)</label>
-                            <input type="text" id="zl-dno-kineta" class="form-input form-input-sm" value="${displayDnoKineta}" readonly style="font-weight:700;color:var(--accent-hover);">
-                        </div>
+    <div class="card card-compact" style="margin-bottom:0.5rem;">
+        <div class="card-title-sm"><i data-lucide="settings"></i> Parametry studni</div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                <div class="form-group-sm" ${isAnyKrag ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+                    <label class="form-label-sm">Redukcja kinety</label>
+                    <div class="ui-row-gap zl-param-group">
+                        ${redKinetyOptions
+                            .map(
+                                ([v, l]) =>
+                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
+                            )
+                            .join('')}
                     </div>
+                    <input type="hidden" id="zl-red-kinety" value="${redKinetyVal}">
                 </div>
 
-                <div class="zl-section-card">
-                    <div class="zl-section-title"><i data-lucide="layers"></i> Rodzaj / Materiał</div>
-                    <div class="zl-param-grid">
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">Rodzaj studni</label>
-                            <div class="ui-row-gap zl-param-group">
-                                ${rodzajStudniOptions
-                                    .map(
-                                        ([v, l]) =>
-                                            `<button type="button" class="param-tile ui-badge ${v === rodzajStudniVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
-                                    )
-                                    .join('')}
-                            </div>
-                            <input type="hidden" id="zl-rodzaj-studni" value="${rodzajStudniVal}">
-                        </div>
-
-                        <div class="form-group-sm" ${shouldForceBrak ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
-                            <label class="form-label-sm">Redukcja kinety</label>
-                            <div class="ui-row-gap zl-param-group">
-                                ${redKinetyOptions
-                                    .map(
-                                        ([v, l]) =>
-                                            `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
-                                    )
-                                    .join('')}
-                            </div>
-                            <input type="hidden" id="zl-red-kinety" value="${redKinetyVal}">
-                        </div>
-
-                        <div class="form-group-sm">
-                            <label class="form-label-sm">DIN</label>
-                            <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:var(--accent-hover); font-weight:700;">
-                        </div>
+                <div class="form-group-sm">
+                    <label class="form-label-sm">Studnia wd. DIN</label>
+                    <div class="ui-row-gap zl-param-group">
+                        <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:var(--accent-hover); font-weight:700;">
                     </div>
                 </div>
 
