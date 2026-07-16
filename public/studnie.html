@@ -5205,14 +5205,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
         <div id="toast-container" class="toast-container"></div>
         <!-- Pasywny moduł telemetry AI (NIE zmienia solvera) -->
         <script src="/js/studnie/telemetryBridge.js?v=1.6.0"></script>
-        <!-- Rejestracja wersji solvera/reguł (raz na sesję) -->
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                if (typeof window.telemetryRegisterSolverVersion === 'function') {
-                    window.telemetryRegisterSolverVersion();
-                }
-            });
-        </script>
+        <script src="js/studnie/registerSolverVersion.js?v=1.6.0"></script>
         <script src="js/shared/xlsx.full.min.js?v=1.6.0"></script>
 
         <!-- PV script dependencies -->
@@ -5228,7 +5221,16 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
         <!-- Produkty studni ładowane z API (/api/products-studnie), seedowane z pliku serwera -->
         <script src="js/studnie/globals.js?v=1.6.0"></script>
         <script src="js/studnie/uiHelpers.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistState.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistRepehd.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistCellEdit.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistCategory.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistProductCrud.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistSaveReset.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistImportExport.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistPreco.js?v=1.6.0"></script>
         <script src="js/studnie/pricelistManager.js?v=1.6.0"></script>
+        <script src="js/studnie/pricelistInit.js?v=1.6.0"></script>
         <script src="js/studnie/precoCalcCore.js?v=1.6.0"></script>
         <script src="js/studnie/wellManager.part1.js?v=1.6.0"></script>
         <script src="js/studnie/actionsWellDiscounts.js?v=1.6.0"></script>
@@ -5274,6 +5276,13 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
         <script src="js/studnie/offerHistory.js?v=1.6.0"></script>
         <script src="js/studnie/offerDiscountsPopup.js?v=1.6.0"></script>
         <script src="js/studnie/offerTransport.js?v=1.6.0"></script>
+        <script src="js/studnie/offerPricingCalc.js?v=1.6.0"></script>
+        <script src="js/studnie/offerSummaryBanners.js?v=1.6.0"></script>
+        <script src="js/studnie/offerNotesGenerator.js?v=1.6.0"></script>
+        <script src="js/studnie/offerWellComponents.js?v=1.6.0"></script>
+        <script src="js/studnie/offerSummaryTable.js?v=1.6.0"></script>
+        <script src="js/studnie/offerSummaryUI.js?v=1.6.0"></script>
+        <script src="js/studnie/offerSavedList.js?v=1.6.0"></script>
         <script src="js/studnie/offerRendering.js?v=1.6.0"></script>
         <script src="js/studnie/offerSave.js?v=1.6.0"></script>
         <script src="js/studnie/offerManager.js?v=1.6.0"></script>
@@ -5314,17 +5323,6 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
         <!-- Confirm modal is now created dynamically by appConfirm() in shared/ui.js -->
         <script src="js/shared/iconsSlim.js?v=1.6.0"></script>
 
-        <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
-        <script>
-            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname
-                        .split('/')
-                        .pop()
-                        .replace(/\.html?$/, '') || 'studnie';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
+        <script src="js/studnie/spaRedirect.js?v=1.6.0"></script>
     </body>
 </html>
