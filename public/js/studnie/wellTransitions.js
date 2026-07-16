@@ -72,10 +72,6 @@ function renderInlinePrzejsciaApp(containerId) {
         (p) => p.componentType === 'przejscie' && p.active !== 0
     );
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
-    // Auto-inicjalizacja dla nowej oferty — pokaż wszystkie typy
-    if (visiblePrzejsciaTypes.size === 0 && allTypes.length > 0) {
-        allTypes.forEach((t) => visiblePrzejsciaTypes.add(t));
-    }
     // Filtruj tylko do widocznych typów
     const types = allTypes.filter((t) => visiblePrzejsciaTypes.has(t));
 
