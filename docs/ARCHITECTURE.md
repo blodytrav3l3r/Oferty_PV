@@ -201,15 +201,15 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
 ### Frontend — struktura CSS
 
-| Plik                          | Linie | Opis                                                |
-| ----------------------------- | ----- | --------------------------------------------------- |
-| `public/css/style.css`        | 3762  | Główny arkusz stylów                                |
-| `public/css/style.part01.css` | 1525  | Zmienne + base (wyodrębnione, niepodłączone)        |
-| `public/css/style.part02.css` | 537   | Karty ofert + compact (wyodrębnione, niepodłączone) |
-| `public/css/style.part03.css` | 1509  | Responsive + wizard (wyodrębnione, niepodłączone)   |
-| `public/css/style.part04.css` | 191   | Utility classes (wyodrębnione, niepodłączone)       |
-| `public/css/inter.css`        | —     | Font Inter                                          |
-| `public/css/printModal.css`   | —     | Style wydruku                                       |
+| Plik                              | Linie | Opis                                                |
+| --------------------------------- | ----- | --------------------------------------------------- |
+| `public/css/style.css`            | 3762  | Główny arkusz stylów                                |
+| `public/css/style.base.css`       | 1525  | Zmienne + base (wyodrębnione, niepodłączone)        |
+| `public/css/style.cards.css`      | 537   | Karty ofert + compact (wyodrębnione, niepodłączone) |
+| `public/css/style.responsive.css` | 1509  | Responsive + wizard (wyodrębnione, niepodłączone)   |
+| `public/css/style.utilities.css`  | 191   | Utility classes (wyodrębnione, niepodłączone)       |
+| `public/css/inter.css`            | —     | Font Inter                                          |
+| `public/css/printModal.css`       | —     | Style wydruku                                       |
 
 > Wszystkie 6 plików HTML (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują 4 części zamiast jednego `style.css`. Plik `style.css` (3762 linie) jest zachowany, ale nie jest już ładowany.
 

@@ -6,7 +6,7 @@
 
 ## 1. Design Tokens (zmienne CSS)
 
-Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css` (oraz w plikach `style.part01.css–style.part04.css`, które zawierają wyodrębnione, ale obecnie niepodłączone sekcje).
+Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css` (oraz w plikach `style.base.css`, `style.cards.css`, `style.responsive.css`, `style.utilities.css`, które zawierają wyodrębnione, ale obecnie niepodłączone sekcje).
 
 ### Kolory
 
