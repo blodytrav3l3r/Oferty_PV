@@ -1,6 +1,7 @@
 # Architektura — WITROS Oferty PV
 
 **Wersja:** 1.5.0  
+**Ostatnia aktualizacja:** 2026-07-16  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
 
 ---
@@ -176,6 +177,41 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 | `studnie.html`   | Zarządzanie ofertami studni |
 | `kartoteka.html` | Kartoteka klientów          |
 | `zlecenia.html`  | Widok zamówień              |
+
+### Frontend — struktura JS
+
+Po refaktoryzacji Phase 2 (podział dużych plików JS na mniejsze moduły):
+
+| Katalog              | Liczba plików | Opis                                                                    |
+| -------------------- | ------------- | ----------------------------------------------------------------------- |
+| `public/js/rury/`    | 22            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
+| `public/js/studnie/` | ~112          | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
+| `public/js/sales/`   | 4             | Narzędzia sprzedaży (PVSalesUI, import/eksport)                         |
+
+Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
+
+- `wellActions.js` (52 linie) → deleguje do 12 modułów `actions*.js`
+- `wellManager.js` (277 linii) → deleguje do `actionsWellPainting.js`
+- `wellPopups.js` (322 linie) → deleguje do `popups*.js`
+- `wellTransitions.js` (643 linie) → deleguje do `wellTransitions*.js`
+- `pricelistManager.js` (241 linii) → deleguje do 9 modułów `pricelist*.js`
+- `offerRendering.js` (54 linie) → deleguje do 11 modułów `offer*.js`
+- `orderZlecenia.js` (7 linii) → deleguje do 5 modułów `orderZlecenia*.js`
+- `excelTableManager.js` (335 linii) → deleguje do 19 modułów `excel*.js`
+
+### Frontend — struktura CSS
+
+| Plik                          | Linie | Opis                                                |
+| ----------------------------- | ----- | --------------------------------------------------- |
+| `public/css/style.css`        | 3762  | Główny arkusz stylów                                |
+| `public/css/style.part01.css` | 1525  | Zmienne + base (wyodrębnione, niepodłączone)        |
+| `public/css/style.part02.css` | 537   | Karty ofert + compact (wyodrębnione, niepodłączone) |
+| `public/css/style.part03.css` | 1509  | Responsive + wizard (wyodrębnione, niepodłączone)   |
+| `public/css/style.part04.css` | 191   | Utility classes (wyodrębnione, niepodłączone)       |
+| `public/css/inter.css`        | —     | Font Inter                                          |
+| `public/css/printModal.css`   | —     | Style wydruku                                       |
+
+> Wszystkie 6 plików HTML (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują 4 części zamiast jednego `style.css`. Plik `style.css` (3762 linie) jest zachowany, ale nie jest już ładowany.
 
 ---
 
@@ -375,4 +411,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-09_
+_Ostatnia aktualizacja: 2026-07-16_

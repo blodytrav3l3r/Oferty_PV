@@ -6,7 +6,7 @@
 
 ## 1. Design Tokens (zmienne CSS)
 
-Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css`.
+Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css` (oraz w plikach `style.part01.css–style.part04.css`, które zawierają wyodrębnione, ale obecnie niepodłączone sekcje).
 
 ### Kolory
 
@@ -683,4 +683,4 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-09_
+_Ostatnia aktualizacja: 2026-07-16_
