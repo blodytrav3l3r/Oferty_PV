@@ -1,19 +1,6 @@
 // @ts-check
 /* ===== Extracted to wellTransitions.js ===== */
 
-let editPrzejscieIdx = -1;
-let editPrzejscieState = {
-    type: null,
-    dnId: null,
-    rzedna: '',
-    angle: 0,
-    spadekKineta: '',
-    spadekMufa: ''
-};
-
-const inlinePrzejsciaState = { type: null, dnId: null };
-let visiblePrzejsciaTypes = new Set(); // Domyslnie wszystkie typy sa ukryte
-
 window.editPrzejscie = editPrzejscie;
 window.savePrzejscieEdit = savePrzejscieEdit;
 window.cancelPrzejscieEdit = cancelPrzejscieEdit;
@@ -946,7 +933,6 @@ function refreshPrzejsciaVisibilityTiles() {
 }
 
 /* ===== PRZECIĄGNIJ I UPUŚĆ DLA PRZEJŚĆ ===== */
-let draggedPrzIndex = null;
 
 window.handlePrzDragStart = function (e) {
     draggedPrzIndex = parseInt(e.currentTarget.getAttribute('data-prz-idx'));
