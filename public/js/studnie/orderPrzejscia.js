@@ -1,4 +1,4 @@
-﻿function handlePrzejsciaZamowioneChange(selectElement) {
+function handlePrzejsciaZamowioneChange(selectElement) {
     const dataInput = document.getElementById('step4-data-zamowienia');
     if (!dataInput) return;
 
@@ -141,7 +141,7 @@ function renderPrzejsciaDetailsTable(existingData) {
 
     if (allRows.length === 0) {
         container.innerHTML =
-            '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.72rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przej┼Ť─ç szczelnych w cenniku. Dodaj niestandardowe przej┼Ťcie przyciskiem powy┼╝ej.</div>';
+            '<div style="text-align:center; padding:1rem; color:var(--text-muted); font-size:0.72rem; border:1px dashed rgba(255,255,255,0.08); border-radius:8px;">Brak przejść szczelnych w cenniku. Dodaj niestandardowe przejście przyciskiem powyżej.</div>';
         return;
     }
 
