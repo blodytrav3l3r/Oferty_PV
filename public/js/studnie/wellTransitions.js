@@ -1,5 +1,5 @@
 // @ts-check
-/* ===== Extracted to wellTransitions.js ===== */
+/* ===== Główny moduł przejść ===== */
 
 function renderInlinePrzejsciaApp(containerId) {
     const well = getCurrentWell();
