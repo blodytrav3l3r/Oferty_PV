@@ -248,3 +248,27 @@ function renderZleceniaWellConfig() {
 
     tbody.innerHTML = html;
 }
+
+function filterZleceniaList() {
+    renderZleceniaList();
+}
+
+function selectZleceniaElement(idx) {
+    zleceniaSelectedIdx = idx;
+    renderZleceniaList();
+    const el = zleceniaElementsList[idx];
+    if (!el) return;
+
+    if (currentWellIndex !== el.wellIndex) {
+        currentWellIndex = el.wellIndex;
+    }
+
+    renderWellDiagram();
+    renderZleceniaWellConfig();
+    renderZleceniaSvgPreview(el.well);
+
+    populateZleceniaForm(el);
+}
+
+window.filterZleceniaList = filterZleceniaList;
+window.selectZleceniaElement = selectZleceniaElement;
