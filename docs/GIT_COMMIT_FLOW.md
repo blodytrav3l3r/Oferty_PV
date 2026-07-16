@@ -11,16 +11,19 @@ git diff --stat     # statystyka: ile linii zmienionych na plik
 ### 2. Staging — wybierz co idzie do commita
 
 **Opcja A — wszystko:**
+
 ```bash
 git add -A
 ```
 
 **Opcja B — konkretne pliki (gdy są niechciane zmiany np. `data/seed*.json`):**
+
 ```bash
 git add sciezka/pliku.ts sciezka/pliku2.html
 ```
 
 **Opcja C — interaktywnie (sprawdź każdą zmianę przed dodaniem):**
+
 ```bash
 git add -p
 ```
@@ -37,11 +40,13 @@ Jeśli coś pada: popraw błędy i wróć do kroku 2.
 ### 4. Commit
 
 **Krótki:**
+
 ```bash
 git commit -m "typ(scope): opis"
 ```
 
 **Dłuższy z ciałem:**
+
 ```bash
 git commit -m "typ(scope): krótki opis
 
