@@ -1,4 +1,4 @@
-﻿# Plan Refaktoryzacji — WITROS Oferty PV
+# Plan Refaktoryzacji — WITROS Oferty PV
 
 > **Status:** Plan zatwierdzony do realizacji
 > **Data:** 2026-07-15

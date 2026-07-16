@@ -11,15 +11,15 @@ function handlePrzejsciaZamowioneChange(selectElement) {
     }
 }
 
-/* ===== SEKCJA PRZEJ┼Ü─ć SZCZELNYCH ÔÇö SZCZEG├ô┼üY Z OFERTY ===== */
+/* ===== SEKCJA PRZEJŚĆ SZCZELNYCH — SZCZEGÓŁY Z OFERTY ===== */
 
-/** Tymczasowa tablica r─Öcznie dodanych wierszy niestandardowych przej┼Ť─ç */
+/** Tymczasowa tablica ręcznie dodanych wierszy niestandardowych przejść */
 var _customPrzejscieRows = [];
 var _offerPrzejscieRows = [];
 var _przejsciaInitialized = false;
 
 /**
- * Buduje list─Ö typ├│w przej┼Ť─ç z cennika (studnieProducts).
+ * Buduje listę typów przejść z cennika (studnieProducts).
  * Zwraca tablic─Ö: [{ rodzaj, dnOd, dnDo, source: 'offer' }]
  */
 function buildOfferPrzejsciaTypes() {
