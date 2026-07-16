@@ -24,6 +24,8 @@ jest.mock('puppeteer', () => ({
     })
 }));
 
+import { buildContactSectionHTML } from '../src/services/pdf/offerUsers';
+
 // Mock logger
 jest.mock('../src/utils/logger', () => ({
     logger: {
@@ -164,13 +166,13 @@ describe('pdfGenerator Service', () => {
 
     describe('buildContactSectionHTML', () => {
         it('zwraca html bez autorów', () => {
-            const html = pdfGen.buildContactSectionHTML(null, null);
+            const html = buildContactSectionHTML(null, null);
             expect(html).toContain('W razie pytań prosimy o kontakt z opiekunem oferty.');
         });
 
         it('zwraca testowych autorów z numerem', () => {
             const auth = { name: 'Aut', email: 'a@a.com', phone: '123' };
-            const html = pdfGen.buildContactSectionHTML(auth, null);
+            const html = buildContactSectionHTML(auth, null);
             expect(html).toContain('Aut');
             expect(html).toContain('123');
         });
