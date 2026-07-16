@@ -1,5 +1,5 @@
 // @ts-check
-/* ===== wellActions.part1.js — helper functions, pure/isolated logic ===== */
+/* ===== KONFIGURACJA STUDNI — sortowanie i reguły zakończeń ===== */
 
 /**
  * Znajduje zakończenie tego samego typu dla innej średnicy.
@@ -42,7 +42,7 @@ function enforceSingularTopClosures(well, productId) {
                 window.showKonusPehdResolverModal(currentWellIndex);
             } else {
                 showToast(
-                    'Nie można dodać konusa przy aktywnej wkładce PEHD zwieńczenia.',
+                    'Nie mo\u017cna doda\u0107 konusa przy aktywnej wk\u0142adce PEHD zwie\u0144czenia.',
                     'error'
                 );
             }

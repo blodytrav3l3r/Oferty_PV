@@ -1,0 +1,583 @@
+/* ===== NOWOCZESNE KARTY OFERT ===== */
+.modern-offer-card {
+    position: relative;
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-deep) 100%);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    border-radius: 12px;
+    padding: 0;
+    margin-bottom: 0.7rem;
+    overflow: hidden;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.modern-offer-card:hover {
+    border-color: rgba(var(--accent-rgb), 0.35);
+    box-shadow:
+        0 8px 16px rgba(var(--accent-rgb), 0.12),
+        0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.modern-offer-card:hover .offer-icon-wrapper {
+    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.2);
+}
+
+.offer-status-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--text-muted);
+    transition: background 0.3s ease;
+}
+
+.offer-status-indicator.has-order {
+    background: linear-gradient(180deg, var(--success) 0%, var(--success-border) 100%);
+}
+
+.offer-status-indicator.no-order {
+    background: linear-gradient(180deg, var(--text-muted) 0%, var(--text-muted) 100%);
+}
+
+.connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.connection-dot.is-online {
+    background: var(--success);
+    box-shadow: 0 0 6px rgba(var(--success-rgb), 0.6);
+    animation: dotPulse 2s ease-in-out infinite;
+}
+
+.connection-dot.is-offline {
+    background: var(--danger);
+    box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.4);
+}
+
+.connection-dot.is-checking {
+    background: var(--warn);
+    box-shadow: 0 0 6px rgba(var(--warn-rgb), 0.4);
+}
+
+@keyframes dotPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 0.6;
+    }
+}
+
+.offer-card-content {
+    padding: 0.85rem 1rem 0.7rem 1.25rem;
+}
+
+.offer-top-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+}
+
+.offer-icon-wrapper {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--accent-rgb), 0.15) 0%,
+        rgba(var(--accent2-rgb), 0.1) 100%
+    );
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-hover);
+    font-size: 1rem;
+    transition: box-shadow 0.2s ease;
+}
+
+.offer-title-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.offer-title {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.2px;
+}
+
+.offer-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.offer-subtitle .author-badge {
+    padding: 0.1rem 0.45rem;
+    font-size: 0.7rem;
+    border-radius: 6px;
+}
+
+.offer-client {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.offer-separator {
+    color: var(--text-muted);
+}
+
+.offer-invest {
+    color: var(--text-secondary);
+}
+
+.offer-price-section {
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.offer-price {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--accent-hover);
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+}
+
+.offer-meta {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+/* Odznaki autora – renderowane inline w .offer-subtitle */
+.author-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--accent-text);
+    white-space: nowrap;
+}
+
+.author-badge i {
+    width: 12px;
+    height: 12px;
+}
+
+.author-badge.clickable-user {
+    cursor: pointer;
+    transition:
+        background 0.15s,
+        border-color 0.15s;
+}
+
+.author-badge.clickable-user:hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.offer-orders-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0 0 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid rgba(var(--success-rgb), 0.18);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.52);
+}
+
+.offer-order-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 36px;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 6px;
+    background: rgba(30, 41, 59, 0.58);
+}
+
+.offer-order-main {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    flex: 1 1 auto;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    padding: 0;
+}
+
+.offer-order-main:hover strong {
+    color: #67e8f9;
+}
+
+.offer-order-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border-radius: 6px;
+    background: rgba(var(--success-rgb), 0.12);
+    border: 1px solid rgba(var(--success-rgb), 0.2);
+    color: var(--success-hover);
+}
+
+.offer-order-icon i {
+    width: 13px;
+    height: 13px;
+}
+
+.offer-order-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.1rem;
+}
+
+.offer-order-text strong,
+.offer-order-text small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.offer-order-text strong {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.offer-order-text small {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+}
+
+.offer-order-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.3rem;
+    flex: 0 0 auto;
+}
+
+.offer-actions-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.order-status-badge {
+    flex-shrink: 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.status-badge.success {
+    background: rgba(var(--success-rgb), 0.12);
+    border: 1px solid rgba(var(--success-rgb), 0.25);
+    color: var(--success-hover);
+}
+
+.status-badge.neutral {
+    background: rgba(100, 116, 139, 0.12);
+    border: 1px solid rgba(100, 116, 139, 0.2);
+    color: var(--text-secondary);
+}
+
+.status-badge i {
+    width: 12px;
+    height: 12px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(var(--accent-rgb), 0.08);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    color: var(--accent-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        box-shadow 0.15s;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.action-btn:hover {
+    box-shadow: 0 3px 8px rgba(var(--accent-rgb), 0.2);
+}
+
+.action-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-btn.primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-color: transparent;
+    color: white;
+    box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.3);
+}
+
+.action-btn.primary:hover {
+    box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.35);
+}
+
+.action-btn.secondary {
+    background: rgba(var(--accent-rgb), 0.1);
+    border-color: rgba(var(--accent-rgb), 0.2);
+    color: var(--accent-text);
+}
+
+.action-btn.secondary:hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.action-btn.success {
+    background: var(--success-bg);
+    border-color: rgba(var(--success-rgb), 0.3);
+    color: var(--success);
+}
+
+.action-btn.success:hover {
+    background: var(--success-bg-hover);
+    border-color: rgba(var(--success-rgb), 0.5);
+    box-shadow: 0 4px 12px var(--success-bg);
+}
+
+.action-btn.danger {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+    color: var(--danger-hover);
+}
+
+.action-btn.danger:hover:not(:disabled) {
+    background: var(--danger-bg-hover);
+    border-color: var(--danger-border);
+    box-shadow: 0 3px 8px var(--danger-bg);
+}
+
+.action-btn.phone {
+    background: var(--success-bg);
+    border-color: var(--success-bg);
+    color: var(--success);
+}
+
+.action-btn.phone:hover {
+    background: var(--success-bg-hover);
+    border-color: var(--success-bg);
+    box-shadow: 0 3px 8px var(--success-bg);
+}
+
+.action-btn svg,
+.action-btn i {
+    width: 16px;
+    height: 16px;
+}
+
+.action-btn.text-btn {
+    width: auto;
+    min-width: 0;
+    padding: 0 0.85rem;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family:
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+    white-space: nowrap;
+    flex-shrink: 1;
+}
+
+.action-btn.text-btn svg,
+.action-btn.text-btn i {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+/* ===== TRYB KOMPAKTOWY ===== */
+.compact-mode .modern-offer-card {
+    margin-bottom: 0.4rem;
+    border-radius: 8px;
+}
+
+.compact-mode .offer-card-content {
+    padding: 0.55rem 0.7rem 0.5rem 1rem;
+}
+
+.compact-mode .offer-top-row {
+    margin-bottom: 0.3rem;
+    gap: 0.5rem;
+}
+
+.compact-mode .offer-icon-wrapper {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+}
+
+.compact-mode .offer-title {
+    font-size: 0.82rem;
+    margin-bottom: 0.1rem;
+}
+
+.compact-mode .offer-subtitle {
+    font-size: 0.7rem;
+    gap: 0.3rem;
+}
+
+.compact-mode .offer-subtitle .author-badge {
+    font-size: 0.62rem;
+    padding: 0.05rem 0.35rem;
+}
+
+.compact-mode .offer-price {
+    font-size: 0.95rem;
+}
+
+.compact-mode .offer-meta {
+    font-size: 0.62rem;
+    margin-top: 0.05rem;
+}
+
+.compact-mode .offer-orders-panel {
+    padding: 0.35rem 0.5rem;
+    margin-bottom: 0.3rem;
+    gap: 0.3rem;
+}
+
+.compact-mode .offer-order-row {
+    padding: 0.25rem 0.4rem;
+    min-height: 32px;
+}
+
+.compact-mode .offer-order-text strong {
+    font-size: 0.72rem;
+}
+
+.compact-mode .offer-order-text small {
+    font-size: 0.65rem;
+}
+
+.compact-mode .action-btn:not(.text-btn) {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+}
+
+.compact-mode .action-btn:not(.text-btn) svg,
+.compact-mode .action-btn:not(.text-btn) i {
+    width: 13px;
+    height: 13px;
+}
+
+.compact-mode .action-btn.text-btn {
+    padding: 0 0.55rem;
+    font-size: 0.7rem;
+    gap: 0.3rem;
+}
+
+.compact-mode .action-btn.text-btn svg,
+.compact-mode .action-btn.text-btn i {
+    width: 14px;
+    height: 14px;
+}
+
+.compact-mode .status-badge {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.65rem;
+}
+
+.compact-mode .status-badge i {
+    width: 10px;
+    height: 10px;
+}
+
+.compact-mode .offer-actions-row {
+    gap: 0.5rem;
+}
+
+.compact-mode .action-buttons {
+    gap: 0.2rem;
+}
+
+.compact-mode .btn-order-badge {
+    height: 28px;
+    padding: 0 0.55rem;
+    font-size: 0.7rem;
+    gap: 0.3rem;
+}
+
+.compact-mode .btn-order-badge svg {
+    width: 14px;
+    height: 14px;
+}

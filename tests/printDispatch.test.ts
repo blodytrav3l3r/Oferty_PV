@@ -21,6 +21,7 @@ const KARTOTEKA_HTML = path.join(PUBLIC, 'kartoteka.html');
 const STUDNIE_PM = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager.js');
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
+const PV_SALES_HELPERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesHelpers.js');
 
 function readFile(p: string): string {
     return fs.readFileSync(p, 'utf-8');
@@ -50,10 +51,12 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: pvSalesUi.js dispatch on offerType', () => {
+    describe('Static: pvSalesUi.js / pvSalesHelpers.js dispatch on offerType', () => {
         let src: string;
+        let helpersSrc: string;
         beforeAll(() => {
             src = readFile(PV_SALES_UI);
+            helpersSrc = readFile(PV_SALES_HELPERS);
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
@@ -61,7 +64,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             // Sprawdza że wywołanie modal buildera dla rur przechodzi przez openPrintModal
             const pattern =
                 /isRuryOfferFromTypeOrId[\s\S]{0,500}showUniversalPrintModalRury\s*\(\s*offerId/;
-            expect(src).toMatch(pattern);
+            expect(helpersSrc).toMatch(pattern);
         });
 
         it('.btn-karta-budowy ma data-offer-type (dispatch Karta Budowy)', () => {
@@ -159,24 +162,26 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: pvSalesUi.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
+    describe('Static: pvSalesHelpers.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
+        let helpersSrc: string;
         let src: string;
         beforeAll(() => {
+            helpersSrc = readFile(PV_SALES_HELPERS);
             src = readFile(PV_SALES_UI);
         });
 
         it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
             // Helper isRuryOfferFromTypeOrId obejmuje 3 warunki: 'rura_oferta' | 'offer' | /^offer_rury_/
-            expect(src).toMatch(/function isRuryOfferFromTypeOrId\s*\(/);
-            expect(src).toMatch(/['"]rura_oferta['"]/);
-            expect(src).toMatch(/['"]offer['"]/);
-            expect(src).toMatch(/\^offer_rury_/);
+            expect(helpersSrc).toMatch(/function isRuryOfferFromTypeOrId\s*\(/);
+            expect(helpersSrc).toMatch(/['"]rura_oferta['"]/);
+            expect(helpersSrc).toMatch(/['"]offer['"]/);
+            expect(helpersSrc).toMatch(/\^offer_rury_/);
         });
 
         it('jest WSPÓLNA funkcja openPrintModal(offerId, orderId, offerType, relatedOrders)', () => {
             // Unifikacja: wszystkie 4 ścieżki (Wydruk + Karta budowy × rury + studnie)
             // idą przez jedną funkcję. 4. arg relatedOrders (z ordersMap) dodany dla kartoteki.
-            expect(src).toMatch(
+            expect(helpersSrc).toMatch(
                 /function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/
             );
             expect(src).toMatch(
@@ -224,26 +229,28 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: openPrintModal przekazuje relatedOrders z ordersMap (kartoteka fix)', () => {
+    describe('Static: openPrintModal (pvSalesHelpers) + ordersMap (pvSalesUi)', () => {
+        let helpersSrc: string;
         let src: string;
         beforeAll(() => {
+            helpersSrc = readFile(PV_SALES_HELPERS);
             src = readFile(PV_SALES_UI);
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {
-            expect(src).toMatch(
+            expect(helpersSrc).toMatch(
                 /function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/
             );
         });
 
         it('openPrintModal przekazuje relatedOrders do showUniversalPrintModalRury', () => {
-            expect(src).toMatch(
+            expect(helpersSrc).toMatch(
                 /showUniversalPrintModalRury\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/
             );
         });
 
         it('openPrintModal przekazuje relatedOrders do showUniversalPrintModal', () => {
-            expect(src).toMatch(
+            expect(helpersSrc).toMatch(
                 /showUniversalPrintModal\s*\(\s*offerId\s*,\s*safeOrderId\s*,\s*safeRelatedOrders\s*\)/
             );
         });

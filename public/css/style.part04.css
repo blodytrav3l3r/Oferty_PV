@@ -1,0 +1,305 @@
+/* ===== Utility classes (JS inline style replacement) ===== */
+
+/* Flex/Grid helper utilities (shared by rury & studnie) */
+.flex-wrap-start {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.flex-1-180 {
+    flex: 1;
+    min-width: 180px;
+}
+.flex-1-240 {
+    flex: 1;
+    min-width: 240px;
+}
+.flex-1-180-hidden {
+    flex: 1;
+    min-width: 180px;
+    display: none;
+}
+.flex-2-240 {
+    flex: 2;
+    min-width: 240px;
+}
+.p-6-12 {
+    padding: 0.6rem 1.2rem;
+}
+.form-input-wide {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 0.6rem 0.8rem;
+}
+
+/* Status badges */
+.badge-ok {
+    background: rgba(var(--success-rgb), 0.15);
+    color: var(--success-hover);
+    border: 1px solid rgba(var(--success-rgb), 0.3);
+}
+.badge-info {
+    background: rgba(var(--blue-rgb), 0.15);
+    color: var(--blue-hover);
+    border: 1px solid rgba(var(--blue-rgb), 0.3);
+}
+.badge-muted {
+    background: rgba(156, 163, 175, 0.15);
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+/* Role badges */
+.role-admin {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.role-pro {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.role-user {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* Color utility classes */
+.color-success {
+    color: var(--success-hover);
+}
+.color-info {
+    color: var(--blue-hover);
+}
+.color-link {
+    color: #60a5fa;
+}
+.color-accent {
+    color: var(--accent2-hover);
+}
+.color-warn {
+    color: var(--warn-hover);
+}
+.color-danger {
+    color: #f87171;
+}
+.color-cyan {
+    color: var(--cyan);
+}
+.color-blue-alt {
+    color: var(--blue-alt);
+}
+.color-purple-alt {
+    color: var(--purple-alt);
+}
+
+/* Background utility classes */
+.bg-glass-subtle {
+    background: rgba(255, 255, 255, 0.03);
+}
+.bg-glass-hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+.bg-glass-strong {
+    background: rgba(255, 255, 255, 0.1);
+}
+.border-accent-subtle {
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+.bg-accent-subtle {
+    background: rgba(var(--accent-rgb), 0.15);
+}
+.bg-success-subtle {
+    background: rgba(var(--success-rgb), 0.2);
+}
+.border-success {
+    border-color: rgba(var(--success-rgb), 0.55);
+}
+.border-danger-subtle {
+    border-color: rgba(var(--danger-rgb), 0.3);
+}
+.bg-danger-subtle {
+    background: rgba(var(--danger-rgb), 0.15);
+}
+.bg-warn-subtle {
+    background: rgba(var(--warn-rgb), 0.15);
+}
+.bg-black-subtle {
+    background: rgba(0, 0, 0, 0.2);
+}
+.bg-black-dim {
+    background: rgba(0, 0, 0, 0.6);
+}
+.bg-glass-ultra {
+    background: rgba(255, 255, 255, 0.02);
+}
+.bg-purple-subtle {
+    background: rgba(168, 85, 247, 0.1);
+}
+.border-warn-subtle {
+    border-color: rgba(var(--warn-rgb), 0.3);
+}
+.border-primary-subtle {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Align & layout utility classes */
+.text-xs {
+    font-size: 0.75rem;
+}
+.text-center {
+    text-align: center;
+}
+.text-left {
+    text-align: left;
+}
+.text-right-600 {
+    text-align: right;
+    font-weight: 600;
+}
+.text-center-block {
+    display: block;
+    text-align: center;
+}
+.ellipsis-center {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+    text-align: center;
+}
+.flex-1 {
+    flex: 1;
+}
+.flex-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.flex-col {
+    display: flex;
+    gap: 0.4rem;
+    flex-direction: column;
+}
+.flex-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.fw-500 {
+    font-weight: 500;
+}
+.fw-600 {
+    font-weight: 600;
+}
+.fw-700 {
+    font-weight: 700;
+}
+.text-muted {
+    color: var(--text-muted);
+}
+.text-primary {
+    color: var(--text-primary);
+}
+
+/* Icon sizing */
+.icon-xxs {
+    width: 12px;
+    height: 12px;
+}
+.icon-xs {
+    width: 14px;
+    height: 14px;
+}
+.icon-sm {
+    width: 16px;
+    height: 16px;
+}
+.icon-md {
+    width: 20px;
+    height: 20px;
+}
+
+/* Klasy pomocnicze przycisków */
+.pad-sm {
+    padding: 0.5rem 0.75rem;
+}
+.pill-sm {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+}
+
+/* Icon button utility classes */
+.btn-icon-danger {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--danger-hover);
+    background: rgba(var(--danger-rgb), 0.1);
+    border: 1px solid rgba(var(--danger-rgb), 0.25);
+    transition: background-color 0.15s;
+}
+.btn-icon-danger:hover {
+    background: rgba(var(--danger-rgb), 0.3);
+}
+.btn-icon-sm {
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+}
+.btn-icon-xs {
+    width: auto;
+    height: auto;
+    border-radius: 4px;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.6rem;
+    line-height: 1;
+}
+
+/* Klasy efektów najechania */
+.hover-danger {
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        color 0.2s;
+    cursor: pointer;
+}
+.hover-danger:hover {
+    background: rgba(var(--danger-rgb), 0.15);
+    border-color: rgba(var(--danger-rgb), 0.3);
+    color: #fca5a5;
+}
+.hover-accent {
+    transition:
+        background-color 0.2s,
+        border-color 0.2s;
+    cursor: pointer;
+}
+.hover-accent:hover {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+}
+.hover-lift {
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
+    cursor: pointer;
+}
+.hover-lift:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.hover-bright {
+    transition:
+        filter 0.2s,
+        border-color 0.2s;
+    cursor: pointer;
+}
+.hover-bright:hover {
+    filter: brightness(1.3);
+    border-color: rgba(255, 255, 255, 0.3);
+}

@@ -178,7 +178,7 @@ function openZakonczeniePopup() {
 }
 
 // updateZakonczenieButton, updateRedukcjaButton, onRedukcjaMinChange,
-// updateRedukcjaZakButton, updatePsiaBudaButton przeniesione do wellPopups.part1.js
+// updateRedukcjaZakButton, updatePsiaBudaButton przeniesione do popupsButtonUpdaters.js
 
 function openRedukcjaZakonczeniePopup() {
     const well = getCurrentWell();

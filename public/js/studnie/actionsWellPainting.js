@@ -1,5 +1,5 @@
 // @ts-check
-/* ===== POMOCNICY PURE (wellManager.part1) ===== */
+/* ===== POLA POWERZCHNI MALOWANIA / PEHD — pure helpers ===== */
 
 // ponytail: 4/π waste factor for plate elements cut as squares from PEHD sheet
 const PLATE_COMPONENT_TYPES = new Set([

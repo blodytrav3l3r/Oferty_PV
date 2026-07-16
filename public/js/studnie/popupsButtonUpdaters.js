@@ -10,7 +10,7 @@ function updateZakonczenieButton() {
         const p = studnieProducts.find((pr) => pr.id === well.zakonczenie);
         const shortName = p
             ? p.name.length > 12
-                ? p.name.substring(0, 12) + '…'
+                ? p.name.substring(0, 12) + '\u2026'
                 : p.name
             : well.zakonczenie;
         btn.innerHTML =
@@ -19,7 +19,7 @@ function updateZakonczenieButton() {
         btn.style.color = '#a78bfa';
     } else {
         btn.innerHTML =
-            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zakończenie';
+            '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zako\u0144czenie';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
     }
@@ -78,7 +78,7 @@ function updateRedukcjaZakButton() {
     if (well.redukcjaZakonczenie) {
         const p = studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
         const shortName = p
-            ? p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)
+            ? p.name.replace(/^.*?(Konus|P\u0142yta|Pier\u015bcie\u0144)/i, '$1').substring(0, 18)
             : 'Zak. DN' + targetDn;
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
