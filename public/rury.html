@@ -196,7 +196,9 @@
                             </div>
                             <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr">
                                 <div class="wizard-form-group">
-                                    <label class="wizard-form-label" for="client-number">Nr klienta</label>
+                                    <label class="wizard-form-label" for="client-number"
+                                        >Nr klienta</label
+                                    >
                                     <input
                                         class="wizard-form-input"
                                         id="client-number"
@@ -386,8 +388,7 @@
                                             height: 34px;
                                         "
                                     >
-Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
-                                    >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                 </div>
                                 <div class="wizard-form-group">
                                     <label class="wizard-form-label" for="offer-validity"
@@ -2105,17 +2106,7 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/shared/iconsSlim.js?v=1.6.0"></script>
 
         <!-- Wersja aplikacji przeniesiona do toolbara SPA (app.html / #app-version-toolbar) -->
-        <script>
-            // Wymuszenie jedynego punktu wejścia: app.html#/<module>
-            if (window.top === window.self) {
-                const module =
-                    location.pathname
-                        .split('/')
-                        .pop()
-                        .replace(/\.html?$/, '') || 'rury';
-                window.location.replace('/app.html#/' + module);
-            }
-        </script>
+        <script src="js/rury/redirectRury.js?v=1.6.0"></script>
 
         <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
         <div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000">
