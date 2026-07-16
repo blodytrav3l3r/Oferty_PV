@@ -612,8 +612,7 @@
                                                     height: 34px;
                                                 "
                                             >
-Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
-                                            >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                                         </div>
                                         <div class="wizard-form-group">
                                             <label class="wizard-form-label" for="offer-validity"
@@ -686,9 +685,32 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                 </div>
                                 <div class="wizard-card-body">
                                     <!-- Baner dla ofert legacy bez zapisanego stanu kreatora -->
-                                    <div id="wizard-legacy-banner" class="gap-2" style="display:none; margin-bottom:0.8rem; padding:0.6rem 0.8rem; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.25); border-radius:8px; font-size:0.82rem; color:#fbbf24;">
-                                        <i data-lucide="info" style="width:1rem;height:1rem;vertical-align:middle;margin-right:0.3rem;"></i>
-                                        Ta oferta nie zawiera zapisanych parametrów ogólnych. Wybierz wartości poniżej — zostaną zapisane przy kolejnym zapisie oferty.
+                                    <div
+                                        id="wizard-legacy-banner"
+                                        class="gap-2"
+                                        style="
+                                            display: none;
+                                            margin-bottom: 0.8rem;
+                                            padding: 0.6rem 0.8rem;
+                                            background: rgba(245, 158, 11, 0.12);
+                                            border: 1px solid rgba(245, 158, 11, 0.25);
+                                            border-radius: 8px;
+                                            font-size: 0.82rem;
+                                            color: #fbbf24;
+                                        "
+                                    >
+                                        <i
+                                            data-lucide="info"
+                                            style="
+                                                width: 1rem;
+                                                height: 1rem;
+                                                vertical-align: middle;
+                                                margin-right: 0.3rem;
+                                            "
+                                        ></i>
+                                        Ta oferta nie zawiera zapisanych parametrów ogólnych.
+                                        Wybierz wartości poniżej — zostaną zapisane przy kolejnym
+                                        zapisie oferty.
                                     </div>
                                     <div
                                         class="gap-3"
@@ -2124,8 +2146,29 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
                                             >
                                                 <i data-lucide="settings"></i> Auto
                                             </button>
-                                            <span id="ai-status-indicator" style="font-size:0.65rem; margin-left:0.3rem; white-space:nowrap; display:inline-flex; align-items:center; gap:3px; opacity:0.7" title="AI ranking — sprawdza status...">
-                                                <span id="ai-status-dot" style="width:6px;height:6px;border-radius:50%;display:inline-block;background:#6b7280"></span>
+                                            <span
+                                                id="ai-status-indicator"
+                                                style="
+                                                    font-size: 0.65rem;
+                                                    margin-left: 0.3rem;
+                                                    white-space: nowrap;
+                                                    display: inline-flex;
+                                                    align-items: center;
+                                                    gap: 3px;
+                                                    opacity: 0.7;
+                                                "
+                                                title="AI ranking — sprawdza status..."
+                                            >
+                                                <span
+                                                    id="ai-status-dot"
+                                                    style="
+                                                        width: 6px;
+                                                        height: 6px;
+                                                        border-radius: 50%;
+                                                        display: inline-block;
+                                                        background: #6b7280;
+                                                    "
+                                                ></span>
                                                 <span id="ai-status-text">AI...</span>
                                             </span>
                                             <button
@@ -5218,6 +5261,24 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea
         <script src="js/studnie/mlDualRanking.js?v=1.6.0"></script>
         <script src="js/studnie/mlRewardHooks.js?v=1.6.0"></script>
         <script src="js/studnie/excelState.js?v=1.6.0"></script>
+        <script src="js/studnie/excelHelpers.js?v=1.6.0"></script>
+        <script src="js/studnie/excelPolling.js?v=1.6.0"></script>
+        <script src="js/studnie/excelColumns.js?v=1.6.0"></script>
+        <script src="js/studnie/excelReductionColumns.js?v=1.6.0"></script>
+        <script src="js/studnie/excelModal.js?v=1.6.0"></script>
+        <script src="js/studnie/excelTabs.js?v=1.6.0"></script>
+        <script src="js/studnie/excelAutoSelect.js?v=1.6.0"></script>
+        <script src="js/studnie/excelCellNavigation.js?v=1.6.0"></script>
+        <script src="js/studnie/excelCellSelection.js?v=1.6.0"></script>
+        <script src="js/studnie/excelCopyPaste.js?v=1.6.0"></script>
+        <script src="js/studnie/excelTableBody.js?v=1.6.0"></script>
+        <script src="js/studnie/excelSelection.js?v=1.6.0"></script>
+        <script src="js/studnie/excelTableRenderer.js?v=1.6.0"></script>
+        <script src="js/studnie/excelAddDialog.js?v=1.6.0"></script>
+        <!-- excel: config manager + handlers (krok 13) -->
+        <script src="js/studnie/excelConfigManager.js?v=1.6.0"></script>
+        <script src="js/studnie/excelChangeHandlers.js?v=1.6.0"></script>
+        <script src="js/studnie/excelWellActions.js?v=1.6.0"></script>
         <script src="js/studnie/excelTableManager.js?v=1.6.0"></script>
         <script src="js/studnie/orderHelpers.js?v=1.6.0"></script>
         <script src="js/studnie/orderExport.js?v=1.6.0"></script>
