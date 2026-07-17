@@ -5,8 +5,9 @@
 function excelOnRzednaChange(wIdx) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (!row) return;
-    _excelMarkAsManual(wIdx);
-    _excelClearResCache(wells[wIdx]);
+    const well = wells[wIdx];
+    if (!well) return;
+    _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
     const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
@@ -22,18 +23,22 @@ function excelOnRzednaChange(wIdx) {
         if (rzDnaInput) rzDnaInput.style.outline = '';
     }
 
-    wells[wIdx].rzednaWlazu = rzWlazu;
-    wells[wIdx].rzednaDna = rzDna;
+    well.rzednaWlazu = rzWlazu;
+    well.rzednaDna = rzDna;
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
+
     if (
         _excelAutoSelectEnabled &&
+        well.autoSelect !== false &&
         rzWlazu !== null &&
         rzDna !== null &&
         rzWlazu > rzDna &&
         typeof autoSelectComponents === 'function'
     ) {
         _excelAutoSelectForWell(wIdx);
+    } else {
+        _excelMarkAsManual(wIdx);
     }
 }
 

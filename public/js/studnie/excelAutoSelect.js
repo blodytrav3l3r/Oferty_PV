@@ -94,6 +94,8 @@ async function _excelRunAutoSelectForWell(wIdx) {
         showToast('Błąd auto-doboru: ' + (e?.message || e), 'error');
     } finally {
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
-        if (runBtn) runBtn.textContent = '▶';
+        if (runBtn)
+            runBtn.innerHTML =
+                '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg>';
     }
 }

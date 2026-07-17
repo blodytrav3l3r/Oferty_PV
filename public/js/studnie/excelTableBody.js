@@ -1,5 +1,5 @@
-// @ts-check
-/* ===== EXCEL TABLE BODY — Render TBODY, autoodświeżanie komórek i kolorów duplikatów ===== */
+﻿// @ts-check
+/* ===== EXCEL TABLE BODY â€” Render TBODY, autoodĹ›wieĹĽanie komĂłrek i kolorĂłw duplikatĂłw ===== */
 
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
@@ -130,13 +130,12 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
         let autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         let autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
-        let runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
         html +=
             '<td style="' +
             tdBaseStyle +
             'background:' +
             rowBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;"><button type="button" id="excel-mode-btn-' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
             wIdx +
@@ -156,9 +155,9 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             wIdx +
             '" onclick="_excelRunAutoSelectForWell(' +
             wIdx +
-            ')" ' +
-            runDisabled +
-            ' style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:' +
+            ')"' +
+            (isAuto ? '' : ' disabled') +
+            ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:' +
             (isAuto ? 'pointer' : 'not-allowed') +
             ';background:' +
             (isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)') +
@@ -166,7 +165,8 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             (isAuto ? '#c7d2fe' : '#64748b') +
             ';border:1px solid ' +
             (isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)') +
-            ';height:18px;line-height:1;">\u25b6</button></td>';
+            (isAuto ? '' : ';opacity:0.4') +
+            ';height:18px;align-items:center;justify-content:center;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
         /* Lp */
         html +=
             '<td style="' +
@@ -486,7 +486,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:block;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.65rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);height:18px;line-height:1;opacity:0.3;">\u25b6</button></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -601,7 +601,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
     return html;
 }
 
-/* ===== AUTO-ODŚWIEŻANIE KOMÓREK (height, dennica, uszczelki) ===== */
+/* ===== AUTO-ODĹšWIEĹ»ANIE KOMĂ“REK (height, dennica, uszczelki) ===== */
 function _excelRefreshAutoCells(wIdx, row) {
     const well = wells[wIdx];
     if (!well) return;
@@ -623,7 +623,7 @@ function _excelRefreshAutoCells(wIdx, row) {
     if (uCell) uCell.textContent = uszcz;
 }
 
-/* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
+/* ===== NATYCHMIASTOWE ODĹšWIEĹ»ENIE KOLORĂ“W DUPLIKATĂ“W (bez re-rendera) ===== */
 function _excelRefreshDupColors() {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
