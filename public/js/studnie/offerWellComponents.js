@@ -79,7 +79,8 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)} ${featureBadges}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
+        <td style="text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
@@ -123,7 +124,7 @@ function getWellBadges(change, isOrdered, well) {
 function renderWellDetailsRow(well, i, change, wellTransportCost) {
     const isExpanded = expandedWellIndices.has(i);
     if (!isExpanded)
-        return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="12"></td></tr>`;
+        return `<tr id="well-details-${i}" class="well-details-row hidden"><td colspan="13"></td></tr>`;
 
     const stats = calcWellStats(well);
     const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
@@ -132,7 +133,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost) {
     const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
     const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
 
-    const detailsHtml = `<tr class="well-details-row"><td colspan="12">
+    const detailsHtml = `<tr class="well-details-row"><td colspan="13">
         <div class="well-details-container">
             <div class="well-details-grid">
                 <div class="well-detail-item">
