@@ -317,25 +317,23 @@ function _excelImportPasteList() {
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
     if (_excelAutoSelectEnabled) {
-        for (var k = 0; k < added; k++) {
-            (function (idx) {
-                setTimeout(
-                    function () {
-                        var nwi = wells.length - added + idx;
-                        var w = wells[nwi];
-                        if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
-                            _excelAutoSelectForWell(nwi).catch(function (e) {
-                                if (window.logger)
-                                    window.logger.warn(
-                                        'AutoSelect pominiety dla nowej studni:',
-                                        e.message || e
-                                    );
-                            });
-                        }
-                    },
-                    200 + idx * 300
-                );
-            })(k);
+        for (let k = 0; k < added; k++) {
+            setTimeout(
+                function () {
+                    var nwi = wells.length - added + k;
+                    var w = wells[nwi];
+                    if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
+                        _excelAutoSelectForWell(nwi).catch(function (e) {
+                            if (window.logger)
+                                window.logger.warn(
+                                    'AutoSelect pominiety dla nowej studni:',
+                                    e.message || e
+                                );
+                        });
+                    }
+                },
+                200 + k * 300
+            );
         }
     }
     _excelDebouncedRefresh();
