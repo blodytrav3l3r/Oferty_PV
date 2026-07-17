@@ -16,38 +16,38 @@ function renderWellHeaderRow(
     const badges = getWellBadges(change, isOrdered, well);
     const displayLp = lp !== undefined ? lp : i + 1;
 
-    let featureIcons = '';
+    let featureBadges = '';
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
-        featureIcons +=
-            '<i data-lucide="layers" style="width:12px;height:12px;color:#f43f5e;vertical-align:middle;" title="Wkładka PRECO"></i> ';
+        featureBadges +=
+            '<span style="font-size:0.55rem; color:#f43f5e; border:1px solid rgba(244,63,94,0.4); padding:1px 4px; border-radius:4px; background:rgba(244,63,94,0.1); margin-left:4px; font-weight:700;">PRECO</span>';
     }
     if (
         (well.wkladkaDennica && well.wkladkaDennica !== 'brak') ||
         (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') ||
         (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
     ) {
-        featureIcons +=
-            '<i data-lucide="shield" style="width:12px;height:12px;color:#0ea5e9;vertical-align:middle;" title="Wkładka PEHD"></i> ';
+        featureBadges +=
+            '<span style="font-size:0.55rem; color:#0ea5e9; border:1px solid rgba(14,165,233,0.4); padding:1px 4px; border-radius:4px; background:rgba(14,165,233,0.1); margin-left:4px; font-weight:700;">PEHD</span>';
     }
     if (well.malowanieW && well.malowanieW !== 'brak') {
         if (well.malowanieZ === 'zewnatrz') {
-            featureIcons +=
-                '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie wewnętrzne i zewnętrzne"></i> ';
+            featureBadges +=
+                '<span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">MAL.</span>';
         } else {
-            featureIcons +=
-                '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie wewnętrzne"></i> ';
+            featureBadges +=
+                '<span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">MAL.</span>';
         }
     } else if (well.malowanieZ === 'zewnatrz') {
-        featureIcons +=
-            '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie zewnętrzne"></i> ';
+        featureBadges +=
+            '<span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">MAL.</span>';
     }
     if (well.nadbudowa === 'zelbetowa' || well.dennicaMaterial === 'zelbetowa') {
-        featureIcons +=
-            '<i data-lucide="wrench" style="width:12px;height:12px;color:#f59e0b;vertical-align:middle;" title="Konstrukcja żelbetowa"></i> ';
+        featureBadges +=
+            '<span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb),0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb),0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
     }
     if (well.stopnie === 'nierdzewna') {
-        featureIcons +=
-            '<i data-lucide="zap" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Stopnie nierdzewne"></i> ';
+        featureBadges +=
+            '<span style="font-size:0.55rem; color:#a855f7; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
     }
 
     let checkbox = '';
@@ -79,7 +79,7 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)} ${featureIcons}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)} ${featureBadges}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
