@@ -70,7 +70,7 @@ function exportStudnieToExcel() {
                 wch: Math.max(col.header.length + 2, 15)
             }));
 
-            let sheetName = cat.replace(/[\[\]\*\/\\\?\:]/g, '_').substring(0, 31);
+            const sheetName = cat.replace(/[[\]*/\\?:]/g, '_').substring(0, 31);
             XLSX.utils.book_append_sheet(wb, ws, sheetName);
         });
 
@@ -171,7 +171,7 @@ function importStudnieFromExcel(event) {
             const workbook = XLSX.read(data, { type: 'array' });
 
             let allJson = [];
-            let precoDataMap = {};
+            const precoDataMap = {};
 
             workbook.SheetNames.forEach((sheetName) => {
                 const worksheet = workbook.Sheets[sheetName];
@@ -213,7 +213,7 @@ function importStudnieFromExcel(event) {
                                         const g = row['Grupa DN'];
                                         const cena = row['Cena (PLN)'] || 0;
 
-                                        let table = precoDataMap[dn][typ];
+                                        const table = precoDataMap[dn][typ];
                                         let existingRow = table.find(
                                             (r) => r.min === min && r.max === max
                                         );
@@ -452,6 +452,9 @@ async function fixIncompleteProducts() {
         );
     }
 }
+
+window.exportStudnieToExcel = exportStudnieToExcel;
+window.importStudnieFromExcel = importStudnieFromExcel;
 
 if (typeof studnieProducts !== 'undefined' && !window.__STUDNIE_APP_ORCHESTRATOR__) {
     setTimeout(fixIncompleteProducts, 1000);

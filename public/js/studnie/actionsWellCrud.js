@@ -60,6 +60,10 @@ function getWizardGlobalParams() {
     return params;
 }
 
+/**
+ * @param {string} name
+ * @param {string|number} [dn=1000]
+ */
 function createNewWell(name, dn = 1000) {
     wellCounter++;
     const gp = getWizardGlobalParams();
@@ -154,6 +158,9 @@ function isWellLocked(wellIdx) {
     return false;
 }
 
+/**
+ * @param {string|number} [dn=1000]
+ */
 function addNewWell(dn = 1000) {
     if (enforceGlobalKonusPehdRule()) {
         showToast(

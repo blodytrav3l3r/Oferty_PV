@@ -485,6 +485,7 @@ function calcWellStats(well) {
                             const drillingProducts = studnieProducts.filter(
                                 (x) => x.category === 'Wiercenie'
                             );
+                            /** @type {{ price?: number } | null} */
                             let bestDrill = null;
                             let bestDnDiff = Infinity;
 

@@ -287,6 +287,7 @@ interface ClientData {
     nip?: string;
     address?: string;
     contact?: string;
+    clientNumber?: string;
     updatedAt?: string;
     createdAt?: string;
 }

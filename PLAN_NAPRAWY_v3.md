@@ -2,13 +2,13 @@
 
 ## Status weryfikacji założeń (przed rozpoczęciem prac)
 
-| Założenie | Zweryfikowane? | Wynik |
-|-----------|---------------|-------|
-| `setupParamTiles`/`updateParamTilesUI` używają `escapeHtml` | ✅ Tak — `wellUI.js:68,514,525,932,951,1004` używa `escapeHtml(...)` (bez `window.`) | Rzeczywista zależność transytywna |
-| Projekt ma wzorzec `window.x = x` | ✅ Tak — `shared/ui.js`: `window.escapeHtml`, `window.setText`, `window.debounce`, `window.globalUsersMap`, `window.fetchWithTimeout`, `window.appConfirm`, `window.createSaveIndicator`, `window.showModal` | Wzorzec potwierdzony |
-| Studnie już eksportują do `window` | ✅ Nie — grep 100+ plików w `public/js/studnie/` nie znalazł żadnego `window.x = x` | Wszystkie funkcje są implicite globalne |
-| `rury/` i `sales/` eksportują do `window` | ✅ Nie — `offerItems.js` używa `window.debounce` (odczyt) ale nie eksportuje własnych funkcji | Wzorzec niespójny między modułami |
-| `declare var` → wszystkie mogą być `const` | ✅ Nie — część JEST reassignowana w runtime | Patrz sekcja 8a |
+| Założenie                                                   | Zweryfikowane?                                                                                                                                                                                               | Wynik                                   |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `setupParamTiles`/`updateParamTilesUI` używają `escapeHtml` | ✅ Tak — `wellUI.js:68,514,525,932,951,1004` używa `escapeHtml(...)` (bez `window.`)                                                                                                                         | Rzeczywista zależność transytywna       |
+| Projekt ma wzorzec `window.x = x`                           | ✅ Tak — `shared/ui.js`: `window.escapeHtml`, `window.setText`, `window.debounce`, `window.globalUsersMap`, `window.fetchWithTimeout`, `window.appConfirm`, `window.createSaveIndicator`, `window.showModal` | Wzorzec potwierdzony                    |
+| Studnie już eksportują do `window`                          | ✅ Nie — grep 100+ plików w `public/js/studnie/` nie znalazł żadnego `window.x = x`                                                                                                                          | Wszystkie funkcje są implicite globalne |
+| `rury/` i `sales/` eksportują do `window`                   | ✅ Nie — `offerItems.js` używa `window.debounce` (odczyt) ale nie eksportuje własnych funkcji                                                                                                                | Wzorzec niespójny między modułami       |
+| `declare var` → wszystkie mogą być `const`                  | ✅ Nie — część JEST reassignowana w runtime                                                                                                                                                                  | Patrz sekcja 8a                         |
 
 ---
 
@@ -28,6 +28,7 @@
 ### Rollback
 
 Jeśli krok powoduje regresję (typów, testów, składni):
+
 ```bash
 git restore .           # nowoczesny zamiennik git checkout --
 # lub jeśli potrzebujesz twardszego resetu:
@@ -39,6 +40,7 @@ Następnie: podziel krok na mniejsze części i powtórz.
 ### Kiedy formatować
 
 `npm run format` tylko po zakończeniu całego logicznego etapu (nie po każdym micro-kroku), aby uniknąć:
+
 - setek zmienionych linii w diff
 - utrudnionego review
 - mieszania zmian formatowania z logicznymi
@@ -107,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 ```
 
 `void window.escapeHtml` to:
+
 - Poprawna składnia JS (`node -c` OK)
 - Dokumentuje rzeczywistą zależność (sprawdzono grepem)
 - Nie dodaje dead code — to wyrażenie, nie instrukcja
@@ -148,7 +151,7 @@ interface ClientData {
     nip?: string;
     address?: string;
     contact?: string;
-    clientNumber?: string;  // ← DODAJ
+    clientNumber?: string; // ← DODAJ
     updatedAt?: string;
     createdAt?: string;
 }
@@ -236,6 +239,7 @@ npx eslint public/js/ --ext .js --fix --rule 'prefer-const: warn' --no-ignore
 ```
 
 **Weryfikacja** (bez formatowania — dopiero po etapie):
+
 ```bash
 Get-ChildItem -Recurse public/js/*.js | ForEach-Object { node -c $_.FullName }
 npm run typecheck:frontend
@@ -277,43 +281,43 @@ Moduł `studnie/` ma **zero** takich eksportów — grep 100+ plików nie znalaz
 
 Każdy wpis zweryfikowany grepem — funkcja jest używana przez min. 1 inny plik.
 
-| Plik | Linie do dodania na końcu pliku |
-|------|-------------------------------|
-| `offerSavedList.js` | `window.renderSavedOffersStudnie = renderSavedOffersStudnie;` |
-| `offerSummaryBanners.js` | `window.renderOrderBanners = renderOrderBanners;` |
-| `offerSummaryTable.js` | `window.renderOfferSummaryTable = renderOfferSummaryTable;` |
-| `offerSummaryUI.js` | `window.updateOfferSummaryUI = updateOfferSummaryUI;` |
-| `wellDiagram.js` | `window.renderWellDiagram = renderWellDiagram;` |
-| `wellUI.js` | `window.setupParamTiles = setupParamTiles;` `window.renderOfferLockBanner = renderOfferLockBanner;` `window.updateAutoLockUI = updateAutoLockUI;` `window.renderWellParams = renderWellParams;` |
-| `uiHelpers.js` | `window.exitWizardOrderMode = exitWizardOrderMode;` `window.wizardPrev = wizardPrev;` `window.skipWizardToStep3 = skipWizardToStep3;` `window.loadStudnieProducts = loadStudnieProducts;` `window.renamePlyty = renamePlyty;` `window.loadPrecoPricing = loadPrecoPricing;` `window.savePrecoPricing = savePrecoPricing;` |
-| `orderExport.js` | `window.refreshGlobalMetrics = refreshGlobalMetrics;` |
-| `orderHelpers.js` | `window.loadOrdersStudnie = loadOrdersStudnie;` `window.saveOrdersDataStudnie = saveOrdersDataStudnie;` |
-| `orderKartaBudowy.js` | `window.initKartaBudowyStep4 = initKartaBudowyStep4;` `window.step4NextAction = step4NextAction;` `window.showKartaBudowyCopyPicker = showKartaBudowyCopyPicker;` `window.copyKartaBudowyFromOrder = copyKartaBudowyFromOrder;` |
-| `orderPrzejscia.js` | `window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;` `window.updatePrzejscieDnOptions = updatePrzejscieDnOptions;` `window.updatePrzejscieSelectStyle = updatePrzejscieSelectStyle;` `window.addCustomPrzejscieRow = addCustomPrzejscieRow;` `window.removePrzejscieRow = removePrzejscieRow;` `window.collectPrzejsciaDetailsFromTable = collectPrzejsciaDetailsFromTable;` |
-| `orderZleceniaData.js` | `window.loadProductionOrders = loadProductionOrders;` `window.deleteProductionOrder = deleteProductionOrder;` `window.acceptProductionOrder = acceptProductionOrder;` `window.revokeProductionOrder = revokeProductionOrder;` |
-| `orderZleceniaForm.js` | `window.populateZleceniaForm = populateZleceniaForm;` |
-| `orderZleceniaHelpers.js` | `window.getElementStatus = getElementStatus;` `window.parseWysokoscGlebokosc = parseWysokoscGlebokosc;` `window.getStudniaDIN = getStudniaDIN;` `window.calcStopnieExecution = calcStopnieExecution;` `window.buildEtykietaElementsSnapshot = buildEtykietaElementsSnapshot;` |
-| `orderZleceniaRender.js` | `window.buildZleceniaWellList = buildZleceniaWellList;` |
-| `popupsButtonUpdaters.js` | `window.updateZakonczenieButton = updateZakonczenieButton;` `window.updateRedukcjaButton = updateRedukcjaButton;` `window.onRedukcjaMinChange = onRedukcjaMinChange;` `window.updateRedukcjaZakButton = updateRedukcjaZakButton;` |
-| `popupsRedukcjaChoice.js` | `window.openRedukcjaChoicePopup = openRedukcjaChoicePopup;` `window.selectRedukcjaChoice = selectRedukcjaChoice;` |
-| `popupsStyczna.js` | `window.showStycznaPopup = showStycznaPopup;` `window.handleStycznaProductChoice = handleStycznaProductChoice;` |
-| `popupsTransitionManager.js` | `window.tmEditSelectType = tmEditSelectType;` `window.tmEditApply = tmEditApply;` |
-| `pricelistCategory.js` | `window.deletePrzejsciaCategory = deletePrzejsciaCategory;` `window.addStudnieCategory = addStudnieCategory;` `window.addStudnieElement = addStudnieElement;` |
-| `pricelistCellEdit.js` | `window.toggleMagazynField = toggleMagazynField;` `window.editStudnieCell = editStudnieCell;` |
-| `pricelistImportExport.js` | `window.exportStudnieToExcel = exportStudnieToExcel;` `window.importStudnieFromExcel = importStudnieFromExcel;` |
-| `pricelistManager.js` | `window.renderStudniePriceList = renderStudniePriceList;` |
-| `pricelistPreco.js` | `window.addPrecoKinetaRow = addPrecoKinetaRow;` `window.removePrecoKinetaRow = removePrecoKinetaRow;` `window.addPrecoRangeRow = addPrecoRangeRow;` `window.removePrecoRangeRow = removePrecoRangeRow;` `window.updatePrecoGrupaKey = updatePrecoGrupaKey;` `window.addPrecoGrupaCol = addPrecoGrupaCol;` `window.removePrecoGrupaCol = removePrecoGrupaCol;` `window.togglePrecoAccordion = togglePrecoAccordion;` `window.savePrecoFromUI = savePrecoFromUI;` `window.loadPrecoDefaults = loadPrecoDefaults;` |
-| `pricelistProductCrud.js` | `window.deleteStudnieProduct = deleteStudnieProduct;` `window.copyStudnieProduct = copyStudnieProduct;` `window.showAddStudnieProductModal = showAddStudnieProductModal;` `window.addStudnieProduct = addStudnieProduct;` |
-| `pricelistSaveReset.js` | `window.resetStudniePriceList = resetStudniePriceList;` `window.saveStudniePriceList = saveStudniePriceList;` |
-| `pricelistState.js` | `window.updateStudnieSaveBtn = updateStudnieSaveBtn;` `window.selectCennikTab = selectCennikTab;` |
-| `ringOptimizer.js` | `window.optimizeRingsForDistance = optimizeRingsForDistance;` |
-| `ruleEngine.js` | `window.estimateBottomSection = estimateBottomSection;` `window.getLowestDennica = getLowestDennica;` `window.getLowestDennicaHybrid = getLowestDennicaHybrid;` `window.getReductionPlate = getReductionPlate;` `window.getTopClosure = getTopClosure;` `window.getKregiList = getKregiList;` |
-| `wellManager.js` | `window.updateParamInput = updateParamInput;` `window.toggleAutoLock = toggleAutoLock;` |
-| `wellPopups.js` | `window.openZakonczeniePopup = openZakonczeniePopup;` `window.openRedukcjaZakonczeniePopup = openRedukcjaZakonczeniePopup;` |
-| `wellSolver.js` | `window.buildConfigSegments = buildConfigSegments;` `window.applyDrilledRings = applyDrilledRings;` `window.recalculateWellErrors = recalculateWellErrors;` |
-| `wellTransitions.js` | `window.renderInlinePrzejsciaApp = renderInlinePrzejsciaApp;` |
-| `wellTransitionsCrud.js` | `window.movePrzejscie = movePrzejscie;` `window.removePrzejscieFromWell = removePrzejscieFromWell;` |
-| `wellTransitionsHelpers.js` | `window.getMaxPipeDn = getMaxPipeDn;` `window.syncEditState = syncEditState;` |
+| Plik                         | Linie do dodania na końcu pliku                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `offerSavedList.js`          | `window.renderSavedOffersStudnie = renderSavedOffersStudnie;`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `offerSummaryBanners.js`     | `window.renderOrderBanners = renderOrderBanners;`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `offerSummaryTable.js`       | `window.renderOfferSummaryTable = renderOfferSummaryTable;`                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `offerSummaryUI.js`          | `window.updateOfferSummaryUI = updateOfferSummaryUI;`                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `wellDiagram.js`             | `window.renderWellDiagram = renderWellDiagram;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `wellUI.js`                  | `window.setupParamTiles = setupParamTiles;` `window.renderOfferLockBanner = renderOfferLockBanner;` `window.updateAutoLockUI = updateAutoLockUI;` `window.renderWellParams = renderWellParams;`                                                                                                                                                                                                                                                                                                                 |
+| `uiHelpers.js`               | `window.exitWizardOrderMode = exitWizardOrderMode;` `window.wizardPrev = wizardPrev;` `window.skipWizardToStep3 = skipWizardToStep3;` `window.loadStudnieProducts = loadStudnieProducts;` `window.renamePlyty = renamePlyty;` `window.loadPrecoPricing = loadPrecoPricing;` `window.savePrecoPricing = savePrecoPricing;`                                                                                                                                                                                       |
+| `orderExport.js`             | `window.refreshGlobalMetrics = refreshGlobalMetrics;`                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `orderHelpers.js`            | `window.loadOrdersStudnie = loadOrdersStudnie;` `window.saveOrdersDataStudnie = saveOrdersDataStudnie;`                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `orderKartaBudowy.js`        | `window.initKartaBudowyStep4 = initKartaBudowyStep4;` `window.step4NextAction = step4NextAction;` `window.showKartaBudowyCopyPicker = showKartaBudowyCopyPicker;` `window.copyKartaBudowyFromOrder = copyKartaBudowyFromOrder;`                                                                                                                                                                                                                                                                                 |
+| `orderPrzejscia.js`          | `window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;` `window.updatePrzejscieDnOptions = updatePrzejscieDnOptions;` `window.updatePrzejscieSelectStyle = updatePrzejscieSelectStyle;` `window.addCustomPrzejscieRow = addCustomPrzejscieRow;` `window.removePrzejscieRow = removePrzejscieRow;` `window.collectPrzejsciaDetailsFromTable = collectPrzejsciaDetailsFromTable;`                                                                                                               |
+| `orderZleceniaData.js`       | `window.loadProductionOrders = loadProductionOrders;` `window.deleteProductionOrder = deleteProductionOrder;` `window.acceptProductionOrder = acceptProductionOrder;` `window.revokeProductionOrder = revokeProductionOrder;`                                                                                                                                                                                                                                                                                   |
+| `orderZleceniaForm.js`       | `window.populateZleceniaForm = populateZleceniaForm;`                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `orderZleceniaHelpers.js`    | `window.getElementStatus = getElementStatus;` `window.parseWysokoscGlebokosc = parseWysokoscGlebokosc;` `window.getStudniaDIN = getStudniaDIN;` `window.calcStopnieExecution = calcStopnieExecution;` `window.buildEtykietaElementsSnapshot = buildEtykietaElementsSnapshot;`                                                                                                                                                                                                                                   |
+| `orderZleceniaRender.js`     | `window.buildZleceniaWellList = buildZleceniaWellList;`                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `popupsButtonUpdaters.js`    | `window.updateZakonczenieButton = updateZakonczenieButton;` `window.updateRedukcjaButton = updateRedukcjaButton;` `window.onRedukcjaMinChange = onRedukcjaMinChange;` `window.updateRedukcjaZakButton = updateRedukcjaZakButton;`                                                                                                                                                                                                                                                                               |
+| `popupsRedukcjaChoice.js`    | `window.openRedukcjaChoicePopup = openRedukcjaChoicePopup;` `window.selectRedukcjaChoice = selectRedukcjaChoice;`                                                                                                                                                                                                                                                                                                                                                                                               |
+| `popupsStyczna.js`           | `window.showStycznaPopup = showStycznaPopup;` `window.handleStycznaProductChoice = handleStycznaProductChoice;`                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `popupsTransitionManager.js` | `window.tmEditSelectType = tmEditSelectType;` `window.tmEditApply = tmEditApply;`                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `pricelistCategory.js`       | `window.deletePrzejsciaCategory = deletePrzejsciaCategory;` `window.addStudnieCategory = addStudnieCategory;` `window.addStudnieElement = addStudnieElement;`                                                                                                                                                                                                                                                                                                                                                   |
+| `pricelistCellEdit.js`       | `window.toggleMagazynField = toggleMagazynField;` `window.editStudnieCell = editStudnieCell;`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `pricelistImportExport.js`   | `window.exportStudnieToExcel = exportStudnieToExcel;` `window.importStudnieFromExcel = importStudnieFromExcel;`                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `pricelistManager.js`        | `window.renderStudniePriceList = renderStudniePriceList;`                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `pricelistPreco.js`          | `window.addPrecoKinetaRow = addPrecoKinetaRow;` `window.removePrecoKinetaRow = removePrecoKinetaRow;` `window.addPrecoRangeRow = addPrecoRangeRow;` `window.removePrecoRangeRow = removePrecoRangeRow;` `window.updatePrecoGrupaKey = updatePrecoGrupaKey;` `window.addPrecoGrupaCol = addPrecoGrupaCol;` `window.removePrecoGrupaCol = removePrecoGrupaCol;` `window.togglePrecoAccordion = togglePrecoAccordion;` `window.savePrecoFromUI = savePrecoFromUI;` `window.loadPrecoDefaults = loadPrecoDefaults;` |
+| `pricelistProductCrud.js`    | `window.deleteStudnieProduct = deleteStudnieProduct;` `window.copyStudnieProduct = copyStudnieProduct;` `window.showAddStudnieProductModal = showAddStudnieProductModal;` `window.addStudnieProduct = addStudnieProduct;`                                                                                                                                                                                                                                                                                       |
+| `pricelistSaveReset.js`      | `window.resetStudniePriceList = resetStudniePriceList;` `window.saveStudniePriceList = saveStudniePriceList;`                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `pricelistState.js`          | `window.updateStudnieSaveBtn = updateStudnieSaveBtn;` `window.selectCennikTab = selectCennikTab;`                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `ringOptimizer.js`           | `window.optimizeRingsForDistance = optimizeRingsForDistance;`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `ruleEngine.js`              | `window.estimateBottomSection = estimateBottomSection;` `window.getLowestDennica = getLowestDennica;` `window.getLowestDennicaHybrid = getLowestDennicaHybrid;` `window.getReductionPlate = getReductionPlate;` `window.getTopClosure = getTopClosure;` `window.getKregiList = getKregiList;`                                                                                                                                                                                                                   |
+| `wellManager.js`             | `window.updateParamInput = updateParamInput;` `window.toggleAutoLock = toggleAutoLock;`                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `wellPopups.js`              | `window.openZakonczeniePopup = openZakonczeniePopup;` `window.openRedukcjaZakonczeniePopup = openRedukcjaZakonczeniePopup;`                                                                                                                                                                                                                                                                                                                                                                                     |
+| `wellSolver.js`              | `window.buildConfigSegments = buildConfigSegments;` `window.applyDrilledRings = applyDrilledRings;` `window.recalculateWellErrors = recalculateWellErrors;`                                                                                                                                                                                                                                                                                                                                                     |
+| `wellTransitions.js`         | `window.renderInlinePrzejsciaApp = renderInlinePrzejsciaApp;`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `wellTransitionsCrud.js`     | `window.movePrzejscie = movePrzejscie;` `window.removePrzejscieFromWell = removePrzejscieFromWell;`                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `wellTransitionsHelpers.js`  | `window.getMaxPipeDn = getMaxPipeDn;` `window.syncEditState = syncEditState;`                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 
 **Łącznie**: ~30 plików, ~100 linii `window.x = x`.
 
@@ -336,16 +340,16 @@ npm run test:quick
 
 ### Pliki (zweryfikowane przez grep — zmienna faktycznie nieużywana)
 
-| Plik | Linia | Kod | Fix |
-|------|-------|-----|-----|
-| `telemetryBridge.js` | 51 | `catch (e) { showToast(...) }` | `catch (_e) {` |
-| `telemetryBridge.js` | 245 | `catch (e) { ... }` — sprawdzić czy `e` użyte | jeśli nie → `catch (_e) {` |
-| `telemetryBridge.js` | 261 | jw. | jw. |
-| `telemetryBridge.js` | 281 | jw. | jw. |
-| `orderCrud.js` | 169 | `catch (e) { logger.error(...) }` — sprawdzić | jeśli `e` nie przekazane do logger → `catch (_e) {` |
-| `orderExport.js` | 14 | `catch (e) { ... }` | sprawdzić |
-| `orderZleceniaData.js` | 135 | `catch (e) { ... }` | sprawdzić |
-| `wellSolver.js` | 356 | `catch (e) { ... }` | sprawdzić |
+| Plik                   | Linia | Kod                                           | Fix                                                 |
+| ---------------------- | ----- | --------------------------------------------- | --------------------------------------------------- |
+| `telemetryBridge.js`   | 51    | `catch (e) { showToast(...) }`                | `catch (_e) {`                                      |
+| `telemetryBridge.js`   | 245   | `catch (e) { ... }` — sprawdzić czy `e` użyte | jeśli nie → `catch (_e) {`                          |
+| `telemetryBridge.js`   | 261   | jw.                                           | jw.                                                 |
+| `telemetryBridge.js`   | 281   | jw.                                           | jw.                                                 |
+| `orderCrud.js`         | 169   | `catch (e) { logger.error(...) }` — sprawdzić | jeśli `e` nie przekazane do logger → `catch (_e) {` |
+| `orderExport.js`       | 14    | `catch (e) { ... }`                           | sprawdzić                                           |
+| `orderZleceniaData.js` | 135   | `catch (e) { ... }`                           | sprawdzić                                           |
+| `wellSolver.js`        | 356   | `catch (e) { ... }`                           | sprawdzić                                           |
 
 **Zasada**: jeśli zmienna catch jest używana (np. `err.message`, `logger.error(e)`), zostaw. Jeśli nie → prefix `_`.
 
@@ -365,26 +369,27 @@ Migracja w 3 batchach po 5 plików, z git checkpointem między każdym.
 
 ### Batch 1 (priority — pliki z największą liczbą `var`)
 
-| Plik | Liczba `var` | Ryzyko |
-|------|-------------|--------|
-| `excelAddDialog.js` | ~105 | WYSOKIE — dużo zmiennych, blokowy scope |
-| `wellSolver.js` | ~100 | WYSOKIE — złożona logika, pętle |
-| `wellUI.js` | ~89 | ŚREDNIE — głównie stałe |
-| `orderKartaBudowy.js` | ~72 | ŚREDNIE |
-| `orderPrzejscia.js` | ~68 | ŚREDNIE |
+| Plik                  | Liczba `var` | Ryzyko                                  |
+| --------------------- | ------------ | --------------------------------------- |
+| `excelAddDialog.js`   | ~105         | WYSOKIE — dużo zmiennych, blokowy scope |
+| `wellSolver.js`       | ~100         | WYSOKIE — złożona logika, pętle         |
+| `wellUI.js`           | ~89          | ŚREDNIE — głównie stałe                 |
+| `orderKartaBudowy.js` | ~72          | ŚREDNIE                                 |
+| `orderPrzejscia.js`   | ~68          | ŚREDNIE                                 |
 
 ### Batch 2 (~10 plików po 10-20 `var`)
+
 ### Batch 3 (~65 plików po 1-10 `var`)
 
 ### Zasady zamiany
 
-| Wzorzec | Zamień na | Uwagi |
-|---------|-----------|-------|
-| `var name = value;` | `const name = value;` | jeśli nigdy nie reassignowane |
-| `var name = value;` | `let name = value;` | jeśli reassignowane |
-| `for (var i = 0; ...)` | `for (let i = 0; ...)` | bezpieczne — `i` jest lokalne w pętli |
-| `for (var i in arr)` | `for (const i in arr)` | bezpieczne — `const` w `for...in` działa per-iteracja |
-| `for (var i of arr)` | `const` lub `let` | zależnie czy reassignowane w pętli |
+| Wzorzec                | Zamień na              | Uwagi                                                 |
+| ---------------------- | ---------------------- | ----------------------------------------------------- |
+| `var name = value;`    | `const name = value;`  | jeśli nigdy nie reassignowane                         |
+| `var name = value;`    | `let name = value;`    | jeśli reassignowane                                   |
+| `for (var i = 0; ...)` | `for (let i = 0; ...)` | bezpieczne — `i` jest lokalne w pętli                 |
+| `for (var i in arr)`   | `for (const i in arr)` | bezpieczne — `const` w `for...in` działa per-iteracja |
+| `for (var i of arr)`   | `const` lub `let`      | zależnie czy reassignowane w pętli                    |
 
 ### Uwaga na hoisting
 
@@ -425,47 +430,47 @@ git restore . && git reset --hard HEAD
 
 Każda deklaracja została przeanalizowana pod kątem reassignacji w runtime:
 
-| Linia | Obecnie | Poprawny typ | Uzasadnienie |
-|-------|---------|-------------|--------------|
-| 131 | `declare var api: ApiClient;` | `declare const api: ApiClient;` | Singleton, inicjalizowany raz |
-| 132 | `declare var logger: Logger;` | `declare const logger: Logger;` | Singleton |
-| 133 | `declare var auth: AuthModule;` | `declare const auth: AuthModule;` | Singleton |
-| 134 | `declare function showToast(...)` | ✅ już `function` | OK |
-| 135 | `declare function appConfirm(...)` | ✅ już `function` | OK |
-| 136 | `declare function escapeHtml(...)` | ✅ już `function` | OK |
-| 137 | `declare function setText(...)` | ✅ już `function` | OK |
-| 138 | `declare function authHeaders(...)` | ✅ już `function` | OK |
-| 139 | `declare var orderEditMode: any;` | `declare let orderEditMode: boolean \| null;` | **Reassignowane** — togglowane on/off |
-| 190 | `declare var clientsDb: ClientData[];` | `declare let clientsDb: ClientData[];` | **Reassignowane** — wczytywane z localStorage |
-| 191 | `declare var lucide: { ... }` | `declare const lucide: { ... }` | Stała biblioteka |
-| 196 | `declare var fetchWithTimeout: (...)` | `declare function fetchWithTimeout(...)` | To funkcja |
-| 201 | `declare function showModal(...)` | ✅ już `function` | OK |
-| 214 | `declare var showUniversalPrintModal: ...` | `declare function showUniversalPrintModal(...)` | To funkcja |
-| 215 | `declare function closeModal()` | ✅ już `function` | OK |
-| 218 | `declare var XLSX: any;` | `declare const XLSX: any;` | Stała biblioteki |
-| 219 | `declare var CATEGORIES_STUDNIE: ...` | `declare const CATEGORIES_STUDNIE: Record<string, { label: string; dn: string }>` | Stała |
-| 220 | `declare var FLOW_TYPES: ...` | `declare const FLOW_TYPES: Record<string, any>` | Stała |
-| 221 | `declare var ConfigSegment: any;` | `declare const ConfigSegment: any;` | Stała (typ) |
-| 222 | `declare var currentOrder: any;` | `declare let currentOrder: any;` | **Reassignowane** — zmienia się przy każdej ofercie |
-| 223 | `declare var global: typeof globalThis;` | `declare const global: typeof globalThis;` | Stała |
-| 224-244 | `declare function autoSelectComponents(...args: any[]): any;` | `declare function` + konkretne typy zamiast `any` | To funkcje — zostawić `any` tymczasowo |
-| 247 | `declare var products: any;` | `declare let products: any;` | **Reassignowane** |
-| 248 | `declare var offers: any;` | `declare let offers: any;` | **Reassignowane** |
-| 249 | `declare var editingOfferId: any;` | `declare let editingOfferId: string \| null;` | **Reassignowane** |
-| 250 | `declare var currentOfferItems: any;` | `declare let currentOfferItems: any;` | **Reassignowane** |
+| Linia   | Obecnie                                                       | Poprawny typ                                                                      | Uzasadnienie                                        |
+| ------- | ------------------------------------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 131     | `declare var api: ApiClient;`                                 | `declare const api: ApiClient;`                                                   | Singleton, inicjalizowany raz                       |
+| 132     | `declare var logger: Logger;`                                 | `declare const logger: Logger;`                                                   | Singleton                                           |
+| 133     | `declare var auth: AuthModule;`                               | `declare const auth: AuthModule;`                                                 | Singleton                                           |
+| 134     | `declare function showToast(...)`                             | ✅ już `function`                                                                 | OK                                                  |
+| 135     | `declare function appConfirm(...)`                            | ✅ już `function`                                                                 | OK                                                  |
+| 136     | `declare function escapeHtml(...)`                            | ✅ już `function`                                                                 | OK                                                  |
+| 137     | `declare function setText(...)`                               | ✅ już `function`                                                                 | OK                                                  |
+| 138     | `declare function authHeaders(...)`                           | ✅ już `function`                                                                 | OK                                                  |
+| 139     | `declare var orderEditMode: any;`                             | `declare let orderEditMode: boolean \| null;`                                     | **Reassignowane** — togglowane on/off               |
+| 190     | `declare var clientsDb: ClientData[];`                        | `declare let clientsDb: ClientData[];`                                            | **Reassignowane** — wczytywane z localStorage       |
+| 191     | `declare var lucide: { ... }`                                 | `declare const lucide: { ... }`                                                   | Stała biblioteka                                    |
+| 196     | `declare var fetchWithTimeout: (...)`                         | `declare function fetchWithTimeout(...)`                                          | To funkcja                                          |
+| 201     | `declare function showModal(...)`                             | ✅ już `function`                                                                 | OK                                                  |
+| 214     | `declare var showUniversalPrintModal: ...`                    | `declare function showUniversalPrintModal(...)`                                   | To funkcja                                          |
+| 215     | `declare function closeModal()`                               | ✅ już `function`                                                                 | OK                                                  |
+| 218     | `declare var XLSX: any;`                                      | `declare const XLSX: any;`                                                        | Stała biblioteki                                    |
+| 219     | `declare var CATEGORIES_STUDNIE: ...`                         | `declare const CATEGORIES_STUDNIE: Record<string, { label: string; dn: string }>` | Stała                                               |
+| 220     | `declare var FLOW_TYPES: ...`                                 | `declare const FLOW_TYPES: Record<string, any>`                                   | Stała                                               |
+| 221     | `declare var ConfigSegment: any;`                             | `declare const ConfigSegment: any;`                                               | Stała (typ)                                         |
+| 222     | `declare var currentOrder: any;`                              | `declare let currentOrder: any;`                                                  | **Reassignowane** — zmienia się przy każdej ofercie |
+| 223     | `declare var global: typeof globalThis;`                      | `declare const global: typeof globalThis;`                                        | Stała                                               |
+| 224-244 | `declare function autoSelectComponents(...args: any[]): any;` | `declare function` + konkretne typy zamiast `any`                                 | To funkcje — zostawić `any` tymczasowo              |
+| 247     | `declare var products: any;`                                  | `declare let products: any;`                                                      | **Reassignowane**                                   |
+| 248     | `declare var offers: any;`                                    | `declare let offers: any;`                                                        | **Reassignowane**                                   |
+| 249     | `declare var editingOfferId: any;`                            | `declare let editingOfferId: string \| null;`                                     | **Reassignowane**                                   |
+| 250     | `declare var currentOfferItems: any;`                         | `declare let currentOfferItems: any;`                                             | **Reassignowane**                                   |
 
 ### 9b. Zmiany `any` → konkretne typy (tylko tam gdzie bezpieczne)
 
-| Pole | Obecnie | Proponowany typ | Ryzyko |
-|------|---------|----------------|--------|
-| `orderEditMode` | `any` | `boolean \| null` | NISKIE — to flaga |
-| `editingOfferId` | `any` | `string \| null` | NISKIE — to ID |
-| `XLSX` | `any` | zostaw `any` (brak typów) | — |
-| `CATEGORIES_STUDNIE` | `Record<string, any>` | `Record<string, { label: string; dn: string }>` | ŚREDNIE — sprawdzić strukturę |
-| `FLOW_TYPES` | `Record<string, any>` | zostaw tymczasowo | — |
-| `ConfigSegment` | `any` | zostaw tymczasowo | — |
-| `currentOrder` | `any` | zostaw tymczasowo | WYSOKIE — złożony obiekt |
-| `autoSelectComponents` | `(...args: any[]) => any` | zostaw tymczasowo | WYSOKIE — wymaga analizy sygnatur |
+| Pole                   | Obecnie                   | Proponowany typ                                 | Ryzyko                            |
+| ---------------------- | ------------------------- | ----------------------------------------------- | --------------------------------- |
+| `orderEditMode`        | `any`                     | `boolean \| null`                               | NISKIE — to flaga                 |
+| `editingOfferId`       | `any`                     | `string \| null`                                | NISKIE — to ID                    |
+| `XLSX`                 | `any`                     | zostaw `any` (brak typów)                       | —                                 |
+| `CATEGORIES_STUDNIE`   | `Record<string, any>`     | `Record<string, { label: string; dn: string }>` | ŚREDNIE — sprawdzić strukturę     |
+| `FLOW_TYPES`           | `Record<string, any>`     | zostaw tymczasowo                               | —                                 |
+| `ConfigSegment`        | `any`                     | zostaw tymczasowo                               | —                                 |
+| `currentOrder`         | `any`                     | zostaw tymczasowo                               | WYSOKIE — złożony obiekt          |
+| `autoSelectComponents` | `(...args: any[]) => any` | zostaw tymczasowo                               | WYSOKIE — wymaga analizy sygnatur |
 
 **Czas**: 45 min
 
@@ -475,29 +480,29 @@ Każda deklaracja została przeanalizowana pod kątem reassignacji w runtime:
 
 ### Lista sukcesu (checklist)
 
-| # | Kryterium | Komenda | Oczekiwany wynik |
-|---|-----------|---------|------------------|
-| 1 | Typecheck backend | `npm run typecheck` | 0 errors |
-| 2 | Typecheck frontend | `npm run typecheck:frontend` | 0 errors |
-| 3 | Lint backend | `npm run lint` | 0 errors, 0 warnings |
-| 4 | Lint frontend | `npm run lint:frontend` | 0 errors (warnings opcjonalne) |
-| 5 | Test bezpieczeństwa | `npm run test:quick -- --testPathPatterns=security-regression` | wszystkie pass |
-| 6 | Wszystkie testy | `npm run test:quick` | 0 failed |
-| 7 | Formatowanie | `npm run format:check` | wszystkie pliki sformatowane |
-| 8 | Składnia JS | `node -c public/js/studnie/*.js` | wszystkie OK |
-| 9 | Spójność wersji | `npm run version:check` | spójna |
-| 10 | Brak zmian w runtime | Uruchom `npm run dev:backend` i sprawdź czy server startuje | OK |
+| #   | Kryterium            | Komenda                                                        | Oczekiwany wynik               |
+| --- | -------------------- | -------------------------------------------------------------- | ------------------------------ |
+| 1   | Typecheck backend    | `npm run typecheck`                                            | 0 errors                       |
+| 2   | Typecheck frontend   | `npm run typecheck:frontend`                                   | 0 errors                       |
+| 3   | Lint backend         | `npm run lint`                                                 | 0 errors, 0 warnings           |
+| 4   | Lint frontend        | `npm run lint:frontend`                                        | 0 errors (warnings opcjonalne) |
+| 5   | Test bezpieczeństwa  | `npm run test:quick -- --testPathPatterns=security-regression` | wszystkie pass                 |
+| 6   | Wszystkie testy      | `npm run test:quick`                                           | 0 failed                       |
+| 7   | Formatowanie         | `npm run format:check`                                         | wszystkie pliki sformatowane   |
+| 8   | Składnia JS          | `node -c public/js/studnie/*.js`                               | wszystkie OK                   |
+| 9   | Spójność wersji      | `npm run version:check`                                        | spójna                         |
+| 10  | Brak zmian w runtime | Uruchom `npm run dev:backend` i sprawdź czy server startuje    | OK                             |
 
 ### Jeśli checklista nie jest w 100% zielona
 
-| Scenariusz | Działanie |
-|------------|-----------|
-| 1-2 failed | Cofnij ostatnie zmiany w TS/JSDoc, napraw błędy typów |
-| 3-4 failed | Cofnij ostatnie zmiany ESLint, sprawdź konfigurację |
-| 5 failed | Cofnij zmiany w orderManager.js, sprawdź test |
-| 6 failed | `npm run test:quick -- --testPathPatterns=<failed-test>` — napraw konkretny test |
-| 9 failed | `npm run version:check` pokaże niezgodność — napraw ręcznie |
-| 10 failed | Sprawdź logi servera — najprawdopodobniej błąd importu |
+| Scenariusz | Działanie                                                                        |
+| ---------- | -------------------------------------------------------------------------------- |
+| 1-2 failed | Cofnij ostatnie zmiany w TS/JSDoc, napraw błędy typów                            |
+| 3-4 failed | Cofnij ostatnie zmiany ESLint, sprawdź konfigurację                              |
+| 5 failed   | Cofnij zmiany w orderManager.js, sprawdź test                                    |
+| 6 failed   | `npm run test:quick -- --testPathPatterns=<failed-test>` — napraw konkretny test |
+| 9 failed   | `npm run version:check` pokaże niezgodność — napraw ręcznie                      |
+| 10 failed  | Sprawdź logi servera — najprawdopodobniej błąd importu                           |
 
 ### Formatowanie końcowe
 
@@ -511,19 +516,19 @@ npm run format
 
 ## Podsumowanie
 
-| # | Krok | Priorytet | Czas | Ryzyko regresji |
-|---|------|-----------|------|-----------------|
-| 1 | escapeHtml w orderManager.js | CRITICAL | 1 min | BARDZO NISKIE — dodanie `void` |
-| 2 | typecheck → 0 errors | CRITICAL | 35 min | NISKIE — tylko JSDoc + 1 pole w typie |
-| 3 | Regression check | HIGH | 2 min | — |
-| 4 | no-useless-escape | MEDIUM | 1 min | BARDZO NISKIE — auto-fix |
-| 5 | prefer-const | MEDIUM | 5 min | NISKIE — auto-fix, testy po |
-| 6 | window.x = x | MEDIUM | 90 min | NISKIE — dodaje, nie usuwa |
-| 7 | catch prefix _ | LOW | 25 min | NISKIE — zmiana nazwy zmiennej |
-| 8 | no-var → let/const | HIGH | 180 min | **ŚREDNIE/WYSOKIE** — zmiana scoping rules |
-| 9 | types.d.ts cleanup | MEDIUM | 45 min | ŚREDNIE — zmiany typów wpływają na wszystkie pliki |
-| 10 | Walidacja końcowa | CRITICAL | 5 min | — |
-| **Łącznie** | | | **~350 min** | |
+| #           | Krok                         | Priorytet | Czas         | Ryzyko regresji                                    |
+| ----------- | ---------------------------- | --------- | ------------ | -------------------------------------------------- |
+| 1           | escapeHtml w orderManager.js | CRITICAL  | 1 min        | BARDZO NISKIE — dodanie `void`                     |
+| 2           | typecheck → 0 errors         | CRITICAL  | 35 min       | NISKIE — tylko JSDoc + 1 pole w typie              |
+| 3           | Regression check             | HIGH      | 2 min        | —                                                  |
+| 4           | no-useless-escape            | MEDIUM    | 1 min        | BARDZO NISKIE — auto-fix                           |
+| 5           | prefer-const                 | MEDIUM    | 5 min        | NISKIE — auto-fix, testy po                        |
+| 6           | window.x = x                 | MEDIUM    | 90 min       | NISKIE — dodaje, nie usuwa                         |
+| 7           | catch prefix _               | LOW       | 25 min       | NISKIE — zmiana nazwy zmiennej                     |
+| 8           | no-var → let/const           | HIGH      | 180 min      | **ŚREDNIE/WYSOKIE** — zmiana scoping rules         |
+| 9           | types.d.ts cleanup           | MEDIUM    | 45 min       | ŚREDNIE — zmiany typów wpływają na wszystkie pliki |
+| 10          | Walidacja końcowa            | CRITICAL  | 5 min        | —                                                  |
+| **Łącznie** |                              |           | **~350 min** |                                                    |
 
 ### Gdzie czyha największe ryzyko
 
@@ -533,26 +538,26 @@ npm run format
 
 ### Decyzje do podjęcia przed rozpoczęciem
 
-| Decyzja | Opcja A | Opcja B |
-|---------|---------|---------|
-| **Krok 1** | `void window.escapeHtml;` (zalecane) | Usunąć `orderManager.js` z testu |
-| **Krok 8** | 3 batche po 5 plików (zalecane) | Jeden regex na wszystkie 80 plików |
-| **Krok 9** | Tylko łatwe typy + `any` tam gdzie ryzykowne (zalecane) | Pełna typizacja wszystkich `any` |
+| Decyzja    | Opcja A                                                 | Opcja B                            |
+| ---------- | ------------------------------------------------------- | ---------------------------------- |
+| **Krok 1** | `void window.escapeHtml;` (zalecane)                    | Usunąć `orderManager.js` z testu   |
+| **Krok 8** | 3 batche po 5 plików (zalecane)                         | Jeden regex na wszystkie 80 plików |
+| **Krok 9** | Tylko łatwe typy + `any` tam gdzie ryzykowne (zalecane) | Pełna typizacja wszystkich `any`   |
 
 ---
 
 ## Porównanie v1 → v2 → v3
 
-| Aspekt | v1 | v2 | v3 |
-|--------|----|----|----|
-| Krok 1 (escapeHtml) | komentarz (hack) | `void window.escapeHtml` | + udokumentowany łańcuch zależności, + opcja poprawy testu |
-| no-var | wyłączenie reguły | batch po 5 plików | + tabela ryzyka per plik, + uwaga o hoistingu |
-| window.x = x | ogólna lista | lista plików | + dowód że wzorzec istnieje w projekcie (8 przykładów z shared/ui.js) |
-| declare var | — | const wszędzie | + podział na const/let, + uzasadnienie każdego |
-| Szacunki | 140 min | 350 min | 350 min + rozbicie na priorytety |
-| Git checkout | — | `git checkout -- .` | `git restore .` / `git reset --hard HEAD` |
-| Formatowanie | na końcu | po każdym kroku | po każdym LOGICZNYM etapie |
-| Lista sukcesu | — | — | 10-punktowa checklista |
-| Priorytety | — | — | Critical/High/Medium/Low |
-| Rollback | — | — | procedura na 2 scenariusze |
-| Weryfikacja założeń | — | — | tabela z 5 zweryfikowanymi założeniami |
+| Aspekt              | v1                | v2                       | v3                                                                    |
+| ------------------- | ----------------- | ------------------------ | --------------------------------------------------------------------- |
+| Krok 1 (escapeHtml) | komentarz (hack)  | `void window.escapeHtml` | + udokumentowany łańcuch zależności, + opcja poprawy testu            |
+| no-var              | wyłączenie reguły | batch po 5 plików        | + tabela ryzyka per plik, + uwaga o hoistingu                         |
+| window.x = x        | ogólna lista      | lista plików             | + dowód że wzorzec istnieje w projekcie (8 przykładów z shared/ui.js) |
+| declare var         | —                 | const wszędzie           | + podział na const/let, + uzasadnienie każdego                        |
+| Szacunki            | 140 min           | 350 min                  | 350 min + rozbicie na priorytety                                      |
+| Git checkout        | —                 | `git checkout -- .`      | `git restore .` / `git reset --hard HEAD`                             |
+| Formatowanie        | na końcu          | po każdym kroku          | po każdym LOGICZNYM etapie                                            |
+| Lista sukcesu       | —                 | —                        | 10-punktowa checklista                                                |
+| Priorytety          | —                 | —                        | Critical/High/Medium/Low                                              |
+| Rollback            | —                 | —                        | procedura na 2 scenariusze                                            |
+| Weryfikacja założeń | —                 | —                        | tabela z 5 zweryfikowanymi założeniami                                |
