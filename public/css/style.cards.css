@@ -534,22 +534,17 @@
     border-radius: 6px;
 }
 
-.compact-mode .action-btn:not(.text-btn) svg,
-.compact-mode .action-btn:not(.text-btn) i {
-    width: 13px;
-    height: 13px;
-}
-
 .compact-mode .action-btn.text-btn {
+    height: 26px;
     padding: 0 0.55rem;
     font-size: 0.7rem;
     gap: 0.3rem;
 }
 
-.compact-mode .action-btn.text-btn svg,
-.compact-mode .action-btn.text-btn i {
-    width: 14px;
-    height: 14px;
+.compact-mode .action-btn svg,
+.compact-mode .action-btn i {
+    width: 13px;
+    height: 13px;
 }
 
 .compact-mode .status-badge {
