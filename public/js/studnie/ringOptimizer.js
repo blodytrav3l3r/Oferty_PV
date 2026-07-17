@@ -275,7 +275,7 @@ function findAlternativeDPSolution(
  * @param {Array} availableRings - pełna lista kręgów (do mapowania na produkty)
  * @returns {{ success: boolean, selectedRings: Array }}
  */
-var DP_TIMEOUT_MS = 250; // ponytail: global timeout, per-well timeout if DP becomes a bottleneck
+let DP_TIMEOUT_MS = 250; // ponytail: global timeout, per-well timeout if DP becomes a bottleneck
 
 function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
     if (minAllowed <= 0) {

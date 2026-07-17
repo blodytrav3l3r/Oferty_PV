@@ -1,14 +1,14 @@
 // @ts-check
 (function (global) {
     function _findPrecoGroup(grupy, dnRury) {
-        var bestMatchKey = null;
-        var minDiff = Infinity;
-        for (var key in grupy) {
+        let bestMatchKey = null;
+        let minDiff = Infinity;
+        for (let key in grupy) {
             if (!Object.prototype.hasOwnProperty.call(grupy, key)) continue;
-            var parts = key.split('-').map(Number);
+            let parts = key.split('-').map(Number);
             if (parts.length === 2) {
-                var min = parts[0];
-                var max = parts[1];
+                let min = parts[0];
+                let max = parts[1];
                 if (dnRury >= min && dnRury <= max) {
                     return grupy[key];
                 }
@@ -17,7 +17,7 @@
                     bestMatchKey = key;
                 }
             } else if (parts.length === 1) {
-                var val = parts[0];
+                let val = parts[0];
                 if (val === dnRury) return grupy[key];
                 if (val > dnRury && val - dnRury < minDiff) {
                     minDiff = val - dnRury;
@@ -33,11 +33,11 @@
 
     function _findPrecoRange(table, value, dnRury) {
         if (!table || table.length === 0 || value == null || value === '') return 0;
-        var numVal = Math.abs(parseFloat(value));
+        let numVal = Math.abs(parseFloat(value));
         if (isNaN(numVal) || numVal === 0) return 0;
-        var maxRow = table[0];
-        for (var i = 0; i < table.length; i++) {
-            var row = table[i];
+        let maxRow = table[0];
+        for (let i = 0; i < table.length; i++) {
+            let row = table[i];
             if (numVal >= row.min && numVal <= row.max) {
                 return _findPrecoGroup(row.grupy, dnRury);
             }
@@ -53,13 +53,13 @@
 
     function mergeOverlappingRanges(ranges) {
         if (!ranges || ranges.length === 0) return [];
-        var sorted = ranges.slice().sort(function (a, b) {
+        let sorted = ranges.slice().sort(function (a, b) {
             return a.bottom - b.bottom;
         });
-        var merged = [{ bottom: sorted[0].bottom, top: sorted[0].top }];
-        for (var i = 1; i < sorted.length; i++) {
-            var current = merged[merged.length - 1];
-            var next = sorted[i];
+        let merged = [{ bottom: sorted[0].bottom, top: sorted[0].top }];
+        for (let i = 1; i < sorted.length; i++) {
+            let current = merged[merged.length - 1];
+            let next = sorted[i];
             if (next.bottom < current.top) {
                 current.top = Math.max(current.top, next.top);
             } else {
@@ -71,14 +71,14 @@
 
     function ensureDisplayIndices(przejscia) {
         if (!przejscia || przejscia.length === 0) return;
-        var sorted = przejscia.slice().sort(function (a, b) {
+        let sorted = przejscia.slice().sort(function (a, b) {
             return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
         });
-        var currentIdx = 0;
-        var prevAngle = null;
-        for (var i = 0; i < sorted.length; i++) {
-            var p = sorted[i];
-            var angle = parseFloat(p.angle) || 0;
+        let currentIdx = 0;
+        let prevAngle = null;
+        for (let i = 0; i < sorted.length; i++) {
+            let p = sorted[i];
+            let angle = parseFloat(p.angle) || 0;
             if (prevAngle !== null && angle !== prevAngle) {
                 currentIdx++;
             }
@@ -89,11 +89,11 @@
 
     function calcPrecoPricingPure(well, helpers) {
         if (!helpers) helpers = {};
-        var precoPricing = helpers.precoPricing;
+        let precoPricing = helpers.precoPricing;
         if (!precoPricing) return emptyResult();
-        var studnieProducts = helpers.studnieProducts || [];
-        var FLOW_TYPES = helpers.FLOW_TYPES || { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' };
-        var showToast = helpers.showToast;
+        let studnieProducts = helpers.studnieProducts || [];
+        let FLOW_TYPES = helpers.FLOW_TYPES || { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' };
+        let showToast = helpers.showToast;
 
         function emptyResult() {
             return {
@@ -108,16 +108,16 @@
             };
         }
 
-        var result = emptyResult();
+        let result = emptyResult();
 
-        var dnStudni = parseInt(well.dn);
+        let dnStudni = parseInt(well.dn);
         if (!dnStudni || !precoPricing[dnStudni]) return result;
-        var cennik = precoPricing[dnStudni];
+        let cennik = precoPricing[dnStudni];
 
         if (well.wkladkaOsadnikPreco === 'tak') {
-            var heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
-            var baseCost = cennik.cenaDnoOsadnika || 0;
-            var heightCost = (heightMm / 1000) * (cennik.cenaPelnaWysMB || 0);
+            let heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
+            let baseCost = cennik.cenaDnoOsadnika || 0;
+            let heightCost = (heightMm / 1000) * (cennik.cenaPelnaWysMB || 0);
             result.bazowa = baseCost;
             result.bazowaDN = [well.dn];
             result.bazowaEtykiety = ['Osadnik'];
@@ -133,15 +133,15 @@
             return result;
         }
 
-        var maxKinetaDn = 0;
-        for (var ki = 0; ki < cennik.kinety.length; ki++) {
+        let maxKinetaDn = 0;
+        for (let ki = 0; ki < cennik.kinety.length; ki++) {
             if (cennik.kinety[ki].dn > maxKinetaDn) maxKinetaDn = cennik.kinety[ki].dn;
         }
 
-        var allPipes = (well.przejscia || [])
+        let allPipes = (well.przejscia || [])
             .map(function (p, index) {
-                var prod = null;
-                for (var si = 0; si < studnieProducts.length; si++) {
+                let prod = null;
+                for (let si = 0; si < studnieProducts.length; si++) {
                     if (studnieProducts[si].id === p.productId) {
                         prod = studnieProducts[si];
                         break;
@@ -163,7 +163,7 @@
         ensureDisplayIndices(allPipes);
 
         allPipes.forEach(function (p) {
-            var type;
+            let type;
             if (p.flowTypeManual) {
                 type = p.flowType || FLOW_TYPES.WLOT;
             } else {
@@ -172,8 +172,8 @@
             p._flowLabel = type + ' ' + p.displayIndex;
         });
 
-        for (var pi = 0; pi < allPipes.length; pi++) {
-            var p = allPipes[pi];
+        for (let pi = 0; pi < allPipes.length; pi++) {
+            let p = allPipes[pi];
             if (p.dnRury > maxKinetaDn) {
                 result.error =
                     'Brak możliwości wykonania wkładki. Włączenie DN' +
@@ -191,17 +191,17 @@
         if (allPipes.length === 0) return result;
 
         // 2. Wybór kinety głównej (dwa największe DN)
-        var candidates = allPipes.slice();
-        var getZeroScore = function (kat) {
+        let candidates = allPipes.slice();
+        let getZeroScore = function (kat) {
             return Math.min(Math.abs(kat), Math.abs(kat - 360));
         };
         candidates.sort(function (a, b) {
             if (b.dnRury !== a.dnRury) return b.dnRury - a.dnRury;
             return getZeroScore(a.kat) - getZeroScore(b.kat);
         });
-        var mainPipes = candidates.splice(0, 2);
-        var doloty = candidates;
-        var przejscia = mainPipes.concat(
+        let mainPipes = candidates.splice(0, 2);
+        let doloty = candidates;
+        let przejscia = mainPipes.concat(
             doloty.sort(function (a, b) {
                 return b.dnRury - a.dnRury;
             })
@@ -222,8 +222,8 @@
             ids: result.bazowaIds
         };
 
-        var kinetaRow = null;
-        for (var kr = 0; kr < cennik.kinety.length; kr++) {
+        let kinetaRow = null;
+        for (let kr = 0; kr < cennik.kinety.length; kr++) {
             if (cennik.kinety[kr].dn >= mainPipes[0].dnRury) {
                 kinetaRow = cennik.kinety[kr];
                 break;
@@ -232,50 +232,50 @@
         if (!kinetaRow) kinetaRow = cennik.kinety[cennik.kinety.length - 1];
         result.bazowa = kinetaRow ? kinetaRow.prosta : 0;
 
-        var rzDnaBase = parseFloat(well.rzednaDna) || 0;
+        let rzDnaBase = parseFloat(well.rzednaDna) || 0;
         przejscia.forEach(function (p) {
-            var rzWl = p.rzednaWlaczenia || rzDnaBase;
+            let rzWl = p.rzednaWlaczenia || rzDnaBase;
             p._mmFromBottom = (rzWl - rzDnaBase) * 1000;
             p._goraPrzejscia = p._mmFromBottom + p.dnRury;
         });
 
-        var rangesForMerge = przejscia.map(function (p) {
+        let rangesForMerge = przejscia.map(function (p) {
             return { bottom: p._mmFromBottom, top: p._goraPrzejscia };
         });
-        var mergedRanges = mergeOverlappingRanges(rangesForMerge);
-        var precoInsertTop = mergedRanges[0] ? mergedRanges[0].top : 0;
+        let mergedRanges = mergeOverlappingRanges(rangesForMerge);
+        let precoInsertTop = mergedRanges[0] ? mergedRanges[0].top : 0;
 
         // 3. Doloty (trzecie i kolejne przejścia)
-        for (var di = 2; di < przejscia.length; di++) {
-            var dp = przejscia[di];
-            var rzDnaD = parseFloat(well.rzednaDna) || 0;
-            var rzWlD = dp.rzednaWlaczenia || rzDnaD;
-            var mmFromBottomD = (rzWlD - rzDnaD) * 1000;
-            var goraPrzejsciaD = mmFromBottomD + dp.dnRury;
+        for (let di = 2; di < przejscia.length; di++) {
+            let dp = przejscia[di];
+            let rzDnaD = parseFloat(well.rzednaDna) || 0;
+            let rzWlD = dp.rzednaWlaczenia || rzDnaD;
+            let mmFromBottomD = (rzWlD - rzDnaD) * 1000;
+            let goraPrzejsciaD = mmFromBottomD + dp.dnRury;
 
             if (mmFromBottomD >= precoInsertTop) {
-                var isKaskada = false;
-                for (var ok = 0; ok < przejscia.length; ok++) {
-                    var other = przejscia[ok];
+                let isKaskada = false;
+                for (let ok = 0; ok < przejscia.length; ok++) {
+                    let other = przejscia[ok];
                     if (other === dp) continue;
                     if (Math.abs(other.kat - dp.kat) >= 1) continue;
-                    var rzWlOther = other.rzednaWlaczenia || rzDnaD;
-                    var mmOther = (rzWlOther - rzDnaD) * 1000;
-                    var goraOther = mmOther + other.dnRury;
+                    let rzWlOther = other.rzednaWlaczenia || rzDnaD;
+                    let mmOther = (rzWlOther - rzDnaD) * 1000;
+                    let goraOther = mmOther + other.dnRury;
                     if (goraOther < goraPrzejsciaD) {
                         isKaskada = true;
                         break;
                     }
                 }
-                var dodRow = null;
-                for (var dr = 0; dr < cennik.kinety.length; dr++) {
+                let dodRow = null;
+                for (let dr = 0; dr < cennik.kinety.length; dr++) {
                     if (cennik.kinety[dr].dn >= dp.dnRury) {
                         dodRow = cennik.kinety[dr];
                         break;
                     }
                 }
                 if (dodRow) {
-                    var typ = isKaskada ? 'kaskada' : 'sciana';
+                    let typ = isKaskada ? 'kaskada' : 'sciana';
                     result.dodWloty.push({
                         _id: dp._oryginalnyIndex,
                         dn: dp.dnRury,
@@ -285,8 +285,8 @@
                     });
                 }
             } else {
-                var dodRow2 = null;
-                for (var dr2 = 0; dr2 < cennik.kinety.length; dr2++) {
+                let dodRow2 = null;
+                for (let dr2 = 0; dr2 < cennik.kinety.length; dr2++) {
                     if (cennik.kinety[dr2].dn >= dp.dnRury) {
                         dodRow2 = cennik.kinety[dr2];
                         break;
@@ -306,7 +306,7 @@
 
         // 5. Skrzynki włazowe (od DN >= 500)
         if (mainPipes[0].dnRury >= 500 && cennik.skrzynkaWlazowa) {
-            var ilosc = Math.max(0, Math.floor(mainPipes[0].dnRury / 250) - 1);
+            let ilosc = Math.max(0, Math.floor(mainPipes[0].dnRury / 250) - 1);
             result.skrzynki = {
                 ilosc: ilosc,
                 cenaSzt: cennik.skrzynkaWlazowa,
@@ -318,7 +318,7 @@
         result.spadkiSzczegoly = [];
         przejscia.forEach(function (pp) {
             if (pp.spadekKineta) {
-                var kwota = _findPrecoRange(cennik.spadekKineta, pp.spadekKineta, pp.dnRury);
+                let kwota = _findPrecoRange(cennik.spadekKineta, pp.spadekKineta, pp.dnRury);
                 if (kwota > 0) {
                     result.spadekKineta += kwota;
                     result.spadkiSzczegoly.push({
@@ -331,7 +331,7 @@
                 }
             }
             if (pp.spadekMufa) {
-                var kwota2 = _findPrecoRange(cennik.spadekMufa, pp.spadekMufa, pp.dnRury);
+                let kwota2 = _findPrecoRange(cennik.spadekMufa, pp.spadekMufa, pp.dnRury);
                 if (kwota2 > 0) {
                     result.spadekMufa += kwota2;
                     result.spadkiSzczegoly.push({
@@ -349,21 +349,21 @@
         result.uniesieniaSzczegoly = [];
 
         if (mainPipes.length > 0) {
-            var mainSelected = mainPipes[0];
+            let mainSelected = mainPipes[0];
             if (mainPipes.length > 1) {
-                var p0 = mainPipes[0];
-                var p1 = mainPipes[1];
+                let p0 = mainPipes[0];
+                let p1 = mainPipes[1];
                 if (p1.dnRury < p0.dnRury && p1._goraPrzejscia <= p0._goraPrzejscia) {
                     mainSelected = p0;
                 } else {
-                    var dist0 = precoInsertTop - p0._mmFromBottom;
-                    var dist1 = precoInsertTop - p1._mmFromBottom;
+                    let dist0 = precoInsertTop - p0._mmFromBottom;
+                    let dist1 = precoInsertTop - p1._mmFromBottom;
                     mainSelected = dist0 >= dist1 ? p0 : p1;
                 }
             }
-            var uniesienieMm = precoInsertTop - mainSelected._goraPrzejscia;
+            let uniesienieMm = precoInsertTop - mainSelected._goraPrzejscia;
             if (uniesienieMm > 0) {
-                var kwotaU = _findPrecoRange(cennik.uniesienie, uniesienieMm, mainPipes[0].dnRury);
+                let kwotaU = _findPrecoRange(cennik.uniesienie, uniesienieMm, mainPipes[0].dnRury);
                 if (kwotaU > 0) {
                     result.uniesienie += kwotaU;
                     result.uniesieniaSzczegoly.push({
@@ -377,12 +377,12 @@
             }
         }
 
-        for (var ui = 2; ui < przejscia.length; ui++) {
-            var up = przejscia[ui];
+        for (let ui = 2; ui < przejscia.length; ui++) {
+            let up = przejscia[ui];
             if (up._mmFromBottom >= precoInsertTop) continue;
-            var uniesienieMm2 = precoInsertTop - up._goraPrzejscia;
+            let uniesienieMm2 = precoInsertTop - up._goraPrzejscia;
             if (uniesienieMm2 > 0) {
-                var kwotaU2 = _findPrecoRange(cennik.uniesienie, uniesienieMm2, up.dnRury);
+                let kwotaU2 = _findPrecoRange(cennik.uniesienie, uniesienieMm2, up.dnRury);
                 if (kwotaU2 > 0) {
                     result.uniesienie += kwotaU2;
                     result.uniesieniaSzczegoly.push({
@@ -403,7 +403,7 @@
             mainPipes[0].dnRury !== mainPipes[1].dnRury &&
             cennik.redukcja
         ) {
-            var roznicaSrednic = Math.abs(mainPipes[0].dnRury - mainPipes[1].dnRury);
+            let roznicaSrednic = Math.abs(mainPipes[0].dnRury - mainPipes[1].dnRury);
             result.redukcja = _findPrecoRange(
                 cennik.redukcja,
                 roznicaSrednic,
@@ -418,13 +418,13 @@
             (well.precoFullHeight === 'tak' || well.precoFullHeight === true) &&
             cennik.cenaPelnaWysMB
         ) {
-            var dennicaHeight = 0;
+            let dennicaHeight = 0;
             if (well.config) {
-                for (var ci = 0; ci < well.config.length; ci++) {
-                    var item = well.config[ci];
+                for (let ci = 0; ci < well.config.length; ci++) {
+                    let item = well.config[ci];
                     if (item.disablePreco) continue;
-                    var prod2 = null;
-                    for (var si2 = 0; si2 < studnieProducts.length; si2++) {
+                    let prod2 = null;
+                    for (let si2 = 0; si2 < studnieProducts.length; si2++) {
                         if (studnieProducts[si2].id === item.productId) {
                             prod2 = studnieProducts[si2];
                             break;
@@ -438,9 +438,9 @@
                     }
                 }
             }
-            var pozostaloMm = dennicaHeight - precoInsertTop;
+            let pozostaloMm = dennicaHeight - precoInsertTop;
             if (pozostaloMm > 0) {
-                var metry = pozostaloMm / 1000;
+                let metry = pozostaloMm / 1000;
                 result.pelnaWysokosc = {
                     metry: metry,
                     cena: metry * cennik.cenaPelnaWysMB,

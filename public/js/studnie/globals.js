@@ -9,8 +9,8 @@ let currentCennikTab = 'dn1000';
 let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
-var wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
-var precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
+let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica: 0, nadbudowa: 0, preco: 0 }, ... }
+let precoPricing = {}; // Cennik wkładek PRECO: { 1000: { kinety: [...], ... }, ... }
 
 // Globalne domyślne parametry oferty (utrzymują się do czasu ręcznej zmiany)
 let offerDefaultZakonczenie = null; // ID produktu lub null (=konus)
@@ -22,13 +22,13 @@ let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia red
 let offersStudnie = [];
 let ordersStudnie = [];
 let editingOfferIdStudnie = null;
-var editingOfferAssignedUserId = null;
-var editingOfferAssignedUserName = '';
-var editingOfferCreatedByUserId = null;
-var editingOfferCreatedByUserName = '';
-var isSavingOffer = false;
+let editingOfferAssignedUserId = null;
+let editingOfferAssignedUserName = '';
+let editingOfferCreatedByUserId = null;
+let editingOfferCreatedByUserName = '';
+let isSavingOffer = false;
 /** @type {any} */
-var orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
+let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 
 const expandedWellIndices = new Set();
 // clientsDb jest zarządzane przez AppState (shared/appState.js)

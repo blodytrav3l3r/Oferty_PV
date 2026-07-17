@@ -14,9 +14,9 @@ function handlePrzejsciaZamowioneChange(selectElement) {
 /* ===== SEKCJA PRZEJŚĆ SZCZELNYCH — SZCZEGÓŁY Z OFERTY ===== */
 
 /** Tymczasowa tablica ręcznie dodanych wierszy niestandardowych przejść */
-var _customPrzejscieRows = [];
-var _offerPrzejscieRows = [];
-var _przejsciaInitialized = false;
+let _customPrzejscieRows = [];
+let _offerPrzejscieRows = [];
+let _przejsciaInitialized = false;
 
 /**
  * Buduje listę typów przejść z cennika (studnieProducts).

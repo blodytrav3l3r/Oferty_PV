@@ -39,8 +39,8 @@ function excelOnRzednaChange(wIdx) {
 
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
 function excelRemoveTransitionColumn() {
-    var tab = _excelActiveTab || '1000';
-    var curMax = _excelMaxTransitions[tab] || 1;
+    let tab = _excelActiveTab || '1000';
+    let curMax = _excelMaxTransitions[tab] || 1;
     if (curMax <= 1 && wells.length > 0) {
         showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
         return;
@@ -81,9 +81,9 @@ function excelRemoveTransitionColumn() {
     showToast('Usunięto kolumnę przejścia', 'info');
 }
 function excelAddTransitionColumn() {
-    var tab = _excelActiveTab || '1000';
+    let tab = _excelActiveTab || '1000';
     _excelMaxTransitions[tab] = (_excelMaxTransitions[tab] || 1) + 1;
-    var newMax = _excelMaxTransitions[tab];
+    let newMax = _excelMaxTransitions[tab];
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((w) => {
             if (!_excelWellMatchesTab(w, tab)) return;
@@ -111,7 +111,7 @@ function _excelCleanEmptyPrzejscia(well) {
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
-    var hasExisting = trIdx < wells[wIdx].przejscia.length;
+    let hasExisting = trIdx < wells[wIdx].przejscia.length;
     if (!hasExisting && (!value || value === '')) return;
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
@@ -307,17 +307,17 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             componentType === 'plyta_zamykajaca' ||
             componentType === 'pierscien_odciazajacy')
     ) {
-        var isRing = componentType === 'pierscien_odciazajacy';
-        var partnerTypes = isRing
+        let isRing = componentType === 'pierscien_odciazajacy';
+        let partnerTypes = isRing
             ? ['plyta_najazdowa', 'plyta_zamykajaca']
             : ['pierscien_odciazajacy'];
-        var _avail =
+        let _avail =
             typeof getAvailableProducts === 'function'
                 ? getAvailableProducts(well)
                 : studnieProducts || [];
-        var hasPartner = false;
-        for (var ci = 0; ci < (well.config || []).length; ci++) {
-            var cp = _avail.find(function (pr) {
+        let hasPartner = false;
+        for (let ci = 0; ci < (well.config || []).length; ci++) {
+            let cp = _avail.find(function (pr) {
                 return pr.id === well.config[ci].productId;
             });
             if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
@@ -328,7 +328,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             }
         }
         if (!hasPartner) {
-            var partnerCandidates = _avail.filter(function (p) {
+            let partnerCandidates = _avail.filter(function (p) {
                 return (
                     partnerTypes.indexOf(p.componentType) !== -1 &&
                     parseInt(p.dn) === parseInt(well.dn)
@@ -340,7 +340,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
                 });
             }
             if (partnerCandidates.length > 0) {
-                var partner = partnerCandidates[0];
+                let partner = partnerCandidates[0];
                 _excelInsertConfigItem(well, partner.componentType, partner.id, 1);
                 _excelSortConfig(well);
                 _excelRenderTable(_excelActiveTab);
@@ -390,7 +390,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 async function excelOnReductionSelectChange(wIdx, value) {
     _excelSaveUndoSnapshot();
-    var well = wells[wIdx];
+    let well = wells[wIdx];
     if (!well) return;
     if (!value) {
         well.redukcjaDN1000 = false;

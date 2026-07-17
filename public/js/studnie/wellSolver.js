@@ -750,7 +750,7 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
      * Wydzialone z solve() — DRY (używane w 2 miejscach).
      * @returns {{ avrItems: Array, avrH: number }}
      */
-    var AVR_TIMEOUT_MS = 100;
+    let AVR_TIMEOUT_MS = 100;
     function findBestAvrFill(deficit, maxAvr) {
         let bestAvrCombo = [];
         let bestAvrDiff = deficit;

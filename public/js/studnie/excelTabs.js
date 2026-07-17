@@ -41,8 +41,8 @@ function excelSwitchTab(tab) {
     _excelUpdateHeaderProdCodes();
     /* Auto-focus na empty row gdy zakładka pusta */
     if (typeof wells !== 'undefined' && wells.length > 0) {
-        var hasWellsInTab = false;
-        for (var _st = 0; _st < wells.length; _st++) {
+        let hasWellsInTab = false;
+        for (let _st = 0; _st < wells.length; _st++) {
             if (_excelWellMatchesTab(wells[_st], tab)) {
                 hasWellsInTab = true;
                 break;
@@ -50,7 +50,7 @@ function excelSwitchTab(tab) {
         }
         if (!hasWellsInTab) {
             setTimeout(function () {
-                var nameEl = document.getElementById('excel-empty-name');
+                let nameEl = document.getElementById('excel-empty-name');
                 if (nameEl) nameEl.focus();
             }, 150);
         }
@@ -102,12 +102,12 @@ function excelAddWellToTab() {
  * @returns {NodeListOf<Element>}
  */
 function _excelEnsureRowCount(neededTotal, currentRows) {
-    var deficit = neededTotal - currentRows.length;
+    let deficit = neededTotal - currentRows.length;
     if (deficit <= 0) return currentRows;
-    var dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
+    let dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
     _excelSaveUndoSnapshot();
-    for (var i = 0; i < deficit; i++) {
-        var well =
+    for (let i = 0; i < deficit; i++) {
+        let well =
             typeof createNewWell === 'function'
                 ? createNewWell(null, /** @type {any} */ (dn))
                 : {
@@ -203,7 +203,7 @@ function excelCreateFromEmpty() {
         _excelRenderTable(_excelActiveTab);
         _excelUpdateWellCount();
         _excelDebouncedRefresh();
-        var newWIdx = wells.length - 1;
+        let newWIdx = wells.length - 1;
         if (_excelAutoSelectEnabled && rzw !== null && rzd !== null && rzw > rzd) {
             setTimeout(function () {
                 _excelAutoSelectForWell(newWIdx);

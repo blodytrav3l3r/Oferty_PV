@@ -1,10 +1,10 @@
 // @ts-check
 /* ===== ZAMÓWIENIA RUR ===== */
 let ordersRury = [];
-var pendingOrderCreationData = null;
-var _customPrzejscieRows = [];
-var _offerPrzejscieRows = [];
-var _przejsciaInitialized = false;
+let pendingOrderCreationData = null;
+let _customPrzejscieRows = [];
+let _offerPrzejscieRows = [];
+let _przejsciaInitialized = false;
 let orderCurrentItems = [];
 
 function getActiveItemsArray() {
@@ -730,7 +730,7 @@ window.saveOfferOrOrder = async function () {
 /* ===== TRYB EDYCJI ZAMÓWIENIA ===== */
 
 /** @type {any} */
-var orderEditMode = false;
+let orderEditMode = false;
 window.orderEditMode = false;
 
 function isOrderMode() {

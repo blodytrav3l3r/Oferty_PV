@@ -216,26 +216,26 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     if (p.componentType === 'kineta') {
         let dennicaHeight = 0;
         const dennicaItem = well.config.find(function (c) {
-            var pr = studnieProducts.find(function (x) {
+            let pr = studnieProducts.find(function (x) {
                 return x.id === c.productId;
             });
             return pr && pr.componentType === 'dennica';
         });
         if (dennicaItem) {
-            var pPr = studnieProducts.find(function (x) {
+            let pPr = studnieProducts.find(function (x) {
                 return x.id === dennicaItem.productId;
             });
             dennicaHeight = pPr ? pPr.height || 0 : 0;
         }
 
-        var h1m = parseFloat(p.hMin1);
-        var h1x = parseFloat(p.hMax1);
-        var h2m = parseFloat(p.hMin2);
-        var h2x = parseFloat(p.hMax2);
-        var h3m = parseFloat(p.hMin3);
-        var h3x = parseFloat(p.hMax3);
+        let h1m = parseFloat(p.hMin1);
+        let h1x = parseFloat(p.hMax1);
+        let h2m = parseFloat(p.hMin2);
+        let h2x = parseFloat(p.hMax2);
+        let h3m = parseFloat(p.hMin3);
+        let h3x = parseFloat(p.hMax3);
 
-        var kinetaBase = base;
+        let kinetaBase = base;
         if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
             kinetaBase = parseFloat(p.cena1) || 0;
         } else if (!isNaN(h2m) && !isNaN(h2x) && dennicaHeight >= h2m && dennicaHeight <= h2x) {
@@ -252,7 +252,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
                 well.malowanieW === 'kineta_dennica' ||
                 well.malowanieW === 'cale'
             ) {
-                var kinetaArea = calcKinetaPaintingArea(well);
+                let kinetaArea = calcKinetaPaintingArea(well);
                 malowanieW = kinetaArea * well.malowanieWewCena;
             }
         } else if (
@@ -292,7 +292,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
 
     base = base * mult;
 
-    var pehdType = null;
+    let pehdType = null;
     if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) {
         pehdType = well.wkladkaDennica;
     } else if (

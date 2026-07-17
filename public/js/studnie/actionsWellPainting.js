@@ -15,10 +15,10 @@ function getPehdEffectiveArea(p) {
     if (p.area == null || p.area <= 0) return 0;
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) return p.area * (4 / Math.PI);
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-        var dn = parseInt(p.dn) || 0;
+        let dn = parseInt(p.dn) || 0;
         if (dn > 0) {
-            var bottomArea = Math.PI * Math.pow(dn / 2000, 2);
-            var wallArea = p.area - bottomArea;
+            let bottomArea = Math.PI * Math.pow(dn / 2000, 2);
+            let wallArea = p.area - bottomArea;
             if (wallArea > 0) return wallArea + bottomArea * (4 / Math.PI);
         }
     }
@@ -28,7 +28,7 @@ function getPehdEffectiveArea(p) {
 function getPehdTooltip(p, pricePerM2) {
     if (p.area <= 0 || p.componentType === 'przejscie' || p.componentType === 'kineta') return '';
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) {
-        var sqArea = (p.area * 4) / Math.PI;
+        let sqArea = (p.area * 4) / Math.PI;
         return (
             'Pow. koła: ' +
             p.area.toFixed(2) +
@@ -47,9 +47,9 @@ function getPehdTooltip(p, pricePerM2) {
         );
     }
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-        var d2 = parseInt(p.dn) || 0;
+        let d2 = parseInt(p.dn) || 0;
         if (d2 > 0) {
-            var bArea = Math.PI * Math.pow(d2 / 2000, 2);
+            let bArea = Math.PI * Math.pow(d2 / 2000, 2);
             return (
                 'Dno (koło): ' +
                 bArea.toFixed(2) +

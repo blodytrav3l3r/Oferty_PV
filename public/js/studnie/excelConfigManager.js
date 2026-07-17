@@ -134,9 +134,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
     }
     _excelSortConfig(well);
     if ((componentType === 'krag' || componentType === 'krag_ot') && qty > 1) {
-        var _exp = [];
-        for (var _i = 0; _i < well.config.length; _i++) {
-            var _pr =
+        let _exp = [];
+        for (let _i = 0; _i < well.config.length; _i++) {
+            let _pr =
                 typeof studnieProducts !== 'undefined'
                     ? studnieProducts.find(function (x) {
                           return x.id === well.config[_i].productId;
@@ -147,7 +147,7 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                 (_pr.componentType === 'krag' || _pr.componentType === 'krag_ot') &&
                 well.config[_i].quantity > 1
             ) {
-                for (var _j = 0; _j < well.config[_i].quantity; _j++) {
+                for (let _j = 0; _j < well.config[_i].quantity; _j++) {
                     _exp.push({
                         productId: well.config[_i].productId,
                         quantity: 1,
@@ -164,7 +164,7 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
 
 function _excelSortConfig(well) {
     if (!well || !well.config) return;
-    var typeOrder = {
+    let typeOrder = {
         wlaz: 0,
         avr: 1,
         plyta_din: 2,
@@ -179,17 +179,17 @@ function _excelSortConfig(well) {
         kineta: 7,
         uszczelka: 8
     };
-    var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
     well.config = [...well.config].sort(function (a, b) {
-        var pA = sz.find(function (p) {
+        let pA = sz.find(function (p) {
             return p.id === a.productId;
         });
-        var pB = sz.find(function (p) {
+        let pB = sz.find(function (p) {
             return p.id === b.productId;
         });
         if (!pA || !pB) return 0;
-        var oA = typeOrder[pA.componentType] || 100;
-        var oB = typeOrder[pB.componentType] || 100;
+        let oA = typeOrder[pA.componentType] || 100;
+        let oB = typeOrder[pB.componentType] || 100;
         return oA - oB;
     });
     _excelMoveWlazToTop(well);
@@ -197,10 +197,10 @@ function _excelSortConfig(well) {
 
 function _excelMoveWlazToTop(well) {
     if (!well || !well.config || well.config.length < 2) return;
-    var sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
-    var found = null;
-    for (var i = 0; i < well.config.length; i++) {
-        var p = sz.find(function (pr) {
+    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+    let found = null;
+    for (let i = 0; i < well.config.length; i++) {
+        let p = sz.find(function (pr) {
             return pr.id === well.config[i].productId;
         });
         if (p && p.componentType === 'wlaz') {
@@ -209,7 +209,7 @@ function _excelMoveWlazToTop(well) {
         }
     }
     if (found !== null && found !== 0) {
-        var item = well.config.splice(found, 1)[0];
+        let item = well.config.splice(found, 1)[0];
         well.config.unshift(item);
     }
 }

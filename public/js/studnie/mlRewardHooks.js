@@ -19,7 +19,7 @@
     const TIMEOUT_MS = 1000;
 
     /** @type {boolean} flaga do unikania duplikatów */
-    var _rewardInFlight = false;
+    let _rewardInFlight = false;
 
     /**
      * Wysyła sygnał nagrody do backendu
@@ -34,12 +34,12 @@
     function sendReward(params) {
         if (_rewardInFlight) return;
 
-        var well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+        let well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
         if (!well) return;
 
         _rewardInFlight = true;
 
-        var snap = getConfigSnapshot(well);
+        let snap = getConfigSnapshot(well);
         if (params.eventType) {
             snap.eventType = params.eventType;
         }
@@ -49,7 +49,7 @@
             snap.aiRankSnapshot = params.aiRankSnapshot;
         }
 
-        var payload = {
+        let payload = {
             action: params.action,
             wellId: well.id || 'unknown',
             dn: parseInt(well.dn) || 0,
@@ -60,8 +60,8 @@
         };
 
         try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
                 controller.abort();
             }, TIMEOUT_MS);
 

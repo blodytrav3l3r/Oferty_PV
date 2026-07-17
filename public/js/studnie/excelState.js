@@ -77,7 +77,7 @@ const DN_COLORS = {
 
 const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
-var _excelPasteCancelFlag = false;
+let _excelPasteCancelFlag = false;
 
 let _excelUndoStack = [];
 let _excelRedoStack = [];

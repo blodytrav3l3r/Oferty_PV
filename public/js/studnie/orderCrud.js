@@ -117,7 +117,7 @@ async function createOrderFromOffer() {
     }
 }
 
-var pendingOrderCreationData = null;
+let pendingOrderCreationData = null;
 
 async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     let assignedUserId = offer.userId || (currentUser ? currentUser.id : null);

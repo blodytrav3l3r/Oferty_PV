@@ -93,22 +93,22 @@ function _excelInitColumnResize() {
 
 /* ===== ROW SELECT CHEKBOX CHANGE HANDLER ===== */
 function _excelOnRowSelectChange(e) {
-    var target = e.target;
+    let target = e.target;
     if (!target) return;
     /* Row checkbox - per studnia */
     if (target.classList && target.classList.contains('excel-row-select')) {
-        var wIdx = parseInt(target.getAttribute('data-widx'), 10);
+        let wIdx = parseInt(target.getAttribute('data-widx'), 10);
         if (!isNaN(wIdx)) {
             _excelRowSelectStates[wIdx] = target.checked;
             _excelUpdateBulkButtons();
             /* sync select-all checkbox */
-            var allBoxes = document.querySelectorAll(
+            let allBoxes = document.querySelectorAll(
                 '#excel-table-container tbody tr[data-widx] input.excel-row-select'
             );
-            var allChecked = Array.from(allBoxes).every(function (cb) {
+            let allChecked = Array.from(allBoxes).every(function (cb) {
                 return cb.checked;
             });
-            var hdrAll = document.getElementById('excel-select-all');
+            let hdrAll = document.getElementById('excel-select-all');
             if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
         }
     }
@@ -118,14 +118,14 @@ function _excelOnRowSelectChange(e) {
 /* ===== ROW CHECKBOX + AUTO/MANUAL BATCH ===== */
 function _excelBulkSetMode(enabled) {
     if (typeof wells === 'undefined') return;
-    var sel = [];
-    for (var i = 0; i < wells.length; i++) {
+    let sel = [];
+    for (let i = 0; i < wells.length; i++) {
         if (_excelRowSelectStates[i]) sel.push(i);
     }
-    var targets;
+    let targets;
     if (sel.length === 0) {
         targets = [];
-        for (var i = 0; i < wells.length; i++) {
+        for (let i = 0; i < wells.length; i++) {
             if (wells[i]) targets.push(i);
         }
         if (targets.length === 0) return;
@@ -152,7 +152,7 @@ function _excelBulkSetMode(enabled) {
 
 function _excelMarkAsManual(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
-    var w = wells[wIdx];
+    let w = wells[wIdx];
     if (w.autoSelect !== false || w.configSource !== 'MANUAL' || w.autoLocked !== true) {
         w.autoSelect = false;
         w.configSource = 'MANUAL';
@@ -173,7 +173,7 @@ function _excelSaveUndoSnapshot() {
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
     _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
-    var snap = _excelUndoStack.pop();
+    let snap = _excelUndoStack.pop();
     wells.splice(0, wells.length, ...snap);
     _excelRenderTable(_excelActiveTab);
     showToast('Cofnięto', 'info');
@@ -182,7 +182,7 @@ function _excelUndo() {
 function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
     _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
-    var snap = _excelRedoStack.pop();
+    let snap = _excelRedoStack.pop();
     wells.splice(0, wells.length, ...snap);
     _excelRenderTable(_excelActiveTab);
     showToast('Przywrócono', 'info');
@@ -190,10 +190,10 @@ function _excelRedo() {
 
 /* ===== PASTE DO PUSTEGO WIERSZA → nowe studnie ===== */
 function _excelPasteCreateWells(text) {
-    var parsed = _excelParsePasteData(text);
+    let parsed = _excelParsePasteData(text);
     /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
     if (parsed.length === 0) {
-        var lines = text
+        let lines = text
             .trim()
             .split(String.fromCharCode(10))
             .map(function (l) {
@@ -203,15 +203,15 @@ function _excelPasteCreateWells(text) {
                 return l;
             });
         if (lines.length > 0) {
-            var dn = _excelActiveTab || '1000';
+            let dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
-            var added = 0;
-            for (var fi = 0; fi < lines.length; fi++) {
-                var name = lines[fi];
+            let added = 0;
+            for (let fi = 0; fi < lines.length; fi++) {
+                let name = lines[fi];
                 if (!name) continue;
-                var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
+                let dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-                var well =
+                let well =
                     typeof createNewWell === 'function'
                         ? createNewWell(name, dnVal)
                         : {
@@ -247,19 +247,19 @@ function _excelPasteCreateWells(text) {
         showToast('Nie rozpoznano danych', 'error');
         return;
     }
-    var dn = _excelActiveTab || '1000';
+    let dn = _excelActiveTab || '1000';
     _excelSaveUndoSnapshot();
-    var added = 0;
+    let added = 0;
     parsed.forEach(function (row) {
-        var name = String(row.name || '').trim();
+        let name = String(row.name || '').trim();
         if (!name) return;
         /* pozwól na duplikaty — nie sprawdzamy 'wells.some' */
-        var dnVal = row.dn || String(dn);
+        let dnVal = row.dn || String(dn);
         dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
-        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
-        var well =
+        let rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
+        let rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
+        let well =
             typeof createNewWell === 'function'
                 ? createNewWell(name, dnVal)
                 : {
@@ -293,8 +293,8 @@ function _excelPasteCreateWells(text) {
         for (let k = 0; k < added; k++) {
             setTimeout(
                 function () {
-                    var nwi = wells.length - added + k;
-                    var w = wells[nwi];
+                    let nwi = wells.length - added + k;
+                    let w = wells[nwi];
                     if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
                         _excelAutoSelectForWell(nwi).catch(function (e) {
                             if (window.logger)
@@ -322,7 +322,7 @@ window.refreshExcelFromConfig = function () {
 /* Sync UI z wells[i].configSource/autoSelect (bez pelnego re-render) — dla zmian z glownego panelu */
 window._excelSyncAutoManualUI = function () {
     if (!document.getElementById('excel-table-overlay')) return;
-    var fn = /** @type {any} */ (window._excelSyncAutoManualUI);
+    let fn = /** @type {any} */ (window._excelSyncAutoManualUI);
     if (fn._inProgress) return;
     fn._inProgress = true;
     try {

@@ -423,7 +423,7 @@ function skipWizardToStep3() {
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
 async function loadStudnieProducts() {
-    var result = /** @type {any} */ (
+    let result = /** @type {any} */ (
         await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000)
     );
     if (!result || !Array.isArray(result.data)) {

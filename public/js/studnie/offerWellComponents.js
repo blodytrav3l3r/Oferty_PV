@@ -349,7 +349,7 @@ function renderComponentSubItems(
             ? getItemPriceBreakdown(well, p, true, item)
             : null;
     if (bd) {
-        var pehdLabel = '';
+        let pehdLabel = '';
         if (bd.pehd > 0) {
             if (['dennica', 'styczna'].indexOf(p.componentType) !== -1)
                 pehdLabel = well.wkladkaDennica;
@@ -488,8 +488,8 @@ function renderComponentSubItems(
                 ' PLN</td></tr>';
 
             if (kp && typeof getItemPriceBreakdown === 'function') {
-                var kBd = getItemPriceBreakdown(well, kp, true, kineta);
-                var kQ = kineta.quantity || 1;
+                let kBd = getItemPriceBreakdown(well, kp, true, kineta);
+                let kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
                     html +=
                         '<tr style="opacity:0.5; font-size:0.65rem; color:#f9a8d4;"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
@@ -557,13 +557,13 @@ function renderComponentSubItems(
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
             if (precoAlloc.isBottomMostDennica && typeof calcPrecoPricing === 'function') {
-                var precoCalc = calcPrecoPricing(well);
+                let precoCalc = calcPrecoPricing(well);
                 if (precoCalc && precoCalc.suma > 0) {
                     if (precoCalc.bazowa > 0 && precoCalc.kinetaGlowna) {
-                        var dnParts = precoCalc.kinetaGlowna.dn.map(function (d) {
+                        let dnParts = precoCalc.kinetaGlowna.dn.map(function (d) {
                             return 'DN' + d;
                         });
-                        var etyParts = precoCalc.kinetaGlowna.etykiety.map(function (e) {
+                        let etyParts = precoCalc.kinetaGlowna.etykiety.map(function (e) {
                             return '[' + e + ']';
                         });
                         html +=
@@ -598,7 +598,7 @@ function renderComponentSubItems(
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.uniesienie > 0) {
-                        var mm =
+                        let mm =
                             precoCalc.uniesieniaSzczegoly &&
                             precoCalc.uniesieniaSzczegoly.length > 0
                                 ? precoCalc.uniesieniaSzczegoly[0].mm
@@ -619,9 +619,9 @@ function renderComponentSubItems(
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.dodWloty && precoCalc.dodWloty.length > 0) {
-                        for (var dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
-                            var dw = precoCalc.dodWloty[dwi];
-                            var dwTyp =
+                        for (let dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
+                            let dw = precoCalc.dodWloty[dwi];
+                            let dwTyp =
                                 dw.typ === 'kaskada'
                                     ? 'kaskada'
                                     : dw.typ === 'sciana'

@@ -19,50 +19,50 @@
 
     /* ===== KONFIGURACJA ===== */
 
-    var BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
-    var SINGLE_PREDICT_URL = '/api/telemetry/ai/predict';
-    var SETTINGS_URL = '/api/telemetry/ai/settings';
-    var FETCH_TIMEOUT = 3000;
+    let BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
+    let SINGLE_PREDICT_URL = '/api/telemetry/ai/predict';
+    let SETTINGS_URL = '/api/telemetry/ai/settings';
+    let FETCH_TIMEOUT = 3000;
 
-    var MAX_AI_CANDIDATES = 10;
-    var MIN_AI_CANDIDATES = 3;
+    let MAX_AI_CANDIDATES = 10;
+    let MIN_AI_CANDIDATES = 3;
 
-    var RELATIVE_GAP_THRESHOLD = 0.1; // 10% — exploration próg
-    var EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
-    var EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
+    let RELATIVE_GAP_THRESHOLD = 0.1; // 10% — exploration próg
+    let EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
+    let EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
 
-    var FEATURE_VERSION = 'v3';
-    var RANKING_VERSION = 'dual_v1';
-    var SOLVER_VERSION = 'wellSolver_v5';
+    let FEATURE_VERSION = 'v3';
+    let RANKING_VERSION = 'dual_v1';
+    let SOLVER_VERSION = 'wellSolver_v5';
 
     /** @type {Map<string, {score:number, timestamp:number}>} */
-    var scoreCache = new Map();
-    var CACHE_TTL = 15 * 60 * 1000;
+    let scoreCache = new Map();
+    let CACHE_TTL = 15 * 60 * 1000;
 
     /** @type {boolean} */
-    var mlOnline = false;
+    let mlOnline = false;
 
     /** @type {string|null} */
-    var activeModelVersion = null;
+    let activeModelVersion = null;
 
     /** @type {number} */
-    var aiInfluencePct = 0;
+    let aiInfluencePct = 0;
 
     /* ===== FEATURE FLAG — hierarchia: URL override > localStorage > backend > 0 ===== */
 
     async function fetchAiInfluenceFromBackend() {
         try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
-            var res = await fetch(SETTINGS_URL, {
+            let res = await fetch(SETTINGS_URL, {
                 credentials: 'same-origin',
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
             if (!res.ok) return null;
-            var data = await res.json();
+            let data = await res.json();
             return parseInt(data.value, 10);
         } catch (e) {
             return null;
@@ -71,18 +71,18 @@
 
     async function getAiInfluencePct() {
         // 1. URL override (dev/test)
-        var urlMatch = window.location.search.match(/[?&]ai_influence=(\d+)/);
+        let urlMatch = window.location.search.match(/[?&]ai_influence=(\d+)/);
         if (urlMatch) return parseInt(urlMatch[1], 10);
 
         // 2. localStorage override
-        var local = window.localStorage.getItem('wells_ai_influence');
+        let local = window.localStorage.getItem('wells_ai_influence');
         if (local !== null) {
-            var p = parseInt(local, 10);
+            let p = parseInt(local, 10);
             if (!isNaN(p) && p >= 0 && p <= 100) return p;
         }
 
         // 3. Backend config (DB settings)
-        var backend = await fetchAiInfluenceFromBackend();
+        let backend = await fetchAiInfluenceFromBackend();
         if (backend !== null && backend >= 0 && backend <= 100) return backend;
 
         // 4. Default: shadow mode
@@ -97,20 +97,20 @@
      * @returns {number[]} wektor 16 cech
      */
     function buildFeatureVector(layout, well) {
-        var dn = parseInt(well.dn) || 0;
-        var heightMm = parseInt(well.wellHeight) || 0;
-        var warehouse = (well.warehouse || 'KLB').toUpperCase();
-        var wellType = (well.type || 'standard').toLowerCase();
+        let dn = parseInt(well.dn) || 0;
+        let heightMm = parseInt(well.wellHeight) || 0;
+        let warehouse = (well.warehouse || 'KLB').toUpperCase();
+        let wellType = (well.type || 'standard').toLowerCase();
 
-        var hasReduction = !!well.redukcjaDN1000;
-        var hasPsiaBuda = wellType === 'psia_buda';
-        var hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
-        var ringCount = layout.ringCount || 0;
-        var connectionCount = layout.sealCount || 0;
-        var transitionsAboveDennica = Math.max(0, connectionCount - 1);
-        var totalPrice = layout.totalPrice || 0;
-        var totalWeight = layout.totalWeight || 0;
-        var ringVariety = layout.ringVariety || 0;
+        let hasReduction = !!well.redukcjaDN1000;
+        let hasPsiaBuda = wellType === 'psia_buda';
+        let hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
+        let ringCount = layout.ringCount || 0;
+        let connectionCount = layout.sealCount || 0;
+        let transitionsAboveDennica = Math.max(0, connectionCount - 1);
+        let totalPrice = layout.totalPrice || 0;
+        let totalWeight = layout.totalWeight || 0;
+        let ringVariety = layout.ringVariety || 0;
 
         return [
             dn,
@@ -141,21 +141,21 @@
      * @returns {Promise<number>} AI score [0-1] lub -1 gdy offline
      */
     async function fetchAiScore(layout, well) {
-        var features = buildFeatureVector(layout, well);
-        var key = features.join(',');
+        let features = buildFeatureVector(layout, well);
+        let key = features.join(',');
 
-        var cached = scoreCache.get(key);
+        let cached = scoreCache.get(key);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
             return cached.score;
         }
 
         try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
                 controller.abort();
             }, FETCH_TIMEOUT);
 
-            var res = await fetch(SINGLE_PREDICT_URL, {
+            let res = await fetch(SINGLE_PREDICT_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
@@ -176,9 +176,9 @@
                 return -1;
             }
 
-            var data = await res.json();
+            let data = await res.json();
             if (data.scores && data.scores.length > 0) {
-                var s = data.scores[0];
+                let s = data.scores[0];
                 activeModelVersion = s.version;
                 scoreCache.set(key, { score: s.score, timestamp: Date.now() });
                 mlOnline = true;
@@ -201,15 +201,15 @@
      * @returns {Promise<Map<number, number>>} mapa candidateId → aiScore
      */
     async function fetchAiScoresBatch(candidates, well) {
-        var resultMap = new Map();
-        var toFetch = [];
+        let resultMap = new Map();
+        let toFetch = [];
 
-        for (var i = 0; i < candidates.length; i++) {
-            var c = candidates[i];
-            var features = buildFeatureVector(c.solution, well);
-            var key = features.join(',');
+        for (let i = 0; i < candidates.length; i++) {
+            let c = candidates[i];
+            let features = buildFeatureVector(c.solution, well);
+            let key = features.join(',');
 
-            var cached = scoreCache.get(key);
+            let cached = scoreCache.get(key);
             if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
                 resultMap.set(c.id, cached.score);
             } else {
@@ -229,12 +229,12 @@
         }
 
         try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
                 controller.abort();
             }, FETCH_TIMEOUT);
 
-            var res = await fetch(BATCH_PREDICT_URL, {
+            let res = await fetch(BATCH_PREDICT_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
@@ -250,43 +250,43 @@
             if (!res.ok) {
                 mlOnline = false;
                 // Fill uncached with -1
-                for (var j = 0; j < toFetch.length; j++) {
+                for (let j = 0; j < toFetch.length; j++) {
                     resultMap.set(toFetch[j].id, -1);
                 }
                 return resultMap;
             }
 
-            var data = await res.json();
+            let data = await res.json();
             if (data.scores && data.scores.length > 0) {
                 mlOnline = true;
-                for (var k = 0; k < data.scores.length; k++) {
-                    var s = data.scores[k];
+                for (let k = 0; k < data.scores.length; k++) {
+                    let s = data.scores[k];
                     activeModelVersion = s.version;
                     resultMap.set(s.id, s.score);
                     // Update cache
-                    var featKey = toFetch.find(function (t) {
+                    let featKey = toFetch.find(function (t) {
                         return t.id === s.id;
                     });
                     if (featKey) {
-                        var fk = featKey.features.join(',');
+                        let fk = featKey.features.join(',');
                         scoreCache.set(fk, { score: s.score, timestamp: Date.now() });
                     }
                 }
                 // Fill any missing with -1
-                for (var l = 0; l < toFetch.length; l++) {
+                for (let l = 0; l < toFetch.length; l++) {
                     if (!resultMap.has(toFetch[l].id)) {
                         resultMap.set(toFetch[l].id, -1);
                     }
                 }
             } else {
                 mlOnline = false;
-                for (var m = 0; m < toFetch.length; m++) {
+                for (let m = 0; m < toFetch.length; m++) {
                     resultMap.set(toFetch[m].id, -1);
                 }
             }
         } catch (e) {
             mlOnline = false;
-            for (var n = 0; n < toFetch.length; n++) {
+            for (let n = 0; n < toFetch.length; n++) {
                 resultMap.set(toFetch[n].id, -1);
             }
         }
@@ -314,12 +314,12 @@
             });
         }
 
-        var scores = candidates.map(function (c) {
+        let scores = candidates.map(function (c) {
             return c.technicalScore;
         });
-        var min = Math.min.apply(null, scores);
-        var max = Math.max.apply(null, scores);
-        var range = max - min || 1;
+        let min = Math.min.apply(null, scores);
+        let max = Math.max.apply(null, scores);
+        let range = max - min || 1;
 
         return candidates.map(function (c) {
             return {
@@ -350,8 +350,8 @@
      * }>}
      */
     async function rankCandidates(opts) {
-        var candidates = opts.candidates;
-        var well = opts.well;
+        let candidates = opts.candidates;
+        let well = opts.well;
 
         if (!candidates || candidates.length === 0) {
             return {
@@ -365,30 +365,30 @@
         }
 
         // 1. Ustal poziom wpływu AI
-        var influencePct = opts.aiInfluencePct;
+        let influencePct = opts.aiInfluencePct;
         if (influencePct === undefined || influencePct === null) {
             influencePct = await getAiInfluencePct();
         }
         aiInfluencePct = influencePct;
 
         // 2. Limit do MAX_AI_CANDIDATES
-        var pool = candidates.slice(0, MAX_AI_CANDIDATES);
+        let pool = candidates.slice(0, MAX_AI_CANDIDATES);
 
         // 3. Normalizacja technical score (min-max w poolu)
-        var normalized = normalizeTechnicalScores(pool);
+        let normalized = normalizeTechnicalScores(pool);
 
         // 4. Batch predict AI scores
-        var aiScoreMap = await fetchAiScoresBatch(pool, well);
+        let aiScoreMap = await fetchAiScoresBatch(pool, well);
 
         // 5. Oblicz final score
-        var aiWeight = influencePct / 100;
-        var techWeight = 1 - aiWeight;
+        let aiWeight = influencePct / 100;
+        let techWeight = 1 - aiWeight;
 
-        var ranked = normalized.map(function (c) {
-            var aiScore = aiScoreMap.get(c.id);
+        let ranked = normalized.map(function (c) {
+            let aiScore = aiScoreMap.get(c.id);
             if (aiScore === undefined) aiScore = -1;
 
-            var finalScore;
+            let finalScore;
             if (aiScore < 0) {
                 // ML offline — fallback do technical score
                 finalScore = c.technicalScore;
@@ -396,7 +396,7 @@
                 // technicalNormalized: 0=best, 1=worst (lower is better)
                 // aiScore: 0=worst, 1=best (higher is better)
                 // Konwertuj AI na format "lower is better"
-                var aiCost = 1 - aiScore;
+                let aiCost = 1 - aiScore;
                 finalScore = techWeight * c.technicalNormalized + aiWeight * aiCost;
             }
 
@@ -439,23 +439,23 @@
             return { solution: null, explorationTriggered: false, exploredFrom: null };
         }
 
-        var winner = ranked[0];
-        var triggered = false;
-        var exploredFrom = null;
+        let winner = ranked[0];
+        let triggered = false;
+        let exploredFrom = null;
 
         if (ranked.length > 1) {
-            var gap =
+            let gap =
                 (ranked[1].finalScore - ranked[0].finalScore) / Math.abs(ranked[0].finalScore || 1);
-            var lowConfidence = gap < RELATIVE_GAP_THRESHOLD;
-            var rate = lowConfidence ? EXPLORE_RATE_LOW_CONFIDENCE : EXPLORE_RATE_HIGH_CONFIDENCE;
+            let lowConfidence = gap < RELATIVE_GAP_THRESHOLD;
+            let rate = lowConfidence ? EXPLORE_RATE_LOW_CONFIDENCE : EXPLORE_RATE_HIGH_CONFIDENCE;
 
             if (Math.random() < rate) {
                 exploredFrom = 0;
                 // Losuj z top-5 (lub top-3 gdy wysoka pewność)
-                var poolSize = lowConfidence
+                let poolSize = lowConfidence
                     ? Math.min(5, ranked.length)
                     : Math.min(3, ranked.length);
-                var randomIdx = 1 + Math.floor(Math.random() * (poolSize - 1));
+                let randomIdx = 1 + Math.floor(Math.random() * (poolSize - 1));
                 winner = ranked[randomIdx];
                 triggered = true;
             }
@@ -488,11 +488,11 @@
     function recordAiRankDecision(opts) {
         if (typeof window.telemetryRecordEvent !== 'function') return;
 
-        var technicalWinnerIdx = -1;
-        var aiWinnerIdx = -1;
+        let technicalWinnerIdx = -1;
+        let aiWinnerIdx = -1;
 
         if (opts.ranked && opts.ranked.length > 0) {
-            for (var i = 0; i < opts.ranked.length; i++) {
+            for (let i = 0; i < opts.ranked.length; i++) {
                 if (opts.ranked[i].solution === opts.technicalWinner) {
                     technicalWinnerIdx = i;
                 }
@@ -502,7 +502,7 @@
             }
         }
 
-        var reason = {
+        let reason = {
             candidateCount: opts.ranked ? opts.ranked.length : 0,
             technicalWinnerIdx: technicalWinnerIdx,
             aiWinnerIdx: aiWinnerIdx,
@@ -550,7 +550,7 @@
      * @deprecated Użyj rankCandidates() zamiast.
      */
     async function mlEnrichLayout(layout, well) {
-        var aiScore = await fetchAiScore(layout, well);
+        let aiScore = await fetchAiScore(layout, well);
         layout._aiScore = aiScore;
         layout._mlOnline = mlOnline;
         layout._modelVersion = activeModelVersion;
@@ -564,11 +564,11 @@
     async function mlRankLayouts(layouts, well) {
         if (!layouts || layouts.length === 0) return layouts;
 
-        var candidates = layouts.map(function (l, idx) {
+        let candidates = layouts.map(function (l, idx) {
             return { id: idx, solution: l, technicalScore: l.score || l._score || 0 };
         });
 
-        var result = await rankCandidates({ candidates: candidates, well: well });
+        let result = await rankCandidates({ candidates: candidates, well: well });
         return result.ranked.map(function (r) {
             return r.solution;
         });
@@ -596,12 +596,12 @@
      * Wywoływane okresowo i po każdym rankingu.
      */
     function updateAiStatusIndicator() {
-        var dot = document.getElementById('ai-status-dot');
-        var text = document.getElementById('ai-status-text');
+        let dot = document.getElementById('ai-status-dot');
+        let text = document.getElementById('ai-status-text');
         if (!dot || !text) return;
 
-        var status = getMlStatus();
-        var title = '';
+        let status = getMlStatus();
+        let title = '';
 
         if (status.online) {
             if (status.aiInfluencePct > 0) {
@@ -640,16 +640,16 @@
     /**
      * W tle sprawdza czy LearningEngine wykrył wzorce — aktualizuje tooltip.
      */
-    var _lastLearningCheck = 0;
+    let _lastLearningCheck = 0;
 
     function fetchLearningStatusAsync() {
-        var now = Date.now();
+        let now = Date.now();
         if (now - _lastLearningCheck < 60000) return; // max co 60s
         _lastLearningCheck = now;
 
         try {
-            var controller = new AbortController();
-            var timeoutId = setTimeout(function () {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
                 controller.abort();
             }, 3000);
             fetch('/api/telemetry/ai/knowledge/stats', {
@@ -661,9 +661,9 @@
                 })
                 .then(function (stats) {
                     clearTimeout(timeoutId);
-                    var text = document.getElementById('ai-status-text');
+                    let text = document.getElementById('ai-status-text');
                     if (!text || !stats) return;
-                    var existing = text.title || '';
+                    let existing = text.title || '';
                     text.title =
                         existing.split('\n')[0] +
                         '\nWzorce AI: ' +

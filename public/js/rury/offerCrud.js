@@ -3,9 +3,9 @@
 /* Wydzielone z app.js — odpowiedzialność: zapis, ładowanie, duplikacja, usuwanie, historia ofert */
 /* Zależności: offers, currentOfferItems, editingOfferId, editingOfferAssignedUserId/Name, currentUser (globalne) */
 
-var editingOfferCreatedByUserId = null;
-var editingOfferCreatedByUserName = '';
-var isSavingOffer = false;
+let editingOfferCreatedByUserId = null;
+let editingOfferCreatedByUserName = '';
+let isSavingOffer = false;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */

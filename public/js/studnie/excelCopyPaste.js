@@ -3,11 +3,11 @@
 
 function _excelGetPasteColIdx(row) {
     if (!row) return 2;
-    var active = document.activeElement;
+    let active = document.activeElement;
     if (active && row.contains(active)) {
-        var td = active.closest('td');
+        let td = active.closest('td');
         if (td) {
-            var ci = Array.from(row.children).indexOf(td);
+            let ci = Array.from(row.children).indexOf(td);
             if (ci >= 2) return ci;
         }
     }
@@ -18,12 +18,12 @@ function _excelHandleCopy(e) {
     if (!document.getElementById('excel-table-overlay')) return;
     if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
     e.preventDefault();
-    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
     if (rows.length === 0) return;
-    var text = '';
+    let text = '';
     if (_excelSelectedCells.length > 0) {
-        var cellMap = {};
-        var minR = Infinity,
+        let cellMap = {};
+        let minR = Infinity,
             maxR = -Infinity,
             minC = Infinity,
             maxC = -Infinity;
@@ -35,17 +35,17 @@ function _excelHandleCopy(e) {
             if (cell.colIdx < minC) minC = cell.colIdx;
             if (cell.colIdx > maxC) maxC = cell.colIdx;
         });
-        for (var r = minR; r <= maxR; r++) {
-            var line = [];
-            for (var c = minC; c <= maxC; c++) {
-                var val = '';
+        for (let r = minR; r <= maxR; r++) {
+            let line = [];
+            for (let c = minC; c <= maxC; c++) {
+                let val = '';
                 if (cellMap[r] && cellMap[r][c]) {
-                    var row = rows[r];
+                    let row = rows[r];
                     if (row) {
-                        var td = row.children[c];
-                        var target = td ? td.querySelector('input, select') : null;
+                        let td = row.children[c];
+                        let target = td ? td.querySelector('input, select') : null;
                         if (target) {
-                            var _sel = /** @type {HTMLSelectElement} */ (target);
+                            let _sel = /** @type {HTMLSelectElement} */ (target);
                             val =
                                 _sel.tagName === 'SELECT'
                                     ? _sel.options[_sel.selectedIndex]
@@ -60,18 +60,18 @@ function _excelHandleCopy(e) {
             text += line.join('\t') + '\n';
         }
     } else if (_excelSelectedCols.length > 0) {
-        var cols = [..._excelSelectedCols].sort(function (a, b) {
+        let cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
         rows.forEach(function (row) {
-            var line = [];
+            let line = [];
             cols.forEach(function (colIdx) {
-                var td = row.children[colIdx];
-                var target = td ? td.querySelector('input, select') : null;
+                let td = row.children[colIdx];
+                let target = td ? td.querySelector('input, select') : null;
                 line.push(
                     target
                         ? (function (t) {
-                              var _s = /** @type {HTMLSelectElement} */ (t);
+                              let _s = /** @type {HTMLSelectElement} */ (t);
                               return _s.tagName === 'SELECT'
                                   ? _s.options[_s.selectedIndex]
                                       ? _s.options[_s.selectedIndex].text
@@ -96,48 +96,48 @@ function _excelHandleCopy(e) {
 function _excelHandlePaste(e) {
     /* Tylko gdy Excel otwarty */
     if (!document.getElementById('excel-table-overlay')) return;
-    var cb = e.clipboardData || window.clipboardData;
+    let cb = e.clipboardData || window.clipboardData;
     if (!cb) return;
-    var text = cb.getData('text');
+    let text = cb.getData('text');
     if (!text || !text.trim()) return;
     /* Zawsze przejmij event gdy jesteśmy w kontenerze (capture phase) */
     e.preventDefault();
     e.stopPropagation();
 
     /* Paste w pusty wiersz → utwórz nowe studnie */
-    var _emptyInput = document.getElementById('excel-empty-name');
+    let _emptyInput = document.getElementById('excel-empty-name');
     if (_emptyInput && _emptyInput === document.activeElement) {
         _excelPasteCreateWells(text);
         return;
     }
 
-    var rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
     if (rows.length === 0) return;
-    var lines = text.trim().split('\n');
-    for (var _pi = 0; _pi < lines.length; _pi++) {
+    let lines = text.trim().split('\n');
+    for (let _pi = 0; _pi < lines.length; _pi++) {
         lines[_pi] = lines[_pi].replace(/\r$/, '');
     }
     if (_excelSelectedCells.length > 0) {
-        var cellList = [..._excelSelectedCells].sort(function (a, b) {
+        let cellList = [..._excelSelectedCells].sort(function (a, b) {
             return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
         });
-        var cellRows = {};
+        let cellRows = {};
         cellList.forEach(function (c) {
             if (!cellRows[c.wIdx]) cellRows[c.wIdx] = [];
             cellRows[c.wIdx].push(c.colIdx);
         });
-        var widxArr = Object.keys(cellRows)
+        let widxArr = Object.keys(cellRows)
             .map(Number)
             .sort(function (a, b) {
                 return a - b;
             });
-        var _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
-        var _baseCols =
+        let _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
+        let _baseCols =
             widxArr.length > 0 && cellRows[_baseWIdx]
                 ? cellRows[_baseWIdx]
                 : [_excelGetPasteColIdx(rows[0])];
         /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby */
-        var availableRows = rows.length - _baseWIdx;
+        let availableRows = rows.length - _baseWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
             if (lines.length === 0) {
@@ -146,12 +146,12 @@ function _excelHandlePaste(e) {
             }
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
-        var _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
+        let _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
         /* Użyj batch/sync paste — obsłuż duże zestawy */
-        var _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
+        let _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
         _pasteFn(lines, _baseWIdx, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
-        var cols = [..._excelSelectedCols].sort(function (a, b) {
+        let cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
         /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
@@ -160,30 +160,30 @@ function _excelHandlePaste(e) {
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         lines.forEach(function (line, i) {
-            var parts = line.split('	');
+            let parts = line.split('	');
             cols.forEach(function (colIdx, ci) {
                 if (ci >= parts.length) return;
-                var tdInner = rows[i] ? rows[i].children[colIdx] : null;
-                var target = tdInner ? tdInner.querySelector('input, select') : null;
+                let tdInner = rows[i] ? rows[i].children[colIdx] : null;
+                let target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
                 _excelSetCellValue(target, parts[ci].trim());
             });
         });
     } else {
         /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
-        var startWIdx = -1; // -1 = nie wykryto aktywnego wiersza
-        var _ae = document.activeElement;
+        let startWIdx = -1; // -1 = nie wykryto aktywnego wiersza
+        let _ae = document.activeElement;
         if (_ae) {
-            var _tr = _ae.closest('tr[data-widx]');
+            let _tr = _ae.closest('tr[data-widx]');
             if (_tr) startWIdx = parseInt(_tr.getAttribute('data-widx') || '0') || 0;
         }
         if (startWIdx < 0) {
             /* brak fokusu w konkretnym wierszu — szukaj input/select wewnatrz kontenera jako fallback */
-            var focusedInput = document.querySelector(
+            let focusedInput = document.querySelector(
                 '#excel-table-container input:focus, #excel-table-container select:focus, #excel-table-container .excel-sel-wrap:focus-within'
             );
             if (focusedInput) {
-                var _ftr = focusedInput.closest('tr[data-widx]');
+                let _ftr = focusedInput.closest('tr[data-widx]');
                 if (_ftr) startWIdx = parseInt(_ftr.getAttribute('data-widx') || '0') || 0;
             }
         }
@@ -191,11 +191,11 @@ function _excelHandlePaste(e) {
             /* nadal brak — paste do wszystkich istniejących wierszy od 0 */
             startWIdx = 0;
         }
-        var colIdx = _excelGetPasteColIdx(
+        let colIdx = _excelGetPasteColIdx(
             document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
         );
         /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy) */
-        var availableRows = rows.length - startWIdx;
+        let availableRows = rows.length - startWIdx;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
             if (lines.length === 0) {
@@ -212,8 +212,8 @@ function _excelHandlePaste(e) {
 
 /* ===== BATCH PASTE (async chunked) ===== */
 function _excelShowPasteProgress(now, total) {
-    var pct = Math.min(100, Math.round((now / total) * 100));
-    var el = document.getElementById('excel-paste-progress');
+    let pct = Math.min(100, Math.round((now / total) * 100));
+    let el = document.getElementById('excel-paste-progress');
     if (!el) {
         el = document.createElement('div');
         el.id = 'excel-paste-progress';
@@ -225,14 +225,14 @@ function _excelShowPasteProgress(now, total) {
             '<div id="excel-paste-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#22c55e);transition:width 0.15s;"></div></div>';
         document.body.appendChild(el);
     }
-    var bar = document.getElementById('excel-paste-bar');
-    var pctEl = document.getElementById('excel-paste-pct');
+    let bar = document.getElementById('excel-paste-bar');
+    let pctEl = document.getElementById('excel-paste-pct');
     if (bar) bar.style.width = pct + '%';
     if (pctEl) pctEl.textContent = pct + '%';
 }
 
 function _excelHidePasteProgress() {
-    var el = document.getElementById('excel-paste-progress');
+    let el = document.getElementById('excel-paste-progress');
     if (el) el.remove();
 }
 
@@ -241,9 +241,9 @@ function _excelHidePasteProgress() {
  * Nie blokuje UI.
  */
 function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
-    var CHUNK = 50;
-    var idx = 0;
-    var total = lines.length;
+    let CHUNK = 50;
+    let idx = 0;
+    let total = lines.length;
     if (total < 100) {
         _excelPasteSync(lines, startWIdx, startColIdx);
         if (doneCallback) doneCallback();
@@ -251,7 +251,7 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
     }
     _excelShowPasteProgress(0, total);
     function tick() {
-        var end = Math.min(idx + CHUNK, total);
+        let end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
             if (_excelPasteCancelFlag) {
                 _excelHidePasteProgress();
@@ -259,15 +259,15 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
                 showToast('Wklejanie przerwane', 'warning');
                 return;
             }
-            var line = lines[idx];
-            var parts = line.split('	');
-            var wIdx = startWIdx + idx;
+            let line = lines[idx];
+            let parts = line.split('	');
+            let wIdx = startWIdx + idx;
             parts.forEach(function (v, ci) {
-                var colIdx = startColIdx + ci;
-                var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+                let colIdx = startColIdx + ci;
+                let row = document.querySelector('tr[data-widx="' + wIdx + '"]');
                 if (!row) return;
-                var tdEl = row.children[colIdx];
-                var target = tdEl ? tdEl.querySelector('input, select') : null;
+                let tdEl = row.children[colIdx];
+                let target = tdEl ? tdEl.querySelector('input, select') : null;
                 if (target) _excelSetCellValue(target, v.trim());
             });
         }
@@ -284,15 +284,15 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
 
 /** Synchroniczne wklejenie (do 99 wierszy) */
 function _excelPasteSync(lines, startWIdx, startColIdx) {
-    for (var si = 0; si < lines.length; si++) {
-        var parts = lines[si].split('	');
-        var wIdx = startWIdx + si;
+    for (let si = 0; si < lines.length; si++) {
+        let parts = lines[si].split('	');
+        let wIdx = startWIdx + si;
         parts.forEach(function (v, ci) {
-            var colIdx = startColIdx + ci;
-            var row = document.querySelector('tr[data-widx="' + wIdx + '"]');
+            let colIdx = startColIdx + ci;
+            let row = document.querySelector('tr[data-widx="' + wIdx + '"]');
             if (!row) return;
-            var tdEl = row.children[colIdx];
-            var target = tdEl ? tdEl.querySelector('input, select') : null;
+            let tdEl = row.children[colIdx];
+            let target = tdEl ? tdEl.querySelector('input, select') : null;
             if (target) _excelSetCellValue(target, v.trim());
         });
     }
@@ -305,8 +305,8 @@ function _excelPasteSync(lines, startWIdx, startColIdx) {
  */
 function _excelSetCellValue(target, val) {
     if (target.tagName === 'SELECT') {
-        var _sel = /** @type {HTMLSelectElement} */ (target);
-        var opt = Array.from(_sel.options).find(function (o) {
+        let _sel = /** @type {HTMLSelectElement} */ (target);
+        let opt = Array.from(_sel.options).find(function (o) {
             return o.value === val || o.text === val;
         });
         if (opt) {
@@ -315,8 +315,8 @@ function _excelSetCellValue(target, val) {
         }
     } else if (target.tagName === 'INPUT') {
         /* Normalizuj separator dziesietny — MS Excel z PL wysyla przecinek, input type=number wymaga kropki */
-        var normalizedVal = val;
-        var inputType = /** @type {HTMLInputElement} */ (target).type;
+        let normalizedVal = val;
+        let inputType = /** @type {HTMLInputElement} */ (target).type;
         if (
             inputType === 'number' &&
             typeof normalizedVal === 'string' &&

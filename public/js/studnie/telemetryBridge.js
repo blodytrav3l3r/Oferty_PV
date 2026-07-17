@@ -153,11 +153,11 @@
             });
 
             // Oblicz totalPrice i totalWeight z configu
-            var totalPrice = 0;
-            var totalWeight = 0;
-            for (var idx = 0; idx < configItems.length; idx++) {
-                var ci = configItems[idx];
-                var prod = studnieProducts.find(function (p) {
+            let totalPrice = 0;
+            let totalWeight = 0;
+            for (let idx = 0; idx < configItems.length; idx++) {
+                let ci = configItems[idx];
+                let prod = studnieProducts.find(function (p) {
                     return p.id === ci.productId;
                 });
                 if (prod) {

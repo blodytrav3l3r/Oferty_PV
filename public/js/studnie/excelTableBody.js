@@ -3,17 +3,17 @@
 
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
-    var html = '</thead><tbody>';
-    var dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
+    let html = '</thead><tbody>';
+    let dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const nameCounts = {};
     const nameDnMap = {};
     wells.forEach(function (w) {
-        var n = (w.name || '').trim().toLowerCase();
+        let n = (w.name || '').trim().toLowerCase();
         if (n) {
             nameCounts[n] = (nameCounts[n] || 0) + 1;
-            var dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+            let dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
             if (!nameDnMap[n]) nameDnMap[n] = [];
-            var dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
+            let dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
             if (
                 !nameDnMap[n].find(function (x) {
                     return x.dn === dnKey;
@@ -27,26 +27,26 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             }
         }
     });
-    var dupNames = new Set(
+    let dupNames = new Set(
         Object.keys(nameCounts).filter(function (n) {
             return nameCounts[n] > 1;
         })
     );
     tabWells.forEach(function (well, idx) {
-        var wIdx = wells.indexOf(well);
-        var isEven = idx % 2 === 0;
-        var isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        var nameKey = (well.name || '').trim().toLowerCase();
-        var isDup = dupNames.has(nameKey);
-        var tabKey = dn === 'styczne' ? 'styczne' : String(dn);
-        var dnKey = dn === 'styczne' ? 'styczne' : dn;
-        var nameDnList = nameDnMap[nameKey] || [];
-        var otherDns = nameDnList.filter(function (d) {
+        let wIdx = wells.indexOf(well);
+        let isEven = idx % 2 === 0;
+        let isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
+        let nameKey = (well.name || '').trim().toLowerCase();
+        let isDup = dupNames.has(nameKey);
+        let tabKey = dn === 'styczne' ? 'styczne' : String(dn);
+        let dnKey = dn === 'styczne' ? 'styczne' : dn;
+        let nameDnList = nameDnMap[nameKey] || [];
+        let otherDns = nameDnList.filter(function (d) {
             return d.dn !== dnKey;
         });
-        var dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
-        var baseBg = isEven ? '#0a0d16' : '#181c28';
-        var rowDupSolid =
+        let dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
+        let baseBg = isEven ? '#0a0d16' : '#181c28';
+        let rowDupSolid =
             {
                 1000: '#162650',
                 1200: '#0e2a1e',
@@ -55,7 +55,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 2500: '#301818',
                 styczne: '#2c1422'
             }[dupColorKey] || '#162650';
-        var rowActiveDupSolid =
+        let rowActiveDupSolid =
             {
                 1000: '#1e3a6b',
                 1200: '#164530',
@@ -64,7 +64,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 2500: '#4a2020',
                 styczne: '#4a1a38'
             }[dupColorKey] || '#1e3a6b';
-        var rowBg =
+        let rowBg =
             isDup && isActive
                 ? rowActiveDupSolid
                 : isDup
@@ -72,7 +72,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                   : isActive
                     ? '#1a2645'
                     : baseBg;
-        var hoverDupSolid =
+        let hoverDupSolid =
             {
                 1000: '#1d3460',
                 1200: '#143e2e',
@@ -81,7 +81,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 2500: '#3e2020',
                 styczne: '#3a1a2e'
             }[dupColorKey] || '#1d3460';
-        var hoverActiveDupSolid =
+        let hoverActiveDupSolid =
             {
                 1000: '#2a4a80',
                 1200: '#1d5a3e',
@@ -90,7 +90,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 2500: '#602a2a',
                 styczne: '#602848'
             }[dupColorKey] || '#2a4a80';
-        var hoverBg =
+        let hoverBg =
             isDup && isActive
                 ? hoverActiveDupSolid
                 : isDup
@@ -98,7 +98,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                   : isActive
                     ? '#263460'
                     : '#141722';
-        var przejscia = well.przejscia || [];
+        let przejscia = well.przejscia || [];
         html +=
             '<tr data-widx="' +
             wIdx +
@@ -113,9 +113,9 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             '" style="background:' +
             rowBg +
             ';transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
-        var tdBaseStyle = _EXCEL_FONT;
+        let tdBaseStyle = _EXCEL_FONT;
         /* Checkbox */
-        var cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
+        let cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -127,10 +127,10 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             cbChecked +
             ' tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></td>';
         /* AUTO/MANUAL */
-        var isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
-        var autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
-        var autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
-        var runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
+        let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
+        let autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
+        let autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
+        let runDisabled = isAuto ? '' : 'disabled style="opacity:0.4;cursor:not-allowed;"';
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -216,7 +216,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             _excelCellInp(72) +
             '" /></td>';
         /* Wys auto */
-        var height = _excelCalcWellHeight(well);
+        let height = _excelCalcWellHeight(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -230,14 +230,14 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             (height || '\u2014') +
             '</td>';
         /* Przejscia */
-        for (var _i = 0; _i < maxTr; _i++) {
-            var prz = przejscia[_i] || {};
-            var hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
-            var rzWlPlaceholder =
+        for (let _i = 0; _i < maxTr; _i++) {
+            let prz = przejscia[_i] || {};
+            let hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
+            let rzWlPlaceholder =
                 !hasExplicitRzWl && well.rzednaDna != null
                     ? 'auto (' + well.rzednaDna.toFixed(3) + ')'
                     : '';
-            var przProducts =
+            let przProducts =
                 typeof studnieProducts !== 'undefined' && typeof getMaxPipeDn === 'function'
                     ? studnieProducts.filter(function (p) {
                           return (
@@ -247,28 +247,28 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                           );
                       })
                     : [];
-            var currProduct = przProducts.find(function (p) {
+            let currProduct = przProducts.find(function (p) {
                 return p.id === prz.productId;
             });
-            var categories = [
+            let categories = [
                 ...new Set(
                     przProducts.map(function (p) {
                         return p.category;
                     })
                 )
             ].sort();
-            var activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
-            var catOpts = [['', '&mdash;']];
+            let activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
+            let catOpts = [['', '&mdash;']];
             categories.forEach(function (c) {
                 catOpts.push([c, c]);
             });
-            var typeHtml = _excelOverlaySelectHtml(
+            let typeHtml = _excelOverlaySelectHtml(
                 catOpts,
                 activeCategory,
                 'excelOnPrzejscieTypeChange(' + wIdx + ',' + _i + ',this.value)',
                 120
             );
-            var availDns = activeCategory
+            let availDns = activeCategory
                 ? [
                       ...przProducts.filter(function (p) {
                           return p.category === activeCategory;
@@ -277,13 +277,13 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                       return parseFloat(a.dn) - parseFloat(b.dn);
                   })
                 : [];
-            var dnOpts = [['', '&mdash;']];
+            let dnOpts = [['', '&mdash;']];
             availDns.forEach(function (p) {
-                var dnLabel =
+                let dnLabel =
                     typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
                 dnOpts.push([p.id, dnLabel]);
             });
-            var dnHtml = _excelOverlaySelectHtml(
+            let dnHtml = _excelOverlaySelectHtml(
                 dnOpts,
                 prz.productId,
                 'excelOnPrzejscieChange(' + wIdx + ',' + _i + ",'productId',this.value)",
@@ -324,19 +324,19 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         html +=
             '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>';
         /* Wlaz */
-        var wlazCol = compCols.find(function (c) {
+        let wlazCol = compCols.find(function (c) {
             return c.componentType === 'wlaz';
         });
-        var wlazProducts = wlazCol
+        let wlazProducts = wlazCol
             ? wlazCol.products.filter(function (p) {
                   return typeof filterByWellParams !== 'function' || filterByWellParams(p, well);
               })
             : [];
-        var wlazVal = _excelGetWlazFromConfig(well);
-        var wlazOpts = [['', '\u2014']];
+        let wlazVal = _excelGetWlazFromConfig(well);
+        let wlazOpts = [['', '\u2014']];
         wlazProducts.forEach(function (p) {
-            var hCm = Math.round(parseInt(p.height) || 0) / 10;
-            var lbl =
+            let hCm = Math.round(parseInt(p.height) || 0) / 10;
+            let lbl =
                 hCm > 0
                     ? hCm + ' cm'
                     : p.name.length > 20
@@ -356,17 +356,17 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         /* Komponenty */
         compCols.forEach(function (col) {
             if (col.type === 'select' || col.type === 'auto') return;
-            var c = col;
-            var count = _excelCountProductInConfig(
+            let c = col;
+            let count = _excelCountProductInConfig(
                 well,
                 c.componentType,
                 c.height,
                 c.productId,
                 c.fromReduction ? c.targetDn || well.redukcjaTargetDN || 1000 : null
             );
-            var pidArg = c.productId ? "'" + c.productId + "'" : 'null';
-            var hArg = c.height != null ? c.height : 'null';
-            var redArg = c.fromReduction ? ',' + (well.redukcjaTargetDN || 1000) : '';
+            let pidArg = c.productId ? "'" + c.productId + "'" : 'null';
+            let hArg = c.height != null ? c.height : 'null';
+            let redArg = c.fromReduction ? ',' + (well.redukcjaTargetDN || 1000) : '';
             html +=
                 '<td style="' +
                 tdBaseStyle +
@@ -386,7 +386,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 'text-align:center;width:52px;" /></td>';
         });
         /* H dennica */
-        var dennH = _excelCalcDennicaHeight(well);
+        let dennH = _excelCalcDennicaHeight(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -396,7 +396,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             (dennH || '\u2014') +
             '</td>';
         /* Uszczelki */
-        var uszczCount = _excelCalcUszczelkaCount(well);
+        let uszczCount = _excelCalcUszczelkaCount(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -407,10 +407,10 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             '</td>';
         /* Redukcja */
         if (hasReduction) {
-            var redActive = well.redukcjaDN1000;
-            var redTarget = well.redukcjaTargetDN || 1000;
-            var can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
-            var redOpts = [['', 'Brak']];
+            let redActive = well.redukcjaDN1000;
+            let redTarget = well.redukcjaTargetDN || 1000;
+            let can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
+            let redOpts = [['', 'Brak']];
             if (redActive) {
                 if (redTarget === 1000) redOpts.push(['1000', 'DN1000']);
                 if (redTarget === 1200) redOpts.push(['1200', 'DN1200']);
@@ -429,7 +429,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
                 '</td>';
         }
         /* Kineta */
-        var kinOpts = [['', '\u2014']];
+        let kinOpts = [['', '\u2014']];
         KINETA_OPTIONS.forEach(function (ko) {
             kinOpts.push([ko[0], ko[1]]);
         });
@@ -472,9 +472,9 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         html += '</tr>';
     });
     /* EMPTY ROW */
-    var emptyRowBg = '#0a0c10';
+    let emptyRowBg = '#0a0c10';
     html += '<tr id="excel-empty-row" style="background:' + emptyRowBg + ';">';
-    var tdEmptyStyle = _EXCEL_FONT + 'color:#334155;';
+    let tdEmptyStyle = _EXCEL_FONT + 'color:#334155;';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -523,7 +523,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         'position:sticky;left:318px;z-index:5;background:' +
         emptyRowBg +
         ';text-align:center;color:#1e293b;" data-cell="height-empty">\u2014</td>';
-    for (var _j = 0; _j < maxTr; _j++) {
+    for (let _j = 0; _j < maxTr; _j++) {
         html +=
             '<td style="' +
             tdEmptyStyle +

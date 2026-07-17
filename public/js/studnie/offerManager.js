@@ -189,32 +189,32 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     refreshAll();
 
     // Przywróć stan kroku 2 (Ogólne parametry studni) z zapisanego stanu kreatora
-    var wizardState = normalized.wizard;
-    var wizardGlobalParams = wizardState && wizardState.globalParams;
+    let wizardState = normalized.wizard;
+    let wizardGlobalParams = wizardState && wizardState.globalParams;
     if (wizardGlobalParams) {
         // Nowa oferta z zapisanym stanem — pełna restauracja kafelków
         document.querySelectorAll('#wizard-step-2 .param-group').forEach(function (group) {
-            var paramName = group.getAttribute('data-param');
+            let paramName = group.getAttribute('data-param');
             if (!paramName || !wizardGlobalParams.hasOwnProperty(paramName)) return;
-            var val = wizardGlobalParams[paramName];
+            let val = wizardGlobalParams[paramName];
             if (!val) return;
             group.querySelectorAll('.param-tile').forEach(function (b) {
                 b.classList.remove('active');
             });
-            var targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
+            let targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
             if (targetTile) targetTile.classList.add('active');
             if (typeof wizardConfirmedParams !== 'undefined') {
                 wizardConfirmedParams.add(paramName);
             }
         });
         // Obsługa wkładki PEHD (sub-opcje)
-        var wkladkaV = wizardGlobalParams.wkladka;
-        var subOpts = document.getElementById('wkladka-sub-options');
+        let wkladkaV = wizardGlobalParams.wkladka;
+        let subOpts = document.getElementById('wkladka-sub-options');
         if (wkladkaV && wkladkaV !== 'brak') {
             if (subOpts) subOpts.style.display = 'block';
-            var cbDennica = document.getElementById('pehd-dennica');
-            var cbNadbudowa = document.getElementById('pehd-nadbudowa');
-            var cbZwienczenie = document.getElementById('pehd-zwienczenie');
+            let cbDennica = document.getElementById('pehd-dennica');
+            let cbNadbudowa = document.getElementById('pehd-nadbudowa');
+            let cbZwienczenie = document.getElementById('pehd-zwienczenie');
             if (cbDennica) cbDennica.checked = wizardGlobalParams.wkladkaDennica === wkladkaV;
             if (cbNadbudowa) cbNadbudowa.checked = wizardGlobalParams.wkladkaNadbudowa === wkladkaV;
             if (cbZwienczenie)
@@ -237,7 +237,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         // Oferta legacy (bez zapisanego stanu kreatora)
         // Nie przywracamy kafelków z danych studni — byłyby niespójne.
         // wizardConfirmedParams zostanie wypełniony poniżej przez skipWizardToStep3.
-        var legacyBanner = document.getElementById('wizard-legacy-banner');
+        let legacyBanner = document.getElementById('wizard-legacy-banner');
         if (legacyBanner) {
             legacyBanner.style.display = 'flex';
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: legacyBanner });

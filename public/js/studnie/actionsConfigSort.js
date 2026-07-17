@@ -140,16 +140,16 @@ function sortWellConfigByOrder() {
 
 function _moveWlazToTop(well) {
     if (!well || !well.config || well.config.length < 2) return;
-    var wlazIdx = -1;
-    for (var i = 0; i < well.config.length; i++) {
-        var p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+    let wlazIdx = -1;
+    for (let i = 0; i < well.config.length; i++) {
+        let p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
         if (p && p.componentType === 'wlaz') {
             wlazIdx = i;
             break;
         }
     }
     if (wlazIdx > 0) {
-        var item = well.config.splice(wlazIdx, 1)[0];
+        let item = well.config.splice(wlazIdx, 1)[0];
         well.config.unshift(item);
     }
 }

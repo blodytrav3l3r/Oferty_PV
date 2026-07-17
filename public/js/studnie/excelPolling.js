@@ -4,11 +4,11 @@
 function _excelStartPolling() {
     if (_excelPollInterval || typeof wells === 'undefined') return;
     /* Snapshot dla taniego porownywania - hash konfigow wszystkich studni */
-    var lastSnapshot = '';
+    let lastSnapshot = '';
     _excelPollInterval = setInterval(function () {
         if (_excelUserEditing) return;
         if (!document.getElementById('excel-table-overlay')) return;
-        var snap = _excelBuildWellsSnapshot();
+        let snap = _excelBuildWellsSnapshot();
         if (snap !== lastSnapshot) {
             lastSnapshot = snap;
             /* Lekka aktualizacja — nie re-render caly, tylko tryb AUTO/MAN */
@@ -22,9 +22,9 @@ function _excelStartPolling() {
 /* Snapshot stanu configSource + autoSelect wszystkich studzien */
 function _excelBuildWellsSnapshot() {
     if (typeof wells === 'undefined') return '';
-    var parts = [];
-    for (var i = 0; i < wells.length; i++) {
-        var w = wells[i];
+    let parts = [];
+    for (let i = 0; i < wells.length; i++) {
+        let w = wells[i];
         if (!w) continue;
         parts.push(
             i +
@@ -42,16 +42,16 @@ function _excelBuildWellsSnapshot() {
 /* Synchronizuje przyciski AUTO/MAN w UI bez pelnego re-render */
 function _excelSyncAutoManualUI() {
     if (typeof wells === 'undefined') return;
-    for (var i = 0; i < wells.length; i++) {
-        var w = wells[i];
+    for (let i = 0; i < wells.length; i++) {
+        let w = wells[i];
         if (!w) continue;
-        var btnMode = document.getElementById('excel-mode-btn-' + i);
-        var btnRun = document.getElementById('excel-run-auto-' + i);
+        let btnMode = document.getElementById('excel-mode-btn-' + i);
+        let btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
         /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
         if (w.configSource === 'AUTO' && w.autoSelect === false) w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
-        var isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
+        let isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
         btnMode.style.background = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
         btnMode.style.color = isAuto ? '#c7d2fe' : '#fbbf24';

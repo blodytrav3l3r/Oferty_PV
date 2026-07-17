@@ -3,11 +3,11 @@
 
 /* ===== DROPDOWN MENU DODAJ ===== */
 function _excelToggleAddMenu() {
-    var menu = document.getElementById('excel-add-dropdown');
+    let menu = document.getElementById('excel-add-dropdown');
     if (!menu) return;
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     if (menu.style.display === 'block') {
-        var close = function (e) {
+        let close = function (e) {
             if (!e.target.closest('#excel-add-menu-container')) {
                 menu.style.display = 'none';
                 document.removeEventListener('click', close);
@@ -21,11 +21,11 @@ function _excelToggleAddMenu() {
 
 /* ===== DODAWANIE RĘCZNE — DIALOG ===== */
 function excelShowAddDialog() {
-    var dns = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
-    var dnOpts = dns
+    let dns = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+    let dnOpts = dns
         .map(function (d) {
-            var label = d === 'styczne' ? 'Styczna' : 'DN' + d;
-            var sel =
+            let label = d === 'styczne' ? 'Styczna' : 'DN' + d;
+            let sel =
                 d === _excelActiveTab || (d === 'styczne' && _excelActiveTab === 'styczne')
                     ? ' selected'
                     : '';
@@ -33,7 +33,7 @@ function excelShowAddDialog() {
         })
         .join('');
 
-    var html =
+    let html =
         '<div id="excel-add-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">' +
         '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:380px;max-width:460px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">' +
@@ -55,10 +55,10 @@ function excelShowAddDialog() {
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
     setTimeout(function () {
-        var inp = document.getElementById('dlg-name');
+        let inp = document.getElementById('dlg-name');
         if (inp) inp.focus();
     }, 100);
-    var container = document.getElementById('excel-add-dialog-overlay');
+    let container = document.getElementById('excel-add-dialog-overlay');
     if (container) {
         container.addEventListener('keydown', function (e) {
             if (e.key === 'Enter') _excelCreateFromDialog();
@@ -68,12 +68,12 @@ function excelShowAddDialog() {
 }
 
 function _excelCreateFromDialog() {
-    var name = (document.getElementById('dlg-name')?.value || '').trim();
-    var dn = document.getElementById('dlg-dn')?.value || '1000';
-    var rzwParsed = parseFloat(document.getElementById('dlg-rzw')?.value);
-    var rzdParsed = parseFloat(document.getElementById('dlg-rzd')?.value);
-    var rzw = isNaN(rzwParsed) ? null : rzwParsed;
-    var rzd = isNaN(rzdParsed) ? null : rzdParsed;
+    let name = (document.getElementById('dlg-name')?.value || '').trim();
+    let dn = document.getElementById('dlg-dn')?.value || '1000';
+    let rzwParsed = parseFloat(document.getElementById('dlg-rzw')?.value);
+    let rzdParsed = parseFloat(document.getElementById('dlg-rzd')?.value);
+    let rzw = isNaN(rzwParsed) ? null : rzwParsed;
+    let rzd = isNaN(rzdParsed) ? null : rzdParsed;
     if (!name) {
         showToast('Podaj nazwę studni', 'error');
         return;
@@ -95,8 +95,8 @@ function _excelCreateFromDialog() {
         showToast('Rzędna włazu musi być > rzędnej dna', 'error');
         return;
     }
-    var dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn);
-    var well =
+    let dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn);
+    let well =
         typeof createNewWell === 'function'
             ? createNewWell(name, dnVal)
             : {
@@ -121,9 +121,9 @@ function _excelCreateFromDialog() {
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
-    var overlay = document.getElementById('excel-add-dialog-overlay');
+    let overlay = document.getElementById('excel-add-dialog-overlay');
     if (overlay) overlay.remove();
-    var newWIdx = wells.length - 1;
+    let newWIdx = wells.length - 1;
     if (_excelAutoSelectEnabled && rzw != null && rzd != null) {
         setTimeout(function () {
             _excelAutoSelectForWell(newWIdx);
@@ -139,7 +139,7 @@ function _excelCreateFromDialog() {
 /* ===== WKLEJ LISTĘ STUDNI ===== */
 function excelShowPasteDialog() {
     if (!document.getElementById('excel-table-overlay')) return;
-    var html =
+    let html =
         '<div id="excel-paste-dialog-overlay" style="position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;">' +
         '<div style="background:#1a1d27;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:1.2rem;min-width:420px;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">' +
         '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.7rem;">' +
@@ -155,12 +155,12 @@ function excelShowPasteDialog() {
         '</div></div></div>';
     document.body.insertAdjacentHTML('beforeend', html);
     if (typeof lucide !== 'undefined') lucide.createIcons();
-    var ta = document.getElementById('paste-textarea');
+    let ta = document.getElementById('paste-textarea');
     if (ta) {
         ta.addEventListener('input', _excelUpdatePastePreview);
         ta.focus();
     }
-    var c = document.getElementById('excel-paste-dialog-overlay');
+    let c = document.getElementById('excel-paste-dialog-overlay');
     if (c)
         c.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') c.remove();
@@ -168,15 +168,15 @@ function excelShowPasteDialog() {
 }
 
 function _excelUpdatePastePreview() {
-    var ta = document.getElementById('paste-textarea');
-    var prev = document.getElementById('paste-preview');
+    let ta = document.getElementById('paste-textarea');
+    let prev = document.getElementById('paste-preview');
     if (!ta || !prev) return;
-    var text = ta.value.trim();
+    let text = ta.value.trim();
     if (!text) {
         prev.textContent = '';
         return;
     }
-    var rows = _excelParsePasteData(text);
+    let rows = _excelParsePasteData(text);
     prev.innerHTML =
         rows.length > 0
             ? 'Rozpoznano <strong>' + rows.length + '</strong> studni'
@@ -184,7 +184,7 @@ function _excelUpdatePastePreview() {
 }
 
 function _excelParsePasteData(text) {
-    var lines = text
+    let lines = text
         .split('\n')
         .map(function (l) {
             return l.trim();
@@ -193,17 +193,17 @@ function _excelParsePasteData(text) {
             return l;
         });
     if (lines.length === 0) return [];
-    var sep = '\t';
+    let sep = '\t';
     if (!lines[0].includes('\t')) {
         if (lines[0].includes('|')) sep = '|';
         else if (lines[0].includes(';')) sep = ';';
         else if (lines[0].includes(',')) sep = ',';
         else sep = null;
     }
-    var rows = [],
+    let rows = [],
         headerKeys = null;
-    for (var i = 0; i < lines.length; i++) {
-        var parts = sep
+    for (let i = 0; i < lines.length; i++) {
+        let parts = sep
             ? lines[i].split(sep).map(function (p) {
                   return p.trim();
               })
@@ -211,7 +211,7 @@ function _excelParsePasteData(text) {
                   return p;
               });
         if (parts.length < 2) continue;
-        var lower = parts.map(function (p) {
+        let lower = parts.map(function (p) {
             return p.toLowerCase();
         });
         if (
@@ -224,9 +224,9 @@ function _excelParsePasteData(text) {
             });
             continue;
         }
-        var row = {};
+        let row = {};
         if (headerKeys) {
-            for (var j = 0; j < Math.min(parts.length, headerKeys.length); j++) {
+            for (let j = 0; j < Math.min(parts.length, headerKeys.length); j++) {
                 if (headerKeys[j]) row[headerKeys[j]] = parts[j];
             }
         } else {
@@ -241,7 +241,7 @@ function _excelParsePasteData(text) {
 }
 
 function _excelDetectColumn(label) {
-    var l = label.toLowerCase();
+    let l = label.toLowerCase();
     if (l === 'nazwa' || l === 'name' || l === 'nr' || l === 'lp' || l === 'studnia') return 'name';
     if (l === 'dn' || l === 'średnica' || l === 'srednica') return 'dn';
     if (
@@ -258,21 +258,21 @@ function _excelDetectColumn(label) {
 }
 
 function _excelImportPasteList() {
-    var ta = document.getElementById('paste-textarea');
+    let ta = document.getElementById('paste-textarea');
     if (!ta) return;
-    var text = ta.value.trim();
+    let text = ta.value.trim();
     if (!text) {
         showToast('Wklej dane studni', 'error');
         return;
     }
-    var rows = _excelParsePasteData(text);
+    let rows = _excelParsePasteData(text);
     if (rows.length === 0) {
         showToast('Nie rozpoznano danych', 'error');
         return;
     }
-    var added = 0;
+    let added = 0;
     rows.forEach(function (row) {
-        var name = String(row.name || '');
+        let name = String(row.name || '');
         if (!name) return;
         if (
             wells.some(function (w) {
@@ -280,12 +280,12 @@ function _excelImportPasteList() {
             })
         )
             return;
-        var dn = row.dn || String(_excelActiveTab);
-        var dnVal = dn === 'styczne' || dn === 'styczna' ? 'styczna' : parseInt(dn, 10);
+        let dn = row.dn || String(_excelActiveTab);
+        let dnVal = dn === 'styczne' || dn === 'styczna' ? 'styczna' : parseInt(dn, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-        var rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
-        var rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
-        var well =
+        let rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
+        let rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
+        let well =
             typeof createNewWell === 'function'
                 ? createNewWell(name, dnVal)
                 : {
@@ -307,7 +307,7 @@ function _excelImportPasteList() {
         _excelAutoSetWlaz(well);
         added++;
     });
-    var overlay = document.getElementById('excel-paste-dialog-overlay');
+    let overlay = document.getElementById('excel-paste-dialog-overlay');
     if (added === 0) {
         showToast('Nie dodano żadnej studni (duplikaty?)', 'info');
         return;
@@ -320,8 +320,8 @@ function _excelImportPasteList() {
         for (let k = 0; k < added; k++) {
             setTimeout(
                 function () {
-                    var nwi = wells.length - added + k;
-                    var w = wells[nwi];
+                    let nwi = wells.length - added + k;
+                    let w = wells[nwi];
                     if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
                         _excelAutoSelectForWell(nwi).catch(function (e) {
                             if (window.logger)

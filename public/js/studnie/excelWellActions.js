@@ -3,7 +3,7 @@
 
 /* ===== SAVE ===== */
 function excelSaveAll() {
-    var btn = document.getElementById('excel-save-btn');
+    let btn = document.getElementById('excel-save-btn');
     if (btn) {
         btn.disabled = true;
         btn.textContent = 'Zapisywanie...';
@@ -33,7 +33,7 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     }
     _excelDebouncedRefresh();
     _excelRenderTable(_excelActiveTab);
-    var existing = document.getElementById('excel-params-popup');
+    let existing = document.getElementById('excel-params-popup');
     if (existing) {
         existing.remove();
         excelOpenWellParams(wIdx);
