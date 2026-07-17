@@ -10,6 +10,16 @@ class PVSalesUI {
         this.ordersMap = new Map(); // offerId -> order
         this.currentFilter = 'all'; // 'all', 'with_order', 'without_order'
         this.currentTypeFilter = 'all'; // 'all', 'offer', 'studnia_oferta'
+        this.filters = {
+            user: '',
+            myOffers: false,
+            date: {
+                mode: 'none',
+                preset: '',
+                from: '',
+                to: ''
+            }
+        };
         this.autoRefreshInterval = null;
 
         this.init();
@@ -159,6 +169,9 @@ class PVSalesUI {
             this._startAutoRefresh();
 
             this.initialized = true;
+            if (typeof window.initAdvancedFilterEvents === 'function') {
+                window.initAdvancedFilterEvents(this);
+            }
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
             const listDiv = document.getElementById('pv-local-offers-list');
@@ -272,6 +285,7 @@ class PVSalesUI {
             }
 
             this.allLocalOffers = docs;
+            this.populateUserFilter();
             logger.info('pvSalesUi', 'loadLocalOffers: Filtrowanie i renderowanie...');
             this.filterLocalOffers();
             if (window.PvImportExportToolbar) window.PvImportExportToolbar.init('ie-toolbar-host');
@@ -310,18 +324,21 @@ class PVSalesUI {
 
         const query = input.value.trim().toLowerCase();
 
-        // Aktualizacja UI przycisku filtra statusu
-        document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
-            if (btn.dataset.filter === this.currentFilter) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
+        this._syncFilterUI();
+
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const boundaries = {
+            today,
+            todayEnd: new Date(today.getTime() + 86400000),
+            weekAgo: new Date(today.getTime() - 6 * 86400000),
+            monthAgo: new Date(today.getTime() - 29 * 86400000)
+        };
 
         const filtered = this.allLocalOffers.filter((offer) => {
-            // Filtr typu (poziom kartoteki)
             if (this.currentTypeFilter !== 'all' && offer.type !== this.currentTypeFilter)
                 return false;
 
-            // Wyszukiwanie tekstowe
             const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
             const client = (
                 offer.clientName ||
@@ -354,23 +371,25 @@ class PVSalesUI {
                     return on.toLowerCase().includes(query);
                 });
 
-            const matchesText =
-                !query ||
-                num.includes(query) ||
-                client.includes(query) ||
-                nip.includes(query) ||
-                budowa.includes(query) ||
-                userStr.includes(query) ||
-                matchesOrderNumber;
-
-            // Filtr statusu
-            if (!matchesText) return false;
+            if (
+                query &&
+                !num.includes(query) &&
+                !client.includes(query) &&
+                !nip.includes(query) &&
+                !budowa.includes(query) &&
+                !userStr.includes(query) &&
+                !matchesOrderNumber
+            )
+                return false;
 
             if (this.currentFilter !== 'all') {
                 const { hasOrder } = this.getOrderForOffer(offer);
                 if (this.currentFilter === 'with_order' && !hasOrder) return false;
                 if (this.currentFilter === 'without_order' && hasOrder) return false;
             }
+
+            if (!this.offerMatchesUser(offer, this.filters.user)) return false;
+            if (!this.offerMatchesDate(offer, this.filters.date, boundaries)) return false;
             return true;
         });
 
@@ -381,6 +400,9 @@ class PVSalesUI {
 
         listDiv.innerHTML = this.renderOffersList(filtered, true);
         this.attachActionListeners(listDiv);
+        setTimeout(() => {
+            if (window.lucide) lucide.createIcons();
+        }, 0);
     }
 
     setFilterLocalOffers(filterType) {
@@ -402,6 +424,215 @@ class PVSalesUI {
     setTypeFilter(typeFilter) {
         this.currentTypeFilter = typeFilter;
         this.loadLocalOffers();
+    }
+
+    offerMatchesUser(offer, selectedUserId) {
+        if (!selectedUserId) return true;
+        const uid = offer.userId || offer.lastEditedBy || '';
+        return uid === selectedUserId;
+    }
+
+    offerMatchesDate(offer, dateFilter, boundaries) {
+        if (dateFilter.mode === 'none') return true;
+        if (!offer.createdAt) return false;
+        const d = new Date(offer.createdAt);
+        if (isNaN(d.getTime())) return false;
+
+        if (dateFilter.mode === 'preset') {
+            const ts = d.getTime();
+            switch (dateFilter.preset) {
+                case 'today':
+                    return ts >= boundaries.today.getTime() && ts < boundaries.todayEnd.getTime();
+                case '7d':
+                    return ts >= boundaries.weekAgo.getTime();
+                case '30d':
+                    return ts >= boundaries.monthAgo.getTime();
+                case 'month': {
+                    const dLocal = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+                    const monthStart = new Date(
+                        boundaries.today.getFullYear(),
+                        boundaries.today.getMonth(),
+                        1
+                    );
+                    const monthEnd = new Date(
+                        boundaries.today.getFullYear(),
+                        boundaries.today.getMonth() + 1,
+                        1
+                    );
+                    return (
+                        dLocal.getTime() >= monthStart.getTime() &&
+                        dLocal.getTime() < monthEnd.getTime()
+                    );
+                }
+            }
+            return true;
+        }
+
+        if (dateFilter.from || dateFilter.to) {
+            const dateStr = this._formatLocalDate(offer.createdAt);
+            if (!dateStr) return false;
+            if (dateFilter.from && dateStr < dateFilter.from) return false;
+            if (dateFilter.to && dateStr > dateFilter.to) return false;
+        }
+        return true;
+    }
+
+    _formatLocalDate(dateInput) {
+        try {
+            const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
+            if (isNaN(d.getTime())) return null;
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        } catch {
+            return null;
+        }
+    }
+
+    _syncFilterUI() {
+        document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.filter === this.currentFilter);
+            btn.classList.toggle('btn-secondary', btn.dataset.filter !== this.currentFilter);
+        });
+        document.querySelectorAll('.pv-type-filter-btn').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.typeFilter === this.currentTypeFilter);
+            btn.classList.toggle(
+                'btn-secondary',
+                btn.dataset.typeFilter !== this.currentTypeFilter
+            );
+        });
+        const sel = document.getElementById('pv-user-filter');
+        if (sel) sel.value = this.filters.user;
+        const myBtn = document.getElementById('pv-my-offers-btn');
+        if (myBtn) {
+            myBtn.classList.toggle('active', this.filters.myOffers);
+            myBtn.classList.toggle('btn-secondary', !this.filters.myOffers);
+        }
+        document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
+            const isActive =
+                this.filters.date.mode === 'preset' &&
+                btn.dataset.dateRange === this.filters.date.preset;
+            btn.classList.toggle('active', isActive);
+            btn.classList.toggle('btn-secondary', !isActive);
+        });
+        const rangeBtn = document.getElementById('pv-date-range-btn');
+        if (rangeBtn) {
+            rangeBtn.classList.toggle('active', this.filters.date.mode === 'range');
+            rangeBtn.classList.toggle('btn-secondary', this.filters.date.mode !== 'range');
+        }
+    }
+
+    setUserFilter(userId) {
+        this.filters.user = userId || '';
+        this.filters.myOffers = false;
+        this.filterLocalOffers();
+    }
+
+    toggleMyOffers() {
+        if (this.filters.myOffers) {
+            this.filters.myOffers = false;
+            this.filters.user = '';
+        } else {
+            this.filters.myOffers = true;
+            const uid = window.currentUser?.id || window.currentUser?.username || '';
+            this.filters.user = uid;
+        }
+        this.filterLocalOffers();
+    }
+
+    setDatePreset(preset) {
+        if (this.filters.date.mode === 'preset' && this.filters.date.preset === preset) {
+            this.filters.date.mode = 'none';
+            this.filters.date.preset = '';
+        } else {
+            this.filters.date.mode = 'preset';
+            this.filters.date.preset = preset;
+        }
+        this.filters.date.from = '';
+        this.filters.date.to = '';
+        this._closeDatePopover();
+        this.filterLocalOffers();
+    }
+
+    toggleDateRange() {
+        if (this.filters.date.mode === 'range') {
+            this.filters.date.mode = 'none';
+            this.filters.date.from = '';
+            this.filters.date.to = '';
+        } else {
+            this.filters.date.mode = 'range';
+            this.filters.date.preset = '';
+        }
+        this.filterLocalOffers();
+    }
+
+    onDateRangeChange(from, to) {
+        if (from || to) {
+            this.filters.date.mode = 'range';
+            this.filters.date.preset = '';
+        } else {
+            this.filters.date.mode = 'none';
+        }
+        this.filters.date.from = from || '';
+        this.filters.date.to = to || '';
+        this.filterLocalOffers();
+    }
+
+    clearFilters() {
+        this.filters.user = '';
+        this.filters.myOffers = false;
+        this.filters.date.mode = 'none';
+        this.filters.date.preset = '';
+        this.filters.date.from = '';
+        this.filters.date.to = '';
+        this._closeDatePopover();
+        this.filterLocalOffers();
+    }
+
+    _closeDatePopover() {
+        const popover = document.getElementById('pv-date-popover');
+        if (popover) popover.style.display = 'none';
+    }
+
+    populateUserFilter() {
+        const select = document.getElementById('pv-user-filter');
+        if (!select) return;
+
+        const userSet = new Map();
+        for (const offer of this.allLocalOffers) {
+            const uid = offer.userId || offer.lastEditedBy || '';
+            if (!uid || uid === '' || userSet.has(uid)) continue;
+            let displayName = uid;
+            if (window.globalUsersMap && window.globalUsersMap.has(uid))
+                displayName = window.globalUsersMap.get(uid);
+            userSet.set(uid, displayName);
+        }
+
+        const sorted = [...userSet.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pl'));
+
+        const prev = this.filters.user;
+        select.innerHTML =
+            '<option value="">Wszyscy</option>' +
+            sorted
+                .map(
+                    ([id, name]) =>
+                        `<option value="${this.escapeHtml(id)}">${this.escapeHtml(name)}</option>`
+                )
+                .join('');
+
+        if (prev && userSet.has(prev)) {
+            select.value = prev;
+        } else if (prev) {
+            let displayName = prev;
+            if (window.globalUsersMap && window.globalUsersMap.has(prev))
+                displayName = window.globalUsersMap.get(prev);
+            select.innerHTML += `<option value="${this.escapeHtml(prev)}">${this.escapeHtml(displayName)}</option>`;
+            select.value = prev;
+        } else {
+            this.filters.user = '';
+            this.filters.myOffers = false;
+        }
     }
 
     renderOffersList(offers, isLocalList) {

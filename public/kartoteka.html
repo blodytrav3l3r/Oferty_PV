@@ -250,12 +250,58 @@
                             </button>
                         </div>
 
+                        <!-- Divider -->
+                        <div style="width:1px; height:24px; background:var(--border-glass)"></div>
+
+                        <!-- User Filter -->
+                        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap">
+                            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Opiekun:</span>
+                            <button class="btn btn-sm btn-secondary" id="pv-my-offers-btn" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">
+                                <i data-lucide="user-check"></i> Moje
+                            </button>
+                            <select id="pv-user-filter" class="btn btn-sm" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem; appearance:none; -webkit-appearance:none; cursor:pointer; background:var(--bg-glass); border:1px solid var(--border-glass); color:var(--text-primary); min-width:130px;">
+                                <option value="">Wszyscy</option>
+                            </select>
+                        </div>
+
+                        <!-- Divider -->
+                        <div style="width:1px; height:24px; background:var(--border-glass)"></div>
+
+                        <!-- Date Filter -->
+                        <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap">
+                            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.3px;">Data:</span>
+                            <button class="btn btn-sm btn-secondary pv-date-preset-btn" data-date-range="today" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">Dzisiaj</button>
+                            <button class="btn btn-sm btn-secondary pv-date-preset-btn" data-date-range="7d" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">7 dni</button>
+                            <button class="btn btn-sm btn-secondary pv-date-preset-btn" data-date-range="30d" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">30 dni</button>
+                            <button class="btn btn-sm btn-secondary pv-date-preset-btn" data-date-range="month" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">Ten miesiąc</button>
+                            <button class="btn btn-sm btn-secondary" id="pv-date-range-btn" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">
+                                <i data-lucide="calendar"></i> Zakres
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="pv-clear-filters-btn" style="border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem;">
+                                <i data-lucide="x"></i> Wyczyść
+                            </button>
+                        </div>
+
+                        <!-- Date Range Popover (hidden by default) -->
+                        <div id="pv-date-popover" style="display:none; position:fixed; z-index:1000; background:var(--bg-card); border:1px solid var(--border-glass); border-radius:12px; padding:0.75rem 1rem; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+                            <div style="display:flex; gap:0.75rem; align-items:flex-start;">
+                                <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                                    <label for="pv-date-from" style="font-size:0.65rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Od</label>
+                                    <input type="date" id="pv-date-from" class="form-input form-input-sm" style="font-size:0.78rem; width:140px;">
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                                    <label for="pv-date-to" style="font-size:0.65rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Do</label>
+                                    <input type="date" id="pv-date-to" class="form-input form-input-sm" style="font-size:0.78rem; width:140px;">
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Compact Mode Toggle -->
                         <button
                             class="btn btn-sm btn-secondary"
                             id="btn-compact-mode"
                             onclick="toggleCompactMode()"
-                            style="border-radius: 20px; padding: 0.35rem 0.9rem; font-size: 0.75rem"
+                            style="margin-left:auto; border-radius:20px; padding:0.35rem 0.9rem; font-size:0.75rem"
                             title="Przełącz tryb kompaktowy"
                         >
                             <i data-lucide="panel-right-close"></i> Kompakt
