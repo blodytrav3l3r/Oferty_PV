@@ -16,6 +16,40 @@ function renderWellHeaderRow(
     const badges = getWellBadges(change, isOrdered, well);
     const displayLp = lp !== undefined ? lp : i + 1;
 
+    let featureIcons = '';
+    if (well.kineta === 'preco' || well.kineta === 'precotop') {
+        featureIcons +=
+            '<i data-lucide="layers" style="width:12px;height:12px;color:#f43f5e;vertical-align:middle;" title="Wkładka PRECO"></i> ';
+    }
+    if (
+        (well.wkladkaDennica && well.wkladkaDennica !== 'brak') ||
+        (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') ||
+        (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
+    ) {
+        featureIcons +=
+            '<i data-lucide="shield" style="width:12px;height:12px;color:#0ea5e9;vertical-align:middle;" title="Wkładka PEHD"></i> ';
+    }
+    if (well.malowanieW && well.malowanieW !== 'brak') {
+        if (well.malowanieZ === 'zewnatrz') {
+            featureIcons +=
+                '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie wewnętrzne i zewnętrzne"></i> ';
+        } else {
+            featureIcons +=
+                '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie wewnętrzne"></i> ';
+        }
+    } else if (well.malowanieZ === 'zewnatrz') {
+        featureIcons +=
+            '<i data-lucide="paintbrush" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Malowanie zewnętrzne"></i> ';
+    }
+    if (well.nadbudowa === 'zelbetowa' || well.dennicaMaterial === 'zelbetowa') {
+        featureIcons +=
+            '<i data-lucide="wrench" style="width:12px;height:12px;color:#f59e0b;vertical-align:middle;" title="Konstrukcja żelbetowa"></i> ';
+    }
+    if (well.stopnie === 'nierdzewna') {
+        featureIcons +=
+            '<i data-lucide="zap" style="width:12px;height:12px;color:#a855f7;vertical-align:middle;" title="Stopnie nierdzewne"></i> ';
+    }
+
     let checkbox = '';
     if (showOrderSelection) {
         checkbox = isOrdered
@@ -45,7 +79,7 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
+        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)} ${featureIcons}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
