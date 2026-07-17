@@ -37,5 +37,33 @@ window.RuryExternalExportTemplate = {
 
         const wb = XlsxImportShared.generateExternalXlsx('rury', rows);
         XLSX.writeFile(wb, 'eksport_rury_zewn.xlsx');
+    },
+
+    async generateAndDownloadOrder(orderData) {
+        const offerNumber = orderData.offer_number || orderData.number || '';
+        const items = orderData.items || [];
+        if (!items.length) {
+            alert('Brak pozycji w zamówieniu.');
+            return;
+        }
+
+        const rows = items.map((item, i) => ({
+            NUMER_OFERTY: orderData.orderNumber || offerNumber,
+            NR_STUDNI: item.pehdType || '',
+            GLEBOKOSC: '',
+            INDEKS_CZESCI: item.productId || '',
+            ILOSC: item.quantity || 0,
+            CENA_JEDNOSTKOWA: item.unitPrice || item.price || 0,
+            WERSJA: 1,
+            RABAT: item.discount ? item.discount.toFixed(2) : '',
+            SREDNICA: '',
+            ZAKONCZENIE: '',
+            MAGAZYN: '',
+            LP: i + 1
+        }));
+
+        const wb = XlsxImportShared.generateExternalXlsx('rury', rows);
+        const safeNumber = (orderData.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
+        XLSX.writeFile(wb, 'eksport_zamowienie_rury_' + safeNumber + '.xlsx');
     }
 };

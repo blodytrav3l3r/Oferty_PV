@@ -14,7 +14,7 @@ window.PvImportExportToolbar = {
 
         host.innerHTML =
             '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:1.5rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
-            '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport oferty</span>' +
+            '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport</span>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" style="width:14px;height:14px;"></i>Eksport XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" style="width:14px;height:14px;"></i>Eksport 1:1 (JSON)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-import-json"><i data-lucide="file-up" style="width:14px;height:14px;"></i>Import 1:1 (JSON)</button>' +
@@ -27,115 +27,197 @@ window.PvImportExportToolbar = {
         if (window.lucide) lucide.createIcons({ root: host });
     },
 
+    _entityTypeHtml(inputId, entityParam) {
+        const checked = entityParam || 'offer';
+        return (
+            '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
+            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="' +
+            inputId +
+            '-entity" value="offer"' +
+            (checked === 'offer' ? ' checked' : '') +
+            '> Oferta</label>' +
+            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="' +
+            inputId +
+            '-entity" value="order"' +
+            (checked === 'order' ? ' checked' : '') +
+            '> Zamówienie</label>' +
+            '</div>'
+        );
+    },
+
+    _moduleTypeHtml(inputId, moduleParam) {
+        const checked = moduleParam || 'rury';
+        return (
+            '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
+            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="' +
+            inputId +
+            '-module" value="rury"' +
+            (checked === 'rury' ? ' checked' : '') +
+            '> Rury</label>' +
+            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="' +
+            inputId +
+            '-module" value="studnie"' +
+            (checked === 'studnie' ? ' checked' : '') +
+            '> Studnie</label>' +
+            '</div>'
+        );
+    },
+
+    async _findOrderByNumber(number, module) {
+        const ordersMap = window.pvSalesUI && window.pvSalesUI.ordersMap;
+        if (ordersMap) {
+            for (const orders of ordersMap.values()) {
+                for (const order of orders) {
+                    if (order.orderNumber === number) {
+                        const isStudnie = !!order.offerStudnieId;
+                        if (module === 'studnie' && isStudnie) return order;
+                        if (module === 'rury' && !isStudnie) return order;
+                    }
+                }
+            }
+        }
+        return await JsonOfferTransfer.fetchOrderByNumber(module, number);
+    },
+
+    _findOfferByNumber(number, module) {
+        const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
+        if (!offers) return null;
+        return offers.find(
+            (o) =>
+                (o.offer_number === number || o.number === number) &&
+                (module === 'rury' ? o.type !== 'studnia_oferta' : o.type === 'studnia_oferta')
+        );
+    },
+
     showExportXlsxDialog() {
+        const uid = 'xlsx';
         const modal = this._createModal(
             'Eksport XLSX (zewn. system)',
-            '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ oferty i podaj numer:</p>' +
-                '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
-                '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="ie-xlsx-module" value="rury" checked> Rury</label>' +
-                '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="ie-xlsx-module" value="studnie"> Studnie</label>' +
-                '</div>' +
-                '<input type="text" id="ie-xlsx-offer-number" placeholder="Numer oferty (np. OS/1234/R)" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
-                '<div id="ie-xlsx-search-result" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>',
+            '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
+                this._moduleTypeHtml(uid) +
+                this._entityTypeHtml(uid, 'offer') +
+                '<input type="text" id="ie-' +
+                uid +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
+                '<div id="ie-' +
+                uid +
+                '-search-result" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>',
             'Eksportuj',
             async () => {
-                const module = document.querySelector('input[name="ie-xlsx-module"]:checked').value;
-                const number = document.getElementById('ie-xlsx-offer-number').value.trim();
+                const module = document.querySelector(
+                    'input[name="' + uid + '-module"]:checked'
+                ).value;
+                const entity = document.querySelector(
+                    'input[name="' + uid + '-entity"]:checked'
+                ).value;
+                const number = document.getElementById('ie-' + uid + '-number').value.trim();
                 if (!number) {
-                    alert('Podaj numer oferty');
+                    alert('Podaj numer');
                     return;
                 }
 
-                const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-                if (!offers) {
-                    alert('Kartoteka nie jest zaladowana. Odswiez strone.');
-                    return;
-                }
+                const resultEl = document.getElementById('ie-' + uid + '-search-result');
 
-                const offer = offers.find(
-                    (o) =>
-                        (o.offer_number === number || o.number === number) &&
-                        (module === 'rury'
-                            ? o.type !== 'studnia_oferta'
-                            : o.type === 'studnia_oferta')
-                );
+                if (entity === 'order') {
+                    const order = await this._findOrderByNumber(number, module);
+                    if (!order) {
+                        resultEl.textContent = 'Nie znaleziono zamówienia.';
+                        return;
+                    }
+                    resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
+                    this._closeModal();
 
-                if (!offer) {
-                    document.getElementById('ie-xlsx-search-result').textContent =
-                        'Nie znaleziono oferty.';
-                    return;
-                }
-
-                document.getElementById('ie-xlsx-search-result').textContent =
-                    'Znaleziono: ' +
-                    (offer.offer_number || offer.number) +
-                    ' (' +
-                    (offer.clientName || 'brak klienta') +
-                    ')';
-
-                this._closeModal();
-
-                if (module === 'studnie') {
-                    await StudnieExternalExportTemplate.generateAndDownload(offer.id);
+                    if (module === 'studnie') {
+                        await StudnieExternalExportTemplate.generateAndDownloadOrder(order);
+                    } else {
+                        await RuryExternalExportTemplate.generateAndDownloadOrder(order);
+                    }
                 } else {
-                    await RuryExternalExportTemplate.generateAndDownload(offer.id);
+                    const offer = this._findOfferByNumber(number, module);
+                    if (!offer) {
+                        resultEl.textContent = 'Nie znaleziono oferty.';
+                        return;
+                    }
+                    resultEl.textContent =
+                        'Znaleziono: ' +
+                        (offer.offer_number || offer.number) +
+                        ' (' +
+                        (offer.clientName || 'brak klienta') +
+                        ')';
+                    this._closeModal();
+
+                    if (module === 'studnie') {
+                        await StudnieExternalExportTemplate.generateAndDownload(offer.id);
+                    } else {
+                        await RuryExternalExportTemplate.generateAndDownload(offer.id);
+                    }
                 }
             }
         );
     },
 
     showExportJsonPopup() {
+        const uid = 'json';
         const modal = this._createModal(
             'Eksport 1:1 (JSON)',
-            '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ oferty i podaj numer:</p>' +
-                '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
-                '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="ie-json-module" value="rury" checked> Rury</label>' +
-                '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size:0.85rem;"><input type="radio" name="ie-json-module" value="studnie"> Studnie</label>' +
-                '</div>' +
-                '<input type="text" id="ie-json-offer-number" placeholder="Numer oferty (np. OS/1234/R)" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
-                '<div id="ie-json-search-result" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>',
+            '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
+                this._moduleTypeHtml(uid) +
+                this._entityTypeHtml(uid, 'offer') +
+                '<input type="text" id="ie-' +
+                uid +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
+                '<div id="ie-' +
+                uid +
+                '-search-result" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:0.5rem;"></div>',
             'Eksportuj',
             async () => {
-                const module = document.querySelector('input[name="ie-json-module"]:checked').value;
-                const number = document.getElementById('ie-json-offer-number').value.trim();
+                const module = document.querySelector(
+                    'input[name="' + uid + '-module"]:checked'
+                ).value;
+                const entity = document.querySelector(
+                    'input[name="' + uid + '-entity"]:checked'
+                ).value;
+                const number = document.getElementById('ie-' + uid + '-number').value.trim();
                 if (!number) {
-                    alert('Podaj numer oferty');
+                    alert('Podaj numer');
                     return;
                 }
 
-                const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-                if (!offers) {
-                    alert('Kartoteka nie jest zaladowana. Odswiez strone.');
-                    return;
-                }
+                const resultEl = document.getElementById('ie-' + uid + '-search-result');
 
-                const offer = offers.find(
-                    (o) =>
-                        (o.offer_number === number || o.number === number) &&
-                        (module === 'rury'
-                            ? o.type !== 'studnia_oferta'
-                            : o.type === 'studnia_oferta')
-                );
+                if (entity === 'order') {
+                    const order = await this._findOrderByNumber(number, module);
+                    if (!order) {
+                        resultEl.textContent = 'Nie znaleziono zamówienia.';
+                        return;
+                    }
+                    resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
+                    this._closeModal();
 
-                if (!offer) {
-                    document.getElementById('ie-json-search-result').textContent =
-                        'Nie znaleziono oferty.';
-                    return;
-                }
-
-                document.getElementById('ie-json-search-result').textContent =
-                    'Znaleziono: ' +
-                    (offer.offer_number || offer.number) +
-                    ' (' +
-                    (offer.clientName || 'brak klienta') +
-                    ')';
-
-                this._closeModal();
-
-                if (module === 'studnie') {
-                    await StudnieTransferJson.exportOffer(offer.id);
+                    if (module === 'studnie') {
+                        await StudnieTransferJson.exportOrder(order.id);
+                    } else {
+                        await RuryTransferJson.exportOrder(order.id);
+                    }
                 } else {
-                    await RuryTransferJson.exportOffer(offer.id);
+                    const offer = this._findOfferByNumber(number, module);
+                    if (!offer) {
+                        resultEl.textContent = 'Nie znaleziono oferty.';
+                        return;
+                    }
+                    resultEl.textContent =
+                        'Znaleziono: ' +
+                        (offer.offer_number || offer.number) +
+                        ' (' +
+                        (offer.clientName || 'brak klienta') +
+                        ')';
+                    this._closeModal();
+
+                    if (module === 'studnie') {
+                        await StudnieTransferJson.exportOffer(offer.id);
+                    } else {
+                        await RuryTransferJson.exportOffer(offer.id);
+                    }
                 }
             }
         );
@@ -145,7 +227,7 @@ window.PvImportExportToolbar = {
         const modal = this._createModal(
             'Import 1:1 (JSON)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
-                '<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 1rem 0;">Format: witros-offer-transfer (schema v1). Oferta + zamówienia.</p>' +
+                '<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 1rem 0;">Obsługiwane formaty: witros-offer-transfer (oferta+zamówienia), witros-order-transfer (zamówienie).</p>' +
                 '<input type="file" id="ie-json-file-input" accept=".json" class="form-input" style="display:block;margin-bottom:1rem;width:100%;">' +
                 '<div id="ie-json-progress" style="display:none;color:var(--accent);font-size:0.85rem;">Importowanie...</div>',
             'Importuj',
@@ -162,10 +244,18 @@ window.PvImportExportToolbar = {
                     const file = input.files[0];
                     const preview = await JsonOfferTransfer.readFile(file);
 
-                    if (preview.module === 'studnie') {
-                        result = await StudnieTransferJson.importOffer(file);
+                    if (preview.kind === 'witros-order-transfer') {
+                        if (preview.module === 'studnie') {
+                            result = await StudnieTransferJson.importOrder(file);
+                        } else {
+                            result = await RuryTransferJson.importOrder(file);
+                        }
                     } else {
-                        result = await RuryTransferJson.importOffer(file);
+                        if (preview.module === 'studnie') {
+                            result = await StudnieTransferJson.importOffer(file);
+                        } else {
+                            result = await RuryTransferJson.importOffer(file);
+                        }
                     }
 
                     this._closeModal();
@@ -173,8 +263,10 @@ window.PvImportExportToolbar = {
                         alert('Import pominiety.');
                     } else if (result.success) {
                         alert(
-                            'Oferta ' +
-                                (result.action === 'clone' ? 'sklonowana' : 'zaimportowana') +
+                            (preview.kind === 'witros-order-transfer'
+                                ? 'Zamówienie'
+                                : 'Oferta ' +
+                                  (result.action === 'clone' ? 'sklonowana' : 'zaimportowana')) +
                                 ' pomyslnie.'
                         );
                     } else {

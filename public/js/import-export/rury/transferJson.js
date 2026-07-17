@@ -138,5 +138,74 @@ window.RuryTransferJson = {
         } catch (err) {
             return { error: true, message: err.message };
         }
+    },
+
+    async exportOrder(orderId) {
+        const order = await JsonOfferTransfer.fetchOrder('rury', orderId);
+        const payload = JsonOfferTransfer.buildOrderPayload('rury', order);
+        const safeNumber = (order.orderNumber || orderId).replace(/[^a-zA-Z0-9_-]/g, '_');
+        const date = (order.createdAt || '').slice(0, 10) || 'unknown';
+        JsonOfferTransfer.downloadFile(
+            payload,
+            'zamowienie_rury_' + safeNumber + '_' + date + '.json'
+        );
+
+        await fetch('/api/feature-flags/audit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+                entityType: 'order',
+                entityId: orderId,
+                action: 'export.transfer',
+                details: { module: 'rury', orderNumber: safeNumber }
+            })
+        });
+    },
+
+    async importOrder(file) {
+        const json = await JsonOfferTransfer.readFile(file);
+        const order = json.order;
+
+        const orderPayload = {
+            id: order.id,
+            offerId: order.offerId,
+            status: order.status || 'new',
+            createdAt: order.createdAt,
+            ...Object.fromEntries(
+                Object.entries(order).filter(
+                    ([k]) => !['id', 'type', 'offerId', 'status', 'createdAt', 'userId'].includes(k)
+                )
+            )
+        };
+
+        try {
+            const resp = await fetch('/api/orders-rury', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ data: [orderPayload] })
+            });
+            if (!resp.ok) {
+                const err = await resp.json();
+                throw new Error(err.error || 'Blad importu zamowienia');
+            }
+
+            await fetch('/api/feature-flags/audit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    entityType: 'order',
+                    entityId: order.id,
+                    action: 'import.transfer',
+                    details: { module: 'rury', orderNumber: order.orderNumber, source: 'transfer' }
+                })
+            });
+
+            return { success: true };
+        } catch (err) {
+            return { error: true, message: err.message };
+        }
     }
 };
