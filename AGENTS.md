@@ -240,3 +240,9 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run release:major`      | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
 | `graphify query "<q>"`       | Wykonuje zapytanie do grafu wiedzy w celu znalezienia odpowiednich elementów kodu.          |
 | `graphify update .`          | Aktualizuje strukturę grafu wiedzy na podstawie bieżących plików projektu.                  |
+
+---
+
+## 8. Lokalizacja Planów
+
+Wszystkie plany, taski, implementation plany i dokumenty planistyczne (`.md`) muszą znajdować się w katalogu `docs/plans/`. Dotyczy to zarówno istniejących, jak i nowo tworzonych planów. Wyjątkiem są plany narzędziowe w katalogach konfiguracyjnych (`.hermes/`, `.opencode/`).
