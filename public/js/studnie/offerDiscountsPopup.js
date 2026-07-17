@@ -136,6 +136,21 @@ function updateOfferDiscountsPopupPrices() {
                 sumNettoDN += stats.price + transportCost;
             });
 
+        const displayDn = dn === 'styczne' ? 'Styczne' : `DN${dn}`;
+        const dnCount = wells.filter((w) =>
+            dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
+        ).length;
+        const dnAvgPrice = dnCount > 0 ? sumNettoDN / dnCount : 0;
+
+        const countEl = document.getElementById(`offer-dn-count-${dn}`);
+        if (countEl) {
+            countEl.textContent = `${dnCount}× ${displayDn}`;
+        }
+        const avgEl = document.getElementById(`offer-dn-avg-${dn}`);
+        if (avgEl) {
+            avgEl.textContent = `śr. ${typeof fmt === 'function' ? fmt(Math.round(dnAvgPrice)) : Math.round(dnAvgPrice)} PLN`;
+        }
+
         const el = document.getElementById(`offer-dn-price-${dn}`);
         if (el) {
             el.innerHTML = `${typeof fmt === 'function' ? escapeHtml(fmt(sumNettoDN)) : escapeHtml(sumNettoDN)} PLN`;
@@ -215,6 +230,12 @@ function renderOfferDiscountsPopupContent() {
                 sumNettoDN += stats.price + transportCost;
             });
 
+        const dnWells = wells.filter((w) =>
+            dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
+        );
+        const dnCount = dnWells.length;
+        const dnAvgPrice = dnCount > 0 ? sumNettoDN / dnCount : 0;
+
         if (sumNettoDN === 0) return;
 
         totalOverallNetto += sumNettoDN;
@@ -232,7 +253,8 @@ function renderOfferDiscountsPopupContent() {
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb),0.4);"></span>
-                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${displayDn}</span>
+                    <span id="offer-dn-count-${dn}" style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
+                    <span id="offer-dn-avg-${dn}" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
                 </div>
                 <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
