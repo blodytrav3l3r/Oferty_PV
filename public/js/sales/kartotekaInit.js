@@ -100,18 +100,27 @@ window.toggleCompactMode = function () {
     applyCompactMode();
 };
 
+let compactObserver = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     applyCompactMode();
-    const observer = new MutationObserver(() => applyCompactMode());
     const grid = document.getElementById('pv-local-offers-list');
-    if (grid) observer.observe(grid, { childList: true, subtree: true });
+    if (grid) {
+        compactObserver = new MutationObserver(() => applyCompactMode());
+        compactObserver.observe(grid, { childList: true, subtree: true });
+    }
 
     if (window.PvImportExportToolbar) {
         window.PvImportExportToolbar.init('ie-toolbar-host');
     }
 });
 
-function showSection() {}
+window.addEventListener('pagehide', () => {
+    if (compactObserver) {
+        compactObserver.disconnect();
+        compactObserver = null;
+    }
+});
 
 function initAdvancedFilterEvents(ui) {
     if (!ui) return;

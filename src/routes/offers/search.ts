@@ -51,6 +51,8 @@ router.get('/', requireAuth, async (req, res) => {
         const { whereSql: orderStatusWhere } = buildOrderStatusSql(params.orderStatus);
 
         const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
+        const allowedSort = ['createdAt', 'offer_number'];
+        const sortCol = allowedSort.includes(params.sort) ? params.sort : 'createdAt';
         const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
         const sql = Prisma.sql`
@@ -90,7 +92,7 @@ router.get('/', requireAuth, async (req, res) => {
                 ${whereSql}
             ) AS combined
             ${orderStatusWhere}
-            ORDER BY ${Prisma.raw(params.sort)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}
+            ORDER BY ${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}
             LIMIT ${limitVal + 1}
         `;
 

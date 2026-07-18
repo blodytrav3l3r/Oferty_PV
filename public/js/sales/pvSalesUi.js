@@ -5,7 +5,6 @@ import { storageService } from '../shared/StorageService.js';
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
-        this.allLocalOffers = [];
         this.isSyncUpToDate = true;
         this.ordersMap = new Map();
         this.currentFilter = 'all';
@@ -21,6 +20,8 @@ class PVSalesUI {
             }
         };
         this.autoRefreshInterval = null;
+        this.initRetryCount = 0;
+        this.initRetryMax = 5;
 
         // Nowy stan Unified Search API
         this.searchResults = null; // { items, totalCount, hasMore, nextCursor, nextCursorId }
@@ -59,7 +60,27 @@ class PVSalesUI {
         const originalPrice = Number(
             order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
         );
-        const changed = Math.abs(currentPrice - originalPrice) > 0.01;
+        let changed = Math.abs(currentPrice - originalPrice) > 0.01;
+        if (!changed && order?.originalSnapshot) {
+            const snap = order.originalSnapshot;
+            const snapItems = snap.items || [];
+            const snapProductTotal = snapItems.reduce((sum, item) => {
+                const unitBase =
+                    (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
+                return (
+                    sum +
+                    (unitBase + Number(item.surcharge || 0) + Number(item.pehdCostPerUnit || 0)) *
+                        (Number(item.quantity) || 0)
+                );
+            }, 0);
+            const snapTransport = this.recalculateRuryTransportCost(
+                snapItems,
+                snap.transportKm,
+                snap.transportRate
+            );
+            const totalCurrent = this.computeOrderValueWithTransport(order);
+            changed = Math.abs(totalCurrent - (snapProductTotal + snapTransport)) > 0.01;
+        }
         return { changed, currentPrice, originalPrice };
     }
 
@@ -84,7 +105,7 @@ class PVSalesUI {
                 quantity: Number(i.quantity)
             }));
         if (calcItems.length === 0) return 0;
-        const result = calculateTransportTrips(calcItems);
+        const result = window.calculateTransportTrips(calcItems);
         return result.totalTrips * costPerTrip;
     }
 
@@ -152,22 +173,32 @@ class PVSalesUI {
         try {
             const userStr = sessionStorage.getItem('user');
             if (!userStr) {
+                this.initRetryCount++;
+                if (this.initRetryCount > this.initRetryMax) {
+                    logger.error('pvSalesUi', 'Przekroczono limit prób inicjalizacji');
+                    return;
+                }
                 logger.info(
                     'pvSalesUi',
-                    '[PVSalesUI] Czekam na dane użytkownika w sessionStorage (ponowienie za 500ms)...'
+                    '[PVSalesUI] Czekam na dane użytkownika w sessionStorage (ponowienie ' +
+                        this.initRetryCount +
+                        '/' +
+                        this.initRetryMax +
+                        ')...'
                 );
                 setTimeout(() => this.init(), 500);
                 return;
             }
+
+            this.initRetryCount = 0;
 
             const user = JSON.parse(userStr);
             this.role = user.role || 'user';
             logger.info('pvSalesUi', 'Inicjalizacja dla użytkownika:', user.username);
 
             await storageService.init();
-            this.attachEventListeners();
             if (typeof fetchGlobalUsers === 'function') await fetchGlobalUsers();
-            await this.searchOffers(this.buildSearchParams());
+            await this.searchOffers(this.buildSearchParams(), true);
 
             // Załaduj mapę zamówień dla inline panelu w kartotece
             await this.loadOrdersMap();
@@ -185,10 +216,6 @@ class PVSalesUI {
             if (listDiv)
                 listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${this.escapeHtml(error.message)}</div>`;
         }
-    }
-
-    attachEventListeners() {
-        // Zdarzenia do ogólnych akcji (wyszukiwanie lokalne ma oninput w HTML)
     }
 
     async loadOrdersMap() {
@@ -238,6 +265,12 @@ class PVSalesUI {
             );
         } catch (error) {
             logger.warn('pvSalesUi', 'Nie udało się pobrać zamówień:', error.message);
+            if (typeof window.showToast === 'function') {
+                window.showToast(
+                    'Nie udało się pobrać zamówień — oferty mogą być niekompletne',
+                    'warning'
+                );
+            }
         }
     }
 
@@ -281,7 +314,11 @@ class PVSalesUI {
     _startAutoRefresh() {
         this._stopAutoRefresh();
         this.autoRefreshInterval = setInterval(() => {
-            if (!document.hidden) this.searchOffers(this.buildSearchParams());
+            if (!document.hidden) {
+                this.searchOffers(this.buildSearchParams()).catch((e) =>
+                    logger.error('pvSalesUi', 'Auto-refresh error:', e)
+                );
+            }
         }, 60000);
     }
 
@@ -536,7 +573,21 @@ class PVSalesUI {
     /**
      * Główna metoda wyszukiwania — zastępuje loadOrdersMap + loadLocalOffers
      */
-    async searchOffers(params = {}) {
+    _httpErrorMessage(status) {
+        const msgs = {
+            400: 'Nieprawidłowe żądanie',
+            401: 'Sesja wygasła — zaloguj się ponownie',
+            403: 'Brak uprawnień',
+            429: 'Za dużo zapytań — spróbuj za chwilę',
+            500: 'Błąd serwera',
+            502: 'Serwer tymczasowo niedostępny',
+            503: 'Serwer przeciążony',
+            504: 'Przekroczono czas oczekiwania serwera'
+        };
+        return msgs[status] || 'Błąd sieci (HTTP ' + status + ')';
+    }
+
+    async searchOffers(params = {}, skipRender) {
         if (this.abortController) {
             this.abortController.abort();
         }
@@ -572,7 +623,10 @@ class PVSalesUI {
                 signal: this.abortController.signal
             });
 
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            if (!resp.ok) {
+                const errBody = await resp.json().catch(() => ({}));
+                throw new Error(errBody.error || this._httpErrorMessage(resp.status));
+            }
             const json = await resp.json();
 
             if (isLoadMore) {
@@ -592,7 +646,7 @@ class PVSalesUI {
                 this.populateUserFilter();
             }
 
-            this.renderResults();
+            if (!skipRender) this.renderResults();
             this.updateOfferCounter(this.searchResults.items.length, this.searchResults.totalCount);
         } catch (error) {
             if (error.name === 'AbortError') return;
@@ -698,8 +752,12 @@ class PVSalesUI {
             '<span style="font-size:0.85rem; opacity:0.8;">' +
             this.escapeHtml(message) +
             '</span><br/>' +
-            '<button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.searchOffers(window.pvSalesUI.buildSearchParams())">' +
+            '<button class="btn btn-sm btn-secondary" style="margin-top:1rem;" data-action="retry-search">' +
             '<i data-lucide="refresh-cw"></i> Odśwież</button></div>';
+        const retryBtn = listDiv.querySelector('[data-action="retry-search"]');
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => this.searchOffers(this.buildSearchParams()));
+        }
         setTimeout(() => {
             if (window.lucide) lucide.createIcons();
         }, 50);
@@ -743,7 +801,7 @@ class PVSalesUI {
         const select = document.getElementById('pv-user-filter');
         if (!select) return;
 
-        const offers = this.searchResults?.items || this.allLocalOffers || [];
+        const offers = this.searchResults?.items || [];
         const userSet = new Map();
         for (const offer of offers) {
             const uid = offer.userId || offer.lastEditedBy || '';
@@ -841,7 +899,7 @@ class PVSalesUI {
                     ? new Date(offer.createdAt).toLocaleDateString('pl-PL')
                     : '—';
 
-                const isWell = offer.type === 'studnia_oferta';
+                const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
                 let priceVal = 0;
 
                 // Dla studni wolimy obliczyć sumę z wellsExport, bo tam jest już transport per studnia
@@ -2175,16 +2233,21 @@ class PVSalesUI {
                         offerType === 'studnia_oferta'
                             ? `/api/orders-studnie/${linkedOrder.id}`
                             : `/api/orders-rury/${linkedOrder.id}`;
-                    fetch(orderEndpoint, {
-                        method: 'PATCH',
-                        headers,
-                        body: JSON.stringify({
-                            userId: currentOffer.userId,
-                            userName: currentOffer.userName
-                        })
-                    }).catch((e) =>
-                        logger.error('pvSalesUi', 'Błąd aktualizacji opiekuna w zamówieniu:', e)
-                    );
+                    try {
+                        const patchResp = await fetch(orderEndpoint, {
+                            method: 'PATCH',
+                            headers,
+                            body: JSON.stringify({
+                                userId: currentOffer.userId,
+                                userName: currentOffer.userName
+                            })
+                        });
+                        if (!patchResp.ok) {
+                            logger.warn('pvSalesUi', 'Odpowiedz PATCH opiekuna:', patchResp.status);
+                        }
+                    } catch (e) {
+                        logger.error('pvSalesUi', 'Błąd aktualizacji opiekuna w zamówieniu:', e);
+                    }
                 }
 
                 if (typeof window.showToast === 'function') {
@@ -2202,7 +2265,6 @@ class PVSalesUI {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Inicjalizacja na stronie kartoteki (brak przycisku nav-sales, zawsze widoczny)
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');
     const navSales = document.getElementById('nav-sales');
 
@@ -2220,4 +2282,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // Cleanup przy odpięciu iframe
+    window.addEventListener('pagehide', () => {
+        if (window.pvSalesUI) {
+            window.pvSalesUI._stopAutoRefresh();
+        }
+    });
 });
