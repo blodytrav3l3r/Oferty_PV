@@ -199,10 +199,12 @@ class PVSalesUI {
             await storageService.init();
             if (typeof fetchGlobalUsers === 'function') await fetchGlobalUsers();
             await this.searchOffers(this.buildSearchParams(), true);
-
-            // Załaduj mapę zamówień dla inline panelu w kartotece
-            await this.loadOrdersMap();
             this.renderResults();
+
+            // Załaduj mapę zamówień w tle — nie blokuje renderowania
+            this.loadOrdersMap().catch((e) =>
+                logger.warn('pvSalesUi', 'loadOrdersMap (background):', e.message)
+            );
 
             this._startAutoRefresh();
 
@@ -308,7 +310,9 @@ class PVSalesUI {
 
     async loadLocalOffers() {
         logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
-        await this.loadOrdersMap();
+        this.loadOrdersMap().catch((e) =>
+            logger.warn('pvSalesUi', 'loadOrdersMap (background):', e.message)
+        );
         await this.searchOffers(this.buildSearchParams());
     }
 
