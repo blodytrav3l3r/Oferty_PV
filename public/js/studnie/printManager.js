@@ -30,54 +30,6 @@ async function getTemplate(path) {
 }
 
 /**
- * Uniwersalny silnik interpolacji – podmienia wszystkie wystąpienia {{KLUCZ}}
- * na wartości ze słownika (obiektu) dataObj.
- */
-function renderTemplate(template, dataObj) {
-    return template.replace(/\{\{([\w_]+)\}\}/g, (match, key) => {
-        return dataObj[key] !== undefined ? dataObj[key] : '';
-    });
-}
-
-/**
- * Wydrukuj ciąg HTML używając ukrytego iframe, aby całkowicie
- * ominąć blokadę pop-upów w przeglądarkach.
- */
-function silentPrint(htmlString) {
-    const iframe = document.createElement('iframe');
-    iframe.style.position = 'fixed';
-    iframe.style.right = '0';
-    iframe.style.bottom = '0';
-    iframe.style.width = '1200px';
-    iframe.style.height = '1200px';
-    iframe.style.border = '0';
-    iframe.style.opacity = '0';
-    iframe.style.zIndex = '-9999';
-
-    document.body.appendChild(iframe);
-
-    const doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write(htmlString);
-    doc.close();
-
-    // Auto-drukowanie po załadowaniu makiety
-    iframe.onload = () => {
-        setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-
-            // Posprzątanie ukrytego elementu DOM (np. po minucie gdy użytkownik już kliknie w oknie druku)
-            setTimeout(() => {
-                if (document.body.contains(iframe)) {
-                    document.body.removeChild(iframe);
-                }
-            }, 60000);
-        }, 500); // 500ms dla bezpiecznego wczytania czcionek/obrazków webowych przed wydrukiem
-    };
-}
-
-/**
  * Zbiera wszystkie dane potrzebne do wydruku z bieżącego formularza zlecenia
  * i wybranego elementu. Zwraca null, jeśli nic nie zostało wybrane.
  */
@@ -134,53 +86,6 @@ function collectPrintData() {
     };
 }
 
-/** Mapuje wewnętrzną wartość parametru na czytelną dla człowieka etykietę */
-function paramLabel(val) {
-    const map = {
-        tak: 'Tak',
-        nie: 'Nie',
-        linia_dolna: 'Linia dolna',
-        linia_gorna: 'Linia górna',
-        w_osi: 'W osi',
-        patrz_uwagi: 'Patrz uwagi',
-        brak: 'Brak',
-        beton: 'Beton',
-        beton_gfk: 'Beton z GFK',
-        klinkier: 'Klinkier',
-        preco: 'Preco',
-        precotop: 'PrecoTop',
-        unolith: 'UnoLith',
-        predl: 'Predl',
-        kamionka: 'Kamionka',
-        zelbet: 'Żelbet',
-        drabinka_a_stalowa: 'Drabinka Typ A/stalowa',
-        drabinka_a_szlachetna: 'Drabinka Typ A/stal szlachetna',
-        drabinka_b_stalowa: 'Drabinka Typ B/stalowa',
-        drabinka_b_szlachetna: 'Drabinka Typ B/stal szlachetna',
-        inne: 'Inne',
-        '1/2': '1/2',
-        '2/3': '2/3',
-        '3/4': '3/4',
-        '1/1': '1/1'
-    };
-    return map[val] || val || '';
-}
-
-/**
- * Nadaje displayIndex przejściom na podstawie kątów (ruch wskazówek zegara).
- * Przejścia na tym samym kącie dostają ten sam numer. Kąt 0° = indeks 0.
- */
-function ensureDisplayIndices(przejscia) {
-    if (!przejscia || przejscia.length === 0) return;
-
-    const sorted = [...przejscia].sort((a, b) => {
-        return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
-    });
-
-    sorted.forEach((p, idx) => {
-        p.displayIndex = idx;
-    });
-}
 /**
  * Znajduje przejścia w kręgu z otworem (krag_ot) lub drugiej dennicy powyżej,
  * dla których w pierwszej dennicy nie istnieje przejście na tym samym kącie.
