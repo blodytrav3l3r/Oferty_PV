@@ -201,6 +201,9 @@ class PVSalesUI {
             await this.searchOffers(this.buildSearchParams(), true);
             this.renderResults();
 
+            // Załaduj mapę zamówień w tle — nie blokuje renderowania
+            this.notifyOrderMutation();
+
             this._startAutoRefresh();
 
             this.initialized = true;
@@ -271,24 +274,36 @@ class PVSalesUI {
         }
     }
 
+    /**
+     * Wywołaj po każdej mutacji zamówienia (CREATE/UPDATE/DELETE).
+     * Odświeża ordersMap w tle i odświeża widok kartoteki.
+     */
+    notifyOrderMutation() {
+        this.loadOrdersMap()
+            .then(() => {
+                if (this.searchResults?.items) this.renderResults();
+            })
+            .catch((e) => logger.warn('pvSalesUi', 'notifyOrderMutation:', e.message));
+    }
+
     /** @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }} */
     getOrderForOffer(offer) {
         const offerId = this.normalizeId(offer.id);
 
-        // _orderCount z search API — zawsze dostępny, najszybszy
-        if (offer._orderCount != null && offer._orderCount > 0) {
-            return { hasOrder: true, orders: [], order: null };
-        }
-        if (offer._orderCount != null && offer._orderCount === 0) {
-            return { hasOrder: false, orders: [], order: null };
-        }
-
-        // ordersMap (legacy) — dla funkcji które potrzebują pełnych danych zamówienia
+        // ordersMap (pełne dane zamówień) - priorytet, bo UI potrzebuje order.id, orderNumber itp.
         if (offerId && this.ordersMap.has(offerId)) {
             const orders = [...this.ordersMap.get(offerId)];
             if (orders.length > 0) {
                 return { hasOrder: true, orders, order: orders[0] };
             }
+        }
+
+        // _orderCount z search API — szybki boolean, brak pełnych danych zamówienia
+        if (offer._orderCount != null && offer._orderCount > 0) {
+            return { hasOrder: true, orders: [], order: null };
+        }
+        if (offer._orderCount != null && offer._orderCount === 0) {
+            return { hasOrder: false, orders: [], order: null };
         }
 
         // Fallback z pól oferty
@@ -303,6 +318,7 @@ class PVSalesUI {
     async loadLocalOffers() {
         logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
         await this.searchOffers(this.buildSearchParams());
+        this.notifyOrderMutation();
     }
 
     _startAutoRefresh() {

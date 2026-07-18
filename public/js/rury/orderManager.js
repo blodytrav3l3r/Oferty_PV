@@ -521,6 +521,10 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie utworzone', 'success');
 
+        if (window.pvSalesUI) {
+            window.pvSalesUI.notifyOrderMutation();
+        }
+
         // UWAGA: NIE mutujemy currentOfferItems[i].ordered = true.
         // Flaga 'ordered' jest obliczana na bieżąco z ordersRury przez isItemInAnyOrder(uid).
 
@@ -902,6 +906,9 @@ async function saveRuryOrder() {
     try {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie zaktualizowane', 'success');
+        if (window.pvSalesUI) {
+            window.pvSalesUI.notifyOrderMutation();
+        }
         const orderData = ordersRury[orderIndex];
         if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner(orderData);
         if (typeof updateRuryOrderSummary === 'function') updateRuryOrderSummary(orderData);
