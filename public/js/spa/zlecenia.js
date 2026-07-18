@@ -1,13 +1,16 @@
 // @ts-check
 /**
- * Logic for Kartoteka Zleceń Produkcyjnych
+ * Logic for Kartoteka Zleceń Produkcyjnych — wersja z paginacją
  */
 
 const AppZlecenia = (() => {
-    let ordersCache = [];
+    let searchResults = null; // { items, totalCount, hasMore, nextCursor, nextCursorId }
     let activeFilter = 'all'; // 'all' | 'draft' | 'accepted'
     let selectedIds = new Set(); // multi-select for batch print
     let autoRefreshInterval = null;
+    let isLoading = false;
+    let abortController = null;
+    let searchDebounceTimer = null;
 
     const statusMap = {
         draft: {
@@ -32,7 +35,7 @@ const AppZlecenia = (() => {
         }
 
         setupSearch();
-        await loadOrders();
+        await searchOffers(buildSearchParams());
     }
 
     /* ===== HELPERS ===== */
@@ -138,12 +141,51 @@ const AppZlecenia = (() => {
         };
     }
 
+    function showLoadingSpinner() {
+        const tbody = document.getElementById('zlecenia-table-body');
+        if (!tbody) return;
+        if (searchResults && searchResults.items.length > 0) return; // nie kasuj podczas loadMore
+        tbody.innerHTML =
+            '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">Ładowanie danych z serwera...</td></tr>';
+    }
+
+    function showError(message) {
+        const tbody = document.getElementById('zlecenia-table-body');
+        if (tbody) {
+            tbody.innerHTML =
+                '<tr><td colspan="10" style="text-align:center; padding:2.5rem; color:var(--danger);">Wystąpił błąd: ' +
+                escapeHtml(message) +
+                '</td></tr>';
+        }
+    }
+
     /* ===== WYSZUKIWANIE I FILTROWANIE ===== */
+
+    function buildSearchParams() {
+        const input = document.getElementById('zlecenia-search-input');
+        const q = input ? input.value.trim() : '';
+
+        return {
+            q,
+            status: activeFilter,
+            dateFrom: '',
+            dateTo: '',
+            userId: '',
+            limit: 50,
+            sort: 'createdAt',
+            order: 'desc'
+        };
+    }
 
     function setupSearch() {
         const input = document.getElementById('zlecenia-search-input');
         if (input) {
-            input.addEventListener('input', () => renderTable(input.value.toLowerCase().trim()));
+            input.addEventListener('input', () => {
+                clearTimeout(searchDebounceTimer);
+                searchDebounceTimer = setTimeout(() => {
+                    searchOffers(buildSearchParams());
+                }, 300);
+            });
         }
     }
 
@@ -152,46 +194,96 @@ const AppZlecenia = (() => {
         document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filter);
         });
-        const searchInput = document.getElementById('zlecenia-search-input');
-        renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
+        searchOffers(buildSearchParams());
     }
 
     /* ===== DATA LOADING ===== */
 
-    async function loadOrders() {
-        const tbody = document.getElementById('zlecenia-table-body');
-        if (tbody) {
-            tbody.innerHTML =
-                '<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">Ładowanie danych z serwera...</td></tr>';
+    async function searchOffers(params) {
+        if (abortController) {
+            abortController.abort();
         }
+        abortController = new AbortController();
+
+        isLoading = true;
+        const isLoadMore = !!params.cursor;
+
+        if (!isLoadMore) {
+            showLoadingSpinner();
+        }
+
+        const headers = authHeaders?.() || { 'Content-Type': 'application/json' };
+
+        const qs = new URLSearchParams({
+            q: params.q || '',
+            status: params.status || 'all',
+            dateFrom: params.dateFrom || '',
+            dateTo: params.dateTo || '',
+            userId: params.userId || '',
+            limit: String(params.limit || 50),
+            sort: params.sort || 'createdAt',
+            order: params.order || 'desc',
+            cursor: params.cursor || '',
+            cursorId: params.cursorId || '',
+            t: String(Date.now())
+        }).toString();
 
         try {
-            const res = await fetch('/api/orders-studnie/production/registry', {
-                headers: authHeaders()
+            const resp = await fetch('/api/orders-studnie/production/search?' + qs, {
+                headers,
+                signal: abortController.signal
             });
-            if (!res.ok) throw new Error('Nie udało się pobrać zleceń: ' + res.status);
 
-            const data = await res.json();
-            ordersCache = data.data || [];
-            selectedIds.clear();
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const json = await resp.json();
+
+            if (isLoadMore) {
+                searchResults.items = [...searchResults.items, ...(json.data || [])];
+                searchResults.hasMore = json.hasMore;
+                searchResults.nextCursor = json.nextCursor;
+                searchResults.nextCursorId = json.nextCursorId;
+            } else {
+                selectedIds.clear();
+                searchResults = {
+                    items: json.data || [],
+                    totalCount: json.totalCount || 0,
+                    hasMore: json.hasMore,
+                    nextCursor: json.nextCursor,
+                    nextCursorId: json.nextCursorId
+                };
+            }
 
             renderStats();
-            const searchInput = document.getElementById('zlecenia-search-input');
-            renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
+            renderTable();
             startAutoRefresh();
-        } catch (err) {
-            logger.error('zlecenia', err);
-            showToast('<i data-lucide="x-circle"></i> Błąd pobierania zleceń', 'error');
-            if (tbody) {
-                tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2rem; color:var(--danger);">Wystąpił błąd: ${escapeHtml(err.message)}</td></tr>`;
-            }
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            logger.error('zlecenia', 'searchOffers error:', error);
+            showError(error.message);
+        } finally {
+            isLoading = false;
         }
+    }
+
+    function loadMore() {
+        if (isLoading || !searchResults?.hasMore) return;
+        const params = buildSearchParams();
+        params.cursor = searchResults.nextCursor;
+        params.cursorId = searchResults.nextCursorId;
+        searchOffers(params);
+    }
+
+    async function loadOrders() {
+        // Zachowane dla kompatybilności — zewnętrzne wywołania (np. router.refreshModule)
+        await searchOffers(buildSearchParams());
     }
 
     function startAutoRefresh() {
         stopAutoRefresh();
         autoRefreshInterval = setInterval(() => {
-            if (!document.hidden && selectedIds.size === 0) loadOrders();
+            if (!document.hidden && selectedIds.size === 0) {
+                searchOffers(buildSearchParams());
+            }
         }, 60000);
     }
 
@@ -208,11 +300,12 @@ const AppZlecenia = (() => {
         const container = document.getElementById('zlecenia-stats');
         if (!container) return;
 
-        const total = ordersCache.length;
-        const accepted = ordersCache.filter((o) => o.status === 'accepted').length;
-        const draft = ordersCache.filter((o) => o.status !== 'accepted').length;
+        const total = searchResults ? searchResults.totalCount || searchResults.items.length : 0;
+        const items = searchResults ? searchResults.items : [];
+        const accepted = items.filter((o) => o.status === 'accepted').length;
+        const draft = items.filter((o) => o.status !== 'accepted').length;
         const today = new Date().toISOString().slice(0, 10);
-        const todayCount = ordersCache.filter(
+        const todayCount = items.filter(
             (o) => o.createdAt && o.createdAt.slice(0, 10) === today
         ).length;
 
@@ -288,115 +381,153 @@ const AppZlecenia = (() => {
 
     /* ===== RENDEROWANIE TABELI ===== */
 
-    function getFilteredOrders(searchTerm = '') {
-        let filtered = ordersCache;
-
-        if (activeFilter === 'draft') {
-            filtered = filtered.filter((o) => o.status !== 'accepted');
-        } else if (activeFilter === 'accepted') {
-            filtered = filtered.filter((o) => o.status === 'accepted');
-        }
-
-        if (searchTerm) {
-            filtered = filtered.filter((o) => {
-                const fields = [
-                    o.productionOrderNumber,
-                    o.handlerName,
-                    o.creatorName,
-                    o.wellName,
-                    o.projectName,
-                    o.obiekt,
-                    o.salesOrderNumber,
-                    o.dbSalesOrderNumber,
-                    o.elementName,
-                    o.productName
-                ].map((f) => (f || '').toLowerCase());
-                return fields.some((f) => f.includes(searchTerm));
-            });
-        }
-
-        return filtered;
-    }
-
-    function renderTable(searchTerm = '') {
+    function renderTable() {
         const tbody = document.getElementById('zlecenia-table-body');
         if (!tbody) return;
 
-        const filtered = getFilteredOrders(searchTerm);
+        const items = searchResults?.items || [];
 
-        if (filtered.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:2.5rem; color:var(--text-muted); font-style:italic;">Brak zleceń spełniających kryteria.</td></tr>`;
+        if (items.length === 0) {
+            tbody.innerHTML =
+                '<tr><td colspan="10" style="text-align:center; padding:2.5rem; color:var(--text-muted); font-style:italic;">Brak zlece\u0144 spe\u0142niaj\u0105cych kryteria.</td></tr>';
             updateBatchBar();
             return;
         }
 
-        const html = filtered
-            .map((o) => {
-                const statusConfig = statusMap[o.status] || {
-                    label: o.status || 'Nieznany',
-                    class: '',
-                    icon: '<i data-lucide="help-circle"></i>'
-                };
-
-                const orderNum = o.productionOrderNumber
-                    ? `<span class="order-num">${o.productionOrderNumber}</span>`
-                    : `<span class="order-num-missing">— brak —</span>`;
-
-                const salesOrderLabel =
-                    o.dbSalesOrderNumber || o.salesOrderNumber
-                        ? `<span class="sales-order-badge">${o.dbSalesOrderNumber || o.salesOrderNumber}</span>`
-                        : '<span style="color:var(--text-muted); font-size:0.75rem;">—</span>';
-
-                const wellName = o.wellName || '—';
-                const projectName = o.projectName || o.obiekt || '';
-                const elementInfo =
-                    o.elementName ||
-                    o.productName ||
-                    (o.elementIndex !== undefined ? `Element #${o.elementIndex}` : '—');
-
-                const isAccepted = o.status === 'accepted';
-                const isDraft = !isAccepted && o.id;
-                const isChecked = selectedIds.has(o.id);
-
-                // Przyciski akcji
-                let actions = '';
-                if (o.offerId) {
-                    actions += `<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder('${escapeJsStr(o.offerId)}', '${escapeJsStr(o.wellId || '')}', '${escapeJsStr(o.elementIndex !== undefined ? o.elementIndex : '')}', '${escapeJsStr(o.dbSalesOrderId || '')}')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>`;
-                }
-                actions += `<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie('${escapeJsStr(o.id)}')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>`;
-                actions += `<button class="action-btn" aria-label="Drukuj etykietę" onclick="AppZlecenia.printSingleEtykieta('${escapeJsStr(o.id)}')" title="Drukuj etykietę"><i data-lucide="tag" aria-hidden="true"></i></button>`;
-                if (isDraft) {
-                    actions += `<button class="action-btn action-btn-delete" aria-label="Usuń zlecenie" onclick="AppZlecenia.deleteOrder('${escapeJsStr(o.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>`;
-                }
-
-                return `
-                <tr>
-                    <td style="width:40px; text-align:center;">
-                        <input type="checkbox" class="zlecenia-row-cb" data-id="${escapeJsStr(o.id)}" ${isChecked ? 'checked' : ''} onclick="AppZlecenia.toggleSelect('${escapeJsStr(o.id)}', this)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent-hover);">
-                    </td>
-                    <td>${orderNum}</td>
-                    <td class="date-cell">${formatDate(o.createdAt)}</td>
-                    <td>
-                        <div class="well-cell-name">${wellName}</div>
-                        ${projectName ? `<div class="well-cell-project">${projectName}</div>` : ''}
-                    </td>
-                    <td>${salesOrderLabel}</td>
-                    <td class="element-cell">${elementInfo}</td>
-                    <td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ${o.handlerName || '—'}</span></td>
-                    <td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ${o.creatorName || '—'}</span></td>
-                    <td><span class="status-badge ${statusConfig.class}">${statusConfig.icon} ${statusConfig.label}</span></td>
-                    <td style="text-align:right">
-                        <div style="display:flex; gap:0.25rem; justify-content:flex-end;">
-                            ${actions}
-                        </div>
-                    </td>
-                </tr>
-            `;
-            })
-            .join('');
+        const html = items.map(renderOrderRow).join('');
 
         tbody.innerHTML = html;
+
+        // Load more button
+        if (searchResults && searchResults.hasMore) {
+            const shown = searchResults.items.length;
+            const total = searchResults.totalCount;
+            const label =
+                total != null
+                    ? 'Poka\u017C wi\u0119cej (' + shown + ' z ' + total + ')'
+                    : 'Poka\u017C wi\u0119cej';
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td colspan="10" style="text-align:center;padding:1rem;">' +
+                '<button class="btn btn-sm btn-secondary" id="zlecenia-load-more-btn">' +
+                label +
+                '</button></td>';
+            tbody.appendChild(tr);
+            document
+                .getElementById('zlecenia-load-more-btn')
+                ?.addEventListener('click', () => loadMore());
+        }
+
         updateBatchBar();
+    }
+
+    function renderOrderRow(o) {
+        const statusConfig = statusMap[o.status] || {
+            label: o.status || 'Nieznany',
+            class: '',
+            icon: '<i data-lucide="help-circle"></i>'
+        };
+
+        const orderNum = o.productionOrderNumber
+            ? '<span class="order-num">' + escapeHtml(o.productionOrderNumber) + '</span>'
+            : '<span class="order-num-missing">\u2014 brak \u2014</span>';
+
+        const salesOrderLabel =
+            o.dbSalesOrderNumber || o.salesOrderNumber
+                ? '<span class="sales-order-badge">' +
+                  escapeHtml(o.dbSalesOrderNumber || o.salesOrderNumber) +
+                  '</span>'
+                : '<span style="color:var(--text-muted); font-size:0.75rem;">\u2014</span>';
+
+        const wellName = o.wellName || '\u2014';
+        const projectName = o.projectName || o.obiekt || '';
+        const elementInfo =
+            o.elementName ||
+            o.productName ||
+            (o.elementIndex !== undefined ? 'Element #' + o.elementIndex : '\u2014');
+
+        const isAccepted = o.status === 'accepted';
+        const isDraft = !isAccepted && o.id;
+        const isChecked = selectedIds.has(o.id);
+
+        // Przyciski akcji
+        let actions = '';
+        if (o.offerId) {
+            actions +=
+                '<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder(\'' +
+                escapeJsStr(o.offerId) +
+                "', '" +
+                escapeJsStr(o.wellId || '') +
+                "', '" +
+                escapeJsStr(o.elementIndex !== undefined ? o.elementIndex : '') +
+                "', '" +
+                escapeJsStr(o.dbSalesOrderId || '') +
+                '\')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>';
+        }
+        actions +=
+            '<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie(\'' +
+            escapeJsStr(o.id) +
+            '\')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>';
+        actions +=
+            '<button class="action-btn" aria-label="Drukuj etykiet\u0119" onclick="AppZlecenia.printSingleEtykieta(\'' +
+            escapeJsStr(o.id) +
+            '\')" title="Drukuj etykiet\u0119"><i data-lucide="tag" aria-hidden="true"></i></button>';
+        if (isDraft) {
+            actions +=
+                '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie" onclick="AppZlecenia.deleteOrder(\'' +
+                escapeJsStr(o.id) +
+                '\')" title="Usu\u0144 zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>';
+        }
+
+        return (
+            '<tr>\n' +
+            '<td style="width:40px; text-align:center;">\n' +
+            '<input type="checkbox" class="zlecenia-row-cb" data-id="' +
+            escapeJsStr(o.id) +
+            '" ' +
+            (isChecked ? 'checked' : '') +
+            ' onclick="AppZlecenia.toggleSelect(\'' +
+            escapeJsStr(o.id) +
+            '\', this)" style="cursor:pointer; width:16px; height:16px; accent-color:var(--accent-hover);">\n' +
+            '</td>\n' +
+            '<td>' +
+            orderNum +
+            '</td>\n' +
+            '<td class="date-cell">' +
+            formatDate(o.createdAt) +
+            '</td>\n' +
+            '<td>\n' +
+            '<div class="well-cell-name">' +
+            escapeHtml(wellName) +
+            '</div>\n' +
+            (projectName
+                ? '<div class="well-cell-project">' + escapeHtml(projectName) + '</div>\n'
+                : '') +
+            '</td>\n' +
+            '<td>' +
+            salesOrderLabel +
+            '</td>\n' +
+            '<td class="element-cell">' +
+            escapeHtml(elementInfo) +
+            '</td>\n' +
+            '<td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ' +
+            escapeHtml(o.handlerName || '\u2014') +
+            '</span></td>\n' +
+            '<td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ' +
+            escapeHtml(o.creatorName || '\u2014') +
+            '</span></td>\n' +
+            '<td><span class="status-badge ' +
+            statusConfig.class +
+            '">' +
+            statusConfig.icon +
+            ' ' +
+            statusConfig.label +
+            '</span></td>\n' +
+            '<td style="text-align:right">\n' +
+            '<div style="display:flex; gap:0.25rem; justify-content:flex-end;">\n' +
+            actions +
+            '\n</div>\n</td>\n</tr>'
+        );
     }
 
     /* ===== PRINTING (from registry — uses stored PO data) ===== */
@@ -502,13 +633,35 @@ const AppZlecenia = (() => {
 
         const svgParts = [];
         svgParts.push(
-            `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`
+            '<circle cx="' +
+                center +
+                '" cy="' +
+                center +
+                '" r="' +
+                radius +
+                '" fill="none" stroke="#222" stroke-width="2.5" />'
         );
         svgParts.push(
-            `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`
+            '<line x1="' +
+                center +
+                '" y1="' +
+                (center - 5) +
+                '" x2="' +
+                center +
+                '" y2="' +
+                (center + 5) +
+                '" stroke="#999" stroke-width="0.8" />'
         );
         svgParts.push(
-            `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`
+            '<line x1="' +
+                (center - 5) +
+                '" y1="' +
+                center +
+                '" x2="' +
+                (center + 5) +
+                '" y2="' +
+                center +
+                '" stroke="#999" stroke-width="0.8" />'
         );
 
         const labels = [];
@@ -520,7 +673,7 @@ const AppZlecenia = (() => {
         const labelsMap = new Map();
         przejscia.forEach((p) => {
             const prefix = p.flowType === 'wylot' ? 'Wylot' : 'Wlot';
-            labelsMap.set(p, `${prefix} ${p.displayIndex}`);
+            labelsMap.set(p, prefix + ' ' + p.displayIndex);
         });
 
         przejscia.forEach((p) => {
@@ -531,7 +684,19 @@ const AppZlecenia = (() => {
             const isWylot = p === wylot;
 
             svgParts.push(
-                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`
+                '<line x1="' +
+                    center +
+                    '" y1="' +
+                    center +
+                    '" x2="' +
+                    x +
+                    '" y2="' +
+                    y +
+                    '" stroke="' +
+                    (isWylot ? '#000' : '#444') +
+                    '" stroke-width="' +
+                    (isWylot ? 3.5 : 1.8) +
+                    '" />'
             );
 
             const labelRadius = radius + 40;
@@ -550,13 +715,13 @@ const AppZlecenia = (() => {
 
             const pel = parseFloat(p.rzednaWlaczenia) || rzDna;
             const hMm = Math.round((pel - rzDna) * 1000);
-            const hText = hMm > 0 ? ` (+${hMm}mm)` : '';
+            const hText = hMm > 0 ? ' (+' + hMm + 'mm)' : '';
 
             const rodzaj = (p.productCategory || '').toUpperCase();
             const dn = p.productDn || '';
             const prefix = labelsMap.get(p) || 'Wlot';
 
-            const fullName = `${prefix}${rodzaj ? ' ' + rodzaj : ''}${dn ? ' DN' + dn : ''}`;
+            const fullName = prefix + (rodzaj ? ' ' + rodzaj : '') + (dn ? ' DN' + dn : '');
             const maxLineLen = 16;
             const words = fullName.split(' ');
             const lines = [];
@@ -580,7 +745,7 @@ const AppZlecenia = (() => {
                 offsetX,
                 isRight: lx >= center,
                 lines,
-                textAngle: `${angle}°${hText}`
+                textAngle: angle + '°' + hText
             });
         });
 
@@ -637,15 +802,46 @@ const AppZlecenia = (() => {
             if (Math.abs(l.origY - l.ly) > 2) {
                 const lineDist = l.ly > l.origY ? -8 : 8;
                 svgParts.push(
-                    `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`
+                    '<line x1="' +
+                        l.origX +
+                        '" y1="' +
+                        l.origY +
+                        '" x2="' +
+                        l.lx +
+                        '" y2="' +
+                        (l.ly + lineDist) +
+                        '" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />'
                 );
             }
-            let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="#000">`;
+            let textSvg =
+                '<text x="' +
+                (l.lx + l.offsetX) +
+                '" y="' +
+                l.ly +
+                '" text-anchor="' +
+                l.anchor +
+                '" font-family="Arial, sans-serif" font-size="' +
+                labelFontSize +
+                '" font-weight="bold" fill="#000">';
             l.lines.forEach((line, li) => {
-                textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" fill="#000">${line}</tspan>`;
+                textSvg +=
+                    '<tspan x="' +
+                    (l.lx + l.offsetX) +
+                    '" dy="' +
+                    (li === 0 ? '0' : '1.1em') +
+                    '" fill="#000">' +
+                    line +
+                    '</tspan>';
             });
-            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" fill="#444">${l.textAngle}</tspan>`;
-            textSvg += `</text>`;
+            textSvg +=
+                '<tspan x="' +
+                (l.lx + l.offsetX) +
+                '" dy="1.1em" font-size="' +
+                angleFontSize +
+                '" font-weight="normal" fill="#444">' +
+                l.textAngle +
+                '</tspan>';
+            textSvg += '</text>';
             svgParts.push(textSvg);
         });
 
@@ -658,9 +854,22 @@ const AppZlecenia = (() => {
         const svgW = 200;
         const svgH = Math.round(svgW * (vbH / vbW));
 
-        let svg = `<svg viewBox="${vbX} ${vbY} ${vbW} ${vbH}" width="${svgW}" height="${svgH}" style="background:transparent;">`;
+        let svg =
+            '<svg viewBox="' +
+            vbX +
+            ' ' +
+            vbY +
+            ' ' +
+            vbW +
+            ' ' +
+            vbH +
+            '" width="' +
+            svgW +
+            '" height="' +
+            svgH +
+            '" style="background:transparent;">';
         svg += svgParts.join('');
-        svg += `</svg>`;
+        svg += '</svg>';
         return svg;
     }
 
@@ -723,19 +932,36 @@ const AppZlecenia = (() => {
         // Wiersze przejść 0-3 (zgodnie z konfiguratorem: renderuj wszystkie wiersze, także puste)
         for (let i = 0; i < 4; i++) {
             if (przejsciaRows[i]) {
-                payload[`PRZEJSCIA_ROW_${i}`] = `
-                    <td>${przejsciaRows[i].label}</td>
-                    <td>${przejsciaRows[i].rodzaj}</td>
-                    <td class="center">${przejsciaRows[i].srednica}</td>
-                    <td class="center">${przejsciaRows[i].spadekKineta}</td>
-                    <td class="center">${przejsciaRows[i].spadekMufa}</td>
-                    <td class="center">${przejsciaRows[i].katStopien}</td>
-                    <td>${przejsciaRows[i].uwagi}</td>
-                    <td class="center">${przejsciaRows[i].katGon}</td>
-                    <td class="center">${przejsciaRows[i].katWykonania}</td>
-                `;
+                payload['PRZEJSCIA_ROW_' + i] =
+                    '<td>' +
+                    przejsciaRows[i].label +
+                    '</td>' +
+                    '<td>' +
+                    przejsciaRows[i].rodzaj +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].srednica +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].spadekKineta +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].spadekMufa +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katStopien +
+                    '</td>' +
+                    '<td>' +
+                    przejsciaRows[i].uwagi +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katGon +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katWykonania +
+                    '</td>';
             } else {
-                payload[`PRZEJSCIA_ROW_${i}`] = `<td colspan="9"></td>`;
+                payload['PRZEJSCIA_ROW_' + i] = '<td colspan="9"></td>';
             }
         }
 
@@ -743,20 +969,37 @@ const AppZlecenia = (() => {
         payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
             .slice(4)
             .map(
-                (r) => `
-            <tr>
-                <td colspan="2"></td>
-                <td>${r.label}</td>
-                <td>${r.rodzaj}</td>
-                <td class="center">${r.srednica}</td>
-                <td class="center">${r.spadekKineta}</td>
-                <td class="center">${r.spadekMufa}</td>
-                <td class="center">${r.katStopien}</td>
-                <td>${r.uwagi}</td>
-                <td class="center">${r.katGon}</td>
-                <td class="center">${r.katWykonania}</td>
-            </tr>
-        `
+                (r) =>
+                    '<tr>' +
+                    '<td colspan="2"></td>' +
+                    '<td>' +
+                    r.label +
+                    '</td>' +
+                    '<td>' +
+                    r.rodzaj +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.srednica +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.spadekKineta +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.spadekMufa +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katStopien +
+                    '</td>' +
+                    '<td>' +
+                    r.uwagi +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katGon +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katWykonania +
+                    '</td>' +
+                    '</tr>'
             )
             .join('');
 
@@ -764,7 +1007,9 @@ const AppZlecenia = (() => {
     }
 
     /** Build Etykieta HTML from PO data, with unique SVG IDs for batch mode */
-    function buildEtykietaFromPO(template, po, pageIndex = 0) {
+    function buildEtykietaFromPO(template, po, pageIndex) {
+        if (pageIndex === undefined) pageIndex = 0;
+
         function getCertData(dn) {
             const dnStr = String(dn || '');
             const match = dnStr.match(/(\d{3,4})/);
@@ -785,13 +1030,18 @@ const AppZlecenia = (() => {
         const elementy = po.etykietaElementy || [];
         const elementRows = elementy
             .map(
-                (e) => `
-            <tr>
-                <td class="el-qty">${e.ilosc}</td>
-                <td class="el-idx">${e.indeks}</td>
-                <td class="el-name">${e.nazwa}</td>
-            </tr>
-        `
+                (e) =>
+                    '<tr>' +
+                    '<td class="el-qty">' +
+                    e.ilosc +
+                    '</td>' +
+                    '<td class="el-idx">' +
+                    e.indeks +
+                    '</td>' +
+                    '<td class="el-name">' +
+                    e.nazwa +
+                    '</td>' +
+                    '</tr>'
             )
             .join('');
 
@@ -811,18 +1061,23 @@ const AppZlecenia = (() => {
 
         // Zastąp ID SVG w szablonie unikalnymi dla każdej strony
         let html = renderTemplate(template, payload);
-        html = html.replaceAll('id="snr-svg"', `id="${snrSvgId}"`);
-        html = html.replaceAll('id="order-svg"', `id="${orderSvgId}"`);
-        html = html.replaceAll("fitSvgText('snr-svg')", `fitSvgText('${snrSvgId}')`);
-        html = html.replaceAll("fitSvgText('order-svg')", `fitSvgText('${orderSvgId}')`);
+        html = html.replaceAll('id="snr-svg"', 'id="' + snrSvgId + '"');
+        html = html.replaceAll('id="order-svg"', 'id="' + orderSvgId + '"');
+        html = html.replaceAll("fitSvgText('snr-svg')", "fitSvgText('" + snrSvgId + "')");
+        html = html.replaceAll("fitSvgText('order-svg')", "fitSvgText('" + orderSvgId + "')");
 
         return html;
     }
 
     /* ===== PRINT ACTIONS ===== */
 
+    function findOrderById(orderId) {
+        if (!searchResults) return null;
+        return searchResults.items.find((o) => o.id === orderId) || null;
+    }
+
     async function printSingleZlecenie(orderId) {
-        const po = ordersCache.find((o) => o.id === orderId);
+        const po = findOrderById(orderId);
         if (!po) {
             showToast('Nie znaleziono zlecenia', 'error');
             return;
@@ -838,7 +1093,7 @@ const AppZlecenia = (() => {
     }
 
     async function printSingleEtykieta(orderId) {
-        const po = ordersCache.find((o) => o.id === orderId);
+        const po = findOrderById(orderId);
         if (!po) {
             showToast('Nie znaleziono zlecenia', 'error');
             return;
@@ -859,13 +1114,20 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const orders = ordersCache.filter((o) => selectedIds.has(o.id));
+        const orders = [];
+        if (searchResults) {
+            selectedIds.forEach((id) => {
+                const o = searchResults.items.find((item) => item.id === id);
+                if (o) orders.push(o);
+            });
+        }
+
         if (orders.length === 0) {
-            showToast('Brak zleceń do wydruku', 'error');
+            showToast('Brak zlece\u0144 do wydruku', 'error');
             return;
         }
 
-        showToast(`Generowanie ${orders.length} zleceń...`, 'info');
+        showToast('Generowanie ' + orders.length + ' zlece\u0144...', 'info');
 
         const template = await fetchTemplate('templates/zlecenie.html');
         if (!template) return;
@@ -874,7 +1136,7 @@ const AppZlecenia = (() => {
         const pageStartIdx = template.indexOf('<div class="page">');
         const bodyEndIdx = template.lastIndexOf('</body>');
         if (pageStartIdx < 0 || bodyEndIdx < 0) {
-            showToast('Błąd szablonu zlecenia — brak bloku .page', 'error');
+            showToast('B\u0142\u0105d szablonu zlecenia \u2014 brak bloku .page', 'error');
             return;
         }
 
@@ -952,39 +1214,73 @@ const AppZlecenia = (() => {
 
         for (let i = 0; i < 4; i++) {
             if (przejsciaRows[i]) {
-                payload[`PRZEJSCIA_ROW_${i}`] = `
-                    <td>${przejsciaRows[i].label}</td>
-                    <td>${przejsciaRows[i].rodzaj}</td>
-                    <td class="center">${przejsciaRows[i].srednica}</td>
-                    <td class="center">${przejsciaRows[i].spadekKineta}</td>
-                    <td class="center">${przejsciaRows[i].spadekMufa}</td>
-                    <td class="center">${przejsciaRows[i].katStopien}</td>
-                    <td>${przejsciaRows[i].uwagi}</td>
-                    <td class="center">${przejsciaRows[i].katGon}</td>
-                    <td class="center">${przejsciaRows[i].katWykonania}</td>
-                `;
+                payload['PRZEJSCIA_ROW_' + i] =
+                    '<td>' +
+                    przejsciaRows[i].label +
+                    '</td>' +
+                    '<td>' +
+                    przejsciaRows[i].rodzaj +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].srednica +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].spadekKineta +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].spadekMufa +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katStopien +
+                    '</td>' +
+                    '<td>' +
+                    przejsciaRows[i].uwagi +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katGon +
+                    '</td>' +
+                    '<td class="center">' +
+                    przejsciaRows[i].katWykonania +
+                    '</td>';
             } else {
-                payload[`PRZEJSCIA_ROW_${i}`] = `<td colspan="9"></td>`;
+                payload['PRZEJSCIA_ROW_' + i] = '<td colspan="9"></td>';
             }
         }
 
         payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
             .slice(4)
             .map(
-                (r) => `
-            <tr>
-                <td colspan="2"></td>
-                <td>${r.label}</td>
-                <td>${r.rodzaj}</td>
-                <td class="center">${r.srednica}</td>
-                <td class="center">${r.spadekKineta}</td>
-                <td class="center">${r.spadekMufa}</td>
-                <td class="center">${r.katStopien}</td>
-                <td>${r.uwagi}</td>
-                <td class="center">${r.katGon}</td>
-                <td class="center">${r.katWykonania}</td>
-            </tr>
-        `
+                (r) =>
+                    '<tr>' +
+                    '<td colspan="2"></td>' +
+                    '<td>' +
+                    r.label +
+                    '</td>' +
+                    '<td>' +
+                    r.rodzaj +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.srednica +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.spadekKineta +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.spadekMufa +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katStopien +
+                    '</td>' +
+                    '<td>' +
+                    r.uwagi +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katGon +
+                    '</td>' +
+                    '<td class="center">' +
+                    r.katWykonania +
+                    '</td>' +
+                    '</tr>'
             )
             .join('');
 
@@ -997,13 +1293,20 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const orders = ordersCache.filter((o) => selectedIds.has(o.id));
+        const orders = [];
+        if (searchResults) {
+            selectedIds.forEach((id) => {
+                const o = searchResults.items.find((item) => item.id === id);
+                if (o) orders.push(o);
+            });
+        }
+
         if (orders.length === 0) {
-            showToast('Brak zleceń do wydruku', 'error');
+            showToast('Brak zlece\u0144 do wydruku', 'error');
             return;
         }
 
-        showToast(`Generowanie ${orders.length} etykiet...`, 'info');
+        showToast('Generowanie ' + orders.length + ' etykiet...', 'info');
 
         const template = await fetchTemplate('templates/etykieta.html');
         if (!template) return;
@@ -1012,7 +1315,7 @@ const AppZlecenia = (() => {
         const pageStartIdx = template.indexOf('<div class="page">');
         const pageEndComment = template.indexOf('<!-- KONIEC BLOKU "page" -->');
         if (pageStartIdx < 0 || pageEndComment < 0) {
-            showToast('Błąd szablonu etykiety — brak bloku .page', 'error');
+            showToast('B\u0142\u0105d szablonu etykiety \u2014 brak bloku .page', 'error');
             return;
         }
 
@@ -1030,22 +1333,14 @@ const AppZlecenia = (() => {
         orders.forEach((po, i) => {
             const populatedPage = buildEtykietaPageBlock(pageTemplate, po, i);
             allPages += populatedPage + '\n';
-            allFitCalls += `fitSvgText('snr-svg-${i}'); fitSvgText('order-svg-${i}');\n`;
+            allFitCalls += "fitSvgText('snr-svg-" + i + "'); fitSvgText('order-svg-" + i + "');\n";
         });
 
         // Zbuduj końcowy dokument ze skryptem dopasowania SVG
-        const fitScript = `
-<script>
-function runAllFit() {
-    ${allFitCalls}
-}
-if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(runAllFit);
-} else {
-    setTimeout(runAllFit, 200);
-}
-setTimeout(runAllFit, 400);
-</script>`;
+        const fitScript =
+            '\n<script>\nfunction runAllFit() {\n' +
+            allFitCalls +
+            '}\nif (document.fonts && document.fonts.ready) {\n    document.fonts.ready.then(runAllFit);\n} else {\n    setTimeout(runAllFit, 200);\n}\nsetTimeout(runAllFit, 400);\n</script>';
 
         const finalHTML =
             headSection +
@@ -1077,13 +1372,18 @@ setTimeout(runAllFit, 400);
         const elementy = po.etykietaElementy || [];
         const elementRows = elementy
             .map(
-                (e) => `
-            <tr>
-                <td class="el-qty">${e.ilosc}</td>
-                <td class="el-idx">${e.indeks}</td>
-                <td class="el-name">${e.nazwa}</td>
-            </tr>
-        `
+                (e) =>
+                    '<tr>' +
+                    '<td class="el-qty">' +
+                    e.ilosc +
+                    '</td>' +
+                    '<td class="el-idx">' +
+                    e.indeks +
+                    '</td>' +
+                    '<td class="el-name">' +
+                    e.nazwa +
+                    '</td>' +
+                    '</tr>'
             )
             .join('');
 
@@ -1100,8 +1400,8 @@ setTimeout(runAllFit, 400);
         let html = renderTemplate(pageTemplate, payload);
 
         // Zastąp ID SVG unikalnymi ID dla każdej strony
-        html = html.replaceAll('id="snr-svg"', `id="snr-svg-${pageIndex}"`);
-        html = html.replaceAll('id="order-svg"', `id="order-svg-${pageIndex}"`);
+        html = html.replaceAll('id="snr-svg"', 'id="snr-svg-' + pageIndex + '"');
+        html = html.replaceAll('id="order-svg"', 'id="order-svg-' + pageIndex + '"');
 
         return html;
     }
@@ -1109,19 +1409,25 @@ setTimeout(runAllFit, 400);
     /* ===== USUWANIE ===== */
 
     async function deleteOrder(id) {
-        const order = ordersCache.find((o) => o.id === id);
+        const order = findOrderById(id);
         if (!order) return;
 
         if (order.status === 'accepted') {
-            showToast('Nie można usunąć zatwierdzonego zlecenia. Najpierw je cofnij.', 'error');
+            showToast(
+                'Nie mo\u017Cna usun\u0105\u0107 zatwierdzonego zlecenia. Najpierw je cofnij.',
+                'error'
+            );
             return;
         }
 
         if (
-            !(await appConfirm('Usunąć zlecenie ' + (order.productionOrderNumber || '') + '?', {
-                title: 'Usuwanie zlecenia',
-                type: 'danger'
-            }))
+            !(await appConfirm(
+                'Usun\u0105\u0107 zlecenie ' + (order.productionOrderNumber || '') + '?',
+                {
+                    title: 'Usuwanie zlecenia',
+                    type: 'danger'
+                }
+            ))
         )
             return;
 
@@ -1132,15 +1438,17 @@ setTimeout(runAllFit, 400);
             });
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error || 'Błąd serwera');
+                throw new Error(errData.error || 'B\u0142\u0105d serwera');
             }
 
-            ordersCache = ordersCache.filter((o) => o.id !== id);
+            // Usuń z lokalnego cache
+            if (searchResults) {
+                searchResults.items = searchResults.items.filter((o) => o.id !== id);
+            }
             selectedIds.delete(id);
             renderStats();
-            const searchInput = document.getElementById('zlecenia-search-input');
-            renderTable(searchInput ? searchInput.value.toLowerCase().trim() : '');
-            showToast('Zlecenie usunięte', 'info');
+            renderTable();
+            showToast('Zlecenie usuni\u0119te', 'info');
 
             try {
                 if (
@@ -1161,24 +1469,27 @@ setTimeout(runAllFit, 400);
 
     /* ===== NAWIGACJA ===== */
 
-    function editOrder(offerId, wellId = '', elementIndex = '', salesOrderId = '') {
+    function editOrder(offerId, wellId, elementIndex, salesOrderId) {
+        if (wellId === undefined) wellId = '';
+        if (elementIndex === undefined) elementIndex = '';
+        if (salesOrderId === undefined) salesOrderId = '';
         if (!offerId) return;
 
         let extraParams = '&autoopen=zlecenia';
-        if (wellId) extraParams += `&wellId=${wellId}`;
-        if (elementIndex !== '') extraParams += `&elementIndex=${elementIndex}`;
+        if (wellId) extraParams += '&wellId=' + wellId;
+        if (elementIndex !== '') extraParams += '&elementIndex=' + elementIndex;
 
         const useOrderMode =
             salesOrderId &&
             salesOrderId !== '' &&
             salesOrderId !== 'null' &&
             salesOrderId !== 'undefined';
-        const mainParam = useOrderMode ? `order=${salesOrderId}` : `edit=${offerId}`;
+        const mainParam = useOrderMode ? 'order=' + salesOrderId : 'edit=' + offerId;
 
         if (window.parent && window.parent.SpaRouter) {
-            window.parent.location.hash = `#/studnie?${mainParam}${extraParams}`;
+            window.parent.location.hash = '#/studnie?' + mainParam + extraParams;
         } else {
-            window.location.href = `studnie.html?${mainParam}${extraParams}`;
+            window.location.href = 'studnie.html?' + mainParam + extraParams;
         }
     }
 

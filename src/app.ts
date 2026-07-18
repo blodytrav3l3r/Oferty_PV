@@ -190,6 +190,7 @@ import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
 import featureFlagsRoutes from './routes/featureFlags';
 import aiMlRoutes from './routes/telemetryAiMl';
 import searchRoutes from './routes/offers/search';
+import productionSearchRoutes from './routes/orders/productionSearch';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -207,6 +208,7 @@ app.use('/api/offers-studnie', (req, res, next) => {
     offerRoutes(req, res, next);
 });
 
+app.use('/api/orders-studnie/production/search', apiLimiter, productionSearchRoutes);
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
 app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);

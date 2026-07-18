@@ -9,6 +9,7 @@ import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
+import { searchCache } from '../../utils/searchCache';
 import {
     productionOrdersBatchSchema,
     productionOrderCreateSchema
@@ -258,6 +259,7 @@ router.put(
                 });
             }
 
+            searchCache.invalidateNamespace('production');
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -347,6 +349,7 @@ router.post(
                 }
             });
 
+            searchCache.invalidateNamespace('production');
             res.json({ ok: true, id: docId });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -439,6 +442,7 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
                 where: { id: docId, userId: authReq.user?.id }
             });
         }
+        searchCache.invalidateNamespace('production');
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

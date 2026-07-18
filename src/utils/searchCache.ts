@@ -1,4 +1,4 @@
-class SearchCache {
+export class SearchCache {
     private cache: Map<string, { data: unknown; timestamp: number }>;
     private maxSize: number;
     private ttl: number;
@@ -9,41 +9,35 @@ class SearchCache {
         this.ttl = ttl;
     }
 
-    private makeKey(userId: string, params: Record<string, unknown>): string {
-        return userId + '|' + JSON.stringify(params);
+    private _makeKey(namespace: string, params: Record<string, unknown>): string {
+        return namespace + '|' + JSON.stringify(params);
     }
 
-    get(userId: string, params: Record<string, unknown>): unknown | null {
-        const key = this.makeKey(userId, params);
+    get(namespace: string, params: Record<string, unknown>): unknown | null {
+        const key = this._makeKey(namespace, params);
         const entry = this.cache.get(key);
         if (!entry) return null;
-
         if (Date.now() - entry.timestamp > this.ttl) {
             this.cache.delete(key);
             return null;
         }
-
-        // LRU: przenieś na koniec
         this.cache.delete(key);
         this.cache.set(key, entry);
         return entry.data;
     }
 
-    set(userId: string, params: Record<string, unknown>, data: unknown): void {
-        const key = this.makeKey(userId, params);
-
+    set(namespace: string, params: Record<string, unknown>, data: unknown): void {
+        const key = this._makeKey(namespace, params);
         if (this.cache.size >= this.maxSize) {
             const oldest = this.cache.keys().next().value;
             if (oldest !== undefined) this.cache.delete(oldest);
         }
-
         this.cache.set(key, { data, timestamp: Date.now() });
     }
 
-    invalidateUser(userId: string): void {
-        const prefix = userId + '|';
+    invalidateNamespace(namespace: string): void {
         for (const key of this.cache.keys()) {
-            if (key.startsWith(prefix)) {
+            if (key.startsWith(namespace + '|')) {
                 this.cache.delete(key);
             }
         }
@@ -51,10 +45,6 @@ class SearchCache {
 
     invalidateAll(): void {
         this.cache.clear();
-    }
-
-    get size(): number {
-        return this.cache.size;
     }
 }
 

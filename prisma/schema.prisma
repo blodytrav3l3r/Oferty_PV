@@ -388,6 +388,11 @@ model production_orders_rel {
   updatedAt    String?
   data         String?
   creatorId    String? @default("")
+
+  @@index([userId], map: "idx_prod_user")
+  @@index([creatorId], map: "idx_prod_creator")
+  @@index([createdAt], map: "idx_prod_created")
+  @@index([orderId], map: "idx_prod_order")
 }
 
 model recycled_production_numbers {

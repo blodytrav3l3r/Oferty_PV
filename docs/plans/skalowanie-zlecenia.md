@@ -14,15 +14,15 @@ Przystosowanie strony `/zlecenia` do płynnej pracy przy 10 000+ zleceń produkc
 
 ## Stan obecny — problemy
 
-| Komponent | Obecne zachowanie | Problem dla 10k+ |
-|-----------|------------------|------------------|
-| `GET /api/orders-studnie/production/registry` | Zwraca WSZYSTKIE wiersze, brak LIMIT | Payload kilkanaście MB, wolny network |
-| Wyszukiwanie | Client-side: `ordersCache.filter()` na 10 polach | Iteracja po 10k obiektów przy każdym znaku |
-| `ordersCache` (frontend) | Wszystkie rekordy w pamięci | ~10k obiektów JS w RAM |
-| `renderTable()` | Buduje HTML dla wszystkich wierszy naraz | DOM z 10k+ `<tr>`, wolny rendering |
-| Auto-odświeżanie | `loadOrders()` co 60s — pełny reload | Stały transfer pełnego payloadu |
-| Indeksy DB | Brak na `production_orders_rel` (tylko PK) | Full table scan przy każdym zapytaniu |
-| Pole `data` JSON | Wszystkie pola wyszukiwania w JSON blob | Nie da się filtrować DB-side bez skanowania |
+| Komponent                                     | Obecne zachowanie                                | Problem dla 10k+                            |
+| --------------------------------------------- | ------------------------------------------------ | ------------------------------------------- |
+| `GET /api/orders-studnie/production/registry` | Zwraca WSZYSTKIE wiersze, brak LIMIT             | Payload kilkanaście MB, wolny network       |
+| Wyszukiwanie                                  | Client-side: `ordersCache.filter()` na 10 polach | Iteracja po 10k obiektów przy każdym znaku  |
+| `ordersCache` (frontend)                      | Wszystkie rekordy w pamięci                      | ~10k obiektów JS w RAM                      |
+| `renderTable()`                               | Buduje HTML dla wszystkich wierszy naraz         | DOM z 10k+ `<tr>`, wolny rendering          |
+| Auto-odświeżanie                              | `loadOrders()` co 60s — pełny reload             | Stały transfer pełnego payloadu             |
+| Indeksy DB                                    | Brak na `production_orders_rel` (tylko PK)       | Full table scan przy każdym zapytaniu       |
+| Pole `data` JSON                              | Wszystkie pola wyszukiwania w JSON blob          | Nie da się filtrować DB-side bez skanowania |
 
 ## Fazy
 
@@ -111,7 +111,9 @@ router.get('/', requireAuth, async (req, res) => {
         whereParts.push(Prisma.sql`production_orders_rel."createdAt" >= ${dateFrom}`);
     }
     if (dateTo) {
-        whereParts.push(Prisma.sql`production_orders_rel."createdAt" <= ${dateTo + 'T23:59:59.999Z'}`);
+        whereParts.push(
+            Prisma.sql`production_orders_rel."createdAt" <= ${dateTo + 'T23:59:59.999Z'}`
+        );
     }
 
     // User filter (handler / creator)
@@ -146,7 +148,7 @@ router.get('/', requireAuth, async (req, res) => {
             Prisma.sql`u1."firstName" LIKE ${'%' + escaped + '%'}`,
             Prisma.sql`u1."lastName" LIKE ${'%' + escaped + '%'}`,
             Prisma.sql`u2."firstName" LIKE ${'%' + escaped + '%'}`,
-            Prisma.sql`u2."lastName" LIKE ${'%' + escaped + '%'}`,
+            Prisma.sql`u2."lastName" LIKE ${'%' + escaped + '%'}`
         ];
         searchWhere = Prisma.sql`AND (${Prisma.join(searchParts, ' OR ')})`;
     }
@@ -300,6 +302,7 @@ app.use('/api/orders-studnie/production/search', apiLimiter, productionSearchRou
 **Plik:** `public/js/spa/zlecenia.js`
 
 Główne zmiany:
+
 - `ordersCache` → zastąpione `searchResults` (obiekt z `{ items, totalCount, hasMore, nextCursor, nextCursorId }`)
 - `loadOrders()` → wywołuje `searchOffers()` zamiast bezpośredniego fetcha
 - Nowa metoda `searchOffers(params)` — fetch z AbortController + cache
@@ -423,19 +426,19 @@ function renderTable() {
     if (searchResults?.hasMore) {
         const shown = searchResults.items.length;
         const total = searchResults.totalCount;
-        const label = total != null
-            ? 'Pokaż więcej (' + shown + ' z ' + total + ')'
-            : 'Pokaż więcej';
-        html += '<tr><td colspan="10" style="text-align:center;padding:1rem;">' +
+        const label =
+            total != null ? 'Pokaż więcej (' + shown + ' z ' + total + ')' : 'Pokaż więcej';
+        html +=
+            '<tr><td colspan="10" style="text-align:center;padding:1rem;">' +
             '<button class="btn btn-sm btn-secondary" id="zlecenia-load-more-btn">' +
-            label + '</button></td></tr>';
+            label +
+            '</button></td></tr>';
     }
 
     tbody.innerHTML = html;
 
     // Attach event dla load more
-    document.getElementById('zlecenia-load-more-btn')
-        ?.addEventListener('click', () => loadMore());
+    document.getElementById('zlecenia-load-more-btn')?.addEventListener('click', () => loadMore());
 
     updateBatchBar();
 }
@@ -629,50 +632,50 @@ searchCache.invalidateAll();
 
 ## Podsumowanie plików do modyfikacji
 
-| Plik | Faza | Zmiana |
-|------|------|--------|
-| `src/routes/orders/productionSearch.ts` | 1,3,4,7 | **NOWY** — Search API + cursor + LEFT JOIN + cache |
-| `src/utils/productionSearchUtils.ts` | 1,2 | **NOWY** — parseSearchParams, mapProductionOrderRow |
-| `src/utils/searchCache.ts` | 7 | **WSPÓLNY** — LRU cache (już istnieje z planu kartoteki) |
-| `src/app.ts` | 1 | Rejestracja `/api/orders-studnie/production/search` |
-| `src/routes/orders/production.ts` | 7 | Unieważnianie cache po CREATE/UPDATE/DELETE |
-| `public/js/spa/zlecenia.js` | 1,3,4,5,7 | searchOffers, loadMore, buildSearchParams, AbortController, debounce, renderTable z paginacją |
-| `public/zlecenia.html` | 1 | Spinner, load more button container |
-| `prisma/schema.prisma` | 6 | Indeksy na `production_orders_rel` |
+| Plik                                    | Faza      | Zmiana                                                                                        |
+| --------------------------------------- | --------- | --------------------------------------------------------------------------------------------- |
+| `src/routes/orders/productionSearch.ts` | 1,3,4,7   | **NOWY** — Search API + cursor + LEFT JOIN + cache                                            |
+| `src/utils/productionSearchUtils.ts`    | 1,2       | **NOWY** — parseSearchParams, mapProductionOrderRow                                           |
+| `src/utils/searchCache.ts`              | 7         | **WSPÓLNY** — LRU cache (już istnieje z planu kartoteki)                                      |
+| `src/app.ts`                            | 1         | Rejestracja `/api/orders-studnie/production/search`                                           |
+| `src/routes/orders/production.ts`       | 7         | Unieważnianie cache po CREATE/UPDATE/DELETE                                                   |
+| `public/js/spa/zlecenia.js`             | 1,3,4,5,7 | searchOffers, loadMore, buildSearchParams, AbortController, debounce, renderTable z paginacją |
+| `public/zlecenia.html`                  | 1         | Spinner, load more button container                                                           |
+| `prisma/schema.prisma`                  | 6         | Indeksy na `production_orders_rel`                                                            |
 
 ## Zachowanie istniejących funkcji
 
-| Funkcja | Działa dzięki |
-|---------|--------------|
-| Drukowanie pojedynczego zlecenia | `printSingleZlecenie()` szuka w `searchResults.items` po `id` |
-| Drukowanie pojedynczej etykiety | j.w. |
-| Drukowanie wsadowe zleceń | `selectedIds` jest zmapowane z widocznych checkboxów |
-| Drukowanie wsadowe etykiet | j.w. |
-| Usuwanie zlecenia | `deleteOrder()` — po usunięciu, cache na backendzie jest czyszczony, frontend odświeża |
-| Edycja (przekierowanie do studni) | `editOrder()` — działa niezależnie od paginacji |
-| Auto-odświeżanie | `searchOffers()` zamiast `loadOrders()` co 60s (tylko pierwsza strona) |
-| Zaznaczanie wszystkie | `toggleSelectAll()` — działa na widocznych wierszach |
+| Funkcja                           | Działa dzięki                                                                          |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| Drukowanie pojedynczego zlecenia  | `printSingleZlecenie()` szuka w `searchResults.items` po `id`                          |
+| Drukowanie pojedynczej etykiety   | j.w.                                                                                   |
+| Drukowanie wsadowe zleceń         | `selectedIds` jest zmapowane z widocznych checkboxów                                   |
+| Drukowanie wsadowe etykiet        | j.w.                                                                                   |
+| Usuwanie zlecenia                 | `deleteOrder()` — po usunięciu, cache na backendzie jest czyszczony, frontend odświeża |
+| Edycja (przekierowanie do studni) | `editOrder()` — działa niezależnie od paginacji                                        |
+| Auto-odświeżanie                  | `searchOffers()` zamiast `loadOrders()` co 60s (tylko pierwsza strona)                 |
+| Zaznaczanie wszystkie             | `toggleSelectAll()` — działa na widocznych wierszach                                   |
 
 ## Największe ryzyka
 
-| Ryzyko | Jak unikamy |
-|--------|-------------|
-| `json_extract` w WHERE — wolne na 10k+ | Indeksy na kolumnach, docelowo normalizacja do kolumn |
-| LIKE '%tekst%' — nie używa indeksu | FTS5 w przyszłości, na start akceptowalne dla <10k |
-| Print wymaga pełnych danych PO | PO są w całości w `data` JSON — paginacja nie traci danych per-rekord |
-| `selectedIds` obejmuje tylko widoczną stronę | Użytkownik może zaznaczać tylko widoczne wiersze — OK |
+| Ryzyko                                                       | Jak unikamy                                                                                              |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `json_extract` w WHERE — wolne na 10k+                       | Indeksy na kolumnach, docelowo normalizacja do kolumn                                                    |
+| LIKE '%tekst%' — nie używa indeksu                           | FTS5 w przyszłości, na start akceptowalne dla <10k                                                       |
+| Print wymaga pełnych danych PO                               | PO są w całości w `data` JSON — paginacja nie traci danych per-rekord                                    |
+| `selectedIds` obejmuje tylko widoczną stronę                 | Użytkownik może zaznaczać tylko widoczne wiersze — OK                                                    |
 | offser z poza widocznego zakresu nie widać w `searchResults` | `printBatchZlecenia` szuka w `selectedIds` — jeśli element nie jest załadowany, nie będzie w zaznaczeniu |
-| Cache zwraca nieaktualne dane | `invalidateAll()` przy każdym CREATE/UPDATE/DELETE |
+| Cache zwraca nieaktualne dane                                | `invalidateAll()` przy każdym CREATE/UPDATE/DELETE                                                       |
 
 ## Szacowany czas
 
-| Faza | Czas | Zależności |
-|------|------|------------|
-| 1. Unified Search API | 4-6h | — |
-| 2. Backend filtry | 1-2h | Faza 1 |
-| 3. Paginacja cursorowa | 1h | Faza 1 |
-| 4. LEFT JOIN w SQL | 1h | Faza 1 |
-| 5. Debounce + AbortController | 0.5h | — |
-| 6. Indeksy + EXPLAIN | 1h | — |
-| 7. Cache z unieważnianiem | 1h | Faza 1, wspólny searchCache |
-| **Razem** | **9.5-12.5h** | |
+| Faza                          | Czas          | Zależności                  |
+| ----------------------------- | ------------- | --------------------------- |
+| 1. Unified Search API         | 4-6h          | —                           |
+| 2. Backend filtry             | 1-2h          | Faza 1                      |
+| 3. Paginacja cursorowa        | 1h            | Faza 1                      |
+| 4. LEFT JOIN w SQL            | 1h            | Faza 1                      |
+| 5. Debounce + AbortController | 0.5h          | —                           |
+| 6. Indeksy + EXPLAIN          | 1h            | —                           |
+| 7. Cache z unieważnianiem     | 1h            | Faza 1, wspólny searchCache |
+| **Razem**                     | **9.5-12.5h** |                             |
