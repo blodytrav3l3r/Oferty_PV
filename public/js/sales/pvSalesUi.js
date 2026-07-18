@@ -201,11 +201,6 @@ class PVSalesUI {
             await this.searchOffers(this.buildSearchParams(), true);
             this.renderResults();
 
-            // Załaduj mapę zamówień w tle — nie blokuje renderowania
-            this.loadOrdersMap().catch((e) =>
-                logger.warn('pvSalesUi', 'loadOrdersMap (background):', e.message)
-            );
-
             this._startAutoRefresh();
 
             this.initialized = true;
@@ -276,30 +271,27 @@ class PVSalesUI {
         }
     }
 
-    /**
-     * Sprawdza czy oferta ma zamówienie.
-     * Najpierw z _orderCount (search API), potem z ordersMap (legacy), potem z pól oferty.
-     * @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }}
-     */
+    /** @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }} */
     getOrderForOffer(offer) {
-        // Najpierw ordersMap — zawiera pełne dane zamówień
         const offerId = this.normalizeId(offer.id);
-        const orders =
-            offerId && this.ordersMap.has(offerId) ? [...this.ordersMap.get(offerId)] : [];
 
-        if (orders.length > 0) {
-            return { hasOrder: true, orders, order: orders[0] };
-        }
-
-        // Potem _orderCount z search API
+        // _orderCount z search API — zawsze dostępny, najszybszy
         if (offer._orderCount != null && offer._orderCount > 0) {
             return { hasOrder: true, orders: [], order: null };
         }
-
         if (offer._orderCount != null && offer._orderCount === 0) {
             return { hasOrder: false, orders: [], order: null };
         }
 
+        // ordersMap (legacy) — dla funkcji które potrzebują pełnych danych zamówienia
+        if (offerId && this.ordersMap.has(offerId)) {
+            const orders = [...this.ordersMap.get(offerId)];
+            if (orders.length > 0) {
+                return { hasOrder: true, orders, order: orders[0] };
+            }
+        }
+
+        // Fallback z pól oferty
         if (offer.hasOrder && offer.orderId) {
             const fallbackOrder = { id: offer.orderId, orderNumber: offer.orderNumber || '' };
             return { hasOrder: true, orders: [fallbackOrder], order: fallbackOrder };
@@ -310,9 +302,6 @@ class PVSalesUI {
 
     async loadLocalOffers() {
         logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
-        this.loadOrdersMap().catch((e) =>
-            logger.warn('pvSalesUi', 'loadOrdersMap (background):', e.message)
-        );
         await this.searchOffers(this.buildSearchParams());
     }
 
@@ -1392,7 +1381,14 @@ class PVSalesUI {
                 throw new Error(data.error || 'Nie udało się usunąć zamówienia z serwera');
             }
 
-            await this.loadOrdersMap();
+            if (offerIdForOrder && this.ordersMap.has(offerIdForOrder)) {
+                const list = this.ordersMap.get(offerIdForOrder);
+                const idx = list.findIndex(
+                    (o) => this.normalizeId(o.id) === this.normalizeId(orderId)
+                );
+                if (idx !== -1) list.splice(idx, 1);
+                if (list.length === 0) this.ordersMap.delete(offerIdForOrder);
+            }
             const remainingOrders = offerIdForOrder
                 ? this.ordersMap.get(offerIdForOrder) || []
                 : [];
