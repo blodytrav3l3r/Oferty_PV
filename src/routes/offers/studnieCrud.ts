@@ -3,6 +3,8 @@ import prisma, { Prisma } from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
+import { searchCache } from '../../utils/searchCache';
+import { syncFts5, removeFts5 } from '../../utils/fts5Sync';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
@@ -213,6 +215,9 @@ router.post(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
+                const clientName = o.clientName || null;
+                const investName = o.investName || null;
+                const clientNip = o.clientNip || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -242,6 +247,9 @@ router.post(
                         userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         updatedAt: updated,
                         data: dataStr,
@@ -251,10 +259,19 @@ router.post(
                         userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr
                     }
+                });
+                await syncFts5('studnie', {
+                    id: docId,
+                    offer_number: offerNumber,
+                    clientName,
+                    investName
                 });
                 results.push({ id: docId, ok: true });
             }
@@ -263,6 +280,7 @@ router.post(
                 'Offers',
                 `Zapisano ${results.length} ofert studnie przez ${authReq.user?.username}`
             );
+            searchCache.invalidateAll();
             res.json({ ok: true, results });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -308,6 +326,13 @@ router.put(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
+                const dataPayload = (o.data as Record<string, unknown>) || {};
+                const clientName =
+                    (o.clientName as string) || (dataPayload.clientName as string) || null;
+                const investName =
+                    (o.investName as string) || (dataPayload.investName as string) || null;
+                const clientNip =
+                    (o.clientNip as string) || (dataPayload.clientNip as string) || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -325,18 +350,31 @@ router.put(
                         id: docId,
                         userId: authReq.user?.id,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     },
                     update: {
                         userId: authReq.user?.id,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     }
                 });
+                await syncFts5('studnie', {
+                    id: docId,
+                    offer_number: (o.offer_number as string) || null,
+                    clientName,
+                    investName
+                });
             }
 
+            searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -371,11 +409,13 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
         await prisma.offers_studnie_rel.delete({ where: { id } });
+        await removeFts5('studnie', id);
 
         logger.info(
             'Offers',
-            `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`
+            `Oferta studnie ${req.params.id} usuni�ta przez ${authReq.user?.username}`
         );
+        searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

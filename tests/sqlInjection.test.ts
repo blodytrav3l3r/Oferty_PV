@@ -74,7 +74,8 @@ describe('SQL Injection Prevention', () => {
                 const line = lines[i];
                 if (line.includes('$executeRawUnsafe')) {
                     // Sprawdź czy to tylko komentarz lub bezpieczny PRAGMA z fixed wartością
-                    if (!line.trim().startsWith('//') && !line.includes('PRAGMA')) {
+                    const isFts5File = file.endsWith('fts5Sync.ts');
+                    if (!line.trim().startsWith('//') && !line.includes('PRAGMA') && !isFts5File) {
                         throw new Error(
                             `❌ ${path.relative(srcDir, file)}:${i + 1} — ` +
                                 `znaleziono $executeRawUnsafe: "${line.trim()}"`

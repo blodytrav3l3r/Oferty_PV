@@ -5,11 +5,11 @@ import { storageService } from '../shared/StorageService.js';
 class PVSalesUI {
     constructor() {
         this.syncManager = null;
-        this.allLocalOffers = []; // Przechowalnia do filtrowania
+        this.allLocalOffers = [];
         this.isSyncUpToDate = true;
-        this.ordersMap = new Map(); // offerId -> order
-        this.currentFilter = 'all'; // 'all', 'with_order', 'without_order'
-        this.currentTypeFilter = 'all'; // 'all', 'offer', 'studnia_oferta'
+        this.ordersMap = new Map();
+        this.currentFilter = 'all';
+        this.currentTypeFilter = 'all';
         this.filters = {
             user: '',
             myOffers: false,
@@ -21,6 +21,12 @@ class PVSalesUI {
             }
         };
         this.autoRefreshInterval = null;
+
+        // Nowy stan Unified Search API
+        this.searchResults = null; // { items, totalCount, hasMore, nextCursor, nextCursorId }
+        this.isLoading = false;
+        this.abortController = null;
+        this.searchDebounceTimer = null;
 
         this.init();
     }
@@ -158,13 +164,14 @@ class PVSalesUI {
             this.role = user.role || 'user';
             logger.info('pvSalesUi', 'Inicjalizacja dla użytkownika:', user.username);
 
-            // Inicjalizacja StorageService
             await storageService.init();
-
             this.attachEventListeners();
-            await this.loadOrdersMap();
             if (typeof fetchGlobalUsers === 'function') await fetchGlobalUsers();
-            await this.loadLocalOffers();
+            await this.searchOffers(this.buildSearchParams());
+
+            // Załaduj mapę zamówień dla inline panelu w kartotece
+            await this.loadOrdersMap();
+            this.renderResults();
 
             this._startAutoRefresh();
 
@@ -235,16 +242,27 @@ class PVSalesUI {
     }
 
     /**
-     * Sprawdza czy oferta ma zamówienie — najpierw z mapy API, potem z pól oferty.
+     * Sprawdza czy oferta ma zamówienie.
+     * Najpierw z _orderCount (search API), potem z ordersMap (legacy), potem z pól oferty.
      * @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }}
      */
     getOrderForOffer(offer) {
+        // Najpierw ordersMap — zawiera pełne dane zamówień
         const offerId = this.normalizeId(offer.id);
         const orders =
             offerId && this.ordersMap.has(offerId) ? [...this.ordersMap.get(offerId)] : [];
 
         if (orders.length > 0) {
             return { hasOrder: true, orders, order: orders[0] };
+        }
+
+        // Potem _orderCount z search API
+        if (offer._orderCount != null && offer._orderCount > 0) {
+            return { hasOrder: true, orders: [], order: null };
+        }
+
+        if (offer._orderCount != null && offer._orderCount === 0) {
+            return { hasOrder: false, orders: [], order: null };
         }
 
         if (offer.hasOrder && offer.orderId) {
@@ -256,57 +274,14 @@ class PVSalesUI {
     }
 
     async loadLocalOffers() {
-        const listDiv = document.getElementById('pv-local-offers-list');
-        if (!listDiv) {
-            logger.warn(
-                'pvSalesUi',
-                'Nie znaleziono elementu listy ofert (id: pv-local-offers-list)'
-            );
-            return;
-        }
-
-        logger.info('pvSalesUi', 'loadLocalOffers: Rozpoczęcie pobierania...');
-        try {
-            // Zawsze najpierw pobierzmy najświeższą mapę zamówień (omijanie cache'u)
-            logger.info('pvSalesUi', 'loadLocalOffers: Pobieranie mapy zamówień...');
-            await this.loadOrdersMap();
-
-            // Pobieramy oferty przez StorageService
-            logger.info('pvSalesUi', 'loadLocalOffers: Wywołanie storageService.getOffers()...');
-            const docs = await storageService.getOffers();
-            logger.info(
-                'pvSalesUi',
-                `[PVSalesUI] loadLocalOffers: Pobrano ${docs.length} dokumentów.`
-            );
-
-            if (docs.length === 0) {
-                listDiv.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Nie masz jeszcze żadnych zapisanych ofert.</div>`;
-                return;
-            }
-
-            this.allLocalOffers = docs;
-            this.populateUserFilter();
-            logger.info('pvSalesUi', 'loadLocalOffers: Filtrowanie i renderowanie...');
-            this.filterLocalOffers();
-            if (window.PvImportExportToolbar) window.PvImportExportToolbar.init('ie-toolbar-host');
-            logger.info('pvSalesUi', 'loadLocalOffers: Gotowe.');
-        } catch (error) {
-            logger.error('pvSalesUi', 'Błąd pobierania ofert:', error);
-            listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">
-                <strong>Błąd pobierania ofert:</strong><br/>
-                <span style="font-size:0.85rem; opacity:0.8;">${this.escapeHtml(error.message || 'Wystąpił nieoczekiwany błąd sieciowy')}</span><br/>
-                <button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.loadLocalOffers()"><i data-lucide="refresh-cw" aria-hidden="true"></i> Odśwież</button>
-            </div>`;
-            setTimeout(() => {
-                if (window.lucide) lucide.createIcons();
-            }, 50);
-        }
+        logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
+        await this.searchOffers(this.buildSearchParams());
     }
 
     _startAutoRefresh() {
         this._stopAutoRefresh();
         this.autoRefreshInterval = setInterval(() => {
-            if (!document.hidden) this.loadLocalOffers();
+            if (!document.hidden) this.searchOffers(this.buildSearchParams());
         }, 60000);
     }
 
@@ -317,98 +292,25 @@ class PVSalesUI {
         }
     }
 
-    filterLocalOffers() {
-        const input = document.getElementById('pv-local-search-input');
-        const listDiv = document.getElementById('pv-local-offers-list');
-        if (!input || !listDiv || !this.allLocalOffers) return;
-
-        const query = input.value.trim().toLowerCase();
-
+    /**
+     * Handler dla oninput na search box — debounce + sync UI
+     */
+    onSearchInput() {
         this._syncFilterUI();
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = setTimeout(() => {
+            this.searchOffers(this.buildSearchParams());
+        }, 300);
+    }
 
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const boundaries = {
-            today,
-            todayEnd: new Date(today.getTime() + 86400000),
-            weekAgo: new Date(today.getTime() - 6 * 86400000),
-            monthAgo: new Date(today.getTime() - 29 * 86400000)
-        };
-
-        const filtered = this.allLocalOffers.filter((offer) => {
-            if (this.currentTypeFilter !== 'all' && offer.type !== this.currentTypeFilter)
-                return false;
-
-            const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
-            const client = (
-                offer.clientName ||
-                (offer.data && offer.data.clientName) ||
-                ''
-            ).toLowerCase();
-            const nip = (
-                offer.clientNip ||
-                (offer.data && offer.data.clientNip) ||
-                ''
-            ).toLowerCase();
-            const budowa = (
-                offer.investName ||
-                offer.budowa ||
-                (offer.data && (offer.data.investName || offer.data.budowa)) ||
-                ''
-            ).toLowerCase();
-            const userStr = (
-                offer.userName ||
-                offer.lastEditedBy ||
-                (offer.data && offer.data.creatorName) ||
-                ''
-            ).toLowerCase();
-
-            const offerOrders = this.ordersMap.get(this.normalizeId(offer.id));
-            const matchesOrderNumber =
-                offerOrders &&
-                offerOrders.some((o) => {
-                    const on = o?.orderNumber || o?.data?.orderNumber || '';
-                    return on.toLowerCase().includes(query);
-                });
-
-            if (
-                query &&
-                !num.includes(query) &&
-                !client.includes(query) &&
-                !nip.includes(query) &&
-                !budowa.includes(query) &&
-                !userStr.includes(query) &&
-                !matchesOrderNumber
-            )
-                return false;
-
-            if (this.currentFilter !== 'all') {
-                const { hasOrder } = this.getOrderForOffer(offer);
-                if (this.currentFilter === 'with_order' && !hasOrder) return false;
-                if (this.currentFilter === 'without_order' && hasOrder) return false;
-            }
-
-            if (!this.offerMatchesUser(offer, this.filters.user)) return false;
-            if (!this.offerMatchesDate(offer, this.filters.date, boundaries)) return false;
-            return true;
-        });
-
-        if (filtered.length === 0) {
-            listDiv.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted); font-style: italic;">Brak ofert pasujących do wyszukiwania.</div>`;
-            return;
-        }
-
-        listDiv.innerHTML = this.renderOffersList(filtered, true);
-        this.attachActionListeners(listDiv);
-        setTimeout(() => {
-            if (window.lucide) lucide.createIcons();
-        }, 0);
+    filterLocalOffers() {
+        this._syncFilterUI();
+        this.searchOffers(this.buildSearchParams());
     }
 
     setFilterLocalOffers(filterType) {
         this.currentFilter = filterType;
 
-        // Aktualizacja UI przycisku filtru
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filterType);
             if (btn.dataset.filter === filterType) {
@@ -418,12 +320,12 @@ class PVSalesUI {
             }
         });
 
-        this.loadLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     setTypeFilter(typeFilter) {
         this.currentTypeFilter = typeFilter;
-        this.loadLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     offerMatchesUser(offer, selectedUserId) {
@@ -526,7 +428,7 @@ class PVSalesUI {
     setUserFilter(userId) {
         this.filters.user = userId || '';
         this.filters.myOffers = false;
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     toggleMyOffers() {
@@ -538,7 +440,7 @@ class PVSalesUI {
             const uid = window.currentUser?.id || window.currentUser?.username || '';
             this.filters.user = uid;
         }
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     setDatePreset(preset) {
@@ -552,7 +454,7 @@ class PVSalesUI {
         this.filters.date.from = '';
         this.filters.date.to = '';
         this._closeDatePopover();
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     toggleDateRange() {
@@ -564,7 +466,7 @@ class PVSalesUI {
             this.filters.date.mode = 'range';
             this.filters.date.preset = '';
         }
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     onDateRangeChange(from, to) {
@@ -576,7 +478,7 @@ class PVSalesUI {
         }
         this.filters.date.from = from || '';
         this.filters.date.to = to || '';
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
     }
 
     clearFilters() {
@@ -587,7 +489,249 @@ class PVSalesUI {
         this.filters.date.from = '';
         this.filters.date.to = '';
         this._closeDatePopover();
-        this.filterLocalOffers();
+        this.searchOffers(this.buildSearchParams());
+    }
+
+    /**
+     * Buduje parametry wyszukiwania z obecnego stanu filtrów
+     */
+    buildSearchParams() {
+        const input = document.getElementById('pv-local-search-input');
+        const q = input ? input.value.trim() : '';
+
+        let dateFrom = '';
+        let dateTo = '';
+        if (this.filters.date.mode === 'preset') {
+            const resolved = this._resolveDatePreset(this.filters.date.preset);
+            dateFrom = resolved.from;
+            dateTo = resolved.to;
+        } else if (this.filters.date.mode === 'range') {
+            dateFrom = this.filters.date.from;
+            dateTo = this.filters.date.to;
+        }
+
+        let userId = this.filters.user;
+        if (this.filters.myOffers) {
+            try {
+                const u = JSON.parse(sessionStorage.getItem('user') || '{}');
+                userId = u.id || '';
+            } catch {
+                userId = '';
+            }
+        }
+
+        return {
+            q,
+            type: this.currentTypeFilter,
+            dateFrom,
+            dateTo,
+            userId,
+            orderStatus: this.currentFilter,
+            limit: 50,
+            sort: 'createdAt',
+            order: 'desc'
+        };
+    }
+
+    /**
+     * Główna metoda wyszukiwania — zastępuje loadOrdersMap + loadLocalOffers
+     */
+    async searchOffers(params = {}) {
+        if (this.abortController) {
+            this.abortController.abort();
+        }
+        this.abortController = new AbortController();
+
+        this.isLoading = true;
+        this.showLoadingSpinner();
+
+        const headers =
+            typeof authHeaders === 'function'
+                ? authHeaders()
+                : { 'Content-Type': 'application/json' };
+
+        const isLoadMore = !!params.cursor;
+        const qs = new URLSearchParams({
+            q: params.q || '',
+            type: params.type || 'all',
+            dateFrom: params.dateFrom || '',
+            dateTo: params.dateTo || '',
+            userId: params.userId || '',
+            orderStatus: params.orderStatus || 'all',
+            limit: String(params.limit || 50),
+            sort: params.sort || 'createdAt',
+            order: params.order || 'desc',
+            cursor: params.cursor || '',
+            cursorId: params.cursorId || '',
+            t: String(Date.now())
+        }).toString();
+
+        try {
+            const resp = await fetch('/api/offers/search?' + qs, {
+                headers,
+                signal: this.abortController.signal
+            });
+
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const json = await resp.json();
+
+            if (isLoadMore) {
+                this.searchResults.items = [...this.searchResults.items, ...(json.data || [])];
+                this.searchResults.hasMore = json.hasMore;
+                this.searchResults.nextCursor = json.nextCursor;
+                this.searchResults.nextCursorId = json.nextCursorId;
+            } else {
+                this.searchResults = {
+                    items: json.data || [],
+                    totalCount: json.totalCount || 0,
+                    hasMore: json.hasMore,
+                    nextCursor: json.nextCursor,
+                    nextCursorId: json.nextCursorId
+                };
+                // Po nowym wyszukiwaniu odśwież listę opiekunów
+                this.populateUserFilter();
+            }
+
+            this.renderResults();
+            this.updateOfferCounter(this.searchResults.items.length, this.searchResults.totalCount);
+        } catch (error) {
+            if (error.name === 'AbortError') return;
+            logger.error('pvSalesUi', 'Błąd wyszukiwania ofert:', error);
+            this.showError(error.message || 'Błąd sieci');
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    /**
+     * Ładuje kolejną stronę wyników (cursor-based pagination)
+     */
+    async loadMore() {
+        if (this.isLoading || !this.searchResults?.hasMore) return;
+
+        const params = this.buildSearchParams();
+        params.cursor = this.searchResults.nextCursor;
+        params.cursorId = this.searchResults.nextCursorId;
+        params.limit = 50;
+
+        await this.searchOffers(params);
+    }
+
+    /**
+     * Renderuje wyniki wyszukiwania do kontenera kart
+     */
+    renderResults() {
+        const listDiv = document.getElementById('pv-local-offers-list');
+        if (!listDiv) return;
+
+        const items = this.searchResults?.items || [];
+
+        if (items.length === 0) {
+            listDiv.innerHTML =
+                '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-style:italic;">Brak ofert pasujących do filtrów.</div>';
+            return;
+        }
+
+        listDiv.innerHTML = this.renderOffersList(items, true);
+        this.attachActionListeners(listDiv);
+        if (window.lucide) lucide.createIcons({ root: listDiv });
+
+        if (this.searchResults?.hasMore) {
+            listDiv.insertAdjacentHTML('beforeend', this.renderLoadMore());
+            document
+                .getElementById('pv-load-more-btn')
+                ?.addEventListener('click', () => this.loadMore());
+        }
+    }
+
+    /**
+     * HTML przycisku "Pokaż więcej"
+     */
+    renderLoadMore() {
+        const shown = this.searchResults?.items?.length || 0;
+        const total = this.searchResults?.totalCount;
+        const label =
+            total != null ? 'Pokaż więcej (' + shown + ' z ' + total + ')' : 'Pokaż więcej';
+        return (
+            '<div class="load-more-container" style="text-align:center; padding:1rem;">' +
+            '<button class="btn btn-sm btn-secondary" id="pv-load-more-btn">' +
+            label +
+            '</button></div>'
+        );
+    }
+
+    /**
+     * Wyświetla spinner ładowania
+     */
+    showLoadingSpinner() {
+        const el = document.getElementById('pv-local-offers-list');
+        if (!el) return;
+        el.innerHTML =
+            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">' +
+            '<i data-lucide="loader-2" class="spin" style="width:24px;height:24px;animation:spin 1s linear infinite;"></i>' +
+            '<br/><span style="font-size:0.85rem; margin-top:0.5rem; display:inline-block;">Ładowanie ofert...</span></div>';
+        if (window.lucide) lucide.createIcons({ root: el });
+    }
+
+    /**
+     * Aktualizuje licznik ofert
+     */
+    updateOfferCounter(shown, total) {
+        const el = document.getElementById('pv-offer-count');
+        if (!el) return;
+        if (total != null) {
+            el.textContent = 'Pokazuje ' + shown + ' z ' + total + ' ofert';
+        } else {
+            el.textContent = '';
+        }
+    }
+
+    /**
+     * Wyświetla błąd w kontenerze listy
+     */
+    showError(message) {
+        const listDiv = document.getElementById('pv-local-offers-list');
+        if (!listDiv) return;
+        listDiv.innerHTML =
+            '<div style="text-align:center; padding:2rem; color:var(--text-danger);">' +
+            '<strong>Błąd:</strong><br/>' +
+            '<span style="font-size:0.85rem; opacity:0.8;">' +
+            this.escapeHtml(message) +
+            '</span><br/>' +
+            '<button class="btn btn-sm btn-secondary" style="margin-top:1rem;" onclick="window.pvSalesUI.searchOffers(window.pvSalesUI.buildSearchParams())">' +
+            '<i data-lucide="refresh-cw"></i> Odśwież</button></div>';
+        setTimeout(() => {
+            if (window.lucide) lucide.createIcons();
+        }, 50);
+    }
+
+    /**
+     * Rozwiązuje preset daty na przedział from-to
+     */
+    _resolveDatePreset(preset) {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(today.getTime() + 86400000);
+
+        switch (preset) {
+            case 'today':
+                return { from: today.toISOString(), to: todayEnd.toISOString() };
+            case '7d': {
+                const weekAgo = new Date(today.getTime() - 6 * 86400000);
+                return { from: weekAgo.toISOString(), to: todayEnd.toISOString() };
+            }
+            case '30d': {
+                const monthAgo = new Date(today.getTime() - 29 * 86400000);
+                return { from: monthAgo.toISOString(), to: todayEnd.toISOString() };
+            }
+            case 'month': {
+                const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+                const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+                return { from: monthStart.toISOString(), to: monthEnd.toISOString() };
+            }
+            default:
+                return { from: '', to: '' };
+        }
     }
 
     _closeDatePopover() {
@@ -599,8 +743,9 @@ class PVSalesUI {
         const select = document.getElementById('pv-user-filter');
         if (!select) return;
 
+        const offers = this.searchResults?.items || this.allLocalOffers || [];
         const userSet = new Map();
-        for (const offer of this.allLocalOffers) {
+        for (const offer of offers) {
             const uid = offer.userId || offer.lastEditedBy || '';
             if (!uid || uid === '' || userSet.has(uid)) continue;
             let displayName = uid;
@@ -658,7 +803,7 @@ class PVSalesUI {
                         : 'btn-order-badge';
                     const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
 
-                    orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${this.escapeHtml(order.id || '')}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
+                    orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${this.escapeHtml(order?.id || '')}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
                     <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
                    </a>`;
 
@@ -737,6 +882,8 @@ class PVSalesUI {
                           : 0;
                 }
 
+                const clientNumber =
+                    offer.clientNumber || (offer.data && offer.data.clientNumber) || '';
                 const clientInfo =
                     offer.clientName || (offer.data && offer.data.clientName) || 'Brak danych';
                 const investInfo =
@@ -785,7 +932,7 @@ class PVSalesUI {
                             <div class="offer-title-section">
                                 <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
                                 <div class="offer-subtitle">
-                                    <span class="offer-client">${clientInfo}</span>
+                                    <span class="offer-client">${clientInfo}${clientNumber ? ` <span class="client-nip">(${clientNumber})</span>` : ''}</span>
                                     ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${investInfo}</span>` : ''}
                                     ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>` : ''}
                                     ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>` : ''}
@@ -820,7 +967,7 @@ class PVSalesUI {
                                         <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order.id : ''}" title="Wydruk" aria-label="Wydruk">
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         ${
@@ -847,21 +994,52 @@ class PVSalesUI {
             .join('');
     }
 
-    showOfferOrdersPopup(offerId) {
+    _offerTypeForApi(displayType) {
+        return displayType === 'studnia_oferta' ? 'studnie' : 'rury';
+    }
+
+    async showOfferOrdersPopup(offerId, offerType) {
         const offerKey = this.normalizeId(offerId);
-        const offer = this.allLocalOffers.find((o) => this.normalizeId(o.id) === offerKey);
-        const orders =
+
+        let orders =
             offerKey && this.ordersMap.has(offerKey) ? [...this.ordersMap.get(offerKey)] : [];
+
+        if (!orders || orders.length === 0) {
+            try {
+                const headers =
+                    typeof authHeaders === 'function'
+                        ? authHeaders()
+                        : { 'Content-Type': 'application/json' };
+                const apiType = offerType ? this._offerTypeForApi(offerType) : undefined;
+                const resp = await fetch(
+                    `/api/offers/search/orders?id=${encodeURIComponent(offerKey)}${apiType ? `&type=${apiType}` : ''}&t=${Date.now()}`,
+                    { headers }
+                );
+                if (resp.ok) {
+                    const json = await resp.json();
+                    orders = json.data || [];
+                    this.ordersMap.set(offerKey, orders);
+                }
+            } catch (e) {
+                logger.warn('pvSalesUi', 'Błąd pobierania zamówień:', e);
+            }
+        }
 
         if (!orders || orders.length === 0) {
             showToast('Brak zamówień powiązanych z tą ofertą.', 'info');
             return;
         }
 
-        const offerLabel =
-            offer && (offer.number || offer.title || offer.offerName)
-                ? offer.number || offer.title || offer.offerName
-                : 'Oferta';
+        // Odśwież search results — zaktualizuj _orderCount w pamięci
+        let offerLabel = 'Oferta';
+        const srOffer = this.searchResults?.items?.find((o) => this.normalizeId(o.id) === offerKey);
+        if (srOffer) {
+            srOffer._orderCount = orders.length;
+            offerLabel = srOffer.number || srOffer.title || srOffer.offerName || 'Oferta';
+        }
+        this.renderResults();
+
+        const resolvedType = offerType || 'studnia_oferta';
 
         let html = `
             <div class="modal-header">
@@ -881,14 +1059,14 @@ class PVSalesUI {
             html += `
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
                     <div style="min-width:0;">
-                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
+                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
                         <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(offer?.type || (/^offer_rury_/.test(offerKey) ? 'rura_oferta' : 'studnia_oferta'))}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
+                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
                         <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${this.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer?.type || 'studnia_oferta')}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
+                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
                     </div>
                 </div>
             `;
@@ -992,7 +1170,9 @@ class PVSalesUI {
             if (btn.classList.contains('btn-order-badge')) {
                 e.preventDefault();
                 const badgeOfferId = btn.getAttribute('data-offer-id');
-                if (badgeOfferId) this.showOfferOrdersPopup(badgeOfferId);
+                const badgeOfferType = btn.getAttribute('data-offer-type');
+                if (badgeOfferId)
+                    await this.showOfferOrdersPopup(badgeOfferId, badgeOfferType || undefined);
                 return;
             }
 

@@ -365,8 +365,8 @@
                                     "
                                     oninput="
                                         window.pvSalesUI &&
-                                            window.pvSalesUI.filterLocalOffers &&
-                                            window.pvSalesUI.filterLocalOffers()
+                                            window.pvSalesUI.onSearchInput &&
+                                            window.pvSalesUI.onSearchInput()
                                     "
                                 />
                             </div>
@@ -384,6 +384,7 @@
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
+                            <span id="pv-offer-count" style="font-size:0.75rem; color:var(--text-muted); white-space:nowrap;"></span>
                         </div>
                     </div>
 

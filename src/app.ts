@@ -189,6 +189,7 @@ import telemetryAiRoutes from './routes/telemetryAi';
 import telemetryAiDashboardRoutes from './routes/telemetryAiDashboard';
 import featureFlagsRoutes from './routes/featureFlags';
 import aiMlRoutes from './routes/telemetryAiMl';
+import searchRoutes from './routes/offers/search';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -199,6 +200,7 @@ app.use('/api/users-for-assignment', (req, res, next) => {
 
 app.use('/api/products', productRoutes);
 app.use('/api/products-studnie', productStudnieRoutes);
+app.use('/api/offers/search', apiLimiter, searchRoutes);
 app.use('/api/offers-rury', offerRoutes);
 app.use('/api/offers-studnie', (req, res, next) => {
     req.url = '/studnie' + req.url;

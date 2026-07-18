@@ -3,6 +3,7 @@
 ## Cel
 
 Przystosowanie strony `/kartoteka` do płynnej pracy przy 10 000+ ofert i zamówień poprzez:
+
 - przeniesienie całego filtrowania na backend (jeden endpoint `GET /api/offers/search`)
 - paginację kursorową (bez OFFSET, zwraca `nextCursor` + `hasMore`)
 - pobieranie zamówień przez LEFT JOIN (nie subquery, nie osobny SELECT *)
@@ -45,13 +46,25 @@ router.get('/', requireAuth, async (req, res) => {
     const user = req.user;
     const roleSql = buildRoleWhereCondition(user);
     const params = parseSearchParams(req.query);
-    const { q, type, dateFrom, dateTo, userId, orderStatus, cursor, cursorId, limit, sort, order } = params;
+    const { q, type, dateFrom, dateTo, userId, orderStatus, cursor, cursorId, limit, sort, order } =
+        params;
 
     // WHERE — wspólne dla obu tabel
-    const whereParts = buildWhereParts({ q, dateFrom, dateTo, userId, roleSql, cursor, cursorId, sort, order });
-    const whereSql = whereParts.length > 0
-        ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
-        : Prisma.empty;
+    const whereParts = buildWhereParts({
+        q,
+        dateFrom,
+        dateTo,
+        userId,
+        roleSql,
+        cursor,
+        cursorId,
+        sort,
+        order
+    });
+    const whereSql =
+        whereParts.length > 0
+            ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
+            : Prisma.empty;
 
     const sortCol = sort;
     const sortDir = order === 'asc' ? 'ASC' : 'DESC';
@@ -145,14 +158,14 @@ router.get('/', requireAuth, async (req, res) => {
         totalCount = Number(countResult[0]?.cnt || 0);
     }
 
-    const data = (dataRows || []).map(row => mapOfferRow(row));
+    const data = (dataRows || []).map((row) => mapOfferRow(row));
 
     res.json({
         data,
         totalCount,
         hasMore,
         nextCursor,
-        nextCursorId,
+        nextCursorId
     });
 });
 ```
@@ -170,12 +183,13 @@ function parseSearchParams(query) {
         dateTo: typeof query.dateTo === 'string' ? query.dateTo : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
         orderStatus: ['all', 'with_order', 'without_order'].includes(query.orderStatus)
-            ? query.orderStatus : 'all',
+            ? query.orderStatus
+            : 'all',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
         limit: Math.min(100, Math.max(1, parseInt(query.limit) || 50)),
         sort: ['createdAt', 'offer_number'].includes(query.sort) ? query.sort : 'createdAt',
-        order: query.order === 'asc' ? 'asc' : 'desc',
+        order: query.order === 'asc' ? 'asc' : 'desc'
     };
 }
 
@@ -199,7 +213,7 @@ function buildWhereParts({ q, dateFrom, dateTo, userId, roleSql, cursor, cursorI
         const escaped = q.replace(/'/g, "''");
         const searchParts = [
             Prisma.sql`"offer_number" LIKE ${'%' + escaped + '%'}`,
-            Prisma.sql`"data" LIKE ${'%' + escaped + '%'}`,
+            Prisma.sql`"data" LIKE ${'%' + escaped + '%'}`
         ];
         parts.push(Prisma.sql`(${Prisma.join(searchParts, ' OR ')})`);
     }
@@ -224,10 +238,18 @@ function buildWhereParts({ q, dateFrom, dateTo, userId, roleSql, cursor, cursorI
 function mapOfferRow(row) {
     const offer = { ...row };
     if (typeof offer.data === 'string') {
-        try { offer.data = JSON.parse(offer.data); } catch { offer.data = {}; }
+        try {
+            offer.data = JSON.parse(offer.data);
+        } catch {
+            offer.data = {};
+        }
     }
     if (typeof offer.history === 'string') {
-        try { offer.history = JSON.parse(offer.history); } catch { offer.history = []; }
+        try {
+            offer.history = JSON.parse(offer.history);
+        } catch {
+            offer.history = [];
+        }
     }
     // Rozwijanie pól z data na główny poziom (clientName, investName, itp.)
     if (offer.data && typeof offer.data === 'object') {
@@ -293,10 +315,14 @@ class PVSalesUI {
         this.ordersMap = new Map();
         this.currentFilter = 'all';
         this.currentTypeFilter = 'all';
-        this.filters = { user: '', myOffers: false, date: { mode: 'none', preset: '', from: '', to: '' } };
+        this.filters = {
+            user: '',
+            myOffers: false,
+            date: { mode: 'none', preset: '', from: '', to: '' }
+        };
 
         // Nowy stan paginacji
-        this.searchResults = null;    // null | { items, totalCount, hasMore, nextCursor, nextCursorId }
+        this.searchResults = null; // null | { items, totalCount, hasMore, nextCursor, nextCursorId }
         this.isLoading = false;
 
         // AbortController dla debounce
@@ -330,12 +356,14 @@ class PVSalesUI {
             dateFrom,
             dateTo,
             userId: this.filters.myOffers
-                ? (sessionStorage.user ? JSON.parse(sessionStorage.user).id : '')
+                ? sessionStorage.user
+                    ? JSON.parse(sessionStorage.user).id
+                    : ''
                 : this.filters.user,
             orderStatus: this.currentFilter,
             limit: 50,
             sort: 'createdAt',
-            order: 'desc',
+            order: 'desc'
         };
     }
 
@@ -365,13 +393,13 @@ class PVSalesUI {
             order: params.order || 'desc',
             cursor: params.cursor || '',
             cursorId: params.cursorId || '',
-            t: String(Date.now()),
+            t: String(Date.now())
         }).toString();
 
         try {
             const resp = await fetch('/api/offers/search?' + qs, {
                 headers,
-                signal: this.abortController.signal,
+                signal: this.abortController.signal
             });
 
             if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -390,7 +418,7 @@ class PVSalesUI {
                     totalCount: json.totalCount || 0,
                     hasMore: json.hasMore,
                     nextCursor: json.nextCursor,
-                    nextCursorId: json.nextCursorId,
+                    nextCursorId: json.nextCursorId
                 };
             }
 
@@ -433,21 +461,23 @@ class PVSalesUI {
 
         if (this.searchResults?.hasMore) {
             listDiv.insertAdjacentHTML('beforeend', this.renderLoadMore());
-            document.getElementById('pv-load-more-btn')?.addEventListener('click',
-                () => this.loadMore());
+            document
+                .getElementById('pv-load-more-btn')
+                ?.addEventListener('click', () => this.loadMore());
         }
     }
 
     renderLoadMore() {
         const shown = this.searchResults?.items?.length || 0;
         const total = this.searchResults?.totalCount;
-        const label = total != null
-            ? 'Pokaz wiecej (' + shown + ' z ' + total + ')'
-            : 'Pokaz wiecej';
-        return '<div class="load-more-container" style="text-align:center; padding:1rem;">' +
+        const label =
+            total != null ? 'Pokaz wiecej (' + shown + ' z ' + total + ')' : 'Pokaz wiecej';
+        return (
+            '<div class="load-more-container" style="text-align:center; padding:1rem;">' +
             '<button class="btn btn-sm btn-secondary" id="pv-load-more-btn">' +
             label +
-            '</button></div>';
+            '</button></div>'
+        );
     }
 }
 ```
@@ -459,6 +489,7 @@ class PVSalesUI {
 ### 2.1 Filtry przeniesione do SQL
 
 Wszystkie filtry są już w `buildWhereParts` z Fazy 1:
+
 - `q` → LIKE na offer_number + data (docelowo osobne kolumny)
 - `dateFrom`/`dateTo` → porównanie createdAt
 - `userId` → równość userId
@@ -473,7 +504,7 @@ document.getElementById('pv-user-filter')?.addEventListener('change', function (
     ui.searchOffers(ui.buildSearchParams());
 });
 
-document.querySelectorAll('.pv-date-preset-btn').forEach(btn => {
+document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
     btn.addEventListener('click', function () {
         const range = this.dataset.dateRange;
         ui.filters.date.mode = 'preset';
@@ -519,6 +550,7 @@ W `buildWhereParts` dodajemy warunek kursora (już zaimplementowany w Fazie 1).
 ### 3.3 Backend: limit+1 dla hasMore
 
 Zamiast osobnego COUNT na każdej stronie:
+
 1. Pobieramy `limit + 1` wierszy
 2. Jeśli jest `limit + 1` wierszy → `hasMore = true`, zwracamy pierwsze `limit` wierszy
 3. Jeśli jest `<= limit` wierszy → `hasMore = false`
@@ -539,11 +571,13 @@ COUNT wykonujemy tylko przy braku kursora (pierwsza strona).
 ### 4.1 Koniec z loadOrdersMap()
 
 Obecnie:
+
 ```javascript
-await this.loadOrdersMap();  // SELECT * z orders_rury_rel + orders_studnie_rel → 10k wierszy
+await this.loadOrdersMap(); // SELECT * z orders_rury_rel + orders_studnie_rel → 10k wierszy
 ```
 
 Nowy flow:
+
 ```sql
 -- LEFT JOIN z grouped orders_count w UNION ALL dla każdej oferty
 SELECT o.*, COALESCE(ord.order_count, 0) as _orderCount
@@ -668,6 +702,7 @@ model offers_rel {
 ```
 
 Migracja danych:
+
 ```sql
 UPDATE offers_rel SET
     clientName = json_extract(data, '$.clientName'),
@@ -689,7 +724,7 @@ UPDATE offers_rel SET
 ```typescript
 class SearchCache {
     constructor(maxSize = 100, ttl = 30000) {
-        this.cache = new Map();  // key → { data, timestamp }
+        this.cache = new Map(); // key → { data, timestamp }
         this.maxSize = maxSize;
         this.ttl = ttl;
     }
@@ -785,44 +820,44 @@ W `src/routes/orders/ruryOrders.ts` i `studnieOrders.ts` — analogicznie.
 
 ## Podsumowanie plików do modyfikacji
 
-| Plik | Faza | Zmiana |
-|------|------|--------|
-| `src/routes/offers/search.ts` | 1,3,4,7 | **NOWY** — Unified Search API + cursor + LEFT JOIN + cache |
-| `src/utils/searchUtils.ts` | 1,2 | **NOWY** — parseSearchParams, buildWhereParts, mapOfferRow |
-| `src/utils/searchCache.ts` | 7 | **NOWY** — LRU cache z invalidateUser/invalidateAll |
-| `src/app.ts` | 1 | Rejestracja `/api/offers/search` |
-| `src/routes/offers/ruryCrud.ts` | 7 | Unieważnianie cache po CREATE/UPDATE/DELETE |
-| `src/routes/offers/studnieCrud.ts` | 7 | j.w. |
-| `src/routes/orders/ruryOrders.ts` | 7 | j.w. |
-| `src/routes/orders/studnieOrders.ts` | 7 | j.w. |
-| `public/js/sales/pvSalesUi.js` | 1,3,4,5,7 | searchOffers, loadMore, buildSearchParams, AbortController, debounce, usunięcie loadOrdersMap |
-| `public/js/sales/kartotekaInit.js` | 2 | Filtry wywołują searchOffers zamiast client-side filter |
-| `public/kartoteka.html` | 1 | Spinner, licznik, container na load more |
-| `prisma/schema.prisma` | 6 | Indeks na `offer_number` |
+| Plik                                 | Faza      | Zmiana                                                                                        |
+| ------------------------------------ | --------- | --------------------------------------------------------------------------------------------- |
+| `src/routes/offers/search.ts`        | 1,3,4,7   | **NOWY** — Unified Search API + cursor + LEFT JOIN + cache                                    |
+| `src/utils/searchUtils.ts`           | 1,2       | **NOWY** — parseSearchParams, buildWhereParts, mapOfferRow                                    |
+| `src/utils/searchCache.ts`           | 7         | **NOWY** — LRU cache z invalidateUser/invalidateAll                                           |
+| `src/app.ts`                         | 1         | Rejestracja `/api/offers/search`                                                              |
+| `src/routes/offers/ruryCrud.ts`      | 7         | Unieważnianie cache po CREATE/UPDATE/DELETE                                                   |
+| `src/routes/offers/studnieCrud.ts`   | 7         | j.w.                                                                                          |
+| `src/routes/orders/ruryOrders.ts`    | 7         | j.w.                                                                                          |
+| `src/routes/orders/studnieOrders.ts` | 7         | j.w.                                                                                          |
+| `public/js/sales/pvSalesUi.js`       | 1,3,4,5,7 | searchOffers, loadMore, buildSearchParams, AbortController, debounce, usunięcie loadOrdersMap |
+| `public/js/sales/kartotekaInit.js`   | 2         | Filtry wywołują searchOffers zamiast client-side filter                                       |
+| `public/kartoteka.html`              | 1         | Spinner, licznik, container na load more                                                      |
+| `prisma/schema.prisma`               | 6         | Indeks na `offer_number`                                                                      |
 
 ## Największe ryzyka
 
-| Ryzyko | Jak unikamy |
-|--------|------------|
-| Paginacja dwóch tabel osobno → niepoprawne sortowanie | UNION ALL z globalnym ORDER BY + LIMIT |
-| LIMIT 500 na orders → brakujące zamówienia | LEFT JOIN z grouped COUNT — bez limitu, bez osobnego fetcha |
-| OFFSET 9000 → wolne | Cursor: `WHERE createdAt < last`, O(limit) |
-| orderStatus w JS → złe liczniki | EXISTS / NOT EXISTS w SQL |
-| data LIKE → wolne przy 50k+ | Plan normalizacji clientName/investName do kolumn + indeks |
-| Zbyt wiele requestów przy pisaniu | Debounce 300ms + AbortController |
-| Race condition na wynikach | AbortController anuluje stary request |
-| Cache zwraca nieaktualne dane | invalidateAll() przy każdym CREATE/UPDATE/DELETE |
-| Brak indeksów | EXPLAIN QUERY PLAN po dodaniu indeksów, weryfikacja czy są używane |
+| Ryzyko                                                | Jak unikamy                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------ |
+| Paginacja dwóch tabel osobno → niepoprawne sortowanie | UNION ALL z globalnym ORDER BY + LIMIT                             |
+| LIMIT 500 na orders → brakujące zamówienia            | LEFT JOIN z grouped COUNT — bez limitu, bez osobnego fetcha        |
+| OFFSET 9000 → wolne                                   | Cursor: `WHERE createdAt < last`, O(limit)                         |
+| orderStatus w JS → złe liczniki                       | EXISTS / NOT EXISTS w SQL                                          |
+| data LIKE → wolne przy 50k+                           | Plan normalizacji clientName/investName do kolumn + indeks         |
+| Zbyt wiele requestów przy pisaniu                     | Debounce 300ms + AbortController                                   |
+| Race condition na wynikach                            | AbortController anuluje stary request                              |
+| Cache zwraca nieaktualne dane                         | invalidateAll() przy każdym CREATE/UPDATE/DELETE                   |
+| Brak indeksów                                         | EXPLAIN QUERY PLAN po dodaniu indeksów, weryfikacja czy są używane |
 
 ## Szacowany czas
 
-| Faza | Czas | Zależności |
-|------|------|-----------|
-| 1. Unified Search API (UNION ALL + cursor + EXISTS) | 5-7h | — |
-| 2. Backend filtry | 1-2h | Faza 1 |
-| 3. Paginacja cursorowa (tylko cursor) | 1h | Faza 1 |
-| 4. Zamówienia przez LEFT JOIN | 1-2h | Faza 1 |
-| 5. Debounce + AbortController | 0.5h | — |
-| 6. Indeksy + EXPLAIN | 1h | — |
-| 7. Cache z unieważnianiem | 1-2h | Faza 1 |
-| **Razem** | **10.5-15.5h** | |
+| Faza                                                | Czas           | Zależności |
+| --------------------------------------------------- | -------------- | ---------- |
+| 1. Unified Search API (UNION ALL + cursor + EXISTS) | 5-7h           | —          |
+| 2. Backend filtry                                   | 1-2h           | Faza 1     |
+| 3. Paginacja cursorowa (tylko cursor)               | 1h             | Faza 1     |
+| 4. Zamówienia przez LEFT JOIN                       | 1-2h           | Faza 1     |
+| 5. Debounce + AbortController                       | 0.5h           | —          |
+| 6. Indeksy + EXPLAIN                                | 1h             | —          |
+| 7. Cache z unieważnianiem                           | 1-2h           | Faza 1     |
+| **Razem**                                           | **10.5-15.5h** |            |

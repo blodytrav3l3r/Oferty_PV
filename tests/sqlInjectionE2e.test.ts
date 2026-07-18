@@ -36,8 +36,9 @@ jest.mock('../src/prismaClient', () => ({
             deleteMany: jest.fn(),
             create: jest.fn()
         },
-        $queryRawUnsafe: jest.fn(),
-        $executeRaw: jest.fn()
+        $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+        $executeRaw: jest.fn(),
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
     }
 }));
 

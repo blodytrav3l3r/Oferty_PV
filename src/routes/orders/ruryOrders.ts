@@ -5,6 +5,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER, EXPORT_LIMITER } from '../../middleware/rateLimiters';
+import { searchCache } from '../../utils/searchCache';
 import {
     ruryOrdersBatchSchema,
     ruryOrderUpdateSchema,
@@ -181,6 +182,7 @@ router.put(
                 });
             }
 
+            searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -544,9 +546,11 @@ router.patch(
 
             logAudit('order', docId, authReq.user?.id || '', 'update', updatedData, oldData);
 
+            searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('RuryOrders', 'Błąd zapisu zamówień rury', message);
             res.status(500).json({ error: message });
         }
     }
@@ -574,6 +578,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                 where: { id: docId, userId: authReq.user?.id }
             });
         }
+        searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

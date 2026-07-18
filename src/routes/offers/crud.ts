@@ -5,6 +5,8 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc } from '../../utils/ownership';
+import { searchCache } from '../../utils/searchCache';
+import { removeFts5 } from '../../utils/fts5Sync';
 
 const router = express.Router();
 
@@ -159,8 +161,10 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
             await prisma.offers_studnie_rel.delete({ where: { id } });
+            await removeFts5('studnie', id);
 
-            logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
+            logger.info('Offers', `Oferta studnie ${id} usuni�ta przez ${authReq.user?.username}`);
+            searchCache.invalidateAll();
             return res.json({ ok: true });
         }
 
@@ -195,8 +199,10 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         await prisma.offers_rel.delete({
             where: { id }
         });
+        await removeFts5('rury', id);
 
-        logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
+        logger.info('Offers', `Oferta rury ${id} usuni�ta przez ${authReq.user?.username}`);
+        searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

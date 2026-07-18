@@ -290,10 +290,16 @@ model offers_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+  clientName    String?
+  investName    String?
+  clientNip     String?
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")
   @@index([state], map: "idx_offers_state")
+  @@index([offer_number], map: "idx_offers_number")
+  @@index([clientName], map: "idx_offers_clientname")
+  @@index([investName], map: "idx_offers_investname")
 }
 
 // Główne dokumenty ofert (typ studnie)
@@ -308,10 +314,16 @@ model offers_studnie_rel {
   data          String?
   updatedAt     String?
   history       String?  @default("[]")
+  clientName    String?
+  investName    String?
+  clientNip     String?
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")
   @@index([state], map: "idx_offersstud_state")
+  @@index([offer_number], map: "idx_offersstud_number")
+  @@index([clientName], map: "idx_offersstud_clientname")
+  @@index([investName], map: "idx_offersstud_investname")
 }
 
 // Liczniki numeracji ofert

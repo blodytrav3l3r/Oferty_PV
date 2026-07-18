@@ -3,6 +3,8 @@ import prisma from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
+import { searchCache } from '../../utils/searchCache';
+import { syncFts5 } from '../../utils/fts5Sync';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
@@ -175,6 +177,9 @@ router.post(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
+                const clientName = o.clientName || null;
+                const investName = o.investName || null;
+                const clientNip = o.clientNip || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -196,6 +201,9 @@ router.post(
                         userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
@@ -206,6 +214,9 @@ router.post(
                         userId: effectiveUserId,
                         offer_number: offerNumber,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
                         history: JSON.stringify(newHistory),
@@ -232,6 +243,12 @@ router.post(
                         }
                     });
                 }
+                await syncFts5('rury', {
+                    id: docId,
+                    offer_number: offerNumber,
+                    clientName,
+                    investName
+                });
                 results.push({ id: docId, ok: true });
             }
 
@@ -239,6 +256,7 @@ router.post(
                 'Offers',
                 `Zapisano ${results.length} ofert rury przez ${authReq.user?.username}`
             );
+            searchCache.invalidateAll();
             res.json({ ok: true, results });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
@@ -296,6 +314,9 @@ router.put(
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';
+                const clientName = o.clientName || null;
+                const investName = o.investName || null;
+                const clientNip = o.clientNip || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -314,6 +335,9 @@ router.put(
                         id: docId,
                         userId: authReq.user?.id,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
@@ -321,6 +345,9 @@ router.put(
                     update: {
                         userId: authReq.user?.id,
                         state: state,
+                        clientName,
+                        investName,
+                        clientNip,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
@@ -346,11 +373,19 @@ router.put(
                         }
                     });
                 }
+                await syncFts5('rury', {
+                    id: docId,
+                    offer_number: o.offer_number || null,
+                    clientName,
+                    investName
+                });
             }
 
+            searchCache.invalidateAll();
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
+            logger.error('Offers', 'Błąd PUT offers', message);
             res.status(500).json({ error: message });
         }
     }
@@ -377,18 +412,35 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             return res.status(403).json({ error: 'Brak uprawnień do utworzenia oferty' });
         }
 
+        let dupClientName: string | null = null;
+        let dupInvestName: string | null = null;
+        try {
+            const srcData = JSON.parse(source.data || '{}');
+            dupClientName = srcData.clientName || null;
+            dupInvestName = srcData.investName || null;
+        } catch {}
+
         await prisma.offers_rel.create({
             data: {
                 id: newId,
                 userId: resolved.effectiveUserId,
                 offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
                 state: 'draft',
+                clientName: dupClientName,
+                investName: dupInvestName,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 transportCost: source.transportCost ?? 0,
                 history: '[]',
                 data: source.data || '{}'
             }
+        });
+
+        await syncFts5('rury', {
+            id: newId,
+            offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
+            clientName: dupClientName,
+            investName: dupInvestName
         });
 
         for (const item of sourceItems) {
@@ -411,6 +463,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             `Oferta ${id} zduplikowana jako ${newId} przez ${authReq.user?.username}`
         );
 
+        searchCache.invalidateAll();
         return res.json({ ok: true, data: { id: newId } });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

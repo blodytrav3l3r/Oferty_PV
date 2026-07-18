@@ -50,8 +50,9 @@ jest.mock('../src/prismaClient', () => ({
             create: jest.fn()
         },
         $queryRaw: jest.fn(),
-        $queryRawUnsafe: jest.fn(),
-        $executeRaw: jest.fn()
+        $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+        $executeRaw: jest.fn(),
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
     },
     Prisma: {
         raw: (s: string): string => s,
