@@ -38,8 +38,19 @@ window.collectSelectedItemsForOrder = function () {
         if (!uid || seen.has(uid)) return;
         const item = items.find((it) => it.uid === uid);
         if (item && item.autoAdded && item.productId && item.productId.startsWith('ZT-')) return;
+        if (item && getRemainingQuantity(item) <= 0) return;
         seen.add(uid);
-        if (item) selected.push(item);
+        if (item) {
+            const cloned = Object.assign({}, item);
+            const qtyInput =
+                section.querySelector('#order-qty-' + uid) ||
+                section.querySelector('#offer-summary-qty-' + uid);
+            const partialQty = qtyInput ? parseInt(qtyInput.value) : NaN;
+            const remaining = getRemainingQuantity(item);
+            cloned.orderedQuantity =
+                partialQty > 0 && partialQty <= remaining ? partialQty : remaining;
+            selected.push(cloned);
+        }
     });
     {
         const selectedPipeQtyByDiam = {};
@@ -57,7 +68,8 @@ window.collectSelectedItemsForOrder = function () {
                     return 0;
                 })();
             if (d > 0) {
-                selectedPipeQtyByDiam[d] = (selectedPipeQtyByDiam[d] || 0) + (it.quantity || 0);
+                const orderQty = it.orderedQuantity || it.quantity || 0;
+                selectedPipeQtyByDiam[d] = (selectedPipeQtyByDiam[d] || 0) + orderQty;
             }
         });
 

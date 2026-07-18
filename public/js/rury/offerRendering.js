@@ -5,7 +5,7 @@ function renderOfferItems() {
     let _items = getActiveItemsArray();
     const tbody = document.getElementById('offer-items-body');
     if (_items.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="13" class="text-center" style="padding:2rem;color:var(--text-muted)">
+        tbody.innerHTML = `<tr><td colspan="14" class="text-center" style="padding:2rem;color:var(--text-muted)">
       Wróć do kroku 2 aby dodać produkty</td></tr>`;
         updateOfferSummary();
         return;
@@ -69,10 +69,10 @@ function renderOfferItems() {
     let lastCat;
     flat.forEach(({ cat, dk, entries }) => {
         if (cat !== lastCat) {
-            html += `<tr class="offer-cat-header"><td colspan="13">${cat}</td></tr>`;
+            html += `<tr class="offer-cat-header"><td colspan="14">${cat}</td></tr>`;
             lastCat = cat;
         }
-        html += `<tr class="offer-diam-header"><td colspan="13">⌀ ${dk}</td></tr>`;
+        html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${dk}</td></tr>`;
         entries.forEach(({ item, originalIndex: i }) => {
             const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
             const pehdCost = item.pehdCostPerUnit || 0;
@@ -107,8 +107,9 @@ function renderOfferItems() {
             const active4mm =
                 item.pehdType === 'PEHD-4MM' ? 'pehd-btn-active' : 'pehd-btn-inactive';
 
-            const isOrdered = isItemInAnyOrder(item.uid);
+            const remaining = getRemainingQuantity(item);
             const isLocked = isItemLocked(item);
+            const isOrdered = remaining <= 0 && isItemInAnyOrder(item.uid);
 
             const isEditableLength =
                 cat === 'Rury Jajowe Betonowe' ||
@@ -140,11 +141,29 @@ function renderOfferItems() {
 
             let checkboxCell = '';
             if (isOrdered) {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Element dodany do zamówienia — nie można odznaczyć"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox" data-uid="${item.uid}" checked disabled style="cursor:not-allowed;width:16px;height:16px;opacity:0.5" title="Wszystkie sztuki zamówione"></td>`;
             } else if (isAuto) {
                 checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
             } else {
                 checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
+            }
+
+            let orderCell = '';
+            if (isOrdered) {
+                orderCell =
+                    '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
+            } else if (isAuto) {
+                orderCell =
+                    '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
+            } else if (remaining > 0) {
+                const inputId = 'order-qty-' + item.uid;
+                orderCell = `<td class="text-center" onclick="event.stopPropagation()" style="white-space:nowrap">
+                  <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
+                  <span class="order-qty-max">/ ${item.quantity}</span>
+                </td>`;
+            } else {
+                orderCell =
+                    '<td class="text-center"><span class="order-qty-all">&mdash;</span></td>';
             }
             const orderedRowStyle = isOrdered
                 ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);'
@@ -162,6 +181,7 @@ function renderOfferItems() {
                   : '—'
           }</span></td>
           <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          ${orderCell}
           <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
           <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
           <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>

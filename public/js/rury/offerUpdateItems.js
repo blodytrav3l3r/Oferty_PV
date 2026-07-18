@@ -98,6 +98,17 @@ function updateItem(index, field, value) {
         }
     }
 
+    if (field === 'quantity') {
+        const ordered = getItemOrderedQty(item);
+        if (numVal < ordered) {
+            showToast(
+                'Nie można zmniejszyć poniżej już zamówionej ilości (' + ordered + ' szt.)',
+                'error'
+            );
+            renderOfferItems();
+            return;
+        }
+    }
     item[field] = numVal;
     if (field === 'quantity' && item.lengthM) {
         item.meters = numVal * item.lengthM;
@@ -129,7 +140,12 @@ function updateItemMeters(index, metersValue) {
 window.updateItemMeters = updateItemMeters;
 
 function removeOfferItem(index) {
-    if (isItemLocked(getActiveItemsArray()[index])) return;
+    const item = getActiveItemsArray()[index];
+    if (isItemLocked(item)) return;
+    if (getItemOrderedQty(item) > 0) {
+        showToast('Nie można usunąć produktu, który ma już zamówione sztuki', 'error');
+        return;
+    }
     getActiveItemsArray().splice(index, 1);
     syncGaskets();
     syncTransportSecurity();

@@ -28,13 +28,14 @@ function buildRuryColgroup(extraCols = 0) {
         '100px',
         '140px',
         '140px',
+        '80px',
         '120px',
         '120px',
         '130px',
         '120px',
-        '160px',
+        '140px',
         '',
-        '160px'
+        '130px'
     ];
     const extra = [];
     for (let i = 0; i < extraCols; i++) extra.push('120px');

@@ -66,7 +66,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             : null;
     const showPriceComparison = !!(orderData && orderData.originalSnapshot);
     const extraCols = showPriceComparison ? 2 : 0;
-    const COLSPAN_CAT = 7 + extraCols;
+    const COLSPAN_CAT = 8 + extraCols;
     const snapshotByUid = showPriceComparison
         ? new Map(
               (orderData.originalSnapshot.items || [])
@@ -98,21 +98,28 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
     }
 
     let progressHtml = '';
-    if (!window.orderEditMode) {
+    if (!window.orderEditMode && typeof computeOrderedQuantities === 'function') {
         const offerId = window.editingOfferId;
         if (offerId && typeof getOrdersForOffer === 'function') {
             const offerOrders = getOrdersForOffer(offerId);
             if (offerOrders.length > 0) {
-                const orderedUids = new Set();
-                offerOrders.forEach((order) => {
-                    (order.items || []).forEach((it) => {
-                        if (it.uid) orderedUids.add(it.uid);
-                    });
+                const orderedMap = computeOrderedQuantities();
+                let totalQty = 0;
+                let orderedQty = 0;
+                items.forEach((it) => {
+                    if (it.autoAdded) return;
+                    const q = it.quantity || 0;
+                    totalQty += q;
+                    const key =
+                        (it.productId || '') +
+                        '|' +
+                        (it.customLengthM || '') +
+                        '|' +
+                        (it.pehdType || '');
+                    orderedQty += Math.min(q, orderedMap[key] || 0);
                 });
-                const total = items.length;
-                const ordered = items.filter((it) => it.uid && orderedUids.has(it.uid)).length;
-                const percent = total > 0 ? Math.round((ordered / total) * 100) : 0;
-                if (ordered > 0) {
+                const percent = totalQty > 0 ? Math.round((orderedQty / totalQty) * 100) : 0;
+                if (orderedQty > 0) {
                     const color = percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
                     progressHtml = `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb),0.08); border:1px solid rgba(var(--blue-rgb),0.2); border-radius:8px;">
                         <div class="flex-1">
@@ -121,7 +128,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                                     <i data-lucide="package" aria-hidden="true"></i> Postęp zamówień
                                 </span>
                                 <span style="font-size:0.72rem; font-weight:800; color:${color};">
-                                    ${ordered} / ${total} pozycji (${percent}%)
+                                    ${orderedQty} / ${totalQty} szt. (${percent}%)
                                 </span>
                             </div>
                             <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
@@ -148,6 +155,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
           <th style="width:1%; min-width:90px; text-align:right; white-space:nowrap;">Transp/szt</th>
           <th style="width:1%; min-width:210px; text-align:right; white-space:nowrap;">Cena po rabacie + Transp/szt</th>
           <th style="width:1%; min-width:80px; text-align:center; white-space:nowrap;">Ilość szt.</th>
+          <th style="width:80px; text-align:center; white-space:nowrap;">Zamów</th>
           <th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">RAZEM NETTO</th>
           ${showPriceComparison ? '<th style="width:1%; min-width:120px; text-align:right; white-space:nowrap;">Cena z oferty</th>' : ''}
           ${showPriceComparison ? '<th style="width:1%; min-width:90px; text-align:right; white-space:nowrap;">Różnica</th>' : ''}
@@ -216,15 +224,38 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
         }
 
+        const remaining =
+            typeof getRemainingQuantity === 'function' ? getRemainingQuantity(item) : item.quantity;
         const isOrdered =
-            typeof isItemInAnyOrder === 'function' ? isItemInAnyOrder(item.uid) : false;
+            remaining <= 0 &&
+            (typeof isItemInAnyOrder === 'function' ? isItemInAnyOrder(item.uid) : false);
         const summDiamRaw = getProductDiameter(item.productId) || 0;
         const summDiamAttr = summDiamRaw > 0 ? `data-diameter="${summDiamRaw}"` : '';
         const summAutoClass = item.autoAdded ? ' offer-summary-auto' : '';
         const summPipeHandler = item.autoAdded ? '' : ' onPipeCheckboxChange(this);';
-        const summaryCheckboxCell = isOrdered
-            ? '<td class="text-center"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" style="cursor:pointer;width:16px;height:16px"></td>`;
+        let summaryCheckboxCell;
+        let summaryOrderCell;
+        if (isOrdered) {
+            summaryCheckboxCell =
+                '<td class="text-center"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>';
+            summaryOrderCell =
+                '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
+        } else if (item.autoAdded) {
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" style="cursor:pointer;width:16px;height:16px"></td>`;
+            summaryOrderCell =
+                '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
+        } else if (remaining > 0) {
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" style="cursor:pointer;width:16px;height:16px"></td>`;
+            const inputId = 'offer-summary-qty-' + item.uid;
+            summaryOrderCell = `<td class="text-center" onclick="event.stopPropagation()" style="white-space:nowrap">
+                <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
+                <span class="order-qty-max">/ ${item.quantity}</span>
+            </td>`;
+        } else {
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" style="cursor:pointer;width:16px;height:16px"></td>`;
+            summaryOrderCell =
+                '<td class="text-center"><span class="order-qty-all">&mdash;</span></td>';
+        }
 
         let offerCell = '';
         let diffCell = '';
@@ -241,7 +272,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                 '<td style="text-align:right;color:var(--text-muted);padding:0.5rem 0.75rem;">—</td>';
         }
 
-        html += `<tr style="border-bottom:1px solid var(--border-glass); ${isOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
+        const isFullyOrdered = remaining <= 0;
+        html += `<tr style="border-bottom:1px solid var(--border-glass); ${isFullyOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
             ${summaryCheckboxCell}
             <td style="text-align:center; color:var(--text-muted); font-weight:600; white-space:nowrap;">${i + 1}</td>
             <td style="font-weight:600; color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
@@ -251,6 +283,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             <td style="text-align:right; color:var(--warn); white-space:nowrap;">${tpu > 0 ? fmt(tpu) : '—'}</td>
             <td style="text-align:right; color:var(--text-primary); font-weight:600; white-space:nowrap;">${fmt(unitTotal)}</td>
             <td style="text-align:center; font-weight:600; white-space:nowrap;">${item.quantity} szt.</td>
+            ${summaryOrderCell}
             <td style="text-align:right; font-weight:700; color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
             ${offerCell}${diffCell}
         </tr>`;

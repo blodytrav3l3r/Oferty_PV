@@ -431,8 +431,9 @@ window.updateTransportCostSummary = function () {
             totalOfferWeight += i.weight * i.quantity;
         });
         selItems.forEach((i) => {
-            if (i.autoAdded || !i.weight || i.weight <= 0 || i.quantity <= 0) return;
-            selectedWeight += i.weight * i.quantity;
+            const qty = i.orderedQuantity || i.quantity || 0;
+            if (i.autoAdded || !i.weight || i.weight <= 0 || qty <= 0) return;
+            selectedWeight += i.weight * qty;
         });
         if (totalOfferWeight > 0 && selectedWeight > 0 && costPerTrip > 0) {
             const offerMode = offer.transportMode || 'full';

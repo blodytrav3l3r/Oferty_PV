@@ -442,7 +442,50 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
     let html = buildKartaBudowyBaseHtml(kb, nrZamowienia, nrOferty);
 
     html = html.replace(/\{\{RZECZYWISTA_ILOSC_PRZEJSC\}\}/g, '');
-    html = html.replace(/\{\{ILOSC_ELEMENTOW_ZAMOWIENIA\}\}/g, '');
+
+    // Tabela elementów zamówienia rur
+    const orderItems = (Array.isArray(orderData.items) ? orderData.items : []) as any[];
+    let elemHtml = '';
+    if (orderItems.length > 0) {
+        const elemRows = orderItems
+            .map(
+                (it: any, idx: number) => `<tr>
+        <td>${idx + 1}</td>
+        <td style="text-align:left;">${escapeHtml(it.name || '')}</td>
+        <td style="text-align:left;font-size:8pt;">${escapeHtml(it.productId || '')}</td>
+        <td>${it.orderedQuantity || it.quantity || 0}</td>
+        <td>${it.autoAdded ? 'auto' : ''}</td>
+      </tr>`
+            )
+            .join('');
+        const totalQty = orderItems.reduce(
+            (s: number, it: any) => s + (it.orderedQuantity || it.quantity || 0),
+            0
+        );
+        elemHtml = `
+      <div class="section-header">Ilość elementów w zamówieniu</div>
+      <table class="przejscia-table">
+        <thead>
+          <tr>
+            <th style="width:8%;">Lp.</th>
+            <th style="width:34%;">Produkt</th>
+            <th style="width:28%;">Indeks</th>
+            <th style="width:15%;">Ilość zam.</th>
+            <th style="width:15%;">Uwagi</th>
+          </tr>
+        </thead>
+        <tbody>${elemRows}
+          <tr class="total-row">
+            <td></td>
+            <td style="text-align:center;font-weight:700;">Razem</td>
+            <td></td>
+            <td style="font-weight:700;">${totalQty}</td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>`;
+    }
+    html = html.replace(/\{\{ILOSC_ELEMENTOW_ZAMOWIENIA\}\}/g, elemHtml);
     html = html.replace(/\{\{BASE_URL\}\}/g, '');
 
     return generatePDF(html);

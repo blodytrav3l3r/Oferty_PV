@@ -13,6 +13,46 @@ function getActiveItemsArray() {
 window.getActiveItemsArray = getActiveItemsArray;
 window.orderCurrentItems = orderCurrentItems;
 
+/* ===== ILOŚCIOWE ŚLEDZENIE ZAMÓWIEŃ (zamówienia cząstkowe) ===== */
+
+function getConfigKey(item) {
+    return item.productId + '|' + (item.customLengthM || '') + '|' + (item.pehdType || '');
+}
+
+function computeOrderedQuantities() {
+    const result = {};
+    const offerId = window.editingOfferId;
+    if (!offerId || !Array.isArray(ordersRury)) return result;
+    const offerOrders = ordersRury.filter((o) => o && o.offerId === offerId);
+    if (offerOrders.length === 0) return result;
+    offerOrders.forEach((order) => {
+        (order.items || []).forEach((oi) => {
+            if (!oi || !oi.productId) return;
+            const qty = oi.orderedQuantity || oi.quantity || 0;
+            if (qty <= 0) return;
+            const key = getConfigKey(oi);
+            result[key] = (result[key] || 0) + qty;
+        });
+    });
+    return result;
+}
+window.computeOrderedQuantities = computeOrderedQuantities;
+
+function getItemOrderedQty(item) {
+    if (!item || !item.productId) return 0;
+    const key = getConfigKey(item);
+    const orderedMap = computeOrderedQuantities();
+    return orderedMap[key] || 0;
+}
+window.getItemOrderedQty = getItemOrderedQty;
+
+function getRemainingQuantity(item) {
+    if (!item) return 0;
+    const ordered = getItemOrderedQty(item);
+    return Math.max(0, (item.quantity || 0) - ordered);
+}
+window.getRemainingQuantity = getRemainingQuantity;
+
 function isItemInAnyOrder(uid) {
     if (!uid) return false;
     if (typeof ordersRury === 'undefined' || !ordersRury) return false;
@@ -31,7 +71,7 @@ window.isItemInAnyOrder = isItemInAnyOrder;
 function isItemLocked(item) {
     if (!item) return false;
     if (window.orderEditMode) return false;
-    return isItemInAnyOrder(item.uid);
+    return getRemainingQuantity(item) <= 0;
 }
 window.isItemLocked = isItemLocked;
 
@@ -236,6 +276,19 @@ function initKartaBudowyStep4(primaryOfferNumber) {
             ? pendingOrderCreationData.selectedItems
             : getActiveItemsArray();
     if (uwagiField && activeItemsForUwagi && activeItemsForUwagi.length > 0) {
+        // Sortuj według kolejności kategorii/średnic jak w tabeli oferty
+        if (typeof getSortedRuryItems === 'function') {
+            const sorted = getSortedRuryItems(activeItemsForUwagi.filter((i) => !i.autoAdded));
+            const sortedUids = new Map();
+            sorted.flat.forEach((g) =>
+                g.entries.forEach((e, i) => sortedUids.set(e.item.uid || e.item.productId, i))
+            );
+            activeItemsForUwagi.sort((a, b) => {
+                const ai = sortedUids.get(a.uid || a.productId) ?? 999;
+                const bi = sortedUids.get(b.uid || b.productId) ?? 999;
+                return ai - bi;
+            });
+        }
         const discountLines = activeItemsForUwagi
             .filter((item) => !item.autoAdded)
             .map((item) => {
@@ -253,7 +306,7 @@ function initKartaBudowyStep4(primaryOfferNumber) {
                         .replace('.', ',')
                         .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
                 const discountStr = (item.discount || 0).toFixed(2).replace('.', ',');
-                const qty = item.quantity || 0;
+                const qty = item.orderedQuantity || item.quantity || 0;
                 const priceAfterDiscount = item.unitPrice * (1 - (item.discount || 0) / 100);
                 return `${name}${suffix}${pehdText}: ${discountStr}% | ${qty} szt. × ${fmtPLN(priceAfterDiscount)} PLN`;
             });
@@ -420,6 +473,11 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
 
         const orderedUids = new Set(snapshotItems.map((it) => it.uid).filter(Boolean));
 
+        const orderItems = structuredClone(snapshotItems);
+        orderItems.forEach((it) => {
+            it.orderedQuantity = it.orderedQuantity || it.quantity || 0;
+        });
+
         const orderData = {
             id: orderId,
             offerId: offer.id || editingOfferId,
@@ -450,7 +508,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             transportKm,
             transportRate,
             transportMode: currentRuryTransportMode || 'full',
-            items: structuredClone(snapshotItems),
+            items: orderItems,
             kartaBudowy: kartaBudowyData,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
@@ -493,7 +551,7 @@ function updateRuryOrderSummary(orderData) {
     if (!dst) return;
 
     const isOrderMode = !!(window.orderEditMode && orderData);
-    const colCount = 13;
+    const colCount = 14;
 
     const orderColgroup = document.getElementById('order-colgroup');
     if (orderColgroup && typeof buildRuryColgroup === 'function') {
@@ -508,6 +566,144 @@ function updateRuryOrderSummary(orderData) {
     }
 
     dst.innerHTML = src.innerHTML;
+
+    // Podstaw wartości orderedQuantity z zamówienia
+    if (orderData && orderData.items) {
+        const orderByUid = {};
+        orderData.items.forEach((it) => {
+            if (it.uid) orderByUid[it.uid] = it;
+        });
+        dst.querySelectorAll('tr[data-uid]').forEach((row) => {
+            const oi = orderByUid[row.dataset.uid];
+            if (!oi) return;
+            const orderedQty = oi.orderedQuantity || oi.quantity || 0;
+            // Ilość → orderedQuantity
+            const qtyInput = row.querySelector('td:nth-child(6) .edit-input');
+            if (qtyInput) qtyInput.value = orderedQty;
+            // Zamów → ordered / total
+            const orderCell = row.querySelector('.order-partial-qty');
+            if (orderCell) {
+                orderCell.value = orderedQty;
+                const maxSpan = orderCell.parentElement?.querySelector('.order-qty-max');
+                if (maxSpan) maxSpan.textContent = '/ ' + (oi.quantity || 0);
+            }
+        });
+    }
+
+    // W trybie edycji zamówienia qty inputs są edytowalne
+    if (isOrderMode) {
+        // Funkcja pomocnicza do aktualizacji orderedQuantity
+        const applyOrderQty = async function (row, v) {
+            const uid = row.dataset.uid;
+            const item = (orderCurrentItems || []).find((it) => it.uid === uid);
+            if (!item) return;
+            v = parseInt(v);
+            if (isNaN(v) || v < 1) v = 1;
+            const curOrder = (ordersRury || []).find((o) => o && o.id === editingRuryOrderId);
+            const savedItem = curOrder
+                ? (curOrder.items || []).find((it) => it && it.uid === uid)
+                : null;
+            const savedQty = savedItem ? savedItem.orderedQuantity || savedItem.quantity || 0 : 0;
+            const totalOrdered = getItemOrderedQty(item);
+            const otherOrdered = Math.max(0, totalOrdered - savedQty);
+            const maxAllowed = Math.max(1, (item.quantity || 0) - otherOrdered);
+            if (v > maxAllowed) {
+                const over = v - maxAllowed;
+                const confirmed = await appConfirm(
+                    'Ilość ' +
+                        v +
+                        ' szt. przekracza pozostałą ilość w ofercie (' +
+                        maxAllowed +
+                        ' szt.) o ' +
+                        over +
+                        ' szt.',
+                    {
+                        title: 'Przekroczenie ilości w ofercie',
+                        okText: 'Kontynuuj',
+                        cancelText: 'Anuluj',
+                        type: 'warning'
+                    }
+                );
+                if (!confirmed) v = maxAllowed;
+            }
+            item.orderedQuantity = v;
+            // Aktualizacja wszystkich pól ilości w wierszu
+            const qtyInput = row.querySelector('td:nth-child(6) .edit-input');
+            if (qtyInput) qtyInput.value = v;
+            const orderInput = row.querySelector('.order-partial-qty');
+            if (orderInput) orderInput.value = v;
+            // Auto-sync ZT dla tego samego diametru
+            if (!item.autoAdded && typeof getProductDiameter === 'function') {
+                const diam = getProductDiameter(item.productId);
+                if (diam) {
+                    const ztId = 'ZT-' + String(diam).padStart(4, '0');
+                    let totalPipeQty = 0;
+                    (orderCurrentItems || []).forEach((it) => {
+                        if (!it.autoAdded && it.productId && it.productId !== ztId) {
+                            const d = getProductDiameter(it.productId);
+                            if (d === diam) totalPipeQty += it.orderedQuantity || it.quantity || 0;
+                        }
+                    });
+                    (orderCurrentItems || []).forEach((it) => {
+                        if (it.productId === ztId) {
+                            it.orderedQuantity = totalPipeQty;
+                            const ztRow = dst.querySelector('tr[data-uid="' + it.uid + '"]');
+                            if (ztRow) {
+                                const ztQty = ztRow.querySelector('td:nth-child(6) .edit-input');
+                                if (ztQty) ztQty.value = totalPipeQty;
+                                const ztOrder = ztRow.querySelector('.order-partial-qty');
+                                if (ztOrder) ztOrder.value = totalPipeQty;
+                            }
+                        }
+                    });
+                }
+            }
+        };
+        // Obsługa kolumny Zamów
+        dst.querySelectorAll('.order-partial-qty').forEach((el) => {
+            el.removeAttribute('disabled');
+            el.onchange = function () {
+                const row = this.closest('tr[data-uid]');
+                if (!row) return;
+                applyOrderQty(row, this.value);
+            };
+        });
+        // Obsługa kolumny Ilość (kolumna 6)
+        dst.querySelectorAll('td:nth-child(6) .edit-input').forEach((el) => {
+            el.removeAttribute('disabled');
+            el.onchange = function () {
+                const row = this.closest('tr[data-uid]');
+                if (!row) return;
+                applyOrderQty(row, this.value);
+            };
+        });
+        // Zamówione badge → edytowalny input (pomijamy auto-ZT)
+        dst.querySelectorAll('tr[data-uid]').forEach((row) => {
+            const orderCell = row.querySelector('td:nth-child(7)');
+            if (!orderCell) return;
+            const badge = orderCell.querySelector('.order-fully-badge');
+            const existingInput = orderCell.querySelector('.order-partial-qty');
+            if (badge && !existingInput && !badge.classList.contains('order-fully-badge--auto')) {
+                const uid = row.dataset.uid;
+                const item = (orderCurrentItems || []).find((it) => it.uid === uid);
+                const currentQty = item ? item.orderedQuantity || item.quantity || 0 : 0;
+                orderCell.innerHTML =
+                    '<input type="number" class="order-partial-qty" value="' +
+                    currentQty +
+                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
+                const newInput = orderCell.querySelector('.order-partial-qty');
+                if (newInput) {
+                    newInput.onchange = function () {
+                        const r = this.closest('tr[data-uid]');
+                        if (!r) return;
+                        applyOrderQty(r, this.value);
+                    };
+                }
+            }
+        });
+    } else {
+        dst.querySelectorAll('.order-partial-qty').forEach((el) => el.setAttribute('disabled', ''));
+    }
 
     let changes = { items: {}, transportChanged: false };
     if (isOrderMode && orderData && typeof getRuryOrderChanges === 'function') {

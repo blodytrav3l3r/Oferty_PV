@@ -3,10 +3,11 @@
 
 function syncGaskets() {
     const activeItems = getActiveItemsArray();
-    if (!activeItems.some((i) => i.ordered && !i.autoAdded)) {
-        // no ordered non-auto items, proceed normally
-    } else if (!window.orderEditMode) {
-        return; // ordered items exist and we're not in order edit mode — skip gasket sync
+    const hasOrderedItems = activeItems.some(
+        (i) => !i.autoAdded && typeof getItemOrderedQty === 'function' && getItemOrderedQty(i) > 0
+    );
+    if (hasOrderedItems && !window.orderEditMode) {
+        return;
     }
     const req = {};
 
@@ -87,8 +88,10 @@ window.updateZabezpieczenieTransportuUI = updateZabezpieczenieTransportuUI;
 
 function syncTransportSecurity(forceRemove) {
     const activeItems = getActiveItemsArray();
-    const hasNonAutoOrdered = activeItems.some((i) => i.ordered && !i.autoAdded);
-    if (hasNonAutoOrdered && !window.orderEditMode && !forceRemove) return;
+    const hasOrderedItems = activeItems.some(
+        (i) => !i.autoAdded && typeof getItemOrderedQty === 'function' && getItemOrderedQty(i) > 0
+    );
+    if (hasOrderedItems && !window.orderEditMode && !forceRemove) return;
     if (forceRemove || !window.zabezpieczenieTransportuEnabled) {
         let removed = false;
         for (let i = activeItems.length - 1; i >= 0; i--) {

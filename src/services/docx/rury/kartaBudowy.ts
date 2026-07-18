@@ -292,7 +292,87 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
         children.push(SPACER);
     }
 
-    // 7. Uwagi ogólne
+    // 7. Elementy zamówienia (conditional)
+    const orderItems = (Array.isArray(orderData.items) ? orderData.items : []) as any[];
+    if (orderItems.length > 0) {
+        const itemCols = [
+            { text: 'Lp.', width: 8 },
+            { text: 'Produkt', width: 34 },
+            { text: 'Indeks', width: 28 },
+            { text: 'Ilość zam.', width: 15 },
+            { text: 'Uwagi', width: 15 }
+        ];
+        const totalQty = orderItems.reduce(
+            (s: number, it: any) => s + (it.orderedQuantity || it.quantity || 0),
+            0
+        );
+        children.push(
+            new Table({
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                rows: [
+                    sectionRow('Ilość elementów w zamówieniu', 5),
+                    new TableRow({
+                        children: itemCols.map((c) =>
+                            textCell(c.text, {
+                                width: c.width,
+                                size: SZ_TABLE_HEADER,
+                                alignment: AlignmentType.CENTER,
+                                bold: true,
+                                fill: COLOR_GRAY_HEADER,
+                                color: COLOR_WHITE
+                            })
+                        )
+                    }),
+                    ...orderItems.map((it: any, idx: number) => {
+                        const vals = [
+                            String(idx + 1),
+                            String(it.name || '—'),
+                            String(it.productId || '—'),
+                            String(it.orderedQuantity || it.quantity || 0),
+                            it.autoAdded ? 'auto' : ''
+                        ];
+                        return new TableRow({
+                            children: vals.map((v, ci) =>
+                                textCell(v, {
+                                    width: itemCols[ci].width,
+                                    size: SZ_TABLE_BODY,
+                                    alignment:
+                                        ci === 1 || ci === 2
+                                            ? AlignmentType.LEFT
+                                            : AlignmentType.CENTER,
+                                    fill: idx % 2 === 1 ? DOCX_COLORS.rowAlt : undefined
+                                })
+                            )
+                        });
+                    }),
+                    new TableRow({
+                        children: itemCols.map((c, ci) =>
+                            textCell('', {
+                                width: c.width,
+                                size: SZ_TABLE_BODY,
+                                bold: ci === 1,
+                                alignment: AlignmentType.CENTER
+                            })
+                        )
+                    }),
+                    new TableRow({
+                        children: itemCols.map((c, ci) => {
+                            const v = ci === 1 ? 'Razem' : ci === 3 ? String(totalQty) : '';
+                            return textCell(v, {
+                                width: c.width,
+                                size: SZ_TABLE_BODY,
+                                bold: ci === 1 || ci === 3,
+                                alignment: AlignmentType.CENTER
+                            });
+                        })
+                    })
+                ]
+            })
+        );
+        children.push(SPACER);
+    }
+
+    // 8. Uwagi ogólne
     const uwagiText = String(kb.uwagiOgolne || '—');
     const uwagiLines = uwagiText.split('\n');
     const uwagiRuns = uwagiLines.flatMap((line, i) => [

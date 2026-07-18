@@ -308,6 +308,7 @@ class PVSalesUI {
 
     async loadLocalOffers() {
         logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
+        await this.loadOrdersMap();
         await this.searchOffers(this.buildSearchParams());
     }
 
