@@ -165,6 +165,288 @@ function computeOrderValueWithTransport(order, offerType) {
     return productsTotal + transportCost;
 }
 
+function getOfferPrice(offer) {
+    if (offer.type === 'studnia_oferta' || !!offer.wells?.length) {
+        const exportData = offer.wellsExport || (offer.data && offer.data.wellsExport);
+        if (exportData) return exportData.reduce((sum, w) => sum + (w.totalPrice || 0), 0);
+    }
+    let priceVal = offer.totalNetto || offer.totalBrutto || 0;
+    if (!priceVal && offer.data) {
+        if (offer.data.summary)
+            priceVal =
+                offer.data.summary.totalValue ||
+                offer.data.summary.totalNetto ||
+                offer.data.summary.totalBrutto ||
+                0;
+        else if (offer.data.costSummary) priceVal = offer.data.costSummary.totalValue || 0;
+        else priceVal = offer.data.totalNetto || offer.data.totalBrutto || 0;
+    }
+    if (!priceVal && offer.price) priceVal = offer.price;
+    return priceVal || 0;
+}
+
+function getOfferItemCount(offer) {
+    const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
+    if (isWell) return offer.wells?.length || offer.data?.wells?.length || 0;
+    return offer.items?.length || offer.data?.items?.length || 0;
+}
+
+function resolveUserName(raw) {
+    if (!raw) return '';
+    if (window.globalUsersMap && window.globalUsersMap.has(raw))
+        return window.globalUsersMap.get(raw);
+    if (
+        window.currentUser &&
+        (raw === window.currentUser.username || raw === window.currentUser.id)
+    )
+        return window.currentUser.displayName || window.currentUser.username || raw;
+    return raw;
+}
+
+function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
+    let html = `
+            <div class="modal-header">
+                <h3 id="offer-orders-title">Zamówienia oferty ${window.escapeHtml(offerLabel)}</h3>
+                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <div style="margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;">Lista wszystkich zamówień przypisanych do tej oferty.</div>
+            <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
+        `;
+
+    orders.forEach((ord) => {
+        const createdAt = ord.createdAt
+            ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
+            : 'brak daty';
+        const orderLabel = window.escapeHtml(
+            ord?.orderNumber ||
+                ord?.offerNumber ||
+                (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie')
+        );
+
+        html += `
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                    <div style="min-width:0;">
+                        <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
+                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
+                    </div>
+                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
+                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${window.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
+                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
+                    </div>
+                </div>
+            `;
+    });
+
+    html += `
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-close-footer" onclick="closeModal()">Zamknij</button>
+            </div>
+        `;
+
+    return html;
+}
+
+function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
+    const isAdminOrPro = role === 'admin' || role === 'pro';
+    const orderList = orders && orders.length > 0 ? orders : [];
+    const orderCount = orderList.length;
+
+    let orderBadge = '';
+    let orderItemsHtml = '';
+
+    if (hasOrder) {
+        const hasModifiedOrder = orderList.some((ord) => window.getOrderChangeInfo(ord).changed);
+
+        const badgeStateClass = hasModifiedOrder ? 'btn-order-badge modified' : 'btn-order-badge';
+        const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
+
+        orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${window.escapeHtml(order?.id || '')}" data-offer-id="${window.escapeHtml(offer.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
+                    <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
+                   </a>`;
+
+        orderItemsHtml = orderList
+            .map((ord) => {
+                const label = window.escapeHtml(
+                    ord?.orderNumber ||
+                        ord?.offerNumber ||
+                        (ord?.id ? String(ord.id).substring(0, 8) : 'Zamówienie')
+                );
+                const createdAt = ord.createdAt
+                    ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
+                    : 'brak daty';
+                const orderValue = window.computeOrderValueWithTransport(ord, offer.type);
+                const changeInfo = window.getOrderChangeInfo(ord);
+                return `
+                                <div class="offer-order-row">
+                                    <button class="offer-order-main btn-edit-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Edytuj zamówienie ${label}">
+                                        <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
+                                        <span class="offer-order-text">
+                                            <strong>${label} <span style="color: var(--success-hover); font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
+                                            <small>${createdAt}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
+                                        </span>
+                                    </button>
+                                    <div class="offer-order-actions">
+                                        <button class="action-btn success btn-karta-budowy" data-id="${window.escapeHtml(offer.id)}" data-type="${window.escapeHtml(offer.type)}" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offer.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+                                        <button class="action-btn secondary btn-history-order" data-order-id="${window.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
+                                        <button class="action-btn danger btn-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+                                    </div>
+                                </div>`;
+            })
+            .join('');
+    } else {
+        orderBadge = `<span style="background:rgba(100,116,139,0.1); color:var(--text-secondary); padding:4px 10px; border-radius:6px;
+                    border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
+    }
+
+    const dateStr = offer.createdAt ? new Date(offer.createdAt).toLocaleDateString('pl-PL') : '—';
+
+    const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
+    const priceVal = window.getOfferPrice(offer);
+    const icon = isWell
+        ? '<i data-lucide="cylinder"></i>'
+        : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
+    const itemCount = window.getOfferItemCount(offer);
+
+    const dd = window.getOfferDisplayData(offer);
+    const isClickable = role === 'admin' || role === 'pro';
+
+    return `
+                <div class="modern-offer-card" data-offer-id="${offer.id}">
+                    <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
+                    <div class="offer-card-content">
+                        <div class="offer-top-row">
+                            <div class="offer-icon-wrapper">
+                                ${icon}
+                            </div>
+                            <div class="offer-title-section">
+                                <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
+                                <div class="offer-subtitle">
+                                    <span class="offer-client">${dd.clientInfo}${dd.clientNumber ? ` <span class="client-nip">(${dd.clientNumber})</span>` : ''}</span>
+                                    ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${dd.investInfo}</span>` : ''}
+                                    ${dd.creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${dd.creatorName}</span>` : ''}
+                                    ${dd.userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${dd.userName}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="offer-price-section">
+                                <div class="offer-price">${typeof formatCurrency === 'function' ? formatCurrency(priceVal) : priceVal.toFixed(2) + ' PLN'}</div>
+                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
+                            </div>
+                        </div>
+                        ${hasOrder ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
+                        <div class="offer-actions-row">
+                            <div class="order-status-badge">
+                                ${orderBadge}
+                            </div>
+                            <div class="action-buttons">
+                                ${
+                                    isLocalList
+                                        ? `
+                                        <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
+                                            <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
+                                        </button>
+                                        <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">
+                                            <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
+                                        </button>
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
+                                            <i data-lucide="clock" aria-hidden="true"></i>
+                                        </button>
+                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
+                                            <i data-lucide="printer" aria-hidden="true"></i>
+                                        </button>
+                                        ${
+                                            offer.clientPhone
+                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
+                                                : ''
+                                        }
+                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
+                                            <i data-lucide="trash-2" aria-hidden="true"></i>
+                                        </button>
+                                        `
+                                        : `
+                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły" aria-label="Szczegóły">
+                                            <i data-lucide="eye" aria-hidden="true"></i>
+                                        </button>
+                                        `
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+}
+
+function navigateToModule(offerType, entityId, mode) {
+    const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
+    try {
+        if (window.parent?.SpaRouter) {
+            window.parent.SpaRouter.openOfferInModule(offerType, entityId, mode);
+        } else if (window.SpaRouter) {
+            window.SpaRouter.openOfferInModule(offerType, entityId, mode);
+        } else {
+            window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
+        }
+    } catch (err) {
+        logger.error('pvSalesUi', 'Błąd nawigacji:', err);
+        window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
+    }
+}
+
+function getOfferDisplayData(offer) {
+    const clientNumber = offer.clientNumber || (offer.data && offer.data.clientNumber) || '';
+    const clientInfo = offer.clientName || (offer.data && offer.data.clientName) || 'Brak danych';
+    const investInfo =
+        offer.investName ||
+        offer.budowa ||
+        (offer.data && (offer.data.investName || offer.data.budowa));
+    const rawUserName =
+        offer.userName ||
+        (offer.data && offer.data.userName) ||
+        (offer.data && offer.data.creatorName) ||
+        offer.lastEditedBy ||
+        '';
+    const rawCreatorName =
+        offer.createdByUserName || (offer.data && offer.data.createdByUserName) || rawUserName;
+    return {
+        clientNumber,
+        clientInfo,
+        investInfo,
+        userName: resolveUserName(rawUserName),
+        creatorName: resolveUserName(rawCreatorName)
+    };
+}
+
+function getOrderChangeInfo(order) {
+    const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
+    const originalPrice = Number(
+        order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
+    );
+    let changed = Math.abs(currentPrice - originalPrice) > 0.01;
+    if (!changed && order?.originalSnapshot) {
+        const snap = order.originalSnapshot;
+        const snapItems = snap.items || [];
+        const snapProductTotal = snapItems.reduce((sum, item) => {
+            const unitBase =
+                (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
+            return (
+                sum +
+                (unitBase + Number(item.surcharge || 0) + Number(item.pehdCostPerUnit || 0)) *
+                    (Number(item.quantity) || 0)
+            );
+        }, 0);
+        const snapTransport = window.recalculateRuryTransportCost(
+            snapItems,
+            snap.transportKm,
+            snap.transportRate
+        );
+        const totalCurrent = window.computeOrderValueWithTransport(order);
+        changed = Math.abs(totalCurrent - (snapProductTotal + snapTransport)) > 0.01;
+    }
+    return { changed, currentPrice, originalPrice };
+}
+
 window.openPrintModal = openPrintModal;
 window.offerMatchesUser = offerMatchesUser;
 window.offerMatchesDate = offerMatchesDate;
@@ -173,3 +455,11 @@ window.httpErrorMessage = httpErrorMessage;
 window.offerTypeForApi = offerTypeForApi;
 window.recalculateRuryTransportCost = recalculateRuryTransportCost;
 window.computeOrderValueWithTransport = computeOrderValueWithTransport;
+window.getOfferPrice = getOfferPrice;
+window.getOfferItemCount = getOfferItemCount;
+window.resolveUserName = resolveUserName;
+window.navigateToModule = navigateToModule;
+window.buildOrderModalHtml = buildOrderModalHtml;
+window.buildOfferCardHtml = buildOfferCardHtml;
+window.getOfferDisplayData = getOfferDisplayData;
+window.getOrderChangeInfo = getOrderChangeInfo;

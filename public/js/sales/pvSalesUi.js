@@ -47,94 +47,9 @@ class PVSalesUI {
         this.init();
     }
 
-    /** Pomocnik do normalizacji ID */
     normalizeId(id) {
         if (!id) return '';
         return String(id);
-    }
-
-    escapeHtml(value) {
-        return String(value ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    formatOrderLabel(order) {
-        return this.escapeHtml(
-            order?.orderNumber ||
-                order?.offerNumber ||
-                (order?.id ? String(order.id).substring(0, 8) : 'Zamówienie')
-        );
-    }
-
-    getOrderChangeInfo(order) {
-        const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
-        const originalPrice = Number(
-            order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
-        );
-        let changed = Math.abs(currentPrice - originalPrice) > 0.01;
-        if (!changed && order?.originalSnapshot) {
-            const snap = order.originalSnapshot;
-            const snapItems = snap.items || [];
-            const snapProductTotal = snapItems.reduce((sum, item) => {
-                const unitBase =
-                    (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
-                return (
-                    sum +
-                    (unitBase + Number(item.surcharge || 0) + Number(item.pehdCostPerUnit || 0)) *
-                        (Number(item.quantity) || 0)
-                );
-            }, 0);
-            const snapTransport = this.recalculateRuryTransportCost(
-                snapItems,
-                snap.transportKm,
-                snap.transportRate
-            );
-            const totalCurrent = this.computeOrderValueWithTransport(order);
-            changed = Math.abs(totalCurrent - (snapProductTotal + snapTransport)) > 0.01;
-        }
-        return { changed, currentPrice, originalPrice };
-    }
-
-    /**
-     * Przelicza koszt transportu dla zamówienia rur na podstawie aktualnych pozycji.
-     *
-     * Deleguje do calculateTransports() z transport.js (bin-packing z konsolidacją).
-     *
-     * @param {Array} items pozycje zamówienia (z `weight`, `transport`, `quantity`, `autoAdded`)
-     * @param {number} transportKm km na kurs
-     * @param {number} transportRate PLN/km
-     * @returns {number} łączny koszt transportu (PLN)
-     */
-    recalculateRuryTransportCost(items, transportKm, transportRate) {
-        return window.recalculateRuryTransportCost(items, transportKm, transportRate);
-    }
-
-    /**
-     * Oblicza aktualną wartość netto zamówienia Z TRANSPORTEM włącznie.
-     *
-     * Studnie: suma `wellsExport[].totalPrice` (= price + transportCost per studnia).
-     *          Te pole jest aktualizowane przy każdym zapisie oferty i zawiera
-     *          zarówno cenę konfiguracji jak i koszt transportu rozdzielony na studnie.
-     *          Fallback: order.totalNetto (zachowane dla kompatybilności z legacy).
-     *
-     * Rury: suma produktów + przeliczony transport (bin-packing z wag pozycji).
-     *   - products = Σ (unitPrice * (1 - discount/100) + surcharge + pehdCostPerUnit) * quantity
-     *   - transport = recalculateRuryTransportCost(items, transportKm, transportRate)
-     *     (per-item `transport` z cennika może być nieaktualny po modyfikacji ilości,
-     *      więc liczymy koszt od zera z aktualnych wag i `transport` per-unit)
-     *   - final = products + transport
-     *   Zamówienia rur nie zapisują pola totalNetto — wartość musi być liczona w locie.
-     *
-     * @param {object} order obiekt zamówienia
-     * @param {string} [offerType] typ oferty ('rura_oferta' | 'offer' | 'studnia_oferta')
-     * @returns {number} wartość netto (z transportem)
-     */
-    computeOrderValueWithTransport(order, offerType) {
-        return window.computeOrderValueWithTransport(order, offerType);
     }
 
     findOrderById(orderId) {
@@ -193,7 +108,7 @@ class PVSalesUI {
             logger.error('pvSalesUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
             const listDiv = document.getElementById('pv-local-offers-list');
             if (listDiv)
-                listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${this.escapeHtml(error.message)}</div>`;
+                listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${window.escapeHtml(error.message)}</div>`;
         }
     }
 
@@ -354,14 +269,6 @@ class PVSalesUI {
         this.searchOffers(this.buildSearchParams());
     }
 
-    offerMatchesUser(offer, selectedUserId) {
-        return window.offerMatchesUser(offer, selectedUserId);
-    }
-
-    offerMatchesDate(offer, dateFilter, boundaries) {
-        return window.offerMatchesDate(offer, dateFilter, boundaries);
-    }
-
     _syncFilterUI() {
         document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === this.currentFilter);
@@ -472,7 +379,7 @@ class PVSalesUI {
         let dateFrom = '';
         let dateTo = '';
         if (this.filters.date.mode === 'preset') {
-            const resolved = this._resolveDatePreset(this.filters.date.preset);
+            const resolved = window.resolveDatePreset(this.filters.date.preset);
             dateFrom = resolved.from;
             dateTo = resolved.to;
         } else if (this.filters.date.mode === 'range') {
@@ -501,13 +408,6 @@ class PVSalesUI {
             sort: 'createdAt',
             order: 'desc'
         };
-    }
-
-    /**
-     * Główna metoda wyszukiwania — zastępuje loadOrdersMap + loadLocalOffers
-     */
-    _httpErrorMessage(status) {
-        return window.httpErrorMessage(status);
     }
 
     async searchOffers(params = {}, skipRender) {
@@ -548,7 +448,7 @@ class PVSalesUI {
 
             if (!resp.ok) {
                 const errBody = await resp.json().catch(() => ({}));
-                throw new Error(errBody.error || this._httpErrorMessage(resp.status));
+                throw new Error(errBody.error || window.httpErrorMessage(resp.status));
             }
             const json = await resp.json();
 
@@ -673,7 +573,7 @@ class PVSalesUI {
             '<div style="text-align:center; padding:2rem; color:var(--text-danger);">' +
             '<strong>Błąd:</strong><br/>' +
             '<span style="font-size:0.85rem; opacity:0.8;">' +
-            this.escapeHtml(message) +
+            window.escapeHtml(message) +
             '</span><br/>' +
             '<button class="btn btn-sm btn-secondary" style="margin-top:1rem;" data-action="retry-search">' +
             '<i data-lucide="refresh-cw"></i> Odśwież</button></div>';
@@ -684,13 +584,6 @@ class PVSalesUI {
         setTimeout(() => {
             if (window.lucide) lucide.createIcons();
         }, 50);
-    }
-
-    /**
-     * Rozwiązuje preset daty na przedział from-to
-     */
-    _resolveDatePreset(preset) {
-        return window.resolveDatePreset(preset);
     }
 
     _closeDatePopover() {
@@ -721,7 +614,7 @@ class PVSalesUI {
             sorted
                 .map(
                     ([id, name]) =>
-                        `<option value="${this.escapeHtml(id)}">${this.escapeHtml(name)}</option>`
+                        `<option value="${window.escapeHtml(id)}">${window.escapeHtml(name)}</option>`
                 )
                 .join('');
 
@@ -731,7 +624,7 @@ class PVSalesUI {
             let displayName = prev;
             if (window.globalUsersMap && window.globalUsersMap.has(prev))
                 displayName = window.globalUsersMap.get(prev);
-            select.innerHTML += `<option value="${this.escapeHtml(prev)}">${this.escapeHtml(displayName)}</option>`;
+            select.innerHTML += `<option value="${window.escapeHtml(prev)}">${window.escapeHtml(displayName)}</option>`;
             select.value = prev;
         } else {
             this.filters.user = '';
@@ -742,219 +635,17 @@ class PVSalesUI {
     renderOffersList(offers, isLocalList) {
         return offers
             .map((offer) => {
-                const isAdminOrPro = this.role === 'admin' || this.role === 'pro';
-
-                // Sprawdź czy oferta ma zamówienie
                 const { hasOrder, orders, order } = this.getOrderForOffer(offer);
-                const orderList = orders && orders.length > 0 ? orders : [];
-                const orderCount = orderList.length;
-
-                let orderBadge = '';
-                let orderItemsHtml = '';
-
-                if (hasOrder) {
-                    const hasModifiedOrder = orderList.some(
-                        (ord) => this.getOrderChangeInfo(ord).changed
-                    );
-
-                    const badgeStateClass = hasModifiedOrder
-                        ? 'btn-order-badge modified'
-                        : 'btn-order-badge';
-                    const countLabel = orderCount > 0 ? ` (${orderCount})` : '';
-
-                    orderBadge = `<a href="javascript:void(0)" class="btn btn-sm ${badgeStateClass}" data-order-id="${this.escapeHtml(order?.id || '')}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Kliknij aby zobaczyć listę zamówień powiązanych z tą ofertą${hasModifiedOrder ? ' (wykryto zmiany)' : ''}">
-                    <i data-lucide="package" aria-hidden="true"></i> Zamówienia${countLabel}${hasModifiedOrder ? ' • zmiany' : ''}
-                   </a>`;
-
-                    orderItemsHtml = orderList
-                        .map((ord) => {
-                            const label = this.formatOrderLabel(ord);
-                            const createdAt = ord.createdAt
-                                ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
-                                : 'brak daty';
-                            const orderValue = this.computeOrderValueWithTransport(ord, offer.type);
-                            const changeInfo = this.getOrderChangeInfo(ord);
-                            return `
-                                <div class="offer-order-row">
-                                    <button class="offer-order-main btn-edit-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Edytuj zamówienie ${label}">
-                                        <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
-                                        <span class="offer-order-text">
-                                            <strong>${label} <span style="color: var(--success-hover); font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
-                                            <small>${createdAt}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
-                                        </span>
-                                    </button>
-                                    <div class="offer-order-actions">
-                                        <button class="action-btn success btn-karta-budowy" data-id="${this.escapeHtml(offer.id)}" data-type="${this.escapeHtml(offer.type)}" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offer.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Karta budowy ${label}" aria-label="Karta budowy ${label}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-                                        <button class="action-btn secondary btn-history-order" data-order-id="${this.escapeHtml(ord.id)}" title="Historia zmian zamówienia ${label}" aria-label="Historia zmian zamówienia ${label}"><i data-lucide="clock" aria-hidden="true"></i></button>
-                                        <button class="action-btn danger btn-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(offer.type)}" title="Usuń zamówienie ${label}" aria-label="Usuń zamówienie ${label}"><i data-lucide="trash-2" aria-hidden="true"></i></button>
-                                    </div>
-                                </div>`;
-                        })
-                        .join('');
-                } else {
-                    orderBadge = `<span style="background:rgba(100,116,139,0.1); color:var(--text-secondary); padding:4px 10px; border-radius:6px;
-                    border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
-                }
-
-                const dateStr = offer.createdAt
-                    ? new Date(offer.createdAt).toLocaleDateString('pl-PL')
-                    : '—';
-
-                const isWell = offer.type === 'studnia_oferta' || !!offer.wells?.length;
-                let priceVal = 0;
-
-                // Dla studni wolimy obliczyć sumę z wellsExport, bo tam jest już transport per studnia
-                if (isWell && (offer.wellsExport || (offer.data && offer.data.wellsExport))) {
-                    const exportData = offer.wellsExport || offer.data.wellsExport;
-                    priceVal = exportData.reduce((sum, w) => sum + (w.totalPrice || 0), 0);
-                } else {
-                    priceVal = offer.totalNetto || offer.totalBrutto || 0;
-                    if (!priceVal && offer.data) {
-                        if (offer.data.summary)
-                            priceVal =
-                                offer.data.summary.totalValue ||
-                                offer.data.summary.totalNetto ||
-                                offer.data.summary.totalBrutto ||
-                                0;
-                        else if (offer.data.costSummary)
-                            priceVal = offer.data.costSummary.totalValue || 0;
-                        else priceVal = offer.data.totalNetto || offer.data.totalBrutto || 0;
-                    }
-                    if (!priceVal && offer.price) priceVal = offer.price;
-                }
-                const icon = isWell
-                    ? '<i data-lucide="cylinder"></i>'
-                    : '<i data-lucide="cylinder" class="lucide-rotate-n90"></i>';
-
-                let itemCount = 0;
-                if (isWell) {
-                    itemCount = offer.wells
-                        ? offer.wells.length
-                        : offer.data && offer.data.wells
-                          ? offer.data.wells.length
-                          : 0;
-                } else {
-                    itemCount = offer.items
-                        ? offer.items.length
-                        : offer.data && offer.data.items
-                          ? offer.data.items.length
-                          : 0;
-                }
-
-                const clientNumber =
-                    offer.clientNumber || (offer.data && offer.data.clientNumber) || '';
-                const clientInfo =
-                    offer.clientName || (offer.data && offer.data.clientName) || 'Brak danych';
-                const investInfo =
-                    offer.investName ||
-                    offer.budowa ||
-                    (offer.data && (offer.data.investName || offer.data.budowa));
-                const rawUserName =
-                    offer.userName ||
-                    (offer.data && offer.data.userName) ||
-                    (offer.data && offer.data.creatorName) ||
-                    offer.lastEditedBy ||
-                    '';
-                const rawCreatorName =
-                    offer.createdByUserName ||
-                    (offer.data && offer.data.createdByUserName) ||
-                    rawUserName;
-
-                const resolveUser = (raw) => {
-                    if (!raw) return '';
-                    if (window.globalUsersMap && window.globalUsersMap.has(raw))
-                        return window.globalUsersMap.get(raw);
-                    if (
-                        window.currentUser &&
-                        (raw === window.currentUser.username || raw === window.currentUser.id)
-                    )
-                        return window.currentUser.displayName || window.currentUser.username || raw;
-                    return raw;
-                };
-
-                const userName = resolveUser(rawUserName);
-                const creatorName = resolveUser(rawCreatorName);
-                const isClickable = this.role === 'admin' || this.role === 'pro';
-
-                return `
-                <div class="modern-offer-card" data-offer-id="${offer.id}">
-                    <!-- Status Indicator -->
-                    <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
-
-                    <!-- Card Content -->
-                    <div class="offer-card-content">
-                        <!-- Top Row: Icon + Title + Price -->
-                        <div class="offer-top-row">
-                            <div class="offer-icon-wrapper">
-                                ${icon}
-                            </div>
-                            <div class="offer-title-section">
-                                <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
-                                <div class="offer-subtitle">
-                                    <span class="offer-client">${clientInfo}${clientNumber ? ` <span class="client-nip">(${clientNumber})</span>` : ''}</span>
-                                    ${investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${investInfo}</span>` : ''}
-                                    ${creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${creatorName}</span>` : ''}
-                                    ${userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${userName}</span>` : ''}
-                                </div>
-                            </div>
-                            <div class="offer-price-section">
-                                <div class="offer-price">${typeof formatCurrency === 'function' ? formatCurrency(priceVal) : priceVal.toFixed(2) + ' PLN'}</div>
-                                <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
-                            </div>
-                        </div>
-
-                        ${hasOrder ? `<div class="offer-orders-panel">${orderItemsHtml}</div>` : ''}
-
-                        <!-- Bottom Row: Actions -->
-                        <div class="offer-actions-row">
-                            <!-- Order Status -->
-                            <div class="order-status-badge">
-                                ${orderBadge}
-                            </div>
-
-                            <!-- Action Buttons -->
-                            <div class="action-buttons">
-                                ${
-                                    isLocalList
-                                        ? `
-                                        <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
-                                            <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
-                                        </button>
-                                        <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">
-                                            <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
-                                        </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
-                                            <i data-lucide="clock" aria-hidden="true"></i>
-                                        </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
-                                            <i data-lucide="printer" aria-hidden="true"></i>
-                                        </button>
-                                        ${
-                                            offer.clientPhone
-                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
-                                                : ''
-                                        }
-                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
-                                            <i data-lucide="trash-2" aria-hidden="true"></i>
-                                        </button>
-                                        `
-                                        : `
-                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły" aria-label="Szczegóły">
-                                            <i data-lucide="eye" aria-hidden="true"></i>
-                                        </button>
-                                        `
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+                return window.buildOfferCardHtml(
+                    offer,
+                    hasOrder,
+                    orders,
+                    order,
+                    this.role,
+                    isLocalList
+                );
             })
             .join('');
-    }
-
-    _offerTypeForApi(displayType) {
-        return window.offerTypeForApi(displayType);
     }
 
     async showOfferOrdersPopup(offerId, offerType) {
@@ -969,7 +660,7 @@ class PVSalesUI {
                     typeof authHeaders === 'function'
                         ? authHeaders()
                         : { 'Content-Type': 'application/json' };
-                const apiType = offerType ? this._offerTypeForApi(offerType) : undefined;
+                const apiType = offerType ? window.offerTypeForApi(offerType) : undefined;
                 const resp = await fetch(
                     `/api/offers/search/orders?id=${encodeURIComponent(offerKey)}${apiType ? `&type=${apiType}` : ''}&t=${Date.now()}`,
                     { headers }
@@ -999,44 +690,7 @@ class PVSalesUI {
         this.renderResults();
 
         const resolvedType = offerType || 'studnia_oferta';
-
-        let html = `
-            <div class="modal-header">
-                <h3 id="offer-orders-title">Zamówienia oferty ${offerLabel}</h3>
-                <button class="btn-icon btn-close-x" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
-            </div>
-            <div style="margin-bottom:1rem; color:var(--text-muted); font-size:0.9rem;">Lista wszystkich zamówień przypisanych do tej oferty.</div>
-            <div style="display:flex; flex-direction:column; gap:0.75rem; max-height:55vh; overflow-y:auto; padding-right:0.25rem;">
-        `;
-
-        orders.forEach((ord) => {
-            const createdAt = ord.createdAt
-                ? new Date(ord.createdAt).toLocaleDateString('pl-PL')
-                : 'brak daty';
-            const orderLabel = this.formatOrderLabel(ord);
-
-            html += `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
-                    <div style="min-width:0;">
-                        <div class="btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
-                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
-                    </div>
-                    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-id="${this.escapeHtml(offerKey)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Karta</button>
-                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${this.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${this.escapeHtml(ord.id)}" data-offer-type="${this.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Usuń</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary btn-close-footer" onclick="closeModal()">Zamknij</button>
-            </div>
-        `;
+        const html = window.buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel);
 
         const overlay = showModal({
             id: 'offer-orders-modal',
@@ -1057,14 +711,7 @@ class PVSalesUI {
                 const orderId = buttonEl.getAttribute('data-order-id');
                 const offerType = buttonEl.getAttribute('data-offer-type');
                 closeModal();
-                if (window.parent && window.parent.SpaRouter) {
-                    window.parent.SpaRouter.openOfferInModule(offerType, orderId, 'order');
-                } else if (window.SpaRouter) {
-                    window.SpaRouter.openOfferInModule(offerType, orderId, 'order');
-                } else {
-                    const targetModule = offerType === 'studnia_oferta' ? 'studnie' : 'rury';
-                    window.location.href = `app.html#/${targetModule}?order=${orderId}`;
-                }
+                window.navigateToModule(offerType, orderId, 'order');
             });
         });
 
@@ -1141,22 +788,7 @@ class PVSalesUI {
                 const editOrderId = btn.getAttribute('data-order-id');
                 const editOfferType = btn.getAttribute('data-offer-type');
                 if (!editOrderId) return;
-                try {
-                    if (window.parent?.SpaRouter) {
-                        window.parent.SpaRouter.openOfferInModule(
-                            editOfferType,
-                            editOrderId,
-                            'order'
-                        );
-                    } else if (window.SpaRouter) {
-                        window.SpaRouter.openOfferInModule(editOfferType, editOrderId, 'order');
-                    } else {
-                        window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
-                    }
-                } catch (err) {
-                    logger.error('pvSalesUi', 'Błąd nawigacji do zamówienia:', err);
-                    window.location.href = `app.html#/${editOfferType === 'studnia_oferta' ? 'studnie' : 'rury'}?order=${editOrderId}`;
-                }
+                window.navigateToModule(editOfferType, editOrderId, 'order');
                 return;
             }
 
