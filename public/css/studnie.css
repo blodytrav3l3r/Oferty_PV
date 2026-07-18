@@ -115,6 +115,11 @@ body > .main > .section.active {
     display: none !important;
 }
 
+.well-app-layout.intro-mode .well-center-column {
+    overflow-y: visible;
+    height: auto;
+}
+
 /* ── Lewo: Schemat studni ── */
 .well-diagram-panel {
     background: var(--bg-secondary);
