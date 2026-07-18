@@ -50,8 +50,8 @@ body.index-page.logged-in::before {
 
 /* ── Niestandardowy pasek przewijania ── */
 body.index-page ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 body.index-page ::-webkit-scrollbar-track {
     background: var(--bg-primary);

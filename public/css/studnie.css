@@ -244,6 +244,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-width: 0;
     overflow-y: auto;
     padding: 0 1rem 4.5rem;
+    scrollbar-width: thin;
 }
 
 .well-center-column::-webkit-scrollbar,
@@ -295,9 +296,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 4px;
-    /* dla paska przewijania */
-    margin-right: -4px;
+    scrollbar-width: thin;
 }
 
 .wells-sidebar-header .wells-count {
