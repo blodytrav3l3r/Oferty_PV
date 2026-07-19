@@ -29,11 +29,11 @@ function clearOfferForm() {
 
     if (document.getElementById('offer-payment-terms'))
         document.getElementById('offer-payment-terms').value =
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
 
     const tabPayment = document.getElementById('offer-tab-payment-terms');
     if (tabPayment)
-        tabPayment.value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+        tabPayment.value = 'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = '7 dni';
     const tabValidity = document.getElementById('offer-tab-validity');
@@ -43,7 +43,7 @@ function clearOfferForm() {
     wells = [];
     wellCounter = 1;
     currentWellIndex = 0;
-    wellDiscounts = {}; // Reset rabatów
+    wellDiscounts = {}; // Reset rabatow
 
     offerDefaultZakonczenie = null;
     offerDefaultRedukcja = false;
@@ -55,7 +55,7 @@ function clearOfferForm() {
     if (titleEl)
         titleEl.innerHTML = '<i data-lucide="clipboard-list"></i> Dane klienta i oferty (Nowa)';
     const btnEl2 = document.getElementById('btn-save-studnie-offer');
-    if (btnEl2) btnEl2.innerHTML = '<i data-lucide="save"></i> Zapisz ofertę';
+    if (btnEl2) btnEl2.innerHTML = '<i data-lucide="save"></i> Zapisz oferte';
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
@@ -63,7 +63,7 @@ function clearOfferForm() {
             currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
                 ? 'inline-block'
                 : 'none';
-        btnChangeUser.innerHTML = '<i data-lucide="user"></i> Zmień opiekuna';
+        btnChangeUser.innerHTML = '<i data-lucide="user"></i> Zmien opiekuna';
     }
 
     refreshAll();
@@ -90,7 +90,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
                 const { storageService } = await import('../shared/StorageService.js');
                 offer = await storageService.getOfferById(id_or_doc);
             } catch (e) {
-                showToast('Błąd: Nie znaleziono oferty w bazie.', 'error');
+                showToast('Blad: Nie znaleziono oferty w bazie.', 'error');
                 return;
             }
         }
@@ -98,10 +98,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     if (!offer) return;
 
-    // Normalizacja inline — storageService jest tylko ESM i nie jest dostępny w zasięgu globalnym
+    // Normalizacja inline — storageService jest tylko ESM i nie jest dostepny w zasięgu globalnym
     const normalized = normalizeOfferData(offer);
 
-    orderEditMode = null; // wyjdź z trybu zamówienia, jeśli jest aktywny
+    orderEditMode = null; // wyjdz z trybu zamowienia, jesli jest aktywny
     editingOfferIdStudnie = normalized.id || '';
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';
@@ -128,13 +128,13 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     if (document.getElementById('offer-payment-terms'))
         document.getElementById('offer-payment-terms').value =
             normalized.paymentTerms ||
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
 
     const tabPayment = document.getElementById('offer-tab-payment-terms');
     if (tabPayment)
         tabPayment.value =
             normalized.paymentTerms ||
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
+            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
 
     if (document.getElementById('offer-validity'))
         document.getElementById('offer-validity').value = normalized.validity || '7 dni';
@@ -151,14 +151,14 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     wells = structuredClone(normalized.wells || []);
     migrateWellData(wells);
 
-    // Przelicz uszczelki i zsynchronizuj kinetę dla wszystkich studni
+    // Przelicz uszczelki i zsynchronizuj kinete dla wszystkich studni
     wells.forEach((w) => {
         if (typeof recalcGaskets === 'function') recalcGaskets(w);
         if (typeof syncKineta === 'function') syncKineta(w);
     });
 
-    // Zawsze sprawdzaj, czy jakieś przejścia już są fizycznie dodane w studniach
-    // i automatycznie włącz kategorię do widoku (aby nie trzeba było ich "wczytywać")
+    // Zawsze sprawdzaj, czy jakies przejscia juz sa fizycznie dodane w studniach
+    // i automatycznie wlacz kategorie do widoku (aby nie trzeba bylo ich "wczytywac")
     wells.forEach((w) => {
         if (w.przejscia) {
             w.przejscia.forEach((pr) => {
@@ -172,7 +172,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     currentWellIndex = 0;
 
-    // Przywróć domyślne parametry poziomu oferty z wczytanych studni
+    // Przywroc domyslne parametry poziomu oferty z wczytanych studni
     if (wells.length > 0) {
         const lastWell = wells[wells.length - 1];
         offerDefaultZakonczenie = lastWell.zakonczenie || null;
@@ -188,109 +188,15 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 
     refreshAll();
 
-    // Przywróć stan kroku 2 (Ogólne parametry studni) z zapisanego stanu kreatora
-    let wizardState = normalized.wizard;
-    let wizardGlobalParams = wizardState && wizardState.globalParams;
-    if (wizardGlobalParams) {
-        // Nowa oferta z zapisanym stanem — pełna restauracja kafelków
-        document.querySelectorAll('#wizard-step-2 .param-group').forEach(function (group) {
-            let paramName = group.getAttribute('data-param');
-            if (!paramName || !wizardGlobalParams.hasOwnProperty(paramName)) return;
-            let val = wizardGlobalParams[paramName];
-            if (!val) return;
-            group.querySelectorAll('.param-tile').forEach(function (b) {
-                b.classList.remove('active');
-            });
-            let targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
-            if (targetTile) targetTile.classList.add('active');
-            if (typeof wizardConfirmedParams !== 'undefined') {
-                wizardConfirmedParams.add(paramName);
-            }
-        });
-        // Obsługa wkładki PEHD (sub-opcje)
-        let wkladkaV = wizardGlobalParams.wkladka;
-        let subOpts = document.getElementById('wkladka-sub-options');
-        if (wkladkaV && wkladkaV !== 'brak') {
-            if (subOpts) subOpts.style.display = 'block';
-            let cbDennica = document.getElementById('pehd-dennica');
-            let cbNadbudowa = document.getElementById('pehd-nadbudowa');
-            let cbZwienczenie = document.getElementById('pehd-zwienczenie');
-            if (cbDennica) cbDennica.checked = wizardGlobalParams.wkladkaDennica === wkladkaV;
-            if (cbNadbudowa) cbNadbudowa.checked = wizardGlobalParams.wkladkaNadbudowa === wkladkaV;
-            if (cbZwienczenie)
-                cbZwienczenie.checked = wizardGlobalParams.wkladkaZwienczenie === wkladkaV;
-        } else {
-            if (subOpts) subOpts.style.display = 'none';
-        }
-        // Pola tekstowe (powloka, ceny malowania)
-        if (document.getElementById('powloka-name-w'))
-            document.getElementById('powloka-name-w').value = wizardGlobalParams.powlokaNameW || '';
-        if (document.getElementById('malowanie-wew-cena'))
-            document.getElementById('malowanie-wew-cena').value =
-                wizardGlobalParams.malowanieWewCena || '';
-        if (document.getElementById('powloka-name-z'))
-            document.getElementById('powloka-name-z').value = wizardGlobalParams.powlokaNameZ || '';
-        if (document.getElementById('malowanie-zew-cena'))
-            document.getElementById('malowanie-zew-cena').value =
-                wizardGlobalParams.malowanieZewCena || '';
-    } else {
-        // Oferta legacy (bez zapisanego stanu kreatora)
-        // Nie przywracamy kafelków z danych studni — byłyby niespójne.
-        // wizardConfirmedParams zostanie wypełniony poniżej przez skipWizardToStep3.
-        let legacyBanner = document.getElementById('wizard-legacy-banner');
-        if (legacyBanner) {
-            legacyBanner.style.display = 'flex';
-            if (typeof lucide !== 'undefined') lucide.createIcons({ root: legacyBanner });
-        }
-    }
-
-    if (typeof validateWizardStep2 === 'function') {
-        validateWizardStep2();
-    }
-
-    // Pomiń kreatora dla wczytanych ofert — przejdź bezpośrednio do widoku oferty (chyba że zablokowano)
-    if (!preventStepOverride) {
-        if (typeof skipWizardToStep3 === 'function') skipWizardToStep3();
-    } else {
-        if (typeof wizardConfirmedParams !== 'undefined') {
-            wizardConfirmedParams = new Set(WIZARD_REQUIRED_PARAMS);
-        }
-    }
+    restoreWizardState(normalized.wizard, preventStepOverride);
 
     showSection(sectionToShow);
-    showToast('Wczytano ofertę: ' + (normalized.number || offer.id), 'info');
+    showToast('Wczytano oferte: ' + (normalized.number || offer.id), 'info');
 
-    // Aktualizacja UI (nagłówki i przyciski)
-    const titleEl = document.getElementById('offer-form-title-studnie');
-    if (titleEl)
-        titleEl.innerHTML =
-            '<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">' +
-            escapeHtml(normalized.number || offer.id) +
-            '</span>';
-    const btnEl2 = document.getElementById('btn-save-studnie-offer');
-    if (btnEl2) btnEl2.innerHTML = '<i data-lucide="save"></i> Zapisz ofertę';
-
-    const btnChangeUser = document.getElementById('btn-change-offer-user');
-    if (btnChangeUser) {
-        btnChangeUser.style.display =
-            currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')
-                ? 'inline-block'
-                : 'none';
-        if (editingOfferAssignedUserName) {
-            btnChangeUser.innerHTML =
-                '<i data-lucide="user"></i> Opiekun: ' + escapeHtml(editingOfferAssignedUserName);
-        } else {
-            btnChangeUser.innerHTML = '<i data-lucide="user"></i> Zmień opiekuna';
-        }
-    }
-
-    // Pokaż baner blokady, jeśli oferta ma zamówienie
-    if (typeof renderOfferLockBanner === 'function') renderOfferLockBanner();
-    if (typeof window.updateTransportCostSummary === 'function')
-        window.updateTransportCostSummary();
+    updateOfferFormHeader(normalized.number || offer.id, offer.id);
 }
 
-// Globalne udostępnienie
+// Globalne udostepnienie
 window.loadSavedOfferStudnie = loadSavedOfferStudnie;
 
 document.addEventListener('DOMContentLoaded', function () {
