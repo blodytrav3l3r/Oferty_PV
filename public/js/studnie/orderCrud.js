@@ -393,94 +393,6 @@ async function saveOrderStudnie() {
     }
 }
 
-function freezeWellPrices(wellsArr) {
-    (wellsArr || []).forEach((well) => {
-        (well.config || []).forEach((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) return;
-            item.frozenPrice = getItemAssessedPrice(well, p, true, item);
-            item.frozenPriceBase = getItemAssessedPrice(well, p, false, item);
-            item.frozenName = p.name;
-        });
-
-        let discNadbudowa = 0;
-        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        if (discountKey && wellDiscounts[discountKey]) {
-            discNadbudowa = wellDiscounts[discountKey].nadbudowa || 0;
-        }
-        const mult = 1 - discNadbudowa / 100;
-
-        const configMap =
-            typeof buildConfigMap !== 'undefined'
-                ? buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true)
-                : [];
-
-        (well.przejscia || []).forEach((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
-            if (!p) return;
-
-            let drillingBasePrice = 0;
-            let drillProdName = '';
-            let drillProdDn = '';
-            const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
-
-            if (!isInsitu && configMap.length > 0) {
-                let rzDna = parseFloat(well.rzednaDna) || 0;
-                let pel = parseFloat(item.rzednaWlaczenia);
-                if (isNaN(pel)) pel = rzDna;
-                let mmFromBottom = (pel - rzDna) * 1000;
-
-                if (typeof findAssignedElement === 'function') {
-                    const assigned = findAssignedElement(mmFromBottom, configMap);
-                    if (
-                        assigned &&
-                        assigned.entry &&
-                        (assigned.entry.componentType === 'krag' ||
-                            assigned.entry.componentType === 'krag_ot')
-                    ) {
-                        const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
-                        if (trDn > 0) {
-                            const drillingProducts = studnieProducts.filter(
-                                (x) => x.category === 'Wiercenie'
-                            );
-                            let bestDrill = null;
-                            let bestDnDiff = Infinity;
-                            drillingProducts.forEach((drill) => {
-                                let drillDn = parseInt(drill.dn);
-                                if (isNaN(drillDn)) {
-                                    const match = drill.id.match(/Wiercenie-(\d+)/i);
-                                    if (match) drillDn = parseInt(match[1]);
-                                }
-                                if (!isNaN(drillDn) && drillDn >= trDn) {
-                                    if (drillDn - trDn < bestDnDiff) {
-                                        bestDnDiff = drillDn - trDn;
-                                        bestDrill = drill;
-                                    }
-                                }
-                            });
-                            if (bestDrill) {
-                                drillingBasePrice = /** @type {any} */ (bestDrill).price || 0;
-                                drillProdName = /** @type {any} */ (bestDrill).name;
-                                drillProdDn = /** @type {any} */ (bestDrill).dn || '';
-                            }
-                        }
-                    }
-                }
-            }
-
-            const transPriceBase = p.price || 0;
-            const bP = transPriceBase + drillingBasePrice;
-            item.frozenPrice = bP * mult;
-            item.frozenPriceBase = bP;
-            item.frozenName = p.name || p.category;
-            item.frozenTransitionPrice = transPriceBase * mult;
-            item.frozenDrillingPrice = drillingBasePrice * mult;
-            item.frozenDrillingName = drillProdName;
-            item.frozenDrillingDn = drillProdDn;
-        });
-    });
-}
-
 async function deleteOrderStudnie(orderId) {
     const order = ordersStudnie ? ordersStudnie.find((o) => o.id === orderId) : null;
     if (order) {
@@ -540,83 +452,6 @@ async function deleteOrderStudnie(orderId) {
     if (window.pvSalesUI) {
         window.pvSalesUI.notifyOrderMutation();
     }
-}
-
-function getOrderChanges(order) {
-    if (!order || !order.originalSnapshot) return {};
-    const changes = {};
-
-    const originalSnapshotData = order.originalSnapshot;
-    const originalWells = Array.isArray(originalSnapshotData)
-        ? originalSnapshotData
-        : originalSnapshotData.wells || [];
-    const originalDiscounts = !Array.isArray(originalSnapshotData)
-        ? originalSnapshotData.wellDiscounts || null
-        : null;
-
-    const orig = structuredClone(originalWells);
-    if (typeof migrateWellData === 'function') migrateWellData(orig);
-    const curr = order.wells;
-
-    const savedDiscounts =
-        typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
-    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-        window.wellDiscounts = originalDiscounts;
-    }
-    freezeWellPrices(orig);
-    if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
-        window.wellDiscounts = savedDiscounts;
-    }
-
-    const savedPreviewMode = window.isPreviewMode;
-    window.isPreviewMode = true;
-
-    const maxLen = Math.max(orig.length, curr.length);
-    for (let i = 0; i < maxLen; i++) {
-        if (i >= orig.length) {
-            changes[i] = { type: 'added' };
-            continue;
-        }
-        if (i >= curr.length) {
-            changes[i] = { type: 'removed', name: orig[i].name };
-            continue;
-        }
-
-        const origStats = calcWellStats(orig[i]);
-        const currStats = calcWellStats(curr[i]);
-
-        if (Math.abs(currStats.price - origStats.price) > 0.01) {
-            changes[i] = {
-                type: 'modified',
-                fields: ['price'],
-                priceDiff: currStats.price - origStats.price
-            };
-        }
-    }
-
-    const origTransportKm = originalSnapshotData.transportKm;
-    const origTransportRate = originalSnapshotData.transportRate;
-    const origTransportMode = originalSnapshotData.transportMode;
-    const transportChanged =
-        (origTransportKm != null || origTransportRate != null) &&
-        (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
-            Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
-            (order.transportMode || 'full') !== (origTransportMode || 'full'));
-    if (transportChanged) {
-        for (let i = 0; i < curr.length; i++) {
-            if (!changes[i] || changes[i].type !== 'added') {
-                if (changes[i] && changes[i].type === 'modified') {
-                    changes[i].fields.push('transport');
-                } else {
-                    changes[i] = { type: 'modified', fields: ['transport'], priceDiff: 0 };
-                }
-            }
-        }
-    }
-
-    window.isPreviewMode = savedPreviewMode;
-
-    return changes;
 }
 
 function getCurrentOfferOrder() {
@@ -1046,8 +881,6 @@ window.createOrderFromOffer = createOrderFromOffer;
 window.saveOrderStudnie = saveOrderStudnie;
 window.saveCurrentOrder = saveCurrentOrder;
 window.deleteOrderStudnie = deleteOrderStudnie;
-window.freezeWellPrices = freezeWellPrices;
-window.getOrderChanges = getOrderChanges;
 window.getCurrentOfferOrder = getCurrentOfferOrder;
 window.enterOrderEditMode = enterOrderEditMode;
 window.finalizeOrderFromOffer = finalizeOrderFromOffer;
