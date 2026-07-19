@@ -57,45 +57,6 @@ function excelSwitchTab(tab) {
     }
 }
 
-/* ===== ADD WELL TO CURRENT TAB ===== */
-function excelAddWellToTab() {
-    const dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab);
-
-    let well;
-    if (typeof createNewWell === 'function') {
-        well = createNewWell(null, /** @type {any} */ (dn));
-    } else {
-        well = {
-            id: 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000),
-            name:
-                (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) +
-                ' (#' +
-                (wells.length + 1) +
-                ')',
-            dn: dn,
-            config: [],
-            przejscia: [],
-            rzednaWlazu: null,
-            rzednaDna: null,
-            kineta: 'brak',
-            psiaBuda: false,
-            redukcjaDN1000: false,
-            redukcjaMinH: 2500
-        };
-    }
-
-    wells.push(well);
-    _excelAutoSetWlaz(well);
-    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs();
-    _excelRenderTable(_excelActiveTab);
-    _excelUpdateWellCount();
-    const newWIdx = wells.length - 1;
-    setTimeout(() => excelSelectRow(newWIdx), 50);
-    _excelDebouncedRefresh();
-    showToast('Dodano: ' + well.name, 'success');
-}
-
 /**
  * @param {number} neededTotal
  * @param {NodeListOf<Element>} currentRows
