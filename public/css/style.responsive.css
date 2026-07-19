@@ -893,6 +893,14 @@ svg.lucide {
     top: -1px;
 }
 
+/* Ujednolicenie wysokości ikon w kaflach nawigacji (Pulpit / Studnie / Rury / ...) */
+.nav-tile-icon svg.lucide {
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+    align-self: center;
+}
+
 /* ===== WIZARD SYSTEM (shared by rury & studnie) ===== */
 .wizard-indicator {
     display: flex;
