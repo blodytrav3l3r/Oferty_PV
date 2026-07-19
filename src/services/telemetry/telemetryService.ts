@@ -94,7 +94,15 @@ class TelemetryService {
                         successRate: null,
                         usageCount: 1,
                         lastUsedAt: now,
-                        manualOverrideFlag: !!payload.overrideReason
+                        manualOverrideFlag: !!payload.overrideReason,
+                        original_auto_config:
+                            payload.originalConfig && payload.originalConfig.length > 0
+                                ? JSON.stringify(payload.originalConfig)
+                                : null,
+                        final_user_config:
+                            payload.finalConfig && payload.finalConfig.length > 0
+                                ? JSON.stringify(payload.finalConfig)
+                                : null
                     }
                 });
 

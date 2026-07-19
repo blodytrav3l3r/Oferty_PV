@@ -29,7 +29,8 @@ router.post(
                     userId: userId || '',
                     original_auto_config: JSON.stringify(originalConfig),
                     final_user_config: JSON.stringify(finalConfig),
-                    override_reason: overrideReason
+                    override_reason: overrideReason,
+                    wasModified: true
                 }
             });
 
