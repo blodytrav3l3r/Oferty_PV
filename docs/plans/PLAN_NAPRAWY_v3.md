@@ -1,4 +1,4 @@
-# PLAN NAPRAWY v3 — WITROS Oferty PV v1.6.0
+# PLAN NAPRAWY v3 — WITROS Oferty PV (zaktualizowany do v1.7.0)
 
 ## Status weryfikacji założeń (przed rozpoczęciem prac)
 

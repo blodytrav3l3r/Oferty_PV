@@ -672,40 +672,40 @@ Cell selection (click, drag, Shift+click, Ctrl+click), drag state, bulk mode, fo
 
 ```html
 <!-- excel: stan i stałe (krok 1) -->
-<script src="js/studnie/excelState.js?v=1.6.0"></script>
+<script src="js/studnie/excelState.js?v=1.7.0"></script>
 <!-- excel: helpery (krok 2) -->
-<script src="js/studnie/excelHelpers.js?v=1.6.0"></script>
+<script src="js/studnie/excelHelpers.js?v=1.7.0"></script>
 <!-- excel: polling (krok 3) -->
-<script src="js/studnie/excelPolling.js?v=1.6.0"></script>
+<script src="js/studnie/excelPolling.js?v=1.7.0"></script>
 <!-- excel: kolumny (krok 4) -->
-<script src="js/studnie/excelColumns.js?v=1.6.0"></script>
-<script src="js/studnie/excelReductionColumns.js?v=1.6.0"></script>
+<script src="js/studnie/excelColumns.js?v=1.7.0"></script>
+<script src="js/studnie/excelReductionColumns.js?v=1.7.0"></script>
 <!-- excel: modal (krok 5) -->
-<script src="js/studnie/excelModal.js?v=1.6.0"></script>
+<script src="js/studnie/excelModal.js?v=1.7.0"></script>
 <!-- excel: tabs + auto-select (krok 6) -->
-<script src="js/studnie/excelTabs.js?v=1.6.0"></script>
-<script src="js/studnie/excelAutoSelect.js?v=1.6.0"></script>
+<script src="js/studnie/excelTabs.js?v=1.7.0"></script>
+<script src="js/studnie/excelAutoSelect.js?v=1.7.0"></script>
 <!-- excel: renderer + body (krok 7) -->
-<script src="js/studnie/excelTableRenderer.js?v=1.6.0"></script>
-<script src="js/studnie/excelTableBody.js?v=1.6.0"></script>
+<script src="js/studnie/excelTableRenderer.js?v=1.7.0"></script>
+<script src="js/studnie/excelTableBody.js?v=1.7.0"></script>
 <!-- excel: column ops (krok 8) -->
-<script src="js/studnie/excelColumnOps.js?v=1.6.0"></script>
+<script src="js/studnie/excelColumnOps.js?v=1.7.0"></script>
 <!-- excel: selection (krok 9) -->
-<script src="js/studnie/excelSelection.js?v=1.6.0"></script>
+<script src="js/studnie/excelSelection.js?v=1.7.0"></script>
 <!-- excel: clipboard (krok 10) -->
-<script src="js/studnie/excelClipboard.js?v=1.6.0"></script>
+<script src="js/studnie/excelClipboard.js?v=1.7.0"></script>
 <!-- excel: nawigacja (krok 11) -->
-<script src="js/studnie/excelNavigation.js?v=1.6.0"></script>
+<script src="js/studnie/excelNavigation.js?v=1.7.0"></script>
 <!-- excel: config + handlers (krok 12) -->
-<script src="js/studnie/excelConfigManager.js?v=1.6.0"></script>
-<script src="js/studnie/excelChangeHandlers.js?v=1.6.0"></script>
+<script src="js/studnie/excelConfigManager.js?v=1.7.0"></script>
+<script src="js/studnie/excelChangeHandlers.js?v=1.7.0"></script>
 <!-- excel: well actions + dialogs (krok 13) -->
-<script src="js/studnie/excelWellActions.js?v=1.6.0"></script>
-<script src="js/studnie/excelDialogs.js?v=1.6.0"></script>
+<script src="js/studnie/excelWellActions.js?v=1.7.0"></script>
+<script src="js/studnie/excelDialogs.js?v=1.7.0"></script>
 <!-- excel: keyboard shortcuts (krok 14) -->
-<script src="js/studnie/excelKeyboard.js?v=1.6.0"></script>
+<script src="js/studnie/excelKeyboard.js?v=1.7.0"></script>
 <!-- excel: bootstrap (krok 15 — MUSI BYĆ OSTATNI) -->
-<script src="js/studnie/excelTableManager.js?v=1.6.0"></script>
+<script src="js/studnie/excelTableManager.js?v=1.7.0"></script>
 ```
 
 ---
