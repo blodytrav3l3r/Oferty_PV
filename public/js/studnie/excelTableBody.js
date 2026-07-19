@@ -256,8 +256,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                         return p.category;
                     })
                 )
-            ].sort();
+            ]
+                .filter(function (c) {
+                    return (
+                        typeof visiblePrzejsciaTypes !== 'undefined' && visiblePrzejsciaTypes.has(c)
+                    );
+                })
+                .sort();
             let activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
+            if (activeCategory && categories.indexOf(activeCategory) < 0) {
+                categories.push(activeCategory);
+            }
             let catOpts = [['', '&mdash;']];
             categories.forEach(function (c) {
                 catOpts.push([c, c]);

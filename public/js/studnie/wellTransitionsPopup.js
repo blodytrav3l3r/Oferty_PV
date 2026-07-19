@@ -13,7 +13,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
     overlay = document.createElement('div');
     overlay.id = 'przejscia-visibility-overlay';
     overlay.style.cssText = `
-        position:fixed; inset:0; z-index:9999;
+        position:fixed; inset:0; z-index:10001;
         background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
         display:flex; align-items:center; justify-content:center;
         animation: fadeInOverlay 0.2s ease;
@@ -69,6 +69,10 @@ function openPrzejsciaVisibilityPopup(containerId) {
 function closePrzejsciaVisibilityPopup(containerId) {
     const overlay = document.getElementById('przejscia-visibility-overlay');
     if (overlay) overlay.remove();
+    if (containerId === 'excel') {
+        if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+        return;
+    }
     renderInlinePrzejsciaApp(containerId);
 }
 
