@@ -12,12 +12,10 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     overlay = document.createElement('div');
     overlay.id = 'przejscia-visibility-overlay';
-    overlay.style.cssText = `
-        position:fixed; inset:0; z-index:10001;
-        background:rgba(0,0,0,0.6); backdrop-filter:blur(6px);
-        display:flex; align-items:center; justify-content:center;
-        animation: fadeInOverlay 0.2s ease;
-    `;
+    overlay.style.cssText =
+        'position:fixed; inset:0; z-index:' +
+        LAYERS.EXCEL_POPUP_BACKDROP +
+        ';background:rgba(0,0,0,0.6); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; animation:fadeInOverlay 0.2s ease;';
     overlay.onclick = (e) => {
         if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId);
     };
@@ -145,7 +143,7 @@ window.openFlowTypePopup = function (index) {
         modal = document.createElement('div');
         modal.id = 'flow-type-modal';
         modal.innerHTML = `
-        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
+        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
            <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:300px; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
                <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz typ przepływu</h3>
                <div style="display:flex; gap:1rem; justify-content:center;">
@@ -215,7 +213,7 @@ window.openChangePrzejscieTypePopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
        <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Zmień rodzaj przejścia</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
@@ -295,7 +293,7 @@ window.openChangePrzejscieDnPopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:9999; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
        <div style="background:#1e293b; padding:1.5rem; border-radius:12px; border:1px solid #334155; width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(0,0,0,0.5);" onclick="event.stopPropagation()">
            <h3 style="margin-bottom:1rem; color:#fff; font-size:1.1rem; font-weight:700;">Wybierz średnicę (DN): ${currProduct.category}</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">

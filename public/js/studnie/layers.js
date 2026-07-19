@@ -1,0 +1,40 @@
+// @ts-check
+/* ===== LAYER SYSTEM (z-index) =====
+   Grupy: sticky(1-99), local-overlay(100-999), modal-excel(1000-1999),
+          modal-generic(2000-4999), toast-banner(5000-99999), debug(100000+)
+   Excel wewnątrz position:fixed tworzy własny stacking context.
+   LAYERS_EXCEL dla warstw wewnątrz Excela.
+*/
+var LAYERS = Object.freeze({
+    STICKY_TABLE_TH: 5,
+    STICKY_SIDEBAR: 10,
+    STICKY_FILTER_TABS: 39,
+    STICKY_SEARCH_ROW: 40,
+    STICKY_DROPDOWN: 50,
+    STICKY_TRANSITION_OVERLAY: 60,
+    STICKY_SUMMARY_BAR: 99,
+    OVERLAY_BACKDROP: 800,
+    OVERLAY_CONTENT: 810,
+    EXCEL_BACKDROP: 1000,
+    EXCEL_CONTAINER: 1010,
+    FOCUS_OVERLAY: 1050,
+    EXCEL_POPUP_BACKDROP: 1100,
+    EXCEL_POPUP_CONTENT: 1110,
+    EXPORT_MODAL: 1200,
+    GENERIC_MODAL_BACKDROP: 2000,
+    GENERIC_MODAL_CONTENT: 2010,
+    TOAST: 5000,
+    BANNER: 5100,
+    PREVIEW_BANNER: 5200,
+    BULK_ORDER: 100000,
+    TRANSITION_EDIT: 100100
+});
+var LAYERS_EXCEL = Object.freeze({
+    SELECT_OVERLAY: 2,
+    STICKY_COLUMN: 5,
+    STICKY_HEADER_ROW: 20,
+    STICKY_HEADER_TH: 30,
+    RESIZE_HANDLE: 40,
+    STICKY_THEAD: 50,
+    FOCUS_BORDER: 55
+});

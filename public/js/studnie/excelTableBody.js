@@ -171,7 +171,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'position:sticky;left:0;z-index:5;background:' +
+            'position:sticky;left:0;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             rowBg +
             ';text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">' +
             (idx + 1) +
@@ -180,7 +182,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'position:sticky;left:32px;z-index:5;background:' +
+            'position:sticky;left:32px;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             rowBg +
             ';border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="' +
             escapeHtml(well.name) +
@@ -193,7 +197,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'position:sticky;left:162px;z-index:5;background:' +
+            'position:sticky;left:162px;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             rowBg +
             ';text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
@@ -206,7 +212,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'position:sticky;left:240px;z-index:5;background:' +
+            'position:sticky;left:240px;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             rowBg +
             ';text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="' +
             (well.rzednaDna != null ? well.rzednaDna : '') +
@@ -220,7 +228,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'position:sticky;left:318px;z-index:5;background:' +
+            'position:sticky;left:318px;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             rowBg +
             ';text-align:center;color:' +
             dnColor +
@@ -499,13 +509,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'position:sticky;left:0;z-index:5;background:' +
+        'position:sticky;left:0;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">\u2014</td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'position:sticky;left:32px;z-index:5;background:' +
+        'position:sticky;left:32px;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(125) +
@@ -513,7 +527,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'position:sticky;left:162px;z-index:5;background:' +
+        'position:sticky;left:162px;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(72) +
@@ -521,7 +537,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'position:sticky;left:240px;z-index:5;background:' +
+        'position:sticky;left:240px;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(72) +
@@ -529,7 +547,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'position:sticky;left:318px;z-index:5;background:' +
+        'position:sticky;left:318px;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:center;color:#1e293b;" data-cell="height-empty">\u2014</td>';
     for (let _j = 0; _j < maxTr; _j++) {

@@ -50,7 +50,9 @@ function excelOpenWellParams(wIdx) {
     const overlay = document.createElement('div');
     overlay.id = 'excel-params-popup';
     overlay.style.cssText =
-        'position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+        'position:fixed;inset:0;z-index:' +
+        LAYERS.EXCEL_POPUP_BACKDROP +
+        ';background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) overlay.remove();
     });

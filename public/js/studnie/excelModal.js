@@ -61,7 +61,9 @@ function _excelRegisterExcelListeners() {
         let ov = document.createElement('div');
         ov.id = 'excel-focus-overlay';
         ov.style.cssText =
-            'position:fixed;pointer-events:none;z-index:99998;border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
+            'position:fixed;pointer-events:none;z-index:' +
+            LAYERS.FOCUS_OVERLAY +
+            ';border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
         document.body.appendChild(ov);
         _excelFocusOverlayEl = ov;
     } else {
@@ -208,7 +210,7 @@ function openExcelTableModal() {
             #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
             #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
             #excel-table-container .excel-sel-wrap.disabled { opacity:.35;pointer-events:none; }
-            #excel-table-container thead { position:sticky;top:0;z-index:50;background:#161923;isolation:isolate; }
+            #excel-table-container thead { position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_THEAD};background:#161923;isolation:isolate; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">

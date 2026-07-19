@@ -19,7 +19,9 @@ function _excelInitColumnResize() {
         const handle = document.createElement('div');
         handle.className = 'excel-col-resize-handle';
         handle.style.cssText =
-            'position:absolute;top:2px;right:-1px;width:3px;height:calc(100% - 4px);cursor:col-resize;z-index:40;' +
+            'position:absolute;top:2px;right:-1px;width:3px;height:calc(100% - 4px);cursor:col-resize;z-index:' +
+            LAYERS_EXCEL.RESIZE_HANDLE +
+            ';' +
             'background:rgba(148,163,184,0.15);border-radius:2px;transition:background 0.12s,width 0.12s,box-shadow 0.12s;';
         handle.addEventListener('mouseenter', () => {
             handle.style.background = 'rgba(99,102,241,0.45)';

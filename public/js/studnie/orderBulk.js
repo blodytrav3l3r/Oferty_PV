@@ -318,7 +318,9 @@ function openBulkOrderSequencePopup() {
     overlay = document.createElement('div');
     overlay.id = 'bulk-seq-overlay';
     overlay.style.cssText =
-        'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100000; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
+        'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:' +
+        LAYERS.BULK_ORDER +
+        '; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
     overlay.innerHTML = `
         <div style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb),0.3); border-radius:14px; padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">

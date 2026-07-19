@@ -494,7 +494,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
 
     const popup = document.createElement('div');
     popup.id = 'tm-edit-popup';
-    popup.style.cssText = `position:fixed;z-index:100000;background:#1e293b;border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:0.6rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);width:${popupW}px;top:${top}px;left:${left}px;animation:fadeIn 0.1s ease;`;
+    popup.style.cssText = `position:fixed;z-index:${LAYERS.TRANSITION_EDIT};background:#1e293b;border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:0.6rem;box-shadow:0 20px 60px rgba(0,0,0,0.5);width:${popupW}px;top:${top}px;left:${left}px;animation:fadeIn 0.1s ease;`;
     if (maxH > 120) {
         popup.style.maxHeight = maxH + 'px';
         popup.style.overflowY = 'auto';

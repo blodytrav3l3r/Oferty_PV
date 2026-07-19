@@ -615,7 +615,9 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
         '"' +
         wrapperEvents +
         '>' +
-        '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:2;"' +
+        '<select style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;z-index:' +
+        LAYERS_EXCEL.SELECT_OVERLAY +
+        ';"' +
         selectEvents +
         '>' +
         optHtml +
@@ -632,7 +634,9 @@ function _excelPositionOverlay(overlay) {
     if (!overlay) return;
     if (_excelFullscreen) {
         overlay.style.cssText =
-            'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+            'position:fixed;inset:0;z-index:' +
+            LAYERS.EXCEL_BACKDROP +
+            ';background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
         return;
     }
     const diagramPanel = document.querySelector('.well-diagram-panel');
@@ -647,10 +651,12 @@ function _excelPositionOverlay(overlay) {
                 ? bottomBar.getBoundingClientRect().top
                 : diaRect.top + diaRect.height;
         const h = Math.max(bottomOffset - topOffset, 100);
-        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:${LAYERS.EXCEL_BACKDROP};background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
     } else {
         overlay.style.cssText =
-            'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+            'position:fixed;inset:0;z-index:' +
+            LAYERS.EXCEL_BACKDROP +
+            ';background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
     }
 }
 
