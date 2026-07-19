@@ -400,7 +400,6 @@ Oferty_PV/
 │   └── ...
 ├── scripts/                   # Skrypty narzędziowe (backup, migracja)
 ├── # well_configurator_backend/ — usunięty
-├── graphify-out/              # Graf wiedzy o kodzie
 ├── .github/                   # CODE_OF_CONDUCT, CI/CD
 ├── *.bat                      # Skrypty startowe Windows
 ├── Dockerfile                 # Obraz Docker

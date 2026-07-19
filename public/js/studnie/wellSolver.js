@@ -247,7 +247,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         // === KROK 1: JS Solver ===
         const jsMsStart =
             window.performance && window.performance.now ? window.performance.now() : Date.now();
-        const jsResult = runJsAutoSelection(well, requiredMm, availProducts);
+        const jsResult = await runJsAutoSelection(well, requiredMm, availProducts);
         if (jsResult.error) {
             showToast(jsResult.error, 'error');
             well.configStatus = 'ERROR';
@@ -378,7 +378,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 };
 
 /* ===== LOKALNY SOLVER JS ===== */
-function runJsAutoSelection(well, requiredMm, availProducts) {
+async function runJsAutoSelection(well, requiredMm, availProducts) {
     const dn = well.dn;
     const targetDn = well.redukcjaTargetDN || 1000;
     const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
@@ -1257,50 +1257,51 @@ function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     // Technical winner (przed AI rankingiem)
-    const solution = candidates[0].solution;
+    let solution = candidates[0].solution;
 
-    // === AI DUAL-RANKING (shadow mode) ===
-    // W shadow mode: AI rankuje, ale technical winner zostaje
-    // AI_RANK_DECISION jest logowane do telemetrii
+    // === AI DUAL-RANKING ===
+    // aiInfluencePct=0: shadow mode (tylko telemetria)
+    // aiInfluencePct>0: aktywny tryb — AI może zmienić zwycięzcę
     if (
         candidates.length >= 3 &&
         typeof window.rankCandidates === 'function' &&
         typeof window.selectWithExploration === 'function' &&
         typeof window.recordAiRankDecision === 'function'
     ) {
-        (async function () {
-            try {
-                const rankResult = await window.rankCandidates({
-                    candidates: candidates.map(function (c, idx) {
-                        return { id: idx, solution: c.solution, technicalScore: c.technicalScore };
-                    }),
-                    well: well
+        try {
+            const rankResult = await window.rankCandidates({
+                candidates: candidates.map(function (c, idx) {
+                    return { id: idx, solution: c.solution, technicalScore: c.technicalScore };
+                }),
+                well: well
+            });
+
+            if (rankResult.ranked && rankResult.ranked.length > 0) {
+                const explored = window.selectWithExploration(rankResult.ranked);
+                const aiWinner = explored.solution;
+
+                window.recordAiRankDecision({
+                    well: well,
+                    ranked: rankResult.ranked,
+                    technicalWinner: solution,
+                    aiWinner: aiWinner,
+                    explorationTriggered: explored.explorationTriggered,
+                    exploredFrom: explored.exploredFrom,
+                    aiInfluencePct: rankResult.aiInfluencePct,
+                    modelVersion: rankResult.modelVersion,
+                    rankingVersion: rankResult.rankingVersion,
+                    featureVersion: rankResult.featureVersion
                 });
 
-                if (rankResult.ranked && rankResult.ranked.length > 0) {
-                    const explored = window.selectWithExploration(rankResult.ranked);
-                    const aiWinner = explored.solution;
-
-                    window.recordAiRankDecision({
-                        well: well,
-                        ranked: rankResult.ranked,
-                        technicalWinner: solution,
-                        aiWinner: aiWinner,
-                        explorationTriggered: explored.explorationTriggered,
-                        exploredFrom: explored.exploredFrom,
-                        aiInfluencePct: rankResult.aiInfluencePct,
-                        modelVersion: rankResult.modelVersion,
-                        rankingVersion: rankResult.rankingVersion,
-                        featureVersion: rankResult.featureVersion
-                    });
-                }
-            } catch (e) {
-                // Shadow mode — pasywnie ignoruj błędy
-                if (typeof logger !== 'undefined' && logger.warn) {
-                    logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
+                if (rankResult.aiInfluencePct > 0 && aiWinner) {
+                    solution = aiWinner;
                 }
             }
-        })();
+        } catch (e) {
+            if (typeof logger !== 'undefined' && logger.warn) {
+                logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
+            }
+        }
     }
 
     const wlazItems = solution.topItems.filter((item) => {

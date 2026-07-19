@@ -12,6 +12,8 @@
 
 import type { KnowledgePattern } from './KnowledgeBase';
 import { KnowledgeBase } from './KnowledgeBase';
+import { ConfidenceCalculator } from './ConfidenceCalculator';
+import { logger } from '../../../utils/logger';
 
 interface Correction {
     originalConfig?: unknown[];
@@ -22,9 +24,11 @@ interface Correction {
 
 export class PatternDetector {
     private knowledge: KnowledgeBase;
+    private confidence: ConfidenceCalculator;
 
     constructor() {
         this.knowledge = new KnowledgeBase();
+        this.confidence = new ConfidenceCalculator();
     }
 
     /**
@@ -78,7 +82,7 @@ export class PatternDetector {
                 hitCount: val.count,
                 successCount: val.count,
                 rejectionCount: 0,
-                confidence: this._confidence(val.count),
+                confidence: this.confidence.rawConfidence(val.count),
                 recommendation: {
                     removed: Array.from(val.removed),
                     added: Array.from(val.added),
@@ -145,7 +149,11 @@ export class PatternDetector {
                 hitCount: val.count,
                 successCount: val.successes,
                 rejectionCount: val.rejections,
-                confidence: this._confidenceWithDecay(val.count, val.successes, val.rejections),
+                confidence: this.confidence.weighted({
+                    hitCount: val.count,
+                    successCount: val.successes,
+                    rejectionCount: val.rejections
+                }),
                 description: 'Układ ' + val.count + ' przejść w ' + val.dn,
                 recommendation: {
                     layout: key,
@@ -200,11 +208,11 @@ export class PatternDetector {
                 hitCount: val.count,
                 successCount: val.successes,
                 rejectionCount: val.count - val.successes,
-                confidence: this._confidenceWithDecay(
-                    val.count,
-                    val.successes,
-                    val.count - val.successes
-                ),
+                confidence: this.confidence.weighted({
+                    hitCount: val.count,
+                    successCount: val.successes,
+                    rejectionCount: val.count - val.successes
+                }),
                 description: (using ? 'Z redukcją' : 'Bez redukcji') + ' w ' + dn,
                 recommendation: {
                     usesReduction: using,
@@ -220,32 +228,14 @@ export class PatternDetector {
      * Persist wykrytych wzorców do KnowledgeBase.
      */
     async persist(patterns: KnowledgePattern[]): Promise<number> {
-        let count = 0;
-        for (const p of patterns) {
-            try {
-                await this.knowledge.upsertPattern(p);
-                count++;
-            } catch (_e) {
-                // ignorujemy
-            }
+        const results = await Promise.allSettled(
+            patterns.map((p) => this.knowledge.upsertPattern(p))
+        );
+        const count = results.filter((r) => r.status === 'fulfilled').length;
+        const errors = results.filter((r) => r.status === 'rejected');
+        for (const err of errors) {
+            logger.warn('PatternDetector', `Blad persist: ${err.reason}`);
         }
         return count;
-    }
-
-    /**
-     * Confidence z hit_count z krzywą logarytmiczną (lokalna kopia dla izolacji).
-     */
-    private _confidence(hitCount: number): number {
-        if (hitCount < 3) return 0;
-        return Math.min(Math.log(hitCount) / Math.log(30), 0.95);
-    }
-
-    private _confidenceWithDecay(hitCount: number, hits: number, misses: number): number {
-        const base = this._confidence(hitCount);
-        if (base === 0) return 0;
-        const total = hits + misses;
-        if (total === 0) return base * 0.5;
-        const ratio = hits / total;
-        return Math.min(base * (0.5 + 0.5 * ratio), 0.95);
     }
 }

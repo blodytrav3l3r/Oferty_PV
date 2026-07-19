@@ -344,8 +344,8 @@ export type YearLetterInput = z.infer<typeof yearLetterSchema>;
  * Schemat nadpisania konfiguracji telemetrycznej
  */
 export const telemetryOverrideSchema = z.object({
-    originalConfig: z.record(z.string(), z.unknown()),
-    finalConfig: z.record(z.string(), z.unknown()),
+    originalConfig: z.array(z.record(z.string(), z.unknown())).optional(),
+    finalConfig: z.array(z.record(z.string(), z.unknown())).optional(),
     overrideReason: z.string().min(1, 'Powód nadpisania jest wymagany')
 });
 

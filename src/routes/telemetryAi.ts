@@ -15,11 +15,13 @@ import { logger } from '../utils/logger';
 import { telemetryService } from '../services/telemetry';
 import {
     type TelemetryAcceptanceInput,
+    type TelemetryAcceptanceFullInput,
     type TelemetryConfigInput,
     type TelemetryEventsBulkInput,
     type TelemetryEventInputType,
     type TelemetryVersionInput,
     telemetryAcceptanceSchema,
+    telemetryAcceptanceFullSchema,
     telemetryConfigSchema,
     telemetryEventSchema,
     telemetryEventsBulkSchema,
@@ -167,35 +169,30 @@ router.post('/ai/acceptance', requireAuth, WRITE_LIMITER, async (req, res) => {
 router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;
-    try {
-        const body = req.body as {
-            telemetryId?: string;
-            accepted?: boolean;
-            offerId?: string;
-            wellId?: string;
-            configSnapshot?: Record<string, unknown>;
-            transitions?: Array<Record<string, unknown>>;
-            warehouse?: string;
-        };
-        if (typeof body.telemetryId !== 'string') {
-            return res.status(400).json({ error: 'Brak telemetryId' });
-        }
-        if (typeof body.accepted !== 'boolean') {
-            return res.status(400).json({ error: 'Brak accepted (boolean)' });
-        }
-        await telemetryService.recordAcceptance(body.telemetryId, body.accepted);
 
-        if (body.accepted && body.configSnapshot && typeof body.configSnapshot === 'object') {
-            const snap = body.configSnapshot;
+    const parse = telemetryAcceptanceFullSchema.safeParse(req.body);
+    if (!parse.success) {
+        return res.status(400).json({
+            error: 'Nieprawidłowy acceptance-full payload',
+            details: parse.error.issues
+        });
+    }
+
+    try {
+        const data = parse.data as TelemetryAcceptanceFullInput;
+        await telemetryService.recordAcceptance(data.telemetryId, data.accepted);
+
+        if (data.accepted && data.configSnapshot) {
+            const snap = data.configSnapshot;
             await telemetryService.recordConfig(
                 {
                     solverSource: 'MANUAL',
                     wasAccepted: true,
                     wasRejected: false,
                     wasModified: false,
-                    offerId: body.offerId,
-                    wellId: body.wellId,
-                    warehouse: body.warehouse,
+                    offerId: data.offerId,
+                    wellId: data.wellId,
+                    warehouse: data.warehouse,
                     dn: (snap.dn as string) || undefined,
                     dennicaHeight:
                         typeof snap.dennicaHeight === 'number' ? snap.dennicaHeight : undefined,
@@ -215,9 +212,9 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
                     appliedSeals: Array.isArray(snap.appliedSeals)
                         ? (snap.appliedSeals as never[])
                         : undefined,
-                    transitions: Array.isArray(body.transitions)
-                        ? (body.transitions as never[])
-                        : undefined,
+                    originalConfig: data.originalConfig as never[] | undefined,
+                    finalConfig: data.finalConfig as never[] | undefined,
+                    transitions: data.transitions as never[] | undefined,
                     selectionReason: 'user_accepted_post_solver',
                     featureSnapshot:
                         typeof snap.featureSnapshot === 'object' && snap.featureSnapshot
@@ -227,7 +224,7 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
                         typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
                             ? (snap.labelSnapshot as Record<string, unknown>)
                             : undefined,
-                    parentConfigId: body.telemetryId
+                    parentConfigId: data.telemetryId
                 },
                 userId
             );
@@ -235,10 +232,10 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
 
         await telemetryService.recordEvent(
             {
-                eventType: body.accepted ? 'accept' : 'reject',
-                wellId: body.wellId,
-                telemetryId: body.telemetryId,
-                changeReason: body.accepted ? 'offer_saved_user_accept' : 'offer_rejected'
+                eventType: data.accepted ? 'accept' : 'reject',
+                wellId: data.wellId,
+                telemetryId: data.telemetryId,
+                changeReason: data.accepted ? 'offer_saved_user_accept' : 'offer_rejected'
             },
             userId
         );

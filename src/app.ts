@@ -222,7 +222,7 @@ app.use('/api/telemetry', telemetryAiRoutes);
 app.use('/api/telemetry', telemetryAiDashboardRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 app.use('/api/feature-flags', featureFlagsRoutes);
-app.use('/api', aiMlRoutes); // ML prediction API
+app.use('/api/telemetry', aiMlRoutes); // ML prediction API
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use(errorHandler);

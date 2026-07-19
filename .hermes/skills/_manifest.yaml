@@ -120,12 +120,6 @@ providers:
         confidence: 0.55
     default_tier: standard
 
-  graphify:
-    implementations:
-      - skill_id: graphify
-        tier: standard
-    default_tier: standard
-
 # ════════════════════ SKILLS ════════════════════
 
 skills:
@@ -582,7 +576,6 @@ keywords:
   python: [python-debugpy]
   review: [requesting-code-review]
   audyt: [codebase-audit]
-  graphify: [graphify]
   plan: [plan, plan-guardian]
 
 # ════════════════════ STATS ════════════════════

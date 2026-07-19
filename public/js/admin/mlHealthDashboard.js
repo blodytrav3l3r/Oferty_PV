@@ -57,7 +57,7 @@
             '<div class="ai-dq-bar">' +
             '<div class="ai-dq-bar-header">' +
             '<span class="ai-dq-bar-label">' +
-            label +
+            window.escapeHtml(label) +
             '</span>' +
             '<span class="ai-dq-bar-value" style="color:' +
             color +
@@ -91,7 +91,8 @@
             }
 
             var modelStr = d.modelVersion
-                ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
+                ? window.escapeHtml(d.modelVersion) +
+                  (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                 : 'Brak';
             var modelOk = !!d.mlOnline;
 

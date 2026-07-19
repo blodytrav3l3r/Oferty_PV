@@ -170,7 +170,7 @@ export class FeatureExtractor {
             ...new Set([...componentIds, ...reductionIds, ...konusIds, ...sealIds])
         ];
         const ringCount = Math.max(
-            componentIds.filter((id) => id.includes('K') || id.includes('krag')).length,
+            componentIds.filter((id) => /-K-/i.test(id) || /krag/i.test(id)).length,
             record.ringCount || 0
         );
         const connectionCount = sealIds.length;

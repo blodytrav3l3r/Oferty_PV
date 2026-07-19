@@ -39,7 +39,7 @@
 
         _rewardInFlight = true;
 
-        let snap = getConfigSnapshot(well);
+        let snap = Object.assign({}, getConfigSnapshot(well));
         if (params.eventType) {
             snap.eventType = params.eventType;
         }

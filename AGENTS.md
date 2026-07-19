@@ -38,7 +38,6 @@ Szczegółowe opisy decyzji projektowych znajdują się w `docs/adr/`:
 - **ADR-002**: Vanilla JS SPA (architektura bez frameworka frontendowego).
 - **ADR-003**: Vite jako bundler frontendu.
 - **ADR-004**: Express + Prisma na backendzie.
-- **ADR-005**: Graphify jako narzędzie inteligencji kodu (wiedza o repozytorium).
 
 ---
 
@@ -48,7 +47,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 
 ### Proaktywne Działanie i Narzędzia
 
-- **Narzędzia tylko do odczytu**: Narzędzia wyszukujące i odczytujące dane (wyszukiwanie w sieci, czytanie plików, grep, graphify) stosuj **od razu**, gdy są potrzebne do wykonania zadania, bez pytania użytkownika o zgodę.
+- **Narzędzia tylko do odczytu**: Narzędzia wyszukujące i odczytujące dane (wyszukiwanie w sieci, czytanie plików, grep) stosuj **od razu**, gdy są potrzebne do wykonania zadania, bez pytania użytkownika o zgodę.
 - **Obsługa niejasności**: Jeśli żądanie użytkownika jest niejednoznaczne lub brakuje w nim szczegółów, wybierz najbardziej logiczne, domyślne rozwiązanie zgodne z architekturą projektu. Krótko opisz swoje założenie w odpowiedzi i przejdź do realizacji. Unikaj zadawania pytań doprecyzowujących, chyba że kontynuowanie pracy bez nich groziłoby poważnym błędem lub stratą czasu.
 - **Reakcja na błędy**: Gdy popełnisz błąd w kodzie, przyznaj się do niego rzeczowo i przejdź bezpośrednio do jego naprawienia. Unikaj nadmiernych, wylewnych przeprosin (bądź profesjonalny i skupiony na rozwiązaniu problemu).
 - **Zasada "Myśl Krok po Kroku" (Chain of Thought)**: Modele OpenCode/DeepSeek działają znacznie lepiej, gdy analizują kod przed jego zapisaniem. Zawsze sformułuj krótki, logiczny plan działania w myślach lub w odpowiedzi przed edycją plików.
@@ -142,24 +141,7 @@ Projekt stosuje jednolite kodowanie dla wszystkich plików tekstowych:
 
 ---
 
-## 4. Graphify (Zarządzanie Wiedzą o Kodzie)
-
-Projekt korzysta z systemu grafu wiedzy wygenerowanego w katalogu `graphify-out/`. Ułatwia on nawigację i zrozumienie powiązań w kodzie bez konieczności przeszukiwania całego projektu grepem.
-
-### Procedura przed modyfikacją kodu:
-
-1. Użyj `graphify query "<twoje zapytanie>"` do zlokalizowania odpowiednich modułów.
-2. Użyj `graphify path "<plik_A>" "<plik_B>"` do sprawdzenia zależności pomiędzy komponentami.
-3. W celu ogólnej nawigacji zapoznaj się z wygenerowaną dokumentacją w `graphify-out/wiki/index.md`.
-4. Po zakończeniu modyfikacji kodu zawsze zaktualizuj graf za pomocą:
-    ```bash
-    graphify update .
-    ```
-    (Jest to szybka operacja AST, która nie generuje kosztów API).
-
----
-
-## 5. Logika Domenowa i Wdrożenie Szczegółowe
+## 4. Logika Domenowa i Wdrożenie Szczegółowe
 
 ### Moduł: Rury
 
@@ -196,7 +178,7 @@ Projekt korzysta z systemu grafu wiedzy wygenerowanego w katalogu `graphify-out/
 
 ---
 
-## 6. Baza Znanych Błędów (Rozwiązania i Zabezpieczenia)
+## 5. Baza Znanych Błędów (Rozwiązania i Zabezpieczenia)
 
 Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
@@ -221,7 +203,7 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
 ---
 
-## 7. Przydatne Polecenia Konsolowe
+## 6. Przydatne Polecenia Konsolowe
 
 Podczas pracy z projektem korzystaj z poniższych komend:
 
@@ -238,11 +220,9 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run release:patch`      | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                    |
 | `npm run release:minor`      | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                        |
 | `npm run release:major`      | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
-| `graphify query "<q>"`       | Wykonuje zapytanie do grafu wiedzy w celu znalezienia odpowiednich elementów kodu.          |
-| `graphify update .`          | Aktualizuje strukturę grafu wiedzy na podstawie bieżących plików projektu.                  |
 
 ---
 
-## 8. Lokalizacja Planów
+## 7. Lokalizacja Planów
 
 Wszystkie plany, taski, implementation plany i dokumenty planistyczne (`.md`) muszą znajdować się w katalogu `docs/plans/`. Dotyczy to zarówno istniejących, jak i nowo tworzonych planów. Wyjątkiem są plany narzędziowe w katalogach konfiguracyjnych (`.hermes/`, `.opencode/`).

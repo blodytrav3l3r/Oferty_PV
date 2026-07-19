@@ -6,7 +6,7 @@
  */
 
 import express from 'express';
-import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
+import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import { learningEngine } from '../services/telemetry/learning';
@@ -23,14 +23,12 @@ const recommend = new RecommendationEngine();
  * GET /api/telemetry/ai/learning/status
  * Status silnika uczącego.
  */
-router.get('/ai/learning/status', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
-    }
+router.get('/ai/learning/status', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
         return res.json(learningEngine.getStatus());
-    } catch (_e) {
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('AiDashboard', `Error: ${message}`);
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -39,11 +37,7 @@ router.get('/ai/learning/status', requireAuth, READ_LIMITER, async (req, res) =>
  * POST /api/telemetry/ai/learning/run
  * Wymusza pełny cykl uczenia (analiza historyczna).
  */
-router.post('/ai/learning/run', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
-    }
+router.post('/ai/learning/run', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
         const summary = await learningEngine.runFullCycle();
         logger.info(
@@ -63,17 +57,15 @@ router.post('/ai/learning/run', requireAuth, READ_LIMITER, async (req, res) => {
  * GET /api/telemetry/ai/knowledge/patterns
  * Lista wzorców w bazie wiedzy per DN.
  */
-router.get('/ai/knowledge/patterns', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
-    }
+router.get('/ai/knowledge/patterns', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     const dn = (req.query.dn as string) || 'all_dn';
     const minConfidence = parseFloat((req.query.minConfidence as string) || '0.3');
     try {
         const patterns = await kb.getPatternsForDn(dn, minConfidence);
         return res.json({ dn, minConfidence, items: patterns, total: patterns.length });
-    } catch (_e) {
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('AiDashboard', `Error: ${message}`);
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -82,15 +74,13 @@ router.get('/ai/knowledge/patterns', requireAuth, READ_LIMITER, async (req, res)
  * GET /api/telemetry/ai/knowledge/stats
  * Statystyki bazy wiedzy do dashboardu.
  */
-router.get('/ai/knowledge/stats', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
-    }
+router.get('/ai/knowledge/stats', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
         const stats = await kb.getStats();
         return res.json(stats);
-    } catch (_e) {
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('AiDashboard', `Error: ${message}`);
         return res.status(500).json({ error: 'Błąd' });
     }
 });
@@ -101,39 +91,51 @@ router.get('/ai/knowledge/stats', requireAuth, READ_LIMITER, async (req, res) =>
  * GET /api/telemetry/ai/recommendations/:telemetryId
  * Zwraca rekomendacje AI dla danego rekordu telemetry.
  */
-router.get('/ai/recommendations/:telemetryId', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
+router.get(
+    '/ai/recommendations/:telemetryId',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (req, res) => {
+        try {
+            const dn = req.query.dn as string | undefined;
+            const recs = await recommend.recommendForTelemetry(req.params.telemetryId, dn);
+            return res.json({ items: recs, total: recs.length });
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.error('AiDashboard', `Error: ${message}`);
+            return res.status(500).json({ error: 'Błąd' });
+        }
     }
-    try {
-        const dn = req.query.dn as string | undefined;
-        const recs = await recommend.recommendForTelemetry(req.params.telemetryId, dn);
-        return res.json({ items: recs, total: recs.length });
-    } catch (_e) {
-        return res.status(500).json({ error: 'Błąd' });
-    }
-});
+);
 
 /**
  * POST /api/telemetry/ai/recommendations/decide
  * Decyzja akceptacji/odrzucenia rekomendacji.
  */
-router.post('/ai/recommendations/decide', requireAuth, READ_LIMITER, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
-    if (authReq.user?.role !== 'admin') {
-        return res.status(403).json({ error: 'Brak uprawnień' });
-    }
-    try {
-        const { id, accepted } = req.body;
-        if (!id || typeof accepted !== 'boolean') {
-            return res.status(400).json({ error: 'Brak id lub accepted' });
+router.post(
+    '/ai/recommendations/decide',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (req, res) => {
+        try {
+            const { id, accepted } = req.body;
+            if (!id || typeof accepted !== 'boolean') {
+                return res.status(400).json({ error: 'Brak id lub accepted' });
+            }
+            await recommend.applyDecision(
+                id,
+                accepted,
+                (req as AuthenticatedRequest).user?.id || 'unknown'
+            );
+            return res.json({ success: true });
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.error('AiDashboard', `Error: ${message}`);
+            return res.status(500).json({ error: 'Błąd' });
         }
-        await recommend.applyDecision(id, accepted, authReq.user?.id || 'unknown');
-        return res.json({ success: true });
-    } catch (_e) {
-        return res.status(500).json({ error: 'Błąd' });
     }
-});
+);
 
 export default router;

@@ -79,11 +79,6 @@ intents:
   required_capabilities: [node-debugger]
   preferred_skills: [node-inspect-debugger]
 
-- intent: "knowledge graph / graph query"
-  required_capabilities: [knowledge-graph, graph-query]
-  preferred_skills: [graphify]
-  invoke_only: true
-
 - intent: "napisz testy (TDD)"
   required_capabilities: [tdd, testing]
   preferred_skills: [test-driven-development]
@@ -128,5 +123,5 @@ prefer_invoke_only_for_heavy: true
 # ════════════════════ TRIGGER → INTENT ════════════════════
 
 triggers:
-phrases: - "/graphify": "knowledge graph / graph query" - "knowledge graph": "knowledge graph / graph query" - "graph query": "knowledge graph / graph query" - "audyt": "audyt bazy / cleanup repo / dead code" - "audit": "audyt bazy / cleanup repo / dead code" - "code review": "code review przed commitem" - "review przed commitem": "code review przed commitem" - "recenzja kodu": "code review przed commitem" - "debug excelu": "rozwiąż bug w excelu" - "paste nie działa": "rozwiąż bug w excelu" - "wklejanie": "rozwiąż bug w excelu" - "_excelHandlePaste": "rozwiąż bug w excelu" - "_excelRenderTable": "rozwiąż bug w excelu" - "regre": "root cause debugging regression" - "AI dashboard": "AI/telemetry/ML/dashboard" - "ml-api": "AI/telemetry/ML/dashboard" - "telemetr": "AI/telemetry/ML/dashboard"
+phrases: - "knowledge graph": "knowledge graph / graph query" - "graph query": "knowledge graph / graph query" - "audyt": "audyt bazy / cleanup repo / dead code" - "audit": "audyt bazy / cleanup repo / dead code" - "code review": "code review przed commitem" - "review przed commitem": "code review przed commitem" - "recenzja kodu": "code review przed commitem" - "debug excelu": "rozwiąż bug w excelu" - "paste nie działa": "rozwiąż bug w excelu" - "wklejanie": "rozwiąż bug w excelu" - "_excelHandlePaste": "rozwiąż bug w excelu" - "_excelRenderTable": "rozwiąż bug w excelu" - "regre": "root cause debugging regression" - "AI dashboard": "AI/telemetry/ML/dashboard" - "ml-api": "AI/telemetry/ML/dashboard" - "telemetr": "AI/telemetry/ML/dashboard"
 default_intent: "general_help" # load only core

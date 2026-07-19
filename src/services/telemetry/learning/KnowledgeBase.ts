@@ -53,42 +53,46 @@ export class KnowledgeBase {
         const now = new Date().toISOString();
 
         try {
-            const existing = await prisma.ai_knowledge_base.findFirst({
-                where: {
-                    patternKey: pattern.patternKey,
-                    status: { not: 'archived' }
-                }
-            });
-
-            if (existing) {
-                const history = existing.changeHistory ? JSON.parse(existing.changeHistory) : [];
-                history.push({
-                    at: now,
-                    hitCount: pattern.hitCount,
-                    confidence: pattern.confidence
-                });
-
-                await prisma.ai_knowledge_base.update({
-                    where: { id: existing.id },
-                    data: {
-                        hitCount: pattern.hitCount,
-                        confidence: pattern.confidence,
-                        successCount: pattern.successCount,
-                        rejectionCount: pattern.rejectionCount,
-                        lastHitAt: now,
-                        lastUpdatedAt: now,
-                        changeHistory: JSON.stringify(history.slice(-20)),
-                        dn: pattern.dn,
-                        context: pattern.context ? JSON.stringify(pattern.context) : null,
-                        description: pattern.description,
-                        recommendation: pattern.recommendation
-                            ? JSON.stringify(pattern.recommendation)
-                            : null
+            return await prisma.$transaction(async (tx) => {
+                const existing = await tx.ai_knowledge_base.findFirst({
+                    where: {
+                        patternKey: pattern.patternKey,
+                        status: { not: 'archived' }
                     }
                 });
-                return existing.id;
-            } else {
-                await prisma.ai_knowledge_base.create({
+
+                if (existing) {
+                    const history = existing.changeHistory
+                        ? JSON.parse(existing.changeHistory)
+                        : [];
+                    history.push({
+                        at: now,
+                        hitCount: pattern.hitCount,
+                        confidence: pattern.confidence
+                    });
+
+                    await tx.ai_knowledge_base.update({
+                        where: { id: existing.id },
+                        data: {
+                            hitCount: pattern.hitCount,
+                            confidence: pattern.confidence,
+                            successCount: pattern.successCount,
+                            rejectionCount: pattern.rejectionCount,
+                            lastHitAt: now,
+                            lastUpdatedAt: now,
+                            changeHistory: JSON.stringify(history.slice(-20)),
+                            dn: pattern.dn,
+                            context: pattern.context ? JSON.stringify(pattern.context) : null,
+                            description: pattern.description,
+                            recommendation: pattern.recommendation
+                                ? JSON.stringify(pattern.recommendation)
+                                : null
+                        }
+                    });
+                    return existing.id;
+                }
+
+                await tx.ai_knowledge_base.create({
                     data: {
                         id,
                         patternType: pattern.patternType,
@@ -111,7 +115,7 @@ export class KnowledgeBase {
                     }
                 });
                 return id;
-            }
+            });
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd upsert pattern: ${e}`);
             throw e;
@@ -216,42 +220,48 @@ export class KnowledgeBase {
         recentDetected: number;
     }> {
         try {
-            const total = await prisma.ai_knowledge_base.count();
-            const active = await prisma.ai_knowledge_base.count({
-                where: { status: 'active' }
-            });
-            const stale = await prisma.ai_knowledge_base.count({
-                where: { status: 'stale' }
-            });
-            const archived = await prisma.ai_knowledge_base.count({
-                where: { status: 'archived' }
-            });
-            const allActive = await prisma.ai_knowledge_base.findMany({
-                where: { status: 'active' },
-                select: { confidence: true, patternType: true }
-            });
+            const [
+                total,
+                active,
+                stale,
+                archived,
+                allActive,
+                totalRecommendations,
+                acceptedRecommendations,
+                rejectedRecommendations,
+                recentDetected
+            ] = await Promise.all([
+                prisma.ai_knowledge_base.count(),
+                prisma.ai_knowledge_base.count({ where: { status: 'active' } }),
+                prisma.ai_knowledge_base.count({ where: { status: 'stale' } }),
+                prisma.ai_knowledge_base.count({ where: { status: 'archived' } }),
+                prisma.ai_knowledge_base.findMany({
+                    where: { status: 'active' },
+                    select: { confidence: true, patternType: true }
+                }),
+                prisma.ai_recommendations.count(),
+                prisma.ai_recommendations.count({ where: { wasAccepted: true } }),
+                prisma.ai_recommendations.count({ where: { wasRejected: true } }),
+                prisma.ai_knowledge_base.count({
+                    where: {
+                        firstDetectedAt: {
+                            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+                        }
+                    }
+                })
+            ]);
+
             const avgConfidence =
                 allActive.length > 0
-                    ? allActive.reduce(function (acc, p) {
-                          return acc + p.confidence;
-                      }, 0) / allActive.length
+                    ? allActive.reduce((acc, p) => acc + p.confidence, 0) / allActive.length
                     : 0;
+
             const byPatternType: Record<string, number> = {};
-            allActive.forEach(function (p) {
+            allActive.forEach((p) => {
                 const t = p.patternType;
                 byPatternType[t] = (byPatternType[t] || 0) + 1;
             });
-            const totalRecommendations = await prisma.ai_recommendations.count();
-            const acceptedRecommendations = await prisma.ai_recommendations.count({
-                where: { wasAccepted: true }
-            });
-            const rejectedRecommendations = await prisma.ai_recommendations.count({
-                where: { wasRejected: true }
-            });
-            const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-            const recentDetected = await prisma.ai_knowledge_base.count({
-                where: { firstDetectedAt: { gte: sevenDaysAgo } }
-            });
+
             return {
                 total,
                 active,

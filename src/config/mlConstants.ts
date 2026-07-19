@@ -1,0 +1,40 @@
+export const FEATURE_NAMES = [
+    'dn',
+    'heightMm',
+    'warehouse_KLB',
+    'warehouse_WL',
+    'wellType_standard',
+    'wellType_psia_buda',
+    'wellType_styczna',
+    'hasReduction',
+    'hasPsiaBuda',
+    'ringCount',
+    'connectionCount',
+    'transitionsAboveDennica',
+    'totalPrice',
+    'totalWeight',
+    'ringVariety',
+    'season_num',
+    'hasKnownBottom',
+    'hasKnownTop',
+    'dn_x_ringCount',
+    'isKLBstandard'
+];
+
+export const ML_CONSTANTS = {
+    FEATURE_VERSION: process.env.ML_FEATURE_VERSION || 'v5',
+    FEATURE_COUNT: FEATURE_NAMES.length,
+    PREDICTION_CACHE_TTL_MS: 15 * 60 * 1000,
+    FETCH_TIMEOUT_MS: 3000,
+    MAX_AI_CANDIDATES: 10,
+    MIN_AI_CANDIDATES: 3,
+    RELATIVE_GAP_THRESHOLD: 0.1,
+    EXPLORE_RATE_LOW_CONFIDENCE: 0.3,
+    EXPLORE_RATE_HIGH_CONFIDENCE: 0.05,
+    RANKING_VERSION: 'dual_v1',
+    SOLVER_VERSION: 'wellSolver_v5',
+    TRAINING_BATCH_SIZE: 2000,
+    LEARNING_MAX_RECORDS: 200,
+    MIN_HITS_FOR_PATTERN: 3,
+    MAX_CONFIDENCE: 0.95
+} as const;

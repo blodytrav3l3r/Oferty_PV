@@ -4,39 +4,30 @@ import { AcceptanceModel } from './AcceptanceModel';
 import { modelRegistry, type ModelMetrics } from './ModelRegistry';
 import { featureExtractor } from './FeatureExtractor';
 import { ML_CONFIG } from './trainingConfig';
-
-const FEATURE_NAMES = [
-    'dn',
-    'heightMm',
-    'warehouse_KLB',
-    'warehouse_WL',
-    'wellType_standard',
-    'wellType_psia_buda',
-    'wellType_styczna',
-    'hasReduction',
-    'hasPsiaBuda',
-    'hasStyczna',
-    'ringCount',
-    'connectionCount',
-    'transitionsAboveDennica',
-    'totalPrice',
-    'totalWeight',
-    'ringVariety'
-];
-
-const BINARY_FEATURES = new Set(['hasReduction', 'hasPsiaBuda', 'hasStyczna']);
+import { FEATURE_NAMES } from '../../config/mlConstants';
 
 function applyForgetting(exampleAgeDays: number): number {
     const lambda = 0.01;
     return Math.exp(-lambda * exampleAgeDays);
 }
 
+function seasonToNum(s: string): number {
+    const lower = (s || 'unknown').toLowerCase();
+    if (lower === 'spring') return 0;
+    if (lower === 'summer') return 1;
+    if (lower === 'autumn') return 2;
+    if (lower === 'winter') return 3;
+    return 0;
+}
+
 function oneHotEncode(raw: Record<string, unknown>): number[] {
     const warehouse = ((raw.warehouse as string) || 'KLB').toUpperCase();
     const wellType = ((raw.wellType as string) || 'standard').toLowerCase();
+    const dn = Number(raw.dn) || 0;
+    const ringCount = Number(raw.ringCount) || 0;
 
     const vec: number[] = [];
-    vec.push(Number(raw.dn) || 0);
+    vec.push(dn);
     vec.push(Number(raw.heightMm) || 0);
     vec.push(warehouse === 'KLB' ? 1 : 0);
     vec.push(warehouse === 'WL' ? 1 : 0);
@@ -45,19 +36,22 @@ function oneHotEncode(raw: Record<string, unknown>): number[] {
     vec.push(wellType === 'styczna' || wellType === 'styczna_1200' ? 1 : 0);
     vec.push(raw.hasReduction ? 1 : 0);
     vec.push(raw.hasPsiaBuda ? 1 : 0);
-    vec.push(raw.hasStyczna ? 1 : 0);
-    vec.push(Number(raw.ringCount) || 0);
+    vec.push(ringCount);
     vec.push(Number(raw.connectionCount) || 0);
     vec.push(Number(raw.transitionsAboveDennica) || 0);
     vec.push(Number(raw.totalPrice) || 0);
     vec.push(Number(raw.totalWeight) || 0);
     vec.push(Number(raw.ringVariety) || 0);
+    vec.push(seasonToNum(raw.season as string));
+    vec.push(raw.bottomType && String(raw.bottomType) !== 'unknown' ? 1 : 0);
+    vec.push(raw.topType && String(raw.topType) !== 'unknown' ? 1 : 0);
+    vec.push(dn * ringCount);
+    vec.push(warehouse === 'KLB' && wellType === 'standard' ? 1 : 0);
     return vec;
 }
 
 function normalize(vec: number[], mins: number[], maxs: number[]): number[] {
     return vec.map((v, i) => {
-        if (BINARY_FEATURES.has(FEATURE_NAMES[i])) return v;
         const range = maxs[i] - mins[i];
         if (range === 0) return 0;
         return (v - mins[i]) / range;
@@ -138,47 +132,7 @@ export class TrainingPipeline {
             }
             this.lastFeatureCount = features.length;
 
-            const examples = features.map((f) => {
-                const raw: Record<string, unknown> = {
-                    dn: f.dn,
-                    heightMm: f.heightMm,
-                    warehouse: f.warehouse,
-                    wellType: f.wellType,
-                    hasReduction: f.hasReduction,
-                    hasPsiaBuda: f.hasPsiaBuda,
-                    hasStyczna: f.hasStyczna,
-                    ringCount: f.ringCount,
-                    connectionCount: f.connectionCount,
-                    transitionsAboveDennica: f.transitionsAboveDennica,
-                    totalPrice: f.totalPrice,
-                    totalWeight: f.totalWeight,
-                    ringVariety: f.ringVariety
-                };
-                const createdAt = new Date(f.createdAt);
-                const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-                return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };
-            });
-
-            const dim = FEATURE_NAMES.length;
-            const mins = new Array(dim).fill(Infinity);
-            const maxs = new Array(dim).fill(-Infinity);
-            for (const ex of examples) {
-                for (let i = 0; i < dim; i++) {
-                    if (BINARY_FEATURES.has(FEATURE_NAMES[i])) continue;
-                    if (ex.vec[i] < mins[i]) mins[i] = ex.vec[i];
-                    if (ex.vec[i] > maxs[i]) maxs[i] = ex.vec[i];
-                }
-            }
-            for (let i = 0; i < dim; i++) {
-                if (!isFinite(mins[i])) mins[i] = 0;
-                if (!isFinite(maxs[i])) maxs[i] = 1;
-            }
-
-            const normalized = examples.map((ex) => ({
-                vec: normalize(ex.vec, mins, maxs),
-                label: ex.label,
-                weight: applyForgetting(ex.ageDays)
-            }));
+            const { normalized, mins, maxs, dim } = await this.loadAndNormalizeFeatures(features);
 
             const splitIdx = Math.floor(normalized.length * 0.8);
             const trainSet = normalized.slice(0, splitIdx);
@@ -191,45 +145,17 @@ export class TrainingPipeline {
                 5000
             );
 
-            const valPredictions = valSet.map((ex) => model.predict(ex.vec));
-            const valLabels = valSet.map((ex) => ex.label);
-
-            let tp = 0,
-                fp = 0,
-                fn = 0,
-                tn = 0;
-            for (let i = 0; i < valLabels.length; i++) {
-                const predBin = valPredictions[i] >= 0.5 ? 1 : 0;
-                if (predBin === 1 && valLabels[i] === 1) tp++;
-                else if (predBin === 1 && valLabels[i] === 0) fp++;
-                else if (predBin === 0 && valLabels[i] === 1) fn++;
-                else tn++;
-            }
-            const accuracy = (tp + tn) / (tp + fp + fn + tn || 1);
-            const precision = tp / (tp + fp || 1);
-            const recall = tp / (tp + fn || 1);
-            const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
-            const rocAuc = computeRocAuc(valPredictions, valLabels);
-
-            const metrics: ModelMetrics = {
-                accuracy: parseFloat(accuracy.toFixed(4)),
-                precision: parseFloat(precision.toFixed(4)),
-                recall: parseFloat(recall.toFixed(4)),
-                f1: parseFloat(f1.toFixed(4)),
-                rocAuc,
-                trainSize: trainSet.length,
-                valSize: valSet.length
-            };
+            const metrics = this.evaluateModel(model, valSet, trainSet.length);
 
             const existingActive = await modelRegistry.getActiveModel();
             let shouldDeploy = true;
             if (existingActive && !force) {
                 const oldAuc = existingActive.metrics.rocAuc;
-                shouldDeploy = rocAuc > oldAuc + 0.05;
+                shouldDeploy = metrics.rocAuc > oldAuc + 0.05;
                 if (!shouldDeploy) {
                     logger.info(
                         'TrainingPipeline',
-                        `Nowy model AUC=${rocAuc} nie przekracza starego ${oldAuc}+0.05`
+                        `Nowy model AUC=${metrics.rocAuc} nie przekracza starego ${oldAuc}+0.05`
                     );
                 }
             }
@@ -240,16 +166,17 @@ export class TrainingPipeline {
                     metrics,
                     FEATURE_NAMES,
                     mins,
-                    maxs
+                    maxs,
+                    shouldDeploy
                 );
                 logger.info(
                     'TrainingPipeline',
-                    `Wytrenowano i zdeployowano ${version} (auc=${rocAuc})`
+                    `Wytrenowano i zdeployowano ${version} (auc=${metrics.rocAuc})`
                 );
                 return { trained: true, version, metrics };
             }
 
-            return { trained: false, reason: `auc_insufficient:${rocAuc.toFixed(4)}` };
+            return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('TrainingPipeline', `Blad treningu: ${msg}`);
@@ -258,6 +185,97 @@ export class TrainingPipeline {
             this.running = false;
             release();
         }
+    }
+
+    private async loadAndNormalizeFeatures(
+        features: Awaited<ReturnType<typeof prisma.aiFeature.findMany>>
+    ): Promise<{
+        normalized: Array<{ vec: number[]; label: number; weight: number }>;
+        mins: number[];
+        maxs: number[];
+        dim: number;
+    }> {
+        const examples = features.map((f) => {
+            const raw: Record<string, unknown> = {
+                dn: f.dn,
+                heightMm: f.heightMm,
+                warehouse: f.warehouse,
+                wellType: f.wellType,
+                hasReduction: f.hasReduction,
+                hasPsiaBuda: f.hasPsiaBuda,
+                hasStyczna: f.hasStyczna,
+                ringCount: f.ringCount,
+                connectionCount: f.connectionCount,
+                transitionsAboveDennica: f.transitionsAboveDennica,
+                totalPrice: f.totalPrice,
+                totalWeight: f.totalWeight,
+                ringVariety: f.ringVariety,
+                season: f.season,
+                bottomType: f.bottomType,
+                topType: f.topType
+            };
+            const createdAt = new Date(f.createdAt);
+            const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+            return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };
+        });
+
+        const dim = FEATURE_NAMES.length;
+        const mins = new Array(dim).fill(Infinity);
+        const maxs = new Array(dim).fill(-Infinity);
+        for (const ex of examples) {
+            for (let i = 0; i < dim; i++) {
+                if (ex.vec[i] < mins[i]) mins[i] = ex.vec[i];
+                if (ex.vec[i] > maxs[i]) maxs[i] = ex.vec[i];
+            }
+        }
+        for (let i = 0; i < dim; i++) {
+            if (!isFinite(mins[i])) mins[i] = 0;
+            if (!isFinite(maxs[i])) maxs[i] = 1;
+        }
+
+        const normalized = examples.map((ex) => ({
+            vec: normalize(ex.vec, mins, maxs),
+            label: ex.label,
+            weight: applyForgetting(ex.ageDays)
+        }));
+
+        return { normalized, mins, maxs, dim };
+    }
+
+    private evaluateModel(
+        model: AcceptanceModel,
+        valSet: Array<{ vec: number[]; label: number; weight: number }>,
+        trainSize: number
+    ): ModelMetrics {
+        const valPredictions = valSet.map((ex) => model.predict(ex.vec));
+        const valLabels = valSet.map((ex) => ex.label);
+
+        let tp = 0,
+            fp = 0,
+            fn = 0,
+            tn = 0;
+        for (let i = 0; i < valLabels.length; i++) {
+            const predBin = valPredictions[i] >= 0.5 ? 1 : 0;
+            if (predBin === 1 && valLabels[i] === 1) tp++;
+            else if (predBin === 1 && valLabels[i] === 0) fp++;
+            else if (predBin === 0 && valLabels[i] === 1) fn++;
+            else tn++;
+        }
+        const accuracy = (tp + tn) / (tp + fp + fn + tn || 1);
+        const precision = tp / (tp + fp || 1);
+        const recall = tp / (tp + fn || 1);
+        const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
+        const rocAuc = computeRocAuc(valPredictions, valLabels);
+
+        return {
+            accuracy: parseFloat(accuracy.toFixed(4)),
+            precision: parseFloat(precision.toFixed(4)),
+            recall: parseFloat(recall.toFixed(4)),
+            f1: parseFloat(f1.toFixed(4)),
+            rocAuc,
+            trainSize,
+            valSize: valSet.length
+        };
     }
 
     getStatus(): { running: boolean } {

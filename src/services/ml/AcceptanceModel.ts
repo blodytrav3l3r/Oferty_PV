@@ -33,18 +33,21 @@ export class AcceptanceModel {
         return featuresList.map((f) => this.predict(f));
     }
 
-    train(dataset: TrainingExample[], learningRate: number, epochs: number): void {
+    train(dataset: TrainingExample[], learningRate: number, epochs: number, l2Lambda = 0.01): void {
         const n = dataset.length;
         if (n === 0) return;
 
         for (let epoch = 0; epoch < epochs; epoch++) {
             let totalLoss = 0;
+            let l2 = 0;
             for (const example of dataset) {
                 const prediction = this.predict(example.features);
                 const error = example.label - prediction;
                 const w = example.weight;
                 for (let i = 0; i < this.weights.length; i++) {
-                    this.weights[i] += learningRate * error * example.features[i] * w;
+                    this.weights[i] +=
+                        learningRate *
+                        (error * example.features[i] * w - l2Lambda * this.weights[i]);
                 }
                 this.bias += learningRate * error * w;
                 totalLoss +=
@@ -52,8 +55,11 @@ export class AcceptanceModel {
                     (example.label * Math.log(Math.max(prediction, 1e-10)) +
                         (1 - example.label) * Math.log(Math.max(1 - prediction, 1e-10)));
             }
+            for (let i = 0; i < this.weights.length; i++) {
+                l2 += this.weights[i] * this.weights[i];
+            }
             if (epoch % 1000 === 0) {
-                const avgLoss = -totalLoss / n;
+                const avgLoss = -totalLoss / n + (l2Lambda / 2) * (l2 / n);
                 if (avgLoss < 0.001) break;
             }
         }

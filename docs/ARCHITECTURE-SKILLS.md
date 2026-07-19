@@ -17,7 +17,7 @@ Konsumenci:
 | ----------- | ----------------------------------------------------------------------------- |
 | **core**    | Auto-loaded na start sesji (router, conventions-lite)                         |
 | **feature** | Loaded na żądanie gdy `task_class`, `component` lub `error_contains` matchuje |
-| **heavy**   | Loaded tylko na `invoke_only` (np. `/graphify`, "audyt")                      |
+| **heavy**   | Loaded tylko na `invoke_only` (np. "audyt")                                   |
 
 ## Routing
 
@@ -53,14 +53,14 @@ Następna wersja schemy wymaga migratora (np. `migrate-v1-to-v2.mjs`).
 
 ## Pliki
 
-| Plik                                       | Rozmiar    | Rola                                 |
-| ------------------------------------------ | ---------- | ------------------------------------ |
-| `.hermes/skills/_manifest.yaml`            | ~7 KB      | SSoT definicji skilli                |
-| `.hermes/skills/_router.md`                | ~1 KB      | Ładowane zawsze; mówi gdzie szukać   |
-| `.hermes/skills/conventions-lite/SKILL.md` | ~4 KB      | Skrót konwencji (CORE)               |
-| `.hermes/skills/graphify/`                 | 38 KB      | skill graphify (heavy)               |
-| `docs/ARCHITECTURE-SKILLS.md`              | — ten plik | Biała księga architektury            |
-| `scripts/skill-cli.mjs`                    | TBD        | CLI: build-manifest, validate, stats |
+| Plik                                       | Rozmiar | Rola                               |
+| ------------------------------------------ | ------- | ---------------------------------- |
+| `.hermes/skills/_manifest.yaml`            | ~7 KB   | SSoT definicji skilli              |
+| `.hermes/skills/_router.md`                | ~1 KB   | Ładowane zawsze; mówi gdzie szukać |
+| `.hermes/skills/conventions-lite/SKILL.md` | ~4 KB   | Skrót konwencji (CORE)             |
+
+| `docs/ARCHITECTURE-SKILLS.md` | — ten plik | Biała księga architektury |
+| `scripts/skill-cli.mjs` | TBD | CLI: build-manifest, validate, stats |
 
 ## Filozofia
 

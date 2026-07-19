@@ -48,13 +48,6 @@ service_caps:
     tier_default: standard
     fallback: []
 
-  graphify:
-    description: "Knowledge graph build/query"
-    source_skills: [graphify]
-    tier_offered: [standard]
-    tier_default: standard
-    fallback: []
-
 # ════════════════════ SERVICE SUBSTITUTION ════════════════════
 
 substitution_rules:

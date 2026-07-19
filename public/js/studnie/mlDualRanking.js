@@ -22,22 +22,45 @@
     let BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
     let SINGLE_PREDICT_URL = '/api/telemetry/ai/predict';
     let SETTINGS_URL = '/api/telemetry/ai/settings';
+    let ML_STATUS_URL = '/api/telemetry/ai/ml-status';
     let FETCH_TIMEOUT = 3000;
 
     let MAX_AI_CANDIDATES = 10;
     let MIN_AI_CANDIDATES = 3;
 
-    let RELATIVE_GAP_THRESHOLD = 0.1; // 10% — exploration próg
+    let RELATIVE_GAP_THRESHOLD = 0.1;
     let EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
     let EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
 
-    let FEATURE_VERSION = 'v3';
+    let FEATURE_VERSION = 'v5';
+    let _featureVersionFetched = false;
+    let _cachedFeatureNames = null;
     let RANKING_VERSION = 'dual_v1';
     let SOLVER_VERSION = 'wellSolver_v5';
 
     /** @type {Map<string, {score:number, timestamp:number}>} */
     let scoreCache = new Map();
     let CACHE_TTL = 15 * 60 * 1000;
+    var CACHE_MAX_SIZE = 200;
+
+    function setScoreCache(key, value) {
+        if (scoreCache.size >= CACHE_MAX_SIZE) {
+            var oldest = scoreCache.keys().next().value;
+            if (oldest !== undefined) scoreCache.delete(oldest);
+        }
+        scoreCache.set(key, value);
+    }
+
+    // Okresowe czyszczenie przedawnionych wpisów cache co 5 min
+    setInterval(
+        function () {
+            var now = Date.now();
+            scoreCache.forEach(function (v, k) {
+                if (now - v.timestamp > CACHE_TTL) scoreCache.delete(k);
+            });
+        },
+        5 * 60 * 1000
+    );
 
     /** @type {boolean} */
     let mlOnline = false;
@@ -49,6 +72,57 @@
     let aiInfluencePct = 0;
 
     /* ===== FEATURE FLAG — hierarchia: URL override > localStorage > backend > 0 ===== */
+
+    async function validateFeatureSchema() {
+        try {
+            let res = await fetch('/api/telemetry/ai/feature-schema', {
+                credentials: 'same-origin'
+            });
+            if (!res.ok) return;
+            let schema = await res.json();
+            if (schema.count !== 20) {
+                console.warn(
+                    'mlDualRanking: FEATURE_COUNT mismatch',
+                    schema.count,
+                    'vs expected 20'
+                );
+            }
+            if (schema.names) {
+                _cachedFeatureNames = schema.names;
+            }
+        } catch (e) {
+            /* ignoruj — fallback do lokalnej definicji */
+        }
+    }
+
+    async function fetchFeatureVersionFromBackend() {
+        try {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
+                controller.abort();
+            }, 2000);
+            let res = await fetch(ML_STATUS_URL, {
+                credentials: 'same-origin',
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (!res.ok) return null;
+            let data = await res.json();
+            return typeof data.featureVersion === 'string' ? data.featureVersion : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function resolveFeatureVersion() {
+        if (_featureVersionFetched) return FEATURE_VERSION;
+        let backend = await fetchFeatureVersionFromBackend();
+        if (backend !== null) {
+            FEATURE_VERSION = backend;
+        }
+        _featureVersionFetched = true;
+        return FEATURE_VERSION;
+    }
 
     async function fetchAiInfluenceFromBackend() {
         try {
@@ -94,8 +168,16 @@
     /**
      * @param {Object} layout - layout konfiguracji studni
      * @param {Object} well - parametry studni
-     * @returns {number[]} wektor 16 cech
+     * @returns {number[]} wektor 15 cech
      */
+    function getSeasonNum() {
+        var m = new Date().getMonth() + 1;
+        if (m >= 3 && m <= 5) return 0;
+        if (m >= 6 && m <= 8) return 1;
+        if (m >= 9 && m <= 11) return 2;
+        return 3;
+    }
+
     function buildFeatureVector(layout, well) {
         let dn = parseInt(well.dn) || 0;
         let heightMm = parseInt(well.wellHeight) || 0;
@@ -122,13 +204,17 @@
             hasStyczna ? 1 : 0,
             hasReduction ? 1 : 0,
             hasPsiaBuda ? 1 : 0,
-            hasStyczna ? 1 : 0,
             ringCount,
             connectionCount,
             transitionsAboveDennica,
             totalPrice,
             totalWeight,
-            ringVariety
+            ringVariety,
+            getSeasonNum(),
+            layout.dennica ? 1 : 0,
+            layout.topItems && layout.topItems.length > 0 ? 1 : 0,
+            dn * ringCount,
+            warehouse === 'KLB' && wellType === 'standard' ? 1 : 0
         ];
     }
 
@@ -141,6 +227,7 @@
      * @returns {Promise<number>} AI score [0-1] lub -1 gdy offline
      */
     async function fetchAiScore(layout, well) {
+        await resolveFeatureVersion();
         let features = buildFeatureVector(layout, well);
         let key = features.join(',');
 
@@ -180,7 +267,7 @@
             if (data.scores && data.scores.length > 0) {
                 let s = data.scores[0];
                 activeModelVersion = s.version;
-                scoreCache.set(key, { score: s.score, timestamp: Date.now() });
+                setScoreCache(key, { score: s.score, timestamp: Date.now() });
                 mlOnline = true;
                 return s.score;
             }
@@ -203,6 +290,7 @@
     async function fetchAiScoresBatch(candidates, well) {
         let resultMap = new Map();
         let toFetch = [];
+        await resolveFeatureVersion();
 
         for (let i = 0; i < candidates.length; i++) {
             let c = candidates[i];
@@ -269,7 +357,7 @@
                     });
                     if (featKey) {
                         let fk = featKey.features.join(',');
-                        scoreCache.set(fk, { score: s.score, timestamp: Date.now() });
+                        setScoreCache(fk, { score: s.score, timestamp: Date.now() });
                     }
                 }
                 // Fill any missing with -1
@@ -558,25 +646,8 @@
     }
 
     /**
-     * Stary interfejs — ranking layoutów (zachowany dla kompatybilności).
-     * @deprecated Użyj rankCandidates() zamiast.
-     */
-    async function mlRankLayouts(layouts, well) {
-        if (!layouts || layouts.length === 0) return layouts;
-
-        let candidates = layouts.map(function (l, idx) {
-            return { id: idx, solution: l, technicalScore: l.score || l._score || 0 };
-        });
-
-        let result = await rankCandidates({ candidates: candidates, well: well });
-        return result.ranked.map(function (r) {
-            return r.solution;
-        });
-    }
-
-    /**
      * Status systemu ML
-     * @returns {{online:boolean, modelVersion:string|null, cacheSize:number, aiInfluencePct:number, rankingVersion:string}}
+     * @returns {{online:boolean, modelVersion:string|null, cacheSize:number, aiInfluencePct:number, rankingVersion:string, featureVersion:string}}
      */
     function getMlStatus() {
         return {
@@ -584,7 +655,8 @@
             modelVersion: activeModelVersion,
             cacheSize: scoreCache.size,
             aiInfluencePct: aiInfluencePct,
-            rankingVersion: RANKING_VERSION
+            rankingVersion: RANKING_VERSION,
+            featureVersion: FEATURE_VERSION
         };
     }
 
@@ -617,7 +689,9 @@
                 ' | model: ' +
                 (status.modelVersion || '?') +
                 ' | ranking: ' +
-                status.rankingVersion;
+                status.rankingVersion +
+                ' | feat: ' +
+                status.featureVersion;
 
             // Oznacz czy model jest świeży (uczenie aktywne)
             if (status.cacheSize > 0) {
@@ -696,6 +770,8 @@
     }
 
     // Uruchom po załadowaniu DOM
+    setTimeout(validateFeatureSchema, 3000); // walidacja schematu cech z backendem
+
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
         setTimeout(startAiStatusPoller, 2000); // 2s delay — daj czas na init
     } else {
@@ -713,7 +789,6 @@
 
     // Stare API (kompatybilność)
     window.mlEnrichLayout = mlEnrichLayout;
-    window.mlRankLayouts = mlRankLayouts;
     window.getMlStatus = getMlStatus;
     window.fetchAiScore = fetchAiScore;
 })();

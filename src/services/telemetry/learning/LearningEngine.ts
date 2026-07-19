@@ -16,6 +16,7 @@ import { logger } from '../../../utils/logger';
 
 import { PatternDetector } from './PatternDetector';
 import { PreferenceEngine } from './PreferenceEngine';
+import { ML_CONSTANTS } from '../../../config/mlConstants';
 import { RankingEngine } from './RankingEngine';
 import { KnowledgeBase } from './KnowledgeBase';
 import type { KnowledgePattern } from './KnowledgeBase';
@@ -58,6 +59,177 @@ export class LearningEngine {
      * 4) wykryje transition layout + reduction choice
      * 5) zapisze wszystko do Knowledge Base
      */
+    private async loadLastRun(): Promise<string | null> {
+        try {
+            const row = await prisma.settings.findUnique({ where: { key: 'learning_last_run' } });
+            return row?.value || null;
+        } catch {
+            return this.lastRunAt;
+        }
+    }
+
+    private async saveLastRun(ts: string): Promise<void> {
+        await prisma.settings.upsert({
+            where: { key: 'learning_last_run' },
+            update: { value: ts },
+            create: { key: 'learning_last_run', value: ts }
+        });
+        this.lastRunAt = ts;
+    }
+
+    private async fetchTelemetryRecords(since: string | null): Promise<{
+        records: Array<Record<string, unknown>>;
+        transitionsByConfig: Map<string, Array<Record<string, unknown>>>;
+    }> {
+        const where: Record<string, unknown> = { dn: { not: null } };
+        if (since) {
+            where.createdAt = { gt: since };
+        }
+        const records = await prisma.ai_telemetry_logs.findMany({
+            take: ML_CONSTANTS.LEARNING_MAX_RECORDS,
+            orderBy: { createdAt: 'desc' },
+            where
+        });
+
+        const allTransitions = await prisma.ai_transition_snapshots.findMany({
+            where: {
+                configId: { in: records.map((r) => r.id) }
+            }
+        });
+
+        const transitionsByConfig = new Map<string, typeof allTransitions>();
+        for (const t of allTransitions) {
+            if (t.configId) {
+                if (!transitionsByConfig.has(t.configId)) {
+                    transitionsByConfig.set(t.configId, []);
+                }
+                transitionsByConfig.get(t.configId)!.push(t);
+            }
+        }
+
+        return { records, transitionsByConfig };
+    }
+
+    private buildCorrections(records: Array<Record<string, unknown>>): Array<{
+        dn?: string;
+        originalConfig?: unknown[];
+        finalConfig?: unknown[];
+        overrideReason?: string;
+    }> {
+        const corrections: Array<{
+            dn?: string;
+            originalConfig?: unknown[];
+            finalConfig?: unknown[];
+            overrideReason?: string;
+        }> = [];
+        for (const rec of records) {
+            if (!rec.wasModified || !rec.final_user_config || !rec.original_auto_config) continue;
+            try {
+                const final = JSON.parse(rec.final_user_config as string);
+                const orig = JSON.parse(rec.original_auto_config as string);
+                corrections.push({
+                    dn: (rec.dn as string) || 'unknown',
+                    originalConfig: orig,
+                    finalConfig: final,
+                    overrideReason: (rec.override_reason as string) || ''
+                });
+            } catch (_e) {
+                /* skip */
+            }
+        }
+        return corrections;
+    }
+
+    private detectAllPatterns(
+        records: Array<Record<string, unknown>>,
+        transitionsByConfig: Map<string, Array<Record<string, unknown>>>,
+        corrections: Array<Record<string, unknown>>
+    ): KnowledgePattern[] {
+        const subPatterns = this.prefs.buildSubstitution(corrections);
+        const addPatterns = this.prefs.buildAddition(corrections);
+        const remPatterns = this.prefs.buildRemoval(corrections);
+
+        const transitionLayouts = this.patterns.detectTransitionLayout(
+            records.map((r) => {
+                const id = r.id as string;
+                const ts = id ? transitionsByConfig.get(id) || [] : [];
+                const accepted = r.wasAccepted ? 1 : 0;
+                const rejected = r.wasRejected ? 1 : 0;
+                const avgH =
+                    ts.length > 0
+                        ? ts.reduce(
+                              (acc, t) =>
+                                  acc +
+                                  (typeof t.heightFromBottomMm === 'number'
+                                      ? t.heightFromBottomMm
+                                      : 0),
+                              0
+                          ) / ts.length
+                        : 0;
+                let layout = 'unknown';
+                if (ts.length >= 2) {
+                    const heights = ts
+                        .map((t) =>
+                            typeof t.heightFromBottomMm === 'number' ? t.heightFromBottomMm : 0
+                        )
+                        .sort((a, b) => a - b);
+                    const gaps: number[] = [];
+                    for (let i = 1; i < heights.length; i++) gaps.push(heights[i] - heights[i - 1]);
+                    const maxGap = Math.max(...gaps);
+                    const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+                    layout =
+                        maxGap > avgGap * 2.5
+                            ? 'clustered'
+                            : maxGap < avgGap * 1.2
+                              ? 'evenly_spaced'
+                              : 'mixed';
+                }
+                return {
+                    dn: (r.dn as string) || 'unknown',
+                    transitionsCount: ts.length,
+                    layout,
+                    transitionAvgHeight: avgH,
+                    accepted,
+                    rejected
+                };
+            })
+        );
+
+        const reductionPatterns = this.patterns.detectReductionChoice(
+            records.map((r) => {
+                let final: unknown[] = [];
+                if (r.final_user_config) {
+                    try {
+                        final = JSON.parse(r.final_user_config as string);
+                    } catch {
+                        final = [];
+                    }
+                }
+                const reductionUsed = (final as { componentType?: string }[]).some((c) =>
+                    (c.componentType || '').toLowerCase().includes('redukcj')
+                );
+                const id = r.id as string;
+                const ts = id ? transitionsByConfig.get(id) || [] : [];
+                return {
+                    dn: (r.dn as string) || 'unknown',
+                    reductionUsed,
+                    wellHeight: typeof r.wellHeight === 'number' ? r.wellHeight : 0,
+                    transitionCount: ts.length,
+                    wasAccepted: !!r.wasAccepted,
+                    wasRejected: !!r.wasRejected
+                };
+            })
+        );
+
+        return [
+            ...subPatterns,
+            ...addPatterns,
+            ...remPatterns,
+            ...transitionLayouts,
+            ...reductionPatterns
+        ];
+    }
+
     async runFullCycle(): Promise<LearningRunSummary> {
         if (this._running) {
             logger.warn('LearningEngine', 'Pipeline juz dziala — pomijam');
@@ -69,12 +241,10 @@ export class LearningEngine {
         let persisted = 0;
 
         try {
-            // 1) odczyta telemetry - ostatnie 200 rekordów
-            const records = await prisma.ai_telemetry_logs.findMany({
-                take: 200,
-                orderBy: { createdAt: 'desc' },
-                where: { dn: { not: null } }
-            });
+            const since = await this.loadLastRun();
+
+            const { records, transitionsByConfig } = await this.fetchTelemetryRecords(since);
+
             processed = records.length;
             if (records.length === 0) {
                 return {
@@ -85,142 +255,13 @@ export class LearningEngine {
                 };
             }
 
-            // 2) powiązane przejścia
-            const allTransitions = await prisma.ai_transition_snapshots.findMany({
-                where: {
-                    configId: {
-                        in: records.map(function (r) {
-                            return r.id;
-                        })
-                    }
-                }
-            });
+            const corrections = this.buildCorrections(records);
 
-            const transitionsByConfig = new Map<string, typeof allTransitions>();
-            for (const t of allTransitions) {
-                if (t.configId) {
-                    if (!transitionsByConfig.has(t.configId)) {
-                        transitionsByConfig.set(t.configId, []);
-                    }
-                    transitionsByConfig.get(t.configId)!.push(t);
-                }
-            }
+            const allPatterns = this.detectAllPatterns(records, transitionsByConfig, corrections);
 
-            // 3) Przygotuj corrections w postaci dla PreferenceEngine
-            const corrections: Array<{
-                dn?: string;
-                originalConfig?: unknown[];
-                finalConfig?: unknown[];
-                overrideReason?: string;
-            }> = [];
-            for (const rec of records) {
-                if (!rec.wasModified || !rec.final_user_config || !rec.original_auto_config)
-                    continue;
-                try {
-                    const final = JSON.parse(rec.final_user_config);
-                    const orig = JSON.parse(rec.original_auto_config);
-                    corrections.push({
-                        dn: rec.dn || 'unknown',
-                        originalConfig: orig,
-                        finalConfig: final,
-                        overrideReason: rec.override_reason || ''
-                    });
-                } catch (_e) {
-                    /* skip */
-                }
-            }
-
-            // 4) Pattern Detection - substitution/addition/removal
-            const subPatterns = this.prefs.buildSubstitution(corrections);
-            const addPatterns = this.prefs.buildAddition(corrections);
-            const remPatterns = this.prefs.buildRemoval(corrections);
-
-            // 5) Pattern Detection - transition layout + reduction
-            const transitionLayouts = this.patterns.detectTransitionLayout(
-                records.map(function (r) {
-                    const ts = r.id ? transitionsByConfig.get(r.id) || [] : [];
-                    const accepted = r.wasAccepted ? 1 : 0;
-                    const rejected = r.wasRejected ? 1 : 0;
-                    const avgH =
-                        ts.length > 0
-                            ? ts.reduce(function (acc, t) {
-                                  const v =
-                                      typeof t.heightFromBottomMm === 'number'
-                                          ? t.heightFromBottomMm
-                                          : 0;
-                                  return acc + v;
-                              }, 0) / ts.length
-                            : 0;
-                    let layout = 'unknown';
-                    if (ts.length >= 2) {
-                        const heights = ts
-                            .map(function (t) {
-                                return typeof t.heightFromBottomMm === 'number'
-                                    ? t.heightFromBottomMm
-                                    : 0;
-                            })
-                            .sort(function (a, b) {
-                                return a - b;
-                            });
-                        const gaps: number[] = [];
-                        for (let i = 1; i < heights.length; i++) {
-                            gaps.push(heights[i] - heights[i - 1]);
-                        }
-                        const maxGap = Math.max.apply(null, gaps);
-                        const avgGap =
-                            gaps.reduce(function (a, b) {
-                                return a + b;
-                            }, 0) / gaps.length;
-                        layout =
-                            maxGap > avgGap * 2.5
-                                ? 'clustered'
-                                : maxGap < avgGap * 1.2
-                                  ? 'evenly_spaced'
-                                  : 'mixed';
-                    }
-                    return {
-                        dn: r.dn || 'unknown',
-                        transitionsCount: ts.length,
-                        layout,
-                        transitionAvgHeight: avgH,
-                        accepted,
-                        rejected
-                    };
-                })
-            );
-
-            const reductionPatterns = this.patterns.detectReductionChoice(
-                records.map(function (r) {
-                    const final = r.final_user_config ? JSON.parse(r.final_user_config) : [];
-                    const reductionUsed = (final as { componentType?: string }[]).some(
-                        function (c) {
-                            return (c.componentType || '').toLowerCase().includes('redukcj');
-                        }
-                    );
-                    const ts = r.id ? transitionsByConfig.get(r.id) || [] : [];
-                    return {
-                        dn: r.dn || 'unknown',
-                        reductionUsed,
-                        wellHeight: typeof r.wellHeight === 'number' ? r.wellHeight : 0,
-                        transitionCount: ts.length,
-                        wasAccepted: !!r.wasAccepted,
-                        wasRejected: !!r.wasRejected
-                    };
-                })
-            );
-
-            const allPatterns: KnowledgePattern[] = [
-                ...subPatterns,
-                ...addPatterns,
-                ...remPatterns,
-                ...transitionLayouts,
-                ...reductionPatterns
-            ];
-
-            // 6) Zapis do KnowledgeBase
             persisted = await this.patterns.persist(allPatterns);
 
-            this.lastRunAt = new Date().toISOString();
+            await this.saveLastRun(new Date().toISOString());
             this.initialized = true;
 
             return {

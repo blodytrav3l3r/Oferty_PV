@@ -249,7 +249,7 @@ class TelemetryService {
             return { success: true, created: data.length };
         } catch (e) {
             logger.error('Telemetry', `Błąd batch insertu eventów: ${e}`);
-            return { success: false, created: 0 };
+            throw e;
         }
     }
 
@@ -300,7 +300,7 @@ class TelemetryService {
             return logs.map((l) => this._safeDeserialize(l));
         } catch (e) {
             logger.error('Telemetry', `Błąd listy: ${e}`);
-            return [];
+            throw e;
         }
     }
 
@@ -319,7 +319,7 @@ class TelemetryService {
             }));
         } catch (e) {
             logger.error('Telemetry', `Błąd pobierania historii: ${e}`);
-            return [];
+            throw e;
         }
     }
 
@@ -335,7 +335,7 @@ class TelemetryService {
             return trans;
         } catch (e) {
             logger.error('Telemetry', `Błąd pobierania przejść: ${e}`);
-            return [];
+            throw e;
         }
     }
 
@@ -351,7 +351,7 @@ class TelemetryService {
             return events;
         } catch (e) {
             logger.error('Telemetry', `Błąd pobierania eventów: ${e}`);
-            return [];
+            throw e;
         }
     }
 
@@ -366,7 +366,7 @@ class TelemetryService {
             });
         } catch (e) {
             logger.error('Telemetry', `Błąd listy wersji: ${e}`);
-            return [];
+            throw e;
         }
     }
 
@@ -388,10 +388,11 @@ class TelemetryService {
                 }
             });
         } catch (e) {
-            logger.warn(
+            logger.error(
                 'Telemetry',
                 `Nie udało się zaktualizować acceptance dla ${telemetryId}: ${e}`
             );
+            throw e;
         }
     }
 

@@ -6,17 +6,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ## [1.8.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.7.0...v1.8.0) (2026-07-19)
 
-
 ### Features
 
-* **studnie:** add Excel column visibility popup with DN grid and persistence ([62ae04d](https://github.com/blodytrav3l3r/Oferty_PV/commit/62ae04ddb7838112abcea40b9ebf0c269374403f))
-* **studnie:** powiaz widocznosci przejsc z Excelem ([7484699](https://github.com/blodytrav3l3r/Oferty_PV/commit/7484699b25fe63621082a96cf6baac22eac7fb9d))
-
+- **studnie:** add Excel column visibility popup with DN grid and persistence ([62ae04d](https://github.com/blodytrav3l3r/Oferty_PV/commit/62ae04ddb7838112abcea40b9ebf0c269374403f))
+- **studnie:** powiaz widocznosci przejsc z Excelem ([7484699](https://github.com/blodytrav3l3r/Oferty_PV/commit/7484699b25fe63621082a96cf6baac22eac7fb9d))
 
 ### Bug Fixes
 
-* **studnie:** poprawki UI listy studni i lock toasty ([277b739](https://github.com/blodytrav3l3r/Oferty_PV/commit/277b739531d49ce608cdebf67cd0028c2cc40f67))
-* **studnie:** wizualny podziaL konusa na czesc stozkowa i pierscien laczacy ([8f04cea](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f04cead465b505217054f0cb768890b9022bfab))
+- **studnie:** poprawki UI listy studni i lock toasty ([277b739](https://github.com/blodytrav3l3r/Oferty_PV/commit/277b739531d49ce608cdebf67cd0028c2cc40f67))
+- **studnie:** wizualny podziaL konusa na czesc stozkowa i pierscien laczacy ([8f04cea](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f04cead465b505217054f0cb768890b9022bfab))
 
 ## [1.7.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.6.0...v1.7.0) (2026-07-19)
 

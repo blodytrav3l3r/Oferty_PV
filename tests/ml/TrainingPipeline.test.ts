@@ -181,7 +181,8 @@ describe('ModelRegistry', () => {
             },
             ['dn', 'heightMm'],
             [0, 0],
-            [2000, 5000]
+            [2000, 5000],
+            true
         );
 
         expect(version).toContain('v1.0.0-');

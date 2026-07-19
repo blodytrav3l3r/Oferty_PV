@@ -21,7 +21,6 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 | ADR-002 | Vanilla JS SPA (bez frameworka) | `docs/adr/ADR-002-vanilla-js.md`     |
 | ADR-003 | Vite jako bundler frontendu     | `docs/adr/ADR-003-vite.md`           |
 | ADR-004 | Express + Prisma backend        | `docs/adr/ADR-004-express-prisma.md` |
-| ADR-005 | Graphify do inteligencji kodu   | `docs/adr/ADR-005-graphify.md`       |
 
 ---
 
@@ -75,23 +74,6 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 
 ---
 
-## Graphify (inteligencja kodu)
-
-Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i relacjami między plikami.
-
-### Zanim szukasz w kodzie:
-
-1. `graphify query "<pytanie>"` — zapytanie do grafu (scoped subgraph, mniejszy niż grep)
-2. `graphify path "<A>" "<B>"` — relacje między plikami
-3. `graphify explain "<koncept>"" — wyjaśnienie konceptu
-
-### Zasady:
-
-- Dirty graph files NIE są powodem do pominięcia graphify (normalne po hookach)
-- `graphify-out/wiki/index.md` → używaj do broad navigation zamiast grep
-- `graphify-out/GRAPH_REPORT.md` → tylko dla broad architecture review
-- **Po zmianach kodu**: `graphify update .` (AST-only, bez kosztów API)
-
 ---
 
 ## Zasady ogólne
@@ -112,7 +94,7 @@ Projekt ma graf wiedzy w `graphify-out/` z god nodes, community structure i rela
 
 ### Styl pracy
 
-- Zanim napiszesz kod — zaplanuj strukturę i przepływ danych (z użyciem graphify)
+- Zanim napiszesz kod — zaplanuj strukturę i przepływ danych
 - Każdy fragment kodu musi być gotowy do użycia w realnym systemie — kod produkcyjny, nie demo
 
 ---
@@ -221,8 +203,7 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ### Przed zmianami
 
-1. `graphify query "<co robię>"` — zrozum kontekst
-2. Sprawdź `docs/errors-known.md` — czy znany bug pasuje
+1. Sprawdź `docs/errors-known.md` — czy znany bug pasuje
 
 ### W trakcie
 
@@ -234,11 +215,10 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ### Po zmianach
 
-8. `graphify update .` — aktualizuj graf
-9. Jeśli zmieniłeś CSS/HTML: podbij `?v=N` w link/script tag
-10. `npm run typecheck` / `npm run typecheck:frontend` — walidacja
-11. `npm run version:check` — spójność wersji (robi to post-commit hook)
-12. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
+8. Jeśli zmieniłeś CSS/HTML: podbij `?v=N` w link/script tag
+9. `npm run typecheck` / `npm run typecheck:frontend` — walidacja
+10. `npm run version:check` — spójność wersji (robi to post-commit hook)
+11. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
 
 ---
 
@@ -254,7 +234,3 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 | `npm run format`                      | Prettier                               |
 | `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
 | `npm run version:patch\|minor\|major` | Bump wersji                            |
-| `graphify query "<q>"`                | Zapytaj graf wiedzy                    |
-| `graphify path "<A>" "<B>"`           | Relacje między plikami                 |
-| `graphify explain "<koncept>"`        | Wyjaśnij koncept                       |
-| `graphify update .`                   | Aktualizuj graf po zmianach            |

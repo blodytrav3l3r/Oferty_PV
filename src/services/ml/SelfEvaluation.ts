@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import { modelRegistry } from './ModelRegistry';
 import { trainingPipeline } from './TrainingPipeline';
@@ -20,6 +22,17 @@ export class SelfEvaluation {
             this.lastRunAt = Date.now();
             const result = await trainingPipeline.run();
             if (result.trained && result.metrics) {
+                await prisma.aiEvaluation.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        modelVersion: result.version || 'unknown',
+                        acceptance: result.metrics.accuracy,
+                        decisionMsAvg: 0,
+                        rewardsAvg: 0,
+                        totalDecisions: result.metrics.trainSize + result.metrics.valSize,
+                        triggeredAt: new Date().toISOString()
+                    }
+                });
                 logger.info('SelfEvaluation', `Nowy model AUC=${result.metrics.rocAuc} - OK`);
                 return { rolledBack: false };
             }

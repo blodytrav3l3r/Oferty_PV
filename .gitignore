@@ -76,10 +76,6 @@ coverage/
 order_data.json
 everything-claude-code
 
-# Graphify auto-generated cache (knowledge graph - rebuild from source)
-graphify-out/
-public/graphify-out/
-
 # Kilo Agent Manager worktrees (each contains own node_modules/ + assets)
 .kilo/worktrees/
 
@@ -96,16 +92,12 @@ check_db_temp.js
 .kilo/
 .agents/
 .opencode/
-.graphifyignore
 ./~/
 
 # === Temp/working files ===
 scripts/tempRules.js
 data/app_database.sqlite.backup_*
 tmp/
-
-# === Local git hooks (powiązane z graphify które wykluczyliśmy) ===
-.githooks/
 
 # === Python well configurator (osobna usługa, NIE używana przez Node) ===
 # Zachowujemy lokalnie, ale nie pushujemy na GitHub.

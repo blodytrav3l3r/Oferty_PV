@@ -45,8 +45,13 @@
                 .then(function () {
                     clearTimeout(timeoutId);
                 })
-                .catch(function () {
-                    /* telemetry pasywna - ignorujemy */
+                .catch(function (err) {
+                    if (
+                        window.location.hostname === 'localhost' ||
+                        window.location.hostname === '127.0.0.1'
+                    ) {
+                        console.warn('[telemetry] Backend unavailable:', err);
+                    }
                 });
         } catch (e) {
             return Promise.resolve();

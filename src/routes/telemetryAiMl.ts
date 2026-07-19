@@ -3,19 +3,19 @@ import { modelRegistry } from '../services/ml/ModelRegistry';
 import { trainingPipeline } from '../services/ml/TrainingPipeline';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
+import { AcceptanceModel } from '../services/ml/AcceptanceModel';
 import { logger } from '../utils/logger';
 import { WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { logAudit } from '../services/auditService';
 import { z } from 'zod';
 import prisma from '../prismaClient';
+import { FEATURE_NAMES, ML_CONSTANTS } from '../config/mlConstants';
 
 const router = Router();
 
-const FEATURE_COUNT = 16;
-
 const predictSchema = z.object({
-    features: z.array(z.number()).length(FEATURE_COUNT),
+    features: z.array(z.number()).length(ML_CONSTANTS.FEATURE_COUNT),
     wellType: z.string().optional(),
     warehouse: z.string().optional(),
     dn: z.number().optional(),
@@ -26,7 +26,7 @@ const predictSchema = z.object({
 
 const batchCandidateSchema = z.object({
     id: z.number(),
-    features: z.array(z.number()).length(FEATURE_COUNT),
+    features: z.array(z.number()).length(ML_CONSTANTS.FEATURE_COUNT),
     wellType: z.string().optional(),
     warehouse: z.string().optional(),
     dn: z.number().optional()
@@ -53,10 +53,20 @@ interface CacheEntry {
 }
 
 const predictionCache = new Map<string, CacheEntry>();
-const CACHE_TTL = 15 * 60 * 1000;
+const CACHE_TTL = ML_CONSTANTS.PREDICTION_CACHE_TTL_MS;
+const CACHE_MAX_SIZE = 1000;
+
+function setCache(key: string, entry: CacheEntry): void {
+    if (predictionCache.size >= CACHE_MAX_SIZE) {
+        const oldest = predictionCache.keys().next().value;
+        if (oldest !== undefined) predictionCache.delete(oldest);
+    }
+    predictionCache.set(key, entry);
+}
 
 function cacheKey(features: number[], wellType?: string, warehouse?: string, dn?: number): string {
-    return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dn || ''}`;
+    const dnStr = dn !== undefined && dn !== null ? String(dn) : '';
+    return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dnStr}`;
 }
 
 async function runPrediction(
@@ -77,19 +87,15 @@ async function runPrediction(
         } as any;
     }
 
-    const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
     const model = new AcceptanceModel(
         activeModel.weights.length,
         activeModel.weights,
         activeModel.bias
     );
 
-    const normalizedFeatures = features.map((v, i) => {
-        const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
-        return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
-    });
-
-    const score = model.predict(normalizedFeatures);
+    const score = model.predict(
+        normalizeFeatures(features, activeModel.featureMins, activeModel.featureMaxs)
+    );
     return {
         score: parseFloat(score.toFixed(4)),
         version: activeModel.version,
@@ -97,52 +103,54 @@ async function runPrediction(
     };
 }
 
-router.post(
-    '/telemetry/ai/predict',
-    requireAuth,
-    WRITE_LIMITER,
-    async (req: Request, res: Response) => {
-        try {
-            const parsed = predictSchema.safeParse(req.body);
-            if (!parsed.success) {
-                res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
-                return;
-            }
+function normalizeFeatures(features: number[], mins: number[], maxs: number[]): number[] {
+    return features.map((v, i) => {
+        const range = maxs[i] - mins[i];
+        return range === 0 ? 0 : (v - mins[i]) / range;
+    });
+}
 
-            const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
-            const key = cacheKey(features, wellType, warehouse, dn);
-            const cached = predictionCache.get(key);
-            if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-                res.json({ scores: cached.result, cached: true });
-                return;
-            }
-
-            const result = await runPrediction(features, featureVersion);
-            if ('error' in result) {
-                if (result.error === 'No active model') {
-                    res.status(503).json({ error: 'No active model', scores: [] });
-                } else {
-                    res.status(400).json(result);
-                }
-                return;
-            }
-
-            const scoreResult = [result];
-            predictionCache.set(key, { result: scoreResult, timestamp: Date.now() });
-
-            res.json({ scores: scoreResult, cached: false });
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            logger.error('AiPredictRoute', `Blad predykcji: ${msg}`);
-            res.status(500).json({ error: 'Prediction failed' });
+router.post('/ai/predict', requireAuth, WRITE_LIMITER, async (req: Request, res: Response) => {
+    try {
+        const parsed = predictSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
+            return;
         }
+
+        const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
+        const key = cacheKey(features, wellType, warehouse, dn);
+        const cached = predictionCache.get(key);
+        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+            res.json({ scores: cached.result, cached: true });
+            return;
+        }
+
+        const result = await runPrediction(features, featureVersion);
+        if ('error' in result) {
+            if (result.error === 'No active model') {
+                res.status(503).json({ error: 'No active model', scores: [] });
+            } else {
+                res.status(400).json(result);
+            }
+            return;
+        }
+
+        const scoreResult = [result];
+        setCache(key, { result: scoreResult, timestamp: Date.now() });
+
+        res.json({ scores: scoreResult, cached: false });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error('AiPredictRoute', `Blad predykcji: ${msg}`);
+        res.status(500).json({ error: 'Prediction failed' });
     }
-);
+});
 
 /* ===== BATCH PREDICT (dla rankCandidates) ===== */
 
 router.post(
-    '/telemetry/ai/predict/batch',
+    '/ai/predict/batch',
     requireAuth,
     WRITE_LIMITER,
     async (req: Request, res: Response) => {
@@ -175,7 +183,6 @@ router.post(
                 }
             }
 
-            const { AcceptanceModel } = await import('../services/ml/AcceptanceModel');
             const model = new AcceptanceModel(
                 activeModel.weights.length,
                 activeModel.weights,
@@ -183,11 +190,9 @@ router.post(
             );
 
             const scores = candidates.map((c) => {
-                const normalizedFeatures = c.features.map((v, i) => {
-                    const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
-                    return range === 0 ? 0 : (v - activeModel.featureMins[i]) / range;
-                });
-                const score = model.predict(normalizedFeatures);
+                const score = model.predict(
+                    normalizeFeatures(c.features, activeModel.featureMins, activeModel.featureMaxs)
+                );
                 return {
                     id: c.id,
                     score: parseFloat(score.toFixed(4)),
@@ -205,45 +210,40 @@ router.post(
     }
 );
 
-router.post(
-    '/telemetry/ai/reward',
-    requireAuth,
-    WRITE_LIMITER,
-    async (req: Request, res: Response) => {
-        try {
-            const parsed = rewardSchema.safeParse(req.body);
-            if (!parsed.success) {
-                res.status(400).json({
-                    error: 'Invalid reward payload',
-                    details: parsed.error.issues
-                });
-                return;
-            }
-
-            const data = parsed.data;
-            await rewardCalculator.processAction({
-                userId: (req as any).user?.id || 'unknown',
-                action: data.action,
-                wellId: data.wellId,
-                dn: data.dn,
-                scoreBefore: data.scoreBefore,
-                scoreAfter: data.scoreAfter,
-                wasAiRanked: data.wasAiRanked,
-                configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
+router.post('/ai/reward', requireAuth, WRITE_LIMITER, async (req: Request, res: Response) => {
+    try {
+        const parsed = rewardSchema.safeParse(req.body);
+        if (!parsed.success) {
+            res.status(400).json({
+                error: 'Invalid reward payload',
+                details: parsed.error.issues
             });
-
-            res.json({ status: 'ok' });
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
-            res.status(500).json({ error: 'Reward failed' });
+            return;
         }
+
+        const data = parsed.data;
+        await rewardCalculator.processAction({
+            userId: (req as any).user?.id || 'unknown',
+            action: data.action,
+            wellId: data.wellId,
+            dn: data.dn,
+            scoreBefore: data.scoreBefore,
+            scoreAfter: data.scoreAfter,
+            wasAiRanked: data.wasAiRanked,
+            configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
+        });
+
+        res.json({ status: 'ok' });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
+        res.status(500).json({ error: 'Reward failed' });
     }
-);
+});
 
 /* ===== FEATURE FLAG: AI influence level ===== */
 
-router.get('/telemetry/ai/settings', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/settings', requireAuth, async (_req: Request, res: Response) => {
     try {
         const setting = await prisma.settings.findUnique({
             where: { key: 'wells_ai_influence' }
@@ -259,7 +259,7 @@ router.get('/telemetry/ai/settings', requireAuth, async (_req: Request, res: Res
     }
 });
 
-router.post('/telemetry/ai/settings', requireAuth, requireAdmin, async (req, res: Response) => {
+router.post('/ai/settings', requireAuth, requireAdmin, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { value } = req.body;
@@ -283,7 +283,7 @@ router.post('/telemetry/ai/settings', requireAuth, requireAdmin, async (req, res
     }
 });
 
-router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/ml-status', requireAuth, async (_req: Request, res: Response) => {
     try {
         const activeModel = await modelRegistry.getActiveModel();
         const modelCount = await modelRegistry.getModelCount();
@@ -297,7 +297,8 @@ router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Re
         res.json({
             mlOnline: !!activeModel,
             modelVersion: activeModel?.version || null,
-            modelFeatureCount: activeModel?.featureMins.length || FEATURE_COUNT,
+            modelFeatureCount: activeModel?.featureMins.length || ML_CONSTANTS.FEATURE_COUNT,
+            featureVersion: ML_CONSTANTS.FEATURE_VERSION,
             modelCount,
             featureCount,
             trainingRunning: pipelineStatus.running,
@@ -311,7 +312,7 @@ router.get('/telemetry/ai/ml-status', requireAuth, async (_req: Request, res: Re
     }
 });
 
-router.get('/telemetry/ai/health', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/health', requireAuth, async (_req: Request, res: Response) => {
     try {
         const telemetryCount = await prisma.ai_telemetry_logs.count();
         const featureCount = await featureExtractor.getFeatureCount();
@@ -337,6 +338,43 @@ router.get('/telemetry/ai/health', requireAuth, async (_req: Request, res: Respo
             where: { manualOverrideFlag: true }
         });
 
+        let driftPct = null;
+        if (activeModel?.featureMins?.length && activeModel?.featureMaxs?.length) {
+            try {
+                const recentLogs = await prisma.ai_telemetry_logs.findMany({
+                    where: { NOT: { featureSnapshot: '{}' } },
+                    orderBy: { createdAt: 'desc' },
+                    take: 50
+                });
+                const mins = activeModel.featureMins;
+                const maxs = activeModel.featureMaxs;
+                let totalChecks = 0;
+                let outOfRange = 0;
+                for (const log of recentLogs) {
+                    let snap: Record<string, unknown>;
+                    if (!log.featureSnapshot) continue;
+                    try {
+                        snap = JSON.parse(log.featureSnapshot);
+                    } catch {
+                        continue;
+                    }
+                    const checks: Array<{ key: string; idx: number }> = [
+                        { key: 'totalPrice', idx: 12 },
+                        { key: 'totalWeight', idx: 13 }
+                    ];
+                    for (const { key, idx } of checks) {
+                        const val = Number(snap[key]);
+                        if (isNaN(val)) continue;
+                        totalChecks++;
+                        if (val < mins[idx] || val > maxs[idx]) outOfRange++;
+                    }
+                }
+                driftPct = totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : 0;
+            } catch {
+                driftPct = null;
+            }
+        }
+
         res.json({
             mlOnline: !!activeModel,
             telemetryCount,
@@ -347,6 +385,7 @@ router.get('/telemetry/ai/health', requireAuth, async (_req: Request, res: Respo
             lastTrainingAt: lastModel?.createdAt || null,
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
+            driftPct,
             dataQuality: {
                 totalLogs: telemetryCount,
                 withFeatureSnapshotPct:
@@ -364,7 +403,7 @@ router.get('/telemetry/ai/health', requireAuth, async (_req: Request, res: Respo
     }
 });
 
-router.get('/telemetry/ai/models', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/models', requireAuth, async (_req: Request, res: Response) => {
     try {
         const models = await modelRegistry.listModels(50);
         res.json({ models });
@@ -374,7 +413,7 @@ router.get('/telemetry/ai/models', requireAuth, async (_req: Request, res: Respo
     }
 });
 
-router.post('/telemetry/ai/train', requireAuth, requireAdmin, async (req, res: Response) => {
+router.post('/ai/train', requireAuth, requireAdmin, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const result = await trainingPipeline.run(true);
@@ -388,7 +427,15 @@ router.post('/telemetry/ai/train', requireAuth, requireAdmin, async (req, res: R
     }
 });
 
-router.post('/telemetry/ai/rollback', requireAuth, requireAdmin, async (req, res: Response) => {
+router.get('/ai/feature-schema', requireAuth, async (_req: Request, res: Response) => {
+    res.json({
+        version: ML_CONSTANTS.FEATURE_VERSION,
+        count: ML_CONSTANTS.FEATURE_COUNT,
+        names: FEATURE_NAMES
+    });
+});
+
+router.post('/ai/rollback', requireAuth, requireAdmin, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const previous = await modelRegistry.rollbackToPrevious();

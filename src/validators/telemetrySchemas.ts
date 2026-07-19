@@ -209,3 +209,21 @@ export const telemetryAcceptanceSchema = z.object({
 });
 
 export type TelemetryAcceptanceInput = z.infer<typeof telemetryAcceptanceSchema>;
+
+// =============================================================================
+// Acceptance Full — rozszerzony acceptance z pełnym kontekstem oferty
+// =============================================================================
+
+export const telemetryAcceptanceFullSchema = z.object({
+    telemetryId: z.string(),
+    accepted: z.boolean(),
+    offerId: z.string().optional(),
+    wellId: z.string().optional(),
+    configSnapshot: z.record(z.string(), z.unknown()).optional(),
+    transitions: z.array(z.record(z.string(), z.unknown())).optional(),
+    warehouse: z.string().optional(),
+    originalConfig: z.array(z.record(z.string(), z.unknown())).optional(),
+    finalConfig: z.array(z.record(z.string(), z.unknown())).optional()
+});
+
+export type TelemetryAcceptanceFullInput = z.infer<typeof telemetryAcceptanceFullSchema>;

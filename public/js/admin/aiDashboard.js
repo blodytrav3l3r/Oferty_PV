@@ -11,7 +11,8 @@
         mlStatus: '/api/telemetry/ai/ml-status',
         models: '/api/telemetry/ai/models',
         train: '/api/telemetry/ai/train',
-        rollback: '/api/telemetry/ai/rollback'
+        rollback: '/api/telemetry/ai/rollback',
+        settings: '/api/telemetry/ai/settings'
     };
 
     function fetchJson(url, options) {
@@ -32,9 +33,11 @@
     }
 
     /* ===== HELPER: karta statystyczna ===== */
-    function statCard(title, value, color) {
+    function statCard(title, value, color, desc) {
         return (
-            '<div class="ai-stat-card" style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;text-align:center">' +
+            '<div class="ai-stat-card" ' +
+            (desc ? 'title="' + window.escapeHtml(desc) + '"' : '') +
+            ' style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;text-align:center">' +
             '<div style="font-size:1.5rem;font-weight:600;color:' +
             (color || 'var(--accent)') +
             '">' +
@@ -69,18 +72,54 @@
             }
             var html =
                 '<div class="ai-stats-grid">' +
-                statCard('Wzorce łacznie', stats.total, 'var(--accent)') +
-                statCard('Aktywne', stats.active, 'var(--success)') +
+                statCard(
+                    'Wzorce łacznie',
+                    stats.total,
+                    'var(--accent)',
+                    'Łączna liczba wykrytych wzorców w bazie wiedzy'
+                ) +
+                statCard(
+                    'Aktywne',
+                    stats.active,
+                    'var(--success)',
+                    'Liczba aktywnych, aktualnie używanych wzorców'
+                ) +
                 statCard(
                     'Średnie confidence',
                     Math.round((stats.avgConfidence || 0) * 100) + '%',
-                    'var(--warn)'
+                    'var(--warn)',
+                    'Średni poziom ufności dla wszystkich wzorców (0-100%)'
                 ) +
-                statCard('Rekomendacje', stats.totalRecommendations, 'var(--accent2)') +
-                statCard('Zaakceptowane', stats.acceptedRecommendations, 'var(--success-hover)') +
-                statCard('Odrzucone', stats.rejectedRecommendations, 'var(--danger-hover)') +
-                statCard('Nowe (7 dni)', stats.recentDetected, 'var(--cyan)') +
-                statCard('Archiwalne', stats.archived, 'var(--text-muted)') +
+                statCard(
+                    'Rekomendacje',
+                    stats.totalRecommendations,
+                    'var(--accent2)',
+                    'Liczba rekomendacji wygenerowanych przez Learning Engine'
+                ) +
+                statCard(
+                    'Zaakceptowane',
+                    stats.acceptedRecommendations,
+                    'var(--success-hover)',
+                    'Liczba rekomendacji zaakceptowanych przez użytkownika'
+                ) +
+                statCard(
+                    'Odrzucone',
+                    stats.rejectedRecommendations,
+                    'var(--danger-hover)',
+                    'Liczba rekomendacji odrzuconych przez użytkownika'
+                ) +
+                statCard(
+                    'Nowe (7 dni)',
+                    stats.recentDetected,
+                    'var(--cyan)',
+                    'Nowe wzorce wykryte w ciągu ostatnich 7 dni'
+                ) +
+                statCard(
+                    'Archiwalne',
+                    stats.archived,
+                    'var(--text-muted)',
+                    'Liczba wzorców zarchiwizowanych (nieaktywnych)'
+                ) +
                 '</div>' +
                 (stats.byPatternType
                     ? '<div style="background:var(--bg-card);border-radius:var(--radius-md);padding:12px;margin-bottom:16px;border:1px solid var(--border-glass)">' +
@@ -90,10 +129,10 @@
                               return (
                                   '<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-glass);padding:5px 0;font-size:0.8rem">' +
                                   '<span style="color:var(--text-secondary)">' +
-                                  k +
+                                  window.escapeHtml(k) +
                                   '</span>' +
                                   '<strong style="color:var(--text-primary)">' +
-                                  stats.byPatternType[k] +
+                                  window.escapeHtml(stats.byPatternType[k]) +
                                   '</strong></div>'
                               );
                           })
@@ -147,10 +186,10 @@
                     return (
                         '<tr style="border-bottom:1px solid var(--border-glass)">' +
                         '<td style="padding:6px"><code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-size:0.72rem;color:var(--accent-text)">' +
-                        (p.patternType || '') +
+                        window.escapeHtml(p.patternType || '') +
                         '</code></td>' +
                         '<td style="padding:6px;font-family:monospace;font-size:0.7rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-                        (p.patternKey || '').slice(0, 60) +
+                        window.escapeHtml((p.patternKey || '').slice(0, 60)) +
                         '</td>' +
                         '<td style="padding:6px;text-align:right;color:' +
                         confColor +
@@ -161,7 +200,7 @@
                         (p.hitCount || 0) +
                         '</td>' +
                         '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
-                        (p.description || '').slice(0, 80) +
+                        window.escapeHtml((p.description || '').slice(0, 80)) +
                         '</td>' +
                         '</tr>'
                     );
@@ -171,11 +210,11 @@
                 '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
                 '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.82rem">' +
                 '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px">' +
-                '<th style="padding:6px;text-align:left;font-weight:700">Typ</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700">Pattern</th>' +
-                '<th style="padding:6px;text-align:right;font-weight:700">Confidence</th>' +
-                '<th style="padding:6px;text-align:right;font-weight:700">Hits</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700">Opis</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Typ wykrytego wzorca">Typ</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Klucz wzorca">Pattern</th>' +
+                '<th style="padding:6px;text-align:right;font-weight:700" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +
+                '<th style="padding:6px;text-align:right;font-weight:700" title="Liczba trafie\u0144 (zastosowa\u0144 wzorca)">Hits</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Opis wzorca">Opis</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>';
@@ -200,30 +239,64 @@
             }
 
             var online = status.mlOnline;
+            var inf = status.aiInfluencePct || 0;
             var html =
                 '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
                 '<div class="ai-ml-stats-grid">' +
                 statCard(
                     'Status',
                     statusBadge(online),
-                    online ? 'var(--success)' : 'var(--danger)'
+                    online ? 'var(--success)' : 'var(--danger)',
+                    "Status pipeline'a ML — online (działa) lub offline (wyłączony)"
                 ) +
-                statCard('Wersja modelu', status.modelVersion || '—', 'var(--accent2)') +
-                statCard('Liczba modeli', status.modelCount || 0, 'var(--accent-hover)') +
+                statCard(
+                    'Wersja modelu',
+                    status.modelVersion || '—',
+                    'var(--accent2)',
+                    'Aktualna wersja wytrenowanego modelu ML'
+                ) +
+                statCard(
+                    'Liczba modeli',
+                    status.modelCount || 0,
+                    'var(--accent-hover)',
+                    'Całkowita liczba zapisanych modeli w rejestrze'
+                ) +
                 statCard(
                     'Trening trwa',
                     status.trainingRunning ? 'Tak' : 'Nie',
-                    status.trainingRunning ? 'var(--warn)' : 'var(--success)'
+                    status.trainingRunning ? 'var(--warn)' : 'var(--success)',
+                    'Czy w tej chwili trwa trenowanie modelu'
                 ) +
-                statCard('Nagrody (reward)', status.totalRewards || 0, 'var(--cyan)') +
-                statCard('Cache predykcji', status.cacheSize || 0, 'var(--text-muted)') +
+                statCard(
+                    'Nagrody (reward)',
+                    status.totalRewards || 0,
+                    'var(--cyan)',
+                    'Suma nagród (reward) zebranych przez model za trafne predykcje'
+                ) +
+                statCard(
+                    'Cache predykcji',
+                    status.cacheSize || 0,
+                    'var(--text-muted)',
+                    "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
+                ) +
+                '</div>' +
+                '<div class="ai-influence-widget" style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;margin-top:10px">' +
+                '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
+                '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +
+                '<span style="font-size:0.82rem;color:var(--text-primary);white-space:nowrap">Wp\u0142yw AI: <strong id="ai-influence-value">' +
+                inf +
+                '%</strong></span>' +
+                '<input type="range" id="ai-influence-slider" min="0" max="100" value="' +
+                inf +
+                '" style="flex:1;min-width:80px;height:6px;accent-color:var(--accent);cursor:pointer">' +
+                '</label>' +
                 '</div>';
 
             /* Przyciski akcji */
             html +=
                 '<div class="ai-ml-actions">' +
-                '<button id="ai-ml-train-btn" class="ai-ml-train-btn"><i data-lucide="play"></i> Uruchom trening ML</button>' +
-                '<button id="ai-ml-rollback-btn" class="ai-ml-rollback-btn"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
+                '<button id="ai-ml-train-btn" class="ai-ml-train-btn" title="Uruchamia trenowanie modelu ML na zebranych danych telemetrycznych"><i data-lucide="play"></i> Uruchom trening ML</button>' +
+                '<button id="ai-ml-rollback-btn" class="ai-ml-rollback-btn" title="Przywraca poprzedni\u0105 wersj\u0119 modelu ML (cofa ostatni trening)"><i data-lucide="undo-2"></i> Rollback modelu</button>' +
                 '</div>';
 
             /* Tabela modeli */
@@ -237,7 +310,7 @@
                         return (
                             '<tr>' +
                             '<td>' +
-                            (m.version || '—') +
+                            window.escapeHtml(m.version || '—') +
                             '</td>' +
                             '<td>' +
                             (m.auc != null ? m.auc.toFixed(4) : '—') +
@@ -262,11 +335,11 @@
                     '<div class="ai-model-table-wrap">' +
                     '<table class="ai-model-table">' +
                     '<thead><tr>' +
-                    '<th>Wersja</th>' +
-                    '<th>AUC</th>' +
-                    '<th>Cechy</th>' +
-                    '<th>Próbki</th>' +
-                    '<th>Status</th>' +
+                    '<th title="Wersja modelu">Wersja</th>' +
+                    '<th title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
+                    '<th title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
+                    '<th title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
+                    '<th title="Czy model jest aktualnie aktywny">Status</th>' +
                     '</tr></thead><tbody>' +
                     modelRows +
                     '</tbody></table></div>';
@@ -279,6 +352,33 @@
 
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons({ root: container });
+            }
+
+            /* Slider AI Influence */
+            var aiSlider = document.getElementById('ai-influence-slider');
+            var aiValueLabel = document.getElementById('ai-influence-value');
+            var aiSaveTimer = null;
+            if (aiSlider && aiValueLabel) {
+                aiSlider.addEventListener('input', function () {
+                    aiValueLabel.textContent = this.value + '%';
+                });
+                aiSlider.addEventListener('change', function () {
+                    if (aiSaveTimer) clearTimeout(aiSaveTimer);
+                    aiSaveTimer = setTimeout(function () {
+                        var val = aiSlider ? aiSlider.value : '0';
+                        var p = fetchJson(ENDPOINTS.settings || '/api/telemetry/ai/settings', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ value: val })
+                        });
+                        if (p) {
+                            p.then(function () {
+                                if (typeof window.showToast === 'function')
+                                    window.showToast('AI Influence: ' + val + '%', 'info');
+                            });
+                        }
+                    }, 500);
+                });
             }
 
             /* Eventy przycisków */
@@ -360,8 +460,8 @@
             '<div id="ai-stats"></div>' +
             '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">' +
             '<input type="text" id="ai-dn-filter" placeholder="DN (np. 1200)" style="background:var(--bg-input);border:1px solid var(--border-glass);color:var(--text-primary);padding:6px 12px;border-radius:var(--radius-sm);font-size:0.82rem;width:110px">' +
-            '<button id="ai-filter-btn" class="btn-hero" style="padding:0.35rem 0.8rem;font-size:0.78rem"><i data-lucide="filter"></i> Filtruj</button>' +
-            '<button id="ai-run-cycle" class="btn-hero btn-accent" style="padding:0.35rem 0.8rem;font-size:0.78rem"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
+            '<button id="ai-filter-btn" class="btn-hero" style="padding:0.35rem 0.8rem;font-size:0.78rem" title="Filtruj wzorce po \u015brednicy nominalnej (DN)"><i data-lucide="filter"></i> Filtruj</button>' +
+            '<button id="ai-run-cycle" class="btn-hero btn-accent" style="padding:0.35rem 0.8rem;font-size:0.78rem" title="Uruchamia cykl uczenia — analizuje dane telemetryczne i wykrywa nowe wzorce"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
             '</div>' +
             '<div id="ai-patterns"></div>' +
             '</div>' +

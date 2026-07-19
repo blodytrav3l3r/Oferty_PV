@@ -90,6 +90,11 @@ model ai_telemetry_logs {
 
   // ─── Nowe kolumny dodane przez przyszłą ewolucję AI ───
   extraMeta            String?  // JSON: miejsce na dowolne dodatkowe pola
+
+  @@index([wasModified], map: "idx_logs_wasmodified")
+  @@index([createdAt], map: "idx_logs_createdat")
+  @@index([dn], map: "idx_logs_dn")
+  @@index([wasModified, createdAt], map: "idx_logs_modified_created")
 }
 
 // Zdarzenia telemetrii (user actions, zmiany, akceptacje, odrzucenia) - polling feed

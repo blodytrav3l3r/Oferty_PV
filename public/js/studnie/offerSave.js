@@ -312,11 +312,30 @@ async function saveOfferStudnie() {
         // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
         _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
 
-        // Reward hook — zapis oferty = średni sygnał akceptacji
+        // Auto-acceptance — rejestruj akceptację w ML pipeline
         if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
             wells.forEach(function (w) {
                 if (w.config && w.config.length > 0) {
                     window.mlRewardHooks.onWellAccepted({ eventType: 'OFFER_SAVED' });
+                    // Wyślij acceptance-full do backendu
+                    try {
+                        fetch('/api/telemetry/ai/acceptance-full', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                telemetryId: w.id || 'well_' + Date.now(),
+                                accepted: true,
+                                wellId: w.id,
+                                warehouse: w.magazyn,
+                                configSnapshot: {
+                                    dn: w.dn,
+                                    ringCount: (w.config || []).length,
+                                    warehouse: w.magazyn
+                                }
+                            })
+                        }).catch(function () {});
+                    } catch (e) {}
                 }
             });
         }

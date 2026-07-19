@@ -102,6 +102,46 @@ describe('AcceptanceModel', () => {
             const model = new AcceptanceModel(1);
             expect(() => model.train([], 0.01, 100)).not.toThrow();
         });
+
+        it('L2 regularization zmniejsza wagi vs bez regularyzacji', () => {
+            const modelNoReg = new AcceptanceModel(2);
+            const modelReg = new AcceptanceModel(2);
+
+            const dataset = Array.from({ length: 20 }, (_, i) => ({
+                features: [i % 2, (i * 2) % 3],
+                label: i % 2,
+                weight: 1
+            }));
+
+            modelNoReg.train(dataset, 0.1, 2000);
+            modelReg.train(dataset, 0.1, 2000, 0.5);
+
+            const maxWeightNoReg = Math.max(...modelNoReg.getWeights().map(Math.abs));
+            const maxWeightReg = Math.max(...modelReg.getWeights().map(Math.abs));
+            expect(maxWeightReg).toBeLessThan(maxWeightNoReg);
+        });
+
+        it('L2 z domyślnym parametrem jest kompatybilny wstecz', () => {
+            const model = new AcceptanceModel(2);
+            const dataset = [
+                { features: [0, 0], label: 0, weight: 1 },
+                { features: [1, 1], label: 1, weight: 1 }
+            ];
+            model.train(dataset, 0.1, 5000);
+            expect(model.predict([1, 1])).toBeGreaterThan(0.5);
+            expect(model.predict([0, 0])).toBeLessThan(0.5);
+        });
+
+        it('silna L2 nie blokuje nauki prostego wzorca', () => {
+            const model = new AcceptanceModel(2);
+            const dataset = [
+                { features: [0, 0], label: 0, weight: 1 },
+                { features: [1, 1], label: 1, weight: 1 }
+            ];
+            model.train(dataset, 0.1, 10000, 0.01);
+            expect(model.predict([1, 1])).toBeGreaterThan(0.5);
+            expect(model.predict([0, 0])).toBeLessThan(0.5);
+        });
     });
 
     describe('predictBatch', () => {

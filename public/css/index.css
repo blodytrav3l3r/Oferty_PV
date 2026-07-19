@@ -1680,6 +1680,10 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     margin-bottom: 16px;
 }
 
+.ai-influence-widget {
+    margin-bottom: 14px;
+}
+
 .ai-ml-train-btn {
     padding: 0.4rem 1rem;
     display: inline-flex;

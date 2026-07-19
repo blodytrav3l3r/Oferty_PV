@@ -34,16 +34,11 @@ export class ModelRegistry {
         features: string[],
         featureMins: number[],
         featureMaxs: number[],
+        shouldActivate: boolean,
         notes?: string
     ): Promise<string> {
         const now = new Date();
         const version = `v1.0.0-${now.toISOString().slice(0, 10).replace(/-/g, '')}`;
-
-        const existing = await prisma.aiModel.findFirst({ where: { active: true } });
-        const shouldActivate =
-            !existing ||
-            (metrics.rocAuc > 0.3 &&
-                (!existing || metrics.rocAuc > JSON.parse(existing.metrics).rocAuc + 0.05));
 
         const id = crypto.randomUUID();
         await prisma.aiModel.create({
@@ -63,12 +58,15 @@ export class ModelRegistry {
             }
         });
 
-        if (shouldActivate && existing) {
-            await prisma.aiModel.update({
-                where: { id: existing.id },
-                data: { active: false }
-            });
-            logger.info('ModelRegistry', `Dezaktywowano poprzedni model ${existing.version}`);
+        if (shouldActivate) {
+            const existing = await prisma.aiModel.findFirst({ where: { active: true } });
+            if (existing) {
+                await prisma.aiModel.update({
+                    where: { id: existing.id },
+                    data: { active: false }
+                });
+                logger.info('ModelRegistry', `Dezaktywowano poprzedni model ${existing.version}`);
+            }
         }
 
         logger.info(
@@ -100,17 +98,19 @@ export class ModelRegistry {
 
     async rollbackToPrevious(): Promise<StoredModel | null> {
         const active = await prisma.aiModel.findFirst({ where: { active: true } });
-        if (active) {
-            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
-        }
         const previous = await prisma.aiModel.findFirst({
             where: { active: false },
             orderBy: { createdAt: 'desc' }
         });
-        if (previous) {
+        if (active && previous) {
+            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
             await prisma.aiModel.update({ where: { id: previous.id }, data: { active: true } });
             logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
             return this.recordToModel(previous);
+        }
+        if (active && !previous) {
+            logger.warn('ModelRegistry', 'Brak poprzedniego modelu — rollback niemozliwy');
+            return null;
         }
         return null;
     }
@@ -119,19 +119,21 @@ export class ModelRegistry {
         return prisma.aiModel.count();
     }
 
-    private recordToModel(record: Record<string, unknown>): StoredModel {
+    private recordToModel(
+        record: NonNullable<Awaited<ReturnType<typeof prisma.aiModel.findFirst>>>
+    ): StoredModel {
         return {
-            id: record.id as string,
-            version: record.version as string,
-            weights: JSON.parse(record.weights as string) as number[],
-            bias: record.bias as number,
-            metrics: JSON.parse(record.metrics as string) as ModelMetrics,
-            features: JSON.parse(record.features as string) as string[],
-            featureMins: JSON.parse(record.featureMins as string) as number[],
-            featureMaxs: JSON.parse(record.featureMaxs as string) as number[],
-            trainingRows: record.trainingRows as number,
-            active: record.active as boolean,
-            createdAt: record.createdAt as string
+            id: record.id,
+            version: record.version,
+            weights: JSON.parse(record.weights) as number[],
+            bias: record.bias,
+            metrics: JSON.parse(record.metrics) as ModelMetrics,
+            features: JSON.parse(record.features) as string[],
+            featureMins: JSON.parse(record.featureMins) as number[],
+            featureMaxs: JSON.parse(record.featureMaxs) as number[],
+            trainingRows: record.trainingRows,
+            active: record.active,
+            createdAt: record.createdAt
         };
     }
 }
