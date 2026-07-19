@@ -61,6 +61,7 @@ function _excelBuildComponentColumns(dn, well) {
     const wlazProducts = groups['wlaz'] || [];
     if (wlazProducts.length > 0) {
         cols.push({
+            id: 'wlaz',
             key: 'wlaz',
             label: 'Właz',
             type: 'select',
@@ -75,6 +76,7 @@ function _excelBuildComponentColumns(dn, well) {
         const nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
         const lbl = _excelShortLabel(p.name || '', 'avr');
         cols.push({
+            id: 'avr_' + p.id,
             key: 'avr_' + p.id,
             label: 'AVR ' + nameShort,
             shortLabel: lbl.short,
@@ -103,6 +105,7 @@ function _excelBuildComponentColumns(dn, well) {
             const matching = konusProducts.filter((k) => parseInt(k.height) === h);
             const lbl = _excelShortLabel(p.name || '', 'konus');
             cols.push({
+                id: 'konus_' + h,
                 key: 'konus_' + h,
                 label: lbl.short + ' H=' + h,
                 shortLabel: lbl.short,
@@ -138,6 +141,7 @@ function _excelBuildComponentColumns(dn, well) {
                 const matching = prods.filter((k) => parseInt(k.height) === h);
                 const lbl = _excelShortLabel(p.name || '', ct);
                 cols.push({
+                    id: ct + '_' + h,
                     key: ct + '_' + h,
                     label: (ctLabels[ct] || ct) + ' H=' + h,
                     shortLabel: lbl.short,
@@ -159,6 +163,7 @@ function _excelBuildComponentColumns(dn, well) {
         noHeight.forEach((p) => {
             const lbl = _excelShortLabel(p.name || '', ct);
             cols.push({
+                id: ct + '_' + p.id,
                 key: ct + '_' + p.id,
                 label:
                     (ctLabels[ct] || ct) +
@@ -179,6 +184,7 @@ function _excelBuildComponentColumns(dn, well) {
         plytaRedProducts.forEach((p) => {
             const lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
             cols.push({
+                id: 'plyta_redukcyjna_' + p.id,
                 key: 'plyta_redukcyjna_' + p.id,
                 label: p.name,
                 shortLabel: lbl.short,
@@ -203,6 +209,7 @@ function _excelBuildComponentColumns(dn, well) {
             const matching = kregProducts.filter((k) => parseInt(k.height) === h);
             const lbl = _excelShortLabel(p.name || '', 'krag');
             cols.push({
+                id: 'krag_' + h,
                 key: 'krag_' + h,
                 label: 'Krąg H=' + h,
                 shortLabel: lbl.short,
@@ -227,6 +234,7 @@ function _excelBuildComponentColumns(dn, well) {
             const matching = kragOtProducts.filter((k) => parseInt(k.height) === h);
             const lbl = _excelShortLabel(p.name || '', 'krag_ot');
             cols.push({
+                id: 'krag_ot_' + h,
                 key: 'krag_ot_' + h,
                 label: 'Krąg OT H=' + h,
                 shortLabel: lbl.short,
@@ -251,6 +259,7 @@ function _excelBuildComponentColumns(dn, well) {
             const matching = dennicaProducts.filter((k) => parseInt(k.height) === h);
             const lbl = _excelShortLabel(p.name || '', 'dennica');
             cols.push({
+                id: 'dennica_' + h,
                 key: 'dennica_' + h,
                 label: 'Dennica H=' + h,
                 shortLabel: lbl.short,
@@ -267,6 +276,7 @@ function _excelBuildComponentColumns(dn, well) {
         .forEach((p) => {
             const lbl = _excelShortLabel(p.name || '', 'dennica');
             cols.push({
+                id: 'dennica_' + p.id,
                 key: 'dennica_' + p.id,
                 label: 'Dennica ' + (p.name.length > 12 ? p.name.substring(0, 10) + '…' : p.name),
                 shortLabel: lbl.short,
@@ -282,6 +292,7 @@ function _excelBuildComponentColumns(dn, well) {
     osadnikProducts.forEach((p) => {
         const lbl = _excelShortLabel(p.name || '', 'osadnik');
         cols.push({
+            id: 'osadnik_' + p.id,
             key: 'osadnik_' + p.id,
             label: p.name,
             shortLabel: lbl.short,
@@ -299,6 +310,7 @@ function _excelBuildComponentColumns(dn, well) {
         stycznaProducts.forEach((p) => {
             const lbl = _excelShortLabel(p.name || '', 'styczna');
             cols.push({
+                id: 'styczna_' + p.id,
                 key: 'styczna_' + p.id,
                 label: p.name,
                 shortLabel: lbl.short,
@@ -356,6 +368,7 @@ function _excelBuildComponentColumns(dn, well) {
                 uszczProductsU.forEach(function (p) {
                     let lbl = _excelShortLabel(p.name || '', 'uszczelka');
                     cols.push({
+                        id: 'red_uszczelka_' + dnPfxU + p.id,
                         key: 'red_uszczelka_' + dnPfxU + p.id,
                         label: 'R.' + dnLblU + p.name,
                         shortLabel: 'R.' + lbl.short,
@@ -379,6 +392,7 @@ function _excelBuildComponentColumns(dn, well) {
     mainUszczProducts.forEach(function (p) {
         let lbl = _excelShortLabel(p.name || '', 'uszczelka');
         cols.push({
+            id: 'uszczelka_' + p.id,
             key: 'uszczelka_' + p.id,
             label: p.name,
             shortLabel: lbl.short,

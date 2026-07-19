@@ -690,3 +690,16 @@ function excelFilterWells(value) {
         row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
     });
 }
+
+/* ===== COLUMN VISIBILITY FILTER ===== */
+function _excelFilterVisibleColumns(compCols) {
+    if (!_excelHiddenColumnIds || _excelHiddenColumnIds.length === 0) return compCols;
+    return compCols.filter(function (col) {
+        return _excelHiddenColumnIds.indexOf(col.id) < 0;
+    });
+}
+
+function _excelGetVisibleComponentColumns(dn, well) {
+    var compCols = _excelBuildComponentColumns(dn, well);
+    return _excelFilterVisibleColumns(compCols);
+}

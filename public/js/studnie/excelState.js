@@ -82,3 +82,58 @@ let _excelPasteCancelFlag = false;
 let _excelUndoStack = [];
 let _excelRedoStack = [];
 const _EXCEL_UNDO_LIMIT = 20;
+
+/* ===== Column Visibility State ===== */
+let _excelHiddenColumnIds = [];
+const _EXCEL_COL_VISIBILITY_KEY = 'witros_excel_hidden_columns';
+
+function _excelLoadColumnVisibility() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(_EXCEL_COL_VISIBILITY_KEY));
+        if (Array.isArray(saved)) {
+            _excelHiddenColumnIds = saved;
+        } else {
+            _excelHiddenColumnIds = [];
+        }
+    } catch (e) {
+        _excelHiddenColumnIds = [];
+    }
+}
+
+function _excelSaveColumnVisibility() {
+    try {
+        localStorage.setItem(_EXCEL_COL_VISIBILITY_KEY, JSON.stringify(_excelHiddenColumnIds));
+    } catch (e) {}
+}
+
+function _excelToggleColumnVisibility(colId) {
+    _excelDeselectAllCols();
+    const idx = _excelHiddenColumnIds.indexOf(colId);
+    if (idx >= 0) {
+        _excelHiddenColumnIds.splice(idx, 1);
+    } else {
+        _excelHiddenColumnIds.push(colId);
+    }
+    _excelSaveColumnVisibility();
+    _excelRenderTable(_excelActiveTab);
+}
+
+function _excelResetColumnVisibility() {
+    _excelDeselectAllCols();
+    _excelHiddenColumnIds = [];
+    _excelSaveColumnVisibility();
+    _excelRenderTable(_excelActiveTab);
+}
+
+function _excelIsColumnHidden(colId) {
+    return _excelHiddenColumnIds.indexOf(colId) >= 0;
+}
+
+function _excelSetAllColumnsVisible(visible) {
+    _excelDeselectAllCols();
+    if (visible) {
+        _excelHiddenColumnIds = [];
+    }
+    _excelSaveColumnVisibility();
+    _excelRenderTable(_excelActiveTab);
+}

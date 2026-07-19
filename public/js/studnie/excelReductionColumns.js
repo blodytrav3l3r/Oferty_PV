@@ -69,6 +69,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                     let nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
                     let lbl = _excelShortLabel(p.name || '', 'avr');
                     cols.push({
+                        id: 'red_avr_' + dnPfx + p.id,
                         key: 'red_avr_' + dnPfx + p.id,
                         label: 'R.AVR ' + dnLbl + nameShort,
                         shortLabel: 'R.' + lbl.short,
@@ -95,6 +96,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                         });
                         let lbl = _excelShortLabel(p.name || '', 'konus');
                         cols.push({
+                            id: 'red_konus_' + dnPfx + h,
                             key: 'red_konus_' + dnPfx + h,
                             label: 'R.' + lbl.short + ' ' + dnLbl + 'H=' + h,
                             shortLabel: 'R.' + lbl.short,
@@ -134,6 +136,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                             let lbl = _excelShortLabel(p.name || '', ct);
                             let det = ct === 'pierscien_odciazajacy' ? '' : String(h);
                             cols.push({
+                                id: 'red_' + ct + '_' + dnPfx + h + '_' + h,
                                 key: 'red_' + ct + '_' + dnPfx + h + '_' + h,
                                 label:
                                     'R.' +
@@ -174,6 +177,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                         });
                         let lbl = _excelShortLabel(p.name || '', 'krag');
                         cols.push({
+                            id: 'red_krag_' + dnPfx + h,
                             key: 'red_krag_' + dnPfx + h,
                             label: 'R.Krąg ' + dnLbl + 'H=' + h,
                             shortLabel: 'R.' + lbl.short,
@@ -191,6 +195,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                 (redDnSpecific['osadnik'] || []).forEach(function (p) {
                     let lbl = _excelShortLabel(p.name || '', 'osadnik');
                     cols.push({
+                        id: 'red_osadnik_' + dnPfx + p.id,
                         key: 'red_osadnik_' + dnPfx + p.id,
                         label: 'R.' + dnLbl + p.name,
                         shortLabel: 'R.' + lbl.short,
@@ -217,6 +222,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                         });
                         let lbl = _excelShortLabel(p.name || '', 'krag_ot');
                         cols.push({
+                            id: 'red_krag_ot_' + dnPfx + h,
                             key: 'red_krag_ot_' + dnPfx + h,
                             label: 'R.Kr.OT ' + dnLbl + 'H=' + h,
                             shortLabel: 'R.' + lbl.short,
@@ -244,6 +250,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                         });
                         let lbl = _excelShortLabel(p.name || '', 'dennica');
                         cols.push({
+                            id: 'red_dennica_' + dnPfx + h,
                             key: 'red_dennica_' + dnPfx + h,
                             label: 'R.Dennica ' + dnLbl + 'H=' + h,
                             shortLabel: 'R.' + lbl.short,
@@ -263,6 +270,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
             allRedPlyta.forEach(function (p) {
                 let lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
+                    id: 'red_plyta_red_' + p.id,
                     key: 'red_plyta_red_' + p.id,
                     label: 'R.' + p.name,
                     shortLabel: 'R.' + lbl.short,

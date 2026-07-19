@@ -2,7 +2,7 @@
 /* ===== EXCEL TABLE BODY â€” Render TBODY, autoodĹ›wieĹĽanie komĂłrek i kolorĂłw duplikatĂłw ===== */
 
 /* ===== TBODY RENDER ===== */
-function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
+function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
     let dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const nameCounts = {};
@@ -324,7 +324,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         html +=
             '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>';
         /* Wlaz */
-        let wlazCol = compCols.find(function (c) {
+        let wlazCol = visibleCols.find(function (c) {
             return c.componentType === 'wlaz';
         });
         let wlazProducts = wlazCol
@@ -354,7 +354,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
             ) +
             '</td>';
         /* Komponenty */
-        compCols.forEach(function (col) {
+        visibleCols.forEach(function (col) {
             if (col.type === 'select' || col.type === 'auto') return;
             let c = col;
             let count = _excelCountProductInConfig(
@@ -557,7 +557,7 @@ function _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction) {
         'text-align:left;">' +
         _excelOverlaySelectHtml([['', '\u2014']], '', null, 125, true) +
         '</td>';
-    compCols.forEach(function (col) {
+    visibleCols.forEach(function (col) {
         if (col.type === 'select' || col.type === 'auto') return;
         html +=
             '<td style="' +

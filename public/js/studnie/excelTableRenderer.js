@@ -42,7 +42,7 @@ function _excelRenderTable(dn) {
     if (!refWell && typeof _excelGetReferenceWell === 'function') {
         refWell = _excelGetReferenceWell(dn);
     }
-    const compCols = _excelBuildComponentColumns(dn, refWell);
+    const compCols = _excelGetVisibleComponentColumns(dn, refWell);
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].includes(dn);
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
@@ -273,7 +273,13 @@ function _excelRenderTable(dn) {
     html += _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction);
 
     html += '</table>';
+    // Zapisz scroll przed re-renderem
+    var prevScrollLeft = container.scrollLeft;
+    var prevScrollTop = container.scrollTop;
     container.innerHTML = html;
+    // Przywróć scroll po re-renderze
+    container.scrollLeft = prevScrollLeft;
+    container.scrollTop = prevScrollTop;
     /* Zastosuj zapisane szerokości kolumn */
     if (_excelColWidths) {
         let tbl = container.querySelector('table');
