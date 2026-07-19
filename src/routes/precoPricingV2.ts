@@ -51,6 +51,18 @@ const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as 
     }
 })();
 
+/**
+ * @openapi
+ * /api/preco-pricing:
+ *   get:
+ *     tags: [Preco]
+ *     summary: Pobranie struktury wycen Preco
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Struktura Preco
+ */
 // ──────────────────────────────────────────
 // GET / — pełna struktura PRECO z settings
 // ──────────────────────────────────────────
@@ -69,6 +81,18 @@ router.get('/', requireAuth, async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/preco-pricing:
+ *   put:
+ *     tags: [Preco]
+ *     summary: Zapis struktury wycen Preco
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Preco zapisane
+ */
 // ──────────────────────────────────────────
 // PUT / — pełny zapis struktury PRECO
 // ──────────────────────────────────────────
@@ -103,6 +127,18 @@ router.put(
     }
 );
 
+/**
+ * @openapi
+ * /api/preco-pricing:
+ *   patch:
+ *     tags: [Preco]
+ *     summary: Częściowa aktualizacja Preco
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Preco zaktualizowane
+ */
 // ──────────────────────────────────────────
 // PATCH / — częściowa aktualizacja
 // Body: { data: { "1000": { skrzynkaWlazowa: 500 }, "spadekKineta": [...] } }
@@ -146,6 +182,18 @@ router.patch(
     }
 );
 
+/**
+ * @openapi
+ * /api/preco-pricing/default:
+ *   get:
+ *     tags: [Preco]
+ *     summary: Fabryczne wartości Preco
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Domyślne wartości
+ */
 // ──────────────────────────────────────────
 // GET /default — fabryczne wartości PRECO
 // ──────────────────────────────────────────

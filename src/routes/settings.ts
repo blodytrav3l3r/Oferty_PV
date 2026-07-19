@@ -8,6 +8,18 @@ const router = express.Router();
 
 /* ===== LITERA ROKU (Litera roku obrotowego) ===== */
 
+/**
+ * @openapi
+ * /api/settings/year-letter:
+ *   get:
+ *     tags: [Settings]
+ *     summary: Pobranie litery roku obrotowego
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Litera i rok
+ */
 router.get('/year-letter', requireAuth, async (_req, res) => {
     try {
         const year = new Date().getFullYear();
@@ -22,6 +34,26 @@ router.get('/year-letter', requireAuth, async (_req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/settings/year-letter:
+ *   put:
+ *     tags: [Settings]
+ *     summary: Ustawienie litery roku obrotowego (admin)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               letter: { type: string }
+ *     responses:
+ *       200:
+ *         description: Litera zapisana
+ */
 router.put(
     '/year-letter',
     requireAuth,

@@ -1,0 +1,11 @@
+[**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
+
+---
+
+[WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryScalarFieldEnum
+
+# Type Alias: ProductsRuryScalarFieldEnum
+
+> **ProductsRuryScalarFieldEnum** = _typeof_ [`ProductsRuryScalarFieldEnum`](../variables/ProductsRuryScalarFieldEnum.md)\[keyof _typeof_ [`ProductsRuryScalarFieldEnum`](../variables/ProductsRuryScalarFieldEnum.md)\]
+
+Defined in: generated/prisma/index.d.ts:38827

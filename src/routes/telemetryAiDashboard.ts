@@ -23,6 +23,18 @@ const recommend = new RecommendationEngine();
  * GET /api/telemetry/ai/learning/status
  * Status silnika uczącego.
  */
+/**
+ * @openapi
+ * /api/telemetry/ai/learning/status:
+ *   get:
+ *     tags: [Telemetry]
+ *     summary: Status silnika uczącego (admin)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Status Learning Engine
+ */
 router.get('/ai/learning/status', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
         return res.json(learningEngine.getStatus());
@@ -36,6 +48,18 @@ router.get('/ai/learning/status', requireAuth, requireAdmin, READ_LIMITER, async
 /**
  * POST /api/telemetry/ai/learning/run
  * Wymusza pełny cykl uczenia (analiza historyczna).
+ */
+/**
+ * @openapi
+ * /api/telemetry/ai/learning/run:
+ *   post:
+ *     tags: [Telemetry]
+ *     summary: Wymuszenie cyklu uczenia (admin)
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Wynik cyklu uczenia
  */
 router.post('/ai/learning/run', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {

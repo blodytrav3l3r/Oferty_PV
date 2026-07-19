@@ -17,6 +17,18 @@ const uuidv4 = crypto.randomUUID.bind(crypto);
 
 const writeOffersLimiter = WRITE_LIMITER;
 
+/**
+ * @openapi
+ * /api/offers-studnie/studnie:
+ *   get:
+ *     tags: [Offers]
+ *     summary: Lista ofert (studnie) z paginacją
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista ofert
+ */
 router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -111,6 +123,23 @@ router.get('/studnie', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/offers-studnie/studnie/{id}:
+ *   get:
+ *     tags: [Offers]
+ *     summary: Pobranie pojedynczej oferty studni
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Oferta studni
+ */
 router.get('/studnie/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -383,6 +412,23 @@ router.put(
     }
 );
 
+/**
+ * @openapi
+ * /api/offers-studnie/studnie/{id}:
+ *   delete:
+ *     tags: [Offers]
+ *     summary: Usunięcie oferty studni
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Oferta usunięta
+ */
 router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

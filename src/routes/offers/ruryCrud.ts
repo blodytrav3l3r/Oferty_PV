@@ -18,6 +18,31 @@ const uuidv4 = crypto.randomUUID.bind(crypto);
 
 const writeOffersLimiter = WRITE_LIMITER;
 
+/**
+ * @openapi
+ * /api/offers-rury:
+ *   get:
+ *     tags: [Offers]
+ *     summary: Lista ofert (rury) z paginacją
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: skip
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string }
+ *       - in: query
+ *         name: order
+ *         schema: { type: string, enum: [asc, desc] }
+ *     responses:
+ *       200:
+ *         description: Lista ofert
+ */
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -97,6 +122,34 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/offers-rury:
+ *   post:
+ *     tags: [Offers]
+ *     summary: Utworzenie lub aktualizacja oferty (rury)
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     id: { type: string }
+ *                     items: { type: array }
+ *                     transportCost: { type: number }
+ *                     status: { type: string, enum: [draft, active] }
+ *     responses:
+ *       200:
+ *         description: Oferta zapisana
+ */
 router.post(
     '/',
     requireAuth,

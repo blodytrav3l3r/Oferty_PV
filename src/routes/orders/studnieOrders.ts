@@ -37,6 +37,18 @@ const exportOrdersLimiter = EXPORT_LIMITER;
 
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 
+/**
+ * @openapi
+ * /api/orders-studnie:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Lista zamówień studni
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista zamówień
+ */
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -76,6 +88,18 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/orders-studnie:
+ *   put:
+ *     tags: [Orders]
+ *     summary: Zapis (batch upsert) zamówień studni
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Zamówienia zapisane
+ */
 router.put(
     '/',
     requireAuth,
@@ -523,6 +547,23 @@ router.patch(
     }
 );
 
+/**
+ * @openapi
+ * /api/orders-studnie/{id}:
+ *   delete:
+ *     tags: [Orders]
+ *     summary: Usunięcie zamówienia studni
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Zamówienie usunięte
+ */
 router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

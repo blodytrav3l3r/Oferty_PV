@@ -21,6 +21,18 @@ const writeProductionLimiter = WRITE_LIMITER;
 
 /* ===== PRODUCTION ORDERS (Zlecenia Produkcyjne) ===== */
 
+/**
+ * @openapi
+ * /api/orders/production:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Lista zleceń produkcyjnych
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista zleceń
+ */
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

@@ -1,0 +1,49 @@
+[**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
+
+---
+
+[WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryFindUniqueArgs
+
+# Type Alias: order\_counters\_ruryFindUniqueArgs\<ExtArgs\>
+
+> **order\_counters\_ruryFindUniqueArgs**\<`ExtArgs`> \> = `object`
+
+Defined in: generated/prisma/index.d.ts:20445
+
+order_counters_rury findUnique
+
+## Type Parameters
+
+### ExtArgs
+
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+
+## Properties
+
+### omit?
+
+> `optional` **omit?**: [`order_counters_ruryOmit`](order_counters_ruryOmit.md)\<`ExtArgs`> \> \| `null`
+
+Defined in: generated/prisma/index.d.ts:20453
+
+Omit specific fields from the order_counters_rury
+
+---
+
+### select?
+
+> `optional` **select?**: [`order_counters_rurySelect`](order_counters_rurySelect.md)\<`ExtArgs`> \> \| `null`
+
+Defined in: generated/prisma/index.d.ts:20449
+
+Select specific fields to fetch from the order_counters_rury
+
+---
+
+### where
+
+> **where**: [`order_counters_ruryWhereUniqueInput`](order_counters_ruryWhereUniqueInput.md)
+
+Defined in: generated/prisma/index.d.ts:20457
+
+Filter, which order_counters_rury to fetch.

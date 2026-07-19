@@ -7,6 +7,18 @@ const router = express.Router();
 
 /* ===== RECYKLING NUMERÓW ===== */
 
+/**
+ * @openapi
+ * /api/orders/numbering/recycled:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Pobranie zrecyklingowanych (dostępnych) numerów
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista dostępnych numerów
+ */
 router.get('/recycled', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -24,6 +36,23 @@ router.get('/recycled', requireAuth, async (req, res) => {
 
 /* ===== GENEROWANIE NUMERU ZAMÓWIENIA ===== */
 
+/**
+ * @openapi
+ * /api/orders/numbering/next-number/{userId}:
+ *   get:
+ *     tags: [Orders]
+ *     summary: Generowanie następnego numeru zamówienia dla użytkownika
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Wygenerowany numer i nextSeq
+ */
 router.get('/next-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -54,6 +83,23 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/orders/numbering/claim-number/{userId}:
+ *   post:
+ *     tags: [Orders]
+ *     summary: Zarezerwowanie (claim) numeru zamówienia
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Numer zarezerwowany
+ */
 router.post('/claim-number/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

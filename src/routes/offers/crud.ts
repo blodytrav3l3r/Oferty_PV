@@ -12,6 +12,25 @@ const router = express.Router();
 
 const writeOffersLimiter = WRITE_LIMITER;
 
+/**
+ * @openapi
+ * /api/offers-rury/{id}:
+ *   get:
+ *     tags: [Offers]
+ *     summary: Pobranie oferty (rury lub studnie) po ID
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Oferta z pozycjami i historią
+ *       404:
+ *         description: Oferta nie istnieje
+ */
 router.get('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -133,6 +152,25 @@ router.get('/:id', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * @openapi
+ * /api/offers-rury/{id}:
+ *   delete:
+ *     tags: [Offers]
+ *     summary: Usunięcie oferty (rury lub studnie)
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Oferta usunięta
+ *       404:
+ *         description: Oferta nie istnieje
+ */
 router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
