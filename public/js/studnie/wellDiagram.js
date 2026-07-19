@@ -470,7 +470,16 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
     if (ct === 'konus') {
         const topW = Math.max(pxMm * 625, 20);
         const topX = cx - topW / 2;
-        svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        const coneH = Math.min(625, comp.height || h / pxMm);
+        const coneHpx = coneH * pxMm;
+        const ringHpx = Math.max(0, h - coneHpx);
+        if (ringHpx > 2) {
+            const ringY = y + h - ringHpx;
+            svg += `<rect x="${x}" y="${ringY}" width="${w}" height="${ringHpx}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${ringY} ${x},${ringY}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        } else {
+            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        }
     } else if (ct === 'dennica' || ct === 'styczna') {
         svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         svg += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${c.stroke}" stroke-width="3"/>`;
