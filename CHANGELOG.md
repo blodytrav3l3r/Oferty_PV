@@ -4,6 +4,40 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.7.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.6.0...v1.7.0) (2026-07-19)
+
+
+### Features
+
+* **clients:** dodanie numeru klienta (clientNumber) w calym stacku ([63b0e35](https://github.com/blodytrav3l3r/Oferty_PV/commit/63b0e356e0f118ad7f6513d59fcd3c54cc77981e))
+* **import-export:** eksport/import zamowien XLSX i JSON ([02703a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/02703a1855e0a036dd78bd94fdc504293535a4c7))
+* **kartoteka:** dodanie filtrow daty i uzytkownika z popoverem ([10df453](https://github.com/blodytrav3l3r/Oferty_PV/commit/10df453ef505964d393433ddd7ba5b8cd3b0384d))
+* **kartoteka:** generalizacja notifyOrderMutation po kazdej mutacji zamowienia ([ab02ad2](https://github.com/blodytrav3l3r/Oferty_PV/commit/ab02ad258d00a839334447d4fd87ab7bffdeac2f))
+* **kartoteka:** wyszukiwanie FTS5, naprawa widocznosci zamowien studni, numer klienta ([add9e82](https://github.com/blodytrav3l3r/Oferty_PV/commit/add9e829cbd176db9a191f08fd0742fd145e6b45))
+* **rury:** zamowienia czastkowe — ilosciowe sledzenie i karta budowy ([64b120b](https://github.com/blodytrav3l3r/Oferty_PV/commit/64b120b1d23953582166dadf3c93f1e2e8af23e2))
+* **studnie:** dodanie ikon cech studni w zestawieniu ofertowym ([70b6c99](https://github.com/blodytrav3l3r/Oferty_PV/commit/70b6c9947384004ebda37a0d78e06992398d19f8))
+* **studnie:** dodanie ilości i średniej ceny studni w popup rabatów ([4ffdb07](https://github.com/blodytrav3l3r/Oferty_PV/commit/4ffdb07835d181cd00af5ab8b26cbbff55199e88))
+* **zlecenia:** skalowanie kartoteki zlecen produkcyjnych - search API, cursor pagination, cache ([15fa4d9](https://github.com/blodytrav3l3r/Oferty_PV/commit/15fa4d9d26b49997db763428860186ca428e5268))
+
+
+### Bug Fixes
+
+* **kartoteka:** brakujacy skrypt pvSalesHelpers.js w kartoteka.html - ReferenceError: openPrintModal is not defined ([e9ea7fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/e9ea7fa876f6ee3a44a146255a079e807eb60dd4))
+* **kartoteka:** jednolity rozmiar ikon i przyciskow w trybie kompakt ([d0037f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0037f9a30ac250f155e438f241f18f4b6ea6ee2))
+* **kartoteka:** loadOrdersMap w tle nie blokuje renderowania ([3ad34fa](https://github.com/blodytrav3l3r/Oferty_PV/commit/3ad34fa0e6a71c9b43e867239667229629d06131))
+* **kartoteka:** naprawa bledow z analizy statycznej - faza 1-5 ([04a3bf2](https://github.com/blodytrav3l3r/Oferty_PV/commit/04a3bf2ccf233b317b23146f8f5a7c0955285823))
+* naprawa zniekształconych polskich znaków w komentarzach i usunięcie BOM z dokumentacji ([27e1636](https://github.com/blodytrav3l3r/Oferty_PV/commit/27e1636c6bdb427755bd3080a9a7da20e593991f))
+* przeniesienie let anyRed poza blok if (ReferenceError) ([21cc339](https://github.com/blodytrav3l3r/Oferty_PV/commit/21cc3391ef6ec075ca6cdc42ad4bc576622ae0c1))
+* **studnie:** domyślnie ukryte typy przejść w konfiguratorze ([d63aa27](https://github.com/blodytrav3l3r/Oferty_PV/commit/d63aa27ece34e5fcdd2cd16ce41d62e7bdb416e8))
+* **studnie:** naprawa przycisku run w excel - SVG 16x16 zamiast Unicode, fix podwójnego style ([4470f64](https://github.com/blodytrav3l3r/Oferty_PV/commit/4470f64fca8fc722c5f4074360275086322361ea))
+* **studnie:** naprawa zniekształconych polskich znaków w karcie budowy ([affcdf4](https://github.com/blodytrav3l3r/Oferty_PV/commit/affcdf439d78da541565d66bd7cf0b94f157b860))
+* **studnie:** pasek przewijania karty budowy przy krawedzi strony ([d45bfe6](https://github.com/blodytrav3l3r/Oferty_PV/commit/d45bfe61f3ba903c05804a6e5f66bf6ec4210dbf))
+* **studnie:** przywrocenie oryginalnej struktury HTML w populateZleceniaForm ([059867d](https://github.com/blodytrav3l3r/Oferty_PV/commit/059867d28bb769987abecea42e606130e2cced57))
+* **studnie:** scrollbar karty budowy - szerokosc 6px i scrollbar-width:thin ([0add25a](https://github.com/blodytrav3l3r/Oferty_PV/commit/0add25a04bed24f7db28831c62ece3732ce96735))
+* **studnie:** timeout w DP ringOptimizer (250ms) i backtracking wellSolver (100ms) - zabezpieczenie przed zawieszeniem ([9446312](https://github.com/blodytrav3l3r/Oferty_PV/commit/9446312efcad0eedcd3e5f5d8b273d662f8f0b9e))
+* **studnie:** zamiana ikon Lucide na badge tekstowe w zestawieniu ofertowym ([5947faf](https://github.com/blodytrav3l3r/Oferty_PV/commit/5947faf00322fd076251fb8c2196596625271198))
+* **ui:** ujednolicono wysokość ikon w kaflach nawigacji (21x21px) ([6e89c04](https://github.com/blodytrav3l3r/Oferty_PV/commit/6e89c04d9a4690620cc798b8961e4138577c3fd1))
+
 ## [1.6.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.5.0...v1.6.0) (2026-07-15)
 
 ### Features
