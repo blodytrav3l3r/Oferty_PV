@@ -56,16 +56,15 @@ function refreshAll(skipSummary = false) {
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */
 
 async function updateWellParam(paramKey, value) {
-    if (isWellLocked()) {
-        showToast(OFFER_LOCKED_MSG, 'error');
-        return;
-    }
-    if (isWellLocked()) {
-        showToast(WELL_LOCKED_MSG, 'error');
-        return;
-    }
     const well = getCurrentWell();
     if (!well) return;
+    if (isWellLocked()) {
+        const hasAcceptedPO = (
+            typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
+        ).some((po) => po.wellId === well.id && po.status === 'accepted');
+        showToast(hasAcceptedPO ? WELL_LOCKED_MSG : OFFER_LOCKED_MSG, 'error');
+        return;
+    }
     const oldParamVal = well[paramKey];
     well[paramKey] = value;
 

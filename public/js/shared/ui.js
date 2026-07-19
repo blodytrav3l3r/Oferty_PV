@@ -71,7 +71,7 @@ function showToast(msg, type = 'info') {
 
     const text = document.createElement('span');
     // Bezpieczne: wyciągnij ikony Lucide przed eskejpowaniem HTML
-    const iconRegex = /<i\s+data-lucide="([^"]*)"\s*><\/i>/gi;
+    const iconRegex = /<i\s+[^>]*data-lucide="([^"]*)"[^>]*><\/i>/gi;
     const icons = [];
     const safe = msg.replace(iconRegex, (m) => {
         icons.push(m);

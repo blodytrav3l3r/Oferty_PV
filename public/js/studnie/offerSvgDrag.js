@@ -11,8 +11,23 @@ window.svgDragStartIndex = -1;
 
 window.svgPointerDown = function (ev, idx) {
     ev.preventDefault();
+    if (ev.ctrlKey || ev.metaKey) return;
     const well = getCurrentWell();
     if (!well) return;
+
+    if (typeof isWellLocked === 'function' && isWellLocked()) {
+        if (typeof showToast === 'function') {
+            const well = getCurrentWell();
+            const hasAcceptedPO =
+                well &&
+                (typeof productionOrders !== 'undefined' && productionOrders
+                    ? productionOrders
+                    : []
+                ).some((po) => po.wellId === well.id && po.status === 'accepted');
+            showToast(hasAcceptedPO ? WELL_LOCKED_MSG : OFFER_LOCKED_MSG, 'error');
+        }
+        return;
+    }
 
     // Jeśli modal Zlecenia jest otwarty, zaznacz element zamiast przeciągania
     const zlModal = document.getElementById('zlecenia-modal');
@@ -31,10 +46,47 @@ window.svgPointerDown = function (ev, idx) {
     window.requestAnimationFrame(() => renderWellDiagram());
 };
 
+window.svgPointerUp = function (ev, idx) {
+    if (window.svgDragStartIndex >= 0) return;
+    if (ev.ctrlKey || ev.metaKey) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const well = getCurrentWell();
+        if (!well || !well.config[idx]) return;
+        if (typeof isWellLocked === 'function' && isWellLocked()) {
+            if (typeof showToast === 'function') {
+                const well = getCurrentWell();
+                const hasAcceptedPO =
+                    well &&
+                    (typeof productionOrders !== 'undefined' && productionOrders
+                        ? productionOrders
+                        : []
+                    ).some((po) => po.wellId === well.id && po.status === 'accepted');
+                showToast(hasAcceptedPO ? WELL_LOCKED_MSG : OFFER_LOCKED_MSG, 'error');
+            }
+            return;
+        }
+        if (typeof removeWellComponent === 'function') {
+            removeWellComponent(idx);
+        }
+    }
+};
+
+window.svgTouchEnd = function () {};
+
 window.svgTouchStart = function (ev, idx) {
     ev.preventDefault();
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isWellLocked === 'function' && isWellLocked()) {
+        if (typeof showToast === 'function') {
+            const hasAcceptedPO = (
+                typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
+            ).some((po) => po.wellId === well.id && po.status === 'accepted');
+            showToast(hasAcceptedPO ? WELL_LOCKED_MSG : OFFER_LOCKED_MSG, 'error');
+        }
+        return;
+    }
     window.svgDragStartIndex = idx;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
@@ -113,9 +165,11 @@ const _wellDragHandlers = {
             const well = getCurrentWell();
             if (well) {
                 well.config.forEach((c) => (c.isPlaceholder = false));
-                well.autoLocked = true;
+                if (!(typeof isWellLocked === 'function' && isWellLocked())) {
+                    well.autoLocked = true;
+                    well.configSource = 'MANUAL';
+                }
                 if (typeof updateAutoLockUI === 'function') updateAutoLockUI();
-                well.configSource = 'MANUAL';
             }
 
             if (shouldRemove) {

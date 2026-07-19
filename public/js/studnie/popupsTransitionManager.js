@@ -640,7 +640,7 @@ async function tmEditApply(wellIdx, trIdx) {
     if (!tmEditSelectedCat || !tmEditSelectedDn) return;
     if (isWellLocked(wellIdx)) {
         document.getElementById('tm-edit-popup')?.remove();
-        showToast('<i data-lucide="lock"></i> Studnia zablokowana.', 'error');
+        showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const product = studnieProducts.find(

@@ -101,6 +101,8 @@ function renderOfferLockBanner() {
             </div>
         `;
     }
+
+    if (window.lucide) window.lucide.createIcons({ root: lockBanner });
 }
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) ===== */
@@ -783,9 +785,7 @@ window.renderWellsList = function renderWellsList() {
             // Automatyczne sprawdzenie w locie dla wszystkich kart
             const hasErrors = validateAutomatedErrors(w);
 
-            const errorStyling = hasErrors
-                ? ' border:2px solid #ef4444 !important; background:rgba(239,68,68,0.15) !important;'
-                : '';
+            const errorStyling = hasErrors ? ' background:rgba(239,68,68,0.15) !important;' : '';
             const errorNameStyle = hasErrors
                 ? 'color:#ef4444 !important; font-weight:700 !important;'
                 : '';
