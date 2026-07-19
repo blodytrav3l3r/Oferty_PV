@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.5.0  
+**Wersja:** 1.7.0  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera)
 
 ---
@@ -31,7 +31,7 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.5.0",
+    "version": "1.7.0",
     "name": "WITROS Oferty",
     "node": "v24.14.1"
 }

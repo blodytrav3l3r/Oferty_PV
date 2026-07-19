@@ -1,6 +1,6 @@
 # Architektura — WITROS Oferty PV
 
-**Wersja:** 1.5.0  
+**Wersja:** 1.7.0  
 **Ostatnia aktualizacja:** 2026-07-16  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
 
@@ -184,7 +184,7 @@ Po refaktoryzacji Phase 2 (podział dużych plików JS na mniejsze moduły):
 
 | Katalog              | Liczba plików | Opis                                                                    |
 | -------------------- | ------------- | ----------------------------------------------------------------------- |
-| `public/js/rury/`    | 22            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
+| `public/js/rury/`    | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
 | `public/js/studnie/` | ~112          | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
 | `public/js/sales/`   | 4             | Narzędzia sprzedaży (PVSalesUI, import/eksport)                         |
 

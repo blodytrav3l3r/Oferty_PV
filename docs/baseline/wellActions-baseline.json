@@ -1,4 +1,5 @@
 {
+    "_comment": "UWAGA: Ten baseline jest historyczny. wellActions.js (2336 linii) został podzielony na 12 modułów actions*.js, obecnie ~52 linie. Zachowany jako dokumentacja stanu przed refaktoryzacją.",
     "file": "public/js/studnie/wellActions.js",
     "analyzedAt": "2026-07-16",
     "metrics": {
@@ -134,7 +135,7 @@
         "zlecenia-modal"
     ],
     "htmlRefs": [
-        { "file": "public/studnie.html", "line": 5238, "url": "js/studnie/wellActions.js?v=1.6.0" }
+        { "file": "public/studnie.html", "line": 5238, "url": "js/studnie/wellActions.js?v=1.7.0" }
     ],
     "jsRefs": [
         { "file": "public/js/studnie/excelAutoSelect.js", "line": 84, "type": "comment" },

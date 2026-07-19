@@ -1,6 +1,6 @@
 # Raport audytu projektu — WITROS Oferty PV
 
-**Wersja projektu:** 1.5.0  
+**Wersja projektu:** 1.7.0  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 
@@ -139,7 +139,7 @@
 | .gitignore           | ✔      | 117 linii, dokładny                                      |
 | .gitattributes       | ✔      | 163 linie                                                |
 | Husky (pre-commit)   | ✔      | commitlint                                               |
-| Tagi wersji          | ✔      | Tagi v1.1.0..v1.5.0 + checkpoint-*                       |
+| Tagi wersji          | ✔      | Tagi v1.1.0..v1.7.0 + checkpoint-*                       |
 | VERSION file         | ✔      | VERSION w katalogu głównym — jedyne źródło wersji        |
 
 ---
@@ -166,5 +166,5 @@
 2. ✅ **Skrypt restore bazy** — scripts/restore-db.js istnieje
 3. ⏳ **Rozszerzyć testy E2E** i dodać testy frontendu — nadal do zrobienia
 4. ✅ **Plik VERSION** — utworzony jako jedyne źródło wersji
-5. ✅ **Tagi git** — dodane dla wydań (v1.1.0..v1.5.0)
+5. ✅ **Tagi git** — dodane dla wydań (v1.1.0..v1.7.0)
 6. ⚠ **Sprawdzić `npm audit`** — wykonywać okresowo

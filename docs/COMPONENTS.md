@@ -1,6 +1,6 @@
 # Katalog Komponentów — WITROS Oferty PV
 
-> Wersja: 1.5.0 | Data: 2026-07-09 | Źródło: analiza CSS (`public/css/`)
+> Wersja: 1.7.0 | Data: 2026-07-19 | Źródło: analiza CSS (`public/css/`)
 
 ---
 

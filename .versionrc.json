@@ -12,6 +12,6 @@
     "compareUrlFormat": "https://github.com/blodytrav3l3r/Oferty_PV/compare/{{previousTag}}...{{currentTag}}",
     "tagPrefix": "v",
     "scripts": {
-        "postbump": "node scripts/auto-cache-bust.mjs"
+        "postbump": "node scripts/auto-cache-bust.mjs && node scripts/auto-docs-version.mjs"
     }
 }
