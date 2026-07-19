@@ -386,6 +386,20 @@ modal.style = `background:var(--bg-card);padding:1.5rem;border-radius:var(--radi
 
 **Sugestia refaktora:** dodać klasę `.modal-overlay` / `.modal-content` do CSS.
 
+### 8.1 System warstw (z-index)
+
+Zdefiniowany w `public/js/studnie/layers.js` jako dwa zamrożone obiekty (`Object.freeze`):
+
+- **`LAYERS`** — główny system warstw dla całej aplikacji. Grupy:
+    - `sticky` (1–99) — sticky header, sidebar, tabele, filtry
+    - `local-overlay` (100–999) — overlay selecty, popupy kontekstowe
+    - `modal-excel` (1000–1999) — modal Excel (backdrop 1000, container 1010, focus overlay 1050)
+    - `modal-generic` (2000–4999) — generyczne modale
+    - `toast-banner` (5000–99999) — toasty, banery, preview
+    - `debug` (100000+) — bulk order, transition edit
+
+- **`LAYERS_EXCEL`** — warstwy wewnątrz modala Excel. Excel używa `position:fixed`, co tworzy własny stacking context — wymaga osobnych stałych (select overlay 2, sticky column 5, sticky header 20/30, resize handle 40, focus border 55).
+
 ---
 
 ## 9. Tile / Kafelki
