@@ -5,18 +5,6 @@ import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/a
 
 const router = express.Router();
 
-/**
- * @openapi
- * /api/feature-flags:
- *   get:
- *     tags: [Settings]
- *     summary: Pobranie stanu feature flagów
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Stan flag (np. import_export_enabled)
- */
 router.get('/', requireAuth, async (_req, res) => {
     try {
         const flag = await prisma.settings.findUnique({
@@ -29,26 +17,6 @@ router.get('/', requireAuth, async (_req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/feature-flags/import-export:
- *   put:
- *     tags: [Settings]
- *     summary: Włącz/wyłącz funkcję importu/eksportu (admin)
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               enabled: { type: boolean }
- *     responses:
- *       200:
- *         description: Status flagi zmieniony
- */
 router.put('/import-export', requireAuth, requireAdmin, async (req, res) => {
     try {
         const enabled = req.body.enabled === true;
@@ -77,18 +45,6 @@ router.put('/import-export', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/feature-flags/audit:
- *   post:
- *     tags: [Settings]
- *     summary: Zapisanie zdarzenia audytowego
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Zdarzenie zapisane
- */
 router.post('/audit', requireAuth, async (req, res) => {
     try {
         const authReq = req as AuthenticatedRequest;

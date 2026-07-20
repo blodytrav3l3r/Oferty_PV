@@ -11,18 +11,6 @@ const router = express.Router();
 
 const writeClientsLimiter = WRITE_LIMITER;
 
-/**
- * @openapi
- * /api/clients:
- *   get:
- *     tags: [Clients]
- *     summary: Lista klientów
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Lista klientów znormalizowana
- */
 // GET /api/clients - Pobiera klientów z bazy użytkownika
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -78,33 +66,6 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/clients:
- *   put:
- *     tags: [Clients]
- *     summary: Synchronizacja (batch upsert/delete) klientów
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               data:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     id: { type: string }
- *                     name: { type: string }
- *                     nip: { type: string }
- *     responses:
- *       200:
- *         description: Klienci zsynchronizowani
- */
 // PUT /api/clients - Synchronizacja klientów
 router.put(
     '/',

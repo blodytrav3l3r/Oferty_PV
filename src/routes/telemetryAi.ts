@@ -35,18 +35,6 @@ const router = express.Router();
  * Zapisuje pełną konfigurację studni wraz z kontekstem, historią
  * wersji i snapshota przejść szczelnych.
  */
-/**
- * @openapi
- * /api/telemetry/ai/config:
- *   post:
- *     tags: [Telemetry]
- *     summary: Zapis konfiguracji studni dla telemetrii AI
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Konfiguracja zapisana
- */
 router.post('/ai/config', requireAuth, WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;

@@ -11,18 +11,6 @@ const router = express.Router();
 /**
  * SZUKAJ: Wyszukiwanie ofert
  */
-/**
- * @openapi
- * /api/pv-marketplace/search:
- *   post:
- *     tags: [Offers]
- *     summary: Wyszukiwanie ofert w kartotece
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Wyniki wyszukiwania
- */
 router.post('/search', requireAuth, validateData(marketplaceSearchSchema), async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const { query, limit = 50, skip = 0 } = req.body;

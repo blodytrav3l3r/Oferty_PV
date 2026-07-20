@@ -22,27 +22,7 @@ const router = express.Router();
 
 const loginLimiter = LOGIN_LIMITER;
 
-/**
- * @openapi
- * /api/auth/login:
- *   post:
- *     tags: [Auth]
- *     summary: Logowanie użytkownika
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username: { type: string }
- *               password: { type: string }
- *     responses:
- *       200:
- *         description: Zalogowano pomyślnie, zwraca token i dane użytkownika
- *       401:
- *         description: Nieprawidłowy login lub hasło
- */
+// POST /api/auth/login
 router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {
     const { username, password } = req.body;
 
@@ -92,30 +72,6 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
     }
 });
 
-/**
- * @openapi
- * /api/auth/register:
- *   post:
- *     tags: [Auth]
- *     summary: Rejestracja nowego użytkownika (tylko admin)
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username: { type: string }
- *               password: { type: string }
- *               role: { type: string, enum: [user, pro, admin] }
- *               firstName: { type: string }
- *               lastName: { type: string }
- *     responses:
- *       200:
- *         description: Użytkownik utworzony
- *       409:
- *         description: Login już istnieje
- */
 // POST /api/auth/register (tylko administrator)
 router.post(
     '/register',
@@ -192,16 +148,6 @@ router.post(
     }
 );
 
-/**
- * @openapi
- * /api/auth/logout:
- *   post:
- *     tags: [Auth]
- *     summary: Wylogowanie użytkownika
- *     responses:
- *       200:
- *         description: Wylogowano pomyślnie
- */
 // POST /api/auth/logout
 router.post('/logout', async (req, res) => {
     try {
@@ -216,20 +162,6 @@ router.post('/logout', async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/auth/me:
- *   get:
- *     tags: [Auth]
- *     summary: Pobranie danych zalogowanego użytkownika
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Dane użytkownika
- *       401:
- *         description: Niezalogowany
- */
 // GET /api/auth/me
 router.get('/me', requireAuth, (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -237,29 +169,6 @@ router.get('/me', requireAuth, (req, res) => {
     res.json({ user: authReq.user });
 });
 
-/**
- * @openapi
- * /api/auth/change-password:
- *   post:
- *     tags: [Auth]
- *     summary: Zmiana hasła zalogowanego użytkownika
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               oldPassword: { type: string }
- *               newPassword: { type: string }
- *     responses:
- *       200:
- *         description: Hasło zmienione
- *       401:
- *         description: Nieprawidłowe stare hasło
- */
 // POST /api/auth/change-password
 router.post(
     '/change-password',

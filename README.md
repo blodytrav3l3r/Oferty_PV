@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator ofert handlowych
 
-**Wersja:** 1.8.0  
+**Wersja:** 1.5.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** WITROS
@@ -418,21 +418,17 @@ Po uruchomieniu serwera dokumentacja Swagger/OpenAPI dostępna jest pod adresem:
 
 ---
 
-## AI/ML Pipeline (wersja 1.8.0+)
+## AI/ML Pipeline (wersja 1.5.0+)
 
 System zawiera zintegrowany pipeline uczenia maszynowego do rankowania rozwiązań:
 
 - **Model:** Logistic Regression w czystym TypeScript (bez zależności zewnętrznych)
 - **Dual-ranking:** `Final = 0.6 × Technical + 0.4 × AI × 100` z 5% exploracją
-- **Tryb aktywny:** `aiInfluencePct > 0` podmienia rozwiązanie na wskazane przez AI
 - **Trenowanie:** Cron co 15 minut (`TrainingPipeline`)
 - **Samoocena:** Cron co 24h (`SelfEvaluation`)
-- **L2 Regularization:** `l2Lambda=0.01` zapobiega przeuczeniu
-- **Data Drift Detection:** `/ai/health` raportuje `driftPct` (porównanie 50 ostatnich snapshotów z zakresem treningowym)
-- **Feature Set:** 20 cech (FEATURE_VERSION v5), w tym hasKnownBottom, hasKnownTop, season_num, dn_x_ringCount, isKLBstandard
 - **Forgetting curve:** Wykładniczy zanik λ=0.01 (~69 dni półtrwania dla nieużywanych danych)
 - **Auto-rollback:** Gdy ROC-AUC < 0.65
-- **Endpointy:** `/api/telemetry/ai/predict`, `/api/telemetry/ai/predict/batch`, `/api/telemetry/ai/reward`, `/api/telemetry/ai/settings`, `/api/telemetry/ai/ml-status`, `/api/telemetry/ai/health`, `/api/telemetry/ai/models`, `/api/telemetry/ai/train`, `/api/telemetry/ai/feature-schema`, `/api/telemetry/ai/rollback`
+- **Endpointy:** `/api/ml/predict`, `/api/ml/reward`, `/api/ml/status`, `/api/ml/models`, `/api/ml/train`, `/api/ml/rollback`
 
 ---
 

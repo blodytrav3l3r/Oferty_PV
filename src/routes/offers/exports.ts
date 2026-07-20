@@ -11,23 +11,6 @@ const router = express.Router();
 
 /* ===== PUNKTY KOŃCOWE EKSPORTU (EXPORT) ===== */
 
-/**
- * @openapi
- * /api/offers-rury/{id}/export-pdf:
- *   get:
- *     tags: [Offers]
- *     summary: Eksport oferty rur do PDF
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Plik PDF
- */
 // GET /api/offers-rury/:id/export-pdf
 router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -54,18 +37,6 @@ router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/offers-rury/studnie/{id}/export-pdf:
- *   get:
- *     tags: [Offers]
- *     summary: Eksport oferty studni do PDF
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Plik PDF
- */
 // GET /api/offers-studnie/:id/export-pdf
 router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -92,18 +63,6 @@ router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, r
     }
 });
 
-/**
- * @openapi
- * /api/offers-rury/{id}/export-docx:
- *   get:
- *     tags: [Offers]
- *     summary: Eksport oferty rur do DOCX
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Plik DOCX
- */
 // GET /api/offers-rury/:id/export-docx
 router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -133,18 +92,6 @@ router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => 
     }
 });
 
-/**
- * @openapi
- * /api/offers-rury/studnie/{id}/export-docx:
- *   get:
- *     tags: [Offers]
- *     summary: Eksport oferty studni do DOCX
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Plik DOCX
- */
 // GET /api/offers-studnie/:id/export-docx
 router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

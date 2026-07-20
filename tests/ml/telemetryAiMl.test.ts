@@ -86,24 +86,17 @@ describe('POST /api/telemetry/ai/predict', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: [
-                0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 0, 0, 0,
-                0, 0
-            ],
+            weights: [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 0, 0, 0, 0, 0],
             bias: 0.5,
             featureMins: [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            featureMaxs: [
-                2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1
-            ]
+            featureMaxs: [2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1]
         });
         mockPredict.mockReturnValue(0.73);
 
         const res = await request(app)
             .post('/api/telemetry/ai/predict')
             .send({
-                features: [
-                    1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1
-                ],
+                features: [1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1],
                 wellType: 'standard',
                 warehouse: 'KLB',
                 dn: 1000,
@@ -141,9 +134,7 @@ describe('POST /api/telemetry/ai/predict', () => {
         const res = await request(app)
             .post('/api/telemetry/ai/predict')
             .send({
-                features: [
-                    1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1
-                ]
+                features: [1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1]
             });
 
         expect(res.status).toBe(503);
@@ -165,20 +156,8 @@ describe('POST /api/telemetry/ai/predict', () => {
             .post('/api/telemetry/ai/predict/batch')
             .send({
                 candidates: [
-                    {
-                        id: 1,
-                        features: [
-                            1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000,
-                            1
-                        ]
-                    },
-                    {
-                        id: 2,
-                        features: [
-                            1200, 3500, 0, 1, 0, 1, 0, 0, 0, 4, 3, 2, 3000, 6000, 4, 1, 0, 1, 4200,
-                            0
-                        ]
-                    }
+                    { id: 1, features: [1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1] },
+                    { id: 2, features: [1200, 3500, 0, 1, 0, 1, 0, 0, 0, 4, 3, 2, 3000, 6000, 4, 1, 0, 1, 4200, 0] }
                 ]
             });
 
@@ -215,9 +194,7 @@ describe('GET /api/telemetry/ai/health', () => {
                 valSize: 25
             },
             featureMins: [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            featureMaxs: [
-                2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1
-            ]
+            featureMaxs: [2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1]
         });
         mockTelemetryLogsCount.mockResolvedValue(10);
         mockTelemetryLogsFindMany.mockResolvedValue([]);
@@ -255,9 +232,7 @@ describe('GET /api/telemetry/ai/health', () => {
                 valSize: 25
             },
             featureMins: [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            featureMaxs: [
-                2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1
-            ]
+            featureMaxs: [2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1]
         });
         mockTelemetryLogsCount.mockResolvedValue(3);
         mockTelemetryLogsFindMany.mockResolvedValue([
@@ -286,9 +261,7 @@ describe('GET /api/telemetry/ai/health', () => {
                 valSize: 25
             },
             featureMins: [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            featureMaxs: [
-                2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1
-            ]
+            featureMaxs: [2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1]
         });
         mockTelemetryLogsCount.mockResolvedValue(1);
         mockTelemetryLogsFindMany.mockResolvedValue([

@@ -33,18 +33,6 @@ const router = express.Router();
 const writeOrdersLimiter = WRITE_LIMITER;
 const exportOrdersLimiter = EXPORT_LIMITER;
 
-/**
- * @openapi
- * /api/orders-rury:
- *   get:
- *     tags: [Orders]
- *     summary: Lista zamówień rur
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Lista zamówień
- */
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
@@ -121,18 +109,6 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/orders-rury:
- *   put:
- *     tags: [Orders]
- *     summary: Zapis (batch upsert) zamówień rur
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Zamówienia zapisane
- */
 router.put(
     '/',
     requireAuth,
@@ -580,23 +556,6 @@ router.patch(
     }
 );
 
-/**
- * @openapi
- * /api/orders-rury/{id}:
- *   delete:
- *     tags: [Orders]
- *     summary: Usunięcie zamówienia rur
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Zamówienie usunięte
- */
 router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

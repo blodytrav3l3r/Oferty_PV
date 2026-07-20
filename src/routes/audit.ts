@@ -27,33 +27,6 @@ function buildAuditUserFilter(user: { role: string; id: string; subUsers?: strin
     return { userId: user.id };
 }
 
-/**
- * @openapi
- * /api/audit/{entityType}/{entityId}:
- *   get:
- *     tags: [Audit]
- *     summary: Pobranie logów audytowych dla encji
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: entityType
- *         required: true
- *         schema: { type: string }
- *       - in: path
- *         name: entityId
- *         required: true
- *         schema: { type: string }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 20 }
- *       - in: query
- *         name: offset
- *         schema: { type: integer, default: 0 }
- *     responses:
- *       200:
- *         description: Lista logów audytowych z paginacją
- */
 // GET /api/audit/:entityType/:entityId?limit=20&offset=0
 router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -123,31 +96,6 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/audit/rebuild/{entityType}/{entityId}/{logId}:
- *   get:
- *     tags: [Audit]
- *     summary: Rekonstrukcja stanu encji z logów audytowych
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: entityType
- *         required: true
- *         schema: { type: string }
- *       - in: path
- *         name: entityId
- *         required: true
- *         schema: { type: string }
- *       - in: path
- *         name: logId
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Zrekonstruowany stan encji
- */
 // GET /api/audit/rebuild/:entityType/:entityId/:logId
 router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

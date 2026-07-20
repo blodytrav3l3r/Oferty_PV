@@ -71,18 +71,6 @@ export async function initRuryProductsTable() {
 
 const ALLOWED_FIELDS = ['name', 'category', 'price', 'transport', 'weight', 'area'] as const;
 
-/**
- * @openapi
- * /api/products:
- *   get:
- *     tags: [Products Rury]
- *     summary: Lista produktów (rury)
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Lista produktów
- */
 // ──────────────────────────────────────────
 // GET / — wszystkie produkty z ProductsRury
 // ──────────────────────────────────────────
@@ -99,29 +87,6 @@ router.get('/', requireAuth, async (_req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/products:
- *   put:
- *     tags: [Products Rury]
- *     summary: Zastąpienie całego cennika rur (admin)
- *     security:
- *       - cookieAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               data:
- *                 type: array
- *                 items:
- *                   type: object
- *     responses:
- *       200:
- *         description: Cennik zaktualizowany
- */
 // ──────────────────────────────────────────
 // PUT / — bulk save (usuń wszystko + utwórz)
 // ──────────────────────────────────────────
@@ -173,23 +138,6 @@ router.put(
     }
 );
 
-/**
- * @openapi
- * /api/products/{id}:
- *   patch:
- *     tags: [Products Rury]
- *     summary: Edycja pojedynczego produktu (admin)
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Produkt zaktualizowany
- */
 // ──────────────────────────────────────────
 // PATCH /:id — edytuj jeden produkt
 // ──────────────────────────────────────────
@@ -225,23 +173,6 @@ router.patch(
     }
 );
 
-/**
- * @openapi
- * /api/products/{id}:
- *   delete:
- *     tags: [Products Rury]
- *     summary: Usunięcie produktu (admin)
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Produkt usunięty
- */
 // ──────────────────────────────────────────
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
@@ -259,18 +190,6 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
     }
 });
 
-/**
- * @openapi
- * /api/products/default:
- *   get:
- *     tags: [Products Rury]
- *     summary: Domyślny cennik rur (fallback)
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Domyślny cennik
- */
 // ──────────────────────────────────────────
 // GET /default — fallback do settings lub re-seed z DB
 // ──────────────────────────────────────────

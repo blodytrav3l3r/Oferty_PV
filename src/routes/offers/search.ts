@@ -16,37 +16,6 @@ const router = express.Router();
 
 const SEARCH_LIMIT_MAX = 100;
 
-/**
- * @openapi
- * /api/offers-rury/search:
- *   get:
- *     tags: [Offers]
- *     summary: Wyszukiwanie ofert (rury + studnie)
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: query
- *         name: q
- *         schema: { type: string }
- *       - in: query
- *         name: dateFrom
- *         schema: { type: string }
- *       - in: query
- *         name: dateTo
- *         schema: { type: string }
- *       - in: query
- *         name: userId
- *         schema: { type: string }
- *       - in: query
- *         name: sort
- *         schema: { type: string }
- *       - in: query
- *         name: order
- *         schema: { type: string, enum: [asc, desc] }
- *     responses:
- *       200:
- *         description: Wyniki wyszukiwania
- */
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

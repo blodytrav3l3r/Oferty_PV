@@ -33,20 +33,6 @@ async function getNextOrderNumber(
     }
 }
 
-/**
- * @openapi
- * /api/users:
- *   get:
- *     tags: [Users]
- *     summary: Lista użytkowników (tylko admin)
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Lista użytkowników z nextOrderNumber
- *       403:
- *         description: Brak uprawnień
- */
 // GET /api/users (tylko administrator)
 router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     try {
@@ -88,39 +74,6 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     }
 });
 
-/**
- * @openapi
- * /api/users/{id}:
- *   put:
- *     tags: [Users]
- *     summary: Aktualizacja użytkownika (tylko admin)
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username: { type: string }
- *               password: { type: string }
- *               role: { type: string }
- *               firstName: { type: string }
- *               lastName: { type: string }
- *     responses:
- *       200:
- *         description: Użytkownik zaktualizowany
- *       404:
- *         description: Nie znaleziono
- *       409:
- *         description: Login zajęty
- */
 // PUT /api/users/:id (tylko administrator)
 router.put(
     '/:id',
@@ -211,27 +164,6 @@ router.put(
     }
 );
 
-/**
- * @openapi
- * /api/users/{id}:
- *   delete:
- *     tags: [Users]
- *     summary: Usunięcie użytkownika (tylko admin)
- *     security:
- *       - cookieAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Użytkownik usunięty
- *       400:
- *         description: Nie można usunąć siebie
- *       404:
- *         description: Nie znaleziono
- */
 // DELETE /api/users/:id (tylko administrator)
 router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -249,18 +181,6 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
     }
 });
 
-/**
- * @openapi
- * /api/users/for-assignment:
- *   get:
- *     tags: [Users]
- *     summary: Lista użytkowników do przypisania ofert
- *     security:
- *       - cookieAuth: []
- *     responses:
- *       200:
- *         description: Filtrowana lista użytkowników
- */
 // GET /api/users-for-assignment (alias: /for-assignment)
 router.get('/for-assignment', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
