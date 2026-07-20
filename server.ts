@@ -9,30 +9,8 @@ const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
-/* ===== WALIDACJA PRZED STARTEM ===== */
-function preflightCheck(): void {
-    const issues: string[] = [];
-
-    if (!process.env.DATABASE_URL) {
-        issues.push('BRAK .env — skopiuj .env.example na .env i skonfiguruj');
-    }
-
-    if (
-        NODE_ENV === 'production' &&
-        (HOST === '0.0.0.0' || HOST === 'localhost' || HOST === '127.0.0.1')
-    ) {
-        logger.warn(
-            'Server',
-            'UWAGA: NODE_ENV=production na localhost wymusza HTTPS — logowanie moze nie dzialac'
-        );
-        logger.warn('Server', 'Ustaw NODE_ENV=development w .env dla lokalnego rozwoju');
-    }
-}
-
 /* ===== INICJALIZACJA ===== */
 (async function startServer() {
-    preflightCheck();
-
     try {
         await initApp();
     } catch (err) {

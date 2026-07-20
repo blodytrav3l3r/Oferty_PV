@@ -30,19 +30,7 @@ if not exist "package.json" (
     exit /b 1
 )
 
-REM Krok 3: Sprawdzenie .env
-if not exist ".env" (
-    echo [INFO] Brak .env - kopiuje z .env.example...
-    copy .env.example .env >nul
-    if errorlevel 1 (
-        echo [BLAD] Nie udalo sie utworzyc .env.
-        pause
-        exit /b 1
-    )
-    echo [INFO] Utworzono .env - edytuj haslo administratora (DEFAULT_ADMIN_PASSWORD) jesli potrzeba.
-)
-
-REM Krok 4: Auto-instalacja node_modules jesli brak
+REM Krok 3: Auto-instalacja node_modules jesli brak
 if not exist "node_modules" (
     echo [INFO] Brak node_modules. Instaluje zaleznosci...
     call npm install --no-audit --no-fund
@@ -53,7 +41,7 @@ if not exist "node_modules" (
     )
 )
 
-REM Krok 5: Sprawdzenie Prisma Client
+REM Krok 4: Sprawdzenie Prisma Client
 if not exist "generated\prisma\index.d.ts" (
     echo [INFO] Generuje Prisma Client...
     call npx prisma generate
@@ -64,7 +52,7 @@ if not exist "generated\prisma\index.d.ts" (
     )
 )
 
-REM Krok 6: Sprawdzenie schematu DB
+REM Krok 5: Sprawdzenie schematu DB
 echo [INFO] Sprawdzanie schematu bazy...
 call node scripts/check-db.js >nul 2>nul
 if errorlevel 1 (
@@ -72,17 +60,15 @@ if errorlevel 1 (
     call npx prisma db push --skip-generate --accept-data-loss >nul 2>nul
 )
 
-REM Krok 7: PowerShell port-check (odczytuje PORT z .env)
-for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env 2^>nul') do set "APP_PORT=%%a"
-if not defined APP_PORT set "APP_PORT=3000"
-echo [INFO] Sprawdzanie portu !APP_PORT!...
+REM Krok 6: PowerShell port-check (BEZ NETSTAT, ktory mogl wisniec)
+echo [INFO] Sprawdzanie portu 3000...
 set "PORT_PID="
-for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort !APP_PORT! -State Listen -ErrorAction SilentlyContinue).OwningProcess" 2^>nul') do (
+for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue).OwningProcess" 2^>nul') do (
     if "%%n" neq "" set "PORT_PID=%%n"
 )
 
 if defined PORT_PID (
-    echo [UWAGA] Port !APP_PORT! uzywany przez PID !PORT_PID!
+    echo [UWAGA] Port 3000 uzywany przez PID !PORT_PID!
     set /p "KEEP=Nadal kontynuowac? (T = nie, N = kontynuuj) [T/N]: "
     if /i "!KEEP!"=="N" (
         echo [INFO] Kontynuuje pomimo zajetego portu...
@@ -93,7 +79,7 @@ if defined PORT_PID (
     )
 )
 
-REM Krok 8: Uruchomienie
+REM Krok 7: Uruchomienie
 echo [INFO] Uruchamiam npm run dev (Ctrl+C stop)
 echo.
 call npm run dev
