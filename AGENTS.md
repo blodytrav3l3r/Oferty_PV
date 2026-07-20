@@ -58,11 +58,17 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 
 - **Zasada DRY (Don't Repeat Yourself)**: Nigdy nie powielaj logiki. Kod występujący częściej niż 2 razy wydziel do osobnej funkcji, modułu, klasy lub pliku pomocniczego (utils).
 - **Zasada SRP (Single Responsibility Principle)**: Każdy moduł, klasa i funkcja odpowiada za **jedną** rzecz. Oddzielaj logikę pobierania danych, walidacji, przetwarzania i renderowania UI. Logika biznesowa musi być odseparowana od warstwy widoku (UI).
-- **Ograniczenia rozmiaru kodu**:
-    - Maksymalna długość funkcji: **30–40 linii**.
-    - Maksymalna długość klasy: **200–300 linii**.
-    - Maksymalna długość pliku: **400–500 linii**.
-      Jeśli kod przekracza te limity, podziel go na mniejsze, logiczne części.
+- **Ograniczenia rozmiaru kodu (zalecenia, nie sztywne reguły)**:
+    - Funkcje: preferowane do około **100–150 linii**.
+    - Klasy: preferowane do około **500–800 linii**.
+    - Pliki: preferowane do około **1000–1500 linii**.
+- **Zasady**:
+    - Nie dziel funkcji, klas ani plików wyłącznie ze względu na liczbę linii.
+    - Najpierw oceniaj spójność odpowiedzialności (SRP), a dopiero później rozmiar.
+    - Jeśli wydzielenie pogarsza czytelność, nadmiernie zwiększa liczbę parametrów lub utrudnia zrozumienie przepływu — pozostaw w jednej całości.
+    - Dopuszczalne są większe jednostki, jeśli realizują jeden logiczny proces, a podział byłby sztuczny.
+    - Refaktoryzuj tylko wtedy, gdy faktycznie poprawia czytelność, testowalność lub reuse.
+    - **Najważniejsze:** spójny, czytelny kod > sztuczne przestrzeganie limitów linii.
 - **Ograniczenie zagnieżdżeń**: Maksymalnie **3 poziomy** zagnieżdżenia kodu. Stosuj _early return_, _guard clauses_ oraz wydzielanie bloków do osobnych funkcji pomocniczych.
 - **Jasne Nazewnictwo**:
     - Funkcje: czasownik + rzeczownik (np. `createUser`, `calculateTotalPrice`).
