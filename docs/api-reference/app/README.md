@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../README.md) / app
 
@@ -20,7 +20,7 @@
 
 Re-exports [initRuryProductsTable](../routes/productsV2/functions/initRuryProductsTable.md)
 
----
+***
 
 ### initStudnieProductsTable
 

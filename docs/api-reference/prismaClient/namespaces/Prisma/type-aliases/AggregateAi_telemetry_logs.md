@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAi\_telemetry\_logs
 
@@ -20,7 +20,7 @@ Model ai_telemetry_logs
 
 Defined in: generated/prisma/index.d.ts:3661
 
----
+***
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:3661
 
 Defined in: generated/prisma/index.d.ts:3660
 
----
+***
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:3660
 
 Defined in: generated/prisma/index.d.ts:3664
 
----
+***
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:3664
 
 Defined in: generated/prisma/index.d.ts:3663
 
----
+***
 
 ### \_sum
 

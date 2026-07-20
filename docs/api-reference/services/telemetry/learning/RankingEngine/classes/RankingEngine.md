@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../README.md) / [services/telemetry/learning/RankingEngine](../README.md) / RankingEngine
 
 # Class: RankingEngine
 
-Defined in: [src/services/telemetry/learning/RankingEngine.ts:17](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RankingEngine.ts#L17)
+Defined in: [src/services/telemetry/learning/RankingEngine.ts:17](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RankingEngine.ts#L17)
 
 ## Constructors
 
@@ -24,7 +24,7 @@ Defined in: [src/services/telemetry/learning/RankingEngine.ts:17](https://github
 
 > **\_score**(`features`, `pattern`): [`RankedRecommendation`](../interfaces/RankedRecommendation.md)
 
-Defined in: [src/services/telemetry/learning/RankingEngine.ts:37](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RankingEngine.ts#L37)
+Defined in: [src/services/telemetry/learning/RankingEngine.ts:37](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RankingEngine.ts#L37)
 
 Score kombinacja confidence + match cech geometrycznych z features.
 
@@ -42,13 +42,13 @@ Score kombinacja confidence + match cech geometrycznych z features.
 
 [`RankedRecommendation`](../interfaces/RankedRecommendation.md)
 
----
+***
 
 ### rank()
 
 > **rank**(`features`, `patterns`, `topN?`): [`RankedRecommendation`](../interfaces/RankedRecommendation.md)[]
 
-Defined in: [src/services/telemetry/learning/RankingEngine.ts:21](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RankingEngine.ts#L21)
+Defined in: [src/services/telemetry/learning/RankingEngine.ts:21](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RankingEngine.ts#L21)
 
 Rankinguje wzorce dla danego rekordu telemetry.
 

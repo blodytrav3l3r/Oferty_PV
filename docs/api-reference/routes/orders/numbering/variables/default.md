@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [routes/orders/numbering](../README.md) / default
 
@@ -8,4 +8,4 @@
 
 > `const` **default**: `Router`
 
-Defined in: [src/routes/orders/numbering.ts:6](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/routes/orders/numbering.ts#L6)
+Defined in: [src/routes/orders/numbering.ts:6](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/routes/orders/numbering.ts#L6)

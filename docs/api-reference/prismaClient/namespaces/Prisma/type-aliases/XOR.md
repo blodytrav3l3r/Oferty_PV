@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / XOR
 
 # Type Alias: XOR\<T, U\>
 
-> **XOR**\<`T`, `U`> \> = `T` _extends_ `object` ? `U` _extends_ `object` ? [`Without`](Without.md)\<`T`, `U`> \> & `U` \| [`Without`](Without.md)\<`U`, `T`> \> & `T` : `U` : `T`
+> **XOR**\<`T`, `U`\> = `T` *extends* `object` ? `U` *extends* `object` ? [`Without`](Without.md)\<`T`, `U`\> & `U` \| [`Without`](Without.md)\<`U`, `T`\> & `T` : `U` : `T`
 
 Defined in: generated/prisma/index.d.ts:820
 

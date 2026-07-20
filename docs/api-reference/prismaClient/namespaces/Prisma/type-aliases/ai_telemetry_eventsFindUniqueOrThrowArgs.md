@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_eventsFindUniqueOrThrowArgs
 
 # Type Alias: ai\_telemetry\_eventsFindUniqueOrThrowArgs\<ExtArgs\>
 
-> **ai\_telemetry\_eventsFindUniqueOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **ai\_telemetry\_eventsFindUniqueOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:6257
 
@@ -16,29 +16,29 @@ ai_telemetry_events findUniqueOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### omit?
 
-> `optional` **omit?**: [`ai_telemetry_eventsOmit`](ai_telemetry_eventsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_telemetry_eventsOmit`](ai_telemetry_eventsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:6265
 
 Omit specific fields from the ai_telemetry_events
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_telemetry_eventsSelect`](ai_telemetry_eventsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_telemetry_eventsSelect`](ai_telemetry_eventsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:6261
 
 Select specific fields to fetch from the ai_telemetry_events
 
----
+***
 
 ### where
 

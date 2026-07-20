@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryCreateNestedManyWithoutCategory\_relInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46838
 
 Defined in: generated/prisma/index.d.ts:46842
 
----
+***
 
 ### connectOrCreate?
 
@@ -26,15 +26,15 @@ Defined in: generated/prisma/index.d.ts:46842
 
 Defined in: generated/prisma/index.d.ts:46840
 
----
+***
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md), [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)> \> \| [`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md)[] \| [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)[]
+> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md), [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)\> \| [`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md)[] \| [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)[]
 
 Defined in: generated/prisma/index.d.ts:46839
 
----
+***
 
 ### createMany?
 

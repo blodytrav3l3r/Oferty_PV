@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / QueryEvent
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:3533
 
 Defined in: generated/prisma/index.d.ts:3537
 
----
+***
 
 ### params
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:3537
 
 Defined in: generated/prisma/index.d.ts:3536
 
----
+***
 
 ### query
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:3536
 
 Defined in: generated/prisma/index.d.ts:3535
 
----
+***
 
 ### target
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:3535
 
 Defined in: generated/prisma/index.d.ts:3538
 
----
+***
 
 ### timestamp
 

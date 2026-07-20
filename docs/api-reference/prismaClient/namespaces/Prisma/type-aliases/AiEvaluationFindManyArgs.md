@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationFindManyArgs
 
 # Type Alias: AiEvaluationFindManyArgs\<ExtArgs\>
 
-> **AiEvaluationFindManyArgs**\<`ExtArgs`> \> = `object`
+> **AiEvaluationFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:35943
 
@@ -16,7 +16,7 @@ AiEvaluation findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:35967
 
 Sets the position for listing AiEvaluations.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing AiEvaluations.
 
 Defined in: generated/prisma/index.d.ts:35980
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35951
 
 Omit specific fields from the AiEvaluation
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:35961
 
 Determine the order of AiEvaluations to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35947
 
 Select specific fields to fetch from the AiEvaluation
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:35979
 
 Skip the first `n` AiEvaluations.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:35973
 
 Take `±n` AiEvaluations from the position of the cursor.
 
----
+***
 
 ### where?
 

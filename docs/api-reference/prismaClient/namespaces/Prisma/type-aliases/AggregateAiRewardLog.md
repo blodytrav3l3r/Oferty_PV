@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAiRewardLog
 
@@ -20,7 +20,7 @@ Model aiRewardLog
 
 Defined in: generated/prisma/index.d.ts:36174
 
----
+***
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:36174
 
 Defined in: generated/prisma/index.d.ts:36173
 
----
+***
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:36173
 
 Defined in: generated/prisma/index.d.ts:36177
 
----
+***
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:36177
 
 Defined in: generated/prisma/index.d.ts:36176
 
----
+***
 
 ### \_sum
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_order\_countersDeleteManyArgs
 
 # Type Alias: production\_order\_countersDeleteManyArgs\<ExtArgs\>
 
-> **production\_order\_countersDeleteManyArgs**\<`ExtArgs`> \> = `object`
+> **production\_order\_countersDeleteManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:23793
 
@@ -16,7 +16,7 @@ production_order_counters deleteMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:23801
 
 Limit how many production_order_counters to delete.
 
----
+***
 
 ### where?
 

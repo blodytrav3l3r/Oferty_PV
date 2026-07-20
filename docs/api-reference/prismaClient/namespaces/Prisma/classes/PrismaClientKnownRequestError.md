@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / PrismaClientKnownRequestError
 
@@ -54,7 +54,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2630
 
 `ErrorWithBatchIndex.batchRequestIdx`
 
----
+***
 
 ### clientVersion
 
@@ -62,7 +62,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2630
 
 Defined in: generated/prisma/runtime/library.d.ts:2629
 
----
+***
 
 ### code
 
@@ -70,11 +70,11 @@ Defined in: generated/prisma/runtime/library.d.ts:2629
 
 Defined in: generated/prisma/runtime/library.d.ts:2627
 
----
+***
 
 ### meta?
 
-> `optional` **meta?**: `Record`\<`string`, `unknown`>\>
+> `optional` **meta?**: `Record`\<`string`, `unknown`\>
 
 Defined in: generated/prisma/runtime/library.d.ts:2628
 

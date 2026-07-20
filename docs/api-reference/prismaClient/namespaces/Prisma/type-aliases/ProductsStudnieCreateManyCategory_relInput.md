@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieCreateManyCategory\_relInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:47468
 
 Defined in: generated/prisma/index.d.ts:47483
 
----
+***
 
 ### area?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:47483
 
 Defined in: generated/prisma/index.d.ts:47476
 
----
+***
 
 ### areaExt?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:47476
 
 Defined in: generated/prisma/index.d.ts:47477
 
----
+***
 
 ### cena1?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:47477
 
 Defined in: generated/prisma/index.d.ts:47491
 
----
+***
 
 ### cena2?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:47491
 
 Defined in: generated/prisma/index.d.ts:47494
 
----
+***
 
 ### cena3?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:47494
 
 Defined in: generated/prisma/index.d.ts:47497
 
----
+***
 
 ### componentType
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:47497
 
 Defined in: generated/prisma/index.d.ts:47471
 
----
+***
 
 ### dn?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:47471
 
 Defined in: generated/prisma/index.d.ts:47472
 
----
+***
 
 ### doplataDrabNierdzewna?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:47472
 
 Defined in: generated/prisma/index.d.ts:47500
 
----
+***
 
 ### doplataPEHD?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:47500
 
 Defined in: generated/prisma/index.d.ts:47498
 
----
+***
 
 ### doplataZelbet?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:47498
 
 Defined in: generated/prisma/index.d.ts:47499
 
----
+***
 
 ### formaStandardowa?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:47499
 
 Defined in: generated/prisma/index.d.ts:47481
 
----
+***
 
 ### formaStandardowaKLB?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:47481
 
 Defined in: generated/prisma/index.d.ts:47482
 
----
+***
 
 ### height?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:47482
 
 Defined in: generated/prisma/index.d.ts:47473
 
----
+***
 
 ### hMax1?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:47473
 
 Defined in: generated/prisma/index.d.ts:47490
 
----
+***
 
 ### hMax2?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:47490
 
 Defined in: generated/prisma/index.d.ts:47493
 
----
+***
 
 ### hMax3?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:47493
 
 Defined in: generated/prisma/index.d.ts:47496
 
----
+***
 
 ### hMin1?
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:47496
 
 Defined in: generated/prisma/index.d.ts:47489
 
----
+***
 
 ### hMin2?
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/index.d.ts:47489
 
 Defined in: generated/prisma/index.d.ts:47492
 
----
+***
 
 ### hMin3?
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/index.d.ts:47492
 
 Defined in: generated/prisma/index.d.ts:47495
 
----
+***
 
 ### id
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/index.d.ts:47495
 
 Defined in: generated/prisma/index.d.ts:47469
 
----
+***
 
 ### magazynKLB?
 
@@ -186,7 +186,7 @@ Defined in: generated/prisma/index.d.ts:47469
 
 Defined in: generated/prisma/index.d.ts:47480
 
----
+***
 
 ### magazynWL?
 
@@ -194,7 +194,7 @@ Defined in: generated/prisma/index.d.ts:47480
 
 Defined in: generated/prisma/index.d.ts:47479
 
----
+***
 
 ### malowanieWewnetrzne?
 
@@ -202,7 +202,7 @@ Defined in: generated/prisma/index.d.ts:47479
 
 Defined in: generated/prisma/index.d.ts:47501
 
----
+***
 
 ### malowanieZewnetrzne?
 
@@ -210,7 +210,7 @@ Defined in: generated/prisma/index.d.ts:47501
 
 Defined in: generated/prisma/index.d.ts:47502
 
----
+***
 
 ### name
 
@@ -218,7 +218,7 @@ Defined in: generated/prisma/index.d.ts:47502
 
 Defined in: generated/prisma/index.d.ts:47470
 
----
+***
 
 ### price?
 
@@ -226,7 +226,7 @@ Defined in: generated/prisma/index.d.ts:47470
 
 Defined in: generated/prisma/index.d.ts:47475
 
----
+***
 
 ### spocznikH?
 
@@ -234,7 +234,7 @@ Defined in: generated/prisma/index.d.ts:47475
 
 Defined in: generated/prisma/index.d.ts:47488
 
----
+***
 
 ### transport?
 
@@ -242,7 +242,7 @@ Defined in: generated/prisma/index.d.ts:47488
 
 Defined in: generated/prisma/index.d.ts:47478
 
----
+***
 
 ### weight?
 
@@ -250,7 +250,7 @@ Defined in: generated/prisma/index.d.ts:47478
 
 Defined in: generated/prisma/index.d.ts:47474
 
----
+***
 
 ### zapasDol?
 
@@ -258,7 +258,7 @@ Defined in: generated/prisma/index.d.ts:47474
 
 Defined in: generated/prisma/index.d.ts:47484
 
----
+***
 
 ### zapasDolMin?
 
@@ -266,7 +266,7 @@ Defined in: generated/prisma/index.d.ts:47484
 
 Defined in: generated/prisma/index.d.ts:47486
 
----
+***
 
 ### zapasGora?
 
@@ -274,7 +274,7 @@ Defined in: generated/prisma/index.d.ts:47486
 
 Defined in: generated/prisma/index.d.ts:47485
 
----
+***
 
 ### zapasGoraMin?
 

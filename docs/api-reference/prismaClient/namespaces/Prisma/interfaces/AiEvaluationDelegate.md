@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:35385
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the AiEvaluation model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiEvaluationAggregateType`](../type-aliases/GetAiEvaluationAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiEvaluationAggregateType`](../type-aliases/GetAiEvaluationAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:35676
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationAggregateArgs`](../type-aliases/AiEvaluationAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationAggregateArgs`](../type-aliases/AiEvaluationAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiEvaluationCountAggregateOutputType ? AiEvaluationCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiEvaluationCountAggregateOutputType ? AiEvaluationCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:35642
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationCountArgs`](../type-aliases/AiEvaluationCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationCountArgs`](../type-aliases/AiEvaluationCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter AiEvaluations to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiEvaluationCountAggregateOutputType ? AiEvaluationCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiEvaluationCountAggregateOutputType ? AiEvaluationCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of AiEvaluations
 const count = await prisma.aiEvaluation.count({
-    where: {
-        // ... the filter for the AiEvaluations we want to count
-    }
-});
+  where: {
+    // ... the filter for the AiEvaluations we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35475
 
@@ -139,7 +139,7 @@ Create a AiEvaluation.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationCreateArgs`](../type-aliases/AiEvaluationCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationCreateArgs`](../type-aliases/AiEvaluationCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a AiEvaluation.
 ```ts
 // Create one AiEvaluation
 const AiEvaluation = await prisma.aiEvaluation.create({
-    data: {
-        // ... data to create a AiEvaluation
-    }
-});
+  data: {
+    // ... data to create a AiEvaluation
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:35489
 
@@ -178,7 +178,7 @@ Create many AiEvaluations.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationCreateManyArgs`](../type-aliases/AiEvaluationCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationCreateManyArgs`](../type-aliases/AiEvaluationCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many AiEvaluations.
 ```ts
 // Create many AiEvaluations
 const aiEvaluation = await prisma.aiEvaluation.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:35513
 
@@ -217,7 +217,7 @@ Create many AiEvaluations and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationCreateManyAndReturnArgs`](../type-aliases/AiEvaluationCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationCreateManyAndReturnArgs`](../type-aliases/AiEvaluationCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35527
 
@@ -266,7 +266,7 @@ Delete a AiEvaluation.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationDeleteArgs`](../type-aliases/AiEvaluationDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationDeleteArgs`](../type-aliases/AiEvaluationDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one AiEvaluation.
 ```ts
 // Delete one AiEvaluation
 const AiEvaluation = await prisma.aiEvaluation.delete({
-    where: {
-        // ... filter to delete one AiEvaluation
-    }
-});
+  where: {
+    // ... filter to delete one AiEvaluation
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:35558
 
@@ -305,7 +305,7 @@ Delete zero or more AiEvaluations.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationDeleteManyArgs`](../type-aliases/AiEvaluationDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationDeleteManyArgs`](../type-aliases/AiEvaluationDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter AiEvaluations to delete.
 ```ts
 // Delete a few AiEvaluations
 const { count } = await prisma.aiEvaluation.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35427
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationFindFirstArgs`](../type-aliases/AiEvaluationFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationFindFirstArgs`](../type-aliases/AiEvaluationFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a AiEvaluation
 ```ts
 // Get one AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35443
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationFindFirstOrThrowArgs`](../type-aliases/AiEvaluationFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationFindFirstOrThrowArgs`](../type-aliases/AiEvaluationFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a AiEvaluation
 ```ts
 // Get one AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:35461
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationFindManyArgs`](../type-aliases/AiEvaluationFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationFindManyArgs`](../type-aliases/AiEvaluationFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all AiEvaluations
-const aiEvaluations = await prisma.aiEvaluation.findMany();
+const aiEvaluations = await prisma.aiEvaluation.findMany()
 
 // Get first 10 AiEvaluations
-const aiEvaluations = await prisma.aiEvaluation.findMany({ take: 10 });
+const aiEvaluations = await prisma.aiEvaluation.findMany({ take: 10 })
 
 // Only select the `id`
-const aiEvaluationWithIdOnly = await prisma.aiEvaluation.findMany({ select: { id: true } });
+const aiEvaluationWithIdOnly = await prisma.aiEvaluation.findMany({ select: { id: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35398
 
@@ -470,7 +470,7 @@ Find zero or one AiEvaluation that matches the filter.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationFindUniqueArgs`](../type-aliases/AiEvaluationFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationFindUniqueArgs`](../type-aliases/AiEvaluationFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a AiEvaluation
 ```ts
 // Get one AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35412
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationFindUniqueOrThrowArgs`](../type-aliases/AiEvaluationFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationFindUniqueOrThrowArgs`](../type-aliases/AiEvaluationFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a AiEvaluation
 ```ts
 // Get one AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetAiEvaluationGroupByPayload`](../type-aliases/GetAiEvaluationGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetAiEvaluationGroupByPayload`](../type-aliases/GetAiEvaluationGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:35696
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationGroupByArgs`](../type-aliases/AiEvaluationGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationGroupByArgs`](../type-aliases/AiEvaluationGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md) \| [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md) \| [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md) \| [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md) \| [`AiEvaluationOrderByWithAggregationInput`](../type-aliases/AiEvaluationOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"id"` \| `"acceptance"` \| `"modelVersion"` \| `"decisionMsAvg"` \| `"rewardsAvg"` \| `"totalDecisions"` \| `"triggeredAt"`
+`OrderFields` *extends* `"id"` \| `"acceptance"` \| `"modelVersion"` \| `"decisionMsAvg"` \| `"rewardsAvg"` \| `"totalDecisions"` \| `"triggeredAt"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`AiEvaluationScalarFieldEnum`](../type-aliases/AiEvaluationScalarFieldEnum.md)
+`ByFields` *extends* [`AiEvaluationScalarFieldEnum`](../type-aliases/AiEvaluationScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetAiEvaluationGroupByPayload`](../type-aliases/GetAiEvaluationGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetAiEvaluationGroupByPayload`](../type-aliases/GetAiEvaluationGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35544
 
@@ -630,7 +630,7 @@ Update one AiEvaluation.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationUpdateArgs`](../type-aliases/AiEvaluationUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationUpdateArgs`](../type-aliases/AiEvaluationUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one AiEvaluation.
 ```ts
 // Update one AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:35577
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiEvaluationUpdateManyArgs`](../type-aliases/AiEvaluationUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationUpdateManyArgs`](../type-aliases/AiEvaluationUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many AiEvaluations
 const aiEvaluation = await prisma.aiEvaluation.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:35607
 
@@ -716,7 +716,7 @@ Update zero or more AiEvaluations and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationUpdateManyAndReturnArgs`](../type-aliases/AiEvaluationUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationUpdateManyAndReturnArgs`](../type-aliases/AiEvaluationUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__AiEvaluationClient`](Prisma__AiEvaluationClient.md)\<`GetFindResult`\<[`$AiEvaluationPayload`](../type-aliases/$AiEvaluationPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:35626
 
@@ -771,7 +771,7 @@ Create or update one AiEvaluation.
 
 ##### T
 
-`T` _extends_ [`AiEvaluationUpsertArgs`](../type-aliases/AiEvaluationUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiEvaluationUpsertArgs`](../type-aliases/AiEvaluationUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a AiEvaluation.
 ```ts
 // Update or create a AiEvaluation
 const aiEvaluation = await prisma.aiEvaluation.upsert({
-    create: {
-        // ... data to create a AiEvaluation
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the AiEvaluation we want to update
-    }
-});
+  create: {
+    // ... data to create a AiEvaluation
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the AiEvaluation we want to update
+  }
+})
 ```

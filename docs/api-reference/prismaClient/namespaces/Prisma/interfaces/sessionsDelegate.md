@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / sessionsDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:26125
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the sessions model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetSessionsAggregateType`](../type-aliases/GetSessionsAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetSessionsAggregateType`](../type-aliases/GetSessionsAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:26416
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`SessionsAggregateArgs`](../type-aliases/SessionsAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`SessionsAggregateArgs`](../type-aliases/SessionsAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SessionsCountAggregateOutputType ? SessionsCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SessionsCountAggregateOutputType ? SessionsCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:26382
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsCountArgs`](../type-aliases/sessionsCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsCountArgs`](../type-aliases/sessionsCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Sessions to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SessionsCountAggregateOutputType ? SessionsCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SessionsCountAggregateOutputType ? SessionsCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Sessions
 const count = await prisma.sessions.count({
-    where: {
-        // ... the filter for the Sessions we want to count
-    }
-});
+  where: {
+    // ... the filter for the Sessions we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26215
 
@@ -139,7 +139,7 @@ Create a Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsCreateArgs`](../type-aliases/sessionsCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsCreateArgs`](../type-aliases/sessionsCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Sessions.
 ```ts
 // Create one Sessions
 const Sessions = await prisma.sessions.create({
-    data: {
-        // ... data to create a Sessions
-    }
-});
+  data: {
+    // ... data to create a Sessions
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:26229
 
@@ -178,7 +178,7 @@ Create many Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsCreateManyArgs`](../type-aliases/sessionsCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsCreateManyArgs`](../type-aliases/sessionsCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Sessions.
 ```ts
 // Create many Sessions
 const sessions = await prisma.sessions.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:26253
 
@@ -217,7 +217,7 @@ Create many Sessions and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`sessionsCreateManyAndReturnArgs`](../type-aliases/sessionsCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsCreateManyAndReturnArgs`](../type-aliases/sessionsCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26267
 
@@ -266,7 +266,7 @@ Delete a Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsDeleteArgs`](../type-aliases/sessionsDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsDeleteArgs`](../type-aliases/sessionsDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Sessions.
 ```ts
 // Delete one Sessions
 const Sessions = await prisma.sessions.delete({
-    where: {
-        // ... filter to delete one Sessions
-    }
-});
+  where: {
+    // ... filter to delete one Sessions
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:26298
 
@@ -305,7 +305,7 @@ Delete zero or more Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsDeleteManyArgs`](../type-aliases/sessionsDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsDeleteManyArgs`](../type-aliases/sessionsDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Sessions to delete.
 ```ts
 // Delete a few Sessions
 const { count } = await prisma.sessions.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26167
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsFindFirstArgs`](../type-aliases/sessionsFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsFindFirstArgs`](../type-aliases/sessionsFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Sessions
 ```ts
 // Get one Sessions
 const sessions = await prisma.sessions.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26183
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsFindFirstOrThrowArgs`](../type-aliases/sessionsFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsFindFirstOrThrowArgs`](../type-aliases/sessionsFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Sessions
 ```ts
 // Get one Sessions
 const sessions = await prisma.sessions.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:26201
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsFindManyArgs`](../type-aliases/sessionsFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsFindManyArgs`](../type-aliases/sessionsFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Sessions
-const sessions = await prisma.sessions.findMany();
+const sessions = await prisma.sessions.findMany()
 
 // Get first 10 Sessions
-const sessions = await prisma.sessions.findMany({ take: 10 });
+const sessions = await prisma.sessions.findMany({ take: 10 })
 
 // Only select the `token`
-const sessionsWithTokenOnly = await prisma.sessions.findMany({ select: { token: true } });
+const sessionsWithTokenOnly = await prisma.sessions.findMany({ select: { token: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26138
 
@@ -470,7 +470,7 @@ Find zero or one Sessions that matches the filter.
 
 ##### T
 
-`T` _extends_ [`sessionsFindUniqueArgs`](../type-aliases/sessionsFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsFindUniqueArgs`](../type-aliases/sessionsFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a Sessions
 ```ts
 // Get one Sessions
 const sessions = await prisma.sessions.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26152
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`sessionsFindUniqueOrThrowArgs`](../type-aliases/sessionsFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsFindUniqueOrThrowArgs`](../type-aliases/sessionsFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a Sessions
 ```ts
 // Get one Sessions
 const sessions = await prisma.sessions.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetSessionsGroupByPayload`](../type-aliases/GetSessionsGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetSessionsGroupByPayload`](../type-aliases/GetSessionsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:26436
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsGroupByArgs`](../type-aliases/sessionsGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsGroupByArgs`](../type-aliases/sessionsGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md) \| [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md) \| [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md) \| [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md) \| [`sessionsOrderByWithAggregationInput`](../type-aliases/sessionsOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"createdAt"` \| `"userId"` \| `"token"`
+`OrderFields` *extends* `"createdAt"` \| `"userId"` \| `"token"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`SessionsScalarFieldEnum`](../type-aliases/SessionsScalarFieldEnum.md)
+`ByFields` *extends* [`SessionsScalarFieldEnum`](../type-aliases/SessionsScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetSessionsGroupByPayload`](../type-aliases/GetSessionsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetSessionsGroupByPayload`](../type-aliases/GetSessionsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26284
 
@@ -630,7 +630,7 @@ Update one Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsUpdateArgs`](../type-aliases/sessionsUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsUpdateArgs`](../type-aliases/sessionsUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one Sessions.
 ```ts
 // Update one Sessions
 const sessions = await prisma.sessions.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:26317
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`sessionsUpdateManyArgs`](../type-aliases/sessionsUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsUpdateManyArgs`](../type-aliases/sessionsUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Sessions
 const sessions = await prisma.sessions.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:26347
 
@@ -716,7 +716,7 @@ Update zero or more Sessions and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`sessionsUpdateManyAndReturnArgs`](../type-aliases/sessionsUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsUpdateManyAndReturnArgs`](../type-aliases/sessionsUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__sessionsClient`](Prisma__sessionsClient.md)\<`GetFindResult`\<[`$sessionsPayload`](../type-aliases/$sessionsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:26366
 
@@ -771,7 +771,7 @@ Create or update one Sessions.
 
 ##### T
 
-`T` _extends_ [`sessionsUpsertArgs`](../type-aliases/sessionsUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`sessionsUpsertArgs`](../type-aliases/sessionsUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a Sessions.
 ```ts
 // Update or create a Sessions
 const sessions = await prisma.sessions.upsert({
-    create: {
-        // ... data to create a Sessions
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the Sessions we want to update
-    }
-});
+  create: {
+    // ... data to create a Sessions
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the Sessions we want to update
+  }
+})
 ```

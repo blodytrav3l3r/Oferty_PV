@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / GlobalOmitConfig
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:3482
 
 Defined in: generated/prisma/index.d.ts:3485
 
----
+***
 
 ### ai\_knowledge\_base?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:3485
 
 Defined in: generated/prisma/index.d.ts:3487
 
----
+***
 
 ### ai\_recommendations?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:3487
 
 Defined in: generated/prisma/index.d.ts:3488
 
----
+***
 
 ### ai\_telemetry\_events?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:3488
 
 Defined in: generated/prisma/index.d.ts:3484
 
----
+***
 
 ### ai\_telemetry\_logs?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:3484
 
 Defined in: generated/prisma/index.d.ts:3483
 
----
+***
 
 ### ai\_telemetry\_versions?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:3483
 
 Defined in: generated/prisma/index.d.ts:3486
 
----
+***
 
 ### ai\_transition\_snapshots?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:3486
 
 Defined in: generated/prisma/index.d.ts:3489
 
----
+***
 
 ### aiEvaluation?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:3489
 
 Defined in: generated/prisma/index.d.ts:3511
 
----
+***
 
 ### aiFeature?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:3511
 
 Defined in: generated/prisma/index.d.ts:3509
 
----
+***
 
 ### aiModel?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:3509
 
 Defined in: generated/prisma/index.d.ts:3510
 
----
+***
 
 ### aiRewardLog?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:3510
 
 Defined in: generated/prisma/index.d.ts:3512
 
----
+***
 
 ### audit\_logs?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:3512
 
 Defined in: generated/prisma/index.d.ts:3490
 
----
+***
 
 ### categoriesRury?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:3490
 
 Defined in: generated/prisma/index.d.ts:3505
 
----
+***
 
 ### categoriesStudnie?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:3505
 
 Defined in: generated/prisma/index.d.ts:3507
 
----
+***
 
 ### clients\_rel?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:3507
 
 Defined in: generated/prisma/index.d.ts:3491
 
----
+***
 
 ### offer\_items\_rel?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:3491
 
 Defined in: generated/prisma/index.d.ts:3492
 
----
+***
 
 ### offer\_studnie\_items\_rel?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:3492
 
 Defined in: generated/prisma/index.d.ts:3493
 
----
+***
 
 ### offers\_rel?
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:3493
 
 Defined in: generated/prisma/index.d.ts:3494
 
----
+***
 
 ### offers\_studnie\_rel?
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/index.d.ts:3494
 
 Defined in: generated/prisma/index.d.ts:3495
 
----
+***
 
 ### order\_counters?
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/index.d.ts:3495
 
 Defined in: generated/prisma/index.d.ts:3496
 
----
+***
 
 ### order\_counters\_rury?
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/index.d.ts:3496
 
 Defined in: generated/prisma/index.d.ts:3497
 
----
+***
 
 ### orders\_rury\_rel?
 
@@ -186,7 +186,7 @@ Defined in: generated/prisma/index.d.ts:3497
 
 Defined in: generated/prisma/index.d.ts:3499
 
----
+***
 
 ### orders\_studnie\_rel?
 
@@ -194,7 +194,7 @@ Defined in: generated/prisma/index.d.ts:3499
 
 Defined in: generated/prisma/index.d.ts:3498
 
----
+***
 
 ### production\_order\_counters?
 
@@ -202,7 +202,7 @@ Defined in: generated/prisma/index.d.ts:3498
 
 Defined in: generated/prisma/index.d.ts:3500
 
----
+***
 
 ### production\_orders\_rel?
 
@@ -210,7 +210,7 @@ Defined in: generated/prisma/index.d.ts:3500
 
 Defined in: generated/prisma/index.d.ts:3501
 
----
+***
 
 ### productsRury?
 
@@ -218,7 +218,7 @@ Defined in: generated/prisma/index.d.ts:3501
 
 Defined in: generated/prisma/index.d.ts:3506
 
----
+***
 
 ### productsStudnie?
 
@@ -226,7 +226,7 @@ Defined in: generated/prisma/index.d.ts:3506
 
 Defined in: generated/prisma/index.d.ts:3508
 
----
+***
 
 ### recycled\_production\_numbers?
 
@@ -234,7 +234,7 @@ Defined in: generated/prisma/index.d.ts:3508
 
 Defined in: generated/prisma/index.d.ts:3502
 
----
+***
 
 ### sessions?
 
@@ -242,7 +242,7 @@ Defined in: generated/prisma/index.d.ts:3502
 
 Defined in: generated/prisma/index.d.ts:3503
 
----
+***
 
 ### settings?
 
@@ -250,7 +250,7 @@ Defined in: generated/prisma/index.d.ts:3503
 
 Defined in: generated/prisma/index.d.ts:3504
 
----
+***
 
 ### users?
 

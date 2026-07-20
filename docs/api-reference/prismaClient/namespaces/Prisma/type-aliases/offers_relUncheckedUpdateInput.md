@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_relUncheckedUpdateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43212
 
 Defined in: generated/prisma/index.d.ts:43215
 
----
+***
 
 ### clientName?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43215
 
 Defined in: generated/prisma/index.d.ts:43223
 
----
+***
 
 ### clientNip?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:43223
 
 Defined in: generated/prisma/index.d.ts:43225
 
----
+***
 
 ### createdAt?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:43225
 
 Defined in: generated/prisma/index.d.ts:43217
 
----
+***
 
 ### data?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:43217
 
 Defined in: generated/prisma/index.d.ts:43220
 
----
+***
 
 ### history?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:43220
 
 Defined in: generated/prisma/index.d.ts:43222
 
----
+***
 
 ### id?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:43222
 
 Defined in: generated/prisma/index.d.ts:43213
 
----
+***
 
 ### investName?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:43213
 
 Defined in: generated/prisma/index.d.ts:43224
 
----
+***
 
 ### offer\_number?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:43224
 
 Defined in: generated/prisma/index.d.ts:43219
 
----
+***
 
 ### state?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:43219
 
 Defined in: generated/prisma/index.d.ts:43216
 
----
+***
 
 ### transportCost?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:43216
 
 Defined in: generated/prisma/index.d.ts:43218
 
----
+***
 
 ### updatedAt?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:43218
 
 Defined in: generated/prisma/index.d.ts:43221
 
----
+***
 
 ### userId?
 

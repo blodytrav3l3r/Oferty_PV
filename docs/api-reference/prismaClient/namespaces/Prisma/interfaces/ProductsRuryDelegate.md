@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:29217
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the ProductsRury model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetProductsRuryAggregateType`](../type-aliases/GetProductsRuryAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetProductsRuryAggregateType`](../type-aliases/GetProductsRuryAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:29508
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryAggregateArgs`](../type-aliases/ProductsRuryAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryAggregateArgs`](../type-aliases/ProductsRuryAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof ProductsRuryCountAggregateOutputType ? ProductsRuryCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof ProductsRuryCountAggregateOutputType ? ProductsRuryCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:29474
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryCountArgs`](../type-aliases/ProductsRuryCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryCountArgs`](../type-aliases/ProductsRuryCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter ProductsRuries to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof ProductsRuryCountAggregateOutputType ? ProductsRuryCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof ProductsRuryCountAggregateOutputType ? ProductsRuryCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of ProductsRuries
 const count = await prisma.productsRury.count({
-    where: {
-        // ... the filter for the ProductsRuries we want to count
-    }
-});
+  where: {
+    // ... the filter for the ProductsRuries we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29307
 
@@ -139,7 +139,7 @@ Create a ProductsRury.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryCreateArgs`](../type-aliases/ProductsRuryCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryCreateArgs`](../type-aliases/ProductsRuryCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a ProductsRury.
 ```ts
 // Create one ProductsRury
 const ProductsRury = await prisma.productsRury.create({
-    data: {
-        // ... data to create a ProductsRury
-    }
-});
+  data: {
+    // ... data to create a ProductsRury
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:29321
 
@@ -178,7 +178,7 @@ Create many ProductsRuries.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryCreateManyArgs`](../type-aliases/ProductsRuryCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryCreateManyArgs`](../type-aliases/ProductsRuryCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many ProductsRuries.
 ```ts
 // Create many ProductsRuries
 const productsRury = await prisma.productsRury.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:29345
 
@@ -217,7 +217,7 @@ Create many ProductsRuries and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryCreateManyAndReturnArgs`](../type-aliases/ProductsRuryCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryCreateManyAndReturnArgs`](../type-aliases/ProductsRuryCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29359
 
@@ -266,7 +266,7 @@ Delete a ProductsRury.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryDeleteArgs`](../type-aliases/ProductsRuryDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryDeleteArgs`](../type-aliases/ProductsRuryDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one ProductsRury.
 ```ts
 // Delete one ProductsRury
 const ProductsRury = await prisma.productsRury.delete({
-    where: {
-        // ... filter to delete one ProductsRury
-    }
-});
+  where: {
+    // ... filter to delete one ProductsRury
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:29390
 
@@ -305,7 +305,7 @@ Delete zero or more ProductsRuries.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryDeleteManyArgs`](../type-aliases/ProductsRuryDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryDeleteManyArgs`](../type-aliases/ProductsRuryDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter ProductsRuries to delete.
 ```ts
 // Delete a few ProductsRuries
 const { count } = await prisma.productsRury.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29259
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryFindFirstArgs`](../type-aliases/ProductsRuryFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryFindFirstArgs`](../type-aliases/ProductsRuryFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a ProductsRury
 ```ts
 // Get one ProductsRury
 const productsRury = await prisma.productsRury.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29275
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryFindFirstOrThrowArgs`](../type-aliases/ProductsRuryFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryFindFirstOrThrowArgs`](../type-aliases/ProductsRuryFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a ProductsRury
 ```ts
 // Get one ProductsRury
 const productsRury = await prisma.productsRury.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:29293
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryFindManyArgs`](../type-aliases/ProductsRuryFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryFindManyArgs`](../type-aliases/ProductsRuryFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all ProductsRuries
-const productsRuries = await prisma.productsRury.findMany();
+const productsRuries = await prisma.productsRury.findMany()
 
 // Get first 10 ProductsRuries
-const productsRuries = await prisma.productsRury.findMany({ take: 10 });
+const productsRuries = await prisma.productsRury.findMany({ take: 10 })
 
 // Only select the `id`
-const productsRuryWithIdOnly = await prisma.productsRury.findMany({ select: { id: true } });
+const productsRuryWithIdOnly = await prisma.productsRury.findMany({ select: { id: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29230
 
@@ -470,7 +470,7 @@ Find zero or one ProductsRury that matches the filter.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryFindUniqueArgs`](../type-aliases/ProductsRuryFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryFindUniqueArgs`](../type-aliases/ProductsRuryFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a ProductsRury
 ```ts
 // Get one ProductsRury
 const productsRury = await prisma.productsRury.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29244
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryFindUniqueOrThrowArgs`](../type-aliases/ProductsRuryFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryFindUniqueOrThrowArgs`](../type-aliases/ProductsRuryFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a ProductsRury
 ```ts
 // Get one ProductsRury
 const productsRury = await prisma.productsRury.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetProductsRuryGroupByPayload`](../type-aliases/GetProductsRuryGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetProductsRuryGroupByPayload`](../type-aliases/GetProductsRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:29528
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryGroupByArgs`](../type-aliases/ProductsRuryGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryGroupByArgs`](../type-aliases/ProductsRuryGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md) \| [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md) \| [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md) \| [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md) \| [`ProductsRuryOrderByWithAggregationInput`](../type-aliases/ProductsRuryOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"id"` \| `"name"` \| `"category"` \| `"price"` \| `"transport"` \| `"weight"` \| `"area"`
+`OrderFields` *extends* `"id"` \| `"name"` \| `"category"` \| `"price"` \| `"transport"` \| `"weight"` \| `"area"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`ProductsRuryScalarFieldEnum`](../type-aliases/ProductsRuryScalarFieldEnum.md)
+`ByFields` *extends* [`ProductsRuryScalarFieldEnum`](../type-aliases/ProductsRuryScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetProductsRuryGroupByPayload`](../type-aliases/GetProductsRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetProductsRuryGroupByPayload`](../type-aliases/GetProductsRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29376
 
@@ -630,7 +630,7 @@ Update one ProductsRury.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryUpdateArgs`](../type-aliases/ProductsRuryUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryUpdateArgs`](../type-aliases/ProductsRuryUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one ProductsRury.
 ```ts
 // Update one ProductsRury
 const productsRury = await prisma.productsRury.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:29409
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`ProductsRuryUpdateManyArgs`](../type-aliases/ProductsRuryUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryUpdateManyArgs`](../type-aliases/ProductsRuryUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many ProductsRuries
 const productsRury = await prisma.productsRury.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:29439
 
@@ -716,7 +716,7 @@ Update zero or more ProductsRuries and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryUpdateManyAndReturnArgs`](../type-aliases/ProductsRuryUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryUpdateManyAndReturnArgs`](../type-aliases/ProductsRuryUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__ProductsRuryClient`](Prisma__ProductsRuryClient.md)\<`GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:29458
 
@@ -771,7 +771,7 @@ Create or update one ProductsRury.
 
 ##### T
 
-`T` _extends_ [`ProductsRuryUpsertArgs`](../type-aliases/ProductsRuryUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`ProductsRuryUpsertArgs`](../type-aliases/ProductsRuryUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a ProductsRury.
 ```ts
 // Update or create a ProductsRury
 const productsRury = await prisma.productsRury.upsert({
-    create: {
-        // ... data to create a ProductsRury
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the ProductsRury we want to update
-    }
-});
+  create: {
+    // ... data to create a ProductsRury
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the ProductsRury we want to update
+  }
+})
 ```

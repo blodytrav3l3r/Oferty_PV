@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Keys
 
 # Type Alias: Keys\<U\>
 
-> **Keys**\<`U`> \> = `U` _extends_ `unknown` ? keyof `U` : `never`
+> **Keys**\<`U`\> = `U` *extends* `unknown` ? keyof `U` : `never`
 
 Defined in: generated/prisma/index.d.ts:977
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:977
 
 ### U
 
-`U` _extends_ [`Union`](Union.md)
+`U` *extends* [`Union`](Union.md)

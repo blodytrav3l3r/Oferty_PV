@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsSelectCreateManyAndReturn
 
 # Type Alias: ai\_transition\_snapshotsSelectCreateManyAndReturn\<ExtArgs\>
 
-> **ai\_transition\_snapshotsSelectCreateManyAndReturn**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `affectedDennicaHeight?`: `boolean`; `affectedFinalConfig?`: `boolean`; `affectedReductionChoice?`: `boolean`; `affectedRingSelection?`: `boolean`; `angleDeg?`: `boolean`; `collided?`: `boolean`; `configId?`: `boolean`; `createdAt?`: `boolean`; `dn?`: `boolean`; `heightFromBottomMm?`: `boolean`; `id?`: `boolean`; `minimalDennicaForTransitionsMm?`: `boolean`; `position?`: `boolean`; `producer?`: `boolean`; `solverModifiedForTransitions?`: `boolean`; `transitionNo?`: `boolean`; `transitionType?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_transition_snapshots"`\]\>
+> **ai\_transition\_snapshotsSelectCreateManyAndReturn**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `affectedDennicaHeight?`: `boolean`; `affectedFinalConfig?`: `boolean`; `affectedReductionChoice?`: `boolean`; `affectedRingSelection?`: `boolean`; `angleDeg?`: `boolean`; `collided?`: `boolean`; `configId?`: `boolean`; `createdAt?`: `boolean`; `dn?`: `boolean`; `heightFromBottomMm?`: `boolean`; `id?`: `boolean`; `minimalDennicaForTransitionsMm?`: `boolean`; `position?`: `boolean`; `producer?`: `boolean`; `solverModifiedForTransitions?`: `boolean`; `transitionNo?`: `boolean`; `transitionType?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_transition_snapshots"`\]\>
 
 Defined in: generated/prisma/index.d.ts:11426
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:11426
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / UsersAggregateArgs
 
 # Type Alias: UsersAggregateArgs\<ExtArgs\>
 
-> **UsersAggregateArgs**\<`ExtArgs`> \> = `object`
+> **UsersAggregateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:37426
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:37426
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:37466
 
 Select which fields to average
 
----
+***
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:37460
 
 Count returned users
 
----
+***
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:37484
 
 Select which fields to find the maximum value
 
----
+***
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:37478
 
 Select which fields to find the minimum value
 
----
+***
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:37472
 
 Select which fields to sum
 
----
+***
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:37442
 
 Sets the start position
 
----
+***
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:37436
 
 Determine the order of users to fetch.
 
----
+***
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:37454
 
 Skip the first `n` users.
 
----
+***
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:37448
 
 Take `±n` users from the position of the cursor.
 
----
+***
 
 ### where?
 

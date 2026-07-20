@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_logsFindManyArgs
 
 # Type Alias: ai\_telemetry\_logsFindManyArgs\<ExtArgs\>
 
-> **ai\_telemetry\_logsFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_telemetry\_logsFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:5232
 
@@ -16,7 +16,7 @@ ai_telemetry_logs findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:5256
 
 Sets the position for listing ai_telemetry_logs.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing ai_telemetry_logs.
 
 Defined in: generated/prisma/index.d.ts:5269
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ai_telemetry_logsOmit`](ai_telemetry_logsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_telemetry_logsOmit`](ai_telemetry_logsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:5240
 
 Omit specific fields from the ai_telemetry_logs
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:5250
 
 Determine the order of ai_telemetry_logs to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_telemetry_logsSelect`](ai_telemetry_logsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_telemetry_logsSelect`](ai_telemetry_logsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:5236
 
 Select specific fields to fetch from the ai_telemetry_logs
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:5268
 
 Skip the first `n` ai_telemetry_logs.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:5262
 
 Take `±n` ai_telemetry_logs from the position of the cursor.
 
----
+***
 
 ### where?
 

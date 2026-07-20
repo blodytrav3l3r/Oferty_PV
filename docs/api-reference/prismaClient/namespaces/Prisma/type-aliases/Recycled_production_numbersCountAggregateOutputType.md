@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Recycled\_production\_numbersCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:24932
 
 Defined in: generated/prisma/index.d.ts:24936
 
----
+***
 
 ### seqNumber
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:24936
 
 Defined in: generated/prisma/index.d.ts:24935
 
----
+***
 
 ### userId
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:24935
 
 Defined in: generated/prisma/index.d.ts:24933
 
----
+***
 
 ### year
 

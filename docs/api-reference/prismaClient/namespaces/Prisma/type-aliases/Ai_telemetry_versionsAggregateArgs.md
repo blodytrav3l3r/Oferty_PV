@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_versionsAggregateArgs
 
 # Type Alias: Ai\_telemetry\_versionsAggregateArgs\<ExtArgs\>
 
-> **Ai\_telemetry\_versionsAggregateArgs**\<`ExtArgs`> \> = `object`
+> **Ai\_telemetry\_versionsAggregateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:7797
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:7797
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:7831
 
 Count returned ai_telemetry_versions
 
----
+***
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:7843
 
 Select which fields to find the maximum value
 
----
+***
 
 ### \_min?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:7837
 
 Select which fields to find the minimum value
 
----
+***
 
 ### cursor?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:7813
 
 Sets the start position
 
----
+***
 
 ### orderBy?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:7807
 
 Determine the order of ai_telemetry_versions to fetch.
 
----
+***
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:7825
 
 Skip the first `n` ai_telemetry_versions.
 
----
+***
 
 ### take?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:7819
 
 Take `±n` ai_telemetry_versions from the position of the cursor.
 
----
+***
 
 ### where?
 

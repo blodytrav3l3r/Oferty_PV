@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_knowledge\_baseFindManyArgs
 
 # Type Alias: ai\_knowledge\_baseFindManyArgs\<ExtArgs\>
 
-> **ai\_knowledge\_baseFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_knowledge\_baseFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:9733
 
@@ -16,7 +16,7 @@ ai_knowledge_base findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:9757
 
 Sets the position for listing ai_knowledge_bases.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing ai_knowledge_bases.
 
 Defined in: generated/prisma/index.d.ts:9770
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ai_knowledge_baseOmit`](ai_knowledge_baseOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_knowledge_baseOmit`](ai_knowledge_baseOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:9741
 
 Omit specific fields from the ai_knowledge_base
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:9751
 
 Determine the order of ai_knowledge_bases to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_knowledge_baseSelect`](ai_knowledge_baseSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_knowledge_baseSelect`](ai_knowledge_baseSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:9737
 
 Select specific fields to fetch from the ai_knowledge_base
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:9769
 
 Skip the first `n` ai_knowledge_bases.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:9763
 
 Take `±n` ai_knowledge_bases from the position of the cursor.
 
----
+***
 
 ### where?
 

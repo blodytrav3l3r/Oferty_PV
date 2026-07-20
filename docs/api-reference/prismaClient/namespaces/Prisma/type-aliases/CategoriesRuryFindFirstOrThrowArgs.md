@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesRuryFindFirstOrThrowArgs
 
 # Type Alias: CategoriesRuryFindFirstOrThrowArgs\<ExtArgs\>
 
-> **CategoriesRuryFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **CategoriesRuryFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:28596
 
@@ -16,7 +16,7 @@ CategoriesRury findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:28624
 
 Sets the position for searching for CategoriesRuries.
 
----
+***
 
 ### distinct?
 
@@ -42,27 +42,27 @@ Defined in: generated/prisma/index.d.ts:28642
 
 Filter by unique combinations of CategoriesRuries.
 
----
+***
 
 ### include?
 
-> `optional` **include?**: [`CategoriesRuryInclude`](CategoriesRuryInclude.md)\<`ExtArgs`> \> \| `null`
+> `optional` **include?**: [`CategoriesRuryInclude`](CategoriesRuryInclude.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:28608
 
 Choose, which related nodes to fetch as well
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`CategoriesRuryOmit`](CategoriesRuryOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`CategoriesRuryOmit`](CategoriesRuryOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:28604
 
 Omit specific fields from the CategoriesRury
 
----
+***
 
 ### orderBy?
 
@@ -74,17 +74,17 @@ Defined in: generated/prisma/index.d.ts:28618
 
 Determine the order of CategoriesRuries to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`CategoriesRurySelect`](CategoriesRurySelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`CategoriesRurySelect`](CategoriesRurySelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:28600
 
 Select specific fields to fetch from the CategoriesRury
 
----
+***
 
 ### skip?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:28636
 
 Skip the first `n` CategoriesRuries.
 
----
+***
 
 ### take?
 
@@ -108,7 +108,7 @@ Defined in: generated/prisma/index.d.ts:28630
 
 Take `±n` CategoriesRuries from the position of the cursor.
 
----
+***
 
 ### where?
 

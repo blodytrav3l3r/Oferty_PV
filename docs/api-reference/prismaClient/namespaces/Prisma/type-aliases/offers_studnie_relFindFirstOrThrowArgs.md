@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_studnie\_relFindFirstOrThrowArgs
 
 # Type Alias: offers\_studnie\_relFindFirstOrThrowArgs\<ExtArgs\>
 
-> **offers\_studnie\_relFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **offers\_studnie\_relFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:18519
 
@@ -16,7 +16,7 @@ offers_studnie_rel findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:18543
 
 Sets the position for searching for offers_studnie_rels.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:18561
 
 Filter by unique combinations of offers_studnie_rels.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`offers_studnie_relOmit`](offers_studnie_relOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`offers_studnie_relOmit`](offers_studnie_relOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:18527
 
 Omit specific fields from the offers_studnie_rel
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:18537
 
 Determine the order of offers_studnie_rels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`offers_studnie_relSelect`](offers_studnie_relSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`offers_studnie_relSelect`](offers_studnie_relSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:18523
 
 Select specific fields to fetch from the offers_studnie_rel
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:18555
 
 Skip the first `n` offers_studnie_rels.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:18549
 
 Take `±n` offers_studnie_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

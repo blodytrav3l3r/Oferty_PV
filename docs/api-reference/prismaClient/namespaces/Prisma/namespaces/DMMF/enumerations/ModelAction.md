@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../../README.md) / [prismaClient](../../../../../README.md) / [Prisma](../../../README.md) / [DMMF](../README.md) / ModelAction
 
@@ -16,7 +16,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2388
 
 Defined in: generated/prisma/runtime/library.d.ts:2405
 
----
+***
 
 ### aggregateRaw
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2405
 
 Defined in: generated/prisma/runtime/library.d.ts:2407
 
----
+***
 
 ### count
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2407
 
 Defined in: generated/prisma/runtime/library.d.ts:2404
 
----
+***
 
 ### create
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2404
 
 Defined in: generated/prisma/runtime/library.d.ts:2394
 
----
+***
 
 ### createMany
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2394
 
 Defined in: generated/prisma/runtime/library.d.ts:2395
 
----
+***
 
 ### createManyAndReturn
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2395
 
 Defined in: generated/prisma/runtime/library.d.ts:2396
 
----
+***
 
 ### delete
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2396
 
 Defined in: generated/prisma/runtime/library.d.ts:2401
 
----
+***
 
 ### deleteMany
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2401
 
 Defined in: generated/prisma/runtime/library.d.ts:2402
 
----
+***
 
 ### findFirst
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2402
 
 Defined in: generated/prisma/runtime/library.d.ts:2391
 
----
+***
 
 ### findFirstOrThrow
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2391
 
 Defined in: generated/prisma/runtime/library.d.ts:2392
 
----
+***
 
 ### findMany
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2392
 
 Defined in: generated/prisma/runtime/library.d.ts:2393
 
----
+***
 
 ### findRaw
 
@@ -104,7 +104,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2393
 
 Defined in: generated/prisma/runtime/library.d.ts:2406
 
----
+***
 
 ### findUnique
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2406
 
 Defined in: generated/prisma/runtime/library.d.ts:2389
 
----
+***
 
 ### findUniqueOrThrow
 
@@ -120,7 +120,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2389
 
 Defined in: generated/prisma/runtime/library.d.ts:2390
 
----
+***
 
 ### groupBy
 
@@ -128,7 +128,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2390
 
 Defined in: generated/prisma/runtime/library.d.ts:2403
 
----
+***
 
 ### update
 
@@ -136,7 +136,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2403
 
 Defined in: generated/prisma/runtime/library.d.ts:2397
 
----
+***
 
 ### updateMany
 
@@ -144,7 +144,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2397
 
 Defined in: generated/prisma/runtime/library.d.ts:2398
 
----
+***
 
 ### updateManyAndReturn
 
@@ -152,7 +152,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2398
 
 Defined in: generated/prisma/runtime/library.d.ts:2399
 
----
+***
 
 ### upsert
 

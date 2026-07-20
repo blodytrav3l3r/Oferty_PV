@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsUpdateManyArgs
 
 # Type Alias: settingsUpdateManyArgs\<ExtArgs\>
 
-> **settingsUpdateManyArgs**\<`ExtArgs`> \> = `object`
+> **settingsUpdateManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:27744
 
@@ -16,19 +16,19 @@ settings updateMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`settingsUpdateManyMutationInput`](settingsUpdateManyMutationInput.md), [`settingsUncheckedUpdateManyInput`](settingsUncheckedUpdateManyInput.md)>\>
+> **data**: [`XOR`](XOR.md)\<[`settingsUpdateManyMutationInput`](settingsUpdateManyMutationInput.md), [`settingsUncheckedUpdateManyInput`](settingsUncheckedUpdateManyInput.md)\>
 
 Defined in: generated/prisma/index.d.ts:27748
 
 The data used to update settings.
 
----
+***
 
 ### limit?
 
@@ -38,7 +38,7 @@ Defined in: generated/prisma/index.d.ts:27756
 
 Limit how many settings to update.
 
----
+***
 
 ### where?
 

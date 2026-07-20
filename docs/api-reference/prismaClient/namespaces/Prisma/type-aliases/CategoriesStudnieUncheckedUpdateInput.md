@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieUncheckedUpdateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43972
 
 Defined in: generated/prisma/index.d.ts:43974
 
----
+***
 
 ### name?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43974
 
 Defined in: generated/prisma/index.d.ts:43973
 
----
+***
 
 ### order?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:43973
 
 Defined in: generated/prisma/index.d.ts:43975
 
----
+***
 
 ### products?
 

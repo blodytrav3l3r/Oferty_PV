@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryUncheckedUpdateManyWithoutCategory\_relNestedInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46866
 
 Defined in: generated/prisma/index.d.ts:46874
 
----
+***
 
 ### connectOrCreate?
 
@@ -26,15 +26,15 @@ Defined in: generated/prisma/index.d.ts:46874
 
 Defined in: generated/prisma/index.d.ts:46868
 
----
+***
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md), [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)> \> \| [`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md)[] \| [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)[]
+> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md), [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)\> \| [`ProductsRuryCreateWithoutCategory_relInput`](ProductsRuryCreateWithoutCategory_relInput.md)[] \| [`ProductsRuryUncheckedCreateWithoutCategory_relInput`](ProductsRuryUncheckedCreateWithoutCategory_relInput.md)[]
 
 Defined in: generated/prisma/index.d.ts:46867
 
----
+***
 
 ### createMany?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46867
 
 Defined in: generated/prisma/index.d.ts:46870
 
----
+***
 
 ### delete?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:46870
 
 Defined in: generated/prisma/index.d.ts:46873
 
----
+***
 
 ### deleteMany?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:46873
 
 Defined in: generated/prisma/index.d.ts:46877
 
----
+***
 
 ### disconnect?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:46877
 
 Defined in: generated/prisma/index.d.ts:46872
 
----
+***
 
 ### set?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:46872
 
 Defined in: generated/prisma/index.d.ts:46871
 
----
+***
 
 ### update?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:46871
 
 Defined in: generated/prisma/index.d.ts:46875
 
----
+***
 
 ### updateMany?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:46875
 
 Defined in: generated/prisma/index.d.ts:46876
 
----
+***
 
 ### upsert?
 

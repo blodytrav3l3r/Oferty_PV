@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_eventsSumAggregateInputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:5537
 
 Defined in: generated/prisma/index.d.ts:5538
 
----
+***
 
 ### orderInSession?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:5538
 
 Defined in: generated/prisma/index.d.ts:5539
 
----
+***
 
 ### sequenceNo?
 

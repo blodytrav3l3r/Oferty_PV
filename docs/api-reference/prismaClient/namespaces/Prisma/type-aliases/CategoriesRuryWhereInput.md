@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesRuryWhereInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40870
 
 Defined in: generated/prisma/index.d.ts:40871
 
----
+***
 
 ### name?
 
-> `optional` **name?**: [`StringFilter`](StringFilter.md)\<`"CategoriesRury"`> \> \| `string`
+> `optional` **name?**: [`StringFilter`](StringFilter.md)\<`"CategoriesRury"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40874
 
----
+***
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40874
 
 Defined in: generated/prisma/index.d.ts:40873
 
----
+***
 
 ### OR?
 
@@ -42,15 +42,15 @@ Defined in: generated/prisma/index.d.ts:40873
 
 Defined in: generated/prisma/index.d.ts:40872
 
----
+***
 
 ### order?
 
-> `optional` **order?**: [`IntFilter`](IntFilter.md)\<`"CategoriesRury"`> \> \| `number`
+> `optional` **order?**: [`IntFilter`](IntFilter.md)\<`"CategoriesRury"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40875
 
----
+***
 
 ### products?
 

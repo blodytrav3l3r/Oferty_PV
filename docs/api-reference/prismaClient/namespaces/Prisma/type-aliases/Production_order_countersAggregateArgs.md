@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Production\_order\_countersAggregateArgs
 
 # Type Alias: Production\_order\_countersAggregateArgs\<ExtArgs\>
 
-> **Production\_order\_countersAggregateArgs**\<`ExtArgs`> \> = `object`
+> **Production\_order\_countersAggregateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:22885
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:22885
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:22925
 
 Select which fields to average
 
----
+***
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:22919
 
 Count returned production_order_counters
 
----
+***
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:22943
 
 Select which fields to find the maximum value
 
----
+***
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:22937
 
 Select which fields to find the minimum value
 
----
+***
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:22931
 
 Select which fields to sum
 
----
+***
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:22901
 
 Sets the start position
 
----
+***
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:22895
 
 Determine the order of production_order_counters to fetch.
 
----
+***
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:22913
 
 Skip the first `n` production_order_counters.
 
----
+***
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:22907
 
 Take `±n` production_order_counters from the position of the cursor.
 
----
+***
 
 ### where?
 

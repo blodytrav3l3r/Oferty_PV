@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsDeleteManyArgs
 
 # Type Alias: ai\_transition\_snapshotsDeleteManyArgs\<ExtArgs\>
 
-> **ai\_transition\_snapshotsDeleteManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_transition\_snapshotsDeleteManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:12292
 
@@ -16,7 +16,7 @@ ai_transition_snapshots deleteMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:12300
 
 Limit how many ai_transition_snapshots to delete.
 
----
+***
 
 ### where?
 

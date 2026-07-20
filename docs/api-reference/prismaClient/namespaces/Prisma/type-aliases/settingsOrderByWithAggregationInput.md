@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40854
 
 Defined in: generated/prisma/index.d.ts:40857
 
----
+***
 
 ### \_max?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40857
 
 Defined in: generated/prisma/index.d.ts:40858
 
----
+***
 
 ### \_min?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40858
 
 Defined in: generated/prisma/index.d.ts:40859
 
----
+***
 
 ### key?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40859
 
 Defined in: generated/prisma/index.d.ts:40855
 
----
+***
 
 ### value?
 

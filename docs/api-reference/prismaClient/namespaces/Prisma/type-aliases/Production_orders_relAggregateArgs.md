@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Production\_orders\_relAggregateArgs
 
 # Type Alias: Production\_orders\_relAggregateArgs\<ExtArgs\>
 
-> **Production\_orders\_relAggregateArgs**\<`ExtArgs`> \> = `object`
+> **Production\_orders\_relAggregateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:23922
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:23922
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:23962
 
 Select which fields to average
 
----
+***
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:23956
 
 Count returned production_orders_rels
 
----
+***
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:23980
 
 Select which fields to find the maximum value
 
----
+***
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:23974
 
 Select which fields to find the minimum value
 
----
+***
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:23968
 
 Select which fields to sum
 
----
+***
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:23938
 
 Sets the start position
 
----
+***
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:23932
 
 Determine the order of production_orders_rels to fetch.
 
----
+***
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:23950
 
 Skip the first `n` production_orders_rels.
 
----
+***
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:23944
 
 Take `±n` production_orders_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

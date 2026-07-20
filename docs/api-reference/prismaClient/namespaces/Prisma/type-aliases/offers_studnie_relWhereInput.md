@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_studnie\_relWhereInput
 
@@ -18,71 +18,71 @@ Defined in: generated/prisma/index.d.ts:40327
 
 Defined in: generated/prisma/index.d.ts:40328
 
----
+***
 
 ### clientId?
 
-> `optional` **clientId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **clientId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40333
 
----
+***
 
 ### clientName?
 
-> `optional` **clientName?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **clientName?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40341
 
----
+***
 
 ### clientNip?
 
-> `optional` **clientNip?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **clientNip?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40343
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40335
 
----
+***
 
 ### data?
 
-> `optional` **data?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **data?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40338
 
----
+***
 
 ### history?
 
-> `optional` **history?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **history?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40340
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"offers_studnie_rel"`> \> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"offers_studnie_rel"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40331
 
----
+***
 
 ### investName?
 
-> `optional` **investName?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **investName?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40342
 
----
+***
 
 ### NOT?
 
@@ -90,15 +90,15 @@ Defined in: generated/prisma/index.d.ts:40342
 
 Defined in: generated/prisma/index.d.ts:40330
 
----
+***
 
 ### offer\_number?
 
-> `optional` **offer\_number?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **offer\_number?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40337
 
----
+***
 
 ### OR?
 
@@ -106,34 +106,34 @@ Defined in: generated/prisma/index.d.ts:40337
 
 Defined in: generated/prisma/index.d.ts:40329
 
----
+***
 
 ### state?
 
-> `optional` **state?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **state?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40334
 
----
+***
 
 ### transportCost?
 
-> `optional` **transportCost?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `number` \| `null`
+> `optional` **transportCost?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"offers_studnie_rel"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40336
 
----
+***
 
 ### updatedAt?
 
-> `optional` **updatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **updatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40339
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"offers_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40332

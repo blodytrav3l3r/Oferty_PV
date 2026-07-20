@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:41006
 
 Defined in: generated/prisma/index.d.ts:41011
 
----
+***
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:41011
 
 Defined in: generated/prisma/index.d.ts:41010
 
----
+***
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:41010
 
 Defined in: generated/prisma/index.d.ts:41012
 
----
+***
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:41012
 
 Defined in: generated/prisma/index.d.ts:41013
 
----
+***
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:41013
 
 Defined in: generated/prisma/index.d.ts:41014
 
----
+***
 
 ### componentType?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:41014
 
 Defined in: generated/prisma/index.d.ts:41008
 
----
+***
 
 ### name?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41008
 
 Defined in: generated/prisma/index.d.ts:41007
 
----
+***
 
 ### order?
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsWhereInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40833
 
 Defined in: generated/prisma/index.d.ts:40834
 
----
+***
 
 ### key?
 
-> `optional` **key?**: [`StringFilter`](StringFilter.md)\<`"settings"`> \> \| `string`
+> `optional` **key?**: [`StringFilter`](StringFilter.md)\<`"settings"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40837
 
----
+***
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40837
 
 Defined in: generated/prisma/index.d.ts:40836
 
----
+***
 
 ### OR?
 
@@ -42,10 +42,10 @@ Defined in: generated/prisma/index.d.ts:40836
 
 Defined in: generated/prisma/index.d.ts:40835
 
----
+***
 
 ### value?
 
-> `optional` **value?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"settings"`> \> \| `string` \| `null`
+> `optional` **value?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"settings"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40838

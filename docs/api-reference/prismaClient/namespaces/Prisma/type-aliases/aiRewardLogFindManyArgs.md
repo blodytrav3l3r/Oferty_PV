@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogFindManyArgs
 
 # Type Alias: aiRewardLogFindManyArgs\<ExtArgs\>
 
-> **aiRewardLogFindManyArgs**\<`ExtArgs`> \> = `object`
+> **aiRewardLogFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:37060
 
@@ -16,7 +16,7 @@ aiRewardLog findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:37084
 
 Sets the position for listing aiRewardLogs.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing aiRewardLogs.
 
 Defined in: generated/prisma/index.d.ts:37097
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`aiRewardLogOmit`](aiRewardLogOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`aiRewardLogOmit`](aiRewardLogOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:37068
 
 Omit specific fields from the aiRewardLog
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:37078
 
 Determine the order of aiRewardLogs to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`aiRewardLogSelect`](aiRewardLogSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`aiRewardLogSelect`](aiRewardLogSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:37064
 
 Select specific fields to fetch from the aiRewardLog
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:37096
 
 Skip the first `n` aiRewardLogs.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:37090
 
 Take `±n` aiRewardLogs from the position of the cursor.
 
----
+***
 
 ### where?
 

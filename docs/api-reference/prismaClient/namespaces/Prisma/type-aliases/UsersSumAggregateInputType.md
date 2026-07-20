@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / UsersSumAggregateInputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:37368
 
 Defined in: generated/prisma/index.d.ts:37369
 
----
+***
 
 ### productionOrderStartNumber?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:37369
 
 Defined in: generated/prisma/index.d.ts:37370
 
----
+***
 
 ### totalReward?
 

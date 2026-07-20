@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_eventsSelectCreateManyAndReturn
 
 # Type Alias: ai\_telemetry\_eventsSelectCreateManyAndReturn\<ExtArgs\>
 
-> **ai\_telemetry\_eventsSelectCreateManyAndReturn**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `changeReason?`: `boolean`; `componentId?`: `boolean`; `createdAt?`: `boolean`; `eventType?`: `boolean`; `id?`: `boolean`; `msSinceConfig?`: `boolean`; `newValue?`: `boolean`; `orderInSession?`: `boolean`; `previousValue?`: `boolean`; `sequenceNo?`: `boolean`; `telemetryId?`: `boolean`; `userId?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_telemetry_events"`\]\>
+> **ai\_telemetry\_eventsSelectCreateManyAndReturn**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `changeReason?`: `boolean`; `componentId?`: `boolean`; `createdAt?`: `boolean`; `eventType?`: `boolean`; `id?`: `boolean`; `msSinceConfig?`: `boolean`; `newValue?`: `boolean`; `orderInSession?`: `boolean`; `previousValue?`: `boolean`; `sequenceNo?`: `boolean`; `telemetryId?`: `boolean`; `userId?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_telemetry_events"`\]\>
 
 Defined in: generated/prisma/index.d.ts:5729
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:5729
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

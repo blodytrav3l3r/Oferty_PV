@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_recommendationsGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:10181
 
 Defined in: generated/prisma/index.d.ts:10197
 
----
+***
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:10197
 
 Defined in: generated/prisma/index.d.ts:10196
 
----
+***
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:10196
 
 Defined in: generated/prisma/index.d.ts:10200
 
----
+***
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:10200
 
 Defined in: generated/prisma/index.d.ts:10199
 
----
+***
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:10199
 
 Defined in: generated/prisma/index.d.ts:10198
 
----
+***
 
 ### confidence
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:10198
 
 Defined in: generated/prisma/index.d.ts:10188
 
----
+***
 
 ### decidedAt
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:10188
 
 Defined in: generated/prisma/index.d.ts:10194
 
----
+***
 
 ### decidedBy
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:10194
 
 Defined in: generated/prisma/index.d.ts:10195
 
----
+***
 
 ### dn
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:10195
 
 Defined in: generated/prisma/index.d.ts:10185
 
----
+***
 
 ### generatedAt
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:10185
 
 Defined in: generated/prisma/index.d.ts:10193
 
----
+***
 
 ### id
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:10193
 
 Defined in: generated/prisma/index.d.ts:10182
 
----
+***
 
 ### patternKey
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:10182
 
 Defined in: generated/prisma/index.d.ts:10184
 
----
+***
 
 ### patternType
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:10184
 
 Defined in: generated/prisma/index.d.ts:10183
 
----
+***
 
 ### payload
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:10183
 
 Defined in: generated/prisma/index.d.ts:10189
 
----
+***
 
 ### score
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:10189
 
 Defined in: generated/prisma/index.d.ts:10187
 
----
+***
 
 ### wasAccepted
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:10187
 
 Defined in: generated/prisma/index.d.ts:10191
 
----
+***
 
 ### wasApplied
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:10191
 
 Defined in: generated/prisma/index.d.ts:10190
 
----
+***
 
 ### wasRejected
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:10190
 
 Defined in: generated/prisma/index.d.ts:10192
 
----
+***
 
 ### wellId
 

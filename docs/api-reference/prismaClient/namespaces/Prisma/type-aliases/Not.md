@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Not
 
 # Type Alias: Not\<B\>
 
-> **Not**\<`B`> \> = `object`\[`B`\]
+> **Not**\<`B`\> = `object`\[`B`\]
 
 Defined in: generated/prisma/index.d.ts:951
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:951
 
 ### B
 
-`B` _extends_ [`Boolean`](Boolean.md)
+`B` *extends* [`Boolean`](Boolean.md)

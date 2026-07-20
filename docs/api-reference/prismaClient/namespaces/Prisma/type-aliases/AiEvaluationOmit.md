@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationOmit
 
 # Type Alias: AiEvaluationOmit\<ExtArgs\>
 
-> **AiEvaluationOmit**\<`ExtArgs`> \> = `$Extensions.GetOmit`\<`"id"` \| `"modelVersion"` \| `"acceptance"` \| `"decisionMsAvg"` \| `"rewardsAvg"` \| `"totalDecisions"` \| `"triggeredAt"`, `ExtArgs`\[`"result"`\]\[`"aiEvaluation"`\]\>
+> **AiEvaluationOmit**\<`ExtArgs`\> = `$Extensions.GetOmit`\<`"id"` \| `"modelVersion"` \| `"acceptance"` \| `"decisionMsAvg"` \| `"rewardsAvg"` \| `"totalDecisions"` \| `"triggeredAt"`, `ExtArgs`\[`"result"`\]\[`"aiEvaluation"`\]\>
 
 Defined in: generated/prisma/index.d.ts:35361
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:35361
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

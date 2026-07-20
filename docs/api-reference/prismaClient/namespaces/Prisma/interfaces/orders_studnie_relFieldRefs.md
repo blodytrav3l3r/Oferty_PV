@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relFieldRefs
 
@@ -14,46 +14,46 @@ Fields of the orders_studnie_rel model
 
 ### createdAt
 
-> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21441
 
----
+***
 
 ### data
 
-> `readonly` **data**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **data**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21443
 
----
+***
 
 ### id
 
-> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21438
 
----
+***
 
 ### offerStudnieId
 
-> `readonly` **offerStudnieId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **offerStudnieId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21440
 
----
+***
 
 ### status
 
-> `readonly` **status**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **status**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21442
 
----
+***
 
 ### userId
 
-> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`>\>
+> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"orders_studnie_rel"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:21439

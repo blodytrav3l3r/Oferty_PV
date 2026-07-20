@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiModelOrderByWithRelationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:41390
 
 Defined in: generated/prisma/index.d.ts:41400
 
----
+***
 
 ### bias?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:41400
 
 Defined in: generated/prisma/index.d.ts:41394
 
----
+***
 
 ### createdAt?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:41394
 
 Defined in: generated/prisma/index.d.ts:41402
 
----
+***
 
 ### featureMaxs?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:41402
 
 Defined in: generated/prisma/index.d.ts:41398
 
----
+***
 
 ### featureMins?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:41398
 
 Defined in: generated/prisma/index.d.ts:41397
 
----
+***
 
 ### features?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:41397
 
 Defined in: generated/prisma/index.d.ts:41396
 
----
+***
 
 ### id?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41396
 
 Defined in: generated/prisma/index.d.ts:41391
 
----
+***
 
 ### metrics?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:41391
 
 Defined in: generated/prisma/index.d.ts:41395
 
----
+***
 
 ### notes?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:41395
 
 Defined in: generated/prisma/index.d.ts:41401
 
----
+***
 
 ### trainingRows?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:41401
 
 Defined in: generated/prisma/index.d.ts:41399
 
----
+***
 
 ### version?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:41399
 
 Defined in: generated/prisma/index.d.ts:41392
 
----
+***
 
 ### weights?
 

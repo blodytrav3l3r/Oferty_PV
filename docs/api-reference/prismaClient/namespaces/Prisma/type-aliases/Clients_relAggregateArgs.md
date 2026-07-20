@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Clients\_relAggregateArgs
 
 # Type Alias: Clients\_relAggregateArgs\<ExtArgs\>
 
-> **Clients\_relAggregateArgs**\<`ExtArgs`> \> = `object`
+> **Clients\_relAggregateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:13447
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:13447
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:13481
 
 Count returned clients_rels
 
----
+***
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:13493
 
 Select which fields to find the maximum value
 
----
+***
 
 ### \_min?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:13487
 
 Select which fields to find the minimum value
 
----
+***
 
 ### cursor?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:13463
 
 Sets the start position
 
----
+***
 
 ### orderBy?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:13457
 
 Determine the order of clients_rels to fetch.
 
----
+***
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:13475
 
 Skip the first `n` clients_rels.
 
----
+***
 
 ### take?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:13469
 
 Take `±n` clients_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

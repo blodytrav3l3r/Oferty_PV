@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Orders\_rury\_relCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:21836
 
 Defined in: generated/prisma/index.d.ts:21843
 
----
+***
 
 ### createdAt
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:21843
 
 Defined in: generated/prisma/index.d.ts:21840
 
----
+***
 
 ### data
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:21840
 
 Defined in: generated/prisma/index.d.ts:21842
 
----
+***
 
 ### id
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:21842
 
 Defined in: generated/prisma/index.d.ts:21837
 
----
+***
 
 ### offerId
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:21837
 
 Defined in: generated/prisma/index.d.ts:21839
 
----
+***
 
 ### status
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:21839
 
 Defined in: generated/prisma/index.d.ts:21841
 
----
+***
 
 ### userId
 

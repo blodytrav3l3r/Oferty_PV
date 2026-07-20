@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_studnie\_relOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40381
 
 Defined in: generated/prisma/index.d.ts:40396
 
----
+***
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40396
 
 Defined in: generated/prisma/index.d.ts:40395
 
----
+***
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40395
 
 Defined in: generated/prisma/index.d.ts:40397
 
----
+***
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40397
 
 Defined in: generated/prisma/index.d.ts:40398
 
----
+***
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40398
 
 Defined in: generated/prisma/index.d.ts:40399
 
----
+***
 
 ### clientId?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:40399
 
 Defined in: generated/prisma/index.d.ts:40384
 
----
+***
 
 ### clientName?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:40384
 
 Defined in: generated/prisma/index.d.ts:40392
 
----
+***
 
 ### clientNip?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:40392
 
 Defined in: generated/prisma/index.d.ts:40394
 
----
+***
 
 ### createdAt?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:40394
 
 Defined in: generated/prisma/index.d.ts:40386
 
----
+***
 
 ### data?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:40386
 
 Defined in: generated/prisma/index.d.ts:40389
 
----
+***
 
 ### history?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:40389
 
 Defined in: generated/prisma/index.d.ts:40391
 
----
+***
 
 ### id?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:40391
 
 Defined in: generated/prisma/index.d.ts:40382
 
----
+***
 
 ### investName?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:40382
 
 Defined in: generated/prisma/index.d.ts:40393
 
----
+***
 
 ### offer\_number?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:40393
 
 Defined in: generated/prisma/index.d.ts:40388
 
----
+***
 
 ### state?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:40388
 
 Defined in: generated/prisma/index.d.ts:40385
 
----
+***
 
 ### transportCost?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:40385
 
 Defined in: generated/prisma/index.d.ts:40387
 
----
+***
 
 ### updatedAt?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:40387
 
 Defined in: generated/prisma/index.d.ts:40390
 
----
+***
 
 ### userId?
 

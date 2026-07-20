@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [services/docx/colors](../README.md) / DOCX\_COLORS
 
@@ -8,7 +8,7 @@
 
 > `const` **DOCX\_COLORS**: `object`
 
-Defined in: [src/services/docx/colors.ts:7](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/docx/colors.ts#L7)
+Defined in: [src/services/docx/colors.ts:7](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/docx/colors.ts#L7)
 
 Shared color constants for server-side document generation (docx, pdf).
 These CANNOT use CSS variables — they're used in Node.js context.

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogScalarWhereWithAggregatesInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:41592
 
 ### action?
 
-> `optional` **action?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **action?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41600
 
----
+***
 
 ### AND?
 
@@ -26,39 +26,39 @@ Defined in: generated/prisma/index.d.ts:41600
 
 Defined in: generated/prisma/index.d.ts:41593
 
----
+***
 
 ### configSnapshot?
 
-> `optional` **configSnapshot?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string` \| `null`
+> `optional` **configSnapshot?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41605
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **createdAt?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41606
 
----
+***
 
 ### dn?
 
-> `optional` **dn?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `number`
+> `optional` **dn?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41599
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41596
 
----
+***
 
 ### NOT?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41596
 
 Defined in: generated/prisma/index.d.ts:41595
 
----
+***
 
 ### OR?
 
@@ -74,50 +74,50 @@ Defined in: generated/prisma/index.d.ts:41595
 
 Defined in: generated/prisma/index.d.ts:41594
 
----
+***
 
 ### reward?
 
-> `optional` **reward?**: [`FloatWithAggregatesFilter`](FloatWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `number`
+> `optional` **reward?**: [`FloatWithAggregatesFilter`](FloatWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41601
 
----
+***
 
 ### scoreAfter?
 
-> `optional` **scoreAfter?**: [`FloatNullableWithAggregatesFilter`](FloatNullableWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `number` \| `null`
+> `optional` **scoreAfter?**: [`FloatNullableWithAggregatesFilter`](FloatNullableWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41603
 
----
+***
 
 ### scoreBefore?
 
-> `optional` **scoreBefore?**: [`FloatNullableWithAggregatesFilter`](FloatNullableWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `number` \| `null`
+> `optional` **scoreBefore?**: [`FloatNullableWithAggregatesFilter`](FloatNullableWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41602
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41597
 
----
+***
 
 ### wasAiRanked?
 
-> `optional` **wasAiRanked?**: [`BoolWithAggregatesFilter`](BoolWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `boolean`
+> `optional` **wasAiRanked?**: [`BoolWithAggregatesFilter`](BoolWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:41604
 
----
+***
 
 ### wellId?
 
-> `optional` **wellId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **wellId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41598

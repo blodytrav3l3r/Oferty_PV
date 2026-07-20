@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAi\_recommendations
 
@@ -20,7 +20,7 @@ Model ai_recommendations
 
 Defined in: generated/prisma/index.d.ts:9964
 
----
+***
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:9964
 
 Defined in: generated/prisma/index.d.ts:9963
 
----
+***
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:9963
 
 Defined in: generated/prisma/index.d.ts:9967
 
----
+***
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:9967
 
 Defined in: generated/prisma/index.d.ts:9966
 
----
+***
 
 ### \_sum
 

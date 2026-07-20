@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_transition\_snapshotsSumAggregateInputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:11207
 
 Defined in: generated/prisma/index.d.ts:11211
 
----
+***
 
 ### angleDeg?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:11211
 
 Defined in: generated/prisma/index.d.ts:11210
 
----
+***
 
 ### heightFromBottomMm?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:11210
 
 Defined in: generated/prisma/index.d.ts:11209
 
----
+***
 
 ### minimalDennicaForTransitionsMm?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:11209
 
 Defined in: generated/prisma/index.d.ts:11212
 
----
+***
 
 ### transitionNo?
 

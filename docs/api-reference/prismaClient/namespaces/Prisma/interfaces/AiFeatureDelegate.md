@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:33183
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the AiFeature model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiFeatureAggregateType`](../type-aliases/GetAiFeatureAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiFeatureAggregateType`](../type-aliases/GetAiFeatureAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:33474
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureAggregateArgs`](../type-aliases/AiFeatureAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureAggregateArgs`](../type-aliases/AiFeatureAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiFeatureCountAggregateOutputType ? AiFeatureCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiFeatureCountAggregateOutputType ? AiFeatureCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:33440
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureCountArgs`](../type-aliases/AiFeatureCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureCountArgs`](../type-aliases/AiFeatureCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter AiFeatures to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiFeatureCountAggregateOutputType ? AiFeatureCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiFeatureCountAggregateOutputType ? AiFeatureCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of AiFeatures
 const count = await prisma.aiFeature.count({
-    where: {
-        // ... the filter for the AiFeatures we want to count
-    }
-});
+  where: {
+    // ... the filter for the AiFeatures we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33273
 
@@ -139,7 +139,7 @@ Create a AiFeature.
 
 ##### T
 
-`T` _extends_ [`AiFeatureCreateArgs`](../type-aliases/AiFeatureCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureCreateArgs`](../type-aliases/AiFeatureCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a AiFeature.
 ```ts
 // Create one AiFeature
 const AiFeature = await prisma.aiFeature.create({
-    data: {
-        // ... data to create a AiFeature
-    }
-});
+  data: {
+    // ... data to create a AiFeature
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:33287
 
@@ -178,7 +178,7 @@ Create many AiFeatures.
 
 ##### T
 
-`T` _extends_ [`AiFeatureCreateManyArgs`](../type-aliases/AiFeatureCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureCreateManyArgs`](../type-aliases/AiFeatureCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many AiFeatures.
 ```ts
 // Create many AiFeatures
 const aiFeature = await prisma.aiFeature.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:33311
 
@@ -217,7 +217,7 @@ Create many AiFeatures and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`AiFeatureCreateManyAndReturnArgs`](../type-aliases/AiFeatureCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureCreateManyAndReturnArgs`](../type-aliases/AiFeatureCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33325
 
@@ -266,7 +266,7 @@ Delete a AiFeature.
 
 ##### T
 
-`T` _extends_ [`AiFeatureDeleteArgs`](../type-aliases/AiFeatureDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureDeleteArgs`](../type-aliases/AiFeatureDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one AiFeature.
 ```ts
 // Delete one AiFeature
 const AiFeature = await prisma.aiFeature.delete({
-    where: {
-        // ... filter to delete one AiFeature
-    }
-});
+  where: {
+    // ... filter to delete one AiFeature
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:33356
 
@@ -305,7 +305,7 @@ Delete zero or more AiFeatures.
 
 ##### T
 
-`T` _extends_ [`AiFeatureDeleteManyArgs`](../type-aliases/AiFeatureDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureDeleteManyArgs`](../type-aliases/AiFeatureDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter AiFeatures to delete.
 ```ts
 // Delete a few AiFeatures
 const { count } = await prisma.aiFeature.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33225
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureFindFirstArgs`](../type-aliases/AiFeatureFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureFindFirstArgs`](../type-aliases/AiFeatureFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a AiFeature
 ```ts
 // Get one AiFeature
 const aiFeature = await prisma.aiFeature.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33241
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureFindFirstOrThrowArgs`](../type-aliases/AiFeatureFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureFindFirstOrThrowArgs`](../type-aliases/AiFeatureFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a AiFeature
 ```ts
 // Get one AiFeature
 const aiFeature = await prisma.aiFeature.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:33259
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureFindManyArgs`](../type-aliases/AiFeatureFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureFindManyArgs`](../type-aliases/AiFeatureFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all AiFeatures
-const aiFeatures = await prisma.aiFeature.findMany();
+const aiFeatures = await prisma.aiFeature.findMany()
 
 // Get first 10 AiFeatures
-const aiFeatures = await prisma.aiFeature.findMany({ take: 10 });
+const aiFeatures = await prisma.aiFeature.findMany({ take: 10 })
 
 // Only select the `id`
-const aiFeatureWithIdOnly = await prisma.aiFeature.findMany({ select: { id: true } });
+const aiFeatureWithIdOnly = await prisma.aiFeature.findMany({ select: { id: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33196
 
@@ -470,7 +470,7 @@ Find zero or one AiFeature that matches the filter.
 
 ##### T
 
-`T` _extends_ [`AiFeatureFindUniqueArgs`](../type-aliases/AiFeatureFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureFindUniqueArgs`](../type-aliases/AiFeatureFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a AiFeature
 ```ts
 // Get one AiFeature
 const aiFeature = await prisma.aiFeature.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33210
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`AiFeatureFindUniqueOrThrowArgs`](../type-aliases/AiFeatureFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureFindUniqueOrThrowArgs`](../type-aliases/AiFeatureFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a AiFeature
 ```ts
 // Get one AiFeature
 const aiFeature = await prisma.aiFeature.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetAiFeatureGroupByPayload`](../type-aliases/GetAiFeatureGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetAiFeatureGroupByPayload`](../type-aliases/GetAiFeatureGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:33494
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureGroupByArgs`](../type-aliases/AiFeatureGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureGroupByArgs`](../type-aliases/AiFeatureGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md) \| [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md) \| [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md) \| [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md) \| [`AiFeatureOrderByWithAggregationInput`](../type-aliases/AiFeatureOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"id"` \| `"createdAt"` \| `"telemetryId"` \| `"dn"` \| `"heightMm"` \| `"warehouse"` \| `"wellType"` \| `"hasReduction"` \| `"hasPsiaBuda"` \| `"hasStyczna"` \| `"ringCount"` \| `"bottomType"` \| `"topType"` \| `"connectionCount"` \| `"transitionsAboveDennica"` \| `"totalPrice"` \| `"totalWeight"` \| `"ringVariety"` \| `"season"` \| `"label"` \| `"reward"` \| `"decisionMs"`
+`OrderFields` *extends* `"id"` \| `"createdAt"` \| `"telemetryId"` \| `"dn"` \| `"heightMm"` \| `"warehouse"` \| `"wellType"` \| `"hasReduction"` \| `"hasPsiaBuda"` \| `"hasStyczna"` \| `"ringCount"` \| `"bottomType"` \| `"topType"` \| `"connectionCount"` \| `"transitionsAboveDennica"` \| `"totalPrice"` \| `"totalWeight"` \| `"ringVariety"` \| `"season"` \| `"label"` \| `"reward"` \| `"decisionMs"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`AiFeatureScalarFieldEnum`](../type-aliases/AiFeatureScalarFieldEnum.md)
+`ByFields` *extends* [`AiFeatureScalarFieldEnum`](../type-aliases/AiFeatureScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetAiFeatureGroupByPayload`](../type-aliases/GetAiFeatureGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetAiFeatureGroupByPayload`](../type-aliases/GetAiFeatureGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33342
 
@@ -630,7 +630,7 @@ Update one AiFeature.
 
 ##### T
 
-`T` _extends_ [`AiFeatureUpdateArgs`](../type-aliases/AiFeatureUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureUpdateArgs`](../type-aliases/AiFeatureUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one AiFeature.
 ```ts
 // Update one AiFeature
 const aiFeature = await prisma.aiFeature.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:33375
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`AiFeatureUpdateManyArgs`](../type-aliases/AiFeatureUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureUpdateManyArgs`](../type-aliases/AiFeatureUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many AiFeatures
 const aiFeature = await prisma.aiFeature.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:33405
 
@@ -716,7 +716,7 @@ Update zero or more AiFeatures and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`AiFeatureUpdateManyAndReturnArgs`](../type-aliases/AiFeatureUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureUpdateManyAndReturnArgs`](../type-aliases/AiFeatureUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__AiFeatureClient`](Prisma__AiFeatureClient.md)\<`GetFindResult`\<[`$AiFeaturePayload`](../type-aliases/$AiFeaturePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:33424
 
@@ -771,7 +771,7 @@ Create or update one AiFeature.
 
 ##### T
 
-`T` _extends_ [`AiFeatureUpsertArgs`](../type-aliases/AiFeatureUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`AiFeatureUpsertArgs`](../type-aliases/AiFeatureUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a AiFeature.
 ```ts
 // Update or create a AiFeature
 const aiFeature = await prisma.aiFeature.upsert({
-    create: {
-        // ... data to create a AiFeature
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the AiFeature we want to update
-    }
-});
+  create: {
+    // ... data to create a AiFeature
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the AiFeature we want to update
+  }
+})
 ```

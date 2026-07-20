@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiModelFindFirstArgs
 
 # Type Alias: AiModelFindFirstArgs\<ExtArgs\>
 
-> **AiModelFindFirstArgs**\<`ExtArgs`> \> = `object`
+> **AiModelFindFirstArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:34782
 
@@ -16,7 +16,7 @@ AiModel findFirst
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:34806
 
 Sets the position for searching for AiModels.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:34824
 
 Filter by unique combinations of AiModels.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`AiModelOmit`](AiModelOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`AiModelOmit`](AiModelOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:34790
 
 Omit specific fields from the AiModel
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:34800
 
 Determine the order of AiModels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`AiModelSelect`](AiModelSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`AiModelSelect`](AiModelSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:34786
 
 Select specific fields to fetch from the AiModel
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:34818
 
 Skip the first `n` AiModels.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:34812
 
 Take `±n` AiModels from the position of the cursor.
 
----
+***
 
 ### where?
 

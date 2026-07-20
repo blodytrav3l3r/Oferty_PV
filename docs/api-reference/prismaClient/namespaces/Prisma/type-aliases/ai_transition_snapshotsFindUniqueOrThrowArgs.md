@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsFindUniqueOrThrowArgs
 
 # Type Alias: ai\_transition\_snapshotsFindUniqueOrThrowArgs\<ExtArgs\>
 
-> **ai\_transition\_snapshotsFindUniqueOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **ai\_transition\_snapshotsFindUniqueOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:11979
 
@@ -16,29 +16,29 @@ ai_transition_snapshots findUniqueOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### omit?
 
-> `optional` **omit?**: [`ai_transition_snapshotsOmit`](ai_transition_snapshotsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_transition_snapshotsOmit`](ai_transition_snapshotsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:11987
 
 Omit specific fields from the ai_transition_snapshots
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_transition_snapshotsSelect`](ai_transition_snapshotsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_transition_snapshotsSelect`](ai_transition_snapshotsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:11983
 
 Select specific fields to fetch from the ai_transition_snapshots
 
----
+***
 
 ### where
 

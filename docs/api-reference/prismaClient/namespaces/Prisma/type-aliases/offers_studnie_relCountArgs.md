@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_studnie\_relCountArgs
 
 # Type Alias: offers\_studnie\_relCountArgs\<ExtArgs\>
 
-> **offers\_studnie\_relCountArgs**\<`ExtArgs`> \> = `Omit`\<[`offers_studnie_relFindManyArgs`](offers_studnie_relFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`> \> & `object`
+> **offers\_studnie\_relCountArgs**\<`ExtArgs`\> = `Omit`\<[`offers_studnie_relFindManyArgs`](offers_studnie_relFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`\> & `object`
 
 Defined in: generated/prisma/index.d.ts:17998
 
@@ -20,4 +20,4 @@ Defined in: generated/prisma/index.d.ts:17998
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

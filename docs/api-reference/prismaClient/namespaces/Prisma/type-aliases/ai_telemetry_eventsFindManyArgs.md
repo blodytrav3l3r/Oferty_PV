@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_eventsFindManyArgs
 
 # Type Alias: ai\_telemetry\_eventsFindManyArgs\<ExtArgs\>
 
-> **ai\_telemetry\_eventsFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_telemetry\_eventsFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:6371
 
@@ -16,7 +16,7 @@ ai_telemetry_events findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:6395
 
 Sets the position for listing ai_telemetry_events.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing ai_telemetry_events.
 
 Defined in: generated/prisma/index.d.ts:6408
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ai_telemetry_eventsOmit`](ai_telemetry_eventsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_telemetry_eventsOmit`](ai_telemetry_eventsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:6379
 
 Omit specific fields from the ai_telemetry_events
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:6389
 
 Determine the order of ai_telemetry_events to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_telemetry_eventsSelect`](ai_telemetry_eventsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_telemetry_eventsSelect`](ai_telemetry_eventsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:6375
 
 Select specific fields to fetch from the ai_telemetry_events
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:6407
 
 Skip the first `n` ai_telemetry_events.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:6401
 
 Take `±n` ai_telemetry_events from the position of the cursor.
 
----
+***
 
 ### where?
 

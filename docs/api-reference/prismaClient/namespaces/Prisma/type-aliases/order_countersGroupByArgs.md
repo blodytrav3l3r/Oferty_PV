@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersGroupByArgs
 
 # Type Alias: order\_countersGroupByArgs\<ExtArgs\>
 
-> **order\_countersGroupByArgs**\<`ExtArgs`> \> = `object`
+> **order\_countersGroupByArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:18935
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:18935
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:18935
 
 Defined in: generated/prisma/index.d.ts:18943
 
----
+***
 
 ### \_count?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:18943
 
 Defined in: generated/prisma/index.d.ts:18942
 
----
+***
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:18942
 
 Defined in: generated/prisma/index.d.ts:18946
 
----
+***
 
 ### \_min?
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/index.d.ts:18946
 
 Defined in: generated/prisma/index.d.ts:18945
 
----
+***
 
 ### \_sum?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/index.d.ts:18945
 
 Defined in: generated/prisma/index.d.ts:18944
 
----
+***
 
 ### by
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:18944
 
 Defined in: generated/prisma/index.d.ts:18938
 
----
+***
 
 ### having?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/index.d.ts:18938
 
 Defined in: generated/prisma/index.d.ts:18939
 
----
+***
 
 ### orderBy?
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/index.d.ts:18939
 
 Defined in: generated/prisma/index.d.ts:18937
 
----
+***
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:18937
 
 Defined in: generated/prisma/index.d.ts:18941
 
----
+***
 
 ### take?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:18941
 
 Defined in: generated/prisma/index.d.ts:18940
 
----
+***
 
 ### where?
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieSumAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:31164
 
 Defined in: generated/prisma/index.d.ts:31168
 
----
+***
 
 ### areaExt
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:31168
 
 Defined in: generated/prisma/index.d.ts:31169
 
----
+***
 
 ### cena1
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:31169
 
 Defined in: generated/prisma/index.d.ts:31177
 
----
+***
 
 ### cena2
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:31177
 
 Defined in: generated/prisma/index.d.ts:31180
 
----
+***
 
 ### cena3
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:31180
 
 Defined in: generated/prisma/index.d.ts:31183
 
----
+***
 
 ### doplataDrabNierdzewna
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:31183
 
 Defined in: generated/prisma/index.d.ts:31186
 
----
+***
 
 ### doplataPEHD
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:31186
 
 Defined in: generated/prisma/index.d.ts:31184
 
----
+***
 
 ### doplataZelbet
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:31184
 
 Defined in: generated/prisma/index.d.ts:31185
 
----
+***
 
 ### height
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:31185
 
 Defined in: generated/prisma/index.d.ts:31165
 
----
+***
 
 ### hMax1
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:31165
 
 Defined in: generated/prisma/index.d.ts:31176
 
----
+***
 
 ### hMax2
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:31176
 
 Defined in: generated/prisma/index.d.ts:31179
 
----
+***
 
 ### hMax3
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:31179
 
 Defined in: generated/prisma/index.d.ts:31182
 
----
+***
 
 ### hMin1
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:31182
 
 Defined in: generated/prisma/index.d.ts:31175
 
----
+***
 
 ### hMin2
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:31175
 
 Defined in: generated/prisma/index.d.ts:31178
 
----
+***
 
 ### hMin3
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:31178
 
 Defined in: generated/prisma/index.d.ts:31181
 
----
+***
 
 ### malowanieWewnetrzne
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:31181
 
 Defined in: generated/prisma/index.d.ts:31187
 
----
+***
 
 ### malowanieZewnetrzne
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:31187
 
 Defined in: generated/prisma/index.d.ts:31188
 
----
+***
 
 ### price
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:31188
 
 Defined in: generated/prisma/index.d.ts:31167
 
----
+***
 
 ### transport
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/index.d.ts:31167
 
 Defined in: generated/prisma/index.d.ts:31170
 
----
+***
 
 ### weight
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/index.d.ts:31170
 
 Defined in: generated/prisma/index.d.ts:31166
 
----
+***
 
 ### zapasDol
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/index.d.ts:31166
 
 Defined in: generated/prisma/index.d.ts:31171
 
----
+***
 
 ### zapasDolMin
 
@@ -186,7 +186,7 @@ Defined in: generated/prisma/index.d.ts:31171
 
 Defined in: generated/prisma/index.d.ts:31173
 
----
+***
 
 ### zapasGora
 
@@ -194,7 +194,7 @@ Defined in: generated/prisma/index.d.ts:31173
 
 Defined in: generated/prisma/index.d.ts:31172
 
----
+***
 
 ### zapasGoraMin
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / $ai\_transition\_snapshotsPayload
 
 # Type Alias: $ai\_transition\_snapshotsPayload\<ExtArgs\>
 
-> **$ai\_transition\_snapshotsPayload**\<`ExtArgs`> \> = `object`
+> **$ai\_transition\_snapshotsPayload**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:11491
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:11491
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:11491
 
 Defined in: generated/prisma/index.d.ts:11514
 
----
+***
 
 ### name
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:11514
 
 Defined in: generated/prisma/index.d.ts:11492
 
----
+***
 
 ### objects
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:11492
 
 Defined in: generated/prisma/index.d.ts:11493
 
----
+***
 
 ### scalars
 

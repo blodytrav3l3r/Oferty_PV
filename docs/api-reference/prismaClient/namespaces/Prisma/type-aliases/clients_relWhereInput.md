@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relWhereInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:40028
 
 ### address?
 
-> `optional` **address?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **address?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40036
 
----
+***
 
 ### AND?
 
@@ -26,63 +26,63 @@ Defined in: generated/prisma/index.d.ts:40036
 
 Defined in: generated/prisma/index.d.ts:40029
 
----
+***
 
 ### clientNumber?
 
-> `optional` **clientNumber?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **clientNumber?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40040
 
----
+***
 
 ### contact?
 
-> `optional` **contact?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **contact?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40039
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40041
 
----
+***
 
 ### email?
 
-> `optional` **email?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **email?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40037
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"clients_rel"`> \> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"clients_rel"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40032
 
----
+***
 
 ### name?
 
-> `optional` **name?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **name?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40034
 
----
+***
 
 ### nip?
 
-> `optional` **nip?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **nip?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40035
 
----
+***
 
 ### NOT?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:40035
 
 Defined in: generated/prisma/index.d.ts:40031
 
----
+***
 
 ### OR?
 
@@ -98,26 +98,26 @@ Defined in: generated/prisma/index.d.ts:40031
 
 Defined in: generated/prisma/index.d.ts:40030
 
----
+***
 
 ### phone?
 
-> `optional` **phone?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **phone?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40038
 
----
+***
 
 ### updatedAt?
 
-> `optional` **updatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **updatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40042
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40033

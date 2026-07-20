@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureCreateArgs
 
 # Type Alias: AiFeatureCreateArgs\<ExtArgs\>
 
-> **AiFeatureCreateArgs**\<`ExtArgs`> \> = `object`
+> **AiFeatureCreateArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:33799
 
@@ -16,33 +16,33 @@ AiFeature create
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`AiFeatureCreateInput`](AiFeatureCreateInput.md), [`AiFeatureUncheckedCreateInput`](AiFeatureUncheckedCreateInput.md)>\>
+> **data**: [`XOR`](XOR.md)\<[`AiFeatureCreateInput`](AiFeatureCreateInput.md), [`AiFeatureUncheckedCreateInput`](AiFeatureUncheckedCreateInput.md)\>
 
 Defined in: generated/prisma/index.d.ts:33811
 
 The data needed to create a AiFeature.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`AiFeatureOmit`](AiFeatureOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`AiFeatureOmit`](AiFeatureOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:33807
 
 Omit specific fields from the AiFeature
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`AiFeatureSelect`](AiFeatureSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`AiFeatureSelect`](AiFeatureSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:33803
 

@@ -1,14 +1,14 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../README.md) / [validators/authSchema](../README.md) / validateData
 
 # Function: validateData()
 
-> **validateData**(`schema`): (`req`, `res`, `next`) => `Response`\<`any`, `Record`\<`string`, `any`>> \>\> \| `undefined`
+> **validateData**(`schema`): (`req`, `res`, `next`) => `Response`\<`any`, `Record`\<`string`, `any`\>\> \| `undefined`
 
-Defined in: [src/validators/authSchema.ts:60](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/validators/authSchema.ts#L60)
+Defined in: [src/validators/authSchema.ts:60](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/validators/authSchema.ts#L60)
 
 Generyczny middleware Express walidujący dane wejściowe przy użyciu schematu Zod.
 
@@ -41,8 +41,8 @@ const router = Router();
 
 // Walidacja POST /offers
 router.post('/offers', validateData(offerCreateSchema), async (req, res) => {
-    // req.body jest typowo bezpieczne
-    const { clientId, items } = req.body;
-    // ... obsługa żądania
+  // req.body jest typowo bezpieczne
+  const { clientId, items } = req.body;
+  // ... obsługa żądania
 });
 ```

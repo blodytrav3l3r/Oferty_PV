@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationWhereInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:41461
 
 ### acceptance?
 
-> `optional` **acceptance?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`> \> \| `number`
+> `optional` **acceptance?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41467
 
----
+***
 
 ### AND?
 
@@ -26,31 +26,31 @@ Defined in: generated/prisma/index.d.ts:41467
 
 Defined in: generated/prisma/index.d.ts:41462
 
----
+***
 
 ### decisionMsAvg?
 
-> `optional` **decisionMsAvg?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`> \> \| `number`
+> `optional` **decisionMsAvg?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41468
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`> \> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41465
 
----
+***
 
 ### modelVersion?
 
-> `optional` **modelVersion?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`> \> \| `string`
+> `optional` **modelVersion?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41466
 
----
+***
 
 ### NOT?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:41466
 
 Defined in: generated/prisma/index.d.ts:41464
 
----
+***
 
 ### OR?
 
@@ -66,26 +66,26 @@ Defined in: generated/prisma/index.d.ts:41464
 
 Defined in: generated/prisma/index.d.ts:41463
 
----
+***
 
 ### rewardsAvg?
 
-> `optional` **rewardsAvg?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`> \> \| `number`
+> `optional` **rewardsAvg?**: [`FloatFilter`](FloatFilter.md)\<`"AiEvaluation"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41469
 
----
+***
 
 ### totalDecisions?
 
-> `optional` **totalDecisions?**: [`IntFilter`](IntFilter.md)\<`"AiEvaluation"`> \> \| `number`
+> `optional` **totalDecisions?**: [`IntFilter`](IntFilter.md)\<`"AiEvaluation"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41470
 
----
+***
 
 ### triggeredAt?
 
-> `optional` **triggeredAt?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`> \> \| `string`
+> `optional` **triggeredAt?**: [`StringFilter`](StringFilter.md)\<`"AiEvaluation"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41471

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historyFieldRefs
 
@@ -14,94 +14,94 @@ Fields of the ai_config_history model
 
 ### configJson
 
-> `readonly` **configJson**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **configJson**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7346
 
----
+***
 
 ### configVersion
 
-> `readonly` **configVersion**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Int"`>\>
+> `readonly` **configVersion**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Int"`\>
 
 Defined in: generated/prisma/index.d.ts:7344
 
----
+***
 
 ### createdAt
 
-> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7353
 
----
+***
 
 ### diffFromParent
 
-> `readonly` **diffFromParent**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **diffFromParent**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7349
 
----
+***
 
 ### id
 
-> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7342
 
----
+***
 
 ### isCurrent
 
-> `readonly` **isCurrent**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Boolean"`>\>
+> `readonly` **isCurrent**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Boolean"`\>
 
 Defined in: generated/prisma/index.d.ts:7350
 
----
+***
 
 ### parentId
 
-> `readonly` **parentId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **parentId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7345
 
----
+***
 
 ### rankingScore
 
-> `readonly` **rankingScore**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Float"`>\>
+> `readonly` **rankingScore**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"Float"`\>
 
 Defined in: generated/prisma/index.d.ts:7351
 
----
+***
 
 ### selectionReason
 
-> `readonly` **selectionReason**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **selectionReason**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7352
 
----
+***
 
 ### source
 
-> `readonly` **source**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **source**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7347
 
----
+***
 
 ### triggeredBy
 
-> `readonly` **triggeredBy**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **triggeredBy**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7348
 
----
+***
 
 ### wellId
 
-> `readonly` **wellId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`>\>
+> `readonly` **wellId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"ai_config_history"`, `"String"`\>
 
 Defined in: generated/prisma/index.d.ts:7343

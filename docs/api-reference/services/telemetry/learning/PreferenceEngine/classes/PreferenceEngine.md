@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../README.md) / [services/telemetry/learning/PreferenceEngine](../README.md) / PreferenceEngine
 
 # Class: PreferenceEngine
 
-Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:20](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/PreferenceEngine.ts#L20)
+Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:20](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/PreferenceEngine.ts#L20)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:20](https://git
 
 > **new PreferenceEngine**(): `PreferenceEngine`
 
-Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:23](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/PreferenceEngine.ts#L23)
+Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:23](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/PreferenceEngine.ts#L23)
 
 #### Returns
 
@@ -26,7 +26,7 @@ Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:23](https://git
 
 > **buildAddition**(`corrections`): [`KnowledgePattern`](../../KnowledgeBase/interfaces/KnowledgePattern.md)[]
 
-Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:74](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/PreferenceEngine.ts#L74)
+Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:74](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/PreferenceEngine.ts#L74)
 
 Preferencje ADDITION - użytkownik dodaje dodatkowy element.
 
@@ -40,13 +40,13 @@ Preferencje ADDITION - użytkownik dodaje dodatkowy element.
 
 [`KnowledgePattern`](../../KnowledgeBase/interfaces/KnowledgePattern.md)[]
 
----
+***
 
 ### buildRemoval()
 
 > **buildRemoval**(`corrections`): [`KnowledgePattern`](../../KnowledgeBase/interfaces/KnowledgePattern.md)[]
 
-Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:111](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/PreferenceEngine.ts#L111)
+Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:111](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/PreferenceEngine.ts#L111)
 
 Preferencje REMOVAL - użytkownik usuwa element.
 
@@ -60,13 +60,13 @@ Preferencje REMOVAL - użytkownik usuwa element.
 
 [`KnowledgePattern`](../../KnowledgeBase/interfaces/KnowledgePattern.md)[]
 
----
+***
 
 ### buildSubstitution()
 
 > **buildSubstitution**(`corrections`): [`KnowledgePattern`](../../KnowledgeBase/interfaces/KnowledgePattern.md)[]
 
-Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:30](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/PreferenceEngine.ts#L30)
+Defined in: [src/services/telemetry/learning/PreferenceEngine.ts:30](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/PreferenceEngine.ts#L30)
 
 Analizuje korekt i buduje preferencje SUBSTITUTION (zamiana X→Y).
 

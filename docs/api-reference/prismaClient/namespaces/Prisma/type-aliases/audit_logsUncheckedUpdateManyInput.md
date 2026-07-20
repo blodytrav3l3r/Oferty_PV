@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsUncheckedUpdateManyInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:42922
 
 Defined in: generated/prisma/index.d.ts:42927
 
----
+***
 
 ### createdAt?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:42927
 
 Defined in: generated/prisma/index.d.ts:42930
 
----
+***
 
 ### entityId?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:42930
 
 Defined in: generated/prisma/index.d.ts:42925
 
----
+***
 
 ### entityType?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:42925
 
 Defined in: generated/prisma/index.d.ts:42924
 
----
+***
 
 ### id?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:42924
 
 Defined in: generated/prisma/index.d.ts:42923
 
----
+***
 
 ### newData?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:42923
 
 Defined in: generated/prisma/index.d.ts:42929
 
----
+***
 
 ### oldData?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:42929
 
 Defined in: generated/prisma/index.d.ts:42928
 
----
+***
 
 ### userId?
 

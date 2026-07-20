@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieCreateNestedOneWithoutProductsInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46936
 
 Defined in: generated/prisma/index.d.ts:46939
 
----
+***
 
 ### connectOrCreate?
 
@@ -26,10 +26,10 @@ Defined in: generated/prisma/index.d.ts:46939
 
 Defined in: generated/prisma/index.d.ts:46938
 
----
+***
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesStudnieCreateWithoutProductsInput`](CategoriesStudnieCreateWithoutProductsInput.md), [`CategoriesStudnieUncheckedCreateWithoutProductsInput`](CategoriesStudnieUncheckedCreateWithoutProductsInput.md)>\>
+> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesStudnieCreateWithoutProductsInput`](CategoriesStudnieCreateWithoutProductsInput.md), [`CategoriesStudnieUncheckedCreateWithoutProductsInput`](CategoriesStudnieUncheckedCreateWithoutProductsInput.md)\>
 
 Defined in: generated/prisma/index.d.ts:46937

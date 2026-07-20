@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relWhereInput
 
@@ -18,31 +18,31 @@ Defined in: generated/prisma/index.d.ts:40511
 
 Defined in: generated/prisma/index.d.ts:40512
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40518
 
----
+***
 
 ### data?
 
-> `optional` **data?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **data?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40520
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"orders_studnie_rel"`> \> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"orders_studnie_rel"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40515
 
----
+***
 
 ### NOT?
 
@@ -50,15 +50,15 @@ Defined in: generated/prisma/index.d.ts:40515
 
 Defined in: generated/prisma/index.d.ts:40514
 
----
+***
 
 ### offerStudnieId?
 
-> `optional` **offerStudnieId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **offerStudnieId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40517
 
----
+***
 
 ### OR?
 
@@ -66,18 +66,18 @@ Defined in: generated/prisma/index.d.ts:40517
 
 Defined in: generated/prisma/index.d.ts:40513
 
----
+***
 
 ### status?
 
-> `optional` **status?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **status?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40519
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40516

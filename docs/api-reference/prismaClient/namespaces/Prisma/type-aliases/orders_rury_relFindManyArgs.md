@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relFindManyArgs
 
 # Type Alias: orders\_rury\_relFindManyArgs\<ExtArgs\>
 
-> **orders\_rury\_relFindManyArgs**\<`ExtArgs`> \> = `object`
+> **orders\_rury\_relFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:22589
 
@@ -16,7 +16,7 @@ orders_rury_rel findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:22613
 
 Sets the position for listing orders_rury_rels.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing orders_rury_rels.
 
 Defined in: generated/prisma/index.d.ts:22626
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`orders_rury_relOmit`](orders_rury_relOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`orders_rury_relOmit`](orders_rury_relOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:22597
 
 Omit specific fields from the orders_rury_rel
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:22607
 
 Determine the order of orders_rury_rels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`orders_rury_relSelect`](orders_rury_relSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`orders_rury_relSelect`](orders_rury_relSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:22593
 
 Select specific fields to fetch from the orders_rury_rel
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:22625
 
 Skip the first `n` orders_rury_rels.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:22619
 
 Take `±n` orders_rury_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

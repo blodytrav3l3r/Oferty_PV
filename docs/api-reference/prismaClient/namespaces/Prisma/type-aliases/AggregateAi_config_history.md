@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAi\_config\_history
 
@@ -20,7 +20,7 @@ Model ai_config_history
 
 Defined in: generated/prisma/index.d.ts:6602
 
----
+***
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:6602
 
 Defined in: generated/prisma/index.d.ts:6601
 
----
+***
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:6601
 
 Defined in: generated/prisma/index.d.ts:6605
 
----
+***
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:6605
 
 Defined in: generated/prisma/index.d.ts:6604
 
----
+***
 
 ### \_sum
 

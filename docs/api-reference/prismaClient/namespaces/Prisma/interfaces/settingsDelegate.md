@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:27080
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the settings model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetSettingsAggregateType`](../type-aliases/GetSettingsAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetSettingsAggregateType`](../type-aliases/GetSettingsAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:27371
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`SettingsAggregateArgs`](../type-aliases/SettingsAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`SettingsAggregateArgs`](../type-aliases/SettingsAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SettingsCountAggregateOutputType ? SettingsCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SettingsCountAggregateOutputType ? SettingsCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:27337
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsCountArgs`](../type-aliases/settingsCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsCountArgs`](../type-aliases/settingsCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Settings to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SettingsCountAggregateOutputType ? SettingsCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof SettingsCountAggregateOutputType ? SettingsCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Settings
 const count = await prisma.settings.count({
-    where: {
-        // ... the filter for the Settings we want to count
-    }
-});
+  where: {
+    // ... the filter for the Settings we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27170
 
@@ -139,7 +139,7 @@ Create a Settings.
 
 ##### T
 
-`T` _extends_ [`settingsCreateArgs`](../type-aliases/settingsCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsCreateArgs`](../type-aliases/settingsCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Settings.
 ```ts
 // Create one Settings
 const Settings = await prisma.settings.create({
-    data: {
-        // ... data to create a Settings
-    }
-});
+  data: {
+    // ... data to create a Settings
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:27184
 
@@ -178,7 +178,7 @@ Create many Settings.
 
 ##### T
 
-`T` _extends_ [`settingsCreateManyArgs`](../type-aliases/settingsCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsCreateManyArgs`](../type-aliases/settingsCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Settings.
 ```ts
 // Create many Settings
 const settings = await prisma.settings.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:27208
 
@@ -217,7 +217,7 @@ Create many Settings and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`settingsCreateManyAndReturnArgs`](../type-aliases/settingsCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsCreateManyAndReturnArgs`](../type-aliases/settingsCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27222
 
@@ -266,7 +266,7 @@ Delete a Settings.
 
 ##### T
 
-`T` _extends_ [`settingsDeleteArgs`](../type-aliases/settingsDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsDeleteArgs`](../type-aliases/settingsDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Settings.
 ```ts
 // Delete one Settings
 const Settings = await prisma.settings.delete({
-    where: {
-        // ... filter to delete one Settings
-    }
-});
+  where: {
+    // ... filter to delete one Settings
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:27253
 
@@ -305,7 +305,7 @@ Delete zero or more Settings.
 
 ##### T
 
-`T` _extends_ [`settingsDeleteManyArgs`](../type-aliases/settingsDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsDeleteManyArgs`](../type-aliases/settingsDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Settings to delete.
 ```ts
 // Delete a few Settings
 const { count } = await prisma.settings.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27122
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsFindFirstArgs`](../type-aliases/settingsFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsFindFirstArgs`](../type-aliases/settingsFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Settings
 ```ts
 // Get one Settings
 const settings = await prisma.settings.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27138
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsFindFirstOrThrowArgs`](../type-aliases/settingsFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsFindFirstOrThrowArgs`](../type-aliases/settingsFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Settings
 ```ts
 // Get one Settings
 const settings = await prisma.settings.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:27156
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsFindManyArgs`](../type-aliases/settingsFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsFindManyArgs`](../type-aliases/settingsFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Settings
-const settings = await prisma.settings.findMany();
+const settings = await prisma.settings.findMany()
 
 // Get first 10 Settings
-const settings = await prisma.settings.findMany({ take: 10 });
+const settings = await prisma.settings.findMany({ take: 10 })
 
 // Only select the `key`
-const settingsWithKeyOnly = await prisma.settings.findMany({ select: { key: true } });
+const settingsWithKeyOnly = await prisma.settings.findMany({ select: { key: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27093
 
@@ -470,7 +470,7 @@ Find zero or one Settings that matches the filter.
 
 ##### T
 
-`T` _extends_ [`settingsFindUniqueArgs`](../type-aliases/settingsFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsFindUniqueArgs`](../type-aliases/settingsFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a Settings
 ```ts
 // Get one Settings
 const settings = await prisma.settings.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27107
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`settingsFindUniqueOrThrowArgs`](../type-aliases/settingsFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsFindUniqueOrThrowArgs`](../type-aliases/settingsFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a Settings
 ```ts
 // Get one Settings
 const settings = await prisma.settings.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetSettingsGroupByPayload`](../type-aliases/GetSettingsGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetSettingsGroupByPayload`](../type-aliases/GetSettingsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:27391
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsGroupByArgs`](../type-aliases/settingsGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsGroupByArgs`](../type-aliases/settingsGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md) \| [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md) \| [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md) \| [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md) \| [`settingsOrderByWithAggregationInput`](../type-aliases/settingsOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"value"` \| `"key"`
+`OrderFields` *extends* `"value"` \| `"key"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`SettingsScalarFieldEnum`](../type-aliases/SettingsScalarFieldEnum.md)
+`ByFields` *extends* [`SettingsScalarFieldEnum`](../type-aliases/SettingsScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetSettingsGroupByPayload`](../type-aliases/GetSettingsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetSettingsGroupByPayload`](../type-aliases/GetSettingsGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27239
 
@@ -630,7 +630,7 @@ Update one Settings.
 
 ##### T
 
-`T` _extends_ [`settingsUpdateArgs`](../type-aliases/settingsUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsUpdateArgs`](../type-aliases/settingsUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one Settings.
 ```ts
 // Update one Settings
 const settings = await prisma.settings.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:27272
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`settingsUpdateManyArgs`](../type-aliases/settingsUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsUpdateManyArgs`](../type-aliases/settingsUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Settings
 const settings = await prisma.settings.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:27302
 
@@ -716,7 +716,7 @@ Update zero or more Settings and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`settingsUpdateManyAndReturnArgs`](../type-aliases/settingsUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsUpdateManyAndReturnArgs`](../type-aliases/settingsUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__settingsClient`](Prisma__settingsClient.md)\<`GetFindResult`\<[`$settingsPayload`](../type-aliases/$settingsPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:27321
 
@@ -771,7 +771,7 @@ Create or update one Settings.
 
 ##### T
 
-`T` _extends_ [`settingsUpsertArgs`](../type-aliases/settingsUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`settingsUpsertArgs`](../type-aliases/settingsUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a Settings.
 ```ts
 // Update or create a Settings
 const settings = await prisma.settings.upsert({
-    create: {
-        // ... data to create a Settings
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the Settings we want to update
-    }
-});
+  create: {
+    // ... data to create a Settings
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the Settings we want to update
+  }
+})
 ```

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historyMinOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:45296
 
 Defined in: generated/prisma/index.d.ts:45301
 
----
+***
 
 ### configVersion?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:45301
 
 Defined in: generated/prisma/index.d.ts:45299
 
----
+***
 
 ### createdAt?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:45299
 
 Defined in: generated/prisma/index.d.ts:45308
 
----
+***
 
 ### diffFromParent?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:45308
 
 Defined in: generated/prisma/index.d.ts:45304
 
----
+***
 
 ### id?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:45304
 
 Defined in: generated/prisma/index.d.ts:45297
 
----
+***
 
 ### isCurrent?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:45297
 
 Defined in: generated/prisma/index.d.ts:45305
 
----
+***
 
 ### parentId?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:45305
 
 Defined in: generated/prisma/index.d.ts:45300
 
----
+***
 
 ### rankingScore?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:45300
 
 Defined in: generated/prisma/index.d.ts:45306
 
----
+***
 
 ### selectionReason?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:45306
 
 Defined in: generated/prisma/index.d.ts:45307
 
----
+***
 
 ### source?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:45307
 
 Defined in: generated/prisma/index.d.ts:45302
 
----
+***
 
 ### triggeredBy?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:45302
 
 Defined in: generated/prisma/index.d.ts:45303
 
----
+***
 
 ### wellId?
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../README.md) / [services/telemetry/learning/LearningEngine](../README.md) / LearningEngine
 
 # Class: LearningEngine
 
-Defined in: [src/services/telemetry/learning/LearningEngine.ts:34](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/LearningEngine.ts#L34)
+Defined in: [src/services/telemetry/learning/LearningEngine.ts:34](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/LearningEngine.ts#L34)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [src/services/telemetry/learning/LearningEngine.ts:34](https://githu
 
 > **new LearningEngine**(): `LearningEngine`
 
-Defined in: [src/services/telemetry/learning/LearningEngine.ts:45](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/LearningEngine.ts#L45)
+Defined in: [src/services/telemetry/learning/LearningEngine.ts:45](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/LearningEngine.ts#L45)
 
 #### Returns
 
@@ -26,7 +26,7 @@ Defined in: [src/services/telemetry/learning/LearningEngine.ts:45](https://githu
 
 > **getComponents**(): `object`
 
-Defined in: [src/services/telemetry/learning/LearningEngine.ts:304](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/LearningEngine.ts#L304)
+Defined in: [src/services/telemetry/learning/LearningEngine.ts:304](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/LearningEngine.ts#L304)
 
 Dostęp do subkompnentów.
 
@@ -58,13 +58,13 @@ Dostęp do subkompnentów.
 
 > **recommend**: [`RecommendationEngine`](../../RecommendationEngine/classes/RecommendationEngine.md)
 
----
+***
 
 ### getStatus()
 
 > **getStatus**(): `object`
 
-Defined in: [src/services/telemetry/learning/LearningEngine.ts:291](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/LearningEngine.ts#L291)
+Defined in: [src/services/telemetry/learning/LearningEngine.ts:291](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/LearningEngine.ts#L291)
 
 Zwraca status silniczka.
 
@@ -80,13 +80,13 @@ Zwraca status silniczka.
 
 > **lastRunAt**: `string` \| `null`
 
----
+***
 
 ### runFullCycle()
 
-> **runFullCycle**(): `Promise`\<[`LearningRunSummary`](../interfaces/LearningRunSummary.md)>\>
+> **runFullCycle**(): `Promise`\<[`LearningRunSummary`](../interfaces/LearningRunSummary.md)\>
 
-Defined in: [src/services/telemetry/learning/LearningEngine.ts:233](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/LearningEngine.ts#L233)
+Defined in: [src/services/telemetry/learning/LearningEngine.ts:233](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/LearningEngine.ts#L233)
 
 #### Returns
 

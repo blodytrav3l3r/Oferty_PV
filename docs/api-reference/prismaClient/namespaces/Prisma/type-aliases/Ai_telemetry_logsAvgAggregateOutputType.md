@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_logsAvgAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:3667
 
 Defined in: generated/prisma/index.d.ts:3675
 
----
+***
 
 ### computationMs
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:3675
 
 Defined in: generated/prisma/index.d.ts:3673
 
----
+***
 
 ### confidenceScore
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:3673
 
 Defined in: generated/prisma/index.d.ts:3678
 
----
+***
 
 ### configVersion
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:3678
 
 Defined in: generated/prisma/index.d.ts:3680
 
----
+***
 
 ### dennicaHeight
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:3680
 
 Defined in: generated/prisma/index.d.ts:3671
 
----
+***
 
 ### iterationCount
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:3671
 
 Defined in: generated/prisma/index.d.ts:3674
 
----
+***
 
 ### learningWeight
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:3674
 
 Defined in: generated/prisma/index.d.ts:3679
 
----
+***
 
 ### modificationCount
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:3679
 
 Defined in: generated/prisma/index.d.ts:3677
 
----
+***
 
 ### rankingScore
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:3677
 
 Defined in: generated/prisma/index.d.ts:3676
 
----
+***
 
 ### rewardValue
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:3676
 
 Defined in: generated/prisma/index.d.ts:3681
 
----
+***
 
 ### ringCount
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:3681
 
 Defined in: generated/prisma/index.d.ts:3672
 
----
+***
 
 ### rzDna
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:3672
 
 Defined in: generated/prisma/index.d.ts:3668
 
----
+***
 
 ### rzWlazu
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:3668
 
 Defined in: generated/prisma/index.d.ts:3669
 
----
+***
 
 ### successRate
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:3669
 
 Defined in: generated/prisma/index.d.ts:3682
 
----
+***
 
 ### usageCount
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:3682
 
 Defined in: generated/prisma/index.d.ts:3683
 
----
+***
 
 ### wellHeight
 

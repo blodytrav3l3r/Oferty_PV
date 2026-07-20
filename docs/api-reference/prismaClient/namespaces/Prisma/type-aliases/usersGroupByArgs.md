@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersGroupByArgs
 
 # Type Alias: usersGroupByArgs\<ExtArgs\>
 
-> **usersGroupByArgs**\<`ExtArgs`> \> = `object`
+> **usersGroupByArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:37498
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:37498
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:37498
 
 Defined in: generated/prisma/index.d.ts:37506
 
----
+***
 
 ### \_count?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:37506
 
 Defined in: generated/prisma/index.d.ts:37505
 
----
+***
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:37505
 
 Defined in: generated/prisma/index.d.ts:37509
 
----
+***
 
 ### \_min?
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/index.d.ts:37509
 
 Defined in: generated/prisma/index.d.ts:37508
 
----
+***
 
 ### \_sum?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/index.d.ts:37508
 
 Defined in: generated/prisma/index.d.ts:37507
 
----
+***
 
 ### by
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:37507
 
 Defined in: generated/prisma/index.d.ts:37501
 
----
+***
 
 ### having?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/index.d.ts:37501
 
 Defined in: generated/prisma/index.d.ts:37502
 
----
+***
 
 ### orderBy?
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/index.d.ts:37502
 
 Defined in: generated/prisma/index.d.ts:37500
 
----
+***
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:37500
 
 Defined in: generated/prisma/index.d.ts:37504
 
----
+***
 
 ### take?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:37504
 
 Defined in: generated/prisma/index.d.ts:37503
 
----
+***
 
 ### where?
 

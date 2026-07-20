@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relFindFirstArgs
 
 # Type Alias: clients\_relFindFirstArgs\<ExtArgs\>
 
-> **clients\_relFindFirstArgs**\<`ExtArgs`> \> = `object`
+> **clients\_relFindFirstArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:14100
 
@@ -16,7 +16,7 @@ clients_rel findFirst
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:14124
 
 Sets the position for searching for clients_rels.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:14142
 
 Filter by unique combinations of clients_rels.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`clients_relOmit`](clients_relOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`clients_relOmit`](clients_relOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:14108
 
 Omit specific fields from the clients_rel
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:14118
 
 Determine the order of clients_rels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`clients_relSelect`](clients_relSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`clients_relSelect`](clients_relSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:14104
 
 Select specific fields to fetch from the clients_rel
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:14136
 
 Skip the first `n` clients_rels.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:14130
 
 Take `±n` clients_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

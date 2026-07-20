@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryFindManyArgs
 
 # Type Alias: ProductsRuryFindManyArgs\<ExtArgs\>
 
-> **ProductsRuryFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ProductsRuryFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:29792
 
@@ -16,7 +16,7 @@ ProductsRury findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:29820
 
 Sets the position for listing ProductsRuries.
 
----
+***
 
 ### distinct?
 
@@ -38,27 +38,27 @@ Sets the position for listing ProductsRuries.
 
 Defined in: generated/prisma/index.d.ts:29833
 
----
+***
 
 ### include?
 
-> `optional` **include?**: [`ProductsRuryInclude`](ProductsRuryInclude.md)\<`ExtArgs`> \> \| `null`
+> `optional` **include?**: [`ProductsRuryInclude`](ProductsRuryInclude.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:29804
 
 Choose, which related nodes to fetch as well
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ProductsRuryOmit`](ProductsRuryOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ProductsRuryOmit`](ProductsRuryOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:29800
 
 Omit specific fields from the ProductsRury
 
----
+***
 
 ### orderBy?
 
@@ -70,17 +70,17 @@ Defined in: generated/prisma/index.d.ts:29814
 
 Determine the order of ProductsRuries to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ProductsRurySelect`](ProductsRurySelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ProductsRurySelect`](ProductsRurySelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:29796
 
 Select specific fields to fetch from the ProductsRury
 
----
+***
 
 ### skip?
 
@@ -92,7 +92,7 @@ Defined in: generated/prisma/index.d.ts:29832
 
 Skip the first `n` ProductsRuries.
 
----
+***
 
 ### take?
 
@@ -104,7 +104,7 @@ Defined in: generated/prisma/index.d.ts:29826
 
 Take `±n` ProductsRuries from the position of the cursor.
 
----
+***
 
 ### where?
 

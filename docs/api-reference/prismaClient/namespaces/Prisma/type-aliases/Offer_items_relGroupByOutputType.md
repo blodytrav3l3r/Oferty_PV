@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Offer\_items\_relGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:14600
 
 Defined in: generated/prisma/index.d.ts:14608
 
----
+***
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:14608
 
 Defined in: generated/prisma/index.d.ts:14607
 
----
+***
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:14607
 
 Defined in: generated/prisma/index.d.ts:14611
 
----
+***
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:14611
 
 Defined in: generated/prisma/index.d.ts:14610
 
----
+***
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:14610
 
 Defined in: generated/prisma/index.d.ts:14609
 
----
+***
 
 ### discount
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:14609
 
 Defined in: generated/prisma/index.d.ts:14605
 
----
+***
 
 ### id
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:14605
 
 Defined in: generated/prisma/index.d.ts:14601
 
----
+***
 
 ### offerId
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:14601
 
 Defined in: generated/prisma/index.d.ts:14602
 
----
+***
 
 ### price
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:14602
 
 Defined in: generated/prisma/index.d.ts:14606
 
----
+***
 
 ### productId
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:14606
 
 Defined in: generated/prisma/index.d.ts:14603
 
----
+***
 
 ### quantity
 

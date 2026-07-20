@@ -1,11 +1,11 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../README.md) / [validators/offerSchemas](../README.md) / ClientInput
 
 # Type Alias: ClientInput
 
-> **ClientInput** = `z.infer`\<_typeof_ [`clientSchema`](../variables/clientSchema.md)>\>
+> **ClientInput** = `z.infer`\<*typeof* [`clientSchema`](../variables/clientSchema.md)\>
 
-Defined in: [src/validators/offerSchemas.ts:310](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/validators/offerSchemas.ts#L310)
+Defined in: [src/validators/offerSchemas.ts:310](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/validators/offerSchemas.ts#L310)

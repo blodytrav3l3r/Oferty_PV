@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsFindFirstOrThrowArgs
 
 # Type Alias: audit\_logsFindFirstOrThrowArgs\<ExtArgs\>
 
-> **audit\_logsFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **audit\_logsFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:13077
 
@@ -16,7 +16,7 @@ audit_logs findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:13101
 
 Sets the position for searching for audit_logs.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:13119
 
 Filter by unique combinations of audit_logs.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13085
 
 Omit specific fields from the audit_logs
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:13095
 
 Determine the order of audit_logs to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13081
 
 Select specific fields to fetch from the audit_logs
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:13113
 
 Skip the first `n` audit_logs.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:13107
 
 Take `±n` audit_logs from the position of the cursor.
 
----
+***
 
 ### where?
 

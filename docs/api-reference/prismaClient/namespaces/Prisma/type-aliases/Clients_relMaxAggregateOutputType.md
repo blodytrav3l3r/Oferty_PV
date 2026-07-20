@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Clients\_relMaxAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:13374
 
 Defined in: generated/prisma/index.d.ts:13379
 
----
+***
 
 ### clientNumber
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:13379
 
 Defined in: generated/prisma/index.d.ts:13383
 
----
+***
 
 ### contact
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:13383
 
 Defined in: generated/prisma/index.d.ts:13382
 
----
+***
 
 ### createdAt
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:13382
 
 Defined in: generated/prisma/index.d.ts:13384
 
----
+***
 
 ### email
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:13384
 
 Defined in: generated/prisma/index.d.ts:13380
 
----
+***
 
 ### id
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:13380
 
 Defined in: generated/prisma/index.d.ts:13375
 
----
+***
 
 ### name
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:13375
 
 Defined in: generated/prisma/index.d.ts:13377
 
----
+***
 
 ### nip
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:13377
 
 Defined in: generated/prisma/index.d.ts:13378
 
----
+***
 
 ### phone
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:13378
 
 Defined in: generated/prisma/index.d.ts:13381
 
----
+***
 
 ### updatedAt
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:13381
 
 Defined in: generated/prisma/index.d.ts:13385
 
----
+***
 
 ### userId
 

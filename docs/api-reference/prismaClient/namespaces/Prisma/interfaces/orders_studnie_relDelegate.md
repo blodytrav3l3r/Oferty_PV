@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:21026
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the orders_studnie_rel model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOrders_studnie_relAggregateType`](../type-aliases/GetOrders_studnie_relAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOrders_studnie_relAggregateType`](../type-aliases/GetOrders_studnie_relAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:21317
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`Orders_studnie_relAggregateArgs`](../type-aliases/Orders_studnie_relAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`Orders_studnie_relAggregateArgs`](../type-aliases/Orders_studnie_relAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Orders\_studnie\_relCountAggregateOutputType ? Orders\_studnie\_relCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Orders\_studnie\_relCountAggregateOutputType ? Orders\_studnie\_relCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:21283
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relCountArgs`](../type-aliases/orders_studnie_relCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relCountArgs`](../type-aliases/orders_studnie_relCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Orders_studnie_rels to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Orders\_studnie\_relCountAggregateOutputType ? Orders\_studnie\_relCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Orders\_studnie\_relCountAggregateOutputType ? Orders\_studnie\_relCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Orders_studnie_rels
 const count = await prisma.orders_studnie_rel.count({
-    where: {
-        // ... the filter for the Orders_studnie_rels we want to count
-    }
-});
+  where: {
+    // ... the filter for the Orders_studnie_rels we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21116
 
@@ -139,7 +139,7 @@ Create a Orders_studnie_rel.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relCreateArgs`](../type-aliases/orders_studnie_relCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relCreateArgs`](../type-aliases/orders_studnie_relCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Orders_studnie_rel.
 ```ts
 // Create one Orders_studnie_rel
 const Orders_studnie_rel = await prisma.orders_studnie_rel.create({
-    data: {
-        // ... data to create a Orders_studnie_rel
-    }
-});
+  data: {
+    // ... data to create a Orders_studnie_rel
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:21130
 
@@ -178,7 +178,7 @@ Create many Orders_studnie_rels.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relCreateManyArgs`](../type-aliases/orders_studnie_relCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relCreateManyArgs`](../type-aliases/orders_studnie_relCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Orders_studnie_rels.
 ```ts
 // Create many Orders_studnie_rels
 const orders_studnie_rel = await prisma.orders_studnie_rel.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:21154
 
@@ -217,7 +217,7 @@ Create many Orders_studnie_rels and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relCreateManyAndReturnArgs`](../type-aliases/orders_studnie_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relCreateManyAndReturnArgs`](../type-aliases/orders_studnie_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21168
 
@@ -266,7 +266,7 @@ Delete a Orders_studnie_rel.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relDeleteArgs`](../type-aliases/orders_studnie_relDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relDeleteArgs`](../type-aliases/orders_studnie_relDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Orders_studnie_rel.
 ```ts
 // Delete one Orders_studnie_rel
 const Orders_studnie_rel = await prisma.orders_studnie_rel.delete({
-    where: {
-        // ... filter to delete one Orders_studnie_rel
-    }
-});
+  where: {
+    // ... filter to delete one Orders_studnie_rel
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:21199
 
@@ -305,7 +305,7 @@ Delete zero or more Orders_studnie_rels.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relDeleteManyArgs`](../type-aliases/orders_studnie_relDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relDeleteManyArgs`](../type-aliases/orders_studnie_relDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Orders_studnie_rels to delete.
 ```ts
 // Delete a few Orders_studnie_rels
 const { count } = await prisma.orders_studnie_rel.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21068
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relFindFirstArgs`](../type-aliases/orders_studnie_relFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relFindFirstArgs`](../type-aliases/orders_studnie_relFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Orders_studnie_rel
 ```ts
 // Get one Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21084
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relFindFirstOrThrowArgs`](../type-aliases/orders_studnie_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relFindFirstOrThrowArgs`](../type-aliases/orders_studnie_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Orders_studnie_rel
 ```ts
 // Get one Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:21102
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relFindManyArgs`](../type-aliases/orders_studnie_relFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relFindManyArgs`](../type-aliases/orders_studnie_relFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,22 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Orders_studnie_rels
-const orders_studnie_rels = await prisma.orders_studnie_rel.findMany();
+const orders_studnie_rels = await prisma.orders_studnie_rel.findMany()
 
 // Get first 10 Orders_studnie_rels
-const orders_studnie_rels = await prisma.orders_studnie_rel.findMany({ take: 10 });
+const orders_studnie_rels = await prisma.orders_studnie_rel.findMany({ take: 10 })
 
 // Only select the `id`
-const orders_studnie_relWithIdOnly = await prisma.orders_studnie_rel.findMany({
-    select: { id: true }
-});
+const orders_studnie_relWithIdOnly = await prisma.orders_studnie_rel.findMany({ select: { id: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21039
 
@@ -472,7 +470,7 @@ Find zero or one Orders_studnie_rel that matches the filter.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relFindUniqueArgs`](../type-aliases/orders_studnie_relFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relFindUniqueArgs`](../type-aliases/orders_studnie_relFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -491,17 +489,17 @@ Arguments to find a Orders_studnie_rel
 ```ts
 // Get one Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21053
 
@@ -512,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relFindUniqueOrThrowArgs`](../type-aliases/orders_studnie_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relFindUniqueOrThrowArgs`](../type-aliases/orders_studnie_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -531,17 +529,17 @@ Arguments to find a Orders_studnie_rel
 ```ts
 // Get one Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetOrders_studnie_relGroupByPayload`](../type-aliases/GetOrders_studnie_relGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetOrders_studnie_relGroupByPayload`](../type-aliases/GetOrders_studnie_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:21337
 
@@ -553,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relGroupByArgs`](../type-aliases/orders_studnie_relGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relGroupByArgs`](../type-aliases/orders_studnie_relGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md) \| [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md) \| [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md) \| [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md) \| [`orders_studnie_relOrderByWithAggregationInput`](../type-aliases/orders_studnie_relOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"id"` \| `"createdAt"` \| `"userId"` \| `"data"` \| `"status"` \| `"offerStudnieId"`
+`OrderFields` *extends* `"id"` \| `"createdAt"` \| `"userId"` \| `"data"` \| `"status"` \| `"offerStudnieId"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`Orders_studnie_relScalarFieldEnum`](../type-aliases/Orders_studnie_relScalarFieldEnum.md)
+`ByFields` *extends* [`Orders_studnie_relScalarFieldEnum`](../type-aliases/Orders_studnie_relScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -585,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -601,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetOrders_studnie_relGroupByPayload`](../type-aliases/GetOrders_studnie_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetOrders_studnie_relGroupByPayload`](../type-aliases/GetOrders_studnie_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21185
 
@@ -632,7 +630,7 @@ Update one Orders_studnie_rel.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relUpdateArgs`](../type-aliases/orders_studnie_relUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relUpdateArgs`](../type-aliases/orders_studnie_relUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -651,20 +649,20 @@ Arguments to update one Orders_studnie_rel.
 ```ts
 // Update one Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:21218
 
@@ -676,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relUpdateManyArgs`](../type-aliases/orders_studnie_relUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relUpdateManyArgs`](../type-aliases/orders_studnie_relUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -695,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Orders_studnie_rels
 const orders_studnie_rel = await prisma.orders_studnie_rel.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:21248
 
@@ -718,7 +716,7 @@ Update zero or more Orders_studnie_rels and returns the data updated in the data
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relUpdateManyAndReturnArgs`](../type-aliases/orders_studnie_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relUpdateManyAndReturnArgs`](../type-aliases/orders_studnie_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -759,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__orders_studnie_relClient`](Prisma__orders_studnie_relClient.md)\<`GetFindResult`\<[`$orders_studnie_relPayload`](../type-aliases/$orders_studnie_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:21267
 
@@ -773,7 +771,7 @@ Create or update one Orders_studnie_rel.
 
 ##### T
 
-`T` _extends_ [`orders_studnie_relUpsertArgs`](../type-aliases/orders_studnie_relUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`orders_studnie_relUpsertArgs`](../type-aliases/orders_studnie_relUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -792,14 +790,14 @@ Arguments to update or create a Orders_studnie_rel.
 ```ts
 // Update or create a Orders_studnie_rel
 const orders_studnie_rel = await prisma.orders_studnie_rel.upsert({
-    create: {
-        // ... data to create a Orders_studnie_rel
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the Orders_studnie_rel we want to update
-    }
-});
+  create: {
+    // ... data to create a Orders_studnie_rel
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the Orders_studnie_rel we want to update
+  }
+})
 ```

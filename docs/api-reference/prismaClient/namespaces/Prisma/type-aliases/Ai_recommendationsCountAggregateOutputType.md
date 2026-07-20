@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_recommendationsCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:10014
 
 Defined in: generated/prisma/index.d.ts:10029
 
----
+***
 
 ### confidence
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:10029
 
 Defined in: generated/prisma/index.d.ts:10021
 
----
+***
 
 ### decidedAt
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:10021
 
 Defined in: generated/prisma/index.d.ts:10027
 
----
+***
 
 ### decidedBy
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:10027
 
 Defined in: generated/prisma/index.d.ts:10028
 
----
+***
 
 ### dn
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:10028
 
 Defined in: generated/prisma/index.d.ts:10018
 
----
+***
 
 ### generatedAt
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:10018
 
 Defined in: generated/prisma/index.d.ts:10026
 
----
+***
 
 ### id
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:10026
 
 Defined in: generated/prisma/index.d.ts:10015
 
----
+***
 
 ### patternKey
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:10015
 
 Defined in: generated/prisma/index.d.ts:10017
 
----
+***
 
 ### patternType
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:10017
 
 Defined in: generated/prisma/index.d.ts:10016
 
----
+***
 
 ### payload
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:10016
 
 Defined in: generated/prisma/index.d.ts:10022
 
----
+***
 
 ### score
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:10022
 
 Defined in: generated/prisma/index.d.ts:10020
 
----
+***
 
 ### wasAccepted
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:10020
 
 Defined in: generated/prisma/index.d.ts:10024
 
----
+***
 
 ### wasApplied
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:10024
 
 Defined in: generated/prisma/index.d.ts:10023
 
----
+***
 
 ### wasRejected
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:10023
 
 Defined in: generated/prisma/index.d.ts:10025
 
----
+***
 
 ### wellId
 

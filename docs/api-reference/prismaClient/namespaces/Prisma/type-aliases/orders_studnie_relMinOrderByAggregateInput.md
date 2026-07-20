@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relMinOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:45961
 
 Defined in: generated/prisma/index.d.ts:45965
 
----
+***
 
 ### data?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:45965
 
 Defined in: generated/prisma/index.d.ts:45967
 
----
+***
 
 ### id?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:45967
 
 Defined in: generated/prisma/index.d.ts:45962
 
----
+***
 
 ### offerStudnieId?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:45962
 
 Defined in: generated/prisma/index.d.ts:45964
 
----
+***
 
 ### status?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:45964
 
 Defined in: generated/prisma/index.d.ts:45966
 
----
+***
 
 ### userId?
 

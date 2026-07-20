@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_relDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:16872
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the offers_rel model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOffers_relAggregateType`](../type-aliases/GetOffers_relAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOffers_relAggregateType`](../type-aliases/GetOffers_relAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:17163
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`Offers_relAggregateArgs`](../type-aliases/Offers_relAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`Offers_relAggregateArgs`](../type-aliases/Offers_relAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Offers\_relCountAggregateOutputType ? Offers\_relCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Offers\_relCountAggregateOutputType ? Offers\_relCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:17129
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relCountArgs`](../type-aliases/offers_relCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relCountArgs`](../type-aliases/offers_relCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Offers_rels to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Offers\_relCountAggregateOutputType ? Offers\_relCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Offers\_relCountAggregateOutputType ? Offers\_relCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Offers_rels
 const count = await prisma.offers_rel.count({
-    where: {
-        // ... the filter for the Offers_rels we want to count
-    }
-});
+  where: {
+    // ... the filter for the Offers_rels we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:16962
 
@@ -139,7 +139,7 @@ Create a Offers_rel.
 
 ##### T
 
-`T` _extends_ [`offers_relCreateArgs`](../type-aliases/offers_relCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relCreateArgs`](../type-aliases/offers_relCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Offers_rel.
 ```ts
 // Create one Offers_rel
 const Offers_rel = await prisma.offers_rel.create({
-    data: {
-        // ... data to create a Offers_rel
-    }
-});
+  data: {
+    // ... data to create a Offers_rel
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:16976
 
@@ -178,7 +178,7 @@ Create many Offers_rels.
 
 ##### T
 
-`T` _extends_ [`offers_relCreateManyArgs`](../type-aliases/offers_relCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relCreateManyArgs`](../type-aliases/offers_relCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Offers_rels.
 ```ts
 // Create many Offers_rels
 const offers_rel = await prisma.offers_rel.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:17000
 
@@ -217,7 +217,7 @@ Create many Offers_rels and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`offers_relCreateManyAndReturnArgs`](../type-aliases/offers_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relCreateManyAndReturnArgs`](../type-aliases/offers_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:17014
 
@@ -266,7 +266,7 @@ Delete a Offers_rel.
 
 ##### T
 
-`T` _extends_ [`offers_relDeleteArgs`](../type-aliases/offers_relDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relDeleteArgs`](../type-aliases/offers_relDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Offers_rel.
 ```ts
 // Delete one Offers_rel
 const Offers_rel = await prisma.offers_rel.delete({
-    where: {
-        // ... filter to delete one Offers_rel
-    }
-});
+  where: {
+    // ... filter to delete one Offers_rel
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:17045
 
@@ -305,7 +305,7 @@ Delete zero or more Offers_rels.
 
 ##### T
 
-`T` _extends_ [`offers_relDeleteManyArgs`](../type-aliases/offers_relDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relDeleteManyArgs`](../type-aliases/offers_relDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Offers_rels to delete.
 ```ts
 // Delete a few Offers_rels
 const { count } = await prisma.offers_rel.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:16914
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relFindFirstArgs`](../type-aliases/offers_relFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relFindFirstArgs`](../type-aliases/offers_relFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Offers_rel
 ```ts
 // Get one Offers_rel
 const offers_rel = await prisma.offers_rel.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:16930
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relFindFirstOrThrowArgs`](../type-aliases/offers_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relFindFirstOrThrowArgs`](../type-aliases/offers_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Offers_rel
 ```ts
 // Get one Offers_rel
 const offers_rel = await prisma.offers_rel.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:16948
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relFindManyArgs`](../type-aliases/offers_relFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relFindManyArgs`](../type-aliases/offers_relFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Offers_rels
-const offers_rels = await prisma.offers_rel.findMany();
+const offers_rels = await prisma.offers_rel.findMany()
 
 // Get first 10 Offers_rels
-const offers_rels = await prisma.offers_rel.findMany({ take: 10 });
+const offers_rels = await prisma.offers_rel.findMany({ take: 10 })
 
 // Only select the `id`
-const offers_relWithIdOnly = await prisma.offers_rel.findMany({ select: { id: true } });
+const offers_relWithIdOnly = await prisma.offers_rel.findMany({ select: { id: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:16885
 
@@ -470,7 +470,7 @@ Find zero or one Offers_rel that matches the filter.
 
 ##### T
 
-`T` _extends_ [`offers_relFindUniqueArgs`](../type-aliases/offers_relFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relFindUniqueArgs`](../type-aliases/offers_relFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a Offers_rel
 ```ts
 // Get one Offers_rel
 const offers_rel = await prisma.offers_rel.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:16899
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`offers_relFindUniqueOrThrowArgs`](../type-aliases/offers_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relFindUniqueOrThrowArgs`](../type-aliases/offers_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a Offers_rel
 ```ts
 // Get one Offers_rel
 const offers_rel = await prisma.offers_rel.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetOffers_relGroupByPayload`](../type-aliases/GetOffers_relGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetOffers_relGroupByPayload`](../type-aliases/GetOffers_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:17183
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relGroupByArgs`](../type-aliases/offers_relGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relGroupByArgs`](../type-aliases/offers_relGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md) \| [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md) \| [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md) \| [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md) \| [`offers_relOrderByWithAggregationInput`](../type-aliases/offers_relOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"id"` \| `"createdAt"` \| `"userId"` \| `"updatedAt"` \| `"data"` \| `"offer_number"` \| `"clientId"` \| `"state"` \| `"transportCost"` \| `"clientName"` \| `"clientNip"` \| `"investName"` \| `"history"`
+`OrderFields` *extends* `"id"` \| `"createdAt"` \| `"userId"` \| `"updatedAt"` \| `"data"` \| `"offer_number"` \| `"clientId"` \| `"state"` \| `"transportCost"` \| `"clientName"` \| `"clientNip"` \| `"investName"` \| `"history"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`Offers_relScalarFieldEnum`](../type-aliases/Offers_relScalarFieldEnum.md)
+`ByFields` *extends* [`Offers_relScalarFieldEnum`](../type-aliases/Offers_relScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetOffers_relGroupByPayload`](../type-aliases/GetOffers_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetOffers_relGroupByPayload`](../type-aliases/GetOffers_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:17031
 
@@ -630,7 +630,7 @@ Update one Offers_rel.
 
 ##### T
 
-`T` _extends_ [`offers_relUpdateArgs`](../type-aliases/offers_relUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relUpdateArgs`](../type-aliases/offers_relUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one Offers_rel.
 ```ts
 // Update one Offers_rel
 const offers_rel = await prisma.offers_rel.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:17064
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`offers_relUpdateManyArgs`](../type-aliases/offers_relUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relUpdateManyArgs`](../type-aliases/offers_relUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Offers_rels
 const offers_rel = await prisma.offers_rel.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:17094
 
@@ -716,7 +716,7 @@ Update zero or more Offers_rels and returns the data updated in the database.
 
 ##### T
 
-`T` _extends_ [`offers_relUpdateManyAndReturnArgs`](../type-aliases/offers_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relUpdateManyAndReturnArgs`](../type-aliases/offers_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__offers_relClient`](Prisma__offers_relClient.md)\<`GetFindResult`\<[`$offers_relPayload`](../type-aliases/$offers_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:17113
 
@@ -771,7 +771,7 @@ Create or update one Offers_rel.
 
 ##### T
 
-`T` _extends_ [`offers_relUpsertArgs`](../type-aliases/offers_relUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`offers_relUpsertArgs`](../type-aliases/offers_relUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a Offers_rel.
 ```ts
 // Update or create a Offers_rel
 const offers_rel = await prisma.offers_rel.upsert({
-    create: {
-        // ... data to create a Offers_rel
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the Offers_rel we want to update
-    }
-});
+  create: {
+    // ... data to create a Offers_rel
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the Offers_rel we want to update
+  }
+})
 ```

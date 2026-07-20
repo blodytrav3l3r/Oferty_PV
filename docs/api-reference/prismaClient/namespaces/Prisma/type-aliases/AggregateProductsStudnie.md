@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateProductsStudnie
 
@@ -20,7 +20,7 @@ Model ProductsStudnie
 
 Defined in: generated/prisma/index.d.ts:31131
 
----
+***
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:31131
 
 Defined in: generated/prisma/index.d.ts:31130
 
----
+***
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:31130
 
 Defined in: generated/prisma/index.d.ts:31134
 
----
+***
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:31134
 
 Defined in: generated/prisma/index.d.ts:31133
 
----
+***
 
 ### \_sum
 

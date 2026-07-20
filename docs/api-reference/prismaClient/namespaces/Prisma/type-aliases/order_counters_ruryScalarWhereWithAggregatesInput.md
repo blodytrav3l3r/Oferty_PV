@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryScalarWhereWithAggregatesInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40502
 
 Defined in: generated/prisma/index.d.ts:40503
 
----
+***
 
 ### lastNumber?
 
-> `optional` **lastNumber?**: [`IntNullableWithAggregatesFilter`](IntNullableWithAggregatesFilter.md)\<`"order_counters_rury"`> \> \| `number` \| `null`
+> `optional` **lastNumber?**: [`IntNullableWithAggregatesFilter`](IntNullableWithAggregatesFilter.md)\<`"order_counters_rury"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40508
 
----
+***
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40508
 
 Defined in: generated/prisma/index.d.ts:40505
 
----
+***
 
 ### OR?
 
@@ -42,18 +42,18 @@ Defined in: generated/prisma/index.d.ts:40505
 
 Defined in: generated/prisma/index.d.ts:40504
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"order_counters_rury"`> \> \| `string`
+> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"order_counters_rury"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40506
 
----
+***
 
 ### year?
 
-> `optional` **year?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"order_counters_rury"`> \> \| `number`
+> `optional` **year?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"order_counters_rury"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40507

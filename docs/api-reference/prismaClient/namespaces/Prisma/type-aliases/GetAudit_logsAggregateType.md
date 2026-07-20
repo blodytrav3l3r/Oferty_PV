@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / GetAudit\_logsAggregateType
 
 # Type Alias: GetAudit\_logsAggregateType\<T\>
 
-> **GetAudit\_logsAggregateType**\<`T`> \> = \{ \[P in keyof T & keyof AggregateAudit\_logs\]: P extends "\_count" \| "count" ? T\[P\] extends true ? number : GetScalarType\<T\[P\], AggregateAudit\_logs\[P\]\> : GetScalarType\<T\[P\], AggregateAudit\_logs\[P\]\> \}
+> **GetAudit\_logsAggregateType**\<`T`\> = \{ \[P in keyof T & keyof AggregateAudit\_logs\]: P extends "\_count" \| "count" ? T\[P\] extends true ? number : GetScalarType\<T\[P\], AggregateAudit\_logs\[P\]\> : GetScalarType\<T\[P\], AggregateAudit\_logs\[P\]\> \}
 
 Defined in: generated/prisma/index.d.ts:12446
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:12446
 
 ### T
 
-`T` _extends_ [`Audit_logsAggregateArgs`](Audit_logsAggregateArgs.md)
+`T` *extends* [`Audit_logsAggregateArgs`](Audit_logsAggregateArgs.md)

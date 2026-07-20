@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_eventsCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:5513
 
 Defined in: generated/prisma/index.d.ts:5527
 
----
+***
 
 ### changeReason
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:5527
 
 Defined in: generated/prisma/index.d.ts:5522
 
----
+***
 
 ### componentId
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:5522
 
 Defined in: generated/prisma/index.d.ts:5519
 
----
+***
 
 ### createdAt
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:5519
 
 Defined in: generated/prisma/index.d.ts:5526
 
----
+***
 
 ### eventType
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:5526
 
 Defined in: generated/prisma/index.d.ts:5516
 
----
+***
 
 ### id
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:5516
 
 Defined in: generated/prisma/index.d.ts:5514
 
----
+***
 
 ### msSinceConfig
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:5514
 
 Defined in: generated/prisma/index.d.ts:5523
 
----
+***
 
 ### newValue
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:5523
 
 Defined in: generated/prisma/index.d.ts:5521
 
----
+***
 
 ### orderInSession
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:5521
 
 Defined in: generated/prisma/index.d.ts:5524
 
----
+***
 
 ### previousValue
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:5524
 
 Defined in: generated/prisma/index.d.ts:5520
 
----
+***
 
 ### sequenceNo
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:5520
 
 Defined in: generated/prisma/index.d.ts:5525
 
----
+***
 
 ### telemetryId
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:5525
 
 Defined in: generated/prisma/index.d.ts:5515
 
----
+***
 
 ### userId
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:5515
 
 Defined in: generated/prisma/index.d.ts:5517
 
----
+***
 
 ### wellId
 

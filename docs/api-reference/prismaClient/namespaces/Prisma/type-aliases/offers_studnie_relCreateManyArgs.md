@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offers\_studnie\_relCreateManyArgs
 
 # Type Alias: offers\_studnie\_relCreateManyArgs\<ExtArgs\>
 
-> **offers\_studnie\_relCreateManyArgs**\<`ExtArgs`> \> = `object`
+> **offers\_studnie\_relCreateManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:18628
 
@@ -16,7 +16,7 @@ offers_studnie_rel createMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 

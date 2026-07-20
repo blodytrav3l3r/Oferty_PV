@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / $CategoriesRuryPayload
 
 # Type Alias: $CategoriesRuryPayload\<ExtArgs\>
 
-> **$CategoriesRuryPayload**\<`ExtArgs`> \> = `object`
+> **$CategoriesRuryPayload**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:28059
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:28059
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:28059
 
 Defined in: generated/prisma/index.d.ts:28068
 
----
+***
 
 ### name
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:28068
 
 Defined in: generated/prisma/index.d.ts:28060
 
----
+***
 
 ### objects
 
@@ -42,9 +42,9 @@ Defined in: generated/prisma/index.d.ts:28061
 
 #### products
 
-> **products**: [`$ProductsRuryPayload`]($ProductsRuryPayload.md)\<`ExtArgs`>\>[]
+> **products**: [`$ProductsRuryPayload`]($ProductsRuryPayload.md)\<`ExtArgs`\>[]
 
----
+***
 
 ### scalars
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../../README.md) / [prismaClient](../../../../../README.md) / [Prisma](../../../README.md) / [DMMF](../README.md) / TypeRef
 
 # Type Alias: TypeRef\<AllowedLocations\>
 
-> **TypeRef**\<`AllowedLocations`> \> = `object`
+> **TypeRef**\<`AllowedLocations`\> = `object`
 
 Defined in: generated/prisma/runtime/library.d.ts:3833
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3833
 
 ### AllowedLocations
 
-`AllowedLocations` _extends_ [`FieldLocation`](FieldLocation.md)
+`AllowedLocations` *extends* [`FieldLocation`](FieldLocation.md)
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3833
 
 Defined in: generated/prisma/runtime/library.d.ts:3834
 
----
+***
 
 ### location
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3834
 
 Defined in: generated/prisma/runtime/library.d.ts:3836
 
----
+***
 
 ### namespace?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3836
 
 Defined in: generated/prisma/runtime/library.d.ts:3837
 
----
+***
 
 ### type
 

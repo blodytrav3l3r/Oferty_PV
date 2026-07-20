@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieUncheckedUpdateManyWithoutCategory\_relNestedInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46922
 
 Defined in: generated/prisma/index.d.ts:46930
 
----
+***
 
 ### connectOrCreate?
 
@@ -26,15 +26,15 @@ Defined in: generated/prisma/index.d.ts:46930
 
 Defined in: generated/prisma/index.d.ts:46924
 
----
+***
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)> \> \| [`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md)[] \| [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)[]
+> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)\> \| [`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md)[] \| [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)[]
 
 Defined in: generated/prisma/index.d.ts:46923
 
----
+***
 
 ### createMany?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46923
 
 Defined in: generated/prisma/index.d.ts:46926
 
----
+***
 
 ### delete?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:46926
 
 Defined in: generated/prisma/index.d.ts:46929
 
----
+***
 
 ### deleteMany?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:46929
 
 Defined in: generated/prisma/index.d.ts:46933
 
----
+***
 
 ### disconnect?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:46933
 
 Defined in: generated/prisma/index.d.ts:46928
 
----
+***
 
 ### set?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:46928
 
 Defined in: generated/prisma/index.d.ts:46927
 
----
+***
 
 ### update?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:46927
 
 Defined in: generated/prisma/index.d.ts:46931
 
----
+***
 
 ### updateMany?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:46931
 
 Defined in: generated/prisma/index.d.ts:46932
 
----
+***
 
 ### upsert?
 

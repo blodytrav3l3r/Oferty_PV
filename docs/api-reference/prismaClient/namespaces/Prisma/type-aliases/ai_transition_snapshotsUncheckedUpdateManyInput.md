@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsUncheckedUpdateManyInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:42835
 
 Defined in: generated/prisma/index.d.ts:42847
 
----
+***
 
 ### affectedFinalConfig?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:42847
 
 Defined in: generated/prisma/index.d.ts:42850
 
----
+***
 
 ### affectedReductionChoice?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:42850
 
 Defined in: generated/prisma/index.d.ts:42849
 
----
+***
 
 ### affectedRingSelection?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:42849
 
 Defined in: generated/prisma/index.d.ts:42848
 
----
+***
 
 ### angleDeg?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:42848
 
 Defined in: generated/prisma/index.d.ts:42844
 
----
+***
 
 ### collided?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:42844
 
 Defined in: generated/prisma/index.d.ts:42846
 
----
+***
 
 ### configId?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:42846
 
 Defined in: generated/prisma/index.d.ts:42838
 
----
+***
 
 ### createdAt?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:42838
 
 Defined in: generated/prisma/index.d.ts:42853
 
----
+***
 
 ### dn?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:42853
 
 Defined in: generated/prisma/index.d.ts:42840
 
----
+***
 
 ### heightFromBottomMm?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:42840
 
 Defined in: generated/prisma/index.d.ts:42843
 
----
+***
 
 ### id?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:42843
 
 Defined in: generated/prisma/index.d.ts:42836
 
----
+***
 
 ### minimalDennicaForTransitionsMm?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:42836
 
 Defined in: generated/prisma/index.d.ts:42851
 
----
+***
 
 ### position?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:42851
 
 Defined in: generated/prisma/index.d.ts:42845
 
----
+***
 
 ### producer?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:42845
 
 Defined in: generated/prisma/index.d.ts:42842
 
----
+***
 
 ### solverModifiedForTransitions?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:42842
 
 Defined in: generated/prisma/index.d.ts:42852
 
----
+***
 
 ### transitionNo?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:42852
 
 Defined in: generated/prisma/index.d.ts:42839
 
----
+***
 
 ### transitionType?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:42839
 
 Defined in: generated/prisma/index.d.ts:42841
 
----
+***
 
 ### wellId?
 

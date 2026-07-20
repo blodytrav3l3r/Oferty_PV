@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../../README.md) / [services/telemetry/learning/RecommendationEngine](../README.md) / RecommendationEngine
 
 # Class: RecommendationEngine
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:26](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L26)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:26](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L26)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:26](https:/
 
 > **new RecommendationEngine**(): `RecommendationEngine`
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:30](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L30)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:30](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L30)
 
 #### Returns
 
@@ -24,9 +24,9 @@ Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:30](https:/
 
 ### applyDecision()
 
-> **applyDecision**(`id`, `accepted`, `decidedBy`): `Promise`\<`void`>\>
+> **applyDecision**(`id`, `accepted`, `decidedBy`): `Promise`\<`void`\>
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:98](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L98)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:98](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L98)
 
 Decyzja acceptance/rejection rekomendacji.
 
@@ -48,13 +48,13 @@ Decyzja acceptance/rejection rekomendacji.
 
 `Promise`\<`void`\>
 
----
+***
 
 ### persistRecommendation()
 
-> **persistRecommendation**(`input`): `Promise`\<`string`>\>
+> **persistRecommendation**(`input`): `Promise`\<`string`\>
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:75](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L75)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:75](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L75)
 
 Zapis rekomendacji do tabeli ai_recommendations.
 
@@ -94,13 +94,13 @@ Zapis rekomendacji do tabeli ai_recommendations.
 
 `Promise`\<`string`\>
 
----
+***
 
 ### recommendForDn()
 
 > **recommendForDn**(`features`, `topN?`): `Promise`\<[`RankedRecommendation`](../../RankingEngine/interfaces/RankedRecommendation.md)[]\>
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:67](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L67)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:67](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L67)
 
 Zwróć najlepsze wzorce dla danego DN z features.
 
@@ -118,13 +118,13 @@ Zwróć najlepsze wzorce dla danego DN z features.
 
 `Promise`\<[`RankedRecommendation`](../../RankingEngine/interfaces/RankedRecommendation.md)[]\>
 
----
+***
 
 ### recommendForTelemetry()
 
 > **recommendForTelemetry**(`telemetryId`, `dn?`): `Promise`\<[`TopRecommendation`](../interfaces/TopRecommendation.md)[]\>
 
-Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:38](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/RecommendationEngine.ts#L38)
+Defined in: [src/services/telemetry/learning/RecommendationEngine.ts:38](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/RecommendationEngine.ts#L38)
 
 Zwraca rekomendacje dla podanego rekordu telemetry.
 

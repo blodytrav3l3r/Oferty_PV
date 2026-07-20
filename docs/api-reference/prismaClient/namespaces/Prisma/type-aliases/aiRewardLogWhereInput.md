@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogWhereInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:41525
 
 ### action?
 
-> `optional` **action?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **action?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41533
 
----
+***
 
 ### AND?
 
@@ -26,39 +26,39 @@ Defined in: generated/prisma/index.d.ts:41533
 
 Defined in: generated/prisma/index.d.ts:41526
 
----
+***
 
 ### configSnapshot?
 
-> `optional` **configSnapshot?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"aiRewardLog"`> \> \| `string` \| `null`
+> `optional` **configSnapshot?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"aiRewardLog"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41538
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **createdAt?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41539
 
----
+***
 
 ### dn?
 
-> `optional` **dn?**: [`IntFilter`](IntFilter.md)\<`"aiRewardLog"`> \> \| `number`
+> `optional` **dn?**: [`IntFilter`](IntFilter.md)\<`"aiRewardLog"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41532
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41529
 
----
+***
 
 ### NOT?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41529
 
 Defined in: generated/prisma/index.d.ts:41528
 
----
+***
 
 ### OR?
 
@@ -74,50 +74,50 @@ Defined in: generated/prisma/index.d.ts:41528
 
 Defined in: generated/prisma/index.d.ts:41527
 
----
+***
 
 ### reward?
 
-> `optional` **reward?**: [`FloatFilter`](FloatFilter.md)\<`"aiRewardLog"`> \> \| `number`
+> `optional` **reward?**: [`FloatFilter`](FloatFilter.md)\<`"aiRewardLog"`\> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41534
 
----
+***
 
 ### scoreAfter?
 
-> `optional` **scoreAfter?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"aiRewardLog"`> \> \| `number` \| `null`
+> `optional` **scoreAfter?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"aiRewardLog"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41536
 
----
+***
 
 ### scoreBefore?
 
-> `optional` **scoreBefore?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"aiRewardLog"`> \> \| `number` \| `null`
+> `optional` **scoreBefore?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"aiRewardLog"`\> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41535
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **userId?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41530
 
----
+***
 
 ### wasAiRanked?
 
-> `optional` **wasAiRanked?**: [`BoolFilter`](BoolFilter.md)\<`"aiRewardLog"`> \> \| `boolean`
+> `optional` **wasAiRanked?**: [`BoolFilter`](BoolFilter.md)\<`"aiRewardLog"`\> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:41537
 
----
+***
 
 ### wellId?
 
-> `optional` **wellId?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`> \> \| `string`
+> `optional` **wellId?**: [`StringFilter`](StringFilter.md)\<`"aiRewardLog"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41531

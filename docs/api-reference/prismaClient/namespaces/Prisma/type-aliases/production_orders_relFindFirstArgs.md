@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_orders\_relFindFirstArgs
 
 # Type Alias: production\_orders\_relFindFirstArgs\<ExtArgs\>
 
-> **production\_orders\_relFindFirstArgs**\<`ExtArgs`> \> = `object`
+> **production\_orders\_relFindFirstArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:24577
 
@@ -16,7 +16,7 @@ production_orders_rel findFirst
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:24601
 
 Sets the position for searching for production_orders_rels.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:24619
 
 Filter by unique combinations of production_orders_rels.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`production_orders_relOmit`](production_orders_relOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`production_orders_relOmit`](production_orders_relOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:24585
 
 Omit specific fields from the production_orders_rel
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:24595
 
 Determine the order of production_orders_rels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`production_orders_relSelect`](production_orders_relSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`production_orders_relSelect`](production_orders_relSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:24581
 
 Select specific fields to fetch from the production_orders_rel
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:24613
 
 Skip the first `n` production_orders_rels.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:24607
 
 Take `±n` production_orders_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

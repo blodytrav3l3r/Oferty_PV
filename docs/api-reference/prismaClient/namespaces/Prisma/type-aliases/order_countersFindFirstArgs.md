@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersFindFirstArgs
 
 # Type Alias: order\_countersFindFirstArgs\<ExtArgs\>
 
-> **order\_countersFindFirstArgs**\<`ExtArgs`> \> = `object`
+> **order\_countersFindFirstArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:19476
 
@@ -16,7 +16,7 @@ order_counters findFirst
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:19500
 
 Sets the position for searching for order_counters.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:19518
 
 Filter by unique combinations of order_counters.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`order_countersOmit`](order_countersOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`order_countersOmit`](order_countersOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:19484
 
 Omit specific fields from the order_counters
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:19494
 
 Determine the order of order_counters to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`order_countersSelect`](order_countersSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`order_countersSelect`](order_countersSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:19480
 
 Select specific fields to fetch from the order_counters
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:19512
 
 Skip the first `n` order_counters.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:19506
 
 Take `±n` order_counters from the position of the cursor.
 
----
+***
 
 ### where?
 

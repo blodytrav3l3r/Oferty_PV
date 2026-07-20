@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_eventsGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:5678
 
 Defined in: generated/prisma/index.d.ts:5693
 
----
+***
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:5693
 
 Defined in: generated/prisma/index.d.ts:5692
 
----
+***
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:5692
 
 Defined in: generated/prisma/index.d.ts:5696
 
----
+***
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:5696
 
 Defined in: generated/prisma/index.d.ts:5695
 
----
+***
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:5695
 
 Defined in: generated/prisma/index.d.ts:5694
 
----
+***
 
 ### changeReason
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:5694
 
 Defined in: generated/prisma/index.d.ts:5687
 
----
+***
 
 ### componentId
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:5687
 
 Defined in: generated/prisma/index.d.ts:5684
 
----
+***
 
 ### createdAt
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:5684
 
 Defined in: generated/prisma/index.d.ts:5691
 
----
+***
 
 ### eventType
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:5691
 
 Defined in: generated/prisma/index.d.ts:5681
 
----
+***
 
 ### id
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:5681
 
 Defined in: generated/prisma/index.d.ts:5679
 
----
+***
 
 ### msSinceConfig
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:5679
 
 Defined in: generated/prisma/index.d.ts:5688
 
----
+***
 
 ### newValue
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:5688
 
 Defined in: generated/prisma/index.d.ts:5686
 
----
+***
 
 ### orderInSession
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:5686
 
 Defined in: generated/prisma/index.d.ts:5689
 
----
+***
 
 ### previousValue
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:5689
 
 Defined in: generated/prisma/index.d.ts:5685
 
----
+***
 
 ### sequenceNo
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:5685
 
 Defined in: generated/prisma/index.d.ts:5690
 
----
+***
 
 ### telemetryId
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:5690
 
 Defined in: generated/prisma/index.d.ts:5680
 
----
+***
 
 ### userId
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:5680
 
 Defined in: generated/prisma/index.d.ts:5682
 
----
+***
 
 ### wellId
 

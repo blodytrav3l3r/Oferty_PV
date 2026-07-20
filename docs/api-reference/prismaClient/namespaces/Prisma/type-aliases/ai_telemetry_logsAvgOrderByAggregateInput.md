@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_logsAvgOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:44952
 
 Defined in: generated/prisma/index.d.ts:44960
 
----
+***
 
 ### computationMs?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:44960
 
 Defined in: generated/prisma/index.d.ts:44958
 
----
+***
 
 ### confidenceScore?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:44958
 
 Defined in: generated/prisma/index.d.ts:44963
 
----
+***
 
 ### configVersion?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:44963
 
 Defined in: generated/prisma/index.d.ts:44965
 
----
+***
 
 ### dennicaHeight?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:44965
 
 Defined in: generated/prisma/index.d.ts:44956
 
----
+***
 
 ### iterationCount?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:44956
 
 Defined in: generated/prisma/index.d.ts:44959
 
----
+***
 
 ### learningWeight?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:44959
 
 Defined in: generated/prisma/index.d.ts:44964
 
----
+***
 
 ### modificationCount?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:44964
 
 Defined in: generated/prisma/index.d.ts:44962
 
----
+***
 
 ### rankingScore?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:44962
 
 Defined in: generated/prisma/index.d.ts:44961
 
----
+***
 
 ### rewardValue?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:44961
 
 Defined in: generated/prisma/index.d.ts:44966
 
----
+***
 
 ### ringCount?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:44966
 
 Defined in: generated/prisma/index.d.ts:44957
 
----
+***
 
 ### rzDna?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:44957
 
 Defined in: generated/prisma/index.d.ts:44953
 
----
+***
 
 ### rzWlazu?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:44953
 
 Defined in: generated/prisma/index.d.ts:44954
 
----
+***
 
 ### successRate?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:44954
 
 Defined in: generated/prisma/index.d.ts:44967
 
----
+***
 
 ### usageCount?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:44967
 
 Defined in: generated/prisma/index.d.ts:44968
 
----
+***
 
 ### wellHeight?
 

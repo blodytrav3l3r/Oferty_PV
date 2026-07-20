@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_logsCreateManyArgs
 
 # Type Alias: ai\_telemetry\_logsCreateManyArgs\<ExtArgs\>
 
-> **ai\_telemetry\_logsCreateManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_telemetry\_logsCreateManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:5293
 
@@ -16,7 +16,7 @@ ai_telemetry_logs createMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 

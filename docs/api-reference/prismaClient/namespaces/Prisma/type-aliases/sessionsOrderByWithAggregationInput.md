@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / sessionsOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40813
 
 Defined in: generated/prisma/index.d.ts:40818
 
----
+***
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40818
 
 Defined in: generated/prisma/index.d.ts:40817
 
----
+***
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40817
 
 Defined in: generated/prisma/index.d.ts:40819
 
----
+***
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40819
 
 Defined in: generated/prisma/index.d.ts:40820
 
----
+***
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40820
 
 Defined in: generated/prisma/index.d.ts:40821
 
----
+***
 
 ### createdAt?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:40821
 
 Defined in: generated/prisma/index.d.ts:40816
 
----
+***
 
 ### token?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:40816
 
 Defined in: generated/prisma/index.d.ts:40814
 
----
+***
 
 ### userId?
 

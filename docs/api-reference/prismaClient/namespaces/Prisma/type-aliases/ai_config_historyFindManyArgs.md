@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historyFindManyArgs
 
 # Type Alias: ai\_config\_historyFindManyArgs\<ExtArgs\>
 
-> **ai\_config\_historyFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_config\_historyFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:7493
 
@@ -16,7 +16,7 @@ ai_config_history findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:7517
 
 Sets the position for listing ai_config_histories.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing ai_config_histories.
 
 Defined in: generated/prisma/index.d.ts:7530
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ai_config_historyOmit`](ai_config_historyOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_config_historyOmit`](ai_config_historyOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:7501
 
 Omit specific fields from the ai_config_history
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:7511
 
 Determine the order of ai_config_histories to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_config_historySelect`](ai_config_historySelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_config_historySelect`](ai_config_historySelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:7497
 
 Select specific fields to fetch from the ai_config_history
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:7529
 
 Skip the first `n` ai_config_histories.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:7523
 
 Take `±n` ai_config_histories from the position of the cursor.
 
----
+***
 
 ### where?
 

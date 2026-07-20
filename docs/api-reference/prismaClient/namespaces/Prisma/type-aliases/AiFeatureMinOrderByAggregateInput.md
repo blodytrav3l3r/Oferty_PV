@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureMinOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46530
 
 Defined in: generated/prisma/index.d.ts:46541
 
----
+***
 
 ### connectionCount?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46541
 
 Defined in: generated/prisma/index.d.ts:46543
 
----
+***
 
 ### createdAt?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46543
 
 Defined in: generated/prisma/index.d.ts:46552
 
----
+***
 
 ### decisionMs?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46552
 
 Defined in: generated/prisma/index.d.ts:46551
 
----
+***
 
 ### dn?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:46551
 
 Defined in: generated/prisma/index.d.ts:46533
 
----
+***
 
 ### hasPsiaBuda?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:46533
 
 Defined in: generated/prisma/index.d.ts:46538
 
----
+***
 
 ### hasReduction?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:46538
 
 Defined in: generated/prisma/index.d.ts:46537
 
----
+***
 
 ### hasStyczna?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:46537
 
 Defined in: generated/prisma/index.d.ts:46539
 
----
+***
 
 ### heightMm?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:46539
 
 Defined in: generated/prisma/index.d.ts:46534
 
----
+***
 
 ### id?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:46534
 
 Defined in: generated/prisma/index.d.ts:46531
 
----
+***
 
 ### label?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:46531
 
 Defined in: generated/prisma/index.d.ts:46549
 
----
+***
 
 ### reward?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:46549
 
 Defined in: generated/prisma/index.d.ts:46550
 
----
+***
 
 ### ringCount?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:46550
 
 Defined in: generated/prisma/index.d.ts:46540
 
----
+***
 
 ### ringVariety?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:46540
 
 Defined in: generated/prisma/index.d.ts:46547
 
----
+***
 
 ### season?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:46547
 
 Defined in: generated/prisma/index.d.ts:46548
 
----
+***
 
 ### telemetryId?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:46548
 
 Defined in: generated/prisma/index.d.ts:46532
 
----
+***
 
 ### topType?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:46532
 
 Defined in: generated/prisma/index.d.ts:46542
 
----
+***
 
 ### totalPrice?
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:46542
 
 Defined in: generated/prisma/index.d.ts:46545
 
----
+***
 
 ### totalWeight?
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/index.d.ts:46545
 
 Defined in: generated/prisma/index.d.ts:46546
 
----
+***
 
 ### transitionsAboveDennica?
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/index.d.ts:46546
 
 Defined in: generated/prisma/index.d.ts:46544
 
----
+***
 
 ### warehouse?
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/index.d.ts:46544
 
 Defined in: generated/prisma/index.d.ts:46535
 
----
+***
 
 ### wellType?
 

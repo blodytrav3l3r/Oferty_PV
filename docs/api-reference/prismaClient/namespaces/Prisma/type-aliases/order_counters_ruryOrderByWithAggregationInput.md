@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40491
 
 Defined in: generated/prisma/index.d.ts:40496
 
----
+***
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40496
 
 Defined in: generated/prisma/index.d.ts:40495
 
----
+***
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40495
 
 Defined in: generated/prisma/index.d.ts:40497
 
----
+***
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40497
 
 Defined in: generated/prisma/index.d.ts:40498
 
----
+***
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40498
 
 Defined in: generated/prisma/index.d.ts:40499
 
----
+***
 
 ### lastNumber?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:40499
 
 Defined in: generated/prisma/index.d.ts:40494
 
----
+***
 
 ### userId?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:40494
 
 Defined in: generated/prisma/index.d.ts:40492
 
----
+***
 
 ### year?
 

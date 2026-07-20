@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / PrismaClientOptions
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:3465
 
 Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
 
----
+***
 
 ### datasources?
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:3418
 
 Overwrites the datasource url from your schema.prisma file
 
----
+***
 
 ### datasourceUrl?
 
@@ -38,7 +38,7 @@ Defined in: generated/prisma/index.d.ts:3422
 
 Overwrites the datasource url from your schema.prisma file
 
----
+***
 
 ### errorFormat?
 
@@ -49,10 +49,10 @@ Defined in: generated/prisma/index.d.ts:3426
 #### Default
 
 ```ts
-'colorless';
+"colorless"
 ```
 
----
+***
 
 ### log?
 
@@ -82,10 +82,9 @@ og: [
  { emit: 'stdout', level: 'error' }
 
 ```
-
 Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
 
----
+***
 
 ### omit?
 
@@ -107,7 +106,7 @@ const prisma = new PrismaClient({
 })
 ```
 
----
+***
 
 ### transactionOptions?
 

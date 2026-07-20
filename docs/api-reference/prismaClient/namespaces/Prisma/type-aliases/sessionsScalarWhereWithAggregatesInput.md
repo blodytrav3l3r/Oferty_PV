@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / sessionsScalarWhereWithAggregatesInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40824
 
 Defined in: generated/prisma/index.d.ts:40825
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`BigIntWithAggregatesFilter`](BigIntWithAggregatesFilter.md)\<`"sessions"`> \> \| `bigint` \| `number`
+> `optional` **createdAt?**: [`BigIntWithAggregatesFilter`](BigIntWithAggregatesFilter.md)\<`"sessions"`\> \| `bigint` \| `number`
 
 Defined in: generated/prisma/index.d.ts:40830
 
----
+***
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40830
 
 Defined in: generated/prisma/index.d.ts:40827
 
----
+***
 
 ### OR?
 
@@ -42,18 +42,18 @@ Defined in: generated/prisma/index.d.ts:40827
 
 Defined in: generated/prisma/index.d.ts:40826
 
----
+***
 
 ### token?
 
-> `optional` **token?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"sessions"`> \> \| `string`
+> `optional` **token?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"sessions"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40828
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"sessions"`> \> \| `string`
+> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"sessions"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40829

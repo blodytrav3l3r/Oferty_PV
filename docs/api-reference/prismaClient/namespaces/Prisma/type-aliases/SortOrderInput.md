@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / SortOrderInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:44884
 
 Defined in: generated/prisma/index.d.ts:44886
 
----
+***
 
 ### sort
 

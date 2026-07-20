@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relFindManyArgs
 
 # Type Alias: clients\_relFindManyArgs\<ExtArgs\>
 
-> **clients\_relFindManyArgs**\<`ExtArgs`> \> = `object`
+> **clients\_relFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:14196
 
@@ -16,7 +16,7 @@ clients_rel findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:14220
 
 Sets the position for listing clients_rels.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing clients_rels.
 
 Defined in: generated/prisma/index.d.ts:14233
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`clients_relOmit`](clients_relOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`clients_relOmit`](clients_relOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:14204
 
 Omit specific fields from the clients_rel
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:14214
 
 Determine the order of clients_rels to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`clients_relSelect`](clients_relSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`clients_relSelect`](clients_relSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:14200
 
 Select specific fields to fetch from the clients_rel
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:14232
 
 Skip the first `n` clients_rels.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:14226
 
 Take `±n` clients_rels from the position of the cursor.
 
----
+***
 
 ### where?
 

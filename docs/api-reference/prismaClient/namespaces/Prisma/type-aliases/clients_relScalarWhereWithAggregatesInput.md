@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relScalarWhereWithAggregatesInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:40093
 
 ### address?
 
-> `optional` **address?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **address?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40101
 
----
+***
 
 ### AND?
 
@@ -26,63 +26,63 @@ Defined in: generated/prisma/index.d.ts:40101
 
 Defined in: generated/prisma/index.d.ts:40094
 
----
+***
 
 ### clientNumber?
 
-> `optional` **clientNumber?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **clientNumber?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40105
 
----
+***
 
 ### contact?
 
-> `optional` **contact?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **contact?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40104
 
----
+***
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40106
 
----
+***
 
 ### email?
 
-> `optional` **email?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **email?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40102
 
----
+***
 
 ### id?
 
-> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string`
+> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40097
 
----
+***
 
 ### name?
 
-> `optional` **name?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **name?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40099
 
----
+***
 
 ### nip?
 
-> `optional` **nip?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **nip?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40100
 
----
+***
 
 ### NOT?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:40100
 
 Defined in: generated/prisma/index.d.ts:40096
 
----
+***
 
 ### OR?
 
@@ -98,26 +98,26 @@ Defined in: generated/prisma/index.d.ts:40096
 
 Defined in: generated/prisma/index.d.ts:40095
 
----
+***
 
 ### phone?
 
-> `optional` **phone?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **phone?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40103
 
----
+***
 
 ### updatedAt?
 
-> `optional` **updatedAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **updatedAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40107
 
----
+***
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`> \> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"clients_rel"`\> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40098

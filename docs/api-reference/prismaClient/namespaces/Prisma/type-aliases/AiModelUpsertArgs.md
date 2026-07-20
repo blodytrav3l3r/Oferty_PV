@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiModelUpsertArgs
 
 # Type Alias: AiModelUpsertArgs\<ExtArgs\>
 
-> **AiModelUpsertArgs**\<`ExtArgs`> \> = `object`
+> **AiModelUpsertArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:35033
 
@@ -16,49 +16,49 @@ AiModel upsert
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### create
 
-> **create**: [`XOR`](XOR.md)\<[`AiModelCreateInput`](AiModelCreateInput.md), [`AiModelUncheckedCreateInput`](AiModelUncheckedCreateInput.md)>\>
+> **create**: [`XOR`](XOR.md)\<[`AiModelCreateInput`](AiModelCreateInput.md), [`AiModelUncheckedCreateInput`](AiModelUncheckedCreateInput.md)\>
 
 Defined in: generated/prisma/index.d.ts:35049
 
 In case the AiModel found by the `where` argument doesn't exist, create a new AiModel with this data.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`AiModelOmit`](AiModelOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`AiModelOmit`](AiModelOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35041
 
 Omit specific fields from the AiModel
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`AiModelSelect`](AiModelSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`AiModelSelect`](AiModelSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35037
 
 Select specific fields to fetch from the AiModel
 
----
+***
 
 ### update
 
-> **update**: [`XOR`](XOR.md)\<[`AiModelUpdateInput`](AiModelUpdateInput.md), [`AiModelUncheckedUpdateInput`](AiModelUncheckedUpdateInput.md)>\>
+> **update**: [`XOR`](XOR.md)\<[`AiModelUpdateInput`](AiModelUpdateInput.md), [`AiModelUncheckedUpdateInput`](AiModelUncheckedUpdateInput.md)\>
 
 Defined in: generated/prisma/index.d.ts:35053
 
 In case the AiModel was found with the provided `where` argument, update it with this data.
 
----
+***
 
 ### where
 

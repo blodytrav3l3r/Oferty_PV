@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historyOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:39519
 
 Defined in: generated/prisma/index.d.ts:39533
 
----
+***
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:39533
 
 Defined in: generated/prisma/index.d.ts:39532
 
----
+***
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:39532
 
 Defined in: generated/prisma/index.d.ts:39534
 
----
+***
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:39534
 
 Defined in: generated/prisma/index.d.ts:39535
 
----
+***
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:39535
 
 Defined in: generated/prisma/index.d.ts:39536
 
----
+***
 
 ### configJson?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:39536
 
 Defined in: generated/prisma/index.d.ts:39524
 
----
+***
 
 ### configVersion?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:39524
 
 Defined in: generated/prisma/index.d.ts:39522
 
----
+***
 
 ### createdAt?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:39522
 
 Defined in: generated/prisma/index.d.ts:39531
 
----
+***
 
 ### diffFromParent?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:39531
 
 Defined in: generated/prisma/index.d.ts:39527
 
----
+***
 
 ### id?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:39527
 
 Defined in: generated/prisma/index.d.ts:39520
 
----
+***
 
 ### isCurrent?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:39520
 
 Defined in: generated/prisma/index.d.ts:39528
 
----
+***
 
 ### parentId?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:39528
 
 Defined in: generated/prisma/index.d.ts:39523
 
----
+***
 
 ### rankingScore?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:39523
 
 Defined in: generated/prisma/index.d.ts:39529
 
----
+***
 
 ### selectionReason?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:39529
 
 Defined in: generated/prisma/index.d.ts:39530
 
----
+***
 
 ### source?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:39530
 
 Defined in: generated/prisma/index.d.ts:39525
 
----
+***
 
 ### triggeredBy?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:39525
 
 Defined in: generated/prisma/index.d.ts:39526
 
----
+***
 
 ### wellId?
 

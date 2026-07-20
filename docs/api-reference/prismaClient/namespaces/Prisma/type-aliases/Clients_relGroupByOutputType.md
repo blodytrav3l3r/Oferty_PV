@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Clients\_relGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:13519
 
 Defined in: generated/prisma/index.d.ts:13531
 
----
+***
 
 ### \_max
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:13531
 
 Defined in: generated/prisma/index.d.ts:13533
 
----
+***
 
 ### \_min
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:13533
 
 Defined in: generated/prisma/index.d.ts:13532
 
----
+***
 
 ### address
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:13532
 
 Defined in: generated/prisma/index.d.ts:13524
 
----
+***
 
 ### clientNumber
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:13524
 
 Defined in: generated/prisma/index.d.ts:13528
 
----
+***
 
 ### contact
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:13528
 
 Defined in: generated/prisma/index.d.ts:13527
 
----
+***
 
 ### createdAt
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:13527
 
 Defined in: generated/prisma/index.d.ts:13529
 
----
+***
 
 ### email
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:13529
 
 Defined in: generated/prisma/index.d.ts:13525
 
----
+***
 
 ### id
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:13525
 
 Defined in: generated/prisma/index.d.ts:13520
 
----
+***
 
 ### name
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:13520
 
 Defined in: generated/prisma/index.d.ts:13522
 
----
+***
 
 ### nip
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:13522
 
 Defined in: generated/prisma/index.d.ts:13523
 
----
+***
 
 ### phone
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:13523
 
 Defined in: generated/prisma/index.d.ts:13526
 
----
+***
 
 ### updatedAt
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:13526
 
 Defined in: generated/prisma/index.d.ts:13530
 
----
+***
 
 ### userId
 

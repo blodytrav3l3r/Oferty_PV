@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsFindManyArgs
 
 # Type Alias: ai\_transition\_snapshotsFindManyArgs\<ExtArgs\>
 
-> **ai\_transition\_snapshotsFindManyArgs**\<`ExtArgs`> \> = `object`
+> **ai\_transition\_snapshotsFindManyArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:12093
 
@@ -16,7 +16,7 @@ ai_transition_snapshots findMany
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:12117
 
 Sets the position for listing ai_transition_snapshots.
 
----
+***
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing ai_transition_snapshots.
 
 Defined in: generated/prisma/index.d.ts:12130
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`ai_transition_snapshotsOmit`](ai_transition_snapshotsOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`ai_transition_snapshotsOmit`](ai_transition_snapshotsOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:12101
 
 Omit specific fields from the ai_transition_snapshots
 
----
+***
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:12111
 
 Determine the order of ai_transition_snapshots to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`ai_transition_snapshotsSelect`](ai_transition_snapshotsSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`ai_transition_snapshotsSelect`](ai_transition_snapshotsSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:12097
 
 Select specific fields to fetch from the ai_transition_snapshots
 
----
+***
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:12129
 
 Skip the first `n` ai_transition_snapshots.
 
----
+***
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:12123
 
 Take `±n` ai_transition_snapshots from the position of the cursor.
 
----
+***
 
 ### where?
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogFindFirstOrThrowArgs
 
 # Type Alias: aiRewardLogFindFirstOrThrowArgs\<ExtArgs\>
 
-> **aiRewardLogFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
+> **aiRewardLogFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
 
 Defined in: generated/prisma/index.d.ts:37012
 
@@ -16,7 +16,7 @@ aiRewardLog findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:37036
 
 Sets the position for searching for aiRewardLogs.
 
----
+***
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:37054
 
 Filter by unique combinations of aiRewardLogs.
 
----
+***
 
 ### omit?
 
-> `optional` **omit?**: [`aiRewardLogOmit`](aiRewardLogOmit.md)\<`ExtArgs`> \> \| `null`
+> `optional` **omit?**: [`aiRewardLogOmit`](aiRewardLogOmit.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:37020
 
 Omit specific fields from the aiRewardLog
 
----
+***
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:37030
 
 Determine the order of aiRewardLogs to fetch.
 
----
+***
 
 ### select?
 
-> `optional` **select?**: [`aiRewardLogSelect`](aiRewardLogSelect.md)\<`ExtArgs`> \> \| `null`
+> `optional` **select?**: [`aiRewardLogSelect`](aiRewardLogSelect.md)\<`ExtArgs`\> \| `null`
 
 Defined in: generated/prisma/index.d.ts:37016
 
 Select specific fields to fetch from the aiRewardLog
 
----
+***
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:37048
 
 Skip the first `n` aiRewardLogs.
 
----
+***
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:37042
 
 Take `±n` aiRewardLogs from the position of the cursor.
 
----
+***
 
 ### where?
 

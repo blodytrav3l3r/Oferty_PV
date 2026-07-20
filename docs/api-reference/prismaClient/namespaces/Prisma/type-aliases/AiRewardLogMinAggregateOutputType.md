@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiRewardLogMinAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:36194
 
 Defined in: generated/prisma/index.d.ts:36199
 
----
+***
 
 ### configSnapshot
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:36199
 
 Defined in: generated/prisma/index.d.ts:36204
 
----
+***
 
 ### createdAt
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:36204
 
 Defined in: generated/prisma/index.d.ts:36205
 
----
+***
 
 ### dn
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:36205
 
 Defined in: generated/prisma/index.d.ts:36198
 
----
+***
 
 ### id
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:36198
 
 Defined in: generated/prisma/index.d.ts:36195
 
----
+***
 
 ### reward
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:36195
 
 Defined in: generated/prisma/index.d.ts:36200
 
----
+***
 
 ### scoreAfter
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:36200
 
 Defined in: generated/prisma/index.d.ts:36202
 
----
+***
 
 ### scoreBefore
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:36202
 
 Defined in: generated/prisma/index.d.ts:36201
 
----
+***
 
 ### userId
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:36201
 
 Defined in: generated/prisma/index.d.ts:36196
 
----
+***
 
 ### wasAiRanked
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:36196
 
 Defined in: generated/prisma/index.d.ts:36203
 
----
+***
 
 ### wellId
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
----
+***
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesRuryDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:28078
 
 ### ExtArgs
 
-`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the CategoriesRury model
 
 ### aggregate()
 
-> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetCategoriesRuryAggregateType`](../type-aliases/GetCategoriesRuryAggregateType.md)\<`T`>>\>\>
+> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetCategoriesRuryAggregateType`](../type-aliases/GetCategoriesRuryAggregateType.md)\<`T`\>\>
 
 Defined in: generated/prisma/index.d.ts:28369
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryAggregateArgs`](../type-aliases/CategoriesRuryAggregateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryAggregateArgs`](../type-aliases/CategoriesRuryAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-    _avg: {
-        age: true
+  _avg: {
+    age: true,
+  },
+  where: {
+    email: {
+      contains: "prisma.io",
     },
-    where: {
-        email: {
-            contains: 'prisma.io'
-        }
-    },
-    orderBy: {
-        age: 'asc'
-    },
-    take: 10
-});
+  },
+  orderBy: {
+    age: "asc",
+  },
+  take: 10,
+})
 ```
 
----
+***
 
 ### count()
 
-> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof CategoriesRuryCountAggregateOutputType ? CategoriesRuryCountAggregateOutputType\[P\] : never \} : `number`>\>
+> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof CategoriesRuryCountAggregateOutputType ? CategoriesRuryCountAggregateOutputType\[P\] : never \} : `number`\>
 
 Defined in: generated/prisma/index.d.ts:28335
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryCountArgs`](../type-aliases/CategoriesRuryCountArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryCountArgs`](../type-aliases/CategoriesRuryCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter CategoriesRuries to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof CategoriesRuryCountAggregateOutputType ? CategoriesRuryCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof CategoriesRuryCountAggregateOutputType ? CategoriesRuryCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of CategoriesRuries
 const count = await prisma.categoriesRury.count({
-    where: {
-        // ... the filter for the CategoriesRuries we want to count
-    }
-});
+  where: {
+    // ... the filter for the CategoriesRuries we want to count
+  }
+})
 ```
 
----
+***
 
 ### create()
 
-> **create**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **create**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28168
 
@@ -139,7 +139,7 @@ Create a CategoriesRury.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryCreateArgs`](../type-aliases/CategoriesRuryCreateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryCreateArgs`](../type-aliases/CategoriesRuryCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a CategoriesRury.
 ```ts
 // Create one CategoriesRury
 const CategoriesRury = await prisma.categoriesRury.create({
-    data: {
-        // ... data to create a CategoriesRury
-    }
-});
+  data: {
+    // ... data to create a CategoriesRury
+  }
+})
 ```
 
----
+***
 
 ### createMany()
 
-> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:28182
 
@@ -178,7 +178,7 @@ Create many CategoriesRuries.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryCreateManyArgs`](../type-aliases/CategoriesRuryCreateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryCreateManyArgs`](../type-aliases/CategoriesRuryCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many CategoriesRuries.
 ```ts
 // Create many CategoriesRuries
 const categoriesRury = await prisma.categoriesRury.createMany({
-    data: [
-        // ... provide data here
-    ]
-});
+  data: [
+    // ... provide data here
+  ]
+})
 ```
 
----
+***
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:28206
 
@@ -217,7 +217,7 @@ Create many CategoriesRuries and returns the data saved in the database.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryCreateManyAndReturnArgs`](../type-aliases/CategoriesRuryCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryCreateManyAndReturnArgs`](../type-aliases/CategoriesRuryCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### delete()
 
-> **delete**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **delete**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28220
 
@@ -266,7 +266,7 @@ Delete a CategoriesRury.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryDeleteArgs`](../type-aliases/CategoriesRuryDeleteArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryDeleteArgs`](../type-aliases/CategoriesRuryDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one CategoriesRury.
 ```ts
 // Delete one CategoriesRury
 const CategoriesRury = await prisma.categoriesRury.delete({
-    where: {
-        // ... filter to delete one CategoriesRury
-    }
-});
+  where: {
+    // ... filter to delete one CategoriesRury
+  }
+})
 ```
 
----
+***
 
 ### deleteMany()
 
-> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:28251
 
@@ -305,7 +305,7 @@ Delete zero or more CategoriesRuries.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryDeleteManyArgs`](../type-aliases/CategoriesRuryDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryDeleteManyArgs`](../type-aliases/CategoriesRuryDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter CategoriesRuries to delete.
 ```ts
 // Delete a few CategoriesRuries
 const { count } = await prisma.categoriesRury.deleteMany({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirst()
 
-> **findFirst**\<`T`>\>(`args?`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirst**\<`T`\>(`args?`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28120
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryFindFirstArgs`](../type-aliases/CategoriesRuryFindFirstArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryFindFirstArgs`](../type-aliases/CategoriesRuryFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a CategoriesRury
 ```ts
 // Get one CategoriesRury
 const categoriesRury = await prisma.categoriesRury.findFirst({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28136
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryFindFirstOrThrowArgs`](../type-aliases/CategoriesRuryFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryFindFirstOrThrowArgs`](../type-aliases/CategoriesRuryFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a CategoriesRury
 ```ts
 // Get one CategoriesRury
 const categoriesRury = await prisma.categoriesRury.findFirstOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findMany()
 
-> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:28154
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryFindManyArgs`](../type-aliases/CategoriesRuryFindManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryFindManyArgs`](../type-aliases/CategoriesRuryFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all CategoriesRuries
-const categoriesRuries = await prisma.categoriesRury.findMany();
+const categoriesRuries = await prisma.categoriesRury.findMany()
 
 // Get first 10 CategoriesRuries
-const categoriesRuries = await prisma.categoriesRury.findMany({ take: 10 });
+const categoriesRuries = await prisma.categoriesRury.findMany({ take: 10 })
 
 // Only select the `name`
-const categoriesRuryWithNameOnly = await prisma.categoriesRury.findMany({ select: { name: true } });
+const categoriesRuryWithNameOnly = await prisma.categoriesRury.findMany({ select: { name: true } })
 ```
 
----
+***
 
 ### findUnique()
 
-> **findUnique**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUnique**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28091
 
@@ -470,7 +470,7 @@ Find zero or one CategoriesRury that matches the filter.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryFindUniqueArgs`](../type-aliases/CategoriesRuryFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryFindUniqueArgs`](../type-aliases/CategoriesRuryFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a CategoriesRury
 ```ts
 // Get one CategoriesRury
 const categoriesRury = await prisma.categoriesRury.findUnique({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28105
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryFindUniqueOrThrowArgs`](../type-aliases/CategoriesRuryFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryFindUniqueOrThrowArgs`](../type-aliases/CategoriesRuryFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a CategoriesRury
 ```ts
 // Get one CategoriesRury
 const categoriesRury = await prisma.categoriesRury.findUniqueOrThrow({
-    where: {
-        // ... provide filter here
-    }
-});
+  where: {
+    // ... provide filter here
+  }
+})
 ```
 
----
+***
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetCategoriesRuryGroupByPayload`](../type-aliases/GetCategoriesRuryGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetCategoriesRuryGroupByPayload`](../type-aliases/GetCategoriesRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 Defined in: generated/prisma/index.d.ts:28389
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryGroupByArgs`](../type-aliases/CategoriesRuryGroupByArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryGroupByArgs`](../type-aliases/CategoriesRuryGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` _extends_ `0` \| `1`
+`HasSelectOrTake` *extends* `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` _extends_ \{ `orderBy`: [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md) \| [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md) \| [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` *extends* \{ `orderBy`: [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md) \| [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md) \| [`CategoriesRuryOrderByWithAggregationInput`](../type-aliases/CategoriesRuryOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` _extends_ `"order"` \| `"name"`
+`OrderFields` *extends* `"order"` \| `"name"`
 
 ##### ByFields
 
-`ByFields` _extends_ [`CategoriesRuryScalarFieldEnum`](../type-aliases/CategoriesRuryScalarFieldEnum.md)
+`ByFields` *extends* [`CategoriesRuryScalarFieldEnum`](../type-aliases/CategoriesRuryScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` _extends_ `0` \| `1`
+`ByValid` *extends* `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` _extends_ `string` \| `number` \| `symbol`
+`HavingFields` *extends* `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` _extends_ `0` \| `1`
+`ByEmpty` *extends* `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` _extends_ `InputErrors` ? [`GetCategoriesRuryGroupByPayload`](../type-aliases/GetCategoriesRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` *extends* `InputErrors` ? [`GetCategoriesRuryGroupByPayload`](../type-aliases/GetCategoriesRuryGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-    by: ['city', 'createdAt'],
-    orderBy: {
-        createdAt: true
-    },
-    _count: {
-        _all: true
-    }
-});
+  by: ['city', 'createdAt'],
+  orderBy: {
+    createdAt: true
+  },
+  _count: {
+    _all: true
+  },
+})
 ```
 
----
+***
 
 ### update()
 
-> **update**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **update**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28237
 
@@ -630,7 +630,7 @@ Update one CategoriesRury.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryUpdateArgs`](../type-aliases/CategoriesRuryUpdateArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryUpdateArgs`](../type-aliases/CategoriesRuryUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one CategoriesRury.
 ```ts
 // Update one CategoriesRury
 const categoriesRury = await prisma.categoriesRury.update({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateMany()
 
-> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
+> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
 
 Defined in: generated/prisma/index.d.ts:28270
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryUpdateManyArgs`](../type-aliases/CategoriesRuryUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryUpdateManyArgs`](../type-aliases/CategoriesRuryUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many CategoriesRuries
 const categoriesRury = await prisma.categoriesRury.updateMany({
-    where: {
-        // ... provide filter here
-    },
-    data: {
-        // ... provide data here
-    }
-});
+  where: {
+    // ... provide filter here
+  },
+  data: {
+    // ... provide data here
+  }
+})
 ```
 
----
+***
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
+> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
 Defined in: generated/prisma/index.d.ts:28300
 
@@ -716,7 +716,7 @@ Update zero or more CategoriesRuries and returns the data updated in the databas
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryUpdateManyAndReturnArgs`](../type-aliases/CategoriesRuryUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryUpdateManyAndReturnArgs`](../type-aliases/CategoriesRuryUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
----
+***
 
 ### upsert()
 
-> **upsert**\<`T`>\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
+> **upsert**\<`T`\>(`args`): [`Prisma__CategoriesRuryClient`](Prisma__CategoriesRuryClient.md)\<`GetFindResult`\<[`$CategoriesRuryPayload`](../type-aliases/$CategoriesRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
 
 Defined in: generated/prisma/index.d.ts:28319
 
@@ -771,7 +771,7 @@ Create or update one CategoriesRury.
 
 ##### T
 
-`T` _extends_ [`CategoriesRuryUpsertArgs`](../type-aliases/CategoriesRuryUpsertArgs.md)\<`DefaultArgs`\>
+`T` *extends* [`CategoriesRuryUpsertArgs`](../type-aliases/CategoriesRuryUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a CategoriesRury.
 ```ts
 // Update or create a CategoriesRury
 const categoriesRury = await prisma.categoriesRury.upsert({
-    create: {
-        // ... data to create a CategoriesRury
-    },
-    update: {
-        // ... in case it already exists, update
-    },
-    where: {
-        // ... the filter for the CategoriesRury we want to update
-    }
-});
+  create: {
+    // ... data to create a CategoriesRury
+  },
+  update: {
+    // ... in case it already exists, update
+  },
+  where: {
+    // ... the filter for the CategoriesRury we want to update
+  }
+})
 ```
