@@ -1,6 +1,6 @@
 # Bezpieczeństwo — WITROS Oferty PV
 
-**Wersja:** 1.8.0
+**Wersja:** 1.7.0
 
 ---
 
@@ -245,7 +245,7 @@ if (process.env.SENTRY_DSN) {
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-20_
+_Ostatnia aktualizacja: 2026-07-14_
 
 ---
 
