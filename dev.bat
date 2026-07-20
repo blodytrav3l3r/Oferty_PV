@@ -39,7 +39,7 @@ if not exist ".env" (
         pause
         exit /b 1
     )
-    echo [INFO] Utworzono .env - edytuj haslo administratora (DEFAULT_ADMIN_PASSWORD) jesli potrzeba.
+    echo [INFO] Utworzono .env - edytuj haslo administratora w DEFAULT_ADMIN_PASSWORD jesli potrzeba.
 )
 
 REM Krok 4: Auto-instalacja node_modules jesli brak
@@ -83,10 +83,8 @@ for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection
 
 if defined PORT_PID (
     echo [UWAGA] Port !APP_PORT! uzywany przez PID !PORT_PID!
-    set /p "KEEP=Nadal kontynuowac? (T = nie, N = kontynuuj) [T/N]: "
-    if /i "!KEEP!"=="N" (
-        echo [INFO] Kontynuuje pomimo zajetego portu...
-    ) else (
+    set /p "KILL=Zwolnic port? (T = tak, N = nie) [T/N]: "
+    if /i "!KILL!"=="T" (
         echo [INFO] Zatrzymuje PID !PORT_PID!...
         powershell -Command "Stop-Process -Id !PORT_PID! -Force" 2>nul
         timeout /t 2 /nobreak >nul 2>&1

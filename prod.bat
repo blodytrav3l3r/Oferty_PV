@@ -75,7 +75,17 @@ if not exist "dist\server.js" (
         exit /b 1
     )
 )
-echo [OK] dist\server.js
+if not exist "dist\index.html" (
+    echo [OSTRZEZENIE] Brak dist\index.html (frontend Vite build).
+    echo [INFO] Buduje frontend...
+    call npm run build:frontend
+    if errorlevel 1 (
+        echo [BLAD] Vite build nie powiodl sie.
+        pause
+        exit /b 1
+    )
+)
+echo [OK] backend + frontend build
 
 REM ---- 6. Port ----
 for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env 2^>nul') do set "APP_PORT=%%a"

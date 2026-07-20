@@ -1,47 +1,43 @@
 @echo off
 REM ===========================================================
-REM  start.bat - Jedno wejscie: caly system
-REM  Uruchamia:
-REM    - Backend Express (Prisma + SQLite)
-REM    - Frontend Vite (dev server)
+REM  start.bat - Serwer produkcyjny
+REM  Buduje backend + frontend i uruchamia serwer.
+REM  Do developmentu (hot-reload) uzyj dev.bat.
 REM ===========================================================
 
-setlocal enabledelayedexpansion
+setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
 echo ===========================================================
-echo   WITROS Oferty PV - Start
+echo   WITROS Oferty PV - Start produkcyjny
 echo ===========================================================
 echo.
 
 REM ---- 1. Node.js ----
-where node >nul 2>nul
-if errorlevel 1 (
+where node >nul 2>nul || (
     echo [BLAD] Brak Node.js. Uruchom install.bat.
     pause
     exit /b 1
 )
 
-REM ---- 2. package.json ----
-if not exist "package.json" (
-    echo [BLAD] Brak package.json.
-    pause
-    exit /b 1
-)
-
-REM ---- 3. .env ----
+REM ---- 2. .env ----
 if not exist ".env" (
-    echo [INFO] Brak .env - kopiuje z .env.example...
-    copy .env.example .env >nul
-    if errorlevel 1 (
-        echo [BLAD] Nie udalo sie utworzyc .env.
+    if exist ".env.example" (
+        echo [INFO] Brak .env - kopiuje z .env.example...
+        copy .env.example .env >nul
+        if errorlevel 1 (
+            echo [BLAD] Nie udalo sie utworzyc .env.
+            pause
+            exit /b 1
+        )
+    ) else (
+        echo [BLAD] Brak .env.example. Utworz .env recznie.
         pause
         exit /b 1
     )
-    echo [INFO] Utworzono .env - edytuj haslo administratora (DEFAULT_ADMIN_PASSWORD) jesli potrzeba.
 )
 
-REM ---- 4. node_modules ----
+REM ---- 3. node_modules ----
 if not exist "node_modules" (
     echo [INFO] Brak node_modules. Instaluje...
     call npm install --no-audit --no-fund
@@ -52,26 +48,18 @@ if not exist "node_modules" (
     )
 )
 
-REM ---- 5. Prisma Client ----
-if not exist "generated\prisma\index.d.ts" (
-    echo [INFO] Generuje Prisma Client...
-    call npx prisma generate
+REM ---- 4. Build (jesli brak dist) ----
+if not exist "dist\server.js" (
+    echo [INFO] Brak dist - budowanie...
+    call build.bat
     if errorlevel 1 (
-        echo [BLAD] prisma generate nie powiodl sie.
+        echo [BLAD] build.bat nie powiodl sie.
         pause
         exit /b 1
     )
 )
 
-REM ---- 6. Schema DB ----
-echo [INFO] Sprawdzanie schematu bazy...
-call node scripts/check-db.js >nul 2>nul
-if errorlevel 1 (
-    echo [INFO] Migracja bazy danych...
-    call npx prisma db push --skip-generate --accept-data-loss >nul 2>nul
-)
-
-REM ---- 7. Port ----
+REM ---- 5. Port ----
 for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env 2^>nul') do set "APP_PORT=%%a"
 if not defined APP_PORT set "APP_PORT=3000"
 echo [INFO] Sprawdzanie portu !APP_PORT!...
@@ -87,17 +75,20 @@ if defined PORT_PID (
         timeout /t 2 /nobreak >nul 2>&1
     )
 )
-REM ---- 8. Start ----
+
+if not exist "data" mkdir data
+
+REM ---- 6. Start ----
 echo.
 echo ===========================================================
-echo   Uruchamiam aplikacje (Ctrl+C aby zatrzymac)
+echo   Uruchamiam serwer produkcyjny (Ctrl+C aby zatrzymac)
 echo ===========================================================
-echo   Frontend: http://localhost:5173
-echo   Backend:  http://localhost:!APP_PORT!/health
+echo   http://localhost:!APP_PORT!
+echo   http://localhost:!APP_PORT!/health
 echo.
-call npm run dev
+call npm start
 
 echo.
-echo [INFO] Aplikacja zatrzymana.
+echo [INFO] Serwer zatrzymany.
 pause
 endlocal
