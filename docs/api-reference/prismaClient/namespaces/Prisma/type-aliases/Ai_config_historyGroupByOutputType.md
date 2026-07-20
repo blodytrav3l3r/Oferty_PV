@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_config\_historyGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:6807
 
 Defined in: generated/prisma/index.d.ts:6821
 
-***
+---
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:6821
 
 Defined in: generated/prisma/index.d.ts:6820
 
-***
+---
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:6820
 
 Defined in: generated/prisma/index.d.ts:6824
 
-***
+---
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:6824
 
 Defined in: generated/prisma/index.d.ts:6823
 
-***
+---
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:6823
 
 Defined in: generated/prisma/index.d.ts:6822
 
-***
+---
 
 ### configJson
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:6822
 
 Defined in: generated/prisma/index.d.ts:6812
 
-***
+---
 
 ### configVersion
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:6812
 
 Defined in: generated/prisma/index.d.ts:6810
 
-***
+---
 
 ### createdAt
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:6810
 
 Defined in: generated/prisma/index.d.ts:6819
 
-***
+---
 
 ### diffFromParent
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:6819
 
 Defined in: generated/prisma/index.d.ts:6815
 
-***
+---
 
 ### id
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:6815
 
 Defined in: generated/prisma/index.d.ts:6808
 
-***
+---
 
 ### isCurrent
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:6808
 
 Defined in: generated/prisma/index.d.ts:6816
 
-***
+---
 
 ### parentId
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:6816
 
 Defined in: generated/prisma/index.d.ts:6811
 
-***
+---
 
 ### rankingScore
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:6811
 
 Defined in: generated/prisma/index.d.ts:6817
 
-***
+---
 
 ### selectionReason
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:6817
 
 Defined in: generated/prisma/index.d.ts:6818
 
-***
+---
 
 ### source
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:6818
 
 Defined in: generated/prisma/index.d.ts:6813
 
-***
+---
 
 ### triggeredBy
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:6813
 
 Defined in: generated/prisma/index.d.ts:6814
 
-***
+---
 
 ### wellId
 

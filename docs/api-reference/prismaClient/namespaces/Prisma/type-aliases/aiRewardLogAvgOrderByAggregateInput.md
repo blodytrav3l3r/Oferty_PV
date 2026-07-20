@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogAvgOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46681
 
 Defined in: generated/prisma/index.d.ts:46682
 
-***
+---
 
 ### reward?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46682
 
 Defined in: generated/prisma/index.d.ts:46683
 
-***
+---
 
 ### scoreAfter?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46683
 
 Defined in: generated/prisma/index.d.ts:46685
 
-***
+---
 
 ### scoreBefore?
 

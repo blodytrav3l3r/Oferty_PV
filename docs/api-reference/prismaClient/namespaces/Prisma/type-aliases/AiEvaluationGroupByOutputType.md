@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:35292
 
 Defined in: generated/prisma/index.d.ts:35301
 
-***
+---
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:35301
 
 Defined in: generated/prisma/index.d.ts:35300
 
-***
+---
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:35300
 
 Defined in: generated/prisma/index.d.ts:35304
 
-***
+---
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:35304
 
 Defined in: generated/prisma/index.d.ts:35303
 
-***
+---
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:35303
 
 Defined in: generated/prisma/index.d.ts:35302
 
-***
+---
 
 ### acceptance
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:35302
 
 Defined in: generated/prisma/index.d.ts:35295
 
-***
+---
 
 ### decisionMsAvg
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:35295
 
 Defined in: generated/prisma/index.d.ts:35296
 
-***
+---
 
 ### id
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:35296
 
 Defined in: generated/prisma/index.d.ts:35293
 
-***
+---
 
 ### modelVersion
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:35293
 
 Defined in: generated/prisma/index.d.ts:35294
 
-***
+---
 
 ### rewardsAvg
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:35294
 
 Defined in: generated/prisma/index.d.ts:35297
 
-***
+---
 
 ### totalDecisions
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:35297
 
 Defined in: generated/prisma/index.d.ts:35298
 
-***
+---
 
 ### triggeredAt
 

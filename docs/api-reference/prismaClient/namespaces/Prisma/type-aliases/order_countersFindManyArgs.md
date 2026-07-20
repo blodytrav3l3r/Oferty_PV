@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersFindManyArgs
 
 # Type Alias: order\_countersFindManyArgs\<ExtArgs\>
 
-> **order\_countersFindManyArgs**\<`ExtArgs`\> = `object`
+> **order\_countersFindManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:19572
 
@@ -16,7 +16,7 @@ order_counters findMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:19596
 
 Sets the position for listing order_counters.
 
-***
+---
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing order_counters.
 
 Defined in: generated/prisma/index.d.ts:19609
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`order_countersOmit`](order_countersOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`order_countersOmit`](order_countersOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:19580
 
 Omit specific fields from the order_counters
 
-***
+---
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:19590
 
 Determine the order of order_counters to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`order_countersSelect`](order_countersSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`order_countersSelect`](order_countersSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:19576
 
 Select specific fields to fetch from the order_counters
 
-***
+---
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:19608
 
 Skip the first `n` order_counters.
 
-***
+---
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:19602
 
 Take `±n` order_counters from the position of the cursor.
 
-***
+---
 
 ### where?
 

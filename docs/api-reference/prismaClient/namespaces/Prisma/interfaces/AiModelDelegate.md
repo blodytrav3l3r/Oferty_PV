@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiModelDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:34315
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the AiModel model
 
 ### aggregate()
 
-> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiModelAggregateType`](../type-aliases/GetAiModelAggregateType.md)\<`T`\>\>
+> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiModelAggregateType`](../type-aliases/GetAiModelAggregateType.md)\<`T`>>\>\>
 
 Defined in: generated/prisma/index.d.ts:34606
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelAggregateArgs`](../type-aliases/AiModelAggregateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelAggregateArgs`](../type-aliases/AiModelAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-  _avg: {
-    age: true,
-  },
-  where: {
-    email: {
-      contains: "prisma.io",
+    _avg: {
+        age: true
     },
-  },
-  orderBy: {
-    age: "asc",
-  },
-  take: 10,
-})
+    where: {
+        email: {
+            contains: 'prisma.io'
+        }
+    },
+    orderBy: {
+        age: 'asc'
+    },
+    take: 10
+});
 ```
 
-***
+---
 
 ### count()
 
-> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiModelCountAggregateOutputType ? AiModelCountAggregateOutputType\[P\] : never \} : `number`\>
+> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiModelCountAggregateOutputType ? AiModelCountAggregateOutputType\[P\] : never \} : `number`>\>
 
 Defined in: generated/prisma/index.d.ts:34572
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelCountArgs`](../type-aliases/AiModelCountArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelCountArgs`](../type-aliases/AiModelCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter AiModels to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiModelCountAggregateOutputType ? AiModelCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiModelCountAggregateOutputType ? AiModelCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of AiModels
 const count = await prisma.aiModel.count({
-  where: {
-    // ... the filter for the AiModels we want to count
-  }
-})
+    where: {
+        // ... the filter for the AiModels we want to count
+    }
+});
 ```
 
-***
+---
 
 ### create()
 
-> **create**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **create**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34405
 
@@ -139,7 +139,7 @@ Create a AiModel.
 
 ##### T
 
-`T` *extends* [`AiModelCreateArgs`](../type-aliases/AiModelCreateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelCreateArgs`](../type-aliases/AiModelCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a AiModel.
 ```ts
 // Create one AiModel
 const AiModel = await prisma.aiModel.create({
-  data: {
-    // ... data to create a AiModel
-  }
-})
+    data: {
+        // ... data to create a AiModel
+    }
+});
 ```
 
-***
+---
 
 ### createMany()
 
-> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:34419
 
@@ -178,7 +178,7 @@ Create many AiModels.
 
 ##### T
 
-`T` *extends* [`AiModelCreateManyArgs`](../type-aliases/AiModelCreateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelCreateManyArgs`](../type-aliases/AiModelCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many AiModels.
 ```ts
 // Create many AiModels
 const aiModel = await prisma.aiModel.createMany({
-  data: [
-    // ... provide data here
-  ]
-})
+    data: [
+        // ... provide data here
+    ]
+});
 ```
 
-***
+---
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:34443
 
@@ -217,7 +217,7 @@ Create many AiModels and returns the data saved in the database.
 
 ##### T
 
-`T` *extends* [`AiModelCreateManyAndReturnArgs`](../type-aliases/AiModelCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelCreateManyAndReturnArgs`](../type-aliases/AiModelCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### delete()
 
-> **delete**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **delete**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34457
 
@@ -266,7 +266,7 @@ Delete a AiModel.
 
 ##### T
 
-`T` *extends* [`AiModelDeleteArgs`](../type-aliases/AiModelDeleteArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelDeleteArgs`](../type-aliases/AiModelDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one AiModel.
 ```ts
 // Delete one AiModel
 const AiModel = await prisma.aiModel.delete({
-  where: {
-    // ... filter to delete one AiModel
-  }
-})
+    where: {
+        // ... filter to delete one AiModel
+    }
+});
 ```
 
-***
+---
 
 ### deleteMany()
 
-> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:34488
 
@@ -305,7 +305,7 @@ Delete zero or more AiModels.
 
 ##### T
 
-`T` *extends* [`AiModelDeleteManyArgs`](../type-aliases/AiModelDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelDeleteManyArgs`](../type-aliases/AiModelDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter AiModels to delete.
 ```ts
 // Delete a few AiModels
 const { count } = await prisma.aiModel.deleteMany({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirst()
 
-> **findFirst**\<`T`\>(`args?`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirst**\<`T`>\>(`args?`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34357
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelFindFirstArgs`](../type-aliases/AiModelFindFirstArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelFindFirstArgs`](../type-aliases/AiModelFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a AiModel
 ```ts
 // Get one AiModel
 const aiModel = await prisma.aiModel.findFirst({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34373
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelFindFirstOrThrowArgs`](../type-aliases/AiModelFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelFindFirstOrThrowArgs`](../type-aliases/AiModelFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a AiModel
 ```ts
 // Get one AiModel
 const aiModel = await prisma.aiModel.findFirstOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findMany()
 
-> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:34391
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelFindManyArgs`](../type-aliases/AiModelFindManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelFindManyArgs`](../type-aliases/AiModelFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all AiModels
-const aiModels = await prisma.aiModel.findMany()
+const aiModels = await prisma.aiModel.findMany();
 
 // Get first 10 AiModels
-const aiModels = await prisma.aiModel.findMany({ take: 10 })
+const aiModels = await prisma.aiModel.findMany({ take: 10 });
 
 // Only select the `id`
-const aiModelWithIdOnly = await prisma.aiModel.findMany({ select: { id: true } })
+const aiModelWithIdOnly = await prisma.aiModel.findMany({ select: { id: true } });
 ```
 
-***
+---
 
 ### findUnique()
 
-> **findUnique**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUnique**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34328
 
@@ -470,7 +470,7 @@ Find zero or one AiModel that matches the filter.
 
 ##### T
 
-`T` *extends* [`AiModelFindUniqueArgs`](../type-aliases/AiModelFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelFindUniqueArgs`](../type-aliases/AiModelFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a AiModel
 ```ts
 // Get one AiModel
 const aiModel = await prisma.aiModel.findUnique({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34342
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` *extends* [`AiModelFindUniqueOrThrowArgs`](../type-aliases/AiModelFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelFindUniqueOrThrowArgs`](../type-aliases/AiModelFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a AiModel
 ```ts
 // Get one AiModel
 const aiModel = await prisma.aiModel.findUniqueOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetAiModelGroupByPayload`](../type-aliases/GetAiModelGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetAiModelGroupByPayload`](../type-aliases/GetAiModelGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
 
 Defined in: generated/prisma/index.d.ts:34626
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelGroupByArgs`](../type-aliases/AiModelGroupByArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelGroupByArgs`](../type-aliases/AiModelGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` *extends* `0` \| `1`
+`HasSelectOrTake` _extends_ `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` *extends* \{ `orderBy`: [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md) \| [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md) \| [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` _extends_ \{ `orderBy`: [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md) \| [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md) \| [`AiModelOrderByWithAggregationInput`](../type-aliases/AiModelOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` *extends* `"id"` \| `"version"` \| `"weights"` \| `"bias"` \| `"metrics"` \| `"features"` \| `"featureMins"` \| `"featureMaxs"` \| `"trainingRows"` \| `"active"` \| `"notes"` \| `"createdAt"`
+`OrderFields` _extends_ `"id"` \| `"version"` \| `"weights"` \| `"bias"` \| `"metrics"` \| `"features"` \| `"featureMins"` \| `"featureMaxs"` \| `"trainingRows"` \| `"active"` \| `"notes"` \| `"createdAt"`
 
 ##### ByFields
 
-`ByFields` *extends* [`AiModelScalarFieldEnum`](../type-aliases/AiModelScalarFieldEnum.md)
+`ByFields` _extends_ [`AiModelScalarFieldEnum`](../type-aliases/AiModelScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` *extends* `0` \| `1`
+`ByValid` _extends_ `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` *extends* `string` \| `number` \| `symbol`
+`HavingFields` _extends_ `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` *extends* `0` \| `1`
+`ByEmpty` _extends_ `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` *extends* `InputErrors` ? [`GetAiModelGroupByPayload`](../type-aliases/GetAiModelGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` _extends_ `InputErrors` ? [`GetAiModelGroupByPayload`](../type-aliases/GetAiModelGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-  by: ['city', 'createdAt'],
-  orderBy: {
-    createdAt: true
-  },
-  _count: {
-    _all: true
-  },
-})
+    by: ['city', 'createdAt'],
+    orderBy: {
+        createdAt: true
+    },
+    _count: {
+        _all: true
+    }
+});
 ```
 
-***
+---
 
 ### update()
 
-> **update**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **update**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34474
 
@@ -630,7 +630,7 @@ Update one AiModel.
 
 ##### T
 
-`T` *extends* [`AiModelUpdateArgs`](../type-aliases/AiModelUpdateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelUpdateArgs`](../type-aliases/AiModelUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one AiModel.
 ```ts
 // Update one AiModel
 const aiModel = await prisma.aiModel.update({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateMany()
 
-> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:34507
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiModelUpdateManyArgs`](../type-aliases/AiModelUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelUpdateManyArgs`](../type-aliases/AiModelUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many AiModels
 const aiModel = await prisma.aiModel.updateMany({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:34537
 
@@ -716,7 +716,7 @@ Update zero or more AiModels and returns the data updated in the database.
 
 ##### T
 
-`T` *extends* [`AiModelUpdateManyAndReturnArgs`](../type-aliases/AiModelUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelUpdateManyAndReturnArgs`](../type-aliases/AiModelUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### upsert()
 
-> **upsert**\<`T`\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **upsert**\<`T`>\>(`args`): [`Prisma__AiModelClient`](Prisma__AiModelClient.md)\<`GetFindResult`\<[`$AiModelPayload`](../type-aliases/$AiModelPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:34556
 
@@ -771,7 +771,7 @@ Create or update one AiModel.
 
 ##### T
 
-`T` *extends* [`AiModelUpsertArgs`](../type-aliases/AiModelUpsertArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiModelUpsertArgs`](../type-aliases/AiModelUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a AiModel.
 ```ts
 // Update or create a AiModel
 const aiModel = await prisma.aiModel.upsert({
-  create: {
-    // ... data to create a AiModel
-  },
-  update: {
-    // ... in case it already exists, update
-  },
-  where: {
-    // ... the filter for the AiModel we want to update
-  }
-})
+    create: {
+        // ... data to create a AiModel
+    },
+    update: {
+        // ... in case it already exists, update
+    },
+    where: {
+        // ... the filter for the AiModel we want to update
+    }
+});
 ```

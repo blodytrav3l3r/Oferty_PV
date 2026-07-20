@@ -1,11 +1,11 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../README.md) / [validators/offerSchemas](../README.md) / StudnieOrderItemInput
 
 # Type Alias: StudnieOrderItemInput
 
-> **StudnieOrderItemInput** = `z.infer`\<*typeof* [`studnieOrderItemSchema`](../variables/studnieOrderItemSchema.md)\>
+> **StudnieOrderItemInput** = `z.infer`\<_typeof_ [`studnieOrderItemSchema`](../variables/studnieOrderItemSchema.md)>\>
 
-Defined in: [src/validators/offerSchemas.ts:445](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/validators/offerSchemas.ts#L445)
+Defined in: [src/validators/offerSchemas.ts:445](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/validators/offerSchemas.ts#L445)

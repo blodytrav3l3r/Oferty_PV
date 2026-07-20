@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Production\_order\_countersGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:22971
 
 Defined in: generated/prisma/index.d.ts:22976
 
-***
+---
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:22976
 
 Defined in: generated/prisma/index.d.ts:22975
 
-***
+---
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:22975
 
 Defined in: generated/prisma/index.d.ts:22979
 
-***
+---
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:22979
 
 Defined in: generated/prisma/index.d.ts:22978
 
-***
+---
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:22978
 
 Defined in: generated/prisma/index.d.ts:22977
 
-***
+---
 
 ### lastNumber
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:22977
 
 Defined in: generated/prisma/index.d.ts:22974
 
-***
+---
 
 ### userId
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:22974
 
 Defined in: generated/prisma/index.d.ts:22972
 
-***
+---
 
 ### year
 

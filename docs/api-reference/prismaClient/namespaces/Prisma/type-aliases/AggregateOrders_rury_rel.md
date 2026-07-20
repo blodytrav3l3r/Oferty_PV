@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateOrders\_rury\_rel
 
@@ -20,7 +20,7 @@ Model orders_rury_rel
 
 Defined in: generated/prisma/index.d.ts:21813
 
-***
+---
 
 ### \_max
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:21813
 
 Defined in: generated/prisma/index.d.ts:21815
 
-***
+---
 
 ### \_min
 

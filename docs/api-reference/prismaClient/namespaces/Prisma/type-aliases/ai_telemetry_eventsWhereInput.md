@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_eventsWhereInput
 
@@ -18,63 +18,63 @@ Defined in: generated/prisma/index.d.ts:39374
 
 Defined in: generated/prisma/index.d.ts:39375
 
-***
+---
 
 ### changeReason?
 
-> `optional` **changeReason?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **changeReason?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39386
 
-***
+---
 
 ### componentId?
 
-> `optional` **componentId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **componentId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39383
 
-***
+---
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39390
 
-***
+---
 
 ### eventType?
 
-> `optional` **eventType?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_events"`\> \| `string`
+> `optional` **eventType?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_events"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39380
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_events"`\> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_events"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39378
 
-***
+---
 
 ### msSinceConfig?
 
-> `optional` **msSinceConfig?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`\> \| `number` \| `null`
+> `optional` **msSinceConfig?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39387
 
-***
+---
 
 ### newValue?
 
-> `optional` **newValue?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **newValue?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39385
 
-***
+---
 
 ### NOT?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:39385
 
 Defined in: generated/prisma/index.d.ts:39377
 
-***
+---
 
 ### OR?
 
@@ -90,50 +90,50 @@ Defined in: generated/prisma/index.d.ts:39377
 
 Defined in: generated/prisma/index.d.ts:39376
 
-***
+---
 
 ### orderInSession?
 
-> `optional` **orderInSession?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`\> \| `number` \| `null`
+> `optional` **orderInSession?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39388
 
-***
+---
 
 ### previousValue?
 
-> `optional` **previousValue?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **previousValue?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39384
 
-***
+---
 
 ### sequenceNo?
 
-> `optional` **sequenceNo?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`\> \| `number` \| `null`
+> `optional` **sequenceNo?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39389
 
-***
+---
 
 ### telemetryId?
 
-> `optional` **telemetryId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **telemetryId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39379
 
-***
+---
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39381
 
-***
+---
 
 ### wellId?
 
-> `optional` **wellId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`\> \| `string` \| `null`
+> `optional` **wellId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_events"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39382

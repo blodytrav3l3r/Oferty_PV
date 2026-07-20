@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_transition\_snapshotsGroupByArgs
 
 # Type Alias: ai\_transition\_snapshotsGroupByArgs\<ExtArgs\>
 
-> **ai\_transition\_snapshotsGroupByArgs**\<`ExtArgs`\> = `object`
+> **ai\_transition\_snapshotsGroupByArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:11351
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:11351
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:11351
 
 Defined in: generated/prisma/index.d.ts:11359
 
-***
+---
 
 ### \_count?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:11359
 
 Defined in: generated/prisma/index.d.ts:11358
 
-***
+---
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:11358
 
 Defined in: generated/prisma/index.d.ts:11362
 
-***
+---
 
 ### \_min?
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/index.d.ts:11362
 
 Defined in: generated/prisma/index.d.ts:11361
 
-***
+---
 
 ### \_sum?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/index.d.ts:11361
 
 Defined in: generated/prisma/index.d.ts:11360
 
-***
+---
 
 ### by
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:11360
 
 Defined in: generated/prisma/index.d.ts:11354
 
-***
+---
 
 ### having?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/index.d.ts:11354
 
 Defined in: generated/prisma/index.d.ts:11355
 
-***
+---
 
 ### orderBy?
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/index.d.ts:11355
 
 Defined in: generated/prisma/index.d.ts:11353
 
-***
+---
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:11353
 
 Defined in: generated/prisma/index.d.ts:11357
 
-***
+---
 
 ### take?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:11357
 
 Defined in: generated/prisma/index.d.ts:11356
 
-***
+---
 
 ### where?
 

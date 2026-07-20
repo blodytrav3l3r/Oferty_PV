@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryFieldRefs
 
@@ -14,22 +14,22 @@ Fields of the order_counters_rury model
 
 ### lastNumber
 
-> `readonly` **lastNumber**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"Int"`\>
+> `readonly` **lastNumber**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"Int"`>\>
 
 Defined in: generated/prisma/index.d.ts:20437
 
-***
+---
 
 ### userId
 
-> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"String"`\>
+> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:20435
 
-***
+---
 
 ### year
 
-> `readonly` **year**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"Int"`\>
+> `readonly` **year**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"order_counters_rury"`, `"Int"`>\>
 
 Defined in: generated/prisma/index.d.ts:20436

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_logsCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:3831
 
 Defined in: generated/prisma/index.d.ts:3892
 
-***
+---
 
 ### aiVersion
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:3892
 
 Defined in: generated/prisma/index.d.ts:3863
 
-***
+---
 
 ### allComponentIds
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:3863
 
 Defined in: generated/prisma/index.d.ts:3859
 
-***
+---
 
 ### appliedHatches
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:3859
 
 Defined in: generated/prisma/index.d.ts:3857
 
-***
+---
 
 ### appliedKonus
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:3857
 
 Defined in: generated/prisma/index.d.ts:3856
 
-***
+---
 
 ### appliedReductions
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:3856
 
 Defined in: generated/prisma/index.d.ts:3855
 
-***
+---
 
 ### appliedSeals
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:3855
 
 Defined in: generated/prisma/index.d.ts:3858
 
-***
+---
 
 ### checkedVariants
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:3858
 
 Defined in: generated/prisma/index.d.ts:3866
 
-***
+---
 
 ### clientId
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:3866
 
 Defined in: generated/prisma/index.d.ts:3840
 
-***
+---
 
 ### computationMs
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:3840
 
 Defined in: generated/prisma/index.d.ts:3864
 
-***
+---
 
 ### confidenceScore
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:3864
 
 Defined in: generated/prisma/index.d.ts:3874
 
-***
+---
 
 ### configVersion
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:3874
 
 Defined in: generated/prisma/index.d.ts:3878
 
-***
+---
 
 ### createdAt
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:3878
 
 Defined in: generated/prisma/index.d.ts:3837
 
-***
+---
 
 ### dennicaHeight
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:3837
 
 Defined in: generated/prisma/index.d.ts:3852
 
-***
+---
 
 ### dennicaType
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:3852
 
 Defined in: generated/prisma/index.d.ts:3851
 
-***
+---
 
 ### dn
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:3851
 
 Defined in: generated/prisma/index.d.ts:3843
 
-***
+---
 
 ### extraMeta
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:3843
 
 Defined in: generated/prisma/index.d.ts:3891
 
-***
+---
 
 ### featureSnapshot
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:3891
 
 Defined in: generated/prisma/index.d.ts:3881
 
-***
+---
 
 ### feedbackProcessed
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/index.d.ts:3881
 
 Defined in: generated/prisma/index.d.ts:3877
 
-***
+---
 
 ### final\_user\_config
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/index.d.ts:3877
 
 Defined in: generated/prisma/index.d.ts:3835
 
-***
+---
 
 ### id
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/index.d.ts:3835
 
 Defined in: generated/prisma/index.d.ts:3832
 
-***
+---
 
 ### iterationCount
 
@@ -186,7 +186,7 @@ Defined in: generated/prisma/index.d.ts:3832
 
 Defined in: generated/prisma/index.d.ts:3865
 
-***
+---
 
 ### labelSnapshot
 
@@ -194,7 +194,7 @@ Defined in: generated/prisma/index.d.ts:3865
 
 Defined in: generated/prisma/index.d.ts:3882
 
-***
+---
 
 ### lastAcceptedAt
 
@@ -202,7 +202,7 @@ Defined in: generated/prisma/index.d.ts:3882
 
 Defined in: generated/prisma/index.d.ts:3888
 
-***
+---
 
 ### lastRejectedAt
 
@@ -210,7 +210,7 @@ Defined in: generated/prisma/index.d.ts:3888
 
 Defined in: generated/prisma/index.d.ts:3889
 
-***
+---
 
 ### lastUsedAt
 
@@ -218,7 +218,7 @@ Defined in: generated/prisma/index.d.ts:3889
 
 Defined in: generated/prisma/index.d.ts:3887
 
-***
+---
 
 ### learningWeight
 
@@ -226,7 +226,7 @@ Defined in: generated/prisma/index.d.ts:3887
 
 Defined in: generated/prisma/index.d.ts:3875
 
-***
+---
 
 ### manualOverrideFlag
 
@@ -234,7 +234,7 @@ Defined in: generated/prisma/index.d.ts:3875
 
 Defined in: generated/prisma/index.d.ts:3890
 
-***
+---
 
 ### modificationCount
 
@@ -242,7 +242,7 @@ Defined in: generated/prisma/index.d.ts:3890
 
 Defined in: generated/prisma/index.d.ts:3873
 
-***
+---
 
 ### offerId
 
@@ -250,7 +250,7 @@ Defined in: generated/prisma/index.d.ts:3873
 
 Defined in: generated/prisma/index.d.ts:3838
 
-***
+---
 
 ### original\_auto\_config
 
@@ -258,7 +258,7 @@ Defined in: generated/prisma/index.d.ts:3838
 
 Defined in: generated/prisma/index.d.ts:3834
 
-***
+---
 
 ### override\_reason
 
@@ -266,7 +266,7 @@ Defined in: generated/prisma/index.d.ts:3834
 
 Defined in: generated/prisma/index.d.ts:3836
 
-***
+---
 
 ### parentConfigId
 
@@ -274,7 +274,7 @@ Defined in: generated/prisma/index.d.ts:3836
 
 Defined in: generated/prisma/index.d.ts:3879
 
-***
+---
 
 ### predictionSnapshot
 
@@ -282,7 +282,7 @@ Defined in: generated/prisma/index.d.ts:3879
 
 Defined in: generated/prisma/index.d.ts:3883
 
-***
+---
 
 ### projectId
 
@@ -290,7 +290,7 @@ Defined in: generated/prisma/index.d.ts:3883
 
 Defined in: generated/prisma/index.d.ts:3841
 
-***
+---
 
 ### rankingScore
 
@@ -298,7 +298,7 @@ Defined in: generated/prisma/index.d.ts:3841
 
 Defined in: generated/prisma/index.d.ts:3867
 
-***
+---
 
 ### reductionType
 
@@ -306,7 +306,7 @@ Defined in: generated/prisma/index.d.ts:3867
 
 Defined in: generated/prisma/index.d.ts:3849
 
-***
+---
 
 ### reviewStatus
 
@@ -314,7 +314,7 @@ Defined in: generated/prisma/index.d.ts:3849
 
 Defined in: generated/prisma/index.d.ts:3880
 
-***
+---
 
 ### rewardValue
 
@@ -322,7 +322,7 @@ Defined in: generated/prisma/index.d.ts:3880
 
 Defined in: generated/prisma/index.d.ts:3884
 
-***
+---
 
 ### ringCount
 
@@ -330,7 +330,7 @@ Defined in: generated/prisma/index.d.ts:3884
 
 Defined in: generated/prisma/index.d.ts:3853
 
-***
+---
 
 ### ringHeights
 
@@ -338,7 +338,7 @@ Defined in: generated/prisma/index.d.ts:3853
 
 Defined in: generated/prisma/index.d.ts:3854
 
-***
+---
 
 ### rulesVersion
 
@@ -346,7 +346,7 @@ Defined in: generated/prisma/index.d.ts:3854
 
 Defined in: generated/prisma/index.d.ts:3862
 
-***
+---
 
 ### rzDna
 
@@ -354,7 +354,7 @@ Defined in: generated/prisma/index.d.ts:3862
 
 Defined in: generated/prisma/index.d.ts:3844
 
-***
+---
 
 ### rzWlazu
 
@@ -362,7 +362,7 @@ Defined in: generated/prisma/index.d.ts:3844
 
 Defined in: generated/prisma/index.d.ts:3845
 
-***
+---
 
 ### selectionReason
 
@@ -370,7 +370,7 @@ Defined in: generated/prisma/index.d.ts:3845
 
 Defined in: generated/prisma/index.d.ts:3868
 
-***
+---
 
 ### solverSource
 
@@ -378,7 +378,7 @@ Defined in: generated/prisma/index.d.ts:3868
 
 Defined in: generated/prisma/index.d.ts:3860
 
-***
+---
 
 ### solverVersion
 
@@ -386,7 +386,7 @@ Defined in: generated/prisma/index.d.ts:3860
 
 Defined in: generated/prisma/index.d.ts:3861
 
-***
+---
 
 ### successRate
 
@@ -394,7 +394,7 @@ Defined in: generated/prisma/index.d.ts:3861
 
 Defined in: generated/prisma/index.d.ts:3885
 
-***
+---
 
 ### terminationType
 
@@ -402,7 +402,7 @@ Defined in: generated/prisma/index.d.ts:3885
 
 Defined in: generated/prisma/index.d.ts:3848
 
-***
+---
 
 ### trainingEligible
 
@@ -410,7 +410,7 @@ Defined in: generated/prisma/index.d.ts:3848
 
 Defined in: generated/prisma/index.d.ts:3876
 
-***
+---
 
 ### usageCount
 
@@ -418,7 +418,7 @@ Defined in: generated/prisma/index.d.ts:3876
 
 Defined in: generated/prisma/index.d.ts:3886
 
-***
+---
 
 ### userId
 
@@ -426,7 +426,7 @@ Defined in: generated/prisma/index.d.ts:3886
 
 Defined in: generated/prisma/index.d.ts:3833
 
-***
+---
 
 ### warehouse
 
@@ -434,7 +434,7 @@ Defined in: generated/prisma/index.d.ts:3833
 
 Defined in: generated/prisma/index.d.ts:3842
 
-***
+---
 
 ### wasAccepted
 
@@ -442,7 +442,7 @@ Defined in: generated/prisma/index.d.ts:3842
 
 Defined in: generated/prisma/index.d.ts:3870
 
-***
+---
 
 ### wasAutoGenerated
 
@@ -450,7 +450,7 @@ Defined in: generated/prisma/index.d.ts:3870
 
 Defined in: generated/prisma/index.d.ts:3869
 
-***
+---
 
 ### wasModified
 
@@ -458,7 +458,7 @@ Defined in: generated/prisma/index.d.ts:3869
 
 Defined in: generated/prisma/index.d.ts:3872
 
-***
+---
 
 ### wasRejected
 
@@ -466,7 +466,7 @@ Defined in: generated/prisma/index.d.ts:3872
 
 Defined in: generated/prisma/index.d.ts:3871
 
-***
+---
 
 ### wellHeight
 
@@ -474,7 +474,7 @@ Defined in: generated/prisma/index.d.ts:3871
 
 Defined in: generated/prisma/index.d.ts:3846
 
-***
+---
 
 ### wellId
 
@@ -482,7 +482,7 @@ Defined in: generated/prisma/index.d.ts:3846
 
 Defined in: generated/prisma/index.d.ts:3839
 
-***
+---
 
 ### wellType
 
@@ -490,7 +490,7 @@ Defined in: generated/prisma/index.d.ts:3839
 
 Defined in: generated/prisma/index.d.ts:3847
 
-***
+---
 
 ### zwiencenieType
 

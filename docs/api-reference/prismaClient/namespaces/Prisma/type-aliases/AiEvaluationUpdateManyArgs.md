@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationUpdateManyArgs
 
 # Type Alias: AiEvaluationUpdateManyArgs\<ExtArgs\>
 
-> **AiEvaluationUpdateManyArgs**\<`ExtArgs`\> = `object`
+> **AiEvaluationUpdateManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:36054
 
@@ -16,19 +16,19 @@ AiEvaluation updateMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`AiEvaluationUpdateManyMutationInput`](AiEvaluationUpdateManyMutationInput.md), [`AiEvaluationUncheckedUpdateManyInput`](AiEvaluationUncheckedUpdateManyInput.md)\>
+> **data**: [`XOR`](XOR.md)\<[`AiEvaluationUpdateManyMutationInput`](AiEvaluationUpdateManyMutationInput.md), [`AiEvaluationUncheckedUpdateManyInput`](AiEvaluationUncheckedUpdateManyInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:36058
 
 The data used to update AiEvaluations.
 
-***
+---
 
 ### limit?
 
@@ -38,7 +38,7 @@ Defined in: generated/prisma/index.d.ts:36066
 
 Limit how many AiEvaluations to update.
 
-***
+---
 
 ### where?
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / NullableIntFieldUpdateOperationsInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46802
 
 Defined in: generated/prisma/index.d.ts:46805
 
-***
+---
 
 ### divide?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46805
 
 Defined in: generated/prisma/index.d.ts:46807
 
-***
+---
 
 ### increment?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46807
 
 Defined in: generated/prisma/index.d.ts:46804
 
-***
+---
 
 ### multiply?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46804
 
 Defined in: generated/prisma/index.d.ts:46806
 
-***
+---
 
 ### set?
 

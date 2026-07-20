@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieScalarWhereWithAggregatesInput
 
@@ -18,23 +18,23 @@ Defined in: generated/prisma/index.d.ts:41017
 
 Defined in: generated/prisma/index.d.ts:41018
 
-***
+---
 
 ### componentType?
 
-> `optional` **componentType?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"CategoriesStudnie"`\> \| `string` \| `null`
+> `optional` **componentType?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"CategoriesStudnie"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:41022
 
-***
+---
 
 ### name?
 
-> `optional` **name?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"CategoriesStudnie"`\> \| `string`
+> `optional` **name?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"CategoriesStudnie"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:41021
 
-***
+---
 
 ### NOT?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:41021
 
 Defined in: generated/prisma/index.d.ts:41020
 
-***
+---
 
 ### OR?
 
@@ -50,10 +50,10 @@ Defined in: generated/prisma/index.d.ts:41020
 
 Defined in: generated/prisma/index.d.ts:41019
 
-***
+---
 
 ### order?
 
-> `optional` **order?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"CategoriesStudnie"`\> \| `number`
+> `optional` **order?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"CategoriesStudnie"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:41023

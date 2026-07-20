@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AtStrict
 
 # Type Alias: AtStrict\<O, K\>
 
-> **AtStrict**\<`O`, `K`\> = `O`\[`K` & keyof `O`\]
+> **AtStrict**\<`O`, `K`> \> = `O`\[`K` & keyof `O`\]
 
 Defined in: generated/prisma/index.d.ts:900
 
@@ -14,8 +14,8 @@ Defined in: generated/prisma/index.d.ts:900
 
 ### O
 
-`O` *extends* `object`
+`O` _extends_ `object`
 
 ### K
 
-`K` *extends* [`Key`](Key.md)
+`K` _extends_ [`Key`](Key.md)

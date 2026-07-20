@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:13634
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the clients_rel model
 
 ### aggregate()
 
-> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetClients_relAggregateType`](../type-aliases/GetClients_relAggregateType.md)\<`T`\>\>
+> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetClients_relAggregateType`](../type-aliases/GetClients_relAggregateType.md)\<`T`>>\>\>
 
 Defined in: generated/prisma/index.d.ts:13925
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`Clients_relAggregateArgs`](../type-aliases/Clients_relAggregateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`Clients_relAggregateArgs`](../type-aliases/Clients_relAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-  _avg: {
-    age: true,
-  },
-  where: {
-    email: {
-      contains: "prisma.io",
+    _avg: {
+        age: true
     },
-  },
-  orderBy: {
-    age: "asc",
-  },
-  take: 10,
-})
+    where: {
+        email: {
+            contains: 'prisma.io'
+        }
+    },
+    orderBy: {
+        age: 'asc'
+    },
+    take: 10
+});
 ```
 
-***
+---
 
 ### count()
 
-> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Clients\_relCountAggregateOutputType ? Clients\_relCountAggregateOutputType\[P\] : never \} : `number`\>
+> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Clients\_relCountAggregateOutputType ? Clients\_relCountAggregateOutputType\[P\] : never \} : `number`>\>
 
 Defined in: generated/prisma/index.d.ts:13891
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relCountArgs`](../type-aliases/clients_relCountArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relCountArgs`](../type-aliases/clients_relCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Clients_rels to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Clients\_relCountAggregateOutputType ? Clients\_relCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Clients\_relCountAggregateOutputType ? Clients\_relCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Clients_rels
 const count = await prisma.clients_rel.count({
-  where: {
-    // ... the filter for the Clients_rels we want to count
-  }
-})
+    where: {
+        // ... the filter for the Clients_rels we want to count
+    }
+});
 ```
 
-***
+---
 
 ### create()
 
-> **create**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **create**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13724
 
@@ -139,7 +139,7 @@ Create a Clients_rel.
 
 ##### T
 
-`T` *extends* [`clients_relCreateArgs`](../type-aliases/clients_relCreateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relCreateArgs`](../type-aliases/clients_relCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Clients_rel.
 ```ts
 // Create one Clients_rel
 const Clients_rel = await prisma.clients_rel.create({
-  data: {
-    // ... data to create a Clients_rel
-  }
-})
+    data: {
+        // ... data to create a Clients_rel
+    }
+});
 ```
 
-***
+---
 
 ### createMany()
 
-> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:13738
 
@@ -178,7 +178,7 @@ Create many Clients_rels.
 
 ##### T
 
-`T` *extends* [`clients_relCreateManyArgs`](../type-aliases/clients_relCreateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relCreateManyArgs`](../type-aliases/clients_relCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Clients_rels.
 ```ts
 // Create many Clients_rels
 const clients_rel = await prisma.clients_rel.createMany({
-  data: [
-    // ... provide data here
-  ]
-})
+    data: [
+        // ... provide data here
+    ]
+});
 ```
 
-***
+---
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:13762
 
@@ -217,7 +217,7 @@ Create many Clients_rels and returns the data saved in the database.
 
 ##### T
 
-`T` *extends* [`clients_relCreateManyAndReturnArgs`](../type-aliases/clients_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relCreateManyAndReturnArgs`](../type-aliases/clients_relCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### delete()
 
-> **delete**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **delete**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13776
 
@@ -266,7 +266,7 @@ Delete a Clients_rel.
 
 ##### T
 
-`T` *extends* [`clients_relDeleteArgs`](../type-aliases/clients_relDeleteArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relDeleteArgs`](../type-aliases/clients_relDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Clients_rel.
 ```ts
 // Delete one Clients_rel
 const Clients_rel = await prisma.clients_rel.delete({
-  where: {
-    // ... filter to delete one Clients_rel
-  }
-})
+    where: {
+        // ... filter to delete one Clients_rel
+    }
+});
 ```
 
-***
+---
 
 ### deleteMany()
 
-> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:13807
 
@@ -305,7 +305,7 @@ Delete zero or more Clients_rels.
 
 ##### T
 
-`T` *extends* [`clients_relDeleteManyArgs`](../type-aliases/clients_relDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relDeleteManyArgs`](../type-aliases/clients_relDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Clients_rels to delete.
 ```ts
 // Delete a few Clients_rels
 const { count } = await prisma.clients_rel.deleteMany({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirst()
 
-> **findFirst**\<`T`\>(`args?`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirst**\<`T`>\>(`args?`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13676
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relFindFirstArgs`](../type-aliases/clients_relFindFirstArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relFindFirstArgs`](../type-aliases/clients_relFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Clients_rel
 ```ts
 // Get one Clients_rel
 const clients_rel = await prisma.clients_rel.findFirst({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13692
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relFindFirstOrThrowArgs`](../type-aliases/clients_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relFindFirstOrThrowArgs`](../type-aliases/clients_relFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Clients_rel
 ```ts
 // Get one Clients_rel
 const clients_rel = await prisma.clients_rel.findFirstOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findMany()
 
-> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:13710
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relFindManyArgs`](../type-aliases/clients_relFindManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relFindManyArgs`](../type-aliases/clients_relFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Clients_rels
-const clients_rels = await prisma.clients_rel.findMany()
+const clients_rels = await prisma.clients_rel.findMany();
 
 // Get first 10 Clients_rels
-const clients_rels = await prisma.clients_rel.findMany({ take: 10 })
+const clients_rels = await prisma.clients_rel.findMany({ take: 10 });
 
 // Only select the `id`
-const clients_relWithIdOnly = await prisma.clients_rel.findMany({ select: { id: true } })
+const clients_relWithIdOnly = await prisma.clients_rel.findMany({ select: { id: true } });
 ```
 
-***
+---
 
 ### findUnique()
 
-> **findUnique**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUnique**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13647
 
@@ -470,7 +470,7 @@ Find zero or one Clients_rel that matches the filter.
 
 ##### T
 
-`T` *extends* [`clients_relFindUniqueArgs`](../type-aliases/clients_relFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relFindUniqueArgs`](../type-aliases/clients_relFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a Clients_rel
 ```ts
 // Get one Clients_rel
 const clients_rel = await prisma.clients_rel.findUnique({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13661
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` *extends* [`clients_relFindUniqueOrThrowArgs`](../type-aliases/clients_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relFindUniqueOrThrowArgs`](../type-aliases/clients_relFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a Clients_rel
 ```ts
 // Get one Clients_rel
 const clients_rel = await prisma.clients_rel.findUniqueOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetClients_relGroupByPayload`](../type-aliases/GetClients_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetClients_relGroupByPayload`](../type-aliases/GetClients_relGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
 
 Defined in: generated/prisma/index.d.ts:13945
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relGroupByArgs`](../type-aliases/clients_relGroupByArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relGroupByArgs`](../type-aliases/clients_relGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` *extends* `0` \| `1`
+`HasSelectOrTake` _extends_ `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` *extends* \{ `orderBy`: [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md) \| [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md) \| [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` _extends_ \{ `orderBy`: [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md) \| [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md) \| [`clients_relOrderByWithAggregationInput`](../type-aliases/clients_relOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` *extends* `"id"` \| `"createdAt"` \| `"name"` \| `"userId"` \| `"updatedAt"` \| `"phone"` \| `"email"` \| `"nip"` \| `"address"` \| `"contact"` \| `"clientNumber"`
+`OrderFields` _extends_ `"id"` \| `"createdAt"` \| `"name"` \| `"userId"` \| `"updatedAt"` \| `"phone"` \| `"email"` \| `"nip"` \| `"address"` \| `"contact"` \| `"clientNumber"`
 
 ##### ByFields
 
-`ByFields` *extends* [`Clients_relScalarFieldEnum`](../type-aliases/Clients_relScalarFieldEnum.md)
+`ByFields` _extends_ [`Clients_relScalarFieldEnum`](../type-aliases/Clients_relScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` *extends* `0` \| `1`
+`ByValid` _extends_ `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` *extends* `string` \| `number` \| `symbol`
+`HavingFields` _extends_ `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` *extends* `0` \| `1`
+`ByEmpty` _extends_ `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` *extends* `InputErrors` ? [`GetClients_relGroupByPayload`](../type-aliases/GetClients_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` _extends_ `InputErrors` ? [`GetClients_relGroupByPayload`](../type-aliases/GetClients_relGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-  by: ['city', 'createdAt'],
-  orderBy: {
-    createdAt: true
-  },
-  _count: {
-    _all: true
-  },
-})
+    by: ['city', 'createdAt'],
+    orderBy: {
+        createdAt: true
+    },
+    _count: {
+        _all: true
+    }
+});
 ```
 
-***
+---
 
 ### update()
 
-> **update**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **update**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13793
 
@@ -630,7 +630,7 @@ Update one Clients_rel.
 
 ##### T
 
-`T` *extends* [`clients_relUpdateArgs`](../type-aliases/clients_relUpdateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relUpdateArgs`](../type-aliases/clients_relUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one Clients_rel.
 ```ts
 // Update one Clients_rel
 const clients_rel = await prisma.clients_rel.update({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateMany()
 
-> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:13826
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`clients_relUpdateManyArgs`](../type-aliases/clients_relUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relUpdateManyArgs`](../type-aliases/clients_relUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Clients_rels
 const clients_rel = await prisma.clients_rel.updateMany({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:13856
 
@@ -716,7 +716,7 @@ Update zero or more Clients_rels and returns the data updated in the database.
 
 ##### T
 
-`T` *extends* [`clients_relUpdateManyAndReturnArgs`](../type-aliases/clients_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relUpdateManyAndReturnArgs`](../type-aliases/clients_relUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### upsert()
 
-> **upsert**\<`T`\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **upsert**\<`T`>\>(`args`): [`Prisma__clients_relClient`](Prisma__clients_relClient.md)\<`GetFindResult`\<[`$clients_relPayload`](../type-aliases/$clients_relPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:13875
 
@@ -771,7 +771,7 @@ Create or update one Clients_rel.
 
 ##### T
 
-`T` *extends* [`clients_relUpsertArgs`](../type-aliases/clients_relUpsertArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`clients_relUpsertArgs`](../type-aliases/clients_relUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a Clients_rel.
 ```ts
 // Update or create a Clients_rel
 const clients_rel = await prisma.clients_rel.upsert({
-  create: {
-    // ... data to create a Clients_rel
-  },
-  update: {
-    // ... in case it already exists, update
-  },
-  where: {
-    // ... the filter for the Clients_rel we want to update
-  }
-})
+    create: {
+        // ... data to create a Clients_rel
+    },
+    update: {
+        // ... in case it already exists, update
+    },
+    where: {
+        // ... the filter for the Clients_rel we want to update
+    }
+});
 ```

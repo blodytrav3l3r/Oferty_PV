@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsFindManyArgs
 
 # Type Alias: audit\_logsFindManyArgs\<ExtArgs\>
 
-> **audit\_logsFindManyArgs**\<`ExtArgs`\> = `object`
+> **audit\_logsFindManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:13125
 
@@ -16,7 +16,7 @@ audit_logs findMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:13149
 
 Sets the position for listing audit_logs.
 
-***
+---
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing audit_logs.
 
 Defined in: generated/prisma/index.d.ts:13162
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13133
 
 Omit specific fields from the audit_logs
 
-***
+---
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:13143
 
 Determine the order of audit_logs to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13129
 
 Select specific fields to fetch from the audit_logs
 
-***
+---
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:13161
 
 Skip the first `n` audit_logs.
 
-***
+---
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:13155
 
 Take `±n` audit_logs from the position of the cursor.
 
-***
+---
 
 ### where?
 

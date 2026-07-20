@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieAggregateArgs
 
 # Type Alias: ProductsStudnieAggregateArgs\<ExtArgs\>
 
-> **ProductsStudnieAggregateArgs**\<`ExtArgs`\> = `object`
+> **ProductsStudnieAggregateArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:31476
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:31476
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:31516
 
 Select which fields to average
 
-***
+---
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:31510
 
 Count returned ProductsStudnies
 
-***
+---
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:31534
 
 Select which fields to find the maximum value
 
-***
+---
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:31528
 
 Select which fields to find the minimum value
 
-***
+---
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:31522
 
 Select which fields to sum
 
-***
+---
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:31492
 
 Sets the start position
 
-***
+---
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:31486
 
 Determine the order of ProductsStudnies to fetch.
 
-***
+---
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:31504
 
 Skip the first `n` ProductsStudnies.
 
-***
+---
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:31498
 
 Take `±n` ProductsStudnies from the position of the cursor.
 
-***
+---
 
 ### where?
 

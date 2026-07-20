@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_knowledge\_baseDeleteManyArgs
 
 # Type Alias: ai\_knowledge\_baseDeleteManyArgs\<ExtArgs\>
 
-> **ai\_knowledge\_baseDeleteManyArgs**\<`ExtArgs`\> = `object`
+> **ai\_knowledge\_baseDeleteManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:9932
 
@@ -16,7 +16,7 @@ ai_knowledge_base deleteMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:9940
 
 Limit how many ai_knowledge_bases to delete.
 
-***
+---
 
 ### where?
 

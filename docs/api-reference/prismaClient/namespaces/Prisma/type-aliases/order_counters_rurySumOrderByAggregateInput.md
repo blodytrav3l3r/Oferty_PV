@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_rurySumOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:45938
 
 Defined in: generated/prisma/index.d.ts:45940
 
-***
+---
 
 ### year?
 

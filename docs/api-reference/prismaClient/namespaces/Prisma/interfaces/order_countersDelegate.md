@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:19018
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the order_counters model
 
 ### aggregate()
 
-> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOrder_countersAggregateType`](../type-aliases/GetOrder_countersAggregateType.md)\<`T`\>\>
+> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetOrder_countersAggregateType`](../type-aliases/GetOrder_countersAggregateType.md)\<`T`>>\>\>
 
 Defined in: generated/prisma/index.d.ts:19309
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`Order_countersAggregateArgs`](../type-aliases/Order_countersAggregateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`Order_countersAggregateArgs`](../type-aliases/Order_countersAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-  _avg: {
-    age: true,
-  },
-  where: {
-    email: {
-      contains: "prisma.io",
+    _avg: {
+        age: true
     },
-  },
-  orderBy: {
-    age: "asc",
-  },
-  take: 10,
-})
+    where: {
+        email: {
+            contains: 'prisma.io'
+        }
+    },
+    orderBy: {
+        age: 'asc'
+    },
+    take: 10
+});
 ```
 
-***
+---
 
 ### count()
 
-> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Order\_countersCountAggregateOutputType ? Order\_countersCountAggregateOutputType\[P\] : never \} : `number`\>
+> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Order\_countersCountAggregateOutputType ? Order\_countersCountAggregateOutputType\[P\] : never \} : `number`>\>
 
 Defined in: generated/prisma/index.d.ts:19275
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersCountArgs`](../type-aliases/order_countersCountArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersCountArgs`](../type-aliases/order_countersCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Order_counters to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Order\_countersCountAggregateOutputType ? Order\_countersCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof Order\_countersCountAggregateOutputType ? Order\_countersCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Order_counters
 const count = await prisma.order_counters.count({
-  where: {
-    // ... the filter for the Order_counters we want to count
-  }
-})
+    where: {
+        // ... the filter for the Order_counters we want to count
+    }
+});
 ```
 
-***
+---
 
 ### create()
 
-> **create**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **create**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19108
 
@@ -139,7 +139,7 @@ Create a Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersCreateArgs`](../type-aliases/order_countersCreateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersCreateArgs`](../type-aliases/order_countersCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Order_counters.
 ```ts
 // Create one Order_counters
 const Order_counters = await prisma.order_counters.create({
-  data: {
-    // ... data to create a Order_counters
-  }
-})
+    data: {
+        // ... data to create a Order_counters
+    }
+});
 ```
 
-***
+---
 
 ### createMany()
 
-> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:19122
 
@@ -178,7 +178,7 @@ Create many Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersCreateManyArgs`](../type-aliases/order_countersCreateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersCreateManyArgs`](../type-aliases/order_countersCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Order_counters.
 ```ts
 // Create many Order_counters
 const order_counters = await prisma.order_counters.createMany({
-  data: [
-    // ... provide data here
-  ]
-})
+    data: [
+        // ... provide data here
+    ]
+});
 ```
 
-***
+---
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:19146
 
@@ -217,7 +217,7 @@ Create many Order_counters and returns the data saved in the database.
 
 ##### T
 
-`T` *extends* [`order_countersCreateManyAndReturnArgs`](../type-aliases/order_countersCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersCreateManyAndReturnArgs`](../type-aliases/order_countersCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### delete()
 
-> **delete**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **delete**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19160
 
@@ -266,7 +266,7 @@ Delete a Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersDeleteArgs`](../type-aliases/order_countersDeleteArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersDeleteArgs`](../type-aliases/order_countersDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Order_counters.
 ```ts
 // Delete one Order_counters
 const Order_counters = await prisma.order_counters.delete({
-  where: {
-    // ... filter to delete one Order_counters
-  }
-})
+    where: {
+        // ... filter to delete one Order_counters
+    }
+});
 ```
 
-***
+---
 
 ### deleteMany()
 
-> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:19191
 
@@ -305,7 +305,7 @@ Delete zero or more Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersDeleteManyArgs`](../type-aliases/order_countersDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersDeleteManyArgs`](../type-aliases/order_countersDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Order_counters to delete.
 ```ts
 // Delete a few Order_counters
 const { count } = await prisma.order_counters.deleteMany({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirst()
 
-> **findFirst**\<`T`\>(`args?`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirst**\<`T`>\>(`args?`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19060
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersFindFirstArgs`](../type-aliases/order_countersFindFirstArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersFindFirstArgs`](../type-aliases/order_countersFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Order_counters
 ```ts
 // Get one Order_counters
 const order_counters = await prisma.order_counters.findFirst({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19076
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersFindFirstOrThrowArgs`](../type-aliases/order_countersFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersFindFirstOrThrowArgs`](../type-aliases/order_countersFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Order_counters
 ```ts
 // Get one Order_counters
 const order_counters = await prisma.order_counters.findFirstOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findMany()
 
-> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:19094
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersFindManyArgs`](../type-aliases/order_countersFindManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersFindManyArgs`](../type-aliases/order_countersFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,22 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Order_counters
-const order_counters = await prisma.order_counters.findMany()
+const order_counters = await prisma.order_counters.findMany();
 
 // Get first 10 Order_counters
-const order_counters = await prisma.order_counters.findMany({ take: 10 })
+const order_counters = await prisma.order_counters.findMany({ take: 10 });
 
 // Only select the `userId`
-const order_countersWithUserIdOnly = await prisma.order_counters.findMany({ select: { userId: true } })
+const order_countersWithUserIdOnly = await prisma.order_counters.findMany({
+    select: { userId: true }
+});
 ```
 
-***
+---
 
 ### findUnique()
 
-> **findUnique**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUnique**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19031
 
@@ -470,7 +472,7 @@ Find zero or one Order_counters that matches the filter.
 
 ##### T
 
-`T` *extends* [`order_countersFindUniqueArgs`](../type-aliases/order_countersFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersFindUniqueArgs`](../type-aliases/order_countersFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +491,17 @@ Arguments to find a Order_counters
 ```ts
 // Get one Order_counters
 const order_counters = await prisma.order_counters.findUnique({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19045
 
@@ -510,7 +512,7 @@ if no matches were found.
 
 ##### T
 
-`T` *extends* [`order_countersFindUniqueOrThrowArgs`](../type-aliases/order_countersFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersFindUniqueOrThrowArgs`](../type-aliases/order_countersFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +531,17 @@ Arguments to find a Order_counters
 ```ts
 // Get one Order_counters
 const order_counters = await prisma.order_counters.findUniqueOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetOrder_countersGroupByPayload`](../type-aliases/GetOrder_countersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetOrder_countersGroupByPayload`](../type-aliases/GetOrder_countersGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
 
 Defined in: generated/prisma/index.d.ts:19329
 
@@ -551,31 +553,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersGroupByArgs`](../type-aliases/order_countersGroupByArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersGroupByArgs`](../type-aliases/order_countersGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` *extends* `0` \| `1`
+`HasSelectOrTake` _extends_ `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` *extends* \{ `orderBy`: [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md) \| [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md) \| [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` _extends_ \{ `orderBy`: [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md) \| [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md) \| [`order_countersOrderByWithAggregationInput`](../type-aliases/order_countersOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` *extends* `"userId"` \| `"year"` \| `"lastNumber"`
+`OrderFields` _extends_ `"userId"` \| `"year"` \| `"lastNumber"`
 
 ##### ByFields
 
-`ByFields` *extends* [`Order_countersScalarFieldEnum`](../type-aliases/Order_countersScalarFieldEnum.md)
+`ByFields` _extends_ [`Order_countersScalarFieldEnum`](../type-aliases/Order_countersScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` *extends* `0` \| `1`
+`ByValid` _extends_ `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` *extends* `string` \| `number` \| `symbol`
+`HavingFields` _extends_ `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +585,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` *extends* `0` \| `1`
+`ByEmpty` _extends_ `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +601,28 @@ Group by arguments.
 
 #### Returns
 
-`object` *extends* `InputErrors` ? [`GetOrder_countersGroupByPayload`](../type-aliases/GetOrder_countersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` _extends_ `InputErrors` ? [`GetOrder_countersGroupByPayload`](../type-aliases/GetOrder_countersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-  by: ['city', 'createdAt'],
-  orderBy: {
-    createdAt: true
-  },
-  _count: {
-    _all: true
-  },
-})
+    by: ['city', 'createdAt'],
+    orderBy: {
+        createdAt: true
+    },
+    _count: {
+        _all: true
+    }
+});
 ```
 
-***
+---
 
 ### update()
 
-> **update**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **update**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19177
 
@@ -630,7 +632,7 @@ Update one Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersUpdateArgs`](../type-aliases/order_countersUpdateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersUpdateArgs`](../type-aliases/order_countersUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +651,20 @@ Arguments to update one Order_counters.
 ```ts
 // Update one Order_counters
 const order_counters = await prisma.order_counters.update({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateMany()
 
-> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:19210
 
@@ -674,7 +676,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`order_countersUpdateManyArgs`](../type-aliases/order_countersUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersUpdateManyArgs`](../type-aliases/order_countersUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +695,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Order_counters
 const order_counters = await prisma.order_counters.updateMany({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:19240
 
@@ -716,7 +718,7 @@ Update zero or more Order_counters and returns the data updated in the database.
 
 ##### T
 
-`T` *extends* [`order_countersUpdateManyAndReturnArgs`](../type-aliases/order_countersUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersUpdateManyAndReturnArgs`](../type-aliases/order_countersUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +759,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### upsert()
 
-> **upsert**\<`T`\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **upsert**\<`T`>\>(`args`): [`Prisma__order_countersClient`](Prisma__order_countersClient.md)\<`GetFindResult`\<[`$order_countersPayload`](../type-aliases/$order_countersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:19259
 
@@ -771,7 +773,7 @@ Create or update one Order_counters.
 
 ##### T
 
-`T` *extends* [`order_countersUpsertArgs`](../type-aliases/order_countersUpsertArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`order_countersUpsertArgs`](../type-aliases/order_countersUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +792,14 @@ Arguments to update or create a Order_counters.
 ```ts
 // Update or create a Order_counters
 const order_counters = await prisma.order_counters.upsert({
-  create: {
-    // ... data to create a Order_counters
-  },
-  update: {
-    // ... in case it already exists, update
-  },
-  where: {
-    // ... the filter for the Order_counters we want to update
-  }
-})
+    create: {
+        // ... data to create a Order_counters
+    },
+    update: {
+        // ... in case it already exists, update
+    },
+    where: {
+        // ... the filter for the Order_counters we want to update
+    }
+});
 ```

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryScalarWhereInput
 
@@ -18,39 +18,39 @@ Defined in: generated/prisma/index.d.ts:47203
 
 Defined in: generated/prisma/index.d.ts:47204
 
-***
+---
 
 ### area?
 
-> `optional` **area?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`\> \| `number` \| `null`
+> `optional` **area?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:47213
 
-***
+---
 
 ### category?
 
-> `optional` **category?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`\> \| `string`
+> `optional` **category?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:47209
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`\> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:47207
 
-***
+---
 
 ### name?
 
-> `optional` **name?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`\> \| `string`
+> `optional` **name?**: [`StringFilter`](StringFilter.md)\<`"ProductsRury"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:47208
 
-***
+---
 
 ### NOT?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:47208
 
 Defined in: generated/prisma/index.d.ts:47206
 
-***
+---
 
 ### OR?
 
@@ -66,26 +66,26 @@ Defined in: generated/prisma/index.d.ts:47206
 
 Defined in: generated/prisma/index.d.ts:47205
 
-***
+---
 
 ### price?
 
-> `optional` **price?**: [`FloatFilter`](FloatFilter.md)\<`"ProductsRury"`\> \| `number`
+> `optional` **price?**: [`FloatFilter`](FloatFilter.md)\<`"ProductsRury"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:47210
 
-***
+---
 
 ### transport?
 
-> `optional` **transport?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`\> \| `number` \| `null`
+> `optional` **transport?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:47211
 
-***
+---
 
 ### weight?
 
-> `optional` **weight?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`\> \| `number` \| `null`
+> `optional` **weight?**: [`FloatNullableFilter`](FloatNullableFilter.md)\<`"ProductsRury"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:47212

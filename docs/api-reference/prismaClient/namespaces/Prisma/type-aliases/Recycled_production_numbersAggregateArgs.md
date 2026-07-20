@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Recycled\_production\_numbersAggregateArgs
 
 # Type Alias: Recycled\_production\_numbersAggregateArgs\<ExtArgs\>
 
-> **Recycled\_production\_numbersAggregateArgs**\<`ExtArgs`\> = `object`
+> **Recycled\_production\_numbersAggregateArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:24969
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:24969
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:25009
 
 Select which fields to average
 
-***
+---
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:25003
 
 Count returned recycled_production_numbers
 
-***
+---
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:25027
 
 Select which fields to find the maximum value
 
-***
+---
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:25021
 
 Select which fields to find the minimum value
 
-***
+---
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:25015
 
 Select which fields to sum
 
-***
+---
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:24985
 
 Sets the start position
 
-***
+---
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:24979
 
 Determine the order of recycled_production_numbers to fetch.
 
-***
+---
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:24997
 
 Skip the first `n` recycled_production_numbers.
 
-***
+---
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:24991
 
 Take `±n` recycled_production_numbers from the position of the cursor.
 
-***
+---
 
 ### where?
 

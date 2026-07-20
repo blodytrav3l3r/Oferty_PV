@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsDeleteManyArgs
 
 # Type Alias: settingsDeleteManyArgs\<ExtArgs\>
 
-> **settingsDeleteManyArgs**\<`ExtArgs`\> = `object`
+> **settingsDeleteManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:27832
 
@@ -16,7 +16,7 @@ settings deleteMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:27840
 
 Limit how many settings to delete.
 
-***
+---
 
 ### where?
 

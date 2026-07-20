@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_order\_countersFindFirstOrThrowArgs
 
 # Type Alias: production\_order\_countersFindFirstOrThrowArgs\<ExtArgs\>
 
-> **production\_order\_countersFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **production\_order\_countersFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:23546
 
@@ -16,7 +16,7 @@ production_order_counters findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:23570
 
 Sets the position for searching for production_order_counters.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:23588
 
 Filter by unique combinations of production_order_counters.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`production_order_countersOmit`](production_order_countersOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`production_order_countersOmit`](production_order_countersOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:23554
 
 Omit specific fields from the production_order_counters
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:23564
 
 Determine the order of production_order_counters to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`production_order_countersSelect`](production_order_countersSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`production_order_countersSelect`](production_order_countersSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:23550
 
 Select specific fields to fetch from the production_order_counters
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:23582
 
 Skip the first `n` production_order_counters.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:23576
 
 Take `±n` production_order_counters from the position of the cursor.
 
-***
+---
 
 ### where?
 

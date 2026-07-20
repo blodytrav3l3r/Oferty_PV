@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationFindFirstArgs
 
 # Type Alias: AiEvaluationFindFirstArgs\<ExtArgs\>
 
-> **AiEvaluationFindFirstArgs**\<`ExtArgs`\> = `object`
+> **AiEvaluationFindFirstArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:35847
 
@@ -16,7 +16,7 @@ AiEvaluation findFirst
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:35871
 
 Sets the position for searching for AiEvaluations.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:35889
 
 Filter by unique combinations of AiEvaluations.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35855
 
 Omit specific fields from the AiEvaluation
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:35865
 
 Determine the order of AiEvaluations to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35851
 
 Select specific fields to fetch from the AiEvaluation
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:35883
 
 Skip the first `n` AiEvaluations.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:35877
 
 Take `±n` AiEvaluations from the position of the cursor.
 
-***
+---
 
 ### where?
 

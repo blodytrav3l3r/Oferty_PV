@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offer\_studnie\_items\_relOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40205
 
 Defined in: generated/prisma/index.d.ts:40214
 
-***
+---
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40214
 
 Defined in: generated/prisma/index.d.ts:40213
 
-***
+---
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40213
 
 Defined in: generated/prisma/index.d.ts:40215
 
-***
+---
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40215
 
 Defined in: generated/prisma/index.d.ts:40216
 
-***
+---
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40216
 
 Defined in: generated/prisma/index.d.ts:40217
 
-***
+---
 
 ### discount?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:40217
 
 Defined in: generated/prisma/index.d.ts:40210
 
-***
+---
 
 ### dodatkowe\_info?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:40210
 
 Defined in: generated/prisma/index.d.ts:40212
 
-***
+---
 
 ### id?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:40212
 
 Defined in: generated/prisma/index.d.ts:40206
 
-***
+---
 
 ### offerId?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:40206
 
 Defined in: generated/prisma/index.d.ts:40207
 
-***
+---
 
 ### price?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:40207
 
 Defined in: generated/prisma/index.d.ts:40211
 
-***
+---
 
 ### productId?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:40211
 
 Defined in: generated/prisma/index.d.ts:40208
 
-***
+---
 
 ### quantity?
 

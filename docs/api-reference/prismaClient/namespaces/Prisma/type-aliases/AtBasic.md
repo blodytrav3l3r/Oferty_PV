@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AtBasic
 
 # Type Alias: AtBasic\<O, K\>
 
-> **AtBasic**\<`O`, `K`\> = `K` *extends* keyof `O` ? `O`\[`K`\] : `never`
+> **AtBasic**\<`O`, `K`> \> = `K` _extends_ keyof `O` ? `O`\[`K`\] : `never`
 
 Defined in: generated/prisma/index.d.ts:899
 
@@ -14,8 +14,8 @@ Defined in: generated/prisma/index.d.ts:899
 
 ### O
 
-`O` *extends* `object`
+`O` _extends_ `object`
 
 ### K
 
-`K` *extends* [`Key`](Key.md)
+`K` _extends_ [`Key`](Key.md)

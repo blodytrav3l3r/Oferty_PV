@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryFindManyArgs
 
 # Type Alias: order\_counters\_ruryFindManyArgs\<ExtArgs\>
 
-> **order\_counters\_ruryFindManyArgs**\<`ExtArgs`\> = `object`
+> **order\_counters\_ruryFindManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:20577
 
@@ -16,7 +16,7 @@ order_counters_rury findMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:20601
 
 Sets the position for listing order_counters_ruries.
 
-***
+---
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing order_counters_ruries.
 
 Defined in: generated/prisma/index.d.ts:20614
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`order_counters_ruryOmit`](order_counters_ruryOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`order_counters_ruryOmit`](order_counters_ruryOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:20585
 
 Omit specific fields from the order_counters_rury
 
-***
+---
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:20595
 
 Determine the order of order_counters_ruries to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`order_counters_rurySelect`](order_counters_rurySelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`order_counters_rurySelect`](order_counters_rurySelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:20581
 
 Select specific fields to fetch from the order_counters_rury
 
-***
+---
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:20613
 
 Skip the first `n` order_counters_ruries.
 
-***
+---
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:20607
 
 Take `±n` order_counters_ruries from the position of the cursor.
 
-***
+---
 
 ### where?
 

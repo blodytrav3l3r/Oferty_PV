@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relUncheckedUpdateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43562
 
 Defined in: generated/prisma/index.d.ts:43566
 
-***
+---
 
 ### data?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43566
 
 Defined in: generated/prisma/index.d.ts:43568
 
-***
+---
 
 ### id?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:43568
 
 Defined in: generated/prisma/index.d.ts:43563
 
-***
+---
 
 ### offerId?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:43563
 
 Defined in: generated/prisma/index.d.ts:43565
 
-***
+---
 
 ### status?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:43565
 
 Defined in: generated/prisma/index.d.ts:43567
 
-***
+---
 
 ### userId?
 

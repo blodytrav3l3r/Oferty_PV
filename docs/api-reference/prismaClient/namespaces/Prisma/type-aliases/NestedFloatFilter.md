@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / NestedFloatFilter
 
 # Type Alias: NestedFloatFilter\<$PrismaModel\>
 
-> **NestedFloatFilter**\<`$PrismaModel`\> = `object`
+> **NestedFloatFilter**\<`$PrismaModel`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:47106
 
@@ -20,27 +20,27 @@ Defined in: generated/prisma/index.d.ts:47106
 
 ### equals?
 
-> `optional` **equals?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **equals?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:47107
 
-***
+---
 
 ### gt?
 
-> `optional` **gt?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gt?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:47112
 
-***
+---
 
 ### gte?
 
-> `optional` **gte?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gte?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:47113
 
-***
+---
 
 ### in?
 
@@ -48,31 +48,31 @@ Defined in: generated/prisma/index.d.ts:47113
 
 Defined in: generated/prisma/index.d.ts:47108
 
-***
+---
 
 ### lt?
 
-> `optional` **lt?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lt?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:47110
 
-***
+---
 
 ### lte?
 
-> `optional` **lte?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lte?**: `number` \| [`FloatFieldRefInput`](FloatFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:47111
 
-***
+---
 
 ### not?
 
-> `optional` **not?**: `NestedFloatFilter`\<`$PrismaModel`\> \| `number`
+> `optional` **not?**: `NestedFloatFilter`\<`$PrismaModel`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:47114
 
-***
+---
 
 ### notIn?
 

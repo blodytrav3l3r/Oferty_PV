@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / settingsFindFirstOrThrowArgs
 
 # Type Alias: settingsFindFirstOrThrowArgs\<ExtArgs\>
 
-> **settingsFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **settingsFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:27585
 
@@ -16,7 +16,7 @@ settings findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:27609
 
 Sets the position for searching for settings.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:27627
 
 Filter by unique combinations of settings.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`settingsOmit`](settingsOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`settingsOmit`](settingsOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:27593
 
 Omit specific fields from the settings
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:27603
 
 Determine the order of settings to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`settingsSelect`](settingsSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`settingsSelect`](settingsSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:27589
 
 Select specific fields to fetch from the settings
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:27621
 
 Skip the first `n` settings.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:27615
 
 Take `±n` settings from the position of the cursor.
 
-***
+---
 
 ### where?
 

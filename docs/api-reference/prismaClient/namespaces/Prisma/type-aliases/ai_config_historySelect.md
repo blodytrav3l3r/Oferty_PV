@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historySelect
 
 # Type Alias: ai\_config\_historySelect\<ExtArgs\>
 
-> **ai\_config\_historySelect**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `configJson?`: `boolean`; `configVersion?`: `boolean`; `createdAt?`: `boolean`; `diffFromParent?`: `boolean`; `id?`: `boolean`; `isCurrent?`: `boolean`; `parentId?`: `boolean`; `rankingScore?`: `boolean`; `selectionReason?`: `boolean`; `source?`: `boolean`; `triggeredBy?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_config_history"`\]\>
+> **ai\_config\_historySelect**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `configJson?`: `boolean`; `configVersion?`: `boolean`; `createdAt?`: `boolean`; `diffFromParent?`: `boolean`; `id?`: `boolean`; `isCurrent?`: `boolean`; `parentId?`: `boolean`; `rankingScore?`: `boolean`; `selectionReason?`: `boolean`; `source?`: `boolean`; `triggeredBy?`: `boolean`; `wellId?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"ai_config_history"`\]\>
 
 Defined in: generated/prisma/index.d.ts:6841
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:6841
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

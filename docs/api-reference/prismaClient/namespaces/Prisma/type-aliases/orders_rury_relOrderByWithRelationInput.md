@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relOrderByWithRelationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40580
 
 Defined in: generated/prisma/index.d.ts:40584
 
-***
+---
 
 ### data?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40584
 
 Defined in: generated/prisma/index.d.ts:40586
 
-***
+---
 
 ### id?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40586
 
 Defined in: generated/prisma/index.d.ts:40581
 
-***
+---
 
 ### offerId?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40581
 
 Defined in: generated/prisma/index.d.ts:40583
 
-***
+---
 
 ### status?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40583
 
 Defined in: generated/prisma/index.d.ts:40585
 
-***
+---
 
 ### userId?
 

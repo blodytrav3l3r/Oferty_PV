@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAi\_knowledge\_base
 
@@ -20,7 +20,7 @@ Model ai_knowledge_base
 
 Defined in: generated/prisma/index.d.ts:8756
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:8756
 
 Defined in: generated/prisma/index.d.ts:8755
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:8755
 
 Defined in: generated/prisma/index.d.ts:8759
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:8759
 
 Defined in: generated/prisma/index.d.ts:8758
 
-***
+---
 
 ### \_sum
 

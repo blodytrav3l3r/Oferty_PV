@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / SessionsCountAggregateInputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:25963
 
 Defined in: generated/prisma/index.d.ts:25967
 
-***
+---
 
 ### createdAt?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:25967
 
 Defined in: generated/prisma/index.d.ts:25966
 
-***
+---
 
 ### token?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:25966
 
 Defined in: generated/prisma/index.d.ts:25964
 
-***
+---
 
 ### userId?
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_counters\_ruryUncheckedUpdateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43448
 
 Defined in: generated/prisma/index.d.ts:43451
 
-***
+---
 
 ### userId?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43451
 
 Defined in: generated/prisma/index.d.ts:43449
 
-***
+---
 
 ### year?
 

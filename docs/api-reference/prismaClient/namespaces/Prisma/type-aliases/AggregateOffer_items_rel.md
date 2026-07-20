@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateOffer\_items\_rel
 
@@ -20,7 +20,7 @@ Model offer_items_rel
 
 Defined in: generated/prisma/index.d.ts:14427
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:14427
 
 Defined in: generated/prisma/index.d.ts:14426
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:14426
 
 Defined in: generated/prisma/index.d.ts:14430
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:14430
 
 Defined in: generated/prisma/index.d.ts:14429
 
-***
+---
 
 ### \_sum
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../README.md) / [utils/logger](../README.md) / logger
 
@@ -8,7 +8,7 @@
 
 > `const` **logger**: `object`
 
-Defined in: [src/utils/logger.ts:16](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/utils/logger.ts#L16)
+Defined in: [src/utils/logger.ts:16](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/utils/logger.ts#L16)
 
 ## Type Declaration
 

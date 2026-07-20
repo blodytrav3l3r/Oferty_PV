@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureSelect
 
 # Type Alias: AiFeatureSelect\<ExtArgs\>
 
-> **AiFeatureSelect**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `bottomType?`: `boolean`; `connectionCount?`: `boolean`; `createdAt?`: `boolean`; `decisionMs?`: `boolean`; `dn?`: `boolean`; `hasPsiaBuda?`: `boolean`; `hasReduction?`: `boolean`; `hasStyczna?`: `boolean`; `heightMm?`: `boolean`; `id?`: `boolean`; `label?`: `boolean`; `reward?`: `boolean`; `ringCount?`: `boolean`; `ringVariety?`: `boolean`; `season?`: `boolean`; `telemetryId?`: `boolean`; `topType?`: `boolean`; `totalPrice?`: `boolean`; `totalWeight?`: `boolean`; `transitionsAboveDennica?`: `boolean`; `warehouse?`: `boolean`; `wellType?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"aiFeature"`\]\>
+> **AiFeatureSelect**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `bottomType?`: `boolean`; `connectionCount?`: `boolean`; `createdAt?`: `boolean`; `decisionMs?`: `boolean`; `dn?`: `boolean`; `hasPsiaBuda?`: `boolean`; `hasReduction?`: `boolean`; `hasStyczna?`: `boolean`; `heightMm?`: `boolean`; `id?`: `boolean`; `label?`: `boolean`; `reward?`: `boolean`; `ringCount?`: `boolean`; `ringVariety?`: `boolean`; `season?`: `boolean`; `telemetryId?`: `boolean`; `topType?`: `boolean`; `totalPrice?`: `boolean`; `totalWeight?`: `boolean`; `transitionsAboveDennica?`: `boolean`; `warehouse?`: `boolean`; `wellType?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"aiFeature"`\]\>
 
 Defined in: generated/prisma/index.d.ts:33044
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:33044
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

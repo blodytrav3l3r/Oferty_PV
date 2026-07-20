@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsMaxOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:45620
 
 Defined in: generated/prisma/index.d.ts:45625
 
-***
+---
 
 ### createdAt?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:45625
 
 Defined in: generated/prisma/index.d.ts:45628
 
-***
+---
 
 ### entityId?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:45628
 
 Defined in: generated/prisma/index.d.ts:45623
 
-***
+---
 
 ### entityType?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:45623
 
 Defined in: generated/prisma/index.d.ts:45622
 
-***
+---
 
 ### id?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:45622
 
 Defined in: generated/prisma/index.d.ts:45621
 
-***
+---
 
 ### newData?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:45621
 
 Defined in: generated/prisma/index.d.ts:45627
 
-***
+---
 
 ### oldData?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:45627
 
 Defined in: generated/prisma/index.d.ts:45626
 
-***
+---
 
 ### userId?
 

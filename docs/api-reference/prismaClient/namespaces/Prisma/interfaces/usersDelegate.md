@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:37647
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the users model
 
 ### aggregate()
 
-> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetUsersAggregateType`](../type-aliases/GetUsersAggregateType.md)\<`T`\>\>
+> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetUsersAggregateType`](../type-aliases/GetUsersAggregateType.md)\<`T`>>\>\>
 
 Defined in: generated/prisma/index.d.ts:37938
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`UsersAggregateArgs`](../type-aliases/UsersAggregateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`UsersAggregateArgs`](../type-aliases/UsersAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-  _avg: {
-    age: true,
-  },
-  where: {
-    email: {
-      contains: "prisma.io",
+    _avg: {
+        age: true
     },
-  },
-  orderBy: {
-    age: "asc",
-  },
-  take: 10,
-})
+    where: {
+        email: {
+            contains: 'prisma.io'
+        }
+    },
+    orderBy: {
+        age: 'asc'
+    },
+    take: 10
+});
 ```
 
-***
+---
 
 ### count()
 
-> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof UsersCountAggregateOutputType ? UsersCountAggregateOutputType\[P\] : never \} : `number`\>
+> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof UsersCountAggregateOutputType ? UsersCountAggregateOutputType\[P\] : never \} : `number`>\>
 
 Defined in: generated/prisma/index.d.ts:37904
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersCountArgs`](../type-aliases/usersCountArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersCountArgs`](../type-aliases/usersCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter Users to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof UsersCountAggregateOutputType ? UsersCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof UsersCountAggregateOutputType ? UsersCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of Users
 const count = await prisma.users.count({
-  where: {
-    // ... the filter for the Users we want to count
-  }
-})
+    where: {
+        // ... the filter for the Users we want to count
+    }
+});
 ```
 
-***
+---
 
 ### create()
 
-> **create**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **create**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37737
 
@@ -139,7 +139,7 @@ Create a Users.
 
 ##### T
 
-`T` *extends* [`usersCreateArgs`](../type-aliases/usersCreateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersCreateArgs`](../type-aliases/usersCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a Users.
 ```ts
 // Create one Users
 const Users = await prisma.users.create({
-  data: {
-    // ... data to create a Users
-  }
-})
+    data: {
+        // ... data to create a Users
+    }
+});
 ```
 
-***
+---
 
 ### createMany()
 
-> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:37751
 
@@ -178,7 +178,7 @@ Create many Users.
 
 ##### T
 
-`T` *extends* [`usersCreateManyArgs`](../type-aliases/usersCreateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersCreateManyArgs`](../type-aliases/usersCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many Users.
 ```ts
 // Create many Users
 const users = await prisma.users.createMany({
-  data: [
-    // ... provide data here
-  ]
-})
+    data: [
+        // ... provide data here
+    ]
+});
 ```
 
-***
+---
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:37775
 
@@ -217,7 +217,7 @@ Create many Users and returns the data saved in the database.
 
 ##### T
 
-`T` *extends* [`usersCreateManyAndReturnArgs`](../type-aliases/usersCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersCreateManyAndReturnArgs`](../type-aliases/usersCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### delete()
 
-> **delete**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **delete**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37789
 
@@ -266,7 +266,7 @@ Delete a Users.
 
 ##### T
 
-`T` *extends* [`usersDeleteArgs`](../type-aliases/usersDeleteArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersDeleteArgs`](../type-aliases/usersDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one Users.
 ```ts
 // Delete one Users
 const Users = await prisma.users.delete({
-  where: {
-    // ... filter to delete one Users
-  }
-})
+    where: {
+        // ... filter to delete one Users
+    }
+});
 ```
 
-***
+---
 
 ### deleteMany()
 
-> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:37820
 
@@ -305,7 +305,7 @@ Delete zero or more Users.
 
 ##### T
 
-`T` *extends* [`usersDeleteManyArgs`](../type-aliases/usersDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersDeleteManyArgs`](../type-aliases/usersDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter Users to delete.
 ```ts
 // Delete a few Users
 const { count } = await prisma.users.deleteMany({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirst()
 
-> **findFirst**\<`T`\>(`args?`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirst**\<`T`>\>(`args?`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37689
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersFindFirstArgs`](../type-aliases/usersFindFirstArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersFindFirstArgs`](../type-aliases/usersFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a Users
 ```ts
 // Get one Users
 const users = await prisma.users.findFirst({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37705
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersFindFirstOrThrowArgs`](../type-aliases/usersFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersFindFirstOrThrowArgs`](../type-aliases/usersFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a Users
 ```ts
 // Get one Users
 const users = await prisma.users.findFirstOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findMany()
 
-> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:37723
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersFindManyArgs`](../type-aliases/usersFindManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersFindManyArgs`](../type-aliases/usersFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all Users
-const users = await prisma.users.findMany()
+const users = await prisma.users.findMany();
 
 // Get first 10 Users
-const users = await prisma.users.findMany({ take: 10 })
+const users = await prisma.users.findMany({ take: 10 });
 
 // Only select the `id`
-const usersWithIdOnly = await prisma.users.findMany({ select: { id: true } })
+const usersWithIdOnly = await prisma.users.findMany({ select: { id: true } });
 ```
 
-***
+---
 
 ### findUnique()
 
-> **findUnique**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUnique**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37660
 
@@ -470,7 +470,7 @@ Find zero or one Users that matches the filter.
 
 ##### T
 
-`T` *extends* [`usersFindUniqueArgs`](../type-aliases/usersFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersFindUniqueArgs`](../type-aliases/usersFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a Users
 ```ts
 // Get one Users
 const users = await prisma.users.findUnique({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37674
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` *extends* [`usersFindUniqueOrThrowArgs`](../type-aliases/usersFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersFindUniqueOrThrowArgs`](../type-aliases/usersFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a Users
 ```ts
 // Get one Users
 const users = await prisma.users.findUniqueOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetUsersGroupByPayload`](../type-aliases/GetUsersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetUsersGroupByPayload`](../type-aliases/GetUsersGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
 
 Defined in: generated/prisma/index.d.ts:37958
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersGroupByArgs`](../type-aliases/usersGroupByArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersGroupByArgs`](../type-aliases/usersGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` *extends* `0` \| `1`
+`HasSelectOrTake` _extends_ `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` *extends* \{ `orderBy`: [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md) \| [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md) \| [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` _extends_ \{ `orderBy`: [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md) \| [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md) \| [`usersOrderByWithAggregationInput`](../type-aliases/usersOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` *extends* `"symbol"` \| `"id"` \| `"createdAt"` \| `"role"` \| `"subUsers"` \| `"username"` \| `"password"` \| `"firstName"` \| `"lastName"` \| `"phone"` \| `"email"` \| `"orderStartNumber"` \| `"productionOrderStartNumber"` \| `"totalReward"`
+`OrderFields` _extends_ `"symbol"` \| `"id"` \| `"createdAt"` \| `"role"` \| `"subUsers"` \| `"username"` \| `"password"` \| `"firstName"` \| `"lastName"` \| `"phone"` \| `"email"` \| `"orderStartNumber"` \| `"productionOrderStartNumber"` \| `"totalReward"`
 
 ##### ByFields
 
-`ByFields` *extends* [`UsersScalarFieldEnum`](../type-aliases/UsersScalarFieldEnum.md)
+`ByFields` _extends_ [`UsersScalarFieldEnum`](../type-aliases/UsersScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` *extends* `0` \| `1`
+`ByValid` _extends_ `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` *extends* `string` \| `number` \| `symbol`
+`HavingFields` _extends_ `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` *extends* `0` \| `1`
+`ByEmpty` _extends_ `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` *extends* `InputErrors` ? [`GetUsersGroupByPayload`](../type-aliases/GetUsersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` _extends_ `InputErrors` ? [`GetUsersGroupByPayload`](../type-aliases/GetUsersGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-  by: ['city', 'createdAt'],
-  orderBy: {
-    createdAt: true
-  },
-  _count: {
-    _all: true
-  },
-})
+    by: ['city', 'createdAt'],
+    orderBy: {
+        createdAt: true
+    },
+    _count: {
+        _all: true
+    }
+});
 ```
 
-***
+---
 
 ### update()
 
-> **update**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **update**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37806
 
@@ -630,7 +630,7 @@ Update one Users.
 
 ##### T
 
-`T` *extends* [`usersUpdateArgs`](../type-aliases/usersUpdateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersUpdateArgs`](../type-aliases/usersUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one Users.
 ```ts
 // Update one Users
 const users = await prisma.users.update({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateMany()
 
-> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:37839
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`usersUpdateManyArgs`](../type-aliases/usersUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersUpdateManyArgs`](../type-aliases/usersUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many Users
 const users = await prisma.users.updateMany({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:37869
 
@@ -716,7 +716,7 @@ Update zero or more Users and returns the data updated in the database.
 
 ##### T
 
-`T` *extends* [`usersUpdateManyAndReturnArgs`](../type-aliases/usersUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersUpdateManyAndReturnArgs`](../type-aliases/usersUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### upsert()
 
-> **upsert**\<`T`\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **upsert**\<`T`>\>(`args`): [`Prisma__usersClient`](Prisma__usersClient.md)\<`GetFindResult`\<[`$usersPayload`](../type-aliases/$usersPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:37888
 
@@ -771,7 +771,7 @@ Create or update one Users.
 
 ##### T
 
-`T` *extends* [`usersUpsertArgs`](../type-aliases/usersUpsertArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`usersUpsertArgs`](../type-aliases/usersUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a Users.
 ```ts
 // Update or create a Users
 const users = await prisma.users.upsert({
-  create: {
-    // ... data to create a Users
-  },
-  update: {
-    // ... in case it already exists, update
-  },
-  where: {
-    // ... the filter for the Users we want to update
-  }
-})
+    create: {
+        // ... data to create a Users
+    },
+    update: {
+        // ... in case it already exists, update
+    },
+    where: {
+        // ... the filter for the Users we want to update
+    }
+});
 ```

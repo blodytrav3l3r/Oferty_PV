@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieUncheckedCreateNestedManyWithoutCategory\_relInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46901
 
 Defined in: generated/prisma/index.d.ts:46905
 
-***
+---
 
 ### connectOrCreate?
 
@@ -26,15 +26,15 @@ Defined in: generated/prisma/index.d.ts:46905
 
 Defined in: generated/prisma/index.d.ts:46903
 
-***
+---
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)\> \| [`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md)[] \| [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)[]
+> `optional` **create?**: [`XOR`](XOR.md)\<[`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)> \> \| [`ProductsStudnieCreateWithoutCategory_relInput`](ProductsStudnieCreateWithoutCategory_relInput.md)[] \| [`ProductsStudnieUncheckedCreateWithoutCategory_relInput`](ProductsStudnieUncheckedCreateWithoutCategory_relInput.md)[]
 
 Defined in: generated/prisma/index.d.ts:46902
 
-***
+---
 
 ### createMany?
 

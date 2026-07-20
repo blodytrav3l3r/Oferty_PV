@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_order\_countersWhereInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40625
 
 Defined in: generated/prisma/index.d.ts:40626
 
-***
+---
 
 ### lastNumber?
 
-> `optional` **lastNumber?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"production_order_counters"`\> \| `number` \| `null`
+> `optional` **lastNumber?**: [`IntNullableFilter`](IntNullableFilter.md)\<`"production_order_counters"`> \> \| `number` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40631
 
-***
+---
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40631
 
 Defined in: generated/prisma/index.d.ts:40628
 
-***
+---
 
 ### OR?
 
@@ -42,18 +42,18 @@ Defined in: generated/prisma/index.d.ts:40628
 
 Defined in: generated/prisma/index.d.ts:40627
 
-***
+---
 
 ### userId?
 
-> `optional` **userId?**: [`StringFilter`](StringFilter.md)\<`"production_order_counters"`\> \| `string`
+> `optional` **userId?**: [`StringFilter`](StringFilter.md)\<`"production_order_counters"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40629
 
-***
+---
 
 ### year?
 
-> `optional` **year?**: [`IntFilter`](IntFilter.md)\<`"production_order_counters"`\> \| `number`
+> `optional` **year?**: [`IntFilter`](IntFilter.md)\<`"production_order_counters"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40630

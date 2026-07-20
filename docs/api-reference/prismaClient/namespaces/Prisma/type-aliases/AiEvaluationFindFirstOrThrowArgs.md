@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiEvaluationFindFirstOrThrowArgs
 
 # Type Alias: AiEvaluationFindFirstOrThrowArgs\<ExtArgs\>
 
-> **AiEvaluationFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **AiEvaluationFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:35895
 
@@ -16,7 +16,7 @@ AiEvaluation findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:35919
 
 Sets the position for searching for AiEvaluations.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:35937
 
 Filter by unique combinations of AiEvaluations.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`AiEvaluationOmit`](AiEvaluationOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35903
 
 Omit specific fields from the AiEvaluation
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:35913
 
 Determine the order of AiEvaluations to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`AiEvaluationSelect`](AiEvaluationSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:35899
 
 Select specific fields to fetch from the AiEvaluation
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:35931
 
 Skip the first `n` AiEvaluations.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:35925
 
 Take `±n` AiEvaluations from the position of the cursor.
 
-***
+---
 
 ### where?
 

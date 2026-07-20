@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AtLoose
 
 # Type Alias: AtLoose\<O, K\>
 
-> **AtLoose**\<`O`, `K`\> = `O` *extends* `unknown` ? [`AtStrict`](AtStrict.md)\<`O`, `K`\> : `never`
+> **AtLoose**\<`O`, `K`> \> = `O` _extends_ `unknown` ? [`AtStrict`](AtStrict.md)\<`O`, `K`> \> : `never`
 
 Defined in: generated/prisma/index.d.ts:901
 
@@ -14,8 +14,8 @@ Defined in: generated/prisma/index.d.ts:901
 
 ### O
 
-`O` *extends* `object`
+`O` _extends_ `object`
 
 ### K
 
-`K` *extends* [`Key`](Key.md)
+`K` _extends_ [`Key`](Key.md)

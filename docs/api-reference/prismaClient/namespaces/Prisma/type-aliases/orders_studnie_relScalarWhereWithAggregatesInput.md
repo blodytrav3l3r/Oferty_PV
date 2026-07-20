@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relScalarWhereWithAggregatesInput
 
@@ -18,31 +18,31 @@ Defined in: generated/prisma/index.d.ts:40556
 
 Defined in: generated/prisma/index.d.ts:40557
 
-***
+---
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40563
 
-***
+---
 
 ### data?
 
-> `optional` **data?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
+> `optional` **data?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40565
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string`
+> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40560
 
-***
+---
 
 ### NOT?
 
@@ -50,15 +50,15 @@ Defined in: generated/prisma/index.d.ts:40560
 
 Defined in: generated/prisma/index.d.ts:40559
 
-***
+---
 
 ### offerStudnieId?
 
-> `optional` **offerStudnieId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
+> `optional` **offerStudnieId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40562
 
-***
+---
 
 ### OR?
 
@@ -66,18 +66,18 @@ Defined in: generated/prisma/index.d.ts:40562
 
 Defined in: generated/prisma/index.d.ts:40558
 
-***
+---
 
 ### status?
 
-> `optional` **status?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
+> `optional` **status?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40564
 
-***
+---
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`\> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_studnie_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40561

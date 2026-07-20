@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Audit\_logsAggregateArgs
 
 # Type Alias: Audit\_logsAggregateArgs\<ExtArgs\>
 
-> **Audit\_logsAggregateArgs**\<`ExtArgs`\> = `object`
+> **Audit\_logsAggregateArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:12397
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:12397
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:12431
 
 Count returned audit_logs
 
-***
+---
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:12443
 
 Select which fields to find the maximum value
 
-***
+---
 
 ### \_min?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:12437
 
 Select which fields to find the minimum value
 
-***
+---
 
 ### cursor?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:12413
 
 Sets the start position
 
-***
+---
 
 ### orderBy?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:12407
 
 Determine the order of audit_logs to fetch.
 
-***
+---
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:12425
 
 Skip the first `n` audit_logs.
 
-***
+---
 
 ### take?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:12419
 
 Take `±n` audit_logs from the position of the cursor.
 
-***
+---
 
 ### where?
 

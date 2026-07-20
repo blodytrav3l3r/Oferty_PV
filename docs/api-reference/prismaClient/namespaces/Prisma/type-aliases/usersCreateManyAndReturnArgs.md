@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersCreateManyAndReturnArgs
 
 # Type Alias: usersCreateManyAndReturnArgs\<ExtArgs\>
 
-> **usersCreateManyAndReturnArgs**\<`ExtArgs`\> = `object`
+> **usersCreateManyAndReturnArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:38283
 
@@ -16,7 +16,7 @@ users createManyAndReturn
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,21 +28,21 @@ Defined in: generated/prisma/index.d.ts:38295
 
 The data used to create many users.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`usersOmit`](usersOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`usersOmit`](usersOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:38291
 
 Omit specific fields from the users
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`usersSelectCreateManyAndReturn`](usersSelectCreateManyAndReturn.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`usersSelectCreateManyAndReturn`](usersSelectCreateManyAndReturn.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:38287
 

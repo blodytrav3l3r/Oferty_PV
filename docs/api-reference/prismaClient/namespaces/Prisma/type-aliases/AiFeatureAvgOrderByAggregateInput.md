@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureAvgOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46492
 
 Defined in: generated/prisma/index.d.ts:46496
 
-***
+---
 
 ### decisionMs?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46496
 
 Defined in: generated/prisma/index.d.ts:46502
 
-***
+---
 
 ### dn?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46502
 
 Defined in: generated/prisma/index.d.ts:46493
 
-***
+---
 
 ### heightMm?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46493
 
 Defined in: generated/prisma/index.d.ts:46494
 
-***
+---
 
 ### reward?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:46494
 
 Defined in: generated/prisma/index.d.ts:46501
 
-***
+---
 
 ### ringCount?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:46501
 
 Defined in: generated/prisma/index.d.ts:46495
 
-***
+---
 
 ### ringVariety?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:46495
 
 Defined in: generated/prisma/index.d.ts:46500
 
-***
+---
 
 ### totalPrice?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:46500
 
 Defined in: generated/prisma/index.d.ts:46498
 
-***
+---
 
 ### totalWeight?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:46498
 
 Defined in: generated/prisma/index.d.ts:46499
 
-***
+---
 
 ### transitionsAboveDennica?
 

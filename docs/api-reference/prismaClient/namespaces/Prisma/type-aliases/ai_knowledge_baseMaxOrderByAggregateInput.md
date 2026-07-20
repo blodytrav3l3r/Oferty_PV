@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_knowledge\_baseMaxOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:45404
 
 Defined in: generated/prisma/index.d.ts:45419
 
-***
+---
 
 ### confidence?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:45419
 
 Defined in: generated/prisma/index.d.ts:45413
 
-***
+---
 
 ### context?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:45413
 
 Defined in: generated/prisma/index.d.ts:45409
 
-***
+---
 
 ### description?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:45409
 
 Defined in: generated/prisma/index.d.ts:45410
 
-***
+---
 
 ### dn?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:45410
 
 Defined in: generated/prisma/index.d.ts:45408
 
-***
+---
 
 ### firstDetectedAt?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:45408
 
 Defined in: generated/prisma/index.d.ts:45416
 
-***
+---
 
 ### generatedBy?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:45416
 
 Defined in: generated/prisma/index.d.ts:45422
 
-***
+---
 
 ### hitCount?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:45422
 
 Defined in: generated/prisma/index.d.ts:45412
 
-***
+---
 
 ### id?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:45412
 
 Defined in: generated/prisma/index.d.ts:45405
 
-***
+---
 
 ### lastHitAt?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:45405
 
 Defined in: generated/prisma/index.d.ts:45417
 
-***
+---
 
 ### lastUpdatedAt?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:45417
 
 Defined in: generated/prisma/index.d.ts:45418
 
-***
+---
 
 ### patternKey?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:45418
 
 Defined in: generated/prisma/index.d.ts:45407
 
-***
+---
 
 ### patternType?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:45407
 
 Defined in: generated/prisma/index.d.ts:45406
 
-***
+---
 
 ### recommendation?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:45406
 
 Defined in: generated/prisma/index.d.ts:45411
 
-***
+---
 
 ### rejectionCount?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:45411
 
 Defined in: generated/prisma/index.d.ts:45415
 
-***
+---
 
 ### schemaVersion?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:45415
 
 Defined in: generated/prisma/index.d.ts:45421
 
-***
+---
 
 ### status?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:45421
 
 Defined in: generated/prisma/index.d.ts:45420
 
-***
+---
 
 ### successCount?
 

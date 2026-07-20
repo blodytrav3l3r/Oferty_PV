@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsFindUniqueOrThrowArgs
 
 # Type Alias: audit\_logsFindUniqueOrThrowArgs\<ExtArgs\>
 
-> **audit\_logsFindUniqueOrThrowArgs**\<`ExtArgs`\> = `object`
+> **audit\_logsFindUniqueOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:13011
 
@@ -16,29 +16,29 @@ audit_logs findUniqueOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### omit?
 
-> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`audit_logsOmit`](audit_logsOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13019
 
 Omit specific fields from the audit_logs
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`audit_logsSelect`](audit_logsSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:13015
 
 Select specific fields to fetch from the audit_logs
 
-***
+---
 
 ### where
 

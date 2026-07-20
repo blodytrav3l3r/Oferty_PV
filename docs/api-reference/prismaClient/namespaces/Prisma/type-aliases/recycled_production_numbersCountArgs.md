@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / recycled\_production\_numbersCountArgs
 
 # Type Alias: recycled\_production\_numbersCountArgs\<ExtArgs\>
 
-> **recycled\_production\_numbersCountArgs**\<`ExtArgs`\> = `Omit`\<[`recycled_production_numbersFindManyArgs`](recycled_production_numbersFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`\> & `object`
+> **recycled\_production\_numbersCountArgs**\<`ExtArgs`> \> = `Omit`\<[`recycled_production_numbersFindManyArgs`](recycled_production_numbersFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`> \> & `object`
 
 Defined in: generated/prisma/index.d.ts:25119
 
@@ -20,4 +20,4 @@ Defined in: generated/prisma/index.d.ts:25119
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

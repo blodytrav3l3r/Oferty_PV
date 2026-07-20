@@ -1,14 +1,14 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../README.md) / [validators/telemetrySchemas](../README.md) / TelemetryConfigInput
 
 # Type Alias: TelemetryConfigInput
 
-> **TelemetryConfigInput** = `Omit`\<`z.infer`\<*typeof* [`telemetryConfigSchema`](../variables/telemetryConfigSchema.md)\>, `"predictionSnapshot"` \| `"rzDna"` \| `"rzWlazu"` \| `"wellHeight"` \| `"dennicaHeight"`\> & `object`
+> **TelemetryConfigInput** = `Omit`\<`z.infer`\<_typeof_ [`telemetryConfigSchema`](../variables/telemetryConfigSchema.md)>\>, `"predictionSnapshot"` \| `"rzDna"` \| `"rzWlazu"` \| `"wellHeight"` \| `"dennicaHeight"`> \> & `object`
 
-Defined in: [src/validators/telemetrySchemas.ts:138](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/validators/telemetrySchemas.ts#L138)
+Defined in: [src/validators/telemetrySchemas.ts:138](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/validators/telemetrySchemas.ts#L138)
 
 ## Type Declaration
 
@@ -18,7 +18,7 @@ Defined in: [src/validators/telemetrySchemas.ts:138](https://github.com/blodytra
 
 ### predictionSnapshot?
 
-> `optional` **predictionSnapshot?**: `Record`\<`string`, `unknown`\> \| `null`
+> `optional` **predictionSnapshot?**: `Record`\<`string`, `unknown`> \> \| `null`
 
 ### rzDna?
 

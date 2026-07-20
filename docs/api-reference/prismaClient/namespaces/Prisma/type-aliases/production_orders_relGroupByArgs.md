@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_orders\_relGroupByArgs
 
 # Type Alias: production\_orders\_relGroupByArgs\<ExtArgs\>
 
-> **production\_orders\_relGroupByArgs**\<`ExtArgs`\> = `object`
+> **production\_orders\_relGroupByArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:23994
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:23994
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:23994
 
 Defined in: generated/prisma/index.d.ts:24002
 
-***
+---
 
 ### \_count?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:24002
 
 Defined in: generated/prisma/index.d.ts:24001
 
-***
+---
 
 ### \_max?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:24001
 
 Defined in: generated/prisma/index.d.ts:24005
 
-***
+---
 
 ### \_min?
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/index.d.ts:24005
 
 Defined in: generated/prisma/index.d.ts:24004
 
-***
+---
 
 ### \_sum?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/index.d.ts:24004
 
 Defined in: generated/prisma/index.d.ts:24003
 
-***
+---
 
 ### by
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:24003
 
 Defined in: generated/prisma/index.d.ts:23997
 
-***
+---
 
 ### having?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/index.d.ts:23997
 
 Defined in: generated/prisma/index.d.ts:23998
 
-***
+---
 
 ### orderBy?
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/index.d.ts:23998
 
 Defined in: generated/prisma/index.d.ts:23996
 
-***
+---
 
 ### skip?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:23996
 
 Defined in: generated/prisma/index.d.ts:24000
 
-***
+---
 
 ### take?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:24000
 
 Defined in: generated/prisma/index.d.ts:23999
 
-***
+---
 
 ### where?
 

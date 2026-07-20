@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_eventsAggregateArgs
 
 # Type Alias: Ai\_telemetry\_eventsAggregateArgs\<ExtArgs\>
 
-> **Ai\_telemetry\_eventsAggregateArgs**\<`ExtArgs`\> = `object`
+> **Ai\_telemetry\_eventsAggregateArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:5592
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:5592
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:5632
 
 Select which fields to average
 
-***
+---
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:5626
 
 Count returned ai_telemetry_events
 
-***
+---
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:5650
 
 Select which fields to find the maximum value
 
-***
+---
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:5644
 
 Select which fields to find the minimum value
 
-***
+---
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:5638
 
 Select which fields to sum
 
-***
+---
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:5608
 
 Sets the start position
 
-***
+---
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:5602
 
 Determine the order of ai_telemetry_events to fetch.
 
-***
+---
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:5620
 
 Skip the first `n` ai_telemetry_events.
 
-***
+---
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:5614
 
 Take `±n` ai_telemetry_events from the position of the cursor.
 
-***
+---
 
 ### where?
 

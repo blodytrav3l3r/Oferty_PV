@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnie$productsArgs
 
 # Type Alias: CategoriesStudnie$productsArgs\<ExtArgs\>
 
-> **CategoriesStudnie$productsArgs**\<`ExtArgs`\> = `object`
+> **CategoriesStudnie$productsArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:31085
 
@@ -16,7 +16,7 @@ CategoriesStudnie.products
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -26,7 +26,7 @@ CategoriesStudnie.products
 
 Defined in: generated/prisma/index.d.ts:31100
 
-***
+---
 
 ### distinct?
 
@@ -34,27 +34,27 @@ Defined in: generated/prisma/index.d.ts:31100
 
 Defined in: generated/prisma/index.d.ts:31103
 
-***
+---
 
 ### include?
 
-> `optional` **include?**: [`ProductsStudnieInclude`](ProductsStudnieInclude.md)\<`ExtArgs`\> \| `null`
+> `optional` **include?**: [`ProductsStudnieInclude`](ProductsStudnieInclude.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:31097
 
 Choose, which related nodes to fetch as well
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`ProductsStudnieOmit`](ProductsStudnieOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`ProductsStudnieOmit`](ProductsStudnieOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:31093
 
 Omit specific fields from the ProductsStudnie
 
-***
+---
 
 ### orderBy?
 
@@ -62,17 +62,17 @@ Omit specific fields from the ProductsStudnie
 
 Defined in: generated/prisma/index.d.ts:31099
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`ProductsStudnieSelect`](ProductsStudnieSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`ProductsStudnieSelect`](ProductsStudnieSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:31089
 
 Select specific fields to fetch from the ProductsStudnie
 
-***
+---
 
 ### skip?
 
@@ -80,7 +80,7 @@ Select specific fields to fetch from the ProductsStudnie
 
 Defined in: generated/prisma/index.d.ts:31102
 
-***
+---
 
 ### take?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:31102
 
 Defined in: generated/prisma/index.d.ts:31101
 
-***
+---
 
 ### where?
 

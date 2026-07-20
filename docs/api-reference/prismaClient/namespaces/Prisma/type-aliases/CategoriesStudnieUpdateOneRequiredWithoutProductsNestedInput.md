@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieUpdateOneRequiredWithoutProductsNestedInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46942
 
 Defined in: generated/prisma/index.d.ts:46946
 
-***
+---
 
 ### connectOrCreate?
 
@@ -26,23 +26,23 @@ Defined in: generated/prisma/index.d.ts:46946
 
 Defined in: generated/prisma/index.d.ts:46944
 
-***
+---
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesStudnieCreateWithoutProductsInput`](CategoriesStudnieCreateWithoutProductsInput.md), [`CategoriesStudnieUncheckedCreateWithoutProductsInput`](CategoriesStudnieUncheckedCreateWithoutProductsInput.md)\>
+> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesStudnieCreateWithoutProductsInput`](CategoriesStudnieCreateWithoutProductsInput.md), [`CategoriesStudnieUncheckedCreateWithoutProductsInput`](CategoriesStudnieUncheckedCreateWithoutProductsInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:46943
 
-***
+---
 
 ### update?
 
-> `optional` **update?**: [`XOR`](XOR.md)\<[`XOR`](XOR.md)\<[`CategoriesStudnieUpdateToOneWithWhereWithoutProductsInput`](CategoriesStudnieUpdateToOneWithWhereWithoutProductsInput.md), [`CategoriesStudnieUpdateWithoutProductsInput`](CategoriesStudnieUpdateWithoutProductsInput.md)\>, [`CategoriesStudnieUncheckedUpdateWithoutProductsInput`](CategoriesStudnieUncheckedUpdateWithoutProductsInput.md)\>
+> `optional` **update?**: [`XOR`](XOR.md)\<[`XOR`](XOR.md)\<[`CategoriesStudnieUpdateToOneWithWhereWithoutProductsInput`](CategoriesStudnieUpdateToOneWithWhereWithoutProductsInput.md), [`CategoriesStudnieUpdateWithoutProductsInput`](CategoriesStudnieUpdateWithoutProductsInput.md)>\>, [`CategoriesStudnieUncheckedUpdateWithoutProductsInput`](CategoriesStudnieUncheckedUpdateWithoutProductsInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:46947
 
-***
+---
 
 ### upsert?
 

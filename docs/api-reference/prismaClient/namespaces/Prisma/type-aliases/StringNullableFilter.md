@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / StringNullableFilter
 
 # Type Alias: StringNullableFilter\<$PrismaModel\>
 
-> **StringNullableFilter**\<`$PrismaModel`\> = `object`
+> **StringNullableFilter**\<`$PrismaModel`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:44843
 
@@ -20,43 +20,43 @@ Defined in: generated/prisma/index.d.ts:44843
 
 ### contains?
 
-> `optional` **contains?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **contains?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44851
 
-***
+---
 
 ### endsWith?
 
-> `optional` **endsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **endsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44853
 
-***
+---
 
 ### equals?
 
-> `optional` **equals?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\> \| `null`
+> `optional` **equals?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:44844
 
-***
+---
 
 ### gt?
 
-> `optional` **gt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44849
 
-***
+---
 
 ### gte?
 
-> `optional` **gte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44850
 
-***
+---
 
 ### in?
 
@@ -64,31 +64,31 @@ Defined in: generated/prisma/index.d.ts:44850
 
 Defined in: generated/prisma/index.d.ts:44845
 
-***
+---
 
 ### lt?
 
-> `optional` **lt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44847
 
-***
+---
 
 ### lte?
 
-> `optional` **lte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44848
 
-***
+---
 
 ### not?
 
-> `optional` **not?**: [`NestedStringNullableFilter`](NestedStringNullableFilter.md)\<`$PrismaModel`\> \| `string` \| `null`
+> `optional` **not?**: [`NestedStringNullableFilter`](NestedStringNullableFilter.md)\<`$PrismaModel`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:44854
 
-***
+---
 
 ### notIn?
 
@@ -96,10 +96,10 @@ Defined in: generated/prisma/index.d.ts:44854
 
 Defined in: generated/prisma/index.d.ts:44846
 
-***
+---
 
 ### startsWith?
 
-> `optional` **startsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **startsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:44852

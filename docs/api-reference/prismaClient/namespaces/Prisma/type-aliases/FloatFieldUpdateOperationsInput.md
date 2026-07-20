@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / FloatFieldUpdateOperationsInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46822
 
 Defined in: generated/prisma/index.d.ts:46825
 
-***
+---
 
 ### divide?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46825
 
 Defined in: generated/prisma/index.d.ts:46827
 
-***
+---
 
 ### increment?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46827
 
 Defined in: generated/prisma/index.d.ts:46824
 
-***
+---
 
 ### multiply?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46824
 
 Defined in: generated/prisma/index.d.ts:46826
 
-***
+---
 
 ### set?
 

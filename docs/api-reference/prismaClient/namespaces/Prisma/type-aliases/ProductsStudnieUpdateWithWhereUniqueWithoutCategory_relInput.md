@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsStudnieUpdateWithWhereUniqueWithoutCategory\_relInput
 
@@ -14,11 +14,11 @@ Defined in: generated/prisma/index.d.ts:47341
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`ProductsStudnieUpdateWithoutCategory_relInput`](ProductsStudnieUpdateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedUpdateWithoutCategory_relInput`](ProductsStudnieUncheckedUpdateWithoutCategory_relInput.md)\>
+> **data**: [`XOR`](XOR.md)\<[`ProductsStudnieUpdateWithoutCategory_relInput`](ProductsStudnieUpdateWithoutCategory_relInput.md), [`ProductsStudnieUncheckedUpdateWithoutCategory_relInput`](ProductsStudnieUncheckedUpdateWithoutCategory_relInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:47343
 
-***
+---
 
 ### where
 

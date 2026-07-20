@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateOrder\_counters
 
@@ -20,7 +20,7 @@ Model order_counters
 
 Defined in: generated/prisma/index.d.ts:18798
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:18798
 
 Defined in: generated/prisma/index.d.ts:18797
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:18797
 
 Defined in: generated/prisma/index.d.ts:18801
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:18801
 
 Defined in: generated/prisma/index.d.ts:18800
 
-***
+---
 
 ### \_sum
 

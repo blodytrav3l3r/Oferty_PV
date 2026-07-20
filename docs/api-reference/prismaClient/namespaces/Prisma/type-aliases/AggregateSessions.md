@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateSessions
 
@@ -20,7 +20,7 @@ Model sessions
 
 Defined in: generated/prisma/index.d.ts:25909
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:25909
 
 Defined in: generated/prisma/index.d.ts:25908
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:25908
 
 Defined in: generated/prisma/index.d.ts:25912
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:25912
 
 Defined in: generated/prisma/index.d.ts:25911
 
-***
+---
 
 ### \_sum
 

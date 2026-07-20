@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Decimal
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/runtime/library.d.ts:458
 
 Defined in: generated/prisma/runtime/library.d.ts:454
 
-***
+---
 
 ### e
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/runtime/library.d.ts:454
 
 Defined in: generated/prisma/runtime/library.d.ts:455
 
-***
+---
 
 ### s
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/runtime/library.d.ts:455
 
 Defined in: generated/prisma/runtime/library.d.ts:456
 
-***
+---
 
 ### crypto
 
@@ -58,23 +58,23 @@ Defined in: generated/prisma/runtime/library.d.ts:456
 
 Defined in: generated/prisma/runtime/library.d.ts:684
 
-***
+---
 
 ### Decimal?
 
-> `readonly` `static` `optional` **Decimal?**: *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `readonly` `static` `optional` **Decimal?**: _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:676
 
-***
+---
 
 ### default?
 
-> `readonly` `static` `optional` **default?**: *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `readonly` `static` `optional` **default?**: _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:675
 
-***
+---
 
 ### EUCLID
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/runtime/library.d.ts:675
 
 Defined in: generated/prisma/runtime/library.d.ts:696
 
-***
+---
 
 ### maxE
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/runtime/library.d.ts:696
 
 Defined in: generated/prisma/runtime/library.d.ts:683
 
-***
+---
 
 ### minE
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/runtime/library.d.ts:683
 
 Defined in: generated/prisma/runtime/library.d.ts:682
 
-***
+---
 
 ### modulo
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/runtime/library.d.ts:682
 
 Defined in: generated/prisma/runtime/library.d.ts:685
 
-***
+---
 
 ### precision
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/runtime/library.d.ts:685
 
 Defined in: generated/prisma/runtime/library.d.ts:678
 
-***
+---
 
 ### ROUND\_CEIL
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/runtime/library.d.ts:678
 
 Defined in: generated/prisma/runtime/library.d.ts:689
 
-***
+---
 
 ### ROUND\_DOWN
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/runtime/library.d.ts:689
 
 Defined in: generated/prisma/runtime/library.d.ts:688
 
-***
+---
 
 ### ROUND\_FLOOR
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/runtime/library.d.ts:688
 
 Defined in: generated/prisma/runtime/library.d.ts:690
 
-***
+---
 
 ### ROUND\_HALF\_CEIL
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/runtime/library.d.ts:690
 
 Defined in: generated/prisma/runtime/library.d.ts:694
 
-***
+---
 
 ### ROUND\_HALF\_DOWN
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/runtime/library.d.ts:694
 
 Defined in: generated/prisma/runtime/library.d.ts:692
 
-***
+---
 
 ### ROUND\_HALF\_EVEN
 
@@ -162,7 +162,7 @@ Defined in: generated/prisma/runtime/library.d.ts:692
 
 Defined in: generated/prisma/runtime/library.d.ts:693
 
-***
+---
 
 ### ROUND\_HALF\_FLOOR
 
@@ -170,7 +170,7 @@ Defined in: generated/prisma/runtime/library.d.ts:693
 
 Defined in: generated/prisma/runtime/library.d.ts:695
 
-***
+---
 
 ### ROUND\_HALF\_UP
 
@@ -178,7 +178,7 @@ Defined in: generated/prisma/runtime/library.d.ts:695
 
 Defined in: generated/prisma/runtime/library.d.ts:691
 
-***
+---
 
 ### ROUND\_UP
 
@@ -186,7 +186,7 @@ Defined in: generated/prisma/runtime/library.d.ts:691
 
 Defined in: generated/prisma/runtime/library.d.ts:687
 
-***
+---
 
 ### rounding
 
@@ -194,7 +194,7 @@ Defined in: generated/prisma/runtime/library.d.ts:687
 
 Defined in: generated/prisma/runtime/library.d.ts:679
 
-***
+---
 
 ### toExpNeg
 
@@ -202,7 +202,7 @@ Defined in: generated/prisma/runtime/library.d.ts:679
 
 Defined in: generated/prisma/runtime/library.d.ts:680
 
-***
+---
 
 ### toExpPos
 
@@ -222,7 +222,7 @@ Defined in: generated/prisma/runtime/library.d.ts:461
 
 `Decimal`
 
-***
+---
 
 ### absoluteValue()
 
@@ -234,7 +234,7 @@ Defined in: generated/prisma/runtime/library.d.ts:460
 
 `Decimal`
 
-***
+---
 
 ### acos()
 
@@ -246,7 +246,7 @@ Defined in: generated/prisma/runtime/library.d.ts:507
 
 `Decimal`
 
-***
+---
 
 ### acosh()
 
@@ -258,7 +258,7 @@ Defined in: generated/prisma/runtime/library.d.ts:510
 
 `Decimal`
 
-***
+---
 
 ### add()
 
@@ -276,7 +276,7 @@ Defined in: generated/prisma/runtime/library.d.ts:564
 
 `Decimal`
 
-***
+---
 
 ### asin()
 
@@ -288,7 +288,7 @@ Defined in: generated/prisma/runtime/library.d.ts:519
 
 `Decimal`
 
-***
+---
 
 ### asinh()
 
@@ -300,7 +300,7 @@ Defined in: generated/prisma/runtime/library.d.ts:513
 
 `Decimal`
 
-***
+---
 
 ### atan()
 
@@ -312,7 +312,7 @@ Defined in: generated/prisma/runtime/library.d.ts:522
 
 `Decimal`
 
-***
+---
 
 ### atanh()
 
@@ -324,7 +324,7 @@ Defined in: generated/prisma/runtime/library.d.ts:516
 
 `Decimal`
 
-***
+---
 
 ### cbrt()
 
@@ -336,7 +336,7 @@ Defined in: generated/prisma/runtime/library.d.ts:475
 
 `Decimal`
 
-***
+---
 
 ### ceil()
 
@@ -348,7 +348,7 @@ Defined in: generated/prisma/runtime/library.d.ts:463
 
 `Decimal`
 
-***
+---
 
 ### clamp()
 
@@ -370,7 +370,7 @@ Defined in: generated/prisma/runtime/library.d.ts:466
 
 `Decimal`
 
-***
+---
 
 ### clampedTo()
 
@@ -392,7 +392,7 @@ Defined in: generated/prisma/runtime/library.d.ts:465
 
 `Decimal`
 
-***
+---
 
 ### cmp()
 
@@ -410,7 +410,7 @@ Defined in: generated/prisma/runtime/library.d.ts:469
 
 `number`
 
-***
+---
 
 ### comparedTo()
 
@@ -428,7 +428,7 @@ Defined in: generated/prisma/runtime/library.d.ts:468
 
 `number`
 
-***
+---
 
 ### cos()
 
@@ -440,7 +440,7 @@ Defined in: generated/prisma/runtime/library.d.ts:472
 
 `Decimal`
 
-***
+---
 
 ### cosh()
 
@@ -452,7 +452,7 @@ Defined in: generated/prisma/runtime/library.d.ts:498
 
 `Decimal`
 
-***
+---
 
 ### cosine()
 
@@ -464,7 +464,7 @@ Defined in: generated/prisma/runtime/library.d.ts:471
 
 `Decimal`
 
-***
+---
 
 ### cubeRoot()
 
@@ -476,7 +476,7 @@ Defined in: generated/prisma/runtime/library.d.ts:474
 
 `Decimal`
 
-***
+---
 
 ### decimalPlaces()
 
@@ -488,7 +488,7 @@ Defined in: generated/prisma/runtime/library.d.ts:477
 
 `number`
 
-***
+---
 
 ### div()
 
@@ -506,7 +506,7 @@ Defined in: generated/prisma/runtime/library.d.ts:481
 
 `Decimal`
 
-***
+---
 
 ### dividedBy()
 
@@ -524,7 +524,7 @@ Defined in: generated/prisma/runtime/library.d.ts:480
 
 `Decimal`
 
-***
+---
 
 ### dividedToIntegerBy()
 
@@ -542,7 +542,7 @@ Defined in: generated/prisma/runtime/library.d.ts:483
 
 `Decimal`
 
-***
+---
 
 ### divToInt()
 
@@ -560,7 +560,7 @@ Defined in: generated/prisma/runtime/library.d.ts:484
 
 `Decimal`
 
-***
+---
 
 ### dp()
 
@@ -572,7 +572,7 @@ Defined in: generated/prisma/runtime/library.d.ts:478
 
 `number`
 
-***
+---
 
 ### eq()
 
@@ -590,7 +590,7 @@ Defined in: generated/prisma/runtime/library.d.ts:487
 
 `boolean`
 
-***
+---
 
 ### equals()
 
@@ -608,7 +608,7 @@ Defined in: generated/prisma/runtime/library.d.ts:486
 
 `boolean`
 
-***
+---
 
 ### exp()
 
@@ -620,7 +620,7 @@ Defined in: generated/prisma/runtime/library.d.ts:555
 
 `Decimal`
 
-***
+---
 
 ### floor()
 
@@ -632,7 +632,7 @@ Defined in: generated/prisma/runtime/library.d.ts:489
 
 `Decimal`
 
-***
+---
 
 ### greaterThan()
 
@@ -650,7 +650,7 @@ Defined in: generated/prisma/runtime/library.d.ts:491
 
 `boolean`
 
-***
+---
 
 ### greaterThanOrEqualTo()
 
@@ -668,7 +668,7 @@ Defined in: generated/prisma/runtime/library.d.ts:494
 
 `boolean`
 
-***
+---
 
 ### gt()
 
@@ -686,7 +686,7 @@ Defined in: generated/prisma/runtime/library.d.ts:492
 
 `boolean`
 
-***
+---
 
 ### gte()
 
@@ -704,7 +704,7 @@ Defined in: generated/prisma/runtime/library.d.ts:495
 
 `boolean`
 
-***
+---
 
 ### hyperbolicCosine()
 
@@ -716,7 +716,7 @@ Defined in: generated/prisma/runtime/library.d.ts:497
 
 `Decimal`
 
-***
+---
 
 ### hyperbolicSine()
 
@@ -728,7 +728,7 @@ Defined in: generated/prisma/runtime/library.d.ts:500
 
 `Decimal`
 
-***
+---
 
 ### hyperbolicTangent()
 
@@ -740,7 +740,7 @@ Defined in: generated/prisma/runtime/library.d.ts:503
 
 `Decimal`
 
-***
+---
 
 ### inverseCosine()
 
@@ -752,7 +752,7 @@ Defined in: generated/prisma/runtime/library.d.ts:506
 
 `Decimal`
 
-***
+---
 
 ### inverseHyperbolicCosine()
 
@@ -764,7 +764,7 @@ Defined in: generated/prisma/runtime/library.d.ts:509
 
 `Decimal`
 
-***
+---
 
 ### inverseHyperbolicSine()
 
@@ -776,7 +776,7 @@ Defined in: generated/prisma/runtime/library.d.ts:512
 
 `Decimal`
 
-***
+---
 
 ### inverseHyperbolicTangent()
 
@@ -788,7 +788,7 @@ Defined in: generated/prisma/runtime/library.d.ts:515
 
 `Decimal`
 
-***
+---
 
 ### inverseSine()
 
@@ -800,7 +800,7 @@ Defined in: generated/prisma/runtime/library.d.ts:518
 
 `Decimal`
 
-***
+---
 
 ### inverseTangent()
 
@@ -812,7 +812,7 @@ Defined in: generated/prisma/runtime/library.d.ts:521
 
 `Decimal`
 
-***
+---
 
 ### isFinite()
 
@@ -824,7 +824,7 @@ Defined in: generated/prisma/runtime/library.d.ts:524
 
 `boolean`
 
-***
+---
 
 ### isInt()
 
@@ -836,7 +836,7 @@ Defined in: generated/prisma/runtime/library.d.ts:527
 
 `boolean`
 
-***
+---
 
 ### isInteger()
 
@@ -848,7 +848,7 @@ Defined in: generated/prisma/runtime/library.d.ts:526
 
 `boolean`
 
-***
+---
 
 ### isNaN()
 
@@ -860,7 +860,7 @@ Defined in: generated/prisma/runtime/library.d.ts:529
 
 `boolean`
 
-***
+---
 
 ### isNeg()
 
@@ -872,7 +872,7 @@ Defined in: generated/prisma/runtime/library.d.ts:532
 
 `boolean`
 
-***
+---
 
 ### isNegative()
 
@@ -884,7 +884,7 @@ Defined in: generated/prisma/runtime/library.d.ts:531
 
 `boolean`
 
-***
+---
 
 ### isPos()
 
@@ -896,7 +896,7 @@ Defined in: generated/prisma/runtime/library.d.ts:535
 
 `boolean`
 
-***
+---
 
 ### isPositive()
 
@@ -908,7 +908,7 @@ Defined in: generated/prisma/runtime/library.d.ts:534
 
 `boolean`
 
-***
+---
 
 ### isZero()
 
@@ -920,7 +920,7 @@ Defined in: generated/prisma/runtime/library.d.ts:537
 
 `boolean`
 
-***
+---
 
 ### lessThan()
 
@@ -938,7 +938,7 @@ Defined in: generated/prisma/runtime/library.d.ts:539
 
 `boolean`
 
-***
+---
 
 ### lessThanOrEqualTo()
 
@@ -956,7 +956,7 @@ Defined in: generated/prisma/runtime/library.d.ts:542
 
 `boolean`
 
-***
+---
 
 ### ln()
 
@@ -968,7 +968,7 @@ Defined in: generated/prisma/runtime/library.d.ts:558
 
 `Decimal`
 
-***
+---
 
 ### log()
 
@@ -986,7 +986,7 @@ Defined in: generated/prisma/runtime/library.d.ts:546
 
 `Decimal`
 
-***
+---
 
 ### logarithm()
 
@@ -1004,7 +1004,7 @@ Defined in: generated/prisma/runtime/library.d.ts:545
 
 `Decimal`
 
-***
+---
 
 ### lt()
 
@@ -1022,7 +1022,7 @@ Defined in: generated/prisma/runtime/library.d.ts:540
 
 `boolean`
 
-***
+---
 
 ### lte()
 
@@ -1040,7 +1040,7 @@ Defined in: generated/prisma/runtime/library.d.ts:543
 
 `boolean`
 
-***
+---
 
 ### minus()
 
@@ -1058,7 +1058,7 @@ Defined in: generated/prisma/runtime/library.d.ts:548
 
 `Decimal`
 
-***
+---
 
 ### mod()
 
@@ -1076,7 +1076,7 @@ Defined in: generated/prisma/runtime/library.d.ts:552
 
 `Decimal`
 
-***
+---
 
 ### modulo()
 
@@ -1094,7 +1094,7 @@ Defined in: generated/prisma/runtime/library.d.ts:551
 
 `Decimal`
 
-***
+---
 
 ### mul()
 
@@ -1112,7 +1112,7 @@ Defined in: generated/prisma/runtime/library.d.ts:581
 
 `Decimal`
 
-***
+---
 
 ### naturalExponential()
 
@@ -1124,7 +1124,7 @@ Defined in: generated/prisma/runtime/library.d.ts:554
 
 `Decimal`
 
-***
+---
 
 ### naturalLogarithm()
 
@@ -1136,7 +1136,7 @@ Defined in: generated/prisma/runtime/library.d.ts:557
 
 `Decimal`
 
-***
+---
 
 ### neg()
 
@@ -1148,7 +1148,7 @@ Defined in: generated/prisma/runtime/library.d.ts:561
 
 `Decimal`
 
-***
+---
 
 ### negated()
 
@@ -1160,7 +1160,7 @@ Defined in: generated/prisma/runtime/library.d.ts:560
 
 `Decimal`
 
-***
+---
 
 ### plus()
 
@@ -1178,7 +1178,7 @@ Defined in: generated/prisma/runtime/library.d.ts:563
 
 `Decimal`
 
-***
+---
 
 ### pow()
 
@@ -1196,7 +1196,7 @@ Defined in: generated/prisma/runtime/library.d.ts:614
 
 `Decimal`
 
-***
+---
 
 ### precision()
 
@@ -1214,7 +1214,7 @@ Defined in: generated/prisma/runtime/library.d.ts:566
 
 `number`
 
-***
+---
 
 ### round()
 
@@ -1226,7 +1226,7 @@ Defined in: generated/prisma/runtime/library.d.ts:569
 
 `Decimal`
 
-***
+---
 
 ### sd()
 
@@ -1244,7 +1244,7 @@ Defined in: generated/prisma/runtime/library.d.ts:567
 
 `number`
 
-***
+---
 
 ### sin()
 
@@ -1256,7 +1256,7 @@ Defined in: generated/prisma/runtime/library.d.ts:572
 
 `Decimal`
 
-***
+---
 
 ### sine()
 
@@ -1268,7 +1268,7 @@ Defined in: generated/prisma/runtime/library.d.ts:571
 
 `Decimal`
 
-***
+---
 
 ### sinh()
 
@@ -1280,7 +1280,7 @@ Defined in: generated/prisma/runtime/library.d.ts:501
 
 `Decimal`
 
-***
+---
 
 ### sqrt()
 
@@ -1292,7 +1292,7 @@ Defined in: generated/prisma/runtime/library.d.ts:575
 
 `Decimal`
 
-***
+---
 
 ### squareRoot()
 
@@ -1304,7 +1304,7 @@ Defined in: generated/prisma/runtime/library.d.ts:574
 
 `Decimal`
 
-***
+---
 
 ### sub()
 
@@ -1322,7 +1322,7 @@ Defined in: generated/prisma/runtime/library.d.ts:549
 
 `Decimal`
 
-***
+---
 
 ### tan()
 
@@ -1334,7 +1334,7 @@ Defined in: generated/prisma/runtime/library.d.ts:578
 
 `Decimal`
 
-***
+---
 
 ### tangent()
 
@@ -1346,7 +1346,7 @@ Defined in: generated/prisma/runtime/library.d.ts:577
 
 `Decimal`
 
-***
+---
 
 ### tanh()
 
@@ -1358,7 +1358,7 @@ Defined in: generated/prisma/runtime/library.d.ts:504
 
 `Decimal`
 
-***
+---
 
 ### times()
 
@@ -1376,7 +1376,7 @@ Defined in: generated/prisma/runtime/library.d.ts:580
 
 `Decimal`
 
-***
+---
 
 ### toBinary()
 
@@ -1416,7 +1416,7 @@ Defined in: generated/prisma/runtime/library.d.ts:584
 
 `string`
 
-***
+---
 
 ### toDecimalPlaces()
 
@@ -1456,7 +1456,7 @@ Defined in: generated/prisma/runtime/library.d.ts:587
 
 `Decimal`
 
-***
+---
 
 ### toDP()
 
@@ -1496,7 +1496,7 @@ Defined in: generated/prisma/runtime/library.d.ts:589
 
 `Decimal`
 
-***
+---
 
 ### toExponential()
 
@@ -1536,7 +1536,7 @@ Defined in: generated/prisma/runtime/library.d.ts:592
 
 `string`
 
-***
+---
 
 ### toFixed()
 
@@ -1576,7 +1576,7 @@ Defined in: generated/prisma/runtime/library.d.ts:595
 
 `string`
 
-***
+---
 
 ### toFraction()
 
@@ -1594,7 +1594,7 @@ Defined in: generated/prisma/runtime/library.d.ts:597
 
 `Decimal`[]
 
-***
+---
 
 ### toHex()
 
@@ -1634,7 +1634,7 @@ Defined in: generated/prisma/runtime/library.d.ts:602
 
 `string`
 
-***
+---
 
 ### toHexadecimal()
 
@@ -1674,7 +1674,7 @@ Defined in: generated/prisma/runtime/library.d.ts:600
 
 `string`
 
-***
+---
 
 ### toJSON()
 
@@ -1686,7 +1686,7 @@ Defined in: generated/prisma/runtime/library.d.ts:604
 
 `string`
 
-***
+---
 
 ### toNearest()
 
@@ -1708,7 +1708,7 @@ Defined in: generated/prisma/runtime/library.d.ts:606
 
 `Decimal`
 
-***
+---
 
 ### toNumber()
 
@@ -1720,7 +1720,7 @@ Defined in: generated/prisma/runtime/library.d.ts:608
 
 `number`
 
-***
+---
 
 ### toOctal()
 
@@ -1760,7 +1760,7 @@ Defined in: generated/prisma/runtime/library.d.ts:611
 
 `string`
 
-***
+---
 
 ### toPower()
 
@@ -1778,7 +1778,7 @@ Defined in: generated/prisma/runtime/library.d.ts:613
 
 `Decimal`
 
-***
+---
 
 ### toPrecision()
 
@@ -1818,7 +1818,7 @@ Defined in: generated/prisma/runtime/library.d.ts:617
 
 `string`
 
-***
+---
 
 ### toSD()
 
@@ -1858,7 +1858,7 @@ Defined in: generated/prisma/runtime/library.d.ts:622
 
 `Decimal`
 
-***
+---
 
 ### toSignificantDigits()
 
@@ -1898,7 +1898,7 @@ Defined in: generated/prisma/runtime/library.d.ts:620
 
 `Decimal`
 
-***
+---
 
 ### toString()
 
@@ -1910,7 +1910,7 @@ Defined in: generated/prisma/runtime/library.d.ts:624
 
 `string`
 
-***
+---
 
 ### trunc()
 
@@ -1922,7 +1922,7 @@ Defined in: generated/prisma/runtime/library.d.ts:627
 
 `Decimal`
 
-***
+---
 
 ### truncated()
 
@@ -1934,7 +1934,7 @@ Defined in: generated/prisma/runtime/library.d.ts:626
 
 `Decimal`
 
-***
+---
 
 ### valueOf()
 
@@ -1946,7 +1946,7 @@ Defined in: generated/prisma/runtime/library.d.ts:629
 
 `string`
 
-***
+---
 
 ### abs()
 
@@ -1964,7 +1964,7 @@ Defined in: generated/prisma/runtime/library.d.ts:631
 
 `Decimal`
 
-***
+---
 
 ### acos()
 
@@ -1982,7 +1982,7 @@ Defined in: generated/prisma/runtime/library.d.ts:632
 
 `Decimal`
 
-***
+---
 
 ### acosh()
 
@@ -2000,7 +2000,7 @@ Defined in: generated/prisma/runtime/library.d.ts:633
 
 `Decimal`
 
-***
+---
 
 ### add()
 
@@ -2022,7 +2022,7 @@ Defined in: generated/prisma/runtime/library.d.ts:634
 
 `Decimal`
 
-***
+---
 
 ### asin()
 
@@ -2040,7 +2040,7 @@ Defined in: generated/prisma/runtime/library.d.ts:635
 
 `Decimal`
 
-***
+---
 
 ### asinh()
 
@@ -2058,7 +2058,7 @@ Defined in: generated/prisma/runtime/library.d.ts:636
 
 `Decimal`
 
-***
+---
 
 ### atan()
 
@@ -2076,7 +2076,7 @@ Defined in: generated/prisma/runtime/library.d.ts:637
 
 `Decimal`
 
-***
+---
 
 ### atan2()
 
@@ -2098,7 +2098,7 @@ Defined in: generated/prisma/runtime/library.d.ts:639
 
 `Decimal`
 
-***
+---
 
 ### atanh()
 
@@ -2116,7 +2116,7 @@ Defined in: generated/prisma/runtime/library.d.ts:638
 
 `Decimal`
 
-***
+---
 
 ### cbrt()
 
@@ -2134,7 +2134,7 @@ Defined in: generated/prisma/runtime/library.d.ts:640
 
 `Decimal`
 
-***
+---
 
 ### ceil()
 
@@ -2152,7 +2152,7 @@ Defined in: generated/prisma/runtime/library.d.ts:641
 
 `Decimal`
 
-***
+---
 
 ### clamp()
 
@@ -2178,11 +2178,11 @@ Defined in: generated/prisma/runtime/library.d.ts:642
 
 `Decimal`
 
-***
+---
 
 ### clone()
 
-> `static` **clone**(`object?`): *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `static` **clone**(`object?`): _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:643
 
@@ -2194,13 +2194,13 @@ Defined in: generated/prisma/runtime/library.d.ts:643
 
 #### Returns
 
-*typeof* [`Decimal`](../namespaces/Decimal/README.md)
+_typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
-***
+---
 
 ### config()
 
-> `static` **config**(`object`): *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `static` **config**(`object`): _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:644
 
@@ -2212,9 +2212,9 @@ Defined in: generated/prisma/runtime/library.d.ts:644
 
 #### Returns
 
-*typeof* [`Decimal`](../namespaces/Decimal/README.md)
+_typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
-***
+---
 
 ### cos()
 
@@ -2232,7 +2232,7 @@ Defined in: generated/prisma/runtime/library.d.ts:645
 
 `Decimal`
 
-***
+---
 
 ### cosh()
 
@@ -2250,7 +2250,7 @@ Defined in: generated/prisma/runtime/library.d.ts:646
 
 `Decimal`
 
-***
+---
 
 ### div()
 
@@ -2272,7 +2272,7 @@ Defined in: generated/prisma/runtime/library.d.ts:647
 
 `Decimal`
 
-***
+---
 
 ### exp()
 
@@ -2290,7 +2290,7 @@ Defined in: generated/prisma/runtime/library.d.ts:648
 
 `Decimal`
 
-***
+---
 
 ### floor()
 
@@ -2308,7 +2308,7 @@ Defined in: generated/prisma/runtime/library.d.ts:649
 
 `Decimal`
 
-***
+---
 
 ### hypot()
 
@@ -2326,7 +2326,7 @@ Defined in: generated/prisma/runtime/library.d.ts:650
 
 `Decimal`
 
-***
+---
 
 ### isDecimal()
 
@@ -2344,7 +2344,7 @@ Defined in: generated/prisma/runtime/library.d.ts:651
 
 `object is Decimal`
 
-***
+---
 
 ### ln()
 
@@ -2362,7 +2362,7 @@ Defined in: generated/prisma/runtime/library.d.ts:652
 
 `Decimal`
 
-***
+---
 
 ### log()
 
@@ -2384,7 +2384,7 @@ Defined in: generated/prisma/runtime/library.d.ts:653
 
 `Decimal`
 
-***
+---
 
 ### log10()
 
@@ -2402,7 +2402,7 @@ Defined in: generated/prisma/runtime/library.d.ts:655
 
 `Decimal`
 
-***
+---
 
 ### log2()
 
@@ -2420,7 +2420,7 @@ Defined in: generated/prisma/runtime/library.d.ts:654
 
 `Decimal`
 
-***
+---
 
 ### max()
 
@@ -2438,7 +2438,7 @@ Defined in: generated/prisma/runtime/library.d.ts:656
 
 `Decimal`
 
-***
+---
 
 ### min()
 
@@ -2456,7 +2456,7 @@ Defined in: generated/prisma/runtime/library.d.ts:657
 
 `Decimal`
 
-***
+---
 
 ### mod()
 
@@ -2478,7 +2478,7 @@ Defined in: generated/prisma/runtime/library.d.ts:658
 
 `Decimal`
 
-***
+---
 
 ### mul()
 
@@ -2500,19 +2500,19 @@ Defined in: generated/prisma/runtime/library.d.ts:659
 
 `Decimal`
 
-***
+---
 
 ### noConflict()
 
-> `static` **noConflict**(): *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `static` **noConflict**(): _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:660
 
 #### Returns
 
-*typeof* [`Decimal`](../namespaces/Decimal/README.md)
+_typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
-***
+---
 
 ### pow()
 
@@ -2534,7 +2534,7 @@ Defined in: generated/prisma/runtime/library.d.ts:661
 
 `Decimal`
 
-***
+---
 
 ### random()
 
@@ -2552,7 +2552,7 @@ Defined in: generated/prisma/runtime/library.d.ts:662
 
 `Decimal`
 
-***
+---
 
 ### round()
 
@@ -2570,11 +2570,11 @@ Defined in: generated/prisma/runtime/library.d.ts:663
 
 `Decimal`
 
-***
+---
 
 ### set()
 
-> `static` **set**(`object`): *typeof* [`Decimal`](../namespaces/Decimal/README.md)
+> `static` **set**(`object`): _typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
 Defined in: generated/prisma/runtime/library.d.ts:664
 
@@ -2586,9 +2586,9 @@ Defined in: generated/prisma/runtime/library.d.ts:664
 
 #### Returns
 
-*typeof* [`Decimal`](../namespaces/Decimal/README.md)
+_typeof_ [`Decimal`](../namespaces/Decimal/README.md)
 
-***
+---
 
 ### sign()
 
@@ -2606,7 +2606,7 @@ Defined in: generated/prisma/runtime/library.d.ts:665
 
 `number`
 
-***
+---
 
 ### sin()
 
@@ -2624,7 +2624,7 @@ Defined in: generated/prisma/runtime/library.d.ts:666
 
 `Decimal`
 
-***
+---
 
 ### sinh()
 
@@ -2642,7 +2642,7 @@ Defined in: generated/prisma/runtime/library.d.ts:667
 
 `Decimal`
 
-***
+---
 
 ### sqrt()
 
@@ -2660,7 +2660,7 @@ Defined in: generated/prisma/runtime/library.d.ts:668
 
 `Decimal`
 
-***
+---
 
 ### sub()
 
@@ -2682,7 +2682,7 @@ Defined in: generated/prisma/runtime/library.d.ts:669
 
 `Decimal`
 
-***
+---
 
 ### sum()
 
@@ -2700,7 +2700,7 @@ Defined in: generated/prisma/runtime/library.d.ts:670
 
 `Decimal`
 
-***
+---
 
 ### tan()
 
@@ -2718,7 +2718,7 @@ Defined in: generated/prisma/runtime/library.d.ts:671
 
 `Decimal`
 
-***
+---
 
 ### tanh()
 
@@ -2736,7 +2736,7 @@ Defined in: generated/prisma/runtime/library.d.ts:672
 
 `Decimal`
 
-***
+---
 
 ### trunc()
 

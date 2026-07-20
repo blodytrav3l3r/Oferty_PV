@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_transition\_snapshotsAggregateArgs
 
 # Type Alias: Ai\_transition\_snapshotsAggregateArgs\<ExtArgs\>
 
-> **Ai\_transition\_snapshotsAggregateArgs**\<`ExtArgs`\> = `object`
+> **Ai\_transition\_snapshotsAggregateArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:11279
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:11279
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:11319
 
 Select which fields to average
 
-***
+---
 
 ### \_count?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:11313
 
 Count returned ai_transition_snapshots
 
-***
+---
 
 ### \_max?
 
@@ -52,7 +52,7 @@ Defined in: generated/prisma/index.d.ts:11337
 
 Select which fields to find the maximum value
 
-***
+---
 
 ### \_min?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:11331
 
 Select which fields to find the minimum value
 
-***
+---
 
 ### \_sum?
 
@@ -76,7 +76,7 @@ Defined in: generated/prisma/index.d.ts:11325
 
 Select which fields to sum
 
-***
+---
 
 ### cursor?
 
@@ -88,7 +88,7 @@ Defined in: generated/prisma/index.d.ts:11295
 
 Sets the start position
 
-***
+---
 
 ### orderBy?
 
@@ -100,7 +100,7 @@ Defined in: generated/prisma/index.d.ts:11289
 
 Determine the order of ai_transition_snapshots to fetch.
 
-***
+---
 
 ### skip?
 
@@ -112,7 +112,7 @@ Defined in: generated/prisma/index.d.ts:11307
 
 Skip the first `n` ai_transition_snapshots.
 
-***
+---
 
 ### take?
 
@@ -124,7 +124,7 @@ Defined in: generated/prisma/index.d.ts:11301
 
 Take `±n` ai_transition_snapshots from the position of the cursor.
 
-***
+---
 
 ### where?
 

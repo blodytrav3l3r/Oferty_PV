@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / production\_orders\_relDeleteArgs
 
 # Type Alias: production\_orders\_relDeleteArgs\<ExtArgs\>
 
-> **production\_orders\_relDeleteArgs**\<`ExtArgs`\> = `object`
+> **production\_orders\_relDeleteArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:24854
 
@@ -16,29 +16,29 @@ production_orders_rel delete
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### omit?
 
-> `optional` **omit?**: [`production_orders_relOmit`](production_orders_relOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`production_orders_relOmit`](production_orders_relOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:24862
 
 Omit specific fields from the production_orders_rel
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`production_orders_relSelect`](production_orders_relSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`production_orders_relSelect`](production_orders_relSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:24858
 
 Select specific fields to fetch from the production_orders_rel
 
-***
+---
 
 ### where
 

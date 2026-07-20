@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersCountArgs
 
 # Type Alias: order\_countersCountArgs\<ExtArgs\>
 
-> **order\_countersCountArgs**\<`ExtArgs`\> = `Omit`\<[`order_countersFindManyArgs`](order_countersFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`\> & `object`
+> **order\_countersCountArgs**\<`ExtArgs`> \> = `Omit`\<[`order_countersFindManyArgs`](order_countersFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`> \> & `object`
 
 Defined in: generated/prisma/index.d.ts:19013
 
@@ -20,4 +20,4 @@ Defined in: generated/prisma/index.d.ts:19013
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

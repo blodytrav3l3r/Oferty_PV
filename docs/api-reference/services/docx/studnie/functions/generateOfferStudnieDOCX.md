@@ -1,14 +1,14 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [services/docx/studnie](../README.md) / generateOfferStudnieDOCX
 
 # Function: generateOfferStudnieDOCX()
 
-> **generateOfferStudnieDOCX**(`offerId`): `Promise`\<`Buffer`\<`ArrayBufferLike`\>\>
+> **generateOfferStudnieDOCX**(`offerId`): `Promise`\<`Buffer`\<`ArrayBufferLike`>>\>\>
 
-Defined in: [src/services/docx/studnie/index.ts:37](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/docx/studnie/index.ts#L37)
+Defined in: [src/services/docx/studnie/index.ts:37](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/docx/studnie/index.ts#L37)
 
 Generuje dokument DOCX dla oferty studni.
 
@@ -38,7 +38,10 @@ Error gdy oferta nie zostanie znaleziona
 
 ```ts
 const docxBuffer = await generateOfferStudnieDOCX('studnie-456');
-res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+res.setHeader(
+    'Content-Type',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+);
 res.setHeader('Content-Disposition', 'attachment; filename="oferta.docx"');
 res.send(docxBuffer);
 ```

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_config\_historyFindFirstOrThrowArgs
 
 # Type Alias: ai\_config\_historyFindFirstOrThrowArgs\<ExtArgs\>
 
-> **ai\_config\_historyFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **ai\_config\_historyFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:7445
 
@@ -16,7 +16,7 @@ ai_config_history findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:7469
 
 Sets the position for searching for ai_config_histories.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:7487
 
 Filter by unique combinations of ai_config_histories.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`ai_config_historyOmit`](ai_config_historyOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`ai_config_historyOmit`](ai_config_historyOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:7453
 
 Omit specific fields from the ai_config_history
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:7463
 
 Determine the order of ai_config_histories to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`ai_config_historySelect`](ai_config_historySelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`ai_config_historySelect`](ai_config_historySelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:7449
 
 Select specific fields to fetch from the ai_config_history
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:7481
 
 Skip the first `n` ai_config_histories.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:7475
 
 Take `±n` ai_config_histories from the position of the cursor.
 
-***
+---
 
 ### where?
 

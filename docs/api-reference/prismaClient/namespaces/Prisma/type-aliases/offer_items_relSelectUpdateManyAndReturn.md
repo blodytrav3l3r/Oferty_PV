@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offer\_items\_relSelectUpdateManyAndReturn
 
 # Type Alias: offer\_items\_relSelectUpdateManyAndReturn\<ExtArgs\>
 
-> **offer\_items\_relSelectUpdateManyAndReturn**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `discount?`: `boolean`; `id?`: `boolean`; `offerId?`: `boolean`; `price?`: `boolean`; `productId?`: `boolean`; `quantity?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"offer_items_rel"`\]\>
+> **offer\_items\_relSelectUpdateManyAndReturn**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `discount?`: `boolean`; `id?`: `boolean`; `offerId?`: `boolean`; `price?`: `boolean`; `productId?`: `boolean`; `quantity?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"offer_items_rel"`\]\>
 
 Defined in: generated/prisma/index.d.ts:14646
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:14646
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

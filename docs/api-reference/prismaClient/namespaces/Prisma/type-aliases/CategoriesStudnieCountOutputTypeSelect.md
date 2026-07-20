@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieCountOutputTypeSelect
 
 # Type Alias: CategoriesStudnieCountOutputTypeSelect\<ExtArgs\>
 
-> **CategoriesStudnieCountOutputTypeSelect**\<`ExtArgs`\> = `object`
+> **CategoriesStudnieCountOutputTypeSelect**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:3628
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:3628
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_versionsWhereInput
 
@@ -18,55 +18,55 @@ Defined in: generated/prisma/index.d.ts:39557
 
 Defined in: generated/prisma/index.d.ts:39558
 
-***
+---
 
 ### appliedFrom?
 
-> `optional` **appliedFrom?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`\> \| `string` \| `null`
+> `optional` **appliedFrom?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39567
 
-***
+---
 
 ### componentType?
 
-> `optional` **componentType?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`\> \| `string`
+> `optional` **componentType?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39562
 
-***
+---
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`\> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39568
 
-***
+---
 
 ### description?
 
-> `optional` **description?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`\> \| `string` \| `null`
+> `optional` **description?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39564
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`\> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39561
 
-***
+---
 
 ### isActive?
 
-> `optional` **isActive?**: [`BoolFilter`](BoolFilter.md)\<`"ai_telemetry_versions"`\> \| `boolean`
+> `optional` **isActive?**: [`BoolFilter`](BoolFilter.md)\<`"ai_telemetry_versions"`> \> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:39566
 
-***
+---
 
 ### NOT?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:39566
 
 Defined in: generated/prisma/index.d.ts:39560
 
-***
+---
 
 ### OR?
 
@@ -82,18 +82,18 @@ Defined in: generated/prisma/index.d.ts:39560
 
 Defined in: generated/prisma/index.d.ts:39559
 
-***
+---
 
 ### schemaVersion?
 
-> `optional` **schemaVersion?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`\> \| `string` \| `null`
+> `optional` **schemaVersion?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_telemetry_versions"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39565
 
-***
+---
 
 ### version?
 
-> `optional` **version?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`\> \| `string`
+> `optional` **version?**: [`StringFilter`](StringFilter.md)\<`"ai_telemetry_versions"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39563

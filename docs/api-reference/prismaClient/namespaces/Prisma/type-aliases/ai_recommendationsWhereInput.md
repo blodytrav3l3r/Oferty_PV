@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_recommendationsWhereInput
 
@@ -18,55 +18,55 @@ Defined in: generated/prisma/index.d.ts:39743
 
 Defined in: generated/prisma/index.d.ts:39744
 
-***
+---
 
 ### confidence?
 
-> `optional` **confidence?**: [`FloatFilter`](FloatFilter.md)\<`"ai_recommendations"`\> \| `number`
+> `optional` **confidence?**: [`FloatFilter`](FloatFilter.md)\<`"ai_recommendations"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39753
 
-***
+---
 
 ### decidedAt?
 
-> `optional` **decidedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **decidedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39759
 
-***
+---
 
 ### decidedBy?
 
-> `optional` **decidedBy?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **decidedBy?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39760
 
-***
+---
 
 ### dn?
 
-> `optional` **dn?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **dn?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39750
 
-***
+---
 
 ### generatedAt?
 
-> `optional` **generatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **generatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39758
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`\> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39747
 
-***
+---
 
 ### NOT?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:39747
 
 Defined in: generated/prisma/index.d.ts:39746
 
-***
+---
 
 ### OR?
 
@@ -82,66 +82,66 @@ Defined in: generated/prisma/index.d.ts:39746
 
 Defined in: generated/prisma/index.d.ts:39745
 
-***
+---
 
 ### patternKey?
 
-> `optional` **patternKey?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`\> \| `string`
+> `optional` **patternKey?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39749
 
-***
+---
 
 ### patternType?
 
-> `optional` **patternType?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`\> \| `string`
+> `optional` **patternType?**: [`StringFilter`](StringFilter.md)\<`"ai_recommendations"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39748
 
-***
+---
 
 ### payload?
 
-> `optional` **payload?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **payload?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39754
 
-***
+---
 
 ### score?
 
-> `optional` **score?**: [`FloatFilter`](FloatFilter.md)\<`"ai_recommendations"`\> \| `number`
+> `optional` **score?**: [`FloatFilter`](FloatFilter.md)\<`"ai_recommendations"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39752
 
-***
+---
 
 ### wasAccepted?
 
-> `optional` **wasAccepted?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`\> \| `boolean`
+> `optional` **wasAccepted?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`> \> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:39756
 
-***
+---
 
 ### wasApplied?
 
-> `optional` **wasApplied?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`\> \| `boolean`
+> `optional` **wasApplied?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`> \> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:39755
 
-***
+---
 
 ### wasRejected?
 
-> `optional` **wasRejected?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`\> \| `boolean`
+> `optional` **wasRejected?**: [`BoolFilter`](BoolFilter.md)\<`"ai_recommendations"`> \> \| `boolean`
 
 Defined in: generated/prisma/index.d.ts:39757
 
-***
+---
 
 ### wellId?
 
-> `optional` **wellId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`\> \| `string` \| `null`
+> `optional` **wellId?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_recommendations"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39751

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Order\_counters\_ruryMaxAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:19825
 
 Defined in: generated/prisma/index.d.ts:19828
 
-***
+---
 
 ### userId
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:19828
 
 Defined in: generated/prisma/index.d.ts:19826
 
-***
+---
 
 ### year
 

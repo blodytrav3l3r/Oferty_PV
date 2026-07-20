@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersFindManyArgs
 
 # Type Alias: usersFindManyArgs\<ExtArgs\>
 
-> **usersFindManyArgs**\<`ExtArgs`\> = `object`
+> **usersFindManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:38212
 
@@ -16,7 +16,7 @@ users findMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:38236
 
 Sets the position for listing users.
 
-***
+---
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing users.
 
 Defined in: generated/prisma/index.d.ts:38249
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`usersOmit`](usersOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`usersOmit`](usersOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:38220
 
 Omit specific fields from the users
 
-***
+---
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:38230
 
 Determine the order of users to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`usersSelect`](usersSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`usersSelect`](usersSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:38216
 
 Select specific fields to fetch from the users
 
-***
+---
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:38248
 
 Skip the first `n` users.
 
-***
+---
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:38242
 
 Take `±n` users from the position of the cursor.
 
-***
+---
 
 ### where?
 

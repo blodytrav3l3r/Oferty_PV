@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relFieldRefs
 
@@ -14,86 +14,86 @@ Fields of the clients_rel model
 
 ### address
 
-> `readonly` **address**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **address**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14050
 
-***
+---
 
 ### clientNumber
 
-> `readonly` **clientNumber**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **clientNumber**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14054
 
-***
+---
 
 ### contact
 
-> `readonly` **contact**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **contact**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14053
 
-***
+---
 
 ### createdAt
 
-> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **createdAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14055
 
-***
+---
 
 ### email
 
-> `readonly` **email**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **email**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14051
 
-***
+---
 
 ### id
 
-> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **id**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14046
 
-***
+---
 
 ### name
 
-> `readonly` **name**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **name**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14048
 
-***
+---
 
 ### nip
 
-> `readonly` **nip**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **nip**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14049
 
-***
+---
 
 ### phone
 
-> `readonly` **phone**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **phone**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14052
 
-***
+---
 
 ### updatedAt
 
-> `readonly` **updatedAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **updatedAt**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14056
 
-***
+---
 
 ### userId
 
-> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`\>
+> `readonly` **userId**: [`FieldRef`](../type-aliases/FieldRef.md)\<`"clients_rel"`, `"String"`>\>
 
 Defined in: generated/prisma/index.d.ts:14047

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / recycled\_production\_numbersSelectScalar
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:25098
 
 Defined in: generated/prisma/index.d.ts:25101
 
-***
+---
 
 ### userId?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:25101
 
 Defined in: generated/prisma/index.d.ts:25099
 
-***
+---
 
 ### year?
 

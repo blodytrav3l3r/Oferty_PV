@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / clients\_relOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40076
 
 Defined in: generated/prisma/index.d.ts:40088
 
-***
+---
 
 ### \_max?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40088
 
 Defined in: generated/prisma/index.d.ts:40089
 
-***
+---
 
 ### \_min?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40089
 
 Defined in: generated/prisma/index.d.ts:40090
 
-***
+---
 
 ### address?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:40090
 
 Defined in: generated/prisma/index.d.ts:40081
 
-***
+---
 
 ### clientNumber?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:40081
 
 Defined in: generated/prisma/index.d.ts:40085
 
-***
+---
 
 ### contact?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:40085
 
 Defined in: generated/prisma/index.d.ts:40084
 
-***
+---
 
 ### createdAt?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:40084
 
 Defined in: generated/prisma/index.d.ts:40086
 
-***
+---
 
 ### email?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:40086
 
 Defined in: generated/prisma/index.d.ts:40082
 
-***
+---
 
 ### id?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:40082
 
 Defined in: generated/prisma/index.d.ts:40077
 
-***
+---
 
 ### name?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:40077
 
 Defined in: generated/prisma/index.d.ts:40079
 
-***
+---
 
 ### nip?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:40079
 
 Defined in: generated/prisma/index.d.ts:40080
 
-***
+---
 
 ### phone?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:40080
 
 Defined in: generated/prisma/index.d.ts:40083
 
-***
+---
 
 ### updatedAt?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:40083
 
 Defined in: generated/prisma/index.d.ts:40087
 
-***
+---
 
 ### userId?
 

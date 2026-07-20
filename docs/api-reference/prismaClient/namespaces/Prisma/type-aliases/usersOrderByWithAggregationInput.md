@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:41666
 
 Defined in: generated/prisma/index.d.ts:41682
 
-***
+---
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:41682
 
 Defined in: generated/prisma/index.d.ts:41681
 
-***
+---
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:41681
 
 Defined in: generated/prisma/index.d.ts:41683
 
-***
+---
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:41683
 
 Defined in: generated/prisma/index.d.ts:41684
 
-***
+---
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:41684
 
 Defined in: generated/prisma/index.d.ts:41685
 
-***
+---
 
 ### createdAt?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:41685
 
 Defined in: generated/prisma/index.d.ts:41677
 
-***
+---
 
 ### email?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41677
 
 Defined in: generated/prisma/index.d.ts:41674
 
-***
+---
 
 ### firstName?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:41674
 
 Defined in: generated/prisma/index.d.ts:41671
 
-***
+---
 
 ### id?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:41671
 
 Defined in: generated/prisma/index.d.ts:41667
 
-***
+---
 
 ### lastName?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:41667
 
 Defined in: generated/prisma/index.d.ts:41672
 
-***
+---
 
 ### orderStartNumber?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:41672
 
 Defined in: generated/prisma/index.d.ts:41678
 
-***
+---
 
 ### password?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:41678
 
 Defined in: generated/prisma/index.d.ts:41669
 
-***
+---
 
 ### phone?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:41669
 
 Defined in: generated/prisma/index.d.ts:41673
 
-***
+---
 
 ### productionOrderStartNumber?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:41673
 
 Defined in: generated/prisma/index.d.ts:41679
 
-***
+---
 
 ### role?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:41679
 
 Defined in: generated/prisma/index.d.ts:41670
 
-***
+---
 
 ### subUsers?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:41670
 
 Defined in: generated/prisma/index.d.ts:41676
 
-***
+---
 
 ### symbol?
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:41676
 
 Defined in: generated/prisma/index.d.ts:41675
 
-***
+---
 
 ### totalReward?
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:41675
 
 Defined in: generated/prisma/index.d.ts:41680
 
-***
+---
 
 ### username?
 

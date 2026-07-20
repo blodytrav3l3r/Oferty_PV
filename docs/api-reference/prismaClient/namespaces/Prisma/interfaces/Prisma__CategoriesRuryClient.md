@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Prisma\_\_CategoriesRuryClient
 
@@ -29,7 +29,7 @@ https://github.com/prisma/prisma-client-js/issues/707
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -51,7 +51,7 @@ Defined in: generated/prisma/index.d.ts:28460
 
 ### catch()
 
-> **catch**\<`TResult`\>(`onrejected?`): `Promise`\<`T` \| `TResult`\>
+> **catch**\<`TResult`>\>(`onrejected?`): `Promise`\<`T` \| `TResult`>\>
 
 Defined in: generated/prisma/index.d.ts:28474
 
@@ -81,11 +81,11 @@ A Promise for the completion of the callback.
 
 `Prisma.PrismaPromise.catch`
 
-***
+---
 
 ### finally()
 
-> **finally**(`onfinally?`): `Promise`\<`T`\>
+> **finally**(`onfinally?`): `Promise`\<`T`>\>
 
 Defined in: generated/prisma/index.d.ts:28481
 
@@ -110,11 +110,11 @@ A Promise for the completion of the callback.
 
 `Prisma.PrismaPromise.finally`
 
-***
+---
 
 ### products()
 
-> **products**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`Null` \| `GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **products**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`Null` \| `GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:28461
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:28461
 
 ##### T
 
-`T` *extends* [`CategoriesRury$productsArgs`](../type-aliases/CategoriesRury$productsArgs.md)\<`ExtArgs`\> = \{ \}
+`T` _extends_ [`CategoriesRury$productsArgs`](../type-aliases/CategoriesRury$productsArgs.md)\<`ExtArgs`\> = \{ \}
 
 #### Parameters
 
@@ -134,11 +134,11 @@ Defined in: generated/prisma/index.d.ts:28461
 
 [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`Null` \| `GetFindResult`\<[`$ProductsRuryPayload`](../type-aliases/$ProductsRuryPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
 
-***
+---
 
 ### then()
 
-> **then**\<`TResult1`, `TResult2`\>(`onfulfilled?`, `onrejected?`): `Promise`\<`TResult1` \| `TResult2`\>
+> **then**\<`TResult1`, `TResult2`>\>(`onfulfilled?`, `onrejected?`): `Promise`\<`TResult1` \| `TResult2`>\>
 
 Defined in: generated/prisma/index.d.ts:28468
 

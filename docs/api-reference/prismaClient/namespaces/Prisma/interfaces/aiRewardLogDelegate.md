@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / aiRewardLogDelegate
 
@@ -12,7 +12,7 @@ Defined in: generated/prisma/index.d.ts:36498
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -36,7 +36,7 @@ Fields of the aiRewardLog model
 
 ### aggregate()
 
-> **aggregate**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiRewardLogAggregateType`](../type-aliases/GetAiRewardLogAggregateType.md)\<`T`\>\>
+> **aggregate**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`GetAiRewardLogAggregateType`](../type-aliases/GetAiRewardLogAggregateType.md)\<`T`>>\>\>
 
 Defined in: generated/prisma/index.d.ts:36789
 
@@ -48,7 +48,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`AiRewardLogAggregateArgs`](../type-aliases/AiRewardLogAggregateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`AiRewardLogAggregateArgs`](../type-aliases/AiRewardLogAggregateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -69,26 +69,26 @@ Select which aggregations you would like to apply and on what fields.
 // Where email contains prisma.io
 // Limited to the 10 users
 const aggregations = await prisma.user.aggregate({
-  _avg: {
-    age: true,
-  },
-  where: {
-    email: {
-      contains: "prisma.io",
+    _avg: {
+        age: true
     },
-  },
-  orderBy: {
-    age: "asc",
-  },
-  take: 10,
-})
+    where: {
+        email: {
+            contains: 'prisma.io'
+        }
+    },
+    orderBy: {
+        age: 'asc'
+    },
+    take: 10
+});
 ```
 
-***
+---
 
 ### count()
 
-> **count**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiRewardLogCountAggregateOutputType ? AiRewardLogCountAggregateOutputType\[P\] : never \} : `number`\>
+> **count**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`> \> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiRewardLogCountAggregateOutputType ? AiRewardLogCountAggregateOutputType\[P\] : never \} : `number`>\>
 
 Defined in: generated/prisma/index.d.ts:36755
 
@@ -100,7 +100,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogCountArgs`](../type-aliases/aiRewardLogCountArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogCountArgs`](../type-aliases/aiRewardLogCountArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -112,24 +112,24 @@ Arguments to filter AiRewardLogs to count.
 
 #### Returns
 
-[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` *extends* `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] *extends* `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiRewardLogCountAggregateOutputType ? AiRewardLogCountAggregateOutputType\[P\] : never \} : `number`\>
+[`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`T` _extends_ `Record_2`\<`"select"`, `any`\> ? `T`\[`"select"`\] _extends_ `true` ? `number` : \{ \[P in string \| number \| symbol\]: P extends keyof AiRewardLogCountAggregateOutputType ? AiRewardLogCountAggregateOutputType\[P\] : never \} : `number`\>
 
 #### Example
 
 ```ts
 // Count the number of AiRewardLogs
 const count = await prisma.aiRewardLog.count({
-  where: {
-    // ... the filter for the AiRewardLogs we want to count
-  }
-})
+    where: {
+        // ... the filter for the AiRewardLogs we want to count
+    }
+});
 ```
 
-***
+---
 
 ### create()
 
-> **create**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **create**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36588
 
@@ -139,7 +139,7 @@ Create a AiRewardLog.
 
 ##### T
 
-`T` *extends* [`aiRewardLogCreateArgs`](../type-aliases/aiRewardLogCreateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogCreateArgs`](../type-aliases/aiRewardLogCreateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -158,17 +158,17 @@ Arguments to create a AiRewardLog.
 ```ts
 // Create one AiRewardLog
 const AiRewardLog = await prisma.aiRewardLog.create({
-  data: {
-    // ... data to create a AiRewardLog
-  }
-})
+    data: {
+        // ... data to create a AiRewardLog
+    }
+});
 ```
 
-***
+---
 
 ### createMany()
 
-> **createMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **createMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:36602
 
@@ -178,7 +178,7 @@ Create many AiRewardLogs.
 
 ##### T
 
-`T` *extends* [`aiRewardLogCreateManyArgs`](../type-aliases/aiRewardLogCreateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogCreateManyArgs`](../type-aliases/aiRewardLogCreateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -197,17 +197,17 @@ Arguments to create many AiRewardLogs.
 ```ts
 // Create many AiRewardLogs
 const aiRewardLog = await prisma.aiRewardLog.createMany({
-  data: [
-    // ... provide data here
-  ]
-})
+    data: [
+        // ... provide data here
+    ]
+});
 ```
 
-***
+---
 
 ### createManyAndReturn()
 
-> **createManyAndReturn**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **createManyAndReturn**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:36626
 
@@ -217,7 +217,7 @@ Create many AiRewardLogs and returns the data saved in the database.
 
 ##### T
 
-`T` *extends* [`aiRewardLogCreateManyAndReturnArgs`](../type-aliases/aiRewardLogCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogCreateManyAndReturnArgs`](../type-aliases/aiRewardLogCreateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -252,11 +252,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### delete()
 
-> **delete**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **delete**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36640
 
@@ -266,7 +266,7 @@ Delete a AiRewardLog.
 
 ##### T
 
-`T` *extends* [`aiRewardLogDeleteArgs`](../type-aliases/aiRewardLogDeleteArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogDeleteArgs`](../type-aliases/aiRewardLogDeleteArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -285,17 +285,17 @@ Arguments to delete one AiRewardLog.
 ```ts
 // Delete one AiRewardLog
 const AiRewardLog = await prisma.aiRewardLog.delete({
-  where: {
-    // ... filter to delete one AiRewardLog
-  }
-})
+    where: {
+        // ... filter to delete one AiRewardLog
+    }
+});
 ```
 
-***
+---
 
 ### deleteMany()
 
-> **deleteMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **deleteMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:36671
 
@@ -305,7 +305,7 @@ Delete zero or more AiRewardLogs.
 
 ##### T
 
-`T` *extends* [`aiRewardLogDeleteManyArgs`](../type-aliases/aiRewardLogDeleteManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogDeleteManyArgs`](../type-aliases/aiRewardLogDeleteManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -324,17 +324,17 @@ Arguments to filter AiRewardLogs to delete.
 ```ts
 // Delete a few AiRewardLogs
 const { count } = await prisma.aiRewardLog.deleteMany({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirst()
 
-> **findFirst**\<`T`\>(`args?`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirst**\<`T`>\>(`args?`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36540
 
@@ -346,7 +346,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogFindFirstArgs`](../type-aliases/aiRewardLogFindFirstArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogFindFirstArgs`](../type-aliases/aiRewardLogFindFirstArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -365,17 +365,17 @@ Arguments to find a AiRewardLog
 ```ts
 // Get one AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.findFirst({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findFirstOrThrow()
 
-> **findFirstOrThrow**\<`T`\>(`args?`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findFirstOrThrow**\<`T`>\>(`args?`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36556
 
@@ -388,7 +388,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogFindFirstOrThrowArgs`](../type-aliases/aiRewardLogFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogFindFirstOrThrowArgs`](../type-aliases/aiRewardLogFindFirstOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -407,17 +407,17 @@ Arguments to find a AiRewardLog
 ```ts
 // Get one AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.findFirstOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findMany()
 
-> **findMany**\<`T`\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **findMany**\<`T`>\>(`args?`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:36574
 
@@ -429,7 +429,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogFindManyArgs`](../type-aliases/aiRewardLogFindManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogFindManyArgs`](../type-aliases/aiRewardLogFindManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -447,20 +447,20 @@ Arguments to filter and select certain fields only.
 
 ```ts
 // Get all AiRewardLogs
-const aiRewardLogs = await prisma.aiRewardLog.findMany()
+const aiRewardLogs = await prisma.aiRewardLog.findMany();
 
 // Get first 10 AiRewardLogs
-const aiRewardLogs = await prisma.aiRewardLog.findMany({ take: 10 })
+const aiRewardLogs = await prisma.aiRewardLog.findMany({ take: 10 });
 
 // Only select the `id`
-const aiRewardLogWithIdOnly = await prisma.aiRewardLog.findMany({ select: { id: true } })
+const aiRewardLogWithIdOnly = await prisma.aiRewardLog.findMany({ select: { id: true } });
 ```
 
-***
+---
 
 ### findUnique()
 
-> **findUnique**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUnique**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`> \> \| `null`, `null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36511
 
@@ -470,7 +470,7 @@ Find zero or one AiRewardLog that matches the filter.
 
 ##### T
 
-`T` *extends* [`aiRewardLogFindUniqueArgs`](../type-aliases/aiRewardLogFindUniqueArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogFindUniqueArgs`](../type-aliases/aiRewardLogFindUniqueArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -489,17 +489,17 @@ Arguments to find a AiRewardLog
 ```ts
 // Get one AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.findUnique({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### findUniqueOrThrow()
 
-> **findUniqueOrThrow**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **findUniqueOrThrow**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36525
 
@@ -510,7 +510,7 @@ if no matches were found.
 
 ##### T
 
-`T` *extends* [`aiRewardLogFindUniqueOrThrowArgs`](../type-aliases/aiRewardLogFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogFindUniqueOrThrowArgs`](../type-aliases/aiRewardLogFindUniqueOrThrowArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -529,17 +529,17 @@ Arguments to find a AiRewardLog
 ```ts
 // Get one AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.findUniqueOrThrow({
-  where: {
-    // ... provide filter here
-  }
-})
+    where: {
+        // ... provide filter here
+    }
+});
 ```
 
-***
+---
 
 ### groupBy()
 
-> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`\>(`args`): `object` *extends* `InputErrors` ? [`GetAiRewardLogGroupByPayload`](../type-aliases/GetAiRewardLogGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+> **groupBy**\<`T`, `HasSelectOrTake`, `OrderByArg`, `OrderFields`, `ByFields`, `ByValid`, `HavingFields`, `HavingValid`, `ByEmpty`, `InputErrors`>\>(`args`): `object` _extends_ `InputErrors` ? [`GetAiRewardLogGroupByPayload`](../type-aliases/GetAiRewardLogGroupByPayload.md)\<`T`> \> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`>\>
 
 Defined in: generated/prisma/index.d.ts:36809
 
@@ -551,31 +551,31 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogGroupByArgs`](../type-aliases/aiRewardLogGroupByArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogGroupByArgs`](../type-aliases/aiRewardLogGroupByArgs.md)\<`DefaultArgs`\>
 
 ##### HasSelectOrTake
 
-`HasSelectOrTake` *extends* `0` \| `1`
+`HasSelectOrTake` _extends_ `0` \| `1`
 
 ##### OrderByArg
 
-`OrderByArg` *extends* \{ `orderBy`: [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md) \| [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md) \| [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md)[]; \}
+`OrderByArg` _extends_ \{ `orderBy`: [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md) \| [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md)[] \| `undefined`; \} \| \{ `orderBy?`: [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md) \| [`aiRewardLogOrderByWithAggregationInput`](../type-aliases/aiRewardLogOrderByWithAggregationInput.md)[]; \}
 
 ##### OrderFields
 
-`OrderFields` *extends* `"id"` \| `"createdAt"` \| `"dn"` \| `"reward"` \| `"userId"` \| `"wellId"` \| `"action"` \| `"configSnapshot"` \| `"scoreBefore"` \| `"scoreAfter"` \| `"wasAiRanked"`
+`OrderFields` _extends_ `"id"` \| `"createdAt"` \| `"dn"` \| `"reward"` \| `"userId"` \| `"wellId"` \| `"action"` \| `"configSnapshot"` \| `"scoreBefore"` \| `"scoreAfter"` \| `"wasAiRanked"`
 
 ##### ByFields
 
-`ByFields` *extends* [`AiRewardLogScalarFieldEnum`](../type-aliases/AiRewardLogScalarFieldEnum.md)
+`ByFields` _extends_ [`AiRewardLogScalarFieldEnum`](../type-aliases/AiRewardLogScalarFieldEnum.md)
 
 ##### ByValid
 
-`ByValid` *extends* `0` \| `1`
+`ByValid` _extends_ `0` \| `1`
 
 ##### HavingFields
 
-`HavingFields` *extends* `string` \| `number` \| `symbol`
+`HavingFields` _extends_ `string` \| `number` \| `symbol`
 
 ##### HavingValid
 
@@ -583,7 +583,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### ByEmpty
 
-`ByEmpty` *extends* `0` \| `1`
+`ByEmpty` _extends_ `0` \| `1`
 
 ##### InputErrors
 
@@ -599,28 +599,28 @@ Group by arguments.
 
 #### Returns
 
-`object` *extends* `InputErrors` ? [`GetAiRewardLogGroupByPayload`](../type-aliases/GetAiRewardLogGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
+`object` _extends_ `InputErrors` ? [`GetAiRewardLogGroupByPayload`](../type-aliases/GetAiRewardLogGroupByPayload.md)\<`T`\> : [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`InputErrors`\>
 
 #### Example
 
 ```ts
 // Group by city, order by createdAt, get count
 const result = await prisma.user.groupBy({
-  by: ['city', 'createdAt'],
-  orderBy: {
-    createdAt: true
-  },
-  _count: {
-    _all: true
-  },
-})
+    by: ['city', 'createdAt'],
+    orderBy: {
+        createdAt: true
+    },
+    _count: {
+        _all: true
+    }
+});
 ```
 
-***
+---
 
 ### update()
 
-> **update**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **update**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36657
 
@@ -630,7 +630,7 @@ Update one AiRewardLog.
 
 ##### T
 
-`T` *extends* [`aiRewardLogUpdateArgs`](../type-aliases/aiRewardLogUpdateArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogUpdateArgs`](../type-aliases/aiRewardLogUpdateArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -649,20 +649,20 @@ Arguments to update one AiRewardLog.
 ```ts
 // Update one AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.update({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateMany()
 
-> **updateMany**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)\>
+> **updateMany**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<[`BatchPayload`](../type-aliases/BatchPayload.md)>\>
 
 Defined in: generated/prisma/index.d.ts:36690
 
@@ -674,7 +674,7 @@ Read more here: https://pris.ly/d/null-undefined
 
 ##### T
 
-`T` *extends* [`aiRewardLogUpdateManyArgs`](../type-aliases/aiRewardLogUpdateManyArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogUpdateManyArgs`](../type-aliases/aiRewardLogUpdateManyArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -693,20 +693,20 @@ Arguments to update one or more rows.
 ```ts
 // Update many AiRewardLogs
 const aiRewardLog = await prisma.aiRewardLog.updateMany({
-  where: {
-    // ... provide filter here
-  },
-  data: {
-    // ... provide data here
-  }
-})
+    where: {
+        // ... provide filter here
+    },
+    data: {
+        // ... provide data here
+    }
+});
 ```
 
-***
+---
 
 ### updateManyAndReturn()
 
-> **updateManyAndReturn**\<`T`\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>[]\>
+> **updateManyAndReturn**\<`T`>\>(`args`): [`PrismaPromise`](../type-aliases/PrismaPromise.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>[]\>
 
 Defined in: generated/prisma/index.d.ts:36720
 
@@ -716,7 +716,7 @@ Update zero or more AiRewardLogs and returns the data updated in the database.
 
 ##### T
 
-`T` *extends* [`aiRewardLogUpdateManyAndReturnArgs`](../type-aliases/aiRewardLogUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogUpdateManyAndReturnArgs`](../type-aliases/aiRewardLogUpdateManyAndReturnArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -757,11 +757,11 @@ Note, that providing `undefined` is treated as the value not being there.
 Read more here: https://pris.ly/d/null-undefined
 ```
 
-***
+---
 
 ### upsert()
 
-> **upsert**\<`T`\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `never`, `ExtArgs`, `GlobalOmitOptions`\>
+> **upsert**\<`T`>\>(`args`): [`Prisma__aiRewardLogClient`](Prisma__aiRewardLogClient.md)\<`GetFindResult`\<[`$aiRewardLogPayload`](../type-aliases/$aiRewardLogPayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `never`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:36739
 
@@ -771,7 +771,7 @@ Create or update one AiRewardLog.
 
 ##### T
 
-`T` *extends* [`aiRewardLogUpsertArgs`](../type-aliases/aiRewardLogUpsertArgs.md)\<`DefaultArgs`\>
+`T` _extends_ [`aiRewardLogUpsertArgs`](../type-aliases/aiRewardLogUpsertArgs.md)\<`DefaultArgs`\>
 
 #### Parameters
 
@@ -790,14 +790,14 @@ Arguments to update or create a AiRewardLog.
 ```ts
 // Update or create a AiRewardLog
 const aiRewardLog = await prisma.aiRewardLog.upsert({
-  create: {
-    // ... data to create a AiRewardLog
-  },
-  update: {
-    // ... in case it already exists, update
-  },
-  where: {
-    // ... the filter for the AiRewardLog we want to update
-  }
-})
+    create: {
+        // ... data to create a AiRewardLog
+    },
+    update: {
+        // ... in case it already exists, update
+    },
+    where: {
+        // ... the filter for the AiRewardLog we want to update
+    }
+});
 ```

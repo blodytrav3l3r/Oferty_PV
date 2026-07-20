@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_knowledge\_baseWhereInput
 
@@ -18,95 +18,95 @@ Defined in: generated/prisma/index.d.ts:39624
 
 Defined in: generated/prisma/index.d.ts:39625
 
-***
+---
 
 ### changeHistory?
 
-> `optional` **changeHistory?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **changeHistory?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39642
 
-***
+---
 
 ### confidence?
 
-> `optional` **confidence?**: [`FloatFilter`](FloatFilter.md)\<`"ai_knowledge_base"`\> \| `number`
+> `optional` **confidence?**: [`FloatFilter`](FloatFilter.md)\<`"ai_knowledge_base"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39636
 
-***
+---
 
 ### context?
 
-> `optional` **context?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **context?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39632
 
-***
+---
 
 ### description?
 
-> `optional` **description?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **description?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39633
 
-***
+---
 
 ### dn?
 
-> `optional` **dn?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **dn?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39631
 
-***
+---
 
 ### firstDetectedAt?
 
-> `optional` **firstDetectedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **firstDetectedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39639
 
-***
+---
 
 ### generatedBy?
 
-> `optional` **generatedBy?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **generatedBy?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39645
 
-***
+---
 
 ### hitCount?
 
-> `optional` **hitCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`\> \| `number`
+> `optional` **hitCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39635
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`\> \| `string`
+> `optional` **id?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39628
 
-***
+---
 
 ### lastHitAt?
 
-> `optional` **lastHitAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **lastHitAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39640
 
-***
+---
 
 ### lastUpdatedAt?
 
-> `optional` **lastUpdatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **lastUpdatedAt?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39641
 
-***
+---
 
 ### NOT?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:39641
 
 Defined in: generated/prisma/index.d.ts:39627
 
-***
+---
 
 ### OR?
 
@@ -122,58 +122,58 @@ Defined in: generated/prisma/index.d.ts:39627
 
 Defined in: generated/prisma/index.d.ts:39626
 
-***
+---
 
 ### patternKey?
 
-> `optional` **patternKey?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`\> \| `string`
+> `optional` **patternKey?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39630
 
-***
+---
 
 ### patternType?
 
-> `optional` **patternType?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`\> \| `string`
+> `optional` **patternType?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39629
 
-***
+---
 
 ### recommendation?
 
-> `optional` **recommendation?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **recommendation?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39634
 
-***
+---
 
 ### rejectionCount?
 
-> `optional` **rejectionCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`\> \| `number`
+> `optional` **rejectionCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39638
 
-***
+---
 
 ### schemaVersion?
 
-> `optional` **schemaVersion?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`\> \| `string` \| `null`
+> `optional` **schemaVersion?**: [`StringNullableFilter`](StringNullableFilter.md)\<`"ai_knowledge_base"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:39644
 
-***
+---
 
 ### status?
 
-> `optional` **status?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`\> \| `string`
+> `optional` **status?**: [`StringFilter`](StringFilter.md)\<`"ai_knowledge_base"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:39643
 
-***
+---
 
 ### successCount?
 
-> `optional` **successCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`\> \| `number`
+> `optional` **successCount?**: [`IntFilter`](IntFilter.md)\<`"ai_knowledge_base"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:39637

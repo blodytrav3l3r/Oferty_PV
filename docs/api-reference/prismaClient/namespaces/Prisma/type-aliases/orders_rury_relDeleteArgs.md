@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relDeleteArgs
 
 # Type Alias: orders\_rury\_relDeleteArgs\<ExtArgs\>
 
-> **orders\_rury\_relDeleteArgs**\<`ExtArgs`\> = `object`
+> **orders\_rury\_relDeleteArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:22770
 
@@ -16,29 +16,29 @@ orders_rury_rel delete
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### omit?
 
-> `optional` **omit?**: [`orders_rury_relOmit`](orders_rury_relOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`orders_rury_relOmit`](orders_rury_relOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:22778
 
 Omit specific fields from the orders_rury_rel
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`orders_rury_relSelect`](orders_rury_relSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`orders_rury_relSelect`](orders_rury_relSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:22774
 
 Select specific fields to fetch from the orders_rury_rel
 
-***
+---
 
 ### where
 

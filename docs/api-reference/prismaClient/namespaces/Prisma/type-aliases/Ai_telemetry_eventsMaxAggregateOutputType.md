@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_eventsMaxAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:5497
 
 Defined in: generated/prisma/index.d.ts:5506
 
-***
+---
 
 ### componentId
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:5506
 
 Defined in: generated/prisma/index.d.ts:5503
 
-***
+---
 
 ### createdAt
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:5503
 
 Defined in: generated/prisma/index.d.ts:5510
 
-***
+---
 
 ### eventType
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:5510
 
 Defined in: generated/prisma/index.d.ts:5500
 
-***
+---
 
 ### id
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:5500
 
 Defined in: generated/prisma/index.d.ts:5498
 
-***
+---
 
 ### msSinceConfig
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:5498
 
 Defined in: generated/prisma/index.d.ts:5507
 
-***
+---
 
 ### newValue
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:5507
 
 Defined in: generated/prisma/index.d.ts:5505
 
-***
+---
 
 ### orderInSession
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:5505
 
 Defined in: generated/prisma/index.d.ts:5508
 
-***
+---
 
 ### previousValue
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:5508
 
 Defined in: generated/prisma/index.d.ts:5504
 
-***
+---
 
 ### sequenceNo
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:5504
 
 Defined in: generated/prisma/index.d.ts:5509
 
-***
+---
 
 ### telemetryId
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:5509
 
 Defined in: generated/prisma/index.d.ts:5499
 
-***
+---
 
 ### userId
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:5499
 
 Defined in: generated/prisma/index.d.ts:5501
 
-***
+---
 
 ### wellId
 

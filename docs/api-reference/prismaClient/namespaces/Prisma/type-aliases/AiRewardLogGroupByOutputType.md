@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiRewardLogGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:36381
 
 Defined in: generated/prisma/index.d.ts:36394
 
-***
+---
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:36394
 
 Defined in: generated/prisma/index.d.ts:36393
 
-***
+---
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:36393
 
 Defined in: generated/prisma/index.d.ts:36397
 
-***
+---
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:36397
 
 Defined in: generated/prisma/index.d.ts:36396
 
-***
+---
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:36396
 
 Defined in: generated/prisma/index.d.ts:36395
 
-***
+---
 
 ### action
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:36395
 
 Defined in: generated/prisma/index.d.ts:36386
 
-***
+---
 
 ### configSnapshot
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:36386
 
 Defined in: generated/prisma/index.d.ts:36391
 
-***
+---
 
 ### createdAt
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:36391
 
 Defined in: generated/prisma/index.d.ts:36392
 
-***
+---
 
 ### dn
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:36392
 
 Defined in: generated/prisma/index.d.ts:36385
 
-***
+---
 
 ### id
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:36385
 
 Defined in: generated/prisma/index.d.ts:36382
 
-***
+---
 
 ### reward
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:36382
 
 Defined in: generated/prisma/index.d.ts:36387
 
-***
+---
 
 ### scoreAfter
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:36387
 
 Defined in: generated/prisma/index.d.ts:36389
 
-***
+---
 
 ### scoreBefore
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:36389
 
 Defined in: generated/prisma/index.d.ts:36388
 
-***
+---
 
 ### userId
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:36388
 
 Defined in: generated/prisma/index.d.ts:36383
 
-***
+---
 
 ### wasAiRanked
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:36383
 
 Defined in: generated/prisma/index.d.ts:36390
 
-***
+---
 
 ### wellId
 

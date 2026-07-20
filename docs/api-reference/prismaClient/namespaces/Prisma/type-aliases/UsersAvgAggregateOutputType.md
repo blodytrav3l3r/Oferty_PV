@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / UsersAvgAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:37297
 
 Defined in: generated/prisma/index.d.ts:37298
 
-***
+---
 
 ### productionOrderStartNumber
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:37298
 
 Defined in: generated/prisma/index.d.ts:37299
 
-***
+---
 
 ### totalReward
 

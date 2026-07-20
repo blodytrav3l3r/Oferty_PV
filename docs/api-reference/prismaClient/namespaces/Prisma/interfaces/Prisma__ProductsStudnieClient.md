@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Prisma\_\_ProductsStudnieClient
 
@@ -29,7 +29,7 @@ https://github.com/prisma/prisma-client-js/issues/707
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ### GlobalOmitOptions
 
@@ -51,7 +51,7 @@ Defined in: generated/prisma/index.d.ts:32219
 
 ### catch()
 
-> **catch**\<`TResult`\>(`onrejected?`): `Promise`\<`T` \| `TResult`\>
+> **catch**\<`TResult`>\>(`onrejected?`): `Promise`\<`T` \| `TResult`>\>
 
 Defined in: generated/prisma/index.d.ts:32233
 
@@ -81,11 +81,11 @@ A Promise for the completion of the callback.
 
 `Prisma.PrismaPromise.catch`
 
-***
+---
 
 ### category\_rel()
 
-> **category\_rel**\<`T`\>(`args?`): [`Prisma__CategoriesStudnieClient`](Prisma__CategoriesStudnieClient.md)\<`Null` \| `GetFindResult`\<[`$CategoriesStudniePayload`](../type-aliases/$CategoriesStudniePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `Null`, `ExtArgs`, `GlobalOmitOptions`\>
+> **category\_rel**\<`T`>\>(`args?`): [`Prisma__CategoriesStudnieClient`](Prisma__CategoriesStudnieClient.md)\<`Null` \| `GetFindResult`\<[`$CategoriesStudniePayload`](../type-aliases/$CategoriesStudniePayload.md)\<`ExtArgs`>\>, `T`, `GlobalOmitOptions`>\>, `Null`, `ExtArgs`, `GlobalOmitOptions`>\>
 
 Defined in: generated/prisma/index.d.ts:32220
 
@@ -93,7 +93,7 @@ Defined in: generated/prisma/index.d.ts:32220
 
 ##### T
 
-`T` *extends* [`CategoriesStudnieDefaultArgs`](../type-aliases/CategoriesStudnieDefaultArgs.md)\<`ExtArgs`\> = \{ \}
+`T` _extends_ [`CategoriesStudnieDefaultArgs`](../type-aliases/CategoriesStudnieDefaultArgs.md)\<`ExtArgs`\> = \{ \}
 
 #### Parameters
 
@@ -105,11 +105,11 @@ Defined in: generated/prisma/index.d.ts:32220
 
 [`Prisma__CategoriesStudnieClient`](Prisma__CategoriesStudnieClient.md)\<`Null` \| `GetFindResult`\<[`$CategoriesStudniePayload`](../type-aliases/$CategoriesStudniePayload.md)\<`ExtArgs`\>, `T`, `GlobalOmitOptions`\>, `Null`, `ExtArgs`, `GlobalOmitOptions`\>
 
-***
+---
 
 ### finally()
 
-> **finally**(`onfinally?`): `Promise`\<`T`\>
+> **finally**(`onfinally?`): `Promise`\<`T`>\>
 
 Defined in: generated/prisma/index.d.ts:32240
 
@@ -134,11 +134,11 @@ A Promise for the completion of the callback.
 
 `Prisma.PrismaPromise.finally`
 
-***
+---
 
 ### then()
 
-> **then**\<`TResult1`, `TResult2`\>(`onfulfilled?`, `onrejected?`): `Promise`\<`TResult1` \| `TResult2`\>
+> **then**\<`TResult1`, `TResult2`>\>(`onfulfilled?`, `onrejected?`): `Promise`\<`TResult1` \| `TResult2`>\>
 
 Defined in: generated/prisma/index.d.ts:32227
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / order\_countersUpdateManyArgs
 
 # Type Alias: order\_countersUpdateManyArgs\<ExtArgs\>
 
-> **order\_countersUpdateManyArgs**\<`ExtArgs`\> = `object`
+> **order\_countersUpdateManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:19683
 
@@ -16,19 +16,19 @@ order_counters updateMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`order_countersUpdateManyMutationInput`](order_countersUpdateManyMutationInput.md), [`order_countersUncheckedUpdateManyInput`](order_countersUncheckedUpdateManyInput.md)\>
+> **data**: [`XOR`](XOR.md)\<[`order_countersUpdateManyMutationInput`](order_countersUpdateManyMutationInput.md), [`order_countersUncheckedUpdateManyInput`](order_countersUncheckedUpdateManyInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:19687
 
 The data used to update order_counters.
 
-***
+---
 
 ### limit?
 
@@ -38,7 +38,7 @@ Defined in: generated/prisma/index.d.ts:19695
 
 Limit how many order_counters to update.
 
-***
+---
 
 ### where?
 

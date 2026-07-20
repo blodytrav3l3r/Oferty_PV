@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesRuryScalarWhereWithAggregatesInput
 
@@ -18,15 +18,15 @@ Defined in: generated/prisma/index.d.ts:40904
 
 Defined in: generated/prisma/index.d.ts:40905
 
-***
+---
 
 ### name?
 
-> `optional` **name?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"CategoriesRury"`\> \| `string`
+> `optional` **name?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"CategoriesRury"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40908
 
-***
+---
 
 ### NOT?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:40908
 
 Defined in: generated/prisma/index.d.ts:40907
 
-***
+---
 
 ### OR?
 
@@ -42,10 +42,10 @@ Defined in: generated/prisma/index.d.ts:40907
 
 Defined in: generated/prisma/index.d.ts:40906
 
-***
+---
 
 ### order?
 
-> `optional` **order?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"CategoriesRury"`\> \| `number`
+> `optional` **order?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"CategoriesRury"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40909

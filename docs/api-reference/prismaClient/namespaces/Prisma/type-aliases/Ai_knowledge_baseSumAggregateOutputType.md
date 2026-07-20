@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_knowledge\_baseSumAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:8769
 
 Defined in: generated/prisma/index.d.ts:8771
 
-***
+---
 
 ### hitCount
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:8771
 
 Defined in: generated/prisma/index.d.ts:8770
 
-***
+---
 
 ### rejectionCount
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:8770
 
 Defined in: generated/prisma/index.d.ts:8773
 
-***
+---
 
 ### successCount
 

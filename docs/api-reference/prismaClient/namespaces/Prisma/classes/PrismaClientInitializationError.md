@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / PrismaClientInitializationError
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2622
 
 Defined in: generated/prisma/runtime/library.d.ts:2619
 
-***
+---
 
 ### errorCode?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/runtime/library.d.ts:2619
 
 Defined in: generated/prisma/runtime/library.d.ts:2620
 
-***
+---
 
 ### retryable?
 

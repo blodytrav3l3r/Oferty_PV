@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relDeleteManyArgs
 
 # Type Alias: orders\_rury\_relDeleteManyArgs\<ExtArgs\>
 
-> **orders\_rury\_relDeleteManyArgs**\<`ExtArgs`\> = `object`
+> **orders\_rury\_relDeleteManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:22788
 
@@ -16,7 +16,7 @@ orders_rury_rel deleteMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:22796
 
 Limit how many orders_rury_rels to delete.
 
-***
+---
 
 ### where?
 

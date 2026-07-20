@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / recycled\_production\_numbersScalarWhereWithAggregatesInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:40780
 
 Defined in: generated/prisma/index.d.ts:40781
 
-***
+---
 
 ### NOT?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:40781
 
 Defined in: generated/prisma/index.d.ts:40783
 
-***
+---
 
 ### OR?
 
@@ -34,26 +34,26 @@ Defined in: generated/prisma/index.d.ts:40783
 
 Defined in: generated/prisma/index.d.ts:40782
 
-***
+---
 
 ### seqNumber?
 
-> `optional` **seqNumber?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"recycled_production_numbers"`\> \| `number`
+> `optional` **seqNumber?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"recycled_production_numbers"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40786
 
-***
+---
 
 ### userId?
 
-> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"recycled_production_numbers"`\> \| `string`
+> `optional` **userId?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"recycled_production_numbers"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40784
 
-***
+---
 
 ### year?
 
-> `optional` **year?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"recycled_production_numbers"`\> \| `number`
+> `optional` **year?**: [`IntWithAggregatesFilter`](IntWithAggregatesFilter.md)\<`"recycled_production_numbers"`> \> \| `number`
 
 Defined in: generated/prisma/index.d.ts:40785

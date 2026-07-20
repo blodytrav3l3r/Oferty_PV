@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_recommendationsMinAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:9980
 
 Defined in: generated/prisma/index.d.ts:9987
 
-***
+---
 
 ### decidedAt
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:9987
 
 Defined in: generated/prisma/index.d.ts:9993
 
-***
+---
 
 ### decidedBy
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:9993
 
 Defined in: generated/prisma/index.d.ts:9994
 
-***
+---
 
 ### dn
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:9994
 
 Defined in: generated/prisma/index.d.ts:9984
 
-***
+---
 
 ### generatedAt
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:9984
 
 Defined in: generated/prisma/index.d.ts:9992
 
-***
+---
 
 ### id
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:9992
 
 Defined in: generated/prisma/index.d.ts:9981
 
-***
+---
 
 ### patternKey
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:9981
 
 Defined in: generated/prisma/index.d.ts:9983
 
-***
+---
 
 ### patternType
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:9983
 
 Defined in: generated/prisma/index.d.ts:9982
 
-***
+---
 
 ### payload
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:9982
 
 Defined in: generated/prisma/index.d.ts:9988
 
-***
+---
 
 ### score
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:9988
 
 Defined in: generated/prisma/index.d.ts:9986
 
-***
+---
 
 ### wasAccepted
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:9986
 
 Defined in: generated/prisma/index.d.ts:9990
 
-***
+---
 
 ### wasApplied
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:9990
 
 Defined in: generated/prisma/index.d.ts:9989
 
-***
+---
 
 ### wasRejected
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:9989
 
 Defined in: generated/prisma/index.d.ts:9991
 
-***
+---
 
 ### wellId
 

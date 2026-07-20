@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / recycled\_production\_numbersCreateManyInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43748
 
 Defined in: generated/prisma/index.d.ts:43751
 
-***
+---
 
 ### userId
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43751
 
 Defined in: generated/prisma/index.d.ts:43749
 
-***
+---
 
 ### year
 

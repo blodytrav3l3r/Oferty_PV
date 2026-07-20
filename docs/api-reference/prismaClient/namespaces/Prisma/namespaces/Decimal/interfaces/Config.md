@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../../../README.md) / [prismaClient](../../../../../README.md) / [Prisma](../../../README.md) / [Decimal](../README.md) / Config
 
@@ -16,7 +16,7 @@ Defined in: generated/prisma/runtime/library.d.ts:440
 
 Defined in: generated/prisma/runtime/library.d.ts:447
 
-***
+---
 
 ### defaults?
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/runtime/library.d.ts:447
 
 Defined in: generated/prisma/runtime/library.d.ts:449
 
-***
+---
 
 ### maxE?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/runtime/library.d.ts:449
 
 Defined in: generated/prisma/runtime/library.d.ts:446
 
-***
+---
 
 ### minE?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/runtime/library.d.ts:446
 
 Defined in: generated/prisma/runtime/library.d.ts:445
 
-***
+---
 
 ### modulo?
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/runtime/library.d.ts:445
 
 Defined in: generated/prisma/runtime/library.d.ts:448
 
-***
+---
 
 ### precision?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/runtime/library.d.ts:448
 
 Defined in: generated/prisma/runtime/library.d.ts:441
 
-***
+---
 
 ### rounding?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/runtime/library.d.ts:441
 
 Defined in: generated/prisma/runtime/library.d.ts:442
 
-***
+---
 
 ### toExpNeg?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/runtime/library.d.ts:442
 
 Defined in: generated/prisma/runtime/library.d.ts:443
 
-***
+---
 
 ### toExpPos?
 

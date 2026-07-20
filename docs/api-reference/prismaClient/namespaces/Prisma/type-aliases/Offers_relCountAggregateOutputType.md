@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Offers\_relCountAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:16582
 
 Defined in: generated/prisma/index.d.ts:16596
 
-***
+---
 
 ### clientId
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:16596
 
 Defined in: generated/prisma/index.d.ts:16585
 
-***
+---
 
 ### clientName
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:16585
 
 Defined in: generated/prisma/index.d.ts:16593
 
-***
+---
 
 ### clientNip
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:16593
 
 Defined in: generated/prisma/index.d.ts:16595
 
-***
+---
 
 ### createdAt
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:16595
 
 Defined in: generated/prisma/index.d.ts:16587
 
-***
+---
 
 ### data
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:16587
 
 Defined in: generated/prisma/index.d.ts:16590
 
-***
+---
 
 ### history
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:16590
 
 Defined in: generated/prisma/index.d.ts:16592
 
-***
+---
 
 ### id
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:16592
 
 Defined in: generated/prisma/index.d.ts:16583
 
-***
+---
 
 ### investName
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:16583
 
 Defined in: generated/prisma/index.d.ts:16594
 
-***
+---
 
 ### offer\_number
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:16594
 
 Defined in: generated/prisma/index.d.ts:16589
 
-***
+---
 
 ### state
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:16589
 
 Defined in: generated/prisma/index.d.ts:16586
 
-***
+---
 
 ### transportCost
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:16586
 
 Defined in: generated/prisma/index.d.ts:16588
 
-***
+---
 
 ### updatedAt
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:16588
 
 Defined in: generated/prisma/index.d.ts:16591
 
-***
+---
 
 ### userId
 

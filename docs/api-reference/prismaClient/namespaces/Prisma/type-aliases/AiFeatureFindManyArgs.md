@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureFindManyArgs
 
 # Type Alias: AiFeatureFindManyArgs\<ExtArgs\>
 
-> **AiFeatureFindManyArgs**\<`ExtArgs`\> = `object`
+> **AiFeatureFindManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:33756
 
@@ -16,7 +16,7 @@ AiFeature findMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:33780
 
 Sets the position for listing AiFeatures.
 
-***
+---
 
 ### distinct?
 
@@ -38,17 +38,17 @@ Sets the position for listing AiFeatures.
 
 Defined in: generated/prisma/index.d.ts:33793
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`AiFeatureOmit`](AiFeatureOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`AiFeatureOmit`](AiFeatureOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:33764
 
 Omit specific fields from the AiFeature
 
-***
+---
 
 ### orderBy?
 
@@ -60,17 +60,17 @@ Defined in: generated/prisma/index.d.ts:33774
 
 Determine the order of AiFeatures to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`AiFeatureSelect`](AiFeatureSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`AiFeatureSelect`](AiFeatureSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:33760
 
 Select specific fields to fetch from the AiFeature
 
-***
+---
 
 ### skip?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:33792
 
 Skip the first `n` AiFeatures.
 
-***
+---
 
 ### take?
 
@@ -94,7 +94,7 @@ Defined in: generated/prisma/index.d.ts:33786
 
 Take `±n` AiFeatures from the position of the cursor.
 
-***
+---
 
 ### where?
 

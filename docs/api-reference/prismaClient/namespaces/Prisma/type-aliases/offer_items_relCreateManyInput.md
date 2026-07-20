@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / offer\_items\_relCreateManyInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:43067
 
 Defined in: generated/prisma/index.d.ts:43072
 
-***
+---
 
 ### id
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:43072
 
 Defined in: generated/prisma/index.d.ts:43068
 
-***
+---
 
 ### offerId?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:43068
 
 Defined in: generated/prisma/index.d.ts:43069
 
-***
+---
 
 ### price?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:43069
 
 Defined in: generated/prisma/index.d.ts:43073
 
-***
+---
 
 ### productId?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:43073
 
 Defined in: generated/prisma/index.d.ts:43070
 
-***
+---
 
 ### quantity?
 

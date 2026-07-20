@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / UsersGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:37512
 
 Defined in: generated/prisma/index.d.ts:37528
 
-***
+---
 
 ### \_count
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:37528
 
 Defined in: generated/prisma/index.d.ts:37527
 
-***
+---
 
 ### \_max
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:37527
 
 Defined in: generated/prisma/index.d.ts:37531
 
-***
+---
 
 ### \_min
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:37531
 
 Defined in: generated/prisma/index.d.ts:37530
 
-***
+---
 
 ### \_sum
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:37530
 
 Defined in: generated/prisma/index.d.ts:37529
 
-***
+---
 
 ### createdAt
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:37529
 
 Defined in: generated/prisma/index.d.ts:37523
 
-***
+---
 
 ### email
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:37523
 
 Defined in: generated/prisma/index.d.ts:37520
 
-***
+---
 
 ### firstName
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:37520
 
 Defined in: generated/prisma/index.d.ts:37517
 
-***
+---
 
 ### id
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:37517
 
 Defined in: generated/prisma/index.d.ts:37513
 
-***
+---
 
 ### lastName
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:37513
 
 Defined in: generated/prisma/index.d.ts:37518
 
-***
+---
 
 ### orderStartNumber
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:37518
 
 Defined in: generated/prisma/index.d.ts:37524
 
-***
+---
 
 ### password
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:37524
 
 Defined in: generated/prisma/index.d.ts:37515
 
-***
+---
 
 ### phone
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:37515
 
 Defined in: generated/prisma/index.d.ts:37519
 
-***
+---
 
 ### productionOrderStartNumber
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:37519
 
 Defined in: generated/prisma/index.d.ts:37525
 
-***
+---
 
 ### role
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:37525
 
 Defined in: generated/prisma/index.d.ts:37516
 
-***
+---
 
 ### subUsers
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:37516
 
 Defined in: generated/prisma/index.d.ts:37522
 
-***
+---
 
 ### symbol
 
@@ -146,7 +146,7 @@ Defined in: generated/prisma/index.d.ts:37522
 
 Defined in: generated/prisma/index.d.ts:37521
 
-***
+---
 
 ### totalReward
 
@@ -154,7 +154,7 @@ Defined in: generated/prisma/index.d.ts:37521
 
 Defined in: generated/prisma/index.d.ts:37526
 
-***
+---
 
 ### username
 

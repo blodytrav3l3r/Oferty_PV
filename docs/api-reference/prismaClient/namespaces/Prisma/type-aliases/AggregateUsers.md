@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateUsers
 
@@ -20,7 +20,7 @@ Model users
 
 Defined in: generated/prisma/index.d.ts:37291
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:37291
 
 Defined in: generated/prisma/index.d.ts:37290
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:37290
 
 Defined in: generated/prisma/index.d.ts:37294
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:37294
 
 Defined in: generated/prisma/index.d.ts:37293
 
-***
+---
 
 ### \_sum
 

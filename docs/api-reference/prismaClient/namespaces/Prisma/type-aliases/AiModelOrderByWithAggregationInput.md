@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiModelOrderByWithAggregationInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:41423
 
 Defined in: generated/prisma/index.d.ts:41437
 
-***
+---
 
 ### \_count?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:41437
 
 Defined in: generated/prisma/index.d.ts:41436
 
-***
+---
 
 ### \_max?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:41436
 
 Defined in: generated/prisma/index.d.ts:41438
 
-***
+---
 
 ### \_min?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:41438
 
 Defined in: generated/prisma/index.d.ts:41439
 
-***
+---
 
 ### \_sum?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:41439
 
 Defined in: generated/prisma/index.d.ts:41440
 
-***
+---
 
 ### active?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:41440
 
 Defined in: generated/prisma/index.d.ts:41433
 
-***
+---
 
 ### bias?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:41433
 
 Defined in: generated/prisma/index.d.ts:41427
 
-***
+---
 
 ### createdAt?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:41427
 
 Defined in: generated/prisma/index.d.ts:41435
 
-***
+---
 
 ### featureMaxs?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:41435
 
 Defined in: generated/prisma/index.d.ts:41431
 
-***
+---
 
 ### featureMins?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:41431
 
 Defined in: generated/prisma/index.d.ts:41430
 
-***
+---
 
 ### features?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:41430
 
 Defined in: generated/prisma/index.d.ts:41429
 
-***
+---
 
 ### id?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:41429
 
 Defined in: generated/prisma/index.d.ts:41424
 
-***
+---
 
 ### metrics?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:41424
 
 Defined in: generated/prisma/index.d.ts:41428
 
-***
+---
 
 ### notes?
 
@@ -122,7 +122,7 @@ Defined in: generated/prisma/index.d.ts:41428
 
 Defined in: generated/prisma/index.d.ts:41434
 
-***
+---
 
 ### trainingRows?
 
@@ -130,7 +130,7 @@ Defined in: generated/prisma/index.d.ts:41434
 
 Defined in: generated/prisma/index.d.ts:41432
 
-***
+---
 
 ### version?
 
@@ -138,7 +138,7 @@ Defined in: generated/prisma/index.d.ts:41432
 
 Defined in: generated/prisma/index.d.ts:41425
 
-***
+---
 
 ### weights?
 

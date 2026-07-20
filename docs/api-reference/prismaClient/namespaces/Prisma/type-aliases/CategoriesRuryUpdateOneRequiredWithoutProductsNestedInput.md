@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesRuryUpdateOneRequiredWithoutProductsNestedInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46886
 
 Defined in: generated/prisma/index.d.ts:46890
 
-***
+---
 
 ### connectOrCreate?
 
@@ -26,23 +26,23 @@ Defined in: generated/prisma/index.d.ts:46890
 
 Defined in: generated/prisma/index.d.ts:46888
 
-***
+---
 
 ### create?
 
-> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesRuryCreateWithoutProductsInput`](CategoriesRuryCreateWithoutProductsInput.md), [`CategoriesRuryUncheckedCreateWithoutProductsInput`](CategoriesRuryUncheckedCreateWithoutProductsInput.md)\>
+> `optional` **create?**: [`XOR`](XOR.md)\<[`CategoriesRuryCreateWithoutProductsInput`](CategoriesRuryCreateWithoutProductsInput.md), [`CategoriesRuryUncheckedCreateWithoutProductsInput`](CategoriesRuryUncheckedCreateWithoutProductsInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:46887
 
-***
+---
 
 ### update?
 
-> `optional` **update?**: [`XOR`](XOR.md)\<[`XOR`](XOR.md)\<[`CategoriesRuryUpdateToOneWithWhereWithoutProductsInput`](CategoriesRuryUpdateToOneWithWhereWithoutProductsInput.md), [`CategoriesRuryUpdateWithoutProductsInput`](CategoriesRuryUpdateWithoutProductsInput.md)\>, [`CategoriesRuryUncheckedUpdateWithoutProductsInput`](CategoriesRuryUncheckedUpdateWithoutProductsInput.md)\>
+> `optional` **update?**: [`XOR`](XOR.md)\<[`XOR`](XOR.md)\<[`CategoriesRuryUpdateToOneWithWhereWithoutProductsInput`](CategoriesRuryUpdateToOneWithWhereWithoutProductsInput.md), [`CategoriesRuryUpdateWithoutProductsInput`](CategoriesRuryUpdateWithoutProductsInput.md)>\>, [`CategoriesRuryUncheckedUpdateWithoutProductsInput`](CategoriesRuryUncheckedUpdateWithoutProductsInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:46891
 
-***
+---
 
 ### upsert?
 

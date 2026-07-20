@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRurySelectUpdateManyAndReturn
 
 # Type Alias: ProductsRurySelectUpdateManyAndReturn\<ExtArgs\>
 
-> **ProductsRurySelectUpdateManyAndReturn**\<`ExtArgs`\> = `$Extensions.GetSelect`\<\{ `area?`: `boolean`; `category?`: `boolean`; `category_rel?`: `boolean` \| [`CategoriesRuryDefaultArgs`](CategoriesRuryDefaultArgs.md)\<`ExtArgs`\>; `id?`: `boolean`; `name?`: `boolean`; `price?`: `boolean`; `transport?`: `boolean`; `weight?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"productsRury"`\]\>
+> **ProductsRurySelectUpdateManyAndReturn**\<`ExtArgs`> \> = `$Extensions.GetSelect`\<\{ `area?`: `boolean`; `category?`: `boolean`; `category_rel?`: `boolean` \| [`CategoriesRuryDefaultArgs`](CategoriesRuryDefaultArgs.md)\<`ExtArgs`>\>; `id?`: `boolean`; `name?`: `boolean`; `price?`: `boolean`; `transport?`: `boolean`; `weight?`: `boolean`; \}, `ExtArgs`\[`"result"`\]\[`"productsRury"`\]\>
 
 Defined in: generated/prisma/index.d.ts:29161
 
@@ -14,4 +14,4 @@ Defined in: generated/prisma/index.d.ts:29161
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

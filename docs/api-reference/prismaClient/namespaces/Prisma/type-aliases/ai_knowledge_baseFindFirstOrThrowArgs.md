@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_knowledge\_baseFindFirstOrThrowArgs
 
 # Type Alias: ai\_knowledge\_baseFindFirstOrThrowArgs\<ExtArgs\>
 
-> **ai\_knowledge\_baseFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **ai\_knowledge\_baseFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:9685
 
@@ -16,7 +16,7 @@ ai_knowledge_base findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:9709
 
 Sets the position for searching for ai_knowledge_bases.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:9727
 
 Filter by unique combinations of ai_knowledge_bases.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`ai_knowledge_baseOmit`](ai_knowledge_baseOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`ai_knowledge_baseOmit`](ai_knowledge_baseOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:9693
 
 Omit specific fields from the ai_knowledge_base
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:9703
 
 Determine the order of ai_knowledge_bases to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`ai_knowledge_baseSelect`](ai_knowledge_baseSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`ai_knowledge_baseSelect`](ai_knowledge_baseSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:9689
 
 Select specific fields to fetch from the ai_knowledge_base
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:9721
 
 Skip the first `n` ai_knowledge_bases.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:9715
 
 Take `±n` ai_knowledge_bases from the position of the cursor.
 
-***
+---
 
 ### where?
 

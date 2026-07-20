@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ai\_telemetry\_logsFindFirstOrThrowArgs
 
 # Type Alias: ai\_telemetry\_logsFindFirstOrThrowArgs\<ExtArgs\>
 
-> **ai\_telemetry\_logsFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **ai\_telemetry\_logsFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:5184
 
@@ -16,7 +16,7 @@ ai_telemetry_logs findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:5208
 
 Sets the position for searching for ai_telemetry_logs.
 
-***
+---
 
 ### distinct?
 
@@ -42,17 +42,17 @@ Defined in: generated/prisma/index.d.ts:5226
 
 Filter by unique combinations of ai_telemetry_logs.
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`ai_telemetry_logsOmit`](ai_telemetry_logsOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`ai_telemetry_logsOmit`](ai_telemetry_logsOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:5192
 
 Omit specific fields from the ai_telemetry_logs
 
-***
+---
 
 ### orderBy?
 
@@ -64,17 +64,17 @@ Defined in: generated/prisma/index.d.ts:5202
 
 Determine the order of ai_telemetry_logs to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`ai_telemetry_logsSelect`](ai_telemetry_logsSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`ai_telemetry_logsSelect`](ai_telemetry_logsSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:5188
 
 Select specific fields to fetch from the ai_telemetry_logs
 
-***
+---
 
 ### skip?
 
@@ -86,7 +86,7 @@ Defined in: generated/prisma/index.d.ts:5220
 
 Skip the first `n` ai_telemetry_logs.
 
-***
+---
 
 ### take?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:5214
 
 Take `±n` ai_telemetry_logs from the position of the cursor.
 
-***
+---
 
 ### where?
 

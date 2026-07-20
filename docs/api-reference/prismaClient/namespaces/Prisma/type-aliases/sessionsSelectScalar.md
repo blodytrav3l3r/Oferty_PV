@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / sessionsSelectScalar
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:26099
 
 Defined in: generated/prisma/index.d.ts:26102
 
-***
+---
 
 ### token?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:26102
 
 Defined in: generated/prisma/index.d.ts:26100
 
-***
+---
 
 ### userId?
 

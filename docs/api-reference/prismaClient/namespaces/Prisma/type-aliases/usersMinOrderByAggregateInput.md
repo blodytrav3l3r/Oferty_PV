@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / usersMinOrderByAggregateInput
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:46763
 
 Defined in: generated/prisma/index.d.ts:46774
 
-***
+---
 
 ### email?
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:46774
 
 Defined in: generated/prisma/index.d.ts:46771
 
-***
+---
 
 ### firstName?
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:46771
 
 Defined in: generated/prisma/index.d.ts:46768
 
-***
+---
 
 ### id?
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:46768
 
 Defined in: generated/prisma/index.d.ts:46764
 
-***
+---
 
 ### lastName?
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:46764
 
 Defined in: generated/prisma/index.d.ts:46769
 
-***
+---
 
 ### orderStartNumber?
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:46769
 
 Defined in: generated/prisma/index.d.ts:46775
 
-***
+---
 
 ### password?
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:46775
 
 Defined in: generated/prisma/index.d.ts:46766
 
-***
+---
 
 ### phone?
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:46766
 
 Defined in: generated/prisma/index.d.ts:46770
 
-***
+---
 
 ### productionOrderStartNumber?
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:46770
 
 Defined in: generated/prisma/index.d.ts:46776
 
-***
+---
 
 ### role?
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:46776
 
 Defined in: generated/prisma/index.d.ts:46767
 
-***
+---
 
 ### subUsers?
 
@@ -98,7 +98,7 @@ Defined in: generated/prisma/index.d.ts:46767
 
 Defined in: generated/prisma/index.d.ts:46773
 
-***
+---
 
 ### symbol?
 
@@ -106,7 +106,7 @@ Defined in: generated/prisma/index.d.ts:46773
 
 Defined in: generated/prisma/index.d.ts:46772
 
-***
+---
 
 ### totalReward?
 
@@ -114,7 +114,7 @@ Defined in: generated/prisma/index.d.ts:46772
 
 Defined in: generated/prisma/index.d.ts:46777
 
-***
+---
 
 ### username?
 

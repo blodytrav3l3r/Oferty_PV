@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Ai\_telemetry\_versionsGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:7869
 
 Defined in: generated/prisma/index.d.ts:7878
 
-***
+---
 
 ### \_max
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:7878
 
 Defined in: generated/prisma/index.d.ts:7880
 
-***
+---
 
 ### \_min
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:7880
 
 Defined in: generated/prisma/index.d.ts:7879
 
-***
+---
 
 ### appliedFrom
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:7879
 
 Defined in: generated/prisma/index.d.ts:7876
 
-***
+---
 
 ### componentType
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:7876
 
 Defined in: generated/prisma/index.d.ts:7871
 
-***
+---
 
 ### createdAt
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:7871
 
 Defined in: generated/prisma/index.d.ts:7877
 
-***
+---
 
 ### description
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:7877
 
 Defined in: generated/prisma/index.d.ts:7873
 
-***
+---
 
 ### id
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:7873
 
 Defined in: generated/prisma/index.d.ts:7870
 
-***
+---
 
 ### isActive
 
@@ -82,7 +82,7 @@ Defined in: generated/prisma/index.d.ts:7870
 
 Defined in: generated/prisma/index.d.ts:7875
 
-***
+---
 
 ### schemaVersion
 
@@ -90,7 +90,7 @@ Defined in: generated/prisma/index.d.ts:7875
 
 Defined in: generated/prisma/index.d.ts:7874
 
-***
+---
 
 ### version
 

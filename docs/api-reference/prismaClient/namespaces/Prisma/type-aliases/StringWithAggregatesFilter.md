@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / StringWithAggregatesFilter
 
 # Type Alias: StringWithAggregatesFilter\<$PrismaModel\>
 
-> **StringWithAggregatesFilter**\<`$PrismaModel`\> = `object`
+> **StringWithAggregatesFilter**\<`$PrismaModel`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:45116
 
@@ -20,67 +20,67 @@ Defined in: generated/prisma/index.d.ts:45116
 
 ### \_count?
 
-> `optional` **\_count?**: [`NestedIntFilter`](NestedIntFilter.md)\<`$PrismaModel`\>
+> `optional` **\_count?**: [`NestedIntFilter`](NestedIntFilter.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45128
 
-***
+---
 
 ### \_max?
 
-> `optional` **\_max?**: [`NestedStringFilter`](NestedStringFilter.md)\<`$PrismaModel`\>
+> `optional` **\_max?**: [`NestedStringFilter`](NestedStringFilter.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45130
 
-***
+---
 
 ### \_min?
 
-> `optional` **\_min?**: [`NestedStringFilter`](NestedStringFilter.md)\<`$PrismaModel`\>
+> `optional` **\_min?**: [`NestedStringFilter`](NestedStringFilter.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45129
 
-***
+---
 
 ### contains?
 
-> `optional` **contains?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **contains?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45124
 
-***
+---
 
 ### endsWith?
 
-> `optional` **endsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **endsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45126
 
-***
+---
 
 ### equals?
 
-> `optional` **equals?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **equals?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45117
 
-***
+---
 
 ### gt?
 
-> `optional` **gt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45122
 
-***
+---
 
 ### gte?
 
-> `optional` **gte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **gte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45123
 
-***
+---
 
 ### in?
 
@@ -88,31 +88,31 @@ Defined in: generated/prisma/index.d.ts:45123
 
 Defined in: generated/prisma/index.d.ts:45118
 
-***
+---
 
 ### lt?
 
-> `optional` **lt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lt?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45120
 
-***
+---
 
 ### lte?
 
-> `optional` **lte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **lte?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45121
 
-***
+---
 
 ### not?
 
-> `optional` **not?**: [`NestedStringWithAggregatesFilter`](NestedStringWithAggregatesFilter.md)\<`$PrismaModel`\> \| `string`
+> `optional` **not?**: [`NestedStringWithAggregatesFilter`](NestedStringWithAggregatesFilter.md)\<`$PrismaModel`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:45127
 
-***
+---
 
 ### notIn?
 
@@ -120,10 +120,10 @@ Defined in: generated/prisma/index.d.ts:45127
 
 Defined in: generated/prisma/index.d.ts:45119
 
-***
+---
 
 ### startsWith?
 
-> `optional` **startsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`\>
+> `optional` **startsWith?**: `string` \| [`StringFieldRefInput`](StringFieldRefInput.md)\<`$PrismaModel`>\>
 
 Defined in: generated/prisma/index.d.ts:45125

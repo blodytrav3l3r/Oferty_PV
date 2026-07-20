@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_studnie\_relGroupByArgs
 
 # Type Alias: orders\_studnie\_relGroupByArgs\<ExtArgs\>
 
-> **orders\_studnie\_relGroupByArgs**\<`ExtArgs`\> = `object`
+> **orders\_studnie\_relGroupByArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:20929
 
@@ -14,7 +14,7 @@ Defined in: generated/prisma/index.d.ts:20929
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/index.d.ts:20929
 
 Defined in: generated/prisma/index.d.ts:20936
 
-***
+---
 
 ### \_max?
 
@@ -32,7 +32,7 @@ Defined in: generated/prisma/index.d.ts:20936
 
 Defined in: generated/prisma/index.d.ts:20938
 
-***
+---
 
 ### \_min?
 
@@ -40,7 +40,7 @@ Defined in: generated/prisma/index.d.ts:20938
 
 Defined in: generated/prisma/index.d.ts:20937
 
-***
+---
 
 ### by
 
@@ -48,7 +48,7 @@ Defined in: generated/prisma/index.d.ts:20937
 
 Defined in: generated/prisma/index.d.ts:20932
 
-***
+---
 
 ### having?
 
@@ -56,7 +56,7 @@ Defined in: generated/prisma/index.d.ts:20932
 
 Defined in: generated/prisma/index.d.ts:20933
 
-***
+---
 
 ### orderBy?
 
@@ -64,7 +64,7 @@ Defined in: generated/prisma/index.d.ts:20933
 
 Defined in: generated/prisma/index.d.ts:20931
 
-***
+---
 
 ### skip?
 
@@ -72,7 +72,7 @@ Defined in: generated/prisma/index.d.ts:20931
 
 Defined in: generated/prisma/index.d.ts:20935
 
-***
+---
 
 ### take?
 
@@ -80,7 +80,7 @@ Defined in: generated/prisma/index.d.ts:20935
 
 Defined in: generated/prisma/index.d.ts:20934
 
-***
+---
 
 ### where?
 

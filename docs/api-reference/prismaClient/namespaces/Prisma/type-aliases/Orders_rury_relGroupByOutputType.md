@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Orders\_rury\_relGroupByOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:21947
 
 Defined in: generated/prisma/index.d.ts:21954
 
-***
+---
 
 ### \_max
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:21954
 
 Defined in: generated/prisma/index.d.ts:21956
 
-***
+---
 
 ### \_min
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:21956
 
 Defined in: generated/prisma/index.d.ts:21955
 
-***
+---
 
 ### createdAt
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:21955
 
 Defined in: generated/prisma/index.d.ts:21951
 
-***
+---
 
 ### data
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:21951
 
 Defined in: generated/prisma/index.d.ts:21953
 
-***
+---
 
 ### id
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:21953
 
 Defined in: generated/prisma/index.d.ts:21948
 
-***
+---
 
 ### offerId
 
@@ -66,7 +66,7 @@ Defined in: generated/prisma/index.d.ts:21948
 
 Defined in: generated/prisma/index.d.ts:21950
 
-***
+---
 
 ### status
 
@@ -74,7 +74,7 @@ Defined in: generated/prisma/index.d.ts:21950
 
 Defined in: generated/prisma/index.d.ts:21952
 
-***
+---
 
 ### userId
 

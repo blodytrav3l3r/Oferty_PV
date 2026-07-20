@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / audit\_logsCountArgs
 
 # Type Alias: audit\_logsCountArgs\<ExtArgs\>
 
-> **audit\_logsCountArgs**\<`ExtArgs`\> = `Omit`\<[`audit_logsFindManyArgs`](audit_logsFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`\> & `object`
+> **audit\_logsCountArgs**\<`ExtArgs`> \> = `Omit`\<[`audit_logsFindManyArgs`](audit_logsFindManyArgs.md), `"select"` \| `"include"` \| `"distinct"` \| `"omit"`> \> & `object`
 
 Defined in: generated/prisma/index.d.ts:12561
 
@@ -20,4 +20,4 @@ Defined in: generated/prisma/index.d.ts:12561
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`

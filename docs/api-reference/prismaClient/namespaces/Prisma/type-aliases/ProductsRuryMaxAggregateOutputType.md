@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / ProductsRuryMaxAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:28957
 
 Defined in: generated/prisma/index.d.ts:28964
 
-***
+---
 
 ### category
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:28964
 
 Defined in: generated/prisma/index.d.ts:28960
 
-***
+---
 
 ### id
 
@@ -34,7 +34,7 @@ Defined in: generated/prisma/index.d.ts:28960
 
 Defined in: generated/prisma/index.d.ts:28958
 
-***
+---
 
 ### name
 
@@ -42,7 +42,7 @@ Defined in: generated/prisma/index.d.ts:28958
 
 Defined in: generated/prisma/index.d.ts:28959
 
-***
+---
 
 ### price
 
@@ -50,7 +50,7 @@ Defined in: generated/prisma/index.d.ts:28959
 
 Defined in: generated/prisma/index.d.ts:28961
 
-***
+---
 
 ### transport
 
@@ -58,7 +58,7 @@ Defined in: generated/prisma/index.d.ts:28961
 
 Defined in: generated/prisma/index.d.ts:28962
 
-***
+---
 
 ### weight
 

@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / TypeMapCb
 
@@ -34,11 +34,11 @@ Defined in: generated/prisma/runtime/library.d.ts:1432
 
 `$Utils.Fn.params`
 
-***
+---
 
 ### returns
 
-> **returns**: [`TypeMap`](../type-aliases/TypeMap.md)\<`InternalArgs`, `ClientOptions` *extends* `object` ? `OmitOptions` : `object`\>
+> **returns**: [`TypeMap`](../type-aliases/TypeMap.md)\<`InternalArgs`, `ClientOptions` _extends_ `object` ? `OmitOptions` : `object`>\>
 
 Defined in: generated/prisma/index.d.ts:1081
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / CategoriesStudnieFindFirstOrThrowArgs
 
 # Type Alias: CategoriesStudnieFindFirstOrThrowArgs\<ExtArgs\>
 
-> **CategoriesStudnieFindFirstOrThrowArgs**\<`ExtArgs`\> = `object`
+> **CategoriesStudnieFindFirstOrThrowArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:30800
 
@@ -16,7 +16,7 @@ CategoriesStudnie findFirstOrThrow
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
@@ -30,7 +30,7 @@ Defined in: generated/prisma/index.d.ts:30828
 
 Sets the position for searching for CategoriesStudnies.
 
-***
+---
 
 ### distinct?
 
@@ -42,27 +42,27 @@ Defined in: generated/prisma/index.d.ts:30846
 
 Filter by unique combinations of CategoriesStudnies.
 
-***
+---
 
 ### include?
 
-> `optional` **include?**: [`CategoriesStudnieInclude`](CategoriesStudnieInclude.md)\<`ExtArgs`\> \| `null`
+> `optional` **include?**: [`CategoriesStudnieInclude`](CategoriesStudnieInclude.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:30812
 
 Choose, which related nodes to fetch as well
 
-***
+---
 
 ### omit?
 
-> `optional` **omit?**: [`CategoriesStudnieOmit`](CategoriesStudnieOmit.md)\<`ExtArgs`\> \| `null`
+> `optional` **omit?**: [`CategoriesStudnieOmit`](CategoriesStudnieOmit.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:30808
 
 Omit specific fields from the CategoriesStudnie
 
-***
+---
 
 ### orderBy?
 
@@ -74,17 +74,17 @@ Defined in: generated/prisma/index.d.ts:30822
 
 Determine the order of CategoriesStudnies to fetch.
 
-***
+---
 
 ### select?
 
-> `optional` **select?**: [`CategoriesStudnieSelect`](CategoriesStudnieSelect.md)\<`ExtArgs`\> \| `null`
+> `optional` **select?**: [`CategoriesStudnieSelect`](CategoriesStudnieSelect.md)\<`ExtArgs`> \> \| `null`
 
 Defined in: generated/prisma/index.d.ts:30804
 
 Select specific fields to fetch from the CategoriesStudnie
 
-***
+---
 
 ### skip?
 
@@ -96,7 +96,7 @@ Defined in: generated/prisma/index.d.ts:30840
 
 Skip the first `n` CategoriesStudnies.
 
-***
+---
 
 ### take?
 
@@ -108,7 +108,7 @@ Defined in: generated/prisma/index.d.ts:30834
 
 Take `±n` CategoriesStudnies from the position of the cursor.
 
-***
+---
 
 ### where?
 

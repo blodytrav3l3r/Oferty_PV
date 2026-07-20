@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AiFeatureUpdateManyArgs
 
 # Type Alias: AiFeatureUpdateManyArgs\<ExtArgs\>
 
-> **AiFeatureUpdateManyArgs**\<`ExtArgs`\> = `object`
+> **AiFeatureUpdateManyArgs**\<`ExtArgs`> \> = `object`
 
 Defined in: generated/prisma/index.d.ts:33867
 
@@ -16,19 +16,19 @@ AiFeature updateMany
 
 ### ExtArgs
 
-`ExtArgs` *extends* `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
+`ExtArgs` _extends_ `$Extensions.InternalArgs` = `$Extensions.DefaultArgs`
 
 ## Properties
 
 ### data
 
-> **data**: [`XOR`](XOR.md)\<[`AiFeatureUpdateManyMutationInput`](AiFeatureUpdateManyMutationInput.md), [`AiFeatureUncheckedUpdateManyInput`](AiFeatureUncheckedUpdateManyInput.md)\>
+> **data**: [`XOR`](XOR.md)\<[`AiFeatureUpdateManyMutationInput`](AiFeatureUpdateManyMutationInput.md), [`AiFeatureUncheckedUpdateManyInput`](AiFeatureUncheckedUpdateManyInput.md)>\>
 
 Defined in: generated/prisma/index.d.ts:33871
 
 The data used to update AiFeatures.
 
-***
+---
 
 ### limit?
 
@@ -38,7 +38,7 @@ Defined in: generated/prisma/index.d.ts:33879
 
 Limit how many AiFeatures to update.
 
-***
+---
 
 ### where?
 

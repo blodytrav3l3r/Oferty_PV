@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / validator
 
@@ -8,7 +8,7 @@
 
 ## Call Signature
 
-> **validator**\<`V`\>(): \<`S`\>(`select`) => `S`
+> **validator**\<`V`>\>(): \<`S`>\>(`select`) => `S`
 
 Defined in: generated/prisma/runtime/library.d.ts:3967
 
@@ -24,7 +24,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3967
 
 ## Call Signature
 
-> **validator**\<`C`, `M`, `O`\>(`client`, `model`, `operation`): \<`S`\>(`select`) => `S`
+> **validator**\<`C`, `M`, `O`>\>(`client`, `model`, `operation`): \<`S`>\>(`select`) => `S`
 
 Defined in: generated/prisma/runtime/library.d.ts:3969
 
@@ -36,11 +36,11 @@ Defined in: generated/prisma/runtime/library.d.ts:3969
 
 #### M
 
-`M` *extends* `string` \| `number` \| `symbol`
+`M` _extends_ `string` \| `number` \| `symbol`
 
 #### O
 
-`O` *extends* `"findFirst"` \| `"findMany"` \| `"count"` \| `"findUnique"` \| `"findUniqueOrThrow"` \| `"findFirstOrThrow"` \| `"create"` \| `"createManyAndReturn"` \| `"delete"` \| `"update"` \| `"updateManyAndReturn"` \| `"upsert"` \| `"createMany"` \| `"updateMany"` \| `"deleteMany"` \| `"aggregate"` \| `"groupBy"` \| `"$queryRaw"` \| `"$executeRaw"` \| `"$queryRawUnsafe"` \| `"$executeRawUnsafe"` \| `"findRaw"` \| `"aggregateRaw"` \| `"$runCommandRaw"`
+`O` _extends_ `"findFirst"` \| `"findMany"` \| `"count"` \| `"findUnique"` \| `"findUniqueOrThrow"` \| `"findFirstOrThrow"` \| `"create"` \| `"createManyAndReturn"` \| `"delete"` \| `"update"` \| `"updateManyAndReturn"` \| `"upsert"` \| `"createMany"` \| `"updateMany"` \| `"deleteMany"` \| `"aggregate"` \| `"groupBy"` \| `"$queryRaw"` \| `"$executeRaw"` \| `"$queryRawUnsafe"` \| `"$executeRawUnsafe"` \| `"findRaw"` \| `"aggregateRaw"` \| `"$runCommandRaw"`
 
 ### Parameters
 
@@ -62,7 +62,7 @@ Defined in: generated/prisma/runtime/library.d.ts:3969
 
 ## Call Signature
 
-> **validator**\<`C`, `M`, `O`, `P`\>(`client`, `model`, `operation`, `prop`): \<`S`\>(`select`) => `S`
+> **validator**\<`C`, `M`, `O`, `P`>\>(`client`, `model`, `operation`, `prop`): \<`S`>\>(`select`) => `S`
 
 Defined in: generated/prisma/runtime/library.d.ts:3971
 
@@ -74,15 +74,15 @@ Defined in: generated/prisma/runtime/library.d.ts:3971
 
 #### M
 
-`M` *extends* `string` \| `number` \| `symbol`
+`M` _extends_ `string` \| `number` \| `symbol`
 
 #### O
 
-`O` *extends* `"findFirst"` \| `"findMany"` \| `"count"` \| `"findUnique"` \| `"findUniqueOrThrow"` \| `"findFirstOrThrow"` \| `"create"` \| `"createManyAndReturn"` \| `"delete"` \| `"update"` \| `"updateManyAndReturn"` \| `"upsert"` \| `"createMany"` \| `"updateMany"` \| `"deleteMany"` \| `"aggregate"` \| `"groupBy"` \| `"$queryRaw"` \| `"$executeRaw"` \| `"$queryRawUnsafe"` \| `"$executeRawUnsafe"` \| `"findRaw"` \| `"aggregateRaw"` \| `"$runCommandRaw"`
+`O` _extends_ `"findFirst"` \| `"findMany"` \| `"count"` \| `"findUnique"` \| `"findUniqueOrThrow"` \| `"findFirstOrThrow"` \| `"create"` \| `"createManyAndReturn"` \| `"delete"` \| `"update"` \| `"updateManyAndReturn"` \| `"upsert"` \| `"createMany"` \| `"updateMany"` \| `"deleteMany"` \| `"aggregate"` \| `"groupBy"` \| `"$queryRaw"` \| `"$executeRaw"` \| `"$queryRawUnsafe"` \| `"$executeRawUnsafe"` \| `"findRaw"` \| `"aggregateRaw"` \| `"$runCommandRaw"`
 
 #### P
 
-`P` *extends* `string` \| `number` \| `symbol`
+`P` _extends_ `string` \| `number` \| `symbol`
 
 ### Parameters
 

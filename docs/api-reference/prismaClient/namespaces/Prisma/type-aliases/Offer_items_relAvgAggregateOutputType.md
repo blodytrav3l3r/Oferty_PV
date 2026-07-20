@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / Offer\_items\_relAvgAggregateOutputType
 
@@ -18,7 +18,7 @@ Defined in: generated/prisma/index.d.ts:14433
 
 Defined in: generated/prisma/index.d.ts:14435
 
-***
+---
 
 ### price
 
@@ -26,7 +26,7 @@ Defined in: generated/prisma/index.d.ts:14435
 
 Defined in: generated/prisma/index.d.ts:14436
 
-***
+---
 
 ### quantity
 

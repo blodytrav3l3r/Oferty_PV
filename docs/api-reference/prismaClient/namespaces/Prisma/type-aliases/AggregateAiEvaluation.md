@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateAiEvaluation
 
@@ -20,7 +20,7 @@ Model AiEvaluation
 
 Defined in: generated/prisma/index.d.ts:35109
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:35109
 
 Defined in: generated/prisma/index.d.ts:35108
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:35108
 
 Defined in: generated/prisma/index.d.ts:35112
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:35112
 
 Defined in: generated/prisma/index.d.ts:35111
 
-***
+---
 
 ### \_sum
 

@@ -1,12 +1,12 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../../README.md) / [services/telemetry/learning/KnowledgeBase](../README.md) / KnowledgeBase
 
 # Class: KnowledgeBase
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:47](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L47)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:47](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L47)
 
 ## Constructors
 
@@ -22,9 +22,9 @@ Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:47](https://github
 
 ### archivePattern()
 
-> **archivePattern**(`id`): `Promise`\<`void`\>
+> **archivePattern**(`id`): `Promise`\<`void`>\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:297](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L297)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:297](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L297)
 
 Oznacz wzorzec jako 'stale' (nieużywany od dawna).
 
@@ -38,13 +38,13 @@ Oznacz wzorzec jako 'stale' (nieużywany od dawna).
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### decideRecommendation()
 
-> **decideRecommendation**(`id`, `accepted`, `decidedBy`): `Promise`\<`void`\>
+> **decideRecommendation**(`id`, `accepted`, `decidedBy`): `Promise`\<`void`>\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:191](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L191)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:191](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L191)
 
 Oznacz rekomendację jako zaakceptowaną/odrzuconą (pasywne — nie wpływa na solver).
 
@@ -66,13 +66,13 @@ Oznacz rekomendację jako zaakceptowaną/odrzuconą (pasywne — nie wpływa na 
 
 `Promise`\<`void`\>
 
-***
+---
 
 ### getPatternsForDn()
 
 > **getPatternsForDn**(`dn`, `minConfidence?`): `Promise`\<[`KnowledgePattern`](../interfaces/KnowledgePattern.md)[]\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:128](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L128)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:128](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L128)
 
 Lista wzorców wg DN (do rekomendacji).
 
@@ -90,13 +90,13 @@ Lista wzorców wg DN (do rekomendacji).
 
 `Promise`\<[`KnowledgePattern`](../interfaces/KnowledgePattern.md)[]\>
 
-***
+---
 
 ### getStats()
 
-> **getStats**(): `Promise`\<\{ `acceptedRecommendations`: `number`; `active`: `number`; `archived`: `number`; `avgConfidence`: `number`; `byPatternType`: `Record`\<`string`, `number`\>; `recentDetected`: `number`; `rejectedRecommendations`: `number`; `stale`: `number`; `total`: `number`; `totalRecommendations`: `number`; \}\>
+> **getStats**(): `Promise`\<\{ `acceptedRecommendations`: `number`; `active`: `number`; `archived`: `number`; `avgConfidence`: `number`; `byPatternType`: `Record`\<`string`, `number`>\>; `recentDetected`: `number`; `rejectedRecommendations`: `number`; `stale`: `number`; `total`: `number`; `totalRecommendations`: `number`; \}\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:210](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L210)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:210](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L210)
 
 Statystyki bazy wiedzy do dashboardu.
 
@@ -104,13 +104,13 @@ Statystyki bazy wiedzy do dashboardu.
 
 `Promise`\<\{ `acceptedRecommendations`: `number`; `active`: `number`; `archived`: `number`; `avgConfidence`: `number`; `byPatternType`: `Record`\<`string`, `number`\>; `recentDetected`: `number`; `rejectedRecommendations`: `number`; `stale`: `number`; `total`: `number`; `totalRecommendations`: `number`; \}\>
 
-***
+---
 
 ### recordRecommendation()
 
-> **recordRecommendation**(`rec`): `Promise`\<`string`\>
+> **recordRecommendation**(`rec`): `Promise`\<`string`>\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:164](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L164)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:164](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L164)
 
 Zapis rekomendacji w tabeli.
 
@@ -124,13 +124,13 @@ Zapis rekomendacji w tabeli.
 
 `Promise`\<`string`\>
 
-***
+---
 
 ### upsertPattern()
 
-> **upsertPattern**(`pattern`): `Promise`\<`string`\>
+> **upsertPattern**(`pattern`): `Promise`\<`string`>\>
 
-Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:51](https://github.com/blodytrav3l3r/Oferty_PV/blob/31aceca21d78721aaaf4b7ce00f0688e6197beec/src/services/telemetry/learning/KnowledgeBase.ts#L51)
+Defined in: [src/services/telemetry/learning/KnowledgeBase.ts:51](https://github.com/blodytrav3l3r/Oferty_PV/blob/1ea8d64735797c220332cd09d00dac564c72e93c/src/services/telemetry/learning/KnowledgeBase.ts#L51)
 
 Upsert wzorca - jeśli patternKey istnieje, aktualizuj; wpp wstaw.
 

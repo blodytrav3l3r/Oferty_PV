@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / orders\_rury\_relScalarWhereWithAggregatesInput
 
@@ -18,31 +18,31 @@ Defined in: generated/prisma/index.d.ts:40613
 
 Defined in: generated/prisma/index.d.ts:40614
 
-***
+---
 
 ### createdAt?
 
-> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string` \| `null`
+> `optional` **createdAt?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40620
 
-***
+---
 
 ### data?
 
-> `optional` **data?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string` \| `null`
+> `optional` **data?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40622
 
-***
+---
 
 ### id?
 
-> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string`
+> `optional` **id?**: [`StringWithAggregatesFilter`](StringWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string`
 
 Defined in: generated/prisma/index.d.ts:40617
 
-***
+---
 
 ### NOT?
 
@@ -50,15 +50,15 @@ Defined in: generated/prisma/index.d.ts:40617
 
 Defined in: generated/prisma/index.d.ts:40616
 
-***
+---
 
 ### offerId?
 
-> `optional` **offerId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string` \| `null`
+> `optional` **offerId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40619
 
-***
+---
 
 ### OR?
 
@@ -66,18 +66,18 @@ Defined in: generated/prisma/index.d.ts:40619
 
 Defined in: generated/prisma/index.d.ts:40615
 
-***
+---
 
 ### status?
 
-> `optional` **status?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string` \| `null`
+> `optional` **status?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40621
 
-***
+---
 
 ### userId?
 
-> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`\> \| `string` \| `null`
+> `optional` **userId?**: [`StringNullableWithAggregatesFilter`](StringNullableWithAggregatesFilter.md)\<`"orders_rury_rel"`> \> \| `string` \| `null`
 
 Defined in: generated/prisma/index.d.ts:40618

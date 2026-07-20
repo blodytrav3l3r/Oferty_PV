@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../README.md) / validators/offerSchemas
 
@@ -16,14 +16,14 @@ przy tworzeniu, aktualizacji i walidacji danych wejściowych API.
 ```ts
 // Walidacja pojedynczej oferty
 const result = offerCreateSchema.safeParse({
-  clientId: 'client-123',
-  items: [{ productId: 'prod-1', quantity: 5, price: 100 }]
+    clientId: 'client-123',
+    items: [{ productId: 'prod-1', quantity: 5, price: 100 }]
 });
 
 if (result.success) {
-  console.log('Dane poprawne:', result.data);
+    console.log('Dane poprawne:', result.data);
 } else {
-  console.error('Błędy walidacji:', result.error.issues);
+    console.error('Błędy walidacji:', result.error.issues);
 }
 ```
 

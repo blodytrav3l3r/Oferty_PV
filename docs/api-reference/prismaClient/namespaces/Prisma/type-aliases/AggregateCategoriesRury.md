@@ -1,6 +1,6 @@
 [**WITROS Oferty PV — Backend API Reference v1.8.0**](../../../../README.md)
 
-***
+---
 
 [WITROS Oferty PV — Backend API Reference](../../../../README.md) / [prismaClient](../../../README.md) / [Prisma](../README.md) / AggregateCategoriesRury
 
@@ -20,7 +20,7 @@ Model CategoriesRury
 
 Defined in: generated/prisma/index.d.ts:27864
 
-***
+---
 
 ### \_count
 
@@ -28,7 +28,7 @@ Defined in: generated/prisma/index.d.ts:27864
 
 Defined in: generated/prisma/index.d.ts:27863
 
-***
+---
 
 ### \_max
 
@@ -36,7 +36,7 @@ Defined in: generated/prisma/index.d.ts:27863
 
 Defined in: generated/prisma/index.d.ts:27867
 
-***
+---
 
 ### \_min
 
@@ -44,7 +44,7 @@ Defined in: generated/prisma/index.d.ts:27867
 
 Defined in: generated/prisma/index.d.ts:27866
 
-***
+---
 
 ### \_sum
 
