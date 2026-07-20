@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  build.bat - Budowanie production bundle (final)
+REM  build.bat - Budowanie production bundle
 REM ===========================================================
 
 setlocal
@@ -18,12 +18,23 @@ where node >nul 2>nul || (
     exit /b 1
 )
 
-REM npm ci jesli brak node_modules
-if not exist "node_modules" (
-    echo [INFO] npm ci...
-    call npm ci --no-audit --no-fund
+REM .env
+if not exist ".env" (
+    echo [INFO] Brak .env - kopiuje z .env.example...
+    copy .env.example .env >nul
     if errorlevel 1 (
-        echo [BLAD] npm ci nie powiodl sie.
+        echo [BLAD] Nie udalo sie utworzyc .env.
+        pause
+        exit /b 1
+    )
+)
+
+REM npm install (zabezpieczenie przed brakiem lockfile)
+if not exist "node_modules" (
+    echo [INFO] Instaluje zaleznosci...
+    call npm install --no-audit --no-fund
+    if errorlevel 1 (
+        echo [BLAD] npm install nie powiodl sie.
         pause
         exit /b 1
     )

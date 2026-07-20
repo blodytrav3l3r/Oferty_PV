@@ -1,6 +1,6 @@
 @echo off
 REM ===========================================================
-REM  prod.bat - Production server start (final)
+REM  prod.bat - Production server start
 REM ===========================================================
 
 setlocal ENABLEDELAYEDEXPANSION
@@ -17,7 +17,55 @@ where node >nul 2>nul || (
     exit /b 1
 )
 
-REM Czy jest dist\server.js?
+REM ---- 1. .env ----
+if not exist ".env" (
+    if exist ".env.example" (
+        echo [INFO] Brak .env - kopiuje z .env.example...
+        copy .env.example .env >nul
+        if errorlevel 1 (
+            echo [BLAD] Nie udalo sie utworzyc .env.
+            pause
+            exit /b 1
+        )
+        echo [OK] .env utworzony
+    ) else (
+        echo [BLAD] Brak .env.example. Utworz .env recznie.
+        pause
+        exit /b 1
+    )
+)
+
+REM ---- 2. node_modules ----
+if not exist "node_modules" (
+    echo [INFO] Brak node_modules. Instaluje...
+    call npm install --no-audit --no-fund
+    if errorlevel 1 (
+        echo [BLAD] npm install nie powiodl sie.
+        pause
+        exit /b 1
+    )
+)
+
+REM ---- 3. Prisma Client ----
+if not exist "generated\prisma\index.d.ts" (
+    echo [INFO] Generuje Prisma Client...
+    call npx prisma generate
+    if errorlevel 1 (
+        echo [BLAD] prisma generate nie powiodl sie.
+        pause
+        exit /b 1
+    )
+)
+
+REM ---- 4. Schema DB ----
+echo [INFO] Sprawdzanie schematu bazy...
+call node scripts/check-db.js >nul 2>nul
+if errorlevel 1 (
+    echo [INFO] Migracja bazy danych...
+    call npx prisma db push --skip-generate --accept-data-loss >nul 2>nul
+)
+
+REM ---- 5. dist (build) ----
 if not exist "dist\server.js" (
     echo [INFO] Brak dist - budowanie...
     call build.bat
@@ -29,14 +77,16 @@ if not exist "dist\server.js" (
 )
 echo [OK] dist\server.js
 
-REM Port check (PowerShell, nie netstat)
-echo [INFO] Sprawdzanie portu 3000...
+REM ---- 6. Port ----
+for /f "tokens=2 delims==" %%a in ('findstr "^PORT=" .env 2^>nul') do set "APP_PORT=%%a"
+if not defined APP_PORT set "APP_PORT=3000"
+echo [INFO] Sprawdzanie portu !APP_PORT!...
 set "PORT_PID="
-for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue).OwningProcess" 2^>nul') do (
+for /f "tokens=*" %%n in ('powershell -NoProfile -Command "(Get-NetTCPConnection -LocalPort !APP_PORT! -State Listen -ErrorAction SilentlyContinue).OwningProcess" 2^>nul') do (
     if "%%n" neq "" set "PORT_PID=%%n"
 )
 if defined PORT_PID (
-    echo [UWAGA] Port 3000 uzywany przez PID !PORT_PID!
+    echo [UWAGA] Port !APP_PORT! uzywany przez PID !PORT_PID!
     set /p "KEEP=Zatrzymac i uruchomic? [T/N]: "
     if /i "!KEEP!"=="N" (
         echo [INFO] Kontynuuje pomimo zajetego portu...
@@ -50,8 +100,8 @@ if defined PORT_PID (
 if not exist "data" mkdir data
 
 echo [INFO] npm start (Ctrl+C stop)
-echo         http://localhost:3000/health
-echo         http://localhost:3000/api/version
+echo         http://localhost:!APP_PORT!/health
+echo         http://localhost:!APP_PORT!/api/version
 echo.
 call npm start
 

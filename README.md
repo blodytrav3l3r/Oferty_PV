@@ -78,7 +78,7 @@ Instalator automatycznie:
 - Utworzy plik `.env` z `.env.example` (jeśli nie istnieje)
 - Zainstaluje zależności (`npm install`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
-- Uruchomi migracje bazy danych (`npx prisma migrate dev`)
+- Uruchomi synchronizację schematu bazy danych (`npx prisma db push`)
 - Zasieje dane początkowe (`npm run prisma:seed`)
 
 #### 3. Ręczna instalacja (alternatywa)
@@ -91,13 +91,14 @@ npm install
 
 # 2. Skopiuj i skonfiguruj zmienne środowiskowe
 # Edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD (wymagane!)
+# Dla lokalnego rozwoju ustaw NODE_ENV=development
 copy .env.example .env
 
 # 3. Wygeneruj klienta Prisma
 npx prisma generate
 
-# 4. Uruchom migracje bazy danych
-npx prisma migrate dev
+# 4. Synchronizacja schematu bazy danych
+npx prisma db push
 
 # 5. Zasiej dane początkowe (produkty, cenniki)
 npm run prisma:seed
@@ -146,9 +147,9 @@ cd Oferty_PV
 # 3. Instalacja
 npm install
 cp .env.example .env
-nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
+nano .env  # ustaw DEFAULT_ADMIN_PASSWORD i NODE_ENV=development
 npx prisma generate
-npx prisma migrate dev
+npx prisma db push
 
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
