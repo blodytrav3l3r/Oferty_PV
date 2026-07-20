@@ -51,9 +51,9 @@ if errorlevel 1 (
 )
 echo [OK] Prisma client
 
-REM TypeScript compile + Prisma copy
+REM TypeScript compile
 echo [INFO] TypeScript compile...
-call npm run build
+call npx tsc
 if errorlevel 1 (
     echo [BLAD] TypeScript compile.
     pause

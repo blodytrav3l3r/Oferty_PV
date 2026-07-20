@@ -7,7 +7,7 @@
         "dev": "concurrently -k -n backend,frontend -c cyan,green \"npm run dev:backend\" \"node scripts/wait-and-start.mjs\"",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
         "dev:frontend": "vite",
-        "build": "tsc && powershell -NoProfile -Command \"Copy-Item -Recurse -LiteralPath 'generated/prisma' -Destination 'dist/generated/prisma' -Force -Exclude 'schema.prisma','*.tmp*'\"",
+        "build": "tsc",
         "build:frontend": "vite build",
         "build:watch": "tsc --watch",
         "preview:frontend": "vite preview",
