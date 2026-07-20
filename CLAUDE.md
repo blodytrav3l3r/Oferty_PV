@@ -57,7 +57,7 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 
 ### 5. Cache-busting
 
-- CSS/JS linki z `?v=N` — bump przy zmianie pliku
+- Wszystkie parametry `?v=` w HTML są automatycznie synchronizowane z `VERSION` podczas release (skrypt `scripts/auto-cache-bust.mjs`). **Nie edytuj ręcznie** parametrów `?v=` w HTML.
 - Express: `Cache-Control: no-store` dla HTML
 - Browser: `Ctrl+Shift+R` po dużej zmianie CSS/JS
 
@@ -233,4 +233,4 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 | `npm run lint`                        | ESLint (tylko src/)                    |
 | `npm run format`                      | Prettier                               |
 | `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
-| `npm run version:patch\|minor\|major` | Bump wersji                            |
+| `npm run version:patch\|minor\|major` | Ręczne podbicie wersji                 |

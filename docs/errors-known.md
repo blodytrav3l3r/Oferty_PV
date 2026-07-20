@@ -97,3 +97,9 @@
 **Problem**: `.sort()` w JS jest in-place — mutuje oryginalną tablicę.
 **Objaw**: Kolejność `products` zmienia się po renderowaniu.
 **Fix** (`1bd859c`): `[...array].sort(...)` — kopia przed sortowaniem.
+
+## 16. Wyrównanie kolumn w pustym wierszu Excel
+
+**Problem**: 5 gołych `<select disabled>` w pustym wierszu vs `_excelOverlaySelectHtml` w wierszach danych — różnica w box modelu / intrinsic sizing → przesunięcie sticky.
+**Objaw**: Kolumny sticky rozjeżdżają się w Excel Table przy pustym wierszu.
+**Fix** (v1.5.0): Używać `_excelOverlaySelectHtml(productId, null, null, null, null, true)` dla wyłączonych selectów w pustym wierszu oraz CSS `.excel-sel-wrap.disabled`.
