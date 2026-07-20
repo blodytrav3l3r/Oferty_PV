@@ -1,6 +1,6 @@
 # Wdrożenie — WITROS Oferty PV
 
-**Wersja:** 1.7.0  
+**Wersja:** 1.8.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -283,7 +283,7 @@ Sentry będzie rejestrować:
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-14_
+_Ostatnia aktualizacja: 2026-07-20_
 
 ---
 
