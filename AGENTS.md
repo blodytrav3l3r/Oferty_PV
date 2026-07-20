@@ -28,7 +28,7 @@ Aplikacja jest zbudowana z podziałem na backend i frontend (SPA oparte na ifram
 - **Frontend**: Czysty Vanilla JS (bez frameworków SPA), Vite jako dev server (`build:frontend`). Kod modułów znajduje się w `public/js/rury/` oraz `public/js/studnie/`.
 - **SPA (Single Page Application)**: Plik `app.html` jest jedynym punktem wejścia (entry point). Moduły (`studnie.html`, `rury.html`) są ładowane jako iframe wewnątrz `app.html`.
 
-- **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z głównego `tsc` i `eslint`, ale mają osobny typecheck (`tsconfig.frontend.json`) i lint (`npm run lint:frontend`).
+- **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z kompilacji `tsc` oraz sprawdzania `eslint`.
 
 ### Decyzje Architektoniczne (ADR)
 
@@ -113,7 +113,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 ### Formaty i Styl Kodowania
 
 - Formatowanie: używaj Prettier (pojedyncze cudzysłowy `'`, zawsze średniki `;`, brak tabulatorów - wcięcia spacjami).
-- Kod frontendowy w `public/js/` ma osobny typecheck (`npm run typecheck:frontend`) i lint (`npm run lint:frontend`). Dodatkowo weryfikuj składnię ręcznie: `node -c <nazwa_pliku>`.
+- Kod frontendowy w `public/js/` **nie** jest sprawdzany przez lintery ani TypeScript. Weryfikuj go ręcznie i za pomocą komendy `node -c <nazwa_pliku>` w celu sprawdzenia składni.
 - Klasyczne zmienne globalne: wszystkie globalne helpery na frontendzie rejestruj jawnie na obiekcie `window` (np. na końcu pliku: `window.myHelper = myHelper;`).
 - Po każdym dynamicznym wstrzyknięciu kodu HTML zawierającego ikony Lucide (atrybuty `data-lucide`) wywołaj funkcję inicjalizującą: `lucide.createIcons({root: container})`.
 - Zapobieganie XSS: Przy interpolacji ciągów znaków do `innerHTML` zawsze używaj funkcji `escapeHtml(str)`.
@@ -215,21 +215,11 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run test:quick`         | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
 | `npm run test:alignment`     | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
 | `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (tylko w katalogu `src/`).           |
-| `npm run lint:frontend`      | Sprawdza poprawność kodu JS w `public/js/` za pomocą ESLint.                                |
 | `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                   |
-| `npm run format:check`       | Sprawdza formatowanie kodu bez zapisywania zmian.                                           |
-| `npm run validate`           | Uruchamia kompletny pipeline: typecheck + lint + testy.                                     |
 | `npm run version:check`      | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`.   |
-| `npm run version:patch`      | Ręczne podbicie wersji typu patch.                                                          |
-| `npm run version:minor`      | Ręczne podbicie wersji typu minor.                                                          |
-| `npm run version:major`      | Ręczne podbicie wersji typu major.                                                          |
 | `npm run release:patch`      | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                    |
 | `npm run release:minor`      | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                        |
 | `npm run release:major`      | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
-| `npm run release:dry`        | Podgląd zmian w changelogu bez ich zapisywania.                                             |
-| `npm run backup:restore`     | Przywraca bazę danych z pliku backupu.                                                      |
-| `npm run encoding:check`     | Sprawdza spójność kodowania polskich znaków we wszystkich plikach.                          |
-| `npm run encoding:fix`       | Naprawia kodowanie polskich znaków.                                                         |
 
 ---
 

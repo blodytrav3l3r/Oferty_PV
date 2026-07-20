@@ -185,8 +185,8 @@ Po refaktoryzacji Phase 2 (podział dużych plików JS na mniejsze moduły):
 | Katalog              | Liczba plików | Opis                                                                    |
 | -------------------- | ------------- | ----------------------------------------------------------------------- |
 | `public/js/rury/`    | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
-| `public/js/studnie/` | 115           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
-| `public/js/sales/`   | 5             | Narzędzia sprzedaży (PVSalesUI, import/eksport)                         |
+| `public/js/studnie/` | ~112          | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
+| `public/js/sales/`   | 4             | Narzędzia sprzedaży (PVSalesUI, import/eksport)                         |
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -364,7 +364,7 @@ Oferty_PV/
 │   ├── encoding-integrity.js        # Spójność kodowania
 │   └── excel-validator.py           # Walidacja Excel
 │
-├── tests/                           # Testy (59 plików .ts)
+├── tests/                           # Testy (32 pliki)
 │   ├── auth.test.ts
 │   ├── offers.crud.test.ts
 │   ├── products.test.ts

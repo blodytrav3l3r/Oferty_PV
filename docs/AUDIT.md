@@ -1,7 +1,7 @@
 # Raport audytu projektu — WITROS Oferty PV
 
-**Wersja projektu:** 1.8.0  
-**Data audytu:** 2026-07-20 (aktualizacja dokumentacji)  
+**Wersja projektu:** 1.7.0  
+**Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 
 ---

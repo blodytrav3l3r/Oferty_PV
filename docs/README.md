@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator Ofert Handlowych
 
-**Wersja:** 1.8.0
+**Wersja:** 1.7.0
 
 Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV, studnie, rury). Backend API + frontend SPA w iframe'ach + zintegrowany pipeline ML.
 
@@ -12,7 +12,7 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 | Frontend  | Vanilla JS (ES6), HTML5, CSS3            |
 | Walidacja | Zod                                      |
 | PDF       | Puppeteer                                |
-| MS Word   | docx (npm)                               |
+| MS Word   | docxtemplater / docx                     |
 | AI/ML     | Logistic Regression (TypeScript, własny) |
 | Testy     | Jest + ts-jest + supertest               |
 | Ikonki    | Lucide (slim build, 76 ikon)             |
