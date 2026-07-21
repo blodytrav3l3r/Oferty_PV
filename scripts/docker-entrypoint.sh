@@ -6,7 +6,7 @@ echo "[DEBUG] Wersja Node: $(node -v)"
 echo "[DEBUG] Bieżący katalog: $(pwd)"
 
 # Ustawiamy domyślną ścieżkę do bazy, jeśli nie została podana
-# Na Render.com Persistent Disk montowany jest w /var/data
+# Dla Dockera: wolumen montowany jest w /var/data
 if [ -z "$DATABASE_URL" ]; then
     export DATABASE_URL="file:/var/data/app_database.sqlite"
     echo "[INFO] DATABASE_URL nieustawione, użycie domyślnego: $DATABASE_URL"

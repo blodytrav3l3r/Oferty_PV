@@ -74,8 +74,7 @@
 | Husky + commitlint | ✔      | Pre-commit hooks, conventional commits           |
 | lint-staged        | ✔      | ESLint + Prettier na staged plikach              |
 | Docker             | ✔      | Dockerfile + docker-compose.yml                  |
-| Render deploy      | ✔      | render.yaml z Persistent Disk                    |
-| Health check       | ✔      | Docker HEALTHCHECK + Render healthCheckPath      |
+| Health check       | ✔      | Docker HEALTHCHECK                               |
 
 ## 6. Testy
 

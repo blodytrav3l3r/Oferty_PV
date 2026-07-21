@@ -26,8 +26,7 @@ RUN ln -sf /app/generated /app/dist/generated
 RUN npm prune --production && \
     npm cache clean --force
 
-# Tworzymy katalog danych i kopiujemy szablon bazy (dla inicjalizacji wolumenu)
-# Na Render.com Persistent Disk montowany jest w /var/data
+# Tworzymy katalog danych dla trwałego wolumenu Docker (/var/data)
 RUN mkdir -p /var/data && \
     chmod -R 755 /var/data
 

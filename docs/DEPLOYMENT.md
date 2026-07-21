@@ -128,49 +128,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
     CMD node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 ```
 
----
-
-## 4. Render.com
-
-### Wdrożenie przez Blueprint
-
-1. W dashboardzie Render.com: **New → Blueprint**
-2. Wybierz repozytorium `blodytrav3l3r/Oferty_PV`
-3. Render automatycznie odczyta `render.yaml`:
-    - Web Service z Node.js
-    - Persistent Disk (1 GB) w `/var/data`
-    - Region: Oregon
-    - Plan: Starter (darmowy)
-
-### render.yaml
-
-```yaml
-services:
-    - type: web
-      name: witros-oferty
-      runtime: node
-      plan: starter
-      buildCommand: npm ci && npx prisma generate && npm run build && ln -sf ../generated dist/generated
-      startCommand: npx prisma db push --skip-generate && node dist/server.js
-      healthCheckPath: /health
-      envVars:
-          - key: NODE_ENV
-            value: production
-          - key: DATABASE_URL
-            value: file:/var/data/app_database.sqlite
-          - key: DEFAULT_ADMIN_PASSWORD
-            sync: false # ustaw ręcznie w dashboardzie
-```
-
-### Po deployu
-
-1. W dashboardzie Render → Environment → ustaw `DEFAULT_ADMIN_PASSWORD` (sekret)
-2. Aplikacja uruchomi się z czystą bazą SQLite na Persistent Disk
-3. Przy pierwszym uruchomieniu: produkty zostają zaseedowane, konto admin utworzone
-
----
-
-## 5. VPS (Linux)
+## 4. VPS (Linux)
 
 ### Wymagania
 
@@ -234,7 +192,7 @@ server {
 
 ---
 
-## 6. Bezpieczeństwo w produkcji
+## 5. Bezpieczeństwo w produkcji
 
 | Obszar       | Zalecenie                                                |
 | ------------ | -------------------------------------------------------- |
@@ -247,7 +205,7 @@ server {
 
 ---
 
-## 7. Backup bazy w produkcji
+## 6. Backup bazy w produkcji
 
 ### Cron (Linux)
 
@@ -264,7 +222,7 @@ npm run backup:install-cron
 
 ---
 
-## 8. Obsługa błędów — Sentry
+## 7. Obsługa błędów — Sentry
 
 Aby włączyć Sentry:
 
@@ -287,7 +245,7 @@ _Ostatnia aktualizacja: 2026-07-20_
 
 ---
 
-## 9. Przenoszenie bazy na inne urządzenie
+## 8. Przenoszenie bazy na inne urządzenie
 
 Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest prostą operacją kopiowania.
 

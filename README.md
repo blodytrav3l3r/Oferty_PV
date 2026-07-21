@@ -11,7 +11,7 @@
 
 WITROS Oferty PV to aplikacja webowa do generowania ofert handlowych dla branży fotowoltaicznej, rur i studni. Umożliwia zarządzanie produktami, klientami, tworzenie ofert (zarówno dla rur jak i studni), generowanie dokumentów PDF/DOCX, monitorowanie zamówień oraz inteligentne rankowanie rozwiązań (ML).
 
-Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i bazą SQLite. Przeznaczona do wdrożenia na lokalnym serwerze, VPS lub platformie Render.com.
+Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i bazą SQLite. Przeznaczona do wdrożenia na lokalnym serwerze, VPS lub przez Docker.
 
 ---
 
@@ -446,8 +446,7 @@ Oferty_PV/
 ├── .nvmrc                     # Wersja Node.js dla nvm
 ├── .versionrc.json            # Konfiguracja standard-version
 ├── Dockerfile                 # Obraz Docker
-├── docker-compose.yml         # Orkiestracja Docker
-└── render.yaml                # Konfiguracja Render.com
+└── docker-compose.yml         # Orkiestracja Docker
 ```
 
 ---

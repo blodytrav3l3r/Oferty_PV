@@ -383,7 +383,6 @@ Oferty_PV/
 │
 ├── Dockerfile                       # Obraz Docker
 ├── docker-compose.yml               # Docker Compose
-├── render.yaml                      # Render deploy
 └── .env.example                     # Zmienne środowiskowe
 ```
 
@@ -396,10 +395,6 @@ Oferty_PV/
 ```bash
 docker compose up --build
 ```
-
-### Render.com
-
-Blueprint z `render.yaml` — Persistent Disk dla SQLite.
 
 ### VPS
 

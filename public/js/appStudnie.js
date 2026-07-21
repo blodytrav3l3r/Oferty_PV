@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 /**
  * Czeka aż tablica wells[] będzie załadowana, następnie otwiera modal zleceń.
- * Rozwiązuje problem race condition na wolnych serwerach (onrender.com cold start).
+ * Rozwiązuje problem race condition na wolnych serwerach (cold start).
  * Zamiast sztywnego setTimeout(600ms), polling co 200ms z limitem 15 sekund.
  */
 function waitForWellsAndOpen(targetWellId, targetElementIndex) {

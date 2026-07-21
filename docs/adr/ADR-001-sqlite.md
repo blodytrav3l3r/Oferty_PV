@@ -16,7 +16,7 @@ Rozważano: PostgreSQL (standard dla web apps), SQLite, MySQL.
 ## Uzasadnienie
 
 1. **Prostota backupu** — jeden plik (`app_database.sqlite`) = cała baza. Backup to `cp` pliku.
-2. **Niski koszt hostingu** — Render.com starter ($7/miesiąc) z Persistent Disk (1 GB) w zupełności wystarcza.
+2. **Niski koszt hostingu** — Docker + VPS z Persistent Disk (1 GB) w zupełności wystarcza.
 3. **Zero administracji** — brak serwera DB, brak konfiguracji replikacji, brak connection poolingu.
 4. **Prisma ORM** — abstrakcja nad DB pozwala zmienić provider w przyszłości (wystarczy zmienić `datasource.provider` w schema.prisma).
 5. **Single-writer model** — aplikacja biznesowa (jeden użytkownik generuje ofertę) nie wymaga concurrent writes.

@@ -38,7 +38,7 @@ if (process.env.SENTRY_DSN) {
     logger.info('Server', 'Sentry — aktywny');
 }
 
-app.set('trust proxy', 1); // Trust Render's proxy to handle HTTPS correctly
+app.set('trust proxy', 1); // Trust proxy gdy aplikacja stoi za reverse proxy
 
 /* ===== LOGOWANIE ŻĄDAŃ ===== */
 app.use(requestLogger);
@@ -65,7 +65,7 @@ app.get('/api/version', (_req, res) => {
  *   get:
  *     tags: [System]
  *     summary: Sprawdzenie statusu serwera
- *     description: Endpoint używany przez Docker/Render do healthcheck. Zwraca status, uptime i wersję.
+ *     description: Endpoint używany przez Docker do healthcheck. Zwraca status, uptime i wersję.
  *     responses:
  *       200:
  *         description: Serwer działa
