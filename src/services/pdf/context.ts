@@ -3,7 +3,12 @@ import { logger } from '../../utils/logger';
 import { mapWellsToItems } from './helpers';
 import { lookupOfferUsers } from './offerUsers';
 import type { RuryOfferData, StudnieOfferData } from './types';
-import type { RuryOfferDataBlob, StudnieOfferDataBlob, RuryOrderDataBlob, StudnieOrderDataBlob } from '../../types/offerData';
+import type {
+    RuryOfferDataBlob,
+    StudnieOfferDataBlob,
+    RuryOrderDataBlob,
+    StudnieOrderDataBlob
+} from '../../types/offerData';
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
