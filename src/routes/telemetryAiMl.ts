@@ -80,11 +80,7 @@ async function runPrediction(
 
     const expectedDim = activeModel.featureMins.length;
     if (features.length !== expectedDim) {
-        return {
-            error: 'FEATURE_COUNT_MISMATCH',
-            expectedFeatureCount: expectedDim,
-            receivedFeatureCount: features.length
-        } as any;
+        return { error: 'FEATURE_COUNT_MISMATCH' };
     }
 
     const model = new AcceptanceModel(
@@ -210,36 +206,41 @@ router.post(
     }
 );
 
-router.post('/ai/reward', requireAuth, WRITE_LIMITER, async (req: Request, res: Response) => {
-    try {
-        const parsed = rewardSchema.safeParse(req.body);
-        if (!parsed.success) {
-            res.status(400).json({
-                error: 'Invalid reward payload',
-                details: parsed.error.issues
+router.post(
+    '/ai/reward',
+    requireAuth,
+    WRITE_LIMITER,
+    async (req: AuthenticatedRequest, res: Response) => {
+        try {
+            const parsed = rewardSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'Invalid reward payload',
+                    details: parsed.error.issues
+                });
+                return;
+            }
+
+            const data = parsed.data;
+            await rewardCalculator.processAction({
+                userId: req.user?.id || 'unknown',
+                action: data.action,
+                wellId: data.wellId,
+                dn: data.dn,
+                scoreBefore: data.scoreBefore,
+                scoreAfter: data.scoreAfter,
+                wasAiRanked: data.wasAiRanked,
+                configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
             });
-            return;
+
+            res.json({ status: 'ok' });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
+            res.status(500).json({ error: 'Reward failed' });
         }
-
-        const data = parsed.data;
-        await rewardCalculator.processAction({
-            userId: (req as any).user?.id || 'unknown',
-            action: data.action,
-            wellId: data.wellId,
-            dn: data.dn,
-            scoreBefore: data.scoreBefore,
-            scoreAfter: data.scoreAfter,
-            wasAiRanked: data.wasAiRanked,
-            configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
-        });
-
-        res.json({ status: 'ok' });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
-        res.status(500).json({ error: 'Reward failed' });
     }
-});
+);
 
 /* ===== FEATURE FLAG: AI influence level ===== */
 

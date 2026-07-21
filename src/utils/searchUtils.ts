@@ -117,7 +117,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
     return { joinSql: Prisma.empty, whereSql: Prisma.empty };
 }
 
-interface RawOfferRow {
+export interface RawOfferRow {
     id: string;
     userId: string | null;
     clientId: string | null;

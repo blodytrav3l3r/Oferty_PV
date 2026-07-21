@@ -4,9 +4,10 @@ import path from 'path';
 import { logger } from '../../utils/logger';
 import { escapeHtml } from './helpers';
 import { generatePDF } from './pdfEngine';
+import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../types/kartaBudowy';
 
 function buildKartaBudowyBaseHtml(
-    kb: Record<string, unknown>,
+    kb: KartaBudowyMeta,
     nrZamowienia: string,
     nrOferty: string
 ): string {
@@ -81,7 +82,7 @@ function buildKartaBudowyBaseHtml(
     if (Array.isArray(pd) && pd.length > 0) {
         const trs = pd
             .map(
-                (p: any, idx: number) => `<tr>
+                (p, idx) => `<tr>
                 <td>${idx + 1}</td>
                 <td>${escapeHtml(p.rodzaj ?? '—')}</td>
                 <td>${escapeHtml(p.dnOd ?? '—')}</td>
@@ -122,16 +123,16 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
         throw new Error('Zamówienie studni nie znaleziona');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: KartaBudowyOrderData = {};
     if (order.data) {
         try {
-            orderData = JSON.parse(order.data) as Record<string, unknown>;
+            orderData = JSON.parse(order.data) as KartaBudowyOrderData;
         } catch (e) {
             logger.warn('PdfKartaBudowy', 'Nie udało się sparsować danych zamówienia', e);
         }
     }
 
-    const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
+    const kb: KartaBudowyMeta = orderData.kartaBudowy || {};
     const nrZamowienia = String(
         orderData.orderNumber || orderData.id || String(order.id).substring(0, 8)
     );
@@ -178,7 +179,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
         return undefined;
     }
 
-    const wsz = (Array.isArray(orderData.wells) ? orderData.wells : []) as any[];
+    const wsz = orderData.wells || [];
 
     interface TransSummary {
         cat: string;
@@ -191,8 +192,8 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
 
     for (const w of wsz) {
         const segments: { start: number; end: number; isDennica: boolean; isOT: boolean }[] = [];
-        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
-        const relevant = cfg.filter((item: any) => {
+        const cfg = w.config || [];
+        const relevant = cfg.filter((item) => {
             const prod = allProducts.get(item.productId);
             return (
                 prod &&
@@ -215,17 +216,17 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
             y += h;
         }
 
-        const rzdDna = parseFloat(w.rzednaDna);
+        const rzdDna = parseFloat(w.rzednaDna ?? '');
         if (isNaN(rzdDna)) continue;
 
-        const pjs = (Array.isArray(w.przejscia) ? w.przejscia : []) as any[];
+        const pjs = w.przejscia || [];
         for (const pj of pjs) {
             let prod = allProducts.get(pj.productId);
             if (!prod || prod.componentType !== 'przejscie') {
                 prod = _findPrzejscieByIdPrefix(allProducts, pj.productId);
                 if (!prod) continue;
             }
-            const rzdPj = parseFloat(pj.rzednaWlaczenia);
+            const rzdPj = parseFloat(pj.rzednaWlaczenia ?? '');
             if (isNaN(rzdPj)) continue;
             const mmFromBottom = (rzdPj - rzdDna) * 1000;
 
@@ -340,7 +341,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
 
     const elemMap = new Map<string, { pid: string; type: string; desc: string; qty: number }>();
     for (const w of wsz) {
-        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
+        const cfg = w.config || [];
         for (const item of cfg) {
             const prod = allProducts.get(item.productId);
             const ct = prod?.componentType || '';
@@ -420,16 +421,16 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
         throw new Error('Zamówienie rur nie znalezione');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: KartaBudowyOrderData = {};
     if (order.data) {
         try {
-            orderData = JSON.parse(order.data) as Record<string, unknown>;
+            orderData = JSON.parse(order.data) as KartaBudowyOrderData;
         } catch (e) {
             logger.warn('PdfKartaBudowyRury', 'Nie udało się sparsować danych zamówienia', e);
         }
     }
 
-    const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
+    const kb: KartaBudowyMeta = orderData.kartaBudowy || {};
     const nrZamowienia = String(
         orderData.orderNumber || orderData.id || String(order.id).substring(0, 8)
     );
@@ -444,12 +445,12 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
     html = html.replace(/\{\{RZECZYWISTA_ILOSC_PRZEJSC\}\}/g, '');
 
     // Tabela elementów zamówienia rur
-    const orderItems = (Array.isArray(orderData.items) ? orderData.items : []) as any[];
+    const orderItems = orderData.items || [];
     let elemHtml = '';
     if (orderItems.length > 0) {
         const elemRows = orderItems
             .map(
-                (it: any, idx: number) => `<tr>
+                (it, idx) => `<tr>
         <td>${idx + 1}</td>
         <td style="text-align:left;">${escapeHtml(it.name || '')}</td>
         <td style="text-align:left;font-size:8pt;">${escapeHtml(it.productId || '')}</td>
@@ -459,7 +460,7 @@ export async function generateKartaBudowyRuryPDF(orderId: string): Promise<Buffe
             )
             .join('');
         const totalQty = orderItems.reduce(
-            (s: number, it: any) => s + (it.orderedQuantity || it.quantity || 0),
+            (s, it) => s + (it.orderedQuantity || it.quantity || 0),
             0
         );
         elemHtml = `

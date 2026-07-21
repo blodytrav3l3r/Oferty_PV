@@ -9,7 +9,8 @@ import {
     parseSearchParams,
     buildWhereParts,
     buildOrderStatusSql,
-    mapOfferRow
+    mapOfferRow,
+    RawOfferRow
 } from '../../utils/searchUtils';
 
 const router = express.Router();
@@ -96,7 +97,7 @@ router.get('/', requireAuth, async (req, res) => {
             LIMIT ${limitVal + 1}
         `;
 
-        const rows = (await prisma.$queryRaw(sql)) as any[];
+        const rows = (await prisma.$queryRaw(sql)) as RawOfferRow[];
 
         const hasMore = rows.length > limitVal;
         const dataRows = hasMore ? rows.slice(0, limitVal) : rows;
@@ -118,7 +119,7 @@ router.get('/', requireAuth, async (req, res) => {
                     SELECT id FROM offers_studnie_rel ${whereSql}
                 )
             `;
-            const countResult = (await prisma.$queryRaw(countSql)) as any[];
+            const countResult = (await prisma.$queryRaw(countSql)) as { cnt: number | bigint }[];
             totalCount = Number(countResult[0]?.cnt || 0);
         }
 
@@ -168,7 +169,7 @@ router.get('/orders', requireAuth, async (req, res) => {
             LIMIT 50
         `);
 
-        const mapped = ((rows as any[]) || []).map((r) => {
+        const mapped = ((rows as RawOfferRow[]) || []).map((r) => {
             const parsed = parseJsonField<Record<string, unknown>>(r.data, {});
             return { ...r, data: parsed, ...parsed };
         });

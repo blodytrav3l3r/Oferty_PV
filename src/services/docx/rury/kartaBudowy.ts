@@ -29,6 +29,7 @@ import {
     CELL_BORDERS,
     type CellBorders
 } from '../constants';
+import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../../types/kartaBudowy';
 
 const INFO_BOTTOM: CellBorders = {
     top: BORDER_NONE,
@@ -148,16 +149,16 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
         throw new Error('Zamówienie rur nie znalezione');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: KartaBudowyOrderData = {};
     if (order.data) {
         try {
-            orderData = JSON.parse(order.data) as Record<string, unknown>;
+            orderData = JSON.parse(order.data) as KartaBudowyOrderData;
         } catch (e) {
             logger.warn('DocxKartaBudowyRury', 'Nie udało się sparsować danych zamówienia', e);
         }
     }
 
-    const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
+    const kb: KartaBudowyMeta = orderData.kartaBudowy || {};
 
     const nrZamowienia = String(
         orderData.orderNumber || orderData.id || String(order.id).substring(0, 8)
@@ -293,7 +294,7 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
     }
 
     // 7. Elementy zamówienia (conditional)
-    const orderItems = (Array.isArray(orderData.items) ? orderData.items : []) as any[];
+    const orderItems = orderData.items || [];
     if (orderItems.length > 0) {
         const itemCols = [
             { text: 'Lp.', width: 8 },
@@ -303,7 +304,7 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
             { text: 'Uwagi', width: 15 }
         ];
         const totalQty = orderItems.reduce(
-            (s: number, it: any) => s + (it.orderedQuantity || it.quantity || 0),
+            (s, it) => s + (it.orderedQuantity || it.quantity || 0),
             0
         );
         children.push(
@@ -323,7 +324,7 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
                             })
                         )
                     }),
-                    ...orderItems.map((it: any, idx: number) => {
+                    ...orderItems.map((it, idx) => {
                         const vals = [
                             String(idx + 1),
                             String(it.name || '—'),

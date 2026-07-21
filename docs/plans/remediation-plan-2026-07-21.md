@@ -464,7 +464,7 @@ Dodać `meta name="description"` do:
 
 ---
 
-## Sekcja 9: 🔵 REFAKTOR TYPÓW TYPESCRIPT — [STATUS: PENDING]
+## Sekcja 9: 🔵 REFAKTOR TYPÓW TYPESCRIPT — [STATUS: DONE ✅]
 
 **Cel:** Eliminacja ~28 `as any`, zastąpienie `Record<string, unknown>` konkretnymi interfejsami.
 

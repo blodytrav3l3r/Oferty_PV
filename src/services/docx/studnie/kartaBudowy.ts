@@ -11,10 +11,11 @@ import {
     ShadingType,
     BorderStyle
 } from 'docx';
-import fs from 'fs';
-import path from 'path';
-import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
+import path from 'path';
+import fs from 'fs';
+import prisma from '../../../prismaClient';
+import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../../types/kartaBudowy';
 import { textCell } from '../helpers';
 import { DOCX_COLORS } from '../colors';
 import {
@@ -163,16 +164,16 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         throw new Error('Zamówienie studni nie znaleziona');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: KartaBudowyOrderData = {};
     if (order.data) {
         try {
-            orderData = JSON.parse(order.data) as Record<string, unknown>;
+            orderData = JSON.parse(order.data) as KartaBudowyOrderData;
         } catch (e) {
             logger.warn('DocxKartaBudowy', 'Nie udało się sparsować danych zamówienia', e);
         }
     }
 
-    const kb = (orderData.kartaBudowy as Record<string, unknown>) || {};
+    const kb: KartaBudowyMeta = orderData.kartaBudowy || {};
 
     const nrZamowienia = String(
         orderData.orderNumber || orderData.productionOrderNumber || String(order.id).substring(0, 8)
@@ -378,7 +379,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         return undefined;
     }
 
-    const wsz = (Array.isArray(orderData.wells) ? orderData.wells : []) as any[];
+    const wsz = orderData.wells || [];
 
     interface TransSummary {
         cat: string;
@@ -392,8 +393,8 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
     for (const w of wsz) {
         // Build well segments bottom-up from config (dennica + krag + krag_ot only)
         const segments: { start: number; end: number; isDennica: boolean; isOT: boolean }[] = [];
-        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
-        const relevant = cfg.filter((item: any) => {
+        const cfg = w.config || [];
+        const relevant = cfg.filter((item) => {
             const prod = allProducts.get(item.productId);
             return (
                 prod &&
@@ -416,10 +417,10 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
             y += h;
         }
 
-        const rzdDna = parseFloat(w.rzednaDna);
+        const rzdDna = parseFloat(w.rzednaDna ?? '');
         if (isNaN(rzdDna)) continue;
 
-        const pjs = (Array.isArray(w.przejscia) ? w.przejscia : []) as any[];
+        const pjs = w.przejscia || [];
         for (const pj of pjs) {
             let prod = allProducts.get(pj.productId);
             if (!prod || prod.componentType !== 'przejscie') {
@@ -427,7 +428,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
                 if (!prod) continue;
             }
 
-            const rzdPj = parseFloat(pj.rzednaWlaczenia);
+            const rzdPj = parseFloat(pj.rzednaWlaczenia ?? '');
             if (isNaN(rzdPj)) continue;
             const mmFromBottom = (rzdPj - rzdDna) * 1000;
 
@@ -630,7 +631,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
 
     const elemMap = new Map<string, { pid: string; type: string; desc: string; qty: number }>();
     for (const w of wsz) {
-        const cfg = (Array.isArray(w.config) ? w.config : []) as any[];
+        const cfg = w.config || [];
         for (const item of cfg) {
             const prod = allProducts.get(item.productId);
             const ct = prod?.componentType || '';
