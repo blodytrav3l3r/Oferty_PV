@@ -22,6 +22,7 @@ const STUDNIE_PM = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager.js');
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
 const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
 const PV_SALES_HELPERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesHelpers.js');
+const PV_SALES_ACTIONS = path.join(PUBLIC, 'js', 'sales', 'pvSalesActions.js');
 
 function readFile(p: string): string {
     return fs.readFileSync(p, 'utf-8');
@@ -51,12 +52,12 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: pvSalesUi.js / pvSalesHelpers.js dispatch on offerType', () => {
-        let src: string;
+    describe('Static: pvSalesUi.js / pvSalesHelpers.js / pvSalesActions.js dispatch on offerType', () => {
         let helpersSrc: string;
+        let actionsSrc: string;
         beforeAll(() => {
-            src = readFile(PV_SALES_UI);
             helpersSrc = readFile(PV_SALES_HELPERS);
+            actionsSrc = readFile(PV_SALES_ACTIONS);
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
@@ -68,24 +69,25 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('.btn-karta-budowy ma data-offer-type (dispatch Karta Budowy)', () => {
-            // Sprawdza template HTML btn-karta-budowy
+            // Sprawdza template HTML btn-karta-budowy w pvSalesHelpers.js
             const pattern =
                 /class="action-btn success btn-karta-budowy"[\s\S]{0,200}data-offer-type/;
-            expect(src).toMatch(pattern);
+            expect(helpersSrc).toMatch(pattern);
         });
 
         it('.btn-print-order (modal) ma data-offer-type (dispatch Karta)', () => {
+            // Template w pvSalesHelpers.js
             const pattern =
                 /class="btn btn-sm btn-secondary btn-print-order"[\s\S]{0,250}data-offer-type/;
-            expect(src).toMatch(pattern);
+            expect(helpersSrc).toMatch(pattern);
         });
 
         it('modal .btn-print-order handler dispatchuje przez openPrintModal', () => {
             // Po unifikacji: btn-print-order wywołuje openPrintModal (nie inline logic)
-            // Listener jest w showOfferOrdersPopup (overlay), 596 chars dalej od forEach()
+            // Listener jest w showOfferOrdersPopup (overlay) w pvSalesActions.js
             const pattern =
                 /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
-            expect(src).toMatch(pattern);
+            expect(actionsSrc).toMatch(pattern);
         });
     });
 
@@ -156,18 +158,18 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             );
         });
 
-        it('rury/offerCrud.js onclick strings używają exportKartaDirectRury_action', () => {
-            const src = readFile(path.join(PUBLIC, 'js', 'rury', 'offerCrud.js'));
+        it('rury/offerCrudHelpers.js onclick strings używają exportKartaDirectRury_action', () => {
+            const src = readFile(path.join(PUBLIC, 'js', 'rury', 'offerCrudHelpers.js'));
             expect(src).toMatch(/onclick="exportKartaDirectRury_action/);
         });
     });
 
     describe('Static: pvSalesHelpers.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
         let helpersSrc: string;
-        let src: string;
+        let actionsSrc: string;
         beforeAll(() => {
             helpersSrc = readFile(PV_SALES_HELPERS);
-            src = readFile(PV_SALES_UI);
+            actionsSrc = readFile(PV_SALES_ACTIONS);
         });
 
         it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
@@ -184,7 +186,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(helpersSrc).toMatch(
                 /function openPrintModal\s*\(\s*offerId\s*,\s*orderId\s*,\s*offerType\s*,\s*relatedOrders\s*\)/
             );
-            expect(src).toMatch(
+            expect(actionsSrc).toMatch(
                 /openPrintModal\s*\(\s*printOfferId\s*,\s*printOrderId\s*,\s*printOfferType\s*,\s*printRelatedOrders\s*\)/
             );
         });
@@ -196,25 +198,25 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             // Popup btn-print-order handler jest w showOfferOrdersPopup (overlay)
             const popup =
                 /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
-            expect(src).toMatch(mainRow);
-            expect(src).toMatch(popup);
+            expect(actionsSrc).toMatch(mainRow);
+            expect(actionsSrc).toMatch(popup);
         });
 
         it('dispatch NIE wywołuje już window.exportKartaDirectRury_action bezpośrednio (usunięty bypass)', () => {
             // Po refaktorze wszystkie ścieżki idą przez openPrintModal → uniwersalny modal
-            expect(src).not.toMatch(/window\.exportKartaDirectRury_action\s*\(/);
+            expect(actionsSrc).not.toMatch(/window\.exportKartaDirectRury_action\s*\(/);
         });
 
         it('dispatch NIE wywołuje już inline isRuryOffer (zastąpione przez openPrintModal)', () => {
             // Wcześniej było "isRuryOffer = offerType === ..." — teraz jest w openPrintModal
-            expect(src).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
+            expect(actionsSrc).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
         });
 
         it('przycisk "Wydruk" MA data-offer-id + data-offer-type (unifikacja atrybutów)', () => {
             // Oba przyciski (Wydruk + Karta budowy) muszą mieć te same atrybuty
             // Używamy [\\s\\S] z odwróconym kierunkiem bo atrybuty są PRZED title
             const wydrukBlock = /class="action-btn secondary"[\s\S]{0,400}title="Wydruk"/;
-            const match = src.match(wydrukBlock);
+            const match = helpersSrc.match(wydrukBlock);
             expect(match).not.toBeNull();
             expect(match![0]).toMatch(/data-offer-id=/);
             expect(match![0]).toMatch(/data-offer-type=/);
@@ -222,19 +224,19 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('przycisk "Karta budowy" MA data-id + data-type (unifikacja atrybutów)', () => {
             const kartaBlock = /btn-karta-budowy[\s\S]{0,500}title="Karta budowy/;
-            const match = src.match(kartaBlock);
+            const match = helpersSrc.match(kartaBlock);
             expect(match).not.toBeNull();
             expect(match![0]).toMatch(/data-id=/);
             expect(match![0]).toMatch(/data-type=/);
         });
     });
 
-    describe('Static: openPrintModal (pvSalesHelpers) + ordersMap (pvSalesUi)', () => {
+    describe('Static: openPrintModal (pvSalesHelpers) + ordersMap (pvSalesActions)', () => {
         let helpersSrc: string;
-        let src: string;
+        let actionsSrc: string;
         beforeAll(() => {
             helpersSrc = readFile(PV_SALES_HELPERS);
-            src = readFile(PV_SALES_UI);
+            actionsSrc = readFile(PV_SALES_ACTIONS);
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {
@@ -257,12 +259,12 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('dispatch czyta relatedOrders z this.ordersMap (kartoteka)', () => {
             // Wydruk/Karta budowy dispatch musi czytać z this.ordersMap
-            expect(src).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*printOfferId\s*\)/);
+            expect(actionsSrc).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*printOfferId\s*\)/);
         });
 
         it('popup .btn-print-order listener czyta relatedOrders z this.ordersMap', () => {
             // W showOfferOrdersPopup listenerze btn-print-order musi czytać z this.ordersMap
-            expect(src).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*offerId\s*\)/);
+            expect(actionsSrc).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*offerId\s*\)/);
         });
     });
 

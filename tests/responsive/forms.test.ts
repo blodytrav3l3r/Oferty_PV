@@ -17,9 +17,14 @@ describe('Formularze — responsywność', () => {
         expect(mqMatch).not.toBeNull();
     });
 
-    test('każdy formularz w rury.html ma klasę .wizard-form-grid', () => {
-        const html = fs.readFileSync('public/rury.html', 'utf-8');
-        const formRows = html.match(/class="[^"]*wizard-form-grid[^"]*"/g);
+    test('każdy formularz w rury partialach ma klasę .wizard-form-grid', () => {
+        const partialDir = 'public/partials/rury';
+        const files = fs.readdirSync(partialDir).filter((f) => f.endsWith('.html'));
+        let allHtml = '';
+        for (const f of files) {
+            allHtml += fs.readFileSync(`${partialDir}/${f}`, 'utf-8') + '\n';
+        }
+        const formRows = allHtml.match(/class="[^"]*wizard-form-grid[^"]*"/g);
         expect(formRows!.length).toBeGreaterThan(0);
     });
 });

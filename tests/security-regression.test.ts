@@ -85,7 +85,7 @@ describe('T5.3: Predefiniowane rate limitery', () => {
 describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
     const xssFiles = [
         { name: 'offerCrud.js', path: 'public/js/rury/offerCrud.js' },
-        { name: 'offerManager.js', path: 'public/js/studnie/offerManager.js' },
+        { name: 'offerSummaryUI.js', path: 'public/js/studnie/offerSummaryUI.js' },
         { name: 'orderManager.js', path: 'public/js/studnie/orderManager.js' }
     ];
 
@@ -117,9 +117,9 @@ describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
 // ─── T5.6: userId change guard (static) ─────────────────────
 
 describe('T5.6: Blokada zmiany opiekuna zamówienia', () => {
-    it('ruryOrders.ts powinien zawierać guard zmiany userId', () => {
+    it('ruryOrders.crud.ts powinien zawierać guard zmiany userId', () => {
         const content = fs.readFileSync(
-            path.resolve(__dirname, '..', 'src/routes/orders/ruryOrders.ts'),
+            path.resolve(__dirname, '..', 'src/routes/orders/ruryOrders.crud.ts'),
             'utf-8'
         );
         expect(content).toContain('req.body.userId');
