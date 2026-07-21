@@ -4,6 +4,30 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.9.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.8.0...v1.9.0) (2026-07-21)
+
+
+### Features
+
+* **ai-ml:** kompleksowa naprawa modulu AI/ML ([1ea8d64](https://github.com/blodytrav3l3r/Oferty_PV/commit/1ea8d64735797c220332cd09d00dac564c72e93c))
+* **docs:** automatyczna generacja dokumentacji — OpenAPI, ERD, TypeDoc, skrypty npm ([31aceca](https://github.com/blodytrav3l3r/Oferty_PV/commit/31aceca21d78721aaaf4b7ce00f0688e6197beec))
+* **studnie:** faza 0 - header partial + partialLoader ([c914d5e](https://github.com/blodytrav3l3r/Oferty_PV/commit/c914d5e7d5ca03d5fabd251df64d2071e737fb83))
+* **validators:** podzial offerSchemas.ts na productSchemas + orderSchemas ([f893d9f](https://github.com/blodytrav3l3r/Oferty_PV/commit/f893d9f1d787c3e8310dbe8ed14db18d9632dec2))
+
+
+### Bug Fixes
+
+* **ai:** naprawa LearningEngine — zapis wasModified, originalConfig i finalConfig ([74b1ef1](https://github.com/blodytrav3l3r/Oferty_PV/commit/74b1ef13f783fc17dc2b22c198071d162d283dce))
+* **bat:** naprawa skryptow startowych - wait-and-start.mjs czyta PORT z .env, dev.bat usuniete nawiasy z echo, build.bat bez wyciszania, start.bat i prod.bat z weryfikacja builda ([08d3811](https://github.com/blodytrav3l3r/Oferty_PV/commit/08d3811c388972685edde3e88e82b9a282e99c19))
+* **build:** kopiuj generated/prisma do dist po tsc ([a906490](https://github.com/blodytrav3l3r/Oferty_PV/commit/a906490ae15add6a711ba1ffd2e5605d7f23a8e4))
+* **install:** auto-kopiowanie .env, poprawki bat, walidacja startupu ([244b744](https://github.com/blodytrav3l3r/Oferty_PV/commit/244b744adf45c074fd3e7a84471a047bb69ebc50))
+* **partialLoader:** przeniesienie na koniec body ([3d814a7](https://github.com/blodytrav3l3r/Oferty_PV/commit/3d814a70f09ae7374dd727329a2c2402a971d12e))
+* **sales:** dodanie importu storageService w pvSalesActions.js ([9a124f6](https://github.com/blodytrav3l3r/Oferty_PV/commit/9a124f6a3df6a213a8c45295781dde6008614da2))
+* **studnie:** add missing script tags for Phase 2 split modules ([9fb6ce0](https://github.com/blodytrav3l3r/Oferty_PV/commit/9fb6ce0a9ded3e6df2766d265bac08315f365a9e))
+* **studnie:** min-height 0 na [data-partial], naprawa kodowania UTF-8 ([c0e7b34](https://github.com/blodytrav3l3r/Oferty_PV/commit/c0e7b3476af41ed0aeddbe2a6af52e770796ed01))
+* **studnie:** podlaczenie orphaned partiali offer.html i pricelist.html ([582353a](https://github.com/blodytrav3l3r/Oferty_PV/commit/582353a356ab599d921a276d12c4e48e596f319e))
+* **tests:** update regression tests to match refactored file structure ([838c1a3](https://github.com/blodytrav3l3r/Oferty_PV/commit/838c1a3818db73505686bf9b11c41b9302c967bb))
+
 ## [1.8.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.7.0...v1.8.0) (2026-07-19)
 
 ### Features
