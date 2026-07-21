@@ -1,7 +1,7 @@
 # Instalacja i przenoszenie systemu WITROS Oferty PV
 
 > **Plik:** docs/plans/instalacja-przenoszenie-systemu.md
-> **Wersja:** 1.8.0
+> **Wersja:** 1.9.0
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
 
 ---
@@ -359,9 +359,9 @@ npx prisma migrate deploy
 
 ```powershell
 # Automatyczne podbicie wersji (patch/minor/major):
-npm run release:patch   # Małe poprawki (1.8.0 → 1.8.1)
-npm run release:minor   # Nowe funkcje (1.8.0 → 1.9.0)
-npm run release:major   # Zmiany przełamujące (1.8.0 → 2.0.0)
+npm run release:patch   # Małe poprawki (1.9.0 → 1.9.1)
+npm run release:minor   # Nowe funkcje (1.9.0 → 1.10.0)
+npm run release:major   # Zmiany przełamujące (1.9.0 → 2.0.0)
 
 # To robi automatycznie:
 # 1. Podbija VERSION i package.json

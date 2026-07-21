@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 /**
- * auto-cache-bust.mjs — automatyczne ustawienie cache-bustingu w HTML.
+ * auto-cache-bust.mjs — automatyczne ustawienie cache-bustingu w HTML
+ *                       i synchronizacja wersji w dokumentacji.
  *
- * Czyta wersję z VERSION i podmienia wszystkie ?v= w lokalnych assetach
- * (.js/.css) w wskazanych plikach HTML na ?v=<VERSION>.
+ * Czyta wersję z VERSION i podmienia:
+ *   - ?v= w lokalnych assetach (.js/.css) w plikach HTML
+ *   - **Wersja:** X.Y.Z w plikach .md
  *
  * Użycie:
  *   node scripts/auto-cache-bust.mjs
@@ -32,6 +34,18 @@ const HTML_FILES = [
     'public/templates/etykieta.html',
     'public/templates/ofertaStudnie.html',
     'public/templates/zlecenie.html'
+];
+
+const MD_FILES = [
+    'README.md',
+    'docs/API.md',
+    'docs/ARCHITECTURE.md',
+    'docs/DEPLOYMENT.md',
+    'docs/INSTRUKCJA_SERWER.md',
+    'docs/README.md',
+    'docs/SECURITY.md',
+    'docs/plans/instalacja-krok-po-kroku-dla-laika.md',
+    'docs/plans/instalacja-przenoszenie-systemu.md'
 ];
 
 function isLocalPath(url) {
@@ -77,6 +91,31 @@ function processFile(filePath) {
     return true;
 }
 
+function processMdFile(filePath) {
+    const absPath = resolve(ROOT, filePath);
+    if (!existsSync(absPath)) {
+        console.log(`  - ${filePath} (nie istnieje, pomijam)`);
+        return false;
+    }
+
+    let content = readFileSync(absPath, 'utf-8');
+    const original = content;
+
+    content = content.replace(
+        /(\*\*Wersja:\*\*)\s*\d+\.\d+\.\d+/g,
+        `$1 ${VERSION}`
+    );
+
+    if (content === original) {
+        console.log(`  - ${filePath} (bez zmian)`);
+        return false;
+    }
+
+    writeFileSync(absPath, content, 'utf-8');
+    console.log(`  \u2713 ${filePath}  ->  v${VERSION}`);
+    return true;
+}
+
 function main() {
     console.log(`\n  auto-cache-bust  |  VERSION=${VERSION}\n`);
 
@@ -86,6 +125,13 @@ function main() {
     }
 
     console.log(`\n  Zmieniono ${changed} z ${HTML_FILES.length} plikow HTML\n`);
+
+    let mdChanged = 0;
+    for (const mdFile of MD_FILES) {
+        if (processMdFile(mdFile)) mdChanged++;
+    }
+
+    console.log(`  Zmieniono ${mdChanged} z ${MD_FILES.length} plikow MD\n`);
 }
 
 main();
