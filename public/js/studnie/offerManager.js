@@ -10,36 +10,7 @@ function clearOfferForm() {
     editingOfferAssignedUserName = '';
     editingOfferCreatedByUserId = null;
     editingOfferCreatedByUserName = '';
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('offer-number', generateOfferNumberStudnie());
-    setVal('offer-date', new Date().toISOString().slice(0, 10));
-    setVal('client-name', '');
-    setVal('client-nip', '');
-    setVal('client-address', '');
-    setVal('client-contact', '');
-    setVal('invest-name', '');
-    setVal('invest-address', '');
-    setVal('invest-contractor', '');
-    setVal('offer-notes', '');
-    const tabNotes = document.getElementById('offer-tab-notes');
-    if (tabNotes) tabNotes.value = '';
-
-    if (document.getElementById('offer-payment-terms'))
-        document.getElementById('offer-payment-terms').value =
-            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
-
-    const tabPayment = document.getElementById('offer-tab-payment-terms');
-    if (tabPayment)
-        tabPayment.value = 'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
-    if (document.getElementById('offer-validity'))
-        document.getElementById('offer-validity').value = '7 dni';
-    const tabValidity = document.getElementById('offer-tab-validity');
-    if (tabValidity) tabValidity.value = '7 dni';
-    setVal('transport-km', '100');
-    setVal('transport-rate', '10');
+    clearOfferFormFields(generateOfferNumberStudnie);
     wells = [];
     wellCounter = 1;
     currentWellIndex = 0;
@@ -107,42 +78,22 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     editingOfferAssignedUserName = normalized.userName || '';
     editingOfferCreatedByUserId = normalized.createdByUserId || null;
     editingOfferCreatedByUserName = normalized.createdByUserName || '';
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('offer-number', normalized.number || '');
-    setVal('offer-date', normalized.date || new Date().toISOString().slice(0, 10));
-    setVal('client-name', normalized.clientName || '');
-    setVal('client-nip', normalized.clientNip || '');
-    setVal('client-address', normalized.clientAddress || '');
-    setVal('client-contact', normalized.clientContact || '');
-    setVal('invest-name', normalized.investName || '');
-    setVal('invest-address', normalized.investAddress || '');
-    setVal('invest-contractor', normalized.investContractor || '');
-
-    setVal('offer-notes', normalized.notes || '');
-    const tabNotes = document.getElementById('offer-tab-notes');
-    if (tabNotes) tabNotes.value = normalized.notes || '';
-
-    if (document.getElementById('offer-payment-terms'))
-        document.getElementById('offer-payment-terms').value =
-            normalized.paymentTerms ||
-            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
-
-    const tabPayment = document.getElementById('offer-tab-payment-terms');
-    if (tabPayment)
-        tabPayment.value =
-            normalized.paymentTerms ||
-            'Do uzgodnienia lub wedlug indywidualnych warunkow handlowych.';
-
-    if (document.getElementById('offer-validity'))
-        document.getElementById('offer-validity').value = normalized.validity || '7 dni';
-
-    const tabValidity = document.getElementById('offer-tab-validity');
-    if (tabValidity) tabValidity.value = normalized.validity || '7 dni';
-    setVal('transport-km', normalized.transportKm ?? 100);
-    setVal('transport-rate', normalized.transportRate ?? 10);
+    setOfferFormFields({
+        number: normalized.number,
+        date: normalized.date,
+        clientName: normalized.clientName,
+        clientNip: normalized.clientNip,
+        clientAddress: normalized.clientAddress,
+        clientContact: normalized.clientContact,
+        investName: normalized.investName,
+        investAddress: normalized.investAddress,
+        investContractor: normalized.investContractor,
+        notes: normalized.notes,
+        paymentTerms: normalized.paymentTerms,
+        validity: normalized.validity,
+        transportKm: normalized.transportKm,
+        transportRate: normalized.transportRate
+    });
     currentTransportMode = normalized.transportMode || 'full';
 
     wellDiscounts = normalized.wellDiscounts ? structuredClone(normalized.wellDiscounts) : {};

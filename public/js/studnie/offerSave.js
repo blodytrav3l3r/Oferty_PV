@@ -11,39 +11,13 @@ async function saveOfferStudnie() {
 
     if (isSavingOffer) return false;
 
-    const getVal = (id) => {
-        const el = document.getElementById(id);
-        return el ? el.value : '';
-    };
-    const number = getVal('offer-number').trim();
-    if (!number) {
+    const fields = getOfferFormFields();
+    if (!fields.number) {
         showToast('Wprowadź numer oferty', 'error');
         return false;
     }
 
-    const date = getVal('offer-date');
-    const clientName = getVal('client-name').trim();
-    const clientNip = getVal('client-nip').trim();
-    const clientAddress = getVal('client-address').trim();
-    const clientContact = getVal('client-contact').trim();
-    const investName = getVal('invest-name').trim();
-    const investAddress = getVal('invest-address').trim();
-    const investContractor = getVal('invest-contractor').trim();
-    const notes =
-        document.getElementById('offer-tab-notes')?.value.trim() ||
-        document.getElementById('offer-notes')?.value.trim() ||
-        '';
-    const paymentTerms =
-        document.getElementById('offer-tab-payment-terms')?.value.trim() ||
-        document.getElementById('offer-payment-terms')?.value.trim() ||
-        'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    const validity = normalizeValidityValue(
-        document.getElementById('offer-tab-validity')?.value.trim() ||
-            document.getElementById('offer-validity')?.value.trim() ||
-            '7 dni'
-    );
-    const transportKm = parseFloat(getVal('transport-km')) || 0;
-    const transportRate = parseFloat(getVal('transport-rate')) || 0;
+    fields.validity = normalizeValidityValue(fields.validity);
 
     let totalNetto = 0;
     let totalWeight = 0;
@@ -57,36 +31,22 @@ async function saveOfferStudnie() {
 
     isSavingOffer = true;
 
-    // Automatyczny wybór opiekuna dla nowych ofert (tylko admin / pro)
-    if (
-        !editingOfferIdStudnie &&
-        currentUser &&
-        (currentUser.role === 'admin' || currentUser.role === 'pro') &&
-        !editingOfferAssignedUserId
-    ) {
-        try {
-            const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
-            const usersData = await usersResp.json();
-            const allUsers = usersData.data || [];
-
-            if (allUsers.length > 0) {
-                const currentId = currentUser.id;
-                const selectedUser = await showUserSelectionPopup(allUsers, currentId);
-                if (selectedUser === null) {
-                    showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
-                    isSavingOffer = false;
-                    return false;
-                }
-                editingOfferAssignedUserId = selectedUser.id;
-                editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
-
-                const btnChangeUser = document.getElementById('btn-change-offer-user');
-                if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
-            }
-        } catch (e) {
-            logger.error('offerManager', 'Błąd wyboru opiekuna:', e);
-        }
+    const assignedUserRes = await assignOfferSupervisor(
+        currentUser,
+        !editingOfferIdStudnie,
+        editingOfferIdStudnie
+    );
+    if (assignedUserRes === undefined) {
+        showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
+        isSavingOffer = false;
+        return false;
+    }
+    if (assignedUserRes) {
+        editingOfferAssignedUserId = assignedUserRes.id;
+        editingOfferAssignedUserName = assignedUserRes.displayName || assignedUserRes.username;
+        const btnChangeUser = document.getElementById('btn-change-offer-user');
+        if (btnChangeUser)
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
     }
 
     const { storageService } = await import('../shared/StorageService.js');
@@ -109,8 +69,8 @@ async function saveOfferStudnie() {
     // Oblicz koszty transportu per studnia
     let globalWeightForTransport = 0;
     wells.forEach((w) => (globalWeightForTransport += calcWellStats(w).weight));
-    const transportKmVal = parseFloat(document.getElementById('transport-km').value) || 0;
-    const transportRateVal = parseFloat(document.getElementById('transport-rate').value) || 0;
+    const transportKmVal = fields.transportKm;
+    const transportRateVal = fields.transportRate;
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0) {
         const totalTransportsCount =
@@ -237,11 +197,7 @@ async function saveOfferStudnie() {
         userName:
             editingOfferAssignedUserName ||
             existingDoc?.userName ||
-            (currentUser
-                ? currentUser.firstName && currentUser.lastName
-                    ? `${currentUser.firstName} ${currentUser.lastName}`
-                    : currentUser.username
-                : ''),
+            buildUserDisplayName(currentUser),
         createdByUserId:
             editingOfferCreatedByUserId ||
             existingDoc?.createdByUserId ||
@@ -249,28 +205,24 @@ async function saveOfferStudnie() {
         createdByUserName:
             editingOfferCreatedByUserName ||
             existingDoc?.createdByUserName ||
-            (currentUser
-                ? currentUser.firstName && currentUser.lastName
-                    ? `${currentUser.firstName} ${currentUser.lastName}`
-                    : currentUser.username
-                : ''),
-        number,
-        date,
-        clientName,
-        clientNip,
-        clientAddress,
-        clientContact,
-        investName,
-        investAddress,
-        investContractor,
-        notes,
-        paymentTerms,
-        validity,
+            buildUserDisplayName(currentUser),
+        number: fields.number,
+        date: fields.date,
+        clientName: fields.clientName,
+        clientNip: fields.clientNip,
+        clientAddress: fields.clientAddress,
+        clientContact: fields.clientContact,
+        investName: fields.investName,
+        investAddress: fields.investAddress,
+        investContractor: fields.investContractor,
+        notes: fields.notes,
+        paymentTerms: fields.paymentTerms,
+        validity: fields.validity,
         wells: structuredClone(wells),
         wellsExport: wellsForExport,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
-        transportKm,
-        transportRate,
+        transportKm: fields.transportKm,
+        transportRate: fields.transportRate,
         transportMode: currentTransportMode,
         wellDiscounts:
             typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts || {}) : {},
@@ -278,11 +230,7 @@ async function saveOfferStudnie() {
         totalNetto: totalNetto + totalTransportCostForOffer,
         totalBrutto: (totalNetto + totalTransportCostForOffer) * 1.23,
         createdAt: existingDoc?.createdAt || new Date().toISOString(),
-        lastEditedBy: currentUser
-            ? currentUser.firstName && currentUser.lastName
-                ? `${currentUser.firstName} ${currentUser.lastName}`
-                : currentUser.username
-            : '',
+        lastEditedBy: buildUserDisplayName(currentUser),
         wizard: {
             globalParams: getWizardGlobalParams(),
             currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,

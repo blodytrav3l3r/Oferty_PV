@@ -528,7 +528,7 @@ Zastosować w:
 
 ---
 
-## Sekcja 10: 🔵 WSPÓLNY CRUD OFERT (Sprint 2-3) — [STATUS: PENDING]
+## Sekcja 10: 🔵 WSPÓLNY CRUD OFERT (Sprint 2-3) — [STATUS: DONE ✅]
 
 **Cel:** Eliminacja ~80% duplikacji między modułami rury/studnie w operacjach CRUD ofert.
 
@@ -599,7 +599,7 @@ Moduły rury/studnie importują wspólny kod i dodają tylko logikę specyficzn�
 | 7. Bugi logiczne   | 🟢 Dzień 4    |     20 min     | PENDING |
 | 8. CSS/HTML        | 🟢 Dzień 4    |     30 min     | PENDING |
 | 9. Refaktor typów  | 🔵 Sprint 2   |       2h       | PENDING |
-| 10. Wspólny CRUD   | 🔵 Sprint 2-3 |       4h       | PENDING |
+| 10. Wspólny CRUD   | 🔵 Sprint 2-3 |       4h       | DONE ✅ |
 | 11. Technical Debt | ⚪ Backlog    |     8-16h      | PENDING |
 
 **Łącznie:** ~8.5h (Sekcje 1-8) + ~6h (Sekcje 9-10) + backlog

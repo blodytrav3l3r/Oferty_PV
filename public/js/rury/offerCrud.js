@@ -34,58 +34,8 @@ async function saveOffer() {
         return;
     }
     if (isSavingOffer) return;
-    const numEl = document.getElementById('offer-number');
-    const number = numEl ? numEl.value.trim() : '';
-    const dateEl = document.getElementById('offer-date');
-    const date = dateEl ? dateEl.value : '';
-    const cnEl = document.getElementById('client-name');
-    const clientName = cnEl ? cnEl.value.trim() : '';
-    const nipEl = document.getElementById('client-nip');
-    const clientNip = nipEl ? nipEl.value.trim() : '';
-    const caEl = document.getElementById('client-address');
-    const clientAddress = caEl ? caEl.value.trim() : '';
-    const ccEl = document.getElementById('client-contact');
-    const clientContact = ccEl ? ccEl.value.trim() : '';
-    const inEl = document.getElementById('invest-name');
-    const investName = inEl ? inEl.value.trim() : '';
-    const iaEl = document.getElementById('invest-address');
-    const investAddress = iaEl ? iaEl.value.trim() : '';
-    const icEl = document.getElementById('invest-contractor');
-    const investContractor = icEl ? icEl.value.trim() : '';
-    const tabNotesEl = document.getElementById('offer-tab-notes');
-    const notes =
-        tabNotesEl && tabNotesEl.value.trim() !== ''
-            ? tabNotesEl.value.trim()
-            : (() => {
-                  const nEl = document.getElementById('offer-notes');
-                  return nEl ? nEl.value.trim() : '';
-              })();
-
-    const tabPaymentEl = document.getElementById('offer-tab-payment-terms');
-    const paymentTermsEl = document.getElementById('offer-payment-terms');
-    const paymentTerms =
-        tabPaymentEl && tabPaymentEl.value.trim() !== ''
-            ? tabPaymentEl.value.trim()
-            : paymentTermsEl
-              ? paymentTermsEl.value.trim()
-              : 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-
-    const tabValidityEl = document.getElementById('offer-tab-validity');
-    const validityEl = document.getElementById('offer-validity');
-    const validity =
-        tabValidityEl && tabValidityEl.value.trim() !== ''
-            ? tabValidityEl.value.trim()
-            : validityEl
-              ? validityEl.value.trim()
-              : '7 dni';
-
-    const tkEl = document.getElementById('transport-km');
-    const transportKm = Number(tkEl ? tkEl.value : 0) || 0;
-    const trEl = document.getElementById('transport-rate');
-    const transportRate = Number(trEl ? trEl.value : 0) || 0;
-    const transportCostPerTrip = transportKm * transportRate;
-
-    if (!number) {
+    const fields = getOfferFormFields();
+    if (!fields.number) {
         showToast('Podaj numer oferty', 'error');
         return;
     }
@@ -93,6 +43,7 @@ async function saveOffer() {
         showToast('Dodaj przynajmniej jeden produkt', 'error');
         return;
     }
+    const transportCostPerTrip = fields.transportKm * fields.transportRate;
 
     const transportResult = calculateTransports(currentOfferItems);
     const transportCost = transportResult.totalTransports * transportCostPerTrip;
@@ -108,36 +59,22 @@ async function saveOffer() {
         totalNetto += (priceAfterDiscount + transportPerUnit) * item.quantity;
     });
 
-    // Automatyczny wybór opiekuna dla nowych ofert (tylko admin / pro)
-    if (
-        !editingOfferId &&
-        currentUser &&
-        (currentUser.role === 'admin' || currentUser.role === 'pro') &&
-        !editingOfferAssignedUserId
-    ) {
-        try {
-            const usersResp = await fetch('/api/users-for-assignment', { headers: authHeaders() });
-            const usersData = await usersResp.json();
-            const allUsers = usersData.data || [];
-
-            if (allUsers.length > 0) {
-                const currentId = currentUser.id;
-                const selectedUser = await showUserSelectionPopup(allUsers, currentId);
-                if (selectedUser === null) {
-                    showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
-                    return;
-                }
-                editingOfferAssignedUserId = selectedUser.id;
-                editingOfferAssignedUserName = selectedUser.displayName || selectedUser.username;
-
-                const btnChangeUser = document.getElementById('btn-change-offer-user');
-                if (btnChangeUser)
-                    btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
-                if (window.lucide) lucide.createIcons();
-            }
-        } catch (e) {
-            logger.error('offerCrud', 'Błąd wyboru opiekuna:', e);
-        }
+    const assignedUserRes = await assignOfferSupervisor(
+        currentUser,
+        !editingOfferId,
+        editingOfferId
+    );
+    if (assignedUserRes === undefined) {
+        showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
+        return;
+    }
+    if (assignedUserRes) {
+        editingOfferAssignedUserId = assignedUserRes.id;
+        editingOfferAssignedUserName = assignedUserRes.displayName || assignedUserRes.username;
+        const btnChangeUser = document.getElementById('btn-change-offer-user');
+        if (btnChangeUser)
+            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
+        if (window.lucide) lucide.createIcons();
     }
 
     let storageService;
@@ -169,11 +106,7 @@ async function saveOffer() {
         userName:
             editingOfferAssignedUserName ||
             existingDoc?.userName ||
-            (currentUser
-                ? currentUser.firstName && currentUser.lastName
-                    ? `${currentUser.firstName} ${currentUser.lastName}`
-                    : currentUser.username
-                : ''),
+            buildUserDisplayName(currentUser),
         createdByUserId:
             editingOfferCreatedByUserId ||
             existingDoc?.createdByUserId ||
@@ -181,26 +114,22 @@ async function saveOffer() {
         createdByUserName:
             editingOfferCreatedByUserName ||
             existingDoc?.createdByUserName ||
-            (currentUser
-                ? currentUser.firstName && currentUser.lastName
-                    ? `${currentUser.firstName} ${currentUser.lastName}`
-                    : currentUser.username
-                : ''),
-        number,
-        date,
-        clientName,
-        clientNip,
-        clientAddress,
-        clientContact,
-        investName,
-        investAddress,
-        investContractor,
-        notes,
-        paymentTerms,
-        validity,
+            buildUserDisplayName(currentUser),
+        number: fields.number,
+        date: fields.date,
+        clientName: fields.clientName,
+        clientNip: fields.clientNip,
+        clientAddress: fields.clientAddress,
+        clientContact: fields.clientContact,
+        investName: fields.investName,
+        investAddress: fields.investAddress,
+        investContractor: fields.investContractor,
+        notes: fields.notes,
+        paymentTerms: fields.paymentTerms,
+        validity: fields.validity,
         items: structuredClone(currentOfferItems),
-        transportKm,
-        transportRate,
+        transportKm: fields.transportKm,
+        transportRate: fields.transportRate,
         transportCostPerTrip,
         transportMode: currentRuryTransportMode || 'full',
         transportCount: transportResult.totalTransports,
@@ -208,11 +137,7 @@ async function saveOffer() {
         totalNetto,
         totalBrutto: totalNetto * 1.23,
         createdAt: existingDoc?.createdAt || new Date().toISOString(),
-        lastEditedBy: currentUser
-            ? currentUser.firstName && currentUser.lastName
-                ? `${currentUser.firstName} ${currentUser.lastName}`
-                : currentUser.username
-            : ''
+        lastEditedBy: buildUserDisplayName(currentUser)
     };
 
     isSavingOffer = true;
@@ -247,27 +172,7 @@ function clearOfferForm() {
     editingOfferAssignedUserName = '';
     editingOfferCreatedByUserId = null;
     editingOfferCreatedByUserName = '';
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('offer-number', generateOfferNumber());
-    setVal('offer-date', new Date().toISOString().slice(0, 10));
-    setVal('client-name', '');
-    setVal('client-nip', '');
-    setVal('client-address', '');
-    setVal('client-contact', '');
-    setVal('invest-name', '');
-    setVal('invest-address', '');
-    setVal('invest-contractor', '');
-    setVal('offer-notes', '');
-    if (document.getElementById('offer-payment-terms'))
-        document.getElementById('offer-payment-terms').value =
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    if (document.getElementById('offer-validity'))
-        document.getElementById('offer-validity').value = '7 dni';
-    setVal('transport-km', '100');
-    setVal('transport-rate', '10');
+    clearOfferFormFields(generateOfferNumber);
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     currentOfferItems = [];
 
@@ -335,28 +240,22 @@ async function loadOffer(id) {
         normalized.title ||
         normalized.offerName ||
         '';
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('offer-number', finalNumber);
-    setVal('offer-date', normalized.date || new Date().toISOString().slice(0, 10));
-    setVal('client-name', normalized.clientName || '');
-    setVal('client-nip', normalized.clientNip || '');
-    setVal('client-address', normalized.clientAddress || '');
-    setVal('client-contact', normalized.clientContact || '');
-    setVal('invest-name', normalized.investName || '');
-    setVal('invest-address', normalized.investAddress || '');
-    setVal('invest-contractor', normalized.investContractor || '');
-    setVal('offer-notes', normalized.notes || '');
-    if (document.getElementById('offer-payment-terms'))
-        document.getElementById('offer-payment-terms').value =
-            normalized.paymentTerms ||
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    if (document.getElementById('offer-validity'))
-        document.getElementById('offer-validity').value = normalized.validity || '7 dni';
-    setVal('transport-km', normalized.transportKm ?? 100);
-    setVal('transport-rate', normalized.transportRate ?? 10);
+    setOfferFormFields({
+        number: finalNumber,
+        date: normalized.date,
+        clientName: normalized.clientName,
+        clientNip: normalized.clientNip,
+        clientAddress: normalized.clientAddress,
+        clientContact: normalized.clientContact,
+        investName: normalized.investName,
+        investAddress: normalized.investAddress,
+        investContractor: normalized.investContractor,
+        notes: normalized.notes,
+        paymentTerms: normalized.paymentTerms,
+        validity: normalized.validity,
+        transportKm: normalized.transportKm,
+        transportRate: normalized.transportRate
+    });
     currentRuryTransportMode = normalized.transportMode || 'full';
     currentOfferItems = structuredClone(normalized.items || []);
 
@@ -496,28 +395,22 @@ function restoreOfferVersion(offerId, historyIndex) {
 
     // Wczytaj migawke jako nowa oferte z biezacym ID edycji
     editingOfferId = offer.id;
-    const setVal = (id, val) => {
-        const el = document.getElementById(id);
-        if (el) el.value = val;
-    };
-    setVal('offer-number', snapshot.number || offer.number);
-    setVal('offer-date', snapshot.date || offer.date);
-    setVal('client-name', snapshot.clientName || '');
-    setVal('client-nip', snapshot.clientNip || '');
-    setVal('client-address', snapshot.clientAddress || '');
-    setVal('client-contact', snapshot.clientContact || '');
-    setVal('invest-name', snapshot.investName || '');
-    setVal('invest-address', snapshot.investAddress || '');
-    setVal('invest-contractor', snapshot.investContractor || '');
-    setVal('offer-notes', snapshot.notes || '');
-    if (document.getElementById('offer-payment-terms'))
-        document.getElementById('offer-payment-terms').value =
-            snapshot.paymentTerms ||
-            'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    if (document.getElementById('offer-validity'))
-        document.getElementById('offer-validity').value = snapshot.validity || '7 dni';
-    setVal('transport-km', snapshot.transportKm ?? 100);
-    setVal('transport-rate', snapshot.transportRate ?? 10);
+    setOfferFormFields({
+        number: snapshot.number || offer.number,
+        date: snapshot.date || offer.date,
+        clientName: snapshot.clientName,
+        clientNip: snapshot.clientNip,
+        clientAddress: snapshot.clientAddress,
+        clientContact: snapshot.clientContact,
+        investName: snapshot.investName,
+        investAddress: snapshot.investAddress,
+        investContractor: snapshot.investContractor,
+        notes: snapshot.notes,
+        paymentTerms: snapshot.paymentTerms,
+        validity: snapshot.validity,
+        transportKm: snapshot.transportKm,
+        transportRate: snapshot.transportRate
+    });
 
     currentOfferItems = structuredClone(snapshot.items || []);
     window.zabezpieczenieTransportuEnabled = true;
