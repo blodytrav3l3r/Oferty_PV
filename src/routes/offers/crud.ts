@@ -163,7 +163,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             await prisma.offers_studnie_rel.delete({ where: { id } });
             await removeFts5('studnie', id);
 
-            logger.info('Offers', `Oferta studnie ${id} usuni�ta przez ${authReq.user?.username}`);
+            logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
             searchCache.invalidateAll();
             return res.json({ ok: true });
         }
@@ -201,7 +201,7 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         });
         await removeFts5('rury', id);
 
-        logger.info('Offers', `Oferta rury ${id} usuni�ta przez ${authReq.user?.username}`);
+        logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {

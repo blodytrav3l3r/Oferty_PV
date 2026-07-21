@@ -413,7 +413,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
 
         logger.info(
             'Offers',
-            `Oferta studnie ${req.params.id} usuni�ta przez ${authReq.user?.username}`
+            `Oferta studnie ${req.params.id} usunięta przez ${authReq.user?.username}`
         );
         searchCache.invalidateAll();
         res.json({ ok: true });

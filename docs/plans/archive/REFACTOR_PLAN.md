@@ -2106,7 +2106,7 @@ Tydzien 3-5: offerManager.js - Stage 1 (8-11 dni)
   -> Krok 3.10 Transport - 2 sub-kroki (2h)
   -> Krok 3.11 Rabaty - 2 sub-kroki (2h)
   -> Krok 3.12 Renderowanie - 4 sub-kroki (4h)
-  -> Krok 3.13 CRUD - 7 sub-krok�w (3h) - OSTATNI!
+  -> Krok 3.13 CRUD - 7 sub-kroków (3h) - OSTATNI!
   -> Krok 3.14 Bootstrap (1h)
   --- FREEZE + golden master + contract tests (1d) ---
 
@@ -2159,9 +2159,9 @@ Po zakonczeniu calego planu mierzymy:
 | **orderManager.js** - linie             | 5114       | ~7                                            | <500       |
 | **Sredni rozmiar modulu**               | -          | <300 linii                                    | <400       |
 | **Najwieksza funkcja w nowych plikach** | 641 linii  | <100 linii                                    | <100       |
-| **Liczba plik�w >500 linii**            | 4 (+ nowe) | 4 (crud + rendering + zlecenia + kartaBudowy) | 0 docelowo |
+| **Liczba plików >500 linii**            | 4 (+ nowe) | 4 (crud + rendering + zlecenia + kartaBudowy) | 0 docelowo |
 | **Public API (window.\*)**              | bez zmian  | bez zmian                                     | bez zmian  |
-| **Liczba test�w**                       | bez zmian  | bez zmian                                     | bez zmian  |
+| **Liczba testów**                       | bez zmian  | bez zmian                                     | bez zmian  |
 | **npm run typecheck**                   | OK         | OK                                            | OK         |
 | **node -c dla wszystkich JS**           | -          | OK                                            | OK         |
 | **Golden master**                       | -          | zachowany dla CRITICAL krokow                 | zachowany  |
@@ -2171,7 +2171,7 @@ Po zakonczeniu calego planu mierzymy:
 ### Warunki uznania planu za zakonczony
 
 1. Wszystkie pliki zrodlowe (<500 linii) - za wyjatkiem tych wymagajacych osobnego cyklu
-2. Wszystkie funkcje przeniesione do nowych plik�w - bez zmian w logice
+2. Wszystkie funkcje przeniesione do nowych plików - bez zmian w logice
 3. Public API (window.*) - 100% zgodne z baseline
 4. Wszystkie testy - przechodza
 5. Smoke testy dla kazdego pliku - wykonane i zapisane
@@ -2211,7 +2211,7 @@ Jesli po zmianie aplikacja dziala ale inaczej niz przed zmiana:
 ### 13.3 Blad typu undefined is not a function
 
 1. Sprawdz czy wszystkie funkcje sa poprawnie eksportowane
-2. Sprawdz czy kolejnosc ladowania skrypt�w w HTML jest zachowana
+2. Sprawdz czy kolejnosc ladowania skryptów w HTML jest zachowana
 3. Sprawdz czy window.* przypisania sa wykonywane przed pierwszym uzyciem
 4. Uruchom contract tests dla window.*
 
@@ -2221,7 +2221,7 @@ Jesli po zmianie aplikacja dziala ale inaczej niz przed zmiana:
 2. Uruchom npm run typecheck dla TS
 3. Napraw blad skladni przed kontynuacja
 
-### 13.5 Lista alert�w - co wymaga natychmiastowego zatrzymania
+### 13.5 Lista alertów - co wymaga natychmiastowego zatrzymania
 
 | Alert                               | Dzialanie                                                           |
 | ----------------------------------- | ------------------------------------------------------------------- |
@@ -2254,7 +2254,7 @@ Przed uznaniem kroku za zakonczony wykonaj ponizszy smoke test dla danego pliku.
 
 **Dla offerItems.js:**
 
-- [ ] node -c public/js/rury/offerItems.js - brak bled�w
+- [ ] node -c public/js/rury/offerItems.js - brak bledów
 - [ ] node -c dla kazdego nowego pliku JS
 - [ ] Dodac rure przez wyszukiwarke
 - [ ] Dodac rure z okresleniem dlugosci
@@ -2372,7 +2372,7 @@ Wszystkie scenariusze musza przechodzic IDENTYCZNIE przed i po zmianie.
 ### 14.5 Karta budowy + przejscia
 
 - [ ] Inicjalizacja karty budowy krok 4
-- [ ] Automatyczne wykrywanie parametr�w
+- [ ] Automatyczne wykrywanie parametrów
 - [ ] Reczne uzupelnienie danych
 - [ ] Dodanie przejscia szczelnego
 - [ ] Zmiana DN przejscia
@@ -2393,28 +2393,28 @@ Wszystkie scenariusze musza przechodzic IDENTYCZNIE przed i po zmianie.
 ### 14.7 SVG preview
 
 - [ ] Renderowanie diagramu SVG studni
-- [ ] Drag element�w na diagramie
-- [ ] Zmiana liczby element�w przez diagram
+- [ ] Drag elementów na diagramie
+- [ ] Zmiana liczby elementów przez diagram
 
 ### 14.8 Transport
 
 - [ ] Ustawienie transportu w ofercie
 - [ ] Zmiana trybu transportu
-- [ ] Przeliczenie koszt�w transportu
+- [ ] Przeliczenie kosztów transportu
 - [ ] Zapis transportu w zamowieniu
 
 ### 14.9 Discounts
 
-- [ ] Otwarcie modalu rabat�w
+- [ ] Otwarcie modalu rabatów
 - [ ] Zmiana rabatu globalnego
 - [ ] Zmiana rabatu per-studnia
-- [ ] Zapis rabat�w -> weryfikacja podsumowania
-- [ ] Zaladowanie rabat�w z zapisanej oferty
+- [ ] Zapis rabatów -> weryfikacja podsumowania
+- [ ] Zaladowanie rabatów z zapisanej oferty
 
 ### 14.10 History
 
 - [ ] Wyswietlenie historii oferty
-- [ ] Zaladowanie starszych wpis�w
+- [ ] Zaladowanie starszych wpisów
 - [ ] Podglad snapshota
 - [ ] Przywrocenie snapshota
 
@@ -2428,9 +2428,9 @@ Kazdy krok refaktoryzacji jest zakonczony dopiero gdy wszystkie ponizsze punkty 
 
 **Weryfikacja techniczna:**
 
-- [ ] node -c <filename> dla wszystkich zmienionych plik�w JS
-- [ ] npm run typecheck dla wszystkich zmienionych plik�w TS
-- [ ] npm run lint - brak nowych bled�w
+- [ ] node -c <filename> dla wszystkich zmienionych plików JS
+- [ ] npm run typecheck dla wszystkich zmienionych plików TS
+- [ ] npm run lint - brak nowych bledów
 - [ ] npm run format - kod sformatowany
 
 **Weryfikacja kodu:**
@@ -2449,14 +2449,14 @@ Kazdy krok refaktoryzacji jest zakonczony dopiero gdy wszystkie ponizsze punkty 
 - [ ] Wszystkie default values zachowane
 - [ ] Wszystkie if/else/switch zachowane
 - [ ] Wszystkie edge case zachowane
-- [ ] Wszystkie komunikaty bled�w zachowane
+- [ ] Wszystkie komunikaty bledów zachowane
 - [ ] Wszystkie logi zachowane
 
 **Golden Master (CRITICAL/HIGH):**
 
 - [ ] Golden master JSON API wykonany przed zmiana
 - [ ] Golden master JSON API wykonany po zmianie
-- [ ] Roznice w golden master dotycza WYLACZNIE niezmienionych fragment�w
+- [ ] Roznice w golden master dotycza WYLACZNIE niezmienionych fragmentów
 - [ ] Call graph freeze - porownana sekwencja wywolan
 - [ ] Event dependency map - przeplyw eventu identyczny
 
@@ -2464,12 +2464,12 @@ Kazdy krok refaktoryzacji jest zakonczony dopiero gdy wszystkie ponizsze punkty 
 
 - [ ] Snapshot HTML i serialized state wykonany przed zmiana
 - [ ] Snapshot HTML i serialized state wykonany po zmianie
-- [ ] Roznice w snapshotach dotycza WYLACZNIE niezmienionych fragment�w
+- [ ] Roznice w snapshotach dotycza WYLACZNIE niezmienionych fragmentów
 
 **Contract Tests (window.\*):**
 
 - [ ] typeof window.fn === "function" dla wszystkich funkcji publicznych
-- [ ] window.fn.length === oryginalnaLiczbaParametr�w
+- [ ] window.fn.length === oryginalnaLiczbaParametrów
 - [ ] window.fn.name === oryginalnaNazwa
 - [ ] Zwraca Promise (async) vs non-Promise - bez zmian
 
@@ -2491,7 +2491,7 @@ Kazdy krok refaktoryzacji jest zakonczony dopiero gdy wszystkie ponizsze punkty 
 
 **Integracja:**
 
-- [ ] Aplikacja uruchamia sie bez bled�w konsoli
+- [ ] Aplikacja uruchamia sie bez bledów konsoli
 - [ ] Inne moduly (niezmienione) dzialaja poprawnie
 - [ ] Rollback mozliwy przez git revert lub feature flag (redirect)
 
@@ -2513,10 +2513,10 @@ Kazdy krok refaktoryzacji jest zakonczony dopiero gdy wszystkie ponizsze punkty 
 | --------------------------- | ------- |
 | Linie kodu                  | ...     |
 | Liczba funkcji              | ...     |
-| Liczba export�w             | ...     |
+| Liczba exportów             | ...     |
 | Liczba window.*             | ...     |
 | Liczba operacji na DOM      | ...     |
-| Liczba listener�w           | ...     |
+| Liczba listenerów           | ...     |
 | Liczba fetch/API            | ...     |
 | Liczba mutacji globali      | ...     |
 | Zlozonosc cyklomatyczna max | ...     |

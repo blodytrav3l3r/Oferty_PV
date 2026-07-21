@@ -91,6 +91,10 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-width: 0;
 }
 
+[data-partial] {
+    min-height: 0;
+}
+
 /* Wizard bottom nav â€” position: fixed; bottom: 0 z style.css */
 .wizard-nav-fixed {
     flex: 0 0 auto;
