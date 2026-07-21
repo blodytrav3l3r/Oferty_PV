@@ -300,28 +300,33 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Podstawowe
 
-| Komenda         | Opis                                                           |
-| --------------- | -------------------------------------------------------------- |
-| `npm run dev`   | Uruchom w trybie developerskim (backend + frontend równolegle) |
-| `npm run build` | Zbuduj backend (TypeScript → JavaScript)                       |
-| `npm start`     | Uruchom w trybie produkcyjnym (`node dist/server.js`)          |
-| `npm test`      | Uruchom testy (Jest)                                           |
+| Komenda                  | Opis                                                           |
+| ------------------------ | -------------------------------------------------------------- |
+| `npm run dev`            | Uruchom w trybie developerskim (backend + frontend równolegle) |
+| `npm run build`          | Zbuduj backend (TypeScript → JavaScript)                       |
+| `npm start`              | Uruchom w trybie produkcyjnym (`node dist/server.js`)          |
+| `npm test`               | Uruchom testy (Jest z pokryciem)                               |
+| `npm run test:quick`     | Uruchom szybkie testy (bez pokrycia)                           |
+| `npm run test:watch`     | Uruchom testy w trybie watch                                   |
+| `npm run test:alignment` | Test regresyjny Playwright (wyrównanie kolumn Excel)           |
 
 ### Backend
 
 | Komenda               | Opis                                       |
 | --------------------- | ------------------------------------------ |
 | `npm run dev:backend` | Uruchom backend z hot-reload (ts-node-dev) |
-| `npm run typecheck`   | Sprawdź typy TypeScript                    |
+| `npm run typecheck`   | Sprawdź typy TypeScript (backend)          |
 | `npm run lint`        | ESLint dla backendu                        |
 | `npm run lint:fix`    | ESLint z automatyczną naprawą              |
 
 ### Frontend
 
-| Komenda                  | Opis                    |
-| ------------------------ | ----------------------- |
-| `npm run dev:frontend`   | Uruchom Vite dev server |
-| `npm run build:frontend` | Zbuduj frontend (Vite)  |
+| Komenda                      | Opis                               |
+| ---------------------------- | ---------------------------------- |
+| `npm run dev:frontend`       | Uruchom Vite dev server            |
+| `npm run build:frontend`     | Zbuduj frontend (Vite)             |
+| `npm run typecheck:frontend` | Sprawdź typy TypeScript (frontend) |
+| `npm run lint:frontend`      | ESLint dla kodu frontendowego      |
 
 ### Baza danych (Prisma)
 
@@ -344,14 +349,35 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows) |
 | `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows) |
 
-### Inne
+### Wersjonowanie
 
-| Komenda                | Opis                                      |
-| ---------------------- | ----------------------------------------- |
-| `npm run validate`     | Pełna walidacja: typecheck + lint + testy |
-| `npm run format`       | Formatuj kod (Prettier)                   |
-| `npm run format:check` | Sprawdź formatowanie                      |
-| `npm run release`      | Utwórz release (nowa wersja + changelog)  |
+| Komenda                 | Opis                                                       |
+| ----------------------- | ---------------------------------------------------------- |
+| `npm run version:check` | Sprawdź spójność wersji (VERSION, package.json, CHANGELOG) |
+| `npm run version:patch` | Podbij wersję patch                                        |
+| `npm run version:minor` | Podbij wersję minor                                        |
+| `npm run version:major` | Podbij wersję major                                        |
+
+### Release
+
+| Komenda                 | Opis                                               |
+| ----------------------- | -------------------------------------------------- |
+| `npm run release`       | Utwórz release — auto patch/minor/major z commitów |
+| `npm run release:patch` | Wymuś release typu patch                           |
+| `npm run release:minor` | Wymuś release typu minor                           |
+| `npm run release:major` | Wymuś release typu major                           |
+| `npm run release:dry`   | Podgląd changeloga bez zapisywania                 |
+| `npm run release:first` | Pierwszy release (pomija semver)                   |
+
+### Walidacja i kodowanie
+
+| Komenda                  | Opis                                                     |
+| ------------------------ | -------------------------------------------------------- |
+| `npm run validate`       | Pełna walidacja: typecheck + lint + testy                |
+| `npm run format`         | Formatuj kod (Prettier)                                  |
+| `npm run format:check`   | Sprawdź formatowanie                                     |
+| `npm run encoding:check` | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat) |
+| `npm run encoding:fix`   | Napraw kodowanie plików                                  |
 
 ---
 
@@ -361,12 +387,12 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 Oferty_PV/
 ├── server.ts                  # Entry point Express
 ├── src/                       # Backend (TypeScript)
-│   ├── routes/                # Endpointy API (auth, produkty, oferty, zamówienia, klienci, telemetry)
+│   ├── routes/                # Endpointy API
 │   │   ├── offers/            # CRUD ofert (rury + studnie)
 │   │   ├── orders/            # Zamówienia, zlecenia
 │   │   └── telemetryAiMl.ts   # Endpointy ML (predict, reward, train, rollback)
 │   ├── services/              # Logika biznesowa
-│   │   ├── ml/                # AI/ML Pipeline (7 plików: FeatureExtractor, AcceptanceModel, itp.)
+│   │   ├── ml/                # AI/ML Pipeline
 │   │   ├── pdfGenerator.ts    # Generowanie PDF (Puppeteer)
 │   │   ├── docx/              # Generowanie MS Word
 │   │   └── auditService.ts    # Service audytu
@@ -389,18 +415,36 @@ Oferty_PV/
 ├── prisma/                    # Schema + migracje Prisma
 │   └── schema.prisma
 ├── data/                      # Baza SQLite + pliki seed
-├── tests/                     # Testy (Jest)
+├── tests/                     # Testy (Jest, Playwright)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie
+│   ├── playwright/            # Testy Playwright (regresyjne)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..004)
+│   ├── plans/                 # Plany i taski
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...
-├── scripts/                   # Skrypty narzędziowe (backup, migracja)
-├── # well_configurator_backend/ — usunięty
-├── .github/                   # CODE_OF_CONDUCT, CI/CD
-├── *.bat                      # Skrypty startowe Windows
+├── scripts/                   # Skrypty narzędziowe
+│   ├── backup.ts              # Backup bazy danych
+│   ├── bump-version.mjs       # Podbijanie wersji
+│   ├── check-version.mjs      # Weryfikacja spójności wersji
+│   ├── auto-cache-bust.mjs    # Cache-bust assetów przy release
+│   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8
+│   ├── skill-cli.mjs          # Skill CLI (build cost, stats)
+│   └── ...
+├── .github/                   # CI/CD, CODE_OF_CONDUCT
+├── .husky/                    # Git hooks (pre-push, commit-msg)
+├── *.bat / *.sh               # Skrypty startowe (start, dev, install, build)
+├── vite.config.js             # Konfiguracja Vite (frontend bundler)
+├── eslint.config.mjs          # Konfiguracja ESLint (flat config)
+├── tsconfig.json              # TypeScript (backend)
+├── tsconfig.frontend.json     # TypeScript (frontend)
+├── jest.config.ts             # Konfiguracja Jest
+├── .prettierrc                # Konfiguracja Prettier
+├── .editorconfig              # Konfiguracja edytora
+├── .nvmrc                     # Wersja Node.js dla nvm
+├── .versionrc.json            # Konfiguracja standard-version
 ├── Dockerfile                 # Obraz Docker
 ├── docker-compose.yml         # Orkiestracja Docker
 └── render.yaml                # Konfiguracja Render.com

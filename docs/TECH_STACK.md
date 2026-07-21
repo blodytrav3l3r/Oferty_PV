@@ -37,7 +37,7 @@
 | Helmet           | ^8.1.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                 |     ✅      |
 | Zod              | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                            |     ✅      |
 | ESLint           | ^9.39.4  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
-| Prettier         | ^3.8.2   | MIT           | Formatter kodu            | https://prettier.io                                        |     ✅      |
+| Prettier         | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                        |     ✅      |
 | Husky            | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                           |     ✅      |
 | commitlint       | ^21.0.2  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |
 | standard-version | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version |     ✅      |

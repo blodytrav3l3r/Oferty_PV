@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator Ofert Handlowych
 
-**Wersja:** 1.7.0
+**Wersja:** 1.8.0
 
 Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV, studnie, rury). Backend API + frontend SPA w iframe'ach + zintegrowany pipeline ML.
 
@@ -70,6 +70,11 @@ npm start
 | `npm run backup`         | Backup bazy danych                  |
 | `npm run backup:restore` | Przywróć bazę z backupu             |
 | `npm run release`        | Utwórz release (wersja + changelog) |
+| `npm run release:patch`  | Wymuś release typu patch            |
+| `npm run release:minor`  | Wymuś release typu minor            |
+| `npm run release:major`  | Wymuś release typu major            |
+| `npm run release:dry`    | Podgląd changeloga bez zapisywania  |
+| `npm run version:check`  | Sprawdź spójność wersji             |
 
 ## ML Pipeline (TypeScript)
 
