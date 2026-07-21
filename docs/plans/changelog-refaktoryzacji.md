@@ -39,13 +39,14 @@
 
 ## Faza 0: Przygotowanie
 
-| Data | Autor | Pliki                                               | Typ           | Status    |
-| ---- | ----- | --------------------------------------------------- | ------------- | --------- |
-| —    | —     | `public/partials/` (katalog)                        | Przygotowanie | Planowane |
-| —    | —     | `public/partials/studnie/` (katalog)                | Przygotowanie | Planowane |
-| —    | —     | `public/partials/rury/` (katalog)                   | Przygotowanie | Planowane |
-| —    | —     | `partialLoader.js`                                  | Przygotowanie | Planowane |
-| —    | —     | `partials/header.html` (z linii 1–150 studnie.html) | HTML partial  | Planowane |
+| Data       | Autor    | Pliki                                                     | Typ           | Status        |
+| ---------- | -------- | --------------------------------------------------------- | ------------- | ------------- |
+| 2026-07-21 | opencode | `public/partials/` (katalog)                              | Przygotowanie | Zweryfikowane |
+| 2026-07-21 | opencode | `public/partials/studnie/` (katalog)                      | Przygotowanie | Zweryfikowane |
+| 2026-07-21 | opencode | `public/partials/rury/` (katalog)                         | Przygotowanie | Zweryfikowane |
+| 2026-07-21 | opencode | `public/js/studnie/partialLoader.js`                      | Przygotowanie | Zweryfikowane |
+| 2026-07-21 | opencode | `public/partials/header.html` (linie 19-147 studnie.html) | HTML partial  | Zweryfikowane |
+| 2026-07-21 | opencode | `public/studnie.html` (header -> partial-header kontener) | HTML partial  | Zweryfikowane |
 
 ---
 
