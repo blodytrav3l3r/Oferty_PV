@@ -1,0 +1,91 @@
+<!-- ===== SECTION: PRICE LIST ===== -->
+<div class="section" id="section-pricelist" style="padding-bottom: 200px">
+    <div class="toolbar" style="flex-wrap: wrap">
+        <h2 style="font-size: 1rem; font-weight: 700">
+            <i data-lucide="clipboard-list"></i> Cennik elementów studni
+        </h2>
+        <div class="toolbar-spacer"></div>
+        <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+                class="form-input form-input-sm"
+                id="studnie-pricelist-search"
+                placeholder="Szukaj..."
+                style="padding-left: 2.2rem !important"
+            />
+        </div>
+        <div class="cennik-actions gap-2" style="display: flex; justify-content: flex-end">
+            <button class="btn btn-primary" onclick="showAddStudnieProductModal()">
+                <i data-lucide="plus"></i> Dodaj
+            </button>
+            <button
+                class="btn btn-secondary"
+                id="btn-save-studnie-pricelist"
+                onclick="saveStudniePriceList()"
+            >
+                <i data-lucide="save"></i> Zapisz
+            </button>
+            <button class="btn btn-secondary" onclick="exportStudnieToExcel()">
+                <i data-lucide="upload"></i> Eksportuj Excel
+            </button>
+            <button
+                class="btn btn-secondary"
+                onclick="document.getElementById('import-studnie-excel').click()"
+            >
+                <i data-lucide="download"></i> Importuj Excel
+            </button>
+            <input
+                type="file"
+                id="import-studnie-excel"
+                style="display: none"
+                accept=".xlsx,.xls"
+                onchange="importStudnieFromExcel(event)"
+            />
+
+            <button class="btn btn-secondary" onclick="resetStudniePriceList()">
+                <i data-lucide="refresh-cw"></i> Reset
+            </button>
+        </div>
+    </div>
+    <div class="cennik-tabs gap-1" style="display: flex; margin-bottom: 0.8rem; flex-wrap: wrap">
+        <button class="cennik-tab active" data-tab="dn1000" onclick="selectCennikTab('dn1000')">
+            <span class="cennik-tab-icon" style="background: #6366f1"></span> DN1000
+        </button>
+        <button class="cennik-tab" data-tab="dn1200" onclick="selectCennikTab('dn1200')">
+            <span class="cennik-tab-icon" style="background: #8b5cf6"></span> DN1200
+        </button>
+        <button class="cennik-tab" data-tab="dn1500" onclick="selectCennikTab('dn1500')">
+            <span class="cennik-tab-icon" style="background: #ec4899"></span> DN1500
+        </button>
+        <button class="cennik-tab" data-tab="dn2000" onclick="selectCennikTab('dn2000')">
+            <span class="cennik-tab-icon" style="background: #f59e0b"></span> DN2000
+        </button>
+        <button class="cennik-tab" data-tab="dn2500" onclick="selectCennikTab('dn2500')">
+            <span class="cennik-tab-icon" style="background: #ef4444"></span> DN2500
+        </button>
+        <button class="cennik-tab" data-tab="styczne" onclick="selectCennikTab('styczne')">
+            <span class="cennik-tab-icon" style="background: #f97316"></span> Styczne
+        </button>
+        <button class="cennik-tab" data-tab="dennicy" onclick="selectCennikTab('dennicy')">
+            <span class="cennik-tab-icon" style="background: #10b981"></span> Dennicy
+        </button>
+        <button class="cennik-tab" data-tab="akcesoria" onclick="selectCennikTab('akcesoria')">
+            <span class="cennik-tab-icon" style="background: #64748b"></span> Akcesoria
+        </button>
+        <button class="cennik-tab" data-tab="przejscia" onclick="selectCennikTab('przejscia')">
+            <span class="cennik-tab-icon" style="background: #14b8a6"></span> Przejścia
+        </button>
+        <button class="cennik-tab" data-tab="kinety" onclick="selectCennikTab('kinety')">
+            <span class="cennik-tab-icon" style="background: #8b5cf6"></span> Kinety
+        </button>
+        <button class="cennik-tab" data-tab="preco" onclick="selectCennikTab('preco')">
+            <span class="cennik-tab-icon" style="background: #f43f5e"></span> Wkładki PRECO
+        </button>
+    </div>
+    <div class="card">
+        <div id="studnie-pricelist-body"></div>
+    </div>
+</div>

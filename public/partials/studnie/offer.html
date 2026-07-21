@@ -1,0 +1,244 @@
+<!-- ===== SECTION: OFFER ===== -->
+<div class="section" id="section-offer" style="padding-bottom: 200px">
+    <!-- Baner kontekstu: oferta / zamówienie -->
+    <div id="offer-context-banner-studnie" style="display: none; margin-bottom: 0.75rem">
+        <div class="card gap-3" style="padding: 0.5rem 0.75rem; display: flex; align-items: center">
+            <span
+                id="offer-context-badge-studnie"
+                class="gap-1"
+                style="
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 6px;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                "
+            ></span>
+            <span
+                id="offer-context-text-studnie"
+                style="font-size: 0.78rem; color: var(--text-secondary)"
+            ></span>
+        </div>
+    </div>
+    <!-- Client & offer info summary (read from builder form) -->
+    <div class="card card-compact mb-1">
+        <div
+            class="card-title-sm"
+            style="display: flex; align-items: center; justify-content: space-between; width: 100%"
+        >
+            <span id="offer-form-title-studnie"
+                ><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span
+            >
+        </div>
+        <div class="card-content" style="margin-top: 0.5rem">
+            <div
+                id="offer-client-summary"
+                class="gap-2"
+                style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    font-size: 0.78rem;
+                    color: var(--text-secondary);
+                "
+            >
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Firma:</span>
+                    <span id="offer-disp-name">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">NIP:</span>
+                    <span id="offer-disp-nip">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Nr oferty:</span>
+                    <span id="offer-disp-number">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Data:</span>
+                    <span id="offer-disp-date">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Inwestycja:</span>
+                    <span id="offer-disp-invest">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Transport:</span>
+                    <span id="offer-disp-transport">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UWAGI DO OFERTY -->
+    <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem">
+        <div class="card-header-row">
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
+                <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
+            </label>
+            <button
+                class="btn btn-secondary btn-sm"
+                onclick="generateOfferNotes()"
+                style="font-size: 0.7rem; padding: 0.3rem 0.6rem"
+            >
+                <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
+                Auto-generuj uwagi
+            </button>
+        </div>
+        <textarea
+            id="offer-tab-notes"
+            class="wizard-form-input"
+            rows="4"
+            placeholder="Uwagi zostaną automatycznie wygenerowane..."
+            style="resize: vertical; width: 100%; font-size: 0.75rem"
+        ></textarea>
+    </div>
+
+    <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
+    <div class="card" style="margin-bottom: 1rem; padding: 0.8rem">
+        <div class="card-header-row">
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
+                <i data-lucide="credit-card"></i> Warunki płatności
+            </label>
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700"
+                >Data ważności</label
+            >
+        </div>
+        <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
+            <textarea
+                id="offer-tab-payment-terms"
+                class="wizard-form-input"
+                rows="2"
+                placeholder="Domyślnie przepisywane z kroku 1..."
+                style="resize: vertical; width: 100%; font-size: 0.75rem"
+            ></textarea>
+            <input
+                id="offer-tab-validity"
+                class="wizard-form-input"
+                style="width: 100%; font-size: 0.75rem; text-align: right"
+                onclick="this.select()"
+            />
+        </div>
+    </div>
+
+    <div class="card mb-1">
+        <div class="toolbar" style="margin-top: 0; margin-bottom: 0.5rem; padding: 0">
+            <h2 style="font-size: 1rem; font-weight: 700">
+                <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Studnie)
+            </h2>
+        </div>
+        <div id="offer-summary-body"></div>
+    </div>
+
+    <!-- Summary Foot -->
+    <div id="offer-summary-footer-fixed" class="offer-summary-footer-fixed">
+        <div
+            class="summary-grid gap-4"
+            style="
+                margin: 0 auto;
+                max-width: 100%;
+                display: grid;
+                grid-template-columns: 1fr 1.2fr 1.1fr 2.6fr 1.6fr;
+                align-items: stretch;
+                text-align: center;
+            "
+        >
+            <!-- CENA NETTO -->
+            <div class="summary-card" style="align-items: center; text-align: center">
+                <div class="studnie-summary-label">Cena Netto</div>
+                <div class="studnie-summary-value accent" id="sum-netto-products">0,00 PLN</div>
+            </div>
+            <!-- TRANSPORT -->
+            <div
+                class="summary-card"
+                onclick="openTransportPopup()"
+                style="
+                    align-items: center;
+                    text-align: center;
+                    cursor: pointer;
+                    transition: background 0.2s;
+                "
+                onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+                onmouseout="this.style.background = 'transparent'"
+            >
+                <div class="studnie-summary-label" style="width: 100%">Koszt transportu</div>
+                <div
+                    class="studnie-summary-value warn gap-2"
+                    id="sum-transport-cost"
+                    style="
+                        white-space: nowrap;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                >
+                    <i data-lucide="truck" style="width: 20px; height: 20px"></i> 0 PLN
+                </div>
+                <div
+                    id="offer-active-transport-info"
+                    style="
+                        font-size: 0.75rem;
+                        color: #94a3b8;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.3;
+                        text-align: center;
+                        margin-top: 0.15rem;
+                    "
+                >
+                    <!-- info o transporcie wg. JS -->
+                </div>
+            </div>
+            <!-- RAZEM NETTO -->
+            <div class="summary-card" style="align-items: center">
+                <div class="studnie-summary-label">RAZEM Netto</div>
+                <div class="studnie-summary-value success" id="sum-total-netto">0,00 PLN</div>
+                <div class="studnie-summary-sub" id="sum-brutto-details">Brutto: 0,00 PLN</div>
+            </div>
+            <!-- RABATY -->
+            <div
+                class="summary-card"
+                onclick="openOfferDiscountsPopup()"
+                style="align-items: stretch; cursor: pointer; transition: background 0.2s"
+                onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+                onmouseout="this.style.background = 'transparent'"
+            >
+                <div style="text-align: center; margin-bottom: 0.2rem">
+                    <span class="studnie-summary-label" style="margin: 0"
+                        >Zarządzanie Rabatami</span
+                    >
+                </div>
+                <div id="offer-active-discounts-info" style="width: 100%; min-height: 22px">
+                    <!-- Populated by updateOfferSummaryUI -->
+                </div>
+            </div>
+            <!-- AKCJE -->
+            <div class="summary-card summary-card-actions">
+                <div class="summary-card-actions-grid">
+                    <button
+                        id="btn-save-studnie-offer"
+                        class="summary-action-btn summary-action-btn--save"
+                        onclick="saveOfferStudnie()"
+                    >
+                        <i data-lucide="save"></i> Zapisz ofertę
+                    </button>
+                    <button
+                        id="btn-create-order-offer"
+                        class="summary-action-btn summary-action-btn--order"
+                        onclick="createOrderFromOffer()"
+                    >
+                        <i data-lucide="package"></i> Utwórz zamówienie
+                    </button>
+                    <button
+                        class="summary-action-btn summary-action-btn--print"
+                        onclick="showOfferExportChoice()"
+                    >
+                        <i data-lucide="printer"></i> Wydruk
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

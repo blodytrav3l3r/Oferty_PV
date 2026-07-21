@@ -1,0 +1,60 @@
+<!-- PARTIAL: step2-products.html -->
+<!-- ===== FAZA 2: WYBÓR PRODUKTÓW ===== -->
+<div class="wizard-step" id="wizard-step-2">
+    <div class="rury-card">
+        <div class="rury-card-header">
+            <span class="rury-card-title"><i data-lucide="search"></i> Wyszukaj produkty</span>
+            <div class="zt-toggle-wrap">
+                <span class="zt-toggle-label">Zabezp. transp.</span>
+                <div class="zt-toggle-group">
+                    <button
+                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                        id="zt-toggle-tak"
+                        onclick="setZabezpieczenieTransportu(true)"
+                    >
+                        TAK
+                    </button>
+                    <button
+                        class="zt-toggle-btn zt-toggle-nie-btn"
+                        id="zt-toggle-nie"
+                        onclick="setZabezpieczenieTransportu(false)"
+                    >
+                        NIE
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div
+            class="offer-search-row"
+            style="position: static; margin: 0 -1rem 0.5rem; padding: 0.3rem 0.6rem"
+        >
+            <div class="offer-product-search">
+                <div class="search-box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input
+                        class="rury-form-input"
+                        id="product-search"
+                        placeholder="Wyszukaj produkt po nazwie lub indeksie..."
+                        style="padding-left: 2.4rem"
+                        autocomplete="off"
+                    />
+                </div>
+                <div class="product-dropdown" id="product-dropdown"></div>
+            </div>
+            <button
+                class="btn btn-secondary offer-catalog-btn"
+                id="toggle-catalog-btn"
+                onclick="toggleCatalog()"
+            >
+                <i data-lucide="folder-open"></i> Ukryj katalog produktów
+            </button>
+        </div>
+        <div id="product-catalog" class="product-catalog">
+            <div class="catalog-tabs" id="catalog-tabs" style="position: static"></div>
+            <div class="catalog-products" id="catalog-products"></div>
+        </div>
+    </div>
+</div>

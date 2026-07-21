@@ -1,0 +1,146 @@
+<!-- PARTIAL: offer.html -->
+<!-- ===== SECTION: OFFER (PODSUMOWANIE) ===== -->
+<div class="section" id="section-offer" style="padding-bottom: 220px">
+    <!-- Baner kontekstu: oferta / zamówienie -->
+    <div id="offer-context-banner" style="display: none; margin-bottom: 0.75rem">
+        <div class="card gap-3" style="padding: 0.5rem 0.75rem; display: flex; align-items: center">
+            <span
+                id="offer-context-badge"
+                class="gap-1"
+                style="
+                    display: inline-flex;
+                    align-items: center;
+                    padding: 0.2rem 0.6rem;
+                    border-radius: 6px;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                "
+            ></span>
+            <span
+                id="offer-context-text"
+                style="font-size: 0.78rem; color: var(--text-secondary)"
+            ></span>
+        </div>
+    </div>
+    <!-- Dane klienta i oferty -->
+    <div class="card card-compact mb-1">
+        <div
+            class="card-title-sm"
+            style="display: flex; align-items: center; justify-content: space-between; width: 100%"
+        >
+            <span id="offer-form-title-rury"
+                ><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span
+            >
+        </div>
+        <div class="card-content" style="margin-top: 0.5rem">
+            <div
+                id="offer-client-summary"
+                class="gap-2"
+                style="
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                    font-size: 0.78rem;
+                    color: var(--text-secondary);
+                "
+            >
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Firma:</span>
+                    <span id="offer-disp-name">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">NIP:</span>
+                    <span id="offer-disp-nip">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Nr oferty:</span>
+                    <span id="offer-disp-number">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Data:</span>
+                    <span id="offer-disp-date">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Inwestycja:</span>
+                    <span id="offer-disp-invest">—</span>
+                </div>
+                <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Transport:</span>
+                    <span id="offer-disp-transport">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UWAGI DO OFERTY -->
+    <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem">
+        <div class="card-header-row">
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
+                <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
+            </label>
+        </div>
+        <textarea
+            id="offer-tab-notes"
+            class="wizard-form-input"
+            rows="4"
+            placeholder="Wpisz uwagi do oferty..."
+            style="resize: vertical; width: 100%; font-size: 0.75rem"
+        ></textarea>
+    </div>
+
+    <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
+    <div class="card" style="margin-bottom: 1rem; padding: 0.8rem">
+        <div class="card-header-row">
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
+                <i data-lucide="credit-card"></i> Warunki płatności
+            </label>
+            <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700"
+                >Data ważności</label
+            >
+        </div>
+        <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
+            <textarea
+                id="offer-tab-payment-terms"
+                class="wizard-form-input"
+                rows="2"
+                placeholder="Domyślnie przepisywane z kroku 1..."
+                style="resize: vertical; width: 100%; font-size: 0.75rem"
+            ></textarea>
+            <input
+                id="offer-tab-validity"
+                class="wizard-form-input"
+                style="width: 100%; font-size: 0.75rem; text-align: right"
+                onclick="this.select()"
+            />
+        </div>
+    </div>
+
+    <!-- ZESTAWIENIE OFERTOWE -->
+    <div class="card mb-1">
+        <div class="toolbar" style="margin-top: 0; margin-bottom: 0.5rem; padding: 0">
+            <h2 style="font-size: 1rem; font-weight: 700">
+                <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Rury)
+            </h2>
+            <div class="toolbar-spacer"></div>
+            <div class="zt-toggle-wrap">
+                <span class="zt-toggle-label">Zabezp. transp.</span>
+                <div class="zt-toggle-group">
+                    <button
+                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                        id="zt-toggle-tak-oferta"
+                        onclick="setZabezpieczenieTransportu(true)"
+                    >
+                        TAK
+                    </button>
+                    <button
+                        class="zt-toggle-btn zt-toggle-nie-btn"
+                        id="zt-toggle-nie-oferta"
+                        onclick="setZabezpieczenieTransportu(false)"
+                    >
+                        NIE
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="offer-tab-summary-body"></div>
+    </div>
+</div>

@@ -1,0 +1,445 @@
+﻿<!-- SIDEBAR: Wells list and discounts -->
+<!-- RIGHT: Wells list sidebar -->
+<div class="wells-sidebar">
+    <div class="wells-sidebar-panel">
+        <div
+            class="wells-sidebar-header gap-1"
+            style="flex-direction: column; align-items: stretch; padding-bottom: 0.4rem"
+        >
+            <!-- Main Action Buttons at the very top -->
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    padding-bottom: 0.4rem;
+                    border-bottom: 1px solid #1a2233;
+                "
+            >
+                <button
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 38px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: rgba(16, 185, 129, 0.15);
+                        color: #6ee7b7;
+                        border-color: rgba(16, 185, 129, 0.3);
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.4rem;
+                        line-height: 1.2;
+                    "
+                    onclick="openExcelTableModal()"
+                >
+                    <span><i data-lucide="table"></i></span>
+                    <span
+                        style="
+                            font-size: 0.6rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Excel</span
+                    >
+                </button>
+            </div>
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    padding-bottom: 0.4rem;
+                    border-bottom: 1px solid #1a2233;
+                "
+            >
+                <button
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: rgba(99, 102, 241, 0.15);
+                        color: #a5b4fc;
+                        border-color: rgba(99, 102, 241, 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="window.openGlobalRecalcModal()"
+                >
+                    <span class="fs-1"><i data-lucide="settings"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Przelicz</span
+                    >
+                </button>
+                <button
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: rgba(139, 92, 246, 0.15);
+                        color: #c4b5fd;
+                        border-color: rgba(139, 92, 246, 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="openTransitionManagerModal()"
+                >
+                    <span class="fs-1"><i data-lucide="droplets"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >M. PrzejĹ›Ä‡</span
+                    >
+                </button>
+                <button
+                    class="btn btn-success btn-sm"
+                    id="btn-save-studnie-sidebar"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="saveOfferStudnie()"
+                >
+                    <span class="fs-1"><i data-lucide="save"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zapisz</span
+                    >
+                </button>
+                <button
+                    class="btn btn-success btn-sm"
+                    id="btn-save-zamowienie-sidebar"
+                    style="
+                        display: none;
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: rgba(16, 185, 129, 0.2);
+                        border-color: rgba(16, 185, 129, 0.4);
+                        color: #34d399;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="saveCurrentOrder()"
+                >
+                    <span class="fs-1"><i data-lucide="save"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zapisz</span
+                    >
+                </button>
+                <button
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: rgba(220, 38, 38, 0.12);
+                        border: 1px solid rgba(220, 38, 38, 0.3);
+                        color: #f87171;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="handlePrintClick()"
+                >
+                    <span class="fs-1"><i data-lucide="printer"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Wydruk</span
+                    >
+                </button>
+                <button
+                    class="btn btn-sm"
+                    style="
+                        display: none !important;
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        flex: 1;
+                        background: #0f3328;
+                        border: 1px solid #0d2a20;
+                        color: #34d399;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="createOrderFromOffer()"
+                >
+                    <span class="fs-1"><i data-lucide="package"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >ZamĂłw</span
+                    >
+                </button>
+                <button
+                    id="btn-zlecenia-sidebar"
+                    class="btn btn-sm"
+                    style="
+                        display: none;
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        grid-column: span 2;
+                        background: #2d1a08;
+                        border: 1px solid #5a3010;
+                        color: #f97316;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
+                    onclick="openZleceniaProdukcyjne()"
+                >
+                    <span class="fs-1"><i data-lucide="factory"></i></span>
+                    <span
+                        style="
+                            font-size: 0.55rem;
+                            font-weight: 800;
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zlecenia</span
+                    >
+                </button>
+            </div>
+
+            <!-- Add Well Buttons -->
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+                    padding: 0.4rem 0;
+                    border-bottom: 1px solid #1a2233;
+                "
+            >
+                <button
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell(1000)"
+                >
+                    +1000
+                </button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell(1200)"
+                >
+                    +1200
+                </button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell(1500)"
+                >
+                    +1500
+                </button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell(2000)"
+                >
+                    +2000
+                </button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.65rem;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell(2500)"
+                >
+                    +2500
+                </button>
+                <button
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: 0.6rem;
+                        background: rgba(249, 115, 22, 0.15);
+                        border: 1px solid rgba(249, 115, 22, 0.3);
+                        color: #f97316;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
+                    onclick="addNewWell('styczna')"
+                >
+                    +StyczeĹ„
+                </button>
+            </div>
+
+            <!-- Tabs Switcher -->
+            <div
+                class="sidebar-tabs gap-1"
+                style="
+                    display: flex;
+                    margin-top: 0.4rem;
+                    padding: 0.2rem;
+                    background: rgba(0, 0, 0, 0.3);
+                    border-radius: 8px;
+                    border: 1px solid rgba(255, 255, 255, 0.05);
+                "
+            >
+                <button
+                    class="s-tab-btn active"
+                    onclick="switchSidebarTab('list')"
+                    id="stab-list"
+                    style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
+                >
+                    <i data-lucide="folder-open"></i> Lista studni
+                    <span id="wells-counter" style="opacity: 0.6; margin-left: 2px">(0)</span>
+                </button>
+                <button
+                    class="s-tab-btn"
+                    onclick="switchSidebarTab('discounts')"
+                    id="stab-discounts"
+                    style="flex: 1; font-size: 0.68rem; padding: 0.35rem 0.2rem"
+                >
+                    <i data-lucide="banknote"></i> Rabaty
+                </button>
+            </div>
+        </div>
+
+        <!-- Content below header -->
+        <div
+            id="sidebar-list-content"
+            style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden"
+        >
+            <div
+                style="
+                    padding: 0.4rem;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    background: rgba(255, 255, 255, 0.02);
+                "
+            >
+                <div style="position: relative; display: flex; align-items: center">
+                    <input
+                        type="text"
+                        id="wells-search-input"
+                        placeholder="Szukaj po numerze..."
+                        oninput="renderWellsList()"
+                        style="
+                            width: 100%;
+                            padding: 0.4rem 0.6rem;
+                            background: rgba(0, 0, 0, 0.2);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: 6px;
+                            color: #fff;
+                            font-size: 0.75rem;
+                            outline: none;
+                            transition: all 0.2s;
+                        "
+                        onfocus="
+                            this.style.borderColor = 'rgba(99,102,241,0.5)';
+                            this.style.background = 'rgba(0,0,0,0.3)';
+                        "
+                        onblur="
+                            this.style.borderColor = 'rgba(255,255,255,0.1)';
+                            this.style.background = 'rgba(0,0,0,0.2)';
+                        "
+                    />
+                </div>
+            </div>
+            <div id="wells-list" style="padding: 0.4rem"></div>
+        </div>
+        <div
+            id="sidebar-discounts-content"
+            style="flex: 1; display: none; flex-direction: column; overflow: hidden"
+        >
+            <div id="wells-discount-panel"></div>
+        </div>
+    </div>
+    <!-- /wells-sidebar-panel -->
+</div>

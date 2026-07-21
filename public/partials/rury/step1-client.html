@@ -1,0 +1,244 @@
+<!-- PARTIAL: step1-client.html -->
+<!-- ===== FAZA 1: DANE KLIENTA I OFERTY (identyczny HTML jak studnie) ===== -->
+<div class="wizard-step active" id="wizard-step-1">
+    <div class="wizard-card">
+        <div
+            class="wizard-card-header gap-2"
+            style="
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.8rem;
+                padding-bottom: 0.6rem;
+                border-bottom: 1px solid #1b2334;
+            "
+        >
+            <div
+                style="
+                    font-size: 1.4rem;
+                    background: #1a1a3e;
+                    width: 2.4rem;
+                    height: 2.4rem;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                "
+            >
+                <i data-lucide="clipboard-list"></i>
+            </div>
+            <div>
+                <h2
+                    id="offer-form-title"
+                    class="wizard-card-title"
+                    style="margin: 0; font-size: 1.15rem; font-weight: 700"
+                >
+                    Dane klienta i oferty
+                </h2>
+                <p
+                    class="wizard-card-subtitle"
+                    style="margin: 0; font-size: 0.75rem; color: #71717a"
+                >
+                    Uzupełnij dane klienta i podstawowe informacje o ofercie
+                </p>
+            </div>
+            <div class="gap-2" style="display: flex; margin-left: auto">
+                <button
+                    class="btn btn-secondary btn-sm"
+                    onclick="showClientsDb()"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                >
+                    <i data-lucide="folder-open"></i> Wczytaj klienta
+                </button>
+                <button
+                    class="btn btn-primary btn-sm"
+                    onclick="saveClientToDb()"
+                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                >
+                    <i data-lucide="save"></i> Zapisz klienta
+                </button>
+            </div>
+        </div>
+
+        <div class="wizard-card-body">
+            <div class="wizard-section-title"><i data-lucide="user"></i> Dane klienta</div>
+            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr">
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="client-number">Nr klienta</label>
+                    <input class="wizard-form-input" id="client-number" placeholder="K-001" />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="client-name">Firma</label>
+                    <input class="wizard-form-input" id="client-name" placeholder="Budimex S.A." />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="client-nip">NIP</label>
+                    <input
+                        class="wizard-form-input"
+                        id="client-nip"
+                        placeholder="1234567890"
+                        oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="client-address">Adres firmy</label>
+                    <input
+                        class="wizard-form-input"
+                        id="client-address"
+                        placeholder="ul. Przykładowa 1, Warszawa"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="client-contact">Kontakt</label>
+                    <input
+                        class="wizard-form-input"
+                        id="client-contact"
+                        placeholder="Jan Kowalski, 600 100 200"
+                    />
+                </div>
+            </div>
+
+            <div class="wizard-section-title" style="margin-top: 1.2rem">
+                <i data-lucide="hard-hat"></i> Inwestycja
+            </div>
+            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr">
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="invest-name">Obiekt</label>
+                    <input
+                        class="wizard-form-input"
+                        id="invest-name"
+                        placeholder="Budowa kanalizacji deszczowej"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="invest-address">Adres</label>
+                    <input
+                        class="wizard-form-input"
+                        id="invest-address"
+                        placeholder="ul. Nowa 5, Kraków"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="invest-contractor">Wykonawca</label>
+                    <input
+                        class="wizard-form-input"
+                        id="invest-contractor"
+                        placeholder="Firma budowlana XYZ"
+                    />
+                </div>
+            </div>
+
+            <div
+                style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-end;
+                    margin-top: 1.2rem;
+                    margin-bottom: 0.5rem;
+                "
+            >
+                <div class="wizard-section-title" style="margin: 0">
+                    <i data-lucide="file-text"></i> Oferta
+                </div>
+                <button
+                    id="btn-change-offer-user"
+                    class="btn btn-sm"
+                    style="
+                        display: none;
+                        background: rgba(99, 102, 241, 0.1);
+                        border: 1px solid rgba(99, 102, 241, 0.3);
+                        color: #818cf8;
+                        font-size: 0.75rem;
+                        font-weight: 700;
+                        padding: 0.3rem 0.6rem;
+                    "
+                    onclick="changeOfferUser()"
+                >
+                    <i data-lucide="user"></i> Zmień opiekuna
+                </button>
+            </div>
+            <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr">
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-number">Nr oferty</label>
+                    <input class="wizard-form-input" id="offer-number" />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-date">Data</label>
+                    <input class="wizard-form-input" type="date" id="offer-date" />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="transport-km">Kilometry</label>
+                    <input
+                        class="wizard-form-input"
+                        type="number"
+                        step="1"
+                        id="transport-km"
+                        value="100"
+                        oninput="onRuryTransportFormChange()"
+                    />
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="transport-rate">PLN/km</label>
+                    <input
+                        class="wizard-form-input"
+                        type="number"
+                        step="0.1"
+                        id="transport-rate"
+                        value="10"
+                        oninput="onRuryTransportFormChange()"
+                    />
+                </div>
+            </div>
+            <div class="wizard-form-grid" style="grid-template-columns: 1fr; margin-top: 0.3rem">
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-notes">Uwagi</label>
+                    <textarea
+                        class="wizard-form-textarea"
+                        id="offer-notes"
+                        rows="5"
+                        placeholder="np. Cena obejmuje transport do 100 km..."
+                        style="resize: vertical; min-height: 140px; height: 140px"
+                    ></textarea>
+                </div>
+            </div>
+            <div
+                class="wizard-form-grid"
+                style="grid-template-columns: 3fr 1fr; margin-top: 0.3rem"
+            >
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-payment-terms"
+                        >Warunki płatności</label
+                    >
+                    <textarea
+                        class="wizard-form-textarea"
+                        id="offer-payment-terms"
+                        rows="1"
+                        style="
+                            resize: vertical;
+                            font-size: 0.8rem;
+                            width: 100%;
+                            min-height: 34px;
+                            height: 34px;
+                        "
+                    >
+Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
+                </div>
+                <div class="wizard-form-group">
+                    <label class="wizard-form-label" for="offer-validity"
+                        >Data ważności oferty</label
+                    >
+                    <input
+                        class="wizard-form-input"
+                        id="offer-validity"
+                        value="7 dni"
+                        onclick="this.select()"
+                    />
+                </div>
+            </div>
+            <div class="wizard-nav">
+                <div></div>
+                <button class="wizard-btn wizard-btn-next" onclick="phaseNext()">Dalej →</button>
+            </div>
+        </div>
+    </div>
+</div>

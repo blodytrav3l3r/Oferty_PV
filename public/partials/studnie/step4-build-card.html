@@ -1,0 +1,939 @@
+﻿<!-- STEP 4: Build Card (Karta Budowy) -->
+<!-- â•â•â•â•â•â• WIZARD STEP 4: KARTA BUDOWY â•â•â•â•â•â• -->
+<div class="wizard-step" id="wizard-step-4">
+    <div class="wizard-card">
+        <div class="wizard-card-content" style="padding: 1rem 0">
+            <!-- Wiersz 0: Kopiuj KartÄ™ Budowy z istniejÄ…cego zamĂłwienia -->
+            <div
+                class="gap-3"
+                style="display: flex; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem"
+            >
+                <div style="flex: 1; min-width: 0">
+                    <select id="step4-copy-order-select" class="form-input form-input-wide">
+                        <option value="">Wybierz kartÄ™ budowy do skopiowania</option>
+                    </select>
+                    <div
+                        id="step4-copy-order-help"
+                        style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem"
+                    >
+                        Wybierz istniejÄ…ce zamĂłwienie, aby skopiowaÄ‡ jego dane Karty Budowy.
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    id="step4-copy-toggle-btn"
+                    class="wizard-btn wizard-btn-secondary"
+                    onclick="copyKartaBudowyFromOrder()"
+                    style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
+                >
+                    Kopiuj KartÄ™ Budowy z zamĂłwienia
+                </button>
+            </div>
+
+            <!-- Wiersz 1: Emaile i numer oferty -->
+            <div
+                class="gap-4"
+                style="
+                    display: flex;
+                    align-items: flex-start;
+                    flex-wrap: wrap;
+                    padding: 0.4rem 1.2rem 0.6rem;
+                "
+            >
+                <!-- Email do faktury (Zablokowane) -->
+                <div class="flex-1-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #f59e0b;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Aktualnie przypisane emaile do faktury
+                    </label>
+                    <input
+                        type="email"
+                        id="step4-email-faktura"
+                        class="form-input"
+                        placeholder="np. faktura@firma.pl"
+                        style="
+                            width: 100%;
+                            font-size: 0.85rem;
+                            padding: 0.6rem 0.8rem;
+                            background: rgba(0, 0, 0, 0.2);
+                            color: var(--text-muted);
+                            cursor: not-allowed;
+                        "
+                        readonly
+                    />
+                </div>
+
+                <!-- Email e-faktura (TU DOPISYWAC) -->
+                <div class="flex-1-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #10b981;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Email e-faktura
+                        <span
+                            style="
+                                font-size: 0.65rem;
+                                color: #10b981;
+                                font-weight: 800;
+                                margin-left: 0.3rem;
+                            "
+                            >(TU DOPISYWAÄ†)</span
+                        >
+                    </label>
+                    <input
+                        type="email"
+                        id="step4-email-efaktura"
+                        class="form-input"
+                        placeholder="np. efaktura@firma.pl"
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+
+                <!-- ZamĂłwienie wedĹ‚ug oferty nr. -->
+                <div class="flex-1-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #818cf8;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        ZamĂłwienie wedĹ‚ug oferty nr.
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-offer-nr-input"
+                        class="form-input"
+                        placeholder="np. OF/2026/001, OF/2026/002"
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem">
+                        Numery ofert oddzielaj przecinkiem
+                    </div>
+                </div>
+            </div>
+
+            <!-- Wiersz 2: Adres i PĹ‚atnoĹ›ci -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Adres wysyĹ‚ki faktury -->
+                <div class="flex-2-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #3b82f6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Adres wysyĹ‚ki faktury
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-adres-wysylki"
+                        class="form-input"
+                        placeholder="Wpisz adres wysyĹ‚ki faktury..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+
+                <!-- Warunki pĹ‚atnoĹ›ci -->
+                <div style="flex: 1; min-width: 150px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #a855f7;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Warunki pĹ‚atnoĹ›ci
+                    </label>
+                    <select id="step4-warunki-platnosci" class="form-input form-input-wide">
+                        <option value="przelew">Przelew</option>
+                        <option value="gotĂłwka">GotĂłwka</option>
+                        <option value="przedpĹ‚ata">PrzedpĹ‚ata</option>
+                    </select>
+                </div>
+
+                <!-- IloĹ›Ä‡ dni -->
+                <div style="flex: 1; min-width: 100px; max-width: 150px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #a855f7;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        IloĹ›Ä‡ dni
+                    </label>
+                    <input
+                        type="number"
+                        id="step4-ilosc-dni"
+                        class="form-input"
+                        placeholder="np. 14"
+                        min="0"
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 3: Ubezpieczenie -->
+            <div class="flex-wrap-start p-6-12">
+                <div class="flex-1-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #14b8a6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Ubezpieczenie
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-ubezpieczenie"
+                        class="form-input"
+                        placeholder="Wpisz dane ubezpieczenia..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 4: Osoba do kontaktu -->
+            <div class="flex-wrap-start p-6-12">
+                <div class="flex-1-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #ec4899;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Osoba do kontaktu tel. / email
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-osoba-kontakt"
+                        class="form-input"
+                        placeholder="Wpisz dane osoby do kontaktu..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 5: Transport -->
+            <div class="flex-wrap-start p-6-12">
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #f43f5e;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Zabezpieczenie transportu
+                    </label>
+                    <select id="step4-zabezpieczenie-transportu" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="PodkĹ‚ady jednorazowe">PodkĹ‚ady jednorazowe</option>
+                        <option value="PodkĹ‚ady zwrotne">PodkĹ‚ady zwrotne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #f97316;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Rodzaj transportu
+                    </label>
+                    <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
+                        <option value="W kĂłĹ‚ko">W kĂłĹ‚ko</option>
+                        <option value="Spedycja">Spedycja</option>
+                        <option value="Transport P.V." selected>Transport P.V.</option>
+                        <option value="OdbiĂłr wĹ‚asny">OdbiĂłr wĹ‚asny</option>
+                    </select>
+                </div>
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #8b5cf6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Wyliczony transport z zam.
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-wyliczony-transport"
+                        class="form-input"
+                        placeholder="Brak danych"
+                        style="
+                            width: 100%;
+                            font-size: 0.85rem;
+                            padding: 0.6rem 0.8rem;
+                            background: rgba(30, 41, 59, 0.8);
+                            color: #e2e8f0;
+                        "
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 6: Rodzaj studni, Uszczelka do studni, Rodzaj stopni -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Rodzaj studni -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #38bdf8;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Rodzaj studni
+                    </label>
+                    <select id="step4-rodzaj-studni" class="form-input form-input-wide">
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Beton" selected>Beton</option>
+                        <option value="Ĺ»elbet">Ĺ»elbet</option>
+                    </select>
+                </div>
+
+                <!-- Uszczelka do studni -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #22d3ee;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Uszczelka do studni
+                    </label>
+                    <select
+                        id="step4-uszczelka-studni"
+                        class="form-input form-input-wide"
+                        onchange="
+                            document.getElementById(
+                                'step4-uszczelka-studni-inne-wrap'
+                            ).style.display = this.value === 'Inne' ? 'block' : 'none'
+                        "
+                    >
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Brak" selected>Brak</option>
+                        <option value="GSG">GSG</option>
+                        <option value="SDV">SDV</option>
+                        <option value="SDV PO">SDV PO</option>
+                        <option value="NBR">NBR</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180-hidden" id="step4-uszczelka-studni-inne-wrap">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #22d3ee;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Jakie (Inne)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-uszczelka-studni-inne"
+                        class="form-input"
+                        placeholder="Wpisz uszczelkÄ™..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+
+                <!-- Rodzaj stopni -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #eab308;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Rodzaj stopni
+                    </label>
+                    <select
+                        id="step4-rodzaj-stopni"
+                        class="form-input form-input-wide"
+                        onchange="
+                            document.getElementById('step4-rodzaj-stopni-inne-wrap').style.display =
+                                this.value === 'Inne' ? 'block' : 'none'
+                        "
+                    >
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Brak">Brak</option>
+                        <option value="Drabinka">Drabinka</option>
+                        <option value="Drabinka nierdzewna">Drabinka nierdzewna</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180-hidden" id="step4-rodzaj-stopni-inne-wrap">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #eab308;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Jakie (Inne)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-rodzaj-stopni-inne"
+                        class="form-input"
+                        placeholder="Wpisz rodzaj stopni..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 7: Kineta i WysokoĹ›Ä‡ spocznika -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Kineta -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #a855f7;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Kineta
+                    </label>
+                    <select
+                        id="step4-kineta"
+                        class="form-input form-input-wide"
+                        onchange="
+                            document.getElementById('step4-kineta-inne-wrap').style.display =
+                                this.value === 'Inne' ? 'block' : 'none'
+                        "
+                    >
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Brak" selected>Brak</option>
+                        <option value="Beton">Beton</option>
+                        <option value="Beton z GFK">Beton z GFK</option>
+                        <option value="Klinkier">Klinkier</option>
+                        <option value="Preco">Preco</option>
+                        <option value="PrecoTop">PrecoTop</option>
+                        <option value="UnoLith">UnoLith</option>
+                        <option value="Predl">Predl</option>
+                        <option value="Kamionka">Kamionka</option>
+                        <option value="Inne">Inne</option>
+                    </select>
+                </div>
+                <div class="flex-1-180-hidden" id="step4-kineta-inne-wrap">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #a855f7;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Jakie (Inne)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-kineta-inne"
+                        class="form-input"
+                        placeholder="Wpisz rodzaj kinety..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+
+                <!-- WysokoĹ›Ä‡ spocznika -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #14b8a6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        WysokoĹ›Ä‡ spocznika
+                    </label>
+                    <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="1/2">1/2</option>
+                        <option value="2/3">2/3</option>
+                        <option value="3/4">3/4</option>
+                        <option value="1/1">1/1</option>
+                    </select>
+                </div>
+
+                <!-- Usytuowanie -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #f43f5e;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Usytuowanie
+                    </label>
+                    <select id="step4-usytuowanie" class="form-input form-input-wide">
+                        <option value="Nie dotyczy">Nie dotyczy</option>
+                        <option value="Linia dolna" selected>Linia dolna</option>
+                        <option value="Linia gĂłrna">Linia gĂłrna</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Wiersz 8: Kaskada i Ĺšlepa kineta -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Kaskada -->
+                <div style="flex: 1; min-width: 140px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #3b82f6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Kaskada
+                    </label>
+                    <select id="step4-kaskada" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+                <div style="flex: 2; min-width: 180px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #3b82f6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Uwagi (Kaskada)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-kaskada-uwagi"
+                        class="form-input"
+                        placeholder="Wpisz uwagi..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+
+                <!-- Ĺšlepa kineta -->
+                <div style="flex: 1; min-width: 140px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #8b5cf6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Ĺšlepa kineta
+                    </label>
+                    <select id="step4-slepa-kineta" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+                <div style="flex: 2; min-width: 180px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #8b5cf6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Uwagi (Ĺšlepa kineta)
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-slepa-kineta-uwagi"
+                        class="form-input"
+                        placeholder="Wpisz uwagi..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 9: Redukcja kinety, PrzejĹ›cia tulejowe, PrzejĹ›cia szczelne -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- Redukcja kinety -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #10b981;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Redukcja kinety
+                    </label>
+                    <select id="step4-redukcja-kinety" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Nie">Nie</option>
+                        <option value="Tak">Tak</option>
+                    </select>
+                </div>
+
+                <!-- PrzejĹ›cia tulejowe -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #0ea5e9;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        PrzejĹ›cia tulejowe
+                    </label>
+                    <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+
+                <!-- PrzejĹ›cia szczelne -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #8b5cf6;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        PrzejĹ›cia szczelne
+                    </label>
+                    <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="W zakresie P.V.">W zakresie P.V.</option>
+                        <option value="Dostarcza klient">Dostarcza klient</option>
+                    </select>
+                </div>
+
+                <!-- PrzejĹ›cia zamĂłwione -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #cbd5e1;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        PrzejĹ›cia zamĂłwione
+                    </label>
+                    <select
+                        id="step4-przejscia-zamowione"
+                        class="form-input form-input-wide"
+                        onchange="handlePrzejsciaZamowioneChange(this)"
+                    >
+                        <option value="Nie dotyczy" selected>Nie dotyczy</option>
+                        <option value="Tak">Tak</option>
+                        <option value="Nie">Nie</option>
+                    </select>
+                </div>
+
+                <!-- Data zamĂłwienia -->
+                <div class="flex-2-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #cbd5e1;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        Data zamĂłwienia
+                    </label>
+                    <input
+                        type="date"
+                        id="step4-data-zamowienia"
+                        class="form-input form-input-wide"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 10: WĹ‚aĹ›ciwoĹ›ci betonu, PozostaĹ‚e wĹ‚aĹ›ciwoĹ›ci -->
+            <div class="flex-wrap-start p-6-12">
+                <!-- WĹ‚aĹ›ciwoĹ›ci betonu -->
+                <div class="flex-1-180">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #cbd5e1;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        WĹ‚aĹ›ciwoĹ›ci betonu
+                    </label>
+                    <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
+                        <option value="C40/50" selected>C40/50</option>
+                        <option value="C40/50 HSR">C40/50 HSR</option>
+                        <option value="C45/55">C45/55</option>
+                        <option value="C45/55 HSR">C45/55 HSR</option>
+                        <option value="C70/85">C70/85</option>
+                        <option value="C70/80 HSR">C70/80 HSR</option>
+                    </select>
+                </div>
+
+                <!-- PozostaĹ‚e wĹ‚aĹ›ciwoĹ›ci -->
+                <div class="flex-2-240">
+                    <label
+                        style="
+                            display: block;
+                            font-size: 0.75rem;
+                            font-weight: 700;
+                            color: #cbd5e1;
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
+                        PozostaĹ‚e wĹ‚aĹ›ciwoĹ›ci
+                    </label>
+                    <input
+                        type="text"
+                        id="step4-pozostale-wlasciwosci"
+                        class="form-input"
+                        placeholder="Wpisz wĹ‚aĹ›ciwoĹ›ci (np. Agresja mrozowa)..."
+                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                    />
+                </div>
+            </div>
+
+            <!-- Wiersz 9.1: PrzejĹ›cia szczelne â€” szczegĂłĹ‚y z oferty -->
+            <div style="padding: 0.6rem 1.2rem">
+                <div
+                    style="
+                        background: rgba(139, 92, 246, 0.06);
+                        border: 1px solid rgba(139, 92, 246, 0.2);
+                        border-radius: 10px;
+                        padding: 0.8rem;
+                        position: relative;
+                    "
+                >
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 0.6rem;
+                        "
+                    >
+                        <label
+                            class="gap-2"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                font-size: 0.75rem;
+                                font-weight: 700;
+                                color: #a78bfa;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                            "
+                        >
+                            <i data-lucide="link"></i> PrzejĹ›cia szczelne â€” szczegĂłĹ‚y z oferty
+                        </label>
+                        <button
+                            type="button"
+                            id="step4-add-custom-przejscie-btn"
+                            onclick="addCustomPrzejscieRow()"
+                            class="gap-1"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                background: rgba(139, 92, 246, 0.12);
+                                border: 1px solid rgba(139, 92, 246, 0.3);
+                                color: #c4b5fd;
+                                font-size: 0.65rem;
+                                font-weight: 700;
+                                padding: 0.3rem 0.6rem;
+                                border-radius: 6px;
+                                cursor: pointer;
+                                transition: all 0.15s;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                            "
+                            onmouseenter="
+                                this.style.background = 'rgba(139,92,246,0.25)';
+                                this.style.borderColor = 'rgba(139,92,246,0.5)';
+                            "
+                            onmouseleave="
+                                this.style.background = 'rgba(139,92,246,0.12)';
+                                this.style.borderColor = 'rgba(139,92,246,0.3)';
+                            "
+                        >
+                            <i data-lucide="plus" style="width: 12px; height: 12px"></i>
+                            Dodaj niestandardowe
+                        </button>
+                    </div>
+                    <div id="step4-przejscia-details-table"></div>
+                </div>
+            </div>
+
+            <!-- Wiersz 11: Uwagi ogĂłlne -->
+            <div style="padding: 0.6rem 1.2rem">
+                <label
+                    style="
+                        display: block;
+                        font-size: 0.75rem;
+                        font-weight: 700;
+                        color: #cbd5e1;
+                        margin-bottom: 0.4rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                    "
+                >
+                    Uwagi
+                </label>
+                <textarea
+                    id="step4-uwagi-ogolne"
+                    class="form-input"
+                    rows="9"
+                    style="
+                        width: 100%;
+                        font-size: 0.85rem;
+                        padding: 0.6rem 0.8rem;
+                        resize: vertical;
+                    "
+                    placeholder="Wpisz uwagi..."
+                ></textarea>
+            </div>
+
+            <!-- Step 4 nav handled by bottom fixed nav -->
+        </div>
+    </div>
+</div>

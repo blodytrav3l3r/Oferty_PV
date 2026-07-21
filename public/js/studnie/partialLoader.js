@@ -1,6 +1,4 @@
 (function () {
-    var PARTIALS = [{ id: 'partial-header', path: 'partials/header.html' }];
-
     function loadPartialSync(id, path) {
         var el = document.getElementById(id);
         if (!el) return;
@@ -17,7 +15,10 @@
         }
     }
 
-    for (var i = 0; i < PARTIALS.length; i++) {
-        loadPartialSync(PARTIALS[i].id, PARTIALS[i].path);
+    var els = document.querySelectorAll('[data-partial]');
+    for (var i = 0; i < els.length; i++) {
+        var id = els[i].id;
+        var path = els[i].getAttribute('data-partial');
+        if (id && path) loadPartialSync(id, path);
     }
 })();

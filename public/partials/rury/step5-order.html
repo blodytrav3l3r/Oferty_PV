@@ -1,0 +1,99 @@
+<!-- PARTIAL: step5-order.html -->
+<!-- ===== FAZA 5: ZAMÓWIENIE (PODGLĄD) ===== -->
+<div class="wizard-step" id="wizard-step-5">
+    <!-- Karta: Pozycje zamówienia -->
+    <div class="card" style="margin-bottom: 1rem">
+        <div
+            style="
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                margin-bottom: 0.6rem;
+            "
+        >
+            <div class="card-title-sm" style="margin-bottom: 0">
+                <i data-lucide="bar-chart-2"></i> Pozycje zamówienia
+            </div>
+            <div class="zt-toggle-wrap">
+                <span class="zt-toggle-label">Zabezp. transp.</span>
+                <div class="zt-toggle-group">
+                    <button
+                        class="zt-toggle-btn zt-toggle-tak-btn active"
+                        id="zt-toggle-tak-5"
+                        onclick="setZabezpieczenieTransportu(true)"
+                    >
+                        TAK
+                    </button>
+                    <button
+                        class="zt-toggle-btn zt-toggle-nie-btn"
+                        id="zt-toggle-nie-5"
+                        onclick="setZabezpieczenieTransportu(false)"
+                    >
+                        NIE
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div id="order-items-content">
+            <div class="rury-table-wrap">
+                <table class="rury-table">
+                    <colgroup id="order-colgroup"></colgroup>
+                    <thead>
+                        <tr>
+                            <th style="width: 36px; text-align: center" title="Status zamówienia">
+                                <i
+                                    data-lucide="check-circle"
+                                    style="width: 12px; height: 12px; opacity: 0.6"
+                                ></i>
+                            </th>
+                            <th style="text-align: left">Lp.</th>
+                            <th style="text-align: left">Nazwa produktu</th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Cena jedn.</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Metry</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Ilość</span>
+                            </th>
+                            <th style="width: 80px; text-align: center; white-space: nowrap">
+                                <span class="text-center-block">Zamów</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Rabat</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Po rabacie</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Dopłata</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Transport</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Netto</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Wersja handlowa</span>
+                            </th>
+                            <th style="text-align: right">
+                                <span class="text-center-block">Akcje</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-items-body">
+                        <tr class="rury-table-empty">
+                            <td colspan="14">Brak produktów</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Transport breakdown -->
+            <div id="order-transport-breakdown" class="rury-transport-info"></div>
+        </div>
+    </div>
+</div>

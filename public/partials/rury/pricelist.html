@@ -1,0 +1,43 @@
+<!-- PARTIAL: pricelist.html -->
+<div class="section" id="section-pricelist">
+    <div class="rury-toolbar">
+        <h2 class="rury-toolbar-title"><i data-lucide="clipboard-list"></i> Cennik produktów</h2>
+        <div class="rury-toolbar-spacer"></div>
+        <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+                class="rury-form-input"
+                id="pricelist-search"
+                placeholder="Szukaj..."
+                style="padding-left: 2.2rem"
+            />
+        </div>
+        <button class="btn btn-primary" onclick="showAddProductModal()">
+            <i data-lucide="plus"></i> Dodaj
+        </button>
+        <button class="btn btn-secondary" id="btn-save-pricelist" onclick="savePriceList()">
+            <i data-lucide="save"></i> Zapisz
+        </button>
+        <button class="btn btn-secondary" onclick="exportRuryToExcel()">
+            <i data-lucide="upload"></i> Eksportuj Excel
+        </button>
+        <button
+            class="btn btn-secondary"
+            onclick="document.getElementById('import-rury-excel').click()"
+        >
+            <i data-lucide="download"></i> Importuj Excel
+        </button>
+        <input
+            type="file"
+            id="import-rury-excel"
+            style="display: none"
+            accept=".xlsx,.xls"
+            onchange="importRuryFromExcel(event)"
+        />
+    </div>
+
+    <div id="pricelist-body" style="margin-top: 1rem"></div>
+</div>
