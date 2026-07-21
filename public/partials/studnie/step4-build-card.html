@@ -1,22 +1,22 @@
 <!-- STEP 4: Build Card (Karta Budowy) -->
-<!-- ══════ WIZARD STEP 4: KARTA BUDOWY ══════ -->
+<!-- â•â•â•â•â•â• WIZARD STEP 4: KARTA BUDOWY â•â•â•â•â•â• -->
 <div class="wizard-step" id="wizard-step-4">
     <div class="wizard-card">
         <div class="wizard-card-content" style="padding: 1rem 0">
-            <!-- Wiersz 0: Kopiuj Kart� Budowy z istniej�cego zamówienia -->
+            <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamĂłwienia -->
             <div
                 class="gap-3"
                 style="display: flex; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem"
             >
                 <div style="flex: 1; min-width: 0">
                     <select id="step4-copy-order-select" class="form-input form-input-wide">
-                        <option value="">Wybierz kart� budowy do skopiowania</option>
+                        <option value="">Wybierz kartę budowy do skopiowania</option>
                     </select>
                     <div
                         id="step4-copy-order-help"
                         style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem"
                     >
-                        Wybierz istniej�ce zamówienie, aby skopiowa� jego dane Karty Budowy.
+                        Wybierz istniejące zamĂłwienie, aby skopiować jego dane Karty Budowy.
                     </div>
                 </div>
                 <button
@@ -26,7 +26,7 @@
                     onclick="copyKartaBudowyFromOrder()"
                     style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
                 >
-                    Kopiuj Kart� Budowy z zamówienia
+                    Kopiuj Kartę Budowy z zamĂłwienia
                 </button>
             </div>
 
@@ -93,7 +93,7 @@
                                 font-weight: 800;
                                 margin-left: 0.3rem;
                             "
-                            >(TU DOPISYWAĆ)</span
+                            >(TU DOPISYWAÄ†)</span
                         >
                     </label>
                     <input
@@ -105,7 +105,7 @@
                     />
                 </div>
 
-                <!-- Zamówienie wed�ug oferty nr. -->
+                <!-- ZamĂłwienie według oferty nr. -->
                 <div class="flex-1-240">
                     <label
                         style="
@@ -118,7 +118,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Zamówienie wed�ug oferty nr.
+                        ZamĂłwienie według oferty nr.
                     </label>
                     <input
                         type="text"
@@ -133,9 +133,9 @@
                 </div>
             </div>
 
-            <!-- Wiersz 2: Adres i P�atno�ci -->
+            <!-- Wiersz 2: Adres i Płatności -->
             <div class="flex-wrap-start p-6-12">
-                <!-- Adres wysy�ki faktury -->
+                <!-- Adres wysyłki faktury -->
                 <div class="flex-2-240">
                     <label
                         style="
@@ -148,18 +148,18 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Adres wysy�ki faktury
+                        Adres wysyłki faktury
                     </label>
                     <input
                         type="text"
                         id="step4-adres-wysylki"
                         class="form-input"
-                        placeholder="Wpisz adres wysy�ki faktury..."
+                        placeholder="Wpisz adres wysyłki faktury..."
                         style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
                     />
                 </div>
 
-                <!-- Warunki p�atno�ci -->
+                <!-- Warunki płatności -->
                 <div style="flex: 1; min-width: 150px">
                     <label
                         style="
@@ -172,16 +172,16 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Warunki p�atno�ci
+                        Warunki płatności
                     </label>
                     <select id="step4-warunki-platnosci" class="form-input form-input-wide">
                         <option value="przelew">Przelew</option>
-                        <option value="gotówka">Gotówka</option>
-                        <option value="przedp�ata">Przedp�ata</option>
+                        <option value="gotĂłwka">GotĂłwka</option>
+                        <option value="przedpłata">Przedpłata</option>
                     </select>
                 </div>
 
-                <!-- Ilo�� dni -->
+                <!-- Ilość dni -->
                 <div style="flex: 1; min-width: 100px; max-width: 150px">
                     <label
                         style="
@@ -194,7 +194,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Ilo�� dni
+                        Ilość dni
                     </label>
                     <input
                         type="number"
@@ -277,8 +277,8 @@
                     </label>
                     <select id="step4-zabezpieczenie-transportu" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
-                        <option value="Podk�ady jednorazowe">Podk�ady jednorazowe</option>
-                        <option value="Podk�ady zwrotne">Podk�ady zwrotne</option>
+                        <option value="Podkłady jednorazowe">Podkłady jednorazowe</option>
+                        <option value="Podkłady zwrotne">Podkłady zwrotne</option>
                     </select>
                 </div>
                 <div class="flex-1-180">
@@ -296,10 +296,10 @@
                         Rodzaj transportu
                     </label>
                     <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
-                        <option value="W kó�ko">W kó�ko</option>
+                        <option value="W kĂłłko">W kĂłłko</option>
                         <option value="Spedycja">Spedycja</option>
                         <option value="Transport P.V." selected>Transport P.V.</option>
-                        <option value="Odbiór w�asny">Odbiór w�asny</option>
+                        <option value="OdbiĂłr własny">OdbiĂłr własny</option>
                     </select>
                 </div>
                 <div class="flex-1-180">
@@ -352,7 +352,7 @@
                     <select id="step4-rodzaj-studni" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Beton" selected>Beton</option>
-                        <option value="Żelbet">Żelbet</option>
+                        <option value="Ĺ»elbet">Ĺ»elbet</option>
                     </select>
                 </div>
 
@@ -407,7 +407,7 @@
                         type="text"
                         id="step4-uszczelka-studni-inne"
                         class="form-input"
-                        placeholder="Wpisz uszczelk�..."
+                        placeholder="Wpisz uszczelkę..."
                         style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
                     />
                 </div>
@@ -466,7 +466,7 @@
                 </div>
             </div>
 
-            <!-- Wiersz 7: Kineta i Wysoko�� spocznika -->
+            <!-- Wiersz 7: Kineta i Wysokość spocznika -->
             <div class="flex-wrap-start p-6-12">
                 <!-- Kineta -->
                 <div class="flex-1-180">
@@ -527,7 +527,7 @@
                     />
                 </div>
 
-                <!-- Wysoko�� spocznika -->
+                <!-- Wysokość spocznika -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -540,7 +540,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Wysoko�� spocznika
+                        Wysokość spocznika
                     </label>
                     <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -569,12 +569,12 @@
                     <select id="step4-usytuowanie" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Linia dolna" selected>Linia dolna</option>
-                        <option value="Linia górna">Linia górna</option>
+                        <option value="Linia gĂłrna">Linia gĂłrna</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Wiersz 8: Kaskada i Ślepa kineta -->
+            <!-- Wiersz 8: Kaskada i Ĺšlepa kineta -->
             <div class="flex-wrap-start p-6-12">
                 <!-- Kaskada -->
                 <div style="flex: 1; min-width: 140px">
@@ -620,7 +620,7 @@
                     />
                 </div>
 
-                <!-- Ślepa kineta -->
+                <!-- Ĺšlepa kineta -->
                 <div style="flex: 1; min-width: 140px">
                     <label
                         style="
@@ -633,7 +633,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Ślepa kineta
+                        Ĺšlepa kineta
                     </label>
                     <select id="step4-slepa-kineta" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -653,7 +653,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Uwagi (Ślepa kineta)
+                        Uwagi (Ĺšlepa kineta)
                     </label>
                     <input
                         type="text"
@@ -665,7 +665,7 @@
                 </div>
             </div>
 
-            <!-- Wiersz 9: Redukcja kinety, Przej�cia tulejowe, Przej�cia szczelne -->
+            <!-- Wiersz 9: Redukcja kinety, Przejścia tulejowe, Przejścia szczelne -->
             <div class="flex-wrap-start p-6-12">
                 <!-- Redukcja kinety -->
                 <div class="flex-1-180">
@@ -689,7 +689,7 @@
                     </select>
                 </div>
 
-                <!-- Przej�cia tulejowe -->
+                <!-- Przejścia tulejowe -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -702,7 +702,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Przej�cia tulejowe
+                        Przejścia tulejowe
                     </label>
                     <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -711,7 +711,7 @@
                     </select>
                 </div>
 
-                <!-- Przej�cia szczelne -->
+                <!-- Przejścia szczelne -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -724,7 +724,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Przej�cia szczelne
+                        Przejścia szczelne
                     </label>
                     <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -733,7 +733,7 @@
                     </select>
                 </div>
 
-                <!-- Przej�cia zamówione -->
+                <!-- Przejścia zamĂłwione -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -746,7 +746,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Przej�cia zamówione
+                        Przejścia zamĂłwione
                     </label>
                     <select
                         id="step4-przejscia-zamowione"
@@ -759,7 +759,7 @@
                     </select>
                 </div>
 
-                <!-- Data zamówienia -->
+                <!-- Data zamĂłwienia -->
                 <div class="flex-2-240">
                     <label
                         style="
@@ -772,7 +772,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Data zamówienia
+                        Data zamĂłwienia
                     </label>
                     <input
                         type="date"
@@ -782,9 +782,9 @@
                 </div>
             </div>
 
-            <!-- Wiersz 10: W�a�ciwo�ci betonu, Pozosta�e w�a�ciwo�ci -->
+            <!-- Wiersz 10: Właściwości betonu, Pozostałe właściwości -->
             <div class="flex-wrap-start p-6-12">
-                <!-- W�a�ciwo�ci betonu -->
+                <!-- Właściwości betonu -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -797,7 +797,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        W�a�ciwo�ci betonu
+                        Właściwości betonu
                     </label>
                     <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
                         <option value="C40/50" selected>C40/50</option>
@@ -809,7 +809,7 @@
                     </select>
                 </div>
 
-                <!-- Pozosta�e w�a�ciwo�ci -->
+                <!-- Pozostałe właściwości -->
                 <div class="flex-2-240">
                     <label
                         style="
@@ -822,19 +822,19 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Pozosta�e w�a�ciwo�ci
+                        Pozostałe właściwości
                     </label>
                     <input
                         type="text"
                         id="step4-pozostale-wlasciwosci"
                         class="form-input"
-                        placeholder="Wpisz w�a�ciwo�ci (np. Agresja mrozowa)..."
+                        placeholder="Wpisz właściwości (np. Agresja mrozowa)..."
                         style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
 
-            <!-- Wiersz 9.1: Przej�cia szczelne — szczegó�y z oferty -->
+            <!-- Wiersz 9.1: Przejścia szczelne â€” szczegĂłły z oferty -->
             <div style="padding: 0.6rem 1.2rem">
                 <div
                     style="
@@ -865,7 +865,7 @@
                                 letter-spacing: 0.3px;
                             "
                         >
-                            <i data-lucide="link"></i> Przej�cia szczelne — szczegó�y z oferty
+                            <i data-lucide="link"></i> Przejścia szczelne â€” szczegĂłły z oferty
                         </label>
                         <button
                             type="button"
@@ -904,7 +904,7 @@
                 </div>
             </div>
 
-            <!-- Wiersz 11: Uwagi ogólne -->
+            <!-- Wiersz 11: Uwagi ogĂłlne -->
             <div style="padding: 0.6rem 1.2rem">
                 <label
                     style="

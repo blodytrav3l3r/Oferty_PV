@@ -1,26 +1,26 @@
 <!-- STEP 3: Calculator / Config -->
-<!-- ══════ WIZARD STEP 3: Calculator ══════ -->
+<!-- â•â•â•â•â•â• WIZARD STEP 3: Calculator â•â•â•â•â•â• -->
 <div class="wizard-step" id="wizard-step-3">
     <!-- Summary bar -->
     <div class="wizard-summary-bar" id="wizard-summary-bar">
         <span class="wizard-summary-item"
-            ><i data-lucide="file-text"></i> <strong id="wsb-offer">—</strong></span
+            ><i data-lucide="file-text"></i> <strong id="wsb-offer">â€”</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">—</strong></span
+            ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">â€”</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">—</strong></span
+            ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">â€”</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="map-pin"></i> <strong id="wsb-address">—</strong></span
+            ><i data-lucide="map-pin"></i> <strong id="wsb-address">â€”</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="settings"></i> <strong id="wsb-params">—</strong></span
+            ><i data-lucide="settings"></i> <strong id="wsb-params">â€”</strong></span
         >
 
         <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(1)">
@@ -33,7 +33,7 @@
 
     <!-- CENTER: Config area -->
     <div>
-        <!-- B��dy konfiguracji studni -->
+        <!-- Błędy konfiguracji studni -->
         <div
             id="well-config-errors-container"
             style="
@@ -98,7 +98,7 @@
                             font-weight: 600;
                             white-space: nowrap;
                         "
-                        >Rz. w�azu</label
+                        >Rz. włazu</label
                     >
                     <input
                         type="text"
@@ -184,7 +184,7 @@
                     <span
                         >Wym:
                         <strong id="well-required-height" style="color: #818cf8"
-                            >— m</strong
+                            >â€” m</strong
                         ></span
                     >
                     <span
@@ -204,7 +204,7 @@
                             font-weight: 600;
                             white-space: nowrap;
                         "
-                        >Dop�ata</label
+                        >Dopłata</label
                     >
                     <input
                         type="text"
@@ -281,7 +281,7 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        <i data-lucide="unlock"></i> R�czny
+                        <i data-lucide="unlock"></i> Ręczny
                     </button>
                     <button type="button"
                         class="btn btn-secondary btn-sm"
@@ -293,7 +293,7 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        ⏬ Redukcja
+                        âŹ¬ Redukcja
                     </button>
                     <button type="button"
                         class="btn btn-secondary btn-sm"
@@ -305,7 +305,7 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        🐶 Psia buda
+                        đź¶ Psia buda
                     </button>
                     <button type="button"
                         class="btn btn-secondary btn-sm"
@@ -378,7 +378,7 @@
                         "
                     >
                         <span class="text-xs"><i data-lucide="chevron-down"></i></span>
-                        Zako�czenie
+                        Zakończenie
                     </button>
                     <button type="button"
                         class="btn btn-primary btn-sm"
@@ -399,7 +399,7 @@
                             gap: 3px;
                             opacity: 0.7;
                         "
-                        title="AI ranking — sprawdza status..."
+                        title="AI ranking â€” sprawdza status..."
                     >
                         <span
                             id="ai-status-dot"
@@ -475,7 +475,7 @@
                 onclick="switchBuilderTab('transitions')"
                 id="btab-transitions"
             >
-                <i data-lucide="droplets"></i> Przej�cia szczelne
+                <i data-lucide="droplets"></i> Przejścia szczelne
             </button>
         </div>
 
@@ -495,7 +495,7 @@
                     "
                     onclick="toggleCard('tiles-content', 'tiles-icon')"
                 >
-                    <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
+                    <span><i data-lucide="brick-wall"></i> WybĂłr elementĂłw</span>
                     <span id="tiles-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
                 </div>
                 <div id="tiles-content" class="card-content" style="margin-top: 0.5rem">
@@ -536,7 +536,7 @@
                                 font-size: 0.78rem;
                             "
                         >
-                            Kliknij kafelki powyżej, aby doda� elementy studni
+                            Kliknij kafelki powyĹĽej, aby dodać elementy studni
                         </div>
                     </div>
                 </div>
@@ -561,7 +561,7 @@
                         window.toggleCard('inline-przejscia-app-container', 'przejscia-app-icon')
                     "
                 >
-                    <span><i data-lucide="plus"></i> Dodaj Przej�cie Szczelne</span>
+                    <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                     <span id="przejscia-app-icon" class="fs-075"
                         ><i data-lucide="chevron-down"></i
                     ></span>
@@ -585,7 +585,7 @@
                         align-items: center;
                     "
                 >
-                    <span><i data-lucide="book-open"></i> Lista przej��</span>
+                    <span><i data-lucide="book-open"></i> Lista przejść</span>
                     <span
                         id="przejscia-count"
                         style="font-size: 0.65rem; color: var(--text-muted)"
@@ -651,7 +651,7 @@
                             color: var(--text-muted);
                         "
                     >
-                        Wysoko��
+                        Wysokość
                     </div>
                     <div
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
@@ -674,7 +674,7 @@
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
                         id="sum-area-int"
                     >
-                        0 m²
+                        0 mÂ˛
                     </div>
                 </div>
                 <div>
@@ -691,7 +691,7 @@
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
                         id="sum-area-ext"
                     >
-                        0 m²
+                        0 mÂ˛
                     </div>
                 </div>
             </div>
