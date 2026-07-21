@@ -7,6 +7,7 @@ import {
 import type { UserContactInfo } from '../../pdfGenerator';
 import { buildRuryDocument } from './builder';
 import { logger } from '../../../utils/logger';
+import type { RuryOfferDataBlob, RuryOrderDataBlob } from '../../../types/offerData';
 
 /**
  * Generuje dokument DOCX dla oferty rur.
@@ -25,9 +26,9 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta nie znaleziona');
 
-    let offerData: Record<string, unknown> = {};
+    let offerData: RuryOfferDataBlob = {};
     try {
-        if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
+        if (offer.data) offerData = JSON.parse(offer.data) as RuryOfferDataBlob;
     } catch (e) {
         logger.warn('DocxRury', 'Nie udało się sparsować danych oferty', e);
     }
@@ -42,7 +43,7 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
         { offer_number: ctx.offerNumber },
         offerData,
         client,
-        ctx.items,
+        ctx.items as Record<string, unknown>[],
         ctx.authorUser ?? null,
         ctx.guardianUser ?? null
     );
@@ -59,8 +60,8 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
  */
 export async function generateRuryDOCXFromContext(ctx: {
     offerNumber: string;
-    offerData: Record<string, unknown>;
-    items: Array<Record<string, unknown>>;
+    offerData: RuryOfferDataBlob;
+    items: unknown[];
     authorUser: UserContactInfo | null;
     guardianUser: UserContactInfo | null;
     documentType?: 'offer' | 'order';
@@ -75,7 +76,7 @@ export async function generateRuryDOCXFromContext(ctx: {
         { offer_number: ctx.offerNumber },
         ctx.offerData,
         null,
-        ctx.items,
+        ctx.items as Record<string, unknown>[],
         ctx.authorUser,
         ctx.guardianUser,
         documentType
@@ -95,9 +96,9 @@ export async function generateRuryOrderDOCX(orderId: string): Promise<Buffer> {
 
     // Znajdź client record (potrzebny do buildRuryDocument)
     const order = await prisma.orders_rury_rel.findUnique({ where: { id: orderId } });
-    let orderData: Record<string, unknown> = {};
+    let orderData: RuryOrderDataBlob = {};
     try {
-        if (order?.data) orderData = JSON.parse(order.data) as Record<string, unknown>;
+        if (order?.data) orderData = JSON.parse(order.data) as RuryOrderDataBlob;
     } catch (e) {
         logger.warn('DocxRury', 'Błąd parsowania order.data (order DOCX)', e);
     }
@@ -122,7 +123,7 @@ export async function generateRuryOrderDOCX(orderId: string): Promise<Buffer> {
             productionOrderNumber: ctx.productionOrderNumber
         },
         client,
-        ctx.items,
+        ctx.items as Record<string, unknown>[],
         ctx.authorUser ?? null,
         ctx.guardianUser ?? null,
         'order'

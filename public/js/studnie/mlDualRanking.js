@@ -52,7 +52,7 @@
     }
 
     // Okresowe czyszczenie przedawnionych wpisów cache co 5 min
-    setInterval(
+    var _cacheCleanInterval = setInterval(
         function () {
             var now = Date.now();
             scoreCache.forEach(function (v, k) {
@@ -764,9 +764,22 @@
     /**
      * Odświeża wskaźnik AI okresowo (co 30s).
      */
+    var _statusPollerInterval = null;
+
     function startAiStatusPoller() {
         updateAiStatusIndicator();
-        setInterval(updateAiStatusIndicator, 30000);
+        _statusPollerInterval = setInterval(updateAiStatusIndicator, 30000);
+    }
+
+    function stopMlPollers() {
+        if (_cacheCleanInterval) {
+            clearInterval(_cacheCleanInterval);
+            _cacheCleanInterval = null;
+        }
+        if (_statusPollerInterval) {
+            clearInterval(_statusPollerInterval);
+            _statusPollerInterval = null;
+        }
     }
 
     // Uruchom po załadowaniu DOM
@@ -786,6 +799,7 @@
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
     window.updateAiStatusIndicator = updateAiStatusIndicator;
+    window.stopMlPollers = stopMlPollers;
 
     // Stare API (kompatybilność)
     window.mlEnrichLayout = mlEnrichLayout;

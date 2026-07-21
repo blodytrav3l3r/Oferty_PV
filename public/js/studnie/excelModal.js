@@ -100,6 +100,7 @@ function _excelUnregisterExcelListeners() {
         _container.removeEventListener('focusin', _excelOnFocusIn);
         _container.removeEventListener('focusout', _excelOnFocusOut);
         _container.removeEventListener('change', _excelOnRowSelectChange);
+        _container.removeEventListener('keydown', _excelHandleKeydown);
     }
     document.removeEventListener('scroll', _excelOnOverlayScroll, true);
     window.removeEventListener('resize', _excelOnOverlayScroll);

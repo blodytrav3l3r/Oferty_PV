@@ -96,8 +96,9 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
         return name.includes('bosy') || id.endsWith('-B00');
     };
 
+    const items = data.items as Record<string, unknown>[];
     const groupedByCat: Record<string, Record<string, Record<string, unknown>[]>> = {};
-    for (const item of data.items) {
+    for (const item of items) {
         const cat = getProductCategory(item);
         if (!groupedByCat[cat]) groupedByCat[cat] = {};
         const diam = getProductDiameter(item);

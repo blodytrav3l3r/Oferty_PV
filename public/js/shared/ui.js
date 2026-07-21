@@ -38,7 +38,7 @@ function trapFocus(container) {
     );
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    container.addEventListener('keydown', (e) => {
+    const handler = (e) => {
         if (e.key === 'Tab') {
             if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
@@ -49,7 +49,16 @@ function trapFocus(container) {
             }
         }
         if (e.key === 'Escape') closeModal();
-    });
+    };
+    container.addEventListener('keydown', handler);
+    /** @type {any} */ (container)._trapFocusHandler = handler;
+}
+
+function untrapFocus(container) {
+    if (container && /** @type {any} */ (container)._trapFocusHandler) {
+        container.removeEventListener('keydown', /** @type {any} */ (container)._trapFocusHandler);
+        /** @type {any} */ (container)._trapFocusHandler = null;
+    }
 }
 
 /**
@@ -554,19 +563,23 @@ window.showModal = function (opts) {
     overlay.innerHTML = opts.html;
     document.body.appendChild(overlay);
 
-    overlay.addEventListener('click', function (e) {
+    function onOverlayClick(e) {
         if (e.target === overlay) {
+            untrapFocus(overlay);
             overlay.remove();
             if (opts.onClose) opts.onClose();
         }
-    });
+    }
+    overlay.addEventListener('click', onOverlayClick);
 
-    overlay.addEventListener('keydown', function (e) {
+    function onOverlayKeydown(e) {
         if (e.key === 'Escape') {
+            untrapFocus(overlay);
             overlay.remove();
             if (opts.onClose) opts.onClose();
         }
-    });
+    }
+    overlay.addEventListener('keydown', onOverlayKeydown);
 
     trapFocus(overlay);
 

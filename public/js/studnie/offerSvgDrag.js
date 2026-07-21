@@ -41,6 +41,7 @@ window.svgPointerDown = function (ev, idx) {
         return;
     }
 
+    startWellDragListeners();
     window.svgDragStartIndex = idx;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
@@ -87,6 +88,7 @@ window.svgTouchStart = function (ev, idx) {
         }
         return;
     }
+    startWellDragListeners();
     window.svgDragStartIndex = idx;
     well.config[idx].isPlaceholder = true;
     window.requestAnimationFrame(() => renderWellDiagram());
@@ -150,13 +152,11 @@ const _wellDragHandlers = {
 
             let shouldRemove = false;
 
-            // Złapane w obszar kosza
             const trash = document.getElementById('svg-trash');
             if (trash && (trash === ev.target || trash.contains(/** @type {Node} */ (ev.target)))) {
                 shouldRemove = true;
             }
 
-            // Wyrzucone całkowicie poza okienko podglądu (diagram-panel)
             const diagramZone = document.getElementById('drop-zone-diagram');
             if (diagramZone && !diagramZone.contains(/** @type {Node} */ (ev.target))) {
                 shouldRemove = true;
@@ -180,16 +180,15 @@ const _wellDragHandlers = {
                 updateSummary();
             }
 
-            // Reset wizualny stanu kosza
             if (trash) {
                 trash.style.background = 'rgba(var(--danger-rgb),0.1)';
                 trash.style.borderColor = 'rgba(var(--danger-rgb),0.4)';
             }
         }
+        window.cleanupWellDragListeners();
     },
     touchend: (ev) => {
         if (window.svgDragStartIndex >= 0) {
-            // Syntetyczne mapowanie na to samo zachowanie co mouseup
             const mouseUpEvent = new MouseEvent('mouseup', {
                 clientX: ev.changedTouches[0].clientX,
                 clientY: ev.changedTouches[0].clientY,
@@ -197,15 +196,24 @@ const _wellDragHandlers = {
             });
             document.dispatchEvent(mouseUpEvent);
         }
+        window.cleanupWellDragListeners();
     }
 };
 
-document.addEventListener('mousemove', _wellDragHandlers.mousemove);
-document.addEventListener('touchmove', _wellDragHandlers.touchmove, { passive: false });
-document.addEventListener('mouseup', _wellDragHandlers.mouseup);
-document.addEventListener('touchend', _wellDragHandlers.touchend);
+let _wellDragActive = false;
+
+function startWellDragListeners() {
+    if (_wellDragActive) return;
+    _wellDragActive = true;
+    document.addEventListener('mousemove', _wellDragHandlers.mousemove);
+    document.addEventListener('touchmove', _wellDragHandlers.touchmove, { passive: false });
+    document.addEventListener('mouseup', _wellDragHandlers.mouseup);
+    document.addEventListener('touchend', _wellDragHandlers.touchend);
+}
 
 window.cleanupWellDragListeners = function cleanupWellDragListeners() {
+    if (!_wellDragActive) return;
+    _wellDragActive = false;
     document.removeEventListener('mousemove', _wellDragHandlers.mousemove);
     document.removeEventListener('touchmove', _wellDragHandlers.touchmove);
     document.removeEventListener('mouseup', _wellDragHandlers.mouseup);

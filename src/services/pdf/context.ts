@@ -3,6 +3,7 @@ import { logger } from '../../utils/logger';
 import { mapWellsToItems } from './helpers';
 import { lookupOfferUsers } from './offerUsers';
 import type { RuryOfferData, StudnieOfferData } from './types';
+import type { RuryOfferDataBlob, StudnieOfferDataBlob, RuryOrderDataBlob, StudnieOrderDataBlob } from '../../types/offerData';
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
@@ -15,9 +16,9 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
         throw new Error('Oferta nie znaleziona');
     }
 
-    let offerData: Record<string, unknown> = {};
+    let offerData: RuryOfferDataBlob = {};
     try {
-        if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
+        if (offer.data) offerData = JSON.parse(offer.data) as RuryOfferDataBlob;
     } catch (e) {
         logger.warn('PdfRury', 'Nie udało się sparsować danych oferty', e);
     }
@@ -26,10 +27,7 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
         where: { offerId }
     });
 
-    const enhancedItems = (Array.isArray(offerData.items) ? offerData.items : items) as Record<
-        string,
-        unknown
-    >[];
+    const enhancedItems: unknown[] = Array.isArray(offerData.items) ? offerData.items : items;
 
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
@@ -63,23 +61,23 @@ export async function buildRuryOrderContextFromOrderId(orderId: string): Promise
         throw new Error('Zamówienie rur nie znalezione');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: RuryOrderDataBlob = {};
     try {
-        if (order.data) orderData = JSON.parse(order.data) as Record<string, unknown>;
+        if (order.data) orderData = JSON.parse(order.data) as RuryOrderDataBlob;
     } catch (e) {
         logger.warn('PdfRury', 'Błąd parsowania order.data', e);
     }
 
-    let items: Record<string, unknown>[] = [];
+    let items: unknown[] = [];
     if (Array.isArray(orderData.items)) {
-        items = orderData.items as Record<string, unknown>[];
+        items = orderData.items;
     } else if (order.offerId) {
         const offerItems = await prisma.offer_items_rel.findMany({
             where: { offerId: order.offerId }
         });
-        items = offerItems as Record<string, unknown>[];
+        items = offerItems;
         if (!Array.isArray(orderData.items) && orderData.wells) {
-            items = orderData.wells as Record<string, unknown>[];
+            items = orderData.wells as unknown[];
         }
     }
 
@@ -131,17 +129,17 @@ export async function buildStudnieOfferContextFromOfferId(
         throw new Error('Oferta studni nie znaleziona');
     }
 
-    let offerData: Record<string, unknown> = {};
+    let offerData: StudnieOfferDataBlob = {};
     try {
-        if (offer.data) offerData = JSON.parse(offer.data) as Record<string, unknown>;
+        if (offer.data) offerData = JSON.parse(offer.data) as StudnieOfferDataBlob;
     } catch (e) {
         logger.warn('PdfStudnie', 'Nie udało się sparsować danych oferty', e);
     }
 
     let wells: unknown[] = [];
-    if (offerData.wellsExport && Array.isArray(offerData.wellsExport)) {
+    if (Array.isArray(offerData.wellsExport)) {
         wells = offerData.wellsExport;
-    } else if (offerData.wells && Array.isArray(offerData.wells)) {
+    } else if (Array.isArray(offerData.wells)) {
         wells = offerData.wells;
     }
 
@@ -205,9 +203,9 @@ export async function buildStudnieOrderContextFromOrderId(
         throw new Error('Zamówienie studni nie znalezione');
     }
 
-    let orderData: Record<string, unknown> = {};
+    let orderData: StudnieOrderDataBlob = {};
     try {
-        if (order.data) orderData = JSON.parse(order.data) as Record<string, unknown>;
+        if (order.data) orderData = JSON.parse(order.data) as StudnieOrderDataBlob;
     } catch (e) {
         logger.warn('PdfStudnie', 'Błąd parsowania order.data', e);
     }
@@ -221,8 +219,8 @@ export async function buildStudnieOrderContextFromOrderId(
         });
         if (offer?.data) {
             try {
-                const offerData = JSON.parse(offer.data) as Record<string, unknown>;
-                if (Array.isArray(offerData.wellsExport)) wells = offerData.wellsExport;
+                const parsed = JSON.parse(offer.data) as StudnieOfferDataBlob;
+                if (Array.isArray(parsed.wellsExport)) wells = parsed.wellsExport;
             } catch (e) {
                 logger.warn('PdfStudnie', 'Błąd parsowania offer.data (fallback)', e);
             }

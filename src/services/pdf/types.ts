@@ -17,7 +17,7 @@ export interface RuryOfferData {
     investName: string;
     investAddress: string;
     investContractor: string;
-    items: Array<Record<string, unknown>>;
+    items: unknown[];
     createdAt: string;
     validityDays: number;
     notes: string;
