@@ -52,26 +52,20 @@
 
 ## Faza 1: Quick wins — CSS + Backend
 
-### 1.1 Podział `style.css` → 6 plików
+### 1.1 Podział `style.css` → 4 pliki
 
-| Data | Autor | Pliki                                  | Typ       | Status    |
-| ---- | ----- | -------------------------------------- | --------- | --------- |
-| —    | —     | `style.variables.css` (nowy)           | CSS split | Planowane |
-| —    | —     | `style.layout.css` (nowy)              | CSS split | Planowane |
-| —    | —     | `style.components.css` (nowy)          | CSS split | Planowane |
-| —    | —     | `style.modals.css` (nowy)              | CSS split | Planowane |
-| —    | —     | `style.tables.css` (nowy)              | CSS split | Planowane |
-| —    | —     | `style.css` (redukcja)                 | CSS split | Planowane |
-| —    | —     | Wszystkie HTML (aktualizacja importów) | CSS split | Planowane |
+| Data       | Autor    | Pliki                                | Typ       | Status        |
+| ---------- | -------- | ------------------------------------ | --------- | ------------- |
+| przed sesją | opencode | 4 pliki zamiast planowanych 6        | CSS split | Zweryfikowane |
+| przed sesją | opencode | Wszystkie HTML (aktualizacja importów) | CSS split | Zweryfikowane |
 
 ### 1.2 Podział `offerSchemas.ts` → 3 pliki
 
-| Data | Autor | Pliki                           | Typ           | Status    |
-| ---- | ----- | ------------------------------- | ------------- | --------- |
-| —    | —     | `offerSchemasCommon.ts` (nowy)  | Backend split | Planowane |
-| —    | —     | `offerSchemasRury.ts` (nowy)    | Backend split | Planowane |
-| —    | —     | `offerSchemasStudnie.ts` (nowy) | Backend split | Planowane |
-| —    | —     | `offerSchemas.ts` (redukcja)    | Backend split | Planowane |
+| Data       | Autor    | Pliki                               | Typ           | Status        |
+| ---------- | -------- | ----------------------------------- | ------------- | ------------- |
+| 2026-07-21 | opencode | `productSchemas.ts` (nowy)          | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `orderSchemas.ts` (nowy)            | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `offerSchemas.ts` (redukcja)        | Backend split | Zweryfikowane |
 
 ---
 
@@ -79,70 +73,81 @@
 
 ### 2.1 Podział `wellSolver.js` → 3 pliki
 
-| Data | Autor | Pliki                                                                                     | Typ      | Status    |
-| ---- | ----- | ----------------------------------------------------------------------------------------- | -------- | --------- |
-| —    | —     | `solverCore.js` (nowy) — backtrack, solve, checkConflicts, findBestAvrFill                | JS split | Planowane |
-| —    | —     | `solverAutoSelect.js` (nowy) — runJsAutoSelection, buildConfigSegments, applyDrilledRings | JS split | Planowane |
-| —    | —     | `solverValidation.js` (nowy) — recalculateWellErrors, fillKregiDP, fillKregiGreedy        | JS split | Planowane |
-| —    | —     | `wellSolver.js` (redukcja)                                                                | JS split | Planowane |
-| —    | —     | `studnie.html` (dodanie script tagów)                                                     | JS split | Planowane |
+| Data       | Autor    | Pliki                                                                                     | Typ      | Status        |
+| ---------- | -------- | ----------------------------------------------------------------------------------------- | -------- | ------------- |
+| 2026-07-21 | opencode | `solverCore.js` (nowy) — buildConfigSegments, applyDrilledRings                           | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `solverAutoSelect.js` (nowy) — autoSelectComponents, runJsAutoSelection                   | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `solverValidation.js` (nowy) — recalculateWellErrors                                      | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `wellSolver.js` (redukcja do wrappera)                                                    | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnie.html` (dodanie 3 script tagów)                                                    | JS split | Zweryfikowane |
 
-### 2.2 Podział `wellDiagram.js` → 4 pliki
+### 2.2 Podział `wellDiagram.js` → 7 plików (więcej niż planowane 4)
 
-| Data | Autor | Pliki                           | Typ      | Status    |
-| ---- | ----- | ------------------------------- | -------- | --------- |
-| —    | —     | `diagramSvgShapes.js` (nowy)    | JS split | Planowane |
-| —    | —     | `diagramCalculations.js` (nowy) | JS split | Planowane |
-| —    | —     | `diagramOtRings.js` (nowy)      | JS split | Planowane |
-| —    | —     | `diagramRenderer.js` (nowy)     | JS split | Planowane |
-| —    | —     | `wellDiagram.js` (redukcja)     | JS split | Planowane |
+| Data       | Autor    | Pliki                                      | Typ      | Status        |
+| ---------- | -------- | ------------------------------------------ | -------- | ------------- |
+| 2026-07-21 | opencode | `diagramTheme.js` (nowy) — SVG_COLORS itp. | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramOtRings.js` (nowy)                 | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramComponents.js` (nowy)              | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramTransitions.js` (nowy)             | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramDimensions.js` (nowy)              | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramPreco.js` (nowy)                   | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `diagramRenderer.js` (nowy)                | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `wellDiagram.js` (redukcja do wrappera)     | JS split | Zweryfikowane |
 
-### 2.3 Podział `wellUI.js` → 4 pliki
+### 2.3 Podział `wellUI.js` → 4 pliki (+ wrapper z renderWellsList/updateSummary)
 
-| Data | Autor | Pliki                                                               | Typ      | Status    |
-| ---- | ----- | ------------------------------------------------------------------- | -------- | --------- |
-| —    | —     | `uiLockBanners.js` (nowy) — renderOfferLockBanner, updateAutoLockUI | JS split | Planowane |
-| —    | —     | `uiParamTiles.js` (nowy) — setupParamTiles, updateParamTilesUI      | JS split | Planowane |
-| —    | —     | `uiWellParams.js` (nowy) — renderWellParams                         | JS split | Planowane |
-| —    | —     | `uiTabSwitcher.js` (nowy) — switchSidebarTab, switchBuilderTab      | JS split | Planowane |
-| —    | —     | `wellUI.js` (redukcja)                                              | JS split | Planowane |
+| Data       | Autor    | Pliki                                                  | Typ      | Status        |
+| ---------- | -------- | ------------------------------------------------------ | -------- | ------------- |
+| 2026-07-21 | opencode | `uiLockBanners.js` (nowy)                              | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `uiParamTiles.js` (nowy)                               | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `uiWellParams.js` (nowy)                               | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `uiTabSwitcher.js` (nowy)                              | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `wellUI.js` (redukcja — renderWellsList + updateSummary) | JS split | Zweryfikowane |
 
-### 2.4 Podział `pvSalesUi.js` → 4 pliki
+### 2.4 Podział `pvSalesUi.js` → 4 pliki (ES module mixin)
 
-| Data | Autor | Pliki                                                                                                         | Typ      | Status    |
-| ---- | ----- | ------------------------------------------------------------------------------------------------------------- | -------- | --------- |
-| —    | —     | `pvSalesSearch.js` (nowy) — searchOffers, loadMore, buildSearchParams, onSearchInput                          | JS split | Planowane |
-| —    | —     | `pvSalesFilter.js` (nowy) — setFilterLocalOffers, setTypeFilter, setUserFilter, clearFilters                  | JS split | Planowane |
-| —    | —     | `pvSalesHistory.js` (nowy) — showOfferHistoryUnified, restoreOfferVersionUnified, showAuditSnapshotModal, ... | JS split | Planowane |
-| —    | —     | `pvSalesActions.js` (nowy) — deleteOrderUnified, deleteOfferWithConfirmation, openOfferForEdit                | JS split | Planowane |
-| —    | —     | `pvSalesUi.js` (redukcja)                                                                                     | JS split | Planowane |
+| Data       | Autor    | Pliki                                                | Typ      | Status        |
+| ---------- | -------- | ---------------------------------------------------- | -------- | ------------- |
+| 2026-07-21 | opencode | `pvSalesSearch.js` (nowy)                            | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `pvSalesFilter.js` (nowy)                            | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `pvSalesHistory.js` (nowy)                           | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `pvSalesActions.js` (nowy)                           | JS split | Zweryfikowane |
+| 2026-07-21 | opencode | `pvSalesUi.js` (redukcja do wrappera z Object.assign) | JS split | Zweryfikowane |
 
 ---
 
 ## Faza 3: HTML monoliths — studnie.html + rury.html
 
-### 3.1 Podział `studnie.html` → partiale
+### 3.1 Podział `studnie.html` → 8 partiali
 
-| Data | Autor | Pliki                                                             | Typ          | Status    |
-| ---- | ----- | ----------------------------------------------------------------- | ------------ | --------- |
-| —    | —     | `partials/studnie/offer.html` (nowy) — linie 4097–4386            | HTML partial | Planowane |
-| —    | —     | `partials/studnie/pricelist.html` (nowy) — linie 4387–5207        | HTML partial | Planowane |
-| —    | —     | `partials/studnie/step1-client.html` (nowy) — linie 341–643       | HTML partial | Planowane |
-| —    | —     | `partials/studnie/step3-offer.html` (nowy) — linie 1699–2519      | HTML partial | Planowane |
-| —    | —     | `partials/studnie/step2-parameters.html` (nowy) — linie 644–1698  | HTML partial | Planowane |
-| —    | —     | `partials/studnie/sidebar.html` (nowy) — linie 3622–4090          | HTML partial | Planowane |
-| —    | —     | `partials/studnie/step4-build-card.html` (nowy) — linie 2522–3621 | HTML partial | Planowane |
-| —    | —     | `studnie.html` (redukcja do ~400 linii)                           | HTML partial | Planowane |
+| Data       | Autor    | Pliki                                                   | Typ          | Status        |
+| ---------- | -------- | ------------------------------------------------------- | ------------ | ------------- |
+| 2026-07-21 | opencode | `partials/studnie/offer.html` (nowy)                    | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/pricelist.html` (nowy)                | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/step1-client.html` (nowy)             | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/step3-offer.html` (nowy)              | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/step2-parameters.html` (nowy)         | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/sidebar.html` (nowy)                  | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/step4-build-card.html` (nowy)         | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/studnie/modals.html` (nowy)                   | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `studnie.html` (redukcja 5238→838 linii)                | HTML partial | Zweryfikowane |
 
-### 3.2 Podział `rury.html` → partiale
+### 3.2 Podział `rury.html` → 11 partiali
 
-| Data | Autor | Pliki                                    | Typ          | Status    |
-| ---- | ----- | ---------------------------------------- | ------------ | --------- |
-| —    | —     | `partials/rury/step1-client.html` (nowy) | HTML partial | Planowane |
-| —    | —     | `partials/rury/step2-params.html` (nowy) | HTML partial | Planowane |
-| —    | —     | `partials/rury/step3-offer.html` (nowy)  | HTML partial | Planowane |
-| —    | —     | `partials/rury/offer.html` (nowy)        | HTML partial | Planowane |
-| —    | —     | `rury.html` (redukcja do ~400 linii)     | HTML partial | Planowane |
+| Data       | Autor    | Pliki                                                    | Typ          | Status        |
+| ---------- | -------- | -------------------------------------------------------- | ------------ | ------------- |
+| 2026-07-21 | opencode | `partials/rury/header.html` (nowy)                       | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/wizard-nav.html` (nowy)                   | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/step1-client.html` (nowy)                 | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/step2-products.html` (nowy)               | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/step3-offer-summary.html` (nowy)          | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/step4-build-card.html` (nowy)             | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/step5-order.html` (nowy)                  | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/offer.html` (nowy)                        | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/pricelist.html` (nowy)                    | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/summary-bar.html` (nowy)                  | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `partials/rury/transport-modal.html` (nowy)              | HTML partial | Zweryfikowane |
+| 2026-07-21 | opencode | `rury.html` (redukcja 2457→131 linii)                    | HTML partial | Zweryfikowane |
 
 ---
 
@@ -150,21 +155,38 @@
 
 ### 4.1 Podział `studnie.css` → 3 pliki
 
-| Data | Autor | Pliki                             | Typ       | Status    |
-| ---- | ----- | --------------------------------- | --------- | --------- |
-| —    | —     | `studnie/configurator.css` (nowy) | CSS split | Planowane |
-| —    | —     | `studnie/offer.css` (nowy)        | CSS split | Planowane |
-| —    | —     | `studnie/modal.css` (nowy)        | CSS split | Planowane |
-| —    | —     | `studnie.css` (redukcja)          | CSS split | Planowane |
+| Data       | Autor    | Pliki                                  | Typ       | Status        |
+| ---------- | -------- | -------------------------------------- | --------- | ------------- |
+| 2026-07-21 | opencode | `studnie/configurator.css` (nowy)      | CSS split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnie/offer.css` (nowy)             | CSS split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnie/modal.css` (nowy)             | CSS split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnie.css` (oryginał zachowany)     | CSS split | Zweryfikowane |
 
 ### 4.2 Podział route files
 
-| Data | Autor | Pliki                            | Typ           | Status    |
-| ---- | ----- | -------------------------------- | ------------- | --------- |
-| —    | —     | `ruryOrders.crud.ts` (nowy)      | Backend split | Planowane |
-| —    | —     | `ruryOrders.export.ts` (nowy)    | Backend split | Planowane |
-| —    | —     | `studnieOrders.crud.ts` (nowy)   | Backend split | Planowane |
-| —    | —     | `studnieOrders.export.ts` (nowy) | Backend split | Planowane |
+| Data       | Autor    | Pliki                                    | Typ           | Status        |
+| ---------- | -------- | ---------------------------------------- | ------------- | ------------- |
+| 2026-07-21 | opencode | `ruryOrders.crud.ts` (nowy)              | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `ruryOrders.export.ts` (nowy)            | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `ruryOrders.ts` (redukcja do wrappera)    | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnieOrders.crud.ts` (nowy)           | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnieOrders.export.ts` (nowy)         | Backend split | Zweryfikowane |
+| 2026-07-21 | opencode | `studnieOrders.ts` (redukcja do wrappera) | Backend split | Zweryfikowane |
+
+### 4.3 Fix powdrożeniowy: brakujące script tagi
+
+| Data       | Autor    | Pliki                                    | Typ              | Status        |
+| ---------- | -------- | ---------------------------------------- | ---------------- | ------------- |
+| 2026-07-21 | opencode | `studnie.html` (14 brakujących script tagów) | Fix powdrożeniowy | Zweryfikowane |
+
+### 4.4 Fix powdrożeniowy: testy regresyjne
+
+| Data       | Autor    | Pliki                                                          | Typ              | Status        |
+| ---------- | -------- | -------------------------------------------------------------- | ---------------- | ------------- |
+| 2026-07-21 | opencode | `tests/responsive/rury.test.ts` (partials dir)                | Fix powdrożeniowy | Zweryfikowane |
+| 2026-07-21 | opencode | `tests/responsive/forms.test.ts` (partials dir)               | Fix powdrożeniowy | Zweryfikowane |
+| 2026-07-21 | opencode | `tests/printDispatch.test.ts` (pvSalesActions.js redirect)    | Fix powdrożeniowy | Zweryfikowane |
+| 2026-07-21 | opencode | `tests/security-regression.test.ts` (crud.ts redirect)        | Fix powdrożeniowy | Zweryfikowane |
 
 ---
 
@@ -181,13 +203,14 @@
 
 | Faza                     | Planowane | W toku | Zweryfikowane | Wycofane |  Razem |
 | ------------------------ | --------: | -----: | ------------: | -------: | -----: |
-| 0 — Przygotowanie        |         4 |      0 |             0 |        0 |      4 |
-| 1 — CSS + Backend        |        10 |      0 |             0 |        0 |     10 |
-| 2 — Frontend JS          |        20 |      0 |             0 |        0 |     20 |
-| 3 — HTML partiale        |        13 |      0 |             0 |        0 |     13 |
-| 4 — CSS studnie + Routes |         8 |      0 |             0 |        0 |      8 |
+| 0 — Przygotowanie        |         0 |      0 |             6 |        0 |      6 |
+| 1 — CSS + Backend        |         0 |      0 |             5 |        0 |      5 |
+| 2 — Frontend JS          |         0 |      0 |            23 |        0 |     23 |
+| 3 — HTML partiale        |         0 |      0 |            19 |        0 |     19 |
+| 4 — CSS studnie + Routes |         0 |      0 |            13 |        0 |     13 |
 | Dokumentacja             |         0 |      0 |             2 |        0 |      2 |
-| **Razem**                |    **55** |  **0** |         **2** |    **0** | **57** |
+| Fix powdrożeniowe        |         0 |      0 |             5 |        0 |      5 |
+| **Razem**                |    **0**  |  **0** |        **73** |    **0** | **73** |
 
 ---
 
