@@ -209,7 +209,9 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('dispatch NIE wywołuje już inline isRuryOffer (zastąpione przez openPrintModal)', () => {
             // Wcześniej było "isRuryOffer = offerType === ..." — teraz jest w openPrintModal
-            expect(actionsSrc).not.toMatch(/isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/);
+            expect(actionsSrc).not.toMatch(
+                /isRuryOffer\s*=\s*offerType\s*===\s*['"]rura_oferta['"]/
+            );
         });
 
         it('przycisk "Wydruk" MA data-offer-id + data-offer-type (unifikacja atrybutów)', () => {
@@ -259,12 +261,16 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('dispatch czyta relatedOrders z this.ordersMap (kartoteka)', () => {
             // Wydruk/Karta budowy dispatch musi czytać z this.ordersMap
-            expect(actionsSrc).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*printOfferId\s*\)/);
+            expect(actionsSrc).toMatch(
+                /this\.ordersMap\.get\(\s*this\.normalizeId\(\s*printOfferId\s*\)/
+            );
         });
 
         it('popup .btn-print-order listener czyta relatedOrders z this.ordersMap', () => {
             // W showOfferOrdersPopup listenerze btn-print-order musi czytać z this.ordersMap
-            expect(actionsSrc).toMatch(/this\.ordersMap\.get\(\s*this\.normalizeId\(\s*offerId\s*\)/);
+            expect(actionsSrc).toMatch(
+                /this\.ordersMap\.get\(\s*this\.normalizeId\(\s*offerId\s*\)/
+            );
         });
     });
 
