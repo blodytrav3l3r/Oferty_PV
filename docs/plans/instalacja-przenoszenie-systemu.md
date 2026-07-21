@@ -41,15 +41,15 @@
 
 ### Komponenty:
 
-| Komponent | Technologia | Rola |
-|-----------|-------------|------|
-| **Backend** | TypeScript + Express 4.21 | API, logika biznesowa, generowanie PDF/DOCX |
-| **Frontend** | Vanilla JS (ES2020), Vite 8 | UI w iframe'ach, kompilowany przez Vite do `dist/` |
-| **Baza danych** | SQLite przez Prisma 6 | Jeden plik `data/app_database.sqlite` |
-| **ORM** | Prisma 6 | Migracje, seed, zapytania |
-| **PDF** | Puppeteer 24 | Generowanie dokumentów PDF (Chromium ~300 MB) |
-| **DOCX** | docx 9 | Generowanie dokumentów Word |
-| **Monitoring** | Sentry 10 (opcjonalnie) | Zbieranie błędów |
+| Komponent       | Technologia                 | Rola                                               |
+| --------------- | --------------------------- | -------------------------------------------------- |
+| **Backend**     | TypeScript + Express 4.21   | API, logika biznesowa, generowanie PDF/DOCX        |
+| **Frontend**    | Vanilla JS (ES2020), Vite 8 | UI w iframe'ach, kompilowany przez Vite do `dist/` |
+| **Baza danych** | SQLite przez Prisma 6       | Jeden plik `data/app_database.sqlite`              |
+| **ORM**         | Prisma 6                    | Migracje, seed, zapytania                          |
+| **PDF**         | Puppeteer 24                | Generowanie dokumentów PDF (Chromium ~300 MB)      |
+| **DOCX**        | docx 9                      | Generowanie dokumentów Word                        |
+| **Monitoring**  | Sentry 10 (opcjonalnie)     | Zbieranie błędów                                   |
 
 ---
 
@@ -57,16 +57,16 @@
 
 ### Minimalne:
 
-| Zasób | Wymaganie |
-|-------|-----------|
-| **System** | Windows 10/11, Linux (Ubuntu 20+), macOS 12+ |
-| **Node.js** | >= 20.0.0 LTS |
-| **npm** | >= 9.0.0 (dołączony do Node.js) |
-| **RAM** | 512 MB (1 GB zalecane) |
-| **Dysk** | ~500 MB wolnego miejsca (w tym Chromium ~300 MB) |
-| **Internet** | Tylko przy pierwszej instalacji |
-| **Git** | Opcjonalnie (do pobierania aktualizacji) |
-| **Python** | Opcjonalnie (3.10+ tylko dla walidacji Excel w pre-commit) |
+| Zasób        | Wymaganie                                                  |
+| ------------ | ---------------------------------------------------------- |
+| **System**   | Windows 10/11, Linux (Ubuntu 20+), macOS 12+               |
+| **Node.js**  | >= 20.0.0 LTS                                              |
+| **npm**      | >= 9.0.0 (dołączony do Node.js)                            |
+| **RAM**      | 512 MB (1 GB zalecane)                                     |
+| **Dysk**     | ~500 MB wolnego miejsca (w tym Chromium ~300 MB)           |
+| **Internet** | Tylko przy pierwszej instalacji                            |
+| **Git**      | Opcjonalnie (do pobierania aktualizacji)                   |
+| **Python**   | Opcjonalnie (3.10+ tylko dla walidacji Excel w pre-commit) |
 
 ### Dla Docker:
 
@@ -131,6 +131,7 @@ copy .env.example .env
 ```
 
 Co robi instalator:
+
 1. ✅ Sprawdza Node.js 20+
 2. ✅ Sprawdza npm
 3. ✅ Sprawdza Git (opcjonalny)
@@ -153,6 +154,7 @@ Co robi instalator:
 ```
 
 Po uruchomieniu `dev.bat`:
+
 - Frontend: **http://localhost:5173**
 - Backend API: **http://localhost:3000/health**
 - Logowanie: **admin** / hasło z `.env`
@@ -197,12 +199,12 @@ npm run backup:restore -- data/backups/backup_*.sqlite
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
-| Kwestia | Zalecenie |
-|---------|-----------|
+| Kwestia            | Zalecenie                                                    |
+| ------------------ | ------------------------------------------------------------ |
 | **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`) |
-| **Różne wersje** | Po restore uruchom `install.bat` — zaktualizuje schemat bazy |
-| **Migracje** | `prisma db push` doda brakujące tabele, nie usunie danych |
-| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika |
+| **Różne wersje**   | Po restore uruchom `install.bat` — zaktualizuje schemat bazy |
+| **Migracje**       | `prisma db push` doda brakujące tabele, nie usunie danych    |
+| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika     |
 
 ---
 
@@ -222,10 +224,10 @@ docker compose up --build -d
 
 1. Buduje obraz z node:22-slim
 2. Uruchamia `docker-entrypoint.sh`, który:
-   - Ustawia `DATABASE_URL` na `/var/data/app_database.sqlite`
-   - Migruje dane PRECO (jeśli stare tabele istnieją)
-   - Wykonuje `prisma db push --skip-generate` (aktualizacja schematu)
-   - Uruchamia `npm start` (serwer produkcyjny)
+    - Ustawia `DATABASE_URL` na `/var/data/app_database.sqlite`
+    - Migruje dane PRECO (jeśli stare tabele istnieją)
+    - Wykonuje `prisma db push --skip-generate` (aktualizacja schematu)
+    - Uruchamia `npm start` (serwer produkcyjny)
 3. Montuje wolumen `witros_data:/var/data` (baza trwała)
 4. Healthcheck co 30s na `/health`
 
@@ -251,6 +253,7 @@ docker compose down -v
 ### ⚠️ Docker — zmienne środowiskowe:
 
 Docker czyta `.env` z projektu. Jeśli chcesz zmienić hasło:
+
 1. Edytuj `.env` i zmień `DEFAULT_ADMIN_PASSWORD`
 2. Zrestartuj: `docker compose restart`
 
@@ -301,11 +304,11 @@ data/
 
 ### 💡 Dobre praktyki backupu:
 
-| Częstotliwość | Co backupować | Jak |
-|---------------|---------------|-----|
-| **Codziennie** | Baza SQLite | `npm run backup` (automat przez cron) |
-| **Przed aktualizacją** | Baza SQLite | Ręcznie: `npm run backup` |
-| **Ręcznie (co tydzień)** | Cały folder projektu | Kopiuj cały katalog na pendrive |
+| Częstotliwość            | Co backupować        | Jak                                   |
+| ------------------------ | -------------------- | ------------------------------------- |
+| **Codziennie**           | Baza SQLite          | `npm run backup` (automat przez cron) |
+| **Przed aktualizacją**   | Baza SQLite          | Ręcznie: `npm run backup`             |
+| **Ręcznie (co tydzień)** | Cały folder projektu | Kopiuj cały katalog na pendrive       |
 
 ---
 
@@ -374,34 +377,35 @@ git push --follow-tags
 
 ## 8. Co jest automatyczne vs ręczne
 
-| Czynność | Automatyczne | Ręczne | Uwagi |
-|----------|:---:|:---:|-------|
-| Instalacja Node.js 20+ | | ✅ | Pobrać z https://nodejs.org |
-| Pobranie kodu (git clone / ZIP) | | ✅ | GitHub → Code → Download ZIP |
-| Kopiowanie .env.example → .env | | ✅ | `copy .env.example .env` |
-| Ustawienie DEFAULT_ADMIN_PASSWORD | | ✅ | Edycja .env |
-| Instalacja npm dependencies | ✅ | | `install.bat` → npm ci |
-| Generowanie Prisma Client | ✅ | | `install.bat` → prisma generate |
-| Migracja bazy danych | ✅ | | `install.bat` → prisma migrate deploy / db push |
-| Seed danych początkowych | ✅ | | `install.bat` → prisma/seed.ts (opcjonalnie) |
-| Typecheck TypeScript | ✅ | | `install.bat` → tsc --noEmit |
-| Budowa (TS→JS + frontend) | ✅ | | `build.bat` → tsc + vite build |
-| Uruchomienie serwera dev | ✅ | | `dev.bat` → npm run dev |
-| Uruchomienie serwera prod | ✅ | | `prod.bat` → npm start |
-| Port check (3000) | ✅ | | PowerShell Get-NetTCPConnection |
-| Backup bazy | ✅ | | `npm run backup` (VACUUM INTO) |
-| Przywracanie backupu | | ✅ | `npm run backup:restore -- <file>` |
-| Automatyczny backup cron | | ✅ | `npm run backup:install-cron` (jako Admin) |
-| Aktualizacja z gita | | ✅ | `git pull` |
-| Release (wersja + changelog + tag) | ✅ | | `npm run release:patch` |
-| Cache-bust assetów (?v=) | ✅ | | Hook postbump w standard-version |
-| Git hooks (Husky pre-push, pre-commit) | ✅ | | Automatycznie przy commit/push |
-| Docker deploy | | ✅ | `docker compose up --build -d` |
-| Zmiana hasła admina | | ✅ | W panelu użytkownika po 1. logowaniu |
+| Czynność                               | Automatyczne | Ręczne | Uwagi                                           |
+| -------------------------------------- | :----------: | :----: | ----------------------------------------------- |
+| Instalacja Node.js 20+                 |              |   ✅   | Pobrać z https://nodejs.org                     |
+| Pobranie kodu (git clone / ZIP)        |              |   ✅   | GitHub → Code → Download ZIP                    |
+| Kopiowanie .env.example → .env         |              |   ✅   | `copy .env.example .env`                        |
+| Ustawienie DEFAULT_ADMIN_PASSWORD      |              |   ✅   | Edycja .env                                     |
+| Instalacja npm dependencies            |      ✅      |        | `install.bat` → npm ci                          |
+| Generowanie Prisma Client              |      ✅      |        | `install.bat` → prisma generate                 |
+| Migracja bazy danych                   |      ✅      |        | `install.bat` → prisma migrate deploy / db push |
+| Seed danych początkowych               |      ✅      |        | `install.bat` → prisma/seed.ts (opcjonalnie)    |
+| Typecheck TypeScript                   |      ✅      |        | `install.bat` → tsc --noEmit                    |
+| Budowa (TS→JS + frontend)              |      ✅      |        | `build.bat` → tsc + vite build                  |
+| Uruchomienie serwera dev               |      ✅      |        | `dev.bat` → npm run dev                         |
+| Uruchomienie serwera prod              |      ✅      |        | `prod.bat` → npm start                          |
+| Port check (3000)                      |      ✅      |        | PowerShell Get-NetTCPConnection                 |
+| Backup bazy                            |      ✅      |        | `npm run backup` (VACUUM INTO)                  |
+| Przywracanie backupu                   |              |   ✅   | `npm run backup:restore -- <file>`              |
+| Automatyczny backup cron               |              |   ✅   | `npm run backup:install-cron` (jako Admin)      |
+| Aktualizacja z gita                    |              |   ✅   | `git pull`                                      |
+| Release (wersja + changelog + tag)     |      ✅      |        | `npm run release:patch`                         |
+| Cache-bust assetów (?v=)               |      ✅      |        | Hook postbump w standard-version                |
+| Git hooks (Husky pre-push, pre-commit) |      ✅      |        | Automatycznie przy commit/push                  |
+| Docker deploy                          |              |   ✅   | `docker compose up --build -d`                  |
+| Zmiana hasła admina                    |              |   ✅   | W panelu użytkownika po 1. logowaniu            |
 
 ### Podsumowanie:
 
 **Musisz zrobić ręcznie (4 kroki):**
+
 1. Zainstalować Node.js
 2. Pobrać kod (git clone lub ZIP)
 3. Skopiować .env.example → .env i ustawić hasło
@@ -437,13 +441,13 @@ DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30
 
 ### Zmienne dla różnych środowisk:
 
-| Zmienna | Lokalnie (dev) | Docker |
-|---------|:---:|:---:|
-| `PORT` | 10000 lub 3000 | 10000 |
-| `HOST` | 0.0.0.0 | 0.0.0.0 |
-| `NODE_ENV` | development | production |
-| `DEFAULT_ADMIN_PASSWORD` | **Wymagane** | **Wymagane** |
-| `DATABASE_URL` | file:../data/... | file:/var/data/... |
+| Zmienna                  |  Lokalnie (dev)  |       Docker       |
+| ------------------------ | :--------------: | :----------------: |
+| `PORT`                   |  10000 lub 3000  |       10000        |
+| `HOST`                   |     0.0.0.0      |      0.0.0.0       |
+| `NODE_ENV`               |   development    |     production     |
+| `DEFAULT_ADMIN_PASSWORD` |   **Wymagane**   |    **Wymagane**    |
+| `DATABASE_URL`           | file:../data/... | file:/var/data/... |
 
 ---
 
@@ -460,6 +464,7 @@ DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30
 **Przyczyna:** Brak internetu, antywirus blokuje, za stary Node.js.
 
 **Rozwiązanie:**
+
 ```powershell
 node --version          # Sprawdź wersję (musi być 20+)
 npm --version           # Sprawdź npm
@@ -478,6 +483,7 @@ npm --version           # Sprawdź npm
 **Przyczyna:** Brak uprawnień zapisu, brak miejsca na dysku.
 
 **Rozwiązanie:**
+
 ```powershell
 # Sprawdź miejsce na dysku
 # Uruchom terminal jako Administrator
@@ -489,6 +495,7 @@ npx prisma generate
 **Przyczyna:** Brak pliku .env, błędne hasło, uszkodzona baza.
 
 **Rozwiązanie:**
+
 1. Sprawdź czy `.env` istnieje
 2. Sprawdź czy `DEFAULT_ADMIN_PASSWORD` jest ustawione
 3. Usuń `data/app_database.sqlite` i uruchom `install.bat` ponownie
@@ -498,6 +505,7 @@ npx prisma generate
 **Przyczyna:** Niekompletna instalacja lub build.
 
 **Rozwiązanie:**
+
 ```powershell
 .\build.bat    # Przebuduj projekt
 ```
@@ -507,6 +515,7 @@ npx prisma generate
 **Przyczyna:** Brak zależności systemowych dla Chromium.
 
 **Rozwiązanie (Linux):**
+
 ```bash
 sudo apt install -y chromium-browser
 # lub
@@ -518,6 +527,7 @@ npx puppeteer install
 **Przyczyna:** Husky pre-commit/pre-push sprawdza kod.
 
 **Rozwiązanie:**
+
 ```powershell
 # Obejście (jeśli pilnie potrzebujesz commita):
 git -c core.hooksPath=/dev/null commit -m "opis"
@@ -535,38 +545,38 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 
 ### 10 najważniejszych komend:
 
-| # | Komenda | Co robi |
-|---|---------|---------|
-| 1 | `.\install.bat` | Instalacja (RAZ po pobraniu) |
-| 2 | `.\dev.bat` | Uruchomienie (ZAWSZE do pracy) |
-| 3 | `npm run backup` | Kopia bezpieczeństwa bazy |
-| 4 | `npm run backup:restore -- <plik>` | Przywróć bazę z kopii |
-| 5 | `npm run backup:install-cron` | Automatyczny backup codziennie o 02:00 |
-| 6 | `git pull` | Pobierz aktualizacje |
-| 7 | `.\build.bat` | Zbuduj wersję produkcyjną |
-| 8 | `.\prod.bat` | Uruchom wersję produkcyjną |
-| 9 | `npm run test:quick` | Szybkie testy (sprawdź czy wszystko działa) |
-| 10 | `npm run validate` | Pełna walidacja (typecheck + lint + test) |
+| #   | Komenda                            | Co robi                                     |
+| --- | ---------------------------------- | ------------------------------------------- |
+| 1   | `.\install.bat`                    | Instalacja (RAZ po pobraniu)                |
+| 2   | `.\dev.bat`                        | Uruchomienie (ZAWSZE do pracy)              |
+| 3   | `npm run backup`                   | Kopia bezpieczeństwa bazy                   |
+| 4   | `npm run backup:restore -- <plik>` | Przywróć bazę z kopii                       |
+| 5   | `npm run backup:install-cron`      | Automatyczny backup codziennie o 02:00      |
+| 6   | `git pull`                         | Pobierz aktualizacje                        |
+| 7   | `.\build.bat`                      | Zbuduj wersję produkcyjną                   |
+| 8   | `.\prod.bat`                       | Uruchom wersję produkcyjną                  |
+| 9   | `npm run test:quick`               | Szybkie testy (sprawdź czy wszystko działa) |
+| 10  | `npm run validate`                 | Pełna walidacja (typecheck + lint + test)   |
 
 ### Główne pliki i katalogi:
 
-| Ścieżka | Opis |
-|---------|------|
+| Ścieżka                    | Opis                                 |
+| -------------------------- | ------------------------------------ |
 | `data/app_database.sqlite` | **BAZA DANYCH** — najważniejszy plik |
-| `data/backups/` | Kopie bezpieczeństwa bazy |
-| `.env` | Konfiguracja (hasło, port, itp.) |
-| `.env.example` | Szablon konfiguracji |
-| `install.bat` | Instalator |
-| `dev.bat` | Uruchomienie deweloperskie |
-| `start.bat` | Uruchomienie (to samo co dev.bat) |
-| `build.bat` | Budowa produkcyjna |
-| `prod.bat` | Uruchomienie produkcyjne |
-| `scripts/backup.ts` | Skrypt backupu |
-| `scripts/restore-db.js` | Skrypt przywracania |
-| `prisma/seed.ts` | Dane początkowe |
-| `prisma/migrations/` | Migracje schematu bazy |
-| `docs/` | Dokumentacja |
-| `VERSION` | Aktualna wersja systemu |
+| `data/backups/`            | Kopie bezpieczeństwa bazy            |
+| `.env`                     | Konfiguracja (hasło, port, itp.)     |
+| `.env.example`             | Szablon konfiguracji                 |
+| `install.bat`              | Instalator                           |
+| `dev.bat`                  | Uruchomienie deweloperskie           |
+| `start.bat`                | Uruchomienie (to samo co dev.bat)    |
+| `build.bat`                | Budowa produkcyjna                   |
+| `prod.bat`                 | Uruchomienie produkcyjne             |
+| `scripts/backup.ts`        | Skrypt backupu                       |
+| `scripts/restore-db.js`    | Skrypt przywracania                  |
+| `prisma/seed.ts`           | Dane początkowe                      |
+| `prisma/migrations/`       | Migracje schematu bazy               |
+| `docs/`                    | Dokumentacja                         |
+| `VERSION`                  | Aktualna wersja systemu              |
 
 ---
 

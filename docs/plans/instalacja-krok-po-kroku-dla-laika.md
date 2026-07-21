@@ -23,12 +23,12 @@
 
 ## 1. Czego potrzebujesz
 
-| Wymaganie | Opis |
-|-----------|------|
-| **Komputer** | Windows 10 lub 11 (może być też Linux, ale ta instrukcja dotyczy Windows) |
-| **Internet** | Do pobrania plików — ok. 500 MB |
-| **Konto administratora** | Aby zainstalować Node.js (możesz poprosić informatyka) |
-| **Czas** | Ok. 10-15 minut |
+| Wymaganie                | Opis                                                                      |
+| ------------------------ | ------------------------------------------------------------------------- |
+| **Komputer**             | Windows 10 lub 11 (może być też Linux, ale ta instrukcja dotyczy Windows) |
+| **Internet**             | Do pobrania plików — ok. 500 MB                                           |
+| **Konto administratora** | Aby zainstalować Node.js (możesz poprosić informatyka)                    |
+| **Czas**                 | Ok. 10-15 minut                                                           |
 
 Aplikacja działa **na Twoim komputerze** — nie potrzebujesz serwera, chmury ani internetu po instalacji.
 
@@ -90,6 +90,7 @@ Musisz pobrać folder z programem na swój komputer.
 ### Opcja B: Dla znających Git
 
 Otwórz wiersz poleceń i wpisz:
+
 ```powershell
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
@@ -113,7 +114,7 @@ To taki plik z ustawieniami — trzyma hasło i inne opcje. Jest prywatny (nikt 
 
 1. Otwórz folder z programem (ten który rozpakowałeś w Kroku 2)
 2. Znajdź plik o nazwie **`.env.example`** (ikona pliku, niebieska)
-   > Jeśli nie widzisz rozszerzeń plików: w Eksploratorze Windows kliknij **"Widok"** → zaznacz **"Rozszerzenia nazw plików"**
+    > Jeśli nie widzisz rozszerzeń plików: w Eksploratorze Windows kliknij **"Widok"** → zaznacz **"Rozszerzenia nazw plików"**
 3. Kliknij PRAWYM przyciskiem myszy na `.env.example` → **"Kopiuj"**
 4. Kliknij PRAWYM w pustym miejscu (w tym samym folderze) → **"Wklej"**
 5. Powstał plik **"Kopia — .env.example"**
@@ -148,24 +149,27 @@ Instalator pobierze wszystkie potrzebne biblioteki, przygotuje bazę danych i sp
 3. Kliknij na niego **DWUKROTNIE** lewym przyciskiem myszy
 4. Pojawi się **czarne okno** (terminal / wiersz poleceń)
 5. **NIE ZAMYKAJ tego okna!** Instalator pracuje:
-   - Najpierw sprawdzi czy Node.js jest zainstalowany
-   - Potem pobierze biblioteki (może to trwać 2-5 minut)
-   - Następnie przygotuje bazę danych
-   - Na końcu sprawdzi czy wszystko jest OK
+    - Najpierw sprawdzi czy Node.js jest zainstalowany
+    - Potem pobierze biblioteki (może to trwać 2-5 minut)
+    - Następnie przygotuje bazę danych
+    - Na końcu sprawdzi czy wszystko jest OK
 6. Gdy zobaczysz napis:
-   ```
-   ===========================================================
-     Instalacja zakonczona
-   ===========================================================
-   Uruchom dev.bat aby zaczac prace.
-   ```
-   oznacza to, że instalacja się udała
+
+    ```
+    ===========================================================
+      Instalacja zakonczona
+    ===========================================================
+    Uruchom dev.bat aby zaczac prace.
+    ```
+
+    oznacza to, że instalacja się udała
 
 7. Kliknij dowolny klawisz aby zamknąć okno
 
 ### Jeśli pojawił się błąd:
 
 Nie panikuj! Zobacz sekcję [Problemy i rozwiązania](#9-problemy-i-rozwiązania). Najczęściej pomaga:
+
 - Sprawdzenie czy Node.js został poprawnie zainstalowany (wróć do Kroku 1)
 - Uruchomienie instalatora ponownie (jeszcze raz kliknij na `install.bat`)
 
@@ -184,11 +188,13 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 3. Kliknij na niego **DWUKROTNIE**
 4. Pojawi się czarne okno — aplikacja się uruchamia
 5. **Poczekaj** aż zobaczysz w oknie:
-   ```
-   Frontend: http://localhost:5173
-   Backend:  http://localhost:3000/health
-   ```
-   To może potrwać 10-30 sekund
+
+    ```
+    Frontend: http://localhost:5173
+    Backend:  http://localhost:3000/health
+    ```
+
+    To może potrwać 10-30 sekund
 
 6. **NIE ZAMYKAJ** tego okna! Dopóki jest otwarte, aplikacja działa
 7. Otwórz swoją przeglądarkę (Chrome, Edge, Firefox)
@@ -205,6 +211,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 ### ✅ Gotowe! Aplikacja działa.
 
 > **WAŻNE:** Za każdym razem gdy chcesz uruchomić aplikację:
+>
 > 1. Otwórz folder
 > 2. Kliknij 2x na `dev.bat`
 > 3. Otwórz http://localhost:5173 w przeglądarce
@@ -240,7 +247,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 3. Skopiuj plik backupu (ze starego komputera) do folderu `data/backups/` na nowym komputerze
 4. Kliknij PRAWYM w pustym miejscu w folderze → **"Otwórz w terminalu"**
 5. Wpisz: `npm run backup:restore -- data/backups/backup_NAZWA_PLIKU.sqlite`
-   > Zamiast `backup_NAZWA_PLIKU.sqlite` wpisz rzeczywistą nazwę pliku
+    > Zamiast `backup_NAZWA_PLIKU.sqlite` wpisz rzeczywistą nazwę pliku
 6. Naciśnij Enter
 7. System zapyta: "Czy na pewno przywrócić backup?" — wpisz: `tak` i naciśnij Enter
 8. Zobaczysz: "Baza przywrócona z: ..."
@@ -261,6 +268,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Nie zainstalowałeś Node.js (Krok 1) lub instalacja się nie udała.
 
 **Rozwiązanie:**
+
 1. Wejdź na https://nodejs.org
 2. Kliknij duży zielony przycisk LTS (lewa strona)
 3. Uruchom pobrany plik
@@ -273,6 +281,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Nie rozpakowałeś pliku ZIP lub rozpakowałeś w złym miejscu.
 
 **Rozwiązanie:**
+
 1. Otwórz folder "Pobrane" (Downloads) w Eksploratorze Windows
 2. Znajdź plik `Oferty_PV-main.zip`
 3. Kliknij PRAWYM → "Wyodrębnij wszystko"
@@ -285,6 +294,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Inny program już używa portu 3000 (np. inna kopia aplikacji).
 
 **Rozwiązanie:**
+
 1. W czarnym oknie pojawi się pytanie: "Zwolnić port? (T=tak, N=nie)"
 2. Wpisz: **T** (tak) i naciśnij Enter
 3. Program sam zamknie starą aplikację i uruchomi nową
@@ -294,6 +304,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Może być wiele przyczyn. Zrób screena i wyślij do pomocy technicznej.
 
 **Co możesz sam sprawdzić:**
+
 1. Czy Node.js jest zainstalowany? Otwórz wiersz poleceń i wpisz: `node --version` — powinieneś zobaczyć `v20.x.x`
 2. Czy plik `.env` istnieje? Sprawdź w folderze — jeśli nie ma, wróć do [Kroku 3](#5-krok-3--skonfiguruj-hasło)
 3. Czy plik .env ma ustawione hasło? Otwórz .env w Notatniku i sprawdź linię `DEFAULT_ADMIN_PASSWORD=...`
@@ -303,6 +314,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Aplikacja nie jest uruchomiona lub uruchomiła się na innym porcie.
 
 **Rozwiązanie:**
+
 1. Sprawdź czy czarne okno (dev.bat) jest otwarte
 2. W oknie powinno być napisane `Frontend: http://localhost:5173`
 3. Jeśli nie ma takiego napisu — poczekaj jeszcze chwilę
@@ -314,12 +326,13 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Hasło w pliku .env jest inne niż to które wpisujesz.
 
 **Rozwiązanie:**
+
 1. Otwórz plik `.env` Notatnikiem
 2. Sprawdź linię: `DEFAULT_ADMIN_PASSWORD=...`
 3. Zapamiętaj hasło (za `=` jest hasło)
 4. Na stronie logowania wpisz:
-   - Login: `admin`
-   - Hasło: to z pliku .env
+    - Login: `admin`
+    - Hasło: to z pliku .env
 5. Jeśli nadal nie działa: zamknij czarne okno, zmień hasło w .env, uruchom `dev.bat` od nowa
 
 ### install.bat się wysypał (error)
@@ -327,6 +340,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Przyczyna:** Różne — najczęściej problem z internetem lub antywirusem.
 
 **Rozwiązanie:**
+
 1. Sprawdź czy masz dostęp do internetu
 2. Wyłącz na chwilę antywirusa (Windows Defender może blokować npm)
 3. Uruchom `install.bat` jeszcze raz
@@ -335,6 +349,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 ### ⚠️ OSTATECZNOŚĆ: Przywracanie systemu
 
 Jeśli całkowicie zablokowałeś system:
+
 1. Wejdź do folderu z programem
 2. Usuń folder `node_modules`
 3. Usuń folder `data`
@@ -347,25 +362,25 @@ Jeśli całkowicie zablokowałeś system:
 
 ## 10. Ściągawka
 
-| Komenda / Plik | Kiedy używać | Opis |
-|----------------|--------------|------|
-| `install.bat` | **RAZ po pobraniu programu** | Instaluje wszystkie biblioteki i przygotowuje bazę |
-| `dev.bat` | **ZAWSZE gdy chcesz pracować** | Uruchamia aplikację (tryb developerski) |
-| `start.bat` | **ZAMIAST dev.bat** | To samo co dev.bat |
-| `prod.bat` | **Do użytku produkcyjnego** | Uruchamia w trybie produkcyjnym (szybszy, bez debugowania) |
-| `npm run backup` | **Regularnie (np. co tydzień)** | Tworzy kopię bezpieczeństwa bazy danych |
-| `npm run backup:restore -- <plik>` | **Przy przenoszeniu danych** | Przywraca bazę z kopii bezpieczeństwa |
-| `build.bat` | **Przed wdrożeniem na serwer** | Kompiluje program do wersji produkcyjnej |
+| Komenda / Plik                     | Kiedy używać                    | Opis                                                       |
+| ---------------------------------- | ------------------------------- | ---------------------------------------------------------- |
+| `install.bat`                      | **RAZ po pobraniu programu**    | Instaluje wszystkie biblioteki i przygotowuje bazę         |
+| `dev.bat`                          | **ZAWSZE gdy chcesz pracować**  | Uruchamia aplikację (tryb developerski)                    |
+| `start.bat`                        | **ZAMIAST dev.bat**             | To samo co dev.bat                                         |
+| `prod.bat`                         | **Do użytku produkcyjnego**     | Uruchamia w trybie produkcyjnym (szybszy, bez debugowania) |
+| `npm run backup`                   | **Regularnie (np. co tydzień)** | Tworzy kopię bezpieczeństwa bazy danych                    |
+| `npm run backup:restore -- <plik>` | **Przy przenoszeniu danych**    | Przywraca bazę z kopii bezpieczeństwa                      |
+| `build.bat`                        | **Przed wdrożeniem na serwer**  | Kompiluje program do wersji produkcyjnej                   |
 
 ### Gdzie są pliki?
 
-| Plik / Folder | Opis |
-|---------------|------|
+| Plik / Folder              | Opis                                                             |
+| -------------------------- | ---------------------------------------------------------------- |
 | `data/app_database.sqlite` | **BAZA DANYCH** — najważniejszy plik! To w nim są wszystkie dane |
-| `data/backups/` | Folder z kopiami bezpieczeństwa |
-| `.env` | Plik z hasłem i ustawieniami |
-| `node_modules/` | Biblioteki (nie ruszaj, instalator sam zarządza) |
-| `dist/` | Skompilowany program (tworzony przez `build.bat`) |
+| `data/backups/`            | Folder z kopiami bezpieczeństwa                                  |
+| `.env`                     | Plik z hasłem i ustawieniami                                     |
+| `node_modules/`            | Biblioteki (nie ruszaj, instalator sam zarządza)                 |
+| `dist/`                    | Skompilowany program (tworzony przez `build.bat`)                |
 
 ### 💡 Złote zasady:
 

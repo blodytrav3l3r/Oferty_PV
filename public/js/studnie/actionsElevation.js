@@ -104,7 +104,7 @@ function updateHeightIndicator() {
         if (liveErrors.length > 0) {
             errContainer.innerHTML =
                 '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
-                liveErrors.map((e) => `• ${e}`).join('<br>');
+                liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
             errContainer.style.display = 'block';
             if (window.lucide) {
                 window.lucide.createIcons();

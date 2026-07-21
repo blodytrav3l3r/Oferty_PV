@@ -117,7 +117,7 @@ function renderOfferItems() {
                 cat === 'Duże Żelbetowe II';
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
-                    ? `<div class="length-editor" onclick="showPipeLengthModal('${item.productId}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+                    ? `<div class="length-editor" onclick="showPipeLengthModal('${escapeHtml(item.productId)}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
                             <i data-lucide="ruler" style="width:11px;height:11px"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>

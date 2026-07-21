@@ -35,7 +35,7 @@ function setupOfferForm() {
             dropdown.innerHTML = matches
                 .map(
                     (p) =>
-                        `<div class="product-dropdown-item" onclick="addOfferItem('${p.id}')">
+                        `<div class="product-dropdown-item" onclick="addOfferItem('${escapeHtml(p.id)}')">
         <span>${escapeHtml(p.name)}</span>
         <span class="price">${fmt(p.price)} PLN</span>
       </div>`
