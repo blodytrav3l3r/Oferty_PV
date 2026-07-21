@@ -1,5 +1,5 @@
 ﻿/* studnie/modal.css — Modal and popup styles */
-/* ===== PRZEJĹšCIA VISIBILITY POPUP ===== */
+/* ===== PRZEJŚCIA VISIBILITY POPUP ===== */
 @keyframes fadeInOverlay {
     from {
         opacity: 0;
@@ -280,7 +280,7 @@
     align-items: center;
     justify-content: space-between;
     min-height: 57px;
-    /* dopasowanie do wysokoĹ›ci paska przyciskĂłw */
+    /* dopasowanie do wysokości paska przycisków */
     box-shadow: var(--shadow-sm);
 }
 

@@ -3,7 +3,7 @@
 <div class="wizard-step" id="wizard-step-4">
     <div class="wizard-card">
         <div class="wizard-card-content" style="padding: 1rem 0">
-            <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamĂłwienia -->
+            <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamówienia -->
             <div
                 class="gap-3"
                 style="display: flex; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem"
@@ -16,7 +16,7 @@
                         id="step4-copy-order-help"
                         style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem"
                     >
-                        Wybierz istniejące zamĂłwienie, aby skopiować jego dane Karty Budowy.
+                        Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.
                     </div>
                 </div>
                 <button
@@ -26,7 +26,7 @@
                     onclick="copyKartaBudowyFromOrder()"
                     style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
                 >
-                    Kopiuj Kartę Budowy z zamĂłwienia
+                    Kopiuj Kartę Budowy z zamówienia
                 </button>
             </div>
 
@@ -105,7 +105,7 @@
                     />
                 </div>
 
-                <!-- ZamĂłwienie według oferty nr. -->
+                <!-- Zamówienie według oferty nr. -->
                 <div class="flex-1-240">
                     <label
                         style="
@@ -118,7 +118,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        ZamĂłwienie według oferty nr.
+                        Zamówienie według oferty nr.
                     </label>
                     <input
                         type="text"
@@ -176,7 +176,7 @@
                     </label>
                     <select id="step4-warunki-platnosci" class="form-input form-input-wide">
                         <option value="przelew">Przelew</option>
-                        <option value="gotĂłwka">GotĂłwka</option>
+                        <option value="gotówka">Gotówka</option>
                         <option value="przedpłata">Przedpłata</option>
                     </select>
                 </div>
@@ -296,10 +296,10 @@
                         Rodzaj transportu
                     </label>
                     <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
-                        <option value="W kĂłłko">W kĂłłko</option>
+                        <option value="W kółko">W kółko</option>
                         <option value="Spedycja">Spedycja</option>
                         <option value="Transport P.V." selected>Transport P.V.</option>
-                        <option value="OdbiĂłr własny">OdbiĂłr własny</option>
+                        <option value="Odbiór własny">Odbiór własny</option>
                     </select>
                 </div>
                 <div class="flex-1-180">
@@ -352,7 +352,7 @@
                     <select id="step4-rodzaj-studni" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Beton" selected>Beton</option>
-                        <option value="Ĺ»elbet">Ĺ»elbet</option>
+                        <option value="Żelbet">Żelbet</option>
                     </select>
                 </div>
 
@@ -569,12 +569,12 @@
                     <select id="step4-usytuowanie" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Linia dolna" selected>Linia dolna</option>
-                        <option value="Linia gĂłrna">Linia gĂłrna</option>
+                        <option value="Linia górna">Linia górna</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Wiersz 8: Kaskada i Ĺšlepa kineta -->
+            <!-- Wiersz 8: Kaskada i Ślepa kineta -->
             <div class="flex-wrap-start p-6-12">
                 <!-- Kaskada -->
                 <div style="flex: 1; min-width: 140px">
@@ -620,7 +620,7 @@
                     />
                 </div>
 
-                <!-- Ĺšlepa kineta -->
+                <!-- Ślepa kineta -->
                 <div style="flex: 1; min-width: 140px">
                     <label
                         style="
@@ -633,7 +633,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Ĺšlepa kineta
+                        Ślepa kineta
                     </label>
                     <select id="step4-slepa-kineta" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -653,7 +653,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Uwagi (Ĺšlepa kineta)
+                        Uwagi (Ślepa kineta)
                     </label>
                     <input
                         type="text"
@@ -733,7 +733,7 @@
                     </select>
                 </div>
 
-                <!-- Przejścia zamĂłwione -->
+                <!-- Przejścia zamówione -->
                 <div class="flex-1-180">
                     <label
                         style="
@@ -746,7 +746,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Przejścia zamĂłwione
+                        Przejścia zamówione
                     </label>
                     <select
                         id="step4-przejscia-zamowione"
@@ -759,7 +759,7 @@
                     </select>
                 </div>
 
-                <!-- Data zamĂłwienia -->
+                <!-- Data zamówienia -->
                 <div class="flex-2-240">
                     <label
                         style="
@@ -772,7 +772,7 @@
                             letter-spacing: 0.3px;
                         "
                     >
-                        Data zamĂłwienia
+                        Data zamówienia
                     </label>
                     <input
                         type="date"
@@ -834,7 +834,7 @@
                 </div>
             </div>
 
-            <!-- Wiersz 9.1: Przejścia szczelne â€” szczegĂłły z oferty -->
+            <!-- Wiersz 9.1: Przejścia szczelne — szczegóły z oferty -->
             <div style="padding: 0.6rem 1.2rem">
                 <div
                     style="
@@ -865,7 +865,7 @@
                                 letter-spacing: 0.3px;
                             "
                         >
-                            <i data-lucide="link"></i> Przejścia szczelne â€” szczegĂłły z oferty
+                            <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
                         </label>
                         <button
                             type="button"
@@ -904,7 +904,7 @@
                 </div>
             </div>
 
-            <!-- Wiersz 11: Uwagi ogĂłlne -->
+            <!-- Wiersz 11: Uwagi ogólne -->
             <div style="padding: 0.6rem 1.2rem">
                 <label
                     style="

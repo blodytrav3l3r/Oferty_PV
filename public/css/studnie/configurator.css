@@ -1,8 +1,8 @@
 ﻿/* studnie/configurator.css — Configuration panel */
 /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-   PEĹNA WYSOKOĹšÄ† LAYOUTU â€” FLEX CHAIN (scoped: studnie.html)
-   body â†’ .main â†’ .section.active â†’ .well-app-layout â†’ kolumny
-   WysokoĹ›Ä‡ wynika z drzewa DOM, NIE z calc(100vh - N).
+   PEŁNA WYSOKOŚĆ LAYOUTU — FLEX CHAIN (scoped: studnie.html)
+   body → .main → .section.active → .well-app-layout → kolumny
+   Wysokość wynika z drzewa DOM, NIE z calc(100vh - N).
    â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 html,
 body {
@@ -22,7 +22,7 @@ body > .header {
     flex: 0 0 auto;
 }
 
-/* .main odbiera resztÄ™ wysokoĹ›ci po headerze */
+/* .main odbiera resztę wysokości po headerze */
 body.studnie-page > .main {
     flex: 1;
     min-height: 0;
@@ -41,7 +41,7 @@ body.studnie-page .header-inner {
     padding: 0.3rem 0;
 }
 
-/* .section.active â€” aktwynazakĹ‚adka */
+/* .section.active — aktwynazakładka */
 body > .main > .section.active {
     flex: 1;
     min-height: 0;
@@ -95,7 +95,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-height: 0;
 }
 
-/* Wizard bottom nav â€” position: fixed; bottom: 0 z style.css */
+/* Wizard bottom nav — position: fixed; bottom: 0 z style.css */
 .wizard-nav-fixed {
     flex: 0 0 auto;
     width: 100%;
@@ -123,7 +123,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     }
 }
 
-/* â”€â”€ Modyfikator ukĹ‚adu dla krokĂłw 1 i 2 â”€â”€ */
+/* â”€â”€ Modyfikator układu dla kroków 1 i 2 â”€â”€ */
 .well-app-layout.intro-mode {
     grid-template-columns: 1fr;
     max-width: min(90vw, 1400px);
@@ -689,7 +689,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     opacity: 0.2;
     cursor: not-allowed;
 }
-/* Kolory typĂłw kafelkĂłw */
+/* Kolory typów kafelków */
 .tile[data-type='dennica'] {
     --tile-accent: #10b981;
 }
@@ -746,7 +746,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .tile[data-type='uszczelka'] {
     --tile-accent: #84cc16;
 }
-/* ZakĹ‚adki cennika */
+/* Zakładki cennika */
 .cennik-tab {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
@@ -786,7 +786,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 /* Oferta */
-/* ZakĹ‚adki kreatora inline */
+/* Zakładki kreatora inline */
 .b-tab-btn {
     flex: 1;
     padding: 0.45rem;
@@ -812,7 +812,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-color: var(--accent-border-dim);
     color: var(--text-primary);
 }
-/* ZakĹ‚adki panelu bocznego */
+/* Zakładki panelu bocznego */
 .s-tab-btn {
     flex: 1;
     padding: 0.4rem;
@@ -869,7 +869,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: #ffedd5;
     box-shadow: 0 0 10px var(--warn-bg);
 }
-/* Style aplikacji Inline Transitions wykorzystujÄ…ce nazwy fs-* ale zlokalizowane */
+/* Style aplikacji Inline Transitions wykorzystujące nazwy fs-* ale zlokalizowane */
 .fs-sidebar {
     background: var(--bg-deep);
     border-right: 1px solid var(--bg-tertiary);
@@ -1128,7 +1128,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .wizard-validation-msg.hidden {
     opacity: 0;
 }
-/* --- STAN ĹADOWANIA KREATORA --- */
+/* --- STAN ŁADOWANIA KREATORA --- */
 .wizard-loading-state .wizard-step {
     display: none !important;
 }
@@ -1161,7 +1161,7 @@ select.form-input option {
     background-color: #1b2334;
     color: #fff;
 }
-/* â”€â”€â”€ Klasy narzÄ™dziowe do migracji stylĂłw inline â”€â”€â”€ */
+/* â”€â”€â”€ Klasy narzędziowe do migracji stylów inline â”€â”€â”€ */
 /* Font size */
 .fs-085 {
     font-size: 0.85rem;
@@ -1253,7 +1253,7 @@ select.form-input option {
     height: 16px;
 }
 
-/* Styl etykiety dla checkboxĂłw */
+/* Styl etykiety dla checkboxów */
 .checkbox-label {
     display: flex;
     align-items: center;
@@ -1292,7 +1292,7 @@ select.form-input option {
     color: var(--text-muted);
 }
 
-/* ResponsywnoĹ›Ä‡ kreatora */
+/* Responsywność kreatora */
 
 @media (max-width: 768px) {
     .wizard-dot-label {
@@ -1361,7 +1361,7 @@ select.form-input option {
         margin-left: 0 !important;
     }
 
-    /* Panel 3-kolumnowy w parametrach (juĹĽ po polsku) */
+    /* Panel 3-kolumnowy w parametrach (już po polsku) */
     div[style*='grid-template-columns: 1fr 1fr 1fr'][style*='gap: 0.7rem'] {
         grid-template-columns: 1fr !important;
     }

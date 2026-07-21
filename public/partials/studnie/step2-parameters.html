@@ -32,13 +32,13 @@
                     class="wizard-card-title"
                     style="margin: 0; font-size: 1.15rem; font-weight: 700"
                 >
-                    OgĂłlne parametry studni
+                    Ogólne parametry studni
                 </h2>
                 <p
                     class="wizard-card-subtitle"
                     style="margin: 0; font-size: 0.75rem; color: #71717a"
                 >
-                    Wybierz parametry dla konfiguracji studni â€” kliknij w kaĹĽdej grupie
+                    Wybierz parametry dla konfiguracji studni — kliknij w każdej grupie
                 </p>
             </div>
         </div>
@@ -62,8 +62,8 @@
                     data-lucide="info"
                     style="width: 1rem; height: 1rem; vertical-align: middle; margin-right: 0.3rem"
                 ></i>
-                Ta oferta nie zawiera zapisanych parametrĂłw ogĂłlnych. Wybierz wartości poniĹĽej
-                â€” zostaną zapisane przy kolejnym zapisie oferty.
+                Ta oferta nie zawiera zapisanych parametrów ogólnych. Wybierz wartości poniżej
+                — zostaną zapisane przy kolejnym zapisie oferty.
             </div>
             <div
                 class="gap-3"
@@ -128,7 +128,7 @@
                             data-param="nadbudowa"
                         >
                             <button type="button" class="param-tile" data-val="betonowa">Beton</button>
-                            <button type="button" class="param-tile" data-val="zelbetowa">Ĺ»elbet</button>
+                            <button type="button" class="param-tile" data-val="zelbetowa">Żelbet</button>
                         </div>
                     </div>
 
@@ -148,7 +148,7 @@
                             data-param="dennicaMaterial"
                         >
                             <button type="button" class="param-tile" data-val="betonowa">Beton</button>
-                            <button type="button" class="param-tile" data-val="zelbetowa">Ĺ»elbet</button>
+                            <button type="button" class="param-tile" data-val="zelbetowa">Żelbet</button>
                         </div>
                     </div>
 
@@ -200,7 +200,7 @@
                             "
                         >
                             <div style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 8px">
-                                Wybierz elementy, w ktĂłrych ma być wkładka:
+                                Wybierz elementy, w których ma być wkładka:
                             </div>
                             <div style="display: flex; gap: 15px">
                                 <label class="checkbox-label">
@@ -280,7 +280,7 @@
                     </div>
                 </div>
 
-                <!-- KOLUMNA 2: POWĹOKA I KINETA -->
+                <!-- KOLUMNA 2: POWŁOKA I KINETA -->
                 <div
                     class="gap-2"
                     style="
@@ -363,14 +363,14 @@
                     </div>
                     <div class="wizard-form-group mt-2-hidden" id="malowanie-wew-cena-group">
                         <label class="wizard-form-label"
-                            >Koszt mal. wew. (PLN/mÂ˛) <span class="text-warn">*</span></label
+                            >Koszt mal. wew. (PLN/m²) <span class="text-warn">*</span></label
                         >
                         <input
                             class="wizard-form-input"
                             id="malowanie-wew-cena"
                             type="number"
                             step="0.01"
-                            placeholder="Koszt za 1mÂ˛..."
+                            placeholder="Koszt za 1m²..."
                             oninput="
                                 updateParamInput('malowanieWewCena', this.value);
                                 validateWizardStep2();
@@ -393,14 +393,14 @@
                     </div>
                     <div class="wizard-form-group mt-2-hidden" id="malowanie-zew-cena-group">
                         <label class="wizard-form-label"
-                            >Koszt mal. zew. (PLN/mÂ˛) <span class="text-warn">*</span></label
+                            >Koszt mal. zew. (PLN/m²) <span class="text-warn">*</span></label
                         >
                         <input
                             class="wizard-form-input"
                             id="malowanie-zew-cena"
                             type="number"
                             step="0.01"
-                            placeholder="Koszt za 1mÂ˛..."
+                            placeholder="Koszt za 1m²..."
                             oninput="
                                 updateParamInput('malowanieZewCena', this.value);
                                 validateWizardStep2();
@@ -499,7 +499,7 @@
                     </div>
                 </div>
 
-                <!-- KOLUMNA 3: OSPRZÄT -->
+                <!-- KOLUMNA 3: OSPRZĘT -->
                 <div
                     class="gap-2"
                     style="
@@ -581,7 +581,7 @@
                             data-param="usytuowanie"
                         >
                             <button type="button" class="param-tile" data-val="linia_dolna">Linia dolna</button>
-                            <button type="button" class="param-tile" data-val="linia_gorna">Linia gĂłrna</button>
+                            <button type="button" class="param-tile" data-val="linia_gorna">Linia górna</button>
                             <button type="button" class="param-tile" data-val="w_osi">W osi</button>
                             <button type="button" class="param-tile" data-val="patrz_uwagi">Patrz uwagi</button>
                         </div>
@@ -607,7 +607,7 @@
                         </div>
                     </div>
 
-                    <!-- KLASY NOĹšNOĹšCI -->
+                    <!-- KLASY NOŚNOŚCI -->
                     <div
                         style="
                             margin-top: 0.4rem;
@@ -676,12 +676,12 @@
                 </div>
             </div>
             <div class="wizard-validation-msg" id="wizard-validation-msg">
-                <i data-lucide="alert-triangle"></i> Wybierz opcję w kaĹĽdej grupie parametrĂłw,
+                <i data-lucide="alert-triangle"></i> Wybierz opcję w każdej grupie parametrów,
                 aby kontynuować
             </div>
         </div>
         <div class="wizard-nav">
-            <button type="button" class="wizard-btn wizard-btn-prev" onclick="wizardPrev()">â† Wstecz</button>
+            <button type="button" class="wizard-btn wizard-btn-prev" onclick="wizardPrev()">← Wstecz</button>
             <button type="button"
                 class="wizard-btn wizard-btn-apply"
                 onclick="applyGlobalParamsToAllWells()"
@@ -700,7 +700,7 @@
                 id="wizard-next-step2"
                 disabled
             >
-                Dalej â†’
+                Dalej →
             </button>
         </div>
     </div>

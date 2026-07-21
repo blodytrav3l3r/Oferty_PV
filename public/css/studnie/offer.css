@@ -92,7 +92,7 @@
 
 #excel-table-container td {
     padding: 0;
-    height: 1px; /* Trik CSS: pozwala dzieciom z height: 100% wypeĹ‚niÄ‡ peĹ‚nÄ… wysokoĹ›Ä‡ wiersza */
+    height: 1px; /* Trik CSS: pozwala dzieciom z height: 100% wypełnić pełną wysokość wiersza */
 }
 
 #excel-table-container input[type='checkbox'] {
@@ -104,7 +104,7 @@
     position: relative;
 }
 
-/* GĂłrna linia podĹ›wietlenia wiersza na wierzchu */
+/* Górna linia podświetlenia wiersza na wierzchu */
 #excel-table-container tbody tr:focus-within td::before {
     content: '';
     position: absolute;
@@ -117,7 +117,7 @@
     pointer-events: none;
 }
 
-/* Dolna linia podĹ›wietlenia wiersza na wierzchu */
+/* Dolna linia podświetlenia wiersza na wierzchu */
 #excel-table-container tbody tr:focus-within td::after {
     content: '';
     position: absolute;
@@ -130,13 +130,13 @@
     pointer-events: none;
 }
 
-/* Lewa krawÄ™dĹş na pierwszej komĂłrce */
+/* Lewa krawędź na pierwszej komórce */
 #excel-table-container tbody tr:focus-within td:first-child::before {
     height: 100%;
     border-left: 2px solid rgba(99, 102, 241, 0.95);
 }
 
-/* Prawa krawÄ™dĹş na ostatniej komĂłrce */
+/* Prawa krawędź na ostatniej komórce */
 #excel-table-container tbody tr:focus-within td:last-child::after {
     height: 100%;
     border-right: 2px solid rgba(99, 102, 241, 0.95);
@@ -147,12 +147,12 @@
     color: #e2e8f0 !important;
 }
 
-/* Kolumna Lp. â€” lepszy kontrast w aktywnym wierszu */
+/* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
 #excel-table-container tbody tr:focus-within td:first-child {
     color: #a5b4fc !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
 }
 
-/* Kolumna Wys. â€” stonowany niebieski, a w aktywnym wierszu jasny */
+/* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
 #excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
     color: #f8fafc !important;
 }
@@ -235,7 +235,7 @@
     border-color: rgba(99, 102, 241, 0.6);
     color: var(--accent-text);
 }
-/* â”€â”€ Karty w dolnym pasku podsumowania (wzĂłr rury) â”€â”€ */
+/* â”€â”€ Karty w dolnym pasku podsumowania (wzór rury) â”€â”€ */
 #offer-summary-footer-fixed .summary-card {
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
@@ -335,7 +335,7 @@
     border-collapse: collapse;
 }
 
-/* Sticky header rows â€” klasy dla position:sticky (opcjonalnie) */
+/* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
 .excel-th-h3 {
     position: sticky;
     top: 0;
@@ -352,7 +352,7 @@
     z-index: 20;
 }
 
-/* WciÄ™cia dla sub-elementĂłw w tabeli oferty studni */
+/* Wcięcia dla sub-elementów w tabeli oferty studni */
 .pl-lg {
     padding-left: 1.5rem !important;
 }
