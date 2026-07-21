@@ -1,5 +1,6 @@
 // @ts-check
 // Moduł akcji dla PV Sales UI
+import { storageService } from '../shared/StorageService.js';
 
 export default {
     normalizeId(id) {

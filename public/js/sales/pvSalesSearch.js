@@ -1,5 +1,6 @@
 // @ts-check
 // Moduł wyszukiwania dla PV Sales UI
+import { storageService } from '../shared/StorageService.js';
 
 export default {
     async init() {

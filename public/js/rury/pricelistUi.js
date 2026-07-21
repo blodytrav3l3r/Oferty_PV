@@ -20,6 +20,7 @@ function updateSaveBtn() {
 
 function renderPriceList() {
     const container = document.getElementById('pricelist-body');
+    if (!container) return;
     const searchVal = document.getElementById('pricelist-search')?.value?.toLowerCase() || '';
 
     let html = `<div class="table-wrap">
