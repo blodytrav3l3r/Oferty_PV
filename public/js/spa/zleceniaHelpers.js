@@ -701,7 +701,6 @@ function buildEtykietaPageBlock(pageTemplate, po, pageIndex) {
 
 /* ===== REGISTER ON WINDOW ===== */
 
-window.escapeHtml = escapeHtml;
 window.escapeJsStr = escapeJsStr;
 window.formatDate = formatDate;
 window.paramLabel = paramLabel;

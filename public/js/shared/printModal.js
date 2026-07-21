@@ -30,28 +30,18 @@
         if (m) m.remove();
     }
 
-    function escapeHtml(s) {
-        if (s === null || s === undefined) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
     function renderOfferSection(cfg) {
         if (!cfg || !cfg.id) return '';
-        const idEsc = escapeHtml(cfg.id);
-        const pdfAction = escapeHtml(cfg.actionPdf);
-        const docxAction = escapeHtml(cfg.actionDocx);
+        const idEsc = window.escapeHtml(cfg.id);
+        const pdfAction = window.escapeHtml(cfg.actionPdf);
+        const docxAction = window.escapeHtml(cfg.actionDocx);
         return `
             <div class="upm-section" data-section="offer">
                 <div class="upm-section-header">
                     <h4 class="upm-title upm-title-offer">
-                        <i data-lucide="file-text"></i> ${escapeHtml(cfg.title || 'Wydruk Oferty')}
+                        <i data-lucide="file-text"></i> ${window.escapeHtml(cfg.title || 'Wydruk Oferty')}
                     </h4>
-                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz format eksportu oferty:')}</p>
+                    <p class="upm-desc">${window.escapeHtml(cfg.description || 'Wybierz format eksportu oferty:')}</p>
                 </div>
                 <div class="upm-actions">
                     <button class="upm-btn upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">
@@ -66,17 +56,19 @@
 
     function renderOrderCurrentSection(cfg) {
         if (!cfg || !cfg.id) return '';
-        const idEsc = escapeHtml(cfg.id);
-        const pdfAction = escapeHtml(cfg.actionPdf);
-        const docxAction = escapeHtml(cfg.actionDocx);
-        const badge = cfg.badge ? `<span class="upm-badge">${escapeHtml(cfg.badge)}</span>` : '';
+        const idEsc = window.escapeHtml(cfg.id);
+        const pdfAction = window.escapeHtml(cfg.actionPdf);
+        const docxAction = window.escapeHtml(cfg.actionDocx);
+        const badge = cfg.badge
+            ? `<span class="upm-badge">${window.escapeHtml(cfg.badge)}</span>`
+            : '';
         return `
             <div class="upm-section" data-section="orderCurrent">
                 <div class="upm-section-header">
                     <h4 class="upm-title upm-title-orderCurrent">
-                        <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Oferta (stan bieżący zamówienia)')} ${badge}
+                        <i data-lucide="package"></i> ${window.escapeHtml(cfg.title || 'Oferta (stan bieżący zamówienia)')} ${badge}
                     </h4>
-                    <p class="upm-desc">${escapeHtml(cfg.description || 'Drukuje aktualne pozycje z edycji zamówienia.')}</p>
+                    <p class="upm-desc">${window.escapeHtml(cfg.description || 'Drukuje aktualne pozycje z edycji zamówienia.')}</p>
                 </div>
                 <div class="upm-actions">
                     <button class="upm-btn upm-btn-pdf" data-action="${pdfAction}" data-id="${idEsc}" data-format="pdf">
@@ -91,16 +83,16 @@
 
     function renderOrdersSection(cfg) {
         if (!cfg || !Array.isArray(cfg.orders) || cfg.orders.length === 0) return '';
-        const pdfAction = escapeHtml(cfg.actionPdf);
-        const docxAction = escapeHtml(cfg.actionDocx);
+        const pdfAction = window.escapeHtml(cfg.actionPdf);
+        const docxAction = window.escapeHtml(cfg.actionDocx);
         const rows = cfg.orders
             .map((ord) => {
-                const idEsc = escapeHtml(ord.id);
-                const ordNum = escapeHtml(
+                const idEsc = window.escapeHtml(ord.id);
+                const ordNum = window.escapeHtml(
                     ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—')
                 );
                 const status = ord.status
-                    ? `<span class="upm-status upm-status-${escapeHtml(ord.status)}">${escapeHtml(ord.status)}</span>`
+                    ? `<span class="upm-status upm-status-${window.escapeHtml(ord.status)}">${window.escapeHtml(ord.status)}</span>`
                     : '';
                 return `
                 <div class="upm-row upm-row-orders">
@@ -116,9 +108,9 @@
             <div class="upm-section" data-section="orders">
                 <div class="upm-section-header">
                     <h4 class="upm-title upm-title-orders">
-                        <i data-lucide="package"></i> ${escapeHtml(cfg.title || 'Wydruk Zamówienia')}
+                        <i data-lucide="package"></i> ${window.escapeHtml(cfg.title || 'Wydruk Zamówienia')}
                     </h4>
-                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format:')}</p>
+                    <p class="upm-desc">${window.escapeHtml(cfg.description || 'Wybierz zamówienie i format:')}</p>
                 </div>
                 <div class="upm-orders-list">${rows}</div>
             </div>`;
@@ -126,12 +118,12 @@
 
     function renderKartaSection(cfg) {
         if (!cfg || !Array.isArray(cfg.orders) || cfg.orders.length === 0) return '';
-        const pdfAction = escapeHtml(cfg.actionPdf);
-        const docxAction = escapeHtml(cfg.actionDocx);
+        const pdfAction = window.escapeHtml(cfg.actionPdf);
+        const docxAction = window.escapeHtml(cfg.actionDocx);
         const rows = cfg.orders
             .map((ord) => {
-                const idEsc = escapeHtml(ord.id);
-                const ordNum = escapeHtml(
+                const idEsc = window.escapeHtml(ord.id);
+                const ordNum = window.escapeHtml(
                     ord.orderNumber || (ord.id ? ord.id.substring(0, 8) : '—')
                 );
                 return `
@@ -148,9 +140,9 @@
             <div class="upm-section" data-section="karta">
                 <div class="upm-section-header">
                     <h4 class="upm-title upm-title-karta">
-                        <i data-lucide="hard-hat"></i> ${escapeHtml(cfg.title || 'Wydruk Karty Budowy')}
+                        <i data-lucide="hard-hat"></i> ${window.escapeHtml(cfg.title || 'Wydruk Karty Budowy')}
                     </h4>
-                    <p class="upm-desc">${escapeHtml(cfg.description || 'Wybierz zamówienie i format Karty Budowy:')}</p>
+                    <p class="upm-desc">${window.escapeHtml(cfg.description || 'Wybierz zamówienie i format Karty Budowy:')}</p>
                 </div>
                 <div class="upm-orders-list">${rows}</div>
             </div>`;
@@ -205,9 +197,9 @@
                 <div class="upm-header">
                     <div class="upm-header-text">
                         <h3 class="upm-modal-title" id="upm-modal-title">
-                            <i data-lucide="printer"></i> ${escapeHtml(config.modalTitle || 'Wydruk Dokumentów')}
+                            <i data-lucide="printer"></i> ${window.escapeHtml(config.modalTitle || 'Wydruk Dokumentów')}
                         </h3>
-                        ${config.subtitle ? `<p class="upm-modal-subtitle">${escapeHtml(config.subtitle)}</p>` : ''}
+                        ${config.subtitle ? `<p class="upm-modal-subtitle">${window.escapeHtml(config.subtitle)}</p>` : ''}
                     </div>
                     <button class="upm-close" data-action="__upm_close" type="button" aria-label="Zamknij">
                         <i data-lucide="x"></i>

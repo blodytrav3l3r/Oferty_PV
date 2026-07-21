@@ -2,21 +2,21 @@
 /* ===== EXCEL COLUMN VISIBILITY — modal do ukrywania/pokazywania kolumn ===== */
 
 function _excelToggleColumnPopup() {
-    var refWell =
+    const refWell =
         typeof _excelGetReferenceWell === 'function'
             ? _excelGetReferenceWell(_excelActiveTab)
             : null;
-    var allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
+    const allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
     if (!allCols || allCols.length === 0) return;
 
-    var groups = {};
+    const groups = {};
     allCols.forEach(function (col) {
-        var g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
+        const g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
         if (!groups[g]) groups[g] = { cols: [] };
         groups[g].cols.push(col);
     });
 
-    var groupLabels = {
+    const groupLabels = {
         wlaz: 'Właz',
         avr: 'AVR / Pierścienie',
         konus: 'Konus / Stożek',
@@ -33,7 +33,7 @@ function _excelToggleColumnPopup() {
         uszczelka: 'Uszczelki'
     };
 
-    var staticGroupOrder = [
+    const staticGroupOrder = [
         'wlaz',
         'avr',
         'konus',
@@ -49,17 +49,17 @@ function _excelToggleColumnPopup() {
         'styczna',
         'uszczelka'
     ];
-    var reductionKeys = Object.keys(groups)
+    const reductionKeys = Object.keys(groups)
         .filter(function (k) {
             return k.indexOf('_reduction_') === 0;
         })
         .sort();
 
     function _excelColCheckboxHtml(col, padLeft) {
-        var hidden = _excelIsColumnHidden(col.id);
-        var colName = col.shortLabel || col.label || col.id;
-        var detail = col.detailLabel && col.detailLabel !== '·' ? ' (' + col.detailLabel + ')' : '';
-        var h =
+        let hidden = _excelIsColumnHidden(col.id);
+        let colName = col.shortLabel || col.label || col.id;
+        let detail = col.detailLabel && col.detailLabel !== '·' ? ' (' + col.detailLabel + ')' : '';
+        let h =
             '<label style="display:flex;align-items:center;gap:0.4rem;padding:0.15rem 0.2rem 0.15rem ' +
             padLeft +
             ';font-size:0.6rem;color:#94a3b8;cursor:pointer;white-space:nowrap;border-radius:2px;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(255,255,255,0.04)\'" onmouseleave="this.style.background=\'transparent\'">';
@@ -81,7 +81,7 @@ function _excelToggleColumnPopup() {
     }
 
     function _excelBuildColumnGridHtml(gridCols, allCts, groupLabels) {
-        var html = '';
+        let html = '';
         html +=
             '<div id="excel-col-vis-grid" style="display:grid;grid-template-columns:auto repeat(' +
             gridCols.length +
@@ -91,9 +91,9 @@ function _excelToggleColumnPopup() {
         html +=
             '<div style="padding:0.25rem 0.3rem;background:rgba(255,255,255,0.03);font-size:0.55rem;font-weight:500;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.06);"></div>';
         gridCols.forEach(function (col, cIdx) {
-            var sepStyle =
+            let sepStyle =
                 cIdx < gridCols.length - 1 ? 'border-right:1px solid rgba(255,255,255,0.04);' : '';
-            var bg = col.isBase
+            let bg = col.isBase
                 ? 'background:rgba(139,92,246,0.06);'
                 : 'background:rgba(255,255,255,0.03);';
             html +=
@@ -110,18 +110,18 @@ function _excelToggleColumnPopup() {
         html +=
             '<div style="padding:0.2rem 0.3rem;background:rgba(255,255,255,0.02);font-size:0.5rem;color:#64748b;border-bottom:1px solid rgba(255,255,255,0.06);"></div>';
         gridCols.forEach(function (col, cIdx) {
-            var sepStyle =
+            let sepStyle =
                 cIdx < gridCols.length - 1 ? 'border-right:1px solid rgba(255,255,255,0.04);' : '';
-            var bg = col.isBase
+            let bg = col.isBase
                 ? 'background:rgba(139,92,246,0.04);'
                 : 'background:rgba(255,255,255,0.02);';
-            var allIds = [];
+            let allIds = [];
             Object.keys(col.groups).forEach(function (ct) {
                 col.groups[ct].forEach(function (c) {
                     allIds.push(c.id);
                 });
             });
-            var allVis = allIds.every(function (id) {
+            let allVis = allIds.every(function (id) {
                 return !_excelIsColumnHidden(id);
             });
             html +=
@@ -144,9 +144,9 @@ function _excelToggleColumnPopup() {
 
         /* Wiersze danych */
         allCts.forEach(function (ct, rIdx) {
-            var ctLabel = groupLabels[ct] || ct;
-            var lastRow = rIdx === allCts.length - 1;
-            var rowStyle = lastRow ? '' : 'border-bottom:1px solid rgba(255,255,255,0.04);';
+            let ctLabel = groupLabels[ct] || ct;
+            let lastRow = rIdx === allCts.length - 1;
+            let rowStyle = lastRow ? '' : 'border-bottom:1px solid rgba(255,255,255,0.04);';
 
             html +=
                 '<div style="padding:0.25rem 0.3rem;font-size:0.55rem;font-weight:500;color:#94a3b8;background:rgba(255,255,255,0.01);' +
@@ -156,29 +156,29 @@ function _excelToggleColumnPopup() {
                 '</div>';
 
             gridCols.forEach(function (col, cIdx) {
-                var cellStyle = rowStyle;
+                let cellStyle = rowStyle;
                 if (cIdx < gridCols.length - 1)
                     cellStyle += 'border-right:1px solid rgba(255,255,255,0.04);';
                 cellStyle += 'padding:0.15rem 0.2rem;';
                 if (col.isBase) cellStyle += 'background:rgba(139,92,246,0.03);';
 
-                var cols = col.groups[ct] || [];
+                let cols = col.groups[ct] || [];
                 html += '<div style="' + cellStyle + '">';
                 if (cols.length === 0) {
                     html += '<span style="color:#3f4356;font-size:0.5rem;">—</span>';
                 } else {
                     if (cols.length > 1) {
-                        var cellIds = cols.map(function (c) {
+                        let cellIds = cols.map(function (c) {
                             return c.id;
                         });
-                        var cellAllVis = cellIds.every(function (id) {
+                        let cellAllVis = cellIds.every(function (id) {
                             return !_excelIsColumnHidden(id);
                         });
-                        var cellSomeVis = cellIds.some(function (id) {
+                        let cellSomeVis = cellIds.some(function (id) {
                             return !_excelIsColumnHidden(id);
                         });
-                        var cellIndet = !cellAllVis && cellSomeVis;
-                        var escapedIds = cellIds.map(function (id) {
+                        let cellIndet = !cellAllVis && cellSomeVis;
+                        let escapedIds = cellIds.map(function (id) {
                             return id.replace(/'/g, "\\'");
                         });
                         html +=
@@ -205,11 +205,11 @@ function _excelToggleColumnPopup() {
     }
 
     /* Buduj tablicę kolumn (DN) dla gridu */
-    var baseDn = _excelActiveTab || '';
-    var gridCols = [];
+    let baseDn = _excelActiveTab || '';
+    let gridCols = [];
 
     /* 1. Kolumna podstawowa */
-    var baseGroups = {};
+    let baseGroups = {};
     staticGroupOrder.forEach(function (g) {
         if (groups[g]) baseGroups[g] = groups[g].cols;
     });
@@ -222,11 +222,11 @@ function _excelToggleColumnPopup() {
 
     /* 2. Kolumny redukcji */
     reductionKeys.forEach(function (key) {
-        var dn = key.replace('_reduction_', '');
-        var grp = groups[key];
-        var sub = {};
+        let dn = key.replace('_reduction_', '');
+        let grp = groups[key];
+        let sub = {};
         grp.cols.forEach(function (c) {
-            var ct = c.componentType;
+            let ct = c.componentType;
             if (!sub[ct]) sub[ct] = [];
             sub[ct].push(c);
         });
@@ -234,24 +234,24 @@ function _excelToggleColumnPopup() {
     });
 
     /* Wszystkie unikalne typy komponentów */
-    var allCts = [];
+    let allCts = [];
     gridCols.forEach(function (col) {
         Object.keys(col.groups).forEach(function (ct) {
             if (allCts.indexOf(ct) < 0) allCts.push(ct);
         });
     });
     allCts.sort(function (a, b) {
-        var ai = staticGroupOrder.indexOf(a);
-        var bi = staticGroupOrder.indexOf(b);
+        let ai = staticGroupOrder.indexOf(a);
+        let bi = staticGroupOrder.indexOf(b);
         return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
     });
 
-    var existingModal = document.getElementById('excel-col-vis-modal');
+    let existingModal = document.getElementById('excel-col-vis-modal');
     if (existingModal) {
-        var gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
-        var oldGrid = existingModal.querySelector('#excel-col-vis-grid');
+        let gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
+        let oldGrid = existingModal.querySelector('#excel-col-vis-grid');
         if (oldGrid) oldGrid.outerHTML = gridHtml;
-        var cbs = existingModal.querySelectorAll(
+        let cbs = existingModal.querySelectorAll(
             'input[type="checkbox"][data-indeterminate="true"]'
         );
         cbs.forEach(function (cb) {
@@ -260,8 +260,8 @@ function _excelToggleColumnPopup() {
         return;
     }
 
-    var gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
-    var html = '';
+    let gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
+    let html = '';
     html += '<div class="modal" style="max-width:620px;max-height:70vh;overflow-y:auto;">';
     html +=
         '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;padding:0;line-height:1;">✕</button></div>';
@@ -269,16 +269,16 @@ function _excelToggleColumnPopup() {
     html +=
         '<div style="padding-top:0.5rem;margin-top:0.5rem;border-top:1px solid rgba(255,255,255,0.08);">';
     html +=
-        '<button onclick="var o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" style="width:100%;background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.5rem;border-radius:3px;font-size:0.6rem;cursor:pointer;font-weight:500;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(239,68,68,0.2)\'" onmouseleave="this.style.background=\'rgba(239,68,68,0.1)\'">Przywróć domyślne</button>';
+        '<button onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" style="width:100%;background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.5rem;border-radius:3px;font-size:0.6rem;cursor:pointer;font-weight:500;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(239,68,68,0.2)\'" onmouseleave="this.style.background=\'rgba(239,68,68,0.1)\'">Przywróć domyślne</button>';
     html += '</div></div>';
 
     window.showModal({
         id: 'excel-col-vis-modal',
         html: html,
         onOpen: function () {
-            var modal = document.getElementById('excel-col-vis-modal');
+            let modal = document.getElementById('excel-col-vis-modal');
             if (!modal) return;
-            var cbs = modal.querySelectorAll('input[type="checkbox"][data-indeterminate="true"]');
+            let cbs = modal.querySelectorAll('input[type="checkbox"][data-indeterminate="true"]');
             cbs.forEach(function (cb) {
                 cb.indeterminate = true;
             });
@@ -287,22 +287,22 @@ function _excelToggleColumnPopup() {
 }
 
 function _excelOnDnSelectAll(dnKey, checked) {
-    var refWell =
+    let refWell =
         typeof _excelGetReferenceWell === 'function'
             ? _excelGetReferenceWell(_excelActiveTab)
             : null;
-    var allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
+    let allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
     if (!allCols) return;
-    var ids = [];
+    let ids = [];
     allCols.forEach(function (col) {
-        var g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
+        let g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
         if (dnKey === '_base' && !col.fromReduction) ids.push(col.id);
         else if (col.fromReduction && g === dnKey) ids.push(col.id);
     });
     _excelDeselectAllCols();
     ids.forEach(function (id) {
         if (checked) {
-            var idx = _excelHiddenColumnIds.indexOf(id);
+            let idx = _excelHiddenColumnIds.indexOf(id);
             if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
         } else {
             if (_excelHiddenColumnIds.indexOf(id) < 0) _excelHiddenColumnIds.push(id);
@@ -317,7 +317,7 @@ function _excelOnCellToggleAll(ids, checked) {
     _excelDeselectAllCols();
     ids.forEach(function (id) {
         if (checked) {
-            var idx = _excelHiddenColumnIds.indexOf(id);
+            let idx = _excelHiddenColumnIds.indexOf(id);
             if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
         } else {
             if (_excelHiddenColumnIds.indexOf(id) < 0) _excelHiddenColumnIds.push(id);
@@ -331,7 +331,7 @@ function _excelOnCellToggleAll(ids, checked) {
 function _excelOnColumnToggle(colId, checked) {
     _excelDeselectAllCols();
     if (checked) {
-        var idx = _excelHiddenColumnIds.indexOf(colId);
+        let idx = _excelHiddenColumnIds.indexOf(colId);
         if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
     } else {
         if (_excelHiddenColumnIds.indexOf(colId) < 0) {

@@ -1491,3 +1491,11 @@ select.form-input option {
     background: rgba(255, 255, 255, 0.1) !important;
 }
 
+.config-tile {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.config-tile:hover {
+    background: #f0f9ff;
+}
+

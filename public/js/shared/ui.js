@@ -484,7 +484,7 @@ function createSaveIndicator(parent, opts = {}) {
                   : state === 'error'
                     ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>'
                     : '<i data-lucide="circle" style="width:14px;height:14px"></i>';
-        el.innerHTML = `${icon}<span>${text}</span>`;
+        el.innerHTML = `${icon}<span>${escapeHtml(text)}</span>`;
         if (window.lucide) window.lucide.createIcons({ root: el });
     }
 

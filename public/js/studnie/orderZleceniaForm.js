@@ -313,7 +313,7 @@ function populateZleceniaForm(el) {
         errorsHtml = `
             <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: 6px; color: var(--danger); font-size: 0.75rem; font-weight: 600; line-height: 1.4;">
                 <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
-                ${liveErrors.map((e) => `• ${e}`).join('<br>')}
+                ${liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>')}
             </div>
         `;
     }

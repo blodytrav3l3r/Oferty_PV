@@ -117,7 +117,7 @@ export class TrainingPipeline {
             if (features.length < ML_CONFIG.minFeatureCountForTraining) {
                 logger.info(
                     'TrainingPipeline',
-                    `Za malo danych: ${features.length} < ${ML_CONFIG.minFeatureCountForTraining}`
+                    `Za mało danych: ${features.length} < ${ML_CONFIG.minFeatureCountForTraining}`
                 );
                 return { trained: false, reason: `insufficient_data:${features.length}` };
             }
@@ -126,7 +126,7 @@ export class TrainingPipeline {
             if (!force && newCount < ML_CONFIG.minNewRecordsForTraining) {
                 logger.info(
                     'TrainingPipeline',
-                    `Za malo nowych danych: ${newCount} < ${ML_CONFIG.minNewRecordsForTraining}`
+                    `Za mało nowych danych: ${newCount} < ${ML_CONFIG.minNewRecordsForTraining}`
                 );
                 return { trained: false, reason: `insufficient_new_data:${newCount}` };
             }
@@ -171,7 +171,7 @@ export class TrainingPipeline {
                 );
                 logger.info(
                     'TrainingPipeline',
-                    `Wytrenowano i zdeployowano ${version} (auc=${metrics.rocAuc})`
+                    `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
                 );
                 return { trained: true, version, metrics };
             }
@@ -179,7 +179,7 @@ export class TrainingPipeline {
             return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            logger.error('TrainingPipeline', `Blad treningu: ${msg}`);
+            logger.error('TrainingPipeline', `Błąd treningu: ${msg}`);
             return { trained: false, reason: `error:${msg}` };
         } finally {
             this.running = false;

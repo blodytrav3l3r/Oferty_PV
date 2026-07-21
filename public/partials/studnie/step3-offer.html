@@ -1,39 +1,39 @@
-﻿<!-- STEP 3: Calculator / Config -->
-<!-- â•â•â•â•â•â• WIZARD STEP 3: Calculator â•â•â•â•â•â• -->
+<!-- STEP 3: Calculator / Config -->
+<!-- ══════ WIZARD STEP 3: Calculator ══════ -->
 <div class="wizard-step" id="wizard-step-3">
     <!-- Summary bar -->
     <div class="wizard-summary-bar" id="wizard-summary-bar">
         <span class="wizard-summary-item"
-            ><i data-lucide="file-text"></i> <strong id="wsb-offer">â€”</strong></span
+            ><i data-lucide="file-text"></i> <strong id="wsb-offer">—</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">â€”</strong></span
+            ><i data-lucide="clipboard-list"></i> <strong id="wsb-client">—</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">â€”</strong></span
+            ><i data-lucide="hard-hat"></i> <strong id="wsb-invest">—</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="map-pin"></i> <strong id="wsb-address">â€”</strong></span
+            ><i data-lucide="map-pin"></i> <strong id="wsb-address">—</strong></span
         >
         <span class="wizard-summary-divider"></span>
         <span class="wizard-summary-item"
-            ><i data-lucide="settings"></i> <strong id="wsb-params">â€”</strong></span
+            ><i data-lucide="settings"></i> <strong id="wsb-params">—</strong></span
         >
 
-        <button class="wizard-summary-edit" onclick="goToWizardStep(1)">
+        <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(1)">
             <i data-lucide="pencil"></i> Edytuj dane
         </button>
-        <button class="wizard-summary-edit" onclick="goToWizardStep(2)">
+        <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(2)">
             <i data-lucide="settings"></i> Edytuj parametry
         </button>
     </div>
 
     <!-- CENTER: Config area -->
     <div>
-        <!-- Błędy konfiguracji studni -->
+        <!-- B��dy konfiguracji studni -->
         <div
             id="well-config-errors-container"
             style="
@@ -98,7 +98,7 @@
                             font-weight: 600;
                             white-space: nowrap;
                         "
-                        >Rz. włazu</label
+                        >Rz. w�azu</label
                     >
                     <input
                         type="text"
@@ -184,7 +184,7 @@
                     <span
                         >Wym:
                         <strong id="well-required-height" style="color: #818cf8"
-                            >â€” m</strong
+                            >— m</strong
                         ></span
                     >
                     <span
@@ -204,7 +204,7 @@
                             font-weight: 600;
                             white-space: nowrap;
                         "
-                        >Dopłata</label
+                        >Dop�ata</label
                     >
                     <input
                         type="text"
@@ -251,12 +251,12 @@
                         >DN</span
                     >
                     <div class="dn-selector mb-0">
-                        <button class="dn-btn active" onclick="selectDN(1000)">1000</button>
-                        <button class="dn-btn" onclick="selectDN(1200)">1200</button>
-                        <button class="dn-btn" onclick="selectDN(1500)">1500</button>
-                        <button class="dn-btn" onclick="selectDN(2000)">2000</button>
-                        <button class="dn-btn" onclick="selectDN(2500)">2500</button>
-                        <button
+                        <button type="button" class="dn-btn active" onclick="selectDN(1000)">1000</button>
+                        <button type="button" class="dn-btn" onclick="selectDN(1200)">1200</button>
+                        <button type="button" class="dn-btn" onclick="selectDN(1500)">1500</button>
+                        <button type="button" class="dn-btn" onclick="selectDN(2000)">2000</button>
+                        <button type="button" class="dn-btn" onclick="selectDN(2500)">2500</button>
+                        <button type="button"
                             class="dn-btn"
                             onclick="selectDN('styczna')"
                             style="
@@ -271,7 +271,7 @@
                 </div>
                 <div style="flex: 1"></div>
                 <div class="gap-1" style="display: flex">
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="toggleAutoLock()"
                         id="btn-lock-auto"
@@ -281,9 +281,9 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        <i data-lucide="unlock"></i> Ręczny
+                        <i data-lucide="unlock"></i> R�czny
                     </button>
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="toggleRedukcja()"
                         id="btn-redukcja"
@@ -293,9 +293,9 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        âŹ¬ Redukcja
+                        ⏬ Redukcja
                     </button>
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="togglePsiaBuda()"
                         id="btn-psia-buda"
@@ -305,9 +305,9 @@
                             border-color: var(--border-glass);
                         "
                     >
-                        đź¶ Psia buda
+                        🐶 Psia buda
                     </button>
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="toggleStyczna1200()"
                         id="btn-styczna-1200"
@@ -353,7 +353,7 @@
                             "
                         />
                         <span style="font-size: 0.65rem; color: var(--text-muted)">m</span>
-                        <button
+                        <button type="button"
                             class="btn btn-secondary btn-sm"
                             onclick="openRedukcjaZakonczeniePopup()"
                             id="btn-redukcja-zak"
@@ -367,7 +367,7 @@
                             Zak. DN1000
                         </button>
                     </div>
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="openZakonczeniePopup()"
                         id="btn-zakonczenie"
@@ -378,9 +378,9 @@
                         "
                     >
                         <span class="text-xs"><i data-lucide="chevron-down"></i></span>
-                        Zakończenie
+                        Zako�czenie
                     </button>
-                    <button
+                    <button type="button"
                         class="btn btn-primary btn-sm"
                         onclick="autoSelectComponents()"
                         id="btn-auto-select"
@@ -399,7 +399,7 @@
                             gap: 3px;
                             opacity: 0.7;
                         "
-                        title="AI ranking â€” sprawdza status..."
+                        title="AI ranking — sprawdza status..."
                     >
                         <span
                             id="ai-status-dot"
@@ -413,7 +413,7 @@
                         ></span>
                         <span id="ai-status-text">AI...</span>
                     </span>
-                    <button
+                    <button type="button"
                         class="btn btn-secondary btn-sm"
                         onclick="clearWellConfig()"
                         style="font-size: 0.8rem; padding: 0.3rem 0.6rem"
@@ -463,19 +463,19 @@
                 border: 1px solid var(--border-glass);
             "
         >
-            <button
+            <button type="button"
                 class="b-tab-btn active"
                 onclick="switchBuilderTab('concrete')"
                 id="btab-concrete"
             >
                 <i data-lucide="cylinder"></i> Prefabrykaty betonowe
             </button>
-            <button
+            <button type="button"
                 class="b-tab-btn"
                 onclick="switchBuilderTab('transitions')"
                 id="btab-transitions"
             >
-                <i data-lucide="droplets"></i> Przejścia szczelne
+                <i data-lucide="droplets"></i> Przej�cia szczelne
             </button>
         </div>
 
@@ -495,7 +495,7 @@
                     "
                     onclick="toggleCard('tiles-content', 'tiles-icon')"
                 >
-                    <span><i data-lucide="brick-wall"></i> WybĂłr elementĂłw</span>
+                    <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
                     <span id="tiles-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
                 </div>
                 <div id="tiles-content" class="card-content" style="margin-top: 0.5rem">
@@ -536,7 +536,7 @@
                                 font-size: 0.78rem;
                             "
                         >
-                            Kliknij kafelki powyĹĽej, aby dodać elementy studni
+                            Kliknij kafelki powyżej, aby doda� elementy studni
                         </div>
                     </div>
                 </div>
@@ -561,7 +561,7 @@
                         window.toggleCard('inline-przejscia-app-container', 'przejscia-app-icon')
                     "
                 >
-                    <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
+                    <span><i data-lucide="plus"></i> Dodaj Przej�cie Szczelne</span>
                     <span id="przejscia-app-icon" class="fs-075"
                         ><i data-lucide="chevron-down"></i
                     ></span>
@@ -585,7 +585,7 @@
                         align-items: center;
                     "
                 >
-                    <span><i data-lucide="book-open"></i> Lista przejść</span>
+                    <span><i data-lucide="book-open"></i> Lista przej��</span>
                     <span
                         id="przejscia-count"
                         style="font-size: 0.65rem; color: var(--text-muted)"
@@ -651,7 +651,7 @@
                             color: var(--text-muted);
                         "
                     >
-                        Wysokość
+                        Wysoko��
                     </div>
                     <div
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
@@ -674,7 +674,7 @@
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
                         id="sum-area-int"
                     >
-                        0 mÂ˛
+                        0 m²
                     </div>
                 </div>
                 <div>
@@ -691,7 +691,7 @@
                         style="font-size: 1rem; font-weight: 700; color: var(--text-primary)"
                         id="sum-area-ext"
                     >
-                        0 mÂ˛
+                        0 m²
                     </div>
                 </div>
             </div>

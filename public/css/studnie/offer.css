@@ -359,3 +359,13 @@
 .pl-xl {
     padding-left: 3.0rem !important;
 }
+
+.drag-preview {
+    opacity: 0.7;
+    background: #eff6ff;
+}
+.cell-selected {
+    outline: 2px solid #2563eb;
+    outline-offset: -1px;
+    background: #eff6ff;
+}

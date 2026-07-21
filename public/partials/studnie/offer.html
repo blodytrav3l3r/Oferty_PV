@@ -76,7 +76,7 @@
             <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
                 <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
             </label>
-            <button
+            <button type="button"
                 class="btn btn-secondary btn-sm"
                 onclick="generateOfferNotes()"
                 style="font-size: 0.7rem; padding: 0.3rem 0.6rem"
@@ -217,21 +217,21 @@
             <!-- AKCJE -->
             <div class="summary-card summary-card-actions">
                 <div class="summary-card-actions-grid">
-                    <button
+                    <button type="button"
                         id="btn-save-studnie-offer"
                         class="summary-action-btn summary-action-btn--save"
                         onclick="saveOfferStudnie()"
                     >
                         <i data-lucide="save"></i> Zapisz ofertę
                     </button>
-                    <button
+                    <button type="button"
                         id="btn-create-order-offer"
                         class="summary-action-btn summary-action-btn--order"
                         onclick="createOrderFromOffer()"
                     >
                         <i data-lucide="package"></i> Utwórz zamówienie
                     </button>
-                    <button
+                    <button type="button"
                         class="summary-action-btn summary-action-btn--print"
                         onclick="showOfferExportChoice()"
                     >

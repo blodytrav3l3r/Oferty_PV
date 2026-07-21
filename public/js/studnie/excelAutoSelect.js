@@ -24,9 +24,9 @@ function _excelToggleWellAutoMode(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
     _excelSaveUndoSnapshot();
     wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
-    /* Synchornizuj configSource z glownym panelem */
+    /* Synchronizuj configSource z glownym panelem */
     wells[wIdx].configSource = wells[wIdx].autoSelect !== false ? 'AUTO' : 'MANUAL';
-    /* Synchornizuj autoLocked - glowny panel sprawdza to dla przycisku Auto */
+    /* Synchronizuj autoLocked - glowny panel sprawdza to dla przycisku Auto */
     if (wells[wIdx].autoSelect === false) wells[wIdx].autoLocked = true;
     else wells[wIdx].autoLocked = false;
     /* Lekki update - tylko jeden TD, bez calego _excelRenderTable (mniej migotania) */

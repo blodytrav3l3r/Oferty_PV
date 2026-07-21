@@ -149,7 +149,7 @@ function updateRuryOrderSummary(orderData) {
                 const currentQty = item ? item.orderedQuantity || item.quantity || 0 : 0;
                 orderCell.innerHTML =
                     '<input type="number" class="order-partial-qty" value="' +
-                    currentQty +
+                    escapeHtml(String(currentQty)) +
                     '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
                 const newInput = orderCell.querySelector('.order-partial-qty');
                 if (newInput) {

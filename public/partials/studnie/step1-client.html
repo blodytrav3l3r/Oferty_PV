@@ -1,5 +1,5 @@
-﻿<!-- STEP 1: Client & Offer Data -->
-<!-- â•â•â•â•â•â• WIZARD STEP 1: Client & Offer Data â•â•â•â•â•â• -->
+<!-- STEP 1: Client & Offer Data -->
+<!-- ══════ WIZARD STEP 1: Client & Offer Data ══════ -->
 <div class="wizard-step active" id="wizard-step-1">
     <div class="wizard-card">
         <div
@@ -38,18 +38,18 @@
                     class="wizard-card-subtitle"
                     style="margin: 0; font-size: 0.75rem; color: #71717a"
                 >
-                    Uzupełnij dane klienta i podstawowe informacje o ofercie
+                    Uzupe�nij dane klienta i podstawowe informacje o ofercie
                 </p>
             </div>
             <div class="gap-2" style="display: flex; margin-left: auto">
-                <button
+                <button type="button"
                     class="btn btn-secondary btn-sm"
                     onclick="showClientsDb()"
                     style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
                 >
                     <i data-lucide="folder-open"></i> Wczytaj klienta
                 </button>
-                <button
+                <button type="button"
                     class="btn btn-primary btn-sm"
                     onclick="saveClientToDb()"
                     style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
@@ -83,7 +83,7 @@
                     <input
                         class="wizard-form-input"
                         id="client-address"
-                        placeholder="ul. Przykładowa 1, Warszawa"
+                        placeholder="ul. Przyk�adowa 1, Warszawa"
                     />
                 </div>
                 <div class="wizard-form-group">
@@ -113,7 +113,7 @@
                     <input
                         class="wizard-form-input"
                         id="invest-address"
-                        placeholder="ul. Nowa 5, KrakĂłw"
+                        placeholder="ul. Nowa 5, Kraków"
                     />
                 </div>
                 <div class="wizard-form-group">
@@ -138,7 +138,7 @@
                 <div class="wizard-section-title" style="margin: 0">
                     <i data-lucide="file-text"></i> Oferta
                 </div>
-                <button
+                <button type="button"
                     id="btn-change-offer-user"
                     class="btn btn-sm"
                     style="
@@ -152,7 +152,7 @@
                     "
                     onclick="changeOfferUser()"
                 >
-                    <i data-lucide="user"></i> Zmień opiekuna
+                    <i data-lucide="user"></i> Zmie� opiekuna
                 </button>
             </div>
             <div class="wizard-form-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr">
@@ -203,7 +203,7 @@
             >
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="offer-payment-terms"
-                        >Warunki płatności</label
+                        >Warunki p�atno�ci</label
                     >
                     <textarea
                         class="wizard-form-input"
@@ -217,11 +217,11 @@
                             height: 34px;
                         "
                     >
-Do uzgodnienia lub według indywidualnych warunkĂłw handlowych.</textarea>
+Do uzgodnienia lub wed�ug indywidualnych warunków handlowych.</textarea>
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="offer-validity"
-                        >Data waĹĽności oferty</label
+                        >Data ważno�ci oferty</label
                     >
                     <input
                         class="wizard-form-input"
@@ -234,7 +234,7 @@ Do uzgodnienia lub według indywidualnych warunkĂłw handlowych.</textarea>
         </div>
         <div class="wizard-nav">
             <div></div>
-            <button class="wizard-btn wizard-btn-next" onclick="wizardNext()">Dalej â†’</button>
+            <button type="button" class="wizard-btn wizard-btn-next" onclick="wizardNext()">Dalej →</button>
         </div>
     </div>
 </div>

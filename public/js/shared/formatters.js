@@ -38,13 +38,6 @@ function formatDate(isoString) {
     });
 }
 
-/** Escape for HTML body content */
-function escapeHtml(str) {
-    const d = document.createElement('div');
-    d.textContent = str;
-    return d.innerHTML;
-}
-
 /** Prosta interpolacja szablonu: zastępuje {{KEY}} wartościami z dataObj */
 function renderTemplate(template, dataObj) {
     return template.replace(/\{\{([\w_]+)\}\}/g, (match, key) => {

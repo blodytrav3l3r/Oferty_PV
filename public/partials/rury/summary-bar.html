@@ -66,7 +66,7 @@
             <div class="rury-summary-sub" id="sum-brutto-details">Brutto: 0,00 PLN</div>
         </div>
         <div class="rury-summary-card" style="border-left: 1px solid var(--border-glass)">
-            <button class="rury-btn-discount" onclick="showItemDiscountModal()">
+            <button type="button" class="rury-btn-discount" onclick="showItemDiscountModal()">
                 % Edytuj rabaty
             </button>
         </div>
@@ -75,20 +75,20 @@
             class="rury-summary-card rury-summary-actions"
             style="border-left: 1px solid var(--border-glass)"
         >
-            <button
+            <button type="button"
                 class="rury-action-btn rury-action-btn--print"
                 onclick="showUniversalPrintModalRury(editingOfferId)"
             >
                 <i data-lucide="printer"></i> Wydruk
             </button>
-            <button
+            <button type="button"
                 class="rury-action-btn rury-action-btn--save"
                 id="btn-save-offer-order"
                 onclick="saveOfferOrOrder()"
             >
                 <i data-lucide="save"></i> Zapisz ofertę
             </button>
-            <button
+            <button type="button"
                 class="rury-action-btn rury-action-btn--order"
                 id="btn-order-create"
                 onclick="createOrderFromOffer()"

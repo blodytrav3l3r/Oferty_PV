@@ -1,4 +1,4 @@
-Ôªø<!-- MODALS: Offer discounts, transport, production orders -->
+<!-- MODALS: Offer discounts, transport, production orders -->
 <!-- ===== OFFER DISCOUNTS MODAL ===== -->
 <div
     id="offer-discounts-modal"
@@ -40,9 +40,9 @@
                     color: #a5b4fc;
                 "
             >
-                <i data-lucide="percent" class="icon-sm"></i> ZarzƒÖdzanie Rabatami Oferty
+                <i data-lucide="percent" class="icon-sm"></i> Zarzπdzanie Rabatami Oferty
             </div>
-            <button
+            <button type="button"
                 class="btn btn-icon"
                 onclick="closeOfferDiscountsPopup()"
                 style="color: var(--text-muted); width: 28px; height: 28px"
@@ -54,7 +54,7 @@
             id="offer-discounts-modal-body"
             style="padding: 0.75rem 1.2rem; max-height: 75vh; overflow-y: auto"
         >
-            <!-- Zawarto≈õƒá wstrzykiwana przez JS -->
+            <!-- ZawartoúÊ wstrzykiwana przez JS -->
         </div>
         <div
             class="gap-2"
@@ -66,14 +66,14 @@
                 justify-content: flex-end;
             "
         >
-            <button
+            <button type="button"
                 class="btn btn-secondary"
                 onclick="handleOfferDiscountsCancel()"
                 style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
             >
                 Zamknij
             </button>
-            <button
+            <button type="button"
                 class="btn btn-primary"
                 onclick="handleOfferDiscountsSave()"
                 style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
@@ -128,7 +128,7 @@
             >
                 <i data-lucide="truck" class="icon-sm"></i> Koszty Transportu
             </div>
-            <button
+            <button type="button"
                 class="btn btn-icon"
                 onclick="handleOfferTransportCancel()"
                 style="color: var(--text-muted); width: 28px; height: 28px"
@@ -145,7 +145,7 @@
                     line-height: 1.5;
                 "
             >
-                Wprowadƒπ≈ü dystans oraz stawkƒô. Formularz jest zsynchronizowany z danymi klienta i
+                Wprowad≈∫ dystans oraz stawkÍ. Formularz jest zsynchronizowany z danymi klienta i
                 ulegnie przedawnieniu tylko po odrzuceniu zmian.
             </p>
             <div class="gap-3" style="display: flex; align-items: flex-end">
@@ -158,7 +158,7 @@
                             display: block;
                             font-weight: 600;
                         "
-                        >Odleg≈Ço≈õƒá (km)</label
+                        >Odleg≥oúÊ (km)</label
                     >
                     <input
                         type="number"
@@ -229,7 +229,7 @@
                 <label style="font-size: 0.65rem; color: var(--text-muted); font-weight: 600"
                     >Tryb transportu:</label
                 >
-                <button
+                <button type="button"
                     id="transport-mode-btn"
                     type="button"
                     onclick="toggleTransportMode()"
@@ -249,7 +249,7 @@
                     "
                 >
                     <i data-lucide="truck" style="width: 12px; height: 12px"></i>
-                    <span id="transport-mode-label">Pe≈Çne</span>
+                    <span id="transport-mode-label">Pe≥ne</span>
                 </button>
             </div>
             <div
@@ -261,7 +261,7 @@
                     color: var(--text-muted);
                 "
             >
-                <!-- ilo≈õƒá transportƒÇ≈Çw -->
+                <!-- iloúÊ transport√≥w -->
             </div>
             <div
                 class="gap-3"
@@ -315,7 +315,7 @@
                             letter-spacing: 1px;
                         "
                     >
-                        Ilo≈õƒá transportƒÇ≈Çw
+                        IloúÊ transport√≥w
                     </div>
                     <div
                         id="transport-modal-count"
@@ -373,7 +373,7 @@
                         letter-spacing: 2px;
                     "
                 >
-                    Aktualna ƒπ¬ÅƒÖczna Suma Netto
+                    Aktualna ≈Åπczna Suma Netto
                 </div>
                 <div
                     id="transport-modal-total-val"
@@ -398,14 +398,14 @@
                 justify-content: flex-end;
             "
         >
-            <button
+            <button type="button"
                 class="btn btn-secondary"
                 onclick="handleOfferTransportCancel()"
                 style="font-size: 0.7rem; padding: 0.4rem 1rem; font-weight: 700"
             >
                 Zamknij
             </button>
-            <button
+            <button type="button"
                 class="btn btn-primary"
                 onclick="handleOfferTransportSave()"
                 style="font-size: 0.7rem; padding: 0.4rem 1.2rem; font-weight: 800"
@@ -485,7 +485,7 @@
                     <i data-lucide="factory"></i> Zlecenie Produkcyjne
                 </div>
                 <div class="gap-2" style="display: flex">
-                    <button
+                    <button type="button"
                         id="zl-btn-generate-ordered"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="openBulkOrderSequencePopup()"
@@ -495,9 +495,9 @@
                             color: #a78bfa;
                         "
                     >
-                        <i data-lucide="list-ordered"></i> Generuj w kolejno≈õci
+                        <i data-lucide="list-ordered"></i> Generuj w kolejnoúci
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-accept"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="acceptProductionOrder()"
@@ -509,7 +509,7 @@
                     >
                         <i data-lucide="check-circle-2"></i> Zaakceptuj
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-revoke"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="revokeProductionOrder()"
@@ -522,7 +522,7 @@
                     >
                         <i data-lucide="unlock"></i> Cofnij
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-delete"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="deleteSelectedProductionOrder()"
@@ -532,16 +532,16 @@
                             color: #f87171;
                         "
                     >
-                        <i data-lucide="trash-2"></i> Usu≈Ñ
+                        <i data-lucide="trash-2"></i> UsuÒ
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-save"
                         class="btn btn-sm btn-success zlecenia-header-btn"
                         onclick="saveProductionOrder()"
                     >
                         <i data-lucide="save"></i> Zapisz
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-print"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="printZlecenie()"
@@ -553,7 +553,7 @@
                     >
                         <i data-lucide="printer"></i> Zlecenie
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-label"
                         class="btn btn-sm zlecenia-header-btn"
                         onclick="printEtykieta()"
@@ -565,7 +565,7 @@
                     >
                         <i data-lucide="tag"></i> Etykieta
                     </button>
-                    <button
+                    <button type="button"
                         id="zl-btn-close"
                         class="btn btn-sm btn-danger zlecenia-header-btn"
                         onclick="closeZleceniaModal()"
@@ -617,21 +617,21 @@
                     background: var(--bg-secondary);
                 "
             >
-                <button
+                <button type="button"
                     class="zlecenia-filter-btn active"
                     data-filter="all"
                     onclick="setZleceniaFilter('all')"
                 >
                     <i data-lucide="folder-open"></i> Otwarte
                 </button>
-                <button
+                <button type="button"
                     class="zlecenia-filter-btn"
                     data-filter="saved"
                     onclick="setZleceniaFilter('saved')"
                 >
                     <i data-lucide="save"></i> Zapisane
                 </button>
-                <button
+                <button type="button"
                     class="zlecenia-filter-btn"
                     data-filter="accepted"
                     onclick="setZleceniaFilter('accepted')"

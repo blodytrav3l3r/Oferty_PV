@@ -75,7 +75,7 @@
                             id="connection-dot"
                             title="Sprawdzanie połączenia..."
                         ></span>
-                        <button class="dash-logout-btn" onclick="doLogout()">Wyloguj</button>
+                        <button type="button" class="dash-logout-btn" onclick="doLogout()">Wyloguj</button>
                     </div>
                 </div>
             </div>
@@ -132,7 +132,7 @@
                     placeholder="Hasło"
                     autocomplete="current-password"
                 />
-                <button class="login-btn" onclick="doLogin()">Zaloguj się</button>
+                <button type="button" class="login-btn" onclick="doLogin()">Zaloguj się</button>
                 <div class="login-error" id="login-error"></div>
             </div>
 
@@ -151,10 +151,10 @@
                         <a href="app.html#/kartoteka" class="btn-hero btn-accent"
                             ><i data-lucide="folder-open"></i> Kartoteka</a
                         >
-                        <button class="btn-hero" onclick="showChangePassword()">
+                        <button type="button" class="btn-hero" onclick="showChangePassword()">
                             <i data-lucide="key"></i> Hasło
                         </button>
-                        <button class="btn-hero btn-hero-danger" onclick="doLogout()">
+                        <button type="button" class="btn-hero btn-hero-danger" onclick="doLogout()">
                             <i data-lucide="log-out"></i> Wyloguj
                         </button>
                     </div>
@@ -239,7 +239,7 @@
                                 maxlength="1"
                                 class="sysconfig-input"
                             />
-                            <button
+                            <button type="button"
                                 class="btn-hero btn-accent"
                                 onclick="saveYearLetter()"
                                 style="padding: 0.4rem 1rem"
@@ -397,10 +397,10 @@
                                 <span id="form-mode-label" class="admin-edit-badge hidden">
                                     <i data-lucide="pencil"></i> TRYB EDYCJI
                                 </span>
-                                <button id="add-user-btn" class="btn-hero btn-accent" onclick="createUser()">
+                                <button type="button" id="add-user-btn" class="btn-hero btn-accent" onclick="createUser()">
                                     <i data-lucide="plus"></i> Dodaj
                                 </button>
-                                <button id="cancel-edit-btn" class="btn-hero btn-hero-cancel hidden" onclick="cancelEditUser()">
+                                <button type="button" id="cancel-edit-btn" class="btn-hero btn-hero-cancel hidden" onclick="cancelEditUser()">
                                     Anuluj
                                 </button>
                             </div>

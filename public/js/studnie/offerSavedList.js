@@ -11,7 +11,7 @@ function renderSavedOffersStudnie() {
         return;
     }
 
-    container.innerHTML = offersStudnie
+    container.innerHTML = [...offersStudnie]
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .map((o) => {
             const oId = normalizeId(o.id);

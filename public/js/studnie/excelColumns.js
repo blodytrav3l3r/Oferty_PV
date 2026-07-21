@@ -125,7 +125,7 @@ function _excelBuildComponentColumns(dn, well) {
         );
         /* Ogranicz do wysokości wskazanych przez użytkownika */
         if (ct === 'plyta_din') {
-            prods = prods.filter((p) => parseInt(p.height) === 200);
+            prods = prods.filter((p) => parseInt(p.height, 10) <= 200);
         }
         const seenH = new Set();
         const ctLabels = {

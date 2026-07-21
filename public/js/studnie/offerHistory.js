@@ -40,9 +40,9 @@ function renderAuditLogEntry(log) {
                     k.toLowerCase().includes('price') ||
                     k.toLowerCase().includes('cena')
                 ) {
-                    return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${fmt(Number(oldVal))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${fmt(Number(newVal))} PLN</span></div>`;
+                    return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(fmt(Number(oldVal)))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(fmt(Number(newVal)))} PLN</span></div>`;
                 }
-                return `<div class="diff-line"><strong class="diff-key">${k}</strong>: <span class="diff-old">${JSON.stringify(oldVal)}</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${JSON.stringify(newVal)}</span></div>`;
+                return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(JSON.stringify(oldVal))}</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(JSON.stringify(newVal))}</span></div>`;
             })
             .join('');
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
@@ -64,13 +64,13 @@ function renderAuditLogEntry(log) {
     const restoreBtnHtml =
         !isDelete && !isDiff
             ? `
-        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${log.id}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
+        <button class="btn btn-sm btn-secondary restore-btn" onclick="restoreHistorySnapshot('${escapeHtml(log.id)}')"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć</button>
     `
             : '';
 
     const buttonsHtml = `
         <div style="display:flex; gap:0.4rem;">
-            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${log.id}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
+            <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${escapeHtml(log.id)}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
     `;
@@ -83,7 +83,7 @@ function renderAuditLogEntry(log) {
                     <span class="audit-date"><i data-lucide="calendar"></i> ${new Date(log.createdAt).toLocaleString()}</span>
                 </div>
                 <div class="audit-author">
-                    <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong class="text-primary">${log.userName || 'System'}</strong>
+                    <i data-lucide="user"></i>‍<i data-lucide="monitor"></i> <strong class="text-primary">${escapeHtml(log.userName || 'System')}</strong>
                 </div>
             </div>
             <div class="audit-card-body">
@@ -118,7 +118,7 @@ async function showOfferHistoryStudnie(id) {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${id}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
+                   <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
 
@@ -241,7 +241,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
-                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
+                    <button class="load-more-btn" onclick="loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `
             );

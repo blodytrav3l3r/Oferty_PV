@@ -36,21 +36,21 @@
                         <!-- Header: filters + search + refresh -->
                         <div class="zlecenia-header">
                             <div class="zlecenia-filters" id="zlecenia-filter-tabs">
-                                <button
+                                <button type="button"
                                     class="zlecenia-filter-tab active"
                                     data-filter="all"
                                     onclick="AppZlecenia.setFilter('all')"
                                 >
                                     Wszystkie
                                 </button>
-                                <button
+                                <button type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="draft"
                                     onclick="AppZlecenia.setFilter('draft')"
                                 >
                                     <i data-lucide="hourglass-2"></i> Oczekujące
                                 </button>
-                                <button
+                                <button type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="accepted"
                                     onclick="AppZlecenia.setFilter('accepted')"
@@ -93,7 +93,7 @@
                                 />
                             </div>
 
-                            <button
+                            <button type="button"
                                 class="btn btn-secondary btn-sm"
                                 onclick="AppZlecenia.loadOrders()"
                                 title="Odśwież bazę zleceń"
@@ -109,13 +109,13 @@
                                 <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
                             </div>
                             <div class="batch-actions">
-                                <button
+                                <button type="button"
                                     class="batch-btn batch-btn-print"
                                     onclick="AppZlecenia.printBatchZlecenia()"
                                 >
                                     <i data-lucide="printer"></i> Drukuj zlecenia
                                 </button>
-                                <button
+                                <button type="button"
                                     class="batch-btn batch-btn-label"
                                     onclick="AppZlecenia.printBatchEtykiety()"
                                 >

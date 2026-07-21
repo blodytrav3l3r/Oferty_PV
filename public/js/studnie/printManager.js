@@ -11,11 +11,6 @@ const templateCache = new Map();
  * Zwraca szablon pobierany jednorazowo (teraz pobiera na nowo co kliknięcie by aktualizować zmiany graficzne w locie).
  */
 async function getTemplate(path) {
-    // WYŁĄCZENIE CACHE:
-    // if (templateCache.has(path)) {
-    //    return templateCache.get(path);
-    // }
-
     try {
         const res = await fetch(path + '?v=' + Date.now()); // dla deweloperki można utrzymać ?v=, w prod ew. zdjąć
         if (!res.ok) throw new Error(`Nie znaleziono szablonu: ${path}`);

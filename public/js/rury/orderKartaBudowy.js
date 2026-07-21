@@ -110,7 +110,7 @@ function initKartaBudowyStep4(primaryOfferNumber) {
             sorted.flat.forEach((g) =>
                 g.entries.forEach((e, i) => sortedUids.set(e.item.uid || e.item.productId, i))
             );
-            activeItemsForUwagi.sort((a, b) => {
+            [...activeItemsForUwagi].sort((a, b) => {
                 const ai = sortedUids.get(a.uid || a.productId) ?? 999;
                 const bi = sortedUids.get(b.uid || b.productId) ?? 999;
                 return ai - bi;

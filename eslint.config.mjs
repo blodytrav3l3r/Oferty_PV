@@ -4,7 +4,7 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import globals from 'globals';
 
 export default tseslint.config(
-    { ignores: ['node_modules/', 'data/', '*.sqlite', 'public/data/'] },
+    { ignores: ['node_modules/', 'data/', '*.sqlite'] },
     eslint.configs.recommended,
     ...tseslint.configs.recommended.map((c) => ({
         files: ['**/*.ts'],

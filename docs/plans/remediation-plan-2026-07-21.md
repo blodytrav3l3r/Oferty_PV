@@ -102,7 +102,7 @@ liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
 
 ---
 
-## Sekcja 2: 🔴 SQL INJECTION — [STATUS: PENDING]
+## Sekcja 2: 🔴 SQL INJECTION — [STATUS: DONE ✅]
 
 **Cel:** Wyeliminowanie nieparametryzowanego zapytania SQL w `roleFilter.ts`.
 
@@ -129,7 +129,7 @@ liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
 
 ---
 
-## Sekcja 3: 🟡 WYSOKIE XSS — [STATUS: PENDING]
+## Sekcja 3: 🟡 WYSOKIE XSS — [STATUS: DONE ✅]
 
 **Cel:** Eliminacja 5 dodatkowych podatności XSS wysokiego ryzyka.
 
@@ -201,7 +201,7 @@ orderCell.innerHTML = '<input type="number" value="' + escapeHtml(String(current
 
 ---
 
-## Sekcja 4: 🟡 BEZPIECZEŃSTWO — [STATUS: PENDING]
+## Sekcja 4: 🟡 BEZPIECZEŃSTWO — [STATUS: DONE ✅]
 
 **Cel:** Poprawa bezpieczeństwa autoryzacji i API.
 
@@ -232,7 +232,7 @@ fetch('/api/auth/change-password', { method: 'POST', ...body });
 
 ---
 
-## Sekcja 5: 🟡 MARTWY KOD I DUPLIKACJE — [STATUS: PENDING]
+## Sekcja 5: 🟡 MARTWY KOD I DUPLIKACJE — [STATUS: DONE ✅]
 
 **Cel:** Usunięcie nieużywanego kodu i duplikacji. Redukcja kodu o ~1-2%.
 
@@ -285,7 +285,7 @@ fetch('/api/auth/change-password', { method: 'POST', ...body });
 
 ---
 
-## Sekcja 6: 🟢 LITERÓWKI I NIESPÓJNOŚCI — [STATUS: PENDING]
+## Sekcja 6: 🟢 LITERÓWKI I NIESPÓJNOŚCI — [STATUS: DONE ✅]
 
 **Cel:** Poprawa błędów językowych i drobnych niespójności.
 
@@ -384,7 +384,7 @@ offers.sort((a, b) => ...)
 
 ---
 
-## Sekcja 8: 🟢 CSS / HTML — [STATUS: PENDING]
+## Sekcja 8: 🟢 CSS / HTML — [STATUS: DONE ✅]
 
 **Cel:** Uzupełnienie brakujących klas CSS, atrybutów HTML i meta tagów.
 

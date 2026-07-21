@@ -999,3 +999,15 @@
     background: rgba(239, 68, 68, 0.2);
     border-color: rgba(239, 68, 68, 0.35);
 }
+
+/* Checkbox w ofercie */
+.offer-summary-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+.item-order-checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
