@@ -1,5 +1,8 @@
 # Proces wydawniczy (Release Process)
 
+**Wersja:** 1.9.0  
+**Ostatnia aktualizacja:** 2026-07-22
+
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
 
 ## Krok po kroku
@@ -51,7 +54,8 @@ Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, któ
 - `VERSION` i `package.json` muszą być zgodne (automatycznie po release)
 - Po zmianie wersji restart backendu
 - Release dopiero gdy zmiany są gotowe do produkcji
-- **Cache-bust assetów** (`?v=` w HTML) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
+- **Cache-bust assetów** (`?v=` w HTML) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
+- **Pre-push validation**: Husky pre-push sprawdza `npm run version:check` (blokuje push przy niespójnej wersji) oraz `typecheck` + testy.
 
 ## Release — podgląd (dry run)
 

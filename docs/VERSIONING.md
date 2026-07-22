@@ -20,12 +20,11 @@ major.minor.patch (np. 1.0.0)
 
 Wersja jest przechowywana w pliku `VERSION` w katalogu głównym projektu. Stamtąd jest odczytywana przez:
 
-- `src/version.ts` — centralny moduł wersji
-- `package.json` — zadbaj aby zgadzała się z `VERSION`
-- `GET /api/version` — endpoint API
-- `GET /health` — health check
-- Swagger/OpenAPI — dokumentacja API
-- UI — wyświetlana w stopce aplikacji
+- `package.json` — musi zgadzać się z `VERSION`
+- `GET /api/version` — endpoint API (`{ version, name, node }`)
+- `GET /health` — health check (`{ status, version, ... }`)
+- `public/js/versionDisplay.js` — wyświetlana w UI (toolbar aplikacji)
+- `scripts/auto-cache-bust.mjs` — synchronizuje `?v=` w plikach HTML podczas release
 
 ## Automatyzacja
 

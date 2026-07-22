@@ -1,7 +1,7 @@
 # Architektura — WITROS Oferty PV
 
 **Wersja:** 1.9.0  
-**Ostatnia aktualizacja:** 2026-07-20  
+**Ostatnia aktualizacja:** 2026-07-22  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
 
 ---
@@ -109,8 +109,11 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
     - `users.ts` — zarządzanie użytkownikami
     - `productsV2.ts` — CRUD produktów (rury)
     - `productsStudnieV2.ts` — CRUD produktów (studnie)
-    - `offers/` — oferty: rury (`ruryCrud.ts`), studnie (`studnieCrud.ts`), dispatcher (`crud.ts`), eksport (`exports.ts`)
-    - `orders/` — zamówienia, numeracja, produkcja
+    - `offers/` — oferty: rury (`ruryCrud.ts`), studnie (`studnieCrud.ts`), dispatcher (`crud.ts`), eksport (`exports.ts`), wyszukiwanie (`search.ts`)
+    - `orders/` — zamówienia, numeracja, produkcja, wyszukiwanie produkcji
+        - `index.ts`, `numbering.ts`, `production.ts`, `productionSearch.ts`
+        - `ruryOrders.ts`, `ruryOrders.crud.ts`, `ruryOrders.export.ts`
+        - `studnieOrders.ts`, `studnieOrders.crud.ts`, `studnieOrders.export.ts`
     - `clients.ts` — CRUD klientów
     - `audit.ts` — logi audytowe
     - `settings.ts` — ustawienia systemowe
@@ -124,12 +127,14 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 
 3. **Services** (`src/services/`)
     - `auditService.ts` — logowanie zmian w bazie
-    - `pricelistService.ts` — zarządzanie cennikami
     - `pdfGenerator.ts` — generowanie PDF (Puppeteer)
     - `docx/` — generowanie dokumentów DOCX (rury i studnie)
         - `rury/` — builder, content, sections, tables, kartaBudowy
         - `studnie/` — builder, content, sections, tables, kartaBudowy
         - `helpers.ts`, `headerFooter.ts`, `constants.ts`, `colors.ts`, `index.ts`
+    - `pdf/` — generowanie kart budowy i dokumentów PDF
+        - `pdfEngine.ts`, `kartaBudowy.ts`, `offerUsers.ts`, `ruryHtml.ts`, `studnieHtml.ts`
+        - `context.ts`, `helpers.ts`, `types.ts`
     - `telemetry/` — telemetria AI i learning engine
         - `telemetryService.ts`, `telemetryTypes.ts`
         - `learning/` — silnik uczący: LearningEngine, KnowledgeBase, RecommendationEngine, RankingEngine, PreferenceEngine, PatternDetector, FeedbackProcessor, ConfidenceCalculator
@@ -141,7 +146,19 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 4. **Validators** (`src/validators/`)
     - `authSchema.ts` — schematy dla auth (login, register, changePassword)
     - `offerSchemas.ts` — schematy dla ofert i klientów
+    - `orderSchemas.ts` — schematy dla zamówień
+    - `productSchemas.ts` — schematy dla produktów
     - `telemetrySchemas.ts` — schematy dla telemetrii AI
+
+5. **Utils** (`src/utils/`)
+    - `cronService.ts` — serwis cron (setInterval)
+    - `fts5Sync.ts` — synchronizacja FTS5 dla wyszukiwarki
+    - `logger.ts` — logger aplikacji
+    - `ownership.ts` — weryfikacja własności zasobów
+    - `productionSearchUtils.ts` — narzędzia wyszukiwania produkcji
+    - `roleFilter.ts` — filtrowanie po roli użytkownika
+    - `searchCache.ts` — cache wyszukiwania
+    - `searchUtils.ts` — narzędzia wyszukiwania
 
 ### Konfiguracja
 
@@ -180,13 +197,11 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 
 ### Frontend — struktura JS
 
-Po refaktoryzacji Phase 2 (podział dużych plików JS na mniejsze moduły):
-
 | Katalog              | Liczba plików | Opis                                                                    |
 | -------------------- | ------------- | ----------------------------------------------------------------------- |
 | `public/js/rury/`    | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
-| `public/js/studnie/` | ~112          | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
-| `public/js/sales/`   | 4             | Narzędzia sprzedaży (PVSalesUI, import/eksport)                         |
+| `public/js/studnie/` | 90            | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
+| `public/js/sales/`   | 9             | Narzędzia sprzedaży (kartoteka, import/eksport)                         |
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -223,14 +238,13 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (17)
+### Modele (28)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)
 - **clients_rel** — baza klientów
-- **productsRury** — produkty typu rura
-- **productsStudnie** — produkty typu studnia
-- **categoriesRury** / **categoriesStudnie** — kategorie produktów
+- **productsRury** / **productsRuryDefault** — produkty rury + wzorzec resetu
+- **productsStudnie** / **productsStudnieDefault** — produkty studnie + wzorzec resetu
 - **offers_rel** — oferty rur
 - **offers_studnie_rel** — oferty studni
 - **orders_rury_rel** — zamówienia rur
@@ -240,7 +254,19 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **settings** — ustawienia (klucz-wartość)
 - **order_counters** / **order_counters_rury** — liczniki numeracji
 - **production_orders_rel** / **production_order_counters** / **recycled_production_numbers** — produkcja
-- **ai_telemetry_logs** — telemetria AI
+- **PrecoKonfig** / **PrecoKonfigDefault** — konfiguracja Preco
+- **PrecoKinety** / **PrecoKinetyDefault** — kinety Preco
+- **PrecoZakresy** / **PrecoZakresyDefault** — zakresy Preco
+- **ai_telemetry_logs** / **ai_telemetry_events** — telemetria AI (logi + zdarzenia)
+- **ai_config_history** — historia wersji konfiguracji
+- **ai_telemetry_versions** — wersje solvera/reguł/AI
+- **ai_knowledge_base** — baza wiedzy AI (wzorce i rekomendacje)
+- **ai_recommendations** — rekomendacje AI
+- **ai_transition_snapshots** — przejścia szczelne (cechy geometryczne)
+- **AiFeature** — feature store ML (wektory cech)
+- **AiModel** — model registry ML (wagi modeli)
+- **AiEvaluation** — dzienne metryki ewaluacji ML
+- **aiRewardLog** — logi nagród ML
 
 Szczegóły: [DATABASE.md](DATABASE.md)
 
@@ -272,17 +298,21 @@ Oferty_PV/
 ├── commitlint.config.js             # Conventional commits
 │
 ├── src/                             # Backend
-│   ├── db.ts                        # Połączenie z bazą (legacy)
-│   ├── prismaClient.ts              # Klient Prisma (singleton)
-│   ├── helpers.ts                   # Funkcje pomocnicze
-│   ├── swagger.ts                   # Konfiguracja Swagger
+│   ├── app.ts                      # Konfiguracja Express
+│   ├── server.ts                   # Główny plik startowy
+│   ├── prismaClient.ts             # Klient Prisma (singleton)
+│   ├── logger.ts                   # Logger
+│   ├── session.ts                  # Zarządzanie sesjami
 │   ├── middleware/
-│   │   ├── auth.ts                  # Autoryzacja + sesje
-│   │   ├── security.ts              # Nagłówki bezpieczeństwa
-│   │   └── rateLimiter.ts           # Rate limiting
+│   │   ├── auth.ts                 # Autoryzacja + sesje
+│   │   ├── security.ts             # Nagłówki bezpieczeństwa
+│   │   ├── rateLimiter.ts          # Rate limiting
+│   │   ├── rateLimiters.ts         # Konfiguracja limiterów
+│   │   ├── errorHandler.ts         # Globalna obsługa błędów
+│   │   └── requestLogger.ts        # Logowanie żądań HTTP
 │   ├── routes/
-│   │   ├── auth.ts                  # Endpointy auth
-│   │   ├── users.ts                 # Zarządzanie użytkownikami
+│   │   ├── auth.ts                 # Endpointy auth
+│   │   ├── users.ts                # Zarządzanie użytkownikami
 │   │   ├── productsV2.ts           # Produkty rury
 │   │   ├── productsStudnieV2.ts    # Produkty studnie
 │   │   ├── clients.ts              # Klienci
@@ -291,26 +321,50 @@ Oferty_PV/
 │   │   │   ├── crud.ts             # CRUD (dispatcher)
 │   │   │   ├── ruryCrud.ts         # Oferty rur
 │   │   │   ├── studnieCrud.ts      # Oferty studni
-│   │   │   └── exports.ts          # Eksport PDF/DOCX
+│   │   │   ├── exports.ts          # Eksport PDF/DOCX
+│   │   │   └── search.ts           # Wyszukiwanie ofert
 │   │   ├── orders/
 │   │   │   ├── index.ts            # Router główny zamówień
 │   │   │   ├── ruryOrders.ts       # Zamówienia rur
+│   │   │   ├── ruryOrders.crud.ts  # CRUD zamówień rur
+│   │   │   ├── ruryOrders.export.ts# Eksport zamówień rur
 │   │   │   ├── studnieOrders.ts    # Zamówienia studni
+│   │   │   ├── studnieOrders.crud.ts# CRUD zamówień studni
+│   │   │   ├── studnieOrders.export.ts# Eksport zamówień studni
 │   │   │   ├── numbering.ts        # Numeracja zamówień
-│   │   │   └── production.ts       # Zamówienia produkcyjne
+│   │   │   ├── production.ts       # Zamówienia produkcyjne
+│   │   │   └── productionSearch.ts # Wyszukiwanie produkcji
 │   │   ├── audit.ts                # Logi audytowe
 │   │   ├── settings.ts             # Ustawienia
 │   │   ├── telemetry.ts            # Telemetria AI
+│   │   ├── telemetryAi.ts          # Endpointy AI
+│   │   ├── telemetryAiMl.ts        # Pipeline ML
+│   │   ├── telemetryAiDashboard.ts # Dashboard AI
+│   │   ├── featureFlags.ts         # Feature flags
 │   │   ├── precoPricingV2.ts       # Cenniki Preco
 │   │   └── pvMarketplace.ts        # PV Marketplace
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
-│   │   └── pricelistService.ts     # Usługa cenników
+│   │   ├── pdfGenerator.ts         # Generowanie PDF
+│   │   ├── docx/                   # Generowanie DOCX
+│   │   ├── pdf/                    # Karty budowy PDF
+│   │   ├── telemetry/              # Telemetria AI
+│   │   └── ml/                     # Pipeline ML
 │   ├── utils/
-│   │   └── logger.ts               # Logger
+│   │   ├── cronService.ts          # Serwis cron
+│   │   ├── fts5Sync.ts             # Synchronizacja FTS5
+│   │   ├── logger.ts               # Logger
+│   │   ├── ownership.ts            # Weryfikacja własności
+│   │   ├── productionSearchUtils.ts# Narzędzia wyszukiwania
+│   │   ├── roleFilter.ts           # Filtr roli
+│   │   ├── searchCache.ts          # Cache wyszukiwania
+│   │   └── searchUtils.ts          # Narzędzia wyszukiwania
 │   ├── validators/
 │   │   ├── authSchema.ts           # Walidacja auth
-│   │   └── offerSchemas.ts         # Walidacja ofert
+│   │   ├── offerSchemas.ts         # Walidacja ofert
+│   │   ├── orderSchemas.ts         # Walidacja zamówień
+│   │   ├── productSchemas.ts       # Walidacja produktów
+│   │   └── telemetrySchemas.ts     # Walidacja telemetrii
 │   └── types/                      # Typy TypeScript
 │
 ├── public/                          # Frontend

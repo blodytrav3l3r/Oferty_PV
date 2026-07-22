@@ -1,7 +1,8 @@
 # Wdrożenie — WITROS Oferty PV
 
 **Wersja:** 1.9.0  
-**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
+**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
+**Ostatnia aktualizacja:** 2026-07-22
 
 ---
 
@@ -54,9 +55,7 @@ Serwer dostępny pod adresem: `http://localhost:10000`
 Projekt zawiera wygodne skrypty startowe:
 
 - **Windows:** `start.bat` — uruchamia serwer w oknie konsoli
-- **Linux/Mac:** `start.sh` — uruchamia serwer w shellu
-- **Uniwersalny (Windows):** `start_node.bat` — uruchamia przez `node dist/server.js`
-- **Multi (Windows):** `start_all.bat` — backup + start
+- **Instalator:** `install.bat` — automatyzuje `npm install`, `prisma generate`, seed i build
 
 ---
 
@@ -240,8 +239,6 @@ Sentry będzie rejestrować:
 - Wydajność (opcjonalnie, traceSampleRate: 0.1)
 
 ---
-
-_Ostatnia aktualizacja: 2026-07-20_
 
 ---
 

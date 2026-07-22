@@ -1,5 +1,7 @@
 # Tech Stack — stos technologiczny
 
+**Ostatnia aktualizacja:** 2026-07-22
+
 ## Licencje — podsumowanie
 
 | Licencja      | Liczba pakietów | Komercyjne użycie | Sprzedaż produktu |               Attribution                |

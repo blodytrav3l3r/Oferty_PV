@@ -2,7 +2,8 @@
 
 **Silnik:** SQLite  
 **ORM:** Prisma 6.0  
-**Plik bazy:** `data/app_database.sqlite`
+**Plik bazy:** `data/app_database.sqlite`  
+**Liczba modeli:** 28
 
 ---
 
@@ -29,7 +30,7 @@ Zmienna środowiskowa `DATABASE_URL` wskazuje na plik bazy SQLite (np. `file:../
 
 ---
 
-### 2. Modele danych
+### 2. Modele danych — warstwa rdzenna
 
 #### `users` — Użytkownicy
 
@@ -61,18 +62,19 @@ Sesja wygasa po 7 dniach (`SESSION_MAX_AGE_MS`).
 
 #### `clients_rel` — Klienci
 
-| Kolumna   | Typ        | Opis                        |
-| --------- | ---------- | --------------------------- |
-| id        | String @id | Unikalny identyfikator      |
-| userId    | String?    | ID użytkownika (właściciel) |
-| name      | String?    | Nazwa klienta               |
-| nip       | String?    | NIP                         |
-| address   | String?    | Adres                       |
-| email     | String?    | Email                       |
-| phone     | String?    | Telefon                     |
-| contact   | String?    | Osoba kontaktowa            |
-| createdAt | String?    | Data utworzenia             |
-| updatedAt | String?    | Data aktualizacji           |
+| Kolumna      | Typ        | Opis                        |
+| ------------ | ---------- | --------------------------- |
+| id           | String @id | Unikalny identyfikator      |
+| userId       | String?    | ID użytkownika (właściciel) |
+| name         | String?    | Nazwa klienta               |
+| nip          | String?    | NIP                         |
+| address      | String?    | Adres                       |
+| email        | String?    | Email                       |
+| phone        | String?    | Telefon                     |
+| contact      | String?    | Osoba kontaktowa            |
+| clientNumber | String?    | Numer klienta               |
+| createdAt    | String?    | Data utworzenia             |
+| updatedAt    | String?    | Data aktualizacji           |
 
 Indeks: `idx_clients_user` na kolumnie `userId`.
 
@@ -153,27 +155,35 @@ Identyczna struktura jak `offers_rel`, ale dedykowana dla ofert studni.
 | status         | String?    | Status                      |
 | data           | String?    | JSON z danymi               |
 
+---
+
+### 3. Modele danych — produkty i cenniki
+
 #### `productsRury` — Produkty (rury)
 
-| Kolumna   | Typ        | Opis                                  |
-| --------- | ---------- | ------------------------------------- |
-| id        | String @id | Unikalny identyfikator                |
-| name      | String     | Nazwa produktu                        |
-| category  | String     | Kategoria (relacja do CategoriesRury) |
-| price     | Float      | Cena                                  |
-| transport | Float?     | Koszt transportu                      |
-| weight    | Float?     | Waga                                  |
-| area      | Float?     | Powierzchnia                          |
+| Kolumna   | Typ        | Opis                   |
+| --------- | ---------- | ---------------------- |
+| id        | String @id | Unikalny identyfikator |
+| name      | String     | Nazwa produktu         |
+| category  | String     | Kategoria              |
+| price     | Float      | Cena                   |
+| transport | Float?     | Koszt transportu       |
+| weight    | Float?     | Waga                   |
+| area      | Float?     | Powierzchnia           |
+
+#### `productsRuryDefault` — Domyślne produkty rury (wzorzec resetu)
+
+Identyczna struktura jak `productsRury`. Używana do resetowania cennika do wartości domyślnych.
 
 #### `productsStudnie` — Produkty (studnie)
 
-Rozbudowany model z wieloma polami specyficznymi dla studni:
+Rozbudowany model z polami specyficznymi dla studni:
 
 | Kolumna       | Typ        | Opis                                      |
 | ------------- | ---------- | ----------------------------------------- |
 | id            | String @id | Identyfikator                             |
 | name          | String     | Nazwa                                     |
-| category      | String     | Kategoria (relacja do CategoriesStudnie)  |
+| category      | String     | Kategoria                                 |
 | componentType | String     | Typ komponentu                            |
 | dn            | String?    | Średnica nominalna                        |
 | height        | Int?       | Wysokość                                  |
@@ -187,37 +197,42 @@ Rozbudowany model z wieloma polami specyficznymi dla studni:
 | active        | Boolean    | Czy aktywny                               |
 | ...           | ...        | Dodatkowe pola dla przejść, kinet, dopłat |
 
-#### `categoriesRury` / `categoriesStudnie` — Kategorie
+#### `productsStudnieDefault` — Domyślne produkty studnie (wzorzec resetu)
 
-| Kolumna       | Typ        | Opis                           |
-| ------------- | ---------- | ------------------------------ |
-| name          | String @id | Nazwa kategorii                |
-| order         | Int        | Kolejność wyświetlania         |
-| componentType | String?    | Typ komponentu (tylko studnie) |
+Identyczna struktura jak `productsStudnie`. Używana do resetowania cen do wartości domyślnych.
 
-#### `audit_logs` — Logi audytowe
+#### `PrecoKonfig` / `PrecoKonfigDefault` — Konfiguracja Preco
 
-| Kolumna    | Typ        | Opis                                     |
-| ---------- | ---------- | ---------------------------------------- |
-| id         | String @id | Identyfikator                            |
-| entityType | String     | Typ encji (np. `offer`, `client`)        |
-| entityId   | String     | ID encji                                 |
-| userId     | String?    | ID użytkownika                           |
-| action     | String     | Akcja (np. `CREATE`, `UPDATE`, `DELETE`) |
-| oldData    | String?    | JSON — dane przed zmianą                 |
-| newData    | String?    | JSON — dane po zmianie                   |
-| createdAt  | String?    | Data zdarzenia                           |
+| Kolumna | Typ        | Opis                   |
+| ------- | ---------- | ---------------------- |
+| id      | String @id | Identyfikator          |
+| ...     | ...        | Parametry konfiguracji |
 
-Indeks: `idx_audit_entity` na `(entityType, entityId)`.
+Wzorzec domyślny w `PrecoKonfigDefault`.
 
-#### `settings` — Ustawienia
+#### `PrecoKinety` / `PrecoKinetyDefault` — Kinety Preco
 
 | Kolumna | Typ        | Opis             |
 | ------- | ---------- | ---------------- |
-| key     | String @id | Klucz ustawienia |
-| value   | String?    | Wartość          |
+| id      | String @id | Identyfikator    |
+| ...     | ...        | Parametry kinety |
 
-#### `order_counters` / `order_counters_rury` — Liczniki numeracji
+Wzorzec domyślny w `PrecoKinetyDefault`.
+
+#### `PrecoZakresy` / `PrecoZakresyDefault` — Zakresy Preco
+
+| Kolumna | Typ        | Opis              |
+| ------- | ---------- | ----------------- |
+| id      | String @id | Identyfikator     |
+| ...     | ...        | Zakresy dla Preco |
+
+Wzorzec domyślny w `PrecoZakresyDefault`.
+
+---
+
+### 4. Modele danych — zamówienia i produkcja
+
+#### `order_counters` — Liczniki numeracji ofert
 
 | Kolumna    | Typ    | Opis                |
 | ---------- | ------ | ------------------- |
@@ -226,6 +241,10 @@ Indeks: `idx_audit_entity` na `(entityType, entityId)`.
 | lastNumber | Int?   | Ostatni użyty numer |
 
 Kompozytowy klucz główny: `(userId, year)`.
+
+#### `order_counters_rury` — Liczniki numeracji zamówień rur
+
+Identyczna struktura jak `order_counters`. Niezależne liczniki dla zamówień rur.
 
 #### `production_orders_rel` — Zamówienia produkcyjne
 
@@ -257,7 +276,37 @@ Kompozytowy klucz główny: `(userId, year)`.
 | year      | Int    | Rok               |
 | seqNumber | Int    | Numer sekwencyjny |
 
-#### `ai_telemetry_logs` — Telemetria AI
+---
+
+### 5. Modele danych — audyt i konfiguracja
+
+#### `audit_logs` — Logi audytowe
+
+| Kolumna    | Typ        | Opis                                     |
+| ---------- | ---------- | ---------------------------------------- |
+| id         | String @id | Identyfikator                            |
+| entityType | String     | Typ encji (np. `offer`, `client`)        |
+| entityId   | String     | ID encji                                 |
+| userId     | String?    | ID użytkownika                           |
+| action     | String     | Akcja (np. `CREATE`, `UPDATE`, `DELETE`) |
+| oldData    | String?    | JSON — dane przed zmianą                 |
+| newData    | String?    | JSON — dane po zmianie                   |
+| createdAt  | String?    | Data zdarzenia                           |
+
+Indeks: `idx_audit_entity` na `(entityType, entityId)`.
+
+#### `settings` — Ustawienia
+
+| Kolumna | Typ        | Opis             |
+| ------- | ---------- | ---------------- |
+| key     | String @id | Klucz ustawienia |
+| value   | String?    | Wartość          |
+
+---
+
+### 6. Modele danych — AI/ML i telemetria
+
+#### `ai_telemetry_logs` — Logi telemetrii AI
 
 | Kolumna              | Typ        | Opis                      |
 | -------------------- | ---------- | ------------------------- |
@@ -268,11 +317,133 @@ Kompozytowy klucz główny: `(userId, year)`.
 | override_reason      | String?    | Powód nadpisania          |
 | createdAt            | String?    | Data zdarzenia            |
 
+#### `ai_telemetry_events` — Zdarzenia telemetrii AI
+
+| Kolumna    | Typ        | Opis                                 |
+| ---------- | ---------- | ------------------------------------ |
+| id         | String @id | Identyfikator                        |
+| userId     | String?    | ID użytkownika                       |
+| eventType  | String?    | Typ zdarzenia                        |
+| eventData  | String?    | JSON z danymi zdarzenia              |
+| createdAt  | String?    | Data zdarzenia                       |
+| snapshotId | String?    | Powiązanie z snapshotem konfiguracji |
+
+Używany do pollingu zdarzeń użytkownika (akceptacje, odrzucenia, modyfikacje).
+
+#### `ai_config_history` — Historia wersji konfiguracji
+
+| Kolumna         | Typ        | Opis                              |
+| --------------- | ---------- | --------------------------------- |
+| id              | String @id | Identyfikator                     |
+| configSnapshot  | String?    | JSON snapshot konfiguracji studni |
+| solverVersionId | String?    | Wersja solvera                    |
+| ruleVersionId   | String?    | Wersja reguł                      |
+| aiVersionId     | String?    | Wersja AI                         |
+| createdAt       | String?    | Data utworzenia                   |
+
+#### `ai_telemetry_versions` — Wersje solvera, reguł i AI
+
+| Kolumna     | Typ        | Opis                      |
+| ----------- | ---------- | ------------------------- |
+| id          | String @id | Identyfikator             |
+| versionType | String?    | Typ: `solver`/`rule`/`ai` |
+| version     | String?    | Numer wersji              |
+| createdAt   | String?    | Data rejestracji          |
+
+#### `ai_knowledge_base` — Baza wiedzy AI
+
+| Kolumna    | Typ        | Opis                 |
+| ---------- | ---------- | -------------------- |
+| id         | String @id | Identyfikator        |
+| pattern    | String?    | Wzorzec konfiguracji |
+| confidence | Float?     | Poziom ufności (0-1) |
+| metadata   | String?    | JSON metadane        |
+| createdAt  | String?    | Data utworzenia      |
+| updatedAt  | String?    | Data aktualizacji    |
+
+#### `ai_recommendations` — Rekomendacje AI
+
+| Kolumna        | Typ        | Opis              |
+| -------------- | ---------- | ----------------- |
+| id             | String @id | Identyfikator     |
+| userId         | String?    | ID użytkownika    |
+| configHash     | String?    | Hash konfiguracji |
+| recommendation | String?    | JSON rekomendacja |
+| wasApplied     | Boolean?   | Czy zastosowano   |
+| createdAt      | String?    | Data utworzenia   |
+
+#### `ai_transition_snapshots` — Przejścia szczelne
+
+| Kolumna  | Typ        | Opis                       |
+| -------- | ---------- | -------------------------- |
+| id       | String @id | Identyfikator              |
+| configId | String?    | ID konfiguracji            |
+| ...      | ...        | Cechy geometryczne przejść |
+
+Wydzielone od zwykłych komponentów ze względu na specyfikę danych.
+
+#### `AiFeature` — Feature Store ML
+
+| Kolumna   | Typ        | Opis                      |
+| --------- | ---------- | ------------------------- |
+| id        | String @id | Identyfikator             |
+| features  | String?    | JSON wektor cech          |
+| label     | Float?     | Etykieta (akceptacja 0/1) |
+| createdAt | String?    | Data utworzenia           |
+
+#### `AiModel` — Model Registry ML
+
+| Kolumna   | Typ        | Opis                          |
+| --------- | ---------- | ----------------------------- |
+| id        | String @id | Identyfikator                 |
+| modelData | String?    | JSON wagi modelu              |
+| version   | String?    | Wersja modelu                 |
+| metrics   | String?    | JSON metryki (accuracy, loss) |
+| createdAt | String?    | Data utworzenia               |
+| active    | Boolean?   | Czy model aktywny             |
+
+#### `AiEvaluation` — Dzienne metryki ewaluacji
+
+| Kolumna      | Typ        | Opis          |
+| ------------ | ---------- | ------------- |
+| id           | String @id | Identyfikator |
+| date         | String?    | Data          |
+| accuracy     | Float?     | Dokładność    |
+| precision    | Float?     | Precyzja      |
+| recall       | Float?     | Czułość       |
+| f1Score      | Float?     | F1-score      |
+| modelVersion | String?    | Wersja modelu |
+
+#### `aiRewardLog` — Logi nagród ML
+
+| Kolumna   | Typ        | Opis            |
+| --------- | ---------- | --------------- |
+| id        | String @id | Identyfikator   |
+| userId    | String?    | ID użytkownika  |
+| reward    | Float?     | Wartość nagrody |
+| reason    | String?    | Powód nagrody   |
+| createdAt | String?    | Data utworzenia |
+
 ---
 
 ## 3. Migracje
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
+
+### Lista migracji (10)
+
+| Migracja                                        | Opis                         |
+| ----------------------------------------------- | ---------------------------- |
+| `20260611000000_init`                           | Inicjalna migracja           |
+| `20260611000001_add_product_tables`             | Tabele produktów             |
+| `20260611170224_add_dn_studni_to_preco_zakresy` | DN studni w Preco zakresy    |
+| `20260630190000_telemetry_ai_prep`              | Przygotowanie telemetrii AI  |
+| `20260630200000_ai_knowledge_base`              | Baza wiedzy AI               |
+| `20260705000000_ai_well_cases_create`           | Przypadki studni AI          |
+| `20260705000000_feature_import_export`          | Feature flag import/eksport  |
+| `20260705000001_ai_well_cases_unique`           | Unique key dla przypadków AI |
+| `20260707000000_ai_ml_models`                   | Modele ML                    |
+| `20260719000000_ai_unique_pattern_key`          | Unique pattern key           |
 
 ### Komendy
 

@@ -1,7 +1,11 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.9.0  
-**Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera)
+**Ostatnia aktualizacja:** 2026-07-22  
+**Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
+
+> **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
+> Poniższy opis może nie obejmować wszystkich endpointów — priorytetowo traktuj Swagger.
 
 ---
 
@@ -157,6 +161,7 @@ Wymaga autoryzacji.
 | POST   | `/api/offers-rury`                 | Utworzenie nowej oferty rur |
 | PUT    | `/api/offers-rury/:id`             | Aktualizacja oferty         |
 | DELETE | `/api/offers-rury/:id`             | Usunięcie oferty            |
+| GET    | `/api/offers-rury/search?q=`       | Wyszukiwanie ofert          |
 | GET    | `/api/offers-rury/:id/export-pdf`  | Eksport oferty do PDF       |
 | GET    | `/api/offers-rury/:id/export-docx` | Eksport oferty do DOCX      |
 | PUT    | `/api/offers-rury/dispatch`        | Wysyłka (dispatch) ofert    |

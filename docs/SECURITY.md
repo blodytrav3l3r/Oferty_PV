@@ -1,6 +1,7 @@
 # Bezpieczeństwo — WITROS Oferty PV
 
-**Wersja:** 1.9.0
+**Wersja:** 1.9.0  
+**Ostatnia aktualizacja:** 2026-07-22
 
 ---
 
@@ -242,10 +243,6 @@ if (process.env.SENTRY_DSN) {
 | Sentry monitoring               | ✔ (opcjonalny)         |
 | CSRF                            | ⚠ (planowane)          |
 | npm audit                       | ⚠ (wykonywać okresowo) |
-
----
-
-_Ostatnia aktualizacja: 2026-07-20_
 
 ---
 
