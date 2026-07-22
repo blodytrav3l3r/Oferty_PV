@@ -86,7 +86,7 @@ router.put(
                 // Pobierz istniejące ID klientów dla tego użytkownika
                 const existingClients =
                     await tx.$queryRaw`SELECT id FROM clients_rel WHERE userId = ${userId}`;
-                const existingIds = (existingClients as any[]).map((c: any) => c.id);
+                const existingIds = (existingClients as { id: string }[]).map((c) => c.id);
                 const incomingIds = arr.map((c: any) => c.id).filter(Boolean);
                 const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 

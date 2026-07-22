@@ -71,9 +71,9 @@ export function buildFts5Query(input: string): string {
  */
 export async function fts5Exists(): Promise<boolean> {
     try {
-        const r = (await prisma.$queryRawUnsafe(
+        const r = await prisma.$queryRawUnsafe<{ name: string }[]>(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='offers_search_fts'"
-        )) as any[];
+        );
         return r.length > 0;
     } catch {
         return false;

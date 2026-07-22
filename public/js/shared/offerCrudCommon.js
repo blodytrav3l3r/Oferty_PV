@@ -120,8 +120,65 @@ async function assignOfferSupervisor(currentUser, isNewOffer, editingId) {
     }
 }
 
+/**
+ * Buduje wspolne 22+ pola dokumentu oferty.
+ * @param {object} spec
+ * @param {string} spec.id
+ * @param {'offer'|'studnia_oferta'} spec.type
+ * @param {object} spec.fields — z getOfferFormFields()
+ * @param {object|null} [spec.existingDoc]
+ * @param {object|null} [spec.currentUser]
+ * @param {string|null} [spec.assignedUserId]
+ * @param {string|null} [spec.assignedUserName]
+ * @param {string|null} [spec.createdByUserId]
+ * @param {string|null} [spec.createdByUserName]
+ * @returns {object}
+ */
+function buildBaseOfferDoc(spec) {
+    var id = spec.id;
+    var type = spec.type;
+    var fields = spec.fields;
+    var existingDoc = spec.existingDoc || null;
+    var currentUser = spec.currentUser || null;
+    var assignedUserId = spec.assignedUserId || null;
+    var assignedUserName = spec.assignedUserName || null;
+    var createdByUserId = spec.createdByUserId || null;
+    var createdByUserName = spec.createdByUserName || null;
+    return {
+        id: id,
+        type: type,
+        userId: assignedUserId || existingDoc?.userId || (currentUser ? currentUser.id : null),
+        userName: assignedUserName || existingDoc?.userName || buildUserDisplayName(currentUser),
+        createdByUserId:
+            createdByUserId ||
+            existingDoc?.createdByUserId ||
+            (currentUser ? currentUser.id : null),
+        createdByUserName:
+            createdByUserName ||
+            existingDoc?.createdByUserName ||
+            buildUserDisplayName(currentUser),
+        number: fields.number,
+        date: fields.date,
+        clientName: fields.clientName,
+        clientNip: fields.clientNip,
+        clientAddress: fields.clientAddress,
+        clientContact: fields.clientContact,
+        investName: fields.investName,
+        investAddress: fields.investAddress,
+        investContractor: fields.investContractor,
+        notes: fields.notes,
+        paymentTerms: fields.paymentTerms,
+        validity: fields.validity,
+        transportKm: fields.transportKm,
+        transportRate: fields.transportRate,
+        createdAt: existingDoc?.createdAt || new Date().toISOString(),
+        lastEditedBy: buildUserDisplayName(currentUser)
+    };
+}
+
 window.getOfferFormFields = getOfferFormFields;
 window.setOfferFormFields = setOfferFormFields;
 window.clearOfferFormFields = clearOfferFormFields;
 window.buildUserDisplayName = buildUserDisplayName;
 window.assignOfferSupervisor = assignOfferSupervisor;
+window.buildBaseOfferDoc = buildBaseOfferDoc;

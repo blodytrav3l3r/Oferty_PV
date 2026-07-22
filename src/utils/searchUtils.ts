@@ -18,21 +18,19 @@ export interface SearchParams {
 export function parseSearchParams(query: Record<string, unknown>): SearchParams {
     return {
         q: typeof query.q === 'string' ? query.q.trim() : '',
-        type: (['all', 'offer', 'studnia_oferta'] as const).includes(query.type as any)
+        type: ['all', 'offer', 'studnia_oferta'].includes(query.type as string)
             ? (query.type as SearchParams['type'])
             : 'all',
         dateFrom: typeof query.dateFrom === 'string' ? query.dateFrom : '',
         dateTo: typeof query.dateTo === 'string' ? query.dateTo : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
-        orderStatus: (['all', 'with_order', 'without_order'] as const).includes(
-            query.orderStatus as any
-        )
+        orderStatus: ['all', 'with_order', 'without_order'].includes(query.orderStatus as string)
             ? (query.orderStatus as SearchParams['orderStatus'])
             : 'all',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
         limit: Math.min(100, Math.max(1, parseInt(String(query.limit)) || 50)),
-        sort: (['createdAt', 'offer_number'] as const).includes(query.sort as any)
+        sort: ['createdAt', 'offer_number'].includes(query.sort as string)
             ? (query.sort as SearchParams['sort'])
             : 'createdAt',
         order: query.order === 'asc' ? 'asc' : 'desc'

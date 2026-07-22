@@ -96,49 +96,27 @@ async function saveOffer() {
         }
     }
 
-    const offerDoc = {
+    const base = buildBaseOfferDoc({
         id: editingOfferId || 'offer_' + Date.now(),
         type: 'offer',
-        userId:
-            editingOfferAssignedUserId ||
-            existingDoc?.userId ||
-            (currentUser ? currentUser.id : null),
-        userName:
-            editingOfferAssignedUserName ||
-            existingDoc?.userName ||
-            buildUserDisplayName(currentUser),
-        createdByUserId:
-            window.editingOfferCreatedByUserId ||
-            existingDoc?.createdByUserId ||
-            (currentUser ? currentUser.id : null),
-        createdByUserName:
-            window.editingOfferCreatedByUserName ||
-            existingDoc?.createdByUserName ||
-            buildUserDisplayName(currentUser),
-        number: fields.number,
-        date: fields.date,
-        clientName: fields.clientName,
-        clientNip: fields.clientNip,
-        clientAddress: fields.clientAddress,
-        clientContact: fields.clientContact,
-        investName: fields.investName,
-        investAddress: fields.investAddress,
-        investContractor: fields.investContractor,
-        notes: fields.notes,
-        paymentTerms: fields.paymentTerms,
-        validity: fields.validity,
+        fields: fields,
+        existingDoc: existingDoc,
+        currentUser: currentUser,
+        assignedUserId: editingOfferAssignedUserId,
+        assignedUserName: editingOfferAssignedUserName,
+        createdByUserId: window.editingOfferCreatedByUserId,
+        createdByUserName: window.editingOfferCreatedByUserName
+    });
+
+    const offerDoc = Object.assign({}, base, {
         items: structuredClone(currentOfferItems),
-        transportKm: fields.transportKm,
-        transportRate: fields.transportRate,
-        transportCostPerTrip,
+        transportCostPerTrip: transportCostPerTrip,
         transportMode: currentRuryTransportMode || 'full',
         transportCount: transportResult.totalTransports,
-        transportCost,
-        totalNetto,
-        totalBrutto: totalNetto * 1.23,
-        createdAt: existingDoc?.createdAt || new Date().toISOString(),
-        lastEditedBy: buildUserDisplayName(currentUser)
-    };
+        transportCost: transportCost,
+        totalNetto: totalNetto,
+        totalBrutto: totalNetto * 1.23
+    });
 
     window.isSavingOffer = true;
     try {

@@ -1,6 +1,39 @@
 // @ts-check
 /* ===== EXCEL MODAL — Otwarzanie/zamykanie tabeli konfiguracyjnej studni ===== */
 
+function _excelOnFocusInRow(e) {
+    const row = e.target.closest('tr[data-widx]');
+    if (!row) return;
+    const wIdx = parseInt(row.getAttribute('data-widx'), 10);
+    if (!isNaN(wIdx) && (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)) {
+        excelSelectRow(wIdx);
+    }
+}
+
+function _excelOnClickCell(e) {
+    if (e.target.closest('button')) return;
+    const td = e.target.closest('td');
+    const row = e.target.closest('tr[data-widx]');
+    if (!row || !td) return;
+    const wIdx = parseInt(row.getAttribute('data-widx'), 10);
+    if (isNaN(wIdx)) return;
+    const colIdx = Array.from(row.children).indexOf(td);
+    if (e.shiftKey) {
+        e.stopPropagation();
+        _excelSelectCell(wIdx, colIdx, false, true);
+        return;
+    }
+    if (e.ctrlKey) {
+        e.stopPropagation();
+        _excelSelectCell(wIdx, colIdx, true, false);
+        return;
+    }
+    _excelSelectCell(wIdx, colIdx, false, false);
+    if (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex) {
+        excelSelectRow(wIdx);
+    }
+}
+
 function _excelRegisterExcelListeners() {
     const container = document.getElementById('excel-table-container');
     if (!container || /** @type {any} */ (container)._excelListenersAttached) return;
@@ -16,40 +49,8 @@ function _excelRegisterExcelListeners() {
     };
     document.addEventListener('keydown', _arrowHandler, true);
     /** @type {any} */ (container)._arrowHandler = _arrowHandler;
-    container.addEventListener('focusin', function (e) {
-        let row = e.target.closest('tr[data-widx]');
-        if (!row) return;
-        let wIdx = parseInt(row.getAttribute('data-widx'), 10);
-        if (
-            !isNaN(wIdx) &&
-            (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)
-        ) {
-            excelSelectRow(wIdx);
-        }
-    });
-    container.addEventListener('click', function (e) {
-        if (e.target.closest('button')) return;
-        let td = e.target.closest('td');
-        let row = e.target.closest('tr[data-widx]');
-        if (!row || !td) return;
-        let wIdx = parseInt(row.getAttribute('data-widx'), 10);
-        if (isNaN(wIdx)) return;
-        let colIdx = Array.from(row.children).indexOf(td);
-        if (e.shiftKey) {
-            e.stopPropagation();
-            _excelSelectCell(wIdx, colIdx, false, true);
-            return;
-        }
-        if (e.ctrlKey) {
-            e.stopPropagation();
-            _excelSelectCell(wIdx, colIdx, true, false);
-            return;
-        }
-        _excelSelectCell(wIdx, colIdx, false, false);
-        if (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex) {
-            excelSelectRow(wIdx);
-        }
-    });
+    container.addEventListener('focusin', _excelOnFocusInRow);
+    container.addEventListener('click', _excelOnClickCell);
     document.addEventListener('copy', _excelHandleCopy);
     container.addEventListener('paste', _excelHandlePaste, true);
     container.addEventListener('keydown', _excelHandleKeydown);
@@ -91,7 +92,6 @@ function _excelUnregisterExcelListeners() {
         );
     }
     document.removeEventListener('copy', _excelHandleCopy);
-    document.removeEventListener('paste', _excelHandlePaste);
     if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
     if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
     document.removeEventListener('mousemove', _excelOnMouseMove);
@@ -99,6 +99,8 @@ function _excelUnregisterExcelListeners() {
     if (_container) {
         _container.removeEventListener('focusin', _excelOnFocusIn);
         _container.removeEventListener('focusout', _excelOnFocusOut);
+        _container.removeEventListener('focusin', _excelOnFocusInRow);
+        _container.removeEventListener('click', _excelOnClickCell);
         _container.removeEventListener('change', _excelOnRowSelectChange);
         _container.removeEventListener('keydown', _excelHandleKeydown);
     }

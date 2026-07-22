@@ -223,10 +223,13 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
 const dragOverCount = 0; // dla wizualizacji drag & drop
 
 // Nasłuchiwanie zmian statusu synchronizacji dla odświeżenia listy
-window.addEventListener('pv-sync-status-changed', () => {
-    // Jeśli widżet zapisu ofert jest widoczny, odświeżamy go
+const _onSyncStatusChanged = () => {
     const container = document.getElementById('saved-offers-list');
     if (container && container.offsetParent !== null) {
         renderSavedOffersStudnie();
     }
-});
+};
+window.addEventListener('pv-sync-status-changed', _onSyncStatusChanged);
+window._cleanupSvgDrag = () => {
+    window.removeEventListener('pv-sync-status-changed', _onSyncStatusChanged);
+};

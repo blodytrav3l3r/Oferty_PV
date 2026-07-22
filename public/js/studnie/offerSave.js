@@ -64,56 +64,34 @@ async function saveOfferStudnie() {
         currentTransportMode
     );
 
-    const offerDoc = {
+    const base = buildBaseOfferDoc({
         id: simpleId,
         type: 'studnia_oferta',
-        userId:
-            editingOfferAssignedUserId ||
-            existingDoc?.userId ||
-            (currentUser ? currentUser.id : null),
-        userName:
-            editingOfferAssignedUserName ||
-            existingDoc?.userName ||
-            buildUserDisplayName(currentUser),
-        createdByUserId:
-            editingOfferCreatedByUserId ||
-            existingDoc?.createdByUserId ||
-            (currentUser ? currentUser.id : null),
-        createdByUserName:
-            editingOfferCreatedByUserName ||
-            existingDoc?.createdByUserName ||
-            buildUserDisplayName(currentUser),
-        number: fields.number,
-        date: fields.date,
-        clientName: fields.clientName,
-        clientNip: fields.clientNip,
-        clientAddress: fields.clientAddress,
-        clientContact: fields.clientContact,
-        investName: fields.investName,
-        investAddress: fields.investAddress,
-        investContractor: fields.investContractor,
-        notes: fields.notes,
-        paymentTerms: fields.paymentTerms,
-        validity: fields.validity,
+        fields: fields,
+        existingDoc: existingDoc,
+        currentUser: currentUser,
+        assignedUserId: editingOfferAssignedUserId,
+        assignedUserName: editingOfferAssignedUserName,
+        createdByUserId: editingOfferCreatedByUserId,
+        createdByUserName: editingOfferCreatedByUserName
+    });
+
+    const offerDoc = Object.assign({}, base, {
         wells: structuredClone(wells),
         wellsExport: pricing.wellsForExport,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
-        transportKm: fields.transportKm,
-        transportRate: fields.transportRate,
         transportMode: currentTransportMode,
         wellDiscounts:
             typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts || {}) : {},
         totalWeight: pricing.totalWeight,
         totalNetto: pricing.totalNetto + pricing.totalTransportCostForOffer,
         totalBrutto: (pricing.totalNetto + pricing.totalTransportCostForOffer) * 1.23,
-        createdAt: existingDoc?.createdAt || new Date().toISOString(),
-        lastEditedBy: buildUserDisplayName(currentUser),
         wizard: {
             globalParams: getWizardGlobalParams(),
             currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,
             version: 1
         }
-    };
+    });
 
     try {
         if (!offerDoc.wells || offerDoc.wells.length === 0) {
