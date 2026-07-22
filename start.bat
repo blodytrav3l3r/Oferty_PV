@@ -115,6 +115,7 @@ if /i "%MODE%"=="prod" (
 ) else (
     echo   Frontend: http://localhost:5173
     echo   Backend:  http://localhost:3000/health
+    set "NODE_ENV=development"
     call npm run dev
 )
 
