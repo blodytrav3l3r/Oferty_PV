@@ -50,11 +50,16 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
 
 1. Na starym urządzeniu wykonaj `npm run backup`
 2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
-3. Na nowym urządzeniu po standardowej instalacji (bez seedowania) wykonaj:
+3. Na nowym urządzeniu wykonaj instalację z pominięciem seedowania:
     ```bash
-    npm run backup:restore -- data/backups/backup_*.sqlite
+    .\install.bat --skip-seed   # Windows
+    bash install.sh --skip-seed  # Linux
     ```
-4. Jeśli schemat bazy różni się między wersjami, uruchom:
+4. Przywróć bazę z backupu:
+    ```bash
+    npm run restore data/backups/backup_*.sqlite
+    ```
+5. Jeśli schemat bazy różni się między wersjami, uruchom:
     ```bash
     npx prisma db push --skip-generate
     ```

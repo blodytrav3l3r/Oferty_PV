@@ -79,7 +79,7 @@ Instalator automatycznie:
 - Zainstaluje zależności (`npm install`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Uruchomi migracje bazy danych (`npx prisma migrate dev`)
-- Zasieje dane początkowe (`npm run prisma:seed`)
+- Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
 
 #### 3. Ręczna instalacja (alternatywa)
 
@@ -106,29 +106,26 @@ npm run prisma:seed
 npm run build
 ```
 
-> **Jeśli przenosisz bazę z innej instalacji:** pomiń krok 5 (seed) i po zbudowaniu projektu przywróć bazę z backupu (patrz sekcja [Przenoszenie bazy cenników z istniejącej instalacji](#przenoszenie-bazy-cenników-z-istniejącej-instalacji)).
+> **Jeśli przenosisz bazę z innej instalacji:** użyj `.\install.bat --skip-seed` (pomija seed), a po instalacji przywróć bazę z backupu `npm run restore data/backups/backup_*.sqlite` (patrz sekcja [Przenoszenie bazy cenników z istniejącej instalacji](#przenoszenie-bazy-cenników-z-istniejącej-instalacji)).
 
 #### 4. Uruchom serwer
 
-**Tryb developerski (z hot-reload):**
+Aplikację uruchamiasz przez `start.bat` (główne wejście):
 
 ```powershell
-.\dev.bat
+.\start.bat              # Tryb developerski (domyślnie, z hot-reload)
+.\start.bat --prod       # Tryb produkcyjny
 ```
 
-**Tryb produkcyjny:**
+`dev.bat` to alias do `start.bat` — działa identycznie (zachowany dla kompatybilności).
 
-```powershell
-.\start.bat
-```
+Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
 
-Aplikacja będzie dostępna pod adresem: **http://localhost:10000**
-
-> **Uwaga (Docker):** Przy uruchomieniu przez `docker compose up --build -d` aplikacja domyślnie nasłuchuje na porcie **10000** (skonfigurowanym w `.env`). W razie potrzeby zmień mapowanie portów w `docker-compose.yml`.
+> **Uwaga (Docker):** Przy uruchomieniu przez `docker compose up --build -d` aplikacja wewnątrz kontenera nasłuchuje na porcie **3000**, ale `docker-compose.yml` mapuje go na port zewnętrzny (domyślnie `3000:3000`). W razie potrzeby zmień mapowanie portów w `docker-compose.yml`.
 
 #### 5. Pierwsze logowanie
 
-1. Otwórz przeglądarkę i wejdź na **http://localhost:10000**
+1. Otwórz przeglądarkę i wejdź na **http://localhost:3000**
 2. Zaloguj się jako:
     - **Użytkownik:** `admin`
     - **Hasło:** ustawione w `DEFAULT_ADMIN_PASSWORD` w pliku `.env`
@@ -155,8 +152,8 @@ npx prisma migrate dev
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
 npm run prisma:seed
-#    b) LUB przywróć bazę z backupu z innego urządzenia:
-#       npm run backup:restore -- data/backups/backup_*.sqlite
+#    b) LUB przywróć bazę z backupu z innego urządzenia (pomijając seed):
+#       npm run restore data/backups/backup_*.sqlite
 
 # 5. Zbuduj projekt
 npm run build
@@ -168,7 +165,7 @@ pm2 save
 pm2 startup
 ```
 
-Aplikacja: **http://TWOJ_ADRES_IP:10000**
+Aplikacja: **http://TWOJ_ADRES_IP:3000**
 
 ### Instalacja przez Docker
 
@@ -176,7 +173,7 @@ Aplikacja: **http://TWOJ_ADRES_IP:10000**
 docker compose up --build -d
 ```
 
-Aplikacja: **http://localhost:10000** (port zgodny z konfiguracją w `.env`)
+Aplikacja: **http://localhost:3000** (port zgodny z konfiguracją w `.env`)
 
 ---
 
@@ -200,21 +197,30 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
     data/backups/backup_2026-07-14_*.sqlite
     ```
 
-3. **Na nowym urządzeniu** wykonaj standardową instalację (kroki 1–4 z sekcji wyżej) — bez seedowania:
+3. **Na nowym urządzeniu** wykonaj instalację z pominięciem seedowania:
 
     ```powershell
-    .\install.bat
+    .\install.bat --skip-seed   # Windows
+    bash install.sh --skip-seed  # Linux
     ```
 
-4. **Zatrzymaj serwer** (jeśli działa).
+    Flaga `--skip-seed` zapobiega nadpisaniu bazy danych początkowych, co byłoby sprzeczne z przywracaniem własnej bazy.
 
-5. **Przywróć bazę z backupu**:
+4. **Przywróć bazę z backupu**:
+
     ```powershell
-    npm run backup:restore -- data/backups/backup_2026-07-14_*.sqlite
+    npm run restore data/backups/backup_2026-07-14_*.sqlite
     ```
+
     lub ręcznie:
+
     ```powershell
     copy /Y data\backups\backup_2026-07-14_*.sqlite data\app_database.sqlite
+    ```
+
+5. **Uruchom serwer**:
+    ```powershell
+    .\start.bat
     ```
 
 #### Co zawiera baza?
@@ -239,7 +245,7 @@ Plik `data/app_database.sqlite` przechowuje:
 1. Uruchom serwer: `.\start.bat`
 2. Sprawdź endpoint `/health`:
     ```powershell
-    curl http://localhost:10000/health
+    curl http://localhost:3000/health
     ```
 3. Zaloguj się i zweryfikuj:
     - Lista produktów i ceny są zgodne z poprzednią instalacją
@@ -252,7 +258,7 @@ Plik `data/app_database.sqlite` przechowuje:
 
 | Zmienna                  | Opis                                               | Domyślnie                          | Wymagane |
 | ------------------------ | -------------------------------------------------- | ---------------------------------- | -------- |
-| `PORT`                   | Port serwera                                       | `10000`                            | Nie      |
+| `PORT`                   | Port serwera                                       | `3000`                             | Nie      |
 | `HOST`                   | Adres nasłuchiwania (`0.0.0.0` = z sieci)          | `0.0.0.0`                          | Nie      |
 | `NODE_ENV`               | Środowisko: `development` / `production`           | `production`                       | Nie      |
 | `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu) | —                                  | **Tak**  |
@@ -271,7 +277,7 @@ Plik `data/app_database.sqlite` przechowuje:
 npm run dev
 ```
 
-- Backend: `http://localhost:10000` (hot-reload)
+- Backend: `http://localhost:3000/health` (hot-reload)
 
 ### Tryb produkcyjny
 
@@ -280,7 +286,7 @@ npm run build
 npm start
 ```
 
-Aplikacja: `http://localhost:10000`
+Aplikacja: `http://localhost:3000`
 
 ---
 
@@ -290,10 +296,10 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 | Skrypt        | Opis                                                                 |
 | ------------- | -------------------------------------------------------------------- |
-| `start.bat`   | Uruchamia serwer produkcyjny (`node dist/server.js`)                 |
-| `dev.bat`     | Uruchamia serwer deweloperski z hot-reload                           |
+| `start.bat`   | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`  |
+| `dev.bat`     | Alias do `start.bat` (zachowany dla kompatybilności)                 |
 | `build.bat`   | Buduje projekt (TypeScript + frontend)                               |
-| `install.bat` | Instaluje wszystkie zależności i przygotowuje bazę danych            |
+| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed    |
 | `prod.bat`    | Uruchamia serwer produkcyjny z przekierowaniem portów (zaawansowane) |
 
 ---
@@ -347,7 +353,7 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | Komenda                         | Opis                              |
 | ------------------------------- | --------------------------------- |
 | `npm run backup`                | Wykonaj backup bazy SQLite        |
-| `npm run backup:restore`        | Przywróć bazę z pliku backupu     |
+| `npm run restore`               | Przywróć bazę z pliku backupu     |
 | `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows) |
 | `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows) |
 

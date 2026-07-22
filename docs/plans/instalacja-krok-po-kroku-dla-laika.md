@@ -41,9 +41,9 @@ Jeśli już wiesz co robisz, oto cały proces w pigułce:
 ```
 Krok 1: Wejdź na https://nodejs.org → kliknij duży zielony przycisk → zainstaluj
 Krok 2: Wejdź na https://github.com/blodytrav3l3r/Oferty_PV → Code → Download ZIP → rozpakuj
-Krok 3: W folderze: skopiuj .env.example → .env; edytuj .env i zmień hasło
+Krok 3: W folderze: edytuj .env (auto-kopiowany z .env.example) i zmień hasło
 Krok 4: Kliknij 2x na install.bat → poczekaj aż się skończy
-Krok 5: Kliknij 2x na dev.bat → otwórz http://localhost:5173
+Krok 5: Kliknij 2x na start.bat (lub dev.bat) → otwórz http://localhost:5173
 ```
 
 Poniżej każdy krok jest szczegółowo opisany.
@@ -113,24 +113,18 @@ To taki plik z ustawieniami — trzyma hasło i inne opcje. Jest prywatny (nikt 
 ### Instrukcja:
 
 1. Otwórz folder z programem (ten który rozpakowałeś w Kroku 2)
-2. Znajdź plik o nazwie **`.env.example`** (ikona pliku, niebieska)
-    > Jeśli nie widzisz rozszerzeń plików: w Eksploratorze Windows kliknij **"Widok"** → zaznacz **"Rozszerzenia nazw plików"**
-3. Kliknij PRAWYM przyciskiem myszy na `.env.example` → **"Kopiuj"**
-4. Kliknij PRAWYM w pustym miejscu (w tym samym folderze) → **"Wklej"**
-5. Powstał plik **"Kopia — .env.example"**
-6. Kliknij na niego PRAWYM → **"Zmień nazwę"**
-7. Zaznacz całą nazwę i wpisz: **`.env`** (tylko `.env`, nic więcej)
-8. Kliknij Enter
-9. System zapyta "Czy na pewno chcesz zmienić rozszerzenie?" → kliknij **"Tak"**
-10. Teraz kliknij PRAWYM na `.env` → **"Otwórz za pomocą"** → **"Notatnik"**
-11. Znajdź linię (mniej więcej w połowie):
+2. Jeśli plik `.env` nie istnieje — **uruchom `install.bat`**, który sam skopiuje `.env.example` → `.env` (lub zrób to ręcznie).
+3. Znajdź plik o nazwie **`.env`** (może być niewidoczny jeśli nie pokazujesz ukrytych plików)
+    > Jeśli nie widzisz pliku: w Eksploratorze Windows kliknij **"Widok"** → zaznacz **"Ukryte elementy"**
+4. Kliknij PRAWYM na `.env` → **"Otwórz za pomocą"** → **"Notatnik"**
+5. Znajdź linię (mniej więcej w połowie):
     ```
     DEFAULT_ADMIN_PASSWORD=anim123456
     ```
-12. Zaznacz `anim123456` i wpisz **swoje własne hasło** (minimum 6 znaków)
+6. Zaznacz `anim123456` i wpisz **swoje własne hasło** (minimum 6 znaków)
     > Np. `DEFAULT_ADMIN_PASSWORD=MojeTajneHaslo123`
-13. Kliknij **"Plik"** → **"Zapisz"** (lub naciśnij **Ctrl+S**)
-14. Zamknij Notatnik
+7. Kliknij **"Plik"** → **"Zapisz"** (lub naciśnij **Ctrl+S**)
+8. Zamknij Notatnik
 
 ### ✅ Gotowe! Hasło skonfigurowane.
 
@@ -184,7 +178,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 ### Instrukcja:
 
 1. Otwórz folder z programem
-2. Znajdź plik **`dev.bat`** (lub `start.bat`)
+2. Znajdź plik **`start.bat`** (lub `dev.bat` — to to samo)
 3. Kliknij na niego **DWUKROTNIE**
 4. Pojawi się czarne okno — aplikacja się uruchamia
 5. **Poczekaj** aż zobaczysz w oknie:
@@ -213,7 +207,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 > **WAŻNE:** Za każdym razem gdy chcesz uruchomić aplikację:
 >
 > 1. Otwórz folder
-> 2. Kliknij 2x na `dev.bat`
+> 2. Kliknij 2x na `start.bat` (lub `dev.bat` — to to samo)
 > 3. Otwórz http://localhost:5173 w przeglądarce
 > 4. Gdy skończysz pracę, zamknij czarne okno
 
@@ -242,21 +236,21 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 
 #### Na NOWYM komputerze (przywróć dane):
 
-1. Wykonaj Kroki 1-4 z tej instrukcji (zainstaluj Node.js, pobierz program, skonfiguruj .env, uruchom install.bat)
-2. **Nie seeduj bazy** — nie uruchamiaj ponownie `install.bat`
+1. Wykonaj Kroki 1-4 z tej instrukcji (zainstaluj Node.js, pobierz program, skonfiguruj .env)
+2. **Uruchom `install.bat --skip-seed`** — dzięki fladze `--skip-seed` baza nie zostanie nadpisana przykładowymi danymi
 3. Skopiuj plik backupu (ze starego komputera) do folderu `data/backups/` na nowym komputerze
 4. Kliknij PRAWYM w pustym miejscu w folderze → **"Otwórz w terminalu"**
-5. Wpisz: `npm run backup:restore -- data/backups/backup_NAZWA_PLIKU.sqlite`
+5. Wpisz: `npm run restore data/backups/backup_NAZWA_PLIKU.sqlite`
     > Zamiast `backup_NAZWA_PLIKU.sqlite` wpisz rzeczywistą nazwę pliku
 6. Naciśnij Enter
 7. System zapyta: "Czy na pewno przywrócić backup?" — wpisz: `tak` i naciśnij Enter
 8. Zobaczysz: "Baza przywrócona z: ..."
-9. Uruchom aplikację (`dev.bat`) — wszystkie dane są już na miejscu
+9. Uruchom aplikację (`start.bat`) — wszystkie dane są już na miejscu
 
 ### ⚠️ WAŻNE PRZY PRZENOSZENIU:
 
 - **Wersja programu na starym i nowym komputerze powinna być taka sama** (sprawdź w pliku `VERSION`)
-- Jeśli wersje są różne, po przywróceniu bazy uruchom `install.bat` jeszcze raz (zaktualizuje schemat bazy)
+- Jeśli wersje są różne, po przywróceniu bazy uruchom `install.bat --skip-seed` jeszcze raz (zaktualizuje schemat bazy bez nadpisywania danych)
 - Po wykonaniu backupu na starym komputerze możesz bezpiecznie wyłączyć stary komputer
 
 ---
@@ -362,15 +356,15 @@ Jeśli całkowicie zablokowałeś system:
 
 ## 10. Ściągawka
 
-| Komenda / Plik                     | Kiedy używać                    | Opis                                                       |
-| ---------------------------------- | ------------------------------- | ---------------------------------------------------------- |
-| `install.bat`                      | **RAZ po pobraniu programu**    | Instaluje wszystkie biblioteki i przygotowuje bazę         |
-| `dev.bat`                          | **ZAWSZE gdy chcesz pracować**  | Uruchamia aplikację (tryb developerski)                    |
-| `start.bat`                        | **ZAMIAST dev.bat**             | To samo co dev.bat                                         |
-| `prod.bat`                         | **Do użytku produkcyjnego**     | Uruchamia w trybie produkcyjnym (szybszy, bez debugowania) |
-| `npm run backup`                   | **Regularnie (np. co tydzień)** | Tworzy kopię bezpieczeństwa bazy danych                    |
-| `npm run backup:restore -- <plik>` | **Przy przenoszeniu danych**    | Przywraca bazę z kopii bezpieczeństwa                      |
-| `build.bat`                        | **Przed wdrożeniem na serwer**  | Kompiluje program do wersji produkcyjnej                   |
+| Komenda / Plik           | Kiedy używać                    | Opis                                                                |
+| ------------------------ | ------------------------------- | ------------------------------------------------------------------- |
+| `install.bat`            | **RAZ po pobraniu programu**    | Instaluje biblioteki i przygotowuje bazę. `--skip-seed` pomija seed |
+| `start.bat`              | **ZAWSZE gdy chcesz pracować**  | Główne wejście: domyślnie dev, `--prod` tryb produkcyjny            |
+| `dev.bat`                | **ZAMIAST start.bat**           | Alias do `start.bat` (to samo)                                      |
+| `start.bat --prod`       | **Do użytku produkcyjnego**     | Tryb produkcyjny (szybszy, bez debugowania)                         |
+| `npm run backup`         | **Regularnie (np. co tydzień)** | Tworzy kopię bezpieczeństwa bazy danych                             |
+| `npm run restore <plik>` | **Przy przenoszeniu danych**    | Przywraca bazę z kopii bezpieczeństwa                               |
+| `build.bat`              | **Przed wdrożeniem na serwer**  | Kompiluje program do wersji produkcyjnej                            |
 
 ### Gdzie są pliki?
 

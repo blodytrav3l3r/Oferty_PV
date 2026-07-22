@@ -28,9 +28,9 @@
 
 | Pole                        | Opis                                                                                                                                                                                                                                                |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Co zrobić**               | Skopiować `.env.example` → `.env`, a następnie edytować `.env` i ustawić `DEFAULT_ADMIN_PASSWORD`.                                                                                                                                                  |
+| **Co zrobić**               | Edytować `.env` i ustawić `DEFAULT_ADMIN_PASSWORD`. Jeśli `.env` nie istnieje — `install.bat` automatycznie skopiuje `.env.example` → `.env`.                                                                                                       |
 | **Dlaczego ręczne**         | Hasło administratora to sekret — nie może być przechowywany w repozytorium ani generowany automatycznie (ryzyko bezpieczeństwa). Również inne ustawienia (Sentry DSN, port itp.) są opcjonalne, ale ich wartości muszą pochodzić od administratora. |
-| **Konsekwencja pominięcia** | Aplikacja uruchomi się, ale nie utworzy konta administratora (brak możliwości logowania). `install.bat` **nie** tworzy `.env` automatycznie. Skrypt `check-db.js` może przepuścić, ale endpoint logowania zwróci błąd.                              |
+| **Konsekwencja pominięcia** | Aplikacja uruchomi się, ale nie utworzy konta administratora (brak możliwości logowania). `install.bat` tworzy `.env` z `.env.example` automatycznie, ale bez edycji hasło pozostanie domyślne.                                                     |
 | **Weryfikacja**             | Plik `.env` istnieje i zawiera `DEFAULT_ADMIN_PASSWORD=...` (min. 6 znaków)                                                                                                                                                                         |
 
 ### 1.4 Ustawienie DEFAULT_ADMIN_PASSWORD
@@ -89,19 +89,19 @@
 
 ### 2.1 `install.bat` / `install.sh` — Instalacja środowiska
 
-| Pole                              | Opis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wyzwalacz**                     | Uruchomienie `.\install.bat` (Windows) lub `bash install.sh` (Linux) przez użytkownika.                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **Co robi wewnętrznie**           | 1. Sprawdza Node.js 20+ (`node --version`)\ 2. Sprawdza npm (`npm --version`)\ 3. Sprawdza Git (opcjonalnie, nie blokuje)\ 4. Weryfikuje strukturę katalogów (`src/`, `prisma/`)\ 5. Uruchamia `npm ci` (jeśli `package-lock.json` istnieje) lub `npm install`\ 6. Generuje Prisma Client (`npx prisma generate`)\ 7. Migruje schemat bazy (`npx prisma migrate deploy` z fallback `db push`)\ 8. Seed danych początkowych (`npx ts-node prisma/seed.ts`)\ 9. Typecheck (`npx tsc --noEmit`) |
-| **Weryfikacja przez użytkownika** | Komunikat `Instalacja zakonczona` na końcu. Brak czerwonych `[BŁAD]`.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| Pole                              | Opis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wyzwalacz**                     | Uruchomienie `.\install.bat` (Windows) lub `bash install.sh` (Linux) przez użytkownika. Flaga `--skip-seed` pomija seed danych (przydatne przy przenoszeniu bazy).                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| **Co robi wewnętrznie**           | 1. Sprawdza Node.js 20+ (`node --version`)\ 2. Sprawdza npm (`npm --version`)\ 3. Sprawdza Git (opcjonalnie, nie blokuje)\ 4. Kopiuje `.env.example` → `.env` jeśli brak (auto-konfiguracja)\ 5. Weryfikuje strukturę katalogów (`src/`, `public/`, `tests/`, `prisma/`)\ 6. Uruchamia `npm ci` (jeśli `package-lock.json` istnieje) lub `npm install`\ 7. Generuje Prisma Client (`npx prisma generate`)\ 8. Migruje schemat bazy (`npx prisma migrate deploy` z fallback `db push`)\ 9. Seed danych początkowych (`npx ts-node prisma/seed.ts`, chyba że `--skip-seed`)\ 10. Typecheck (`npx tsc --noEmit`) |
+| **Weryfikacja przez użytkownika** | Komunikat `Instalacja zakonczona` na końcu. Brak czerwonych `[BŁAD]`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
-### 2.2 `dev.bat` / `dev.sh` — Uruchomienie developerskie
+### 2.2 `dev.bat` — Alias do `start.bat --dev`
 
-| Pole                              | Opis                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wyzwalacz**                     | Uruchomienie `.\dev.bat` lub `bash dev.sh`.                                                                                                                                                                                                                                                                                                                                                                                           |
-| **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. Sprawdza `package.json`\ 3. Jeśli brak `node_modules` → `npm install` (auto-instalacja)\ 4. Jeśli brak Prisma Client → `npx prisma generate` (auto-generacja)\ 5. Sprawdza schemat DB przez `node scripts/check-db.js` — jeśli brak tabel → `npx prisma db push`\ 6. Sprawdza port 3000 (PowerShell `Get-NetTCPConnection`), pyta czy zabić proces\ 7. Uruchamia `npm run dev` (backed + frontend równolegle) |
-| **Weryfikacja przez użytkownika** | Aplikacja działa na `http://localhost:3000`. Backend: `http://localhost:3000/health` → `200 OK`.                                                                                                                                                                                                                                                                                                                                      |
+| Pole                              | Opis                                                                                             |
+| --------------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Wyzwalacz**                     | Uruchomienie `.\dev.bat`.                                                                        |
+| **Co robi wewnętrznie**           | Deleguje do `start.bat --dev` — cała logika znajduje się w `start.bat` (patrz sekcja 2.5).       |
+| **Weryfikacja przez użytkownika** | Aplikacja działa na `http://localhost:3000`. Backend: `http://localhost:3000/health` → `200 OK`. |
 
 ### 2.3 `build.bat` / `build.sh` — Budowanie produkcyjne
 
@@ -119,13 +119,13 @@
 | **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. Jeśli brak `dist/server.js` → uruchamia `build.bat` (auto-build)\ 3. Sprawdza port 3000, pyta czy zabić proces\ 4. Tworzy `data/` jeśli nie istnieje\ 5. Uruchamia `npm start` (`node dist/server.js`) |
 | **Weryfikacja przez użytkownika** | Aplikacja na `http://localhost:3000/health` → `200 OK`.                                                                                                                                                                        |
 
-### 2.5 `start.bat` — Uniwersalny starter
+### 2.5 `start.bat` — Główne wejście (dev/prod)
 
-| Pole                              | Opis                                                                                                                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wyzwalacz**                     | Uruchomienie `.\start.bat`.                                                                                                                                                             |
-| **Co robi wewnętrznie**           | Łączy logikę `dev.bat` + `install.bat`: sprawdza Node.js, auto-instaluje `node_modules`, auto-generuje Prisma Client, sprawdza schemat DB, sprawdza port 3000, uruchamia `npm run dev`. |
-| **Weryfikacja przez użytkownika** | Aplikacja na `http://localhost:3000`.                                                                                                                                                   |
+| Pole                              | Opis                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Wyzwalacz**                     | Uruchomienie `.\start.bat` (tryb dev, domyślnie) lub `.\start.bat --prod` (tryb produkcyjny).                                                                                                                                                                                                                                  |
+| **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. Auto-instaluje `node_modules` jeśli brak\ 3. Auto-generuje Prisma Client jeśli brak\ 4. Tworzy `data/` jeśli nie istnieje\ 5. Sprawdza schemat DB (`node scripts/check-db.js`)\ 6. Sprawdza port 3000 przez `netstat` — pyta czy zabić proces\ 7. Uruchamia `npm run dev` (dev) lub `npm start` (prod) |
+| **Weryfikacja przez użytkownika** | Tryb dev: Frontend `http://localhost:5173`, Backend `http://localhost:3000/health`. Tryb prod: Aplikacja na `http://localhost:3000`.                                                                                                                                                                                           |
 
 ### 2.6 Release (standard-version)
 
@@ -143,11 +143,11 @@
 | **Co robi wewnętrznie**           | 1. Sprawdza/ tworzy `data/backups/`\ 2. Wykonuje `VACUUM INTO` na SQLite — bezpieczny snapshot WAL-safe\ 3. Zapisuje plik `backup_YYYY-MM-DD_TIMESTAMP.sqlite`\ 4. Czyści stare backupy — zachowuje max 30 najnowszych |
 | **Weryfikacja przez użytkownika** | Komunikat `[Backup] Utworzono: data/backups/backup_...`. Plik backupu istnieje.                                                                                                                                        |
 
-### 2.8 Przywracanie backupu (`npm run backup:restore`)
+### 2.8 Przywracanie backupu (`npm run restore`)
 
 | Pole                              | Opis                                                                                                                                                                            |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wyzwalacz**                     | `npm run backup:restore -- data/backups/backup_*.sqlite`                                                                                                                        |
+| **Wyzwalacz**                     | `npm run restore data/backups/backup_*.sqlite`                                                                                                                                  |
 | **Co robi wewnętrznie**           | 1. Waliduje, czy plik backupu istnieje\ 2. Pyta o potwierdzenie `Czy na pewno przywrócić backup? (tak/nie)`\ 3. Kopiuje plik backupu na `data/app_database.sqlite` (nadpisuje!) |
 | **Weryfikacja przez użytkownika** | Komunikat `Baza przywrócona z: ...`                                                                                                                                             |
 
@@ -179,31 +179,30 @@ Tak → Czy masz istniejącą bazę danych?
        ├── Nie → [ŚCIEŻKA A: FRESH INSTALL]
        │        1. Zainstaluj Node.js 20+ LTS
        │        2. git clone (lub ZIP)
-       │        3. Skopiuj .env.example → .env, ustaw DEFAULT_ADMIN_PASSWORD
+       │        3. Edytuj .env, ustaw DEFAULT_ADMIN_PASSWORD (auto-kopiowany z .env.example)
        │        4. Uruchom install.bat
-       │        5. Uruchom dev.bat (lub prod.bat)
+       │        5. Uruchom start.bat (lub start.bat --prod)
        │        6. Zaloguj się admin / <hasło>
        │
        └── Tak → [ŚCIEŻKA B: MIGRACJA BAZY]
                 1. Zainstaluj Node.js 20+ LTS
                 2. git clone (lub ZIP)
-                3. Skopiuj .env.example → .env, ustaw DEFAULT_ADMIN_PASSWORD
-                4. Uruchom install.bat
-                5. ZATRZYMAJ serwer (jeśli działa)
-                6. Skopiuj backup z starego urządzenia na nowe
-                7. npm run backup:restore -- data/backups/backup_*.sqlite
-                8. Uruchom dev.bat (lub prod.bat)
-                9. Zaloguj się i zweryfikuj dane
+                3. Edytuj .env, ustaw DEFAULT_ADMIN_PASSWORD (auto-kopiowany)
+                4. Uruchom install.bat --skip-seed (pomija seed)
+                5. Skopiuj backup z starego urządzenia na nowe
+                6. npm run restore data/backups/backup_*.sqlite
+                7. Uruchom start.bat (lub start.bat --prod)
+                8. Zaloguj się i zweryfikuj dane
 
 Nie → To jest istniejąca instalacja → co chcesz zrobić?
        ├── Uruchomić aplikację?
-       │   ├── dev.bat (tryb developerski, hot-reload)
-       │   └── prod.bat (tryb produkcyjny, po buildzie)
+       │   ├── start.bat (tryb developerski, domyślnie)
+       │   └── start.bat --prod (tryb produkcyjny)
        │
        ├── Zaktualizować kod?
        │   ├── git pull
        │   ├── install.bat (lub npm install)
-       │   └── dev.bat / prod.bat
+       │   └── start.bat
        │
        ├── Zrobić backup?
        │   └── npm run backup
@@ -238,14 +237,14 @@ Chcesz uruchomić w Dockerze?
 ```
 Cel instalacji:
 ├── Development (praca nad kodem)
-│   ├── install.bat → dev.bat (hot-reload, backend + frontend)
+│   ├── install.bat → start.bat (hot-reload, backend + frontend)
 │   ├── Backend: http://localhost:3000
 │   ├── Frontend: http://localhost:5173 (Vite)
 │   └── Zmiany w kodzie → auto-restart backendu
 │
 ├── Lokalna produkcja (użytkowanie, nie kodowanie)
-│   ├── install.bat → build.bat → prod.bat
-│   └── Lub: install.bat → start.bat (robi wszystko auto)
+│   ├── install.bat → build.bat → start.bat --prod
+│   └── Lub: install.bat → start.bat (domyślnie dev)
 │
 └── Produkcja zdalna (Docker / VPS)
     ├── docker compose up --build -d
@@ -359,37 +358,39 @@ Cel instalacji:
                            │  └─ typecheck       │
                            └────────┬───────────┘
                                     │ potem
-                    ┌───────────────┼────────────────┐
-                    ▼               ▼                 ▼
-            ┌──────────┐   ┌─────────────┐   ┌─────────────────┐
-            │ dev.bat  │   │  prod.bat   │   │ docker-compose   │
-            │(hot-reload)│  │ (production)│   │ (konteneryzacja) │
-            └──────────┘   └─────────────┘   └─────────────────┘
-                                    │
-                    ┌───────────────┼────────────────┐
-                    ▼               ▼                 ▼
-            ┌──────────┐   ┌─────────────┐   ┌─────────────────┐
-            │npm run    │   │ npm run     │   │ Husky hooks     │
-            │backup     │   │ release     │   │(pre-commit/push)│
-            └──────────┘   └─────────────┘   └─────────────────┘
+                     ┌───────────────┼────────────────┐
+                     ▼               ▼                 ▼
+             ┌────────────┐   ┌──────────────┐   ┌─────────────────┐
+             │ start.bat  │   │ start.bat    │   │ docker-compose   │
+             │ (dev, dom.) │   │ --prod       │   │ (konteneryzacja) │
+             └────────────┘   └──────────────┘   └─────────────────┘
+                                     │
+                     ┌───────────────┼────────────────┐
+                     ▼               ▼                 ▼
+             ┌──────────┐   ┌─────────────┐   ┌─────────────────┐
+             │npm run    │   │ npm run     │   │ Husky hooks     │
+             │backup     │   │ release     │   │(pre-commit/push)│
+             └──────────┘   └─────────────┘   └─────────────────┘
 ```
 
-**Wszystkie skrypty startowe** (`dev.bat`, `prod.bat`, `start.bat`) są **idempotentne** — można je uruchomić wielokrotnie. Same uzupełnią brakujące elementy (`node_modules`, `generated/prisma`, migracje bazy).
+**Wszystkie skrypty startowe** (`start.bat`, `dev.bat` jako alias) są **idempotentne** — można je uruchomić wielokrotnie. Same uzupełnią brakujące elementy (`node_modules`, `generated/prisma`, migracje bazy).
+
+> `dev.bat` to alias do `start.bat --dev` — zachowany dla kompatybilności.
 
 ---
 
 ## 6. SZYBKI CHEAT SHEET
 
-| Sytuacja                  | Komenda / Akcja                                             | Automatyczne?                     |
-| ------------------------- | ----------------------------------------------------------- | --------------------------------- |
-| Nowa instalacja (Windows) | `.\install.bat` → `.\dev.bat`                               | Głównie TAK (poza Node.js + .env) |
-| Nowa instalacja (Linux)   | `bash install.sh` → `bash dev.sh`                           | Głównie TAK                       |
-| Migracja bazy z innego PC | `.\install.bat` → `npm run backup:restore -- backup.sqlite` | Częściowo                         |
-| Tylko uruchomienie (dev)  | `.\dev.bat`                                                 | TAK (auto-naprawia braki)         |
-| Tylko uruchomienie (prod) | `.\prod.bat`                                                | TAK                               |
-| Backup ręczny             | `npm run backup`                                            | TAK                               |
-| Backup automatyczny       | `npm run backup:install-cron` (jako Admin)                  | Ręczna instalacja, potem auto     |
-| Przywrócenie backupu      | `npm run backup:restore -- <plik>`                          | TAK (z potwierdzeniem)            |
-| Release nowej wersji      | `npm run release:patch` → `git push --follow-tags`          | TAK (bump + changelog + tag)      |
-| Docker                    | `docker compose up --build -d`                              | TAK (wewnątrz kontenera)          |
-| Deploy Docker             | docker compose up --build -d                                | TAK (wewnątrz kontenera)          |
+| Sytuacja                  | Komenda / Akcja                                               | Automatyczne?                     |
+| ------------------------- | ------------------------------------------------------------- | --------------------------------- |
+| Nowa instalacja (Windows) | `.\install.bat` → `.\start.bat`                               | Głównie TAK (poza Node.js + .env) |
+| Nowa instalacja (Linux)   | `bash install.sh` → `bash start.sh`                           | Głównie TAK                       |
+| Migracja bazy z innego PC | `.\install.bat --skip-seed` → `npm run restore backup.sqlite` | Częściowo                         |
+| Tylko uruchomienie (dev)  | `.\start.bat` (lub `.\dev.bat` — alias)                       | TAK (auto-naprawia braki)         |
+| Tylko uruchomienie (prod) | `.\start.bat --prod` (lub `.\prod.bat`)                       | TAK                               |
+| Backup ręczny             | `npm run backup`                                              | TAK                               |
+| Backup automatyczny       | `npm run backup:install-cron` (jako Admin)                    | Ręczna instalacja, potem auto     |
+| Przywrócenie backupu      | `npm run restore <plik>`                                      | TAK (z potwierdzeniem)            |
+| Release nowej wersji      | `npm run release:patch` → `git push --follow-tags`            | TAK (bump + changelog + tag)      |
+| Docker                    | `docker compose up --build -d`                                | TAK (wewnątrz kontenera)          |
+| Deploy Docker             | docker compose up --build -d                                  | TAK (wewnątrz kontenera)          |

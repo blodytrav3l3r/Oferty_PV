@@ -24,10 +24,10 @@ npm run backup:uninstall-cron  # Usuwa zadanie
 ### Przywrócenie z backupu (zalecane)
 
 ```bash
-npm run backup:restore -- data/backups/backup_2026-06-30_*.sqlite
+npm run restore data/backups/backup_2026-06-30_*.sqlite
 ```
 
-Skrypt weryfikuje wersję bazy (`PRAGMA user_version`) przed nadpisaniem.
+Skrypt pyta o potwierdzenie przed nadpisaniem bieżącej bazy.
 
 ### Ręczne przywrócenie
 
@@ -41,11 +41,16 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 
 1. Na starym urządzeniu: `npm run backup`
 2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie (pendrive, SCP, chmura)
-3. Na nowym urządzeniu po standardowej instalacji (pomiń seed):
+3. Na nowym urządzeniu wykonaj instalację z pominięciem seedowania:
     ```bash
-    npm run backup:restore -- data/backups/backup_*.sqlite
+    .\install.bat --skip-seed   # Windows
+    bash install.sh --skip-seed  # Linux
     ```
-4. Jeśli schemat bazy różni się między wersjami:
+4. Przywróć bazę z backupu:
+    ```bash
+    npm run restore data/backups/backup_*.sqlite
+    ```
+5. Jeśli schemat bazy różni się między wersjami:
     ```bash
     npx prisma db push --skip-generate
     ```
