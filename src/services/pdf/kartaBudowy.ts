@@ -149,9 +149,7 @@ export async function generateKartaBudowyPDF(orderId: string): Promise<Buffer> {
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
-        const raw = fs.readFileSync(jsonPath, 'utf-8');
-        const products: any[] = JSON.parse(raw);
+        const products = await prisma.productsStudnieDefault.findMany();
         for (const p of products) {
             allProducts.set(p.id, {
                 componentType: p.componentType || '',

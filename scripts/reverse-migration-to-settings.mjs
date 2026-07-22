@@ -78,49 +78,63 @@ async function reverseStudnie(dryRun) {
     return { section: 'Studnie', key: settingsKey, count: items.length, hash, dryRun };
 }
 
+const PRECO_RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
+
 async function reversePreco(dryRun) {
     const konfig = await prisma.precoKonfig.findMany({ orderBy: { id: 'asc' } });
-    const kinety = await prisma.precoKinety.findMany({ orderBy: { order: 'asc' } });
-    const zakresy = await prisma.precoZakresy.findMany({ orderBy: { order: 'asc' } });
+    const kinetyRows = await prisma.precoKinety.findMany({ orderBy: { order: 'asc' } });
+    const zakresyRows = await prisma.precoZakresy.findMany({ orderBy: { order: 'asc' } });
 
-    // Rekonstrukcja legacy formatu PRECO (zagnie�d�ony obiekt per DN)
+    // Rekonstrukcja legacy formatu: per DN
     const legacy = {};
 
-    // Konfig do p�askich kluczy
+    // Konfig: klucz "1000" z value JSON -> scalars pod obiekt DN
     for (const k of konfig) {
-        legacy[k.key] = k.value;
+        const dn = k.key;
+        if (!legacy[dn]) legacy[dn] = {};
+        try {
+            const parsed = JSON.parse(k.value);
+            Object.assign(legacy[dn], parsed);
+        } catch {
+            legacy[dn][k.key] = k.value;
+        }
     }
 
-    // Grupuj kinety per DN
-    const kinetyByDn = {};
-    for (const k of kinety) {
-        const dn = k.dn;
-        if (!kinetyByDn[dn]) kinetyByDn[dn] = [];
-        kinetyByDn[dn].push({ dn: k.dn, height: k.height, cena: k.cena });
+    // Kinety: grouped by wellDn
+    for (const k of kinetyRows) {
+        const wellDn = k.wellDn ?? k.dn;
+        const dnKey = String(wellDn);
+        if (!legacy[dnKey]) legacy[dnKey] = {};
+        if (!legacy[dnKey].kinety) legacy[dnKey].kinety = [];
+        legacy[dnKey].kinety.push({
+            dn: k.dn,
+            prosta: k.height,
+            dodWlot: k.cena
+        });
     }
 
-    // Zakresy - wsp�lne dla wszystkich DN
-    const zakresyArr = zakresy.map((z) => ({
-        label: z.label,
-        min: z.min,
-        max: z.max
-    }));
-
-    // Po��cz w legacy format
-    for (const [dn, kinList] of Object.entries(kinetyByDn)) {
-        legacy[dn] = {
-            kinety: kinList,
-            zakresy: zakresyArr
-        };
+    // Range types: grouped by wellDn
+    const rangeByDn = {};
+    for (const z of zakresyRows) {
+        const dnKey = String(z.wellDn);
+        if (!rangeByDn[dnKey]) rangeByDn[dnKey] = {};
+        if (!rangeByDn[dnKey][z.label]) rangeByDn[dnKey][z.label] = [];
+        rangeByDn[dnKey][z.label].push({
+            min: z.min,
+            max: z.max,
+            grupy: JSON.parse(z.grupy || '{}')
+        });
+    }
+    for (const dn of Object.keys(legacy)) {
+        const perDn = rangeByDn[dn] || {};
+        for (const rt of PRECO_RANGE_TYPES) {
+            if (perDn[rt]) {
+                legacy[dn][rt] = perDn[rt];
+            }
+        }
     }
 
-    // Konfig specyficzny per DN (je�li istnieje w legacy)
-    const legacyConfigKeys = new Set(['precoInsertTop', 'precoFullHeight', 'precoInsertDn']);
-    for (const k of konfig) {
-        legacy[k.key] = k.value;
-    }
-
-    const value = JSON.stringify(legacy);
+    const value = JSON.stringify([legacy]);
     const hash = sha256(legacy);
 
     if (!dryRun) {
@@ -134,7 +148,7 @@ async function reversePreco(dryRun) {
     return {
         section: 'PRECO',
         key: SETTINGS_KEY_MAP.preco,
-        count: kinety.length + zakresy.length + konfig.length,
+        count: kinetyRows.length + zakresyRows.length + konfig.length,
         hash,
         dryRun
     };

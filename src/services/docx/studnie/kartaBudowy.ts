@@ -12,8 +12,6 @@ import {
     BorderStyle
 } from 'docx';
 import { logger } from '../../../utils/logger';
-import path from 'path';
-import fs from 'fs';
 import prisma from '../../../prismaClient';
 import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../../types/kartaBudowy';
 import { textCell } from '../helpers';
@@ -349,9 +347,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
         { componentType: string; category: string; dn: number | string; height: number }
     >();
     try {
-        const jsonPath = path.join(process.cwd(), 'data', 'seed_studnie.json');
-        const raw = fs.readFileSync(jsonPath, 'utf-8');
-        const products: any[] = JSON.parse(raw);
+        const products = await prisma.productsStudnieDefault.findMany();
         for (const p of products) {
             allProducts.set(p.id, {
                 componentType: p.componentType || '',

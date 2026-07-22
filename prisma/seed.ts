@@ -50,6 +50,7 @@ async function main() {
 
     console.log('Seed: zapis do bazy...');
 
+    let konfigCount = 0;
     let kinetyCount = 0;
     let zakresyCount = 0;
 
@@ -127,12 +128,14 @@ async function main() {
                 cenaPelnaWysMB: dnCfg.cenaPelnaWysMB,
                 cenaDnoOsadnika: dnCfg.cenaDnoOsadnika
             };
-            for (const [key, val] of Object.entries(scalars)) {
-                const id = `konfig_${dnStr}_${key}`;
-                konfigRows.push({ id, key: `${dnStr}:${key}`, value: String(val) });
-            }
+            konfigRows.push({
+                id: `konfig_${dnStr}`,
+                key: dnStr,
+                value: JSON.stringify(scalars)
+            });
         }
         if (konfigRows.length > 0) {
+            konfigCount = konfigRows.length;
             await tx.precoKonfig.createMany({ data: konfigRows });
             await tx.precoKonfigDefault.createMany({ data: konfigRows });
         }
@@ -143,6 +146,7 @@ async function main() {
             id: string;
             order: number;
             dn: number;
+            wellDn: number;
             height: number;
             cena: number;
         }> = [];
@@ -155,6 +159,7 @@ async function main() {
                     id: `kineta_${kinetaOrder}`,
                     order: kinetaOrder,
                     dn: k.dn,
+                    wellDn: Number(dnStr),
                     height: k.prosta,
                     cena: k.dodWlot
                 });
@@ -174,6 +179,8 @@ async function main() {
             label: string;
             min: number;
             max: number;
+            grupy: string;
+            wellDn: number;
         }> = [];
         for (const dnStr of DN_SIZES) {
             const dnCfg = precoData[dnStr];
@@ -182,16 +189,16 @@ async function main() {
                 const entries = dnCfg[typ];
                 if (!entries) continue;
                 for (const entry of entries) {
-                    for (const grupaDn of Object.keys(entry.grupy)) {
-                        zakresOrder++;
-                        zakresyRows.push({
-                            id: `zakres_${zakresOrder}`,
-                            order: zakresOrder,
-                            label: `${typ}:${grupaDn}`,
-                            min: entry.min,
-                            max: entry.max
-                        });
-                    }
+                    zakresOrder++;
+                    zakresyRows.push({
+                        id: `zakres_${zakresOrder}`,
+                        order: zakresOrder,
+                        label: typ,
+                        min: entry.min,
+                        max: entry.max,
+                        grupy: JSON.stringify(entry.grupy || {}),
+                        wellDn: Number(dnStr)
+                    });
                 }
             }
         }
@@ -205,7 +212,7 @@ async function main() {
     console.log(`Seed: zakonczono. Wgrano:`);
     console.log(`  ProductsRury / ProductsRuryDefault: ${ruryData.length}`);
     console.log(`  ProductsStudnie / ProductsStudnieDefault: ${studnieData.length}`);
-    console.log(`  PrecoKonfig / PrecoKonfigDefault: ${DN_SIZES.length * 3}`);
+    console.log(`  PrecoKonfig / PrecoKonfigDefault: ${konfigCount}`);
     console.log(`  PrecoKinety / PrecoKinetyDefault: ${kinetyCount}`);
     console.log(`  PrecoZakresy / PrecoZakresyDefault: ${zakresyCount}`);
 }

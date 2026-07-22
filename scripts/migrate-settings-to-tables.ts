@@ -70,6 +70,8 @@ async function readSettings(): Promise<Record<string, unknown>> {
     return map;
 }
 
+const PRECO_RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
+
 function parsePreco(raw: unknown): {
     konfig: Record<string, string>[];
     kinety: Record<string, unknown>[];
@@ -84,44 +86,56 @@ function parsePreco(raw: unknown): {
     const kinety: Record<string, unknown>[] = [];
     const zakresy: Record<string, unknown>[] = [];
 
-    const seen = new Set<string>();
     for (const [key, val] of Object.entries(obj)) {
-        // Konfig
-        if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') {
-            konfig.push({ id: `cfg_${key}`, key, value: String(val) });
-            continue;
-        }
         if (!val || typeof val !== 'object') continue;
 
-        // Zakresy
-        if (Array.isArray(val.zakresy)) {
-            for (const z of val.zakresy) {
-                const zId = `zakr_${key}_${z.min}_${z.max}`;
-                if (seen.has(zId)) continue;
-                seen.add(zId);
+        const dnEntry = val as Record<string, any>;
+
+        // Konfig — one row per DN with JSON value (skrzynkaWlazowa, cenaPelnaWysMB, cenaDnoOsadnika)
+        const scalars: Record<string, number> = {};
+        for (const sk of ['skrzynkaWlazowa', 'cenaPelnaWysMB', 'cenaDnoOsadnika']) {
+            if (typeof dnEntry[sk] === 'number') scalars[sk] = dnEntry[sk];
+        }
+        if (Object.keys(scalars).length > 0) {
+            konfig.push({
+                id: `konfig_${key}`,
+                key: String(key),
+                value: JSON.stringify(scalars)
+            });
+        }
+
+        // Zakresy per range type
+        for (const rt of PRECO_RANGE_TYPES) {
+            const arr = dnEntry[rt];
+            if (!Array.isArray(arr)) continue;
+            for (let i = 0; i < arr.length; i++) {
+                const z = arr[i];
+                const zId = `zakr_${key}_${rt}_${i}`;
                 zakresy.push({
                     id: zId,
                     order: zakresy.length,
-                    label: z.label ?? '',
+                    label: rt,
                     min: z.min ?? 0,
-                    max: z.max ?? 0
+                    max: z.max ?? 0,
+                    grupy: JSON.stringify(z.grupy ?? {}),
+                    wellDn: Number(key)
                 });
             }
         }
 
         // Kinety
-        if (Array.isArray(val.kinety)) {
-            for (const k of val.kinety) {
-                const kDn = k.dn ?? parseInt(key) ?? 0;
-                const kId = `kin_${key}_${kDn}_${k.height ?? 0}`;
-                if (seen.has(kId)) continue;
-                seen.add(kId);
+        if (Array.isArray(dnEntry.kinety)) {
+            for (let i = 0; i < dnEntry.kinety.length; i++) {
+                const k = dnEntry.kinety[i];
+                const kDn = k.dn ?? 0;
+                const kId = `kin_${key}_${i}`;
                 kinety.push({
                     id: kId,
                     order: kinety.length,
                     dn: kDn,
-                    height: k.height ?? 0,
-                    cena: k.cena ?? 0
+                    wellDn: Number(key),
+                    height: k.prosta ?? 0,
+                    cena: k.dodWlot ?? 0
                 });
             }
         }

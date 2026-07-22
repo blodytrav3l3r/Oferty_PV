@@ -233,8 +233,11 @@ const SpaRouter = (() => {
             try {
                 const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
                 // Ukryj nagłówek w iframe
-                const header = iframeDoc.querySelector('.header, header.header');
-                if (header) header.style.display = 'none';
+                const isolationStyle = iframeDoc.createElement('style');
+                isolationStyle.id = 'spa-iframe-isolation-style';
+                isolationStyle.textContent =
+                    'header.header, .header.header { display: none !important; }';
+                iframeDoc.head.appendChild(isolationStyle);
 
                 // Dopasuj główną treść, aby nie miała przesunięcia nagłówka
                 const main = iframeDoc.querySelector('main.main');

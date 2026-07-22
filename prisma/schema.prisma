@@ -540,16 +540,19 @@ model PrecoKinety {
   id        String @id
   order     Int
   dn        Int
+  wellDn    Int
   height    Int
   cena      Float
 }
 
 model PrecoZakresy {
-  id        String @id
+  id        String  @id
   order     Int
   label     String
   min       Int
   max       Int
+  grupy     String
+  wellDn    Int
 }
 
 model PrecoKonfigDefault {
@@ -562,16 +565,19 @@ model PrecoKinetyDefault {
   id        String @id
   order     Int
   dn        Int
+  wellDn    Int
   height    Int
   cena      Float
 }
 
 model PrecoZakresyDefault {
-  id        String @id
+  id        String  @id
   order     Int
   label     String
   min       Int
   max       Int
+  grupy     String
+  wellDn    Int
 }
 
 // =============================================================================

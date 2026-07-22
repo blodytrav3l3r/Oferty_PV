@@ -52,17 +52,23 @@ async function formatPrecoResponse(konfigTable: any, kinetyTable: any, zakresyTa
     const entry: Record<string, unknown> = {};
 
     for (const row of konfigRows) {
+        const wellDn = Number(row.key);
         const parsed = JSON.parse(row.value);
         const kinety = kinetyRows
-            .filter((k: any) => k.dn === Number(row.key))
-            .map((k: any) => ({ order: k.order, height: k.height, cena: k.cena }));
-        entry[row.key] = { ...parsed, kinety };
-    }
-
-    for (const label of RANGE_TYPES) {
-        entry[label] = zakresyRows
-            .filter((z: any) => z.label === label)
-            .map((z: any) => ({ order: z.order, min: z.min, max: z.max }));
+            .filter((k: any) => k.wellDn === wellDn)
+            .map((k: any) => ({ dn: k.dn, prosta: k.height, dodWlot: k.cena, order: k.order }));
+        const ranges: Record<string, unknown> = {};
+        for (const label of RANGE_TYPES) {
+            ranges[label] = zakresyRows
+                .filter((z: any) => z.label === label && z.wellDn === wellDn)
+                .map((z: any) => ({
+                    order: z.order,
+                    min: z.min,
+                    max: z.max,
+                    grupy: JSON.parse(z.grupy)
+                }));
+        }
+        entry[row.key] = { ...parsed, kinety, ...ranges };
     }
 
     return { data: [entry] };
@@ -77,10 +83,23 @@ async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean
     const zakresyTable: any = isDefault ? prisma.precoZakresyDefault : prisma.precoZakresy;
 
     const konfigRows: { id: string; key: string; value: string }[] = [];
-    const kinetyRows: { id: string; order: number; dn: number; height: number; cena: number }[] =
-        [];
-    const zakresyRows: { id: string; order: number; label: string; min: number; max: number }[] =
-        [];
+    const kinetyRows: {
+        id: string;
+        order: number;
+        dn: number;
+        wellDn: number;
+        height: number;
+        cena: number;
+    }[] = [];
+    const zakresyRows: {
+        id: string;
+        order: number;
+        label: string;
+        min: number;
+        max: number;
+        grupy: string;
+        wellDn: number;
+    }[] = [];
     let kinetyIdx = 0;
     let zakresIdx = 0;
 
@@ -105,29 +124,32 @@ async function flattenAndSave(input: Record<string, unknown>, isDefault: boolean
                     kinetyRows.push({
                         id: `preco_kinety_${key}_${kinetyIdx}`,
                         order: (kin.order as number) ?? kinetyIdx,
-                        dn,
-                        height: kin.height as number,
-                        cena: kin.cena as number
+                        dn: (kin.dn ?? 0) as number,
+                        wellDn: dn,
+                        height: (kin.prosta ?? kin.height) as number,
+                        cena: (kin.dodWlot ?? kin.cena) as number
                     });
                     kinetyIdx++;
                 }
             }
-        }
-    }
-
-    for (const label of RANGE_TYPES) {
-        const arr = input[label];
-        if (Array.isArray(arr)) {
-            for (const item of arr) {
-                const it = item as Record<string, unknown>;
-                zakresyRows.push({
-                    id: `preco_zakres_${label}_${zakresIdx}`,
-                    order: (it.order as number) ?? zakresIdx,
-                    label,
-                    min: it.min as number,
-                    max: it.max as number
-                });
-                zakresIdx++;
+            for (const label of RANGE_TYPES) {
+                const arr = obj[label];
+                if (Array.isArray(arr)) {
+                    for (const item of arr) {
+                        const it = item as Record<string, unknown>;
+                        const grupy = (it.grupy as Record<string, unknown>) ?? {};
+                        zakresyRows.push({
+                            id: `preco_zakres_${label}_${zakresIdx}`,
+                            order: (it.order as number) ?? zakresIdx,
+                            label,
+                            min: it.min as number,
+                            max: it.max as number,
+                            grupy: JSON.stringify(grupy),
+                            wellDn: dn
+                        });
+                        zakresIdx++;
+                    }
+                }
             }
         }
     }
