@@ -134,47 +134,66 @@ export interface RawOfferRow {
     clientNumber: string | null;
 }
 
-export function mapOfferRow(row: RawOfferRow): Record<string, unknown> {
-    const offer: Record<string, unknown> = { ...row };
+export interface SearchOfferRowMapped {
+    id: string;
+    userId: string | null;
+    clientId: string | null;
+    state: string | null;
+    createdAt: string | null;
+    updatedAt: string | null;
+    offer_number: string | null;
+    data: Record<string, unknown>;
+    history: unknown[];
+    clientName: string;
+    investName: string;
+    investAddress: string | null;
+    clientNip: string;
+    clientNumber: string | null;
+    type: 'offer' | 'studnia_oferta';
+    _orderCount: number;
+    transportCost: number | null;
+    number: string;
+    [key: string]: unknown;
+}
 
-    if (typeof offer.data === 'string') {
+export function mapOfferRow(row: RawOfferRow): SearchOfferRowMapped {
+    const offer = { ...row } as unknown as SearchOfferRowMapped;
+    offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
+    offer.number = row.offer_number || '';
+    offer._orderCount = Number(row._orderCount);
+
+    if (typeof row.data === 'string') {
         try {
-            offer.data = JSON.parse(offer.data as string);
+            offer.data = JSON.parse(row.data) as Record<string, unknown>;
         } catch {
             offer.data = {};
         }
+    } else {
+        offer.data = {};
     }
-    if (typeof offer.history === 'string') {
+
+    if (typeof row.history === 'string') {
         try {
-            offer.history = JSON.parse(offer.history as string);
+            offer.history = JSON.parse(row.history) as unknown[];
         } catch {
             offer.history = [];
         }
+    } else {
+        offer.history = [];
     }
 
-    // Kolumny clientName/investName są teraz wypełniane przy zapisie
-    // Fallback do JSON data dla legacy rekordów
     if (!offer.clientName && !offer.investName) {
-        const dataObj = offer.data as Record<string, unknown> | undefined;
+        const dataObj = offer.data;
         if (dataObj && typeof dataObj === 'object') {
-            offer.clientName = dataObj.clientName || '';
-            offer.investName = dataObj.investName || '';
-            offer.clientNip = dataObj.clientNip || '';
+            offer.clientName = (dataObj.clientName as string) || '';
+            offer.investName = (dataObj.investName as string) || '';
+            offer.clientNip = (dataObj.clientNip as string) || '';
         }
     }
 
     offer.clientName = offer.clientName || '';
     offer.investName = offer.investName || '';
     offer.clientNip = offer.clientNip || '';
-
-    offer.type = row._type === 'studnie' ? 'studnia_oferta' : 'offer';
-    delete offer._type;
-
-    if (typeof offer._orderCount === 'bigint') {
-        offer._orderCount = Number(offer._orderCount);
-    }
-
-    offer.number = offer.offer_number || '';
 
     return offer;
 }
