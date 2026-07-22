@@ -28,7 +28,7 @@ Aplikacja jest zbudowana z podziałem na backend i frontend (SPA oparte na ifram
 - **Frontend**: Czysty Vanilla JS (bez frameworków SPA), Vite jako dev server (`build:frontend`). Kod modułów znajduje się w `public/js/rury/` oraz `public/js/studnie/`.
 - **SPA (Single Page Application)**: Plik `app.html` jest jedynym punktem wejścia (entry point). Moduły (`studnie.html`, `rury.html`) są ładowane jako iframe wewnątrz `app.html`.
 
-- **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z kompilacji `tsc` oraz sprawdzania `eslint`.
+- **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z kompilacji `tsc`, ale **są sprawdzane przez ESLint** (z osobnym zestawem reguł dla przeglądarki w `eslint.config.mjs`).
 
 ### Decyzje Architektoniczne (ADR)
 
@@ -106,7 +106,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
         - Generowanie `CHANGELOG.md`
         - Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`
     4. Wyślij tag na repozytorium zdalne: `git push --follow-tags`.
-- **Nigdy nie taguj gita ręcznie!** Wszystko obsługuje `npm run release`. Po zmianie wersji zrestartuj backend (`npx ts-node-dev ./server.ts`).
+- **Nigdy nie taguj gita ręcznie!** Wszystko obsługuje `npm run release`. Po zmianie wersji zrestartuj backend (`npm run dev:backend` lub `npm start` w produkcji).
 - **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
 - **Pre-push validation**: Husky `pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji) oraz `typecheck` + testy.
 
@@ -119,7 +119,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 ### Formaty i Styl Kodowania
 
 - Formatowanie: używaj Prettier (pojedyncze cudzysłowy `'`, zawsze średniki `;`, brak tabulatorów - wcięcia spacjami).
-- Kod frontendowy w `public/js/` **nie** jest sprawdzany przez lintery ani TypeScript. Weryfikuj go ręcznie i za pomocą komendy `node -c <nazwa_pliku>` w celu sprawdzenia składni.
+- Kod frontendowy w `public/js/` **nie jest sprawdzany przez TypeScript**, ale jest sprawdzany przez ESLint (z osobnym zestawem reguł w `eslint.config.mjs`). Weryfikuj składnię również ręcznie za pomocą komendy `node -c <nazwa_pliku>`.
 - Klasyczne zmienne globalne: wszystkie globalne helpery na frontendzie rejestruj jawnie na obiekcie `window` (np. na końcu pliku: `window.myHelper = myHelper;`).
 - Po każdym dynamicznym wstrzyknięciu kodu HTML zawierającego ikony Lucide (atrybuty `data-lucide`) wywołaj funkcję inicjalizującą: `lucide.createIcons({root: container})`.
 - Zapobieganie XSS: Przy interpolacji ciągów znaków do `innerHTML` zawsze używaj funkcji `escapeHtml(str)`.
@@ -213,19 +213,88 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 
 Podczas pracy z projektem korzystaj z poniższych komend:
 
-| Polecenie                    | Opis działania                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------- |
-| `npm run dev:backend`        | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev).           |
-| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                        |
-| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych (jeśli są skonfigurowane).                  |
-| `npm run test:quick`         | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
-| `npm run test:alignment`     | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
-| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (tylko w katalogu `src/`).           |
-| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                   |
-| `npm run version:check`      | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`.   |
-| `npm run release:patch`      | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                    |
-| `npm run release:minor`      | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                        |
-| `npm run release:major`      | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                         |
+### Dewelopment i build
+
+| Polecenie                | Opis działania                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------- |
+| `npm run dev`            | Uruchamia backend + frontend równolegle (concurrently).                           |
+| `npm run dev:backend`    | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev). |
+| `npm run dev:frontend`   | Uruchamia Vite dev server dla frontendu.                                          |
+| `npm run build`          | Kompilacja TypeScript backendu.                                                   |
+| `npm run build:frontend` | Budowa frontendu przez Vite.                                                      |
+
+### Walidacja i jakość kodu
+
+| Polecenie                    | Opis działania                                                            |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.      |
+| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych.                          |
+| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (katalog `src/`).  |
+| `npm run lint:frontend`      | Sprawdza poprawność kodu frontendowego w `public/js/`.                    |
+| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier. |
+| `npm run format:check`       | Sprawdza formatowanie bez zapisywania.                                    |
+| `npm run validate`           | Pełna walidacja: typecheck + lint + testy dymne.                          |
+
+### Testy
+
+| Polecenie                | Opis działania                                                                              |
+| ------------------------ | ------------------------------------------------------------------------------------------- |
+| `npm test`               | Uruchamia wszystkie testy (Jest z pokryciem).                                               |
+| `npm run test:quick`     | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
+| `npm run test:watch`     | Uruchamia testy w trybie watch.                                                             |
+| `npm run test:alignment` | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
+
+### Baza danych
+
+| Polecenie                 | Opis działania                         |
+| ------------------------- | -------------------------------------- |
+| `npm run prisma:generate` | Generuje klienta Prisma.               |
+| `npm run prisma:migrate`  | Tworzy nową migrację (dev).            |
+| `npm run prisma:deploy`   | Zastosowuje migracje w produkcji.      |
+| `npm run prisma:seed`     | Zasiewa dane początkowe.               |
+| `npm run prisma:studio`   | Otwiera Prisma Studio (GUI bazy).      |
+| `npm run prisma:reset`    | Resetuje bazę danych (utrata danych!). |
+| `npm run prisma:status`   | Sprawdza status migracji.              |
+
+### Backup i przenoszenie bazy
+
+| Polecenie                       | Opis działania                             |
+| ------------------------------- | ------------------------------------------ |
+| `npm run backup`                | Wykonuje backup bazy SQLite (VACUUM INTO). |
+| `npm run backup:install-cron`   | Instaluje cron backupu (Windows).          |
+| `npm run backup:uninstall-cron` | Odinstalowuje cron backupu (Windows).      |
+
+### Wersjonowanie i release
+
+| Polecenie               | Opis działania                                                                            |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run version:check` | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`. |
+| `npm run version:patch` | Podbija wersję patch.                                                                     |
+| `npm run version:minor` | Podbija wersję minor.                                                                     |
+| `npm run version:major` | Podbija wersję major.                                                                     |
+| `npm run release`       | Automatyczny release (dobór patch/minor/major na bazie commitów).                         |
+| `npm run release:patch` | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                  |
+| `npm run release:minor` | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                      |
+| `npm run release:major` | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                       |
+| `npm run release:dry`   | Podgląd changeloga bez zapisywania.                                                       |
+| `npm run release:first` | Pierwszy release (pomija semver).                                                         |
+
+### Kodowanie
+
+| Polecenie                | Opis działania                                             |
+| ------------------------ | ---------------------------------------------------------- |
+| `npm run encoding:check` | Sprawdza kodowanie plików (UTF-8 bez BOM, ASCII dla .bat). |
+| `npm run encoding:fix`   | Naprawia kodowanie plików.                                 |
+
+### Skills (narzędzia agentów AI)
+
+| Polecenie                 | Opis działania               |
+| ------------------------- | ---------------------------- |
+| `npm run skills:build`    | Oblicza koszt budowy skilli. |
+| `npm run skills:stats`    | Statystyki skilli.           |
+| `npm run skills:validate` | Walidacja manifestów skilli. |
+| `npm run skills:cost`     | Koszt tokenów skilli.        |
+| `npm run skills:deps`     | Zależności między skillami.  |
 
 ---
 
@@ -242,6 +311,7 @@ Wszystkie plany, taski, implementation plany i dokumenty planistyczne (`.md`) mu
 Model dla subagentów (`architect`, `planner`, `code-reviewer`, `build-error-resolver`, `doc-updater` itd.) konfiguruje się w `.opencode/opencode.json` w sekcji `agent.{type}.model`. **Wymaga restartu opencode** — zmiany nie są odczytywane w trakcie trwającej sesji.
 
 **Przykład:**
+
 ```json
 "architect": {
     "description": "System design and scalability specialist",
@@ -256,6 +326,7 @@ Model dla subagentów (`architect`, `planner`, `code-reviewer`, `build-error-res
 ### Workaround — gdybyś nie mógł zmienić configu
 
 Użyj `general` z precyzyjnym promptem:
+
 ```
 task(subagent_type: "general", prompt: "Jesteś architektem. Przeanalizuj...")
 ```

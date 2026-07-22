@@ -124,6 +124,8 @@ npm run build
 
 Aplikacja będzie dostępna pod adresem: **http://localhost:10000**
 
+> **Uwaga (Docker):** Przy uruchomieniu przez `docker compose up --build -d` aplikacja domyślnie nasłuchuje na porcie **10000** (skonfigurowanym w `.env`). W razie potrzeby zmień mapowanie portów w `docker-compose.yml`.
+
 #### 5. Pierwsze logowanie
 
 1. Otwórz przeglądarkę i wejdź na **http://localhost:10000**
@@ -174,7 +176,7 @@ Aplikacja: **http://TWOJ_ADRES_IP:10000**
 docker compose up --build -d
 ```
 
-Aplikacja: **http://localhost:3000**
+Aplikacja: **http://localhost:10000** (port zgodny z konfiguracją w `.env`)
 
 ---
 
@@ -460,17 +462,18 @@ Po uruchomieniu serwera dokumentacja Swagger/OpenAPI dostępna jest pod adresem:
 
 ---
 
-## AI/ML Pipeline (wersja 1.5.0+)
+## AI/ML Pipeline
 
 System zawiera zintegrowany pipeline uczenia maszynowego do rankowania rozwiązań:
 
 - **Model:** Logistic Regression w czystym TypeScript (bez zależności zewnętrznych)
 - **Dual-ranking:** `Final = 0.6 × Technical + 0.4 × AI × 100` z 5% exploracją
+- **Learning Engine:** Zbieranie telemetrii, Knowledge Base, Preference Engine, Pattern Detector
 - **Trenowanie:** Cron co 15 minut (`TrainingPipeline`)
 - **Samoocena:** Cron co 24h (`SelfEvaluation`)
 - **Forgetting curve:** Wykładniczy zanik λ=0.01 (~69 dni półtrwania dla nieużywanych danych)
 - **Auto-rollback:** Gdy ROC-AUC < 0.65
-- **Endpointy:** `/api/ml/predict`, `/api/ml/reward`, `/api/ml/status`, `/api/ml/models`, `/api/ml/train`, `/api/ml/rollback`
+- **Endpointy:** `/api/ml/predict`, `/api/ml/reward`, `/api/ml/status`, `/api/ml/models`, `/api/ml/train`, `/api/ml/rollback`, `/api/telemetry-ai/*`, `/api/telemetry-ai-dashboard/*`
 
 ---
 

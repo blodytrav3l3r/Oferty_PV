@@ -200,7 +200,7 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 | Katalog              | Liczba plików | Opis                                                                    |
 | -------------------- | ------------- | ----------------------------------------------------------------------- |
 | `public/js/rury/`    | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
-| `public/js/studnie/` | 90            | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
+| `public/js/studnie/` | 132           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
 | `public/js/sales/`   | 9             | Narzędzia sprzedaży (kartoteka, import/eksport)                         |
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
@@ -238,7 +238,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (28)
+### Modele (37)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)
@@ -299,10 +299,13 @@ Oferty_PV/
 │
 ├── src/                             # Backend
 │   ├── app.ts                      # Konfiguracja Express
-│   ├── server.ts                   # Główny plik startowy
 │   ├── prismaClient.ts             # Klient Prisma (singleton)
-│   ├── logger.ts                   # Logger
-│   ├── session.ts                  # Zarządzanie sesjami
+│   ├── helpers.ts                  # Pomocnicze funkcje
+│   ├── version.ts                  # Wersja aplikacji
+│   ├── swagger.ts                  # Konfiguracja Swagger/OpenAPI
+│   ├── db.ts                       # Re-eksporty db (kompatybilność)
+│   ├── config/                     # Konfiguracja
+│   │   └── mlConstants.ts          # Stałe ML
 │   ├── middleware/
 │   │   ├── auth.ts                 # Autoryzacja + sesje
 │   │   ├── security.ts             # Nagłówki bezpieczeństwa
@@ -378,7 +381,8 @@ Oferty_PV/
 │   ├── js/                          # Skrypty JS
 │   ├── css/                         # Style CSS
 │   ├── images/                      # Obrazy
-│   └── templates/                   # Szablony
+│   ├── partials/                    # Partial HTML (partialLoader)
+│   └── templates/                   # Szablony do druku
 │
 ├── prisma/                          # Prisma
 │   ├── schema.prisma                # Definicja schematu
@@ -407,7 +411,8 @@ Oferty_PV/
 │   ├── screenshot.js                # Zrzut ekranu
 │   ├── docker-entrypoint.sh         # Entrypoint Docker
 │   ├── install-backup-cron.ps1      # Cron backup (Windows)
-│   ├── auto-bump.mjs                # Auto-bump wersji
+│   ├── uninstall-backup-cron.ps1    # Odinstaluj cron backup (Windows)
+│   ├── auto-cache-bust.mjs          # Cache-bust assetów przy release
 │   ├── bump-version.mjs             # Podbicie wersji
 │   ├── check-version.mjs            # Sprawdzenie wersji
 │   ├── normalize-seed-studnie.mjs   # Normalizacja seed studni
@@ -418,7 +423,7 @@ Oferty_PV/
 │   ├── encoding-integrity.js        # Spójność kodowania
 │   └── excel-validator.py           # Walidacja Excel
 │
-├── tests/                           # Testy (32 pliki)
+├── tests/                           # Testy (34+ plików .test.ts)
 │   ├── auth.test.ts
 │   ├── offers.crud.test.ts
 │   ├── products.test.ts

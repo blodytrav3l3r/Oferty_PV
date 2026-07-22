@@ -76,7 +76,7 @@ app.use(
                 scriptSrc: ["'self'", "'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
-                connectSrc: ["'self'", 'http://localhost:5000'],
+                connectSrc: ["'self'"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"]
             }
@@ -152,7 +152,7 @@ Walidacja chroni przed:
 ## 7. HTTPS
 
 - W środowisku produkcyjnym (`NODE_ENV=production`) włączone jest przekierowanie HTTP → HTTPS
-- Wykrywanie przez nagłówek `x-forwarded-proto` (dla Render/proxy)
+- Wykrywanie przez nagłówek `x-forwarded-proto` (dla reverse proxy)
 - Nagłówek HSTS (Strict-Transport-Security) ustawiony na 1 rok
 
 ```typescript
@@ -182,7 +182,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
 
 - Plik `.env` jest w `.gitignore` — nie trafia do repozytorium
 - Wzór konfiguracji: `.env.example` — bezpieczny do commitu
-- W produkcji (Render): sekrety ustawiane przez dashboard Environment Variables
+- W produkcji (VPS, Docker, Render): sekrety ustawiane przez zmienne środowiskowe
 - Kluczowe sekrety:
     - `DEFAULT_ADMIN_PASSWORD` — hasło admina przy pierwszym uruchomieniu
     - `SENTRY_DSN` — klucz do monitoringu błędów
@@ -252,7 +252,7 @@ Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki
 
 ### Przed transportem
 
-- Wykonaj backup za pomocą `npm run backup` (zawsze najpierw zatrzymaj serwer)
+- Wykonaj backup za pomocą `npm run backup` (skrypt używa `VACUUM INTO`, który jest bezpieczny nawet podczas działania serwera, ale dla pewności zatrzymaj serwer)
 - Upewnij się, że backup nie zawiera danych wrażliwych, które nie powinny opuszczać urządzenia
 - W przypadku transportu przez sieć rozważ zaszyfrowanie pliku backupu (np. 7-Zip z hasłem)
 

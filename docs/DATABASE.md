@@ -3,7 +3,7 @@
 **Silnik:** SQLite  
 **ORM:** Prisma 6.0  
 **Plik bazy:** `data/app_database.sqlite`  
-**Liczba modeli:** 28
+**Liczba modeli:** 37
 
 ---
 
@@ -447,12 +447,16 @@ Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
 ### Komendy
 
-| Komenda                  | Opis                          |
-| ------------------------ | ----------------------------- |
-| `npm run prisma:migrate` | Utwórz nową migrację (dev)    |
-| `npm run prisma:deploy`  | Zastosuj migracje w produkcji |
-| `npm run prisma:status`  | Status migracji               |
-| `npm run prisma:reset`   | Reset bazy (utrata danych!)   |
+| Komenda                   | Opis                          |
+| ------------------------- | ----------------------------- |
+| `npm run prisma:generate` | Generuj klienta Prisma        |
+| `npm run prisma:migrate`  | Utwórz nową migrację (dev)    |
+| `npm run prisma:deploy`   | Zastosuj migracje w produkcji |
+| `npm run prisma:status`   | Status migracji               |
+| `npm run prisma:seed`     | Zasiej dane początkowe        |
+| `npm run prisma:reset`    | Reset bazy (utrata danych!)   |
+| `npm run backup`          | Backup bazy (VACUUM INTO)     |
+| `npm run backup:restore`  | Przywróć bazę z backupu       |
 
 ### Seed
 
