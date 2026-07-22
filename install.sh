@@ -36,15 +36,27 @@ else
     warn "Brak Git - husky hooks nie beda dzialac"
 fi
 
-# 4. Struktura
-log STEP "Krok 4/8 - Struktura (src/public/tests/prisma)..."
+# 4. .env
+log STEP "Krok 4/8 - Konfiguracja (.env)..."
+if [ ! -f .env ]; then
+    if [ -f .env.example ]; then
+        log WARN "Brak .env - kopiuje z .env.example"
+        cp .env.example .env
+    else
+        err "Brak .env i .env.example. Skopiuj recznie."
+    fi
+fi
+log OK ".env OK"
+
+# 5. Struktura
+log STEP "Krok 5/8 - Struktura (src/public/tests/prisma)..."
 for d in src public tests prisma; do
     [ -d "$d" ] || err "Brak katalogu $d/"
 done
 log OK "Struktura OK"
 
-# 5. npm install
-log STEP "Krok 5/8 - npm install (moze potrwac kilka minut)..."
+# 6. npm install
+log STEP "Krok 6/9 - npm install (moze potrwac kilka minut)..."
 if [ -f package-lock.json ]; then
     npm ci --no-audit --no-fund
 else
@@ -52,12 +64,12 @@ else
 fi
 log OK "node_modules zainstalowane"
 
-# 6. Prisma
-log STEP "Krok 6/8 - Prisma generate + migrate..."
+# 7. Prisma
+log STEP "Krok 7/9 - Prisma generate + migrate..."
 npx prisma generate
 log OK "Prisma client"
 
-if [ -f "migrations/migration_lock.toml" ]; then
+if [ -f "prisma/migrations/migration_lock.toml" ]; then
     log STEP "  prisma migrate deploy..."
     npx prisma migrate deploy || {
         warn "migrate deploy nie powiodl sie - fallback db push"
@@ -69,20 +81,26 @@ else
 fi
 log OK "Schema bazy aktualny"
 
-# 7. Seed
-log STEP "Krok 7/8 - Seed (opcjonalny)..."
-if [ -f "prisma/seed.ts" ]; then
-    if npx ts-node prisma/seed.ts; then
-        log OK "Seed OK"
-    else
-        warn "Seed nie powiodl sie - pomijam"
+# 8. Seed (opcja — pomijany z --skip-seed)
+log STEP "Krok 8/9 - Seed (--skip-seed aby pominac)..."
+SKIP_SEED=false
+for arg in "$@"; do
+    if [ "$arg" = "--skip-seed" ]; then SKIP_SEED=true; fi
+done
+if [ "$SKIP_SEED" = false ]; then
+    if [ -f "prisma/seed.ts" ]; then
+        if npx ts-node prisma/seed.ts; then
+            log OK "Seed OK"
+        else
+            warn "Seed nie powiodl sie - dane juz istnieja?"
+        fi
     fi
 else
-    log SKIP "Brak prisma/seed.ts"
+    log SKIP "Seed pominiety (--skip-seed)"
 fi
 
-# 8. Typecheck
-log STEP "Krok 8/8 - TypeScript typecheck..."
+# 9. Typecheck
+log STEP "Krok 9/9 - TypeScript typecheck..."
 if npx tsc --noEmit; then
     log OK "Brak bledow typow"
 else
@@ -94,5 +112,8 @@ log OK "  INSTALACJA ZAKONCZONA"
 log OK "========================================================"
 echo
 echo "Nastepne kroki:"
-echo "  bash dev.sh  / bash prod.sh"
+echo "  bash start.sh  / bash prod.sh"
 echo "  URL: http://localhost:3000"
+echo ""
+echo "UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:"
+echo "  npm run restore data/backups/nazwa_pliku.sqlite"

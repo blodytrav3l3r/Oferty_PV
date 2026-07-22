@@ -4,7 +4,7 @@ REM  install.bat - Setup srodowiska developer-skiego (final)
 REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
 REM ===========================================================
 
-setlocal
+setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
 echo ===========================================================
@@ -33,9 +33,32 @@ for /F "tokens=1" %%v in ('npm --version') do echo [OK] npm v%%v
 REM 3. Git (opcjonalny)
 where git >nul 2>nul && echo [OK] Git || echo [INFO] Brak Git - husky hooks beda nieaktywne
 
-REM 4. Struktura
+REM 4. .env
+if not exist ".env" (
+    if exist ".env.example" (
+        echo [INFO] Brak .env - kopiuje z .env.example
+        copy ".env.example" ".env" >nul
+    ) else (
+        echo [BLAD] Brak .env i .env.example. Skopiuj .env.example na .env recznie.
+        pause
+        exit /b 1
+    )
+)
+echo [OK] .env OK
+
+REM 5. Struktura katalogow
 if not exist "src" (
     echo [BLAD] Brak katalogu src\
+    pause
+    exit /b 1
+)
+if not exist "public" (
+    echo [BLAD] Brak katalogu public\
+    pause
+    exit /b 1
+)
+if not exist "tests" (
+    echo [BLAD] Brak katalogu tests\
     pause
     exit /b 1
 )
@@ -46,7 +69,7 @@ if not exist "prisma" (
 )
 echo [OK] Struktura OK
 
-REM 5. npm install
+REM 6. npm install
 echo [INFO] npm install (moze potrwac kilka minut)...
 if exist "package-lock.json" (
     call npm ci --no-audit --no-fund
@@ -60,7 +83,7 @@ if errorlevel 1 (
 )
 echo [OK] node_modules zainstalowane
 
-REM 6. Prisma
+REM 7. Prisma
 echo [INFO] Prisma generate...
 call npx prisma generate
 if errorlevel 1 (
@@ -70,9 +93,9 @@ if errorlevel 1 (
 )
 echo [OK] Prisma Client OK
 
-REM 7. Schema DB
+REM 8. Schema DB
 echo [INFO] migrate db...
-if exist "migrations\migration_lock.toml" (
+if exist "prisma\migrations\migration_lock.toml" (
     call npx prisma migrate deploy
     if errorlevel 1 (
         echo [INFO] migrate deploy nie powiodl sie - fallback db push
@@ -88,14 +111,20 @@ if errorlevel 1 (
 )
 echo [OK] Schema OK
 
-REM 8. Seed (opcja)
-if exist "prisma\seed.ts" (
-    echo [INFO] Seed...
-    call npx ts-node prisma\seed.ts >nul 2>nul
-    if not errorlevel 1 (echo [OK] Seed OK)
+REM 9. Seed (opcja — pomijany z --skip-seed)
+set "SKIP_SEED="
+for %%a in (%*) do if /i "%%a"=="--skip-seed" set "SKIP_SEED=1"
+if not defined SKIP_SEED (
+    if exist "prisma\seed.ts" (
+        echo [INFO] Seed (--skip-seed aby pominac)...
+        call npx ts-node prisma\seed.ts >nul 2>nul
+        if !errorlevel! equ 0 (echo [OK] Seed OK) else (echo [WARN] Seed nie powiodl sie - dane juz istnieja?)
+    )
+) else (
+    echo [INFO] Seed pominiety (--skip-seed)
 )
 
-REM 9. Typecheck
+REM 10. Typecheck
 echo [INFO] typecheck...
 call npx tsc --noEmit >nul 2>nul && echo [OK] Brak bledow || echo [WARN] Blad typecheck
 
@@ -103,6 +132,9 @@ echo ===========================================================
 echo   Instalacja zakonczona
 echo ===========================================================
 echo.
-echo Uruchom dev.bat aby zaczac prace.
+echo Uruchom start.bat aby zaczac prace.
+echo.
+echo UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:
+echo   npm run restore data/backups/nazwa_pliku.sqlite
 pause
 endlocal
