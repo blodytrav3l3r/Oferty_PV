@@ -24,6 +24,7 @@
         "format": "prettier --write \"**/*.{js,ts,json,md}\"",
         "format:check": "prettier --check \"**/*.{js,ts,json,md}\"",
         "backup": "ts-node scripts/backup.ts",
+        "restore": "node scripts/restore-db.js",
         "backup:install-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/install-backup-cron.ps1",
         "backup:uninstall-cron": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/uninstall-backup-cron.ps1",
         "prisma:seed": "ts-node prisma/seed.ts",

@@ -318,7 +318,7 @@ if (existing) {
 
 ### 8.3 Rollback
 
-Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywrócenie backupu SQLite. Rekomendowane: backup przed każdą migracją (`scripts/backup-db.js`).
+Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywrócenie backupu SQLite. Rekomendowane: backup przed każdą migracją (scripts/backup.ts).
 
 ---
 

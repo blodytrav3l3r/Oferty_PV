@@ -398,7 +398,6 @@ Oferty_PV/
 │
 ├── scripts/                         # Skrypty narzędziowe
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO)
-│   ├── backup-db.js                 # Backup bazy (alternatywny)
 │   ├── restore-db.js                # Restore bazy z backupu
 │   ├── checkDb.ts                   # Sprawdzenie bazy
 │   ├── check-db.js                  # Sprawdzenie bazy (JS)
