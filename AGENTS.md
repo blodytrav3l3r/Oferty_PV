@@ -232,3 +232,30 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 ## 7. Lokalizacja Planów
 
 Wszystkie plany, taski, implementation plany i dokumenty planistyczne (`.md`) muszą znajdować się w katalogu `docs/plans/`. Dotyczy to zarówno istniejących, jak i nowo tworzonych planów. Wyjątkiem są plany narzędziowe w katalogach konfiguracyjnych (`.hermes/`, `.opencode/`).
+
+---
+
+## 8. Subagenty OpenCode — Model w `task` tool
+
+### Działa po restarcie
+
+Model dla subagentów (`architect`, `planner`, `code-reviewer`, `build-error-resolver`, `doc-updater` itd.) konfiguruje się w `.opencode/opencode.json` w sekcji `agent.{type}.model`. **Wymaga restartu opencode** — zmiany nie są odczytywane w trakcie trwającej sesji.
+
+**Przykład:**
+```json
+"architect": {
+    "description": "System design and scalability specialist",
+    "mode": "subagent",
+    "model": "deepseek-v4-flash-free",
+    ...
+}
+```
+
+**Jeśli nie ustawisz modelu** dla subagenta, dziedziczy on model z primary agenta (build) lub globalnego modelu (dokumentacja: "subagents will use the model of the primary agent that invoked the subagent").
+
+### Workaround — gdybyś nie mógł zmienić configu
+
+Użyj `general` z precyzyjnym promptem:
+```
+task(subagent_type: "general", prompt: "Jesteś architektem. Przeanalizuj...")
+```
