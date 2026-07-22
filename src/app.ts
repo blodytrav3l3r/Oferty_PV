@@ -174,8 +174,8 @@ const apiLimiter = createRateLimiter({
 /* ===== ŚCIEŻKI (ROUTES) ===== */
 import authRoutes from './routes/auth';
 import userRoutes from './routes/users';
-import productRoutes, { initRuryProductsTable } from './routes/productsV2';
-import productStudnieRoutes, { initStudnieProductsTable } from './routes/productsStudnieV2';
+import productRoutes from './routes/productsV2';
+import productStudnieRoutes from './routes/productsStudnieV2';
 import precoPricingRoutes from './routes/precoPricingV2';
 import offerRoutes from './routes/offers/index';
 import orderRoutes from './routes/orders/index';
@@ -232,10 +232,8 @@ if (process.env.SENTRY_DSN) {
     Sentry.setupExpressErrorHandler(app);
 }
 
-export { initRuryProductsTable, initStudnieProductsTable };
-
 /**
- * Inicjalizacja aplikacji — seeding tabel produktowych, administracja i PRAGMA user_version.
+ * Inicjalizacja aplikacji — administracja i PRAGMA user_version.
  */
 export async function initApp(): Promise<void> {
     // Ustawienie wersji bazy danych (2.0.0 → 20000)
@@ -246,28 +244,6 @@ export async function initApp(): Promise<void> {
         logger.warn(
             'Server',
             'Nie udało się ustawić PRAGMA user_version:',
-            err instanceof Error ? err.message : err
-        );
-    }
-
-    // Seed tabel produktowych
-    try {
-        await initRuryProductsTable();
-        logger.info('Server', 'productsRury — OK');
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'initRuryProductsTable failed:',
-            err instanceof Error ? err.message : err
-        );
-    }
-    try {
-        await initStudnieProductsTable();
-        logger.info('Server', 'productsStudnie — OK');
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'initStudnieProductsTable failed:',
             err instanceof Error ? err.message : err
         );
     }

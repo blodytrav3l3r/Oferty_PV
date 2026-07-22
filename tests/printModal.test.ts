@@ -35,6 +35,16 @@ function loadPrintModalInSandbox() {
         body: bodyEl
     };
 
+    function escapeHtml(str: unknown): string {
+        if (str == null) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     const sandbox: any = {
         console,
         document: documentMock,
@@ -43,6 +53,7 @@ function loadPrintModalInSandbox() {
         setImmediate: (cb: () => void) => cb()
     };
     sandbox.window = sandbox;
+    sandbox.window.escapeHtml = escapeHtml;
     sandbox.window.lucide = {
         createIcons: (opts?: any) => createIconsCalls.push(JSON.stringify(opts))
     };

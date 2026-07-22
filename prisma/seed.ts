@@ -4,18 +4,6 @@ import * as fs from 'fs';
 
 const prisma = new PrismaClient();
 
-const CATEGORIES_RURY = [
-    'Rury Betonowe',
-    'Żelbetowe KL. A (II)',
-    'Żelbetowe KL. S (I)',
-    'Duże Żelbetowe II',
-    'Rury Jajowe Betonowe',
-    'Rury Jajowe Żelbetowe',
-    'Akcesoria PEHD',
-    'Uszczelki',
-    'Zabezpieczenie transportu'
-];
-
 function readJson(fileName: string): any {
     return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8'));
 }
@@ -25,199 +13,201 @@ function toBool(val: any): boolean {
     return false;
 }
 
-async function main() {
-    console.log('Seeding database...');
+const DN_SIZES = ['1000', '1200', '1500', '2000', '2500'];
 
+const ZAKRESY_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
+
+async function main() {
+    const args = process.argv.slice(2);
+    const force = args.includes('--force');
+
+    console.log('Seed: sprawdzam czy dane juz istnieja...');
+
+    const [hasRury, hasStudnie, hasPreco] = await Promise.all([
+        prisma.productsRury.count(),
+        prisma.productsStudnie.count(),
+        prisma.precoKonfig.count()
+    ]);
+
+    if (hasRury > 0 || hasStudnie > 0 || hasPreco > 0) {
+        if (!force) {
+            console.error(
+                'Blad: baza zawiera juz dane (ProductsRury, ProductsStudnie lub PrecoKonfig).'
+            );
+            console.error('Uzyj --force aby pominac ten check i nadpisac dane.');
+            process.exit(1);
+        }
+        console.log('— Wymuszono nadpisanie danych (--force).');
+    }
+
+    console.log('Seed: wczytywanie danych z JSON...');
     const ruryData = readJson('seed_rury.json');
     const studnieData = readJson('seed_studnie.json');
-    const precoData = readJson('seed_preco.json');
+    const precoData = readJson('seed_preco.json')[0];
 
-    // ── Wyczyść stare dane w nowych tabelach ──
-    await prisma.productsRury.deleteMany();
-    await prisma.productsStudnie.deleteMany();
-    await prisma.precoKinety.deleteMany();
-    await prisma.precoZakresy.deleteMany();
-    await prisma.precoKonfig.deleteMany();
+    console.log(`  Rury: ${ruryData.length}`);
+    console.log(`  Studnie: ${studnieData.length}`);
+
+    console.log('Seed: zapis do bazy...');
+
+    let kinetyCount = 0;
+    let zakresyCount = 0;
 
     await prisma.$transaction(async (tx) => {
-        // ── CategoriesRury ──
-        for (let i = 0; i < CATEGORIES_RURY.length; i++) {
-            await tx.categoriesRury.upsert({
-                where: { name: CATEGORIES_RURY[i] },
-                update: { order: i },
-                create: { name: CATEGORIES_RURY[i], order: i }
-            });
+        // ── ProductsRury + ProductsRuryDefault ──
+        console.log('  -> ProductsRury / ProductsRuryDefault...');
+        const ruryRows = ruryData.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            transport: p.transport ?? null,
+            weight: p.weight ?? null,
+            area: p.area ?? null
+        }));
+
+        if (ruryRows.length > 0) {
+            await tx.productsRury.createMany({ data: ruryRows });
+            await tx.productsRuryDefault.createMany({ data: ruryRows });
         }
 
-        // ── ProductsRury ──
-        await tx.productsRury.createMany({
-            data: ruryData.map((p: any) => ({
-                id: p.id,
-                name: p.name,
-                category: p.category,
-                price: p.price,
-                transport: p.transport ?? null,
-                weight: p.weight ?? null,
-                area: p.area ?? null
-            }))
-        });
+        // ── ProductsStudnie + ProductsStudnieDefault ──
+        console.log('  -> ProductsStudnie / ProductsStudnieDefault...');
+        const studnieRows = studnieData.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            category: p.category,
+            componentType: p.componentType,
+            dn: p.dn != null ? String(p.dn) : null,
+            height: p.height ?? null,
+            weight: p.weight ?? null,
+            price: p.price ?? 0,
+            area: p.area ?? null,
+            areaExt: p.areaExt ?? null,
+            transport: p.transport ?? null,
+            magazynWL: toBool(p.magazynWL),
+            magazynKLB: toBool(p.magazynKLB),
+            formaStandardowa: toBool(p.formaStandardowa),
+            formaStandardowaKLB: toBool(p.formaStandardowaKLB),
+            active: p.active !== undefined ? toBool(p.active) : true,
+            zapasDol: p.zapasDol ?? null,
+            zapasGora: p.zapasGora ?? null,
+            zapasDolMin: p.zapasDolMin ?? null,
+            zapasGoraMin: p.zapasGoraMin ?? null,
+            spocznikH: p.spocznikH != null ? String(p.spocznikH) : null,
+            hMin1: p.hMin1 ?? null,
+            hMax1: p.hMax1 ?? null,
+            cena1: p.cena1 ?? null,
+            hMin2: p.hMin2 ?? null,
+            hMax2: p.hMax2 ?? null,
+            cena2: p.cena2 ?? null,
+            hMin3: p.hMin3 ?? null,
+            hMax3: p.hMax3 ?? null,
+            cena3: p.cena3 ?? null,
+            doplataPEHD: p.doplataPEHD ?? null,
+            doplataZelbet: p.doplataZelbet ?? null,
+            doplataDrabNierdzewna: p.doplataDrabNierdzewna ?? null,
+            malowanieWewnetrzne: p.malowanieWewnetrzne ?? null,
+            malowanieZewnetrzne: p.malowanieZewnetrzne ?? null
+        }));
 
-        // ── CategoriesStudnie ──
-        const catStudnieMap = new Map<string, { componentType: string | null; order: number }>();
-        const compTypesByCat = new Map<string, Set<string>>();
-
-        for (const p of studnieData) {
-            if (!catStudnieMap.has(p.category)) {
-                catStudnieMap.set(p.category, { componentType: null, order: catStudnieMap.size });
-                compTypesByCat.set(p.category, new Set());
-            }
-            if (p.componentType) {
-                compTypesByCat.get(p.category)!.add(p.componentType);
-            }
+        if (studnieRows.length > 0) {
+            await tx.productsStudnie.createMany({ data: studnieRows });
+            await tx.productsStudnieDefault.createMany({ data: studnieRows });
         }
-
-        for (const [cat, types] of compTypesByCat) {
-            if (types.size === 1) {
-                catStudnieMap.get(cat)!.componentType = types.values().next().value ?? null;
-            }
-        }
-
-        for (const [name, meta] of catStudnieMap) {
-            await tx.categoriesStudnie.upsert({
-                where: { name },
-                update: { componentType: meta.componentType, order: meta.order },
-                create: { name, componentType: meta.componentType, order: meta.order }
-            });
-        }
-
-        // ── ProductsStudnie ──
-        const studnieProducts = studnieData.map((p: any) => {
-            const area = p.area;
-            const areaExt = p.areaExt;
-            const doplataZelbet = p.doplataZelbet;
-            const spocznikH = p.spocznikH;
-            const hMin1 = p.hMin1;
-            const hMax1 = p.hMax1;
-            const cena1 = p.cena1;
-            const hMin2 = p.hMin2;
-            const hMax2 = p.hMax2;
-            const cena2 = p.cena2;
-            const hMin3 = p.hMin3;
-            const hMax3 = p.hMax3;
-            const cena3 = p.cena3;
-
-            return {
-                id: p.id,
-                name: p.name,
-                category: p.category,
-                componentType: p.componentType,
-                dn: p.dn != null ? String(p.dn) : null,
-                height: p.height ?? null,
-                weight: p.weight ?? null,
-                price: p.price ?? 0,
-                area: area ?? null,
-                areaExt: areaExt ?? null,
-                transport: p.transport ?? null,
-                magazynWL: toBool(p.magazynWL),
-                magazynKLB: toBool(p.magazynKLB),
-                formaStandardowa: toBool(p.formaStandardowa),
-                formaStandardowaKLB: toBool(p.formaStandardowaKLB),
-                active: p.active !== undefined ? toBool(p.active) : true,
-                zapasDol: p.zapasDol ?? null,
-                zapasGora: p.zapasGora ?? null,
-                zapasDolMin: p.zapasDolMin ?? null,
-                zapasGoraMin: p.zapasGoraMin ?? null,
-                spocznikH: spocznikH != null ? String(spocznikH) : null,
-                hMin1: hMin1 ?? null,
-                hMax1: hMax1 ?? null,
-                cena1: cena1 ?? null,
-                hMin2: hMin2 ?? null,
-                hMax2: hMax2 ?? null,
-                cena2: cena2 ?? null,
-                hMin3: hMin3 ?? null,
-                hMax3: hMax3 ?? null,
-                cena3: cena3 ?? null,
-                doplataPEHD: p.doplataPEHD ?? null,
-                doplataZelbet: doplataZelbet ?? null,
-                doplataDrabNierdzewna: p.doplataDrabNierdzewna ?? null,
-                malowanieWewnetrzne: p.malowanieWewnetrzne ?? null,
-                malowanieZewnetrzne: p.malowanieZewnetrzne ?? null
-            };
-        });
-
-        await tx.productsStudnie.createMany({
-            data: studnieProducts
-        });
 
         // ── PRECO ──
-        const precoConfig = precoData[0];
-        const dnSizes = ['1000', '1200', '1500', '2000', '2500'];
+        console.log('  -> PrecoKonfig / PrecoKonfigDefault...');
+        const konfigRows: Array<{ id: string; key: string; value: string }> = [];
+        for (const dnStr of DN_SIZES) {
+            const dnCfg = precoData[dnStr];
+            if (!dnCfg) continue;
+            const scalars: Record<string, number> = {
+                skrzynkaWlazowa: dnCfg.skrzynkaWlazowa,
+                cenaPelnaWysMB: dnCfg.cenaPelnaWysMB,
+                cenaDnoOsadnika: dnCfg.cenaDnoOsadnika
+            };
+            for (const [key, val] of Object.entries(scalars)) {
+                const id = `konfig_${dnStr}_${key}`;
+                konfigRows.push({ id, key: `${dnStr}:${key}`, value: String(val) });
+            }
+        }
+        if (konfigRows.length > 0) {
+            await tx.precoKonfig.createMany({ data: konfigRows });
+            await tx.precoKonfigDefault.createMany({ data: konfigRows });
+        }
 
-        await tx.precoKonfig.createMany({
-            data: dnSizes.map((dnStr) => ({
-                dnStudni: parseInt(dnStr),
-                skrzynkaWlazowa: precoConfig[dnStr].skrzynkaWlazowa,
-                cenaPelnaWysMB: precoConfig[dnStr].cenaPelnaWysMB,
-                cenaDnoOsadnika: precoConfig[dnStr].cenaDnoOsadnika
-            }))
-        });
-
-        const kinetyData: Array<{
-            dnStudni: number;
-            dnRury: number;
-            prosta: number;
-            dodWlot: number;
+        console.log('  -> PrecoKinety / PrecoKinetyDefault...');
+        let kinetaOrder = 0;
+        const kinetyRows: Array<{
+            id: string;
+            order: number;
+            dn: number;
+            height: number;
+            cena: number;
         }> = [];
-        for (const dnStr of dnSizes) {
-            for (const k of precoConfig[dnStr].kinety) {
-                kinetyData.push({
-                    dnStudni: parseInt(dnStr),
-                    dnRury: k.dn,
-                    prosta: k.prosta,
-                    dodWlot: k.dodWlot
+        for (const dnStr of DN_SIZES) {
+            const dnCfg = precoData[dnStr];
+            if (!dnCfg || !dnCfg.kinety) continue;
+            for (const k of dnCfg.kinety) {
+                kinetaOrder++;
+                kinetyRows.push({
+                    id: `kineta_${kinetaOrder}`,
+                    order: kinetaOrder,
+                    dn: k.dn,
+                    height: k.prosta,
+                    cena: k.dodWlot
                 });
             }
         }
-        await tx.precoKinety.createMany({ data: kinetyData });
+        kinetyCount = kinetyRows.length;
+        if (kinetyRows.length > 0) {
+            await tx.precoKinety.createMany({ data: kinetyRows });
+            await tx.precoKinetyDefault.createMany({ data: kinetyRows });
+        }
 
-        const zakresyTypes = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
-        const seenZakresy = new Set<string>();
-        const zakresyData: Array<{
-            dnStudni: number;
-            typ: string;
-            minVal: number;
-            maxVal: number;
-            grupaDn: string;
-            cena: number;
+        console.log('  -> PrecoZakresy / PrecoZakresyDefault...');
+        let zakresOrder = 0;
+        const zakresyRows: Array<{
+            id: string;
+            order: number;
+            label: string;
+            min: number;
+            max: number;
         }> = [];
-
-        for (const dnStr of dnSizes) {
-            const dnStudni = parseInt(dnStr);
-            for (const typ of zakresyTypes) {
-                const arr: Array<{ min: number; max: number; grupy: Record<string, number> }> =
-                    precoConfig[dnStr][typ];
-                for (const entry of arr) {
-                    for (const [grupaDn, cena] of Object.entries(entry.grupy)) {
-                        const key = `${dnStudni}|${typ}|${entry.min}|${entry.max}|${grupaDn}`;
-                        if (!seenZakresy.has(key)) {
-                            seenZakresy.add(key);
-                            zakresyData.push({
-                                dnStudni,
-                                typ,
-                                minVal: entry.min,
-                                maxVal: entry.max,
-                                grupaDn,
-                                cena
-                            });
-                        }
+        for (const dnStr of DN_SIZES) {
+            const dnCfg = precoData[dnStr];
+            if (!dnCfg) continue;
+            for (const typ of ZAKRESY_TYPES) {
+                const entries = dnCfg[typ];
+                if (!entries) continue;
+                for (const entry of entries) {
+                    for (const grupaDn of Object.keys(entry.grupy)) {
+                        zakresOrder++;
+                        zakresyRows.push({
+                            id: `zakres_${zakresOrder}`,
+                            order: zakresOrder,
+                            label: `${typ}:${grupaDn}`,
+                            min: entry.min,
+                            max: entry.max
+                        });
                     }
                 }
             }
         }
-        await tx.precoZakresy.createMany({ data: zakresyData });
+        zakresyCount = zakresyRows.length;
+        if (zakresyRows.length > 0) {
+            await tx.precoZakresy.createMany({ data: zakresyRows });
+            await tx.precoZakresyDefault.createMany({ data: zakresyRows });
+        }
     });
 
-    console.log('Seeding complete');
+    console.log(`Seed: zakonczono. Wgrano:`);
+    console.log(`  ProductsRury / ProductsRuryDefault: ${ruryData.length}`);
+    console.log(`  ProductsStudnie / ProductsStudnieDefault: ${studnieData.length}`);
+    console.log(`  PrecoKonfig / PrecoKonfigDefault: ${DN_SIZES.length * 3}`);
+    console.log(`  PrecoKinety / PrecoKinetyDefault: ${kinetyCount}`);
+    console.log(`  PrecoZakresy / PrecoZakresyDefault: ${zakresyCount}`);
 }
 
 main()

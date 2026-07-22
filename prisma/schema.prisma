@@ -421,13 +421,6 @@ model settings {
 
 // ─── Produkty rury ─────────────────────────────────────────────────
 
-model CategoriesRury {
-  name  String @id
-  order Int
-
-  products ProductsRury[]
-}
-
 model ProductsRury {
   id        String  @id
   name      String
@@ -436,19 +429,19 @@ model ProductsRury {
   transport Float?
   weight    Float?
   area      Float?
+}
 
-  category_rel CategoriesRury @relation(fields: [category], references: [name])
+model ProductsRuryDefault {
+  id        String  @id
+  name      String
+  category  String
+  price     Float
+  transport Float?
+  weight    Float?
+  area      Float?
 }
 
 // ─── Produkty studnie ──────────────────────────────────────────────
-
-model CategoriesStudnie {
-  name          String @id
-  componentType String?
-  order         Int
-
-  products ProductsStudnie[]
-}
 
 model ProductsStudnie {
   id                   String  @id
@@ -492,8 +485,93 @@ model ProductsStudnie {
   doplataDrabNierdzewna Float?
   malowanieWewnetrzne   Float?
   malowanieZewnetrzne   Float?
+}
 
-  category_rel CategoriesStudnie @relation(fields: [category], references: [name])
+model ProductsStudnieDefault {
+  id                   String  @id
+  name                 String
+  category             String
+  componentType        String
+  dn                   String?
+  height               Int?
+  weight               Float?
+  price                Float   @default(0)
+  area                 Float?
+  areaExt              Float?
+  transport            Float?
+  magazynWL            Boolean @default(false)
+  magazynKLB           Boolean @default(false)
+  formaStandardowa     Boolean @default(false)
+  formaStandardowaKLB  Boolean @default(false)
+
+  active               Boolean @default(false)
+  zapasDol             Int?
+  zapasGora            Int?
+  zapasDolMin          Int?
+  zapasGoraMin         Int?
+  spocznikH            String?
+
+  hMin1  Int?
+  hMax1  Int?
+  cena1  Float?
+  hMin2  Int?
+  hMax2  Int?
+  cena2  Float?
+  hMin3  Int?
+  hMax3  Int?
+  cena3  Float?
+
+  doplataPEHD           Float?
+  doplataZelbet         Float?
+  doplataDrabNierdzewna Float?
+  malowanieWewnetrzne   Float?
+  malowanieZewnetrzne   Float?
+}
+
+// ─── PRECO ─────────────────────────────────────────────────────────
+
+model PrecoKonfig {
+  id        String @id
+  key       String
+  value     String
+}
+
+model PrecoKinety {
+  id        String @id
+  order     Int
+  dn        Int
+  height    Int
+  cena      Float
+}
+
+model PrecoZakresy {
+  id        String @id
+  order     Int
+  label     String
+  min       Int
+  max       Int
+}
+
+model PrecoKonfigDefault {
+  id        String @id
+  key       String
+  value     String
+}
+
+model PrecoKinetyDefault {
+  id        String @id
+  order     Int
+  dn        Int
+  height    Int
+  cena      Float
+}
+
+model PrecoZakresyDefault {
+  id        String @id
+  order     Int
+  label     String
+  min       Int
+  max       Int
 }
 
 // =============================================================================

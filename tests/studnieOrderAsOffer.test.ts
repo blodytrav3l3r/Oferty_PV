@@ -417,8 +417,11 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
     const PROJECT_ROOT = path.resolve(__dirname, '..');
     const FILE_PATH = path.join(PROJECT_ROOT, 'public', 'js', 'studnie', 'offerPrintManager.js');
 
-    function loadStudniePrintManager(): { context: any; source: string } {
-        const source = fs.readFileSync(FILE_PATH, 'utf8');
+    function loadStudniePrintManager(): { context: any } {
+        const helpersSource = fs.readFileSync(
+            path.join(PROJECT_ROOT, 'public', 'js', 'studnie', 'offerPrintManagerHelpers.js'),
+            'utf8'
+        );
         const mockFetch = jest.fn();
         const sandbox: Record<string, unknown> = {
             URL: {
@@ -474,7 +477,8 @@ describe('Studnie Order As Offer — frontend exportStudnieOrderAsOffer_action (
         };
         (sandbox.window as any) = sandbox;
         const context = vm.createContext(sandbox);
-        return { context, source };
+        vm.runInContext(helpersSource, context, { filename: 'offerPrintManagerHelpers.js' });
+        return { context };
     }
 
     it('action is exported on window', () => {

@@ -49,19 +49,89 @@ jest.mock('../src/prismaClient', () => ({
         clients_rel: { upsert: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn() },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn(),
-        $transaction: jest.fn(async (fn: any) => {
-            const tx = {
-                clients_rel: { upsert: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn() },
-                productsRury: { findMany: jest.fn(), deleteMany: jest.fn(), create: jest.fn() },
-                categoriesRury: { upsert: jest.fn() },
-                $queryRaw: jest.fn(),
-                $executeRaw: jest.fn()
-            };
-            return fn(tx);
+        $transaction: jest.fn(async (arg: any) => {
+            if (typeof arg === 'function') {
+                const tx = {
+                    clients_rel: { upsert: jest.fn(), findMany: jest.fn(), deleteMany: jest.fn() },
+                    productsRury: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 }),
+                        update: jest.fn(),
+                        delete: jest.fn()
+                    },
+                    productsRuryDefault: { findMany: jest.fn().mockResolvedValue([]) },
+                    productsStudnie: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 }),
+                        update: jest.fn(),
+                        delete: jest.fn()
+                    },
+                    productsStudnieDefault: { findMany: jest.fn().mockResolvedValue([]) },
+                    precoKonfig: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    precoKinety: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    precoZakresy: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    precoKonfigDefault: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    precoKinetyDefault: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    precoZakresyDefault: {
+                        findMany: jest.fn(),
+                        deleteMany: jest.fn(),
+                        createMany: jest.fn().mockResolvedValue({ count: 0 })
+                    },
+                    $queryRaw: jest.fn(),
+                    $executeRaw: jest.fn()
+                };
+                return arg(tx);
+            }
+            if (Array.isArray(arg)) {
+                return Promise.all(arg.map((p: any) => (typeof p === 'function' ? p() : p)));
+            }
+            return undefined;
         }),
         pricelists: { findUnique: jest.fn(), upsert: jest.fn() },
-        productsRury: { findMany: jest.fn(), deleteMany: jest.fn(), create: jest.fn() },
-        categoriesRury: { upsert: jest.fn() },
+        productsRury: {
+            findMany: jest.fn(),
+            deleteMany: jest.fn(),
+            createMany: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn()
+        },
+        productsRuryDefault: { findMany: jest.fn() },
+        productsStudnie: {
+            findMany: jest.fn(),
+            deleteMany: jest.fn(),
+            createMany: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn()
+        },
+        productsStudnieDefault: { findMany: jest.fn() },
+        precoKonfig: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
+        precoKinety: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
+        precoZakresy: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
+        precoKonfigDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
+        precoKinetyDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
+        precoZakresyDefault: { findMany: jest.fn(), deleteMany: jest.fn(), createMany: jest.fn() },
         ai_telemetry_logs: { create: jest.fn() },
         users: { update: jest.fn(), findUnique: jest.fn() },
         settings: { findUnique: jest.fn(), update: jest.fn(), create: jest.fn() }
