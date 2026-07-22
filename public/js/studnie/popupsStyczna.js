@@ -11,7 +11,7 @@ function showStycznaPopup(mode = 'select') {
     ].sort((a, b) => (a.dn || 0) - (b.dn || 0));
 
     const renderProductRow = (p) => `
-        <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${p.id}', '${mode}')" style="
+        <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${escapeHtml(p.id)}', '${escapeHtml(mode)}')" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
             padding:0.55rem 0.8rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
             border-radius:8px; cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;

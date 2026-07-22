@@ -8,10 +8,10 @@ function goToPhase(step) {
     if (
         step === 1 &&
         !window.orderEditMode &&
-        typeof pendingOrderCreationData !== 'undefined' &&
-        pendingOrderCreationData
+        typeof window.pendingOrderCreationData !== 'undefined' &&
+        window.pendingOrderCreationData
     ) {
-        pendingOrderCreationData = null;
+        window.pendingOrderCreationData = null;
     }
 
     if (step === 5 && !window.orderEditMode) {

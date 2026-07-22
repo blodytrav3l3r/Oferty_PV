@@ -52,7 +52,6 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
             path: '/'
         });
         res.json({
-            token,
             user: {
                 id: user.id,
                 username: user.username,

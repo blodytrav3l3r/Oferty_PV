@@ -420,9 +420,9 @@ window.updateTransportCostSummary = function () {
     };
 
     // Tryb tworzenia zamówienia — transport proporcjonalny (jak studnie)
-    if (typeof pendingOrderCreationData !== 'undefined' && pendingOrderCreationData) {
-        const offer = pendingOrderCreationData.offer;
-        const selItems = pendingOrderCreationData.selectedItems || [];
+    if (typeof window.pendingOrderCreationData !== 'undefined' && window.pendingOrderCreationData) {
+        const offer = window.pendingOrderCreationData.offer;
+        const selItems = window.pendingOrderCreationData.selectedItems || [];
         const allItems = offer.items || [];
         let totalOfferWeight = 0,
             selectedWeight = 0;

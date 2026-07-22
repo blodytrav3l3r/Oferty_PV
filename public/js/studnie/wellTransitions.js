@@ -76,7 +76,7 @@ function renderInlinePrzejsciaApp(containerId) {
                         .map((t) => {
                             const isActive = t === inlinePrzejsciaState.type;
                             return `
-                        <div onclick="window.inlineSetType('${t}', '${containerId || ''}')" 
+                        <div onclick="window.inlineSetType('${escapeHtml(t)}', '${escapeHtml(containerId || '')}')" 
                              style="padding:0.2rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
                                     background:${isActive ? 'rgba(99,102,241,0.2)' : 'rgba(255,255,255,0.03)'};
                                     border:1px solid ${isActive ? 'rgba(99,102,241,0.5)' : 'rgba(255,255,255,0.06)'};
@@ -109,7 +109,7 @@ function renderInlinePrzejsciaApp(containerId) {
                                 ${isActive ? 'box-shadow:0 0 10px rgba(99,102,241,0.3);' : ''}"
                          onmouseenter="if(!${isActive}){this.style.background='rgba(99,102,241,0.1)';this.style.borderColor='rgba(99,102,241,0.3)'}"
                          onmouseleave="if(!${isActive}){this.style.background='rgba(255,255,255,0.03)';this.style.borderColor='rgba(255,255,255,0.06)'}"
-                         onclick="window.inlineSetDN('${p.id}', '${containerId || ''}')">
+                         onclick="window.inlineSetDN('${escapeHtml(p.id)}', '${escapeHtml(containerId || '')}')">
                          <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight:800; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
                     </div>
                 `;

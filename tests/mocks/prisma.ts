@@ -56,7 +56,10 @@ const mockPrismaClient = {
         findMany: jest.fn().mockResolvedValue([]),
         upsert: jest.fn().mockResolvedValue({}),
         delete: jest.fn().mockResolvedValue({})
-    }
+    },
+    // Raw SQL methods używane przez auditService
+    $executeRaw: jest.fn(),
+    $queryRaw: jest.fn()
 };
 
 export default mockPrismaClient;

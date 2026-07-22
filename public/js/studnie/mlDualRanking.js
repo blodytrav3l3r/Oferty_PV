@@ -165,11 +165,6 @@
 
     /* ===== BUDOWA WEKTORA CECH ===== */
 
-    /**
-     * @param {Object} layout - layout konfiguracji studni
-     * @param {Object} well - parametry studni
-     * @returns {number[]} wektor 15 cech
-     */
     function getSeasonNum() {
         var m = new Date().getMonth() + 1;
         if (m >= 3 && m <= 5) return 0;
@@ -178,6 +173,11 @@
         return 3;
     }
 
+    /**
+     * @param {Object} layout - layout konfiguracji studni
+     * @param {Object} well - parametry studni
+     * @returns {number[]} wektor 15 cech
+     */
     function buildFeatureVector(layout, well) {
         let dn = parseInt(well.dn) || 0;
         let heightMm = parseInt(well.wellHeight) || 0;

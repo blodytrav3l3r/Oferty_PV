@@ -54,6 +54,7 @@ function calculateAssignedPrzejscia(well) {
             if (!assigned[idx]) assigned[idx] = [];
 
             let drillingBasePrice = 0;
+            /** @type {any} */
             let bestDrillProd = null;
             const p = studnieProducts.find((x) => x.id === pr.productId);
             if (p) {

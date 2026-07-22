@@ -2,18 +2,18 @@
 /**
  * reverse-migration-to-settings.mjs
  *
- * Awaryjne narz�dzie recovery: kopiuje dane z tabel Prisma z powrotem
+ * Awaryjne narzędzie recovery: kopiuje dane z tabel Prisma z powrotem
  * do `settings` (legacy JSON format).
  *
- * U�ycie:
+ * Użycie:
  *   node scripts/reverse-migration-to-settings.mjs          # wszystkie
  *   node scripts/reverse-migration-to-settings.mjs rury      # tylko rury
  *   node scripts/reverse-migration-to-settings.mjs studnie   # tylko studnie
  *   node scripts/reverse-migration-to-settings.mjs preco     # tylko PRECO
- *   node scripts/reverse-migration-to-settings.mjs --dry-run # podgl�d
+ *   node scripts/reverse-migration-to-settings.mjs --dry-run # podgląd
  *
- * Ostrze�enie: To narz�dzie cofa migracj�. U�ywaj tylko w razie
- * konieczno�ci rollbacku po Deploy 2 (gdy backup SQLite nie jest dost�pny).
+ * Ostrzeżenie: To narzędzie cofa migrację. Używaj tylko w razie
+ * konieczności rollbacku po Deploy 2 (gdy backup SQLite nie jest dostępny).
  */
 
 import { createRequire } from 'module';
@@ -179,7 +179,7 @@ function printReport(results) {
     if (allOk) {
         console.log('  Status: OK');
         if (results.some((r) => r.dryRun)) {
-            console.log('  Uruchom bez --dry-run aby zapisa�.');
+            console.log('  Uruchom bez --dry-run aby zapisać.');
         }
     } else {
         console.log('  Status: FAIL');

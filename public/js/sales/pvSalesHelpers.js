@@ -327,7 +327,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                     <span class="offer-client">${dd.clientInfo}${dd.clientNumber ? ` <span class="client-nip">(${dd.clientNumber})</span>` : ''}</span>
                                     ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${dd.investInfo}</span>` : ''}
                                     ${dd.creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${dd.creatorName}</span>` : ''}
-                                    ${dd.userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${offer.id}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${dd.userName}</span>` : ''}
+                                    ${dd.userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${dd.userName}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">

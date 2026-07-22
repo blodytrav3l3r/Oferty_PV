@@ -423,15 +423,25 @@ function skipWizardToStep3() {
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
 async function loadStudnieProducts() {
-    let result = /** @type {any} */ (
-        await api.getWithRetry('/api/products-studnie', { silent: true }, 3, 1000)
-    );
-    if (!result || !Array.isArray(result.data)) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const res = await fetchWithTimeout('/api/products-studnie', { silent: true }, 1000);
+            if (res.ok) {
+                const json = await res.json();
+                if (json && Array.isArray(json.data)) {
+                    var saved = json.data;
+                    break;
+                }
+            }
+        } catch (_) {
+            if (attempt < 2) await new Promise((r) => setTimeout(r, 1000));
+        }
+    }
+    if (!saved) {
         logger.error('uiHelpers', '[Studnie] Błąd loadStudnieProducts: brak danych po 3 próbach');
         showToast('Nie udało się załadować cennika studni z serwera', 'error');
         return [];
     }
-    const saved = result.data;
 
     // Napraw uszczelki DN2500 dla kompatybilności z istniejącymi danymi
     const hadDn2500Bug = saved.some(
@@ -454,8 +464,16 @@ function renamePłyty(p) {
 }
 
 async function saveStudnieProducts(data) {
-    const result = await api.put('/api/products-studnie', { data });
-    return result !== null;
+    try {
+        const res = await fetch('/api/products-studnie', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify({ data })
+        });
+        return res.ok;
+    } catch {
+        return false;
+    }
 }
 
 /* ===== CENNIK PRECO — load / save / defaults ===== */

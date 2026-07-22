@@ -62,15 +62,15 @@ function renderPriceList() {
 
         items.forEach((p) => {
             html += `<tr data-id="${p.id}">
-        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${p.id}')">${p.id}</code></td>
-        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${p.id}')">${p.name}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'price','${p.id}')">${fmt(p.price)}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'area','${p.id}')">${p.area != null ? fmt(p.area) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${p.id}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${p.id}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
+        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${escapeHtml(p.id)}')">${escapeHtml(p.id)}</code></td>
+        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${escapeHtml(p.id)}')">${escapeHtml(p.name)}</span></td>
+        <td class="text-right"><span class="editable" onclick="editCell(this,'price','${escapeHtml(p.id)}')">${fmt(p.price)}</span></td>
+        <td class="text-right"><span class="editable" onclick="editCell(this,'area','${escapeHtml(p.id)}')">${p.area != null ? fmt(p.area) : '—'}</span></td>
+        <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${escapeHtml(p.id)}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
+        <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${escapeHtml(p.id)}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
         <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyProduct('${p.id}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteProduct('${p.id}')"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyProduct('${escapeHtml(p.id)}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteProduct('${escapeHtml(p.id)}')"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });

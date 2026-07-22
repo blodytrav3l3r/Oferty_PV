@@ -1,7 +1,6 @@
 // @ts-check
 /* ===== ZAMÓWIENIA RUR — TRYB EDYCJI ===== */
 
-let orderEditMode = false;
 window.orderEditMode = false;
 let editingRuryOrderId = null;
 window.editingRuryOrderId = null;
@@ -9,7 +8,7 @@ let orderCurrentItems = [];
 window.orderCurrentItems = orderCurrentItems;
 
 function isOrderMode() {
-    return orderEditMode;
+    return window.orderEditMode;
 }
 window.isOrderMode = isOrderMode;
 
@@ -25,7 +24,6 @@ async function enterRuryOrderEditMode(orderId) {
             return;
         }
 
-        orderEditMode = true;
         window.orderEditMode = true;
         editingRuryOrderId = orderId;
         window.editingRuryOrderId = orderId;
@@ -83,7 +81,6 @@ function exitOrderEditMode() {
     if (typeof clearOrderEditState === 'function') {
         clearOrderEditState();
     } else {
-        orderEditMode = false;
         window.orderEditMode = false;
         editingRuryOrderId = null;
         window.editingRuryOrderId = null;
@@ -277,13 +274,12 @@ function getRuryOrderChanges(order) {
 window.getRuryOrderChanges = getRuryOrderChanges;
 
 function clearOrderEditState() {
-    orderEditMode = false;
     window.orderEditMode = false;
     editingRuryOrderId = null;
     window.editingRuryOrderId = null;
     orderCurrentItems = [];
     window.orderCurrentItems = orderCurrentItems;
-    pendingOrderCreationData = null;
+    window.pendingOrderCreationData = null;
     if (typeof hideOrderModeBanner === 'function') hideOrderModeBanner();
 }
 window.clearOrderEditState = clearOrderEditState;

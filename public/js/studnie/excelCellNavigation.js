@@ -230,7 +230,7 @@ function _excelSkipDisabled(el, els, startIdx, dir) {
         if (!_excelIsDisabledNav(els[i])) return els[i];
     }
     // Szukaj w przeciwnym kierunku
-    for (i = from - dir; i >= 0 && i < els.length; i -= dir) {
+    for (let i = from - dir; i >= 0 && i < els.length; i -= dir) {
         if (!_excelIsDisabledNav(els[i])) return els[i];
     }
     return null;

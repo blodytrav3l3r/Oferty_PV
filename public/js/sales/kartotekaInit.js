@@ -156,9 +156,9 @@ function initAdvancedFilterEvents(ui) {
         document.addEventListener('click', (e) => {
             if (popover.style.display === 'none') return;
             if (
-                !popover.contains(e.target) &&
+                !popover.contains(/** @type {Node} */ (e.target)) &&
                 e.target !== rangeBtn &&
-                !rangeBtn.contains(e.target)
+                !rangeBtn.contains(/** @type {Node} */ (e.target))
             ) {
                 hideDatePopover(ui, popover, dateFrom, dateTo);
             }

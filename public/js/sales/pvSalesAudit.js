@@ -177,9 +177,9 @@ export function auditRenderEntry(self, log, id, type) {
     const canRestore =
         log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
     const restoreBtn = canRestore
-        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${id}', '${log.id}', '${type}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
+        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
         : '';
-    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${id}', '${log.id}', '${type}')"><i data-lucide="eye"></i> Podgląd</button>`;
+    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
 
     return `
         <div class="audit-card ${meta.className}">
@@ -223,7 +223,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${type}', '${id}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
+                <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${escapeHtml(type)}', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
             </div>`
                 : '';
 
@@ -340,7 +340,7 @@ export async function auditLoadMore(self, entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                    <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${entityType}', '${entityId}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
+                    <button class="load-more-btn" onclick="window.pvSalesUI.loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
                 </div>`
             );
         }

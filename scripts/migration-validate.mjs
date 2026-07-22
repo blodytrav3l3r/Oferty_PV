@@ -2,15 +2,15 @@
 /**
  * migration-validate.mjs
  *
- * Por�wnuje dane cennikowe z `settings` (JSON) z danymi w tabelach Prisma.
- * Generuje raport SHA-256 checksum + deep diff dla ka�dej pary.
+ * Porównuje dane cennikowe z `settings` (JSON) z danymi w tabelach Prisma.
+ * Generuje raport SHA-256 checksum + deep diff dla każdej pary.
  *
- * U�ycie:
+ * Użycie:
  *   node scripts/migration-validate.mjs
  *   node scripts/migration-validate.mjs --verbose
  *
- * To jest GATE przed Deploy 2 (usuni�ciem legacy settings).
- * Blokuje deploy, je�li jakikolwiek checksum si� nie zgadza.
+ * To jest GATE przed Deploy 2 (usunięciem legacy settings).
+ * Blokuje deploy, jeśli jakikolwiek checksum się nie zgadza.
  */
 
 import { createRequire } from 'module';
@@ -53,7 +53,7 @@ function deepDiff(source, target) {
     const targetMap = new Map();
     for (const item of target) targetMap.set(item.id, item);
 
-    // Sprawd�, czy ka�dy element source istnieje w target
+    // Sprawdź, czy każdy element source istnieje w target
     for (const [id, sItem] of sourceMap) {
         const tItem = targetMap.get(id);
         if (!tItem) {
@@ -69,7 +69,7 @@ function deepDiff(source, target) {
         }
     }
 
-    // Sprawd�, czy target ma elementy spoza source
+    // Sprawdź, czy target ma elementy spoza source
     for (const [id, tItem] of targetMap) {
         if (!sourceMap.has(id)) {
             mismatches.push({ id, field: '(extra)', source: undefined, target: tItem });
@@ -217,7 +217,7 @@ async function main() {
     const { verbose } = parseArgs();
 
     console.log('=== MIGRATION VALIDATE ===');
-    console.log('Por�wnuje: settings (legacy) vs Prisma tabele');
+    console.log('Porównuje: settings (legacy) vs Prisma tabele');
     console.log('');
 
     const results = [

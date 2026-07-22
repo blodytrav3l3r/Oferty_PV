@@ -1,7 +1,8 @@
 /* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
     try {
-        const json = /** @type {any} */ (await api.get('/api/products-studnie/default'));
+        const res = await fetch('/api/products-studnie/default', { headers: authHeaders() });
+        const json = res.ok ? /** @type {any} */ (await res.json()) : null;
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
@@ -54,13 +55,18 @@ async function saveStudniePriceList() {
  * Pobiera świeże dane z serwera i przebudowuje: tabelę cennika, kafelki, tabelę Excel.
  */
 async function refreshStudnieData() {
-    const result = /** @type {any} */ (await api.get('/api/products-studnie', { silent: true }));
-    if (result && Array.isArray(result.data)) {
-        studnieProducts = result.data;
-        renderStudniePriceList();
-        renderTiles();
-        if (typeof window.refreshExcelFromConfig === 'function') {
-            window.refreshExcelFromConfig();
+    try {
+        const res = await fetch('/api/products-studnie', { headers: authHeaders() });
+        const result = res.ok ? /** @type {any} */ (await res.json()) : null;
+        if (result && Array.isArray(result.data)) {
+            studnieProducts = result.data;
+            renderStudniePriceList();
+            renderTiles();
+            if (typeof window.refreshExcelFromConfig === 'function') {
+                window.refreshExcelFromConfig();
+            }
         }
+    } catch {
+        logger.warn('pricelistSaveReset', 'refreshStudnieData: blad pobierania');
     }
 }

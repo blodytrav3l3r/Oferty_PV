@@ -35,6 +35,13 @@ class PVSalesUI {
 
         this.init();
     }
+
+    /** Deleguje do domiksowanej implementacji (Object.assign poniżej) */
+    init() {
+        if (typeof pvSalesSearch.init === 'function') {
+            return pvSalesSearch.init.call(this);
+        }
+    }
 }
 
 Object.assign(PVSalesUI.prototype, pvSalesSearch);

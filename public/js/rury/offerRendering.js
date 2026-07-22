@@ -11,11 +11,6 @@ function renderOfferItems() {
         return;
     }
 
-    const filtered = _items.filter((i) => !i.isPehd);
-    if (filtered.length !== _items.length) {
-        _items = filtered;
-    }
-
     _items.forEach((item) => {
         const product = products.find((p) => p.id === item.productId);
         if (product !== undefined) {
@@ -66,12 +61,14 @@ function renderOfferItems() {
 
     let lastCat;
     flat.forEach(({ cat, dk, entries }) => {
+        const displayEntries = entries.filter((e) => !e.item.isPehd);
+        if (displayEntries.length === 0) return;
         if (cat !== lastCat) {
             html += `<tr class="offer-cat-header"><td colspan="14">${cat}</td></tr>`;
             lastCat = cat;
         }
         html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${dk}</td></tr>`;
-        entries.forEach(({ item, originalIndex: i }) => {
+        displayEntries.forEach(({ item, originalIndex: i }) => {
             const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
             const pehdCost = item.pehdCostPerUnit || 0;
             const surcharge = item.surcharge || 0;

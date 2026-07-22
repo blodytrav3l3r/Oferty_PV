@@ -333,3 +333,22 @@ window._excelSyncAutoManualUI = function () {
         fn._inProgress = false;
     }
 };
+
+/* ===== PARSER DANYCH ZE SCHOWKA (paste) ===== */
+function _excelParsePasteData(text) {
+    if (!text || typeof text !== 'string') return [];
+    var lines = text.trim().split('\n').filter(Boolean);
+    if (lines.length === 0) return [];
+    var result = [];
+    for (var li = 0; li < lines.length; li++) {
+        var parts = lines[li].replace('\r', '').split('\t');
+        if (parts.length === 0) continue;
+        var row = { name: (parts[0] || '').trim() };
+        if (parts.length > 1) row.dn = parts[1].trim();
+        if (parts.length > 2) row.rzednaWlazu = parts[2].trim();
+        if (parts.length > 3) row.rzednaDna = parts[3].trim();
+        if (row.name) result.push(row);
+    }
+    return result;
+}
+window._excelParsePasteData = _excelParsePasteData;

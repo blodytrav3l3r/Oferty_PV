@@ -64,6 +64,7 @@ class CronService {
                     logger.error('CronService', `Błąd w ${name}: ${err}`);
                 });
         }, intervalMs);
+        id.unref(); // nie blokuj procesu (ważne w testach)
         this.intervals.set(name, id);
         logger.info('CronService', `Zarejestrowano ${name} (co ${Math.round(intervalMs / 1000)}s)`);
     }

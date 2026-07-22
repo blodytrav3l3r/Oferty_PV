@@ -8,14 +8,21 @@
  * @returns {Promise<Array>} Tablica produktów
  */
 async function loadProducts() {
-    var result = /** @type {any} */ (
-        await api.getWithRetry('/api/products', { silent: true }, 3, 1000)
-    );
-    if (!result || !Array.isArray(result.data)) {
-        logger.error('dataService', 'Błąd loadProducts: brak danych po 3 próbach');
-        return [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const res = await fetchWithTimeout('/api/products', { silent: true }, 1000);
+            if (res.ok) {
+                const json = await res.json();
+                if (json && Array.isArray(json.data)) {
+                    return json.data;
+                }
+            }
+        } catch (_) {
+            if (attempt < 2) await new Promise((r) => setTimeout(r, 1000));
+        }
     }
-    return result.data;
+    logger.error('dataService', 'Błąd loadProducts: brak danych po 3 próbach');
+    return [];
 }
 
 /**

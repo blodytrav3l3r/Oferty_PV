@@ -3,9 +3,9 @@
 /* Wydzielone z app.js — odpowiedzialność: zapis, ładowanie, duplikacja, usuwanie, historia ofert */
 /* Zależności: offers, currentOfferItems, editingOfferId, editingOfferAssignedUserId/Name, currentUser (globalne) */
 
-let editingOfferCreatedByUserId = null;
-let editingOfferCreatedByUserName = '';
-let isSavingOffer = false;
+window.editingOfferCreatedByUserId = null;
+window.editingOfferCreatedByUserName = '';
+window.isSavingOffer = false;
 /* calculateTransports, calculateTransportDistributionStandalone z transport.js */
 /* renderOfferItems, generateOfferNumber z offerItems.js */
 /* showToast, appConfirm, closeModal z shared/ui.js; authHeaders z shared/auth.js; fmt z shared/formatters.js */
@@ -33,7 +33,7 @@ async function saveOffer() {
         showToast('Edycja oferty zablokowana w trybie edycji zamówienia', 'warning');
         return;
     }
-    if (isSavingOffer) return;
+    if (window.isSavingOffer) return;
     const fields = getOfferFormFields();
     if (!fields.number) {
         showToast('Podaj numer oferty', 'error');
@@ -108,11 +108,11 @@ async function saveOffer() {
             existingDoc?.userName ||
             buildUserDisplayName(currentUser),
         createdByUserId:
-            editingOfferCreatedByUserId ||
+            window.editingOfferCreatedByUserId ||
             existingDoc?.createdByUserId ||
             (currentUser ? currentUser.id : null),
         createdByUserName:
-            editingOfferCreatedByUserName ||
+            window.editingOfferCreatedByUserName ||
             existingDoc?.createdByUserName ||
             buildUserDisplayName(currentUser),
         number: fields.number,
@@ -140,7 +140,7 @@ async function saveOffer() {
         lastEditedBy: buildUserDisplayName(currentUser)
     };
 
-    isSavingOffer = true;
+    window.isSavingOffer = true;
     try {
         if (offerDoc.items.length === 0) {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
@@ -160,7 +160,7 @@ async function saveOffer() {
         logger.error('offerCrud', '[App] Save error:', err);
         showToast('Błąd zapisu oferty', 'error');
     } finally {
-        isSavingOffer = false;
+        window.isSavingOffer = false;
     }
 }
 
@@ -170,8 +170,8 @@ function clearOfferForm() {
     editingOfferId = null;
     editingOfferAssignedUserId = null;
     editingOfferAssignedUserName = '';
-    editingOfferCreatedByUserId = null;
-    editingOfferCreatedByUserName = '';
+    window.editingOfferCreatedByUserId = null;
+    window.editingOfferCreatedByUserName = '';
     clearOfferFormFields(generateOfferNumber);
     if (typeof clearOrderEditState === 'function') clearOrderEditState();
     currentOfferItems = [];
@@ -232,8 +232,8 @@ async function loadOffer(id) {
     editingOfferId = id;
     editingOfferAssignedUserId = normalized.userId || null;
     editingOfferAssignedUserName = normalized.userName || '';
-    editingOfferCreatedByUserId = normalized.createdByUserId || null;
-    editingOfferCreatedByUserName = normalized.createdByUserName || '';
+    window.editingOfferCreatedByUserId = normalized.createdByUserId || null;
+    window.editingOfferCreatedByUserName = normalized.createdByUserName || '';
     const finalNumber =
         normalized.number ||
         normalized.offerNumber ||

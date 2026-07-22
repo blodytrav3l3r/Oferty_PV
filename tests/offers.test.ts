@@ -2,6 +2,28 @@ import request from 'supertest';
 import express from 'express';
 import offerRoutes from '../src/routes/offers/index';
 
+jest.mock('../src/prismaClient', () => ({
+    __esModule: true,
+    default: {
+        $executeRaw: jest.fn(),
+        $queryRaw: jest.fn(),
+        $executeRawUnsafe: jest.fn(),
+        offers_rel: {
+            findMany: jest.fn().mockResolvedValue([]),
+            findUnique: jest.fn().mockResolvedValue(null)
+        },
+        offers_studnie_rel: {
+            findMany: jest.fn().mockResolvedValue([]),
+            findUnique: jest.fn().mockResolvedValue(null)
+        },
+        offer_items_rel: { findMany: jest.fn().mockResolvedValue([]) },
+        users: {
+            findUnique: jest.fn().mockResolvedValue(null),
+            findMany: jest.fn().mockResolvedValue([])
+        }
+    }
+}));
+
 describe('Offers Routes', () => {
     let app: express.Application;
 
@@ -9,7 +31,6 @@ describe('Offers Routes', () => {
         app = express();
         app.use(express.json());
         app.use('/api/offers', offerRoutes);
-        // Uwaga: W prawdziwych testach powinieneś zamockować klienta Prisma
     });
 
     describe('GET /api/offers', () => {

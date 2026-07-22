@@ -108,7 +108,7 @@ function getWellBadges(change, isOrdered, well) {
                 ? getOrderForWellId(well.id, editingOfferIdStudnie)
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
-            html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
+            html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb),0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb),0.4); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}

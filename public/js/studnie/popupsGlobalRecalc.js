@@ -32,7 +32,7 @@ window.openGlobalRecalcModal = function () {
                     (p) => `
             <div class="fs-dn-tile" id="recalc-top-${dn}-${p.id}"
                  style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                 onclick="window.recalcSelectTop(${dn}, '${p.id}')">
+                 onclick="window.recalcSelectTop(${dn}, '${escapeHtml(p.id)}')">
                 <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
             </div>`
                 )
@@ -60,7 +60,7 @@ window.openGlobalRecalcModal = function () {
                         (p) => `
                 <div class="fs-dn-tile fs-red-tile-${dn}" id="recalc-redtop-${dn}-${p.id}"
                      style="padding:0.35rem; text-align:center; cursor:pointer; border-radius:6px; background: rgba(30,41,59,0.3); border: 1px solid var(--border);"
-                     onclick="window.recalcSelectRedTop(${dn}, '${p.id}')">
+                     onclick="window.recalcSelectRedTop(${dn}, '${escapeHtml(p.id)}')">
                     <div style="font-size:0.65rem; font-weight:700; color:var(--text-primary);">${p.name.replace(/^.*?(Konus|Płyta|Pierścień)/i, '$1').substring(0, 18)}</div>
                 </div>`
                     )

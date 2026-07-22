@@ -112,10 +112,14 @@ function updateRuryOrderSummary(orderData) {
                             it.orderedQuantity = totalPipeQty;
                             const ztRow = dst.querySelector('tr[data-uid="' + it.uid + '"]');
                             if (ztRow) {
-                                const ztQty = ztRow.querySelector('td:nth-child(6) .edit-input');
-                                if (ztQty) ztQty.value = totalPipeQty;
-                                const ztOrder = ztRow.querySelector('.order-partial-qty');
-                                if (ztOrder) ztOrder.value = totalPipeQty;
+                                const ztQty = /** @type {HTMLInputElement} */ (
+                                    ztRow.querySelector('td:nth-child(6) .edit-input')
+                                );
+                                if (ztQty) ztQty.value = String(totalPipeQty);
+                                const ztOrder = /** @type {HTMLInputElement} */ (
+                                    ztRow.querySelector('.order-partial-qty')
+                                );
+                                if (ztOrder) ztOrder.value = String(totalPipeQty);
                             }
                         }
                     });
@@ -124,18 +128,20 @@ function updateRuryOrderSummary(orderData) {
         };
         dst.querySelectorAll('.order-partial-qty').forEach((el) => {
             el.removeAttribute('disabled');
-            el.onchange = function () {
-                const row = this.closest('tr[data-uid]');
+            var input = /** @type {HTMLInputElement} */ (el);
+            input.onchange = function () {
+                var row = input.closest('tr[data-uid]');
                 if (!row) return;
-                applyOrderQty(row, this.value);
+                applyOrderQty(row, input.value);
             };
         });
         dst.querySelectorAll('td:nth-child(6) .edit-input').forEach((el) => {
             el.removeAttribute('disabled');
-            el.onchange = function () {
-                const row = this.closest('tr[data-uid]');
+            var input = /** @type {HTMLInputElement} */ (el);
+            input.onchange = function () {
+                var row = input.closest('tr[data-uid]');
                 if (!row) return;
-                applyOrderQty(row, this.value);
+                applyOrderQty(row, input.value);
             };
         });
         dst.querySelectorAll('tr[data-uid]').forEach((row) => {
@@ -151,12 +157,14 @@ function updateRuryOrderSummary(orderData) {
                     '<input type="number" class="order-partial-qty" value="' +
                     escapeHtml(String(currentQty)) +
                     '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
-                const newInput = orderCell.querySelector('.order-partial-qty');
+                var newInput = /** @type {HTMLInputElement} */ (
+                    orderCell.querySelector('.order-partial-qty')
+                );
                 if (newInput) {
                     newInput.onchange = function () {
-                        const r = this.closest('tr[data-uid]');
+                        var r = newInput.closest('tr[data-uid]');
                         if (!r) return;
-                        applyOrderQty(r, this.value);
+                        applyOrderQty(r, newInput.value);
                     };
                 }
             }

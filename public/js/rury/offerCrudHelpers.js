@@ -171,7 +171,7 @@ function showOfferHistory(id) {
             <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>
             ${diffHtml}
             <div style="margin-top:0.6rem;">
-              <button class="btn btn-sm btn-secondary" onclick="restoreOfferVersion('${id}', ${i})">Pobierz do edycji</button>
+              <button class="btn btn-sm btn-secondary" onclick="restoreOfferVersion('${escapeHtml(id)}', ${i})">Pobierz do edycji</button>
             </div>
           </div>
         </div>

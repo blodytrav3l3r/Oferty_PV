@@ -11,7 +11,8 @@ function _excelToggleColumnPopup() {
 
     const groups = {};
     allCols.forEach(function (col) {
-        const g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
+        const c = /** @type {any} */ (col);
+        const g = c.fromReduction ? '_reduction_' + (c.targetDn || 1000) : col.componentType;
         if (!groups[g]) groups[g] = { cols: [] };
         groups[g].cols.push(col);
     });
@@ -255,7 +256,7 @@ function _excelToggleColumnPopup() {
             'input[type="checkbox"][data-indeterminate="true"]'
         );
         cbs.forEach(function (cb) {
-            cb.indeterminate = true;
+            /** @type {HTMLInputElement} */ (cb).indeterminate = true;
         });
         return;
     }
@@ -280,7 +281,7 @@ function _excelToggleColumnPopup() {
             if (!modal) return;
             let cbs = modal.querySelectorAll('input[type="checkbox"][data-indeterminate="true"]');
             cbs.forEach(function (cb) {
-                cb.indeterminate = true;
+                /** @type {HTMLInputElement} */ (cb).indeterminate = true;
             });
         }
     });
@@ -295,9 +296,10 @@ function _excelOnDnSelectAll(dnKey, checked) {
     if (!allCols) return;
     let ids = [];
     allCols.forEach(function (col) {
-        let g = col.fromReduction ? '_reduction_' + (col.targetDn || 1000) : col.componentType;
-        if (dnKey === '_base' && !col.fromReduction) ids.push(col.id);
-        else if (col.fromReduction && g === dnKey) ids.push(col.id);
+        const c = /** @type {any} */ (col);
+        const g = c.fromReduction ? '_reduction_' + (c.targetDn || 1000) : col.componentType;
+        if (dnKey === '_base' && !c.fromReduction) ids.push(col.id);
+        else if (c.fromReduction && g === dnKey) ids.push(col.id);
     });
     _excelDeselectAllCols();
     ids.forEach(function (id) {

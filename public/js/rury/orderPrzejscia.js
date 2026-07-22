@@ -1,17 +1,17 @@
 // @ts-check
 /* ===== ZAMÓWIENIA RUR — PRZEJŚCIA SZCZELNE TABELA ===== */
 
-let _customPrzejscieRows = [];
-let _offerPrzejscieRows = [];
-let _przejsciaInitialized = false;
+window._customPrzejscieRows = [];
+window._offerPrzejscieRows = [];
+window._przejsciaInitialized = false;
 
 function renderPrzejsciaDetailsTable(existingData) {
     const container = document.getElementById('step4-przejscia-details-table');
     if (!container) return;
 
     const allRows = [
-        ..._offerPrzejscieRows.map((r, i) => ({ ...r, source: 'offer', _idx: i })),
-        ..._customPrzejscieRows.map((r, i) => ({ ...r, source: 'custom', _idx: i }))
+        ...window._offerPrzejscieRows.map((r, i) => ({ ...r, source: 'offer', _idx: i })),
+        ...window._customPrzejscieRows.map((r, i) => ({ ...r, source: 'custom', _idx: i }))
     ];
 
     if (allRows.length === 0) {
@@ -71,7 +71,7 @@ function renderPrzejsciaDetailsTable(existingData) {
 
 function addCustomPrzejscieRow() {
     _syncCustomRowsFromDOM();
-    _customPrzejscieRows.push({
+    window._customPrzejscieRows.push({
         rodzaj: '',
         dnOd: '',
         dnDo: '',
@@ -86,9 +86,9 @@ window.addCustomPrzejscieRow = addCustomPrzejscieRow;
 
 function removePrzejscieRow(source, idx) {
     if (source === 'custom') {
-        _customPrzejscieRows.splice(idx, 1);
+        window._customPrzejscieRows.splice(idx, 1);
     } else {
-        _offerPrzejscieRows.splice(idx, 1);
+        window._offerPrzejscieRows.splice(idx, 1);
     }
     renderPrzejsciaDetailsTable();
 }
@@ -98,7 +98,7 @@ function _syncCustomRow(input) {
     const field = input.dataset.field;
     const source = input.dataset.source;
     const idx = parseInt(input.dataset.idx);
-    const target = source === 'custom' ? _customPrzejscieRows : _offerPrzejscieRows;
+    const target = source === 'custom' ? window._customPrzejscieRows : window._offerPrzejscieRows;
     if (target && target[idx] !== undefined) {
         target[idx][field] = input.value;
     }
@@ -119,8 +119,8 @@ function _syncCustomRowsFromDOM() {
 function collectPrzejsciaDetailsFromTable() {
     _syncCustomRowsFromDOM();
     return [
-        ..._offerPrzejscieRows.map((r) => ({ ...r, source: 'offer' })),
-        ..._customPrzejscieRows.map((r) => ({ ...r, source: 'custom' }))
+        ...window._offerPrzejscieRows.map((r) => ({ ...r, source: 'offer' })),
+        ...window._customPrzejscieRows.map((r) => ({ ...r, source: 'custom' }))
     ];
 }
 

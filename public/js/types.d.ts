@@ -136,8 +136,6 @@ declare function appConfirm(msg: string): Promise<boolean>;
 declare function escapeHtml(str: string): string;
 declare function setText(el: HTMLElement | null, value: string | number | null | undefined): void;
 declare function authHeaders(): Record<string, string>;
-declare var orderEditMode: any;
-
 /* ===== Deklaracje dla window.* ===== */
 interface Window {
     /* constants.js */

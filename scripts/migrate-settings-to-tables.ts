@@ -3,16 +3,16 @@
  * migrate-settings-to-tables.ts
  *
  * Bezpieczna, idempotentna migracja danych cennikowych z `settings` JSON
- * do docelowych tabel Prisma z walidacj� SHA-256 i automatycznym rollbackiem.
+ * do docelowych tabel Prisma z walidacją SHA-256 i automatycznym rollbackiem.
  *
- * U�ycie:
+ * Użycie:
  *   npx ts-node scripts/migrate-settings-to-tables.ts
  *   npx ts-node scripts/migrate-settings-to-tables.ts --dry-run
  *   npx ts-node scripts/migrate-settings-to-tables.ts --backup
  *
  * Flagi:
  *   --dry-run - tylko odczyt i walidacja, bez zapisu
- *   --backup  - wykonaj backup SQLite przed migracj�
+ *   --backup  - wykonaj backup SQLite przed migracją
  */
 
 import { PrismaClient } from '../generated/prisma';
@@ -312,11 +312,11 @@ async function main() {
     );
 
     if (hasError || hasMismatch) {
-        console.error('Migracja nie powiod�a si�. Szczegó�y powy�ej.');
+        console.error('Migracja nie powiodła się. Szczegóły powyżej.');
         process.exit(1);
     }
 
-    console.log('Migracja zako�czona sukcesem.');
+    console.log('Migracja zakończona sukcesem.');
 }
 
 main().catch((err) => {

@@ -98,10 +98,10 @@ function initKartaBudowyStep4(primaryOfferNumber) {
 
     const uwagiField = document.getElementById('step4-uwagi-ogolne');
     const activeItemsForUwagi =
-        typeof pendingOrderCreationData !== 'undefined' &&
-        pendingOrderCreationData &&
-        pendingOrderCreationData.selectedItems
-            ? pendingOrderCreationData.selectedItems
+        typeof window.pendingOrderCreationData !== 'undefined' &&
+        window.pendingOrderCreationData &&
+        window.pendingOrderCreationData.selectedItems
+            ? window.pendingOrderCreationData.selectedItems
             : getActiveItemsArray();
     if (uwagiField && activeItemsForUwagi && activeItemsForUwagi.length > 0) {
         if (typeof getSortedRuryItems === 'function') {
@@ -185,9 +185,9 @@ function initKartaBudowyStep4(primaryOfferNumber) {
                     editingRuryOrderId
                 ) ||
                 !!(
-                    typeof pendingOrderCreationData !== 'undefined' &&
-                    pendingOrderCreationData &&
-                    pendingOrderCreationData.selectedItems
+                    typeof window.pendingOrderCreationData !== 'undefined' &&
+                    window.pendingOrderCreationData &&
+                    window.pendingOrderCreationData.selectedItems
                 );
             const currentVal = uwagiField.value;
             const existingLines = currentVal ? currentVal.split('\n').map((l) => l.trimEnd()) : [];
@@ -226,11 +226,11 @@ function initKartaBudowyStep4(primaryOfferNumber) {
         dataZamInput.value = new Date().toISOString().slice(0, 10);
     }
 
-    if (!_przejsciaInitialized) {
-        _customPrzejscieRows = [];
-        _offerPrzejscieRows = [];
-        renderPrzejsciaDetailsTable();
-        _przejsciaInitialized = true;
+    if (!window._przejsciaInitialized) {
+        window._customPrzejscieRows = [];
+        window._offerPrzejscieRows = [];
+
+        window._przejsciaInitialized = true;
     }
 
     renderKartaBudowyCopyOptions();
@@ -252,8 +252,8 @@ window.initKartaBudowyStep4 = initKartaBudowyStep4;
 async function step4NextAction() {
     const kartaBudowyData = collectKartaBudowyDataStep4();
 
-    if (pendingOrderCreationData) {
-        await finalizeOrderFromOffer(pendingOrderCreationData.offer, kartaBudowyData);
+    if (window.pendingOrderCreationData) {
+        await finalizeOrderFromOffer(window.pendingOrderCreationData.offer, kartaBudowyData);
     } else {
         showToast('Brak danych do utworzenia zamówienia. Zapisz najpierw ofertę.', 'error');
     }
@@ -261,8 +261,12 @@ async function step4NextAction() {
 window.step4NextAction = step4NextAction;
 
 function getKartaBudowyCopyOrders() {
-    if (!pendingOrderCreationData || !pendingOrderCreationData.kartaBudowyTemplateOrders) return [];
-    return pendingOrderCreationData.kartaBudowyTemplateOrders;
+    if (
+        !window.pendingOrderCreationData ||
+        !window.pendingOrderCreationData.kartaBudowyTemplateOrders
+    )
+        return [];
+    return window.pendingOrderCreationData.kartaBudowyTemplateOrders;
 }
 
 function renderKartaBudowyCopyOptions() {
@@ -361,8 +365,12 @@ function applyCopiedKartaBudowyData(sourceData) {
     }
 
     if (Array.isArray(sourceData.przejsciaDetails)) {
-        _customPrzejscieRows = sourceData.przejsciaDetails.filter((p) => p.source === 'custom');
-        _offerPrzejscieRows = sourceData.przejsciaDetails.filter((p) => p.source === 'offer');
+        window._customPrzejscieRows = sourceData.przejsciaDetails.filter(
+            (p) => p.source === 'custom'
+        );
+        window._offerPrzejscieRows = sourceData.przejsciaDetails.filter(
+            (p) => p.source === 'offer'
+        );
         renderPrzejsciaDetailsTable();
     }
 }

@@ -2,7 +2,7 @@
 /* ===== ZAMÓWIENIA RUR — CRUD ===== */
 
 let ordersRury = [];
-let pendingOrderCreationData = null;
+window.pendingOrderCreationData = null;
 
 async function loadOrdersRury() {
     try {
@@ -79,7 +79,7 @@ async function createOrderFromOffer() {
         return;
     }
 
-    pendingOrderCreationData = {
+    window.pendingOrderCreationData = {
         offer,
         selectedItems: selectedItemsClone,
         kartaBudowyTemplateOrders: existingOrdersForOffer
@@ -138,7 +138,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
 
     try {
         const snapshotItems = structuredClone(
-            pendingOrderCreationData.selectedItems || getActiveItemsArray() || []
+            window.pendingOrderCreationData.selectedItems || getActiveItemsArray() || []
         );
 
         const orderedUids = new Set(snapshotItems.map((it) => it.uid).filter(Boolean));
@@ -197,7 +197,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
 
         editingRuryOrderId = orderId;
         window.editingRuryOrderId = orderId;
-        pendingOrderCreationData = null;
+        window.pendingOrderCreationData = null;
 
         if (typeof enterRuryOrderEditMode === 'function') {
             enterRuryOrderEditMode(orderId);
