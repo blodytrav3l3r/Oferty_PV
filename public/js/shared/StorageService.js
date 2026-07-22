@@ -156,36 +156,37 @@ class StorageService {
             ? [`/api/offers-rury/studnie/${id}`, `/api/offers-rury/${id}`]
             : [`/api/offers-rury/${id}`, `/api/offers-rury/studnie/${id}`];
 
-        try {
-            for (let i = 0; i < endpoints.length; i++) {
-                const url = endpoints[i];
-                const res = await fetch(url, { method: 'DELETE', headers });
-
-                if (res.ok) {
-                    const type = url.includes('/studnie/') ? 'studni' : 'rur';
-                    logger.info(
-                        'StorageService',
-                        `[StorageService] Oferta ${id} została usunięta z ${type}.`
-                    );
-                    return true;
-                }
-
-                // Jeśli to ostatnia próba i nadal nie ok, rzuć błąd
-                if (i === endpoints.length - 1) {
-                    const errData = await res.json().catch(() => ({}));
-                    throw new Error(
-                        errData.error || 'Nie udało się usunąć oferty z żadnego endpointu'
-                    );
-                }
+        for (let i = 0; i < endpoints.length; i++) {
+            const url = endpoints[i];
+            let res;
+            try {
+                res = await fetch(url, { method: 'DELETE', headers });
+            } catch {
+                continue;
             }
-        } catch (error) {
-            logger.error(
-                'StorageService',
-                `[StorageService] Błąd podczas usuwania oferty ${id}:`,
-                error
-            );
-            throw error;
+
+            if (res.ok) {
+                const type = url.includes('/studnie/') ? 'studni' : 'rur';
+                logger.info(
+                    'StorageService',
+                    `[StorageService] Oferta ${id} została usunięta z ${type}.`
+                );
+                return true;
+            }
+
+            if (res.status === 500) {
+                // 500 = oferta mogła być już usunięta z DB (błąd FTS5/cache)
+                logger.warn(
+                    'StorageService',
+                    `[StorageService] DELETE ${url} zwrócił 500, próbuję drugi endpoint...`
+                );
+                continue;
+            }
         }
+
+        const errMsg = 'Nie udało się usunąć oferty z żadnego endpointu';
+        logger.error('StorageService', `[StorageService] ${errMsg} (${id})`);
+        throw new Error(errMsg);
     }
 
     /**

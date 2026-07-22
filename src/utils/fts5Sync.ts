@@ -12,30 +12,38 @@ export interface OfferFts5Data {
  * Uses DELETE + INSERT to avoid rowid conflicts.
  */
 export async function syncFts5(type: 'rury' | 'studnie', data: OfferFts5Data): Promise<void> {
-    await prisma.$executeRawUnsafe(
-        `DELETE FROM offers_search_fts WHERE id = ? AND type = ?`,
-        data.id,
-        type
-    );
-    await prisma.$executeRawUnsafe(
-        `INSERT INTO offers_search_fts(id, offer_number, clientName, investName, type) VALUES (?, ?, ?, ?, ?)`,
-        data.id,
-        data.offer_number || '',
-        data.clientName || '',
-        data.investName || '',
-        type
-    );
+    try {
+        await prisma.$executeRawUnsafe(
+            `DELETE FROM offers_search_fts WHERE id = ? AND type = ?`,
+            data.id,
+            type
+        );
+        await prisma.$executeRawUnsafe(
+            `INSERT INTO offers_search_fts(id, offer_number, clientName, investName, type) VALUES (?, ?, ?, ?, ?)`,
+            data.id,
+            data.offer_number || '',
+            data.clientName || '',
+            data.investName || '',
+            type
+        );
+    } catch {
+        // FTS5 table may not exist — safe to ignore
+    }
 }
 
 /**
  * Remove an offer from FTS5 index.
  */
 export async function removeFts5(type: 'rury' | 'studnie', id: string): Promise<void> {
-    await prisma.$executeRawUnsafe(
-        `DELETE FROM offers_search_fts WHERE id = ? AND type = ?`,
-        id,
-        type
-    );
+    try {
+        await prisma.$executeRawUnsafe(
+            `DELETE FROM offers_search_fts WHERE id = ? AND type = ?`,
+            id,
+            type
+        );
+    } catch {
+        // FTS5 table may not exist — safe to ignore
+    }
 }
 
 /**

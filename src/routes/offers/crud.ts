@@ -160,12 +160,13 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             } catch (_e) {}
             logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
-            await prisma.offers_studnie_rel.delete({ where: { id } });
             await removeFts5('studnie', id);
+            await prisma.offers_studnie_rel.delete({ where: { id } });
 
             logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
             searchCache.invalidateAll();
-            return res.json({ ok: true });
+            res.json({ ok: true });
+            return;
         }
 
         const offer = await prisma.offers_rel.findUnique({
@@ -193,17 +194,18 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         };
         logAudit('offer', id, authReq.user?.id || '', 'delete', null, oldSnapshot);
 
+        await removeFts5('rury', id);
         await prisma.offer_items_rel.deleteMany({
             where: { offerId: id }
         });
         await prisma.offers_rel.delete({
             where: { id }
         });
-        await removeFts5('rury', id);
 
         logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         searchCache.invalidateAll();
         res.json({ ok: true });
+        return;
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         res.status(500).json({ error: message });
