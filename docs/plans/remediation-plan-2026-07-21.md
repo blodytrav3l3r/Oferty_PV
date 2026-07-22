@@ -246,13 +246,13 @@ fetch('/api/auth/change-password', { method: 'POST', ...body });
 
 **Weryfikacja:** `grep -r "api\.\(get\|post\|put\|patch\|del\)" public/js/` — brak wyników.
 
-### 5.2 Usunięcie `public/js/shared/appState.js`
+### 5.2 Usunięcie `public/js/shared/appState.js` — [DONE ✅]
 
-**Problem:** Klasa `AppState` zdefiniowana i załadowana w HTML, ale nieużywana przez kod. Analiza grep nie wykazała żadnych odwołań do `window.AppState`.
+**Problem:** Klasa `AppState` zdefiniowana i załadowana w HTML. `Object.defineProperty` proxy na `window` shadowowane przez `let` w modułach.
 
-**Zmiana:** Usunąć plik `public/js/shared/appState.js`.
+**Zmiana:** Usunięto plik, `<script>` z obu HTML, zastąpiono `AppState.clientsDb = ...` na `clientsDb = ...` w `app.js` i `appStudnie.js`.
 
-**Weryfikacja:** `grep -r "AppState" public/js/` — brak wyników poza samym plikiem.
+**Weryfikacja:** `Select-String "AppState" public/js/` — brak wyników poza `jsonOfferTransfer.js` (window.appState lowercase, inna rzecz).
 
 ### 5.3 Usunięcie `public/js/shared/StorageService.js`
 
@@ -328,7 +328,7 @@ fetch('/api/auth/change-password', { method: 'POST', ...body });
 
 ---
 
-## Sekcja 7: 🟢 BUGI LOGICZNE — [STATUS: PENDING]
+## Sekcja 7: 🟢 BUGI LOGICZNE — [STATUS: DONE]
 
 **Cel:** Naprawa potencjalnych błędów logicznych.
 

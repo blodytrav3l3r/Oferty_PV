@@ -243,7 +243,7 @@ async function loadDataInBackground() {
     }
 
     if (clientsP.status === 'fulfilled') {
-        AppState.clientsDb = clientsP.value;
+        clientsDb = clientsP.value;
     } else {
         logger.warn('appStudnie', '[AppStudnie] Błąd klientów:', clientsP.reason);
     }

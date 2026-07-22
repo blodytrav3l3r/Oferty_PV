@@ -11,9 +11,10 @@
 /*   pricelistUi.js    — cennik CRUD, import/eksport Excel */
 
 /* ===== ZMIENNE GLOBALNE ===== */
-/* Zarządzane przez AppState singleton (shared/appState.js). */
-/* Dostępne globalnie przez window.products, window.offers itp. */
+/* products, offers, clientsDb, currentOfferItems, editingOfferId itp. */
+/* to zmienne globalne (window.*) dostępne we wszystkich modułach. */
 /* dzięki Object.defineProperty — pełna kompatybilność wsteczna. */
+var editingOfferId = null;
 // getAuthToken(), authHeaders(), appLogout() — dostępne z shared/auth.js
 
 /* ===== ZMIANA OPIEKUNA ===== */
@@ -151,7 +152,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     products = await loadProducts();
     offers = await loadOffers();
-    AppState.clientsDb = await loadClientsDb();
+    clientsDb = await loadClientsDb();
     if (typeof loadOrdersRury === 'function') await loadOrdersRury();
 
     setupNavigation();

@@ -31,8 +31,8 @@ let isSavingOffer = false;
 let orderEditMode = null; // Podczas edycji zamówienia: { orderId, order }
 
 const expandedWellIndices = new Set();
-// clientsDb jest zarządzane przez AppState (shared/appState.js)
-// Używać AppState.clientsDb zamiast lokalnej zmiennej
+// clientsDb to zmienna globalna (window.clientsDb)
+// ustawiana w appStudnie.js przez clientsDb = loadClientsDb()
 
 // Stan kreatora
 let currentWizardStep = 1;

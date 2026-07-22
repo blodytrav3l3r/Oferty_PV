@@ -1,6 +1,6 @@
 // @ts-check
 /* ===== KREATOR OFERTY (RURY) — FAZY 1-5 ===== */
-/* currentWizardStep zarządzany przez AppState (shared/appState.js) */
+/* currentWizardStep — zmienna globalna (window.currentWizardStep) */
 
 function goToPhase(step) {
     if (step < 1 || step > 5) return;
@@ -215,7 +215,7 @@ function updateWizardIndicator() {
 function initWizard() {
     goToPhase(1);
 
-    if (editingOfferId) {
+    if (window.editingOfferId) {
         goToPhase(3);
         renderOfferItems();
     }
