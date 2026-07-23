@@ -182,18 +182,22 @@ async function deleteProduct(id) {
 }
 
 async function resetPriceList() {
+    const btns = document.querySelectorAll('[onclick*="resetPriceList"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+    if (
+        !(await appConfirm(
+            'Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.',
+            { title: 'Reset cennika', type: 'warning' }
+        ))
+    ) {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        return;
+    }
     try {
         const json = await api.get('/api/products/default');
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = /** @type {any} */ (json).data;
         if (customDefault && customDefault.length > 0) {
-            if (
-                !(await appConfirm(
-                    'Przywrócić cennik do Twojego zapisanego cennika domyślnego? Utracisz niezapisane i najnowsze zmiany.',
-                    { title: 'Reset cennika', type: 'warning' }
-                ))
-            )
-                return;
             products = structuredClone(customDefault);
         } else {
             showToast('Brak zapisanych wartości fabrycznych cennika', 'error');
@@ -202,6 +206,8 @@ async function resetPriceList() {
     } catch {
         showToast('Nie udało się pobrać domyślnego cennika z serwera', 'error');
         return;
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
     }
     _pricelistDirty = true;
     updateSaveBtn();
@@ -214,6 +220,8 @@ async function savePriceList() {
         showToast('Brak zmian do zapisania', 'info');
         return;
     }
+    const btns = document.querySelectorAll('[onclick*="savePriceList"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const ok = await saveProducts(products);
         if (!ok) {
@@ -228,6 +236,8 @@ async function savePriceList() {
     } catch (err) {
         logger.error('pricelistUi', 'savePriceList: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
     }
 }
 
@@ -339,9 +349,24 @@ function exportRuryToExcel() {
     }
 }
 
-function importRuryFromExcel(event) {
+async function importRuryFromExcel(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    const btns = document.querySelectorAll('[onclick*="importRuryFromExcel"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+
+    if (_pricelistDirty) {
+        const proceed = await appConfirm(
+            'Masz niezapisane zmiany w cenniku rur. Czy kontynuować import? Niezapisane zmiany zostaną utracone.',
+            { title: 'Niezapisane zmiany', type: 'warning' }
+        );
+        if (!proceed) {
+            btns.forEach((b) => b.removeAttribute('disabled'));
+            event.target.value = '';
+            return;
+        }
+    }
 
     const reader = new FileReader();
     reader.onload = async function (e) {
@@ -436,10 +461,15 @@ function importRuryFromExcel(event) {
         } catch (err) {
             logger.error('pricelistUi', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
+        } finally {
+            btns.forEach((b) => b.removeAttribute('disabled'));
         }
         event.target.value = ''; // Reset input
     };
-    reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
+    reader.onerror = () => {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        showToast('Błąd odczytu pliku', 'error');
+    };
     reader.readAsArrayBuffer(file);
 }
 

@@ -1,18 +1,24 @@
 /* ===== RESET / ZAPIS DOMYŚLNYCH ===== */
 async function resetStudniePriceList() {
+    const btns = document.querySelectorAll('[onclick*="resetStudniePriceList"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+    if (
+        !(await appConfirm('Przywrócić cennik studni do zapisanego cennika domyślnego?', {
+            title: 'Reset cennika',
+            type: 'warning'
+        }))
+    ) {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        return;
+    }
     try {
-        const res = await fetch('/api/products-studnie/default', { headers: authHeaders() });
+        const res = await fetchWithTimeout('/api/products-studnie/default', {
+            headers: authHeaders()
+        });
         const json = res.ok ? /** @type {any} */ (await res.json()) : null;
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
-            if (
-                !(await appConfirm('Przywrócić cennik studni do zapisanego cennika domyślnego?', {
-                    title: 'Reset cennika',
-                    type: 'warning'
-                }))
-            )
-                return;
             studnieProducts = structuredClone(customDefault);
         } else {
             showToast('Brak zapisanych wartości fabrycznych cennika studni', 'error');
@@ -21,6 +27,8 @@ async function resetStudniePriceList() {
     } catch {
         showToast('Nie udało się pobrać domyślnego cennika studni z serwera', 'error');
         return;
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
     }
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
@@ -34,6 +42,8 @@ async function saveStudniePriceList() {
         showToast('Brak zmian do zapisania', 'info');
         return;
     }
+    const btns = document.querySelectorAll('[onclick*="saveStudniePriceList"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
     try {
         const ok = await saveStudnieProducts(studnieProducts);
         if (!ok) {
@@ -47,6 +57,8 @@ async function saveStudniePriceList() {
     } catch (err) {
         logger.error('pricelistManager', 'saveStudniePriceList: wyjątek', err);
         showToast('Błąd zapisu: ' + err.message, 'error');
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
     }
 }
 
@@ -70,3 +82,6 @@ async function refreshStudnieData() {
         logger.warn('pricelistSaveReset', 'refreshStudnieData: blad pobierania');
     }
 }
+
+window.saveStudniePriceList = saveStudniePriceList;
+window.resetStudniePriceList = resetStudniePriceList;

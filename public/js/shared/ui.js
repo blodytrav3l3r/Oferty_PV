@@ -215,8 +215,8 @@ function showUserSelectionPopup(users, defaultUserId) {
                onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(255,255,255,0.03)'}">
                 <span style="font-size:1.1rem;">${roleBadge}</span>
                 <div class="flex-1">
-                    <div style="font-weight:700;">${displayName}</div>
-                    <div style="font-size:0.7rem; color:var(--text-secondary);">Symbol: ${symbol}</div>
+                    <div style="font-weight:700;">${escapeHtml(displayName)}</div>
+                    <div style="font-size:0.7rem; color:var(--text-secondary);">Symbol: ${escapeHtml(symbol)}</div>
                 </div>
                 ${isDefault ? '<span style="font-size:0.65rem; color:var(--accent-hover); font-weight:700;">DOMYŚLNY</span>' : ''}
             </button>`;

@@ -1,4 +1,11 @@
 /* ===== CENNIK PRECO — RENDEROWANIE ZAKŁADKI ===== */
+let _precoDirty = false;
+
+function updatePrecoSaveBtn() {
+    const btn = document.querySelector('#studnie-pricelist-body button.btn-primary');
+    if (!btn) return;
+    btn.disabled = !_precoDirty;
+}
 
 /**
  * Renderuje zakładkę cennika PRECO z edytowalnymi tabelami accordion per DN studni.
@@ -23,7 +30,7 @@ function renderPrecoPriceList() {
         <button class="btn btn-secondary pill-sm" onclick="loadPrecoDefaults()">
             <i data-lucide="refresh-cw" aria-hidden="true"></i> Reset
         </button>
-        <button class="btn btn-primary pill-sm" onclick="savePrecoFromUI()">
+        <button class="btn btn-primary pill-sm" id="btn-save-preco" onclick="savePrecoFromUI()" disabled>
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
     </div>`;
@@ -101,6 +108,13 @@ function renderPrecoPriceList() {
 
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons({ root: container });
+
+    container.querySelectorAll('[data-preco-field]').forEach(function (input) {
+        input.addEventListener('input', function () {
+            _precoDirty = true;
+            updatePrecoSaveBtn();
+        });
+    });
 }
 
 function renderPrecoRangeTable(title, table, dn, fieldBase) {
@@ -122,11 +136,12 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     html += `<th style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
     grupyKeys.forEach((g) => {
         const sg = window.escapeHtml(g);
+        const sgJs = encodeURIComponent(g);
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${sg}', this.value)" title="Edytuj nazwę grupy">
-                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${sg}')" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
+                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'))" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
     });
@@ -167,6 +182,7 @@ function addPrecoKinetaRow(dn) {
     if (!precoPricing[dn]) return;
     if (!precoPricing[dn].kinety) precoPricing[dn].kinety = [];
     precoPricing[dn].kinety.push({ dn: 0, prosta: 0, dodWlot: 0 });
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -176,6 +192,7 @@ async function removePrecoKinetaRow(dn, index) {
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn].kinety) return;
     precoPricing[dn].kinety.splice(index, 1);
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -197,6 +214,7 @@ function addPrecoRangeRow(dn, fieldBase) {
     const newRow = { min: 0, max: 0, grupy: {} };
     grupyKeys.forEach((g) => (newRow.grupy[g] = 0));
     table.push(newRow);
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -206,6 +224,7 @@ async function removePrecoRangeRow(dn, fieldBase, index) {
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
     precoPricing[dn][fieldBase].splice(index, 1);
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -220,6 +239,7 @@ function updatePrecoGrupaKey(dn, fieldBase, oldKey, newKey) {
             delete row.grupy[oldKey];
         }
     });
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -236,6 +256,7 @@ function addPrecoGrupaCol(dn, fieldBase) {
         if (!row.grupy) row.grupy = {};
         row.grupy[newDn] = 0;
     });
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -250,6 +271,7 @@ async function removePrecoGrupaCol(dn, fieldBase, g) {
             delete row.grupy[g];
         }
     });
+    _precoDirty = true;
     renderPrecoPriceList();
 }
 
@@ -295,18 +317,45 @@ function collectPrecoFromUI() {
 }
 
 async function savePrecoFromUI() {
-    const data = collectPrecoFromUI();
-    precoPricing = data;
-    const ok = await savePrecoPricing(data);
-    if (ok) refreshAll();
+    if (!_precoDirty) {
+        showToast('Brak zmian do zapisania', 'info');
+        return;
+    }
+    const btns = document.querySelectorAll('[onclick*="savePrecoFromUI"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+    try {
+        const data = collectPrecoFromUI();
+        precoPricing = data;
+        const ok = await savePrecoPricing(data);
+        if (ok) {
+            _precoDirty = false;
+            updatePrecoSaveBtn();
+            await refreshAll();
+        }
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+    }
 }
 
 async function loadPrecoDefaults() {
+    const btns = document.querySelectorAll('[onclick*="loadPrecoDefaults"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+    if (
+        !(await appConfirm('Przywrócić cennik PRECO do wartości fabrycznych?', {
+            title: 'Reset cennika PRECO',
+            type: 'warning'
+        }))
+    ) {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        return;
+    }
     try {
         const res = await fetchWithTimeout('/api/preco-pricing/default');
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
+            _precoDirty = true;
+            updatePrecoSaveBtn();
             renderPrecoPriceList();
             showToast('Cennik PRECO przywrócony — kliknij Zapisz by zachować', 'info');
         } else {
@@ -315,5 +364,19 @@ async function loadPrecoDefaults() {
     } catch (e) {
         logger.error('pricelistManager', 'Błąd ładowania cennika PRECO:', e);
         showToast('Błąd sieci przy ładowaniu cennika PRECO', 'error');
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
     }
 }
+
+window.renderPrecoPriceList = renderPrecoPriceList;
+window.savePrecoFromUI = savePrecoFromUI;
+window.loadPrecoDefaults = loadPrecoDefaults;
+window.togglePrecoAccordion = togglePrecoAccordion;
+window.addPrecoKinetaRow = addPrecoKinetaRow;
+window.removePrecoKinetaRow = removePrecoKinetaRow;
+window.addPrecoRangeRow = addPrecoRangeRow;
+window.removePrecoRangeRow = removePrecoRangeRow;
+window.updatePrecoGrupaKey = updatePrecoGrupaKey;
+window.addPrecoGrupaCol = addPrecoGrupaCol;
+window.removePrecoGrupaCol = removePrecoGrupaCol;

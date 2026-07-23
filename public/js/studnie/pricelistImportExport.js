@@ -160,9 +160,24 @@ function exportStudnieToExcel() {
     }
 }
 
-function importStudnieFromExcel(event) {
+async function importStudnieFromExcel(event) {
     const file = event.target.files[0];
     if (!file) return;
+
+    const btns = document.querySelectorAll('[onclick*="importStudnieFromExcel"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+
+    if (_studniePricelistDirty) {
+        const proceed = await appConfirm(
+            'Masz niezapisane zmiany w cenniku studni. Czy kontynuować import? Niezapisane zmiany zostaną utracone.',
+            { title: 'Niezapisane zmiany', type: 'warning' }
+        );
+        if (!proceed) {
+            btns.forEach((b) => b.removeAttribute('disabled'));
+            event.target.value = '';
+            return;
+        }
+    }
 
     const reader = new FileReader();
     reader.onload = async function (e) {
@@ -375,7 +390,8 @@ function importStudnieFromExcel(event) {
 
             if (hasPrecoData) {
                 precoPricing = precoDataMap;
-                savePrecoPricing(precoPricing);
+                _precoDirty = true;
+                updatePrecoSaveBtn();
             }
 
             renderStudniePriceList();
@@ -384,10 +400,15 @@ function importStudnieFromExcel(event) {
         } catch (err) {
             logger.error('pricelistManager', 'Import error:', err);
             showToast('Błąd podczas importu pliku Excel', 'error');
+        } finally {
+            btns.forEach((b) => b.removeAttribute('disabled'));
         }
         event.target.value = '';
     };
-    reader.onerror = () => showToast('Błąd odczytu pliku', 'error');
+    reader.onerror = () => {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+        showToast('Błąd odczytu pliku', 'error');
+    };
     reader.readAsArrayBuffer(file);
 }
 

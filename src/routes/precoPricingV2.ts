@@ -178,7 +178,7 @@ router.put(
         try {
             const lockAcquired = await acquireLock();
             if (!lockAcquired) {
-                res.status(423).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
+                res.status(429).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
                 return;
             }
 
@@ -220,7 +220,7 @@ router.patch(
         try {
             const lockAcquired = await acquireLock();
             if (!lockAcquired) {
-                res.status(423).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
+                res.status(429).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
                 return;
             }
 
