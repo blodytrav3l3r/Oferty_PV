@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Price Override Service
  *
  * Porównuje LIVE vs DEFAULT dla kazdego modulu:
@@ -77,11 +77,25 @@ function isSameArray(a: unknown[], b: unknown[], ignoreFields: string[] = ['id']
     return true;
 }
 
+interface PriceDefaultsJson {
+    version: 1;
+    exportedAt: string;
+    rury: Record<string, unknown>[];
+    studnie: Record<string, unknown>[];
+    preco: {
+        konfig: Record<string, unknown>[];
+        kinety: Record<string, unknown>[];
+        zakresy: Record<string, unknown>[];
+    };
+}
+
 class PriceOverrideService {
     private readonly overridesPath: string;
+    private readonly defaultsPath: string;
 
     constructor() {
         this.overridesPath = path.join(__dirname, '..', '..', 'data', 'price_overrides.json');
+        this.defaultsPath = path.join(__dirname, '..', '..', 'data', 'price_defaults.json');
     }
 
     async computeAll(): Promise<PriceOverrideData> {
@@ -335,6 +349,159 @@ class PriceOverrideService {
         }
 
         logger.info('PriceOverride', 'Nadpisania zastosowane');
+    }
+
+    async saveDefaults(): Promise<{
+        rury: number;
+        studnie: number;
+        precoKonfig: number;
+        precoKinety: number;
+        precoZakresy: number;
+    }> {
+        logger.info('PriceOverride', 'Zapisywanie bieżącego stanu jako domyślne...');
+
+        const [ruryLive, studnieLive, konfigLive, kinetyLive, zakresyLive] = await Promise.all([
+            prisma.productsRury.findMany({ orderBy: { id: 'asc' } }),
+            prisma.productsStudnie.findMany({ orderBy: { id: 'asc' } }),
+            prisma.precoKonfig.findMany({ orderBy: { key: 'asc' } }),
+            prisma.precoKinety.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] }),
+            prisma.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
+        ]);
+
+        await prisma.$transaction(async (tx) => {
+            await tx.productsRuryDefault.deleteMany();
+            await tx.productsStudnieDefault.deleteMany();
+            await tx.precoKonfigDefault.deleteMany();
+            await tx.precoKinetyDefault.deleteMany();
+            await tx.precoZakresyDefault.deleteMany();
+
+            if (ruryLive.length > 0) await tx.productsRuryDefault.createMany({ data: ruryLive });
+            if (studnieLive.length > 0)
+                await tx.productsStudnieDefault.createMany({ data: studnieLive });
+            if (konfigLive.length > 0) await tx.precoKonfigDefault.createMany({ data: konfigLive });
+            if (kinetyLive.length > 0) await tx.precoKinetyDefault.createMany({ data: kinetyLive });
+            if (zakresyLive.length > 0)
+                await tx.precoZakresyDefault.createMany({ data: zakresyLive });
+        });
+
+        const now = new Date().toISOString();
+        const jsonData: PriceDefaultsJson = {
+            version: 1,
+            exportedAt: now,
+            rury: ruryLive as unknown as Record<string, unknown>[],
+            studnie: studnieLive as unknown as Record<string, unknown>[],
+            preco: {
+                konfig: konfigLive as unknown as Record<string, unknown>[],
+                kinety: kinetyLive as unknown as Record<string, unknown>[],
+                zakresy: zakresyLive as unknown as Record<string, unknown>[]
+            }
+        };
+
+        fs.writeFileSync(this.defaultsPath, JSON.stringify(jsonData, null, 2), 'utf-8');
+
+        await prisma.settings.upsert({
+            where: { key: 'pricelist_defaults_updated_at' },
+            update: { value: now },
+            create: { key: 'pricelist_defaults_updated_at', value: now }
+        });
+
+        logger.info(
+            'PriceOverride',
+            `Domyślne zapisane: rury=${ruryLive.length}, studnie=${studnieLive.length}, preco=${konfigLive.length + kinetyLive.length + zakresyLive.length}`
+        );
+
+        return {
+            rury: ruryLive.length,
+            studnie: studnieLive.length,
+            precoKonfig: konfigLive.length,
+            precoKinety: kinetyLive.length,
+            precoZakresy: zakresyLive.length
+        };
+    }
+
+    async restoreDefaultsFromJson(): Promise<void> {
+        if (!fs.existsSync(this.defaultsPath)) {
+            logger.info('PriceOverride', 'Brak price_defaults.json — pomijam');
+            return;
+        }
+
+        let data: PriceDefaultsJson;
+        try {
+            const raw = fs.readFileSync(this.defaultsPath, 'utf-8');
+            data = JSON.parse(raw) as PriceDefaultsJson;
+        } catch (err) {
+            logger.error('PriceOverride', 'Błąd parsowania price_defaults.json', String(err));
+            return;
+        }
+
+        if (data.version !== 1) {
+            logger.error(
+                'PriceOverride',
+                `Nieobsługiwana wersja price_defaults.json: ${data.version}`
+            );
+            return;
+        }
+
+        logger.info('PriceOverride', 'Przywracanie domyślnych cenników z JSON...');
+
+        if (
+            !data.preco ||
+            !Array.isArray(data.preco.konfig) ||
+            !Array.isArray(data.preco.kinety) ||
+            !Array.isArray(data.preco.zakresy)
+        ) {
+            logger.error(
+                'PriceOverride',
+                'Nieprawidłowa struktura price_defaults.json - brak preco'
+            );
+            return;
+        }
+        if (!Array.isArray(data.rury)) {
+            logger.error(
+                'PriceOverride',
+                'Nieprawidłowa struktura price_defaults.json - brak rury'
+            );
+            return;
+        }
+        if (!Array.isArray(data.studnie)) {
+            logger.error(
+                'PriceOverride',
+                'Nieprawidłowa struktura price_defaults.json - brak studnie'
+            );
+            return;
+        }
+
+        await prisma.$transaction(async (tx) => {
+            await tx.productsRuryDefault.deleteMany();
+            if (data.rury.length > 0) {
+                await tx.productsRuryDefault.createMany({ data: data.rury as never[] });
+            }
+
+            await tx.productsStudnieDefault.deleteMany();
+            if (data.studnie.length > 0) {
+                await tx.productsStudnieDefault.createMany({ data: data.studnie as never[] });
+            }
+
+            await tx.precoKonfigDefault.deleteMany();
+            if (data.preco.konfig.length > 0) {
+                await tx.precoKonfigDefault.createMany({ data: data.preco.konfig as never[] });
+            }
+
+            await tx.precoKinetyDefault.deleteMany();
+            if (data.preco.kinety.length > 0) {
+                await tx.precoKinetyDefault.createMany({ data: data.preco.kinety as never[] });
+            }
+
+            await tx.precoZakresyDefault.deleteMany();
+            if (data.preco.zakresy.length > 0) {
+                await tx.precoZakresyDefault.createMany({ data: data.preco.zakresy as never[] });
+            }
+        });
+
+        logger.info(
+            'PriceOverride',
+            `Domyślne przywrócone: rury=${data.rury.length}, studnie=${data.studnie.length}, preco=${data.preco.konfig.length + data.preco.kinety.length + data.preco.zakresy.length}`
+        );
     }
 }
 

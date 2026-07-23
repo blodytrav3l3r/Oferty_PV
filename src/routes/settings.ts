@@ -53,4 +53,19 @@ router.put(
     }
 );
 
+/* ===== ODCZYT DOWOLNEGO USTAWIENIA PO KLUCZU ===== */
+
+router.get('/:key', requireAuth, async (req, res) => {
+    try {
+        const { key } = req.params;
+        const row = await prisma.settings.findUnique({
+            where: { key }
+        });
+        res.json({ key, value: row ? row.value : null });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        res.status(500).json({ error: message });
+    }
+});
+
 export default router;

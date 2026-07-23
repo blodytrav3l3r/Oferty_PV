@@ -82,9 +82,11 @@ function checkWithCli() {
             missing.push(tbl);
         }
     }
-    return { missingAI: missing.filter(t => REQUIRED_TABLES.includes(t)),
-             missingProduct: missing.filter(t => PRODUCT_TABLES.includes(t)),
-             emptyProduct: [] };
+    return {
+        missingAI: missing.filter((t) => REQUIRED_TABLES.includes(t)),
+        missingProduct: missing.filter((t) => PRODUCT_TABLES.includes(t)),
+        emptyProduct: []
+    };
 }
 
 function check() {

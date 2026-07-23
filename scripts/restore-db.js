@@ -27,10 +27,13 @@ rl.question(
         console.log(`Baza przywrocona z: ${sourcePath}`);
         console.log('[INFO] Synchronizuje schemat bazy...');
         try {
-            require('child_process').execSync('npx prisma db push --skip-generate --accept-data-loss', {
-                stdio: 'inherit',
-                cwd: path.resolve(__dirname, '..')
-            });
+            require('child_process').execSync(
+                'npx prisma db push --skip-generate --accept-data-loss',
+                {
+                    stdio: 'inherit',
+                    cwd: path.resolve(__dirname, '..')
+                }
+            );
             console.log('[OK] Schemat zsynchronizowany.');
         } catch (e) {
             console.warn('[WARN] Nie udalo sie zsynchronizowac schematu.');

@@ -13,26 +13,55 @@
                 id="pricelist-search"
                 placeholder="Szukaj..."
                 style="padding-left: 2.2rem"
+                title="Szukaj produktu w cenniku"
             />
         </div>
-        <button type="button" class="btn btn-primary" onclick="showAddProductModal()">
+        <button
+            type="button"
+            class="btn btn-primary"
+            onclick="showAddProductModal()"
+            title="Dodaj nowy produkt do cennika"
+        >
             <i data-lucide="plus"></i> Dodaj
         </button>
-        <button type="button" class="btn btn-secondary" id="btn-save-pricelist" onclick="savePriceList()">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            id="btn-save-pricelist"
+            onclick="savePriceList()"
+            title="Zapisz zmiany w cenniku"
+        >
             <i data-lucide="save"></i> Zapisz
         </button>
-        <button type="button" class="btn btn-secondary" onclick="syncPriceOverrides()">
-            <i data-lucide="refresh-cw"></i> Sync cen
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="window.parent.saveAllDefaults()"
+            title="Zapisz bieżący stan cenników jako domyślne"
+        >
+            <i data-lucide="bookmark"></i> Zapisz domyślne
         </button>
-        <button type="button" class="btn btn-secondary" onclick="resetPriceList()">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="resetPriceList()"
+            title="Przywróć domyślne wartości cennika"
+        >
             <i data-lucide="rotate-ccw"></i> Reset
         </button>
-        <button type="button" class="btn btn-secondary" onclick="exportRuryToExcel()">
+        <button
+            type="button"
+            class="btn btn-secondary"
+            onclick="exportRuryToExcel()"
+            title="Eksportuj cennik do pliku Excel"
+        >
             <i data-lucide="upload"></i> Eksportuj Excel
         </button>
-        <button type="button"
+        <button
+            type="button"
             class="btn btn-secondary"
             onclick="document.getElementById('import-rury-excel').click()"
+            title="Importuj cennik z pliku Excel"
         >
             <i data-lucide="download"></i> Importuj Excel
         </button>

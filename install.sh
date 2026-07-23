@@ -93,6 +93,8 @@ if [ "$SKIP_SEED" = false ]; then
             log OK "Seed OK"
         else
             warn "Seed nie powiodl sie - dane juz istnieja?"
+        echo "  Lekka alternatywa: skopiuj price_defaults.json do data/"
+        echo "  (ceny zostana przywrocone automatycznie po starcie)"
         fi
     fi
 else
@@ -115,5 +117,9 @@ echo "Nastepne kroki:"
 echo "  bash prod.sh"
 echo "  URL: http://localhost:3000"
 echo ""
+echo "INFO: Jesli masz wlasne ceny domyslne, skopiuj"
+echo "  price_defaults.json do katalogu data/ przed startem."
+echo ""
 echo "UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:"
 echo "  npm run restore data/backups/nazwa_pliku.sqlite"
+

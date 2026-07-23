@@ -80,6 +80,8 @@ Instalator automatycznie:
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Uruchomi migracje bazy danych (`npx prisma migrate dev`)
 - Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
+- Przy pierwszym uruchomieniu serwera automatycznie odczyta plik `data/price_defaults.json`
+  (jeśli istnieje) zawierający snapshot domyślnych cenników
 
 #### 3. Ręczna instalacja (alternatywa)
 
@@ -219,9 +221,18 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
     ```
 
 5. **Uruchom serwer**:
+
     ```powershell
     .\start.bat
     ```
+
+6. **(opcjonalnie)** Jeśli chcesz przenieść również niestandardowe ceny domyślne (rury, studnie, preco),
+   skopiuj plik `data/price_defaults.json` ze starego urządzenia do katalogu `data/` na nowym.
+   Zostanie automatycznie przywrócony przy starcie serwera.
+
+    > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
+    > wystarczy skopiować `data/price_defaults.json` i uruchomić `start.bat` — nie jest
+    > potrzebny backup SQLite ani `--skip-seed`.
 
 #### Co zawiera baza?
 

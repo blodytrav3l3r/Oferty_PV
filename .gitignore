@@ -131,3 +131,7 @@ cookies.txt
 
 # Backup manifestów
 .hermes/skills/_manifest.v2.yaml.bak
+
+# Dane cenowe (wrażliwe biznesowo)
+data/price_defaults.json
+data/price_overrides.json

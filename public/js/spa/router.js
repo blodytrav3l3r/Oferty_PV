@@ -421,6 +421,11 @@ const SpaRouter = (() => {
             }
 
             window.currentUser = authData.user;
+
+            // Pobierz datę ostatniej zmiany domyślnych cenników
+            if (typeof refreshDefaultsTimestamp === 'function') {
+                refreshDefaultsTimestamp();
+            }
         } catch (e) {
             window.location.href = 'index.html';
             return;

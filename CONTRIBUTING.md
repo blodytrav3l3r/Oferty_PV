@@ -59,6 +59,9 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
     bash install.sh # Linux
     ```
     Instalator: skopiuje `.env`, zainstaluje zależności, skonfiguruje bazę i załaduje dane początkowe (produkty, cenniki, konto admina).
+    Po pierwszym uruchomieniu serwera automatycznie odczytany jest plik `data/price_defaults.json`
+    (jeśli istnieje) zawierający snapshot domyślnych cenników — pozwala przenieść niestandardowe
+    ceny z innej instalacji.
 3. Uruchom serwer:
     ```bash
     .\start.bat
@@ -89,6 +92,13 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
     .\start.bat
     ```
 6. Upewnij się, że `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją.
+7. (opcjonalnie) Jeśli chcesz przenieść niestandardowe ceny domyślne (rury, studnie, preco),
+   skopiuj plik `data/price_defaults.json` ze starego urządzenia do katalogu `data/` na nowym.
+   Zostanie automatycznie przywrócony przy starcie serwera.
+
+    > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
+    > wystarczy skopiować `data/price_defaults.json` i uruchomić `start.bat` — nie jest
+    > potrzebny backup SQLite ani `--skip-seed`.
 
 ## Dependabot
 

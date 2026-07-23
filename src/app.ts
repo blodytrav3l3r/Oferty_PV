@@ -265,6 +265,17 @@ export async function initApp(): Promise<void> {
         );
     }
 
+    // Przywróć domyślne cenniki z price_defaults.json (jeśli istnieje)
+    try {
+        await priceOverrideService.restoreDefaultsFromJson();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się przywrócić domyślnych cenników z JSON:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
+
     // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
     try {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;

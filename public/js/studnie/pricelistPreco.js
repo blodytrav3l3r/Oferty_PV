@@ -16,7 +16,7 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Reset</button></div>';
+            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;" title="Przywróć domyślne wartości PRECO">Reset</button></div>';
         return;
     }
 
@@ -27,10 +27,10 @@ function renderPrecoPriceList() {
 
     let html = `
     <div style="padding:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
-        <button class="btn btn-secondary pill-sm" onclick="loadPrecoDefaults()">
+        <button class="btn btn-secondary pill-sm" onclick="loadPrecoDefaults()" title="Przywróć domyślne wartości PRECO">
             <i data-lucide="refresh-cw" aria-hidden="true"></i> Reset
         </button>
-        <button class="btn btn-primary pill-sm" id="btn-save-preco" onclick="savePrecoFromUI()" disabled>
+        <button class="btn btn-primary pill-sm" id="btn-save-preco" onclick="savePrecoFromUI()" disabled title="Zapisz zmiany w cenniku PRECO">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
     </div>`;
