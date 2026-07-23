@@ -65,31 +65,57 @@ CREATE TABLE "ProductsStudnie" (
 
 -- CreateTable
 CREATE TABLE "PrecoKonfig" (
-    "dnStudni" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "skrzynkaWlazowa" REAL NOT NULL,
-    "cenaPelnaWysMB" REAL NOT NULL,
-    "cenaDnoOsadnika" REAL NOT NULL
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "PrecoKinety" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "dnStudni" INTEGER NOT NULL,
-    "dnRury" INTEGER NOT NULL,
-    "prosta" REAL NOT NULL,
-    "dodWlot" REAL NOT NULL
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "order" INTEGER NOT NULL,
+    "dn" INTEGER NOT NULL,
+    "wellDn" INTEGER NOT NULL,
+    "height" INTEGER NOT NULL,
+    "cena" REAL NOT NULL
 );
 
 -- CreateTable
 CREATE TABLE "PrecoZakresy" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "typ" TEXT NOT NULL,
-    "minVal" INTEGER NOT NULL,
-    "maxVal" INTEGER NOT NULL,
-    "grupaDn" TEXT NOT NULL,
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "order" INTEGER NOT NULL,
+    "label" TEXT NOT NULL,
+    "min" INTEGER NOT NULL,
+    "max" INTEGER NOT NULL,
+    "grupy" TEXT NOT NULL,
+    "wellDn" INTEGER NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "PrecoKonfigDefault" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "key" TEXT NOT NULL,
+    "value" TEXT NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "PrecoKinetyDefault" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "order" INTEGER NOT NULL,
+    "dn" INTEGER NOT NULL,
+    "wellDn" INTEGER NOT NULL,
+    "height" INTEGER NOT NULL,
     "cena" REAL NOT NULL
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "PrecoKinety_dnStudni_dnRury_key" ON "PrecoKinety"("dnStudni", "dnRury");
+-- CreateTable
+CREATE TABLE "PrecoZakresyDefault" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "order" INTEGER NOT NULL,
+    "label" TEXT NOT NULL,
+    "min" INTEGER NOT NULL,
+    "max" INTEGER NOT NULL,
+    "grupy" TEXT NOT NULL,
+    "wellDn" INTEGER NOT NULL
+);
 
