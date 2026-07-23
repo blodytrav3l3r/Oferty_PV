@@ -1,6 +1,7 @@
 import { PrismaClient } from '../generated/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
+import { DN_SIZES, ZAKRESY_TYPES } from '../src/constants/precoSizes';
 
 const prisma = new PrismaClient();
 
@@ -12,10 +13,6 @@ function toBool(val: any): boolean {
     if (val === 1 || val === true) return true;
     return false;
 }
-
-const DN_SIZES = ['1000', '1200', '1500', '2000', '2500'];
-
-const ZAKRESY_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
 
 async function main() {
     const args = process.argv.slice(2);

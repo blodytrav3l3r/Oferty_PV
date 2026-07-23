@@ -13,6 +13,7 @@ import fs from 'fs';
 import path from 'path';
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
+import { DN_SIZES, ZAKRESY_TYPES } from '../constants/precoSizes';
 
 interface RuryOverrides {
     records: Record<string, Record<string, unknown>>;
@@ -89,13 +90,23 @@ interface PriceDefaultsJson {
     };
 }
 
+function safeJsonParse(val: string, fallback: unknown = {}): unknown {
+    try {
+        return JSON.parse(val);
+    } catch {
+        return fallback;
+    }
+}
+
 class PriceOverrideService {
     private readonly overridesPath: string;
     private readonly defaultsPath: string;
+    private readonly dataDir: string;
 
     constructor() {
         this.overridesPath = path.join(__dirname, '..', '..', 'data', 'price_overrides.json');
         this.defaultsPath = path.join(__dirname, '..', '..', 'data', 'price_defaults.json');
+        this.dataDir = path.dirname(this.defaultsPath);
     }
 
     async computeAll(): Promise<PriceOverrideData> {
@@ -399,6 +410,8 @@ class PriceOverrideService {
 
         fs.writeFileSync(this.defaultsPath, JSON.stringify(jsonData, null, 2), 'utf-8');
 
+        await this.syncSeedFiles(ruryLive, studnieLive, konfigLive, kinetyLive, zakresyLive);
+
         await prisma.settings.upsert({
             where: { key: 'pricelist_defaults_updated_at' },
             update: { value: now },
@@ -417,6 +430,105 @@ class PriceOverrideService {
             precoKinety: kinetyLive.length,
             precoZakresy: zakresyLive.length
         };
+    }
+
+    private async syncSeedFiles(
+        ruryLive: Record<string, unknown>[],
+        studnieLive: Record<string, unknown>[],
+        konfigLive: Array<{ id: string; key: string; value: string }>,
+        kinetyLive: Array<{
+            id: string;
+            order: number;
+            dn: number;
+            wellDn: number;
+            height: number;
+            cena: number;
+        }>,
+        zakresyLive: Array<{
+            id: string;
+            order: number;
+            label: string;
+            min: number;
+            max: number;
+            grupy: string;
+            wellDn: number;
+        }>
+    ): Promise<void> {
+        try {
+            fs.writeFileSync(
+                path.join(this.dataDir, 'seed_rury.json'),
+                JSON.stringify(ruryLive, null, 2),
+                'utf-8'
+            );
+
+            fs.writeFileSync(
+                path.join(this.dataDir, 'seed_studnie.json'),
+                JSON.stringify(studnieLive, null, 2),
+                'utf-8'
+            );
+
+            const konfigByKey = new Map(konfigLive.map((k) => [k.key, k]));
+            const kinetyByDn = new Map<number, typeof kinetyLive>();
+            for (const k of kinetyLive) {
+                const arr = kinetyByDn.get(k.wellDn);
+                if (arr) arr.push(k);
+                else kinetyByDn.set(k.wellDn, [k]);
+            }
+            const zakresyByDn = new Map<number, typeof zakresyLive>();
+            for (const z of zakresyLive) {
+                const arr = zakresyByDn.get(z.wellDn);
+                if (arr) arr.push(z);
+                else zakresyByDn.set(z.wellDn, [z]);
+            }
+            const precoObj: Record<string, unknown> = {};
+            for (const dnStr of DN_SIZES) {
+                const dn = Number(dnStr);
+                const konfig = konfigByKey.get(dnStr);
+                if (!konfig) continue;
+                const scalars = safeJsonParse(konfig.value) as Record<string, unknown>;
+                const entry: Record<string, unknown> = {
+                    skrzynkaWlazowa: scalars.skrzynkaWlazowa,
+                    cenaPelnaWysMB: scalars.cenaPelnaWysMB,
+                    cenaDnoOsadnika: scalars.cenaDnoOsadnika
+                };
+                const kinety = kinetyByDn.get(dn);
+                if (kinety) {
+                    entry.kinety = kinety.map((k) => ({
+                        dn: k.dn,
+                        prosta: k.height,
+                        dodWlot: k.cena
+                    }));
+                }
+                const zakresy = zakresyByDn.get(dn);
+                if (zakresy) {
+                    for (const typ of ZAKRESY_TYPES) {
+                        const entries = zakresy
+                            .filter((z) => z.label === typ)
+                            .sort((a, b) => a.order - b.order)
+                            .map((z) => ({
+                                min: z.min,
+                                max: z.max,
+                                grupy: safeJsonParse(z.grupy)
+                            }));
+                        if (entries.length > 0) entry[typ] = entries;
+                    }
+                }
+                precoObj[dnStr] = entry;
+            }
+
+            fs.writeFileSync(
+                path.join(this.dataDir, 'seed_preco.json'),
+                JSON.stringify([precoObj], null, 2),
+                'utf-8'
+            );
+
+            logger.info(
+                'PriceOverride',
+                `Seed zaktualizowane: rury=${ruryLive.length}, studnie=${studnieLive.length}, preco=${konfigLive.length} konfig`
+            );
+        } catch (err) {
+            logger.error('PriceOverride', 'Błąd zapisu seed_*.json', String(err));
+        }
     }
 
     async restoreDefaultsFromJson(): Promise<void> {
