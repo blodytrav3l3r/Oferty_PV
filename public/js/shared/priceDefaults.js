@@ -55,11 +55,11 @@ async function refreshDefaultsTimestamp() {
                 ' ' +
                 d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
             btn.title =
-                'Zapisz bieżący stan wszystkich cenników jako domyślne\nOstatnia zmiana: ' +
+                'Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne\nOstatnia zmiana: ' +
                 formatted;
         } else {
             btn.title =
-                'Zapisz bieżący stan wszystkich cenników jako domyślne\nOstatnia zmiana: nigdy';
+                'Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne\nOstatnia zmiana: nigdy';
         }
     } catch (e) {
         // ignoruj — tooltip zostanie z domyślnym tekstem
