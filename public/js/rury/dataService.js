@@ -3,6 +3,62 @@
 /* Wydzielone z app.js — odpowiedzialność: komunikacja REST API z backendem */
 /* Zależności: authHeaders() z shared/auth.js, showToast() z shared/ui.js */
 
+/* Helper HTTP z auth + timeout, dostępny globalnie dla pricelistUi itp. */
+window.api = {
+    async get(url) {
+        try {
+            const res = await fetchWithTimeout(url, { headers: authHeaders() });
+            return res.ok ? res.json() : null;
+        } catch {
+            return null;
+        }
+    },
+    async put(url, body) {
+        try {
+            const res = await fetchWithTimeout(url, {
+                method: 'PUT',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return res.ok ? res.json() : null;
+        } catch {
+            return null;
+        }
+    },
+    async post(url, body) {
+        try {
+            const res = await fetchWithTimeout(url, {
+                method: 'POST',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return res.ok ? res.json() : null;
+        } catch {
+            return null;
+        }
+    },
+    async patch(url, body) {
+        try {
+            const res = await fetchWithTimeout(url, {
+                method: 'PATCH',
+                headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            return res.ok ? res.json() : null;
+        } catch {
+            return null;
+        }
+    },
+    async del(url) {
+        try {
+            const res = await fetchWithTimeout(url, { method: 'DELETE', headers: authHeaders() });
+            return res.ok ? res.json() : null;
+        } catch {
+            return null;
+        }
+    }
+};
+
 /**
  * Pobiera produkty z serwera. W przypadku błędu zwraca pustą tablicę.
  * @returns {Promise<Array>} Tablica produktów

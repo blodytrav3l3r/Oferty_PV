@@ -444,3 +444,4 @@ function importRuryFromExcel(event) {
 }
 
 window.savePriceList = savePriceList;
+window.resetPriceList = resetPriceList;

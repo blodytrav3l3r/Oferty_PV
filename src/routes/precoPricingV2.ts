@@ -1,9 +1,10 @@
 import express from 'express';
-import { requireAuth } from '../middleware/auth';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
+import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 
 const router = express.Router();
@@ -11,27 +12,7 @@ const writeLimiter = PRECO_PRICING_LIMITER;
 
 const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
 
-let writeLock = false;
-const WRITE_TIMEOUT = 30000;
-
-function acquireLock(): Promise<boolean> {
-    return new Promise((resolve) => {
-        const check = () => {
-            if (!writeLock) {
-                writeLock = true;
-                resolve(true);
-                return;
-            }
-            setTimeout(check, 100);
-        };
-        check();
-        setTimeout(() => resolve(false), WRITE_TIMEOUT);
-    });
-}
-
-function releaseLock() {
-    writeLock = false;
-}
+const { acquireLock, releaseLock } = createModuleLock();
 
 // ──────────────────────────────────────────
 // formatPrecoResponse — odczyt z Preco* tables → format zagnieżdżony
@@ -190,6 +171,7 @@ router.get('/', requireAuth, async (_req, res) => {
 router.put(
     '/',
     requireAuth,
+    requireAdmin,
     writeLimiter,
     validateData(precoPricingUpdateSchema),
     async (req, res) => {
@@ -213,7 +195,6 @@ router.put(
             }
 
             await flattenAndSave(input, false);
-            await flattenAndSave(input, true);
             res.json({ ok: true });
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
@@ -232,6 +213,7 @@ router.put(
 router.patch(
     '/',
     requireAuth,
+    requireAdmin,
     writeLimiter,
     validateData(precoPricingPatchSchema),
     async (req, res) => {
@@ -288,22 +270,12 @@ router.patch(
 // ──────────────────────────────────────────
 router.get('/default', requireAuth, async (_req, res) => {
     try {
-        const count = await prisma.precoKonfigDefault.count();
-        if (count > 0) {
-            const result = await formatPrecoResponse(
-                prisma.precoKonfigDefault,
-                prisma.precoKinetyDefault,
-                prisma.precoZakresyDefault
-            );
-            res.json(result);
-            return;
-        }
-        const liveResult = await formatPrecoResponse(
-            prisma.precoKonfig,
-            prisma.precoKinety,
-            prisma.precoZakresy
+        const result = await formatPrecoResponse(
+            prisma.precoKonfigDefault,
+            prisma.precoKinetyDefault,
+            prisma.precoZakresyDefault
         );
-        res.json(liveResult);
+        res.json(result);
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('PrecoPricingV2', 'GET /default error', message);

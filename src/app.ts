@@ -17,6 +17,7 @@ import { httpsRedirect, securityHeaders, charsetMiddleware } from './middleware/
 import { createRateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
+import { priceOverrideService } from './services/priceOverrideService';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
 import { getVersion } from './version';
@@ -191,6 +192,7 @@ import featureFlagsRoutes from './routes/featureFlags';
 import aiMlRoutes from './routes/telemetryAiMl';
 import searchRoutes from './routes/offers/search';
 import productionSearchRoutes from './routes/orders/productionSearch';
+import priceOverridesRoutes from './routes/priceOverrides';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -223,6 +225,7 @@ app.use('/api/telemetry', telemetryAiDashboardRoutes);
 app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 app.use('/api/feature-flags', featureFlagsRoutes);
 app.use('/api/telemetry', aiMlRoutes); // ML prediction API
+app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use(errorHandler);
@@ -250,6 +253,17 @@ export async function initApp(): Promise<void> {
 
     // Admin
     await ensureAdminExists();
+
+    // Aplikuj nadpisania cen z price_overrides.json (jeśli istnieje)
+    try {
+        await priceOverrideService.applyOverrides();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się aplikować nadpisań cen:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
 
     // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
     try {

@@ -9,18 +9,21 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Załaduj domyślne</button></div>';
+            '<div style="padding:2rem; text-align:center; color:var(--muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;">Reset</button></div>';
         return;
     }
 
-    const dns = [1000, 1200, 1500, 2000, 2500];
+    const dns = Object.keys(precoPricing)
+        .map(Number)
+        .filter((dn) => !isNaN(dn))
+        .sort((a, b) => a - b);
 
     let html = `
     <div style="padding:0.5rem; display:flex; gap:0.5rem; justify-content:flex-end;">
-        <button class="btn btn-secondary" onclick="loadPrecoDefaults()" class="pill-sm">
-            <i data-lucide="refresh-cw" aria-hidden="true"></i> Załaduj domyślne
+        <button class="btn btn-secondary pill-sm" onclick="loadPrecoDefaults()">
+            <i data-lucide="refresh-cw" aria-hidden="true"></i> Reset
         </button>
-        <button class="btn btn-primary" onclick="savePrecoFromUI()" class="pill-sm">
+        <button class="btn btn-primary pill-sm" onclick="savePrecoFromUI()">
             <i data-lucide="save" aria-hidden="true"></i> Zapisz cennik PRECO
         </button>
     </div>`;
@@ -97,7 +100,7 @@ function renderPrecoPriceList() {
     });
 
     container.innerHTML = html;
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons({ root: container });
 }
 
 function renderPrecoRangeTable(title, table, dn, fieldBase) {
@@ -118,11 +121,12 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
     html += `<th style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
     grupyKeys.forEach((g) => {
+        const sg = window.escapeHtml(g);
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${g}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${g}', this.value)" title="Edytuj nazwę grupy">
-                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${g}')" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', '${sg}', this.value)" title="Edytuj nazwę grupy">
+                <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', '${sg}')" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
     });
@@ -144,7 +148,8 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
                 </div>
             </td>`;
             grupyKeys.forEach((g) => {
-                html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${g}" data-preco-dn="${dn}"></td>`;
+                const sg = window.escapeHtml(g);
+                html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${sg}" data-preco-dn="${dn}"></td>`;
             });
             html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;
             html += `</tr>`;
@@ -165,8 +170,9 @@ function addPrecoKinetaRow(dn) {
     renderPrecoPriceList();
 }
 
-function removePrecoKinetaRow(dn, index) {
-    if (!confirm('Usunąć tę kinetę?')) return;
+async function removePrecoKinetaRow(dn, index) {
+    if (!(await appConfirm('Usunąć tę kinetę?', { title: 'Potwierdzenie', type: 'danger' })))
+        return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn].kinety) return;
     precoPricing[dn].kinety.splice(index, 1);
@@ -194,8 +200,9 @@ function addPrecoRangeRow(dn, fieldBase) {
     renderPrecoPriceList();
 }
 
-function removePrecoRangeRow(dn, fieldBase, index) {
-    if (!confirm('Usunąć ten zakres?')) return;
+async function removePrecoRangeRow(dn, fieldBase, index) {
+    if (!(await appConfirm('Usunąć ten zakres?', { title: 'Potwierdzenie', type: 'danger' })))
+        return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
     precoPricing[dn][fieldBase].splice(index, 1);
@@ -218,7 +225,10 @@ function updatePrecoGrupaKey(dn, fieldBase, oldKey, newKey) {
 
 function addPrecoGrupaCol(dn, fieldBase) {
     const newDn = prompt("Podaj nazwę nowej grupy DN (np. '800-1000'):");
-    if (!newDn) return;
+    if (!newDn || !/^\d+-\d+$/.test(newDn)) {
+        if (newDn) showToast('Dozwolony format: liczby-liczby (np. 150-200)', 'error');
+        return;
+    }
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
 
@@ -229,8 +239,9 @@ function addPrecoGrupaCol(dn, fieldBase) {
     renderPrecoPriceList();
 }
 
-function removePrecoGrupaCol(dn, fieldBase, g) {
-    if (!confirm(`Usunąć grupę DN ${g}?`)) return;
+async function removePrecoGrupaCol(dn, fieldBase, g) {
+    if (!(await appConfirm(`Usunąć grupę DN ${g}?`, { title: 'Potwierdzenie', type: 'danger' })))
+        return;
     precoPricing = collectPrecoFromUI();
     if (!precoPricing[dn] || !precoPricing[dn][fieldBase]) return;
 
@@ -292,14 +303,14 @@ async function savePrecoFromUI() {
 
 async function loadPrecoDefaults() {
     try {
-        const res = await fetchWithTimeout('/api/preco-pricing');
+        const res = await fetchWithTimeout('/api/preco-pricing/default');
         const json = await res.json();
         if (json.data && Array.isArray(json.data) && json.data.length > 0) {
             precoPricing = json.data[0];
             renderPrecoPriceList();
-            showToast('Wczytano zapisany cennik PRECO', 'info');
+            showToast('Cennik PRECO przywrócony — kliknij Zapisz by zachować', 'info');
         } else {
-            showToast('Brak zapisanych cen PRECO w bazie', 'error');
+            showToast('Brak fabrycznych wartości cennika PRECO', 'error');
         }
     } catch (e) {
         logger.error('pricelistManager', 'Błąd ładowania cennika PRECO:', e);

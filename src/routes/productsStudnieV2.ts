@@ -4,10 +4,13 @@ import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productStudniePatchSchema } from '../validators/offerSchemas';
+import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 
 const router = express.Router();
 const writeLimiter = PRICELIST_WRITE_LIMITER;
+
+const { acquireLock, releaseLock } = createModuleLock();
 
 const ALLOWED_FIELDS = [
     'name',
@@ -251,6 +254,12 @@ router.put(
     validateData(pricelistDataSchema),
     async (req, res) => {
         try {
+            const lockAcquired = await acquireLock();
+            if (!lockAcquired) {
+                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
+                return;
+            }
+
             const arr: Record<string, unknown>[] = req.body.data;
 
             await prisma.$transaction(async (tx) => {
@@ -264,6 +273,8 @@ router.put(
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsStudnieV2', 'PUT error', message);
             res.status(500).json({ error: message });
+        } finally {
+            releaseLock();
         }
     }
 );
@@ -279,6 +290,12 @@ router.patch(
     validateData(productStudniePatchSchema),
     async (req, res) => {
         try {
+            const lockAcquired = await acquireLock();
+            if (!lockAcquired) {
+                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
+                return;
+            }
+
             const { id } = req.params;
             const data: Record<string, unknown> = {};
             for (const key of ALLOWED_FIELDS) {
@@ -301,6 +318,8 @@ router.patch(
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('ProductsStudnieV2', 'PATCH error', message);
             res.status(500).json({ error: message });
+        } finally {
+            releaseLock();
         }
     }
 );
@@ -310,6 +329,12 @@ router.patch(
 // ──────────────────────────────────────────
 router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
     try {
+        const lockAcquired = await acquireLock();
+        if (!lockAcquired) {
+            res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
+            return;
+        }
+
         const { id } = req.params;
         await prisma.productsStudnie.delete({ where: { id } });
         res.json({ ok: true });
@@ -317,6 +342,8 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsStudnieV2', 'DELETE error', message);
         res.status(500).json({ error: message });
+    } finally {
+        releaseLock();
     }
 });
 
@@ -332,7 +359,7 @@ router.get('/default', requireAuth, async (_req, res) => {
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('ProductsStudnieV2', 'GET /default error', message);
-        res.json({ data: [] });
+        res.status(500).json({ error: message });
     }
 });
 

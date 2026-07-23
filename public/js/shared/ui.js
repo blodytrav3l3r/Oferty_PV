@@ -592,3 +592,31 @@ window.showModal = function (opts) {
     if (opts.onOpen) opts.onOpen();
     return overlay;
 };
+
+/**
+ * Synchronizuje nadpisania cen (rury, studnie, PRECO) do price_overrides.json.
+ * Wywoływane przez przycisk "Sync cen" w cennikach.
+ */
+async function syncPriceOverrides() {
+    const btns = document.querySelectorAll('[onclick*="syncPriceOverrides"]');
+    btns.forEach((b) => b.setAttribute('disabled', 'true'));
+
+    try {
+        const res = await fetchWithTimeout('/api/price-overrides/sync', {
+            method: 'POST',
+            headers: authHeaders()
+        });
+        const data = await res.json();
+        if (data.ok) {
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.error || 'Błąd synchronizacji cen', 'error');
+        }
+    } catch (err) {
+        showToast('Błąd sieci: ' + err.message, 'error');
+    } finally {
+        btns.forEach((b) => b.removeAttribute('disabled'));
+    }
+}
+
+window.syncPriceOverrides = syncPriceOverrides;
