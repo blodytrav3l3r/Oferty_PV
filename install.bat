@@ -117,8 +117,8 @@ for %%a in (%*) do if /i "%%a"=="--skip-seed" set "SKIP_SEED=1"
 if not defined SKIP_SEED (
     if exist "prisma\seed.ts" (
         echo [INFO] Seed (--skip-seed aby pominac)...
-        call npx ts-node prisma\seed.ts >nul 2>nul
-        if !errorlevel! equ 0 (echo [OK] Seed OK) else (echo [WARN] Seed nie powiodl sie - dane juz istnieja?)
+        call npx ts-node prisma\seed.ts
+        if !errorlevel! equ 0 (echo [OK] Seed OK) else (echo [BLAD] Seed nie powiodl sie. Sprawdz komunikaty powyzej.)
     )
 ) else (
     echo [INFO] Seed pominiety (--skip-seed)
