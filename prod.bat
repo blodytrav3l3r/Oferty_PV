@@ -49,6 +49,14 @@ if defined PORT_PID (
 
 if not exist "data" mkdir data
 
+echo [INFO] Sprawdzanie bazy danych...
+call scripts\ensure-db.bat
+if errorlevel 1 (
+    echo [BLAD] Baza danych nie jest gotowa.
+    pause
+    exit /b 1
+)
+
 echo [INFO] npm start (Ctrl+C stop)
 echo         http://localhost:3000/health
 echo         http://localhost:3000/api/version

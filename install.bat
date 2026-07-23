@@ -118,7 +118,16 @@ if not defined SKIP_SEED (
     if exist "prisma\seed.ts" (
         echo [INFO] Seed (--skip-seed aby pominac)...
         call npx ts-node prisma\seed.ts
-        if !errorlevel! equ 0 (echo [OK] Seed OK) else (echo [BLAD] Seed nie powiodl sie. Sprawdz komunikaty powyzej.)
+        if !errorlevel! equ 0 (
+            echo [OK] Seed OK
+        ) else (
+            echo [BLAD] Seed nie powiodl sie. Sprawdz komunikaty powyzej.
+            echo [INFO] Jesli przenosisz baze z innego urzadzenia, uruchom:
+            echo [INFO]   install.bat --skip-seed
+            echo [INFO]   npm run restore data/backups/nazwa_backupu.sqlite
+            pause
+            exit /b 1
+        )
     )
 ) else (
     echo [INFO] Seed pominiety (--skip-seed)
@@ -126,7 +135,12 @@ if not defined SKIP_SEED (
 
 REM 10. Typecheck
 echo [INFO] typecheck...
-call npx tsc --noEmit >nul 2>nul && echo [OK] Brak bledow || echo [WARN] Blad typecheck
+call npx tsc --noEmit
+if errorlevel 1 (
+    echo [WARN] Typecheck wykryl bledy. Sprawdz komunikaty powyzej.
+) else (
+    echo [OK] Brak bledow
+)
 
 echo ===========================================================
 echo   Instalacja zakonczona

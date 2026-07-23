@@ -44,6 +44,30 @@ Proces release:
 
 **Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
 
+## Świeża instalacja
+
+Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
+
+1. Sklonuj lub pobierz projekt z GitHub:
+    ```bash
+    git clone https://github.com/blodytrav3l3r/Oferty_PV.git
+    cd Oferty_PV
+    ```
+2. Uruchom instalator:
+    ```bash
+    .\install.bat   # Windows
+    bash install.sh # Linux
+    ```
+    Instalator: skopiuje `.env`, zainstaluje zależności, skonfiguruje bazę i załaduje dane początkowe (produkty, cenniki, konto admina).
+3. Uruchom serwer:
+    ```bash
+    .\start.bat
+    ```
+4. Zaloguj się na http://localhost:3000 (admin / hasło z `.env`).
+
+> **UWAGA:** Nie uruchamiaj `start.bat` przed `install.bat` na świeżej instalacji.
+> `start.bat` nie ładuje danych początkowych (seeda) — bez `install.bat` baza będzie pusta.
+
 ## Przenoszenie bazy między urządzeniami
 
 Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
@@ -55,14 +79,15 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
     .\install.bat --skip-seed   # Windows
     bash install.sh --skip-seed  # Linux
     ```
-4. Przywróć bazę z backupu:
+4. Przywróć bazę z backupu (restore automatycznie synchronizuje schemat):
     ```bash
     npm run restore data/backups/backup_*.sqlite
     ```
-5. Jeśli schemat bazy różni się między wersjami, uruchom:
+5. Uruchom serwer:
     ```bash
-    npx prisma db push --skip-generate
+    .\start.bat
     ```
+6. Upewnij się, że `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją.
 
 ## Dependabot
 

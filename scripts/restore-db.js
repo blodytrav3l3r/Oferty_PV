@@ -24,6 +24,17 @@ rl.question(
             process.exit(0);
         }
         fs.copyFileSync(sourcePath, DB_PATH);
-        console.log(`Baza przywrócona z: ${sourcePath}`);
+        console.log(`Baza przywrocona z: ${sourcePath}`);
+        console.log('[INFO] Synchronizuje schemat bazy...');
+        try {
+            require('child_process').execSync('npx prisma db push --skip-generate --accept-data-loss', {
+                stdio: 'inherit',
+                cwd: path.resolve(__dirname, '..')
+            });
+            console.log('[OK] Schemat zsynchronizowany.');
+        } catch (e) {
+            console.warn('[WARN] Nie udalo sie zsynchronizowac schematu.');
+            console.warn('[WARN] Uruchom recznie: npx prisma db push --accept-data-loss');
+        }
     }
 );

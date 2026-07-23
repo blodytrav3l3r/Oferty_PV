@@ -1,15 +1,3 @@
-/**
- * Skrypt weryfikacyjny bazy danych po migracjach (Chromium-free).
- *
- * Sprawdza czy wszystkie oczekiwane tabele AI + telemetry istnieją w SQLite.
- * Działa bez Prisma Client (node:test runner nie wymusza generowania).
- *
- * Używa wbudowanego node:sqlite (Node 22+) lub `sqlite3` CLI.
- *
- * @example
- *   node scripts/check-db.js && echo "OK" || echo "Wymaga migracji"
- */
-
 'use strict';
 
 const path = require('path');
@@ -27,6 +15,21 @@ const REQUIRED_TABLES = [
     'ai_recommendations'
 ];
 
+const PRODUCT_TABLES = [
+    'ProductsRury',
+    'ProductsStudnie',
+    'PrecoKonfig',
+    'PrecoKinety',
+    'PrecoZakresy'
+];
+
+// Tabele ktore musza zawierac dane po udanym seedzie
+const PRODUCT_DATA_CHECKS = [
+    { table: 'ProductsRury', minRows: 1 },
+    { table: 'ProductsStudnie', minRows: 1 },
+    { table: 'PrecoKonfig', minRows: 1 }
+];
+
 if (!fs.existsSync(DB_PATH)) {
     console.error('[check-db] Brak pliku bazy: ' + DB_PATH);
     process.exit(1);
@@ -37,34 +40,51 @@ function checkWithNodeSqlite() {
     const db = new sqlite.DatabaseSync(DB_PATH, { readOnly: true });
     try {
         const stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?");
-        const missing = [];
+        const missingAI = [];
         for (const tbl of REQUIRED_TABLES) {
             const row = stmt.get(tbl);
-            if (!row) missing.push(tbl);
+            if (!row) missingAI.push(tbl);
         }
-        return missing;
+
+        const missingProduct = [];
+        const existingProduct = [];
+        for (const tbl of PRODUCT_TABLES) {
+            const row = stmt.get(tbl);
+            if (!row) missingProduct.push(tbl);
+            else existingProduct.push(tbl);
+        }
+
+        const emptyProduct = [];
+        for (const check of PRODUCT_DATA_CHECKS) {
+            if (!existingProduct.includes(check.table)) continue;
+            const row = db.prepare('SELECT COUNT(*) as cnt FROM "' + check.table + '"').get();
+            if (!row || row.cnt < check.minRows) emptyProduct.push(check.table);
+        }
+
+        return { missingAI, missingProduct, emptyProduct };
     } finally {
         db.close();
     }
 }
 
 function checkWithCli() {
-    // Fallback — jeśli node:sqlite nie dostępne
     const { execSync } = require('child_process');
     const missing = [];
-    for (const tbl of REQUIRED_TABLES) {
+
+    const allTables = [...REQUIRED_TABLES, ...PRODUCT_TABLES];
+    for (const tbl of allTables) {
         try {
             execSync(
                 `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='table' AND name='${tbl}' LIMIT 1"`,
-                {
-                    stdio: 'pipe'
-                }
+                { stdio: 'pipe' }
             );
         } catch (e) {
             missing.push(tbl);
         }
     }
-    return missing;
+    return { missingAI: missing.filter(t => REQUIRED_TABLES.includes(t)),
+             missingProduct: missing.filter(t => PRODUCT_TABLES.includes(t)),
+             emptyProduct: [] };
 }
 
 function check() {
@@ -75,25 +95,27 @@ function check() {
             try {
                 return checkWithCli();
             } catch (cliErr) {
-                console.error(
-                    '[check-db] Brak node:sqlite i sqlite3 CLI. Nie moge zweryfikowac bazy.'
-                );
-                process.exit(2);
+                console.error('[check-db] Brak node:sqlite i sqlite3 CLI.');
+                process.exit(4);
             }
         }
         throw e;
     }
 }
 
-const missing = check();
+const result = check();
 
-if (missing.length === 0) {
-    console.log(
-        '[check-db] OK - wszystkie ' + REQUIRED_TABLES.length + ' tabel telemetry/AI istnieja.'
-    );
-    process.exit(0);
+if (result.missingAI.length > 0 || result.missingProduct.length > 0) {
+    const allMissing = [...result.missingAI, ...result.missingProduct];
+    console.error('[check-db] BRAK TABEL: ' + allMissing.join(', '));
+    process.exit(1);
 }
 
-console.warn('[check-db] BRAK tabel: ' + missing.join(', '));
-console.warn('[check-db] Uruchom: npx prisma migrate deploy (lub db push dla dev)');
-process.exit(1);
+if (result.emptyProduct.length > 0) {
+    console.error('[check-db] PUSTE TABELE PRODUKTOW: ' + result.emptyProduct.join(', '));
+    console.error('[check-db] Wymagany seed — uruchom npx ts-node prisma/seed.ts');
+    process.exit(2);
+}
+
+console.log('[check-db] OK — wszystkie tabele i dane produktow obecne.');
+process.exit(0);

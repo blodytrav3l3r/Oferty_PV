@@ -61,12 +61,11 @@ if not exist "generated\prisma\index.d.ts" (
 REM ---------- data directory ----------
 if not exist "data" mkdir data
 
-REM ---------- 5. Schema DB ----------
-echo [INFO] Sprawdzanie schematu bazy...
-call node scripts/check-db.js >nul 2>nul
+REM ---------- 5. Schema DB + Seed ----------
+echo [INFO] Sprawdzanie bazy danych...
+call scripts\ensure-db.bat
 if errorlevel 1 (
-    echo [INFO] Migracja bazy - prisma db push ...
-    call npx prisma db push --skip-generate --accept-data-loss >nul 2>nul
+    echo [WARN] Baza danych moze byc niekompletna.
 )
 
 REM ---------- Production: verify build ----------
