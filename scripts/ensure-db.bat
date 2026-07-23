@@ -4,7 +4,6 @@ REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
 REM Uzycie: call scripts\ensure-db.bat
 
 setlocal ENABLEDELAYEDEXPANSION
-cd /d "%~dp0"
 set "RETRY=0"
 
 :check_loop
