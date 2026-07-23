@@ -9,7 +9,7 @@ if (args.length === 0) {
     process.exit(1);
 }
 const sourcePath = path.resolve(args[0]);
-const DB_PATH = path.resolve('data/app_database.sqlite');
+const DB_PATH = path.resolve(__dirname, '..', 'data', 'app_database.sqlite');
 if (!fs.existsSync(sourcePath)) {
     console.error(`Plik backupu nie istnieje: ${sourcePath}`);
     process.exit(1);

@@ -112,7 +112,7 @@ log OK "  INSTALACJA ZAKONCZONA"
 log OK "========================================================"
 echo
 echo "Nastepne kroki:"
-echo "  bash start.sh  / bash prod.sh"
+echo "  bash prod.sh"
 echo "  URL: http://localhost:3000"
 echo ""
 echo "UWAGA: Jesli przenosisz baze z innego urzadzenia, uruchom:"

@@ -66,7 +66,8 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
 4. Zaloguj się na http://localhost:3000 (admin / hasło z `.env`).
 
 > **UWAGA:** Nie uruchamiaj `start.bat` przed `install.bat` na świeżej instalacji.
-> `start.bat` nie ładuje danych początkowych (seeda) — bez `install.bat` baza będzie pusta.
+> `start.bat` automatycznie seeduje pustą bazę przez `ensure-db.bat`, ale `install.bat`
+> wykonuje pełną konfigurację (.env, zależności, migracje) — bez niego aplikacja nie zadziała.
 
 ## Przenoszenie bazy między urządzeniami
 

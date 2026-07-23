@@ -4,6 +4,7 @@ REM Zwraca: errorlevel 0 = OK, 1 = blad krytyczny
 REM Uzycie: call scripts\ensure-db.bat
 
 setlocal ENABLEDELAYEDEXPANSION
+cd /d "%~dp0"
 set "RETRY=0"
 
 :check_loop
@@ -32,8 +33,8 @@ if !CHECK_EXIT! equ 2 (
 if !CHECK_EXIT! equ 1 (
     echo [INFO] Brak tabel w bazie - uruchamianie migracji...
     call npx prisma db push --skip-generate --accept-data-loss
-    if !errorlevel! equ 1 (
-        echo [BLAD] Nie udalo sie zaktualizowac schematu.
+    if !errorlevel! neq 0 (
+        echo [BLAD] Nie udalo sie zaktualizowac schematu (exit=!errorlevel!).
         endlocal
         exit /b 1
     )
@@ -41,6 +42,12 @@ if !CHECK_EXIT! equ 1 (
     set /a RETRY+=1
     if !RETRY! lss 3 goto :check_loop
     echo [BLAD] Za duzo prob - przerywam.
+    endlocal
+    exit /b 1
+)
+
+if !CHECK_EXIT! equ 4 (
+    echo [BLAD] Brak node:sqlite i sqlite3 CLI - nie mozna sprawdzic bazy.
     endlocal
     exit /b 1
 )
