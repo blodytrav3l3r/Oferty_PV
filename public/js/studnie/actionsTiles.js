@@ -29,7 +29,7 @@ function renderTiles() {
             types: ['krag_ot']
         },
         { title: '<i data-lucide="square"></i> Dennica', icon: '', types: ['dennica'] },
-        { title: 'đźŞŁ Osadniki', icon: '', types: ['osadnik'] },
+        { title: '<i data-lucide="layers"></i> Osadniki', icon: '', types: ['osadnik'] },
         ...(dn === 'styczna'
             ? (() => {
                   const variant = well.stycznaVariant || 'standard';

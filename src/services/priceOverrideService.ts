@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Price Override Service
  *
  * Porównuje LIVE vs DEFAULT dla kazdego modulu:

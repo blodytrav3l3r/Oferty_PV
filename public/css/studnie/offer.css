@@ -1,4 +1,4 @@
-﻿/* studnie/offer.css — Offer/summary table styles */
+/* studnie/offer.css — Offer/summary table styles */
 .offer-stats-bar {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -27,7 +27,7 @@
     margin-top: 0.2rem;
 }
 
-/* â”€â”€â”€ Modal transportu oferty: ukryj spinner â”€â”€â”€ */
+/* ——— Modal transportu oferty: ukryj spinner ——— */
 .spinner-hidden .spinner-border {
     display: none;
 }
@@ -161,7 +161,7 @@
     padding: 0.3rem 0.45rem !important;
 }
 
-/* â”€â”€ Akcje w dolnym pasku podsumowania â”€â”€ */
+/* —— Akcje w dolnym pasku podsumowania —— */
 .summary-card-actions {
     padding: 0.5rem 0.8rem !important;
     display: flex;
@@ -235,7 +235,7 @@
     border-color: rgba(99, 102, 241, 0.6);
     color: var(--accent-text);
 }
-/* â”€â”€ Karty w dolnym pasku podsumowania (wzór rury) â”€â”€ */
+/* —— Karty w dolnym pasku podsumowania (wzór rury) —— */
 #offer-summary-footer-fixed .summary-card {
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
@@ -249,7 +249,7 @@
 #offer-summary-footer-fixed .summary-card-actions {
     padding: 0.5rem 0.8rem;
 }
-/* â”€â”€ Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) â”€â”€ */
+/* —— Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) —— */
 .offer-summary-footer-fixed {
     position: fixed;
     bottom: 60px;
@@ -262,7 +262,7 @@
     box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
-/* â”€â”€ Klasy kart w stopce (mirror .rury-summary-*) â”€â”€ */
+/* —— Klasy kart w stopce (mirror .rury-summary-*) —— */
 .studnie-summary-label {
     font-size: 0.78rem;
     text-transform: uppercase;
@@ -299,7 +299,7 @@
         padding: 0.8rem 1rem;
     }
 }
-/* â”€â”€ Excel table header aesthetic improvements â”€â”€ */
+/* —— Excel table header aesthetic improvements —— */
 #excel-table-container .h3-prodcode {
     font-size: 0.5rem;
     font-weight: 600;

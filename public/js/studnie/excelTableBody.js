@@ -1,5 +1,5 @@
-﻿// @ts-check
-/* ===== EXCEL TABLE BODY â€” Render TBODY, autoodĹ›wieĹĽanie komĂłrek i kolorĂłw duplikatĂłw ===== */
+// @ts-check
+/* ===== EXCEL TABLE BODY — Render TBODY, autoodświeżanie komórek i kolorów duplikatów ===== */
 
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
@@ -630,7 +630,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     return html;
 }
 
-/* ===== AUTO-ODĹšWIEĹ»ANIE KOMĂ“REK (height, dennica, uszczelki) ===== */
+/* ===== AUTO-ODŚWIEŻANIE KOMÓREK (height, dennica, uszczelki) ===== */
 function _excelRefreshAutoCells(wIdx, row) {
     const well = wells[wIdx];
     if (!well) return;
@@ -652,7 +652,7 @@ function _excelRefreshAutoCells(wIdx, row) {
     if (uCell) uCell.textContent = uszcz;
 }
 
-/* ===== NATYCHMIASTOWE ODĹšWIEĹ»ENIE KOLORĂ“W DUPLIKATĂ“W (bez re-rendera) ===== */
+/* ===== NATYCHMIASTOWE ODŚWIEŻENIE KOLORÓW DUPLIKATÓW (bez re-rendera) ===== */
 function _excelRefreshDupColors() {
     const container = document.getElementById('excel-table-container');
     if (!container) return;

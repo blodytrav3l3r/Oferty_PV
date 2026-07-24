@@ -127,7 +127,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 
 ### Kodowanie polskich znaków (encoding policy)
 
-Projekt stosuje jednolite kodowanie dla wszystkich plików tekstowych:
+Projekt stosuje **jednolite kodowanie UTF-8** dla wszystkich plików tekstowych:
 
 | Typ pliku                          | Kodowanie           | Uwagi                                              |
 | ---------------------------------- | ------------------- | -------------------------------------------------- |
@@ -144,6 +144,18 @@ Projekt stosuje jednolite kodowanie dla wszystkich plików tekstowych:
 - We wszystkich pozostałych plikach używaj swobodnie polskich znaków w UTF-8.
 - Unikaj BOM (Byte Order Mark) na początku plików UTF-8 — może powodować problemy z narzędziami Node.js i konsolą.
 - Weryfikacja: `npm run encoding:check` (jeśli skrypt istnieje) lub ręcznie przez `node -c` dla plików JS.
+
+**Zabezpieczenia automatyczne (nie pomijaj):**
+
+- `.editorconfig` wymusza `charset = utf-8` na wszystkich plikach tekstowych (z wyjątkiem binarnych: `.sqlite`, `.db`, `.exe`, `.dll`).
+- `lint-staged` uruchamia `encoding-integrity.js` przy każdym commitcie — wykrywa pliki z BOM lub nie-ASCII w `.bat`.
+- `.prettierrc` ustawia `endOfLine: "lf"` (spójne z `.editorconfig`).
+- Husky pre-commit hook blokuje commity z naruszeniami kodowania.
+
+**Jak naprawić problemy z kodowaniem:**
+
+- `npm run encoding:fix` — automatycznie usuwa BOM i naprawia kodowanie plików.
+- `npm run encoding:check` — sprawdza integralność kodowania bez zmian.
 
 ---
 

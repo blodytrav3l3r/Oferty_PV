@@ -20,7 +20,7 @@ let _przejsciaInitialized = false;
 
 /**
  * Buduje listę typów przejść z cennika (studnieProducts).
- * Zwraca tablic─Ö: [{ rodzaj, dnOd, dnDo, source: 'offer' }]
+ * Zwraca tablicę: [{ rodzaj, dnOd, dnDo, source: 'offer' }]
  */
 function buildOfferPrzejsciaTypes() {
     const usedProductIds = new Set();
@@ -39,22 +39,22 @@ function buildOfferPrzejsciaTypes() {
     const przejsciaProducts = studnieProducts.filter(
         (p) => p.componentType === 'przejscie' && p.active !== 0 && usedProductIds.has(p.id)
     );
-    // Dwa oddzielne mapy: numeryczne DN (okr─ůg┼ée) i stringowe DN (jajowe)
-    const typeMap = new Map(); // cat Ôćĺ { dnMin, dnMax }
-    const stringDnMap = new Map(); // cat Ôćĺ { dnStrings: ["600/900", "1200/1800"] }
+    // Dwa oddzielne mapy: numeryczne DN (okrągłe) i stringowe DN (jajowe)
+    const typeMap = new Map(); // cat → { dnMin, dnMax }
+    const stringDnMap = new Map(); // cat → { dnStrings: ["600/900", "1200/1800"] }
 
     przejsciaProducts.forEach((p) => {
         const cat = p.category;
         if (!cat) return;
 
         if (typeof p.dn === 'string' && p.dn.includes('/')) {
-            // String DN (jajowe) ÔÇö zbieraj pe┼éne wymiary
+            // String DN (jajowe) — zbieraj pełne wymiary
             if (!stringDnMap.has(cat)) {
                 stringDnMap.set(cat, { dnStrings: [] });
             }
             stringDnMap.get(cat).dnStrings.push(p.dn);
         } else {
-            // Numeryczny DN ÔÇö ┼Ťled┼║ min/max
+            // Numeryczny DN — śledó min/max
             let dn = parseFloat(p.dn) || 0;
             if (!typeMap.has(cat)) {
                 typeMap.set(cat, { dnMin: dn, dnMax: dn });
@@ -67,7 +67,7 @@ function buildOfferPrzejsciaTypes() {
     });
 
     const result = [];
-    // Wiersze z numerycznym DN (okr─ůg┼ée)
+    // Wiersze z numerycznym DN (okrągłe)
     typeMap.forEach((val, key) => {
         result.push({
             rodzaj: key,
@@ -79,7 +79,7 @@ function buildOfferPrzejsciaTypes() {
             source: 'offer'
         });
     });
-    // Wiersze z stringowym DN (jajowe) ÔÇö osobny wiersz dla ka┼╝dego unikalnego DN
+    // Wiersze z stringowym DN (jajowe) — osobny wiersz dla każdego unikalnego DN
     stringDnMap.forEach((val, key) => {
         val.dnStrings = [...val.dnStrings].sort((a, b) => {
             const aFirst = parseFloat(a.split('/')[0]) || 0;
@@ -103,8 +103,8 @@ function buildOfferPrzejsciaTypes() {
 }
 
 /**
- * Renderuje tabel─Ö szczeg├│┼é├│w przej┼Ť─ç szczelnych w Karcie budowy (Step 4).
- * @param {Array|null} existingData ÔÇö zapisane dane z kartaBudowy.przejsciaDetails
+ * Renderuje tabelę szczegółów przejść szczelnych w Karcie budowy (Step 4).
+ * @param {Array|null} existingData — zapisane dane z kartaBudowy.przejsciaDetails
  */
 function renderPrzejsciaDetailsTable(existingData) {
     const container = document.getElementById('step4-przejscia-details-table');
@@ -136,7 +136,7 @@ function renderPrzejsciaDetailsTable(existingData) {
         _przejsciaInitialized = true;
     }
 
-    // Przywr├│─ç dane je┼Ťli istniej─ů
+    // Przywróć dane jeśli istnieję
     const allRows = [..._offerPrzejscieRows, ..._customPrzejscieRows];
 
     if (allRows.length === 0) {
@@ -153,7 +153,7 @@ function renderPrzejsciaDetailsTable(existingData) {
                     <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN od</th>
                     <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN do</th>
                     <th style="text-align:left; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Uwagi</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przej┼Ťcie?</th>
+                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przejście?</th>
                     <th style="width:36px;"></th>
                 </tr>
             </thead>
@@ -178,13 +178,13 @@ function renderPrzejsciaDetailsTable(existingData) {
 }
 
 /**
- * Buduje HTML wiersza tabeli przej┼Ťcia szczelnego.
- * @param {Object} row ÔÇö dane wiersza
- * @param {number} idx ÔÇö indeks w swojej grupie
- * @param {'offer'|'custom'} source ÔÇö ┼║r├│d┼éo wiersza
+ * Buduje HTML wiersza tabeli przejścia szczelnego.
+ * @param {Object} row — dane wiersza
+ * @param {number} idx — indeks w swojej grupie
+ * @param {'offer'|'custom'} source — óródło wiersza
  */
 
-/** Aktualizuje opcje DN w zale┼╝no┼Ťci od wybranego rodzaju przej┼Ťcia */
+/** Aktualizuje opcje DN w zależności od wybranego rodzaju przejścia */
 function updatePrzejscieDnOptions(prefix, category) {
     const dns = new Set();
     const dnsStr = new Set();
@@ -207,7 +207,7 @@ function updatePrzejscieDnOptions(prefix, category) {
         });
     }
 
-    // Kategorie ze stringowym DN (jajowe) ÔÇö poka┼╝ pe┼éne wymiary w read-only input
+    // Kategorie ze stringowym DN (jajowe) — pokaż pełne wymiary w read-only input
     if (hasStringDn && category && category !== 'Inne') {
         const sortedStr = Array.from(dnsStr).sort((a, b) => {
             const aFirst = parseFloat(a.split('/')[0]) || 0;
@@ -246,7 +246,7 @@ function updatePrzejscieDnOptions(prefix, category) {
         const forceInne = category === 'Inne';
         const isCurrInne = forceInne || (currVal && !dnOptions.includes(parseFloat(currVal)));
 
-        let html = `<option value="" ${!currVal && !forceInne ? 'selected' : ''}>ÔÇö</option>`;
+        let html = `<option value="" ${!currVal && !forceInne ? 'selected' : ''}>—</option>`;
         html += dnOptions
             .map(
                 (d) =>
@@ -277,7 +277,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     const cats = new Set();
     const dns = new Set(); // numeryczne DN
-    const dnsStr = new Set(); // pe┼éne stringowe DN (jajowe: "600/900")
+    const dnsStr = new Set(); // pełne stringowe DN (jajowe: "600/900")
     if (typeof studnieProducts !== 'undefined') {
         studnieProducts.forEach((p) => {
             if (p.componentType === 'przejscie' && p.active !== 0) {
@@ -308,7 +308,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     const warnScript =
         source === 'offer'
-            ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przej┼Ťcie przepisane z oferty!', { title: 'Ostrze┼╝enie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }"
+            ? "if(!this.dataset.warned) { appConfirm('Zmieniasz przejście przepisane z oferty!', { title: 'Ostrzeżenie', type: 'warning', okText: 'Rozumiem', cancelText: 'OK' }); this.dataset.warned = '1'; }"
             : '';
 
     const rodzajCell = `
@@ -318,7 +318,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
                 ${catOptions.map((c) => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz w┼éasny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size:0.78rem; padding:0.3rem 0.5rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
     const dnOdCell = rowHasStringDn
@@ -329,7 +329,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
         : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
-                <option value="" ${!row.dnOd ? 'selected' : ''}>ÔÇö</option>
+                <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
             </select>
@@ -344,7 +344,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
         : `
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size:0.78rem; padding:0.3rem; text-align:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:4px; color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
-                <option value="" ${!row.dnDo ? 'selected' : ''}>ÔÇö</option>
+                <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
             </select>
@@ -365,12 +365,12 @@ function buildPrzejscieRowHTML(row, idx, source) {
             </select>
         </td>
         <td style="padding:0.4rem 0.2rem; text-align:center; vertical-align:top;">
-            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usu┼ä"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+            <button type="button" class="btn-icon-danger btn-icon-sm" onclick="removePrzejscieRow('${source}', ${idx})" title="Usuń"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
         </td>
     </tr>`;
 }
 
-/** Aktualizuje styl selecta TAK/NIE po zmianie warto┼Ťci */
+/** Aktualizuje styl selecta TAK/NIE po zmianie wartości */
 function updatePrzejscieSelectStyle(selectEl) {
     if (selectEl.value === 'TAK') {
         selectEl.style.color = 'var(--success-hover)';
@@ -383,7 +383,7 @@ function updatePrzejscieSelectStyle(selectEl) {
     }
 }
 
-/** Dodaje nowy wiersz niestandardowego przej┼Ťcia */
+/** Dodaje nowy wiersz niestandardowego przejścia */
 function addCustomPrzejscieRow() {
     // Zbierz aktualny stan z DOM przed dodaniem nowego
     _syncCustomRowsFromDOM();
@@ -407,15 +407,15 @@ function addCustomPrzejscieRow() {
     }, 50);
 }
 
-/** Usuwa wiersz niestandardowego przej┼Ťcia */
+/** Usuwa wiersz niestandardowego przejścia */
 
-/** Usuwa wiersz przej┼Ťcia szczelnego */
+/** Usuwa wiersz przejścia szczelnego */
 async function removePrzejscieRow(source, idx) {
     _syncCustomRowsFromDOM();
     if (source === 'offer') {
         if (
             !(await appConfirm(
-                'Usuwasz przej┼Ťcie przepisane z oferty. Czy na pewno chcesz to zrobi─ç?',
+                'Usuwasz przejście przepisane z oferty. Czy na pewno chcesz to zrobić?',
                 { title: 'Potwierdzenie', type: 'warning' }
             ))
         )
@@ -428,8 +428,8 @@ async function removePrzejscieRow(source, idx) {
 }
 
 /**
- * Synchronizuje dane wierszy niestandardowych z DOM do pami─Öci,
- * aby nie straci─ç wpisanych warto┼Ťci przy dodawaniu/usuwaniu wiersza.
+ * Synchronizuje dane wierszy niestandardowych z DOM do pamięci,
+ * aby nie stracić wpisanych wartości przy dodawaniu/usuwaniu wiersza.
  */
 function _syncCustomRowsFromDOM() {
     const rows = document.querySelectorAll('tr[data-psz-source]');
@@ -475,7 +475,7 @@ function _syncCustomRowsFromDOM() {
     });
 }
 
-/** Zbiera informacje o przej┼Ťciach szczelnych z tabeli */
+/** Zbiera informacje o przejściach szczelnych z tabeli */
 function collectPrzejsciaDetailsFromTable() {
     _syncCustomRowsFromDOM();
     const result = [];

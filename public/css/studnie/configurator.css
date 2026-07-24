@@ -1,9 +1,9 @@
-﻿/* studnie/configurator.css — Configuration panel */
-/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* studnie/configurator.css — Configuration panel */
+/* ===== CONFIGURATOR LAYOUT ===== */
    PEŁNA WYSOKOŚĆ LAYOUTU — FLEX CHAIN (scoped: studnie.html)
    body → .main → .section.active → .well-app-layout → kolumny
    Wysokość wynika z drzewa DOM, NIE z calc(100vh - N).
-   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+   ===== CONFIGURATOR LAYOUT ===== */
 html,
 body {
     height: 100%;
@@ -69,7 +69,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
 }
 
-/* â”€â”€â”€ 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE â”€â”€â”€ */
+/* ——— 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ——— */
 .well-app-layout {
     display: grid;
     grid-template-columns: clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px);
@@ -123,7 +123,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     }
 }
 
-/* â”€â”€ Modyfikator układu dla kroków 1 i 2 â”€â”€ */
+/* —— Modyfikator układu dla kroków 1 i 2 —— */
 .well-app-layout.intro-mode {
     grid-template-columns: 1fr;
     max-width: min(90vw, 1400px);
@@ -143,7 +143,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     height: auto;
 }
 
-/* â”€â”€ Lewo: Schemat studni â”€â”€ */
+/* —— Lewo: Schemat studni —— */
 .well-diagram-panel {
     background: var(--bg-secondary);
     border-right: 1px solid var(--border-glass);
@@ -217,7 +217,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: var(--success);
 }
 
-/* â”€â”€ Prawo: Panel boczny studni â”€â”€ */
+/* —— Prawo: Panel boczny studni —— */
 .wells-sidebar {
     height: 100%;
     min-height: 0;
@@ -451,7 +451,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     font-weight: 600;
 }
 
-/* â”€â”€ Pola informacji o studni â”€â”€ */
+/* —— Pola informacji o studni —— */
 .well-info-card {
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);
@@ -501,7 +501,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
         sans-serif;
     color: var(--accent-hover);
 }
-/* â”€â”€ Tiles & Config â”€â”€ */
+/* —— Tiles & Config —— */
 .tiles-section {
     margin-bottom: 0.6rem;
 }
@@ -710,7 +710,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile.active-top-closure::after {
-    content: 'âś”';
+    content: '✔';
     position: absolute;
     top: 5px;
     right: 5px;
@@ -1156,12 +1156,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
         transform: rotate(360deg);
     }
 }
-/* â”€â”€â”€ Studnie: option background â”€â”€â”€ */
+/* ——— Studnie: option background ——— */
 select.form-input option {
     background-color: #1b2334;
     color: #fff;
 }
-/* â”€â”€â”€ Klasy narzędziowe do migracji stylów inline â”€â”€â”€ */
+/* ——— Klasy narzędziowe do migracji stylów inline ——— */
 /* Font size */
 .fs-085 {
     font-size: 0.85rem;
@@ -1379,7 +1379,7 @@ select.form-input option {
         transition: none !important;
     }
 }
-/* â”€â”€ Transition Renderer hover classes â”€â”€ */
+/* —— Transition Renderer hover classes —— */
 .prz-field {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 4px;

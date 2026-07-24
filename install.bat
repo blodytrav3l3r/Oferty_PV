@@ -111,7 +111,7 @@ if errorlevel 1 (
 )
 echo [OK] Schema OK
 
-REM 9. Seed (opcja — pomijany z --skip-seed)
+REM 9. Seed (opcja - pomijany z --skip-seed)
 set "SKIP_SEED="
 for %%a in (%*) do if /i "%%a"=="--skip-seed" set "SKIP_SEED=1"
 if not defined SKIP_SEED (
