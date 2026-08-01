@@ -103,3 +103,43 @@
 **Problem**: 5 gołych `<select disabled>` w pustym wierszu vs `_excelOverlaySelectHtml` w wierszach danych — różnica w box modelu / intrinsic sizing powoduje przesunięcie sticky kolumn.
 **Objaw**: Rozjeżdżanie się kolumn w Excel Table Manager w pustym wierszu.
 **Fix** (v1.5.0): Używać `_excelOverlaySelectHtml(productId, null, null, null, null, true)` dla wyłączonych selectów w pustym wierszu oraz CSS `.excel-sel-wrap.disabled`.
+
+## 17. Scroll poziomy kryje aktywną komórkę (Excel)
+
+**Problem**: Brak korekty `scrollLeft` w `_excelFocusNavEl` przy nawigacji strzałkami — aktywne pole chowało się pod zablokowanymi/sticky kolumnami (Lp, Nazwa, DN).
+**Objaw**: Nawigacja strzałkami do komórki poza widocznym obszarem pozostawia focus pod sticky kolumnami.
+**Fix** (`9cc5956`): Pomiar szerokości kolumn sticky (`_excelGetStickyColumnsWidth`) i korekta pozioma scrolla w `_excelFocusNavEl`.
+
+## 18. Delete/Ctrl+X czyści złą komórkę (Excel)
+
+**Problem**: Czyszczenie oparte o indeks z listy inputów w wierszu zamiast o indeks komórki TD — przy różnej liczbie edytowalnych elementów w komórkach czyściło sąsiednie pole.
+**Objaw**: Delete/Ctrl+X na jednej komórce czyści wartość w innej (sąsiedniej).
+**Fix** (working tree, po `9cc5956`): Indeksować komórki przez TD (`tr.children[indexOf(td)]`), czyścić przez `_excelSetCellValue(target, '')` i zapisywać `wIdx` z `data-widx`.
+
+## 19. Nawigacja wchodzi w ukryte wiersze (Excel)
+
+**Problem**: Filtr wyszukiwarki ukrywa wiersze przez `display:none`, ale nawigacja strzałkami (góra/dół) trafiała również w ukryte wiersze.
+**Objaw**: Strzałki przenoszą focus do wierszy niewidocznych po przefiltrowaniu listy studni.
+**Fix** (working tree, po `9cc5956`): Filtrować wiersze docelowe przez `r.style.display !== 'none'` (także w `_excelHandleEmptyRowArrow`); nawigacja pionowa przekazuje `_excelFocusNavEl` listę elementów wiersza docelowego (`_excelGetNavElements`).
+
+## 20. Duplikacja kręgów krag/krag_ot (Excel)
+
+**Problem**: W bloku konwersji `excelOnCompChange` sumowano `totalQty = totalExistingQty + newQty` zamiast zastąpienia; filtr usuwał tylko wpisany typ, zostawiając bratni typ (krag/krag_ot) o tym samym dn+height.
+**Objaw**: Wpisanie w Excelu kręgu z otworem (`krag_ot`) w studni bez otworu dodaje DWA kręgi zamiast zamiany na zwykły krąg (`krag`) — analogicznie dla zwykłego kręgu.
+**Fix** (working tree, `excelChangeHandlers.js`): Usuwać wszystkie `krag` i `krag_ot` o danym dn+height (przez `filterDn`) i wstawiać jeden element `targetType` z ilością = wpisana (`newQty`), bez sumowania. Ustalenie `targetType`: `krag_ot` gdy studnia ma przejścia, inaczej `krag` (zasada z `diagramOtRings.js`).
+
+> **Uwaga (katalog/seed):** `krag_ot` nie występuje w katalogu dla H250 (`data/seed_studnie.json`) — konwersja krag↔krag_ot dla wysokości 250 nie ma produktu docelowego w seedzie (dostępne wysokości krag_ot: 500/750/1000).
+
+## 21. Brak odświeżenia komórek krag/krag_ot po konwersji (Excel)
+
+**Problem**: `_excelMarkManual(well)` (pełny `_excelRenderTable`) był wywoływany PRZED blokiem konwersji krag↔krag_ot w `excelOnCompChange` (`public/js/studnie/excelChangeHandlers.js`); po konwersji następowały tylko `_excelRefreshAutoCells` (nie obejmuje inputów kręgów) i `_excelDebouncedRefresh` (aktualizuje diagram, nie tabelę).
+**Objaw**: Wpisanie ilości kręgu w Excelu poprawnie konwertuje typ w configu (np. `krag_ot` → `krag`), ale komórki w tabeli nadal pokazują starą wartość/typ — odświeżają się dopiero po wpisaniu innego kręgu.
+**Fix** (working tree, `excelChangeHandlers.js`): przeniesiono `_excelMarkManual(well)` PO blok konwersji — pełny re-render (`_excelRenderTable`) pokazuje finalny config (`krag=0`, `krag_ot=N`) natychmiast.
+
+**Odróżnienie od #20:** #20 = duplikacja kręgów (sumowanie `totalExistingQty + newQty` zostawiało bratni typ w tabeli — błąd logiki konwersji); #21 = brak odświeżenia widoku PO poprawnej konwersji (błąd kolejności re-renderu).
+
+## 22. Edycja rzędnej i auto-dobór w Excelu nie ustawiały flagi niezapisanych zmian
+
+**Problem**: `_excelDirty` był ustawiany wyłącznie przez `_excelDebouncedRefresh()` (excelPolling.js:84). `excelOnRzednaChange` (excelChangeHandlers.js) nie wołał żadnego refreshu, a `_excelAutoSelectForWell` / `_excelRunAutoSelectForWell` (excelAutoSelect.js) nadpisywały `well.config` bez flagi — przycisk Run (▶) i edycja rzędnych były całkowicie poza mechanizmem dirty.
+**Objaw**: `closeExcelTableModal()` nie pokazywało popupu "Niezapisane zmiany" po edycji rzędnej lub auto-doborze z Excela.
+**Fix**: `_excelMarkDirty()` w warstwie modala (caller): `excelOnRzednaChange` (po `well.rzednaDna = rzDna;`) oraz na początku `try` w `_excelAutoSelectForWell` i `_excelRunAutoSelectForWell` (przed `await autoSelectComponents`). Nigdy w solverze `autoSelectComponents` (współdzielony z głównym panelem). Dodatkowo dirty w `_excelToggleWellAutoMode`, `_excelBulkSetMode`, `_excelUndo`/`_excelRedo`. Paste/Delete na rzędnych pokryte przez `_excelSetCellValue` (dispatch `change` → inline `onchange`). Przy okazji usunięto martwe `_excelMarkClean`, `_excelGetWellConfigHash`, `_excelGetColumnStructureHash` (excelHelpers.js) i `_excelEnsureRowCount` (excelTabs.js).

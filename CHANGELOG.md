@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [Unreleased]
+
+### Bug Fixes
+
+- **studnie:** aktywna komórka widoczna przy nawigacji strzałkami — korekta scrolla poziomego pod sticky kolumnami (Lp, Nazwa, DN) w `_excelFocusNavEl` + `_excelGetStickyColumnsWidth` ([9cc5956](https://github.com/blodytrav3l3r/Oferty_PV/commit/9cc5956f79138e9b4f6e20c031d512c8ee7f5361))
+- **studnie:** poprawki indeksowania i nawigacji w trybie Excel — Delete/Ctrl+X czyści właściwą komórkę (indeks TD zamiast listy inputów), Ctrl+A zapisuje `wIdx` z `data-widx`, nawigacja pomija ukryte wiersze (filtr wyszukiwarki `display:none`), `_excelFocusNavEl` przy nawigacji pionowej dostaje listę elementów wiersza docelowego, `_excelGetNavElements` pomija checkbox `.excel-row-select`, deduplikacja przez `_excelSetCellValue`, usunięcie martwego `_excelHandleTab`, reset `_excelLastDataCol` przy zmianie zakładki/zamknięciu modala, wydzielenie `_excelHandleEmptyRowArrow` (max 3 poziomy zagnieżdżenia)
+- **studnie:** naprawa duplikacji kręgów krag/krag_ot w tabeli Excel — konwersja typu kręgu (`excelOnCompChange`) sumowała `totalExistingQty + newQty` i usuwała tylko wpisany typ, przez co bratni typ (krag/krag_ot) o tym samym dn+height zostawał w tabeli; teraz usuwa się wszystkie krag i krag_ot o danym dn+height (przez `filterDn`) i wstawia jeden element `targetType` z ilością = wpisana (`newQty`), bez sumowania (`targetType` = `krag_ot` gdy studnia ma przejścia, inaczej `krag`)
+- **studnie:** natychmiastowe odświeżenie komórek krag/krag_ot po konwersji w tabeli Excel — `_excelMarkManual(well)` (pełny `_excelRenderTable`) był wołany przed blokiem konwersji w `excelOnCompChange` (`excelChangeHandlers.js`), a po konwersji następowały tylko `_excelRefreshAutoCells` (nie obejmuje inputów kręgów) i `_excelDebouncedRefresh` (diagram, nie tabela), przez co komórki pokazywały starą wartość/typ do wpisania innego kręgu; teraz `_excelMarkManual(well)` wykonuje się po konwersji i finalny config (`krag=0`, `krag_ot=N`) jest widoczny natychmiast
+- **studnie:** flaga niezapisanych zmian w tabeli Excel przy edycji rzędnej i auto-doborze (Run/auto-start), toggle AUTO/MAN, undo/redo; usunięcie martwego kodu (`_excelMarkClean`, hashe, `_excelEnsureRowCount`)
+
 ## [1.9.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.8.0...v1.9.0) (2026-07-21)
 
 ### Features

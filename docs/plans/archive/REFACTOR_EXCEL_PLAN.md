@@ -750,3 +750,63 @@ Cell selection (click, drag, Shift+click, Ctrl+click), drag state, bulk mode, fo
 9. **Pojedyncze źródło prawdy** — cały stan modułu (`_excel*`) tylko w `excelState.js`; żaden moduł nie tworzy własnej kopii
 
 10. **Refaktoryzacja = zachowanie 1:1** — wszelkie zmiany funkcjonalne (optymalizacje, DRY, cleanup) są realizowane dopiero po zakończeniu podziału (Stage 2)
+
+---
+
+## 🔄 Aktualizacja (2026-08-01) — poprawki nawigacji Excel (faza 2, po podziale modułów)
+
+> **Status:** ✅ ZREALIZOWANE (poprawki wtórne: w working tree, commit główny: `9cc5956`)
+
+Dodatkowe poprawki funkcjonalne w nawigacji tabeli Excel-like (moduł studnie), wykraczające poza czysty podział modułów z fazy 1 (Stage 2 wg sekcji 10).
+
+### Poprawki i commity
+
+| #   | Poprawka                                                       | Opis                                                                                                                                                                                                            | Commit / pliki                                 |
+| --- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| 1   | **Scroll poziomy pod sticky kolumnami**                        | Aktywne pole chowało się pod zablokowanymi kolumnami (Lp, Nazwa, DN) przy nawigacji strzałkami — brak korekty `scrollLeft` w `_excelFocusNavEl`. Dodano pomiar `_excelGetStickyColumnsWidth` i korektę poziomą. | `9cc5956` (`excelCellNavigation.js`)           |
+| 2   | **Delete/Ctrl+X czyści właściwą komórkę**                      | Indeksowanie przez TD (`tr.children[indexOf(td)]`) zamiast listy inputów w wierszu; czyszczenie przez `_excelSetCellValue(target, '')`; zapis `wIdx` z `data-widx`.                                             | working tree (`excelCellNavigation.js`)        |
+| 3   | **Ctrl+A zapisuje wIdx z `data-widx`**                         | Zaznaczenie całej kolumny zapamiętuje wiersz z atrybutu `data-widx` (nie z listy inputów).                                                                                                                      | working tree (`excelCellNavigation.js`)        |
+| 4   | **Nawigacja pomija ukryte wiersze**                            | Filtr wyszukiwarki ukrywa wiersze przez `display:none` — filtrowanie wierszy docelowych przez `r.style.display !== 'none'` (także w `_excelHandleEmptyRowArrow`).                                               | working tree (`excelCellNavigation.js`)        |
+| 5   | **Nawigacja pionowa przekazuje elementy wiersza docelowego**   | `_excelFocusNavEl` dostaje listę elementów wiersza docelowego (`_excelGetNavElements`), nie bieżącego.                                                                                                          | working tree (`excelCellNavigation.js`)        |
+| 6   | **`_excelGetNavElements` pomija checkbox `.excel-row-select`** | Checkbox wyboru wiersza nie jest traktowany jako komórka edytowalna (checkbox "Psia buda" bez klasy zostaje).                                                                                                   | working tree (`excelSelection.js`)             |
+| 7   | **Deduplikacja `_excelSetCellValue`**                          | Zamiast 4 duplikatów logiki czyszczenia/wpisania wartości — wspólna funkcja z `excelCopyPaste.js`.                                                                                                              | working tree (`excelCellNavigation.js`)        |
+| 8   | **Usunięcie martwego `_excelHandleTab`**                       | Nieużywana funkcja nawigacji Tab usunięta (obsługę przejęła strzałka/nawigacja komórkowa).                                                                                                                      | working tree (`excelCellNavigation.js`)        |
+| 9   | **Reset `_excelLastDataCol`**                                  | Wyzerowanie zapamiętanej kolumny przy zmianie zakładki (`excelTabs.js`) i zamknięciu modala (`excelModal.js`).                                                                                                  | working tree (`excelTabs.js`, `excelModal.js`) |
+| 10  | **Wydzielenie `_excelHandleEmptyRowArrow`**                    | Obsługa strzałek w pustym wierszu jako osobna funkcja (limit 3 poziomów zagnieżdżenia).                                                                                                                         | working tree (`excelCellNavigation.js`)        |
+
+**Powiązane wpisy w bazie błędów:** AGENTS.md §5 — wiersze #17 (scroll poziomy), #18 (Delete/Ctrl+X), #19 (ukryte wiersze).
+
+---
+
+## 🔧 Aktualizacja (2026-08-01) — naprawa duplikacji kręgów krag/krag_ot (Excel)
+
+> **Status:** ✅ ZREALIZOWANE (working tree, `public/js/studnie/excelChangeHandlers.js`)
+
+Poprawka funkcjonalna konwersji typu kręgu w tabeli Excel (moduł studnie), zgłoszona jako błąd duplikacji `krag`/`krag_ot`.
+
+### Opis naprawy
+
+- **Błąd:** wpisanie w Excelu kręgu z otworem (`krag_ot`) w studni bez otworu miało zamienić go na zwykły krąg (`krag`), a zamiast tego dodawało DWA kręgi (analogicznie dla zwykłego kręgu).
+- **Przyczyna:** w bloku konwersji `excelOnCompChange` było `totalQty = totalExistingQty + newQty` — sumowanie istniejących kręgów docelowego typu z wpisaną wartością zamiast zastąpienia; dodatkowo filtr usuwał tylko wpisany typ, zostawiając bratni typ (`krag`/`krag_ot`) o tym samym dn+height.
+- **Fix:** usuwa wszystkie `krag` i `krag_ot` o danym dn+height (przez `filterDn`) i wstawia jeden element `targetType` z ilością = wpisana (`newQty`), bez sumowania. Ustalenie `targetType`: `krag_ot` gdy studnia ma przejścia, inaczej `krag` (zasada z `diagramOtRings.js`).
+
+**Powiązane wpisy w bazie błędów:** AGENTS.md §5 — wiersz #20; docs/errors-known.md — wpis #20.
+
+**Uwaga:** `krag_ot` nie występuje w katalogu dla H250 (`data/seed_studnie.json` — dostępne wysokości krag_ot: 500/750/1000), więc konwersja krag↔krag_ot dla wysokości 250 nie ma produktu docelowego w seedzie.
+
+---
+
+## 🔄 Aktualizacja (2026-08-01) — natychmiastowe odświeżenie komórek krag/krag_ot po konwersji (Excel)
+
+> **Status:** ✅ ZREALIZOWANE (working tree, `public/js/studnie/excelChangeHandlers.js`)
+> **Data:** 2026-08-01
+
+Poprawka wtórna (po #20): konwersja krag↔krag_ot w `excelOnCompChange` działała poprawnie (config), ale widok tabeli nie odświeżał się natychmiast.
+
+- **Błąd:** wpisanie ilości kręgu w Excelu konwertowało typ w configu, a komórki w tabeli nadal pokazywały starą wartość/typ — odświeżały się dopiero po wpisaniu innego kręgu.
+- **Przyczyna:** `_excelMarkManual(well)` (pełny `_excelRenderTable`) był wywoływany PRZED blokiem konwersji krag/krag_ot; po konwersji następował tylko `_excelRefreshAutoCells` (nie obejmuje inputów kręgów) i `_excelDebouncedRefresh` (aktualizuje diagram, nie tabelę).
+- **Fix:** przeniesiono `_excelMarkManual(well)` PO blok konwersji — pełny re-render pokazuje finalny config (`krag=0`, `krag_ot=N`) natychmiast.
+
+**Rozgraniczenie z poprawką #20 (duplikacja kręgów):** #20 dotyczyła logiki konwersji (sumowanie ilości zostawiało bratni typ w tabeli); niniejsza poprawka dotyczy wyłącznie odświeżenia widoku po już poprawnej konwersji — w #20 widok odświeżał się (po ponownym renderze), ale config był błędny; w #21 config jest poprawny, ale widok się nie odświeżał.
+
+**Powiązane wpisy w bazie błędów:** AGENTS.md §5 — wiersz #21; docs/errors-known.md — wpis #21.
