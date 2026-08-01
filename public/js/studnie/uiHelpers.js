@@ -425,7 +425,7 @@ function skipWizardToStep3() {
 async function loadStudnieProducts() {
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
-            const res = await fetchWithTimeout('/api/products-studnie', { silent: true }, 1000);
+            const res = await fetchWithTimeout('/api/products-studnie', {}, 1000);
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {

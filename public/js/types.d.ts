@@ -25,13 +25,6 @@ interface ApiClient {
     put<T = unknown>(url: string, body?: unknown, opts?: ApiRequestOptions): Promise<T | null>;
     del<T = unknown>(url: string, opts?: ApiRequestOptions): Promise<T | null>;
     patch<T = unknown>(url: string, body?: unknown, opts?: ApiRequestOptions): Promise<T | null>;
-    request<T = unknown>(url: string, opts?: ApiRequestOptions): Promise<T | null>;
-    getWithRetry<T = unknown>(
-        url: string,
-        opts?: ApiRequestOptions,
-        retries?: number,
-        delayMs?: number
-    ): Promise<T | null>;
 }
 
 /* ===== Logger ===== */

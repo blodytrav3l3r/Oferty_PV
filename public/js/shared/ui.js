@@ -87,6 +87,7 @@ function showToast(msg, type = 'info') {
         return `\x00ICON${icons.length - 1}\x00`;
     });
     text.innerHTML = escapeHtml(safe).replace(
+        /* eslint-disable-next-line no-control-regex */
         /\x00ICON(\d+)\x00/g,
         (_, i) => icons[parseInt(i)] || ''
     );
@@ -151,8 +152,8 @@ function toggleCard(contentIdOrHeader, iconId) {
             if (icon) {
                 const isHidden = content.classList.contains('hidden');
                 icon.innerHTML = isHidden
-                    ? '<i data-lucide=\"chevron-down\"></i>'
-                    : '<i data-lucide=\"chevron-up\"></i>';
+                    ? '<i data-lucide="chevron-down"></i>'
+                    : '<i data-lucide="chevron-up"></i>';
             }
         }
     }

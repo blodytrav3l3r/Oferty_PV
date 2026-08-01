@@ -376,7 +376,6 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
             return p.dn === null;
         });
         return mainUniv.length > 0 ? mainUniv[0].id : null;
-        return null; /* nie pokazuj kodu z innego DN */
     }
     return null;
 }

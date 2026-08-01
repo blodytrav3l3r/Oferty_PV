@@ -178,7 +178,7 @@ window.handleCfgDrop = function (e) {
                 window.currentDraggedPlaceholderId = null;
                 well.config = well.config.filter((c) => !c.isPlaceholder);
             }
-        } else if (well && draggedCfgIndex !== null) {
+        } else if (well) {
             well.config = well.config.filter((c) => !c.isPlaceholder);
             well.config.forEach((c) => (c.isPlaceholder = false));
             well.autoLocked = true;

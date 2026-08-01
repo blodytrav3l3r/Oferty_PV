@@ -296,7 +296,7 @@ async function loadUsers() {
 function updateStatsBar() {
     const counts = { admin: 0, pro: 0, user: 0 };
     adminUsers.forEach((u) => {
-        if (counts.hasOwnProperty(u.role)) counts[u.role]++;
+        if (Object.prototype.hasOwnProperty.call(counts, u.role)) counts[u.role]++;
     });
     const adminEl = document.getElementById('stat-admin-count');
     const proEl = document.getElementById('stat-pro-count');
