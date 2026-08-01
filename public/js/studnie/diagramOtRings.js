@@ -85,10 +85,10 @@ function enforceOtForSegment(seg, well, rzDna) {
         currentId.toLowerCase().includes('-ot');
 
     if (hasHole && !isCurrentlyOt) {
-        return upgradeToOtRing(seg, currentProd, currentId);
+        return upgradeToOtRing(seg, currentProd, currentId, well);
     }
     if (!hasHole && isCurrentlyOt) {
-        return degradeFromOtRing(seg, currentProd, currentId);
+        return degradeFromOtRing(seg, currentProd, currentId, well);
     }
     return false;
 }
@@ -123,9 +123,39 @@ function checkSegmentHasHole(seg, well, rzDna) {
 }
 
 /**
+ * Pomocnik bezpiecznej zmiany productId dla segmentu — wyodrębnia 1 sztukę gdy quantity > 1.
+ */
+function _applyProductIdToSeg(seg, targetProductId, well) {
+    if (!seg || !seg.configItem) return false;
+    if (seg.configItem.productId === targetProductId) return false;
+
+    const qty = seg.configItem.quantity || 1;
+    if (qty > 1) {
+        seg.configItem.quantity = qty - 1;
+        const newItem = {
+            productId: targetProductId,
+            quantity: 1,
+            autoAdded: !!seg.configItem.autoAdded
+        };
+        if (well && Array.isArray(well.config)) {
+            const idx = well.config.indexOf(seg.configItem);
+            if (idx >= 0) {
+                well.config.splice(idx + 1, 0, newItem);
+            } else {
+                well.config.push(newItem);
+            }
+        }
+        seg.configItem = newItem;
+    } else {
+        seg.configItem.productId = targetProductId;
+    }
+    return true;
+}
+
+/**
  * Zamienia zwykły krąg na wiercony (OT) — szuka w katalogu lub tworzy dynamiczny.
  */
-function upgradeToOtRing(seg, currentProd, currentId) {
+function upgradeToOtRing(seg, currentProd, currentId, well) {
     const otProd = studnieProducts.find(
         (p) =>
             p.componentType === 'krag_ot' &&
@@ -133,36 +163,33 @@ function upgradeToOtRing(seg, currentProd, currentId) {
             p.height === currentProd.height
     );
 
+    let targetId = null;
     if (otProd) {
-        if (seg.configItem.productId !== otProd.id) {
-            seg.configItem.productId = otProd.id;
-            logger.info(
-                'wellDiagram',
-                `[enforceOT] Zamiana ${currentId} → ${otProd.id} (krąg wiercony z katalogu)`
-            );
-            return true;
+        targetId = otProd.id;
+    } else {
+        // Dynamiczny OT
+        const dynamicOtId = currentId + '_OT';
+        if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
+            const dynamicProd = structuredClone(currentProd);
+            dynamicProd.id = dynamicOtId;
+            dynamicProd.componentType = 'krag_ot';
+            if (!dynamicProd.name.includes('wiercony')) {
+                dynamicProd.name = dynamicProd.name.replace('Krąg', 'Krąg wiercony');
+            }
+            studnieProducts.push(dynamicProd);
         }
-        return false;
+        targetId = dynamicOtId;
     }
 
-    // Dynamiczny OT
-    const dynamicOtId = currentId + '_OT';
-    if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-        const dynamicProd = structuredClone(currentProd);
-        dynamicProd.id = dynamicOtId;
-        dynamicProd.componentType = 'krag_ot';
-        if (!dynamicProd.name.includes('wiercony')) {
-            dynamicProd.name = dynamicProd.name.replace('Krąg', 'Krąg wiercony');
+    if (targetId) {
+        const changed = _applyProductIdToSeg(seg, targetId, well);
+        if (changed) {
+            logger.info(
+                'wellDiagram',
+                `[enforceOT] Zamiana ${currentId} → ${targetId} (krąg wiercony)`
+            );
         }
-        studnieProducts.push(dynamicProd);
-    }
-    if (seg.configItem.productId !== dynamicOtId) {
-        seg.configItem.productId = dynamicOtId;
-        logger.info(
-            'wellDiagram',
-            `[enforceOT] Zamiana ${currentId} → ${dynamicOtId} (dynamiczny OT)`
-        );
-        return true;
+        return changed;
     }
     return false;
 }
@@ -170,37 +197,33 @@ function upgradeToOtRing(seg, currentProd, currentId) {
 /**
  * Degradacja kręgu wierconego (OT) na zwykły — gdy nie ma przejścia.
  */
-function degradeFromOtRing(seg, currentProd, currentId) {
+function degradeFromOtRing(seg, currentProd, currentId, well) {
     // Najbezpieczniejsza degradacja: znajdź zwykły krąg o tym samym wymiarze
     const stdProd = studnieProducts.find(
         (p) =>
             p.componentType === 'krag' && p.dn === currentProd.dn && p.height === currentProd.height
     );
 
+    let targetId = null;
     if (stdProd) {
-        if (seg.configItem.productId !== stdProd.id) {
-            seg.configItem.productId = stdProd.id;
-            logger.info(
-                'wellDiagram',
-                `[enforceOT] Zamiana ${currentId} → ${stdProd.id} (powrót do kręgu)`
-            );
-            return true;
+        targetId = stdProd.id;
+    } else {
+        const baseStripped = currentId.replace(/[_-]OT$/i, '');
+        const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
+        if (baseProduct) {
+            targetId = baseProduct.id;
         }
-        return false;
     }
 
-    // Fallback jeśli krąg nie jest standardowy, spróbujmy odciąć _OT
-    const baseStripped = currentId.replace(/[_-]OT$/i, '');
-    const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
-    if (baseProduct && seg.configItem.productId !== baseProduct.id) {
-        seg.configItem.productId = baseProduct.id;
-        logger.info(
-            'wellDiagram',
-            `[enforceOT] Zamiana ${currentId} → ${baseProduct.id} (dynamiczny powrót)`
-        );
-        return true;
+    if (targetId) {
+        const changed = _applyProductIdToSeg(seg, targetId, well);
+        if (changed) {
+            logger.info(
+                'wellDiagram',
+                `[enforceOT] Zamiana ${currentId} → ${targetId} (powrót do kręgu)`
+            );
+        }
+        return changed;
     }
-    // BARDZO WAŻNE: Jeśli nie znaleziono bazy, NIE nadpisujemy na nieistniejące ID,
-    // by zapobiec ucięciu z renderowania ('nie usuwa ich')
     return false;
 }

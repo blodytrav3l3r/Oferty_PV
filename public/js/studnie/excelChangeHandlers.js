@@ -25,6 +25,7 @@ function excelOnRzednaChange(wIdx) {
 
     well.rzednaWlazu = rzWlazu;
     well.rzednaDna = rzDna;
+    _excelMarkDirty();
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
 
@@ -241,64 +242,22 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             _excelInsertConfigItem(well, componentType, candidates[0].id, newQty);
         }
     }
-    _excelMarkManual(well);
 
-    if (newQty > 0 && (componentType === 'krag' || componentType === 'krag_ot')) {
-        const hasPrzejscia = well.przejscia && well.przejscia.length > 0;
-        const shouldBeOT = hasPrzejscia;
-        const wasAddedAsOT = componentType === 'krag_ot';
-
-        if (shouldBeOT !== wasAddedAsOT) {
-            const targetType = shouldBeOT ? 'krag_ot' : 'krag';
-            well.config = (well.config || []).filter((item) => {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
-                if (!p) return true;
-                if (p.componentType !== componentType) return true;
-                if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
-                return false;
-            });
-            let totalExistingQty = 0;
-            const _tmpConfig = [];
-            for (const _item of well.config || []) {
-                const _p = studnieProducts.find((_pr) => _pr.id === _item.productId);
-                if (
-                    _p &&
-                    _p.componentType === targetType &&
-                    parseInt(_p.dn) === parseInt(well.dn) &&
-                    (height === undefined || parseInt(_p.height) === parseInt(height))
-                ) {
-                    totalExistingQty += _item.quantity || 1;
-                } else {
-                    _tmpConfig.push(_item);
-                }
-            }
-            well.config = _tmpConfig;
-            const totalQty = totalExistingQty + newQty;
-            if (totalQty > 0) {
-                const avail =
-                    typeof getAvailableProducts === 'function'
-                        ? getAvailableProducts(well)
-                        : studnieProducts;
-                let cand = avail.filter(
-                    (p) =>
-                        p.componentType === targetType &&
-                        parseInt(p.dn) === parseInt(well.dn) &&
-                        (height === undefined || parseInt(p.height) === parseInt(height))
-                );
-                if (typeof filterByWellParams === 'function')
-                    cand = cand.filter((p) => filterByWellParams(p, well));
-                if (cand.length > 0) {
-                    let pid = cand[0].id;
-                    if (productId) {
-                        const prefix = productId.split('-').slice(0, 2).join('-');
-                        const match = cand.find((c) => c.id.startsWith(prefix));
-                        if (match) pid = match.id;
-                    }
-                    _excelInsertConfigItem(well, targetType, pid, totalQty);
-                }
+    if (componentType === 'krag' || componentType === 'krag_ot') {
+        _excelCleanEmptyPrzejscia(well);
+        if (typeof enforceOtRings === 'function') {
+            const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+            try {
+                currentWellIndex = wIdx;
+                enforceOtRings();
+            } finally {
+                if (savedIdx >= 0) currentWellIndex = savedIdx;
             }
         }
     }
+    /* Odśwież tabelę PO konwersji krag/krag_ot — inaczej komórki kręgów
+       pokazują starą wartość (re-render przed konwersją był nieaktualny). */
+    _excelMarkManual(well);
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
