@@ -248,6 +248,19 @@ function _excelIsDisabledNav(el) {
     return false;
 }
 
+/** Zmierz laczna szerokosc sticky-left kolumn (pierwsze 7 kolumn tabeli) */
+function _excelGetStickyColumnsWidth() {
+    const container = document.getElementById('excel-table-container');
+    const table = container ? container.querySelector('table') : null;
+    const firstRow = table ? table.querySelector('thead tr') : null;
+    if (!firstRow) return 0;
+    let w = 0;
+    for (let i = 0; i < 7 && i < firstRow.children.length; i++) {
+        w += /** @type {HTMLElement} */ (firstRow.children[i]).offsetWidth;
+    }
+    return w;
+}
+
 /** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
 function _excelFocusNavEl(el, rowEls, dir) {
     if (!el) return;
@@ -257,16 +270,17 @@ function _excelFocusNavEl(el, rowEls, dir) {
     while (cur && limit-- > 0) {
         if (!_excelIsDisabledNav(cur)) {
             cur.focus();
-            /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera) */
+            /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera/kolumn) */
             let container = document.getElementById('excel-table-container');
             let headerEl = document.querySelector('#excel-table-container thead');
             let headerH = headerEl ? /** @type {HTMLElement} */ (headerEl).offsetHeight : 60;
             let MARGIN = 5;
-            /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera */
+            /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera
+               i na prawo od sticky-left kolumn (inaczej natywny focus chowa go za nie) */
             if (container) {
                 let elRect = cur.getBoundingClientRect();
                 let containerRect = container.getBoundingClientRect();
-                /* Jesli element jest nad widocznym obszarem (elRect.top < containerRect.top + headerH)
+                /* Pion: jesli element jest nad widocznym obszarem (elRect.top < containerRect.top + headerH)
                    lub calkowicie poza viewport — przewin w dol */
                 if (elRect.top < containerRect.top + headerH + MARGIN) {
                     /* Element za wysoko / zakryty headerm — przewin w dol */
@@ -276,6 +290,19 @@ function _excelFocusNavEl(el, rowEls, dir) {
                     /* Element za nisko — przewin w gore (w gore kontenera) */
                     let diffUp = elRect.bottom - containerRect.bottom + MARGIN;
                     container.scrollTop += diffUp;
+                }
+                /* Poziom: uwzglednij sticky-left kolumny (zajmuja poczatek scrollporta) */
+                let stickyW = _excelGetStickyColumnsWidth();
+                if (stickyW > 0) {
+                    if (elRect.left < containerRect.left + stickyW + MARGIN) {
+                        /* Element za sticky kolumnami — przesun w prawo (zmniejsz scrollLeft) */
+                        let diffLeft = containerRect.left + stickyW + MARGIN - elRect.left;
+                        container.scrollLeft -= diffLeft;
+                    } else if (elRect.right > containerRect.right) {
+                        /* Element poza prawa krawedzia — przesun w lewo (zwieksz scrollLeft) */
+                        let diffRight = elRect.right - containerRect.right + MARGIN;
+                        container.scrollLeft += diffRight;
+                    }
                 }
             }
             if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
