@@ -21,12 +21,12 @@
 
 | Test                                        | Wynik |
 | ------------------------------------------- | ----- |
-| `npm run typecheck`                         | ☐     |
-| `npm run lint`                              | ☐     |
-| `npm test`                                  | ☐     |
-| `npm run validate`                          | ☐     |
-| Aplikacja działa na `http://localhost:3000` | ☐     |
-| `/health` zwraca 200                        | ☐     |
+| `npm run typecheck`                         | [x]   |
+| `npm run lint`                              | [x]   |
+| `npm test`                                  | [x]   |
+| `npm run validate`                          | [x]   |
+| Aplikacja działa na `http://localhost:3000` | [x]   |
+| `/health` zwraca 200                        | [x]   |
 
 ---
 
