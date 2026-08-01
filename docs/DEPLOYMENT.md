@@ -2,7 +2,7 @@
 
 **Wersja:** 1.9.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
-**Ostatnia aktualizacja:** 2026-07-22
+**Ostatnia aktualizacja:** 2026-08-01
 
 ---
 
@@ -256,7 +256,72 @@ npm run backup:install-cron
 
 ---
 
-## 7. Obsługa błędów — Sentry
+## 7. Weryfikacja po wdrożeniu (checklist)
+
+Skonsolidowana checklista do wykonania ręcznie po wdrożeniu produkcyjnym przez
+reverse proxy z HTTPS. Szczegóły konfiguracji proxy znajdują się w sekcji 4
+powyżej — poniższa lista jest samowystarczalna dla wykonawcy, a wyniki odhacza
+się również w `docs/baseline-https.md` oraz `docs/plans/https-migration-plan.md`.
+
+### 7.1 Deploy reverse proxy (HTTPS)
+
+- [ ] DNS domeny propagowany — `dig`/`nslookup` zwraca adres IP serwera
+- [ ] Porty 80 i 443 otwarte w firewallu
+- [ ] Port aplikacji (domyślnie 3000) NIE jest wystawiony na świat — Node słucha na `127.0.0.1`
+
+**Caddy:**
+
+- [ ] `caddy validate` — konfiguracja `Caddyfile` poprawna
+- [ ] `caddy run --config Caddyfile` — uruchomiony, certyfikat Let's Encrypt wydany
+
+**Nginx:**
+
+- [ ] Konfiguracja serwera wg sekcji 4 (proxy_pass na `127.0.0.1:3000`)
+- [ ] `sudo certbot --nginx -d twoja-domena.pl` — certyfikat wydany
+
+### 7.2 Konfiguracja `.env`
+
+- [ ] `COOKIE_SECURE=true` ustawione
+- [ ] `HOST` nie jest ustawione na `0.0.0.0` (w produkcji domyślnie `127.0.0.1`)
+- [ ] `TRUST_PROXY=1` (2 tylko przy łańcuchu Cloudflare → Nginx → App)
+
+### 7.3 Kolejność startu
+
+- [ ] Reverse proxy (Caddy/Nginx) uruchomione PRZED aplikacją Node
+- [ ] `https://domena.pl/health` zwraca `200 OK`
+
+### 7.4 Weryfikacja E2E w przeglądarce (przez HTTPS, DevTools)
+
+- [ ] `window.isSecureContext === true` — w konsoli DevTools
+- [ ] Brak mixed content — zakładki Console/Network/Security/Issues czyste
+- [ ] `http://domena.pl` przekierowuje na HTTPS (301/308)
+- [ ] Nagłówek HSTS obecny: `max-age=...`
+- [ ] Po zalogowaniu ciastko sesji ma flagę `Secure` i `SameSite=Lax`
+- [ ] Logowanie działa przez HTTPS
+- [ ] `/api/*` działa przez HTTPS
+- [ ] Iframe (rury, studnie) działają
+- [ ] Clipboard copy/paste działa
+- [ ] Excel copy/paste zakresu działa
+- [ ] Drukowanie oferty działa
+- [ ] `window.open` (print) działa
+- [ ] Generowanie/pobieranie PDF/DOCX działa
+- [ ] Upload XLSX (import) działa
+- [ ] Wylogowanie działa — `clearCookie` z flagą `Secure` usuwa ciastko sesji
+
+### 7.5 Macierz przeglądarek
+
+- [ ] Przetestowano i odhaczono macierz w `docs/baseline-https.md` §4
+      (Chrome, Edge, Firefox, Safari, Brave) — funkcje: logowanie, iframe,
+      clipboard, Excel, drukowanie, `window.open`, PDF/DOCX, upload, storage
+
+### 7.6 Zamknięcie wdrożenia
+
+- [ ] Odhaczono checkboxy w `docs/baseline-https.md` §3 (Testy po migracji) i §4 (Macierz przeglądarek)
+- [ ] Odhaczono kryteria manualne w `docs/plans/https-migration-plan.md` §10 (Kryteria zakończenia)
+
+---
+
+## 8. Obsługa błędów — Sentry
 
 Aby włączyć Sentry:
 
@@ -277,7 +342,7 @@ Sentry będzie rejestrować:
 
 ---
 
-## 8. Przenoszenie bazy na inne urządzenie
+## 9. Przenoszenie bazy na inne urządzenie
 
 Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest prostą operacją kopiowania.
 
