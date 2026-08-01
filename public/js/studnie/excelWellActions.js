@@ -13,7 +13,7 @@ function excelSaveAll() {
     if (typeof refreshAll === 'function') refreshAll();
     showToast('Zapisano zmiany w tabeli', 'success');
     _excelDirty = false;
-    closeExcelTableModal();
+    _excelCloseOverlay();
 }
 
 /* ===== PARAM. BUTTON — popup parametrów studni w Excelu — kafelki ===== */

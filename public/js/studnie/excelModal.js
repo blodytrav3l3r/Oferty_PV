@@ -278,7 +278,24 @@ function openExcelTableModal() {
 }
 
 /* ===== CLOSE ===== */
+let _excelClosing = false;
+
+/* Fizyczne zamknięcie overlayu — wydzielone, by excelSaveAll mógł je wywołać bez rekurencji */
+function _excelCloseOverlay() {
+    _excelStopPolling();
+    _excelUnregisterExcelListeners();
+    _excelLastDataCol = -1;
+    const overlay = document.getElementById('excel-table-overlay');
+    if (overlay) {
+        overlay.remove();
+    }
+    _excelDirty = false;
+    _excelClosing = false;
+}
+
 async function closeExcelTableModal() {
+    if (_excelClosing) return;
+    _excelClosing = true;
     if (_excelDirty && typeof appConfirm === 'function') {
         const shouldSave = await appConfirm(
             'Są niezapisane zmiany. Czy zapisać przed zamknięciem?',
@@ -294,14 +311,7 @@ async function closeExcelTableModal() {
             return;
         }
     }
-    _excelStopPolling();
-    _excelUnregisterExcelListeners();
-    _excelLastDataCol = -1;
-    const overlay = document.getElementById('excel-table-overlay');
-    if (overlay) {
-        overlay.remove();
-    }
-    _excelDirty = false;
+    _excelCloseOverlay();
 }
 
 /* ===== WYBÓR WIERSZA ===== */
