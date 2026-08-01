@@ -114,19 +114,19 @@
 
 **Problem**: Czyszczenie oparte o indeks z listy inputów w wierszu zamiast o indeks komórki TD — przy różnej liczbie edytowalnych elementów w komórkach czyściło sąsiednie pole.
 **Objaw**: Delete/Ctrl+X na jednej komórce czyści wartość w innej (sąsiedniej).
-**Fix** (working tree, po `9cc5956`): Indeksować komórki przez TD (`tr.children[indexOf(td)]`), czyścić przez `_excelSetCellValue(target, '')` i zapisywać `wIdx` z `data-widx`.
+**Fix** (`cbd2f02`): Indeksować komórki przez TD (`tr.children[indexOf(td)]`), czyścić przez `_excelSetCellValue(target, '')` i zapisywać `wIdx` z `data-widx`.
 
 ## 19. Nawigacja wchodzi w ukryte wiersze (Excel)
 
 **Problem**: Filtr wyszukiwarki ukrywa wiersze przez `display:none`, ale nawigacja strzałkami (góra/dół) trafiała również w ukryte wiersze.
 **Objaw**: Strzałki przenoszą focus do wierszy niewidocznych po przefiltrowaniu listy studni.
-**Fix** (working tree, po `9cc5956`): Filtrować wiersze docelowe przez `r.style.display !== 'none'` (także w `_excelHandleEmptyRowArrow`); nawigacja pionowa przekazuje `_excelFocusNavEl` listę elementów wiersza docelowego (`_excelGetNavElements`).
+**Fix** (`cbd2f02`): Filtrować wiersze docelowe przez `r.style.display !== 'none'` (także w `_excelHandleEmptyRowArrow`); nawigacja pionowa przekazuje `_excelFocusNavEl` listę elementów wiersza docelowego (`_excelGetNavElements`). Ta sama zasada w copy/paste (`_excelGetVisibleRows` w `excelCopyPaste.js`) — kopiowanie/wklejanie pomija wiersze ukryte filtrem.
 
 ## 20. Duplikacja kręgów krag/krag_ot (Excel)
 
 **Problem**: W bloku konwersji `excelOnCompChange` sumowano `totalQty = totalExistingQty + newQty` zamiast zastąpienia; filtr usuwał tylko wpisany typ, zostawiając bratni typ (krag/krag_ot) o tym samym dn+height.
 **Objaw**: Wpisanie w Excelu kręgu z otworem (`krag_ot`) w studni bez otworu dodaje DWA kręgi zamiast zamiany na zwykły krąg (`krag`) — analogicznie dla zwykłego kręgu.
-**Fix** (working tree, `excelChangeHandlers.js`): Usuwać wszystkie `krag` i `krag_ot` o danym dn+height (przez `filterDn`) i wstawiać jeden element `targetType` z ilością = wpisana (`newQty`), bez sumowania. Ustalenie `targetType`: `krag_ot` gdy studnia ma przejścia, inaczej `krag` (zasada z `diagramOtRings.js`).
+**Fix** (`74e9f49`, doprecyzowane): Filtr w `excelOnCompChange` usuwa **wszystkie** `krag` i `krag_ot` o danym dn+height (wpisany typ **i** bratni typ) — bez sumowania `totalExistingQty + newQty`. Następnie wstawiany jest element wpisanego typu z ilością = wpisana (`newQty`), a finalny typ (krag vs krag_ot) ustala `enforceOtRings()` (`diagramOtRings.js`) wg geometrii otworów. Test regresyjny: `tests/studnie/excelDrilledRings.test.ts`.
 
 > **Uwaga (katalog/seed):** `krag_ot` nie występuje w katalogu dla H250 (`data/seed_studnie.json`) — konwersja krag↔krag_ot dla wysokości 250 nie ma produktu docelowego w seedzie (dostępne wysokości krag_ot: 500/750/1000).
 
@@ -134,7 +134,7 @@
 
 **Problem**: `_excelMarkManual(well)` (pełny `_excelRenderTable`) był wywoływany PRZED blokiem konwersji krag↔krag_ot w `excelOnCompChange` (`public/js/studnie/excelChangeHandlers.js`); po konwersji następowały tylko `_excelRefreshAutoCells` (nie obejmuje inputów kręgów) i `_excelDebouncedRefresh` (aktualizuje diagram, nie tabelę).
 **Objaw**: Wpisanie ilości kręgu w Excelu poprawnie konwertuje typ w configu (np. `krag_ot` → `krag`), ale komórki w tabeli nadal pokazują starą wartość/typ — odświeżają się dopiero po wpisaniu innego kręgu.
-**Fix** (working tree, `excelChangeHandlers.js`): przeniesiono `_excelMarkManual(well)` PO blok konwersji — pełny re-render (`_excelRenderTable`) pokazuje finalny config (`krag=0`, `krag_ot=N`) natychmiast.
+**Fix** (`74e9f49`, `excelChangeHandlers.js`): przeniesiono `_excelMarkManual(well)` PO blok konwersji — pełny re-render (`_excelRenderTable`) pokazuje finalny config (`krag=0`, `krag_ot=N`) natychmiast.
 
 **Odróżnienie od #20:** #20 = duplikacja kręgów (sumowanie `totalExistingQty + newQty` zostawiało bratni typ w tabeli — błąd logiki konwersji); #21 = brak odświeżenia widoku PO poprawnej konwersji (błąd kolejności re-renderu).
 
@@ -142,4 +142,10 @@
 
 **Problem**: `_excelDirty` był ustawiany wyłącznie przez `_excelDebouncedRefresh()` (excelPolling.js:84). `excelOnRzednaChange` (excelChangeHandlers.js) nie wołał żadnego refreshu, a `_excelAutoSelectForWell` / `_excelRunAutoSelectForWell` (excelAutoSelect.js) nadpisywały `well.config` bez flagi — przycisk Run (▶) i edycja rzędnych były całkowicie poza mechanizmem dirty.
 **Objaw**: `closeExcelTableModal()` nie pokazywało popupu "Niezapisane zmiany" po edycji rzędnej lub auto-doborze z Excela.
-**Fix**: `_excelMarkDirty()` w warstwie modala (caller): `excelOnRzednaChange` (po `well.rzednaDna = rzDna;`) oraz na początku `try` w `_excelAutoSelectForWell` i `_excelRunAutoSelectForWell` (przed `await autoSelectComponents`). Nigdy w solverze `autoSelectComponents` (współdzielony z głównym panelem). Dodatkowo dirty w `_excelToggleWellAutoMode`, `_excelBulkSetMode`, `_excelUndo`/`_excelRedo`. Paste/Delete na rzędnych pokryte przez `_excelSetCellValue` (dispatch `change` → inline `onchange`). Przy okazji usunięto martwe `_excelMarkClean`, `_excelGetWellConfigHash`, `_excelGetColumnStructureHash` (excelHelpers.js) i `_excelEnsureRowCount` (excelTabs.js).
+**Fix** (`5db8dd3`): `_excelMarkDirty()` w warstwie modala (caller): `excelOnRzednaChange` (po `well.rzednaDna = rzDna;`) oraz na początku `try` w `_excelAutoSelectForWell` i `_excelRunAutoSelectForWell` (przed `await autoSelectComponents`). Nigdy w solverze `autoSelectComponents` (współdzielony z głównym panelem). Dodatkowo dirty w `_excelToggleWellAutoMode`, `_excelBulkSetMode`, `_excelUndo`/`_excelRedo`. Paste/Delete na rzędnych pokryte przez `_excelSetCellValue` (dispatch `change` → inline `onchange`). Przy okazji usunięto martwe `_excelMarkClean`, `_excelGetWellConfigHash`, `_excelGetColumnStructureHash` (excelHelpers.js) i `_excelEnsureRowCount` (excelTabs.js).
+
+## 23. Podwójne zamknięcie modala Excel (race condition przy dirty) i rekurencja Zapisz→Zamknij
+
+**Problem**: `closeExcelTableModal()` był asynchroniczny (dialog `appConfirm`). Podwójne Esc / podwójne kliknięcie ✕ przy `_excelDirty=true` otwierało dwa nakładające się dialogy — możliwy podwójny `excelSaveAll()` lub wyciek nierozwiązanego Promise. Dodatkowo `excelSaveAll()` sam wołał `closeExcelTableModal()`, tworząc kruche sprzężenie "Zapisz i zamknij" → `excelSaveAll` → rekurencyjne zamknięcie.
+**Objaw**: Migający przycisk "Zapisywanie...", podwójny `refreshAll`, podwójny toast przy próbie zapisu i zamknięcia z popupu "Niezapisane zmiany".
+**Fix**: Wydzielono `_excelCloseOverlay()` (fizyczne zamknięcie overlayu) i dodano guard `_excelClosing` w `closeExcelTableModal()` (`excelModal.js`). `excelSaveAll()` woła `_excelCloseOverlay()` zamiast `closeExcelTableModal()` (`excelWellActions.js`) — koniec rekurencji.

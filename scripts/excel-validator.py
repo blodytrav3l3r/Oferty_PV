@@ -55,12 +55,6 @@ def check_overlay_clean(path):
 check('getHasReduction z 2500', JS, r'2500.*includes\(String')
 check('hasReduction render z 2500 i styczne', JS, r"hasReduction = \['1200',\s*'1500',\s*'2000',\s*'2500',\s*'styczne'\]")
 check('stycznaNadbudowa1200 w _excelGetComponentsForDn', JS, r'stycznaNadbudowa1200 \? 1200 : 1000')
-check('redukcjaTargetDN w hash config', JS, r'redukcjaTargetDN')
-check('spocznikH w hash config', JS, r"spocznikH \|\| ''")
-check('wkladkaOsadnikPreco w hash config', JS, r"wkladkaOsadnikPreco \|\| ''")
-check('stycznaNadbudowa1200 w hash config', JS, r"stycznaNadbudowa1200 \? '1' : '0'")
-check_in_block('Hash struktury', JS, 'function _excelGetColumnStructureHash',
-               ['kineta', 'wkladkaZwienczenie', 'wkladkaOsadnikPreco', 'stycznaNadbudowa1200'])
 check('_excelColWidths zdefiniowane', JS, r'_excelColWidths\s*=\s*\{\}')
 check('Zapis szerokosci w resize', JS, r'_excelColWidths\[_excelActiveTab')
 check('Aplikacja szerokosci po renderze', JS, r'_excelColWidths.*minWidth')
