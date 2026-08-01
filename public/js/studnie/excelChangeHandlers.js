@@ -203,10 +203,18 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         }
     }
 
+    const isRingType = componentType === 'krag' || componentType === 'krag_ot';
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return true;
         if (productId) return item.productId !== productId;
+        if (isRingType) {
+            /* #20: usuń WSZYSTKIE krag i krag_ot o danym dn+height (bez sumowania),
+               enforceOtRings ustali targetType wg otworów. */
+            if (p.componentType !== 'krag' && p.componentType !== 'krag_ot') return true;
+            if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
+            return false;
+        }
         if (p.componentType !== componentType) return true;
         if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
         return false;

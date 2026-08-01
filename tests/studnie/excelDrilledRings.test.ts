@@ -80,27 +80,16 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         expect(regItem.quantity).toBe(2);
     });
 
-    test('should preserve 2 regular krag items when setting krag quantity to 2 while 1 krag_ot is present', () => {
-        const well = {
-            dn: '1000',
-            rzednaWlazu: 2.5,
-            rzednaDna: 0.0,
-            przejscia: [{ productId: 'prz-160', rzednaWlaczenia: 0.3 }],
-            // Initially 1 regular ring + 1 drilled ring
-            config: [
-                { productId: 'krag-1000-500', quantity: 1 },
-                { productId: 'krag_ot-1000-500', quantity: 1 }
-            ]
-        };
-
+    function runChangeContext(well: any) {
         const wells = [well];
-        const context = {
+        const context: any = {
             window: {},
             document: { querySelector: () => null },
             wells,
             currentWellIndex: 0,
             studnieProducts,
             logger: (global as any).logger,
+            getCurrentWell: () => well,
             _excelSaveUndoSnapshot: () => {},
             _excelMarkAsManual: () => {},
             _excelClearResCache: () => {},
@@ -119,7 +108,6 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             enforceOtRings: null,
             excelOnCompChange: null
         };
-
         const codeOt = fs.readFileSync(
             path.join(__dirname, '../../public/js/studnie/diagramOtRings.js'),
             'utf8'
@@ -128,22 +116,70 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             path.join(__dirname, '../../public/js/studnie/excelChangeHandlers.js'),
             'utf8'
         );
-
         vm.createContext(context);
         vm.runInContext(codeOt, context);
         vm.runInContext(codeChange, context);
+        return context;
+    }
+
+    test('should replace sibling krag/krag_ot when setting krag quantity to 2 (hole splits drilled ring back)', () => {
+        const well = {
+            dn: '1000',
+            rzednaWlazu: 2.5,
+            rzednaDna: 0.0,
+            przejscia: [{ productId: 'prz-160', rzednaWlaczenia: 0.3 }],
+            // Initially 1 regular ring + 1 drilled ring
+            config: [
+                { productId: 'krag-1000-500', quantity: 1 },
+                { productId: 'krag_ot-1000-500', quantity: 1 }
+            ]
+        };
+
+        const context = runChangeContext(well);
 
         // User enters '2' in the regular 'krag' column
         context.excelOnCompChange(0, 'krag', 500, '2');
 
-        const regItem = well.config.find((x: any) => x.productId === 'krag-1000-500');
-        const otItem = well.config.find((x: any) => x.productId === 'krag_ot-1000-500');
+        // No duplication: total rings of this dn+height == 2, one of them drilled (hole at 300mm)
+        const sumQty = (pid: string) =>
+            well.config
+                .filter((x: any) => x.productId === pid)
+                .reduce((acc: number, x: any) => acc + (x.quantity || 0), 0);
 
-        // User typed '2' for regular rings, so there are 2 regular rings + 1 drilled ring = 3 total!
-        expect(regItem).toBeDefined();
-        expect(regItem.quantity).toBe(2);
+        const total = sumQty('krag-1000-500') + sumQty('krag_ot-1000-500');
+        expect(total).toBe(2);
 
-        expect(otItem).toBeDefined();
-        expect(otItem.quantity).toBe(1);
+        expect(sumQty('krag_ot-1000-500')).toBe(1);
+
+        expect(sumQty('krag-1000-500')).toBe(1);
+    });
+
+    test('should not sum when typing krag_ot in a well without holes (holeless: 2 not 3)', () => {
+        const well = {
+            dn: '1000',
+            rzednaWlazu: 2.5,
+            rzednaDna: 0.0,
+            przejscia: [], // no holes
+            // Initially 1 regular ring
+            config: [{ productId: 'krag-1000-500', quantity: 1 }]
+        };
+
+        const context = runChangeContext(well);
+
+        // User enters '2' in the drilled 'krag_ot' column
+        context.excelOnCompChange(0, 'krag_ot', 500, '2');
+
+        // Filter removes BOTH krag and krag_ot of this dn+height, then enforceOtRings
+        // degrades the drilled ring back to regular (no hole) => total must be 2, not 3.
+        const sumQty = (pid: string) =>
+            well.config
+                .filter((x: any) => x.productId === pid)
+                .reduce((acc: number, x: any) => acc + (x.quantity || 0), 0);
+
+        const total = sumQty('krag-1000-500') + sumQty('krag_ot-1000-500');
+        expect(total).toBe(2);
+
+        expect(sumQty('krag_ot-1000-500')).toBe(0);
+        expect(sumQty('krag-1000-500')).toBe(2);
     });
 });
