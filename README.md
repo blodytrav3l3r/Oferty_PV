@@ -9,7 +9,7 @@
 
 ## Opis
 
-WITROS Oferty PV to aplikacja webowa do generowania ofert handlowych dla branży fotowoltaicznej, rur i studni. Umożliwia zarządzanie produktami, klientami, tworzenie ofert (zarówno dla rur jak i studni), generowanie dokumentów PDF/DOCX, monitorowanie zamówień oraz inteligentne rankowanie rozwiązań (ML).
+WITROS Oferty PV to aplikacja webowa do generowania ofert handlowych dla branży kanalizacyjnej — studni oraz rur betonowych do kanalizacji i odwodnienia dróg. Umożliwia zarządzanie produktami, klientami, tworzenie ofert (zarówno dla rur jak i studni), generowanie dokumentów PDF/DOCX, monitorowanie zamówień oraz inteligentne rankowanie rozwiązań (ML).
 
 Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js i bazą SQLite. Przeznaczona do wdrożenia na lokalnym serwerze, VPS lub przez Docker.
 

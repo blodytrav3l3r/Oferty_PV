@@ -8,7 +8,7 @@ const options: swaggerJsdoc.Options = {
             title: 'WITROS Oferty PV — API',
             version: getVersion().version,
             description:
-                'Generator ofert handlowych dla fotowoltaiki. Zarządzanie produktami (rury, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',
+                'Generator ofert handlowych dla branży kanalizacyjnej. Zarządzanie produktami (rury betonowe, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',
             contact: {
                 name: 'WITROS'
             }
