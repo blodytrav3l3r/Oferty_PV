@@ -6,7 +6,8 @@ function restoreWizardState(wizardState, preventStepOverride) {
     if (wizardGlobalParams) {
         document.querySelectorAll('#wizard-step-2 .param-group').forEach(function (group) {
             var paramName = group.getAttribute('data-param');
-            if (!paramName || !Object.prototype.hasOwnProperty.call(wizardGlobalParams, paramName)) return;
+            if (!paramName || !Object.prototype.hasOwnProperty.call(wizardGlobalParams, paramName))
+                return;
             var val = wizardGlobalParams[paramName];
             if (!val) return;
             group.querySelectorAll('.param-tile').forEach(function (b) {

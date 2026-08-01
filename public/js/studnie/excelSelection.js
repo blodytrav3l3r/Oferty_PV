@@ -114,7 +114,11 @@ function _excelUpdateBulkButtons() {
     let btnManual = document.getElementById('excel-bulk-manual');
     let count = 0;
     for (let k in _excelRowSelectStates) {
-        if (Object.prototype.hasOwnProperty.call(_excelRowSelectStates, k) && _excelRowSelectStates[k]) count++;
+        if (
+            Object.prototype.hasOwnProperty.call(_excelRowSelectStates, k) &&
+            _excelRowSelectStates[k]
+        )
+            count++;
     }
     if (btnAuto) btnAuto.textContent = 'Auto';
     if (btnManual) btnManual.textContent = 'Manual';
