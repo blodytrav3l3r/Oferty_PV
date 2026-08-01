@@ -18,53 +18,6 @@ function excelCellBlur(el) {
     _excelUserEditing = false; /* wznawia polling */
 }
 
-/* ===== TAB KEY NAVIGATION ===== */
-function _excelHandleTab(e) {
-    let target = e.target;
-    if (!target) return;
-    // Normalizuj target — SELECT → wrapper, wrapper OK, INPUT OK
-    if (target.tagName === 'SELECT') {
-        let w = target.closest('.excel-sel-wrap');
-        if (w) target = w;
-    } else if (
-        target.tagName !== 'INPUT' &&
-        !(target.classList && target.classList.contains('excel-sel-wrap'))
-    ) {
-        return;
-    }
-
-    const container = document.getElementById('excel-table-container');
-    if (!container || !container.contains(target)) return;
-
-    const tr = target.closest('tr');
-    if (!tr) return;
-    const navEls = _excelGetNavElements(tr);
-    let idx = navEls.indexOf(target);
-    if (idx === -1) return;
-
-    // Szukaj następnego/poprzedniego nawigacyjnego elementu w wierszu lub następnych wierszach
-    e.preventDefault();
-    let allRows = Array.from(container.querySelectorAll('tbody tr[data-widx]'));
-    let rowIdx = allRows.indexOf(tr);
-    let next = null;
-    if (!e.shiftKey) {
-        next = navEls[idx + 1];
-        if (!next && allRows[rowIdx + 1]) {
-            let nextRowEls = _excelGetNavElements(allRows[rowIdx + 1]);
-            next = nextRowEls[0];
-        }
-    } else {
-        next = navEls[idx - 1];
-        if (!next && allRows[rowIdx - 1]) {
-            let prevRowEls = _excelGetNavElements(allRows[rowIdx - 1]);
-            next = prevRowEls[prevRowEls.length - 1];
-        }
-    }
-    if (next) {
-        _excelFocusNavEl(next, navEls, e.shiftKey ? 'left' : 'right');
-    }
-}
-
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
     /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie */
@@ -72,46 +25,7 @@ function _excelHandleArrow(e) {
     let emptyRzw = document.getElementById('excel-empty-rzw');
     let emptyRzd = document.getElementById('excel-empty-rzd');
     if (emptyInput && (e.target === emptyInput || e.target === emptyRzw || e.target === emptyRzd)) {
-        e.preventDefault();
-        if (e.key === 'ArrowDown') {
-            return; /* nic poniżej */
-        }
-        if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            let drUp = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-            let lastRowUp = drUp[drUp.length - 1];
-            if (lastRowUp) {
-                let lastElsUp = _excelGetNavElements(lastRowUp);
-                /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
-                let targetEl = null;
-                let savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
-                if (savedCol >= 0 && savedCol < lastRowUp.children.length) {
-                    let tdAtCol = lastRowUp.children[savedCol];
-                    if (tdAtCol) {
-                        let inpAtCol = tdAtCol.querySelector('input, select, .excel-sel-wrap');
-                        if (inpAtCol) targetEl = inpAtCol;
-                    }
-                }
-                if (!targetEl && lastElsUp.length > 0) {
-                    /* Fallback: ostatni focusowalny element w ostatnim wierszu */
-                    targetEl = lastElsUp[lastElsUp.length - 1];
-                }
-                if (targetEl) _excelFocusNavEl(targetEl, lastElsUp, 'up');
-            }
-            return;
-        }
-        if (e.key === 'ArrowRight' || e.key === 'Tab') {
-            e.preventDefault();
-            if (e.target === emptyInput && emptyRzw) emptyRzw.focus();
-            else if (e.target === emptyRzw && emptyRzd) emptyRzd.focus();
-            return;
-        }
-        if (e.key === 'ArrowLeft' || (e.key === 'Tab' && e.shiftKey)) {
-            e.preventDefault();
-            if (e.target === emptyRzd && emptyRzw) emptyRzw.focus();
-            else if (e.target === emptyRzw && emptyInput) emptyInput.focus();
-            return;
-        }
+        _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd);
         return;
     }
 
@@ -128,9 +42,11 @@ function _excelHandleArrow(e) {
     const tr = target.closest('tr');
     if (!tr) return;
 
-    // Znajdź wiersze data (pomiń empty-row)
+    // Znajdź wiersze data (pomiń empty-row i ukryte przez filtr wyszukiwania)
     const allRows = Array.from(container.querySelectorAll('tbody tr'));
-    const dataRows = allRows.filter((r) => r.hasAttribute('data-widx'));
+    const dataRows = allRows.filter(
+        (r) => r.hasAttribute('data-widx') && r.style.display !== 'none'
+    );
     const currentRowIdx = dataRows.indexOf(tr);
     if (currentRowIdx === -1) return;
 
@@ -147,6 +63,8 @@ function _excelHandleArrow(e) {
     }
 
     let next = null;
+    /* Elementy wiersza docelowego — przy nawigacji pionowej to nie jest bieżący wiersz */
+    let targetEls = rowEls;
 
     if (e.key === 'ArrowRight') {
         next = rowEls[colIdx + 1] || null;
@@ -179,6 +97,7 @@ function _excelHandleArrow(e) {
         let nextEls = _excelGetNavElements(nextRow);
         next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
         next = _excelSkipDisabled(next, nextEls, colIdx, 1);
+        targetEls = nextEls;
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
@@ -193,11 +112,51 @@ function _excelHandleArrow(e) {
             const prevEls = _excelGetNavElements(prevRow);
             next = prevEls[Math.min(colIdx, prevEls.length - 1)] || null;
             next = _excelSkipDisabled(next, prevEls, colIdx, -1);
+            targetEls = prevEls;
         }
     }
 
     if (next) {
-        _excelFocusNavEl(next, rowEls, e.key.replace('Arrow', '').toLowerCase());
+        _excelFocusNavEl(next, targetEls, e.key.replace('Arrow', '').toLowerCase());
+    }
+}
+
+/** Obsługa strzałek gdy focus jest w pustym wierszu (max 3 poziomy zagnieżdżenia) */
+function _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd) {
+    e.preventDefault();
+    if (e.key === 'ArrowDown') return; /* nic poniżej */
+
+    if (e.key === 'ArrowUp') {
+        let drUp = Array.from(
+            document.querySelectorAll('#excel-table-container tbody tr[data-widx]')
+        ).filter(function (r) {
+            return r.style.display !== 'none';
+        });
+        let lastRowUp = drUp[drUp.length - 1];
+        if (!lastRowUp) return;
+        let lastElsUp = _excelGetNavElements(lastRowUp);
+        /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
+        let savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
+        let tdAtCol = savedCol >= 0 ? lastRowUp.children[savedCol] : null;
+        let targetEl = tdAtCol ? tdAtCol.querySelector('input, select, .excel-sel-wrap') : null;
+        if (!targetEl && lastElsUp.length > 0) {
+            /* Fallback: ostatni focusowalny element w ostatnim wierszu */
+            targetEl = lastElsUp[lastElsUp.length - 1];
+        }
+        if (targetEl) _excelFocusNavEl(targetEl, lastElsUp, 'up');
+        return;
+    }
+
+    if (e.key === 'ArrowRight') {
+        if (e.target === emptyInput && emptyRzw) emptyRzw.focus();
+        else if (e.target === emptyRzw && emptyRzd) emptyRzd.focus();
+        return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+        if (e.target === emptyRzd && emptyRzw) emptyRzw.focus();
+        else if (e.target === emptyRzw && emptyInput) emptyInput.focus();
+        return;
     }
 }
 
@@ -354,21 +313,14 @@ function _excelHandleKeydown(e) {
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function (cell) {
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
-            let inputs = row.querySelectorAll('input, select');
-            let target = inputs[cell.colIdx];
+            /* Rozwiąż przez indeks TD — colIdx to indeks td, nie index z rowEls */
+            let td = row.children[cell.colIdx];
+            let target = td ? td.querySelector('input, select') : null;
             if (!target) return;
-            if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = '';
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = '';
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            _excelSetCellValue(target, '');
         });
         showToast('Wyczyszczono ' + _excelSelectedCells.length + ' komórek', 'info');
         return;
@@ -379,11 +331,14 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         let allRows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelDeselectAllCells();
-        allRows.forEach(function (row, rIdx) {
+        allRows.forEach(function (row) {
+            /* wIdx z atrybutu — DOM order może się różnić (filtrowanie, wstawianie) */
+            let wIdx = parseInt(row.getAttribute('data-widx'), 10);
+            if (isNaN(wIdx)) return;
             let tds = row.querySelectorAll('td');
             tds.forEach(function (td, cIdx) {
                 if (cIdx < 2) return; /* pomiń Lp + Nr Studni */
-                _excelSelectedCells.push({ wIdx: rIdx, colIdx: cIdx });
+                _excelSelectedCells.push({ wIdx: wIdx, colIdx: cIdx });
                 td.classList.add('cell-selected');
             });
         });
@@ -400,21 +355,13 @@ function _excelHandleKeydown(e) {
         _excelHandleCopy(/** @type {any} */ (e));
         /* Potem wyczyść */
         _excelSaveUndoSnapshot();
-        let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function (cell) {
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
-            let inputs = row.querySelectorAll('input, select');
-            let target = inputs[cell.colIdx];
+            let td = row.children[cell.colIdx];
+            let target = td ? td.querySelector('input, select') : null;
             if (!target) return;
-            if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = '';
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = '';
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            _excelSetCellValue(target, '');
         });
         showToast('Wycinanie: ' + _excelSelectedCells.length + ' komórek', 'info');
         return;
@@ -425,7 +372,6 @@ function _excelHandleKeydown(e) {
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function (cell) {
             if (cell.wIdx === 0) return;
             let srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
@@ -436,18 +382,10 @@ function _excelHandleKeydown(e) {
             let target = tdDst ? tdDst.querySelector('input, select') : null;
             let src = tdSrc ? tdSrc.querySelector('input, select') : null;
             if (!target || !src) return;
-            if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (
-                    src
-                ).value;
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (
-                    src
-                ).value;
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            _excelSetCellValue(
+                target,
+                /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
+            );
         });
         showToast('Skopiowano w dół', 'info');
         return;
@@ -458,7 +396,6 @@ function _excelHandleKeydown(e) {
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         _excelSelectedCells.forEach(function (cell) {
             if (cell.colIdx <= 1) return;
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
@@ -468,18 +405,10 @@ function _excelHandleKeydown(e) {
             let target = tdR ? tdR.querySelector('input, select') : null;
             let src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
             if (!target || !src) return;
-            if (target.tagName === 'SELECT') {
-                /** @type {HTMLSelectElement} */ (target).value = /** @type {HTMLSelectElement} */ (
-                    src
-                ).value;
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            } else if (target.tagName === 'INPUT') {
-                /** @type {HTMLInputElement} */ (target).value = /** @type {HTMLInputElement} */ (
-                    src
-                ).value;
-                target.dispatchEvent(new Event('input', { bubbles: true }));
-                target.dispatchEvent(new Event('change', { bubbles: true }));
-            }
+            _excelSetCellValue(
+                target,
+                /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
+            );
         });
         showToast('Skopiowano w prawo', 'info');
         return;

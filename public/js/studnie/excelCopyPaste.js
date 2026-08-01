@@ -35,12 +35,17 @@ function _excelHandleCopy(e) {
             if (cell.colIdx < minC) minC = cell.colIdx;
             if (cell.colIdx > maxC) maxC = cell.colIdx;
         });
+        /* Mapa data-widx -> wiersz (wIdx z selekcji = indeks globalny, nie pozycja DOM) */
+        let rowMap = {};
+        for (let i = 0; i < rows.length; i++) {
+            rowMap[rows[i].getAttribute('data-widx')] = rows[i];
+        }
         for (let r = minR; r <= maxR; r++) {
             let line = [];
             for (let c = minC; c <= maxC; c++) {
                 let val = '';
                 if (cellMap[r] && cellMap[r][c]) {
-                    let row = rows[r];
+                    let row = rowMap[r];
                     if (row) {
                         let td = row.children[c];
                         let target = td ? td.querySelector('input, select') : null;
@@ -136,8 +141,13 @@ function _excelHandlePaste(e) {
             widxArr.length > 0 && cellRows[_baseWIdx]
                 ? cellRows[_baseWIdx]
                 : [_excelGetPasteColIdx(rows[0])];
-        /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby */
-        let availableRows = rows.length - _baseWIdx;
+        /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby.
+           Licz tylko wiersze o wIdx >= start (wIdx globalny, a rows.length to liczba wierszy zakładki) */
+        let availableRows = 0;
+        for (let i = 0; i < rows.length; i++) {
+            let rWIdx = parseInt(rows[i].getAttribute('data-widx'), 10);
+            if (!isNaN(rWIdx) && rWIdx >= _baseWIdx) availableRows++;
+        }
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
             if (lines.length === 0) {

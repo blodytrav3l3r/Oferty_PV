@@ -135,8 +135,8 @@ function _excelGetNavElements(row) {
             els.push(wrap);
             continue;
         }
-        // INPUT
-        let inp = cells[i].querySelector('input');
+        // INPUT — pomiń checkbox wyboru wiersza (excel-row-select); checkbox "Psia buda" bez klasy zostaje
+        let inp = cells[i].querySelector('input:not(.excel-row-select)');
         if (inp) {
             els.push(inp);
             continue;
