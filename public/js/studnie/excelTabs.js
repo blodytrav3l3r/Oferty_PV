@@ -36,6 +36,7 @@ function _excelUpdateWellCount() {
 
 function excelSwitchTab(tab) {
     _excelActiveTab = tab;
+    _excelLastDataCol = -1; /* reset zapamiętanej kolumny przy zmianie zakładki */
     _excelRenderTabs();
     _excelRenderTable(tab);
     _excelUpdateHeaderProdCodes();
@@ -55,47 +56,6 @@ function excelSwitchTab(tab) {
             }, 150);
         }
     }
-}
-
-/**
- * @param {number} neededTotal
- * @param {NodeListOf<Element>} currentRows
- * @returns {NodeListOf<Element>}
- */
-function _excelEnsureRowCount(neededTotal, currentRows) {
-    let deficit = neededTotal - currentRows.length;
-    if (deficit <= 0) return currentRows;
-    let dn = _excelActiveTab === 'styczne' ? 'styczna' : parseInt(_excelActiveTab, 10);
-    _excelSaveUndoSnapshot();
-    for (let i = 0; i < deficit; i++) {
-        let well =
-            typeof createNewWell === 'function'
-                ? createNewWell(null, /** @type {any} */ (dn))
-                : {
-                      id: 'well_' + Date.now() + '_' + i,
-                      name:
-                          (dn === 'styczna' ? 'Studnia Styczna' : 'Studnia DN' + dn) +
-                          ' (#' +
-                          (wells.length + 1) +
-                          ')',
-                      dn: dn,
-                      config: [],
-                      przejscia: [],
-                      rzednaWlazu: null,
-                      rzednaDna: null,
-                      kineta: 'brak',
-                      psiaBuda: false,
-                      redukcjaDN1000: false,
-                      redukcjaMinH: 2500
-                  };
-        wells.push(well);
-        _excelAutoSetWlaz(well);
-    }
-    _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-    _excelRenderTabs();
-    _excelRenderTable(_excelActiveTab);
-    _excelUpdateWellCount();
-    return document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
 }
 
 /* ===== EMPTY ROW HANDLER — tworzenie studni z wiersza ===== */

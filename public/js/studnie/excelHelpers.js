@@ -1,61 +1,10 @@
 // @ts-check
 /* ===== EXCEL HELPERS — Funkcje pomocnicze dla tabeli konfiguracyjnej studni ===== */
 
-function _excelGetWellConfigHash(well) {
-    if (!well) return '';
-    let wellParams = [
-        well.nadbudowa || '',
-        well.wkladkaZwienczenie || '',
-        well.klasaNosnosci_korpus || '',
-        well.stopnie || '',
-        well.spocznik || '',
-        well.magazyn || '',
-        well.dennicaMaterial || '',
-        well.uszczelka || '',
-        well.kineta || '',
-        well.klasaBetonu || '',
-        well.redukcjaDN1000 ? '1' : '0',
-        well.redukcjaMinH || '',
-        well.redukcjaTargetDN || '',
-        well.prealLuna ? '1' : '0',
-        well.precoFullHeight || '',
-        well.spocznikH || '',
-        well.wkladkaOsadnikPreco || '',
-        well.stycznaNadbudowa1200 ? '1' : '0',
-        well.malowanieW || '',
-        well.malowanieZ || '',
-        well.powlokaNameW || '',
-        well.powlokaNameZ || ''
-    ].join('|');
-    let parts = (well.config || [])
-        .map(function (item) {
-            return (item.productId || '') + ':' + (item.quantity || 0);
-        })
-        .join(',');
-    return wellParams + '|' + parts;
-}
-
 /* Helper: sprawdź czy studnia ma obsługę redukcji (DN1200-2500) */
 function getHasReduction(well, dn) {
     if (!well) return !!dn && ['1200', '1500', '2000', '2500'].includes(String(dn));
     return ['1200', '1500', '2000', '2500'].includes(String(well.dn));
-}
-
-/* Sprawdza czy zmieniła się struktura kolumn (wymaga pełnego re-renderu, nie tylko updatu kodów) */
-function _excelGetColumnStructureHash(well) {
-    if (!well) return '';
-    const hasRed = getHasReduction(well);
-    return [
-        well.nadbudowa || '',
-        well.stopnie || '',
-        well.spocznik || '',
-        well.kineta || '',
-        well.wkladkaZwienczenie || '',
-        well.wkladkaOsadnikPreco || '',
-        well.stycznaNadbudowa1200 ? '1' : '0',
-        hasRed ? '1' : '0',
-        well.dennicaMaterial || ''
-    ].join('|');
 }
 
 function _excelWellMatchesTab(well, tab) {
@@ -670,9 +619,6 @@ function excelToggleFullscreen() {
 /* ===== DIRTY FLAG ===== */
 function _excelMarkDirty() {
     _excelDirty = true;
-}
-function _excelMarkClean() {
-    _excelDirty = false;
 }
 
 /* ===== SEARCH / FILTER ===== */

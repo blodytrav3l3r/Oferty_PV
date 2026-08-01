@@ -278,12 +278,25 @@ function openExcelTableModal() {
 }
 
 /* ===== CLOSE ===== */
-function closeExcelTableModal() {
+async function closeExcelTableModal() {
     if (_excelDirty && typeof appConfirm === 'function') {
-        if (!appConfirm('Są niezapisane zmiany. Czy na pewno zamknąć?')) return;
+        const shouldSave = await appConfirm(
+            'Są niezapisane zmiany. Czy zapisać przed zamknięciem?',
+            {
+                title: 'Niezapisane zmiany',
+                okText: '<i data-lucide="save"></i> Zapisz i zamknij',
+                cancelText: 'Zamknij bez zapisu',
+                type: 'warning'
+            }
+        );
+        if (shouldSave) {
+            excelSaveAll();
+            return;
+        }
     }
     _excelStopPolling();
     _excelUnregisterExcelListeners();
+    _excelLastDataCol = -1;
     const overlay = document.getElementById('excel-table-overlay');
     if (overlay) {
         overlay.remove();
