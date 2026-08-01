@@ -137,6 +137,7 @@ function _excelBulkSetMode(enabled) {
         showToast((enabled ? 'Auto' : 'Manual') + ' dla ' + targets.length + ' studni', 'success');
     }
     _excelSaveUndoSnapshot();
+    _excelMarkDirty();
     targets.forEach(function (i) {
         if (wells[i]) {
             wells[i].autoSelect = enabled;
@@ -177,6 +178,7 @@ function _excelUndo() {
     _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
     let snap = _excelUndoStack.pop();
     wells.splice(0, wells.length, ...snap);
+    _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     showToast('Cofnięto', 'info');
 }
@@ -186,6 +188,7 @@ function _excelRedo() {
     _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
     let snap = _excelRedoStack.pop();
     wells.splice(0, wells.length, ...snap);
+    _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     showToast('Przywrócono', 'info');
 }

@@ -10,6 +10,7 @@ async function _excelAutoSelectForWell(wIdx) {
     let savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     try {
         currentWellIndex = wIdx;
+        _excelMarkDirty();
         await autoSelectComponents(true);
         _excelClearResCache(well);
         _excelRenderTable(_excelActiveTab);
@@ -23,6 +24,7 @@ async function _excelAutoSelectForWell(wIdx) {
 function _excelToggleWellAutoMode(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
     _excelSaveUndoSnapshot();
+    _excelMarkDirty();
     wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
     /* Synchronizuj configSource z glownym panelem */
     wells[wIdx].configSource = wells[wIdx].autoSelect !== false ? 'AUTO' : 'MANUAL';
@@ -81,6 +83,7 @@ async function _excelRunAutoSelectForWell(wIdx) {
     if (runBtn) runBtn.textContent = '...';
     try {
         currentWellIndex = wIdx;
+        _excelMarkDirty();
         /* WZORZEC z wellActions.js:1390 - czyscimy config i przeładowujemy solver */
         well.configSource = 'AUTO';
         well.config = [];
