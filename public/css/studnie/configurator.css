@@ -1,5 +1,5 @@
 /* studnie/configurator.css — Configuration panel */
-/* ===== CONFIGURATOR LAYOUT ===== */
+/* ===== CONFIGURATOR LAYOUT =====
    PEŁNA WYSOKOŚĆ LAYOUTU — FLEX CHAIN (scoped: studnie.html)
    body → .main → .section.active → .well-app-layout → kolumny
    Wysokość wynika z drzewa DOM, NIE z calc(100vh - N).

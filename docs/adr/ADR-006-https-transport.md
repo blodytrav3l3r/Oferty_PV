@@ -80,10 +80,33 @@ Node.js/Express. Node.js pozostaje serwerem HTTP i w produkcji binduje się domy
 - `server.ts` — bind do `127.0.0.1` w produkcji (jawnie ustawiony `HOST` ma priorytet).
 - `src/middleware/security.ts` — `httpsRedirect()` uwzględnia listę w `x-forwarded-proto`
   (wiele proxy), HSTS pozostaje aktywny w produkcji.
-- `src/app.ts` — `trust proxy = 2`, CSP `connectSrc` bez twardych `http://` (dev-only `ws://`).
+- `src/app.ts` — `trust proxy` sterowany `TRUST_PROXY` (domyślnie 1), CSP `connectSrc`
+  bez twardych `http://` (dev-only `ws://`).
 - `src/routes/auth.ts` — `Secure` flag na ciastku sesji sterowana `COOKIE_SECURE` lub `NODE_ENV`.
 - `Caddyfile` / `Caddyfile.dev` — konfiguracja reverse proxy (produkcja / lokalny dev).
 - `.env.example`, `Dockerfile`, `start.bat`, `prod.bat` — dokumentacja i ustawienia HTTPS.
+
+## Znane długi
+
+### Dual auth (localStorage token + httpOnly cookie)
+
+Aplikacja utrzymuje podwójny mechanizm autoryzacji: token sesji w `localStorage`
+(`public/js/shared/auth.js`, wysyłany jako `X-Auth-Token`) oraz cookie `httpOnly`
+(`src/routes/auth.ts`). Jest to **świadomy dług** — decyzja P2, nie blokuje wdrożenia HTTPS:
+
+- **Dlaczego nie naprawione teraz:** wymaga dotknięcia ~30 plików frontendowych
+  (`authHeaders()` w `StorageService.js`, `featureFlag.js` i in.) z ryzykiem regresji
+  logowania; środowisko produkcyjne (HTTPS) i tak już korzysta z cookie `Secure`.
+- **Ryzyko:** token w `localStorage` jest podatny na kradzież przez XSS; w połączeniu
+  z CSP `'unsafe-inline'` (dług pokryty planem `csp-nonce-implementation-2026-07-22.md`)
+  stanowi realny wektor. Cookie `httpOnly` jest w praktyce redundantne dla autoryzacji,
+  bo `requireAuth` czyta header jako pierwszy.
+- **Plan migracji (3 kroki, każdy w osobnym release):**
+    1. `authHeaders()` przestaje dodawać `X-Auth-Token` (cookie wystarcza).
+    2. `requireAuth` odwraca priorytet: cookie → header (backward compat 1 cykl).
+    3. Usunięcie zapisu tokenu do `localStorage` i fallbacku z headera
+       (`src/routes/auth.ts:158`). CSRF jest już zablokowany przez `SameSite=lax`
+        - preflight (brak CORS na API).
 
 ## Rozwiązywanie problemów
 

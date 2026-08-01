@@ -4,7 +4,7 @@
 
 - Pracujesz na `main` — to jedyna gałąź.
 - Commit: `git add -A` → `git commit -m "typ(scope): opis"` → `git push`
-- Przed commitem: `npm run typecheck` i `npm run lint`
+- Przed commitem: `npm run validate` (typecheck backend+frontend, lint backend+frontend, testy)
 - Po modyfikacji kodu frontendowego: `npm run format`
 - **Uwaga:** Husky pre-commit hook może blokować commity (znany błąd z `well.magazyn`). Obejście:
     ```bash
@@ -66,7 +66,7 @@ Przy pierwszym uruchomieniu na nowym komputerze (bez istniejącej bazy danych):
     ```bash
     .\start.bat
     ```
-4. Zaloguj się na http://localhost:3000 (admin / hasło z `.env`).
+4. Zaloguj się na http://localhost:3000 (admin / hasło z `.env`). Do pracy zdalnej użyj HTTPS (reverse proxy) — patrz [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 > **UWAGA:** Nie uruchamiaj `start.bat` przed `install.bat` na świeżej instalacji.
 > `start.bat` automatycznie seeduje pustą bazę przez `ensure-db.bat`, ale `install.bat`
@@ -125,7 +125,7 @@ npm run lint:fix         # ESLint z auto-naprawą
 
 ## Kod frontendowy
 
-- Kod w `public/js/` nie jest sprawdzany przez TypeScript ani ESLint
+- Kod w `public/js/` nie jest kompilowany przez TypeScript, ale jest sprawdzany przez `npm run typecheck:frontend` oraz `npm run lint:frontend` (osobny zestaw reguł ESLint dla przeglądarki)
 - Zawsze weryfikuj składnię: `node -c public/js/<plik>.js`
 - Nowe globalne helpery rejestruj przez `window.mojHelper = mojHelper;`
 - Używaj `escapeHtml(str)` przy interpolacji do `innerHTML` (zapobieganie XSS)

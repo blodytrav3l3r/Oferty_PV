@@ -1,7 +1,10 @@
 # Plan Migracji HTTPS — WITROS Oferty PV
 
 **Data:** 2026-07-24
-**Status:** Zaakceptowany
+**Status:** Zakończony (kod)
+
+> **Zakończenie kodu:** 2026-08-01, commit `dc78506` (`feat(security): migracja HTTPS przez reverse proxy + secure cookie`).
+> `npm run validate` przechodzi w 100% (1305 testów). Do potwierdzenia pozostają wyłącznie kryteria manualne (sekcja 10).
 
 ---
 
@@ -397,22 +400,26 @@ C9 (http→https links) ────────────────┘
 ## 10. Kryteria zakończenia
 
 ```
-[✓] Produkcja działa przez HTTPS
-[✓] HTTP przekierowuje na HTTPS (301)
-[✓] window.isSecureContext === true
-[✓] Brak Mixed Content w DevTools
-[✓] Brak konieczności Chrome Flags
-[✓] Clipboard: kopiowanie i wklejanie działa
-[✓] Drukowanie oferty działa
-[✓] window.open() działa
-[✓] Iframe (rury, studnie) działają
-[✓] API (/api/*) działa
-[✓] Cookies / sesja działają
-[✓] localStorage działa
-[✓] Download/Upload działa
-[✓] Chrome, Edge, Firefox, Safari, Brave — wszystkie działają
+[ ] Produkcja działa przez HTTPS — wymaga deployu (manualne)
+[ ] HTTP przekierowuje na HTTPS (301) — wymaga deployu reverse proxy (manualne)
+[ ] window.isSecureContext === true — weryfikacja w przeglądarce (manualne)
+[ ] Brak Mixed Content w DevTools — weryfikacja w przeglądarce (manualne)
+[ ] Brak konieczności Chrome Flags — weryfikacja w przeglądarce (manualne)
+[ ] Clipboard: kopiowanie i wklejanie działa — weryfikacja w przeglądarce (manualne)
+[ ] Drukowanie oferty działa — weryfikacja w przeglądarce (manualne)
+[ ] window.open() działa — weryfikacja w przeglądarce (manualne)
+[ ] Iframe (rury, studnie) działają — weryfikacja w przeglądarce (manualne)
+[✓] API (/api/*) działa — pokryte testami integracyjnymi (supertest)
+[✓] Cookies / sesja działają — pokryte testami auth (flaga Secure, clearCookie)
+[ ] localStorage działa — weryfikacja w przeglądarce (manualne)
+[ ] Download/Upload działa — weryfikacja w przeglądarce (manualne)
+[ ] Chrome, Edge, Firefox, Safari, Brave — wszystkie działają — matryca przeglądarek (manualne)
 [✓] npm run typecheck — przechodzi
-[✓] npm test — przechodzi
+[✓] npm test — przechodzi (1305 testów)
 [✓] npm run validate — przechodzi
-[✓] Brak regresji funkcjonalnej
+[✓] Brak regresji funkcjonalnej — potwierdzone zielonymi testami (1305)
 ```
+
+> **Legenda:** `[✓]` — kryterium potwierdzone kodem i/lub `npm run validate` (typecheck, testy, validate).
+> `[ ]` — kryterium manualne: wymaga wdrożenia produkcyjnego (deploy reverse proxy) i/lub weryfikacji
+> w przeglądarce na środowisku HTTPS (`isSecureContext`, mixed content, matryca przeglądarek z sekcji 8).

@@ -26,12 +26,12 @@
 
 ### 1.3 Konfiguracja pliku `.env`
 
-| Pole                        | Opis                                                                                                                                                                                                                                                |
-| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Co zrobić**               | Edytować `.env` i ustawić `DEFAULT_ADMIN_PASSWORD`. Jeśli `.env` nie istnieje — `install.bat` automatycznie skopiuje `.env.example` → `.env`.                                                                                                       |
-| **Dlaczego ręczne**         | Hasło administratora to sekret — nie może być przechowywany w repozytorium ani generowany automatycznie (ryzyko bezpieczeństwa). Również inne ustawienia (Sentry DSN, port itp.) są opcjonalne, ale ich wartości muszą pochodzić od administratora. |
-| **Konsekwencja pominięcia** | Aplikacja uruchomi się, ale nie utworzy konta administratora (brak możliwości logowania). `install.bat` tworzy `.env` z `.env.example` automatycznie, ale bez edycji hasło pozostanie domyślne.                                                     |
-| **Weryfikacja**             | Plik `.env` istnieje i zawiera `DEFAULT_ADMIN_PASSWORD=...` (min. 6 znaków)                                                                                                                                                                         |
+| Pole                        | Opis                                                                                                                                                                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Co zrobić**               | Edytować `.env` i ustawić `DEFAULT_ADMIN_PASSWORD`. Jeśli `.env` nie istnieje — `install.bat` automatycznie skopiuje `.env.example` → `.env`. Przy serwowaniu przez HTTPS ustaw dodatkowo `COOKIE_SECURE=true` (wymusza flagę `Secure` na ciastku sesji). |
+| **Dlaczego ręczne**         | Hasło administratora to sekret — nie może być przechowywany w repozytorium ani generowany automatycznie (ryzyko bezpieczeństwa). Również inne ustawienia (Sentry DSN, port itp.) są opcjonalne, ale ich wartości muszą pochodzić od administratora.       |
+| **Konsekwencja pominięcia** | Aplikacja uruchomi się, ale nie utworzy konta administratora (brak możliwości logowania). `install.bat` tworzy `.env` z `.env.example` automatycznie, ale bez edycji hasło pozostanie domyślne.                                                           |
+| **Weryfikacja**             | Plik `.env` istnieje i zawiera `DEFAULT_ADMIN_PASSWORD=...` (min. 6 znaków). Przy HTTPS: `COOKIE_SECURE=true` jest ustawione (inaczej ciastko sesji nie ma flagi `Secure`).                                                                               |
 
 ### 1.4 Ustawienie DEFAULT_ADMIN_PASSWORD
 
@@ -82,6 +82,15 @@
 | **Co zrobić**               | Zainstalować Docker Desktop, uruchomić: `docker compose up --build -d`.                             |
 | **Dlaczego ręczne**         | Docker to zależność systemowa (jak Node.js). Wymaga instalacji, konfiguracji i akceptacji licencji. |
 | **Konsekwencja pominięcia** | Aplikacja uruchamiana natywnie (`.bat` / `.sh`).                                                    |
+
+### 1.10 (Opcjonalne) Konfiguracja reverse proxy dla HTTPS
+
+| Pole                        | Opis                                                                                                                                                                                                                                                                            |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Co zrobić**               | Wdrożyć reverse proxy (Caddy/Nginx) z certyfikatem TLS (np. Let's Encrypt) i skierować ruch na wewnętrzny port Node (`127.0.0.1:3000`). Gotowe pliki konfiguracyjne: `Caddyfile` (produkcja) i `Caddyfile.dev` (lokalny HTTPS z mkcert). W `.env` ustawić `COOKIE_SECURE=true`. |
+| **Dlaczego ręczne**         | Wymaga domeny publicznej, konfiguracji DNS i certyfikatu TLS — to decyzje administratora środowiska, których nie można zautomatyzować w skrypcie instalacyjnym.                                                                                                                 |
+| **Konsekwencja pominięcia** | Aplikacja działa przez zwykły HTTP — funkcje wymagające secure context (clipboard, `window.open`, eksporty) mogą nie działać w pełni, a ciastko sesji nie ma flagi `Secure`.                                                                                                    |
+| **Weryfikacja**             | Otwórz `https://TWOJA_DOMENA` — certyfikat ważny, brak błędów mixed content w DevTools, `window.isSecureContext === true`. Backend wewnętrzny: `curl http://127.0.0.1:3000/health` → `200 OK`.                                                                                  |
 
 ---
 

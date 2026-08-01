@@ -25,6 +25,7 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 - [Struktura projektu](#struktura-projektu)
 - [Dokumentacja](#dokumentacja)
 - [Contributing](#contributing)
+- [Code of Conduct](#code-of-conduct)
 - [Security](#security)
 - [Licencja](#licencja)
 
@@ -267,16 +268,26 @@ Plik `data/app_database.sqlite` przechowuje:
 
 ## Konfiguracja (.env)
 
-| Zmienna                  | Opis                                               | Domyślnie                          | Wymagane |
-| ------------------------ | -------------------------------------------------- | ---------------------------------- | -------- |
-| `PORT`                   | Port serwera                                       | `3000`                             | Nie      |
-| `HOST`                   | Adres nasłuchiwania (`0.0.0.0` = z sieci)          | `0.0.0.0`                          | Nie      |
-| `NODE_ENV`               | Środowisko: `development` / `production`           | `production`                       | Nie      |
-| `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu) | —                                  | **Tak**  |
-| `DATABASE_URL`           | Ścieżka do bazy SQLite                             | `file:../data/app_database.sqlite` | Nie      |
-| `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)   | —                                  | Nie      |
+| Zmienna                  | Opis                                                                                                              | Domyślnie                            | Wymagane |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------- |
+| `PORT`                   | Port serwera                                                                                                      | `3000`                               | Nie      |
+| `HOST`                   | Adres nasłuchiwania. W produkcji domyślnie `127.0.0.1` (tylko loopback); `0.0.0.0` tylko w Dockerze/osobnym proxy | `127.0.0.1` (prod) / `0.0.0.0` (dev) | Nie      |
+| `NODE_ENV`               | Środowisko: `development` / `production`                                                                          | `production`                         | Nie      |
+| `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu)                                                                | —                                    | **Tak**  |
+| `DATABASE_URL`           | Ścieżka do bazy SQLite                                                                                            | `file:../data/app_database.sqlite`   | Nie      |
+| `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                    | Nie      |
+| `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`     | Nie      |
 
 > **Ważne:** `DEFAULT_ADMIN_PASSWORD` jest wymagane tylko przy **pierwszym** uruchomieniu. Po utworzeniu konta admina zmiana hasła w `.env` nie wpływa na istniejące konto.
+
+### HTTPS / Reverse proxy (produkcja)
+
+W środowisku produkcyjnym aplikacja jest serwowana przez **HTTPS** za pośrednictwem reverse proxy (Caddy/Nginx z certyfikatem Let's Encrypt). Node/Express pozostaje wewnętrznym serwerem HTTP nasłuchującym na `127.0.0.1:3000` (w trybie `production` bind do `127.0.0.1` jest domyślny — port nie jest dostępny z sieci).
+
+- Przykładowa konfiguracja Caddy: [`Caddyfile`](Caddyfile) (produkcja) i [`Caddyfile.dev`](Caddyfile.dev) (lokalny HTTPS z mkcert).
+- Przy serwowaniu przez HTTPS ustaw `COOKIE_SECURE=true` w `.env` — wymusi flagę `Secure` na ciastku sesji (w `production` jest to domyślne).
+- W trybie `production` aktywne są automatycznie: HSTS, przekierowanie HTTP→HTTPS (na podstawie `X-Forwarded-Proto`), nagłówki bezpieczeństwa Helmet.
+- Szczegóły: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) oraz [docs/SECURITY.md](docs/SECURITY.md).
 
 ---
 
@@ -297,7 +308,7 @@ npm run build
 npm start
 ```
 
-Aplikacja: `http://localhost:3000`
+Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja))
 
 ---
 
@@ -465,7 +476,9 @@ Oferty_PV/
 ├── .nvmrc                     # Wersja Node.js dla nvm
 ├── .versionrc.json            # Konfiguracja standard-version
 ├── Dockerfile                 # Obraz Docker
-└── docker-compose.yml         # Orkiestracja Docker
+├── docker-compose.yml         # Orkiestracja Docker
+├── Caddyfile                  # Reverse proxy (HTTPS, produkcja)
+└── Caddyfile.dev              # Reverse proxy (lokalny HTTPS, mkcert)
 ```
 
 ---
@@ -502,6 +515,12 @@ Zgłoszenia błędów i propozycje funkcji przyjmujemy przez [GitHub Issues](htt
 
 ---
 
+## Code of Conduct
+
+Oczekujemy przestrzegania naszego [Kodeksu postępowania](.github/CODE_OF_CONDUCT.md) (Contributor Covenant 2.1) we wszystkich przestrzeniach projektu — repozytorium, issue trackerze, PR-ach i dyskusjach.
+
+---
+
 ## Security
 
 Bezpieczeństwo projektu jest priorytetem. Jeśli znajdziesz podatność:
@@ -510,7 +529,7 @@ Bezpieczeństwo projektu jest priorytetem. Jeśli znajdziesz podatność:
 2. Wyślij szczegóły na **blodytrav3l3r@gmail.com** (odpowiedź w ciągu 48h)
 3. Możesz też otworzyć [GitHub Advisory](https://github.com/blodytrav3l3r/Oferty_PV/security/advisories)
 
-Pełna polityka bezpieczeństwa: [docs/SECURITY.md](docs/SECURITY.md)
+Pełna polityka bezpieczeństwa: [docs/SECURITY.md](docs/SECURITY.md) oraz [.github/SECURITY.md](.github/SECURITY.md) (proces zgłaszania podatności).
 
 ---
 

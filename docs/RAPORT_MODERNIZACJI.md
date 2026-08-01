@@ -97,3 +97,22 @@ RAPORT_MODERNIZACJI.md
 4. **Migracja frontendu** — rozważyć React/Vue dla lepszej utrzymywalności (opcjonalnie, duży koszt)
 5. **Monitoring** — skonfigurować Sentry z alertami na produkcji
 6. **Backup automatyczny** — wdrożyć cron/Windows Task Scheduler dla backupu bazy
+
+---
+
+## 7. Aktualizacja: migracja HTTPS (2026-08-01)
+
+Po publikacji raportu zrealizowano migrację na transport **HTTPS** (commit `dc78506`):
+
+| Obszar              | Zmiana                                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Reverse proxy       | Dodano `Caddyfile` (produkcja) i `Caddyfile.dev` (lokalny HTTPS z mkcert); TLS terminuje proxy, Node zostaje na HTTP.      |
+| Secure cookie       | Nowa zmienna `COOKIE_SECURE=true` w `.env` wymusza flagę `Secure` na ciastku sesji (domyślnie przy `NODE_ENV=production`). |
+| Bind w produkcji    | Serwer binduje się do `127.0.0.1` w trybie production (niedostępny z sieci bezpośrednio).                                  |
+| `x-forwarded-proto` | Poprawne parsowanie listy przy wielu proxy (np. Cloudflare → Nginx).                                                       |
+| Linki w dokumentach | `http://` → `https://` w template'ach PDF/DOCX (`pv-prefabet.com.pl`).                                                     |
+| Testy regresyjne    | Nowe testy HTTPS w `tests/security.test.ts` (HSTS, `httpsRedirect`, `x-forwarded-proto`).                                  |
+| Walidacja           | `npm run validate` przechodzi w 100% — **1305 testów** (raport bazował na 1153 testach).                                   |
+
+Pełny plan migracji: `docs/plans/https-migration-plan.md` (status: **Zakończony (kod)**).
+Kryteria zakończenia dotyczące deployu i weryfikacji w przeglądarkach (`isSecureContext`, mixed content) pozostają do potwierdzenia manualnego na środowisku produkcyjnym.

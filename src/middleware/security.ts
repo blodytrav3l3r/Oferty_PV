@@ -27,7 +27,8 @@ export function securityHeaders(_req: Request, res: Response, next: NextFunction
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
     if (process.env.NODE_ENV === 'production') {
-        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+        // Wartość MUSI się zgadzać z Caddyfile (header HSTS) — jedno źródło prawdy.
+        res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
     }
 
     next();

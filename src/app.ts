@@ -39,8 +39,10 @@ if (process.env.SENTRY_DSN) {
     logger.info('Server', 'Sentry — aktywny');
 }
 
-// Trust proxy 2 — obsługuje konfiguracje z wieloma proxy (np. Cloudflare → Nginx → App)
-app.set('trust proxy', 2);
+// Liczba hopów reverse proxy przed aplikacją — Express ufa ich nagłówkom.
+// TRUST_PROXY=1 dla Caddy/Nginx; =2 tylko dla łańcucha np. Cloudflare → Nginx → App.
+// Domyślnie 1 — nie ufaj niepotrzebnym hopom.
+app.set('trust proxy', parseInt(process.env.TRUST_PROXY || '1', 10));
 
 /* ===== LOGOWANIE ŻĄDAŃ ===== */
 app.use(requestLogger);

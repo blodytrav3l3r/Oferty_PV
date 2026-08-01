@@ -16,7 +16,6 @@ interface ApiRequestOptions {
     body?: unknown;
     headers?: Record<string, string>;
     timeout?: number;
-    silent?: boolean;
 }
 
 interface ApiClient {

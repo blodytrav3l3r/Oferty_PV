@@ -52,6 +52,14 @@ npm start
 | `install.bat` | Instalacja + przygotowanie bazy  |
 | `build.bat`   | Budowa projektu                  |
 
+## HTTPS / Reverse proxy
+
+Produkcja jest serwowana przez **HTTPS** za reverse proxy (Caddy/Nginx). Node/Express
+nasłuchuje wewnętrznie na `127.0.0.1:3000` — TLS terminuje proxy. Konfiguracje:
+`Caddyfile` (produkcja) i `Caddyfile.dev` (lokalny HTTPS z mkcert). Przy HTTPS ustaw
+`COOKIE_SECURE=true` w `.env` (wymusza flagę `Secure` na ciastku sesji; domyślnie
+aktywne przy `NODE_ENV=production`). Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Skrypty NPM
 
 | Komenda                  | Opis                                |
