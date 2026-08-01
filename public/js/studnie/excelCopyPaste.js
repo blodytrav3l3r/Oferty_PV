@@ -13,6 +13,16 @@ function _excelGetPasteColIdx(row) {
     }
     return 2; /* fallback: pierwsza kolumna po Lp+NrStudni */
 }
+/* Widoczne wiersze (pomija display:none z filtra wyszukiwarki), posortowane po data-widx */
+function _excelGetVisibleRows() {
+    let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+    /** @type {HTMLElement[]} */
+    let out = [];
+    for (let i = 0; i < rows.length; i++) {
+        if (rows[i].style.display !== 'none') out.push(/** @type {HTMLElement} */ (rows[i]));
+    }
+    return out;
+}
 function _excelHandleCopy(e) {
     /* Tylko gdy Excel otwarty */
     if (!document.getElementById('excel-table-overlay')) return;
@@ -68,7 +78,7 @@ function _excelHandleCopy(e) {
         let cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
-        rows.forEach(function (row) {
+        _excelGetVisibleRows().forEach(function (row) {
             let line = [];
             cols.forEach(function (colIdx) {
                 let td = row.children[colIdx];
@@ -142,12 +152,12 @@ function _excelHandlePaste(e) {
                 ? cellRows[_baseWIdx]
                 : [_excelGetPasteColIdx(rows[0])];
         /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby.
-           Licz tylko wiersze o wIdx >= start (wIdx globalny, a rows.length to liczba wierszy zakładki) */
-        let availableRows = 0;
-        for (let i = 0; i < rows.length; i++) {
-            let rWIdx = parseInt(rows[i].getAttribute('data-widx'), 10);
-            if (!isNaN(rWIdx) && rWIdx >= _baseWIdx) availableRows++;
-        }
+           Licz tylko WIDOCZNE wiersze o wIdx >= start (pomija wiersze ukryte filtrem) */
+        let visibleRows = _excelGetVisibleRows().filter(function (r) {
+            let rWIdx = parseInt(r.getAttribute('data-widx'), 10);
+            return !isNaN(rWIdx) && rWIdx >= _baseWIdx;
+        });
+        let availableRows = visibleRows.length;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
             if (lines.length === 0) {
@@ -159,21 +169,22 @@ function _excelHandlePaste(e) {
         let _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
         /* Użyj batch/sync paste — obsłuż duże zestawy */
         let _pasteFn = lines.length > 100 ? _excelPasteBatch : _excelPasteSync;
-        _pasteFn(lines, _baseWIdx, _firstCol, null);
+        _pasteFn(lines, visibleRows, _firstCol, null);
     } else if (_excelSelectedCols.length > 0) {
         let cols = [..._excelSelectedCols].sort(function (a, b) {
             return a - b;
         });
-        /* Przy column-selection NIE dodawaj nowych wierszy — obetnij */
-        if (lines.length > rows.length) {
-            lines = lines.slice(0, rows.length);
+        /* Przy column-selection NIE dodawaj nowych wierszy — obetnij (tylko widoczne) */
+        let visibleRows = _excelGetVisibleRows();
+        if (lines.length > visibleRows.length) {
+            lines = lines.slice(0, visibleRows.length);
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         lines.forEach(function (line, i) {
             let parts = line.split('	');
             cols.forEach(function (colIdx, ci) {
                 if (ci >= parts.length) return;
-                let tdInner = rows[i] ? rows[i].children[colIdx] : null;
+                let tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
                 let target = tdInner ? tdInner.querySelector('input, select') : null;
                 if (!target) return;
                 _excelSetCellValue(target, parts[ci].trim());
@@ -204,8 +215,13 @@ function _excelHandlePaste(e) {
         let colIdx = _excelGetPasteColIdx(
             document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
         );
-        /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy) */
-        let availableRows = rows.length - startWIdx;
+        /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy).
+           Pomija wiersze ukryte filtrem wyszukiwarki. */
+        let visibleRows = _excelGetVisibleRows().filter(function (r) {
+            let rWIdx = parseInt(r.getAttribute('data-widx'), 10);
+            return !isNaN(rWIdx) && rWIdx >= startWIdx;
+        });
+        let availableRows = visibleRows.length;
         if (lines.length > availableRows) {
             lines = lines.slice(0, availableRows);
             if (lines.length === 0) {
@@ -215,7 +231,7 @@ function _excelHandlePaste(e) {
             showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
         }
         /* Użyj batch/sync paste — obsłuż duże zestawy */
-        (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, startWIdx, colIdx, null);
+        (lines.length > 100 ? _excelPasteBatch : _excelPasteSync)(lines, visibleRows, colIdx, null);
     }
     showToast('Wklejono', 'info');
 }
@@ -251,13 +267,17 @@ function _excelHidePasteProgress() {
 /**
  * Wkleja dane wsadowo w chunkach przez requestAnimationFrame.
  * Nie blokuje UI.
+ * @param {string[]} lines
+ * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
+ * @param {number} startColIdx
+ * @param {Function|null} doneCallback
  */
-function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
+function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
     let CHUNK = 50;
     let idx = 0;
     let total = lines.length;
     if (total < 100) {
-        _excelPasteSync(lines, startWIdx, startColIdx);
+        _excelPasteSync(lines, visibleRows, startColIdx);
         if (doneCallback) doneCallback();
         return;
     }
@@ -273,11 +293,10 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
             }
             let line = lines[idx];
             let parts = line.split('	');
-            let wIdx = startWIdx + idx;
+            let row = visibleRows[idx];
+            if (!row) continue;
             parts.forEach(function (v, ci) {
                 let colIdx = startColIdx + ci;
-                let row = document.querySelector('tr[data-widx="' + wIdx + '"]');
-                if (!row) return;
                 let tdEl = row.children[colIdx];
                 let target = tdEl ? tdEl.querySelector('input, select') : null;
                 if (target) _excelSetCellValue(target, v.trim());
@@ -294,15 +313,18 @@ function _excelPasteBatch(lines, startWIdx, startColIdx, doneCallback) {
     requestAnimationFrame(tick);
 }
 
-/** Synchroniczne wklejenie (do 99 wierszy) */
-function _excelPasteSync(lines, startWIdx, startColIdx) {
+/** Synchroniczne wklejenie (do 99 wierszy).
+ * @param {string[]} lines
+ * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
+ * @param {number} startColIdx
+ */
+function _excelPasteSync(lines, visibleRows, startColIdx) {
     for (let si = 0; si < lines.length; si++) {
         let parts = lines[si].split('	');
-        let wIdx = startWIdx + si;
+        let row = visibleRows[si];
+        if (!row) continue;
         parts.forEach(function (v, ci) {
             let colIdx = startColIdx + ci;
-            let row = document.querySelector('tr[data-widx="' + wIdx + '"]');
-            if (!row) return;
             let tdEl = row.children[colIdx];
             let target = tdEl ? tdEl.querySelector('input, select') : null;
             if (target) _excelSetCellValue(target, v.trim());
