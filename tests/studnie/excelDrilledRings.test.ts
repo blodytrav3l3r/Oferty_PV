@@ -122,7 +122,7 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         return context;
     }
 
-    test('should replace sibling krag/krag_ot when setting krag quantity to 2 (hole splits drilled ring back)', () => {
+    test('should preserve sibling krag_ot when setting krag quantity (well with hole: 2+1=3)', () => {
         const well = {
             dn: '1000',
             rzednaWlazu: 2.5,
@@ -140,46 +140,42 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         // User enters '2' in the regular 'krag' column
         context.excelOnCompChange(0, 'krag', 500, '2');
 
-        // No duplication: total rings of this dn+height == 2, one of them drilled (hole at 300mm)
+        // Sibling-preserving: only the typed type is replaced (1 krag -> 2 krag),
+        // the drilled ring (1 krag_ot, hole at 300mm) stays untouched.
         const sumQty = (pid: string) =>
             well.config
                 .filter((x: any) => x.productId === pid)
                 .reduce((acc: number, x: any) => acc + (x.quantity || 0), 0);
 
-        const total = sumQty('krag-1000-500') + sumQty('krag_ot-1000-500');
-        expect(total).toBe(2);
-
+        expect(sumQty('krag-1000-500')).toBe(2);
         expect(sumQty('krag_ot-1000-500')).toBe(1);
-
-        expect(sumQty('krag-1000-500')).toBe(1);
     });
 
-    test('should not sum when typing krag_ot in a well without holes (holeless: 2 not 3)', () => {
+    test('should keep existing drilled ring when typing 3 in krag of a well with 3 regular + 1 drilled ring', () => {
         const well = {
             dn: '1000',
             rzednaWlazu: 2.5,
             rzednaDna: 0.0,
-            przejscia: [], // no holes
-            // Initially 1 regular ring
-            config: [{ productId: 'krag-1000-500', quantity: 1 }]
+            przejscia: [{ productId: 'prz-160', rzednaWlaczenia: 0.3 }],
+            // 4 rings total: 3 regular + 1 drilled (hole at 300mm passes through the drilled one)
+            config: [
+                { productId: 'krag-1000-500', quantity: 3 },
+                { productId: 'krag_ot-1000-500', quantity: 1 }
+            ]
         };
 
         const context = runChangeContext(well);
 
-        // User enters '2' in the drilled 'krag_ot' column
-        context.excelOnCompChange(0, 'krag_ot', 500, '2');
+        // User types '3' in the regular 'krag' column — must NOT lose the drilled ring.
+        context.excelOnCompChange(0, 'krag', 500, '3');
 
-        // Filter removes BOTH krag and krag_ot of this dn+height, then enforceOtRings
-        // degrades the drilled ring back to regular (no hole) => total must be 2, not 3.
         const sumQty = (pid: string) =>
             well.config
                 .filter((x: any) => x.productId === pid)
                 .reduce((acc: number, x: any) => acc + (x.quantity || 0), 0);
 
-        const total = sumQty('krag-1000-500') + sumQty('krag_ot-1000-500');
-        expect(total).toBe(2);
-
-        expect(sumQty('krag_ot-1000-500')).toBe(0);
-        expect(sumQty('krag-1000-500')).toBe(2);
+        // Total stays 4: 3 regular + 1 drilled (sibling untouched)
+        expect(sumQty('krag-1000-500')).toBe(3);
+        expect(sumQty('krag_ot-1000-500')).toBe(1);
     });
 });

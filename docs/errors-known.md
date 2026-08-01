@@ -126,7 +126,9 @@
 
 **Problem**: W bloku konwersji `excelOnCompChange` sumowano `totalQty = totalExistingQty + newQty` zamiast zastąpienia; filtr usuwał tylko wpisany typ, zostawiając bratni typ (krag/krag_ot) o tym samym dn+height.
 **Objaw**: Wpisanie w Excelu kręgu z otworem (`krag_ot`) w studni bez otworu dodaje DWA kręgi zamiast zamiany na zwykły krąg (`krag`) — analogicznie dla zwykłego kręgu.
-**Fix** (`74e9f49`, doprecyzowane): Filtr w `excelOnCompChange` usuwa **wszystkie** `krag` i `krag_ot` o danym dn+height (wpisany typ **i** bratni typ) — bez sumowania `totalExistingQty + newQty`. Następnie wstawiany jest element wpisanego typu z ilością = wpisana (`newQty`), a finalny typ (krag vs krag_ot) ustala `enforceOtRings()` (`diagramOtRings.js`) wg geometrii otworów. Test regresyjny: `tests/studnie/excelDrilledRings.test.ts`.
+**Fix** (`74e9f49`, doprecyzowane; przywrócone po regresji z `ee41c0c`): Filtr w `excelOnCompChange` usuwa **tylko wpisany typ** (`krag` LUB `krag_ot`) o danym dn+height — bez sumowania `totalExistingQty + newQty`. Krąg bratni zostaje nietknięty. Następnie wstawiany jest element wpisanego typu z ilością = wpisana (`newQty`), a finalny typ (krag vs krag_ot) ustala `enforceOtRings()` (`diagramOtRings.js`) wg geometrii otworów. Test regresyjny: `tests/studnie/excelDrilledRings.test.ts`.
+
+> **Regresja `ee41c0c`**: eksperyment z usuwaniem OBA typów (`isRingType`) złamał realny przypadek — przy 3 kręgach zwykłych + 1 wierconym wpisanie `3` w kolumnę `krag` kasowało krąg wiercony (wynik 4 zamiast 3+1). Semantyka sibling-preserving jest właściwa: kolumny `krag`/`krag_ot` są niezależne, wpisanie w jedną nie rusza drugiej.
 
 > **Uwaga (katalog/seed):** `krag_ot` nie występuje w katalogu dla H250 (`data/seed_studnie.json`) — konwersja krag↔krag_ot dla wysokości 250 nie ma produktu docelowego w seedzie (dostępne wysokości krag_ot: 500/750/1000).
 
