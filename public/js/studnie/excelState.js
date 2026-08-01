@@ -106,18 +106,6 @@ function _excelSaveColumnVisibility() {
     } catch (e) {}
 }
 
-function _excelToggleColumnVisibility(colId) {
-    _excelDeselectAllCols();
-    const idx = _excelHiddenColumnIds.indexOf(colId);
-    if (idx >= 0) {
-        _excelHiddenColumnIds.splice(idx, 1);
-    } else {
-        _excelHiddenColumnIds.push(colId);
-    }
-    _excelSaveColumnVisibility();
-    _excelRenderTable(_excelActiveTab);
-}
-
 function _excelResetColumnVisibility() {
     _excelDeselectAllCols();
     _excelHiddenColumnIds = [];
@@ -127,13 +115,4 @@ function _excelResetColumnVisibility() {
 
 function _excelIsColumnHidden(colId) {
     return _excelHiddenColumnIds.indexOf(colId) >= 0;
-}
-
-function _excelSetAllColumnsVisible(visible) {
-    _excelDeselectAllCols();
-    if (visible) {
-        _excelHiddenColumnIds = [];
-    }
-    _excelSaveColumnVisibility();
-    _excelRenderTable(_excelActiveTab);
 }

@@ -246,26 +246,6 @@ function _excelClearDragPreview() {
     });
 }
 
-function _excelSelectedCount() {
-    return _excelSelectedCells.length;
-}
-
-/* ===== SELECT ALL ===== */
-function _excelSelectAllCells() {
-    _excelDeselectAllCells();
-    _excelDeselectAllCols();
-    let rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
-    for (let r = 0; r < rows.length; r++) {
-        let tds = rows[r].querySelectorAll('td');
-        for (let c = 0; c < tds.length; c++) {
-            let td = tds[c];
-            if (td.querySelector('input,select')) {
-                _excelSelectCell(r, c, false, false);
-            }
-        }
-    }
-}
-
 function _excelSelectRange(startW, startC, endW, endC, additive) {
     if (!additive) _excelDeselectAllCells();
     let rMin = Math.min(startW, endW);
