@@ -8,7 +8,7 @@ window.renderWellsList = function renderWellsList() {
     if (!container) return;
 
     // Przelicz bezwzględnie wszystkie studnie z tła, aby uzyskać aktualne błędy grubości rur / luzów
-    wells.forEach((w) => recalculateWellErrors(w));
+    refreshAllWellErrors();
 
     // Funkcja szybkoskanująca uchybienia studni (luzy, braki wysokości), aktualizując obiekt przed wyrysowaniem
     const validateAutomatedErrors = (well) => {
@@ -98,7 +98,9 @@ window.renderWellsList = function renderWellsList() {
                       ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
                       : w.configStatus === 'WARNING'
                         ? '<span title="' +
-                          (w.configErrors || []).map((e) => escapeHtml(e)).join('; ') +
+                          (w.configErrors || [])
+                              .map((e) => escapeHtml(e).replace(/"/g, '&quot;'))
+                              .join('; ') +
                           '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
                         : w.configStatus === 'OK'
                           ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'

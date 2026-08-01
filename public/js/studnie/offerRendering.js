@@ -18,6 +18,9 @@ function renderOfferSummary() {
     const container = document.getElementById('offer-summary-body');
     if (!container) return;
 
+    // Świeże błędy konfiguracji wszystkich studni (zapisane oferty bywają nieaktualne)
+    refreshAllWellErrors();
+
     const order = orderEditMode ? getCurrentOfferOrder() : null;
     const orderChanges = orderEditMode && order ? getOrderChanges({ ...order, wells: wells }) : {};
 

@@ -1037,6 +1037,23 @@ tbody tr:hover {
     background: rgba(var(--accent-rgb), 0.1) !important;
 }
 
+/* Studnie z błędami konfiguracji w zakładce Oferta */
+.well-row-error {
+    background: rgba(var(--danger-rgb), 0.12) !important;
+}
+
+.well-row-error:hover {
+    background: rgba(var(--danger-rgb), 0.2) !important;
+}
+
+.well-row-warning {
+    background: rgba(var(--warn-rgb), 0.1) !important;
+}
+
+.well-row-warning:hover {
+    background: rgba(var(--warn-rgb), 0.18) !important;
+}
+
 .well-details-row {
     background: rgba(0, 0, 0, 0.1);
 }

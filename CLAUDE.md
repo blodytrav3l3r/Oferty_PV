@@ -158,6 +158,7 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 - Sortowanie tabeli oferty: tylko po DN numerycznie (`parseInt(a.well.dn) - parseInt(b.well.dn)`); `dn === 'styczna' ? Infinity`
 - Brak category grouping (offerManager.js:402-407)
 - Tryb zamówienia: `orderEditMode` + `originalSnapshot`; kolumny porównania "Cena z oferty", "Różnica"
+- Oznaczanie błędów konfiguracji w Oferta: `.well-row-error`/`.well-row-warning` (tło wiersza) + ikona z tooltipem w osobnej kolumnie "Błąd" (`getWellErrorCell()` w `offerHelpers.js`), `configErrors` przez `escapeHtml`; przeliczane na renderze oferty przez `refreshAllWellErrors()` (solverValidation.js, wołane też z wellUI.js)
 - Layout: 3-kolumnowy grid (diagram | konfig | lista studni) z `clamp()` + `minmax(0, 1fr)`
 
 ---

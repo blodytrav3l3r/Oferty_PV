@@ -12,6 +12,31 @@ function getWellRowStyle(change, isOrdered) {
         : '';
 }
 
+// Liczba kolumn tabeli oferty (do colspan wierszy szczegółów)
+function getOfferColumnsCount(showOrderSelection, showPriceComparison) {
+    let count = 9; // Lp, Expand, Nazwa, Cechy, Status, Błąd, DN, Cena, Akcje
+    if (showOrderSelection) count += 1;
+    if (showPriceComparison) count += 2; // Cena z oferty, Różnica
+    return count;
+}
+
+// Ikona błędu konfiguracji studni (kolumna "Błąd")
+function getWellErrorCell(well) {
+    if (!well) return '';
+    const isError = well.configStatus === 'ERROR';
+    const isWarning = well.configStatus === 'WARNING';
+    if (!isError && !isWarning) return '';
+    const title = (well.configErrors || [])
+        .map((e) => escapeHtml(e).replace(/"/g, '&quot;'))
+        .join('; ');
+    const color = isError ? 'var(--danger-hover)' : 'var(--warn-hover)';
+    const rgb = isError ? 'var(--danger-rgb)' : 'var(--warn-rgb)';
+    const icon = isError ? 'x-circle' : 'alert-triangle';
+    return `<span title="${title}" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(${rgb},0.15); color:${color}; cursor:help;">
+        <i data-lucide="${icon}" style="width:14px; height:14px;"></i>
+    </span>`;
+}
+
 function getDiscountStr(p, disc) {
     const isDen =
         p.componentType === 'dennica' ||

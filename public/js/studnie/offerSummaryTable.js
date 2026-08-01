@@ -17,6 +17,7 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
           <th style="width:100%;">Nazwa studni</th>
           <th style="width:1%; min-width:80px; text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">Cechy</th>
           <th style="width:1%; min-width:70px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
+          <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;" title="Błędy konfiguracji studni">Błąd</th>
           <th style="width:1%; min-width:60px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">DN</th>
           ${showPriceComparison ? '<th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Cena z oferty</th>' : ''}
           <th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
@@ -130,7 +131,8 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             well,
             originalIndex,
             orderChanges[originalIndex],
-            wellTransportCost
+            wellTransportCost,
+            getOfferColumnsCount(showOrderSelection, showPriceComparison)
         );
     });
 
@@ -154,7 +156,7 @@ function renderOfferSummaryFooter(
     dnGroups,
     showPriceComparison
 ) {
-    let baseColspan = 6;
+    let baseColspan = 7;
     if (showOrderSelection) baseColspan += 1;
 
     let html = '<tfoot>';

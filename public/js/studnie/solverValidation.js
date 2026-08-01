@@ -10,7 +10,7 @@
 
 /* ===== WALIDACJA LUZÓW PRZEJŚĆ ===== */
 function recalculateWellErrors(well) {
-    if (!well) return;
+    if (!well || well.configStatus === 'LOADING') return;
 
     // Wyczyść błędy dotyczące luzów z poprzedniego wywołania
     let liveErrors = well.configErrors
@@ -129,4 +129,10 @@ function recalculateWellErrors(well) {
     well.configErrors = [...new Set(liveErrors)];
     well.configStatus =
         well.configErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
+}
+
+/* ===== ODŚWIEŻENIE BŁĘDÓW WSZYSTKICH STUDNI ===== */
+function refreshAllWellErrors() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+    wells.forEach((w) => recalculateWellErrors(w));
 }

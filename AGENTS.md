@@ -185,6 +185,7 @@ Projekt stosuje **jednolite kodowanie UTF-8** dla wszystkich plików tekstowych:
 - **Sortowanie oferty**: Sortowanie odbywa się wyłącznie numerycznie po wartości DN (`parseInt(a.well.dn) - parseInt(b.well.dn)`). Studnie oznaczane jako "styczna" trafiają na sam koniec (`Infinity`).
 - Brak grupowania według kategorii w tabeli oferty (renderowanie w `offerRendering.js` / `offerSummaryTable.js`).
 - **Tryb zamówienia**: Wykorzystuje flagę `orderEditMode` oraz obiekt `originalSnapshot`. Tabela zawiera dodatkowe kolumny porównawcze ("Cena z oferty", "Różnica").
+- **Oznaczanie błędów konfiguracji w zakładce Oferta**: studnie z `well.configStatus` = `'ERROR'`/`'WARNING'` (komunikat "Błędy w konfiguracji studni:") dostają czerwone/bursztynowe tło wiersza (klasy `.well-row-error`/`.well-row-warning` w `style.base.css` i `style.css`) oraz ikonę z tooltipem w osobnej kolumnie "Błąd" (`getWellErrorCell()` w `offerHelpers.js`, renderowana w `offerWellComponents.js`). Błędy przeliczane na każdym renderze oferty przez `refreshAllWellErrors()` (solverValidation.js), wywoływaną także z `wellUI.js`. Działa w trybie oferty i edycji zamówienia (współdzielony render). Treść `configErrors` zawsze przez `escapeHtml`.
 - **Układ strony (Layout)**: Trójkolumnowy grid (wizualizacja/diagram | konfigurator | lista studni) z responsywnym dopasowaniem za pomocą funkcji `clamp()` oraz `minmax(0, 1fr)`.
 
 ### Moduł: Excel studni
