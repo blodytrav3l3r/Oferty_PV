@@ -1,0 +1,24 @@
+# Caddyfile.dev — lokalny HTTPS (development)
+#
+# Używa lokalnego certyfikatu z mkcert:
+#   mkcert -install
+#   mkcert localhost
+#   caddy run --config Caddyfile.dev
+#
+# Aplikacja dostępna na: https://localhost:3443
+
+{
+	# Katalog z certyfikatami mkcert
+	local_certs
+}
+
+:3443 {
+	tls cert.pem key.pem
+
+	encode gzip
+
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}

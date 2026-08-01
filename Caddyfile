@@ -1,0 +1,29 @@
+# Caddyfile — produkcja (reverse proxy TLS)
+#
+# Zastosowanie:
+#   caddy run --config Caddyfile
+#
+# Wymagane zmienne środowiskowe:
+#   DOMAIN  — np. oferty.example.pl
+#   EMAIL   — do rejestracji certyfikatu Let's Encrypt
+#
+# Node nasłuchuje lokalnie na http://127.0.0.1:3000 i nie jest dostępny z sieci.
+
+{$DOMAIN} {
+	tls {$EMAIL}
+
+	encode gzip
+
+	# Bezpieczne nagłówki (HSTS duplikuje ustawienia z Express — defense in depth)
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	# Reverse proxy do Node.js
+	reverse_proxy 127.0.0.1:3000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Host {host}
+	}
+}

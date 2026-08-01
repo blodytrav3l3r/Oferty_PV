@@ -18,6 +18,10 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 | `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (tylko pierwsze uruchomienie) | **Tak**  | `bezpieczne-haslo-123`                  |
 | `DATABASE_URL`           | Ścieżka do bazy SQLite                             | Nie      | `file:../data/app_database.sqlite`      |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
+| `COOKIE_SECURE`          | Wymuszenie `Secure` flagi na ciastku sesji         | Nie*     | `true`                                  |
+
+> \* `COOKIE_SECURE=true` jest wymagane, gdy aplikacja jest serwowana przez HTTPS
+> w trybie innym niż `production` (w `production` flaga jest wymuszana automatycznie).
 
 ---
 
@@ -129,10 +133,15 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 ## 4. VPS (Linux)
 
+> **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki
+> (clipboard, `window.open()` itp.) mogą być blokowane na HTTP. Zobacz
+> [ADR-006](adr/ADR-006-https-transport.md) i konfigurację w `Caddyfile`.
+
 ### Wymagania
 
 - Node.js >= 20.0.0
 - PM2 (opcjonalnie, do zarządzania procesem)
+- Reverse proxy: Caddy (rekomendowany) lub Nginx
 
 ### Instalacja
 
@@ -153,7 +162,7 @@ npm install
 
 # 5. Konfiguracja
 cp .env.example .env
-nano .env  # ustaw DEFAULT_ADMIN_PASSWORD i PORT
+nano .env  # ustaw DEFAULT_ADMIN_PASSWORD, PORT, COOKIE_SECURE=true
 
 # 6. Przygotowanie bazy
 npx prisma generate
@@ -170,15 +179,37 @@ pm2 save
 pm2 startup
 ```
 
-### Nginx jako reverse proxy (opcjonalnie)
+> W produkcji serwer binduje się domyślnie do `127.0.0.1` — nie jest dostępny z sieci
+> bezpośrednio. Jawnie ustawiony `HOST` (np. w Dockerze) ma pierwszeństwo.
+
+### Caddy jako reverse proxy (rekomendowany)
+
+```bash
+sudo apt install caddy
+export DOMAIN=twoja-domena.pl
+export EMAIL=twoj@email.com
+caddy run --config Caddyfile
+```
+
+Caddy automatycznie:
+
+- wydaje certyfikat Let's Encrypt,
+- odnawia certyfikat,
+- przekierowuje HTTP → HTTPS,
+- przekazuje ruch do `127.0.0.1:3000`.
+
+### Nginx jako reverse proxy z Let's Encrypt
+
+```bash
+sudo apt install nginx certbot python3-certbot-nginx
+```
 
 ```nginx
 server {
     listen 80;
     server_name twoja-domena.pl;
-
     location / {
-        proxy_pass http://localhost:10000;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -189,18 +220,22 @@ server {
 }
 ```
 
+```bash
+sudo certbot --nginx -d twoja-domena.pl
+```
+
 ---
 
 ## 5. Bezpieczeństwo w produkcji
 
-| Obszar       | Zalecenie                                                |
-| ------------ | -------------------------------------------------------- |
-| HTTPS        | Użyj reverse proxy (Nginx/Caddy) z Let's Encrypt         |
-| Firewall     | Ogranicz dostęp do portu aplikacji (np. tylko localhost) |
-| Backup       | Skonfiguruj automatyczny backup bazy (cron / PM2)        |
-| Monitoring   | Skonfiguruj Sentry (zmienna `SENTRY_DSN`)                |
-| PM2          | Użyj do zarządzania procesem i auto-restartu             |
-| Aktualizacje | Regularnie aktualizuj npm (`npm audit`, `npm update`)    |
+| Obszar       | Zalecenie                                                  |
+| ------------ | ---------------------------------------------------------- |
+| HTTPS        | **Wymagane** — reverse proxy (Caddy/Nginx) z Let's Encrypt |
+| Firewall     | Ogranicz dostęp do portu aplikacji (np. tylko localhost)   |
+| Backup       | Skonfiguruj automatyczny backup bazy (cron / PM2)          |
+| Monitoring   | Skonfiguruj Sentry (zmienna `SENTRY_DSN`)                  |
+| PM2          | Użyj do zarządzania procesem i auto-restartu               |
+| Aktualizacje | Regularnie aktualizuj npm (`npm audit`, `npm update`)      |
 
 ---
 

@@ -4,7 +4,11 @@ import { Request, Response, NextFunction } from 'express';
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
  */
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
-    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    // x-forwarded-proto może zawierać listę przy wielu proxy (np. "https, http") — bierzemy pierwszy wpis
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const isHttps =
+        req.secure ||
+        (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() === 'https');
     if (process.env.NODE_ENV === 'production' && !isHttps) {
         res.redirect('https://' + req.headers.host + req.url);
         return;

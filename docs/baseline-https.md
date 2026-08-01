@@ -1,0 +1,68 @@
+# Baseline HTTPS — WITROS Oferty PV
+
+**Data:** 2026-07-24
+**Cel:** Punkt odniesienia przed/po migracji HTTP → HTTPS.
+**Wersja aplikacji:** 1.9.0
+
+---
+
+## 1. Środowisko
+
+| Parametr      | Wartość                         |
+| ------------- | ------------------------------- |
+| Node.js       | `node --version` → v22.x        |
+| npm           | `npm --version` → 10.x          |
+| System        | Windows / Linux                 |
+| Reverse proxy | Caddy (rekomendowany) lub Nginx |
+
+---
+
+## 2. Testy przed migracją
+
+| Test                                        | Wynik |
+| ------------------------------------------- | ----- |
+| `npm run typecheck`                         | ☐     |
+| `npm run lint`                              | ☐     |
+| `npm test`                                  | ☐     |
+| `npm run validate`                          | ☐     |
+| Aplikacja działa na `http://localhost:3000` | ☐     |
+| `/health` zwraca 200                        | ☐     |
+
+---
+
+## 3. Testy po migracji (HTTPS)
+
+| Test                                                            | Wynik |
+| --------------------------------------------------------------- | ----- |
+| `https://domena.pl` → 200 OK                                    | ☐     |
+| `http://domena.pl` → przekierowanie na HTTPS (301/308)          | ☐     |
+| HSTS nagłówek `max-age=...`                                     | ☐     |
+| `Secure` flag na ciastku sesji                                  | ☐     |
+| Logowanie działa                                                | ☐     |
+| API (`/api/*`) działa przez HTTPS                               | ☐     |
+| Brak mixed content w DevTools (Console/Network/Security/Issues) | ☐     |
+| `window.isSecureContext === true`                               | ☐     |
+
+---
+
+## 4. Macierz przeglądarek
+
+| Funkcja                              | Chrome | Edge | Firefox | Safari | Brave |
+| ------------------------------------ | ------ | ---- | ------- | ------ | ----- |
+| Logowanie                            | ☐      | ☐    | ☐       | ☐      | ☐     |
+| Iframe (rury, studnie)               | ☐      | ☐    | ☐       | ☐      | ☐     |
+| Clipboard Copy / Paste               | ☐      | ☐    | ☐       | ☐      | ☐     |
+| Excel (kopiowanie/wklejanie zakresu) | ☐      | ☐    | ☐       | ☐      | ☐     |
+| Drukowanie oferty                    | ☐      | ☐    | ☐       | ☐      | ☐     |
+| `window.open` (print)                | ☐      | ☐    | ☐       | ☐      | ☐     |
+| PDF / DOCX (generowanie, pobieranie) | ☐      | ☐    | ☐       | ☐      | ☐     |
+| Upload (import XLSX)                 | ☐      | ☐    | ☐       | ☐      | ☐     |
+| localStorage / Cookies / API         | ☐      | ☐    | ☐       | ☐      | ☐     |
+
+---
+
+## 5. Uwagi
+
+- Zmiany wprowadzone podczas migracji: patrz `docs/adr/ADR-006-https-transport.md`
+  oraz plan `docs/plans/https-migration-plan.md`.
+- Pliki konfiguracyjne: `Caddyfile` (produkcja), `Caddyfile.dev` (lokalny dev z mkcert).

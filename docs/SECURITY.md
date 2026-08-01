@@ -151,13 +151,23 @@ Walidacja chroni przed:
 
 ## 7. HTTPS
 
+**HTTPS jest docelowym środowiskiem aplikacji w produkcji.** TLS terminuje reverse proxy
+(Caddy/Nginx) — Node.js pozostaje serwerem HTTP i w produkcji binduje się do `127.0.0.1`.
+Zobacz [ADR-006](adr/ADR-006-https-transport.md).
+
 - W środowisku produkcyjnym (`NODE_ENV=production`) włączone jest przekierowanie HTTP → HTTPS
-- Wykrywanie przez nagłówek `x-forwarded-proto` (dla reverse proxy)
-- Nagłówek HSTS (Strict-Transport-Security) ustawiony na 1 rok
+- Wykrywanie przez nagłówek `x-forwarded-proto` (dla reverse proxy); obsługiwana lista
+  wartości przy wielu proxy (np. `https, http` — brany jest pierwszy wpis)
+- Nagłówek HSTS (Strict-Transport-Security) ustawiony na 1 rok w produkcji
+- Ciastko sesji `authToken` ma flagę `Secure` (wymuszaną przez `COOKIE_SECURE=true`
+  lub `NODE_ENV=production`); `clearCookie` używa tych samych opcji
 
 ```typescript
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
-    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
+    const forwardedProto = req.headers['x-forwarded-proto'];
+    const isHttps =
+        req.secure ||
+        (typeof forwardedProto === 'string' && forwardedProto.split(',')[0].trim() === 'https');
     if (process.env.NODE_ENV === 'production' && !isHttps) {
         res.redirect('https://' + req.headers.host + req.url);
         return;
@@ -165,6 +175,14 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
     next();
 }
 ```
+
+### Konfiguracja reverse proxy
+
+| Proxy | Plik konfiguracji    | Uwagi                             |
+| ----- | -------------------- | --------------------------------- |
+| Caddy | `Caddyfile`          | Auto-Let's Encrypt, auto-renew    |
+| Caddy | `Caddyfile.dev`      | Lokalny HTTPS (mkcert), port 3443 |
+| Nginx | `docs/DEPLOYMENT.md` | + certbot Let's Encrypt           |
 
 ---
 
@@ -174,7 +192,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
 - CSP (Content Security Policy) kontroluje dozwolone źródła:
     - Skrypty: `'self'` + `'unsafe-inline'` (dla Vanilla JS event handlerów)
     - Style: `'self'` + `'unsafe-inline'`
-    - Połączenia: localhost na porcie 5000 (dla narzędzi deweloperskich)
+    - Połączenia: `'self'` (+ `ws://localhost:*` tylko w trybie development dla HMR Vite)
 
 ---
 

@@ -22,6 +22,10 @@ const router = express.Router();
 
 const loginLimiter = LOGIN_LIMITER;
 
+// Secure flag na ciastku — wymuszane przez COOKIE_SECURE lub NODE_ENV=production
+const isCookieSecure = () =>
+    process.env.COOKIE_SECURE === 'true' || process.env.NODE_ENV === 'production';
+
 // POST /api/auth/login
 router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) => {
     const { username, password } = req.body;
@@ -47,7 +51,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
         res.cookie('authToken', token, {
             httpOnly: true, // true - cookie недоступний JavaScript
             maxAge: SESSION_MAX_AGE_MS,
-            secure: process.env.NODE_ENV === 'production',
+            secure: isCookieSecure(),
             sameSite: 'lax', // lax zamiast strict dla nawigacji między stronami
             path: '/'
         });
@@ -153,7 +157,12 @@ router.post('/logout', async (req, res) => {
     try {
         const token = (req.headers['x-auth-token'] as string) || req.cookies?.authToken;
         if (token) await deleteSession(token);
-        res.clearCookie('authToken');
+        res.clearCookie('authToken', {
+            httpOnly: true,
+            secure: isCookieSecure(),
+            sameSite: 'lax',
+            path: '/'
+        });
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';

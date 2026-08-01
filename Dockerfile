@@ -38,6 +38,8 @@ ENV NODE_ENV=production
 ENV DATABASE_URL=file:/var/data/app_database.sqlite
 ENV PORT=10000
 ENV HOST=0.0.0.0
+# Secure cookie wymagane za reverse proxy (HTTPS zakończony poza kontenerem)
+ENV COOKIE_SECURE=true
 
 EXPOSE 10000
 

@@ -6,7 +6,9 @@ import app, { initApp } from './src/app';
 import { logger } from './src/utils/logger';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const HOST = process.env.HOST || '0.0.0.0';
+// W produkcji domyślnie bind do loopback — HTTPS terminuje reverse proxy (Caddy/Nginx).
+// Jawnie ustawiony HOST (np. w Dockerze dla osobnego kontenera proxy) ma pierwszeństwo.
+const HOST = process.env.HOST || (process.env.NODE_ENV === 'production' ? '127.0.0.1' : '0.0.0.0');
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 /* ===== INICJALIZACJA ===== */

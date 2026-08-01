@@ -52,7 +52,12 @@ cd Oferty_PV
 .\start.bat
 ```
 
-Aplikacja będzie dostępna pod adresem: **http://localhost:10000**
+Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
+
+> **Uwaga (HTTPS):** do pracy zdalnej **HTTPS jest wymagane** — bez niego funkcje
+> przeglądarek (clipboard, `window.open()` itp.) mogą być blokowane na HTTP.
+> Zobacz sekcję [4. Zabezpieczenia](#4-zabezpieczenia) i
+> [ADR-006](adr/ADR-006-https-transport.md).
 
 ### Instalacja ręczna (dowolny system)
 
@@ -230,6 +235,9 @@ sudo ufw allow 10000/tcp
 
 ### HTTPS przez Nginx + Let's Encrypt:
 
+> **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki
+> mogą być blokowane na HTTP. W `.env` ustaw `COOKIE_SECURE=true`.
+
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
 
@@ -238,7 +246,7 @@ server {
     listen 80;
     server_name twojadomena.pl;
     location / {
-        proxy_pass http://localhost:10000;
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -252,6 +260,18 @@ server {
 sudo ln -s /etc/nginx/sites-available/witros /etc/nginx/sites-enabled/
 sudo certbot --nginx -d twojadomena.pl
 ```
+
+### HTTPS przez Caddy (rekomendowany — automatyczny certyfikat)
+
+```bash
+sudo apt install caddy
+export DOMAIN=twojadomena.pl
+export EMAIL=twoj@email.com
+caddy run --config Caddyfile
+```
+
+Caddy automatycznie wydaje i odnawia certyfikat Let's Encrypt oraz przekierowuje
+HTTP → HTTPS. Konfiguracja w pliku `Caddyfile` w katalogu projektu.
 
 ---
 

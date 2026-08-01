@@ -58,8 +58,9 @@ if errorlevel 1 (
 )
 
 echo [INFO] npm start (Ctrl+C stop)
-echo         http://localhost:3000/health
-echo         http://localhost:3000/api/version
+echo         Wewnetrzny: http://127.0.0.1:3000/health
+echo         Wewnetrzny: http://127.0.0.1:3000/api/version
+echo         Publiczny:  https://<twoja-domena> (reverse proxy Caddy/Nginx)
 echo.
 call npm start
 

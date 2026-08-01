@@ -287,11 +287,11 @@ function buildRuryStaticTermsHTML(): string {
 
     <p style="margin-top:10px;">W przypadku wzrostu cen materiałów wsadowych (cement, kruszywa, usługi transportowe itp.) powyżej 3 % zastrzegamy sobie prawo zmiany cen.</p>
 
-    <p style="margin-top:10px;">Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie <a href="http://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a>).<br />W zamówieniach prosimy powoływać się na nr niniejszej oferty.</p>
+    <p style="margin-top:10px;">Na oferowane prefabrykaty betonowe i żelbetowe udzielamy 36 miesięcy gwarancji licząc od daty podpisania dokumentu WZ pod warunkiem montażu ze sztuką budowlaną i zgodnie z dokumentacją techniczną producenta (instrukcje montażu wyrobów do pobrania na stronie <a href="https://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a>).<br />W zamówieniach prosimy powoływać się na nr niniejszej oferty.</p>
 
     <p style="margin-top:10px;">Parametry techniczne oferowanych wyrobów, według odpowiednich deklaracji dostępnych na <a href="https://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">https://www.pv-prefabet.com.pl</a> lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork S.A.</p>
 
-    <p style="margin-top:10px;">Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej <a href="http://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a> oraz Polityka Prywatności dostępna na stronie internetowej <a href="http://www.pv-prefabet.com.pl/rodo-dane" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl/rodo-dane</a></p>
+    <p style="margin-top:10px;">Obligatoryjnym załącznikiem do niniejszej oferty są Ogólne Warunki Sprzedaży dostępne na stronie internetowej <a href="https://www.pv-prefabet.com.pl" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl</a> oraz Polityka Prywatności dostępna na stronie internetowej <a href="https://www.pv-prefabet.com.pl/rodo-dane" style="color:#${DOCX_COLORS.titleText};text-decoration:none;">www.pv-prefabet.com.pl/rodo-dane</a></p>
 
     <p style="margin-top:15px;font-weight:bold;font-size:8.5pt;">Dziękujemy Państwu za zainteresowanie ofertą naszej firmy i mamy nadzieję na dalszą owocną współpracę.</p>
   `.trim();

@@ -39,7 +39,8 @@ if (process.env.SENTRY_DSN) {
     logger.info('Server', 'Sentry — aktywny');
 }
 
-app.set('trust proxy', 1); // Trust proxy gdy aplikacja stoi za reverse proxy
+// Trust proxy 2 — obsługuje konfiguracje z wieloma proxy (np. Cloudflare → Nginx → App)
+app.set('trust proxy', 2);
 
 /* ===== LOGOWANIE ŻĄDAŃ ===== */
 app.use(requestLogger);
@@ -116,9 +117,7 @@ app.use(
                 imgSrc: ["'self'", 'data:', 'blob:'],
                 connectSrc: [
                     "'self'",
-                    'http://localhost:5000',
-                    'http://127.0.0.1:5000',
-                    'ws://localhost:*'
+                    ...(process.env.NODE_ENV !== 'production' ? ['ws://localhost:*'] : [])
                 ],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],

@@ -109,11 +109,13 @@ echo ===========================================================
 echo.
 
 if /i "%MODE%"=="prod" (
-    echo   Produkcja: http://localhost:3000
+    echo   Produkcja: HTTPS za reverse proxy (Caddy/Nginx)
+    echo   Wewnetrzny: http://127.0.0.1:3000
     call npm start
 ) else (
     echo   Frontend: http://localhost:5173
     echo   Backend:  http://localhost:3000/health
+    echo   HTTPS:    https://localhost:3443 (Caddyfile.dev + mkcert, opcjonalnie)
     set "NODE_ENV=development"
     call npm run dev
 )
