@@ -86,7 +86,7 @@ function _excelToggleColumnPopup() {
         html +=
             '<div id="excel-col-vis-grid" style="display:grid;grid-template-columns:auto repeat(' +
             gridCols.length +
-            ',minmax(140px,1fr));border:1px solid rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">';
+            ',minmax(max-content,1fr));border:1px solid rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;width:max-content;min-width:100%;">';
 
         /* Nagłówek — wiersz 1: DN */
         html +=
@@ -263,7 +263,8 @@ function _excelToggleColumnPopup() {
 
     let gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
     let html = '';
-    html += '<div class="modal" style="max-width:620px;max-height:70vh;overflow-y:auto;">';
+    html +=
+        '<div class="modal" style="max-width:min(96vw,1400px);max-height:90vh;overflow:auto;width:auto;">';
     html +=
         '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:#94a3b8;font-size:1.2rem;cursor:pointer;padding:0;line-height:1;">✕</button></div>';
     html += gridHtml;
