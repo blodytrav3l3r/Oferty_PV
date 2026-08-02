@@ -373,4 +373,62 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
         expect(cols1200.some((c: any) => c.id === 'krag_600')).toBe(true);
         expect(cols1200.some((c: any) => c.id === 'krag_500')).toBe(false);
     });
+
+    test("zakładka 'styczna' z redukcją: ukrywa kolumny główne, zostają R.* + styczna", () => {
+        ctx.studnieProducts = [
+            {
+                id: 'styczna-1',
+                name: 'Studnia styczna',
+                componentType: 'styczna',
+                dn: 'styczna',
+                height: 0,
+                magazynKLB: 1,
+                magazynWL: 1
+            },
+            {
+                id: 'krag-1000-500',
+                name: 'Krąg DN1000 H=500',
+                componentType: 'krag',
+                dn: '1000',
+                height: 500,
+                magazynKLB: 1,
+                magazynWL: 1
+            },
+            {
+                id: 'krag-1200-600',
+                name: 'Krąg DN1200 H=600',
+                componentType: 'krag',
+                dn: '1200',
+                height: 600,
+                magazynKLB: 1,
+                magazynWL: 1
+            },
+            {
+                id: 'konus-1000-625',
+                name: 'Konus DN1000 H=625',
+                componentType: 'konus',
+                dn: '1000',
+                height: 625,
+                magazynKLB: 1,
+                magazynWL: 1
+            }
+        ];
+        ctx.wells = [
+            {
+                dn: 'styczna',
+                magazyn: 'Kluczbork',
+                stycznaNadbudowa1200: true,
+                redukcjaDN1000: true
+            }
+        ];
+
+        const cols = ctx._excelBuildComponentColumns('styczne', ctx.wells[0]);
+        expect(cols.some((c: any) => c.id === 'styczna_styczna-1')).toBe(true);
+        expect(cols.some((c: any) => c.id.startsWith('red_'))).toBe(true);
+        expect(cols.some((c: any) => c.id === 'red_krag_1000_500')).toBe(true);
+        expect(cols.some((c: any) => c.id === 'red_krag_1200_600')).toBe(true);
+        expect(cols.some((c: any) => c.id === 'krag_500')).toBe(false);
+        expect(cols.some((c: any) => c.id === 'krag_600')).toBe(false);
+        expect(cols.some((c: any) => c.id === 'konus_625')).toBe(false);
+    });
 });

@@ -410,5 +410,17 @@ function _excelBuildComponentColumns(dn, well) {
         });
     });
 
+    /* Styczne: nadbudowa zawsze przez redukcję DN1000/DN1200 — ukryj kolumny główne (duplikaty effDn) */
+    if (dn === 'styczne' || dn === 'styczna') {
+        const hasReduction = cols.some((c) => 'fromReduction' in c && c.fromReduction === true);
+        if (hasReduction) {
+            return cols.filter(
+                (c) =>
+                    ('fromReduction' in c && c.fromReduction === true) ||
+                    c.componentType === 'styczna'
+            );
+        }
+    }
+
     return cols;
 }
