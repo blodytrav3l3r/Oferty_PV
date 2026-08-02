@@ -4,10 +4,14 @@
 function renderOfferSummaryTab() {
     // 1. Zaktualizuj dane klienta i inwestycji
     const dispName = document.getElementById('offer-disp-name');
-    if (dispName) dispName.textContent = document.getElementById('offer-client-name')?.value || '—';
+    if (dispName) dispName.textContent = document.getElementById('client-name')?.value || '—';
 
     const dispNip = document.getElementById('offer-disp-nip');
-    if (dispNip) dispNip.textContent = document.getElementById('offer-client-nip')?.value || '—';
+    if (dispNip) dispNip.textContent = document.getElementById('client-nip')?.value || '—';
+
+    const dispClientNumber = document.getElementById('offer-disp-client-number');
+    if (dispClientNumber)
+        dispClientNumber.textContent = document.getElementById('client-number')?.value || '—';
 
     const dispNumber = document.getElementById('offer-disp-number');
     if (dispNumber) dispNumber.textContent = document.getElementById('offer-number')?.value || '—';

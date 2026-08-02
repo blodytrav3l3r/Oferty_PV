@@ -57,6 +57,7 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     <div><strong>${escapeHtml(data.clientName)}</strong></div>
     ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
     ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
     ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
   `.trim();
 

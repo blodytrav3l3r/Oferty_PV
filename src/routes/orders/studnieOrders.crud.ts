@@ -9,6 +9,7 @@ import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
 import { canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -235,7 +236,7 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
 
         const existing = await prisma.orders_studnie_rel.findUnique({
             where: { id: docId },
-            select: { id: true, userId: true, data: true }
+            select: { id: true, userId: true, offerStudnieId: true, data: true }
         });
         if (!existing) return res.json({ ok: true });
         if (!canWriteDoc(authReq.user, existing.userId)) {
@@ -243,22 +244,14 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         }
 
         const oldData = parseJsonField<Record<string, unknown>>(existing.data, {});
-        const offerId = oldData.offerId || '';
+        const offerId =
+            existing.offerStudnieId || (typeof oldData.offerId === 'string' ? oldData.offerId : '');
 
-        if (offerId) {
-            const allPOs = await prisma.$queryRaw<
-                Array<{ data: string | null }>
-            >`SELECT data FROM production_orders_rel`;
-            const acceptedPOs = allPOs.filter((po) => {
-                const poData = parseJsonField<Record<string, unknown>>(po.data, {});
-                return poData.offerId === offerId && poData.status === 'accepted';
+        const poCount = await countProductionOrdersForOrder(docId, offerId);
+        if (poCount > 0) {
+            return res.status(403).json({
+                error: 'Nie można usunąć zamówienia — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.'
             });
-
-            if (acceptedPOs.length > 0) {
-                return res.status(403).json({
-                    error: 'Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.'
-                });
-            }
         }
 
         logAudit('order', docId, authReq.user?.id || '', 'delete', null, oldData);

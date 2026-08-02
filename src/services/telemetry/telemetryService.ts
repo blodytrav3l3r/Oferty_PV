@@ -376,7 +376,10 @@ class TelemetryService {
      */
     async recordAcceptance(telemetryId: string, accepted: boolean): Promise<void> {
         try {
-            await prisma.ai_telemetry_logs.update({
+            // updateMany zamiast update: brak rekordu (np. gdy /config nie dotarł
+            // wcześniej albo telemetryId to ID studni) nie może rzucić P2025 —
+            // telemetria jest pasywna, brak rekordu nie jest błędem.
+            await prisma.ai_telemetry_logs.updateMany({
                 where: { id: telemetryId },
                 data: {
                     wasAccepted: accepted,

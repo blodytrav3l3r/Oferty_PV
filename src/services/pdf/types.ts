@@ -12,6 +12,7 @@ export interface RuryOfferData {
     orderStatus?: string;
     clientName: string;
     clientNip: string;
+    clientNumber?: string;
     clientAddress: string;
     clientPhone: string;
     investName: string;
@@ -35,6 +36,7 @@ export interface StudnieOfferData {
     orderStatus?: string;
     clientName: string;
     clientNip: string;
+    clientNumber?: string;
     clientAddress: string;
     clientPhone: string;
     investName: string;

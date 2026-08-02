@@ -2,10 +2,11 @@
 /* ===== ZAMÓWIENIA RUR — HELPERY ILOŚCIOWE ===== */
 
 function getActiveItemsArray() {
-    return window.orderEditMode ? orderCurrentItems : currentOfferItems;
+    return (window.orderEditMode ? orderCurrentItems : currentOfferItems) || [];
 }
 window.getActiveItemsArray = getActiveItemsArray;
 
+window.currentOfferItems = window.currentOfferItems || [];
 window.orderCurrentItems = window.orderCurrentItems || [];
 
 function getConfigKey(item) {

@@ -4,6 +4,11 @@ function offerMatchesSearch(offer: any, query: string, ordersMap: Map<string, an
 
     const num = (offer.number || offer.title || offer.offerName || '').toLowerCase();
     const client = (offer.clientName || (offer.data && offer.data.clientName) || '').toLowerCase();
+    const clientNumber = (
+        offer.clientNumber ||
+        (offer.data && offer.data.clientNumber) ||
+        ''
+    ).toLowerCase();
     const nip = (offer.clientNip || (offer.data && offer.data.clientNip) || '').toLowerCase();
     const budowa = (
         offer.investName ||
@@ -30,6 +35,7 @@ function offerMatchesSearch(offer: any, query: string, ordersMap: Map<string, an
     return !!(
         num.includes(query) ||
         client.includes(query) ||
+        clientNumber.includes(query) ||
         nip.includes(query) ||
         budowa.includes(query) ||
         userStr.includes(query) ||
@@ -63,6 +69,21 @@ describe('Kartoteka — wyszukiwanie po numerze zamówienia', () => {
 
     it('zwraca ofertę gdy query pasuje do klienta (stare zachowanie)', () => {
         expect(offerMatchesSearch(offers[1], 'Beta', ordersMap)).toBe(true);
+    });
+
+    it('zwraca ofertę gdy query pasuje do numeru klienta (clientNumber)', () => {
+        const withNumber = { ...offers[0], clientNumber: 'K-001' };
+        expect(offerMatchesSearch(withNumber, 'K-001', ordersMap)).toBe(true);
+    });
+
+    it('zwraca ofertę gdy query pasuje do numeru klienta w data JSON', () => {
+        const withDataNumber = { ...offers[0], data: { clientNumber: 'K-002' } };
+        expect(offerMatchesSearch(withDataNumber, 'k-002', ordersMap)).toBe(true);
+    });
+
+    it('zwraca false gdy numer klienta nie pasuje do query', () => {
+        const withNumber = { ...offers[0], clientNumber: 'K-001' };
+        expect(offerMatchesSearch(withNumber, 'K-999', ordersMap)).toBe(false);
     });
 
     it('zwraca wszystkie oferty dla pustego query', () => {

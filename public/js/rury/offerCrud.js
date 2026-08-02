@@ -222,6 +222,7 @@ async function loadOffer(id) {
         number: finalNumber,
         date: normalized.date,
         clientName: normalized.clientName,
+        clientNumber: normalized.clientNumber,
         clientNip: normalized.clientNip,
         clientAddress: normalized.clientAddress,
         clientContact: normalized.clientContact,

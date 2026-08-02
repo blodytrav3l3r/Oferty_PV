@@ -7,6 +7,7 @@ import {
     offersBatchSchema,
     offersStudnieBatchSchema
 } from '../src/validators/offerSchemas';
+import { ruryOfferExportSchema, studnieOfferExportSchema } from '../src/validators/orderSchemas';
 
 // ─── offerItemSchema ────────────────────────────────────────────────
 
@@ -362,5 +363,53 @@ describe('Integracja schematów ofert', () => {
         };
         const result = offerStudnieCreateSchema.safeParse(complexOffer);
         expect(result.success).toBe(true);
+    });
+});
+
+// ─── Schematy eksportu zamówienia — clientNumber ─────────────────────
+
+describe('ruryOfferExportSchema / studnieOfferExportSchema (clientNumber)', () => {
+    it('rury: powinien zachować clientNumber (regresja .strip())', () => {
+        const result = ruryOfferExportSchema.safeParse({
+            items: [{ productId: 'p1', name: 'Rura', unitPrice: 10, quantity: 1 }],
+            clientName: 'Budimex S.A.',
+            clientNumber: '1897'
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.clientNumber).toBe('1897');
+        }
+    });
+
+    it('rury: domyślna wartość clientNumber to pusty string', () => {
+        const result = ruryOfferExportSchema.safeParse({
+            items: [{ productId: 'p1', name: 'Rura', unitPrice: 10, quantity: 1 }]
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.clientNumber).toBe('');
+        }
+    });
+
+    it('studnie: powinien zachować clientNumber', () => {
+        const result = studnieOfferExportSchema.safeParse({
+            items: [{ productName: 'Studnia', quantity: 1, price: 100 }],
+            clientName: 'Budimex S.A.',
+            clientNumber: '1897'
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.clientNumber).toBe('1897');
+        }
+    });
+
+    it('studnie: domyślna wartość clientNumber to pusty string', () => {
+        const result = studnieOfferExportSchema.safeParse({
+            items: [{ productName: 'Studnia', quantity: 1, price: 100 }]
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+            expect(result.data.clientNumber).toBe('');
+        }
     });
 });

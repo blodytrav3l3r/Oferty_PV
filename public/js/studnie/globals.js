@@ -143,6 +143,7 @@ function syncOfferClientSummary() {
     };
     s('offer-disp-name', v('client-name'));
     s('offer-disp-nip', v('client-nip'));
+    s('offer-disp-client-number', v('client-number'));
     s('offer-disp-number', v('offer-number'));
     s('offer-disp-date', v('offer-date'));
     s('offer-disp-invest', v('invest-name'));

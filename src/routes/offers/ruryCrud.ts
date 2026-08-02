@@ -180,6 +180,7 @@ router.post(
                 const clientName = o.clientName || null;
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
+                const clientNumber = o.clientNumber || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -204,6 +205,7 @@ router.post(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
@@ -217,6 +219,7 @@ router.post(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         updatedAt: updated,
                         transportCost: o.transportCost || 0,
                         history: JSON.stringify(newHistory),
@@ -247,7 +250,8 @@ router.post(
                     id: docId,
                     offer_number: offerNumber,
                     clientName,
-                    investName
+                    investName,
+                    clientNumber
                 });
                 results.push({ id: docId, ok: true });
             }
@@ -317,6 +321,7 @@ router.put(
                 const clientName = o.clientName || null;
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
+                const clientNumber = o.clientNumber || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -338,6 +343,7 @@ router.put(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
@@ -348,6 +354,7 @@ router.put(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         transportCost: o.transportCost || 0,
                         data: dataStr
@@ -377,7 +384,8 @@ router.put(
                     id: docId,
                     offer_number: o.offer_number || null,
                     clientName,
-                    investName
+                    investName,
+                    clientNumber
                 });
             }
 
@@ -414,10 +422,12 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
 
         let dupClientName: string | null = null;
         let dupInvestName: string | null = null;
+        let dupClientNumber: string | null = null;
         try {
             const srcData = JSON.parse(source.data || '{}');
             dupClientName = srcData.clientName || null;
             dupInvestName = srcData.investName || null;
+            dupClientNumber = srcData.clientNumber || null;
         } catch {}
 
         await prisma.offers_rel.create({
@@ -428,6 +438,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
                 state: 'draft',
                 clientName: dupClientName,
                 investName: dupInvestName,
+                clientNumber: dupClientNumber,
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 transportCost: source.transportCost ?? 0,
@@ -440,7 +451,8 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             id: newId,
             offer_number: source.offer_number ? `${source.offer_number}-KOPIA` : '',
             clientName: dupClientName,
-            investName: dupInvestName
+            investName: dupInvestName,
+            clientNumber: dupClientNumber
         });
 
         for (const item of sourceItems) {

@@ -1596,7 +1596,9 @@ tbody tr:hover {
     height: 8px;
     border-radius: 50%;
     flex-shrink: 0;
-    transition: background 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background 0.3s ease,
+        box-shadow 0.3s ease;
 }
 
 .connection-dot.is-online {
@@ -1616,7 +1618,8 @@ tbody tr:hover {
 }
 
 @keyframes dotPulse {
-    0%, 100% {
+    0%,
+    100% {
         transform: scale(1);
         opacity: 1;
     }
@@ -1690,6 +1693,13 @@ tbody tr:hover {
 .offer-client {
     font-weight: 500;
     color: var(--text-secondary);
+}
+
+.client-nip {
+    font-family: inherit;
+    font-size: inherit;
+    color: inherit;
+    white-space: nowrap;
 }
 
 .offer-separator {

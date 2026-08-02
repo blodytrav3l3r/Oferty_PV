@@ -4,7 +4,7 @@
 
 /**
  * Zbiera standardowe pola formularza oferty.
- * @returns {{number:string,date:string,clientName:string,clientNip:string,clientAddress:string,clientContact:string,investName:string,investAddress:string,investContractor:string,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
+ * @returns {{number:string,date:string,clientName:string,clientNumber:string,clientNip:string,clientAddress:string,clientContact:string,investName:string,investAddress:string,investContractor:string,notes:string,paymentTerms:string,validity:string,transportKm:number,transportRate:number}}
  */
 function getOfferFormFields() {
     const g = (id) => (document.getElementById(id)?.value ?? '').trim();
@@ -12,6 +12,7 @@ function getOfferFormFields() {
         number: g('offer-number'),
         date: document.getElementById('offer-date')?.value || '',
         clientName: g('client-name'),
+        clientNumber: g('client-number'),
         clientNip: g('client-nip'),
         clientAddress: g('client-address'),
         clientContact: g('client-contact'),
@@ -37,16 +38,17 @@ function getOfferFormFields() {
 
 /**
  * Wypełnia standardowe pola formularza oferty danymi.
- * @param {{number?:string,date?:string,clientName?:string,clientNip?:string,clientAddress?:string,clientContact?:string,investName?:string,investAddress?:string,investContractor?:string,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
+ * @param {{number?:string,date?:string,clientName?:string,clientNumber?:string,clientNip?:string,clientAddress?:string,clientContact?:string,investName?:string,investAddress?:string,investContractor?:string,notes?:string,paymentTerms?:string,validity?:string,transportKm?:number,transportRate?:number}} data
  */
 function setOfferFormFields(data) {
     const s = (id, val) => {
         const el = document.getElementById(id);
-        if (el) el.value = val ?? '';
+        if (el && val !== undefined) el.value = val ?? '';
     };
     s('offer-number', data.number);
     s('offer-date', data.date || new Date().toISOString().slice(0, 10));
     s('client-name', data.clientName);
+    s('client-number', data.clientNumber);
     s('client-nip', data.clientNip);
     s('client-address', data.clientAddress);
     s('client-contact', data.clientContact);
@@ -72,6 +74,7 @@ function clearOfferFormFields(numberGenerator) {
         number: typeof numberGenerator === 'function' ? numberGenerator() : '',
         date: new Date().toISOString().slice(0, 10),
         clientName: '',
+        clientNumber: '',
         clientNip: '',
         clientAddress: '',
         clientContact: '',
@@ -160,6 +163,7 @@ function buildBaseOfferDoc(spec) {
         number: fields.number,
         date: fields.date,
         clientName: fields.clientName,
+        clientNumber: fields.clientNumber,
         clientNip: fields.clientNip,
         clientAddress: fields.clientAddress,
         clientContact: fields.clientContact,

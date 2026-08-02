@@ -298,6 +298,7 @@ model offers_rel {
   clientName    String?
   investName    String?
   clientNip     String?
+  clientNumber  String?  @default("")
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")
@@ -322,6 +323,7 @@ model offers_studnie_rel {
   clientName    String?
   investName    String?
   clientNip     String?
+  clientNumber  String?  @default("")
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")

@@ -106,6 +106,14 @@ describe('telemetryConfigSchema', () => {
         expect(r.success).toBe(true);
         if (r.success) expect(r.data.rzDna).toBe(200);
     });
+
+    it('dn jako number jest odrzucany (frontend normalizuje do string)', () => {
+        const r = telemetryConfigSchema.safeParse({
+            solverSource: 'MANUAL',
+            dn: 1200
+        });
+        expect(r.success).toBe(false);
+    });
 });
 
 /* ===== Walidacja telemetryEventSchema ===== */

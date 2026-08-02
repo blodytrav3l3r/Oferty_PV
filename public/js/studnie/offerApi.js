@@ -12,6 +12,7 @@ function normalizeOfferData(doc) {
             'number',
             'clientName',
             'clientNip',
+            'clientNumber',
             'clientAddress',
             'clientContact',
             'clientPhone',

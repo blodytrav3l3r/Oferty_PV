@@ -213,6 +213,13 @@ async function removeWell(index) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
+    if (window.pzGuard && window.pzGuard.hasPzForWell(wells[index].id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można usunąć studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
+        return;
+    }
     if (
         !(await appConfirm(`Usunąć "${wells[index].name}"?`, {
             title: 'Usuwanie studni',

@@ -42,7 +42,6 @@ interface BuildWherePartsInput {
     dateFrom: string;
     dateTo: string;
     userId: string;
-    roleSql: Prisma.Sql;
     cursor: string;
     cursorId: string;
     sort: string;
@@ -51,10 +50,6 @@ interface BuildWherePartsInput {
 
 export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
     const parts: Prisma.Sql[] = [];
-
-    // roleSql to Prisma.empty dla admina — nie dodawaj go, bo Prisma.empty jest obiektem (truthy)
-    const roleSqlStr = input.roleSql;
-    if (roleSqlStr && roleSqlStr !== Prisma.empty) parts.push(roleSqlStr);
 
     if (input.cursor && input.cursorId) {
         const op = input.order === 'desc' ? '<' : '>';
@@ -95,7 +90,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
     if (orderStatus === 'with_order') {
         return {
             joinSql: Prisma.empty,
-            whereSql: Prisma.sql`AND EXISTS (
+            whereSql: Prisma.sql`WHERE EXISTS (
                 SELECT 1 FROM orders_rury_rel WHERE "offerId" = combined.id
                 UNION
                 SELECT 1 FROM orders_studnie_rel WHERE "offerStudnieId" = combined.id
@@ -105,7 +100,7 @@ export function buildOrderStatusSql(orderStatus: SearchParams['orderStatus']): {
     if (orderStatus === 'without_order') {
         return {
             joinSql: Prisma.empty,
-            whereSql: Prisma.sql`AND NOT EXISTS (
+            whereSql: Prisma.sql`WHERE NOT EXISTS (
                 SELECT 1 FROM orders_rury_rel WHERE "offerId" = combined.id
                 UNION
                 SELECT 1 FROM orders_studnie_rel WHERE "offerStudnieId" = combined.id

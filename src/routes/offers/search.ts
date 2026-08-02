@@ -38,16 +38,21 @@ router.get('/', requireAuth, async (req, res) => {
             dateFrom: params.dateFrom,
             dateTo: params.dateTo,
             userId: params.userId,
-            roleSql,
             cursor: params.cursor,
             cursorId: params.cursorId,
             sort: params.sort,
             order: params.order
         });
         const whereSql =
-            whereParts.length > 0
-                ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
-                : Prisma.empty;
+            roleSql !== Prisma.empty
+                ? Prisma.sql`${roleSql}${
+                      whereParts.length > 0
+                          ? Prisma.sql` AND ${Prisma.join(whereParts, ' AND ')}`
+                          : Prisma.empty
+                  }`
+                : whereParts.length > 0
+                  ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
+                  : Prisma.empty;
 
         const { whereSql: orderStatusWhere } = buildOrderStatusSql(params.orderStatus);
 
@@ -62,7 +67,7 @@ router.get('/', requireAuth, async (req, res) => {
                     o.id, "userId", "clientId", state, "createdAt", "updatedAt",
                     "offer_number", data, history,
                     "clientName", "investName", "clientNip",
-                    (SELECT "clientNumber" FROM clients_rel WHERE id = o."clientId") AS "clientNumber",
+                    COALESCE(NULLIF(o."clientNumber", ''), json_extract(o.data, '$.clientNumber'), '') AS "clientNumber",
                     'rury' AS "_type",
                     "transportCost",
                     COALESCE(o_rury.order_count, 0) AS "_orderCount"
@@ -80,7 +85,7 @@ router.get('/', requireAuth, async (req, res) => {
                     s.id, "userId", "clientId", state, "createdAt", "updatedAt",
                     "offer_number", data, history,
                     "clientName", "investName", "clientNip",
-                    (SELECT "clientNumber" FROM clients_rel WHERE id = s."clientId") AS "clientNumber",
+                    COALESCE(NULLIF(s."clientNumber", ''), json_extract(s.data, '$.clientNumber'), '') AS "clientNumber",
                     'studnie' AS "_type",
                     "transportCost",
                     COALESCE(o_stud.order_count, 0) AS "_orderCount"
@@ -117,7 +122,8 @@ router.get('/', requireAuth, async (req, res) => {
                     SELECT id FROM offers_rel ${whereSql}
                     UNION ALL
                     SELECT id FROM offers_studnie_rel ${whereSql}
-                )
+                ) AS combined
+                ${orderStatusWhere}
             `;
             const countResult = (await prisma.$queryRaw(countSql)) as { cnt: number | bigint }[];
             totalCount = Number(countResult[0]?.cnt || 0);

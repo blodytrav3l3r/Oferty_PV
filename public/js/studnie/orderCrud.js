@@ -189,6 +189,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         date: offer.date,
         clientName: offer.clientName,
         clientNip: offer.clientNip,
+        clientNumber:
+            document.getElementById('client-number')?.value?.trim() || offer.clientNumber || '',
         clientAddress: offer.clientAddress,
         clientContact: offer.clientContact,
         investName: offer.investName,
@@ -395,17 +397,12 @@ async function saveOrderStudnie() {
 
 async function deleteOrderStudnie(orderId) {
     const order = ordersStudnie ? ordersStudnie.find((o) => o.id === orderId) : null;
-    if (order) {
-        const acceptedPOs = (productionOrders || []).filter(
-            (po) => po.offerId === order.offerId && po.status === 'accepted'
+    if (order && window.pzGuard && window.pzGuard.hasPzForOrder(order.id, order.offerId)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można usunąć zamówienia — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
         );
-        if (acceptedPOs.length > 0) {
-            showToast(
-                '<i data-lucide="x-circle"></i> Nie można usunąć zamówienia — zawiera zaakceptowane zlecenia produkcyjne. Najpierw cofnij ich akceptację.',
-                'error'
-            );
-            return;
-        }
+        return;
     }
 
     if (
@@ -423,7 +420,10 @@ async function deleteOrderStudnie(orderId) {
         });
         if (!res.ok) {
             const errData = await res.json().catch(() => ({}));
-            showToast(errData.error || 'Błąd usuwania zamówienia', 'error');
+            showToast(
+                '<i data-lucide="x-circle"></i> ' + (errData.error || 'Błąd usuwania zamówienia'),
+                'error'
+            );
             return;
         }
     } catch (e) {
@@ -557,6 +557,7 @@ async function enterOrderEditMode(orderId) {
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
+        setVal('client-number', order.clientNumber || '');
         setVal('client-address', order.clientAddress || '');
         setVal('client-contact', order.clientContact || '');
         setVal('invest-name', order.investName || '');
@@ -691,6 +692,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         setVal('offer-date', order.date || new Date().toISOString().slice(0, 10));
         setVal('client-name', order.clientName || '');
         setVal('client-nip', order.clientNip || '');
+        setVal('client-number', order.clientNumber || '');
         setVal('client-address', order.clientAddress || '');
         setVal('client-contact', order.clientContact || '');
         setVal('invest-name', order.investName || '');

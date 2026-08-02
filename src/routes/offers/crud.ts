@@ -7,6 +7,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { canReadDoc } from '../../utils/ownership';
 import { searchCache } from '../../utils/searchCache';
 import { removeFts5 } from '../../utils/fts5Sync';
+import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 
 const router = express.Router();
 
@@ -152,6 +153,12 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
 
             if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
                 return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
+            }
+
+            if (await hasProductionOrdersForOffer(id)) {
+                return res.status(403).json({
+                    error: 'Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.'
+                });
             }
 
             let oldData: Record<string, unknown> = {};

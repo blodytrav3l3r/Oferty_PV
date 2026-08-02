@@ -52,6 +52,10 @@
                     <span id="offer-disp-nip">—</span>
                 </div>
                 <div>
+                    <span style="color: var(--text-muted); font-size: 0.65rem">Nr klienta:</span>
+                    <span id="offer-disp-client-number">—</span>
+                </div>
+                <div>
                     <span style="color: var(--text-muted); font-size: 0.65rem">Nr oferty:</span>
                     <span id="offer-disp-number">—</span>
                 </div>
@@ -124,14 +128,16 @@
             <div class="zt-toggle-wrap">
                 <span class="zt-toggle-label">Zabezp. transp.</span>
                 <div class="zt-toggle-group">
-                    <button type="button"
+                    <button
+                        type="button"
                         class="zt-toggle-btn zt-toggle-tak-btn active"
                         id="zt-toggle-tak-oferta"
                         onclick="setZabezpieczenieTransportu(true)"
                     >
                         TAK
                     </button>
-                    <button type="button"
+                    <button
+                        type="button"
                         class="zt-toggle-btn zt-toggle-nie-btn"
                         id="zt-toggle-nie-oferta"
                         onclick="setZabezpieczenieTransportu(false)"

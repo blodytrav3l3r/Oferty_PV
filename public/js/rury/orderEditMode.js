@@ -36,6 +36,7 @@ async function enterRuryOrderEditMode(orderId) {
 
         setVal('client-name', orderData.clientName);
         setVal('client-nip', orderData.clientNip);
+        setVal('client-number', orderData.clientNumber);
         setVal('client-address', orderData.clientAddress);
         setVal('client-contact', orderData.clientContact);
         setVal('invest-name', orderData.investName);

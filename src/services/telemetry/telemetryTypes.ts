@@ -22,13 +22,18 @@ export type TelemetryEventType =
     | 'create_order'
     | 'telemetry_reason'
     | 'rule_violation'
-    | 'fallback_triggered';
+    | 'fallback_triggered'
+    | 'component_add'
+    | 'component_remove'
+    | 'component_qty_change'
+    | 'ai_rank_decision'
+    | 'reduction_swap';
 
 /** Komponent studni (pojedynczy element w config) */
 export interface WellComponentSnapshot {
     productId: string;
     productName?: string;
-    componentType: string;
+    componentType?: string;
     dn?: string | number;
     height?: number;
     width?: number;

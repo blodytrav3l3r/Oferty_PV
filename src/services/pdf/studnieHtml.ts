@@ -52,6 +52,7 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     <div><strong>${escapeHtml(data.clientName)}</strong></div>
     ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
     ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
     ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
   `.trim();
 

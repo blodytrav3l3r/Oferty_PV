@@ -226,6 +226,62 @@ describe('Offers CRUD Routes', () => {
         });
     });
 
+    describe('DELETE oferty studni z przypisanymi PZ (production_orders_rel)', () => {
+        it('zwraca 403 gdy oferta studni ma PZ (studnieCrud DELETE /studnie/:id)', async () => {
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 1 }]);
+
+            const res = await request(app)
+                .delete('/api/offers/studnie/s-1')
+                .set('x-user-id', 'user-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_studnie_rel.delete).not.toHaveBeenCalled();
+        });
+
+        it('zwraca 200 gdy oferta studni nie ma PZ (studnieCrud DELETE /studnie/:id)', async () => {
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 0 }]);
+            (prisma.offers_studnie_rel.delete as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .delete('/api/offers/studnie/s-1')
+                .set('x-user-id', 'user-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
+        });
+
+        it('zwraca 403 gdy oferta studni ma PZ (crud DELETE /:id)', async () => {
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 1 }]);
+
+            const res = await request(app)
+                .delete('/api/offers/offer_studnie_s-1')
+                .set('x-user-id', 'user-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(403);
+            expect(prisma.offers_studnie_rel.delete).not.toHaveBeenCalled();
+        });
+
+        it('zwraca 200 gdy oferta studni nie ma PZ (crud DELETE /:id)', async () => {
+            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferStudnie);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 0 }]);
+            (prisma.offers_studnie_rel.delete as jest.Mock).mockResolvedValue({});
+
+            const res = await request(app)
+                .delete('/api/offers/offer_studnie_s-1')
+                .set('x-user-id', 'user-id')
+                .set('x-user-role', 'admin');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
+        });
+    });
+
     describe('PUT bulk routes i DELETE', () => {
         it('powinien usunąć ofertę rury (DELETE /:id)', async () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);

@@ -12,6 +12,13 @@ function moveWellComponent(index, direction) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
+    if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
+        return;
+    }
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= well.config.length) return;
 
@@ -34,11 +41,18 @@ function moveWellComponent(index, direction) {
 let draggedCfgIndex = null;
 
 window.handleCfgDragStart = function (e) {
+    const well = getCurrentWell();
+    if (well && window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
+        return;
+    }
     draggedCfgIndex = parseInt(e.currentTarget.getAttribute('data-cfg-idx'));
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.4';
 
-    const well = getCurrentWell();
     if (well && well.config[draggedCfgIndex]) {
         well.config[draggedCfgIndex].isPlaceholder = true;
         window.requestAnimationFrame(() => renderWellDiagram());
@@ -114,6 +128,14 @@ window.handleCfgDrop = function (e) {
     }
     if (isWellLocked()) {
         showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
+    const curWell = getCurrentWell();
+    if (curWell && window.pzGuard && window.pzGuard.hasPzForWell(curWell.id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można przesuwać elementów studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
         return;
     }
     const tile = e.target.closest('.config-tile');

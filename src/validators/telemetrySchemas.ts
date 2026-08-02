@@ -14,7 +14,8 @@ import { z } from 'zod';
 const wellComponentSchema = z.object({
     productId: z.string(),
     productName: z.string().optional(),
-    componentType: z.string(),
+    // Opcjonalne: buildComponentSnapshot nie zna componentType, gdy produktu nie ma w studnieProducts
+    componentType: z.string().optional(),
     dn: z.union([z.string(), z.number()]).optional(),
     height: z.number().optional(),
     width: z.number().optional(),
@@ -161,7 +162,12 @@ export const telemetryEventSchema = z.object({
         'create_order',
         'telemetry_reason',
         'rule_violation',
-        'fallback_triggered'
+        'fallback_triggered',
+        'component_add',
+        'component_remove',
+        'component_qty_change',
+        'ai_rank_decision',
+        'reduction_swap'
     ]),
     wellId: z.string().optional(),
     componentId: z.string().optional(),

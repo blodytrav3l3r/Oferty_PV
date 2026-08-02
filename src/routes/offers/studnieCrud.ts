@@ -11,6 +11,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
+import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
@@ -218,6 +219,7 @@ router.post(
                 const clientName = o.clientName || null;
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
+                const clientNumber = o.clientNumber || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -250,6 +252,7 @@ router.post(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         updatedAt: updated,
                         data: dataStr,
@@ -262,6 +265,7 @@ router.post(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr
@@ -271,7 +275,8 @@ router.post(
                     id: docId,
                     offer_number: offerNumber,
                     clientName,
-                    investName
+                    investName,
+                    clientNumber
                 });
                 results.push({ id: docId, ok: true });
             }
@@ -333,6 +338,8 @@ router.put(
                     (o.investName as string) || (dataPayload.investName as string) || null;
                 const clientNip =
                     (o.clientNip as string) || (dataPayload.clientNip as string) || null;
+                const clientNumber =
+                    (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = (() => {
                     const raw = o.createdAt;
                     if (typeof raw === 'number') return new Date(raw).toISOString();
@@ -353,6 +360,7 @@ router.put(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     },
@@ -362,6 +370,7 @@ router.put(
                         clientName,
                         investName,
                         clientNip,
+                        clientNumber,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
                     }
@@ -370,7 +379,8 @@ router.put(
                     id: docId,
                     offer_number: (o.offer_number as string) || null,
                     clientName,
-                    investName
+                    investName,
+                    clientNumber
                 });
             }
 
@@ -400,6 +410,12 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
 
         if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
             return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
+        }
+
+        if (await hasProductionOrdersForOffer(id)) {
+            return res.status(403).json({
+                error: 'Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.'
+            });
         }
 
         let oldData: Record<string, unknown> = {};

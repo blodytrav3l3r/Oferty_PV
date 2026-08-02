@@ -158,6 +158,9 @@ function renderClientsDbList(query) {
                   (c.clientNumber && c.clientNumber.toLowerCase().includes(q))
           )
         : clientsDb;
+    const sorted = [...filtered].sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', 'pl', { sensitivity: 'base' })
+    );
 
     if (clientsDb.length === 0) {
         container.innerHTML =
@@ -189,7 +192,7 @@ function renderClientsDbList(query) {
 
     const tbody = document.createElement('tbody');
 
-    filtered.forEach((c) => {
+    sorted.forEach((c) => {
         const tr = document.createElement('tr');
         tr.style.cssText =
             'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';

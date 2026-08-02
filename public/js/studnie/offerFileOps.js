@@ -2,6 +2,13 @@
 /* ===== OPERACJE NA PLIKACH OFERTY (STUDNIE) ===== */
 
 async function deleteOfferStudnie(id) {
+    if (window.pzGuard && window.pzGuard.hasPzForOffer(id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.',
+            'error'
+        );
+        return;
+    }
     if (
         !(await appConfirm('Czy na pewno usunąć tę ofertę?', {
             title: 'Usuwanie oferty',
@@ -15,8 +22,8 @@ async function deleteOfferStudnie(id) {
             headers: authHeaders()
         });
         if (!res.ok) {
-            const err = await res.json();
-            showToast(err.error || 'Błąd usuwania', 'error');
+            const err = await res.json().catch(() => ({}));
+            showToast('<i data-lucide="x-circle"></i> ' + (err.error || 'Błąd usuwania'), 'error');
             return;
         }
         offersStudnie = offersStudnie.filter((o) => o.id !== id);

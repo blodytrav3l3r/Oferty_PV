@@ -32,7 +32,8 @@ jest.mock('../src/prismaClient', () => ({
         // Raw SQL methods used in studnieOrders.ts
         $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn(),
-        $executeRawUnsafe: jest.fn()
+        $executeRawUnsafe: jest.fn(),
+        $executeRaw: jest.fn()
     }
 }));
 
@@ -97,5 +98,42 @@ describe('Partial Orders Backend Logic', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body.data).toHaveLength(2);
         expect(res.body.data[0].id).toBe('o1');
+    });
+
+    describe('DELETE /api/orders-studnie/:id — blokada zleceń produkcyjnych', () => {
+        const existingOrder = {
+            id: 'order-1',
+            userId: 'test-user',
+            data: JSON.stringify({ offerId: 'offer-123' })
+        };
+
+        it('zwraca 403 gdy zamówienie ma PZ w statusie draft', async () => {
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(existingOrder);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 1 }]);
+
+            const res = await request(app).delete('/api/orders-studnie/order-1');
+
+            expect(res.statusCode).toBe(403);
+        });
+
+        it('zwraca 403 gdy zamówienie ma PZ w statusie accepted', async () => {
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(existingOrder);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 2 }]);
+
+            const res = await request(app).delete('/api/orders-studnie/order-1');
+
+            expect(res.statusCode).toBe(403);
+        });
+
+        it('zwraca 200 gdy zamówienie nie ma PZ', async () => {
+            (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(existingOrder);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([{ cnt: 0 }]);
+            (prisma.$executeRaw as jest.Mock).mockResolvedValue(1);
+
+            const res = await request(app).delete('/api/orders-studnie/order-1');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
+        });
     });
 });

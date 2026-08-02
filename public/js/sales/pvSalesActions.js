@@ -457,7 +457,10 @@ export default {
         } catch (error) {
             logger.error('pvSalesUi', 'Błąd podczas usuwania:', error);
             if (typeof window.showToast === 'function') {
-                window.showToast('Błąd podczas usuwania oferty.', 'error');
+                window.showToast(
+                    (error && error.message) || 'Błąd podczas usuwania oferty.',
+                    'error'
+                );
             }
         }
     },

@@ -193,7 +193,7 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
                     offerId: data.offerId,
                     wellId: data.wellId,
                     warehouse: data.warehouse,
-                    dn: (snap.dn as string) || undefined,
+                    dn: snap.dn != null ? String(snap.dn) : undefined,
                     dennicaHeight:
                         typeof snap.dennicaHeight === 'number' ? snap.dennicaHeight : undefined,
                     ringCount: typeof snap.ringCount === 'number' ? snap.ringCount : undefined,

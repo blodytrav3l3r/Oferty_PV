@@ -227,7 +227,7 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
                     <div style="min-width:0;">
                         <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
-                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}</div>
+                        <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
                         <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size:0.75rem;">Otwórz</button>
@@ -285,7 +285,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <span class="offer-order-icon"><i data-lucide="package-check"></i></span>
                                         <span class="offer-order-text">
                                             <strong>${label} <span style="color: var(--success-hover); font-weight: 600;">• ${orderValue.toFixed(2)} PLN</span></strong>
-                                            <small>${createdAt}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
+                                            <small>${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}${changeInfo.changed ? ' • zmienione względem oferty' : ''}</small>
                                         </span>
                                     </button>
                                     <div class="offer-order-actions">
@@ -324,7 +324,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             <div class="offer-title-section">
                                 <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
                                 <div class="offer-subtitle">
-                                    <span class="offer-client">${dd.clientInfo}${dd.clientNumber ? ` <span class="client-nip">(${dd.clientNumber})</span>` : ''}</span>
+                                    <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Nr klienta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
                                     ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${dd.investInfo}</span>` : ''}
                                     ${dd.creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${dd.creatorName}</span>` : ''}
                                     ${dd.userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${dd.userName}</span>` : ''}

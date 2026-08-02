@@ -120,15 +120,13 @@ async function saveOfferStudnie() {
             wells.forEach(function (w) {
                 if (w.config && w.config.length > 0) {
                     window.mlRewardHooks.onWellAccepted({ eventType: 'OFFER_SAVED' });
-                    // Wyślij acceptance-full do backendu
-                    try {
-                        fetch('/api/telemetry/ai/acceptance-full', {
-                            method: 'POST',
-                            credentials: 'same-origin',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
+                    // Wyślij acceptance-full do backendu (wspólny helper z telemetryBridge.js)
+                    if (typeof window.telemetryRecordAcceptanceFull === 'function') {
+                        try {
+                            window.telemetryRecordAcceptanceFull({
                                 telemetryId: w.id || 'well_' + Date.now(),
                                 accepted: true,
+                                offerId: editingOfferIdStudnie,
                                 wellId: w.id,
                                 warehouse: w.magazyn,
                                 configSnapshot: {
@@ -136,9 +134,9 @@ async function saveOfferStudnie() {
                                     ringCount: (w.config || []).length,
                                     warehouse: w.magazyn
                                 }
-                            })
-                        }).catch(function () {});
-                    } catch (e) {}
+                            });
+                        } catch (e) {}
+                    }
                 }
             });
         }

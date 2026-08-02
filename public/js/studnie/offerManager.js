@@ -82,6 +82,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         number: normalized.number,
         date: normalized.date,
         clientName: normalized.clientName,
+        clientNumber: normalized.clientNumber,
         clientNip: normalized.clientNip,
         clientAddress: normalized.clientAddress,
         clientContact: normalized.clientContact,

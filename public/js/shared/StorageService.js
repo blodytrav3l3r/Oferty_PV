@@ -174,6 +174,13 @@ class StorageService {
                 return true;
             }
 
+            if (res.status === 403) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(
+                    data.error || 'Nie można usunąć oferty — operacja zablokowana przez serwer'
+                );
+            }
+
             if (res.status === 500) {
                 // 500 = oferta mogła być już usunięta z DB (błąd FTS5/cache)
                 logger.warn(
@@ -252,6 +259,7 @@ class StorageService {
                     (doc.data.summary ? doc.data.summary.totalBrutto : null),
                 number: doc.data.number || doc.data.offerNumber,
                 clientName: doc.data.clientName,
+                clientNumber: doc.data.clientNumber,
                 date: doc.data.date || doc.data.offerDate
             };
 

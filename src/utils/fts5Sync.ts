@@ -1,10 +1,12 @@
 import prisma from '../prismaClient';
+import { logger } from './logger';
 
 export interface OfferFts5Data {
     id: string;
     offer_number: string | null;
     clientName: string | null;
     investName: string | null;
+    clientNumber?: string | null;
 }
 
 /**
@@ -19,11 +21,12 @@ export async function syncFts5(type: 'rury' | 'studnie', data: OfferFts5Data): P
             type
         );
         await prisma.$executeRawUnsafe(
-            `INSERT INTO offers_search_fts(id, offer_number, clientName, investName, type) VALUES (?, ?, ?, ?, ?)`,
+            `INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type) VALUES (?, ?, ?, ?, ?, ?)`,
             data.id,
             data.offer_number || '',
             data.clientName || '',
             data.investName || '',
+            data.clientNumber || '',
             type
         );
     } catch {
@@ -77,5 +80,62 @@ export async function fts5Exists(): Promise<boolean> {
         return r.length > 0;
     } catch {
         return false;
+    }
+}
+
+const FTS5_COLUMNS = ['id', 'offer_number', 'clientName', 'investName', 'clientNumber', 'type'];
+
+/**
+ * Ensure FTS5 table exists with the full column set (idempotent).
+ * On existing installs missing the clientNumber column the virtual table
+ * is rebuilt (FTS5 has no ALTER TABLE ADD COLUMN) and backfilled.
+ */
+export async function ensureFts5Schema(): Promise<void> {
+    try {
+        if (!(await fts5Exists())) return;
+        const cols = await prisma.$queryRawUnsafe<{ name: string }[]>(
+            'PRAGMA table_info(offers_search_fts)'
+        );
+        const names = cols.map((c) => c.name);
+        const missing = FTS5_COLUMNS.filter((c) => !names.includes(c));
+        if (missing.length === 0) return;
+
+        logger.warn(
+            'Fts5',
+            `FTS5 brak kolumn: ${missing.join(', ')} — przebudowa tabeli i backfill`
+        );
+        await prisma.$executeRawUnsafe('DROP TABLE offers_search_fts');
+        await prisma.$executeRawUnsafe(`
+            CREATE VIRTUAL TABLE IF NOT EXISTS offers_search_fts USING fts5(
+                id UNINDEXED,
+                offer_number,
+                clientName,
+                investName,
+                clientNumber,
+                type UNINDEXED,
+                tokenize='porter unicode61'
+            )
+        `);
+        await prisma.$executeRawUnsafe(`
+            INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
+            SELECT id, offer_number, clientName, investName,
+                   COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
+                   'rury'
+            FROM offers_rel WHERE id IS NOT NULL
+        `);
+        await prisma.$executeRawUnsafe(`
+            INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
+            SELECT id, offer_number, clientName, investName,
+                   COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
+                   'studnie'
+            FROM offers_studnie_rel WHERE id IS NOT NULL
+        `);
+    } catch (e) {
+        // FTS5 niedostępny (np. build bez fts5) — nie blokuj startu serwera
+        logger.warn(
+            'Fts5',
+            'Nie udało się upewnić schematu FTS5:',
+            e instanceof Error ? e.message : String(e)
+        );
     }
 }

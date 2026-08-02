@@ -98,6 +98,10 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
 
     const clientName = document.getElementById('client-name')?.value?.trim() || '';
     const clientNip = document.getElementById('client-nip')?.value?.trim() || '';
+    const clientNumber =
+        document.getElementById('client-number')?.value?.trim() ||
+        (offer && offer.clientNumber) ||
+        '';
     const clientAddress = document.getElementById('client-address')?.value?.trim() || '';
     const clientContact = document.getElementById('client-contact')?.value?.trim() || '';
     const investName = document.getElementById('invest-name')?.value?.trim() || '';
@@ -169,6 +173,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             },
             clientName,
             clientNip,
+            clientNumber,
             clientAddress,
             clientContact,
             investName,

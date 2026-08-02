@@ -273,6 +273,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         items,
         clientName: getVal('client-name'),
         clientNip: getVal('client-nip'),
+        clientNumber: getVal('client-number'),
         clientAddress: getVal('client-address'),
         clientContact: getVal('client-contact'),
         investName: getVal('invest-name'),

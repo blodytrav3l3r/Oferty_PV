@@ -284,6 +284,18 @@ export async function initApp(): Promise<void> {
         // ignoruj — indeks istnieje lub baza nie ma uprawnień
     }
 
+    // Zapewnij pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne
+    try {
+        const { ensureFts5Schema } = await import('./utils/fts5Sync');
+        await ensureFts5Schema();
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się upewnić schematu FTS5:',
+            e instanceof Error ? e.message : String(e)
+        );
+    }
+
     // Czyszczenie starych logów audytowych
     cleanupAuditLogs().catch((err: unknown) =>
         logger.error(

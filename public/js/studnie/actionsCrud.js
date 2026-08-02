@@ -213,6 +213,13 @@ function removeWellComponent(index) {
         return;
     }
     const well = getCurrentWell();
+    if (well && window.pzGuard && window.pzGuard.hasPzForElementAtOrAfter(well.id, index)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można usunąć elementu — ma przypisane zlecenie produkcyjne. Usuń najpierw zlecenie w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
+        return;
+    }
     well.configSource = 'MANUAL';
 
     const removedItem = well.config.splice(index, 1)[0];
@@ -317,6 +324,13 @@ function clearWellConfig() {
     }
     const well = getCurrentWell();
     if (!well) return;
+    if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) {
+        showToast(
+            '<i data-lucide="x-circle"></i> Nie można wyczyścić konfiguracji studni — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
+            'error'
+        );
+        return;
+    }
     well.configSource = 'MANUAL';
     well.autoSelect = false;
     well.autoLocked = true;
