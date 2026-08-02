@@ -626,7 +626,9 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         for (let k of kItems) {
             let actualH = k._h;
             const kp = studnieProducts.find((p) => p.id === k.productId);
-            if (kp && kp.componentType === 'dennica' && lastWasDennica) {
+            const kpDennicaLike =
+                kp && (kp.componentType === 'dennica' || kp.componentType === 'styczna');
+            if (kpDennicaLike && lastWasDennica) {
                 actualH -= 100;
             }
 
@@ -637,19 +639,21 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             }
             y += actualH;
             if (kp && kp.componentType !== 'uszczelka') {
-                lastWasDennica = kp.componentType === 'dennica';
+                lastWasDennica = kpDennicaLike;
             }
         }
         for (let t of [...topItems].reverse()) {
             const tp = studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 let actualH = tp.height;
-                if (tp.componentType === 'dennica' && lastWasDennica) actualH -= 100;
+                const tpDennicaLike =
+                    tp.componentType === 'dennica' || tp.componentType === 'styczna';
+                if (tpDennicaLike && lastWasDennica) actualH -= 100;
 
                 segs.push({ type: tp.componentType, h: actualH, start: y, end: y + actualH });
                 y += actualH;
                 if (tp.componentType !== 'uszczelka') {
-                    lastWasDennica = tp.componentType === 'dennica';
+                    lastWasDennica = tpDennicaLike;
                 }
             }
         }

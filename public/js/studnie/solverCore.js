@@ -20,7 +20,8 @@ function buildConfigSegments(configItems, psiaBuda) {
     return configItems.map((item) => {
         const prod = studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
-        if (prod && prod.componentType === 'dennica' && lastWasD) {
+        const isDennicaLike = prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
+        if (isDennicaLike && lastWasD) {
             h -= 100;
         }
         const seg = {
@@ -30,7 +31,7 @@ function buildConfigSegments(configItems, psiaBuda) {
             type: prod ? prod.componentType : ''
         };
         y += h;
-        lastWasD = prod && prod.componentType === 'dennica';
+        lastWasD = !!isDennicaLike;
         return seg;
     });
 }
@@ -64,10 +65,11 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) continue;
             let h = p.height || 0;
-            if (p.componentType === 'dennica' && lastWasD) h -= 100;
-            if (p.componentType === 'dennica') currentDennicaEnd = cy + h;
+            const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+            if (isDennicaLike && lastWasD) h -= 100;
+            if (isDennicaLike) currentDennicaEnd = cy + h;
             cy += h;
-            lastWasD = p.componentType === 'dennica';
+            lastWasD = isDennicaLike;
         }
 
         let prDN =

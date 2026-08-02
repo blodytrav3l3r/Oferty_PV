@@ -264,7 +264,8 @@ function buildConfigMap(well, findProductFn, includeName = false) {
         const p = findProductFn(cItem.productId);
         if (!p) continue;
         let h = 0;
-        if (p.componentType === 'dennica') {
+        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+        if (isDennicaLike) {
             for (let q = 0; q < cItem.quantity; q++) {
                 dennicaProcessedCount++;
                 h += (p.height || 0) - (dennicaProcessedCount > 1 ? 100 : 0);

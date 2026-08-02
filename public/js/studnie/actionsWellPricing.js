@@ -396,6 +396,8 @@ function calcWellStats(well) {
                 : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
+        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
+
         let itemPriceDisc, itemPriceBaseVal;
         const useFrozenPrice = item.frozenPrice != null && window.isPreviewMode;
         if (useFrozenPrice) {
@@ -431,12 +433,12 @@ function calcWellStats(well) {
 
         for (let q = 0; q < item.quantity; q++) {
             let h = p.height || 0;
-            if (p.componentType === 'dennica' && lastWasDennica) {
+            if (isDennicaLike && lastWasDennica) {
                 h -= 100;
             }
             height += h;
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = p.componentType === 'dennica';
+                lastWasDennica = isDennicaLike;
             }
         }
     });

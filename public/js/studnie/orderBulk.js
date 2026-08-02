@@ -52,10 +52,12 @@ function buildAutoOrderData(el, sharedData) {
             break;
         }
     }
+    const nextIsDennicaLike =
+        actualNextProduct &&
+        (actualNextProduct.componentType === 'dennica' ||
+            actualNextProduct.componentType === 'styczna');
     const shouldReduce =
-        product.componentType === 'dennica' &&
-        ((actualNextProduct && actualNextProduct.componentType === 'dennica') ||
-            (well.psiaBuda && !actualNextProduct));
+        product.componentType === 'dennica' && (nextIsDennicaLike || (well.psiaBuda && !actualNextProduct));
 
     if (shouldReduce) {
         const reducedH = (product.height || 0) - 100;
@@ -137,7 +139,8 @@ function buildAutoOrderData(el, sharedData) {
     if (
         product.componentType === 'dennica' &&
         actualNextProduct &&
-        actualNextProduct.componentType === 'dennica'
+        (actualNextProduct.componentType === 'dennica' ||
+            actualNextProduct.componentType === 'styczna')
     )
         autoUwagi.push('UWAGA ! KRĄG NA FORMIE STUDNI');
 

@@ -17,7 +17,7 @@ function calculateAssignedPrzejscia(well) {
             const p = studnieProducts.find((x) => x.id === well.config[j].productId);
             if (!p) continue;
             let h = 0;
-            if (p.componentType === 'dennica') {
+            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
                 dennicaCount++;
                 h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
             } else {

@@ -43,9 +43,10 @@ function enforceOtRings() {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
+        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
         for (let i = 0; i < qty; i++) {
             let actualHeight = p.height || 0;
-            if (p.componentType === 'dennica' && lastWasDennica) {
+            if (isDennicaLike && lastWasDennica) {
                 actualHeight -= 100;
             }
 
@@ -57,7 +58,7 @@ function enforceOtRings() {
                 product: p
             });
             cy += actualHeight;
-            lastWasDennica = p.componentType === 'dennica';
+            lastWasDennica = isDennicaLike;
         }
     }
 

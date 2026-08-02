@@ -61,7 +61,9 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
     return configItems.map((item, idx) => {
         const prod = studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
-        if (prod && prod.componentType === 'dennica' && lastWasD) {
+        const isDennicaLike =
+            !!prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
+        if (isDennicaLike && lastWasD) {
             h -= 100;
         }
         const seg = {
@@ -72,7 +74,7 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
             type: prod ? prod.componentType : ''
         };
         y += h;
-        lastWasD = prod && prod.componentType === 'dennica';
+        lastWasD = isDennicaLike;
         return seg;
     });
 }

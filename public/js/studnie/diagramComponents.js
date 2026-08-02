@@ -32,9 +32,10 @@ function buildVisibleComponents(well) {
     configReversedElements.forEach((item, revIdx) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
+        const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
         for (let i = 0; i < item.quantity; i++) {
             let effH = p.height || 0;
-            if (p.componentType === 'dennica' && lastWasDennica) {
+            if (isDennicaLike && lastWasDennica) {
                 effH = Math.max(0, effH - 100);
             }
 
@@ -48,7 +49,7 @@ function buildVisibleComponents(well) {
                 isPlaceholder: !!item.isPlaceholder
             });
             if (p.componentType !== 'uszczelka') {
-                lastWasDennica = p.componentType === 'dennica';
+                lastWasDennica = isDennicaLike;
             }
         }
     });
