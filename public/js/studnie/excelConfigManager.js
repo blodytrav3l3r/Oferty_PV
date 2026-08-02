@@ -19,6 +19,13 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         'konus',
         'pierscien_odciazajacy'
     ];
+    const topClosureTypes = [
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'konus',
+        'pierscien_odciazajacy'
+    ];
     const bottomTypes = ['dennica', 'kineta', 'styczna'];
     const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
     if (topTypes.includes(componentType)) {
@@ -45,7 +52,7 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                 if (reliefTypes.includes(p.componentType)) {
                     return p.componentType !== componentType;
                 }
-                return !topTypes.includes(p.componentType);
+                return !topClosureTypes.includes(p.componentType);
             });
         } else {
             well.config = well.config.filter((item) => {
@@ -53,7 +60,7 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                     typeof studnieProducts !== 'undefined'
                         ? studnieProducts.find((pr) => pr.id === item.productId)
                         : null;
-                return !(p && topTypes.includes(p.componentType));
+                return !(p && topClosureTypes.includes(p.componentType));
             });
         }
         const wlazIdx = well.config.findIndex((item) => {

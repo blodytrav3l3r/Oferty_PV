@@ -221,6 +221,9 @@ function _excelCalcUszczelkaCount(well) {
 function _excelCountProductInConfig(well, componentType, height, productId, targetDn) {
     let count = 0;
     let filterDn = targetDn !== undefined && targetDn !== null ? targetDn : well.dn;
+    if (filterDn === 'styczna' || filterDn === 'styczne') {
+        filterDn = well && well.stycznaNadbudowa1200 ? 1200 : 1000;
+    }
     (well.config || []).forEach((item) => {
         const p = _excelGetResolution(well, item);
         if (!p) return;
@@ -540,7 +543,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
             '"' +
             (opts[i][0] === curVal ? ' selected' : '') +
             '>' +
-            opts[i][1] +
+            escapeHtml(opts[i][1]) +
             '</option>';
     }
     let extraClass = disabled ? ' disabled' : '';
@@ -568,7 +571,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
         optHtml +
         '</select>' +
         '<div style="pointer-events:none;background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
-        (label || '&mdash;') +
+        (label ? escapeHtml(label) : '&mdash;') +
         '</div>' +
         '</div>'
     );

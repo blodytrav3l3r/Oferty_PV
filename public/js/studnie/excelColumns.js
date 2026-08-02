@@ -17,7 +17,7 @@ function _excelGetComponentsForDn(dn, well) {
         return val === 1 || val === '1' || val === undefined;
     });
 
-    if (dn === 'styczna') {
+    if (dn === 'styczne' || dn === 'styczna') {
         const effDn = well && well.stycznaNadbudowa1200 ? 1200 : 1000;
         products = products.filter(
             (p) =>
@@ -73,7 +73,7 @@ function _excelBuildComponentColumns(dn, well) {
     /* 2. AVR / Pierścienie — per produkt (osobna kolumna każdy) */
     const avrProducts = groups['avr'] || [];
     avrProducts.forEach((p) => {
-        const nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
+        const nameShort = (p.name || '').replace(/AVR\s*/i, '').trim() || p.id;
         const lbl = _excelShortLabel(p.name || '', 'avr');
         cols.push({
             id: 'avr_' + p.id,
@@ -168,7 +168,9 @@ function _excelBuildComponentColumns(dn, well) {
                 label:
                     (ctLabels[ct] || ct) +
                     ' ' +
-                    (p.name.length > 15 ? p.name.substring(0, 13) + '…' : p.name),
+                    ((p.name || '').length > 15
+                        ? (p.name || '').substring(0, 13) + '…'
+                        : p.name || ''),
                 shortLabel: lbl.short,
                 detailLabel: lbl.detail,
                 type: 'number',
@@ -278,7 +280,11 @@ function _excelBuildComponentColumns(dn, well) {
             cols.push({
                 id: 'dennica_' + p.id,
                 key: 'dennica_' + p.id,
-                label: 'Dennica ' + (p.name.length > 12 ? p.name.substring(0, 10) + '…' : p.name),
+                label:
+                    'Dennica ' +
+                    ((p.name || '').length > 12
+                        ? (p.name || '').substring(0, 10) + '…'
+                        : p.name || ''),
                 shortLabel: lbl.short,
                 detailLabel: lbl.detail,
                 type: 'number',
@@ -304,8 +310,8 @@ function _excelBuildComponentColumns(dn, well) {
         });
     });
 
-    /* 10. Studnie Styczne (tylko dla dn='styczna') */
-    if (dn === 'styczna') {
+    /* 10. Studnie Styczne (tylko dla dn='styczne'/'styczna') */
+    if (dn === 'styczne' || dn === 'styczna') {
         const stycznaProducts = groups['styczna'] || [];
         stycznaProducts.forEach((p) => {
             const lbl = _excelShortLabel(p.name || '', 'styczna');

@@ -187,7 +187,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ';background:' +
             rowBg +
             ';border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="' +
-            escapeHtml(well.name) +
+            escapeHtml(well.name).replace(/"/g, '&quot;') +
             '" onchange="excelOnNameChange(' +
             wIdx +
             ',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
@@ -277,7 +277,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             if (activeCategory && categories.indexOf(activeCategory) < 0) {
                 categories.push(activeCategory);
             }
-            let catOpts = [['', '&mdash;']];
+            let catOpts = [['', '\u2014']];
             categories.forEach(function (c) {
                 catOpts.push([c, c]);
             });
@@ -296,7 +296,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                       return parseFloat(a.dn) - parseFloat(b.dn);
                   })
                 : [];
-            let dnOpts = [['', '&mdash;']];
+            let dnOpts = [['', '\u2014']];
             availDns.forEach(function (p) {
                 let dnLabel =
                     typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
@@ -358,9 +358,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             let lbl =
                 hCm > 0
                     ? hCm + ' cm'
-                    : p.name.length > 20
-                      ? p.name.substring(0, 18) + '\u2026'
-                      : p.name;
+                    : (p.name || '').length > 20
+                      ? (p.name || '').substring(0, 18) + '\u2026'
+                      : p.name || '';
             wlazOpts.push([p.id, lbl]);
         });
         html +=

@@ -356,7 +356,7 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
         ctx.studnieProducts = [stycznaProd, krag1000, krag1200];
         ctx.wells = [];
 
-        const cols1000 = ctx._excelBuildComponentColumns('styczna', {
+        const cols1000 = ctx._excelBuildComponentColumns('styczne', {
             dn: 'styczna',
             magazyn: 'Kluczbork',
             stycznaNadbudowa1200: false
@@ -365,7 +365,7 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
         expect(cols1000.some((c: any) => c.id === 'krag_500')).toBe(true);
         expect(cols1000.some((c: any) => c.id === 'krag_600')).toBe(false);
 
-        const cols1200 = ctx._excelBuildComponentColumns('styczna', {
+        const cols1200 = ctx._excelBuildComponentColumns('styczne', {
             dn: 'styczna',
             magazyn: 'Kluczbork',
             stycznaNadbudowa1200: true

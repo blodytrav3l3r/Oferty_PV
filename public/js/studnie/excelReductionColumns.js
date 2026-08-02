@@ -66,7 +66,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
 
                 /* Red. AVR */
                 (redDnSpecific['avr'] || []).forEach(function (p) {
-                    let nameShort = p.name.replace(/AVR\s*/i, '').trim() || p.id;
+                    let nameShort = (p.name || '').replace(/AVR\s*/i, '').trim() || p.id;
                     let lbl = _excelShortLabel(p.name || '', 'avr');
                     cols.push({
                         id: 'red_avr_' + dnPfx + p.id,

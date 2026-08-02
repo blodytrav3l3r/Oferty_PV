@@ -10,7 +10,8 @@ function excelOnRzednaChange(wIdx) {
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
-    const rzWlazu = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
+    const rzWlazuRaw = rzWlazuInput ? parseFloat(rzWlazuInput.value) : null;
+    const rzWlazu = rzWlazuRaw !== null && !isNaN(rzWlazuRaw) ? rzWlazuRaw : null;
     const rzDnaRaw = rzDnaInput ? parseFloat(rzDnaInput.value) : null;
     const rzDna = rzDnaRaw !== null && !isNaN(rzDnaRaw) ? rzDnaRaw : null;
 
@@ -191,7 +192,13 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     const newQty = parseInt(value) || 0;
     _excelClearResCache(well);
 
-    const filterDn = redDn ? parseInt(redDn) : parseInt(well.dn);
+    const filterDn = redDn
+        ? parseInt(redDn)
+        : well.dn === 'styczna' || well.dn === 'styczne'
+          ? well.stycznaNadbudowa1200
+              ? 1200
+              : 1000
+          : parseInt(well.dn);
 
     const existingItems = [];
     if (!productId) {
@@ -228,7 +235,11 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
                 typeof getAvailableProducts === 'function'
                     ? getAvailableProducts(well)
                     : studnieProducts
-            ).filter((p) => p.componentType === componentType && parseInt(p.dn) === filterDn);
+            ).filter(
+                (p) =>
+                    p.componentType === componentType &&
+                    (p.dn === null || parseInt(p.dn) === filterDn)
+            );
             if (height !== undefined)
                 candidates = candidates.filter((p) => parseInt(p.height) === parseInt(height));
             if (typeof filterByWellParams === 'function')
