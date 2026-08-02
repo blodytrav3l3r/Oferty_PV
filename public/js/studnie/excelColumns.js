@@ -410,11 +410,5 @@ function _excelBuildComponentColumns(dn, well) {
         });
     });
 
-    /* Styczne: ukryj korpus (dennica, krag, krag_ot) — zostaje uszczelka + nadbudowa DN1000/DN1200 */
-    if (dn === 'styczne' || dn === 'styczna') {
-        const CORPUS_TYPES = ['dennica', 'krag', 'krag_ot'];
-        return cols.filter((c) => !CORPUS_TYPES.includes(c.componentType));
-    }
-
     return cols;
 }

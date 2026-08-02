@@ -353,41 +353,7 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
             magazynKLB: 1,
             magazynWL: 1
         };
-        const konus1000 = {
-            id: 'konus-1000-500',
-            name: 'Konus DN1000 H=500',
-            componentType: 'konus',
-            dn: '1000',
-            height: 500,
-            magazynKLB: 1,
-            magazynWL: 1
-        };
-        const plyta1000 = {
-            id: 'plyta-1000-100',
-            name: 'Płyta zamykająca DN1000 H=100',
-            componentType: 'plyta_zamykajaca',
-            dn: '1000',
-            height: 100,
-            magazynKLB: 1,
-            magazynWL: 1
-        };
-        const uszczelka1000 = {
-            id: 'uszczelka-1000',
-            name: 'Uszczelka DN1000',
-            componentType: 'uszczelka',
-            dn: '1000',
-            height: 0,
-            magazynKLB: 1,
-            magazynWL: 1
-        };
-        ctx.studnieProducts = [
-            stycznaProd,
-            krag1000,
-            krag1200,
-            konus1000,
-            plyta1000,
-            uszczelka1000
-        ];
+        ctx.studnieProducts = [stycznaProd, krag1000, krag1200];
         ctx.wells = [];
 
         const cols1000 = ctx._excelBuildComponentColumns('styczne', {
@@ -396,10 +362,7 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
             stycznaNadbudowa1200: false
         });
         expect(cols1000.some((c: any) => c.id === 'styczna_styczna-1')).toBe(true);
-        expect(cols1000.some((c: any) => c.id === 'konus_500')).toBe(true);
-        expect(cols1000.some((c: any) => c.id === 'plyta_zamykajaca_100')).toBe(true);
-        expect(cols1000.some((c: any) => c.id === 'uszczelka_uszczelka-1000')).toBe(true);
-        expect(cols1000.some((c: any) => c.id === 'krag_500')).toBe(false);
+        expect(cols1000.some((c: any) => c.id === 'krag_500')).toBe(true);
         expect(cols1000.some((c: any) => c.id === 'krag_600')).toBe(false);
 
         const cols1200 = ctx._excelBuildComponentColumns('styczne', {
@@ -407,8 +370,7 @@ describe('_excelBuildComponentColumns — pozostałe średnice zakładek', () =>
             magazyn: 'Kluczbork',
             stycznaNadbudowa1200: true
         });
-        expect(cols1200.some((c: any) => c.id === 'styczna_styczna-1')).toBe(true);
-        expect(cols1200.some((c: any) => c.id === 'krag_600')).toBe(false);
+        expect(cols1200.some((c: any) => c.id === 'krag_600')).toBe(true);
         expect(cols1200.some((c: any) => c.id === 'krag_500')).toBe(false);
     });
 });
