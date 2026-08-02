@@ -12,12 +12,19 @@
 function recalculateWellErrors(well) {
     if (!well || well.configStatus === 'LOADING') return;
 
-    // Wyczyść błędy dotyczące luzów z poprzedniego wywołania
-    let liveErrors = well.configErrors
-        ? well.configErrors.filter(
-              (e) => !e.includes('Błąd zapasu') && !e.includes('nie spełnia zapasów')
-          )
-        : [];
+    // Wyczyść błędy dotyczące luzów z poprzedniego wywołania; przy pustym configu
+    // kasuj też pozostałe błędy solvera (nieaktualne po clearWellConfig/doSelectDN).
+    // Notki luzów ("zastosowano luzy minimalne") są regenerowane poniżej — stare
+    // (np. po zamianie kręgu) nie mogą zostać w configErrors.
+    let liveErrors =
+        well.config && well.config.length > 0 && well.configErrors
+            ? well.configErrors.filter(
+                  (e) =>
+                      !e.includes('Błąd zapasu') &&
+                      !e.includes('nie spełnia zapasów') &&
+                      !e.includes('zastosowano luzy minimalne')
+              )
+            : [];
 
     // --- WALIDACJA LUZÓW NA ŻYWO ---
     if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
@@ -127,12 +134,41 @@ function recalculateWellErrors(well) {
         }
     }
     well.configErrors = [...new Set(liveErrors)];
-    well.configStatus =
-        well.configErrors.length > 0 ? 'ERROR' : well.configSource ? 'OK' : well.configStatus || '';
+    // Ustal status: twarde błędy → ERROR; same notki (tolerancja / luzy minimalne) → WARNING
+    const hasHardError = well.configErrors.some(
+        (e) => !e.includes('Zastosowana rozszerzona tolerancja') && !e.includes('luzy minimalne')
+    );
+    well.configStatus = hasHardError
+        ? 'ERROR'
+        : well.configSource
+          ? well.configErrors.length > 0
+              ? 'WARNING'
+              : 'OK'
+          : well.configStatus || '';
+}
+
+/* ===== RENDER BANNERA BŁĘDÓW BIECĄCEJ STUDNI ===== */
+function renderWellConfigErrors(well) {
+    if (well) recalculateWellErrors(well);
+    const errContainer = document.getElementById('well-config-errors-container');
+    if (!errContainer) return;
+    const liveErrors = (well && well.configErrors) || [];
+    if (liveErrors.length > 0) {
+        errContainer.innerHTML =
+            '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
+            liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
+        errContainer.style.display = 'block';
+        if (window.lucide) window.lucide.createIcons({ root: errContainer });
+    } else {
+        errContainer.style.display = 'none';
+    }
 }
 
 /* ===== ODŚWIEŻENIE BŁĘDÓW WSZYSTKICH STUDNI ===== */
 function refreshAllWellErrors() {
     if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
     wells.forEach((w) => recalculateWellErrors(w));
+    // Jedyny wspólny punkt renderu bannera — każda ścieżka (lista, oferta, Excel,
+    // tryb zamówienia) kończąca się na refreshAllWellErrors odświeża też banner.
+    if (typeof getCurrentWell === 'function') renderWellConfigErrors(getCurrentWell());
 }

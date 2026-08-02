@@ -86,36 +86,18 @@ function updateHeightIndicator() {
     const reqEl = document.getElementById('well-required-height');
     const confEl = document.getElementById('well-configured-height');
     const diffEl = document.getElementById('height-diff-indicator');
-    const errContainer = document.getElementById('well-config-errors-container');
 
     if (!reqEl || !confEl || !diffEl) return;
     if (!well) {
         confEl.innerHTML = '0 m';
         reqEl.textContent = '— m';
         diffEl.innerHTML = '';
-        if (errContainer) errContainer.style.display = 'none';
+        renderWellConfigErrors(null);
         return;
     }
 
-    recalculateWellErrors(well);
-    let liveErrors = well.configErrors || [];
-
-    if (errContainer) {
-        if (liveErrors.length > 0) {
-            errContainer.innerHTML =
-                '<i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>' +
-                liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>');
-            errContainer.style.display = 'block';
-            if (window.lucide) {
-                window.lucide.createIcons();
-            }
-        } else {
-            errContainer.style.display = 'none';
-        }
-    }
-
-    const prevErrors = well.configErrors ? well.configErrors.length : 0;
-    if (prevErrors !== liveErrors.length) renderWellsList();
+    // Banner błędów renderowany przez renderWellConfigErrors (solverValidation.js)
+    renderWellConfigErrors(well);
 
     const stats = calcWellStats(well);
     const confM = (stats.height / 1000).toFixed(3).replace('.', ',');

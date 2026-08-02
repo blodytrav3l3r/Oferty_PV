@@ -180,6 +180,7 @@ function _excelUndo() {
     wells.splice(0, wells.length, ...snap);
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
+    if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
     showToast('Cofnięto', 'info');
 }
 
@@ -190,6 +191,7 @@ function _excelRedo() {
     wells.splice(0, wells.length, ...snap);
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
+    if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
     showToast('Przywrócono', 'info');
 }
 

@@ -312,6 +312,7 @@ async function closeExcelTableModal() {
         }
     }
     _excelCloseOverlay();
+    if (typeof refreshAll === 'function') refreshAll();
 }
 
 /* ===== WYBÓR WIERSZA ===== */

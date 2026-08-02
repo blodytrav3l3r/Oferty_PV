@@ -40,6 +40,7 @@ function excelOnRzednaChange(wIdx) {
         _excelAutoSelectForWell(wIdx);
     } else {
         _excelMarkAsManual(wIdx);
+        if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
     }
 }
 
