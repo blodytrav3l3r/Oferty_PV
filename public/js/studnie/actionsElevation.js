@@ -176,11 +176,9 @@ window.autoUpdateWellName = function (well, index) {
 function checkWellNumerDuplicate(newNumer, inputEl) {
     if (!inputEl) return false;
     if (newNumer !== '') {
+        const currentWell = getCurrentWell();
         const isDuplicate = wells.some(
-            (w, idx) =>
-                idx !== currentWellIndex &&
-                w.numer &&
-                w.numer.toLowerCase() === newNumer.toLowerCase()
+            (w) => w !== currentWell && w.numer && w.numer.toLowerCase() === newNumer.toLowerCase()
         );
         if (isDuplicate) {
             inputEl.classList.add('border-danger-subtle', 'color-danger');

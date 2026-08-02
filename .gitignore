@@ -129,6 +129,9 @@ cookies.txt
 .claude/
 .codex/
 
+# Graf wiedzy graphify (auto-rebuild po commicie, nie jest częścią WITROS)
+graphify-out/
+
 # Backup manifestów
 .hermes/skills/_manifest.v2.yaml.bak
 

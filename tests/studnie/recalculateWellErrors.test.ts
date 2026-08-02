@@ -170,4 +170,101 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
         expect(note).not.toContain('750');
         expect(note).toContain('Krąg DN1000');
     });
+
+    test('rzednaWlaczenia poniżej rzednaDna: twardy błąd ERROR', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '99.5', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(true);
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('rzednaWlaczenia poniżej rzednaDna przy pustym config: błąd zachowany', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [{ rzednaWlaczenia: '99.5', angle: 0 }]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(true);
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('rzednaWlaczenia równa rzednaDna: brak błędu (granica)', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '100.000', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
+    });
+
+    test('rzednaWlaczenia powyżej rzednaDna: brak błędu', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '100.500', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
+    });
+
+    test('brak rzednaDna (null): pominięcie walidacji', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaDna: null,
+            przejscia: [{ rzednaWlaczenia: '99.5', angle: 0 }]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
+    });
+
+    test('rzednaWlaczenia null: pominięcie walidacji', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [{ rzednaWlaczenia: null, angle: 0 }]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
+    });
+
+    test('naprawa rzędnej usuwa stary błąd przy przeliczeniu', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [{ productId: 'krag-1000-500', quantity: 1 }],
+            configSource: 'MANUAL',
+            rzednaDna: 100,
+            przejscia: [
+                { productId: 'prz-160', rzednaWlaczenia: '99.5', flowType: 'wylot', angle: 0 }
+            ]
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(true);
+        well.przejscia[0].rzednaWlaczenia = '100.500';
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
+    });
 });

@@ -22,9 +22,28 @@ function recalculateWellErrors(well) {
                   (e) =>
                       !e.includes('Błąd zapasu') &&
                       !e.includes('nie spełnia zapasów') &&
-                      !e.includes('zastosowano luzy minimalne')
+                      !e.includes('zastosowano luzy minimalne') &&
+                      !e.includes('Rzędna włączenia przejścia')
               )
             : [];
+
+    // --- WALIDACJA RZĘDNEJ WŁĄCZENIA PRZEJŚCIA ---
+    // Rzędna włączenia przejścia nie może być niższa niż rzędna dna studni.
+    if (well.przejscia && well.przejscia.length > 0) {
+        const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
+        if (rzDna !== null && !isNaN(rzDna)) {
+            well.przejscia.forEach((pr, idx) => {
+                const pel = parseFloat(pr.rzednaWlaczenia);
+                if (isNaN(pel)) return;
+                if (pel < rzDna) {
+                    const errStr = `Rzędna włączenia przejścia nr ${idx + 1} (${pel.toFixed(
+                        3
+                    )} m) jest niższa niż rzędna dna studni (${rzDna.toFixed(3)} m)`;
+                    if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
+                }
+            });
+        }
+    }
 
     // --- WALIDACJA LUZÓW NA ŻYWO ---
     if (well.przejscia && well.przejscia.length > 0 && well.config && well.config.length > 0) {
