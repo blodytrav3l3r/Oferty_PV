@@ -56,6 +56,23 @@ router.get('/', requireAuth, async (req, res) => {
 
         const { whereSql: orderStatusWhere } = buildOrderStatusSql(params.orderStatus);
 
+        // Filtr typu oferty (rury vs studnie) na zewnętrznym SELECT — UNION ALL
+        // zawiera wiersze z obu tabel, więc filtrujemy po aliasie _type.
+        const typeWhere =
+            params.type === 'offer'
+                ? Prisma.sql`combined."_type" = 'rury'`
+                : params.type === 'studnia_oferta'
+                  ? Prisma.sql`combined."_type" = 'studnie'`
+                  : Prisma.empty;
+        const combinedWhere =
+            orderStatusWhere !== Prisma.empty && typeWhere !== Prisma.empty
+                ? Prisma.sql`${orderStatusWhere} AND ${typeWhere}`
+                : orderStatusWhere !== Prisma.empty
+                  ? orderStatusWhere
+                  : typeWhere !== Prisma.empty
+                    ? Prisma.sql`WHERE ${typeWhere}`
+                    : Prisma.empty;
+
         const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
         const allowedSort = ['createdAt', 'offer_number'];
         const sortCol = allowedSort.includes(params.sort) ? params.sort : 'createdAt';
@@ -97,7 +114,7 @@ router.get('/', requireAuth, async (req, res) => {
                 ) o_stud ON o_stud."offerStudnieId" = s.id
                 ${whereSql}
             ) AS combined
-            ${orderStatusWhere}
+            ${combinedWhere}
             ORDER BY ${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}
             LIMIT ${limitVal + 1}
         `;
@@ -119,11 +136,11 @@ router.get('/', requireAuth, async (req, res) => {
         if (!params.cursor) {
             const countSql = Prisma.sql`
                 SELECT COUNT(*) as cnt FROM (
-                    SELECT id FROM offers_rel ${whereSql}
+                    SELECT id, 'rury' AS "_type" FROM offers_rel ${whereSql}
                     UNION ALL
-                    SELECT id FROM offers_studnie_rel ${whereSql}
+                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel ${whereSql}
                 ) AS combined
-                ${orderStatusWhere}
+                ${combinedWhere}
             `;
             const countResult = (await prisma.$queryRaw(countSql)) as { cnt: number | bigint }[];
             totalCount = Number(countResult[0]?.cnt || 0);
