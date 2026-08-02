@@ -5,6 +5,16 @@ let tmSelectedTransitions = new Set();
 let tmCurrentFilters = { sourceMaterial: [], dn: [], search: '' };
 let tmWellData = [];
 
+/* Blokada studni dla menedżera przejść — wzorzec z applyGlobalRecalc (popupsGlobalRecalc.js:346-352).
+   isWellLocked pokrywa PZ accepted (zawsze) oraz zamówienie poza orderEditMode,
+   ale NIE pokrywa PZ w statusie draft — dlatego dokładamy pzGuard.hasPzForWell. */
+function tmIsWellBlocked(wellIdx) {
+    const well = wells[wellIdx];
+    if (!well) return true;
+    if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) return true;
+    return isWellLocked(wellIdx);
+}
+
 window.openTransitionManagerModal = function () {
     tmSelectedTransitions = new Set();
     if (!wells || wells.length === 0) {
@@ -335,7 +345,7 @@ window.tmRenderTable = function () {
                 const key = `${w.wellIndex}:${tr.trIndex}`;
                 const isSel = tmSelectedTransitions.has(key);
                 const safeMaterial = tr.material.replace(/'/g, "\\'");
-                const locked = isWellLocked(w.wellIndex);
+                const locked = tmIsWellBlocked(w.wellIndex);
                 return `
             <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
                   style="background:${isSel ? 'rgba(16,185,129,0.15)' : '#1a2536'};
@@ -375,7 +385,7 @@ window.tmRenderTable = function () {
             })
             .join('');
 
-        const wellLocked = isWellLocked(w.wellIndex);
+        const wellLocked = tmIsWellBlocked(w.wellIndex);
         html += `
         <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(239,68,68,0.2)' : wellSomeSel ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.06)'}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
           <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(255,255,255,0.02); border-bottom:1px solid rgba(255,255,255,0.05);">
@@ -421,7 +431,7 @@ window.tmRenderTable = function () {
 };
 
 window.tmToggleWell = function (wellIdx, isChecked) {
-    if (isWellLocked(wellIdx)) return;
+    if (tmIsWellBlocked(wellIdx)) return;
     const wData = tmWellData.find((w) => w.wellIndex === wellIdx);
     if (!wData) return;
     wData.transitions.forEach((tr) => {
@@ -445,7 +455,7 @@ window.tmToggleSelectAll = function () {
     visibleCbs.forEach((cb) => {
         const key = cb.value;
         const wellIdx = parseInt(key.split(':')[0], 10);
-        if (isChecked && isWellLocked(wellIdx)) return;
+        if (isChecked && tmIsWellBlocked(wellIdx)) return;
         if (isChecked) tmSelectedTransitions.add(key);
         else tmSelectedTransitions.delete(key);
     });
@@ -458,9 +468,9 @@ let tmEditSelectedDn = null;
 
 window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     event.stopPropagation();
-    if (isWellLocked(wellIdx)) {
+    if (tmIsWellBlocked(wellIdx)) {
         showToast(
-            '<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zaakceptowane zlecenie produkcyjne.',
+            '<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zlecenie produkcyjne.',
             'error'
         );
         return;
@@ -638,9 +648,12 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
 
 async function tmEditApply(wellIdx, trIdx) {
     if (!tmEditSelectedCat || !tmEditSelectedDn) return;
-    if (isWellLocked(wellIdx)) {
+    if (tmIsWellBlocked(wellIdx)) {
         document.getElementById('tm-edit-popup')?.remove();
-        showToast(WELL_LOCKED_MSG, 'error');
+        showToast(
+            '<i data-lucide="lock"></i> Studnia zablokowana — posiada zamówienie lub zlecenie produkcyjne.',
+            'error'
+        );
         return;
     }
     const product = studnieProducts.find(
@@ -774,7 +787,7 @@ window.tmApplyChanges = async function () {
         const trIdx = parseInt(trIdxStr, 10);
         const well = wells[wellIdx];
 
-        if (isWellLocked(wellIdx)) {
+        if (tmIsWellBlocked(wellIdx)) {
             skippedLocked.add(wellIdx);
             return;
         }
@@ -810,7 +823,7 @@ window.tmApplyChanges = async function () {
 
     if (skippedLocked.size > 0) {
         showToast(
-            `Pominięto ${skippedLocked.size} zablokowaną studnię/studnie (zamówienie/zlecenie).`,
+            `<i data-lucide="lock"></i> Pominięto ${skippedLocked.size} zablokowaną studnię/studnie (zamówienie/zlecenie produkcyjne).`,
             'warning'
         );
     }
