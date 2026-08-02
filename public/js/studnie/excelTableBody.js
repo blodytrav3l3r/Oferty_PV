@@ -385,7 +385,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             );
             let pidArg = c.productId ? "'" + c.productId + "'" : 'null';
             let hArg = c.height != null ? c.height : 'null';
-            let redArg = c.fromReduction ? ',' + (well.redukcjaTargetDN || 1000) : '';
+            let redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
             html +=
                 '<td style="' +
                 tdBaseStyle +
@@ -430,13 +430,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             let redTarget = well.redukcjaTargetDN || 1000;
             let can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
             let redOpts = [['', 'Brak']];
-            if (redActive) {
-                if (redTarget === 1000) redOpts.push(['1000', 'DN1000']);
-                if (redTarget === 1200) redOpts.push(['1200', 'DN1200']);
-            } else {
-                redOpts.push(['1000', 'DN1000']);
-                if (can1200) redOpts.push(['1200', 'DN1200']);
-            }
+            redOpts.push(['1000', 'DN1000']);
+            if (can1200 || (redActive && redTarget === 1200)) redOpts.push(['1200', 'DN1200']);
             html +=
                 '<td style="text-align:center;">' +
                 _excelOverlaySelectHtml(

@@ -451,11 +451,8 @@ function _excelUpdateHeaderProdCodes() {
         let isPerProduct = span.getAttribute('data-per-product') === '1';
         let ct = span.getAttribute('data-ct');
         let height = span.getAttribute('data-height');
-        let redTarget =
-            span.getAttribute('data-reddn') || ''
-                ? well &&
-                  (well.redukcjaTargetDN || parseInt(span.getAttribute('data-reddn')) || 1000)
-                : null;
+        let redAttr = span.getAttribute('data-reddn');
+        let redTarget = redAttr ? parseInt(redAttr) : null;
         if (isPerProduct) {
             /* Kolumny per-produkt: kod stały, ale cenę trzeba odświeżyć */
             if (prices && prices[idx]) {
