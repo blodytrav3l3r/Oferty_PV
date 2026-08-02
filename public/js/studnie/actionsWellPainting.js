@@ -26,7 +26,13 @@ function getPehdEffectiveArea(p) {
 }
 
 function getPehdTooltip(p, pricePerM2) {
-    if (p.area <= 0 || p.componentType === 'przejscie' || p.componentType === 'kineta') return '';
+    if (
+        p.area <= 0 ||
+        p.componentType === 'przejscie' ||
+        p.componentType === 'kineta' ||
+        p.componentType === 'konus'
+    )
+        return '';
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) {
         let sqArea = (p.area * 4) / Math.PI;
         return (
@@ -231,3 +237,38 @@ function calcKinetaPaintingArea(well) {
 
     return calcStandardKinetaPaintingArea(well, R);
 }
+
+function getPehdTypeForComponent(well, componentType) {
+    if (['dennica', 'styczna'].includes(componentType)) return well.wkladkaDennica;
+    if (
+        [
+            'plyta',
+            'plyta_redukcyjna',
+            'plyta_nastudzienna',
+            'stozek',
+            'zwienczenie',
+            'plyta_din',
+            'plyta_najazdowa',
+            'plyta_zamykajaca',
+            'pierscien_odciazajacy'
+        ].includes(componentType)
+    )
+        return well.wkladkaZwienczenie;
+    if (['krag', 'krag_ot', 'rura'].includes(componentType)) return well.wkladkaNadbudowa;
+    // konus i pozostałe: brak PEHD (konus z wkładką jest zabroniony)
+    return null;
+}
+
+function getPehdSurcharge(well, p, applyDiscount, item) {
+    const pehdType = getPehdTypeForComponent(well, p.componentType);
+    if (!pehdType || pehdType === 'brak' || !p.doplataPEHD) return 0;
+    if (item && item.disablePehd) return 0;
+    const raw = parseFloat(String(p.doplataPEHD).replace(',', '.'));
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    let v = raw;
+    if (applyDiscount && well.pehdDiscount) v *= 1 - well.pehdDiscount / 100;
+    return v;
+}
+
+window.getPehdTypeForComponent = getPehdTypeForComponent;
+window.getPehdSurcharge = getPehdSurcharge;

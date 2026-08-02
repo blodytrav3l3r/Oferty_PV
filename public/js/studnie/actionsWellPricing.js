@@ -113,37 +113,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 
     itemPrice = itemPrice * mult;
 
-    let pehdType = null;
-    if (['dennica', 'styczna'].includes(p.componentType)) {
-        pehdType = well.wkladkaDennica;
-    } else if (
-        [
-            'plyta',
-            'plyta_redukcyjna',
-            'plyta_nastudzienna',
-            'stozek',
-            'zwienczenie',
-            'konus',
-            'plyta_din',
-            'plyta_najazdowa',
-            'plyta_zamykajaca',
-            'pierscien_odciazajacy'
-        ].includes(p.componentType)
-    ) {
-        pehdType = well.wkladkaZwienczenie;
-    } else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) {
-        pehdType = well.wkladkaNadbudowa;
-    }
-
-    if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
-        if (!item || !item.disablePehd) {
-            let pehdSurcharge = parseFloat(p.doplataPEHD);
-            if (applyDiscount && well.pehdDiscount) {
-                pehdSurcharge *= 1 - well.pehdDiscount / 100;
-            }
-            itemPrice += pehdSurcharge;
-        }
-    }
+    itemPrice += getPehdSurcharge(well, p, applyDiscount, item);
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
         if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {
@@ -292,36 +262,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
 
     base = base * mult;
 
-    let pehdType = null;
-    if (['dennica', 'styczna'].indexOf(p.componentType) !== -1) {
-        pehdType = well.wkladkaDennica;
-    } else if (
-        [
-            'plyta',
-            'plyta_redukcyjna',
-            'plyta_nastudzienna',
-            'stozek',
-            'zwienczenie',
-            'konus',
-            'plyta_din',
-            'plyta_najazdowa',
-            'plyta_zamykajaca',
-            'pierscien_odciazajacy'
-        ].indexOf(p.componentType) !== -1
-    ) {
-        pehdType = well.wkladkaZwienczenie;
-    } else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1) {
-        pehdType = well.wkladkaNadbudowa;
-    }
-
-    if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
-        if (!item || !item.disablePehd) {
-            pehd = parseFloat(p.doplataPEHD);
-            if (applyDiscount !== false && well.pehdDiscount) {
-                pehd *= 1 - well.pehdDiscount / 100;
-            }
-        }
-    }
+    pehd = getPehdSurcharge(well, p, applyDiscount, item);
 
     if (well.malowanieW && well.malowanieW !== 'brak' && well.malowanieWewCena) {
         if (well.malowanieW === 'kineta_dennica' && p.componentType === 'dennica') {

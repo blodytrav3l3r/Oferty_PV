@@ -42,9 +42,13 @@ function getTopClosure(
     const dn = parseInt(String(topDn));
     const blockKonus = fallbackToDin;
 
-    if (forcedId && !fallbackToDin) {
+    if (forcedId) {
         const forced = products.find((p) => p.id === forcedId);
-        if (forced && (parseInt(String(forced.dn)) === dn || forced.dn === null)) return forced;
+        if (forced && (parseInt(String(forced.dn)) === dn || forced.dn === null)) {
+            // Konus z wkładką PEHD zabroniony — nawet wymuszony
+            if (blockKonus && forced.componentType === 'konus') return null;
+            return forced;
+        }
     }
 
     const konusy = blockKonus
@@ -161,8 +165,26 @@ describe('getTopClosure', () => {
         expect(getTopClosure(PRODS, 1000, 'PDD-10', false, 'Kluczbork')!.id).toBe('PDD-10');
     });
 
-    it('wymuszony ID z fallbackToDin → ignoruje wymuszenie, zwraca DIN', () => {
-        expect(getTopClosure(PRODS, 1000, 'KON-10-625', true, 'Kluczbork')!.id).toBe('PDD-10');
+    it('wymuszony KONUS z fallbackToDin → null (konus + PEHD zabroniony)', () => {
+        expect(getTopClosure(PRODS, 1000, 'KON-10-625', true, 'Kluczbork')).toBeNull();
+    });
+
+    it('wymuszony nie-konus (Płyta DIN) z fallbackToDin → respektowany', () => {
+        expect(getTopClosure(PRODS, 1000, 'PDD-10', true, 'Kluczbork')!.id).toBe('PDD-10');
+    });
+
+    it('wymuszony Pierścień Odciążający z fallbackToDin → respektowany', () => {
+        const PIERSCIEN: MockProduct = {
+            id: 'PO-16-10',
+            name: 'Pierścień Odciążający 1000',
+            componentType: 'pierscien_odciazajacy',
+            dn: 1000,
+            height: 100,
+            formaStandardowaKLB: 1
+        };
+        expect(
+            getTopClosure([KONUS, DIN, PIERSCIEN], 1000, 'PO-16-10', true, 'Kluczbork')!.id
+        ).toBe('PO-16-10');
     });
 
     it('brak Konusa → Płyta DIN', () => {
@@ -1089,9 +1111,14 @@ describe('Recalculation — forced items preservation', () => {
         expect(top2).toBe('PDD-10');
     });
 
-    it('wymuszone zakończenie ignorowane gdy fallbackToDin=true (reguła getTopClosure)', () => {
-        /* fallbackToDin=true → forcedId ignorowane → normalna selekcja (DIN) */
+    it('wymuszony KONUS gdy fallbackToDin=true → null (konus + PEHD zabroniony)', () => {
+        /* fallbackToDin=true + wymuszony konus → konus z wkładką PEHD zabroniony */
         const top = solverSelectTopClosure([KONUS, DIN], 1000, 'KON-10-625', true, 'Kluczbork');
+        expect(top).toBeNull();
+    });
+
+    it('wymuszony nie-konus (Płyta DIN) gdy fallbackToDin=true → respektowany', () => {
+        const top = solverSelectTopClosure([KONUS, DIN], 1000, 'PDD-10', true, 'Kluczbork');
         expect(top).toBe('PDD-10');
     });
 

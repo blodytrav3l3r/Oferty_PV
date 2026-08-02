@@ -419,11 +419,12 @@ function getTopClosure(products, topDn, forcedId, fallbackToDin, warehouse) {
     // Przekazany fallbackToDin z reguły oznacza wkładkę PEHD. Użyjmy go jako flagi do całkowitej blokady Konusa, bo PEHD tego wymaga.
     const blockKonus = fallbackToDin;
 
-    // 1. Wymuszony przez użytkownika — jeśli nie znaleziony, zwróć null
-    //    (caller ma fallback do pełnego katalogu + zwykłego konusa)
-    if (forcedId && !fallbackToDin) {
+    // 1. Wymuszony przez użytkownika — respektowany zawsze, poza konusem z wkładką PEHD.
+    //    Konus z wkładką PEHD jest zabroniony → zwróć null (caller ma fallback do płyty).
+    if (forcedId) {
         const forced = products.find((p) => p.id === forcedId);
         if (forced && (parseInt(forced.dn) === dn || forced.dn === null)) {
+            if (blockKonus && forced.componentType === 'konus') return null;
             return forced;
         }
         return null;

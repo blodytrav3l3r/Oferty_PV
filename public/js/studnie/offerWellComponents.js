@@ -208,25 +208,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
                 ' <span style="font-size:0.55rem; color:#f43f5e; border:1px solid rgba(244,63,94,0.4); padding:1px 4px; border-radius:4px; background:rgba(244,63,94,0.1); margin-left:4px; font-weight:700;">PRECO</span>';
         }
 
-        let pehdType = null;
-        if (['dennica', 'styczna'].includes(p.componentType)) pehdType = well.wkladkaDennica;
-        else if (
-            [
-                'plyta',
-                'plyta_redukcyjna',
-                'plyta_nastudzienna',
-                'stozek',
-                'zwienczenie',
-                'konus',
-                'plyta_din',
-                'plyta_najazdowa',
-                'plyta_zamykajaca',
-                'pierscien_odciazajacy'
-            ].includes(p.componentType)
-        )
-            pehdType = well.wkladkaZwienczenie;
-        else if (['krag', 'krag_ot', 'rura'].includes(p.componentType))
-            pehdType = well.wkladkaNadbudowa;
+        const pehdType = getPehdTypeForComponent(well, p.componentType);
 
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
             badgesHtml +=
@@ -298,30 +280,12 @@ function renderComponentSubItems(
     if (bd) {
         let pehdLabel = '';
         if (bd.pehd > 0) {
-            if (['dennica', 'styczna'].indexOf(p.componentType) !== -1)
-                pehdLabel = well.wkladkaDennica;
-            else if (
-                [
-                    'plyta',
-                    'plyta_redukcyjna',
-                    'plyta_nastudzienna',
-                    'stozek',
-                    'zwienczenie',
-                    'konus',
-                    'plyta_din',
-                    'plyta_najazdowa',
-                    'plyta_zamykajaca',
-                    'pierscien_odciazajacy'
-                ].indexOf(p.componentType) !== -1
-            )
-                pehdLabel = well.wkladkaZwienczenie;
-            else if (['krag', 'krag_ot', 'rura'].indexOf(p.componentType) !== -1)
-                pehdLabel = well.wkladkaNadbudowa;
+            pehdLabel = getPehdTypeForComponent(well, p.componentType) || '';
         }
         if (bd.pehd > 0 && pehdLabel) {
             html +=
                 '<tr style="opacity:0.5; font-size:0.65rem; color:#0ea5e9;"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
-                pehdLabel +
+                escapeHtml(pehdLabel) +
                 '</td><td class="text-right">' +
                 fmt(bd.pehd) +
                 ' PLN</td></tr>';

@@ -23,7 +23,8 @@ function recalculateWellErrors(well) {
                       !e.includes('Błąd zapasu') &&
                       !e.includes('nie spełnia zapasów') &&
                       !e.includes('zastosowano luzy minimalne') &&
-                      !e.includes('Rzędna włączenia przejścia')
+                      !e.includes('Rzędna włączenia przejścia') &&
+                      !e.includes('brak dopłaty PEHD')
               )
             : [];
 
@@ -154,10 +155,35 @@ function recalculateWellErrors(well) {
             });
         }
     }
+    // --- WALIDACJA DOPŁATY PEHD (wkładka wybrana, ale brak dopłaty w cenniku) ---
+    // Cichy brak dopłaty: jeśli parametr wkładki != 'brak', ale produkt nie ma dopłatyPEHD,
+    // wycena nie dolicza nic — zgłoś ostrzeżenie WARNING (nie twardy błąd).
+    if (typeof getPehdTypeForComponent === 'function' && well.config && well.config.length > 0) {
+        for (const item of well.config) {
+            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            if (!p) continue;
+            const pehdType = getPehdTypeForComponent(well, p.componentType);
+            const pehdVal = parseFloat(String(p.doplataPEHD || '').replace(',', '.'));
+            if (
+                pehdType &&
+                pehdType !== 'brak' &&
+                !item.disablePehd &&
+                (Number.isNaN(pehdVal) || pehdVal <= 0)
+            ) {
+                const warnStr = `Wkładka PEHD (${pehdType}) wybrana dla "${p.name}", ale brak dopłaty PEHD w cenniku (doplataPEHD = 0)`;
+                if (!liveErrors.includes(warnStr)) liveErrors.push(warnStr);
+            }
+        }
+    }
+
     well.configErrors = [...new Set(liveErrors)];
-    // Ustal status: twarde błędy → ERROR; same notki (tolerancja / luzy minimalne) → WARNING
+    // Ustal status: twarde błędy → ERROR; same notki (tolerancja / luzy minimalne /
+    // brak dopłaty PEHD) → WARNING
     const hasHardError = well.configErrors.some(
-        (e) => !e.includes('Zastosowana rozszerzona tolerancja') && !e.includes('luzy minimalne')
+        (e) =>
+            !e.includes('Zastosowana rozszerzona tolerancja') &&
+            !e.includes('luzy minimalne') &&
+            !e.includes('brak dopłaty PEHD')
     );
     well.configStatus = hasHardError
         ? 'ERROR'

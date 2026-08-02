@@ -260,14 +260,21 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     if (!topProd && forcedZak) {
-        topProd = studnieProducts.find(
+        const forcedP = studnieProducts.find(
             (p) => p.id === forcedZak && (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
         );
+        // Nie wskrzeszaj konusa, gdy aktywna wkładka PEHD zwieńczenia (zabroniony)
+        if (forcedP && !(isWkladkaZwienczenie && forcedP.componentType === 'konus')) {
+            topProd = forcedP;
+        }
     }
     if (!topProd) {
+        // Przy wkładce PEHD zwieńczenia nie wybieraj konusa — domyślnie płyta DIN
         topProd = studnieProducts.find(
             (p) =>
-                p.componentType === 'konus' &&
+                (isWkladkaZwienczenie
+                    ? p.componentType === 'plyta_din'
+                    : p.componentType === 'konus') &&
                 (parseInt(p.dn) === parseInt(effectiveDn) || p.dn === null)
         );
     }

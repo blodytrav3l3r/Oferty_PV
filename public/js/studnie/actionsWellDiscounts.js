@@ -152,7 +152,8 @@ function updateGlobalPehdDiscount(value) {
                     p.area > 0 &&
                     p.doplataPEHD > 0 &&
                     p.componentType !== 'przejscie' &&
-                    p.componentType !== 'kineta'
+                    p.componentType !== 'kineta' &&
+                    p.componentType !== 'konus'
                 ) {
                     currentPehdPrice = Math.round(p.doplataPEHD / getPehdEffectiveArea(p));
                     break;

@@ -9,7 +9,12 @@ window.recalculatePEHD = async function () {
 
     let count = 0;
     studnieProducts.forEach((p) => {
-        if (p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.area > 0) {
+        if (
+            p.componentType !== 'przejscie' &&
+            p.componentType !== 'kineta' &&
+            p.componentType !== 'konus' &&
+            p.area > 0
+        ) {
             p.doplataPEHD = Math.round(getPehdEffectiveArea(p) * price);
             count++;
         }

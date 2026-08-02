@@ -181,27 +181,7 @@ function renderWellConfig() {
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'preco')" style="cursor:pointer; font-size:0.55rem; color:${precoColor}; font-weight:800; margin-left:4px; border:1px solid ${precoBorder}; padding:1px 4px; border-radius:4px; background:${precoBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć przeliczanie PRECO dla tego elementu">${precoText}</span>`;
                         }
 
-                        let pehdType = null;
-                        if (['dennica', 'styczna'].includes(p.componentType)) {
-                            pehdType = well.wkladkaDennica;
-                        } else if (
-                            [
-                                'plyta',
-                                'plyta_redukcyjna',
-                                'plyta_nastudzienna',
-                                'stozek',
-                                'zwienczenie',
-                                'konus',
-                                'plyta_din',
-                                'plyta_najazdowa',
-                                'plyta_zamykajaca',
-                                'pierscien_odciazajacy'
-                            ].includes(p.componentType)
-                        ) {
-                            pehdType = well.wkladkaZwienczenie;
-                        } else if (['krag', 'krag_ot', 'rura'].includes(p.componentType)) {
-                            pehdType = well.wkladkaNadbudowa;
-                        }
+                        const pehdType = getPehdTypeForComponent(well, p.componentType);
 
                         if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
                             const isPehdDisabled = item.disablePehd;
