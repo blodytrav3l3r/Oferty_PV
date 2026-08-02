@@ -27,10 +27,6 @@ router.get('/', requireAuth, async (req, res) => {
 
     const whereParts: Prisma.Sql[] = [];
 
-    if (roleSql !== Prisma.empty) {
-        whereParts.push(roleSql);
-    }
-
     if (cursor && cursorId) {
         const op = order === 'desc' ? '<' : '>';
         whereParts.push(
@@ -69,9 +65,15 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     const whereSql =
-        whereParts.length > 0
-            ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
-            : Prisma.empty;
+        roleSql !== Prisma.empty
+            ? Prisma.sql`${roleSql}${
+                  whereParts.length > 0
+                      ? Prisma.sql` AND ${Prisma.join(whereParts, ' AND ')}`
+                      : Prisma.empty
+              }`
+            : whereParts.length > 0
+              ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
+              : Prisma.empty;
 
     let searchWhere = Prisma.empty;
     if (q) {
@@ -88,7 +90,10 @@ router.get('/', requireAuth, async (req, res) => {
             Prisma.sql`u2."firstName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
             Prisma.sql`u2."lastName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`
         ];
-        searchWhere = Prisma.sql`AND (${Prisma.join(searchParts, ' OR ')})`;
+        searchWhere =
+            whereSql === Prisma.empty
+                ? Prisma.sql`WHERE (${Prisma.join(searchParts, ' OR ')})`
+                : Prisma.sql`AND (${Prisma.join(searchParts, ' OR ')})`;
     }
 
     try {
