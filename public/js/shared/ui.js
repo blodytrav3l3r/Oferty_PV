@@ -621,3 +621,15 @@ async function syncPriceOverrides() {
 }
 
 window.syncPriceOverrides = syncPriceOverrides;
+
+/**
+ * Auto-zaznaczenie zawartości pola number po wejściu w nie (focus).
+ * Pozwala od razu wpisać nową wartość bez ręcznego kasowania poprzedniej.
+ * Delegacja na document obejmuje także pola generowane dynamicznie.
+ */
+document.addEventListener('focusin', (e) => {
+    const target = e.target;
+    if (!(target instanceof HTMLInputElement) || target.type !== 'number') return;
+    if (target.disabled || target.readOnly) return;
+    target.select();
+});
