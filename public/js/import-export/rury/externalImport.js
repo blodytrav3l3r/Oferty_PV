@@ -1,13 +1,10 @@
 window.RuryExternalImport = {
     async findOfferByNumber(number) {
-        if (window.pvSalesUI && window.pvSalesUI.allLocalOffers) {
-            return (
-                window.pvSalesUI.allLocalOffers.find(
-                    (o) => o.offer_number === number || o.number === number
-                ) || null
-            );
-        }
-        return null;
+        return (
+            XlsxImportShared.getLoadedOffers().find(
+                (o) => o.offer_number === number || o.number === number
+            ) || null
+        );
     },
 
     async import(offerGroup) {

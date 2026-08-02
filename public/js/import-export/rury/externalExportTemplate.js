@@ -1,7 +1,7 @@
 window.RuryExternalExportTemplate = {
     async generateAndDownload(offerId) {
-        const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-        if (!offers || !offers.length) {
+        const offers = XlsxImportShared.getLoadedOffers();
+        if (!offers.length) {
             alert('Brak zaladowanych ofert. Otworz kartoteke.');
             return;
         }
@@ -10,7 +10,10 @@ window.RuryExternalExportTemplate = {
         for (const offer of offers) {
             if (offerId && offer.id !== offerId) continue;
             if (offer.type === 'studnia_oferta') continue;
-            const items = offer.items || [];
+            const items =
+                offer.data && Array.isArray(offer.data.items)
+                    ? offer.data.items
+                    : offer.items || [];
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 rows.push({

@@ -17,12 +17,14 @@ window.PvImportExportToolbar = {
             '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport</span>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" style="width:14px;height:14px;"></i>Eksport XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" style="width:14px;height:14px;"></i>Eksport 1:1 (JSON)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="ie-btn-import-xlsx"><i data-lucide="upload" style="width:14px;height:14px;"></i>Import XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-import-json"><i data-lucide="file-up" style="width:14px;height:14px;"></i>Import 1:1 (JSON)</button>' +
             '</div>';
 
         document.getElementById('ie-btn-export-xlsx').onclick = () => this.showExportXlsxDialog();
         document.getElementById('ie-btn-export-json').onclick = () => this.showExportJsonPopup();
         document.getElementById('ie-btn-import-json').onclick = () => this.showImportJsonDialog();
+        document.getElementById('ie-btn-import-xlsx').onclick = () => this.showImportXlsxDialog();
 
         if (window.lucide) lucide.createIcons({ root: host });
     },
@@ -80,13 +82,29 @@ window.PvImportExportToolbar = {
     },
 
     _findOfferByNumber(number, module) {
-        const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-        if (!offers) return null;
+        const offers = XlsxImportShared.getLoadedOffers();
         return offers.find(
             (o) =>
                 (o.offer_number === number || o.number === number) &&
                 (module === 'rury' ? o.type !== 'studnia_oferta' : o.type === 'studnia_oferta')
         );
+    },
+
+    _offerNotFoundHint(number, module, resultEl) {
+        const otherModule = module === 'rury' ? 'studnie' : 'rury';
+        const other = this._findOfferByNumber(number, otherModule);
+        if (other) {
+            const moduleName = module === 'rury' ? 'Rury' : 'Studnie';
+            const otherName = otherModule === 'rury' ? 'Rury' : 'Studnie';
+            resultEl.textContent =
+                'Nie znaleziono w module ' +
+                moduleName +
+                '. Znaleziono w module ' +
+                otherName +
+                ' — zmień wybór modułu.';
+        } else {
+            resultEl.textContent = 'Nie znaleziono oferty.';
+        }
     },
 
     showExportXlsxDialog() {
@@ -135,7 +153,7 @@ window.PvImportExportToolbar = {
                 } else {
                     const offer = this._findOfferByNumber(number, module);
                     if (!offer) {
-                        resultEl.textContent = 'Nie znaleziono oferty.';
+                        this._offerNotFoundHint(number, module, resultEl);
                         return;
                     }
                     resultEl.textContent =
@@ -202,7 +220,7 @@ window.PvImportExportToolbar = {
                 } else {
                     const offer = this._findOfferByNumber(number, module);
                     if (!offer) {
-                        resultEl.textContent = 'Nie znaleziono oferty.';
+                        this._offerNotFoundHint(number, module, resultEl);
                         return;
                     }
                     resultEl.textContent =
@@ -272,6 +290,63 @@ window.PvImportExportToolbar = {
                     } else {
                         alert('Blad: ' + (result.message || 'Nieznany blad'));
                     }
+                    if (window.pvSalesUI) {
+                        window.pvSalesUI.loadLocalOffers();
+                    }
+                } catch (err) {
+                    alert('Blad: ' + err.message);
+                    progress.style.display = 'none';
+                }
+            }
+        );
+    },
+
+    showImportXlsxDialog() {
+        const uid = 'xlsx-import';
+        const modal = this._createModal(
+            'Import XLSX (zewn. system)',
+            '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz moduł i plik XLSX wyeksportowany z innego systemu.</p>' +
+                this._moduleTypeHtml(uid) +
+                '<input type="file" id="ie-' +
+                uid +
+                '-file-input" accept=".xlsx" class="form-input" style="display:block;margin-bottom:1rem;width:100%;">' +
+                '<div id="ie-' +
+                uid +
+                '-progress" style="display:none;color:var(--accent);font-size:0.85rem;">Importowanie...</div>',
+            'Importuj',
+            async () => {
+                const module = document.querySelector(
+                    'input[name="' + uid + '-module"]:checked'
+                ).value;
+                const input = document.getElementById('ie-' + uid + '-file-input');
+                if (!input.files || !input.files[0]) {
+                    alert('Wybierz plik XLSX');
+                    return;
+                }
+                const progress = document.getElementById('ie-' + uid + '-progress');
+                progress.style.display = 'block';
+                try {
+                    const parsed = await XlsxImportShared.parseExternalXlsx(input.files[0]);
+                    const importer =
+                        module === 'studnie'
+                            ? window.StudnieExternalImport
+                            : window.RuryExternalImport;
+
+                    let imported = 0;
+                    let skipped = 0;
+                    const errors = [];
+                    for (const offer of parsed.offers) {
+                        const result = await importer.import(offer);
+                        if (result.success) imported++;
+                        else if (result.skipped) skipped++;
+                        else errors.push((result.number || '?') + ': ' + result.message);
+                    }
+
+                    this._closeModal();
+                    let message = 'Zaimportowano ofert: ' + imported + '.';
+                    if (skipped) message += ' Pominieto: ' + skipped + '.';
+                    if (errors.length) message += '\nBledy:\n' + errors.join('\n');
+                    alert(message);
                     if (window.pvSalesUI) {
                         window.pvSalesUI.loadLocalOffers();
                     }

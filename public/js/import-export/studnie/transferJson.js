@@ -24,9 +24,11 @@ window.StudnieTransferJson = {
     },
 
     async findOfferByNumber(number) {
-        const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-        if (!offers) return null;
-        return offers.find((o) => o.offer_number === number || o.number === number) || null;
+        return (
+            XlsxImportShared.getLoadedOffers().find(
+                (o) => o.offer_number === number || o.number === number
+            ) || null
+        );
     },
 
     async importOffer(file) {

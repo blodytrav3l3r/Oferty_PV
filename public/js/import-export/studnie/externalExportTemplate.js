@@ -81,8 +81,8 @@ window.StudnieExternalExportTemplate = {
     },
 
     async generateAndDownload(offerId) {
-        const offers = window.pvSalesUI && window.pvSalesUI.allLocalOffers;
-        if (!offers || !offers.length) {
+        const offers = XlsxImportShared.getLoadedOffers();
+        if (!offers.length) {
             alert('Brak zaladowanych ofert. Otworz kartoteke.');
             return;
         }

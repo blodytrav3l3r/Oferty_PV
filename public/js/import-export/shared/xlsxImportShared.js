@@ -80,6 +80,13 @@ window.XlsxImportShared = {
         return Object.values(grouped);
     },
 
+    getLoadedOffers() {
+        const ui = window.pvSalesUI;
+        return ui && ui.searchResults && Array.isArray(ui.searchResults.items)
+            ? ui.searchResults.items
+            : [];
+    },
+
     generateExternalXlsx(module, rows) {
         const ws = XLSX.utils.json_to_sheet(rows, { header: this.REQUIRED_COLS });
         const wb = XLSX.utils.book_new();
