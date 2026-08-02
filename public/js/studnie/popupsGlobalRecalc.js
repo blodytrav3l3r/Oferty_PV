@@ -98,6 +98,7 @@ function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
             id: 'auto',
             name: '',
             componentType: '',
+            height: null,
             isAuto: true,
             isActive: true,
             kind: 'red'
@@ -141,6 +142,7 @@ function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
             id: 'auto',
             name: '',
             componentType: '',
+            height: null,
             isAuto: true,
             isActive: true,
             kind: 'top'
