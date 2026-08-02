@@ -141,10 +141,13 @@ function renderTiles() {
     const primaryProducts = availProducts
         .filter((p) => {
             if (dn === 'styczna') {
-                if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                    return p.dn === 'styczna' || p.componentType === 'styczna';
-                }
                 const effDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
+                if (p.componentType === 'styczna') {
+                    return true;
+                }
+                if (p.componentType === 'dennica') {
+                    return parseInt(p.dn) === effDn;
+                }
                 return parseInt(p.dn) === effDn || p.dn === null;
             }
 
