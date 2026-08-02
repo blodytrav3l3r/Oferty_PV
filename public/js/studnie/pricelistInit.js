@@ -87,8 +87,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    document
-        .getElementById('studnie-pricelist-search')
-        ?.addEventListener('input', renderStudniePriceList);
+/* Input wyszukiwarki jest wstrzykiwany asynchronicznie przez partialLoader — delegacja na document */
+document.addEventListener('input', (e) => {
+    if (e.target && e.target.id === 'studnie-pricelist-search') {
+        renderStudniePriceList();
+    }
 });

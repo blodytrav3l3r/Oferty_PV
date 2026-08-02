@@ -149,8 +149,9 @@ function _excelRenderTable(dn) {
                             : ct === 'styczna'
                               ? '#f472b6'
                               : '#93c5fd';
-        const colLabel = c.shortLabel || c.label;
-        const colDetail = _excelWrapDetail(c.detailLabel) || '·';
+        const colLabel = escapeHtml(c.shortLabel || c.label);
+        /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
+        const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';
         let isPerProduct = c.productId ? true : false;
         let colCodeId;
         if (isPerProduct) {

@@ -97,7 +97,7 @@ function _excelShortLabel(name, componentType) {
             let detail = n.replace(/^Krąg\s+żelbetowy\s*/i, '').trim();
             if (detail === n) detail = n.replace(/^Krąg\s*/i, '').trim();
             detail = detail.replace(/^DN\d+\//, '').trim();
-            detail = detail.replace(/\s*z otworami?\s*$/i, '').trim();
+            detail = detail.replace(/\s*z otwor(?:em|ami)\s*$/i, '').trim();
             return { short: short, detail: detail };
         }
         case 'dennica': {
@@ -174,8 +174,8 @@ function _excelShortLabel(name, componentType) {
 /* ===== WRAP DETAIL — łamie wariant na nowy wiersz ===== */
 function _excelWrapDetail(detail) {
     if (!detail || detail === '·') return '·';
-    // Łam przed "bez stopni", "drabinka nierdzewna", "z otworami"
-    let br = detail.replace(/\s+(bez stopni|drabinka nierdzewna|z otworami?)\s*$/i, '<br>$1');
+    // Łam przed "bez stopni", "drabinka nierdzewna", "z otworem"/"z otworami"
+    let br = detail.replace(/\s+(bez stopni|drabinka nierdzewna|z otwor(?:em|ami))\s*$/i, '<br>$1');
     return br;
 }
 
