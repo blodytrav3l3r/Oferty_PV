@@ -37,16 +37,16 @@ function _excelToggleWellAutoMode(wIdx) {
     if (!btn) return;
     let nowAuto = wells[wIdx].autoSelect !== false;
     btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
-    btn.style.background = nowAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
-    btn.style.color = nowAuto ? '#c7d2fe' : '#fbbf24';
+    btn.style.background = nowAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.25)';
+    btn.style.color = nowAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
     btn.title = nowAuto ? 'Auto (klik = przelacz na Manual)' : 'Manual (klik = przelacz na Auto)';
     if (runBtn) {
         runBtn.disabled = !nowAuto;
         runBtn.style.opacity = nowAuto ? '1' : '0.4';
         runBtn.style.cursor = nowAuto ? 'pointer' : 'not-allowed';
-        runBtn.style.background = nowAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)';
-        runBtn.style.color = nowAuto ? '#c7d2fe' : '#64748b';
-        runBtn.style.borderColor = nowAuto ? '#6366f1' : 'rgba(100,116,139,0.3)';
+        runBtn.style.background = nowAuto ? 'rgba(var(--accent-rgb), 0.35)' : 'rgba(var(--slate-500-rgb), 0.15)';
+        runBtn.style.color = nowAuto ? 'var(--accent-text-light)' : 'var(--slate-500)';
+        runBtn.style.borderColor = nowAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)';
         runBtn.style.pointerEvents = nowAuto ? 'auto' : 'none';
         runBtn.title = nowAuto
             ? 'Uruchom auto-dobor elementow dla tej studni'

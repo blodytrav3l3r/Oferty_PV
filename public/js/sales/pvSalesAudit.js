@@ -232,18 +232,18 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
                 .audit-modal-inner {
                     width: 100vw; height: 100vh; max-width: none; max-height: none;
                     display: flex; flex-direction: column; border-radius: 0;
-                    background: #0f172a; border: 0; box-shadow: none; overflow: hidden;
+                    background: var(--slate-950); border: 0; box-shadow: none; overflow: hidden;
                 }
                 .audit-modal-header {
                     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
                     padding: 1rem 1.25rem;
-                    border-bottom: 1px solid rgba(148,163,184,0.12);
-                    background: rgba(15,23,42,0.96);
+                    border-bottom: 1px solid rgba(var(--slate-400-rgb), 0.12);
+                    background: rgba(var(--slate-950-rgb), 0.96);
                 }
                 .audit-modal-header h3 { margin: 0; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.55rem; }
                 .audit-modal-subtitle { color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.18rem; }
                 .audit-list { padding: 1rem 1.25rem 1.25rem; overflow-y: auto; }
-                .audit-card { position: relative; padding: 0.9rem 1rem; margin-bottom: 0.75rem; border-radius: 8px; background: rgba(30,41,59,0.62); border: 1px solid rgba(148,163,184,0.12); }
+                .audit-card { position: relative; padding: 0.9rem 1rem; margin-bottom: 0.75rem; border-radius: 8px; background: rgba(var(--slate-800-rgb), 0.62); border: 1px solid rgba(var(--slate-400-rgb), 0.12); }
                 .audit-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
                 .audit-card.action-create::before { background: var(--accent-hover); }
                 .audit-card.action-update::before { background: var(--success-hover); }
@@ -253,24 +253,24 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
                 .audit-title-wrap { display: flex; align-items: flex-start; gap: 0.7rem; min-width: 0; }
                 .audit-badge { display: inline-flex; align-items: center; gap: 0.35rem; height: 28px; padding: 0 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; white-space: nowrap; }
                 .audit-badge i { width: 13px; height: 13px; }
-                .audit-badge.create { background: rgba(var(--accent-hover-rgb),0.14); color: var(--accent-text); border: 1px solid rgba(var(--accent-hover-rgb),0.25); }
-                .audit-badge.update { background: rgba(var(--success-rgb),0.12); color: var(--success-hover); border: 1px solid rgba(var(--success-rgb),0.22); }
-                .audit-badge.diff { background: rgba(var(--warn-rgb),0.12); color: var(--warn-hover); border: 1px solid rgba(var(--warn-rgb),0.25); }
-                .audit-badge.danger { background: rgba(var(--danger-rgb),0.12); color: var(--danger-hover); border: 1px solid rgba(var(--danger-rgb),0.25); }
+                .audit-badge.create { background: rgba(var(--accent-rgb), 0.2); color: var(--accent-text); border: 1px solid rgba(var(--accent-rgb), 0.3); }
+                .audit-badge.update { background: rgba(var(--success-rgb), 0.12); color: var(--success-hover); border: 1px solid rgba(var(--success-rgb), 0.22); }
+                .audit-badge.diff { background: rgba(var(--warn-rgb), 0.12); color: var(--warn-hover); border: 1px solid rgba(var(--warn-rgb), 0.25); }
+                .audit-badge.danger { background: rgba(var(--danger-rgb), 0.12); color: var(--danger-hover); border: 1px solid rgba(var(--danger-rgb), 0.25); }
                 .audit-entry-title { color: var(--text-primary); font-size: 0.92rem; font-weight: 750; line-height: 1.25; }
                 .audit-entry-subtitle { color: var(--text-secondary); font-size: 0.76rem; margin-top: 0.2rem; }
                 .audit-card-body { display: flex; flex-direction: column; gap: 0.45rem; padding-left: 0.1rem; }
-                .audit-change-row { display: grid; grid-template-columns: minmax(130px,210px) 1fr; gap: 0.75rem; align-items: center; padding: 0.45rem 0.55rem; border-radius: 7px; background: rgba(15,23,42,0.5); }
+                .audit-change-row { display: grid; grid-template-columns: minmax(130px,210px) 1fr; gap: 0.75rem; align-items: center; padding: 0.45rem 0.55rem; border-radius: 7px; background: rgba(var(--slate-950-rgb), 0.5); }
                 .audit-change-name { color: var(--border); font-size: 0.78rem; font-weight: 700; }
                 .audit-change-values { display: inline-flex; align-items: center; gap: 0.45rem; min-width: 0; color: var(--text-primary); font-size: 0.8rem; }
                 .audit-change-values i { width: 13px; height: 13px; color: var(--text-muted); flex: 0 0 auto; }
                 .audit-old { color: var(--text-secondary); text-decoration: line-through; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .audit-new { color: var(--success-hover); font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .audit-muted { color: var(--border); font-size: 0.84rem; }
-                .danger-text { color: #fca5a5; }
+                .danger-text { color: var(--danger-hover); }
                 .audit-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
                 .preview-btn, .restore-btn, .load-more-btn { border-radius: 7px; font-weight: 700; }
-                .load-more-btn { background: rgba(var(--accent-rgb),0.14); border: 1px solid rgba(var(--accent-rgb),0.3); color: var(--accent-text); padding: 0.55rem 1.1rem; cursor: pointer; }
+                .load-more-btn { background: rgba(var(--accent-rgb), 0.14); border: 1px solid rgba(var(--accent-rgb), 0.3); color: var(--accent-text); padding: 0.55rem 1.1rem; cursor: pointer; }
                 .audit-load-more-wrap { text-align: center; padding: 0.75rem 0 0.25rem; }
                 @media (max-width: 720px) {
                     .audit-card-header, .audit-title-wrap { flex-direction: column; }
@@ -284,7 +284,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
                         <h3 id="offer-history-title"><i data-lucide="history"></i> Historia ${contextLabel}</h3>
                         <div class="audit-modal-subtitle">${total} wpisów • najnowsze zmiany na górze</div>
                     </div>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.08); color:var(--white); width:32px; height:32px;" onclick="document.getElementById('offer-history-modal').remove()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container-kartoteka" class="audit-list">
                     ${historyHtml}
@@ -409,12 +409,12 @@ export function auditShowSnapshotModal(self, data, type) {
         titleId: 'audit-snapshot-title',
         html: `
         <style>
-            #audit-snapshot-modal .audit-modal-inner { width:100vw; height:100vh; max-width:none; max-height:none; background:#0f172a; border:0; border-radius:0; box-shadow:none; display:flex; flex-direction:column; }
-            #audit-snapshot-modal .audit-modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid rgba(148,163,184,0.12); }
+            #audit-snapshot-modal .audit-modal-inner { width:100vw; height:100vh; max-width:none; max-height:none; background:var(--slate-950); border:0; border-radius:0; box-shadow:none; display:flex; flex-direction:column; }
+            #audit-snapshot-modal .audit-modal-header { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:1rem 1.25rem; border-bottom:1px solid rgba(var(--slate-400-rgb), 0.12); }
             #audit-snapshot-modal .audit-modal-header h3 { margin:0; color:var(--text-primary); font-size:1rem; display:flex; align-items:center; gap:0.55rem; }
             #audit-snapshot-modal .audit-modal-subtitle { color:var(--text-secondary); font-size:0.78rem; margin-top:0.18rem; }
             #audit-snapshot-modal .audit-list { padding:1rem 1.25rem 1.25rem; overflow-y:auto; }
-            #audit-snapshot-modal .audit-change-row { display:grid; grid-template-columns:minmax(130px,210px) 1fr; gap:0.75rem; align-items:center; padding:0.45rem 0.55rem; border-radius:7px; background:rgba(15,23,42,0.5); }
+            #audit-snapshot-modal .audit-change-row { display:grid; grid-template-columns:minmax(130px,210px) 1fr; gap:0.75rem; align-items:center; padding:0.45rem 0.55rem; border-radius:7px; background:rgba(var(--slate-950-rgb), 0.5); }
             #audit-snapshot-modal .audit-change-name { color:var(--border); font-size:0.78rem; font-weight:700; }
             #audit-snapshot-modal .audit-change-values { min-width:0; color:var(--text-primary); font-size:0.8rem; }
             #audit-snapshot-modal .audit-new { color:var(--success-hover); font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:block; }
@@ -426,7 +426,7 @@ export function auditShowSnapshotModal(self, data, type) {
                     <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
                     <div class="audit-modal-subtitle">${self.escapeHtml(self.getAuditContextLabel(type))}</div>
                 </div>
-                <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.08); color:#fff; width:32px; height:32px;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.08); color:var(--white); width:32px; height:32px;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
             <div class="audit-list" style="display:flex; flex-direction:column; gap:0.45rem;">
                 ${rows || '<div class="audit-muted">Brak danych do pokazania.</div>'}

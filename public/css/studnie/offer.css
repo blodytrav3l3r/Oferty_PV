@@ -60,12 +60,12 @@
     width: 100% !important;
     box-sizing: border-box !important;
     padding: 0.3rem 0.45rem;
-    background: #1e293b !important;
-    color: #e2e8f0 !important;
+    background: var(--slate-800) !important;
+    color: var(--slate-200) !important;
 }
 #excel-table-container select option {
-    background: #1e293b;
-    color: #e2e8f0;
+    background: var(--slate-800);
+    color: var(--slate-200);
 }
 
 #excel-table-container .excel-sel-wrap {
@@ -112,7 +112,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    border-top: 2px solid rgba(99, 102, 241, 0.95);
+    border-top: 2px solid rgba(var(--accent-rgb), 0.95);
     z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
     pointer-events: none;
 }
@@ -125,7 +125,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    border-bottom: 2px solid rgba(99, 102, 241, 0.95);
+    border-bottom: 2px solid rgba(var(--accent-rgb), 0.95);
     z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
     pointer-events: none;
 }
@@ -133,23 +133,23 @@
 /* Lewa krawędź na pierwszej komórce */
 #excel-table-container tbody tr:focus-within td:first-child::before {
     height: 100%;
-    border-left: 2px solid rgba(99, 102, 241, 0.95);
+    border-left: 2px solid rgba(var(--accent-rgb), 0.95);
 }
 
 /* Prawa krawędź na ostatniej komórce */
 #excel-table-container tbody tr:focus-within td:last-child::after {
     height: 100%;
-    border-right: 2px solid rgba(99, 102, 241, 0.95);
+    border-right: 2px solid rgba(var(--accent-rgb), 0.95);
 }
 
 /* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
 #excel-table-container tbody tr:focus-within td {
-    color: #e2e8f0 !important;
+    color: var(--slate-200) !important;
 }
 
 /* Kolumna Lp. — lepszy kontrast w aktywnym wierszu */
 #excel-table-container tbody tr:focus-within td:first-child {
-    color: #a5b4fc !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
+    color: var(--accent-text) !important; /* Przyjemny pastelowy fioletowy dla aktywnego indeksu */
 }
 
 /* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
@@ -200,39 +200,39 @@
     transform: translateY(-1px);
 }
 .summary-action-btn--save {
-    background: rgba(16, 185, 129, 0.15);
-    border: 1px solid rgba(16, 185, 129, 0.4);
+    background: rgba(var(--success-rgb), 0.15);
+    border: 1px solid rgba(var(--success-rgb), 0.4);
     color: var(--success-hover);
     grid-column: 1;
     grid-row: 1;
 }
 .summary-action-btn--save:hover {
-    background: rgba(16, 185, 129, 0.3);
-    border-color: rgba(16, 185, 129, 0.6);
-    color: #a7f3d0;
+    background: rgba(var(--success-rgb), 0.3);
+    border-color: rgba(var(--success-rgb), 0.6);
+    color: var(--success-hover);
 }
 .summary-action-btn--order {
-    background: rgba(245, 158, 11, 0.15);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    color: #fcd34d;
+    background: rgba(var(--warn-rgb), 0.15);
+    border: 1px solid rgba(var(--warn-rgb), 0.4);
+    color: var(--warn-hover);
     grid-column: 2;
     grid-row: 1 / 3;
 }
 .summary-action-btn--order:hover {
-    background: rgba(245, 158, 11, 0.3);
-    border-color: rgba(245, 158, 11, 0.6);
-    color: #fde68a;
+    background: rgba(var(--warn-rgb), 0.3);
+    border-color: rgba(var(--warn-rgb), 0.6);
+    color: var(--warn-hover);
 }
 .summary-action-btn--print {
-    background: rgba(99, 102, 241, 0.15);
-    border: 1px solid rgba(99, 102, 241, 0.4);
-    color: #a5b4fc;
+    background: rgba(var(--accent-rgb), 0.15);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    color: var(--accent-text);
     grid-column: 1;
     grid-row: 2;
 }
 .summary-action-btn--print:hover {
-    background: rgba(99, 102, 241, 0.3);
-    border-color: rgba(99, 102, 241, 0.6);
+    background: rgba(var(--accent-rgb), 0.3);
+    border-color: rgba(var(--accent-rgb), 0.6);
     color: var(--accent-text);
 }
 /* —— Karty w dolnym pasku podsumowania (wzór rury) —— */
@@ -303,30 +303,30 @@
 #excel-table-container .h3-prodcode {
     font-size: 0.5rem;
     font-weight: 600;
-    color: #a4b3cb;
+    color: var(--slate-400);
     line-height: 1.45;
 }
 #excel-table-container .h3-prodprice {
     font-size: 0.55rem;
-    color: #34d399;
+    color: var(--success-hover);
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
-    background: rgba(52, 211, 153, 0.07);
+    background: rgba(var(--success-rgb), 0.07);
     border-radius: 3px;
     padding: 1px 5px;
     margin-top: 2px;
     display: inline-block;
 }
 #excel-table-container tbody tr:hover {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(var(--white-rgb), 0.02);
 }
 #excel-table-container .excel-resize-handle {
     width: 4px !important;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(var(--white-rgb), 0.08);
 }
 #excel-table-container .excel-resize-handle:hover {
-    background: rgba(99, 102, 241, 0.5) !important;
+    background: rgba(var(--accent-rgb), 0.5) !important;
 }
 #excel-table-container thead th {
     position: relative;
@@ -362,10 +362,10 @@
 
 .drag-preview {
     opacity: 0.7;
-    background: #eff6ff;
+    background: var(--slate-100);
 }
 .cell-selected {
-    outline: 2px solid #2563eb;
+    outline: 2px solid var(--blue);
     outline-offset: -1px;
-    background: #eff6ff;
+    background: var(--slate-100);
 }

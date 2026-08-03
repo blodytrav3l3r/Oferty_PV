@@ -28,8 +28,8 @@
 
     function healthCard(title, value, ok, subtitle) {
         var icon = ok
-            ? '<i data-lucide="check-circle" style="width:18px;height:18px;color:#22c55e"></i>'
-            : '<i data-lucide="alert-circle" style="width:18px;height:18px;color:#eab308"></i>';
+            ? '<i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success)"></i>'
+            : '<i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--warn)"></i>';
         var sub = subtitle
             ? '<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">' +
               subtitle +
@@ -86,7 +86,7 @@
         fetchJson(HEALTH_URL).then(function (d) {
             if (!d) {
                 container.innerHTML =
-                    '<div style="padding:12px;text-align:center;color:#ef4444;font-size:0.85rem">Nie mozna pobrac danych</div>';
+                    '<div style="padding:12px;text-align:center;color:var(--danger);font-size:0.85rem">Nie mozna pobrac danych</div>';
                 return;
             }
 

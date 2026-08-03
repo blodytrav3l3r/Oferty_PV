@@ -28,19 +28,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';
             const colorMap = {
                 admin: {
-                    bg: 'rgba(var(--warn-rgb),0.15)',
+                    bg: 'rgba(var(--warn-rgb), 0.15)',
                     fg: 'var(--warn)',
-                    border: 'rgba(var(--warn-rgb),0.3)'
+                    border: 'rgba(var(--warn-rgb), 0.3)'
                 },
                 pro: {
-                    bg: 'rgba(var(--success-rgb),0.15)',
+                    bg: 'rgba(var(--success-rgb), 0.15)',
                     fg: 'var(--success)',
-                    border: 'rgba(var(--success-rgb),0.3)'
+                    border: 'rgba(var(--success-rgb), 0.3)'
                 },
                 user: {
-                    bg: 'rgba(var(--blue-rgb),0.15)',
+                    bg: 'rgba(var(--blue-rgb), 0.15)',
                     fg: 'var(--blue-hover)',
-                    border: 'rgba(var(--blue-rgb),0.3)'
+                    border: 'rgba(var(--blue-rgb), 0.3)'
                 }
             };
             const c = colorMap[user.role] || colorMap.user;

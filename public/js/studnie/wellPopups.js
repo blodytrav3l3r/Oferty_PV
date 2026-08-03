@@ -50,7 +50,7 @@ function openZakonczeniePopup() {
         }
         return typeof SVG_COLORS !== 'undefined' && SVG_COLORS.fallback
             ? SVG_COLORS.fallback
-            : '#334155';
+            : 'var(--slate-700)';
     };
 
     const renderTile = (p) => {
@@ -94,7 +94,7 @@ function openZakonczeniePopup() {
         const isAutoActive = !currentZak;
 
         tilesHtml += `
-        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:#a78bfa;" aria-pressed="${isAutoActive}" onclick="selectZakonczenie(null)">
+        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:var(--accent2-hover);" aria-pressed="${isAutoActive}" onclick="selectZakonczenie(null)">
             <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(effectiveDn)})</span>
             <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(effectiveDn)}</span>
             <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
@@ -202,7 +202,7 @@ function openRedukcjaZakonczeniePopup() {
         }
         return typeof SVG_COLORS !== 'undefined' && SVG_COLORS.fallback
             ? SVG_COLORS.fallback
-            : '#334155';
+            : 'var(--slate-700)';
     };
 
     const renderTile = (p, overrideLabel = null) => {
@@ -241,7 +241,7 @@ function openRedukcjaZakonczeniePopup() {
     let tilesHtml = '';
     const isAutoActive = !currentZak;
     tilesHtml += `
-    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:#a78bfa;" aria-pressed="${isAutoActive}" onclick="selectRedukcjaZakonczenie(null)">
+    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:var(--accent2-hover);" aria-pressed="${isAutoActive}" onclick="selectRedukcjaZakonczenie(null)">
         <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(targetDn)})</span>
         <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(targetDn)}</span>
         <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>

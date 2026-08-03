@@ -122,15 +122,15 @@ function renderWellConfig() {
 
         const isPlaceholder = item.isPlaceholder;
         const plStyle = isPlaceholder
-            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); pointer-events: none;'
+            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.4); pointer-events: none;'
             : '';
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
-                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(255,255,255,0.3)'; this.style.boxShadow='0 0 12px rgba(99,102,241,0.4)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(255,255,255,0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
+                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.4)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
-                <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(0,0,0,0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
+                <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(var(--black-rgb), 0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
                   <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                   <span style="font-size:0.65rem; line-height:1; color:var(--text-primary); font-weight:800; margin:2px 0;">${index + 1}</span>
                   <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
@@ -138,7 +138,7 @@ function renderWellConfig() {
 
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
                   <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
-                    <span style="background:${badge.bg}; color:white; font-size:0.55rem; padding:1px 5px; border-radius:4px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
+                    <span style="background:${badge.bg}; color:var(--white); font-size:0.55rem; padding:1px 5px; border-radius:4px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
                     <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';
@@ -167,13 +167,13 @@ function renderWellConfig() {
                                     : `${fracPerc ? fracPerc + '% uzup.' : 'Uzup.'}`;
                             }
                             const isPrecoDisabled = item.disablePreco;
-                            const precoColor = isPrecoDisabled ? 'var(--text-muted)' : '#f43f5e';
+                            const precoColor = isPrecoDisabled ? 'var(--text-muted)' : 'var(--danger)';
                             const precoBg = isPrecoDisabled
-                                ? 'rgba(255,255,255,0.05)'
-                                : 'rgba(244,63,94,0.1)';
+                                ? 'rgba(var(--white-rgb), 0.05)'
+                                : 'rgba(var(--danger-rgb), 0.1)';
                             const precoBorder = isPrecoDisabled
-                                ? 'rgba(255,255,255,0.2)'
-                                : 'rgba(244,63,94,0.4)';
+                                ? 'rgba(var(--white-rgb), 0.2)'
+                                : 'rgba(var(--danger-rgb), 0.4)';
                             const precoText = isPrecoDisabled
                                 ? `<del>PRECO (${percDesc})</del>`
                                 : `PRECO (${percDesc})`;
@@ -185,13 +185,13 @@ function renderWellConfig() {
 
                         if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
                             const isPehdDisabled = item.disablePehd;
-                            const pehdColor = isPehdDisabled ? 'var(--text-muted)' : '#0ea5e9';
+                            const pehdColor = isPehdDisabled ? 'var(--text-muted)' : 'var(--blue-alt)';
                             const pehdBg = isPehdDisabled
-                                ? 'rgba(255,255,255,0.05)'
-                                : 'rgba(14,165,233,0.1)';
+                                ? 'rgba(var(--white-rgb), 0.05)'
+                                : 'rgba(var(--blue-alt-rgb), 0.1)';
                             const pehdBorder = isPehdDisabled
-                                ? 'rgba(255,255,255,0.2)'
-                                : 'rgba(14,165,233,0.4)';
+                                ? 'rgba(var(--white-rgb), 0.2)'
+                                : 'rgba(var(--blue-alt-rgb), 0.4)';
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
 
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
@@ -202,7 +202,7 @@ function renderWellConfig() {
                             (p.componentType === 'krag' || p.componentType === 'krag_ot')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
                         if (
                             (well.dennicaMaterial === 'zelbetowa' ||
@@ -210,7 +210,7 @@ function renderWellConfig() {
                             p.componentType === 'dennica'
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(245,158,11,0.4); padding:1px 4px; border-radius:4px; background:rgba(245,158,11,0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
                         if (
                             well.stopnie === 'nierdzewna' &&
@@ -220,7 +220,7 @@ function renderWellConfig() {
                                 p.componentType === 'dennica')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(168,85,247,0.4); padding:1px 4px; border-radius:4px; background:rgba(168,85,247,0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+                                ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
                         }
 
                         return badgesHtml;
@@ -232,16 +232,16 @@ function renderWellConfig() {
 
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
-                <span style="font-size:0.52rem; color:rgba(255,255,255,0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
-                <span style="color:rgba(255,255,255,0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
+                <span style="color:rgba(var(--white-rgb), 0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
-                <span style="font-size:0.52rem; color:rgba(255,255,255,0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">CENA:</span>
+                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">CENA:</span>
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.2); border-radius:6px; cursor:pointer; color:#ef4444; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(239,68,68,0.15)'; this.style.borderColor='rgba(239,68,68,0.4)';" onmouseleave="this.style.background='rgba(239,68,68,0.06)'; this.style.borderColor='rgba(239,68,68,0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
+                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.06); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius:6px; cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.4)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.06)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
               </div>
             </div>
 
@@ -267,16 +267,16 @@ function renderWellConfig() {
             const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
 
             if (precoCalc.error) {
-                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(239,68,68,0.15); border:1px solid #ef4444; border-radius:10px; color:#ef4444; font-weight:700; font-size:0.85rem; line-height:1.4;">`;
+                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:rgba(var(--danger-rgb), 0.15); border:1px solid var(--danger); border-radius:10px; color:var(--danger); font-weight:700; font-size:0.85rem; line-height:1.4;">`;
                 html += `⚠️ ${precoCalc.error}`;
                 html += `</div>`;
             } else {
                 const precoMult = 1 - discPreco / 100;
                 const precoFinal = precoCalc.suma * precoMult;
 
-                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(244,63,94,0.12), rgba(139,92,246,0.08)); border:1px solid rgba(244,63,94,0.3); border-radius:10px;">`;
+                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(var(--danger-rgb), 0.12), rgba(var(--accent2-rgb), 0.08)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius:10px;">`;
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">`;
-                html += `<span style="font-weight:800; font-size:0.85rem; color:#f43f5e;">🔧 Wkładka ${kinetaLabel}</span>`;
+                html += `<span style="font-weight:800; font-size:0.85rem; color:var(--danger);">🔧 Wkładka ${kinetaLabel}</span>`;
                 html += `<span style="font-weight:800; font-size:1rem; color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;
                 html += `</div>`;
                 html += `<div style="display:grid; grid-template-columns:1fr auto; gap:0.15rem 0.8rem; font-size:0.75rem; color:var(--text-secondary);">`;

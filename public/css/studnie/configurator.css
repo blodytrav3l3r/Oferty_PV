@@ -331,8 +331,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .well-list-item {
-    background: rgba(26, 37, 54, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(var(--slate-800-rgb), 0.4);
+    border: 1px solid rgba(var(--white-rgb), 0.05);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     border-radius: 8px;
@@ -347,16 +347,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .well-list-item:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    background: rgba(30, 45, 66, 0.6);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    background: rgba(var(--slate-800-rgb), 0.6);
     transform: translateX(2px);
 }
 
 .well-list-item.active {
-    border-color: rgba(245, 158, 11, 0.8);
+    border-color: rgba(var(--warn-rgb), 0.8);
     border-width: 2px;
-    background: linear-gradient(180deg, transparent 0%, rgba(245, 158, 11, 0.06) 50%, rgba(245, 158, 11, 0.12) 100%);
-    box-shadow: 0 0 16px rgba(245, 158, 11, 0.12);
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.06) 50%, rgba(var(--warn-rgb), 0.12) 100%);
+    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.12);
     transform: translateX(2px);
 }
 
@@ -367,7 +367,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     height: 60%;
-    background: linear-gradient(to top, rgba(245, 158, 11, 0.18), transparent);
+    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.18), transparent);
     pointer-events: none;
     border-radius: 0 0 8px 8px;
     animation: wellActivePulse 2s ease-in-out infinite;
@@ -426,7 +426,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     justify-content: space-between;
     align-items: center;
     font-size: 0.62rem;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(var(--white-rgb), 0.4);
     margin-top: 0.2rem;
 }
 
@@ -438,16 +438,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-elevations {
     font-size: 0.58rem;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(var(--white-rgb), 0.35);
     margin-top: 0.1rem;
     display: flex;
     gap: 0.4rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.03);
+    border-top: 1px solid rgba(var(--white-rgb), 0.03);
     padding-top: 0.15rem;
 }
 
 .well-list-elevations strong {
-    color: rgba(255, 255, 255, 0.6);
+    color: rgba(var(--white-rgb), 0.6);
     font-weight: 600;
 }
 
@@ -715,7 +715,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     top: 5px;
     right: 5px;
     background: var(--accent);
-    color: white;
+    color: var(--white);
     border-radius: 50%;
     width: 16px;
     height: 16px;
@@ -834,7 +834,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .s-tab-btn:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--white-rgb), 0.05);
 }
 
 .s-tab-btn.active {
@@ -909,7 +909,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .fs-type-btn.active {
     background: linear-gradient(135deg, var(--accent-bg-hover), var(--nav-glow-custom));
     border-color: var(--accent-border);
-    color: #fff;
+    color: var(--white);
     box-shadow: var(--shadow-md);
 }
 
@@ -1006,7 +1006,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     inset: 0;
     z-index: 60;
     pointer-events: none;
-    background: rgba(2, 6, 23, 0.2);
+    background: rgba(var(--slate-950-rgb), 0.2);
     -webkit-backdrop-filter: blur(3px);
     backdrop-filter: blur(3px);
     animation: studnieTransitionFade 0.18s ease both;
@@ -1141,7 +1141,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     display: inline-block;
     width: 14px;
     height: 14px;
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(var(--white-rgb), 0.2);
     border-top-color: var(--blue-hover);
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
@@ -1159,7 +1159,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 /* ——— Studnie: option background ——— */
 select.form-input option {
     background-color: #1b2334;
-    color: #fff;
+    color: var(--white);
 }
 /* ——— Klasy narzędziowe do migracji stylów inline ——— */
 /* Font size */
@@ -1259,7 +1259,7 @@ select.form-input option {
     align-items: center;
     gap: 5px;
     cursor: pointer;
-    color: #d4d4d8;
+    color: var(--slate-300);
     font-size: 0.85rem;
 }
 
@@ -1381,47 +1381,47 @@ select.form-input option {
 }
 /* —— Transition Renderer hover classes —— */
 .prz-field {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
     border-radius: 4px;
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
 }
 .prz-field:hover {
-    color: #60a5fa !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--blue-hover) !important;
+    background: rgba(var(--white-rgb), 0.1) !important;
 }
 
 .prz-btn-edit {
-    background: rgba(96, 165, 250, 0.15);
-    border: 1px solid rgba(96, 165, 250, 0.3);
+    background: rgba(var(--blue-rgb), 0.15);
+    border: 1px solid rgba(var(--blue-rgb), 0.3);
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     padding: 0.35rem;
-    color: #60a5fa;
+    color: var(--blue-hover);
     transition:
         background-color 0.2s,
         border-color 0.2s;
 }
 .prz-btn-edit:hover {
-    background: rgba(96, 165, 250, 0.3) !important;
+    background: rgba(var(--blue-rgb), 0.3) !important;
 }
 
 .prz-btn-delete {
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: rgba(var(--danger-rgb), 0.15);
+    border: 1px solid rgba(var(--danger-rgb), 0.3);
     border-radius: 8px;
     cursor: pointer;
     font-size: 0.9rem;
     padding: 0.35rem;
-    color: #ef4444;
+    color: var(--danger);
     transition:
         background-color 0.2s,
         border-color 0.2s;
 }
 .prz-btn-delete:hover {
-    background: rgba(239, 68, 68, 0.3) !important;
+    background: rgba(var(--danger-rgb), 0.3) !important;
 }
 
 .prz-field-color {
@@ -1429,7 +1429,7 @@ select.form-input option {
     cursor: pointer;
 }
 .prz-field-color:hover {
-    color: #60a5fa !important;
+    color: var(--blue-hover) !important;
 }
 
 .prz-field-dn {
@@ -1437,19 +1437,19 @@ select.form-input option {
     cursor: pointer;
 }
 .prz-field-dn:hover {
-    color: #c084fc !important;
+    color: var(--purple-alt) !important;
 }
 
 .prz-field-height {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
     border-radius: 4px;
 }
 .prz-field-height:hover {
-    color: #fbbf24 !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--warn-hover) !important;
+    background: rgba(var(--white-rgb), 0.1) !important;
 }
 
 .prz-field-angle {
@@ -1458,13 +1458,13 @@ select.form-input option {
         transform 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
     border-radius: 4px;
     will-change: transform;
 }
 .prz-field-angle:hover {
     transform: scale(1.15);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--white-rgb), 0.1);
     transform-origin: center center;
 }
 
@@ -1472,23 +1472,23 @@ select.form-input option {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
     border-radius: 4px;
 }
 .prz-field-rzedna:hover {
-    color: #60a5fa !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--blue-hover) !important;
+    background: rgba(var(--white-rgb), 0.1) !important;
 }
 
 .prz-field-doplata {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
     border-radius: 4px;
     transition: background-color 0.2s;
 }
 .prz-field-doplata:hover {
-    background: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(var(--white-rgb), 0.1) !important;
 }
 
 .config-tile {

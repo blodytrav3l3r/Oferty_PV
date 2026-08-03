@@ -18,15 +18,15 @@ function getFlowVisuals(flowType) {
     const isWylot = flowType === FLOW_TYPES.WYLOT;
     return {
         label: isWylot ? 'Wylot' : 'Wlot',
-        bg: isWylot ? 'rgba(239,68,68,0.2)' : 'rgba(59,130,246,0.2)',
-        color: isWylot ? '#fca5a5' : '#93c5fd',
-        border: isWylot ? 'rgba(239,68,68,0.6)' : 'rgba(59,130,246,0.6)',
+        bg: isWylot ? 'rgba(var(--danger-rgb), 0.2)' : 'rgba(var(--blue-rgb), 0.2)',
+        color: isWylot ? 'var(--danger-hover)' : 'var(--blue-hover)',
+        border: isWylot ? 'rgba(var(--danger-rgb), 0.6)' : 'rgba(var(--blue-rgb), 0.6)',
         icon: isWylot ? '<i data-lucide="upload"></i>' : '<i data-lucide="download"></i>'
     };
 }
 
 function getAngleColor(angle) {
-    return angle === 0 || angle === '0' ? '#6366f1' : '#818cf8';
+    return angle === 0 || angle === '0' ? 'var(--accent)' : 'var(--accent-hover)';
 }
 
 function calcExecutionAngle(angle) {
@@ -129,7 +129,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     // Kolumna akcji
     let actionsHTML = '';
     if (showEdit || showDelete) {
-        actionsHTML = `<div style="display:flex; align-items:center; gap:0.25rem; padding-left:0.5rem; border-left:1px dashed rgba(255,255,255,0.1);">`;
+        actionsHTML = `<div style="display:flex; align-items:center; gap:0.25rem; padding-left:0.5rem; border-left:1px dashed rgba(var(--white-rgb), 0.1);">`;
         if (showEdit) {
             actionsHTML += `<button onclick="editPrzejscie(${globalIndex})" title="Edytuj" class="prz-btn-edit"><i data-lucide="pencil"></i></button>`;
         }
@@ -141,7 +141,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     let priceSubInfo = '';
     if (opts.drillingBasePrice > 0 && opts.drillingProd) {
-        priceSubInfo = `<div style="font-size:0.55rem; color:#f97316; text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${opts.drillingProd.name}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
+        priceSubInfo = `<div style="font-size:0.55rem; color:var(--warn); text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${opts.drillingProd.name}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
     }
 
     const priceHTML = showPrice
@@ -154,7 +154,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     // Kolumna dopłata (non-discountable)
     const doplataVal = item.doplata != null ? item.doplata : 0;
-    const doplataColor = doplataVal > 0 ? '#10b981' : doplataVal < 0 ? '#ef4444' : '#fbbf24';
+    const doplataColor = doplataVal > 0 ? 'var(--success)' : doplataVal < 0 ? 'var(--danger)' : 'var(--warn-hover)';
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
@@ -168,11 +168,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const clockIdx = getClockIndex(item, opts);
     const numDisplay =
         clockIdx !== '' && clockIdx !== undefined
-            ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:#1e293b; border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(0,0,0,0.5);">${clockIdx}</div>`
+            ? `<div title="Oznaczenie zegarowe" style="position:absolute; top:-6px; right:-6px; background:var(--slate-800); border:1px solid ${flow.border}; border-radius:50%; width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:0.6rem; font-weight:800; color:${flow.color}; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.5);">${clockIdx}</div>`
             : '';
 
     const extraPadding = opts.drillingBasePrice > 0 && opts.drillingProd ? '0.85rem' : '0.4rem';
-    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(30,41,59,0.8) 100%); border:1px solid rgba(255,255,255,0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
+    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
         ${numDisplay}
@@ -185,38 +185,38 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
         <div style="display:flex; flex-direction:column; gap:0.1rem; flex:1; min-width:200px; white-space:normal; padding-right:0.5rem;">
            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
              <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" class="prz-field-color" style="font-size:0.95rem; font-weight:800; color:var(--text-primary);">${przName}</span>
-             <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" class="prz-field-dn" style="font-size:0.95rem; color:#a78bfa; font-weight:800;">${dnLabel}</span>
+             <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" class="prz-field-dn" style="font-size:0.95rem; color:var(--accent2-hover); font-weight:800;">${dnLabel}</span>
            </div>
         </div>
 
         <div style="display:flex; align-items:center; gap:0.5rem; margin-right: 0.2rem; white-space:nowrap; flex-shrink:0;">
           <div style="width:160px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center" title="${spadekKLabel} [mm]">${spadekKLabel} [%]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekKineta" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" class="prz-field" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); display:inline-block; margin-top:8px;">${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
+            <div data-qe-id="${item.id}" data-qe-field="spadekKineta" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekKineta')" title="Kliknij aby edytować" class="prz-field" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
           </div>
           <div style="width:160px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center" title="${spadekMLabel} [mm]">${spadekMLabel} [%]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekMufa" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekMufa')" title="Kliknij aby edytować" class="prz-field" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); display:inline-block; margin-top:8px;">${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
+            <div data-qe-id="${item.id}" data-qe-field="spadekMufa" onclick="window.activateQuickEdit(this, ${globalIndex}, 'spadekMufa')" title="Kliknij aby edytować" class="prz-field" style="font-size:1.0rem; font-weight:700; color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
           </div>
           <div style="width:65px; flex-shrink:0; position:relative; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center">Kąt</div>
-            <div data-qe-id="${item.id}" data-qe-field="angle" onclick="window.activateQuickEdit(this, ${globalIndex}, 'angle')" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size:1.0rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(0,0,0,0.3); display:inline-block; margin-top:8px;">${item.angle}°</div>
+            <div data-qe-id="${item.id}" data-qe-field="angle" onclick="window.activateQuickEdit(this, ${globalIndex}, 'angle')" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size:1.0rem; font-weight:800; color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.angle}°</div>
           </div>
           <div style="width:95px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center" title="Wysokość [mm]">Wysokość [mm]</div>
-            <div data-qe-id="${item.id}" data-qe-field="heightMm" onclick="window.activateQuickEdit(this, ${globalIndex}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size:1.0rem; font-weight:800; color:#f59e0b; text-shadow:0 1px 2px rgba(0,0,0,0.3); display:inline-block; margin-top:8px;">${heightMm} mm</div>
+            <div data-qe-id="${item.id}" data-qe-field="heightMm" onclick="window.activateQuickEdit(this, ${globalIndex}, 'heightMm')" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size:1.0rem; font-weight:800; color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${heightMm} mm</div>
           </div>
           <div style="width:105px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center" title="Kąt wykonania">Kąt wykonania</div>
-            <div style="font-size:1.0rem; font-weight:700; color:#38bdf8; display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
+            <div style="font-size:1.0rem; font-weight:700; color:var(--blue-alt); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
           </div>
           <div style="width:70px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center" title="Kąt gony">Kąt gony</div>
-            <div style="font-size:1.0rem; font-weight:700; color:#2dd4bf; display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
+            <div style="font-size:1.0rem; font-weight:700; color:var(--success-hover); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
           </div>
           <div style="width:80px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm" class="ellipsis-center">Rzędna</div>
-            <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" onclick="window.activateQuickEdit(this, ${globalIndex}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size:1.0rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(0,0,0,0.3); display:inline-block; margin-top:8px;">${item.rzednaWlaczenia || '—'}</div>
+            <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" onclick="window.activateQuickEdit(this, ${globalIndex}, 'rzednaWlaczenia')" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size:1.0rem; font-weight:800; color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.rzednaWlaczenia || '—'}</div>
           </div>
           ${priceHTML}
           ${doplataHTML}
@@ -350,7 +350,7 @@ function renderMirrorTransitions(container, items, well, findProductFn, configMa
 
     if (items.length === 0) {
         container.innerHTML =
-            '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(255,255,255,0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+            '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
         return;
     }
 

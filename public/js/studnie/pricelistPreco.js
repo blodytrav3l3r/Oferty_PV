@@ -45,7 +45,7 @@ function renderPrecoPriceList() {
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
         html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius:8px; overflow:hidden;">`;
-        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(244,63,94,0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:#f43f5e;">`;
+        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:var(--danger);">`;
         html += `<span><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
         html += `<span style="font-size:0.7rem; color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
         html += `</div>`;
@@ -64,7 +64,7 @@ function renderPrecoPriceList() {
         </tr></thead><tbody>`;
         data.kinety.forEach((k, i) => {
             html += `<tr>
-                <td style="font-weight:600; color:#818cf8;"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
+                <td style="font-weight:600; color:var(--accent-hover);"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}"></td>
                 <td class="text-center"><button class="btn-icon del" onclick="removePrecoKinetaRow(${dn}, ${i})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
@@ -140,7 +140,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
                 <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(0,0,0,0.15); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(var(--black-rgb), 0.15); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
                 <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'))" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
@@ -155,7 +155,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
 
     if (table && table.length > 0) {
         table.forEach((row, ri) => {
-            html += `<tr><td style="font-weight:600; color:#818cf8; padding-left:0.5rem;">
+            html += `<tr><td style="font-weight:600; color:var(--accent-hover); padding-left:0.5rem;">
                 <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-start;">
                     <input type="number" class="edit-input" style="width:70px; text-align:center; padding:0.2rem;" value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}">
                     <span style="color:var(--text-muted); font-weight:normal;">–</span> 

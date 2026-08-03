@@ -195,7 +195,7 @@ function updateRuryOrderSummary(orderData) {
         const uid = row.dataset.uid;
         const ordered = isOrderMode || isItemInAnyOrder(uid);
         const icon = ordered
-            ? '<i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i>'
+            ? '<i data-lucide="package-check" style="width:16px;height:16px;color:var(--accent-text)"></i>'
             : '<i data-lucide="circle" style="width:12px;height:12px;color:var(--text-muted);opacity:0.4"></i>';
         firstCell.innerHTML = icon;
         firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');
@@ -205,18 +205,18 @@ function updateRuryOrderSummary(orderData) {
             const curIdx = (orderCurrentItems || []).findIndex((it) => it.uid === uid);
             const change = curIdx >= 0 ? changes.items[curIdx] : null;
             if (change) {
-                row.style.borderLeft = '3px solid #ef4444';
-                row.style.background = 'rgba(239,68,68,0.05)';
+                row.style.borderLeft = '3px solid var(--danger)';
+                row.style.background = 'rgba(var(--danger-rgb), 0.05)';
                 let badge = '[ZMIENIONE]';
                 if (change.type === 'added') {
-                    row.style.borderLeft = '3px solid #10b981';
-                    row.style.background = 'rgba(16,185,129,0.05)';
+                    row.style.borderLeft = '3px solid var(--success)';
+                    row.style.background = 'rgba(var(--success-rgb), 0.05)';
                     badge = '[NOWE]';
                 }
                 const badgeSpan = document.createElement('span');
                 badgeSpan.style.cssText =
                     'font-size:0.6rem;color:' +
-                    (change.type === 'added' ? '#10b981' : '#ef4444') +
+                    (change.type === 'added' ? 'var(--success)' : 'var(--danger)') +
                     ';font-weight:700;margin-left:0.3rem;white-space:nowrap;';
                 badgeSpan.textContent = badge;
                 const nameCell = row.querySelectorAll('td')[1];

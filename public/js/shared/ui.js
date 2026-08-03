@@ -208,12 +208,12 @@ function showUserSelectionPopup(users, defaultUserId) {
 
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
-                background:${isDefault ? 'rgba(var(--accent-rgb),0.15)' : 'rgba(255,255,255,0.03)'};
-                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb),0.4)' : 'rgba(255,255,255,0.06)'};
+                background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.03)'};
+                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.4)' : 'rgba(var(--white-rgb), 0.06)'};
                 border-radius:10px; cursor:pointer; color:var(--text-primary); font:500 0.85rem Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
-            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.4)';this.style.background='rgba(var(--accent-rgb),0.1)'"
-               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='rgba(255,255,255,0.03)'}">
+            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.4)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
+               onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(var(--white-rgb), 0.06)';this.style.background='rgba(var(--white-rgb), 0.03)'}">
                 <span style="font-size:1.1rem;">${roleBadge}</span>
                 <div class="flex-1">
                     <div style="font-weight:700;">${escapeHtml(displayName)}</div>
@@ -225,13 +225,13 @@ function showUserSelectionPopup(users, defaultUserId) {
 
         html += `</div>`;
         html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
-        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(255,255,255,0.1); border-radius:8px; background:transparent; color:var(--text-secondary); cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
+        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(var(--white-rgb), 0.1); border-radius:8px; background:transparent; color:var(--text-secondary); cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
         html += `</div>`;
 
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
+            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(var(--white-rgb), 0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();
@@ -407,12 +407,12 @@ function _ensureConfirmStyles() {
     style.id = 'app-confirm-styles';
     style.textContent = `
         .app-confirm-modal {
-            background:#0d1520;
+            background:var(--slate-950);
             border:1px solid #2e2e75;
             border-radius:16px;
             width:100%; max-width:800px;
             padding:1.5rem 3rem;
-            box-shadow:0 25px 50px -12px rgba(0,0,0,0.5), 0 0 40px rgba(var(--accent-rgb),0.08);
+            box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.08);
             text-align:center;
             animation:appConfirmIn 0.2s ease-out;
         }
@@ -422,7 +422,7 @@ function _ensureConfirmStyles() {
         }
         .app-confirm-icon { font-size:2rem; margin-bottom:0.6rem; }
         .app-confirm-title {
-            font-size:1.05rem; font-weight:700; color:#fff;
+            font-size:1.05rem; font-weight:700; color:var(--white);
             margin-bottom:0.6rem;
         }
         .app-confirm-message {
@@ -438,13 +438,13 @@ function _ensureConfirmStyles() {
             cursor:pointer; transition:all 0.15s; border:none;
         }
         .app-confirm-btn:focus { outline:2px solid var(--accent-hover); outline-offset:2px; }
-        #app-confirm-ok { background:#4f46e5; color:white; }
+        #app-confirm-ok { background:var(--accent); color:var(--white); }
         #app-confirm-ok:hover { filter:brightness(1.15); transform:translateY(-1px); }
         #app-confirm-cancel {
-            background:#1e2d42; color:var(--text-secondary);
-            border:1px solid rgba(255,255,255,0.08);
+            background:var(--slate-800); color:var(--text-secondary);
+            border:1px solid rgba(var(--white-rgb), 0.08);
         }
-        #app-confirm-cancel:hover { color:#fff; background:#2d3e5a; }
+        #app-confirm-cancel:hover { color:var(--white); background:#2d3e5a; }
     `;
     document.head.appendChild(style);
 }

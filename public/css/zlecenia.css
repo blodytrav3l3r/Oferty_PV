@@ -16,8 +16,8 @@
 .zlecenia-stat-card {
     flex: 1;
     min-width: 160px;
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, var(--glass) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(var(--slate-800-rgb), 0.4) 0%, var(--glass) 100%);
+    border: 1px solid rgba(var(--white-rgb), 0.05);
     border-radius: 10px;
     padding: 0.55rem 0.9rem;
     display: flex;
@@ -37,12 +37,12 @@
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.1), transparent);
 }
 .zlecenia-stat-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
+    border-color: rgba(var(--accent-rgb), 0.3);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px -5px rgba(0, 0, 0, 0.3), 0 0 12px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 6px 20px -5px rgba(var(--black-rgb), 0.3), 0 0 12px rgba(var(--accent-rgb), 0.1);
 }
 .zlecenia-stat-icon {
     font-size: 1.1rem;
@@ -53,7 +53,7 @@
     justify-content: center;
     border-radius: 8px;
     flex-shrink: 0;
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    box-shadow: inset 0 0 10px rgba(var(--black-rgb), 0.2);
 }
 .zlecenia-stat-info {
     flex: 1;
@@ -106,12 +106,12 @@
     gap: 0.3rem;
 }
 .zlecenia-filter-tab:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--white-rgb), 0.04);
     color: var(--text-primary);
 }
 .zlecenia-filter-tab.active {
-    background: rgba(129, 140, 248, 0.12);
-    border-color: rgba(129, 140, 248, 0.4);
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.4);
     color: var(--accent-hover);
 }
 
@@ -123,11 +123,11 @@
 .zlecenia-table-container {
     overflow-x: auto;
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background: rgba(17, 24, 39, 0.4);
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+    background: rgba(var(--slate-950-rgb), 0.4);
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
-    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(var(--black-rgb), 0.5);
     scrollbar-width: thin;
 }
 .zlecenia-table {
@@ -138,7 +138,7 @@
 .zlecenia-table th {
     text-align: left;
     padding: 0.7rem 1rem;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(var(--black-rgb), 0.2);
     color: var(--text-muted);
     font-weight: 700;
     font-size: 0.7rem;
@@ -152,7 +152,7 @@
 }
 .zlecenia-table td {
     padding: 0.8rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(var(--white-rgb), 0.03);
     color: var(--text-primary);
     vertical-align: middle;
     transition: background-color 0.2s;
@@ -162,11 +162,11 @@
     position: relative;
 }
 .zlecenia-table tbody tr:hover {
-    background: rgba(99, 102, 241, 0.08);
+    background: rgba(var(--accent-rgb), 0.08);
     box-shadow: inset 4px 0 0 var(--accent);
 }
 .zlecenia-table tbody tr:hover td {
-    color: #fff;
+    color: var(--white);
 }
 .zlecenia-table tbody tr:last-child td {
     border-bottom: none;
@@ -191,29 +191,29 @@
     height: 14px;
 }
 .status-draft {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(var(--warn-rgb), 0.15) 0%, rgba(var(--warn-rgb), 0.05) 100%);
     color: var(--warn-hover);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    box-shadow: 0 0 15px rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(var(--warn-rgb), 0.4);
+    box-shadow: 0 0 15px rgba(var(--warn-rgb), 0.1);
     animation: pulse-draft 3s infinite;
 }
 @keyframes pulse-draft {
-    0% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
-    50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.2); }
-    100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.05); }
+    0% { box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05); }
+    50% { box-shadow: 0 0 20px rgba(var(--warn-rgb), 0.2); }
+    100% { box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05); }
 }
 .status-accepted {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(var(--success-rgb), 0.15) 0%, rgba(var(--success-rgb), 0.05) 100%);
     color: var(--success-hover);
-    border: 1px solid rgba(16, 185, 129, 0.4);
-    box-shadow: 0 0 15px rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(var(--success-rgb), 0.4);
+    box-shadow: 0 0 15px rgba(var(--success-rgb), 0.1);
 }
 
 /* Odznaka zamówienia sprzedaży */
 .sales-order-badge {
-    background: rgba(129, 140, 248, 0.08);
+    background: rgba(var(--accent-rgb), 0.08);
     color: var(--accent-hover);
-    border: 1px solid rgba(129, 140, 248, 0.2);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
     padding: 0.2rem 0.5rem;
     font-size: 0.78rem;
     font-family: monospace;
@@ -235,14 +235,14 @@
     border: 1px solid transparent;
 }
 .person-handler {
-    background: rgba(6, 182, 212, 0.1);
+    background: rgba(var(--blue-alt-rgb), 0.1);
     color: var(--cyan);
-    border-color: rgba(6, 182, 212, 0.2);
+    border-color: rgba(var(--blue-alt-rgb), 0.2);
 }
 .person-creator {
-    background: rgba(148, 163, 184, 0.08);
+    background: rgba(var(--slate-400-rgb), 0.08);
     color: var(--text-secondary);
-    border-color: rgba(148, 163, 184, 0.15);
+    border-color: rgba(var(--slate-400-rgb), 0.15);
 }
 
 /* Action buttons — base from style.css, only zlecenia variants */
@@ -251,14 +251,14 @@
     color: var(--blue-alt);
 }
 .action-btn-edit:hover {
-    background: rgba(14, 165, 233, 0.1);
+    background: rgba(var(--blue-alt-rgb), 0.1);
 }
 .action-btn-delete {
-    border-color: rgba(239, 68, 68, 0.3);
+    border-color: rgba(var(--danger-rgb), 0.3);
     color: var(--danger-hover);
 }
 .action-btn-delete:hover {
-    background: rgba(239, 68, 68, 0.12);
+    background: rgba(var(--danger-rgb), 0.12);
 }
 
 /* Well name + project */
@@ -299,13 +299,13 @@
     padding: 0.8rem 1.2rem;
     background: linear-gradient(
         135deg,
-        rgba(99, 102, 241, 0.25) 0%,
-        rgba(129, 140, 248, 0.15) 100%
+        rgba(var(--accent-rgb), 0.25) 0%,
+        rgba(var(--accent-rgb), 0.15) 100%
     );
-    border: 1px solid rgba(129, 140, 248, 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.4);
     border-radius: 14px;
     margin-bottom: 1.2rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(99, 102, 241, 0.1);
+    box-shadow: 0 8px 32px rgba(var(--black-rgb), 0.4), 0 0 20px rgba(var(--accent-rgb), 0.1);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -329,7 +329,7 @@
     gap: 0.4rem;
 }
 .batch-count {
-    background: rgba(129, 140, 248, 0.2);
+    background: rgba(var(--accent-rgb), 0.2);
     padding: 0.15rem 0.5rem;
     border-radius: 8px;
     font-weight: 800;
@@ -344,7 +344,7 @@
     padding: 0.4rem 0.8rem;
     border-radius: 8px;
     border: 1px solid var(--border-glass);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(var(--white-rgb), 0.04);
     color: var(--text-primary);
     font-size: 0.75rem;
     font-weight: 700;
@@ -356,21 +356,21 @@
 }
 .batch-btn:hover {
     background: var(--glass-border);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--white-rgb), 0.15);
 }
 .batch-btn-print {
-    border-color: rgba(14, 165, 233, 0.4);
+    border-color: rgba(var(--blue-alt-rgb), 0.4);
     color: var(--blue-alt);
 }
 .batch-btn-print:hover {
-    background: rgba(14, 165, 233, 0.12);
+    background: rgba(var(--blue-alt-rgb), 0.12);
 }
 .batch-btn-label {
-    border-color: rgba(168, 85, 247, 0.4);
+    border-color: rgba(var(--accent2-rgb), 0.4);
     color: var(--purple-alt);
 }
 .batch-btn-label:hover {
-    background: rgba(168, 85, 247, 0.12);
+    background: rgba(var(--accent2-rgb), 0.12);
 }
 
 /* Widok responsywny — Kartoteka Zleceń */

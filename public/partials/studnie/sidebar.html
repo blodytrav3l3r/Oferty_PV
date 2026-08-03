@@ -13,7 +13,7 @@
                     display: grid;
                     grid-template-columns: 1fr;
                     padding-bottom: 0.4rem;
-                    border-bottom: 1px solid #1a2233;
+                    border-bottom: 1px solid var(--slate-800);
                 "
             >
                 <button type="button"
@@ -23,9 +23,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: rgba(16, 185, 129, 0.15);
-                        color: #6ee7b7;
-                        border-color: rgba(16, 185, 129, 0.3);
+                        background: rgba(var(--success-rgb), 0.15);
+                        color: var(--success-hover);
+                        border-color: rgba(var(--success-rgb), 0.3);
                         display: flex;
                         flex-direction: row;
                         align-items: center;
@@ -53,7 +53,7 @@
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     padding-bottom: 0.4rem;
-                    border-bottom: 1px solid #1a2233;
+                    border-bottom: 1px solid var(--slate-800);
                 "
             >
                 <button type="button"
@@ -63,9 +63,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: rgba(99, 102, 241, 0.15);
-                        color: #a5b4fc;
-                        border-color: rgba(99, 102, 241, 0.3);
+                        background: rgba(var(--accent-rgb), 0.15);
+                        color: var(--accent-text);
+                        border-color: rgba(var(--accent-rgb), 0.3);
                         display: flex;
                         flex-direction: column;
                         align-items: center;
@@ -92,9 +92,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: rgba(139, 92, 246, 0.15);
-                        color: #c4b5fd;
-                        border-color: rgba(139, 92, 246, 0.3);
+                        background: rgba(var(--accent2-rgb), 0.15);
+                        color: var(--accent2-hover);
+                        border-color: rgba(var(--accent2-rgb), 0.3);
                         display: flex;
                         flex-direction: column;
                         align-items: center;
@@ -150,9 +150,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: rgba(16, 185, 129, 0.2);
-                        border-color: rgba(16, 185, 129, 0.4);
-                        color: #34d399;
+                        background: rgba(var(--success-rgb), 0.2);
+                        border-color: rgba(var(--success-rgb), 0.4);
+                        color: var(--success-hover);
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
@@ -178,9 +178,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: rgba(220, 38, 38, 0.12);
-                        border: 1px solid rgba(220, 38, 38, 0.3);
-                        color: #f87171;
+                        background: rgba(var(--danger-rgb), 0.12);
+                        border: 1px solid rgba(var(--danger-rgb), 0.3);
+                        color: var(--danger-hover);
                         display: flex;
                         flex-direction: column;
                         align-items: center;
@@ -208,9 +208,9 @@
                         padding: 0;
                         font-size: 0.65rem;
                         flex: 1;
-                        background: #0f3328;
+                        background: var(--slate-800);
                         border: 1px solid #0d2a20;
-                        color: #34d399;
+                        color: var(--success-hover);
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
@@ -240,7 +240,7 @@
                         grid-column: span 2;
                         background: #2d1a08;
                         border: 1px solid #5a3010;
-                        color: #f97316;
+                        color: var(--warn);
                         flex-direction: column;
                         align-items: center;
                         justify-content: center;
@@ -268,7 +268,7 @@
                     display: grid;
                     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
                     padding: 0.4rem 0;
-                    border-bottom: 1px solid #1a2233;
+                    border-bottom: 1px solid var(--slate-800);
                 "
             >
                 <button type="button"
@@ -347,9 +347,9 @@
                         height: 46px;
                         padding: 0;
                         font-size: 0.6rem;
-                        background: rgba(249, 115, 22, 0.15);
-                        border: 1px solid rgba(249, 115, 22, 0.3);
-                        color: #f97316;
+                        background: rgba(var(--warn-rgb), 0.15);
+                        border: 1px solid rgba(var(--warn-rgb), 0.3);
+                        color: var(--warn);
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -367,9 +367,9 @@
                     display: flex;
                     margin-top: 0.4rem;
                     padding: 0.2rem;
-                    background: rgba(0, 0, 0, 0.3);
+                    background: rgba(var(--black-rgb), 0.3);
                     border-radius: 8px;
-                    border: 1px solid rgba(255, 255, 255, 0.05);
+                    border: 1px solid rgba(var(--white-rgb), 0.05);
                 "
             >
                 <button type="button"
@@ -400,8 +400,8 @@
             <div
                 style="
                     padding: 0.4rem;
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-                    background: rgba(255, 255, 255, 0.02);
+                    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
+                    background: rgba(var(--white-rgb), 0.02);
                 "
             >
                 <div style="position: relative; display: flex; align-items: center">
@@ -413,21 +413,21 @@
                         style="
                             width: 100%;
                             padding: 0.4rem 0.6rem;
-                            background: rgba(0, 0, 0, 0.2);
-                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            background: rgba(var(--black-rgb), 0.2);
+                            border: 1px solid rgba(var(--white-rgb), 0.1);
                             border-radius: 6px;
-                            color: #fff;
+                            color: var(--white);
                             font-size: 0.75rem;
                             outline: none;
                             transition: all 0.2s;
                         "
                         onfocus="
-                            this.style.borderColor = 'rgba(99,102,241,0.5)';
-                            this.style.background = 'rgba(0,0,0,0.3)';
+                            this.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
+                            this.style.background = 'rgba(var(--black-rgb), 0.3)';
                         "
                         onblur="
-                            this.style.borderColor = 'rgba(255,255,255,0.1)';
-                            this.style.background = 'rgba(0,0,0,0.2)';
+                            this.style.borderColor = 'rgba(var(--white-rgb), 0.1)';
+                            this.style.background = 'rgba(var(--black-rgb), 0.2)';
                         "
                     />
                 </div>

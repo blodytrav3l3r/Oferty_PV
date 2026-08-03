@@ -21,9 +21,9 @@ function openRedukcjaChoicePopup() {
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
         <button onclick="selectRedukcjaChoice(1000)" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
-            border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
-            background:${isActive && currentTarget === 1000 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
-            color:${isActive && currentTarget === 1000 ? '#a5b4fc' : 'var(--text-primary)'};
+            border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+            background:${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.03)'};
+            color:${isActive && currentTarget === 1000 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">
             <div style="font-weight:800; font-size:0.9rem;">Redukcja na DN1000</div>
             <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Standardowa redukcja na kręgi DN1000.</div>
@@ -34,9 +34,9 @@ function openRedukcjaChoicePopup() {
                 ? `
         <button onclick="selectRedukcjaChoice(1200)" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
-            border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.1)'};
-            background:${isActive && currentTarget === 1200 ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
-            color:${isActive && currentTarget === 1200 ? '#a5b4fc' : 'var(--text-primary)'};
+            border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+            background:${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.03)'};
+            color:${isActive && currentTarget === 1200 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">
             <div style="font-weight:800; font-size:0.9rem;">Redukcja na DN1200</div>
             <div style="font-size:0.7rem; opacity:0.7; margin-top:0.2rem;">Większa redukcja na kręgi DN1200.</div>
@@ -47,7 +47,7 @@ function openRedukcjaChoicePopup() {
 
         <button onclick="selectRedukcjaChoice(null)" style="
             padding:0.6rem; border-radius:8px; cursor:pointer; text-align:center; transition:all 0.2s;
-            border:1px solid rgba(239, 68, 68, 0.3); background:rgba(239, 68, 68, 0.05); color:#ef4444; margin-top:0.4rem;
+            border:1px solid rgba(var(--danger-rgb), 0.3); background:rgba(var(--danger-rgb), 0.05); color:var(--danger); margin-top:0.4rem;
         ">
             Wyłącz redukcję
         </button>

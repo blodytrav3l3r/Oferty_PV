@@ -16,8 +16,8 @@ function excelOnRzednaChange(wIdx) {
     const rzDna = rzDnaRaw !== null && !isNaN(rzDnaRaw) ? rzDnaRaw : null;
 
     if (rzWlazu !== null && rzDna !== null && rzWlazu <= rzDna) {
-        rzWlazuInput.style.outline = '1px solid #ef4444';
-        rzDnaInput.style.outline = '1px solid #ef4444';
+        rzWlazuInput.style.outline = '1px solid var(--danger)';
+        rzDnaInput.style.outline = '1px solid var(--danger)';
         showToast('Rzędna włazu musi być większa od rzędnej dna', 'error');
     } else {
         if (rzWlazuInput) rzWlazuInput.style.outline = '';

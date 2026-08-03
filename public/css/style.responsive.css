@@ -155,11 +155,11 @@
 
 /* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
-    background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(var(--accent-rgb), 0.08));
+    background: linear-gradient(135deg, rgba(var(--slate-800-rgb), 0.8), rgba(var(--accent-rgb), 0.08));
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     box-shadow:
-        0 4px 12px rgba(0, 0, 0, 0.15),
-        0 1px 3px rgba(0, 0, 0, 0.1);
+        0 4px 12px rgba(var(--black-rgb), 0.15),
+        0 1px 3px rgba(var(--black-rgb), 0.1);
     backdrop-filter: blur(10px);
     transition:
         border-color 0.3s,
@@ -170,7 +170,7 @@
     border-color: rgba(var(--accent-rgb), 0.35);
     box-shadow:
         0 6px 16px rgba(var(--accent-rgb), 0.12),
-        0 2px 4px rgba(0, 0, 0, 0.1);
+        0 2px 4px rgba(var(--black-rgb), 0.1);
 }
 
 .kartoteka-filter-bar .pv-type-filter-btn,
@@ -190,7 +190,7 @@
 .kartoteka-filter-bar .pv-filter-btn.active {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
-    color: white;
+    color: var(--white);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.4);
 }
 
@@ -214,7 +214,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.05), transparent);
     animation: shimmer 1.5s infinite;
 }
 
@@ -427,17 +427,17 @@
 
 .toast-success {
     background: var(--success-bg);
-    color: #fff;
+    color: var(--white);
 }
 
 .toast-error {
     background: var(--danger-bg);
-    color: #fff;
+    color: var(--white);
 }
 
 .toast-info {
     background: var(--bg-hover);
-    color: #fff;
+    color: var(--white);
 }
 
 .toast-warning {
@@ -639,8 +639,8 @@
     }
 
     body {
-        background: #fff !important;
-        color: #000 !important;
+        background: var(--white) !important;
+        color: var(--black) !important;
         font-family: 'Inter', Arial, sans-serif !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
@@ -685,8 +685,8 @@
 
     /* Karty i kontenery */
     .card {
-        background: #fff !important;
-        border: 1px solid #ccc !important;
+        background: var(--white) !important;
+        border: 1px solid var(--slate-300) !important;
         box-shadow: none !important;
         break-inside: avoid;
         page-break-inside: avoid;
@@ -700,17 +700,17 @@
     }
 
     thead th {
-        background: #f0f0f0 !important;
-        color: #000 !important;
+        background: var(--slate-100) !important;
+        color: var(--black) !important;
         font-weight: 700 !important;
-        border-bottom: 2px solid #000 !important;
+        border-bottom: 2px solid var(--black) !important;
         padding: 4pt 6pt !important;
     }
 
     tbody td {
-        border-bottom: 1px solid #ddd !important;
+        border-bottom: 1px solid var(--slate-300) !important;
         padding: 3pt 6pt !important;
-        color: #000 !important;
+        color: var(--black) !important;
     }
 
     tbody tr:hover {
@@ -723,8 +723,8 @@
     .offer-diam-header td,
     .catalog-diam-header {
         background: #e8e8e8 !important;
-        color: #000 !important;
-        border-left: 3px solid #333 !important;
+        color: var(--black) !important;
+        border-left: 3px solid var(--slate-700) !important;
         font-weight: 700 !important;
     }
 
@@ -737,25 +737,25 @@
 
     .summary-card {
         background: #f8f8f8 !important;
-        border: 1px solid #ccc !important;
+        border: 1px solid var(--slate-300) !important;
         padding: 0.5rem !important;
         text-align: center !important;
     }
 
     .summary-card .label {
-        color: #666 !important;
+        color: var(--slate-500) !important;
         text-transform: uppercase !important;
         font-size: 0.6rem !important;
     }
 
     .summary-card .value {
-        color: #000 !important;
+        color: var(--black) !important;
         font-weight: 700 !important;
     }
 
     /* Linki */
     a {
-        color: #000 !important;
+        color: var(--black) !important;
         text-decoration: none !important;
     }
 
@@ -793,7 +793,7 @@
         display: block !important;
         text-align: center;
         padding: 1rem 0;
-        border-bottom: 2px solid #000;
+        border-bottom: 2px solid var(--black);
         margin-bottom: 1rem;
     }
 
@@ -802,19 +802,19 @@
         display: block !important;
         text-align: center;
         padding: 0.5rem 0;
-        border-top: 1px solid #ccc;
+        border-top: 1px solid var(--slate-300);
         margin-top: 1rem;
         font-size: 8pt;
-        color: #666;
+        color: var(--slate-500);
     }
 
     /* Style odznak/rol */
     .badge-role,
     .user-role,
     .token-badge {
-        border: 1px solid #999 !important;
-        background: #f0f0f0 !important;
-        color: #333 !important;
+        border: 1px solid var(--slate-400) !important;
+        background: var(--slate-100) !important;
+        color: var(--slate-700) !important;
     }
 }
 
@@ -975,14 +975,14 @@ svg.lucide {
 .wizard-step-dot.active .wizard-dot-number {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border-color: var(--accent-hover);
-    color: white;
+    color: var(--white);
     box-shadow: 0 0 8px var(--accent-border);
 }
 
 .wizard-step-dot.completed .wizard-dot-number {
     background: linear-gradient(135deg, var(--success), var(--success-hover));
     border-color: var(--success-hover);
-    color: white;
+    color: var(--white);
 }
 
 .wizard-dot-label {
@@ -1171,7 +1171,7 @@ svg.lucide {
 
 .wizard-btn-next {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
+    color: var(--white);
     box-shadow: 0 4px 15px var(--accent-border-dim);
 }
 
@@ -1266,7 +1266,7 @@ svg.lucide {
     display: inline-flex;
     align-items: center;
     height: 30px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 0 rgba(var(--white-rgb), 0.04);
 }
 
 .wizard-nav-fixed .wizard-btn {

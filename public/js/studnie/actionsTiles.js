@@ -239,7 +239,7 @@ function renderTiles() {
             .filter((p) => filterByWellParams(p, well));
 
         if (redProducts.length > 0) {
-            html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(255,255,255,0.1);">`;
+            html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(var(--white-rgb), 0.1);">`;
             html += `<h3 class="color-warn" style="margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
 
             groups.forEach((g) => {

@@ -167,7 +167,7 @@ function renderStudniePriceList() {
         html += `<tbody>
       <tr>
         <td colspan="${isPrzejscia ? '11' : isKinety ? '16' : '18'}" style="padding:0; border-bottom:1px solid var(--border);">
-          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(99,102,241,0.06); font-size:0.85rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(var(--accent-rgb), 0.06); font-size:0.85rem;">
             <span style="font-weight:700; color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
               <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" onclick="addStudnieElement('${escapeHtml(groupKey)}')"
@@ -195,17 +195,17 @@ function renderStudniePriceList() {
 
             if (isPrzejscia) {
                 html += `
-        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-center" style="font-weight:600; color:var(--accent-hover); cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'weight','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'zapasDol','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'zapasGora','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:#fbbf24;">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:#fbbf24;">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'active','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.active !== 0 ? '#34d399' : '#f87171'};">${p.active !== 0 ? '1' : '0'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--warn-hover);">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--warn-hover);">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'active','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.active !== 0 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.active !== 0 ? '1' : '0'}</td>
                `;
             } else if (isKinety) {
                 html += `
-        <td class="text-center" style="font-weight:600; color:#818cf8; cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-center" style="font-weight:600; color:var(--accent-hover); cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
         <td class="text-center" onclick="editStudnieCell(this,'spocznikH','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
         <td class="text-center" onclick="editStudnieCell(this,'area','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-center" onclick="editStudnieCell(this,'hMin1','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
@@ -220,7 +220,7 @@ function renderStudniePriceList() {
                 `;
             } else {
                 html += `
-        <td class="text-right" onclick="editStudnieCell(this,'height','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:600; color:#818cf8;">${p.height != null ? fmtInt(p.height) : '—'}</td>
+        <td class="text-right" onclick="editStudnieCell(this,'height','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:600; color:var(--accent-hover);">${p.height != null ? fmtInt(p.height) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'weight','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'area','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.area != null ? fmt(p.area) : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'areaExt','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
@@ -230,10 +230,10 @@ function renderStudniePriceList() {
         <td class="text-right" onclick="editStudnieCell(this,'malowanieZewnetrzne','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
         <td class="text-right" ${p.componentType === 'dennica' ? `onclick="editStudnieCell(this,'doplataZelbet','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
         <td class="text-right" onclick="editStudnieCell(this,'doplataDrabNierdzewna','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);">${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynWL','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.magazynWL === 1 ? '#34d399' : '#f87171'};">${p.magazynWL === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.magazynKLB === 1 ? '#34d399' : '#f87171'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowa','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowa === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowaKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowaKLB === 1 ? '#34d399' : '#f87171'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'magazynWL','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.magazynWL === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynWL === 1 ? '1' : '0'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'magazynKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.magazynKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowa','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowa === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
+        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowaKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:700; color:${p.formaStandardowaKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
                `;
             }
 

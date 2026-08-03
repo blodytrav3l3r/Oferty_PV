@@ -13,8 +13,8 @@ function updateOfferSummaryUI(totals) {
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = `
-                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: #cbd5e1; font-weight: 600;">${typeof formatTransportCount === 'function' ? formatTransportCount(totals.totalTransports, typeof orderEditMode !== 'undefined' && orderEditMode ? 'fractional' : currentTransportMode) : totals.totalTransports}</span></div>
-                <div>Cena rejsu: <span style="color: #cbd5e1; font-weight: 600;">${fmt(totals.transportCostPerTrip)} PLN</span></div>
+                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: var(--slate-300); font-weight: 600;">${typeof formatTransportCount === 'function' ? formatTransportCount(totals.totalTransports, typeof orderEditMode !== 'undefined' && orderEditMode ? 'fractional' : currentTransportMode) : totals.totalTransports}</span></div>
+                <div>Cena rejsu: <span style="color: var(--slate-300); font-weight: 600;">${fmt(totals.transportCostPerTrip)} PLN</span></div>
             `;
         }
     } else {
@@ -62,9 +62,9 @@ function updateOfferSummaryUI(totals) {
         const labelStyle =
             'font-size:0.72rem; font-weight:800; line-height:1.15; color:var(--text-primary);';
         const detailStyle =
-            'font-size:0.65rem; font-weight:600; line-height:1.15; color:rgba(255,255,255,0.85);';
-        const dimVal = 'opacity:0.5; color:rgba(255,255,255,0.6);';
-        const disabledTile = `${tileBase} background:rgba(255,255,255,0.02); color:rgba(100,116,139,0.5); border:1px solid rgba(255,255,255,0.04);`;
+            'font-size:0.65rem; font-weight:600; line-height:1.15; color:rgba(var(--white-rgb), 0.85);';
+        const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.6);';
+        const disabledTile = `${tileBase} background:rgba(var(--white-rgb), 0.02); color:rgba(var(--slate-500-rgb), 0.5); border:1px solid rgba(var(--white-rgb), 0.04);`;
 
         const fmtDisc = (prefix, val, color) => {
             const v = Number(val || 0).toFixed(2);
@@ -86,8 +86,8 @@ function updateOfferSummaryUI(totals) {
             const d = activeDiscounts[dn] || {};
             const hasDisc = d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0;
             const bg = hasDisc
-                ? 'background:rgba(var(--accent-rgb),0.12); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb),0.3);'
-                : 'background:rgba(var(--accent-rgb),0.06); color:rgba(165,180,252,0.5); border:1px solid rgba(var(--accent-rgb),0.12);';
+                ? 'background:rgba(var(--accent-rgb), 0.12); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb), 0.3);'
+                : 'background:rgba(var(--accent-rgb), 0.06); color:rgba(var(--accent-rgb), 0.5); border:1px solid rgba(var(--accent-rgb), 0.12);';
             const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? 'var(--danger-hover)' : null)}`;
             return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span></div>`;
         };
@@ -124,7 +124,7 @@ function updateOfferSummaryUI(totals) {
                 pehdDisc > 0
                     ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)`
                     : `${afterPrice.toFixed(0)} zł/m²`;
-            return `<div style="${tileBase} background:rgba(14,165,233,0.12); color:#38bdf8; border:1px solid rgba(14,165,233,0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
+            return `<div style="${tileBase} background:rgba(var(--blue-alt-rgb), 0.12); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.3);"><span style="${labelStyle}"><i data-lucide="shield" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
         };
 
         const buildMalTile = () => {
@@ -137,7 +137,7 @@ function updateOfferSummaryUI(totals) {
             const parts = [];
             if (anyW) parts.push(`W:${ref.malowanieWewCena || 0}`);
             if (anyZ) parts.push(`Z:${ref.malowanieZewCena || 0}`);
-            return `<div style="${tileBase} background:rgba(168,85,247,0.12); color:#c084fc; border:1px solid rgba(168,85,247,0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
+            return `<div style="${tileBase} background:rgba(var(--accent2-rgb), 0.12); color:var(--purple-alt); border:1px solid rgba(var(--accent2-rgb), 0.3);"><span style="${labelStyle}"><i data-lucide="paintbrush" style="width:9px;height:9px;display:inline;vertical-align:middle;margin-right:1px;"></i>Malowanie</span><span style="${detailStyle}">${parts.join(' ')} zł/m²</span></div>`;
         };
 
         discountsInfoEl.innerHTML = `

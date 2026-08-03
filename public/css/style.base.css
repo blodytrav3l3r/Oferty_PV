@@ -11,7 +11,6 @@
     --bg-hover: #1e1e4a;
     --bg-tile: #1a2536;
     --bg-input: #1e2d42;
-    --bg-elevated: #1e3050;
 
     /* Text */
     --text-primary: #f1f5f9;
@@ -51,7 +50,6 @@
     --warn: #f59e0b;
     --warn-hover: #fbbf24;
     --warn-bg: #2d1a08;
-    --warn-bg-hover: #3d2510;
     --warn-border: #5a3010;
 
     /* Blue accent (sub-module nav) */
@@ -62,14 +60,29 @@
     --accent-rgb: 99, 102, 241;
     --accent-hover-rgb: 129, 140, 248;
     --accent2-rgb: 139, 92, 246;
-    --accent2-hover-rgb: 167, 139, 250;
     --success-rgb: 16, 185, 129;
-    --success-hover-rgb: 52, 211, 153;
     --danger-rgb: 239, 68, 68;
-    --danger-hover-rgb: 248, 113, 113;
     --warn-rgb: 245, 158, 11;
-    --warn-hover-rgb: 251, 191, 36;
     --blue-rgb: 59, 130, 246;
+
+    /* Neutral palette */
+    --black: #000000;
+    --black-rgb: 0, 0, 0;
+    --white: #ffffff;
+    --white-rgb: 255, 255, 255;
+    --slate-950: #0f172a;
+    --slate-950-rgb: 15, 23, 42;
+    --slate-800: #1e293b;
+    --slate-800-rgb: 30, 41, 59;
+    --slate-700: #334155;
+    --slate-500: #64748b;
+    --slate-500-rgb: 100, 116, 139;
+    --slate-400: #94a3b8;
+    --slate-400-rgb: 148, 163, 184;
+    --slate-300: #cbd5e1;
+    --slate-200: #e2e8f0;
+    --slate-100: #f1f5f9;
+    --blue-alt-rgb: 56, 189, 248;
 
     /* Nawigacja */
     --nav-glow-custom: #1e1540;
@@ -88,27 +101,25 @@
     --accent-border-medium: #3a3a8a;
     --accent-text-light: #c7d2fe;
     --border-table-subtle: #14171c;
-    --border-wizard: #334155;
     --danger-border-deep: #3a1a1a;
 
     /* Extra accent colors */
     --cyan: #22d3ee;
-    --cyan-hover: #06b6d4;
     --blue-alt: #38bdf8;
     --blue-alt-hover: #7dd3fc;
     --purple-alt: #c084fc;
     --pink: #ec4899;
 
     /* Shadows */
-    --shadow-color: rgba(0, 0, 0, 0.5);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(var(--black-rgb), 0.5);
+    --shadow-sm: 0 2px 8px rgba(var(--black-rgb), 0.1);
     --shadow-md: 0 4px 16px var(--shadow-color);
     --shadow-lg: 0 8px 32px var(--shadow-color);
     --shadow: var(--shadow-md);
 
     /* Effects */
-    --glass: rgba(15, 23, 42, 0.6);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass: rgba(var(--slate-950-rgb), 0.6);
+    --glass-border: rgba(var(--white-rgb), 0.08);
     --highlight-bg: #2d2510;
 
     /* Scrollbar */
@@ -120,14 +131,10 @@
     --radius: 12px;
     --radius-sm: 8px;
     --radius-md: 16px;
-    --radius-lg: 24px;
 
     /* Pink accent (zlecenia module) — merged with Colors section above */
     --pink-hover: #f472b6;
 
-    /* Glow colors */
-    /* DEPRECATED — see #2e2b6e literal; kept as fallback for JS refs */
-    --accent-glow: #2e2b6e;
     --text-danger: var(--danger);
 
     /* Transition */
@@ -1054,7 +1061,7 @@ tbody tr:hover {
 }
 
 .well-details-row {
-    background: rgba(0, 0, 0, 0.1);
+    background: rgba(var(--black-rgb), 0.1);
 }
 
 .well-details-row.hidden {
@@ -1065,7 +1072,7 @@ tbody tr:hover {
     padding: 0.8rem 1rem;
     border-left: 2px solid var(--accent);
     margin: 0.2rem 0.5rem 0.5rem 2.5rem;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(var(--white-rgb), 0.02);
     border-radius: 0 0 8px 8px;
     animation: slideDown 0.2s ease-out;
 }

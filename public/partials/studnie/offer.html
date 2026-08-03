@@ -163,7 +163,7 @@
                     cursor: pointer;
                     transition: background 0.2s;
                 "
-                onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+                onmouseover="this.style.background = 'rgba(var(--white-rgb), 0.05)'"
                 onmouseout="this.style.background = 'transparent'"
             >
                 <div class="studnie-summary-label" style="width: 100%">Koszt transportu</div>
@@ -183,7 +183,7 @@
                     id="offer-active-transport-info"
                     style="
                         font-size: 0.75rem;
-                        color: #94a3b8;
+                        color: var(--slate-400);
                         display: flex;
                         flex-direction: column;
                         align-items: center;
@@ -207,7 +207,7 @@
                 class="summary-card"
                 onclick="openOfferDiscountsPopup()"
                 style="align-items: stretch; cursor: pointer; transition: background 0.2s"
-                onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+                onmouseover="this.style.background = 'rgba(var(--white-rgb), 0.05)'"
                 onmouseout="this.style.background = 'transparent'"
             >
                 <div style="text-align: center; margin-bottom: 0.2rem">

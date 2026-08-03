@@ -7,7 +7,7 @@ function toggleMagazynField(el, field, id) {
     // Natychmiastowa aktualizacja UI bez pełnego re-renderu
     const newVal = product[field];
     el.textContent = String(newVal);
-    el.style.color = newVal === 1 ? '#34d399' : 'var(--danger-hover)';
+    el.style.color = newVal === 1 ? 'var(--success-hover)' : 'var(--danger-hover)';
 
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();

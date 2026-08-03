@@ -121,21 +121,21 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             tdBaseStyle +
             'background:' +
             rowBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
-            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></td>';
+            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.7);" /></td>';
         /* AUTO/MANUAL */
         let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
-        let autoBg = isAuto ? 'rgba(99,102,241,0.2)' : 'rgba(245,158,11,0.25)';
-        let autoColor = isAuto ? '#c7d2fe' : '#fbbf24';
+        let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.25)';
+        let autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         html +=
             '<td style="' +
             tdBaseStyle +
             'background:' +
             rowBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
             wIdx +
@@ -160,11 +160,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:' +
             (isAuto ? 'pointer' : 'not-allowed') +
             ';background:' +
-            (isAuto ? 'rgba(99,102,241,0.35)' : 'rgba(100,116,139,0.15)') +
+            (isAuto ? 'rgba(var(--accent-rgb), 0.35)' : 'rgba(var(--slate-500-rgb), 0.15)') +
             ';color:' +
-            (isAuto ? '#c7d2fe' : '#64748b') +
+            (isAuto ? 'var(--accent-text-light)' : 'var(--slate-500)') +
             ';border:1px solid ' +
-            (isAuto ? '#6366f1' : 'rgba(100,116,139,0.3)') +
+            (isAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)') +
             (isAuto ? '' : ';opacity:0.4') +
             ';height:18px;align-items:center;justify-content:center;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
         /* Lp */
@@ -175,7 +175,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             rowBg +
-            ';text-align:center;color:#64748b;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">' +
+            ';text-align:center;color:var(--slate-500);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.08);min-width:32px;">' +
             (idx + 1) +
             '</td>';
         /* Nazwa */
@@ -186,7 +186,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             rowBg +
-            ';border-right:1px solid rgba(255,255,255,0.08);"><input type="text" value="' +
+            ';border-right:1px solid rgba(var(--white-rgb), 0.08);"><input type="text" value="' +
             escapeHtml(well.name).replace(/"/g, '&quot;') +
             '" onchange="excelOnNameChange(' +
             wIdx +
@@ -341,7 +341,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         }
         /* Gap */
         html +=
-            '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:#1e293b;background:#0c0e14;"></td>';
+            '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td>';
         /* Wlaz */
         let wlazCol = visibleCols.find(function (c) {
             return c.componentType === 'wlaz';
@@ -409,7 +409,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'text-align:center;color:#fbbf24;font-weight:600;" data-cell="denn-' +
+            'text-align:center;color:var(--warn-hover);font-weight:600;" data-cell="denn-' +
             wIdx +
             '">' +
             (dennH || '\u2014') +
@@ -419,7 +419,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'text-align:center;color:#f97316;font-weight:600;" data-cell="uszcz-' +
+            'text-align:center;color:var(--warn);font-weight:600;" data-cell="uszcz-' +
             wIdx +
             '">' +
             uszczCount +
@@ -464,7 +464,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (well.psiaBuda ? ' checked' : '') +
             ' onchange="excelOnPsiaBudaChange(' +
             wIdx +
-            ',this.checked)" style="accent-color:#f59e0b;cursor:pointer;transform:scale(1.3);" /></td>';
+            ',this.checked)" style="accent-color:var(--warn);cursor:pointer;transform:scale(1.3);" /></td>';
         /* Akcje */
         html +=
             '<td style="' +
@@ -473,34 +473,34 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<button onclick="excelOpenWellParams(' +
             wIdx +
-            ')" title="Parametry" style="background:#13151f;color:#818cf8;border:1px solid rgba(129,140,248,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(129,140,248,0.1)\'" onmouseleave="this.style.background=\'#13151f\'"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Parametry" style="background:var(--slate-950);color:var(--accent-hover);border:1px solid rgba(var(--accent-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--accent-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDuplicateWell(' +
             wIdx +
-            ')" title="Duplikuj" style="background:#13151f;color:#60a5fa;border:1px solid rgba(96,165,250,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(96,165,250,0.1)\'" onmouseleave="this.style.background=\'#13151f\'"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Duplikuj" style="background:var(--slate-950);color:var(--blue-hover);border:1px solid rgba(var(--blue-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--blue-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDeleteWell(' +
             wIdx +
-            ')" title="Usu\u0144" style="background:#13151f;color:#f87171;border:1px solid rgba(248,113,113,0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(239,68,68,0.15)\'" onmouseleave="this.style.background=\'#13151f\'"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Usu\u0144" style="background:var(--slate-950);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--danger-rgb), 0.15)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html += '</div></td>';
         html += '</tr>';
     });
     /* EMPTY ROW */
-    let emptyRowBg = '#0a0c10';
+    let emptyRowBg = 'var(--slate-950)';
     html += '<tr id="excel-empty-row" style="background:' + emptyRowBg + ';">';
-    let tdEmptyStyle = _EXCEL_FONT + 'color:#334155;';
+    let tdEmptyStyle = _EXCEL_FONT + 'color:var(--slate-700);';
     html +=
         '<td style="' +
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(99,102,241,0.7);opacity:0.3;" /></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.7);opacity:0.3;" /></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(255,255,255,0.06);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -508,7 +508,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:#334155;font-size:0.65rem;border-right:1px solid rgba(255,255,255,0.08);min-width:32px;">\u2014</td>';
+        ';text-align:center;color:var(--slate-700);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.08);min-width:32px;">\u2014</td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -518,7 +518,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         emptyRowBg +
         ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(125) +
-        'text-align:left;color:#94a3b8;" /></td>';
+        'text-align:left;color:var(--slate-400);" /></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -546,7 +546,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:#1e293b;" data-cell="height-empty">\u2014</td>';
+        ';text-align:center;color:var(--slate-800);" data-cell="height-empty">\u2014</td>';
     for (let _j = 0; _j < maxTr; _j++) {
         html +=
             '<td style="' +
@@ -574,7 +574,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
     }
     html +=
-        '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:#334155;background:#0a0c10;"></td>';
+        '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -593,11 +593,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'text-align:center;color:#1e293b;" data-cell="denn-empty">\u2014</td>';
+        'text-align:center;color:var(--slate-800);" data-cell="denn-empty">\u2014</td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'text-align:center;color:#1e293b;" data-cell="uszcz-empty">\u2014</td>';
+        'text-align:center;color:var(--slate-800);" data-cell="uszcz-empty">\u2014</td>';
     if (hasReduction) {
         html +=
             '<td style="' +
@@ -619,7 +619,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'text-align:center;color:#1e293b;font-size:0.6rem;" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:#334155;" aria-hidden="true"></i></td>';
+        'text-align:center;color:var(--slate-800);font-size:0.6rem;" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>';
     html += '</tr>';
     html += '</tbody>';
     return html;

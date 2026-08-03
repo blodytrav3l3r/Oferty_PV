@@ -22,14 +22,14 @@ function _excelInitColumnResize() {
             'position:absolute;top:2px;right:-1px;width:3px;height:calc(100% - 4px);cursor:col-resize;z-index:' +
             LAYERS_EXCEL.RESIZE_HANDLE +
             ';' +
-            'background:rgba(148,163,184,0.15);border-radius:2px;transition:background 0.12s,width 0.12s,box-shadow 0.12s;';
+            'background:rgba(var(--slate-400-rgb), 0.15);border-radius:2px;transition:background 0.12s,width 0.12s,box-shadow 0.12s;';
         handle.addEventListener('mouseenter', () => {
-            handle.style.background = 'rgba(99,102,241,0.45)';
+            handle.style.background = 'rgba(var(--accent-rgb), 0.45)';
             handle.style.width = '4px';
-            handle.style.boxShadow = '0 0 6px rgba(99,102,241,0.25)';
+            handle.style.boxShadow = '0 0 6px rgba(var(--accent-rgb), 0.25)';
         });
         handle.addEventListener('mouseleave', () => {
-            handle.style.background = 'rgba(148,163,184,0.15)';
+            handle.style.background = 'rgba(var(--slate-400-rgb), 0.15)';
             handle.style.width = '3px';
             handle.style.boxShadow = 'none';
         });

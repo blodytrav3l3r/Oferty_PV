@@ -13,23 +13,23 @@ function showStycznaPopup(mode = 'select') {
     const renderProductRow = (p) => `
         <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${escapeHtml(p.id)}', '${escapeHtml(mode)}')" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
-            padding:0.55rem 0.8rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08);
+            padding:0.55rem 0.8rem; background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08);
             border-radius:8px; cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
-        " onmouseenter="this.style.borderColor='rgba(249,115,22,0.5)'; this.style.background='rgba(249,115,22,0.1)'"
-           onmouseleave="this.style.borderColor='rgba(255,255,255,0.08)'; this.style.background='rgba(255,255,255,0.03)'">
+        " onmouseenter="this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'"
+           onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.08)'; this.style.background='rgba(var(--white-rgb), 0.03)'">
             <div>
-                <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary, #fff);">DN${p.dn}</div>
-                <div style="font-size:0.65rem; color:var(--text-muted, #888); margin-top:1px;">${p.name}</div>
+                <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary, var(--white));">DN${p.dn}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted, var(--slate-500)); margin-top:1px;">${p.name}</div>
             </div>
             <div style="font-size:0.72rem; color:var(--text-muted);">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
-            <div style="font-size:0.85rem; font-weight:800; color:var(--success, #10b981);">${fmtInt(p.price)} PLN</div>
+            <div style="font-size:0.85rem; font-weight:800; color:var(--success, var(--success));">${fmtInt(p.price)} PLN</div>
         </button>`;
 
     const renderSection = (title, icon, products) => {
         if (products.length === 0) return '';
         return `
             <div style="margin-bottom:0.8rem;">
-                <div style="font-size:0.72rem; text-transform:uppercase; color:#f97316; font-weight:800; letter-spacing:0.5px; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.3rem;">
+                <div style="font-size:0.72rem; text-transform:uppercase; color:var(--warn); font-weight:800; letter-spacing:0.5px; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.3rem;">
                     <span>${icon}</span> ${title}
                 </div>
                 <div style="display:flex; flex-direction:column; gap:0.3rem;">
@@ -42,9 +42,9 @@ function showStycznaPopup(mode = 'select') {
         id: 'styczna-modal',
         titleId: 'styczna-title',
         html: `
-      <div style="background:var(--bg-secondary, #1e293b); border:1px solid rgba(249,115,22,0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, #1e293b); padding-bottom:0.5rem; border-bottom:1px solid rgba(255,255,255,0.08);">
-          <div id="styczna-title" style="font-size:1rem; font-weight:800; color:#f97316;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
+      <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--white-rgb), 0.08);">
+          <div id="styczna-title" style="font-size:1rem; font-weight:800; color:var(--warn);"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
           <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}

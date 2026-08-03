@@ -64,7 +64,7 @@ function _excelRegisterExcelListeners() {
         ov.style.cssText =
             'position:fixed;pointer-events:none;z-index:' +
             LAYERS.FOCUS_OVERLAY +
-            ';border:2px solid rgba(99,102,241,0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(0,0,0,0.3);';
+            ';border:2px solid rgba(var(--accent-rgb), 0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(var(--black-rgb), 0.3);';
         document.body.appendChild(ov);
         _excelFocusOverlayEl = ov;
     } else {
@@ -186,53 +186,53 @@ function openExcelTableModal() {
     const modal = document.createElement('div');
     if (isDiagramVisible) {
         modal.style.cssText =
-            'width:calc(100% - 1rem);height:calc(100% - 1rem);background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+            'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);';
     } else {
         modal.style.cssText =
-            'width:96vw;height:96vh;background:#0c0e14;border:1px solid rgba(255,255,255,0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);';
+            'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.06);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);';
     }
 
     modal.innerHTML = `
         <style>
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
-            #excel-table-overlay ::-webkit-scrollbar-track { background:rgba(255,255,255,0.04); }
-            #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.25); border-radius:4px; }
-            #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.35); }
+            #excel-table-overlay ::-webkit-scrollbar-track { background:rgba(var(--white-rgb), 0.04); }
+            #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(var(--white-rgb), 0.25); border-radius:4px; }
+            #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(var(--white-rgb), 0.35); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
-            #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(99,102,241,0.25) !important; }
-            #excel-table-container td.excel-col-selected { outline:2px solid rgba(99,102,241,0.3); outline-offset:-2px; }
+            #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.25) !important; }
+            #excel-table-container td.excel-col-selected { outline:2px solid rgba(var(--accent-rgb), 0.3); outline-offset:-2px; }
             #excel-table-container td.excel-col-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
-            #excel-table-container td.cell-selected { outline:2px solid rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.06); }
+            #excel-table-container td.cell-selected { outline:2px solid rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:rgba(var(--accent-rgb), 0.06); }
             #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
-            #excel-table-container td.drag-preview { outline:2px dashed rgba(99,102,241,0.5); outline-offset:-2px; background:rgba(99,102,241,0.03); }
+            #excel-table-container td.drag-preview { outline:2px dashed rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:rgba(var(--accent-rgb), 0.03); }
             #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
-            #excel-table-container th.excel-col-selected { background:rgba(99,102,241,0.25) !important; box-shadow:inset 0 0 0 1px rgba(99,102,241,0.35); }
-            #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:#a4b3cb;line-height:1.45; }
-            #excel-table-container .h3-prodprice { font-size:0.55rem;color:#34d399;font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(52,211,153,0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
-            #excel-table-container tbody tr:hover { background:rgba(255,255,255,0.02); }
-            #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(255,255,255,0.08); }
-            #excel-table-container .excel-resize-handle:hover { background:rgba(99,102,241,0.5) !important; }
+            #excel-table-container th.excel-col-selected { background:rgba(var(--accent-rgb), 0.25) !important; box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.35); }
+            #excel-table-container .h3-prodcode { font-size:0.5rem;font-weight:600;color:var(--slate-400);line-height:1.45; }
+            #excel-table-container .h3-prodprice { font-size:0.55rem;color:var(--success-hover);font-weight:700;line-height:1.4;white-space:nowrap;background:rgba(var(--success-rgb), 0.07);border-radius:3px;padding:1px 5px;margin-top:2px;display:inline-block; }
+            #excel-table-container tbody tr:hover { background:rgba(var(--white-rgb), 0.02); }
+            #excel-table-container .excel-resize-handle { width:4px !important;background:rgba(var(--white-rgb), 0.08); }
+            #excel-table-container .excel-resize-handle:hover { background:rgba(var(--accent-rgb), 0.5) !important; }
             #excel-table-container .excel-sel-wrap.disabled { opacity:.35;pointer-events:none; }
-            #excel-table-container thead { position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_THEAD};background:#161923;isolation:isolate; }
+            #excel-table-container thead { position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_THEAD};background:var(--slate-950);isolation:isolate; }
         </style>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.06);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-                <i data-lucide="table" style="width:16px;height:16px;color:#10b981;"></i>
-                <span style="font-size:0.75rem;font-weight:700;color:#e2e8f0;letter-spacing:0.3px;">Tabela konfiguracyjna</span>
-                <span id="excel-well-count" style="font-size:0.6rem;color:#64748b;padding:0.1rem 0.5rem;background:rgba(255,255,255,0.04);border-radius:3px;"></span>
+                <i data-lucide="table" style="width:16px;height:16px;color:var(--success);"></i>
+                <span style="font-size:0.75rem;font-weight:700;color:var(--slate-200);letter-spacing:0.3px;">Tabela konfiguracyjna</span>
+                <span id="excel-well-count" style="font-size:0.6rem;color:var(--slate-500);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.04);border-radius:3px;"></span>
             </div>
             <div style="display:flex;gap:0.4rem;align-items:center;">
 
-                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" style="background:#13151f;border:1px solid rgba(255,255,255,0.08);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:#e2e8f0;outline:none;width:100px;" />
-                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" title="Pokaż/ukryj kolumny" style="background:rgba(139,92,246,0.1);color:#c4b5fd;border:1px solid rgba(139,92,246,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="columns" style="width:12px;height:12px;"></i> Kolumny</button>
-                <button onclick="openPrzejsciaVisibilityPopup('excel')" title="Pokaż/ukryj typy przejść" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="eye" style="width:12px;height:12px;"></i> Przejścia</button>
-                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(99,102,241,0.1);color:#a5b4fc;border:1px solid rgba(99,102,241,0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
-                <button onclick="excelSaveAll()" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
-                <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(239,68,68,0.1);color:#fca5a5;border:1px solid rgba(239,68,68,0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
+                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.08);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:var(--slate-200);outline:none;width:100px;" />
+                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" title="Pokaż/ukryj kolumny" style="background:rgba(var(--accent2-rgb), 0.1);color:var(--accent2-hover);border:1px solid rgba(var(--accent2-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="columns" style="width:12px;height:12px;"></i> Kolumny</button>
+                <button onclick="openPrzejsciaVisibilityPopup('excel')" title="Pokaż/ukryj typy przejść" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="eye" style="width:12px;height:12px;"></i> Przejścia</button>
+                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
+                <button onclick="excelSaveAll()" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(var(--success-rgb), 0.15);color:var(--success-hover);border:1px solid rgba(var(--success-rgb), 0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
+                <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(var(--danger-rgb), 0.1);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
             </div>
         </div>
-        <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:#10131a;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;"></div>
-        <div id="excel-table-container" style="flex:1;overflow:auto;background:#0c0e14;"></div>
+        <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.06);flex-shrink:0;"></div>
+        <div id="excel-table-container" style="flex:1;overflow:auto;background:var(--slate-950);"></div>
     `;
 
     overlay.appendChild(modal);

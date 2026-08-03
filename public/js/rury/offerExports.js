@@ -109,23 +109,23 @@ function exportOfferPDF(id) {
     printWin.document
         .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${offer.number}</title>
   <style>
-    body{font-family:Arial,sans-serif;color:#1a1a2e;padding:30px;font-size:13px;line-height:1.5}
+    body{font-family:Arial,sans-serif;color:var(--slate-950);padding:30px;font-size:13px;line-height:1.5}
     h1{font-size:20px;color:#2d3561;margin-bottom:5px}
     .header-line{border-bottom:3px solid #2d3561;padding-bottom:10px;margin-bottom:15px}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
     .info-box{background:#f4f6fb;border-radius:6px;padding:12px}
-    .info-box h3{font-size:12px;color:#6b7280;text-transform:uppercase;margin-bottom:5px}
+    .info-box h3{font-size:12px;color:var(--slate-500);text-transform:uppercase;margin-bottom:5px}
     table{width:100%;border-collapse:collapse;margin:15px 0;font-size:12px}
-    th{background:#2d3561;color:#fff;padding:8px;text-align:left;font-size:11px}
-    td{padding:7px 8px;border-bottom:1px solid #e5e7eb}
+    th{background:#2d3561;color:var(--white);padding:8px;text-align:left;font-size:11px}
+    td{padding:7px 8px;border-bottom:1px solid var(--slate-200)}
     tr:nth-child(even){background:#f9fafb}
     .text-right{text-align:right}
-    .summary{background:#f0f4ff;border-radius:6px;padding:15px;margin-top:15px}
+    .summary{background:var(--slate-100);border-radius:6px;padding:15px;margin-top:15px}
     .summary-row{display:flex;justify-content:space-between;padding:4px 0}
     .summary-row.total{font-weight:bold;font-size:15px;border-top:2px solid #2d3561;padding-top:8px;margin-top:5px}
-    .summary-row.transport{color:#b45309}
+    .summary-row.transport{color:var(--warn)}
     .notes{margin-top:15px;padding:10px;background:#fffbeb;border-left:3px solid var(--warn);border-radius:4px;font-size:12px}
-    .footer{margin-top:10px;font-size:11px;color:#6b7280;text-align:center;padding-top:10px}
+    .footer{margin-top:10px;font-size:11px;color:var(--slate-500);text-align:center;padding-top:10px}
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }
   </style></head><body>
@@ -213,7 +213,7 @@ function showItemDiscountModal() {
         id: 'item-discount-modal',
         titleId: 'item-discount-title',
         html: `
-    <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
         <h3 id="item-discount-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
@@ -306,10 +306,10 @@ function renderDiscountModalItems() {
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM')
             pName +=
-                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb),0.3); vertical-align:middle;">+ PEHD 3mm</span>';
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:var(--white); border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb), 0.3); vertical-align:middle;">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM')
             pName +=
-                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:white; border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb),0.3); vertical-align:middle;">+ PEHD 4mm</span>';
+                ' <span style="display:inline-block; font-size:0.65rem; padding:0.15rem 0.4rem; background:var(--success); color:var(--white); border-radius:4px; font-weight:700; box-shadow:0 0 8px rgba(var(--success-rgb), 0.3); vertical-align:middle;">+ PEHD 4mm</span>';
         if (item.autoAdded)
             pName +=
                 ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';

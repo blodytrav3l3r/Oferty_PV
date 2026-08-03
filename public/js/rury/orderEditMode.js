@@ -109,8 +109,8 @@ function renderOrderModeBanner(orderData) {
         (k) => changes.items[k].type === 'modified'
     ).length;
     const hasChanges = changeCount > 0 || changes.transportChanged;
-    const borderColor = hasChanges ? 'rgba(var(--danger-rgb),0.3)' : 'rgba(var(--success-rgb),0.3)';
-    const bgColor = hasChanges ? 'rgba(var(--danger-rgb),0.08)' : 'rgba(var(--success-rgb),0.08)';
+    const borderColor = hasChanges ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--success-rgb), 0.3)';
+    const bgColor = hasChanges ? 'rgba(var(--danger-rgb), 0.08)' : 'rgba(var(--success-rgb), 0.08)';
     const textColor = hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)';
     banner.style.cssText = `border-radius:10px;padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;border-width:2px;border-style:solid;border-color:${borderColor};background:${bgColor};`;
     banner.innerHTML =

@@ -10,7 +10,7 @@
             class="rury-summary-card has-borders"
             onclick="openRuryTransportPopup()"
             style="cursor: pointer; transition: background 0.2s"
-            onmouseover="this.style.background = 'rgba(255,255,255,0.05)'"
+            onmouseover="this.style.background = 'rgba(var(--white-rgb), 0.05)'"
             onmouseout="this.style.background = 'transparent'"
             title="Kliknij aby zmienić koszt transportu"
         >
@@ -26,7 +26,7 @@
                 id="rury-active-transport-info"
                 style="
                     font-size: 0.72rem;
-                    color: #94a3b8;
+                    color: var(--slate-400);
                     display: flex;
                     flex-direction: column;
                     align-items: center;
@@ -38,13 +38,13 @@
             >
                 <div style="margin-bottom: 2px">
                     Ilość aut:
-                    <span style="color: #cbd5e1; font-weight: 600" id="rury-transport-count"
+                    <span style="color: var(--slate-300); font-weight: 600" id="rury-transport-count"
                         >0</span
                     >
                 </div>
                 <div>
                     Cena rejsu:
-                    <span style="color: #cbd5e1; font-weight: 600" id="rury-transport-rate"
+                    <span style="color: var(--slate-300); font-weight: 600" id="rury-transport-rate"
                         >0,00 PLN</span
                     >
                 </div>

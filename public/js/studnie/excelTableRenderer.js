@@ -62,65 +62,65 @@ function _excelRenderTable(dn) {
     const th2Base =
         'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
     const th3Base =
-        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#161923;';
+        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);';
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
 
     /* === KOLUMNA 0: Checkbox - select-all przeniesiony do H1 (gorny) === */
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:28px;border-right:1px solid rgba(255,255,255,0.06);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(99,102,241,0.7);" /></th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.06);">.</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.06);">.</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.06);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.7);" /></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    let _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);color:#c7d2fe;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
-    let _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);color:#fbbf24;padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(99,102,241,0.2);"><b style="color:#fbbf24;">A/M</b></th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);">.</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;text-align:center;width:54px;border-right:1px solid rgba(255,255,255,0.06);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    let _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
+    let _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.06);">.</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.06);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
     /* === KOLUMNA 2: Lp. — sticky left:0 === */
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">Lp.</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(255,255,255,0.08);">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;border-right:1px solid rgba(255,255,255,0.1);">Nr Studni</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">Rz. Włazu</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">Rz. Dna</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">Wys.</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.08);">Lp.</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.08);">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.08);">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;border-right:1px solid rgba(var(--white-rgb), 0.1);">Nr Studni</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:130px;text-align:left;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">Rz. Włazu</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:162px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">Rz. Dna</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:240px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:right;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">Wys.</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:${dnColor};position:sticky;left:318px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:65px;text-align:center;">·</th>`;
 
     for (let i = 0; i < maxTr; i++) {
-        h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">·</th>`;
-        h3 += `<th style="${th3Base}background:#13151f;color:${dnColor};min-width:78px;text-align:right;">·</th>`;
-        h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${dnColor};min-width:55px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#13151f;color:${dnColor};min-width:55px;text-align:center;">·</th>`;
-        h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${dnColor};min-width:125px;text-align:left;">·</th>`;
-        h3 += `<th style="${th3Base}background:#13151f;color:${dnColor};min-width:125px;text-align:left;">·</th>`;
-        h1 += `<th style="${thBase}background:#13151f;color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${dnColor};min-width:110px;text-align:left;">·</th>`;
-        h3 += `<th style="${th3Base}background:#13151f;color:${dnColor};min-width:110px;text-align:left;">·</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">Rz.wlot ${i}</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
+        h3 += `<th style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:78px;text-align:right;">·</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">Kąt ${i}°</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
+        h3 += `<th style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:55px;text-align:center;">·</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">Rodzaj ${i}</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
+        h3 += `<th style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:125px;text-align:left;">·</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">Średnica ${i}</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
+        h3 += `<th style="${th3Base}background:var(--slate-950);color:${dnColor};min-width:110px;text-align:left;">·</th>`;
     }
 
     // Przyciski +/-
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:#13151f;color:#ef4444;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#ef4444'">−</button></th>`;
-    h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
-    h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th style="${thBase}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:#13151f;color:#64748b;border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='#94a3b8'" onmouseleave="this.style.color='#64748b'">+</button></th>`;
-    h2 += `<th style="${th2Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
-    h3 += `<th style="${th3Base}background:#13151f;color:#64748b;min-width:24px;text-align:center;padding:0;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:var(--slate-950);color:var(--danger);border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--danger)'">−</button></th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:var(--slate-950);color:var(--slate-500);border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--slate-400)'" onmouseleave="this.style.color='var(--slate-500)'">+</button></th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
 
     // Właz
-    h1 += `<th style="${thBase}background:#0f1a15;color:#6ee7b7;min-width:65px;text-align:left;">Właz</th>`;
-    h2 += `<th style="${th2Base}background:#0f1a15;color:#6ee7b7;min-width:65px;text-align:left;">·</th>`;
-    h3 += `<th style="${th3Base}background:#0f1a15;color:#6ee7b7;min-width:65px;text-align:left;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--success-hover);min-width:65px;text-align:left;">Właz</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--success-hover);min-width:65px;text-align:left;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--success-hover);min-width:65px;text-align:left;">·</th>`;
 
     // Komponenty — trzy wiersze (rz1=DN, rz2=skrót, rz3=szczegół)
     compCols.forEach((col) => {
@@ -130,25 +130,25 @@ function _excelRenderTable(dn) {
         const ct = c.componentType;
         const hc =
             ct === 'avr'
-                ? '#fbbf24'
+                ? 'var(--warn-hover)'
                 : ct === 'krag' || ct === 'krag_ot'
-                  ? '#34d399'
+                  ? 'var(--success-hover)'
                   : ct === 'dennica'
-                    ? '#f97316'
+                    ? 'var(--warn)'
                     : ct === 'konus'
-                      ? '#fb923c'
+                      ? 'var(--warn-hover)'
                       : ct === 'plyta_din' ||
                           ct === 'plyta_najazdowa' ||
                           ct === 'plyta_zamykajaca' ||
                           ct === 'pierscien_odciazajacy'
-                        ? '#60a5fa'
+                        ? 'var(--blue-hover)'
                         : ct === 'plyta_redukcyjna'
-                          ? '#f472b6'
+                          ? 'var(--pink-hover)'
                           : ct === 'osadnik'
-                            ? '#a78bfa'
+                            ? 'var(--accent2-hover)'
                             : ct === 'styczna'
-                              ? '#f472b6'
-                              : '#93c5fd';
+                              ? 'var(--pink-hover)'
+                              : 'var(--blue-hover)';
         const colLabel = escapeHtml(c.shortLabel || c.label);
         /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
         const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';
@@ -239,38 +239,38 @@ function _excelRenderTable(dn) {
                   (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) ||
                   1000)
             : dnTh3(ct);
-        h1 += `<th style="${thBase}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
-        h2 += `<th style="${th2Base}background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:#64748b;text-align:center;white-space:nowrap;background:#13151f;color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
+        h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
-    h1 += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">H denn</th>`;
-    h2 += `<th style="${th2Base}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#1a170f;color:#fbbf24;min-width:60px;text-align:center;">·</th>`;
-    h1 += `<th style="${thBase}background:#1a170f;color:#fbbf24;min-width:50px;text-align:center;">Uszcz</th>`;
-    h2 += `<th style="${th2Base}background:#1a170f;color:#fbbf24;min-width:50px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#1a170f;color:#fbbf24;min-width:50px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
+    h2 += `<th style="${th2Base}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">Uszcz</th>`;
+    h2 += `<th style="${th2Base}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">·</th>`;
 
     if (hasReduction) {
         /* Redukcja — pojedynczy select: Brak / DN1000 / DN1200 */
-        h1 += `<th style="${thBase}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">Redukcja</th>`;
-        h2 += `<th style="${th2Base}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">·</th>`;
-        h3 += `<th style="${th3Base}background:#1a1215;color:#fca5a5;min-width:110px;text-align:center;">·</th>`;
+        h1 += `<th style="${thBase}background:var(--slate-950);color:var(--danger-hover);min-width:110px;text-align:center;">Redukcja</th>`;
+        h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--danger-hover);min-width:110px;text-align:center;">·</th>`;
+        h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--danger-hover);min-width:110px;text-align:center;">·</th>`;
     }
 
-    h1 += `<th style="${thBase}background:#150f1a;color:#c4b5fd;min-width:95px;text-align:left;">Kineta</th>`;
-    h2 += `<th style="${th2Base}background:#150f1a;color:#c4b5fd;min-width:95px;text-align:left;">·</th>`;
-    h3 += `<th style="${th3Base}background:#150f1a;color:#c4b5fd;min-width:95px;text-align:left;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:55px;text-align:center;">P.Buda</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:55px;text-align:center;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:55px;text-align:center;">·</th>`;
-    h1 += `<th style="${thBase}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">Akcje</th>`;
-    h2 += `<th style="${th2Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
-    h3 += `<th style="${th3Base}background:#161923;color:#94a3b8;min-width:90px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--accent2-hover);min-width:95px;text-align:left;">Kineta</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--accent2-hover);min-width:95px;text-align:left;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--accent2-hover);min-width:95px;text-align:left;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">P.Buda</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">Akcje</th>`;
+    h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">·</th>`;
+    h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">·</th>`;
 
-    html += `<tr style="position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:#161923;">${h3}</tr>`;
-    html += `<tr style="position:sticky;top:1.4rem;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:#161923;">${h1}</tr>`;
-    html += `<tr style="position:sticky;top:3.2rem;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:#161923;">${h2}</tr>`;
+    html += `<tr style="position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:var(--slate-950);">${h3}</tr>`;
+    html += `<tr style="position:sticky;top:1.4rem;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:var(--slate-950);">${h1}</tr>`;
+    html += `<tr style="position:sticky;top:3.2rem;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:var(--slate-950);">${h2}</tr>`;
     html += _excelRenderTbody(tabWells, dn, compCols, maxTr, hasReduction);
 
     html += '</table>';

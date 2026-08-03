@@ -181,8 +181,8 @@ const _wellDragHandlers = {
             }
 
             if (trash) {
-                trash.style.background = 'rgba(var(--danger-rgb),0.1)';
-                trash.style.borderColor = 'rgba(var(--danger-rgb),0.4)';
+                trash.style.background = 'rgba(var(--danger-rgb), 0.1)';
+                trash.style.borderColor = 'rgba(var(--danger-rgb), 0.4)';
             }
         }
         window.cleanupWellDragListeners();

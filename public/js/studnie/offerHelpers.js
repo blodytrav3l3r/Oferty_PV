@@ -4,11 +4,11 @@
 function getWellRowStyle(change, isOrdered) {
     if (change) {
         return change.type === 'added'
-            ? 'border-left:3px solid var(--success-hover); background:rgba(var(--success-rgb),0.05);'
-            : 'border-left:3px solid var(--danger); background:rgba(var(--danger-rgb),0.05);';
+            ? 'border-left:3px solid var(--success-hover); background:rgba(var(--success-rgb), 0.05);'
+            : 'border-left:3px solid var(--danger); background:rgba(var(--danger-rgb), 0.05);';
     }
     return isOrdered
-        ? 'border-left:3px solid rgba(var(--accent-rgb),0.5); background:rgba(var(--accent-rgb),0.04);'
+        ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.04);'
         : '';
 }
 
@@ -32,7 +32,7 @@ function getWellErrorCell(well) {
     const color = isError ? 'var(--danger-hover)' : 'var(--warn-hover)';
     const rgb = isError ? 'var(--danger-rgb)' : 'var(--warn-rgb)';
     const icon = isError ? 'x-circle' : 'alert-triangle';
-    return `<span title="${title}" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(${rgb},0.15); color:${color}; cursor:help;">
+    return `<span title="${title}" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(${rgb}, 0.15); color:${color}; cursor:help;">
         <i data-lucide="${icon}" style="width:14px; height:14px;"></i>
     </span>`;
 }

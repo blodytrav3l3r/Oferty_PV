@@ -116,7 +116,7 @@ function showClientsDb() {
     showModal({
         id: 'clients-db-modal',
         html: `
-    <div class="modal" style="max-width:1200px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); max-height:90vh; display:flex; flex-direction:column;">
+    <div class="modal" style="max-width:1200px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:0;">
         <h3 style="font-size:1.25rem; font-weight:700; color:var(--text);"><i data-lucide="folder-open"></i> Baza klientów <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${clientsDb.length})</span></h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
@@ -197,14 +197,14 @@ function renderClientsDbList(query) {
         tr.style.cssText =
             'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
         tr.onmouseenter = () => {
-            tr.style.background = 'rgba(var(--accent-rgb),0.06)';
+            tr.style.background = 'rgba(var(--accent-rgb), 0.06)';
         };
         tr.onmouseleave = () => {
             tr.style.background = 'transparent';
         };
 
         if (editingClientId === c.id) {
-            tr.style.background = 'rgba(var(--accent-rgb),0.05)';
+            tr.style.background = 'rgba(var(--accent-rgb), 0.05)';
             const fields = ['clientNumber', 'name', 'nip', 'address', 'contact'];
             fields.forEach((field) => {
                 const td = document.createElement('td');

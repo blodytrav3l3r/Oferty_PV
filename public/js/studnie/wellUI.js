@@ -80,14 +80,14 @@ window.renderWellsList = function renderWellsList() {
                 const changeType = orderChanges[i].type;
                 if (changeType === 'added') {
                     changeStyling =
-                        'border-left: 3px solid #10b981; background: rgba(16,185,129,0.05);';
+                        'border-left: 3px solid var(--success); background: rgba(var(--success-rgb), 0.05);';
                     changeBadge =
-                        '<span style="font-size:0.6rem; color:#10b981; font-weight:700; margin-left:0.3rem;">[NOWA]</span>';
+                        '<span style="font-size:0.6rem; color:var(--success); font-weight:700; margin-left:0.3rem;">[NOWA]</span>';
                 } else if (changeType === 'modified') {
                     changeStyling =
-                        'border-left: 3px solid #ef4444; background: rgba(239,68,68,0.05);';
+                        'border-left: 3px solid var(--danger); background: rgba(var(--danger-rgb), 0.05);';
                     changeBadge =
-                        '<span style="font-size:0.6rem; color:#ef4444; font-weight:700; margin-left:0.3rem;">[ZMIENIONA]</span>';
+                        '<span style="font-size:0.6rem; color:var(--danger); font-weight:700; margin-left:0.3rem;">[ZMIENIONA]</span>';
                 }
             }
 
@@ -118,7 +118,7 @@ window.renderWellsList = function renderWellsList() {
 
             let errorsHtml = '';
             if (w.configErrors && w.configErrors.length > 0) {
-                const color = w.configStatus === 'ERROR' ? '#ef4444' : '#f59e0b';
+                const color = w.configStatus === 'ERROR' ? 'var(--danger)' : 'var(--warn)';
                 errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.map((e) => escapeHtml(e)).join('<br>')}</div>`;
             }
 
@@ -132,7 +132,7 @@ window.renderWellsList = function renderWellsList() {
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
                         onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
-                        style="font-size:0.55rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                        style="font-size:0.55rem; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
                     </span>`;
                 } else {
@@ -145,18 +145,18 @@ window.renderWellsList = function renderWellsList() {
             if (w.doplata && w.doplata !== 0) {
                 const isNeg = w.doplata < 0;
                 const badgeLabel = isNeg ? 'UPUST' : 'DOPŁATA';
-                const colorHex = isNeg ? '#ef4444' : '#10b981';
-                const bgRgba = isNeg ? 'rgba(239,68,68,0.15)' : 'rgba(16,185,129,0.15)';
-                const borderRgba = isNeg ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)';
+                const colorHex = isNeg ? 'var(--danger)' : 'var(--success)';
+                const bgRgba = isNeg ? 'rgba(var(--danger-rgb), 0.15)' : 'rgba(var(--success-rgb), 0.15)';
+                const borderRgba = isNeg ? 'rgba(var(--danger-rgb), 0.4)' : 'rgba(var(--success-rgb), 0.4)';
                 doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
             // Automatyczne sprawdzenie w locie dla wszystkich kart
             const hasErrors = validateAutomatedErrors(w);
 
-            const errorStyling = hasErrors ? ' background:rgba(239,68,68,0.15) !important;' : '';
+            const errorStyling = hasErrors ? ' background:rgba(var(--danger-rgb), 0.15) !important;' : '';
             const errorNameStyle = hasErrors
-                ? 'color:#ef4444 !important; font-weight:700 !important;'
+                ? 'color:var(--danger) !important; font-weight:700 !important;'
                 : '';
 
             const hasBadges =
@@ -292,13 +292,13 @@ window.updateSummary = function updateSummary() {
 
         if (diff > 0) {
             diffMmText = '-' + fmtInt(diff) + ' mm';
-            diffColor = '#f87171'; // czerwony
+            diffColor = 'var(--danger-hover)'; // czerwony
         } else if (diff < 0) {
             diffMmText = '+' + fmtInt(Math.abs(diff)) + ' mm';
-            diffColor = '#facc15'; // żółty/pomarańczowy
+            diffColor = 'var(--warn-hover)'; // żółty/pomarańczowy
         } else {
             diffMmText = 'OK';
-            diffColor = '#4ade80'; // zielony
+            diffColor = 'var(--success-hover)'; // zielony
         }
     }
 

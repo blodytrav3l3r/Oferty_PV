@@ -15,8 +15,8 @@ function updateZakonczenieButton() {
             : well.zakonczenie;
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
-        btn.style.borderColor = 'rgba(99,102,241,0.4)';
-        btn.style.color = '#a78bfa';
+        btn.style.borderColor = 'rgba(var(--accent-rgb), 0.4)';
+        btn.style.color = 'var(--accent2-hover)';
     } else {
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zako\u0144czenie';
@@ -43,9 +43,9 @@ function updateRedukcjaButton() {
 
     if (well.redukcjaDN1000) {
         btn.innerHTML = `<span class="text-xs"><i data-lucide="chevrons-down"></i></span> Redukcja DN${targetDn} <span class="text-xs"><i data-lucide="check"></i></span>`;
-        btn.style.borderColor = 'rgba(109,40,217,0.5)';
-        btn.style.color = '#a78bfa';
-        btn.style.background = 'rgba(109,40,217,0.15)';
+        btn.style.borderColor = 'rgba(var(--accent2-rgb), 0.5)';
+        btn.style.color = 'var(--accent2-hover)';
+        btn.style.background = 'rgba(var(--accent2-rgb), 0.15)';
         if (minWrap) minWrap.style.display = 'flex';
         if (minInput) minInput.value = ((well.redukcjaMinH || 2500) / 1000).toFixed(1);
     } else {
@@ -82,8 +82,8 @@ function updateRedukcjaZakButton() {
             : 'Zak. DN' + targetDn;
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
-        btn.style.borderColor = 'rgba(99,102,241,0.5)';
-        btn.style.color = '#a78bfa';
+        btn.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
+        btn.style.color = 'var(--accent2-hover)';
     } else {
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> Zak. DN' + targetDn;
@@ -107,9 +107,9 @@ function updatePsiaBudaButton() {
     if (well && well.psiaBuda) {
         btn.innerHTML =
             '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda <span style="font-size:0.75rem; margin-left:4px;"><i data-lucide="check"></i></span>';
-        btn.style.borderColor = 'rgba(16,185,129,0.5)';
-        btn.style.color = '#6ee7b7';
-        btn.style.background = 'rgba(16,185,129,0.15)';
+        btn.style.borderColor = 'rgba(var(--success-rgb), 0.5)';
+        btn.style.color = 'var(--success-hover)';
+        btn.style.background = 'rgba(var(--success-rgb), 0.15)';
     } else {
         btn.innerHTML =
             '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda';

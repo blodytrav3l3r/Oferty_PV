@@ -27,11 +27,11 @@ function renderSavedOffersStudnie() {
             if (hasOrder) {
                 const badgeColor = isFullyOrdered ? 'var(--success-hover)' : 'var(--blue-hover)';
                 const badgeBg = isFullyOrdered
-                    ? 'rgba(var(--success-rgb),0.15)'
-                    : 'rgba(var(--blue-rgb),0.15)';
+                    ? 'rgba(var(--success-rgb), 0.15)'
+                    : 'rgba(var(--blue-rgb), 0.15)';
                 const badgeBorder = isFullyOrdered
-                    ? 'rgba(var(--success-rgb),0.4)'
-                    : 'rgba(var(--blue-rgb),0.4)';
+                    ? 'rgba(var(--success-rgb), 0.4)'
+                    : 'rgba(var(--blue-rgb), 0.4)';
 
                 orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
                 <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
@@ -80,7 +80,7 @@ function renderSavedOffersStudnie() {
                             html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${escapeHtml(oId)}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${creatorName}</strong></span>`;
                         } else {
                             if (creatorName)
-                                html += `<span style="display:inline-block; margin-right:10px; color:#888;"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${creatorName}</strong></span>`;
+                                html += `<span style="display:inline-block; margin-right:10px; color:var(--slate-500);"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${creatorName}</strong></span>`;
                             if (assignedName)
                                 html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${escapeHtml(oId)}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${assignedName}</strong></span>`;
                         }
@@ -88,7 +88,7 @@ function renderSavedOffersStudnie() {
                     })()}
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
-                        <span style="background: rgba(var(--success-hover-rgb), 0.1); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-hover-rgb), 0.3);"><i data-lucide="save"></i> Zapisano</span>
+                        <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-rgb), 0.4);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
                 ${
@@ -115,8 +115,8 @@ function renderSavedOffersStudnie() {
                               let buttonsHtml = '';
                               offerOrders.forEach((order) => {
                                   buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeHtml(order.id)}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
-                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb),0.1); border:1px solid rgba(var(--danger-rgb),0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeHtml(order.id)}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeHtml(order.id)}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeHtml(order.id)}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
                                 `;
                               });
                               return buttonsHtml;

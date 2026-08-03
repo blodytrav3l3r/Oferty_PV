@@ -125,7 +125,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                 const percent = totalQty > 0 ? Math.round((orderedQty / totalQty) * 100) : 0;
                 if (orderedQty > 0) {
                     const color = percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
-                    progressHtml = `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb),0.08); border:1px solid rgba(var(--blue-rgb),0.2); border-radius:8px;">
+                    progressHtml = `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb), 0.08); border:1px solid rgba(var(--blue-rgb), 0.2); border-radius:8px;">
                         <div class="flex-1">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                                 <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
@@ -135,7 +135,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                                     ${orderedQty} / ${totalQty} szt. (${percent}%)
                                 </span>
                             </div>
-                            <div style="height:6px; background:rgba(255,255,255,0.08); border-radius:3px; overflow:hidden;">
+                            <div style="height:6px; background:rgba(var(--white-rgb), 0.08); border-radius:3px; overflow:hidden;">
                                 <div style="height:100%; width:${percent}%; background:${color}; border-radius:3px; transition:width 0.3s ease;"></div>
                             </div>
                         </div>
@@ -213,18 +213,18 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM')
             pName +=
-                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 3mm</span>';
+                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:var(--slate-950); font-weight:700;">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM')
             pName +=
-                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:#1a1a1a; font-weight:700;">+ PEHD 4mm</span>';
+                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:var(--slate-950); font-weight:700;">+ PEHD 4mm</span>';
         if (item.autoAdded)
             pName +=
                 ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
         if (item.surcharge) {
             const isPos = item.surcharge > 0;
-            const color = isPos ? '#34d399' : '#f87171';
-            const bg = isPos ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)';
-            const border = isPos ? 'rgba(16,185,129,0.4)' : 'rgba(239,68,68,0.3)';
+            const color = isPos ? 'var(--success-hover)' : 'var(--danger-hover)';
+            const bg = isPos ? 'rgba(var(--success-rgb), 0.12)' : 'rgba(var(--danger-rgb), 0.12)';
+            const border = isPos ? 'rgba(var(--success-rgb), 0.4)' : 'rgba(var(--danger-rgb), 0.3)';
             pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
         }
 
@@ -241,7 +241,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         let summaryOrderCell;
         if (isOrdered) {
             summaryCheckboxCell =
-                '<td class="text-center"><i data-lucide="package-check" style="width:16px;height:16px;color:#a5b4fc"></i></td>';
+                '<td class="text-center"><i data-lucide="package-check" style="width:16px;height:16px;color:var(--accent-text)"></i></td>';
             summaryOrderCell =
                 '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
         } else if (item.autoAdded) {
@@ -266,7 +266,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         if (snapOfferPrice !== null) {
             const diff = netto - snapOfferPrice;
             const diffSign = diff >= 0 ? '+' : '';
-            const diffColor = diff > 0 ? '#f87171' : diff < 0 ? '#34d399' : 'var(--text-muted)';
+            const diffColor = diff > 0 ? 'var(--danger-hover)' : diff < 0 ? 'var(--success-hover)' : 'var(--text-muted)';
             offerCell = `<td style="text-align:right;font-weight:600;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(snapOfferPrice)} PLN</td>`;
             diffCell = `<td style="text-align:right;font-weight:700;color:${diffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${diffSign}${fmt(diff)} PLN</td>`;
         } else if (showPriceComparison) {
@@ -277,7 +277,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         }
 
         const isFullyOrdered = remaining <= 0;
-        html += `<tr style="border-bottom:1px solid var(--border-glass); ${isFullyOrdered ? 'border-left:3px solid rgba(99,102,241,0.5); background:rgba(99,102,241,0.04);' : ''}">
+        html += `<tr style="border-bottom:1px solid var(--border-glass); ${isFullyOrdered ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.04);' : ''}">
             ${summaryCheckboxCell}
             <td style="text-align:center; color:var(--text-muted); font-weight:600; white-space:nowrap;">${i + 1}</td>
             <td style="font-weight:600; color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
@@ -308,8 +308,8 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             const catDiff = g.sumCurrent - g.sumOffer;
             const catDiffSign = catDiff >= 0 ? '+' : '';
             const catDiffColor =
-                catDiff > 0 ? '#f87171' : catDiff < 0 ? '#34d399' : 'var(--text-muted)';
-            html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
+                catDiff > 0 ? 'var(--danger-hover)' : catDiff < 0 ? 'var(--success-hover)' : 'var(--text-muted)';
+            html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
                 <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
                 <td class="text-right" style="font-size:0.85rem;color:var(--success);font-weight:700;white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
                 <td class="text-right" style="font-size:0.8rem;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumOffer)} PLN</td>
@@ -320,7 +320,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const totalDiff = totalNetto - totalOffer;
         const totalDiffSign = totalDiff >= 0 ? '+' : '';
         const totalDiffColor =
-            totalDiff > 0 ? '#f87171' : totalDiff < 0 ? '#34d399' : 'var(--text-muted)';
+            totalDiff > 0 ? 'var(--danger-hover)' : totalDiff < 0 ? 'var(--success-hover)' : 'var(--text-muted)';
         html += `<tr style="border-top:2px solid var(--border-glass);">
             <td colspan="${COLSPAN_CAT}" style="font-weight:700;font-size:0.9rem;color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
             <td class="text-right" style="font-weight:800;font-size:1rem;color:var(--success);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalNetto)} PLN</td>

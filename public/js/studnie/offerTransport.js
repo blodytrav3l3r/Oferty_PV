@@ -83,7 +83,7 @@ window.updateModalTransportDetails = function () {
             typeof formatTransportCount === 'function'
                 ? formatTransportCount(totalTransports, currentTransportMode)
                 : totalTransports;
-        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? escapeHtml(fmtInt(globalWeight)) : escapeHtml(globalWeight)} kg</strong> &bull; Ilość transportów: <strong style="color: #eab308;">${escapeHtml(countLabel)}</strong></span>`;
+        tripsInfoEl.innerHTML = `<span style="color: var(--text-secondary);">Łączny ciężar: <strong>${typeof fmtInt === 'function' ? escapeHtml(fmtInt(globalWeight)) : escapeHtml(globalWeight)} kg</strong> &bull; Ilość transportów: <strong style="color: var(--warn);">${escapeHtml(countLabel)}</strong></span>`;
     }
     const totalValEl = document.getElementById('transport-modal-total-val');
     if (totalValEl) {

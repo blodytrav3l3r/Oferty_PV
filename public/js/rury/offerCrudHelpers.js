@@ -82,7 +82,7 @@ function renderSavedOffers() {
                         ord.orderNumber ||
                         ord.offerNumber ||
                         (ord.id ? ord.id.substring(0, 8) : '—');
-                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
+                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
                     <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${escapeHtml(label)}
                 </span>`;
                 })
@@ -103,13 +103,13 @@ function renderSavedOffers() {
                 ? _orderList
                       .map(
                           (ord) => `
-            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${escapeHtml(ord.id)}'" style="background:rgba(var(--success-rgb),0.15); border:1px solid rgba(var(--success-rgb),0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
+            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${escapeHtml(ord.id)}'" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${escapeHtml(ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8))}
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'pdf')" style="background:rgba(var(--danger-rgb),0.15); border:1px solid rgba(var(--danger-rgb),0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
+            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'pdf')" style="background:rgba(var(--danger-rgb), 0.15); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'docx')" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#93c5fd; font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
+            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'docx')" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size:0.72rem; padding:0.3rem 0.6rem; font-weight:700;" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
         `

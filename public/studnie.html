@@ -60,27 +60,27 @@
                                     justify-content: center;
                                     align-items: center;
                                     border-radius: 6px;
-                                    background: rgba(239, 68, 68, 0.1);
-                                    border: 1px dashed rgba(239, 68, 68, 0.4);
-                                    color: #f87171;
+                                    background: rgba(var(--danger-rgb), 0.1);
+                                    border: 1px dashed rgba(var(--danger-rgb), 0.4);
+                                    color: var(--danger-hover);
                                     cursor: pointer;
                                 "
                                 title="Kliknij, aby usunąć studnię"
                                 onclick="removeWell(currentWellIndex)"
                                 onmouseenter="
                                     if (window.svgDragStartIndex >= 0) {
-                                        this.style.background = 'rgba(239,68,68,0.3)';
-                                        this.style.borderColor = '#ef4444';
+                                        this.style.background = 'rgba(var(--danger-rgb), 0.3)';
+                                        this.style.borderColor = 'var(--danger)';
                                     }
                                 "
                                 onmouseleave="
-                                    this.style.background = 'rgba(239,68,68,0.1)';
-                                    this.style.borderColor = 'rgba(239,68,68,0.4)';
+                                    this.style.background = 'rgba(var(--danger-rgb), 0.1)';
+                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.4)';
                                 "
                             >
                                 <div
                                     class="ws-label"
-                                    style="color: #f87171; font-size: 0.65rem; white-space: nowrap"
+                                    style="color: var(--danger-hover); font-size: 0.65rem; white-space: nowrap"
                                 >
                                     Usuń
                                 </div>
@@ -93,8 +93,8 @@
                             class="well-summary-mini gap-1"
                             style="
                                 margin-top: 0.4rem;
-                                background: rgba(74, 222, 128, 0.05);
-                                border: 1px solid rgba(74, 222, 128, 0.2);
+                                background: rgba(var(--success-rgb), 0.05);
+                                border: 1px solid rgba(var(--success-rgb), 0.2);
                                 padding: 0.3rem;
                                 border-radius: 6px;
                                 display: flex;
@@ -105,7 +105,7 @@
                             <div
                                 class="ws-label"
                                 style="
-                                    color: #4ade80;
+                                    color: var(--success-hover);
                                     font-size: 0.75rem;
                                     font-weight: 600;
                                     margin: 0;
@@ -118,7 +118,7 @@
                                 class="ws-value"
                                 id="ws-price"
                                 style="
-                                    color: #4ade80;
+                                    color: var(--success-hover);
                                     font-size: 0.75rem;
                                     margin: 0;
                                     font-weight: 700;
@@ -183,7 +183,7 @@
                                 background: var(--bg-card);
                                 border: 1px solid var(--border-glass);
                                 border-radius: 16px;
-                                box-shadow: 0 8px 32px #080808;
+                                box-shadow: 0 8px 32px var(--slate-950);
                                 max-width: 1200px;
                                 margin: 0 auto;
                             "
@@ -193,8 +193,8 @@
                                 style="
                                     width: 40px;
                                     height: 40px;
-                                    border: 4px solid rgba(99, 102, 241, 0.15);
-                                    border-top-color: #6366f1;
+                                    border: 4px solid rgba(var(--accent-rgb), 0.15);
+                                    border-top-color: var(--accent);
                                     border-radius: 50%;
                                     animation: spin 1s linear infinite;
                                 "

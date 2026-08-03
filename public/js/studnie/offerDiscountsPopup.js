@@ -203,7 +203,7 @@ function renderOfferDiscountsPopupContent() {
     const buildInputBlock = (dn, label, type, value, accentColor, borderColor) => `
         <div style="display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 100px;">
             <span style="font-size: 0.5rem; font-weight: 700; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
-            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(0,0,0,0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
+            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(var(--black-rgb), 0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
                 <input type="number" class="text-center offer-discount-input" 
                        value="${value}" 
                        onfocus="this.dataset.oldValue=this.value; this.value='';"
@@ -249,19 +249,19 @@ function renderOfferDiscountsPopupContent() {
             .some((w) => w.kineta === 'preco' || w.kineta === 'precotop');
 
         html += `
-        <div style="background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb),0.2)'" onmouseleave="this.style.borderColor='rgba(255,255,255,0.06)'">
+        <div style="background: rgba(var(--white-rgb), 0.025); border: 1px solid rgba(var(--white-rgb), 0.06); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.06)'">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb),0.4);"></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.4);"></span>
                     <span id="offer-dn-count-${dn}" style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
                     <span id="offer-dn-avg-${dn}" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
                 </div>
                 <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb),0.3)')}
-                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, 'var(--accent-hover)', 'rgba(var(--accent-rgb),0.3)')}
-                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, 'var(--danger-hover)', 'rgba(var(--danger-rgb),0.3)') : ''}
+                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb), 0.3)')}
+                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, 'var(--accent-hover)', 'rgba(var(--accent-rgb), 0.3)')}
+                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, 'var(--danger-hover)', 'rgba(var(--danger-rgb), 0.3)') : ''}
             </div>
         </div>`;
     });
@@ -294,26 +294,26 @@ function renderOfferDiscountsPopupContent() {
         const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
 
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+        <div style="margin-top: 0.5rem; background: rgba(var(--blue-alt-rgb), 0.06); border: 1px solid rgba(var(--blue-alt-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #0ea5e9; box-shadow: 0 0 6px rgba(14,165,233,0.4);"></span>
-                    <span style="font-weight: 800; font-size: 0.8rem; color: #38bdf8;">Wkładka PEHD <span style="font-size:0.65rem; font-weight:600; opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-alt); box-shadow: 0 0 6px rgba(var(--blue-alt-rgb), 0.4);"></span>
+                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--blue-alt);">Wkładka PEHD <span style="font-size:0.65rem; font-weight:600; opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
                 </div>
-                <div style="color: #38bdf8; font-weight: 800; font-size: 0.8rem;"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
+                <div style="color: var(--blue-alt); font-weight: 800; font-size: 0.8rem;"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #0ea5e9; margin-bottom: 0.15rem;">Globalny Rabat na Wkładkę</div>
-                    <div style="display: flex; align-items: center; background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--blue-alt); margin-bottom: 0.15rem;">Globalny Rabat na Wkładkę</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--blue-alt-rgb), 0.08); border: 1px solid rgba(var(--blue-alt-rgb), 0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPehdDiscountChange(this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #38bdf8; background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(14,165,233,0.5); padding-right: 0.4rem;">%</span>
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--blue-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--blue-alt-rgb), 0.5); padding-right: 0.4rem;">%</span>
                     </div>
                 </div>
             </div>
@@ -330,11 +330,11 @@ function renderOfferDiscountsPopupContent() {
         const malZC = refW.malowanieZewCena || '';
 
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(168,85,247,0.06); border: 1px solid rgba(168,85,247,0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+        <div style="margin-top: 0.5rem; background: rgba(var(--accent2-rgb), 0.06); border: 1px solid rgba(var(--accent2-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #a855f7; box-shadow: 0 0 6px rgba(168,85,247,0.4);"></span>
-                    <span style="font-weight: 800; font-size: 0.8rem; color: #c084fc;">Koszt malowania</span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 6px rgba(var(--accent2-rgb), 0.4);"></span>
+                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--purple-alt);">Koszt malowania</span>
                 </div>
                 <span style="font-size: 0.6rem; color: var(--text-muted);">PLN / m²</span>
             </div>
@@ -343,16 +343,16 @@ function renderOfferDiscountsPopupContent() {
         if (anyMalW) {
             html += `
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #a855f7; margin-bottom: 0.15rem;">Wewnętrzne</div>
-                    <div style="display: flex; align-items: center; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Wewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.08); border: 1px solid rgba(var(--accent2-rgb), 0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }
@@ -360,16 +360,16 @@ function renderOfferDiscountsPopupContent() {
         if (anyMalZ) {
             html += `
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #a855f7; margin-bottom: 0.15rem;">Zewnętrzne</div>
-                    <div style="display: flex; align-items: center; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Zewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.08); border: 1px solid rgba(var(--accent2-rgb), 0.25); border-radius: 7px; padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: #c084fc; background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(168,85,247,0.5); padding-right: 0.4rem;">zł</span>
+                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }
@@ -380,7 +380,7 @@ function renderOfferDiscountsPopupContent() {
 
     if (totalOverallNetto > 0) {
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(0,0,0,0.25); border: 1px dashed rgba(255,255,255,0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="margin-top: 0.5rem; background: rgba(var(--black-rgb), 0.25); border: 1px dashed rgba(var(--white-rgb), 0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Łączna Suma Netto</span>
             <span id="offer-total-popup-price" style="font-size: 1.05rem; font-weight: 900; color: var(--success);">${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN</span>
         </div>`;

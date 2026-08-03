@@ -17,7 +17,7 @@
     border-color: rgba(var(--accent-rgb), 0.35);
     box-shadow:
         0 8px 16px rgba(var(--accent-rgb), 0.12),
-        0 2px 4px rgba(0, 0, 0, 0.08);
+        0 2px 4px rgba(var(--black-rgb), 0.08);
 }
 
 .modern-offer-card:hover .offer-icon-wrapper {
@@ -220,7 +220,7 @@
     padding: 0.5rem 0.65rem;
     border: 1px solid rgba(var(--success-rgb), 0.18);
     border-radius: 8px;
-    background: rgba(15, 23, 42, 0.52);
+    background: rgba(var(--slate-950-rgb), 0.52);
 }
 
 .offer-order-row {
@@ -230,9 +230,9 @@
     gap: 0.5rem;
     min-height: 36px;
     padding: 0.35rem 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(var(--slate-400-rgb), 0.12);
     border-radius: 6px;
-    background: rgba(30, 41, 59, 0.58);
+    background: rgba(var(--slate-800-rgb), 0.58);
 }
 
 .offer-order-main {
@@ -250,7 +250,7 @@
 }
 
 .offer-order-main:hover strong {
-    color: #67e8f9;
+    color: var(--cyan);
 }
 
 .offer-order-icon {
@@ -333,8 +333,8 @@
 }
 
 .status-badge.neutral {
-    background: rgba(100, 116, 139, 0.12);
-    border: 1px solid rgba(100, 116, 139, 0.2);
+    background: rgba(var(--slate-500-rgb), 0.12);
+    border: 1px solid rgba(var(--slate-500-rgb), 0.2);
     color: var(--text-secondary);
 }
 
@@ -387,7 +387,7 @@
 .action-btn.primary {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
-    color: white;
+    color: var(--white);
     box-shadow: 0 2px 6px rgba(var(--accent-rgb), 0.3);
 }
 

@@ -216,7 +216,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     border: none;
     border-radius: 12px;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white;
+    color: var(--white);
     font:
         600 0.95rem 'Inter',
         sans-serif;
@@ -236,7 +236,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
         135deg,
         transparent 40%,
-        rgba(255, 255, 255, 0.12) 50%,
+        rgba(var(--white-rgb), 0.12) 50%,
         transparent 60%
     );
     transform: translateX(-100%);
@@ -292,7 +292,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     font-size: 1rem;
     font-weight: 800;
-    color: white;
+    color: var(--white);
     box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.25);
 }
 
@@ -347,7 +347,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .btn-hero:hover {
     background: var(--glass-border);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--white-rgb), 0.15);
     color: var(--text-primary);
     transform: translateY(-1px);
 }
@@ -355,7 +355,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .btn-hero.btn-accent {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none;
-    color: #fff;
+    color: var(--white);
 }
 
 .btn-hero.btn-hero-danger {
@@ -427,7 +427,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .launch-card:hover {
     transform: translateY(-5px);
     border-color: var(--accent-border-dim);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 40px -10px rgba(var(--black-rgb), 0.5);
 }
 
 .launch-icon {
@@ -470,7 +470,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .launch-btn-label {
     padding: 0.4rem 1rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 20px;
     font-size: 0.65rem;
     font-weight: 900;
@@ -479,8 +479,8 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .launch-card:hover .launch-btn-label {
-    background: white;
-    color: #000;
+    background: var(--white);
+    color: var(--black);
     opacity: 1;
 }
 
@@ -614,7 +614,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.06), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.06), transparent);
 }
 
 .admin-stat-card:hover {
@@ -634,7 +634,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     border-radius: 8px;
     flex-shrink: 0;
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: inset 0 0 10px rgba(var(--black-rgb), 0.2);
 }
 
 .admin-stat-icon.admin {
@@ -778,8 +778,8 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .admin-action-btn:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: rgba(var(--white-rgb), 0.06);
+    border-color: rgba(var(--white-rgb), 0.15);
 }
 
 .admin-action-btn svg,
@@ -839,7 +839,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .token-badge {
     display: inline-block;
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--white-rgb), 0.06);
     border: 1px solid var(--border-glass);
     padding: 0.15rem 0.5rem;
     border-radius: 4px;
@@ -1090,7 +1090,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-users-list-compact label:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--white-rgb), 0.06);
 }
 
 .sub-user-checkbox {
@@ -1111,7 +1111,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-user-checkbox:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--white-rgb), 0.06);
 }
 
 /* Subordinates enhancement */
@@ -1163,7 +1163,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-token:hover {
-    background: rgba(99, 102, 241, 0.15) !important;
+    background: rgba(var(--accent-rgb), 0.15) !important;
 }
 
 /* ── Table column widths (replace inline width) ── */
@@ -1419,7 +1419,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-btn:hover {
     background: var(--glass-border);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(var(--white-rgb), 0.15);
     color: var(--text-primary);
     transform: translateY(-1px);
 }
@@ -1427,11 +1427,11 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .ai-btn-primary {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none;
-    color: #fff;
+    color: var(--white);
 }
 
 .ai-btn-primary:hover {
-    color: #fff;
+    color: var(--white);
 }
 
 /* ── Status badge ── */
@@ -1692,7 +1692,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none;
     border-radius: 20px;
-    color: #fff;
+    color: var(--white);
     font:
         600 0.8rem 'Inter',
         sans-serif;

@@ -301,7 +301,7 @@ function populateZleceniaForm(el) {
     let bannerHtml = '';
     if (isAccepted) {
         bannerHtml = `
-            <div style="background:rgba(var(--danger-rgb),0.15); border:2px solid rgba(var(--danger-rgb),0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+            <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
                 <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
                 <div style="flex:1;">
                     <div style="font-size:0.85rem; font-weight:800; color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
@@ -356,7 +356,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Adres</label>
@@ -364,7 +364,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
@@ -376,7 +376,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(255,255,255,0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
             </div>
         </div>
     </div>
@@ -397,7 +397,7 @@ function populateZleceniaForm(el) {
                     <span style="font-weight:bold; color:var(--accent-hover); font-size:0.85rem;">${escapeHtml(well.name || '')}</span>
                 </div>
 
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:#0d1520; padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:var(--slate-950); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
                         <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
                         <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayDN}</span>

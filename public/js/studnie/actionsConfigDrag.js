@@ -67,7 +67,7 @@ window.handleCfgDragOver = function (e) {
 
     if (draggedCfgIndex !== null) {
         if (tile) {
-            tile.style.borderTop = '2px solid #6366f1';
+            tile.style.borderTop = '2px solid var(--accent)';
             const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
             const well = getCurrentWell();
             if (well && draggedCfgIndex !== dropIndex) {

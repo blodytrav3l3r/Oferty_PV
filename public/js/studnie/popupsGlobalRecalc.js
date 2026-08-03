@@ -14,7 +14,7 @@ const RECALC_REDUCIBLE_DNS = [1200, 1500, 2000, 2500];
 
 const RECALC_RELIEF_TYPES = ['pierscien_odciazajacy', 'plyta_najazdowa', 'plyta_zamykajaca'];
 
-const RECALC_AUTO_ACCENT = '#a78bfa';
+const RECALC_AUTO_ACCENT = 'var(--accent2-hover)';
 
 // Kolejność kafelków zakończeń: konus → płyta DIN → pierścień odciążający → płyty odciążające.
 // Nieznane typy lądują na końcu (?? 99).
@@ -42,7 +42,7 @@ function _recalcClosureColor(componentType) {
     }
     return typeof SVG_COLORS !== 'undefined' && SVG_COLORS.fallback
         ? SVG_COLORS.fallback
-        : '#334155';
+        : 'var(--slate-700)';
 }
 
 function _recalcSafeDn(dn) {

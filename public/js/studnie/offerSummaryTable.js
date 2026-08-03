@@ -193,7 +193,7 @@ function renderOfferSummaryFooter(
                 }
             }
 
-            html += `<tr style="border-top:1px solid rgba(255,255,255,0.05);">
+            html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
               <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
               ${offerPriceCell}
               <td class="text-right" style="font-size:0.85rem; color:var(--success); font-weight:700; white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumPrice)} PLN</td>

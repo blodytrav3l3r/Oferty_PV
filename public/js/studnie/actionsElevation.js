@@ -182,7 +182,7 @@ function checkWellNumerDuplicate(newNumer, inputEl) {
         );
         if (isDuplicate) {
             inputEl.classList.add('border-danger-subtle', 'color-danger');
-            inputEl.style.boxShadow = '0 0 10px rgba(239, 68, 68, 0.2)';
+            inputEl.style.boxShadow = '0 0 10px rgba(var(--danger-rgb), 0.2)';
             showToast(
                 `<i data-lucide="alert-triangle"></i> Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
                 'error'

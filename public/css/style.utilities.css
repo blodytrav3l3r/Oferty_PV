@@ -45,26 +45,26 @@
     border: 1px solid rgba(var(--blue-rgb), 0.3);
 }
 .badge-muted {
-    background: rgba(156, 163, 175, 0.15);
-    color: #9ca3af;
-    border: 1px solid rgba(156, 163, 175, 0.3);
+    background: rgba(var(--slate-400-rgb), 0.15);
+    color: var(--slate-400);
+    border: 1px solid rgba(var(--slate-400-rgb), 0.3);
 }
 
 /* Role badges */
 .role-admin {
-    background: rgba(245, 158, 11, 0.15);
-    color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    background: rgba(var(--warn-rgb), 0.15);
+    color: var(--warn);
+    border: 1px solid rgba(var(--warn-rgb), 0.3);
 }
 .role-pro {
-    background: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background: rgba(var(--success-rgb), 0.15);
+    color: var(--success-hover);
+    border: 1px solid rgba(var(--success-rgb), 0.3);
 }
 .role-user {
-    background: rgba(59, 130, 246, 0.15);
-    color: #60a5fa;
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    background: rgba(var(--blue-rgb), 0.15);
+    color: var(--blue-hover);
+    border: 1px solid rgba(var(--blue-rgb), 0.3);
 }
 
 /* Color utility classes */
@@ -75,7 +75,7 @@
     color: var(--blue-hover);
 }
 .color-link {
-    color: #60a5fa;
+    color: var(--blue-hover);
 }
 .color-accent {
     color: var(--accent2-hover);
@@ -84,7 +84,7 @@
     color: var(--warn-hover);
 }
 .color-danger {
-    color: #f87171;
+    color: var(--danger-hover);
 }
 .color-cyan {
     color: var(--cyan);
@@ -98,13 +98,13 @@
 
 /* Background utility classes */
 .bg-glass-subtle {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(var(--white-rgb), 0.03);
 }
 .bg-glass-hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(var(--white-rgb), 0.06);
 }
 .bg-glass-strong {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--white-rgb), 0.1);
 }
 .border-accent-subtle {
     border-color: rgba(var(--accent-rgb), 0.3);
@@ -128,22 +128,22 @@
     background: rgba(var(--warn-rgb), 0.15);
 }
 .bg-black-subtle {
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(var(--black-rgb), 0.2);
 }
 .bg-black-dim {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(var(--black-rgb), 0.6);
 }
 .bg-glass-ultra {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(var(--white-rgb), 0.02);
 }
 .bg-purple-subtle {
-    background: rgba(168, 85, 247, 0.1);
+    background: rgba(var(--accent2-rgb), 0.1);
 }
 .border-warn-subtle {
     border-color: rgba(var(--warn-rgb), 0.3);
 }
 .border-primary-subtle {
-    border-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(var(--white-rgb), 0.08);
 }
 
 /* Align & layout utility classes */
@@ -271,7 +271,7 @@
 .hover-danger:hover {
     background: rgba(var(--danger-rgb), 0.15);
     border-color: rgba(var(--danger-rgb), 0.3);
-    color: #fca5a5;
+    color: var(--danger-hover);
 }
 .hover-accent {
     transition:
@@ -291,7 +291,7 @@
 }
 .hover-lift:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.2);
 }
 .hover-bright {
     transition:
@@ -301,5 +301,5 @@
 }
 .hover-bright:hover {
     filter: brightness(1.3);
-    border-color: rgba(255, 255, 255, 0.3);
+    border-color: rgba(var(--white-rgb), 0.3);
 }

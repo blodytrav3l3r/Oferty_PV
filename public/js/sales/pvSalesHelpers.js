@@ -224,9 +224,9 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
         );
 
         html += `
-                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(148,163,184,0.15); border-radius:10px; background:rgba(15,23,42,0.855); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(var(--slate-400-rgb), 0.15); border-radius:10px; background:rgba(var(--slate-950-rgb), 0.855); box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.15);">
                     <div style="min-width:0;">
-                        <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight:700; color:#38bdf8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='#7dd3fc'; this.style.textDecoration='underline';" onmouseleave="this.style.color='#38bdf8'; this.style.textDecoration='none';">${orderLabel}</div>
+                        <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight:700; color:var(--blue-alt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='var(--blue-alt-hover)'; this.style.textDecoration='underline';" onmouseleave="this.style.color='var(--blue-alt)'; this.style.textDecoration='none';">${orderLabel}</div>
                         <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
@@ -297,8 +297,8 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
             })
             .join('');
     } else {
-        orderBadge = `<span style="background:rgba(100,116,139,0.1); color:var(--text-secondary); padding:4px 10px; border-radius:6px;
-                    border:1px solid rgba(100,116,139,0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
+        orderBadge = `<span style="background:rgba(var(--slate-500-rgb), 0.1); color:var(--text-secondary); padding:4px 10px; border-radius:6px;
+                    border:1px solid rgba(var(--slate-500-rgb), 0.2); font-size:0.75rem; font-weight:600; white-space:nowrap;">Brak zamówienia</span>`;
     }
 
     const dateStr = offer.createdAt ? new Date(offer.createdAt).toLocaleDateString('pl-PL') : '—';

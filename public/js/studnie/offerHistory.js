@@ -13,13 +13,13 @@ function renderAuditLogEntry(log) {
     if (isDelete) {
         cardClass = 'action-delete';
         actionBadge =
-            '<span style="background:rgba(var(--danger-rgb),0.15); color:var(--danger-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>';
+            '<span style="background:rgba(var(--danger-rgb), 0.15); color:var(--danger-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>';
         const oldData = log.oldData || {};
-        contentHtml = `<div style="font-size:0.9rem; color:var(--danger-hover);">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:#fff;">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
+        contentHtml = `<div style="font-size:0.9rem; color:var(--danger-hover);">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:var(--white);">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
     } else if (log.action === 'create') {
         cardClass = 'action-create';
         actionBadge =
-            '<span style="background:rgba(var(--accent-rgb),0.15); color:var(--accent-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>';
+            '<span style="background:rgba(var(--accent-rgb), 0.15); color:var(--accent-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>';
         const price = data.totalBrutto || 0;
         contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         if (data.wells)
@@ -27,7 +27,7 @@ function renderAuditLogEntry(log) {
     } else if (isDiff) {
         cardClass = 'action-diff';
         actionBadge =
-            '<span style="background:rgba(251,191,36,0.15); color:var(--warn-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>';
+            '<span style="background:rgba(var(--warn-rgb), 0.15); color:var(--warn-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>';
         const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
         const changesHtml = changedKeys
             .map((k) => {
@@ -49,7 +49,7 @@ function renderAuditLogEntry(log) {
     } else {
         cardClass = 'action-update';
         actionBadge =
-            '<span style="background:rgba(var(--success-rgb),0.15); color:var(--success-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>';
+            '<span style="background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>';
         const price = data.totalBrutto || 0;
         const oldPrice = log.oldData?.totalBrutto || 0;
         if (oldPrice && Math.abs(price - oldPrice) > 0.01) {
@@ -126,12 +126,12 @@ async function showOfferHistoryStudnie(id) {
             <style>
                 .audit-modal-inner {
                     max-width: 800px; width: 95%; border-radius: 20px; max-height: 90vh; 
-                    display: flex; flex-direction: column; background: #0f172a; 
-                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid rgba(255, 255, 255, 0.1);
+                    display: flex; flex-direction: column; background: var(--slate-950); 
+                    box-shadow: 0 25px 50px -12px rgba(var(--black-rgb), 0.5); border: 1px solid rgba(var(--white-rgb), 0.1);
                 }
                 .audit-card {
-                    background: rgba(30, 41, 59, 0.6);
-                    border: 1px solid rgba(255, 255, 255, 0.06);
+                    background: rgba(var(--slate-800-rgb), 0.6);
+                    border: 1px solid rgba(var(--white-rgb), 0.06);
                     border-radius: 16px;
                     padding: 1.25rem 1.5rem;
                     margin-bottom: 1rem;
@@ -141,10 +141,10 @@ async function showOfferHistoryStudnie(id) {
                     backdrop-filter: blur(10px);
                 }
                 .audit-card:hover {
-                    background: rgba(30, 41, 59, 0.9);
-                    border-color: rgba(255, 255, 255, 0.15);
+                    background: rgba(var(--slate-800-rgb), 0.9);
+                    border-color: rgba(var(--white-rgb), 0.15);
                     transform: translateY(-2px);
-                    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+                    box-shadow: 0 10px 15px -3px rgba(var(--black-rgb), 0.3), 0 4px 6px -2px rgba(var(--black-rgb), 0.15);
                 }
                 .audit-card::before {
                     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px;
@@ -156,7 +156,7 @@ async function showOfferHistoryStudnie(id) {
                 
                 .audit-card-header {
                     display: flex; justify-content: space-between; align-items: center;
-                    margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
                 }
                 .audit-date { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
                 .audit-author { font-size: 0.85rem; color: var(--border); display:flex; align-items:center; gap:4px; }
@@ -166,32 +166,32 @@ async function showOfferHistoryStudnie(id) {
                 }
                 
                 .diff-container { display: flex; flex-direction: column; gap: 0.4rem; }
-                .diff-line { background: rgba(0,0,0,0.2); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; }
+                .diff-line { background: rgba(var(--black-rgb), 0.2); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; }
                 .diff-key { color: var(--text-primary); font-weight: 600; font-family: monospace; }
                 .diff-old { color: var(--text-secondary); text-decoration: line-through; }
                 .diff-new { color: var(--success-hover); font-weight: 700; }
                 
                 .restore-btn, .preview-btn {
-                    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
+                    background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.1); 
                     color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;
                     transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 6px;
                 }
-                .preview-btn:hover { background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: var(--accent-hover); }
-                .restore-btn:hover { background: rgba(var(--success-hover-rgb), 0.15); border-color: rgba(var(--success-hover-rgb), 0.3); color: var(--success-hover); }
+                .preview-btn:hover { background: rgba(var(--accent-rgb), 0.15); border-color: rgba(var(--accent-rgb), 0.3); color: var(--accent-hover); }
+                .restore-btn:hover { background: rgba(var(--success-rgb), 0.2); border-color: rgba(var(--success-rgb), 0.4); color: var(--success-hover); }
                 
                 .load-more-btn {
-                    background: rgba(var(--accent-rgb),0.15); border: 1px solid rgba(var(--accent-rgb),0.3); 
+                    background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3); 
                     color: var(--accent-hover); font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 30px;
                     cursor: pointer; transition: all 0.2s;
                 }
-                .load-more-btn:hover { background: rgba(var(--accent-rgb),0.3); transform: scale(1.05); }
+                .load-more-btn:hover { background: rgba(var(--accent-rgb), 0.3); transform: scale(1.05); }
             </style>
             <div class="modal audit-modal-inner">
-                <div class="modal-header" style="border-bottom:1px solid rgba(255,255,255,0.1); padding:1.2rem 1.5rem; background: rgba(255,255,255,0.02); border-radius: 20px 20px 0 0;">
-                    <h3 style="font-weight:800; color:#fff; margin:0; display:flex; align-items:center; gap:0.5rem;">
+                <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.02); border-radius: 20px 20px 0 0;">
+                    <h3 style="font-weight:800; color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
-                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(255,255,255,0.1); color:#fff; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+                    <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
                 <div id="audit-logs-container" style="padding:1.5rem; overflow-y:auto; flex:1; scrollbar-width:thin;">
                     ${historyHtml}

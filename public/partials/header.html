@@ -24,7 +24,7 @@
                             href="app.html#/studnie"
                             target="_parent"
                             class="nav-tile active"
-                            style="--nav-accent: #10b981; --nav-glow: #0f3328"
+                            style="--nav-accent: var(--success); --nav-glow: var(--slate-800)"
                         >
                             <span class="nav-tile-icon"><i data-lucide="cylinder"></i></span>
                             <span class="nav-tile-text">Studnie</span>
@@ -47,7 +47,7 @@
                             class="nav-btn nav-tile active"
                             data-section="builder"
                             id="nav-builder"
-                            style="--nav-accent: #10b981; --nav-glow: #0d2b22"
+                            style="--nav-accent: var(--success); --nav-glow: var(--slate-800)"
                             onclick="showSection('builder')"
                         >
                             <span class="nav-tile-icon"><i data-lucide="hard-hat"></i></span>
@@ -57,7 +57,7 @@
                             class="nav-btn nav-tile"
                             data-section="offer"
                             id="nav-offer"
-                            style="--nav-accent: #3b82f6; --nav-glow: #152040"
+                            style="--nav-accent: var(--blue); --nav-glow: var(--slate-800)"
                             onclick="showSection('offer')"
                         >
                             <span class="nav-tile-icon"><i data-lucide="bar-chart-2"></i></span>
@@ -67,7 +67,7 @@
                             class="nav-btn nav-tile"
                             data-section="pricelist"
                             id="nav-pricelist"
-                            style="--nav-accent: #8b5cf6; --nav-glow: #1e1540"
+                            style="--nav-accent: var(--accent2); --nav-glow: var(--slate-800)"
                             onclick="showSection('pricelist')"
                         >
                             <span class="nav-tile-icon"><i data-lucide="clipboard-list"></i></span>
@@ -113,8 +113,8 @@
                                 transition: all 0.2s;
                             "
                             onmouseenter="
-                                this.style.color = '#f87171';
-                                this.style.borderColor = '#3a1a1a';
+                                this.style.color = 'var(--danger-hover)';
+                                this.style.borderColor = 'var(--slate-800)';
                             "
                             onmouseleave="
                                 this.style.color = 'var(--text-muted)';

@@ -677,11 +677,11 @@
 
         if (status.online) {
             if (status.aiInfluencePct > 0) {
-                dot.style.background = '#10b981';
+                dot.style.background = 'var(--success)';
                 text.textContent = 'AI ' + status.aiInfluencePct + '%';
                 title = 'AI ranking aktywny (' + status.aiInfluencePct + '%)';
             } else {
-                dot.style.background = '#6b7280';
+                dot.style.background = 'var(--slate-500)';
                 text.textContent = 'AI Shadow';
                 title = 'AI online, tryb shadow (0%) — tylko obserwacja';
             }
@@ -696,10 +696,10 @@
             // Oznacz czy model jest świeży (uczenie aktywne)
             if (status.cacheSize > 0) {
                 dot.style.boxShadow =
-                    '0 0 4px ' + (status.aiInfluencePct > 0 ? '#10b981' : '#6b7280');
+                    '0 0 4px ' + (status.aiInfluencePct > 0 ? 'var(--success)' : 'var(--slate-500)');
             }
         } else {
-            dot.style.background = '#9ca3af';
+            dot.style.background = 'var(--slate-400)';
             dot.style.boxShadow = 'none';
             text.textContent = 'AI Offline';
             title = 'Brak wytrenowanego modelu ML — ranking techniczny';

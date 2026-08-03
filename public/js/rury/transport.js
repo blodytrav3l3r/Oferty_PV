@@ -373,7 +373,7 @@ function renderTransportBreakdown(result, costPerTrip) {
     html += '</tbody></table></div>';
 
     if (result.saved > 0) {
-        html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(16,185,129,0.08);border-radius:8px;font-size:.82rem;color:var(--success)">
+        html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(var(--success-rgb), 0.08);border-radius:8px;font-size:.82rem;color:var(--success)">
       <i data-lucide="check-circle-2"></i> Optymalizacja: połączono niepełne transporty, zaoszczędzono <strong>${result.saved}</strong> transportów
       (${totalDedicated} → ${result.totalTransports})</div>`;
     }
