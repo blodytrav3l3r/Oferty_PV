@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.9.1  
+**Wersja:** 1.10.0  
 **Ostatnia aktualizacja:** 2026-07-22  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
