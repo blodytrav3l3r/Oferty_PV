@@ -412,18 +412,18 @@
 /* ===== GLOBAL RECALC (popupsGlobalRecalc.js) ===== */
 
 .recalc-modal {
-    width: 880px;
+    width: 980px;
     max-width: 96vw;
     background: #111827;
     display: flex;
     flex-direction: column;
-    max-height: 85vh;
+    max-height: 90vh;
     padding: 0;
 }
 
 .recalc-modal-body {
     padding: 1rem;
-    max-height: 65vh;
+    max-height: 75vh;
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
