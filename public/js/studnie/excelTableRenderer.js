@@ -244,12 +244,12 @@ function _excelRenderTable(dn) {
         h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
-    h1 += `<th style="${thBase}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
-    h2 += `<th style="${th2Base}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#1a170f;color:var(--warn-hover);min-width:60px;text-align:center;">·</th>`;
-    h1 += `<th style="${thBase}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">Uszcz</th>`;
-    h2 += `<th style="${th2Base}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">auto</th>`;
-    h3 += `<th style="${th3Base}background:#1a170f;color:var(--warn-hover);min-width:50px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
+    h2 += `<th style="${th2Base}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">·</th>`;
+    h1 += `<th style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">Uszcz</th>`;
+    h2 += `<th style="${th2Base}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">auto</th>`;
+    h3 += `<th style="${th3Base}background:var(--bg-primary);color:var(--warn-hover);min-width:50px;text-align:center;">·</th>`;
 
     if (hasReduction) {
         /* Redukcja — pojedynczy select: Brak / DN1000 / DN1200 */

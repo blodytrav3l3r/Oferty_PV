@@ -344,7 +344,7 @@ function excelSelectRow(wIdx) {
             }
             /* Przywróć tło sticky kolumn do base-bg */
             let prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
-            let baseBg = prevRow.getAttribute('data-base-bg') || '#0a0d16';
+            let baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
             prevStickyTds.forEach(function (td) {
                 td.style.background = baseBg;
             });

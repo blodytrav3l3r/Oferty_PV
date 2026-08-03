@@ -56,21 +56,21 @@ function renderWellConfig() {
     };
 
     const typeBadge = {
-        wlaz: { bg: '#1e293b', label: 'Właz' },
-        plyta_din: { bg: '#be185d', label: 'Płyta' },
-        plyta_najazdowa: { bg: '#9d174d', label: 'Płyta' },
-        plyta_zamykajaca: { bg: '#7c3aed', label: 'Płyta' },
-        pierscien_odciazajacy: { bg: '#0891b2', label: 'Pierścień' },
-        konus: { bg: '#d97706', label: 'Konus' },
-        avr: { bg: '#475569', label: 'AVR' },
-        plyta_redukcyjna: { bg: '#6d28d9', label: 'Redukcja' },
-        krag: { bg: '#4338ca', label: 'Krąg' },
-        krag_ot: { bg: '#4338ca', label: 'Krąg OT' },
-        dennica: { bg: '#047857', label: 'Dennica' },
-        kineta: { bg: '#9d174d', label: 'Kineta' },
-        uszczelka: { bg: '#334155', label: 'Uszczelka' },
-        styczna: { bg: '#059669', label: 'Styczna' },
-        osadnik: { bg: '#a16207', label: 'Osadnik' }
+        wlaz: { bg: 'var(--slate-800)', label: 'Właz' },
+        plyta_din: { bg: 'var(--cmp-plyta-din)', label: 'Płyta' },
+        plyta_najazdowa: { bg: 'var(--cmp-plyta-najazdowa)', label: 'Płyta' },
+        plyta_zamykajaca: { bg: 'var(--cmp-plyta-zamykajaca)', label: 'Płyta' },
+        pierscien_odciazajacy: { bg: 'var(--cmp-pierscien)', label: 'Pierścień' },
+        konus: { bg: 'var(--cmp-konus)', label: 'Konus' },
+        avr: { bg: 'var(--cmp-avr)', label: 'AVR' },
+        plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)', label: 'Redukcja' },
+        krag: { bg: 'var(--cmp-krag)', label: 'Krąg' },
+        krag_ot: { bg: 'var(--cmp-krag)', label: 'Krąg OT' },
+        dennica: { bg: 'var(--cmp-dennica)', label: 'Dennica' },
+        kineta: { bg: 'var(--cmp-kineta)', label: 'Kineta' },
+        uszczelka: { bg: 'var(--slate-700)', label: 'Uszczelka' },
+        styczna: { bg: 'var(--cmp-styczna)', label: 'Styczna' },
+        osadnik: { bg: 'var(--cmp-osadnik)', label: 'Osadnik' }
     };
 
     let html = '';
@@ -115,7 +115,7 @@ function renderWellConfig() {
         const totalWeight = (p.weight || 0) * item.quantity;
         const totalAreaInt = (p.area || 0) * item.quantity;
         const totalAreaExt = (p.areaExt || 0) * item.quantity;
-        const badge = typeBadge[p.componentType] || { bg: '#333', label: '?' };
+        const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
 
         const canMoveUp = index > 0;
         const canMoveDown = index < well.config.length - 1;
@@ -125,7 +125,7 @@ function renderWellConfig() {
             ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5); pointer-events: none;'
             : '';
 
-        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
+        html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:4px solid ${badge.bg}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
                       onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.5)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             

@@ -38,40 +38,52 @@ const KINETA_OPTIONS = [
 const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
 const DN_COLORS = {
     1000: {
-        bg: 'rgba(59,130,246,0.12)',
-        border: '#3b82f6',
-        text: '#93c5fd',
-        activeBg: 'rgba(59,130,246,0.25)'
+        bg: 'rgba(var(--blue-rgb), 0.12)',
+        border: 'var(--blue)',
+        text: 'var(--blue-hover)',
+        activeBg: 'rgba(var(--blue-rgb), 0.25)',
+        borderDim: 'rgba(var(--blue-rgb), 0.4)',
+        textDim: 'rgba(var(--blue-rgb), 0.6)'
     },
     1200: {
-        bg: 'rgba(16,185,129,0.12)',
-        border: '#10b981',
-        text: '#6ee7b7',
-        activeBg: 'rgba(16,185,129,0.25)'
+        bg: 'rgba(var(--success-rgb), 0.12)',
+        border: 'var(--success)',
+        text: 'var(--success-hover)',
+        activeBg: 'rgba(var(--success-rgb), 0.25)',
+        borderDim: 'rgba(var(--success-rgb), 0.4)',
+        textDim: 'rgba(var(--success-rgb), 0.6)'
     },
     1500: {
-        bg: 'rgba(245,158,11,0.12)',
-        border: '#f59e0b',
-        text: '#fbbf24',
-        activeBg: 'rgba(245,158,11,0.25)'
+        bg: 'rgba(var(--warn-rgb), 0.12)',
+        border: 'var(--warn)',
+        text: 'var(--warn-hover)',
+        activeBg: 'rgba(var(--warn-rgb), 0.25)',
+        borderDim: 'rgba(var(--warn-rgb), 0.4)',
+        textDim: 'rgba(var(--warn-rgb), 0.6)'
     },
     2000: {
-        bg: 'rgba(168,85,247,0.12)',
-        border: '#a855f7',
-        text: '#c4b5fd',
-        activeBg: 'rgba(168,85,247,0.25)'
+        bg: 'rgba(var(--purple-rgb), 0.12)',
+        border: 'var(--purple)',
+        text: 'var(--purple-hover)',
+        activeBg: 'rgba(var(--purple-rgb), 0.25)',
+        borderDim: 'rgba(var(--purple-rgb), 0.4)',
+        textDim: 'rgba(var(--purple-rgb), 0.6)'
     },
     2500: {
-        bg: 'rgba(239,68,68,0.12)',
-        border: '#ef4444',
-        text: '#fca5a5',
-        activeBg: 'rgba(239,68,68,0.25)'
+        bg: 'rgba(var(--danger-rgb), 0.12)',
+        border: 'var(--danger)',
+        text: 'var(--danger-hover)',
+        activeBg: 'rgba(var(--danger-rgb), 0.25)',
+        borderDim: 'rgba(var(--danger-rgb), 0.4)',
+        textDim: 'rgba(var(--danger-rgb), 0.6)'
     },
     styczne: {
-        bg: 'rgba(236,72,153,0.12)',
-        border: '#ec4899',
-        text: '#f9a8d4',
-        activeBg: 'rgba(236,72,153,0.25)'
+        bg: 'rgba(var(--pink-rgb), 0.12)',
+        border: 'var(--pink)',
+        text: 'var(--pink-hover)',
+        activeBg: 'rgba(var(--pink-rgb), 0.25)',
+        borderDim: 'rgba(var(--pink-rgb), 0.4)',
+        textDim: 'rgba(var(--pink-rgb), 0.6)'
     }
 };
 

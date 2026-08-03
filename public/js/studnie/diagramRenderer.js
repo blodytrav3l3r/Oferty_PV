@@ -25,7 +25,8 @@
 /* ===== PODŚWIETLANIE SVG ===== */
 window.highlightSvg = function (type, index) {
     document.querySelectorAll('.svg-' + type + '-' + index).forEach((el) => {
-        el.style.filter = 'drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9)) brightness(1.3)';
+        el.style.filter =
+            'drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9)) brightness(1.3)';
     });
 
     // Automatycznie podświetl odpowiedni kafel listy
@@ -87,8 +88,8 @@ function renderWellDiagram(targetSvg, targetWell) {
     if (!well || well.config.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');
         svg.innerHTML = `
-      <text x="150" y="240" text-anchor="middle" fill="${SVG_COLORS.dnLabel}" font-size="13" font-family="Inter,sans-serif">Dodaj elementy</text>
-      <text x="150" y="260" text-anchor="middle" fill="${SVG_COLORS.emptyState}" font-size="11" font-family="Inter,sans-serif">aby zobaczyć podgląd</text>`;
+      <text x="150" y="240" text-anchor="middle" style="fill:${SVG_COLORS.dnLabel}" font-size="13" font-family="Inter,sans-serif">Dodaj elementy</text>
+      <text x="150" y="260" text-anchor="middle" style="fill:${SVG_COLORS.emptyState}" font-size="11" font-family="Inter,sans-serif">aby zobaczyć podgląd</text>`;
         return;
     }
 
@@ -97,7 +98,7 @@ function renderWellDiagram(targetSvg, targetWell) {
 
     if (visible.length === 0) {
         svg.setAttribute('viewBox', '0 0 300 500');
-        svg.innerHTML = `<text x="150" y="240" text-anchor="middle" fill="${SVG_COLORS.dnLabel}" font-size="12">Brak elementów z wysokością</text>`;
+        svg.innerHTML = `<text x="150" y="240" text-anchor="middle" style="fill:${SVG_COLORS.dnLabel}" font-size="12">Brak elementów z wysokością</text>`;
         return;
     }
 

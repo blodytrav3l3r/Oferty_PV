@@ -173,7 +173,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
             : '';
 
     const extraPadding = opts.drillingBasePrice > 0 && opts.drillingProd ? '0.85rem' : '0.4rem';
-    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
+    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
         ${numDisplay}
@@ -242,18 +242,18 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
  */
 function buildConfigMap(well, findProductFn, includeName = false) {
     const typeBadge = {
-        wlaz: { bg: '#374151' },
-        plyta_din: { bg: '#1e3a5f' },
-        plyta_najazdowa: { bg: '#1e3a5f' },
-        plyta_zamykajaca: { bg: '#1e3a5f' },
-        pierscien_odciazajacy: { bg: '#1e3a5f' },
-        konus: { bg: '#7c3aed30' },
-        avr: { bg: '#44403c' },
-        plyta_redukcyjna: { bg: '#6d28d920' },
-        krag: { bg: '#164e63' },
-        krag_ot: { bg: '#312e81' },
-        dennica: { bg: '#14532d' },
-        kineta: { bg: '#9d174d' }
+        wlaz: { bg: 'var(--slate-800)' },
+        plyta_din: { bg: 'var(--cmp-plyta-din)' },
+        plyta_najazdowa: { bg: 'var(--cmp-plyta-najazdowa)' },
+        plyta_zamykajaca: { bg: 'var(--cmp-plyta-zamykajaca)' },
+        pierscien_odciazajacy: { bg: 'var(--cmp-pierscien)' },
+        konus: { bg: 'var(--cmp-konus)' },
+        avr: { bg: 'var(--cmp-avr)' },
+        plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)' },
+        krag: { bg: 'var(--cmp-krag)' },
+        krag_ot: { bg: 'var(--cmp-krag)' },
+        dennica: { bg: 'var(--cmp-dennica)' },
+        kineta: { bg: 'var(--cmp-kineta)' }
     };
 
     const configMap = [];
@@ -282,7 +282,7 @@ function buildConfigMap(well, findProductFn, includeName = false) {
             productId: p.id
         };
         if (includeName) {
-            const badge = typeBadge[p.componentType] || { bg: '#333333' };
+            const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)' };
             entry.name = p.name;
             entry.bg = badge.bg;
         }

@@ -35,7 +35,7 @@ function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
 
     // Tickmarks na każdej pozycji Y
     uniqueY.forEach((pY) => {
-        svgOut += `<line x1="${dX - 4}" y1="${pY}" x2="${dX + 4}" y2="${pY}" stroke="${dimColor}" stroke-width="1.2"/>`;
+        svgOut += `<line x1="${dX - 4}" y1="${pY}" x2="${dX + 4}" y2="${pY}" style="stroke:${dimColor}" stroke-width="1.2"/>`;
     });
 
     // Segmenty między tickmarkami
@@ -47,12 +47,12 @@ function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
 
         if (distMm <= 1) continue;
 
-        svgOut += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" stroke="${dimColor}" stroke-width="1.2"/>`;
+        svgOut += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" style="stroke:${dimColor}" stroke-width="1.2"/>`;
 
         const { labelText, isPipe } = resolveSegmentLabel(distMm, yB, yT, well, pxMm, canvas);
         const textColor = isPipe ? SVG_COLORS.transitionActive : SVG_COLORS.dimText;
         const fW = isPipe ? '700' : '600';
-        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" fill="${textColor}" font-size="11" font-family="Inter,sans-serif" font-weight="${fW}">${labelText}</text>`;
+        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" style="fill:${textColor}" font-size="11" font-family="Inter,sans-serif" font-weight="${fW}">${labelText}</text>`;
     }
 
     return svgOut;
@@ -110,11 +110,11 @@ function drawTotalHeightBar(canvas, totalMm) {
     const aDimColor = SVG_COLORS.dimLine;
 
     let svg = '';
-    svg += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" stroke="${aDimColor}" stroke-width="1.2"/>`;
-    svg += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" stroke="${aDimColor}" stroke-width="1.2"/>`;
-    svg += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" stroke="${aDimColor}" stroke-width="1.2"/>`;
+    svg += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
+    svg += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
+    svg += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
     const totalLabel = fmtInt(totalMm);
-    svg += `<text x="${aX - 5}" y="${mT + drawH / 2}" transform="rotate(-90 ${aX - 5} ${mT + drawH / 2})" text-anchor="middle" fill="${aDimColor}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${totalLabel}</text>`;
+    svg += `<text x="${aX - 5}" y="${mT + drawH / 2}" transform="rotate(-90 ${aX - 5} ${mT + drawH / 2})" text-anchor="middle" style="fill:${aDimColor}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${totalLabel}</text>`;
     return svg;
 }
 
@@ -124,5 +124,5 @@ function drawTotalHeightBar(canvas, totalMm) {
 function drawDnLabel(cx, bodyDN, canvas) {
     const { mT, drawH, mB } = canvas;
     const labelDN = typeof bodyDN === 'number' ? `DN${bodyDN}` : 'Styczna';
-    return `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" fill="${SVG_COLORS.dnLabel}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${labelDN}</text>`;
+    return `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" style="fill:${SVG_COLORS.dnLabel}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${labelDN}</text>`;
 }

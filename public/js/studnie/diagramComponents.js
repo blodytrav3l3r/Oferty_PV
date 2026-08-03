@@ -164,21 +164,21 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
         const ringHpx = Math.max(0, h - coneHpx);
         if (ringHpx > 2) {
             const ringY = y + h - ringHpx;
-            svg += `<rect x="${x}" y="${ringY}" width="${w}" height="${ringHpx}" rx="2" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${ringY} ${x},${ringY}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+            svg += `<rect x="${x}" y="${ringY}" width="${w}" height="${ringHpx}" rx="2" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${ringY} ${x},${ringY}" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         } else {
-            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+            svg += `<polygon points="${topX},${y} ${topX + topW},${y} ${x + w},${y + h} ${x},${y + h}" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         }
     } else if (ct === 'dennica' || ct === 'styczna') {
-        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
-        svg += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" stroke="${c.stroke}" stroke-width="3"/>`;
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        svg += `<line x1="${x}" y1="${y + h}" x2="${x + w}" y2="${y + h}" style="stroke:${c.stroke}" stroke-width="3"/>`;
     } else if (ct === 'wlaz') {
-        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.95"/>`;
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.95"/>`;
     } else if (ct === 'osadnik') {
-        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
         const oy = y + h * 0.65;
-        svg += `<line x1="${x + 4}" y1="${oy}" x2="${x + w - 4}" y2="${oy}" stroke="${c.stroke}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
-        svg += `<line x1="${x + 4}" y1="${oy + h * 0.15}" x2="${x + w - 4}" y2="${oy + h * 0.15}" stroke="${c.stroke}" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.4"/>`;
+        svg += `<line x1="${x + 4}" y1="${oy}" x2="${x + w - 4}" y2="${oy}" style="stroke:${c.stroke}" stroke-width="0.7" stroke-dasharray="3,2" opacity="0.6"/>`;
+        svg += `<line x1="${x + 4}" y1="${oy + h * 0.15}" x2="${x + w - 4}" y2="${oy + h * 0.15}" style="stroke:${c.stroke}" stroke-width="0.5" stroke-dasharray="2,2" opacity="0.4"/>`;
     } else {
         // Kręgi, płyty, pierścienie, AVR i inne prostokątne elementy
         const rx =
@@ -190,14 +190,14 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
             ct === 'plyta_najazdowa'
                 ? 2
                 : 2;
-        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" fill="${c.fill}" stroke="${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
+        svg += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${rx}" style="fill:${c.fill};stroke:${c.stroke}" stroke-width="1.5" opacity="0.85"/>`;
 
         // Otwory wierconego kręgu
         if (ct === 'krag_ot') {
             const hr = Math.min(h * 0.15, 7);
             if (hr > 2) {
-                svg += `<circle cx="${x + 10}" cy="${y + h / 2}" r="${hr}" fill="${SVG_COLORS.transitionCircle}" stroke="${c.stroke}" stroke-width="0.8"/>`;
-                svg += `<circle cx="${x + w - 10}" cy="${y + h / 2}" r="${hr}" fill="${SVG_COLORS.transitionCircle}" stroke="${c.stroke}" stroke-width="0.8"/>`;
+                svg += `<circle cx="${x + 10}" cy="${y + h / 2}" r="${hr}" style="fill:${SVG_COLORS.transitionCircle};stroke:${c.stroke}" stroke-width="0.8"/>`;
+                svg += `<circle cx="${x + w - 10}" cy="${y + h / 2}" r="${hr}" style="fill:${SVG_COLORS.transitionCircle};stroke:${c.stroke}" stroke-width="0.8"/>`;
             }
         }
     }
@@ -213,10 +213,10 @@ function drawComponentShape(comp, x, y, w, h, cx, pxMm, c) {
 function drawComponentLabel(cx, y, h, label) {
     if (h > 18) {
         const fontSize = Math.min(13, Math.max(10, h * 0.35));
-        return `<text x="${cx}" y="${y + h / 2 + 4}" text-anchor="middle" fill="${SVG_COLORS.labelWhite}" font-size="${fontSize}" font-family="Inter,sans-serif" font-weight="700" opacity="0.95">${label}</text>`;
+        return `<text x="${cx}" y="${y + h / 2 + 4}" text-anchor="middle" style="fill:${SVG_COLORS.labelWhite}" font-size="${fontSize}" font-family="Inter,sans-serif" font-weight="700" opacity="0.95">${label}</text>`;
     }
     if (h > 8) {
-        return `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" fill="${SVG_COLORS.labelWhite}" font-size="9" font-family="Inter,sans-serif" font-weight="600" opacity="0.8">${label}</text>`;
+        return `<text x="${cx}" y="${y + h / 2 + 3}" text-anchor="middle" style="fill:${SVG_COLORS.labelWhite}" font-size="9" font-family="Inter,sans-serif" font-weight="600" opacity="0.8">${label}</text>`;
     }
     return '';
 }
@@ -230,13 +230,13 @@ function drawComponentDimension(y, h, heightMm) {
     const dx = 32;
     let svg = '';
     // Kreska pionowa wymiaru
-    svg += `<line x1="${dx}" y1="${y + 1}" x2="${dx}" y2="${y + h - 1}" stroke="${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
+    svg += `<line x1="${dx}" y1="${y + 1}" x2="${dx}" y2="${y + h - 1}" style="stroke:${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
     // Kreski poziome (górny i dolny tick)
-    svg += `<line x1="${dx - 3}" y1="${y + 1}" x2="${dx + 3}" y2="${y + 1}" stroke="${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
-    svg += `<line x1="${dx - 3}" y1="${y + h - 1}" x2="${dx + 3}" y2="${y + h - 1}" stroke="${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
+    svg += `<line x1="${dx - 3}" y1="${y + 1}" x2="${dx + 3}" y2="${y + 1}" style="stroke:${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
+    svg += `<line x1="${dx - 3}" y1="${y + h - 1}" x2="${dx + 3}" y2="${y + h - 1}" style="stroke:${SVG_COLORS.dimLine}" stroke-width="0.7"/>`;
     // Tekst wymiaru (pionowo z lewej strony)
     const dimFontSize = Math.min(11, Math.max(8, h * 0.3));
-    svg += `<text x="${dx - 4}" y="${y + h / 2}" transform="rotate(-90 ${dx - 4} ${y + h / 2})" text-anchor="middle" fill="${SVG_COLORS.dimText}" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${heightMm}</text>`;
+    svg += `<text x="${dx - 4}" y="${y + h / 2}" transform="rotate(-90 ${dx - 4} ${y + h / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="${dimFontSize}" font-family="Inter,sans-serif" font-weight="600">${heightMm}</text>`;
     return svg;
 }
 
@@ -279,7 +279,7 @@ function drawAllComponents(visible, canvas) {
         const isPlaceholder = comp.isPlaceholder;
         const pointerEvents = isPlaceholder ? 'pointer-events="none"' : '';
         const plStyle = isPlaceholder
-            ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(96, 165, 250, 0.9));'
+            ? 'opacity:0.6; filter:drop-shadow(0px 0px 8px rgba(var(--blue-hover-rgb), 0.9));'
             : '';
 
         // Otwieramy grupę SVG z event handlerami (drag & drop, hover)

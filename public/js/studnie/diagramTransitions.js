@@ -105,12 +105,12 @@ function drawTransitionShape(idx, px, prY, radiusW, radiusH, isRect, isEgg, isBa
     const gClose = '</g>';
 
     if (isRect) {
-        return `${gOpen}<rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
+        return `${gOpen}<rect x="${px - radiusW}" y="${prY - radiusH}" width="${radiusW * 2}" height="${radiusH * 2}" style="fill:${pColor};stroke:${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
     }
     if (isEgg) {
-        return `${gOpen}<ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
+        return `${gOpen}<ellipse cx="${px}" cy="${prY}" rx="${radiusW}" ry="${radiusH}" style="fill:${pColor};stroke:${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
     }
-    return `${gOpen}<circle cx="${px}" cy="${prY}" r="${radiusW}" fill="${pColor}" stroke="${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
+    return `${gOpen}<circle cx="${px}" cy="${prY}" r="${radiusW}" style="fill:${pColor};stroke:${sColor}" stroke-width="1.5" ${sDash} />${gClose}`;
 }
 
 /**
@@ -119,7 +119,7 @@ function drawTransitionShape(idx, px, prY, radiusW, radiusH, isRect, isEgg, isBa
 function drawTransitionLabel(px, prY, angle, isBack) {
     if (isBack) return '';
     const fSz = 12;
-    return `<text x="${px}" y="${prY + 3.5}" text-anchor="middle" fill="${SVG_COLORS.labelWhite}" font-size="${fSz}" font-weight="800" font-family="Inter,sans-serif" style="text-shadow: 1px 1px 2px ${SVG_COLORS.textShadow};">${angle}°</text>`;
+    return `<text x="${px}" y="${prY + 3.5}" text-anchor="middle" font-size="${fSz}" font-weight="800" font-family="Inter,sans-serif" style="fill:${SVG_COLORS.labelWhite}; text-shadow: 1px 1px 2px ${SVG_COLORS.textShadow};">${angle}°</text>`;
 }
 
 /**
@@ -127,5 +127,5 @@ function drawTransitionLabel(px, prY, angle, isBack) {
  */
 function drawTransitionGuideLine(px, prY, radiusW, isBack) {
     const dimColor = isBack ? SVG_COLORS.dnLabel : SVG_COLORS.transitionActive;
-    return `<line x1="25" y1="${prY}" x2="${px - radiusW - 2}" y2="${prY}" stroke="${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
+    return `<line x1="25" y1="${prY}" x2="${px - radiusW - 2}" y2="${prY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
 }

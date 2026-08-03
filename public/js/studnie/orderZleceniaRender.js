@@ -195,31 +195,37 @@ function renderZleceniaWellConfig() {
     }
 
     const typeBadge = {
-        wlaz: { bg: '#374151', label: '<i data-lucide="circle-dot"></i>' },
-        plyta_din: { bg: '#1e3a5f', label: '<i data-lucide="chevron-down" class="text-xs"></i>' },
+        wlaz: { bg: 'var(--slate-800)', label: '<i data-lucide="circle-dot"></i>' },
+        plyta_din: {
+            bg: 'var(--cmp-plyta-din)',
+            label: '<i data-lucide="chevron-down" class="text-xs"></i>'
+        },
         plyta_najazdowa: {
-            bg: '#1e3a5f',
+            bg: 'var(--cmp-plyta-najazdowa)',
             label: '<i data-lucide="chevron-down" class="text-xs"></i>'
         },
         plyta_zamykajaca: {
-            bg: '#1e3a5f',
+            bg: 'var(--cmp-plyta-zamykajaca)',
             label: '<i data-lucide="chevron-down" class="text-xs"></i>'
         },
-        pierscien_odciazajacy: { bg: '#1e3a5f', label: '<i data-lucide="settings"></i>' },
-        konus: { bg: '#4c1d95', label: '<i data-lucide="diamond"></i>' },
-        avr: { bg: '#44403c', label: '<i data-lucide="settings"></i>' },
-        plyta_redukcyjna: { bg: '#4c1d95', label: '⬛' },
-        krag: { bg: '#164e63', label: '<i data-lucide="square"></i>' },
-        krag_ot: { bg: '#312e81', label: '<i data-lucide="square"></i>' },
-        dennica: { bg: '#14532d', label: '<i data-lucide="square"></i>' },
-        kineta: { bg: '#9d174d', label: '<i data-lucide="plug"></i>' }
+        pierscien_odciazajacy: {
+            bg: 'var(--cmp-pierscien)',
+            label: '<i data-lucide="settings"></i>'
+        },
+        konus: { bg: 'var(--cmp-konus)', label: '<i data-lucide="diamond"></i>' },
+        avr: { bg: 'var(--cmp-avr)', label: '<i data-lucide="settings"></i>' },
+        plyta_redukcyjna: { bg: 'var(--cmp-plyta-redukcyjna)', label: '⬛' },
+        krag: { bg: 'var(--cmp-krag)', label: '<i data-lucide="square"></i>' },
+        krag_ot: { bg: 'var(--cmp-krag)', label: '<i data-lucide="square"></i>' },
+        dennica: { bg: 'var(--cmp-dennica)', label: '<i data-lucide="square"></i>' },
+        kineta: { bg: 'var(--cmp-kineta)', label: '<i data-lucide="plug"></i>' }
     };
 
     let html = '';
     well.config.forEach((item, index) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
-        const badge = typeBadge[p.componentType] || { bg: '#333', label: '?' };
+        const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
         const isLocked = isWellLocked();
 
         const isCurrentlyEdited =

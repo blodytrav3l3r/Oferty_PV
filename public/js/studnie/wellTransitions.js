@@ -121,7 +121,7 @@ function renderInlinePrzejsciaApp(containerId) {
         ${
             selectedProduct
                 ? `
-        <div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
+        <div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <span style="font-size:1.0rem; font-weight:800; color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
                 <span style="font-size:0.95rem; color:var(--success); font-weight:800; font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size:0.6rem;">PLN</span></span>
@@ -500,9 +500,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             : 'rgba(var(--black-rgb), 0.3)';
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
-            const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
             if (index > 0) html += '<div style="height:0.5rem;"></div>';
-            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${rawRGB}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
+            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${assignedBg}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
                 <span style="font-size:0.9rem; filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
                 <span>Dotyczy:</span> 
                 <span style="color:var(--slate-200); font-size:0.75rem; padding-left:0.2rem;">${assignedName}</span>
@@ -554,7 +553,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
+            html += `<div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                   <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius:4px;">

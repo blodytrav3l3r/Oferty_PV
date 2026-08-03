@@ -45,59 +45,36 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             return d.dn !== dnKey;
         });
         let dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
-        let baseBg = isEven ? '#0a0d16' : '#181c28';
-        let rowDupSolid =
+        let dupRgb =
             {
-                1000: '#162650',
-                1200: '#0e2a1e',
-                1500: '#2a2210',
-                2000: '#241b36',
-                2500: '#301818',
-                styczne: '#2c1422'
-            }[dupColorKey] || '#162650';
-        let rowActiveDupSolid =
-            {
-                1000: '#1e3a6b',
-                1200: '#164530',
-                1500: '#3d3018',
-                2000: '#352552',
-                2500: '#4a2020',
-                styczne: '#4a1a38'
-            }[dupColorKey] || '#1e3a6b';
+                1000: 'var(--blue-rgb)',
+                1200: 'var(--success-rgb)',
+                1500: 'var(--warn-rgb)',
+                2000: 'var(--purple-rgb)',
+                2500: 'var(--danger-rgb)',
+                styczne: 'var(--pink-rgb)'
+            }[dupColorKey] || 'var(--blue-rgb)';
+        let baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        let rowDupSolid = 'rgba(' + dupRgb + ', 0.2)';
+        let rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
+        let hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
+        let hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
         let rowBg =
             isDup && isActive
                 ? rowActiveDupSolid
                 : isDup
                   ? rowDupSolid
                   : isActive
-                    ? '#1a2645'
+                    ? 'rgba(var(--blue-rgb), 0.18)'
                     : baseBg;
-        let hoverDupSolid =
-            {
-                1000: '#1d3460',
-                1200: '#143e2e',
-                1500: '#383018',
-                2000: '#2e2248',
-                2500: '#3e2020',
-                styczne: '#3a1a2e'
-            }[dupColorKey] || '#1d3460';
-        let hoverActiveDupSolid =
-            {
-                1000: '#2a4a80',
-                1200: '#1d5a3e',
-                1500: '#4d3d20',
-                2000: '#452e66',
-                2500: '#602a2a',
-                styczne: '#602848'
-            }[dupColorKey] || '#2a4a80';
         let hoverBg =
             isDup && isActive
                 ? hoverActiveDupSolid
                 : isDup
                   ? hoverDupSolid
                   : isActive
-                    ? '#263460'
-                    : '#141722';
+                    ? 'rgba(var(--blue-rgb), 0.28)'
+                    : 'var(--bg-tertiary)';
         let przejscia = well.przejscia || [];
         html +=
             '<tr data-widx="' +
@@ -109,7 +86,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" data-hover-bg="' +
             hoverBg +
             '" data-active-bg="' +
-            (isDup && isActive ? rowActiveDupSolid : isDup ? hoverDupSolid : '#1a2645') +
+            (isDup && isActive
+                ? rowActiveDupSolid
+                : isDup
+                  ? hoverDupSolid
+                  : 'rgba(var(--blue-rgb), 0.18)') +
             '" style="background:' +
             rowBg +
             ';transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
@@ -670,36 +651,36 @@ function _excelRefreshDupColors() {
     const dupNames = new Set(Object.keys(nameCounts).filter((n) => nameCounts[n] > 1));
 
     const rowDupSolid = {
-        1000: '#162650',
-        1200: '#0e2a1e',
-        1500: '#2a2210',
-        2000: '#241b36',
-        2500: '#301818',
-        styczne: '#2c1422'
+        1000: 'rgba(var(--blue-rgb), 0.2)',
+        1200: 'rgba(var(--success-rgb), 0.2)',
+        1500: 'rgba(var(--warn-rgb), 0.2)',
+        2000: 'rgba(var(--purple-rgb), 0.2)',
+        2500: 'rgba(var(--danger-rgb), 0.2)',
+        styczne: 'rgba(var(--pink-rgb), 0.2)'
     };
     const rowActiveDupSolid = {
-        1000: '#1e3a6b',
-        1200: '#164530',
-        1500: '#3d3018',
-        2000: '#352552',
-        2500: '#4a2020',
-        styczne: '#4a1a38'
+        1000: 'rgba(var(--blue-rgb), 0.3)',
+        1200: 'rgba(var(--success-rgb), 0.3)',
+        1500: 'rgba(var(--warn-rgb), 0.3)',
+        2000: 'rgba(var(--purple-rgb), 0.3)',
+        2500: 'rgba(var(--danger-rgb), 0.3)',
+        styczne: 'rgba(var(--pink-rgb), 0.3)'
     };
     const hoverDupSolid = {
-        1000: '#1d3460',
-        1200: '#143e2e',
-        1500: '#383018',
-        2000: '#2e2248',
-        2500: '#3e2020',
-        styczne: '#3a1a2e'
+        1000: 'rgba(var(--blue-rgb), 0.25)',
+        1200: 'rgba(var(--success-rgb), 0.25)',
+        1500: 'rgba(var(--warn-rgb), 0.25)',
+        2000: 'rgba(var(--purple-rgb), 0.25)',
+        2500: 'rgba(var(--danger-rgb), 0.25)',
+        styczne: 'rgba(var(--pink-rgb), 0.25)'
     };
     const hoverActiveDupSolid = {
-        1000: '#2a4a80',
-        1200: '#1d5a3e',
-        1500: '#4d3d20',
-        2000: '#452e66',
-        2500: '#602a2a',
-        styczne: '#602848'
+        1000: 'rgba(var(--blue-rgb), 0.35)',
+        1200: 'rgba(var(--success-rgb), 0.35)',
+        1500: 'rgba(var(--warn-rgb), 0.35)',
+        2000: 'rgba(var(--purple-rgb), 0.35)',
+        2500: 'rgba(var(--danger-rgb), 0.35)',
+        styczne: 'rgba(var(--pink-rgb), 0.35)'
     };
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
@@ -715,30 +696,30 @@ function _excelRefreshDupColors() {
         const nameDnList = nameDnMap[nameKey] || [];
         const otherDns = nameDnList.filter((d) => d.dn !== dnKey);
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
-        const baseBg = isEven ? '#0a0d16' : '#181c28';
+        const baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
 
         const rowBg =
             isDup && isActive
-                ? rowActiveDupSolid[dupColorKey] || '#1e3a6b'
+                ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
                 : isDup
-                  ? rowDupSolid[dupColorKey] || '#162650'
+                  ? rowDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.2)'
                   : isActive
-                    ? '#1a2645'
+                    ? 'rgba(var(--blue-rgb), 0.18)'
                     : baseBg;
         const hoverBg =
             isDup && isActive
-                ? hoverActiveDupSolid[dupColorKey] || '#2a4a80'
+                ? hoverActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.35)'
                 : isDup
-                  ? hoverDupSolid[dupColorKey] || '#1d3460'
+                  ? hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)'
                   : isActive
-                    ? '#263460'
-                    : '#141722';
+                    ? 'rgba(var(--blue-rgb), 0.28)'
+                    : 'var(--bg-tertiary)';
         const activeBg =
             isDup && isActive
-                ? rowActiveDupSolid[dupColorKey] || '#1e3a6b'
+                ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
                 : isDup
-                  ? hoverDupSolid[dupColorKey] || '#1d3460'
-                  : '#1a2645';
+                  ? hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)'
+                  : 'rgba(var(--blue-rgb), 0.18)';
 
         row.setAttribute('data-base-bg', rowBg);
         row.setAttribute('data-orig-bg', rowBg);

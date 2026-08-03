@@ -112,11 +112,11 @@ function drawPrecoInsertLine(well, canvas) {
     // Sprawdź czy linia mieści się w obszarze diagramu
     if (lineY >= mT && lineY <= mT + drawH) {
         // Przerywana czerwona linia
-        svg += `<line x1="${xStart}" y1="${lineY}" x2="${xEnd}" y2="${lineY}" stroke="${SVG_COLORS.precoDash}" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.85"/>`;
+        svg += `<line x1="${xStart}" y1="${lineY}" x2="${xEnd}" y2="${lineY}" style="stroke:${SVG_COLORS.precoDash}" stroke-width="1.5" stroke-dasharray="6,3" opacity="0.85"/>`;
         // Mały trójkąt / strzałka wskazująca na linię z lewej
-        svg += `<polygon points="${xStart - 3},${lineY - 3} ${xStart - 3},${lineY + 3} ${xStart},${lineY}" fill="${SVG_COLORS.precoDash}" opacity="0.85"/>`;
+        svg += `<polygon points="${xStart - 3},${lineY - 3} ${xStart - 3},${lineY + 3} ${xStart},${lineY}" style="fill:${SVG_COLORS.precoDash}" opacity="0.85"/>`;
         // Etykieta wewnątrz grafiki po prawej stronie
-        svg += `<text x="${rightEdge - 4}" y="${lineY + 10}" text-anchor="end" fill="${SVG_COLORS.precoDash}" font-size="8" font-family="Inter,sans-serif" font-weight="700" opacity="0.9">▼ ${kinetaLabel}</text>`;
+        svg += `<text x="${rightEdge - 4}" y="${lineY + 10}" text-anchor="end" style="fill:${SVG_COLORS.precoDash}" font-size="8" font-family="Inter,sans-serif" font-weight="700" opacity="0.9">▼ ${kinetaLabel}</text>`;
     }
 
     // Jeśli pełna wysokość dennicy jest włączona, narysuj drugą linię
@@ -135,9 +135,9 @@ function drawPrecoInsertLine(well, canvas) {
             const lineYFull = mT + drawH - dennicaHeight * pxMm;
             if (lineYFull >= mT && lineYFull <= mT + drawH) {
                 // Druga przerywana linia dla pełnej wysokości (pomarańczowa)
-                svg += `<line x1="${xStart}" y1="${lineYFull}" x2="${xEnd}" y2="${lineYFull}" stroke="${SVG_COLORS.fillHeight}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.9"/>`;
-                svg += `<polygon points="${xStart - 3},${lineYFull - 3} ${xStart - 3},${lineYFull + 3} ${xStart},${lineYFull}" fill="${SVG_COLORS.fillHeight}" opacity="0.9"/>`;
-                svg += `<text x="${rightEdge - 4}" y="${lineYFull + 10}" text-anchor="end" fill="${SVG_COLORS.fillHeight}" font-size="8" font-family="Inter,sans-serif" font-weight="700" opacity="0.9">▼ Uzupełnienie do pełnej wysokości</text>`;
+                svg += `<line x1="${xStart}" y1="${lineYFull}" x2="${xEnd}" y2="${lineYFull}" style="stroke:${SVG_COLORS.fillHeight}" stroke-width="1.5" stroke-dasharray="4,2" opacity="0.9"/>`;
+                svg += `<polygon points="${xStart - 3},${lineYFull - 3} ${xStart - 3},${lineYFull + 3} ${xStart},${lineYFull}" style="fill:${SVG_COLORS.fillHeight}" opacity="0.9"/>`;
+                svg += `<text x="${rightEdge - 4}" y="${lineYFull + 10}" text-anchor="end" style="fill:${SVG_COLORS.fillHeight}" font-size="8" font-family="Inter,sans-serif" font-weight="700" opacity="0.9">▼ Uzupełnienie do pełnej wysokości</text>`;
             }
         }
     }
