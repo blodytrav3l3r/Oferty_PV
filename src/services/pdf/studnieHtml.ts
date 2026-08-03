@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import type { StudnieOfferData } from './types';
 import { fmtInt, escapeHtml } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
+import { PRINT_TOKENS_CSS } from './printTokens';
 
 export async function generateStudnieHTML(data: StudnieOfferData): Promise<string> {
     const formatDate = (dateStr: string) => {
@@ -29,7 +30,9 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
 
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaStudnie.html');
-    const template = fs.readFileSync(templatePath, 'utf-8');
+    const template = fs
+        .readFileSync(templatePath, 'utf-8')
+        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
 
     const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
     const stopkaPath = path.join(process.cwd(), 'public', 'images', 'letterhead-footer.png');

@@ -510,7 +510,7 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = template.substring(0, template.indexOf('</head>'));
+        const headSection = applyPrintTokens(template.substring(0, template.indexOf('</head>')));
         const pageTemplate = template.substring(pageStartIdx, bodyEndIdx).trim();
         const batchPageStyle =
             '<style>.page { page-break-after: always; } .page:last-child { page-break-after: auto; }</style>';
@@ -558,7 +558,7 @@ const AppZlecenia = (() => {
             return;
         }
 
-        const headSection = template.substring(0, template.indexOf('</head>'));
+        const headSection = applyPrintTokens(template.substring(0, template.indexOf('</head>')));
         const pageTemplate = template
             .substring(pageStartIdx, pageEndComment + '<!-- KONIEC BLOKU "page" -->'.length)
             .trim();

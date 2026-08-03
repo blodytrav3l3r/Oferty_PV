@@ -94,14 +94,14 @@ function exportOfferPDF(id) {
     // HTML tabeli transportu
     let transportHtml = '';
     if (transportResult.lines.length > 0) {
-        transportHtml = `<h3 style="font-size:13px;color:#2d3561;margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
+        transportHtml = `<h3 style="font-size:13px;color:var(--brand-navy);margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
     <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
         transportResult.lines.forEach((l) => {
             transportHtml += `<tr><td>${escapeHtml(l.name)}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
         });
         transportHtml += `</tbody></table>`;
         if (transportResult.saved > 0 && offerMode !== 'fractional') {
-            transportHtml += `<div style="font-size:11px;color:#059669;margin-top:4px">Optymalizacja: połączono niepełne transporty (${transportResult.lines.reduce((s, l) => s + l.dedicatedTransports, 0)} → ${transportResult.totalTransports})</div>`;
+            transportHtml += `<div style="font-size:11px;color:var(--success);margin-top:4px">Optymalizacja: połączono niepełne transporty (${transportResult.lines.reduce((s, l) => s + l.dedicatedTransports, 0)} → ${transportResult.totalTransports})</div>`;
         }
     }
 
@@ -109,22 +109,23 @@ function exportOfferPDF(id) {
     printWin.document
         .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${offer.number}</title>
   <style>
+    ${PRINT_TOKENS_CSS}
     body{font-family:Arial,sans-serif;color:var(--slate-950);padding:30px;font-size:13px;line-height:1.5}
-    h1{font-size:20px;color:#2d3561;margin-bottom:5px}
-    .header-line{border-bottom:3px solid #2d3561;padding-bottom:10px;margin-bottom:15px}
+    h1{font-size:20px;color:var(--brand-navy);margin-bottom:5px}
+    .header-line{border-bottom:3px solid var(--brand-navy);padding-bottom:10px;margin-bottom:15px}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:20px}
-    .info-box{background:#f4f6fb;border-radius:6px;padding:12px}
+    .info-box{background:var(--slate-100);border-radius:6px;padding:12px}
     .info-box h3{font-size:12px;color:var(--slate-500);text-transform:uppercase;margin-bottom:5px}
     table{width:100%;border-collapse:collapse;margin:15px 0;font-size:12px}
-    th{background:#2d3561;color:var(--white);padding:8px;text-align:left;font-size:11px}
+    th{background:var(--brand-navy);color:var(--white);padding:8px;text-align:left;font-size:11px}
     td{padding:7px 8px;border-bottom:1px solid var(--slate-200)}
-    tr:nth-child(even){background:#f9fafb}
+    tr:nth-child(even){background:var(--slate-50)}
     .text-right{text-align:right}
     .summary{background:var(--slate-100);border-radius:6px;padding:15px;margin-top:15px}
     .summary-row{display:flex;justify-content:space-between;padding:4px 0}
-    .summary-row.total{font-weight:bold;font-size:15px;border-top:2px solid #2d3561;padding-top:8px;margin-top:5px}
+    .summary-row.total{font-weight:bold;font-size:15px;border-top:2px solid var(--brand-navy);padding-top:8px;margin-top:5px}
     .summary-row.transport{color:var(--warn)}
-    .notes{margin-top:15px;padding:10px;background:#fffbeb;border-left:3px solid var(--warn);border-radius:4px;font-size:12px}
+    .notes{margin-top:15px;padding:10px;background:var(--warn-bg-light);border-left:3px solid var(--warn);border-radius:4px;font-size:12px}
     .footer{margin-top:10px;font-size:11px;color:var(--slate-500);text-align:center;padding-top:10px}
     .letterhead-header { width: 100%; object-fit: contain; margin-bottom: 20px; display: block; }
     .letterhead-footer { width: 100%; object-fit: contain; margin-top: 20px; display: block; page-break-inside: avoid; }

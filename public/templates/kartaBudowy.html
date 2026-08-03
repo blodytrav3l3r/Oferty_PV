@@ -6,12 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Karta Budowy - Zamówienie</title>
     <style>
-        :root {
-            --slate-300: #cbd5e1;
-            --slate-100: #f1f5f9;
-            --slate-400: #94a3b8;
-            --white: #ffffff;
-        }
+        {{PRINT_TOKENS}}
         @page {
             size: A4 portrait;
             margin: 10mm;
@@ -27,7 +22,7 @@
         body {
             font-family: Arial, sans-serif;
             font-size: 10pt;
-            color: #1a1a2e;
+            color: var(--slate-950);
             background: var(--white);
             line-height: 1.4;
         }
@@ -48,13 +43,13 @@
         .karta-title-main {
             font-size: 14pt;
             font-weight: 700;
-            color: #1a1a2e;
+            color: var(--slate-950);
             letter-spacing: 1px;
         }
         .karta-title-nr {
             font-size: 9pt;
             font-weight: 600;
-            color: #555;
+            color: var(--slate-600);
             margin-top: 4px;
         }
 
@@ -86,13 +81,13 @@
 
         .info-label {
             font-weight: 700;
-            color: #888;
+            color: var(--slate-400);
             width: 45%;
         }
 
         .info-value {
             width: 55%;
-            color: #1a1a2e;
+            color: var(--slate-950);
         }
 
         .full-width {
@@ -101,7 +96,7 @@
 
         .notes-box {
             background: var(--slate-100);
-            border: 1px solid #ddd;
+            border: 1px solid var(--slate-200);
             padding: 8px;
             font-size: 9pt;
             min-height: 40px;

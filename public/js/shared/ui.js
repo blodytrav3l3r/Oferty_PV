@@ -444,7 +444,7 @@ function _ensureConfirmStyles() {
             background:var(--slate-800); color:var(--text-secondary);
             border:1px solid rgba(var(--white-rgb), 0.1);
         }
-        #app-confirm-cancel:hover { color:var(--white); background:#2d3e5a; }
+        #app-confirm-cancel:hover { color:var(--white); background:var(--slate-700); }
     `;
     document.head.appendChild(style);
 }

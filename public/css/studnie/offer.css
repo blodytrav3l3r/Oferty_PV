@@ -154,7 +154,7 @@
 
 /* Kolumna Wys. — stonowany niebieski, a w aktywnym wierszu jasny */
 #excel-table-container tbody tr:focus-within td[data-cell^='height-'] {
-    color: #f8fafc !important;
+    color: var(--slate-50) !important;
 }
 
 #excel-table-container td[data-cell] {
@@ -357,7 +357,7 @@
     padding-left: 1.5rem !important;
 }
 .pl-xl {
-    padding-left: 3.0rem !important;
+    padding-left: 3rem !important;
 }
 
 .drag-preview {

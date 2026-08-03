@@ -17,7 +17,7 @@ window.ConflictModal = {
                 '</strong> już istnieje w systemie. Co robimy?</p>' +
                 '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
                 '<button class="ie-btn ie-btn-skip" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--slate-300);border-radius:8px;background:var(--slate-100);cursor:pointer;">Pomiń</button>' +
-                '<button class="ie-btn ie-btn-overwrite" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--warn);border-radius:8px;background:#fff8e1;cursor:pointer;font-weight:600;">Nadpisz</button>' +
+                '<button class="ie-btn ie-btn-overwrite" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--warn);border-radius:8px;background:var(--warn-bg-soft);cursor:pointer;font-weight:600;">Nadpisz</button>' +
                 '<button class="ie-btn ie-btn-clone" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--blue);border-radius:8px;background:var(--slate-100);cursor:pointer;font-weight:600;">Utwórz kopię (sufiks -2)</button>' +
                 '</div>';
 

@@ -2,7 +2,7 @@ import * as fs from 'fs';
 
 describe('Formularze — responsywność', () => {
     test('480px zmienia .form-row-{2,3,4} na 1fr', () => {
-        const css = fs.readFileSync('public/css/style.css', 'utf-8');
+        const css = fs.readFileSync('public/css/style.responsive.css', 'utf-8');
         const mqMatch = css.match(
             /@media\s*\(max-width:\s*480px\)[\s\S]*?\.form-row-\d[\s\S]*?grid-template-columns\s*:\s*1fr/
         );

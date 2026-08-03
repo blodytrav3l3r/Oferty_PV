@@ -398,23 +398,23 @@ function generateWellSvg(data) {
 
     // Główny okrąg studni
     svgParts.push(
-        `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" stroke="#222" stroke-width="2.5" />`
+        `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" style="stroke:var(--slate-950)" stroke-width="2.5" />`
     );
 
     // Krzyż pomocniczy
     svgParts.push(
-        `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" stroke="#999" stroke-width="0.8" />`
+        `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" style="stroke:var(--slate-400)" stroke-width="0.8" />`
     );
     svgParts.push(
-        `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" stroke="#999" stroke-width="0.8" />`
+        `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" style="stroke:var(--slate-400)" stroke-width="0.8" />`
     );
 
     // Znacznik 0 stopni na dole grafiki
     svgParts.push(
-        `<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" stroke="#777" stroke-width="1.5" />`
+        `<line x1="${center}" y1="${center + radius}" x2="${center}" y2="${center + radius + 10}" style="stroke:var(--slate-500)" stroke-width="1.5" />`
     );
     svgParts.push(
-        `<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#666">0°</text>`
+        `<text x="${center}" y="${center + radius + 20}" text-anchor="middle" font-family="Arial, sans-serif" font-size="10" font-weight="bold" style="fill:var(--slate-500)">0°</text>`
     );
 
     const wylot = przejscia.find(
@@ -460,11 +460,11 @@ function generateWellSvg(data) {
         if (isBlind) {
             // Ślepa kineta — linia przerywana, szary kolor
             svgParts.push(
-                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="#999" stroke-width="1.5" stroke-dasharray="4,3" />`
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" style="stroke:var(--slate-400)" stroke-width="1.5" stroke-dasharray="4,3" />`
             );
         } else {
             svgParts.push(
-                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="${isWylot ? '#000' : '#444'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" style="stroke:${isWylot ? 'var(--black)' : 'var(--slate-700)'}" stroke-width="${isWylot ? 3.5 : 1.8}" />`
             );
         }
 
@@ -574,16 +574,16 @@ function generateWellSvg(data) {
         if (Math.abs(l.origY - l.ly) > 2) {
             const lineDist = l.ly > l.origY ? -8 : 8;
             svgParts.push(
-                `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />`
+                `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" style="stroke:var(--slate-300)" stroke-dasharray="2,2" stroke-width="0.8" />`
             );
         }
-        const textFill = l.isBlind ? '#999' : '#000';
-        const subFill = l.isBlind ? '#aaa' : '#444';
-        let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" fill="${textFill}">`;
+        const textFill = l.isBlind ? 'var(--slate-400)' : 'var(--black)';
+        const subFill = l.isBlind ? 'var(--slate-400)' : 'var(--slate-700)';
+        let textSvg = `<text x="${l.lx + l.offsetX}" y="${l.ly}" text-anchor="${l.anchor}" font-family="Arial, sans-serif" font-size="${labelFontSize}" font-weight="bold" style="fill:${textFill}">`;
         l.lines.forEach((line, li) => {
-            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" fill="${textFill}">${line}</tspan>`;
+            textSvg += `<tspan x="${l.lx + l.offsetX}" dy="${li === 0 ? '0' : '1.1em'}" style="fill:${textFill}">${line}</tspan>`;
         });
-        textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" fill="${subFill}">${l.textAngle}</tspan>`;
+        textSvg += `<tspan x="${l.lx + l.offsetX}" dy="1.1em" font-size="${angleFontSize}" font-weight="normal" style="fill:${subFill}">${l.textAngle}</tspan>`;
         textSvg += `</text>`;
         svgParts.push(textSvg);
     });
@@ -671,7 +671,7 @@ function buildZlecenieHtml(template, data) {
         data.product &&
         (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')
     ) {
-        const osadnikNote = `<strong style="color:#f59e0b; font-size:1.1em; display:block; margin-top:5px;">UWAGA: OSADNIK - WKŁADKA PRECO (Dno + Ściany ${data.well.wkladkaOsadnikH || 0} mm)</strong>`;
+        const osadnikNote = `<strong style="color:var(--warn); font-size:1.1em; display:block; margin-top:5px;">UWAGA: OSADNIK - WKŁADKA PRECO (Dno + Ściany ${data.well.wkladkaOsadnikH || 0} mm)</strong>`;
         finalUwagi = finalUwagi ? finalUwagi + '<br>' + osadnikNote : osadnikNote;
     } else if (
         data.well &&
@@ -680,7 +680,7 @@ function buildZlecenieHtml(template, data) {
         (data.product.componentType === 'dennica' || data.product.componentType === 'styczna')
     ) {
         const fullHeightNote =
-            '<strong style="color:red; font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
+            '<strong style="color:var(--danger); font-size:1.1em; display:block; margin-top:5px;">UWAGA: WKŁADKA PRECO NA CAŁEJ WYSOKOŚCI DENNICY!</strong>';
         finalUwagi = finalUwagi ? finalUwagi + '<br>' + fullHeightNote : fullHeightNote;
     }
 
@@ -807,7 +807,7 @@ async function printEtykietaAll() {
     }
 
     const pageTemplate = pageMatch[0];
-    const htmlBefore = template.substring(0, pageMatch.index);
+    const htmlBefore = applyPrintTokens(template.substring(0, pageMatch.index));
     const htmlAfter = template.substring(pageMatch.index + pageTemplate.length);
 
     let allPagesHTML = '';

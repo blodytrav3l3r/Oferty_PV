@@ -156,7 +156,7 @@ function generateSvgFromPO(po) {
             center +
             '" r="' +
             radius +
-            '" fill="none" stroke="#222" stroke-width="2.5" />'
+            '" fill="none" style="stroke:var(--slate-950)" stroke-width="2.5" />'
     );
     svgParts.push(
         '<line x1="' +
@@ -167,7 +167,7 @@ function generateSvgFromPO(po) {
             center +
             '" y2="' +
             (center + 5) +
-            '" stroke="#999" stroke-width="0.8" />'
+            '" style="stroke:var(--slate-400)" stroke-width="0.8" />'
     );
     svgParts.push(
         '<line x1="' +
@@ -178,7 +178,7 @@ function generateSvgFromPO(po) {
             (center + 5) +
             '" y2="' +
             center +
-            '" stroke="#999" stroke-width="0.8" />'
+            '" style="stroke:var(--slate-400)" stroke-width="0.8" />'
     );
 
     const labels = [];
@@ -209,8 +209,8 @@ function generateSvgFromPO(po) {
                 x +
                 '" y2="' +
                 y +
-                '" stroke="' +
-                (isWylot ? '#000' : '#444') +
+                '" style="stroke:' +
+                (isWylot ? 'var(--black)' : 'var(--slate-700)') +
                 '" stroke-width="' +
                 (isWylot ? 3.5 : 1.8) +
                 '" />'
@@ -325,7 +325,7 @@ function generateSvgFromPO(po) {
                     l.lx +
                     '" y2="' +
                     (l.ly + lineDist) +
-                    '" stroke="#ccc" stroke-dasharray="2,2" stroke-width="0.8" />'
+                    '" style="stroke:var(--slate-300)" stroke-dasharray="2,2" stroke-width="0.8" />'
             );
         }
         let textSvg =
@@ -337,14 +337,14 @@ function generateSvgFromPO(po) {
             l.anchor +
             '" font-family="Arial, sans-serif" font-size="' +
             labelFontSize +
-            '" font-weight="bold" fill="#000">';
+            '" font-weight="bold" style="fill:var(--black)">';
         l.lines.forEach((line, li) => {
             textSvg +=
                 '<tspan x="' +
                 (l.lx + l.offsetX) +
                 '" dy="' +
                 (li === 0 ? '0' : '1.1em') +
-                '" fill="#000">' +
+                '" style="fill:var(--black)">' +
                 line +
                 '</tspan>';
         });
@@ -353,7 +353,7 @@ function generateSvgFromPO(po) {
             (l.lx + l.offsetX) +
             '" dy="1.1em" font-size="' +
             angleFontSize +
-            '" font-weight="normal" fill="#444">' +
+            '" font-weight="normal" style="fill:var(--slate-700)">' +
             l.textAngle +
             '</tspan>';
         textSvg += '</text>';

@@ -5,11 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Zlecenie Produkcyjne {{NR_ZLECENIA}}</title>
         <style>
-            :root {
-                --slate-100: #f1f5f9;
-                --white: #ffffff;
-                --black: #000000;
-            }
+            {{PRINT_TOKENS}}
             @page {
                 size: A4 portrait;
                 margin: 8mm 5mm 6mm 5mm;
@@ -187,7 +183,7 @@
                         class="center bold"
                         style="font-size: 16pt; vertical-align: middle"
                     >
-                        P.V.<br /><span style="font-size: 7pt; font-weight: normal; color: #555"
+                        P.V.<br /><span style="font-size: 7pt; font-weight: normal; color: var(--slate-600)"
                             >PREFABET</span
                         >
                     </td>

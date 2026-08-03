@@ -1,7 +1,7 @@
 /**
  * Shared color constants for server-side document generation (docx, pdf).
  * These CANNOT use CSS variables — they're used in Node.js context.
- * Keep synced with public/css/style.css :root values.
+ * Keep synced with public/css/style.base.css :root values.
  */
 
 export const DOCX_COLORS = {

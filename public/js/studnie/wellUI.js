@@ -262,7 +262,7 @@ window.updateSummary = function updateSummary() {
     if (stats.error) {
         if (priceEl) {
             priceEl.textContent = 'BŁĄD';
-            priceEl.style.color = 'var(--danger, #ef4444)';
+            priceEl.style.color = 'var(--danger)';
         }
     } else {
         if (priceEl) {
@@ -322,7 +322,7 @@ window.updateSummary = function updateSummary() {
     if (wsPrice) {
         if (stats.error) {
             wsPrice.textContent = 'BŁĄD';
-            wsPrice.style.color = 'var(--danger, #ef4444)';
+            wsPrice.style.color = 'var(--danger)';
         } else {
             wsPrice.textContent = fmt(finalPrice);
             wsPrice.style.color = '';

@@ -155,7 +155,11 @@
 
 /* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
-    background: linear-gradient(135deg, rgba(var(--slate-800-rgb), 0.8), rgba(var(--accent-rgb), 0.1));
+    background: linear-gradient(
+        135deg,
+        rgba(var(--slate-800-rgb), 0.8),
+        rgba(var(--accent-rgb), 0.1)
+    );
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     box-shadow:
         0 4px 12px rgba(var(--black-rgb), 0.15),
@@ -599,41 +603,41 @@
 @media print {
     /* Reset ciemnego motywu */
     :root {
-        --bg-primary: #fff;
-        --bg-secondary: #fff;
-        --bg-card: #fff;
-        --bg-glass: #fff;
-        --bg-tertiary: #eee;
-        --bg-deep: #f5f5f5;
-        --bg-hover: #e0e0e0;
-        --bg-tile: #fafafa;
-        --bg-input: #fff;
-        --border-glass: #ccc;
-        --text-primary: #000;
-        --text-secondary: #333;
-        --text-muted: #666;
-        --accent: #333;
-        --accent-hover: #000;
-        --accent-text: #333;
-        --accent-bg: #eee;
-        --accent-bg-hover: #ddd;
-        --accent-border: #999;
-        --accent-border-dim: #aaa;
-        --success: #006600;
-        --danger: #cc0000;
-        --warn: #996600;
-        --success-bg: #e6f7e6;
-        --success-bg-hover: #d0f0d0;
-        --danger-bg: #fce8e8;
-        --danger-bg-hover: #f8d0d0;
-        --danger-border: #cc0000;
-        --warn-bg: #fff3e0;
-        --warn-border: #996600;
-        --shadow-color: #ccc;
-        --scrollbar-track: #eee;
-        --scrollbar-thumb: #999;
-        --scrollbar-thumb-hover: #666;
-        --highlight-bg: #fff3e0;
+        --bg-primary: var(--white);
+        --bg-secondary: var(--white);
+        --bg-card: var(--white);
+        --bg-glass: var(--white);
+        --bg-tertiary: var(--slate-200);
+        --bg-deep: var(--slate-100);
+        --bg-hover: var(--slate-200);
+        --bg-tile: var(--slate-50);
+        --bg-input: var(--white);
+        --border-glass: var(--slate-300);
+        --text-primary: var(--black);
+        --text-secondary: var(--slate-700);
+        --text-muted: var(--slate-500);
+        --accent: var(--slate-700);
+        --accent-hover: var(--black);
+        --accent-text: var(--slate-700);
+        --accent-bg: var(--slate-200);
+        --accent-bg-hover: var(--slate-300);
+        --accent-border: var(--slate-400);
+        --accent-border-dim: var(--slate-400);
+        --success: var(--success-strong);
+        --danger: var(--danger-strong);
+        --warn: var(--warn-strong);
+        --success-bg: var(--success-bg-soft);
+        --success-bg-hover: var(--success-bg-soft);
+        --danger-bg: var(--danger-bg-soft);
+        --danger-bg-hover: var(--danger-bg-soft);
+        --danger-border: var(--danger-strong);
+        --warn-bg: var(--warn-bg-soft);
+        --warn-border: var(--warn-strong);
+        --shadow-color: var(--slate-300);
+        --scrollbar-track: var(--slate-200);
+        --scrollbar-thumb: var(--slate-400);
+        --scrollbar-thumb-hover: var(--slate-500);
+        --highlight-bg: var(--warn-bg-soft);
         --glass: rgba(var(--white-rgb), 0.8);
         --glass-border: rgba(var(--black-rgb), 0.1);
     }
@@ -722,7 +726,7 @@
     .offer-cat-header td,
     .offer-diam-header td,
     .catalog-diam-header {
-        background: #e8e8e8 !important;
+        background: var(--slate-200) !important;
         color: var(--black) !important;
         border-left: 3px solid var(--slate-700) !important;
         font-weight: 700 !important;

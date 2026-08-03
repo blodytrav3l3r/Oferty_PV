@@ -2,7 +2,7 @@ import * as fs from 'fs';
 
 describe('Oferty rur — responsywność', () => {
     test('768px ukrywa kolumny Ilość, Dopłata, Wersja handlowa', () => {
-        const css = fs.readFileSync('public/css/style.css', 'utf-8');
+        const css = fs.readFileSync('public/css/style.responsive.css', 'utf-8');
         const mqMatch = css.match(
             /@media\s*\(max-width:\s*768px\)[\s\S]*?#offer-items-body[\s\S]*?display\s*:\s*none/
         );
@@ -10,7 +10,7 @@ describe('Oferty rur — responsywność', () => {
     });
 
     test('600px ukrywa kolumny Metry, Transport/szt, Brutto', () => {
-        const css = fs.readFileSync('public/css/style.css', 'utf-8');
+        const css = fs.readFileSync('public/css/style.responsive.css', 'utf-8');
         const mqMatch = css.match(
             /@media\s*\(max-width:\s*600px\)[\s\S]*?#offer-items-body[\s\S]*?display\s*:\s*none/
         );

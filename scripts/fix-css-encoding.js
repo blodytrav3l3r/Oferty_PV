@@ -51,6 +51,5 @@ function fixFile(filepath) {
 }
 
 const cssDir = path.resolve(__dirname, '..', 'public', 'css');
-fixFile(path.join(cssDir, 'style.css'));
 fixFile(path.join(cssDir, 'studnie.css'));
 fixFile(path.join(cssDir, 'zlecenia.css'));

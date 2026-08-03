@@ -5,14 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Oferta {{NR_OFERTY}}</title>
         <style>
-            :root {
-                --slate-300: #cbd5e1;
-                --slate-100: #f1f5f9;
-                --slate-700: #334155;
-                --slate-400: #94a3b8;
-                --white: #ffffff;
-                --black: #000000;
-            }
+            {{PRINT_TOKENS}}
             @page {
                 size: A4 portrait;
                 margin: 0mm 10mm;
@@ -28,7 +21,7 @@
             body {
                 font-family: Arial, sans-serif;
                 font-size: 10pt;
-                color: #1a1a2e;
+                color: var(--slate-950);
                 background: var(--white);
                 line-height: 1.4;
             }
@@ -85,7 +78,7 @@
 
             .info-box {
                 background: var(--slate-100);
-                border: 1px solid #ddd;
+                border: 1px solid var(--slate-200);
                 border-radius: 4px;
                 padding: 8px 10px;
                 font-size: 9pt;
@@ -93,7 +86,7 @@
 
             .info-box h3 {
                 font-size: 8pt;
-                color: #888;
+                color: var(--slate-400);
                 text-transform: uppercase;
                 margin-bottom: 4px;
                 letter-spacing: 0.5px;

@@ -4,7 +4,7 @@
    ============================ */
 
 :root {
-    --upm-accent: #2563eb;
+    --upm-accent: var(--blue);
     --upm-bg: var(--slate-800);
     --upm-bg-section: rgba(var(--white-rgb), 0.05);
     --upm-border: var(--slate-700);
@@ -39,7 +39,9 @@
     max-height: 85vh;
     padding: 1.75rem 2rem 1.5rem;
     text-align: left;
-    box-shadow: 0 20px 50px rgba(var(--black-rgb), 0.8), 0 0 0 1px rgba(var(--white-rgb), 0.05) inset;
+    box-shadow:
+        0 20px 50px rgba(var(--black-rgb), 0.8),
+        0 0 0 1px rgba(var(--white-rgb), 0.05) inset;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -99,14 +101,17 @@
     justify-content: center;
     padding: 0.4rem;
     border-radius: 8px;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
     flex-shrink: 0;
 }
 
 .upm-close:hover {
     background: rgba(var(--danger-rgb), 0.15);
     border-color: rgba(var(--danger-rgb), 0.5);
-    color: #fca5a5;
+    color: var(--danger-hover);
 }
 
 .upm-close svg {
@@ -188,10 +193,18 @@
     flex-shrink: 0;
 }
 
-.upm-title-offer { color: var(--upm-offer); }
-.upm-title-orderCurrent { color: var(--upm-orderCurrent); }
-.upm-title-orders { color: var(--upm-orders); }
-.upm-title-karta { color: var(--upm-karta); }
+.upm-title-offer {
+    color: var(--upm-offer);
+}
+.upm-title-orderCurrent {
+    color: var(--upm-orderCurrent);
+}
+.upm-title-orders {
+    color: var(--upm-orders);
+}
+.upm-title-karta {
+    color: var(--upm-karta);
+}
 
 .upm-badge {
     font-size: 0.72rem;
@@ -229,7 +242,9 @@
     flex-direction: column;
     align-items: center;
     gap: 0.5rem;
-    transition: background-color 0.18s, border-color 0.18s;
+    transition:
+        background-color 0.18s,
+        border-color 0.18s;
     border: 2px solid;
     font-size: 1rem;
     font-family: inherit;
@@ -238,7 +253,7 @@
 
 .upm-btn-pdf {
     background: rgba(var(--danger-rgb), 0.2);
-    color: #fca5a5;
+    color: var(--danger-hover);
     border-color: rgba(var(--danger-rgb), 0.8);
 }
 
@@ -251,7 +266,7 @@
 
 .upm-btn-docx {
     background: rgba(var(--blue-rgb), 0.2);
-    color: #93c5fd;
+    color: var(--accent-text);
     border-color: rgba(var(--blue-rgb), 0.8);
 }
 
@@ -293,7 +308,9 @@
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 600;
-    transition: background-color 0.15s, color 0.15s;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
     font-family: inherit;
 }
 
@@ -331,7 +348,9 @@
     justify-content: space-between;
     align-items: center;
     gap: 0.75rem;
-    transition: background-color 0.15s, border-color 0.15s;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s;
     border: 1px solid transparent;
 }
 
@@ -380,7 +399,10 @@
     cursor: pointer;
     font-size: 0.8rem;
     font-weight: 800;
-    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
     border: 1.5px solid;
     font-family: inherit;
     letter-spacing: 0.02em;
@@ -411,9 +433,33 @@
     flex-shrink: 0;
 }
 
-.upm-status-new { background: rgba(96, 165, 250, 0.2); color: #93c5fd; border: 1px solid rgba(96, 165, 250, 0.3); }
-.upm-status-ordered { background: rgba(251, 191, 36, 0.2); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.3); }
-.upm-status-in_production { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.3); }
-.upm-status-available { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.3); }
-.upm-status-completed { background: rgba(var(--slate-400-rgb), 0.2); color: var(--slate-300); border: 1px solid rgba(var(--slate-400-rgb), 0.3); }
-.upm-status-cancelled { background: rgba(var(--danger-rgb), 0.2); color: #fca5a5; border: 1px solid rgba(var(--danger-rgb), 0.3); }
+.upm-status-new {
+    background: rgba(96, 165, 250, 0.2);
+    color: var(--accent-text);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+.upm-status-ordered {
+    background: rgba(251, 191, 36, 0.2);
+    color: var(--warn-hover);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+.upm-status-in_production {
+    background: rgba(167, 139, 250, 0.2);
+    color: var(--accent-text);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.upm-status-available {
+    background: rgba(52, 211, 153, 0.2);
+    color: var(--success-hover);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.upm-status-completed {
+    background: rgba(var(--slate-400-rgb), 0.2);
+    color: var(--slate-300);
+    border: 1px solid rgba(var(--slate-400-rgb), 0.3);
+}
+.upm-status-cancelled {
+    background: rgba(var(--danger-rgb), 0.2);
+    color: var(--danger-hover);
+    border: 1px solid rgba(var(--danger-rgb), 0.3);
+}

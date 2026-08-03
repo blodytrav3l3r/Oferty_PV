@@ -355,7 +355,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-list-item.active {
     border-color: rgba(var(--warn-rgb), 0.8);
     border-width: 2px;
-    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.05) 50%, rgba(var(--warn-rgb), 0.1) 100%);
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(var(--warn-rgb), 0.05) 50%,
+        rgba(var(--warn-rgb), 0.1) 100%
+    );
     box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.1);
     transform: translateX(2px);
 }
@@ -413,11 +418,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .well-list-action:hover {
-    background: #1a1e25;
+    background: var(--slate-950);
 }
 
 .well-list-action.del:hover {
-    background: #301515;
+    background: var(--danger-bg);
     color: var(--danger-hover);
 }
 
@@ -704,7 +709,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile.active-top-closure {
-    border-color: #6060d0 !important;
+    border-color: var(--accent-border) !important;
     box-shadow: 0 0 0 2px var(--accent-border);
     background: var(--bg-hover) !important;
 }
@@ -736,7 +741,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile[data-type='pierscien_odciazajacy'] {
-    --tile-accent: #06b6d4;
+    --tile-accent: var(--cyan);
 }
 
 .tile[data-type='avr'] {
@@ -744,7 +749,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile[data-type='uszczelka'] {
-    --tile-accent: #84cc16;
+    --tile-accent: var(--cmp-uszczelka);
 }
 /* Zakładki cennika */
 .cennik-tab {
@@ -839,7 +844,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .s-tab-btn.active {
     background: var(--bg-hover);
-    border-color: #3b3b9b;
+    border-color: var(--accent-border);
     color: var(--accent-text);
     box-shadow: var(--shadow-sm);
 }
@@ -866,7 +871,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .param-tile.active {
     background: var(--warn-bg);
     border-color: var(--warn);
-    color: #ffedd5;
+    color: var(--slate-100);
     box-shadow: 0 0 10px var(--warn-bg);
 }
 /* Style aplikacji Inline Transitions wykorzystujące nazwy fs-* ale zlokalizowane */
@@ -1496,6 +1501,5 @@ select.form-input option {
     transition: all 0.2s;
 }
 .config-tile:hover {
-    background: #f0f9ff;
+    background: var(--slate-100);
 }
-

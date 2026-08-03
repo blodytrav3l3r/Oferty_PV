@@ -38,6 +38,8 @@
     --success-bg: #0d2a20;
     --success-bg-hover: #0f3328;
     --success-border: #145d3a;
+    --success-strong: #006600;
+    --success-bg-soft: #e6f7e6;
 
     /* Status — danger */
     --danger: #ef4444;
@@ -45,12 +47,17 @@
     --danger-bg: #3a1515;
     --danger-bg-hover: #251010;
     --danger-border: #7a3030;
+    --danger-strong: #cc0000;
+    --danger-bg-soft: #fce8e8;
 
     /* Status — warn */
     --warn: #f59e0b;
     --warn-hover: #fbbf24;
     --warn-bg: #2d1a08;
     --warn-border: #5a3010;
+    --warn-strong: #996600;
+    --warn-bg-soft: #fff3e0;
+    --warn-bg-light: #fffbeb;
 
     /* Blue accent (sub-module nav) */
     --blue: #3b82f6;
@@ -78,6 +85,7 @@
     --slate-800: #1e293b;
     --slate-800-rgb: 30, 41, 59;
     --slate-700: #334155;
+    --slate-600: #475569;
     --slate-600-rgb: 71, 85, 105;
     --slate-500: #64748b;
     --slate-500-rgb: 100, 116, 139;
@@ -86,6 +94,7 @@
     --slate-300: #cbd5e1;
     --slate-200: #e2e8f0;
     --slate-100: #f1f5f9;
+    --slate-50: #f8fafc;
     --blue-alt-rgb: 56, 189, 248;
 
     /* Nawigacja */
@@ -116,6 +125,7 @@
     --purple-hover: #c084fc;
     --sky-500: #0ea5e9;
     --pink: #ec4899;
+    --brand-navy: #2d3561;
 
     /* Shadows */
     --shadow-color: rgba(var(--black-rgb), 0.5);
@@ -155,6 +165,7 @@
     --cmp-kineta: #9d174d;
     --cmp-styczna: #059669;
     --cmp-osadnik: #a16207;
+    --cmp-uszczelka: #84cc16;
 
     --text-danger: var(--danger);
 

@@ -38,9 +38,32 @@ function formatDate(isoString) {
     });
 }
 
+/** Tokeny dla dokumentów drukowanych (silentPrint / window.open).
+ *  Wartości MUSZĄ być zgodne z :root w public/css/style.base.css
+ *  oraz z src/services/pdf/printTokens.ts (backend PDF). */
+const PRINT_TOKENS_CSS = `:root {
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-400: #94a3b8;
+    --slate-500: #64748b;
+    --slate-600: #475569;
+    --slate-700: #334155;
+    --slate-950: #0f172a;
+    --white: #ffffff;
+    --black: #000000;
+    --warn: #f59e0b;
+    --warn-bg-light: #fffbeb;
+    --danger: #ef4444;
+    --success: #10b981;
+    --brand-navy: #2d3561;
+}`;
+
 /** Prosta interpolacja szablonu: zastępuje {{KEY}} wartościami z dataObj */
 function renderTemplate(template, dataObj) {
     return template.replace(/\{\{([\w_]+)\}\}/g, (match, key) => {
+        if (key === 'PRINT_TOKENS') return PRINT_TOKENS_CSS;
         return dataObj[key] !== undefined ? dataObj[key] : '';
     });
 }
@@ -115,3 +138,11 @@ function ensureDisplayIndices(przejscia) {
         p.displayIndex = idx;
     });
 }
+
+/** Podmienia {{PRINT_TOKENS}} w wycinkach <head> (batch print), które nie przechodzą przez renderTemplate. */
+function applyPrintTokens(html) {
+    return html.replaceAll('{{PRINT_TOKENS}}', PRINT_TOKENS_CSS);
+}
+
+window.PRINT_TOKENS_CSS = PRINT_TOKENS_CSS;
+window.applyPrintTokens = applyPrintTokens;

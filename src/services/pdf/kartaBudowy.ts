@@ -5,6 +5,7 @@ import { logger } from '../../utils/logger';
 import { escapeHtml } from './helpers';
 import { generatePDF } from './pdfEngine';
 import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../types/kartaBudowy';
+import { PRINT_TOKENS_CSS } from './printTokens';
 
 function buildKartaBudowyBaseHtml(
     kb: KartaBudowyMeta,
@@ -12,7 +13,9 @@ function buildKartaBudowyBaseHtml(
     nrOferty: string
 ): string {
     const templatePath = path.join(process.cwd(), 'public', 'templates', 'kartaBudowy.html');
-    let html = fs.readFileSync(templatePath, 'utf-8');
+    let html = fs
+        .readFileSync(templatePath, 'utf-8')
+        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
 
     html = html.replace(/\{\{NR_ZAMOWIENIA\}\}/g, nrZamowienia);
     html = html.replace(/\{\{OFFER_NUMBERS\}\}/g, nrOferty);

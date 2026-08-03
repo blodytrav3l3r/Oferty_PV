@@ -170,7 +170,7 @@ function _excelToggleColumnPopup() {
                 let cols = col.groups[ct] || [];
                 html += '<div style="' + cellStyle + '">';
                 if (cols.length === 0) {
-                    html += '<span style="color:#3f4356;font-size:0.5rem;">—</span>';
+                    html += '<span style="color:var(--slate-700);font-size:0.5rem;">—</span>';
                 } else {
                     if (cols.length > 1) {
                         let cellIds = cols.map(function (c) {
@@ -195,7 +195,7 @@ function _excelToggleColumnPopup() {
                             ' onchange="_excelOnCellToggleAll([\'' +
                             escapedIds.join("','") +
                             '\'],this.checked)" style="accent-color:var(--accent2);cursor:pointer;width:8px;height:8px;" />';
-                        html += '<span style="color:#475569;">wsz.</span></label>';
+                        html += '<span style="color:var(--slate-600);">wsz.</span></label>';
                     }
                     cols.forEach(function (c) {
                         html += _excelColCheckboxHtml(c, '0.2rem');

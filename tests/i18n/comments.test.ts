@@ -1,32 +1,9 @@
 import * as fs from 'fs';
 
-const CSS_FILES = [
-    'public/css/style.css',
-    'public/css/studnie.css',
-    'public/css/zlecenia.css',
-    'public/css/index.css'
-];
+const CSS_FILES = ['public/css/studnie.css', 'public/css/zlecenia.css', 'public/css/index.css'];
 
 // Słowa, które mogą wystąpić w komentarzach technicznych (parametry JSDoc, nazwy klas CSS, wartości)
 const ALLOWED_WORDS: Record<string, string[]> = {
-    'public/css/style.css': [
-        'Toast',
-        'flex',
-        'layout',
-        'inline',
-        'Linear',
-        'admin',
-        'menu',
-        'Basic',
-        'slide',
-        'fade',
-        'spin',
-        'pulse',
-        'none',
-        'auto',
-        'sticky',
-        'scroll'
-    ],
     'public/css/studnie.css': [
         'flex',
         'layout',
