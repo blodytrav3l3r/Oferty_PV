@@ -68,7 +68,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
-                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.25); color:var(--accent-text); font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.4)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.25)'">${visibilityBtnLabel}</button>
+                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.4)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.4) transparent;">
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
@@ -78,11 +78,11 @@ function renderInlinePrzejsciaApp(containerId) {
                             return `
                         <div onclick="window.inlineSetType('${escapeHtml(t)}', '${escapeHtml(containerId || '')}')" 
                              style="padding:0.2rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
-                                    background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.03)'};
-                                    border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.06)'};
+                                    background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
+                                    border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(var(--accent-rgb), 0.15);' : ''}"
                              onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
-                             onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.03)';this.style.borderColor='rgba(var(--white-rgb), 0.06)'"
+                             onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'"
                              title="${t}">
                              <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight:700; text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
                         </div>`;
@@ -104,11 +104,11 @@ function renderInlinePrzejsciaApp(containerId) {
                         return `
                     <div class="fs-dn-tile ${isActive ? 'active' : ''}" 
                          style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius:6px; height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
-                                background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.03)'};
-                                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.06)'};
+                                background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
+                                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.3);' : ''}"
                          onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
-                         onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.03)';this.style.borderColor='rgba(var(--white-rgb), 0.06)'}"
+                         onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'}"
                          onclick="window.inlineSetDN('${escapeHtml(p.id)}', '${escapeHtml(containerId || '')}')">
                          <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight:800; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
                     </div>
@@ -121,7 +121,7 @@ function renderInlinePrzejsciaApp(containerId) {
         ${
             selectedProduct
                 ? `
-        <div style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.6); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
+        <div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.6); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <span style="font-size:1.0rem; font-weight:800; color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
                 <span style="font-size:0.95rem; color:var(--success); font-weight:800; font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size:0.6rem;">PLN</span></span>
@@ -132,19 +132,19 @@ function renderInlinePrzejsciaApp(containerId) {
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
                            onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
-                           placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08); border-radius:4px;">
+                           placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08); border-radius:4px;">
+                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
                 </div>
 
                 <div class="text-center">
@@ -162,7 +162,7 @@ function renderInlinePrzejsciaApp(containerId) {
         </div>
         `
                 : `
-        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.06); border-radius:8px; font-size:0.7rem; margin-top:0.3rem;">
+        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.05); border-radius:8px; font-size:0.7rem; margin-top:0.3rem;">
             Wybierz średnicę (DN) aby skonfigurować przejście
         </div>
         `
@@ -382,7 +382,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
         container.innerHTML =
-            '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.08); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
+            '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
         if (countEl) countEl.textContent = '';
         return;
     }
@@ -401,7 +401,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         });
         if (!hasAny) {
             container.innerHTML =
-                '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.08); border-radius:8px;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+                '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px;">Brak przejść szczelnych<br>w tym elemencie.</div>';
             if (countEl) countEl.textContent = '(0)';
             return;
         }
@@ -496,8 +496,8 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             ? assignedEntry.name || 'Brak dopasowania'
             : 'Brak dopasowania';
         const assignedBg = assignedEntry
-            ? assignedEntry.bg || 'rgba(var(--black-rgb), 0.25)'
-            : 'rgba(var(--black-rgb), 0.25)';
+            ? assignedEntry.bg || 'rgba(var(--black-rgb), 0.3)'
+            : 'rgba(var(--black-rgb), 0.3)';
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
             const rawRGB = assignedBg.length > 7 ? assignedBg.substring(0, 7) : assignedBg;
@@ -554,7 +554,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(30,58,138,0.8) 0%, rgba(var(--slate-800-rgb), 0.95) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
+            html += `<div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.8) 0%, rgba(var(--slate-800-rgb), 0.95) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                   <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius:4px;">
@@ -570,7 +570,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.03)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.08)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
                     })
                     .join('')}
               </div>
@@ -582,7 +582,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.03)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.08)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
                     })
                     .join('')}
               </div>
@@ -642,7 +642,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         filterElementIndex != null
             ? `Przejścia tego elementu (${filteredCount} szt.)`
             : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
-    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.08); border-radius:6px; border:1px solid rgba(var(--accent-rgb), 0.2);">
+    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.1); border-radius:6px; border:1px solid rgba(var(--accent-rgb), 0.2);">
       <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${countLabel}</span>
       <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmt(totalPrice)} PLN</span>
     </div>`;

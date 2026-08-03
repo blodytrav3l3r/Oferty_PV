@@ -43,7 +43,7 @@ function renderOrderModeBanner() {
     banner.style.cssText = `
         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
         padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
-        background: ${hasChanges ? 'linear-gradient(135deg, rgba(var(--danger-rgb), 0.12), rgba(var(--danger-rgb), 0.06))' : 'linear-gradient(135deg, rgba(var(--success-rgb), 0.12), rgba(var(--success-rgb), 0.06))'};
+        background: ${hasChanges ? 'linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--danger-rgb), 0.05))' : 'linear-gradient(135deg, rgba(var(--success-rgb), 0.1), rgba(var(--success-rgb), 0.05))'};
         border: 2px solid ${hasChanges ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--success-rgb), 0.3)'};
     `;
 

@@ -220,28 +220,28 @@ const AppZlecenia = (() => {
 
         container.innerHTML = `
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(var(--accent-hover-rgb),0.1); color:var(--accent-hover);"><i data-lucide="layers" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--accent-hover-rgb), 0.1); color:var(--accent-hover);"><i data-lucide="layers" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${total}</div>
                     <div class="zlecenia-stat-label">Wszystkie zlecenia</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(var(--success-rgb),0.1); color:var(--success-hover);"><i data-lucide="check-check" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--success-rgb), 0.1); color:var(--success-hover);"><i data-lucide="check-check" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${accepted}</div>
                     <div class="zlecenia-stat-label">Zatwierdzone</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(var(--warn-rgb),0.1); color:var(--warn-hover);"><i data-lucide="hourglass-2" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(var(--warn-rgb), 0.1); color:var(--warn-hover);"><i data-lucide="hourglass-2" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${draft}</div>
                     <div class="zlecenia-stat-label">Oczekujące</div>
                 </div>
             </div>
             <div class="zlecenia-stat-card">
-                <div class="zlecenia-stat-icon" style="background:rgba(168,85,247,0.1); color:#c084fc;"><i data-lucide="zap" aria-hidden="true"></i></div>
+                <div class="zlecenia-stat-icon" style="background:rgba(168, 85, 247, 0.1); color:var(--purple-alt);"><i data-lucide="zap" aria-hidden="true"></i></div>
                 <div class="zlecenia-stat-info">
                     <div class="zlecenia-stat-value">${todayCount}</div>
                     <div class="zlecenia-stat-label">Dodane dziś</div>

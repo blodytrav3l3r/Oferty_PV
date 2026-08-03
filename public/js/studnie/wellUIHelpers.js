@@ -20,7 +20,7 @@ function renderDiscountPanel() {
         grandTotal = 0,
         grandDiscounted = 0;
 
-    let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(var(--white-rgb), 0.08);">
+    let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
         <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; letter-spacing:0.5px; margin-bottom:0.3rem;"><i data-lucide="banknote" aria-hidden="true"></i> Rabaty i podsumowanie</div>`;
 
     activeDNs.forEach((dn) => {
@@ -52,7 +52,7 @@ function renderDiscountPanel() {
             (w) => w.kineta === 'preco' || w.kineta === 'precotop'
         );
 
-        html += `<div style="background:rgba(var(--white-rgb), 0.03); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--white-rgb), 0.05);">
+        html += `<div style="background:rgba(var(--white-rgb), 0.05); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--white-rgb), 0.05);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
             <span style="font-size:0.82rem; font-weight:700; color:var(--accent2-hover);">${dnLabel}</span>
             <span style="font-size:0.7rem; color:var(--text-muted);">${groupWells.length} szt.</span>
@@ -90,7 +90,7 @@ function renderDiscountPanel() {
                     : ''
             }
           </div>
-          <div style="display:flex; justify-content:space-between; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid rgba(var(--white-rgb), 0.06);">
+          <div style="display:flex; justify-content:space-between; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid rgba(var(--white-rgb), 0.05);">
             <span style="font-size:0.78rem; color:var(--text-muted); text-align:left;">Po rabacie:</span>
             <span style="font-size:0.82rem; font-weight:700; color:${totalAfter < totalDN ? 'var(--success-hover)' : 'var(--text-secondary)'};">${fmtInt(totalAfter)} PLN</span>
           </div>
@@ -121,7 +121,7 @@ function renderDiscountPanel() {
         }
         const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
 
-        html += `<div style="background:rgba(var(--blue-alt-rgb), 0.06); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--blue-alt-rgb), 0.15);">
+        html += `<div style="background:rgba(var(--blue-alt-rgb), 0.05); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--blue-alt-rgb), 0.15);">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem;">
             <div style="display:flex; flex-direction:column; gap:0.1rem;">
                 <span style="font-size:0.82rem; font-weight:700; color:var(--blue-alt); display:flex; align-items:center; gap:0.3rem;"><i data-lucide="shield" style="width:14px; height:14px;"></i> Wkładka PEHD</span>
@@ -154,7 +154,7 @@ function renderDiscountPanel() {
         const malWCena = refWell.malowanieWewCena || '';
         const malZCena = refWell.malowanieZewCena || '';
 
-        html += `<div style="background:rgba(var(--accent2-rgb), 0.06); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--accent2-rgb), 0.15);">
+        html += `<div style="background:rgba(var(--accent2-rgb), 0.05); border-radius:10px; padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--accent2-rgb), 0.15);">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
             <span style="font-size:0.82rem; font-weight:700; color:var(--purple-alt);"><i data-lucide="paintbrush" aria-hidden="true"></i> Koszt malowania</span>
             <span style="font-size:0.6rem; color:var(--text-muted);">PLN / m²</span>

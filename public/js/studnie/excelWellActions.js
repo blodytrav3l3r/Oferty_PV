@@ -64,7 +64,7 @@ function excelOpenWellParams(wIdx) {
     const popupW = Math.min(Math.round(gridW + 185 + 42), 1200);
 
     const modal = document.createElement('div');
-    modal.style.cssText = `width:${popupW}px;max-height:90vh;background:var(--bg-primary);border:1px solid rgba(var(--white-rgb), 0.06);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);`;
+    modal.style.cssText = `width:${popupW}px;max-height:90vh;background:var(--bg-primary);border:1px solid rgba(var(--white-rgb), 0.05);border-radius:6px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);`;
 
     let bodyHtml = `<div style="display:flex;flex-direction:column;gap:0.55rem;">`;
     if (typeof WELL_PARAM_DEFS !== 'undefined') {
@@ -94,7 +94,7 @@ function excelOpenWellParams(wIdx) {
             bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.08)'};background:${active ? 'rgba(var(--accent-rgb), 0.25)' : 'rgba(var(--white-rgb), 0.04)'};color:${active ? 'var(--accent-text)' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.08)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(var(--white-rgb), 0.08)';this.style.background='rgba(var(--white-rgb), 0.04)'}">${lbl}</button>`;
+                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};background:${active ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};color:${active ? 'var(--accent-text)' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}">${lbl}</button>`;
             });
             bodyHtml += `</div></div>`;
 
@@ -123,15 +123,15 @@ function excelOpenWellParams(wIdx) {
     bodyHtml += `</div>`;
 
     modal.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.06);flex-shrink:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
             <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry: ${escapeHtml(well.name)}</span>
             <button onclick="document.getElementById('excel-params-popup').remove()" style="background:var(--slate-950);color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
-        <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:var(--slate-950);border-top:1px solid rgba(var(--white-rgb), 0.06);flex-shrink:0;">
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:rgba(var(--white-rgb), 0.06);color:var(--text-secondary);border:1px solid rgba(var(--white-rgb), 0.1);padding:0.4rem 1.2rem;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:600;">Zamknij</button>
+        <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:var(--slate-950);border-top:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
+            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:rgba(var(--white-rgb), 0.05);color:var(--text-secondary);border:1px solid rgba(var(--white-rgb), 0.1);padding:0.4rem 1.2rem;border-radius:6px;font-size:0.8rem;cursor:pointer;font-weight:600;">Zamknij</button>
         </div>
     `;
 

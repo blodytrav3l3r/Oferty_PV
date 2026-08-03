@@ -523,7 +523,7 @@ function _excelAutoSetWlaz(well) {
 /* ===== CELL STYLES (Excel-like) ===== */
 /** @param {number} [w] */
 function _excelCellInp(w) {
-    return `background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.08);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
+    return `background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
 /* ===== OVERLAY SELECT ===== */
@@ -570,7 +570,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
         '>' +
         optHtml +
         '</select>' +
-        '<div style="pointer-events:none;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.08);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
+        '<div style="pointer-events:none;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
         (label ? escapeHtml(label) : '&mdash;') +
         '</div>' +
         '</div>'
@@ -584,7 +584,7 @@ function _excelPositionOverlay(overlay) {
         overlay.style.cssText =
             'position:fixed;inset:0;z-index:' +
             LAYERS.EXCEL_BACKDROP +
-            ';background:rgba(var(--black-rgb), 0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+            ';background:rgba(var(--black-rgb), 0.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
         return;
     }
     const diagramPanel = document.querySelector('.well-diagram-panel');
@@ -599,12 +599,12 @@ function _excelPositionOverlay(overlay) {
                 ? bottomBar.getBoundingClientRect().top
                 : diaRect.top + diaRect.height;
         const h = Math.max(bottomOffset - topOffset, 100);
-        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:${LAYERS.EXCEL_BACKDROP};background:rgba(var(--black-rgb), 0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
+        overlay.style.cssText = `position:fixed;top:${topOffset}px;left:${diaRect.right}px;width:calc(100vw - ${diaRect.right}px);min-width:400px;height:${h}px;z-index:${LAYERS.EXCEL_BACKDROP};background:rgba(var(--black-rgb), 0.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;`;
     } else {
         overlay.style.cssText =
             'position:fixed;inset:0;z-index:' +
             LAYERS.EXCEL_BACKDROP +
-            ';background:rgba(var(--black-rgb), 0.75);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
+            ';background:rgba(var(--black-rgb), 0.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;';
     }
 }
 

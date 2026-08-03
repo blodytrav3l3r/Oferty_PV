@@ -8,7 +8,7 @@ function getWellRowStyle(change, isOrdered) {
             : 'border-left:3px solid var(--danger); background:rgba(var(--danger-rgb), 0.05);';
     }
     return isOrdered
-        ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.04);'
+        ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.05);'
         : '';
 }
 

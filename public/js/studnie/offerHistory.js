@@ -131,7 +131,7 @@ async function showOfferHistoryStudnie(id) {
                 }
                 .audit-card {
                     background: rgba(var(--slate-800-rgb), 0.6);
-                    border: 1px solid rgba(var(--white-rgb), 0.06);
+                    border: 1px solid rgba(var(--white-rgb), 0.05);
                     border-radius: 16px;
                     padding: 1.25rem 1.5rem;
                     margin-bottom: 1rem;
@@ -141,7 +141,7 @@ async function showOfferHistoryStudnie(id) {
                     backdrop-filter: blur(10px);
                 }
                 .audit-card:hover {
-                    background: rgba(var(--slate-800-rgb), 0.9);
+                    background: rgba(var(--slate-800-rgb), 0.95);
                     border-color: rgba(var(--white-rgb), 0.15);
                     transform: translateY(-2px);
                     box-shadow: 0 10px 15px -3px rgba(var(--black-rgb), 0.3), 0 4px 6px -2px rgba(var(--black-rgb), 0.15);
@@ -187,7 +187,7 @@ async function showOfferHistoryStudnie(id) {
                 .load-more-btn:hover { background: rgba(var(--accent-rgb), 0.3); transform: scale(1.05); }
             </style>
             <div class="modal audit-modal-inner">
-                <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.02); border-radius: 20px 20px 0 0;">
+                <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.05); border-radius: 20px 20px 0 0;">
                     <h3 style="font-weight:800; color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
                         <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>

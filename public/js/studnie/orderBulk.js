@@ -57,7 +57,8 @@ function buildAutoOrderData(el, sharedData) {
         (actualNextProduct.componentType === 'dennica' ||
             actualNextProduct.componentType === 'styczna');
     const shouldReduce =
-        product.componentType === 'dennica' && (nextIsDennicaLike || (well.psiaBuda && !actualNextProduct));
+        product.componentType === 'dennica' &&
+        (nextIsDennicaLike || (well.psiaBuda && !actualNextProduct));
 
     if (shouldReduce) {
         const reducedH = (product.height || 0) - 100;
@@ -288,8 +289,8 @@ function openBulkOrderSequencePopup() {
             return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}"
                     draggable="${!disabled}" data-well-index="${g.wellIndex}"
                     style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
-                    background:${disabled ? 'rgba(var(--white-rgb), 0.02)' : 'rgba(var(--accent2-rgb), 0.08)'};
-                    border:1px solid ${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.25)'};
+                    background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.1)'};
+                    border:1px solid ${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.3)'};
                     border-radius:8px; cursor:${disabled ? 'default' : 'grab'};
                     opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
                 <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
@@ -321,7 +322,7 @@ function openBulkOrderSequencePopup() {
     overlay = document.createElement('div');
     overlay.id = 'bulk-seq-overlay';
     overlay.style.cssText =
-        'position:fixed; inset:0; background:rgba(var(--black-rgb), 0.7); z-index:' +
+        'position:fixed; inset:0; background:rgba(var(--black-rgb), 0.6); z-index:' +
         LAYERS.BULK_ORDER +
         '; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
     overlay.innerHTML = `

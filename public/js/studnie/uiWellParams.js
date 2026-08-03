@@ -261,14 +261,14 @@ function renderWellParams() {
             const isActive = val === currentVal;
             html += `<button onclick="updateWellParam('${def.key}','${val}')" style="
                 height: 34px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:${isActive ? '800' : '600'};
-                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.08)'};
-                background:${isActive ? 'rgba(var(--accent-rgb), 0.25)' : 'rgba(var(--white-rgb), 0.04)'};
+                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+                background:${isActive ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};
                 color:${isActive ? 'var(--accent-text)' : 'var(--text-secondary)'};
                 transition:all 0.15s ease;
                 display:flex; align-items:center; justify-content:center;
                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}
-            " onmouseenter="if(!${isActive}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.08)'}"
-               onmouseleave="if(!${isActive}){this.style.borderColor='rgba(var(--white-rgb), 0.08)';this.style.background='rgba(var(--white-rgb), 0.04)'}"
+            " onmouseenter="if(!${isActive}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}"
+               onmouseleave="if(!${isActive}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}"
             >${lbl}</button>`;
         });
         html += `</div></div>`;

@@ -13,13 +13,13 @@
     --bg-input: #1e2d42;
 
     /* Text */
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
+    --text-primary: var(--slate-100);
+    --text-secondary: var(--slate-400);
+    --text-muted: var(--slate-500);
 
     /* Borders */
-    --border: #1e293b;
-    --border-glass: #1e293b;
+    --border: var(--slate-800);
+    --border-glass: var(--slate-800);
 
     /* Accent — indigo */
     --accent: #6366f1;
@@ -119,11 +119,11 @@
 
     /* Effects */
     --glass: rgba(var(--slate-950-rgb), 0.6);
-    --glass-border: rgba(var(--white-rgb), 0.08);
+    --glass-border: rgba(var(--white-rgb), 0.1);
     --highlight-bg: #2d2510;
 
     /* Scrollbar */
-    --scrollbar-track: #0f172a;
+    --scrollbar-track: var(--slate-950);
     --scrollbar-thumb: #3730a3;
     --scrollbar-thumb-hover: #4f46e5;
 
@@ -167,20 +167,6 @@
 }
 .logo-stop-end {
     stop-color: var(--logo-end);
-}
-
-/* Nav section accent colors */
-.nav-accent-builder {
-    --nav-accent: var(--success);
-    --nav-glow: #0d2b22;
-}
-.nav-accent-offer {
-    --nav-accent: var(--blue);
-    --nav-glow: #152040;
-}
-.nav-accent-pricelist {
-    --nav-accent: var(--accent2);
-    --nav-glow: #1e1540;
 }
 
 /* ========================================
@@ -1045,7 +1031,7 @@ tbody tr:hover {
 
 /* Studnie z błędami konfiguracji w zakładce Oferta */
 .well-row-error {
-    background: rgba(var(--danger-rgb), 0.12) !important;
+    background: rgba(var(--danger-rgb), 0.1) !important;
 }
 
 .well-row-error:hover {
@@ -1057,7 +1043,7 @@ tbody tr:hover {
 }
 
 .well-row-warning:hover {
-    background: rgba(var(--warn-rgb), 0.18) !important;
+    background: rgba(var(--warn-rgb), 0.2) !important;
 }
 
 .well-details-row {
@@ -1072,7 +1058,7 @@ tbody tr:hover {
     padding: 0.8rem 1rem;
     border-left: 2px solid var(--accent);
     margin: 0.2rem 0.5rem 0.5rem 2.5rem;
-    background: rgba(var(--white-rgb), 0.02);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 0 0 8px 8px;
     animation: slideDown 0.2s ease-out;
 }

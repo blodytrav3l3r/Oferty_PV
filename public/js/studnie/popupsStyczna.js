@@ -13,10 +13,10 @@ function showStycznaPopup(mode = 'select') {
     const renderProductRow = (p) => `
         <button class="styczna-product-btn" onclick="handleStycznaProductChoice('${escapeHtml(p.id)}', '${escapeHtml(mode)}')" style="
             display:grid; grid-template-columns:1fr auto auto; align-items:center; gap:0.6rem;
-            padding:0.55rem 0.8rem; background:rgba(var(--white-rgb), 0.03); border:1px solid rgba(var(--white-rgb), 0.08);
+            padding:0.55rem 0.8rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1);
             border-radius:8px; cursor:pointer; transition:all 0.15s; text-align:left; color:inherit; width:100%;
         " onmouseenter="this.style.borderColor='rgba(var(--warn-rgb), 0.5)'; this.style.background='rgba(var(--warn-rgb), 0.1)'"
-           onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.08)'; this.style.background='rgba(var(--white-rgb), 0.03)'">
+           onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'">
             <div>
                 <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary, var(--white));">DN${p.dn}</div>
                 <div style="font-size:0.65rem; color:var(--text-muted, var(--slate-500)); margin-top:1px;">${p.name}</div>
@@ -43,7 +43,7 @@ function showStycznaPopup(mode = 'select') {
         titleId: 'styczna-title',
         html: `
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius:16px; padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--white-rgb), 0.08);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
           <div id="styczna-title" style="font-size:1rem; font-weight:800; color:var(--warn);"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
           <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>

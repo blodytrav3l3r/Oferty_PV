@@ -355,8 +355,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-list-item.active {
     border-color: rgba(var(--warn-rgb), 0.8);
     border-width: 2px;
-    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.06) 50%, rgba(var(--warn-rgb), 0.12) 100%);
-    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.12);
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.05) 50%, rgba(var(--warn-rgb), 0.1) 100%);
+    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.1);
     transform: translateX(2px);
 }
 
@@ -367,7 +367,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     height: 60%;
-    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.18), transparent);
+    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.2), transparent);
     pointer-events: none;
     border-radius: 0 0 8px 8px;
     animation: wellActivePulse 2s ease-in-out infinite;
@@ -438,11 +438,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-elevations {
     font-size: 0.58rem;
-    color: rgba(var(--white-rgb), 0.35);
+    color: rgba(var(--white-rgb), 0.3);
     margin-top: 0.1rem;
     display: flex;
     gap: 0.4rem;
-    border-top: 1px solid rgba(var(--white-rgb), 0.03);
+    border-top: 1px solid rgba(var(--white-rgb), 0.05);
     padding-top: 0.15rem;
 }
 
@@ -691,16 +691,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 /* Kolory typów kafelków */
 .tile[data-type='dennica'] {
-    --tile-accent: #10b981;
+    --tile-accent: var(--success);
 }
 
 .tile[data-type='krag'],
 .tile[data-type='krag_ot'] {
-    --tile-accent: #6366f1;
+    --tile-accent: var(--accent);
 }
 
 .tile[data-type='konus'] {
-    --tile-accent: #f59e0b;
+    --tile-accent: var(--warn);
 }
 
 .tile.active-top-closure {
@@ -728,11 +728,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .tile[data-type='plyta_din'],
 .tile[data-type='plyta_najazdowa'],
 .tile[data-type='plyta_zamykajaca'] {
-    --tile-accent: #ec4899;
+    --tile-accent: var(--pink);
 }
 
 .tile[data-type='plyta_redukcyjna'] {
-    --tile-accent: #8b5cf6;
+    --tile-accent: var(--accent2);
 }
 
 .tile[data-type='pierscien_odciazajacy'] {
@@ -740,7 +740,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile[data-type='avr'] {
-    --tile-accent: #64748b;
+    --tile-accent: var(--slate-500);
 }
 
 .tile[data-type='uszczelka'] {
@@ -1381,7 +1381,7 @@ select.form-input option {
 }
 /* —— Transition Renderer hover classes —— */
 .prz-field {
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     transition: background-color 0.2s;
     cursor: pointer;
@@ -1444,7 +1444,7 @@ select.form-input option {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
 }
 .prz-field-height:hover {
@@ -1458,7 +1458,7 @@ select.form-input option {
         transform 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     will-change: transform;
 }
@@ -1472,7 +1472,7 @@ select.form-input option {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
 }
 .prz-field-rzedna:hover {
@@ -1483,7 +1483,7 @@ select.form-input option {
 .prz-field-doplata {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     transition: background-color 0.2s;
 }

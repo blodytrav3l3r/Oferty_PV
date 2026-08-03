@@ -350,8 +350,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-list-item.active {
     border-color: rgba(var(--warn-rgb), 0.8);
     border-width: 2px;
-    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.06) 50%, rgba(var(--warn-rgb), 0.12) 100%);
-    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.12);
+    background: linear-gradient(180deg, transparent 0%, rgba(var(--warn-rgb), 0.05) 50%, rgba(var(--warn-rgb), 0.1) 100%);
+    box-shadow: 0 0 16px rgba(var(--warn-rgb), 0.1);
     transform: translateX(2px);
 }
 
@@ -362,7 +362,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     height: 60%;
-    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.18), transparent);
+    background: linear-gradient(to top, rgba(var(--warn-rgb), 0.2), transparent);
     pointer-events: none;
     border-radius: 0 0 8px 8px;
     animation: wellActivePulse 2s ease-in-out infinite;
@@ -433,11 +433,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-elevations {
     font-size: 0.58rem;
-    color: rgba(var(--white-rgb), 0.35);
+    color: rgba(var(--white-rgb), 0.3);
     margin-top: 0.1rem;
     display: flex;
     gap: 0.4rem;
-    border-top: 1px solid rgba(var(--white-rgb), 0.03);
+    border-top: 1px solid rgba(var(--white-rgb), 0.05);
     padding-top: 0.15rem;
 }
 
@@ -690,16 +690,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 /* Kolory typów kafelków */
 .tile[data-type='dennica'] {
-    --tile-accent: #10b981;
+    --tile-accent: var(--success);
 }
 
 .tile[data-type='krag'],
 .tile[data-type='krag_ot'] {
-    --tile-accent: #6366f1;
+    --tile-accent: var(--accent);
 }
 
 .tile[data-type='konus'] {
-    --tile-accent: #f59e0b;
+    --tile-accent: var(--warn);
 }
 
 .tile.active-top-closure {
@@ -727,11 +727,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .tile[data-type='plyta_din'],
 .tile[data-type='plyta_najazdowa'],
 .tile[data-type='plyta_zamykajaca'] {
-    --tile-accent: #ec4899;
+    --tile-accent: var(--pink);
 }
 
 .tile[data-type='plyta_redukcyjna'] {
-    --tile-accent: #8b5cf6;
+    --tile-accent: var(--accent2);
 }
 
 .tile[data-type='pierscien_odciazajacy'] {
@@ -739,7 +739,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile[data-type='avr'] {
-    --tile-accent: #64748b;
+    --tile-accent: var(--slate-500);
 }
 
 .tile[data-type='uszczelka'] {
@@ -1292,7 +1292,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(var(--black-rgb), 0.75);
+    background: rgba(var(--black-rgb), 0.8);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
     z-index: 2000; /* GENERIC_MODAL_BACKDROP */
@@ -1373,7 +1373,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     position: fixed;
     inset: 0;
     z-index: 2000; /* GENERIC_MODAL_BACKDROP */
-    background: rgba(var(--black-rgb), 0.85);
+    background: rgba(var(--black-rgb), 0.8);
     display: none;
     align-items: stretch;
     justify-content: center;
@@ -1482,7 +1482,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .zlecenia-el-item.accepted {
     border-left: 3px solid var(--danger);
-    background: rgba(var(--danger-rgb), 0.06);
+    background: rgba(var(--danger-rgb), 0.05);
 }
 
 .zlecenia-header-btn {
@@ -1513,7 +1513,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .zlecenia-filter-btn:hover {
     border-color: var(--accent);
-    background: rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.1);
 }
 
 .zlecenia-filter-btn.active {
@@ -2073,7 +2073,7 @@ select.form-input option {
 
 /* ── Transition Renderer hover classes ── */
 .prz-field {
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     transition: background-color 0.2s;
     cursor: pointer;
@@ -2136,7 +2136,7 @@ select.form-input option {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
 }
 .prz-field-height:hover {
@@ -2150,7 +2150,7 @@ select.form-input option {
         transform 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     will-change: transform;
 }
@@ -2164,7 +2164,7 @@ select.form-input option {
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
 }
 .prz-field-rzedna:hover {
@@ -2175,7 +2175,7 @@ select.form-input option {
 .prz-field-doplata {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
-    background: rgba(var(--white-rgb), 0.03);
+    background: rgba(var(--white-rgb), 0.05);
     border-radius: 4px;
     transition: background-color 0.2s;
 }
@@ -2185,8 +2185,8 @@ select.form-input option {
 
 /* ── Well Popups hover classes ── */
 .pehd-card {
-    background: rgba(var(--white-rgb), 0.03);
-    border: 2px solid rgba(var(--white-rgb), 0.06);
+    background: rgba(var(--white-rgb), 0.05);
+    border: 2px solid rgba(var(--white-rgb), 0.05);
     border-radius: 12px;
     cursor: pointer;
     transition:
@@ -2229,18 +2229,18 @@ select.form-input option {
     font-weight: 700;
     line-height: 1.4;
     white-space: nowrap;
-    background: rgba(var(--success-rgb), 0.07);
+    background: rgba(var(--success-rgb), 0.05);
     border-radius: 3px;
     padding: 1px 5px;
     margin-top: 2px;
     display: inline-block;
 }
 #excel-table-container tbody tr:hover {
-    background: rgba(var(--white-rgb), 0.02);
+    background: rgba(var(--white-rgb), 0.05);
 }
 #excel-table-container .excel-resize-handle {
     width: 4px !important;
-    background: rgba(var(--white-rgb), 0.08);
+    background: rgba(var(--white-rgb), 0.1);
 }
 #excel-table-container .excel-resize-handle:hover {
     background: rgba(var(--accent-rgb), 0.5) !important;

@@ -316,7 +316,7 @@ function populateZleceniaForm(el) {
     let errorsHtml = '';
     if (liveErrors.length > 0) {
         errorsHtml = `
-            <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: 6px; color: var(--danger); font-size: 0.75rem; font-weight: 600; line-height: 1.4;">
+            <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.1); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: 6px; color: var(--danger); font-size: 0.75rem; font-weight: 600; line-height: 1.4;">
                 <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
                 ${liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>')}
             </div>
@@ -356,7 +356,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Adres</label>
@@ -364,7 +364,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
@@ -376,7 +376,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.02); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
             </div>
         </div>
     </div>

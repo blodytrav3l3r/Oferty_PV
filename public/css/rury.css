@@ -218,7 +218,7 @@
 }
 
 .rury-table tbody tr:hover {
-    background: rgba(var(--accent-rgb), 0.06);
+    background: rgba(var(--accent-rgb), 0.05);
 }
 
 .rury-table tbody td input.edit-input:disabled,
@@ -235,7 +235,7 @@
     text-align: center;
     border: 1px solid var(--border-glass);
     border-radius: 4px;
-    background: rgba(var(--warn-rgb), 0.06);
+    background: rgba(var(--warn-rgb), 0.05);
     color: var(--warn);
     font-weight: 600;
     vertical-align: middle;
@@ -267,8 +267,8 @@
     font-size: 0.62rem;
     font-weight: 700;
     color: var(--success-hover);
-    background: rgba(var(--success-rgb), 0.12);
-    border: 1px solid rgba(var(--success-rgb), 0.25);
+    background: rgba(var(--success-rgb), 0.1);
+    border: 1px solid rgba(var(--success-rgb), 0.3);
     border-radius: 4px;
     padding: 1px 6px;
     white-space: nowrap;
@@ -278,8 +278,8 @@
 
 .order-fully-badge--auto {
     color: var(--warn);
-    background: rgba(var(--warn-rgb), 0.12);
-    border-color: rgba(var(--warn-rgb), 0.25);
+    background: rgba(var(--warn-rgb), 0.1);
+    border-color: rgba(var(--warn-rgb), 0.3);
 }
 
 .order-qty-all {
@@ -984,20 +984,20 @@
     font: 600 0.78rem 'Inter', sans-serif;
     border: 1px solid var(--border-glass);
     border-radius: 5px;
-    background: rgba(var(--danger-rgb), 0.12);
+    background: rgba(var(--danger-rgb), 0.1);
     color: rgba(var(--danger-rgb), 0.6);
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s, border-color 0.2s;
     line-height: 1.4;
 }
 .zt-toggle-btn.active {
-    background: rgba(var(--success-rgb), 0.18);
+    background: rgba(var(--success-rgb), 0.2);
     color: var(--success);
     border-color: rgba(var(--success-rgb), 0.4);
 }
 .zt-toggle-btn:hover:not(.active) {
     background: rgba(var(--danger-rgb), 0.2);
-    border-color: rgba(var(--danger-rgb), 0.35);
+    border-color: rgba(var(--danger-rgb), 0.3);
 }
 
 /* Checkbox w ofercie */

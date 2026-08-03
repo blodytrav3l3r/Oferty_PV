@@ -10,7 +10,7 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
     if (oldOverlay) oldOverlay.remove();
 
     const html = `
-    <div style="background:var(--bg-secondary, var(--slate-800)); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(var(--danger-rgb), 0.25); box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5);">
+    <div style="background:var(--bg-secondary, var(--slate-800)); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(var(--danger-rgb), 0.3); box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5);">
         <h3 id="pehd-konus-title" style="margin-top:0; color:var(--danger-hover); display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
             <i data-lucide="alert-circle" style="width:24px;height:24px;" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
         </h3>

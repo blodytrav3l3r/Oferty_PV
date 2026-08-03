@@ -121,21 +121,21 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             tdBaseStyle +
             'background:' +
             rowBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
-            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.7);" /></td>';
+            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.6);" /></td>';
         /* AUTO/MANUAL */
         let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
-        let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.25)';
+        let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
         let autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         html +=
             '<td style="' +
             tdBaseStyle +
             'background:' +
             rowBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
             wIdx +
@@ -160,7 +160,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:' +
             (isAuto ? 'pointer' : 'not-allowed') +
             ';background:' +
-            (isAuto ? 'rgba(var(--accent-rgb), 0.35)' : 'rgba(var(--slate-500-rgb), 0.15)') +
+            (isAuto ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--slate-500-rgb), 0.15)') +
             ';color:' +
             (isAuto ? 'var(--accent-text-light)' : 'var(--slate-500)') +
             ';border:1px solid ' +
@@ -175,7 +175,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             rowBg +
-            ';text-align:center;color:var(--slate-500);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.08);min-width:32px;">' +
+            ';text-align:center;color:var(--slate-500);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">' +
             (idx + 1) +
             '</td>';
         /* Nazwa */
@@ -186,7 +186,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             rowBg +
-            ';border-right:1px solid rgba(var(--white-rgb), 0.08);"><input type="text" value="' +
+            ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" value="' +
             escapeHtml(well.name).replace(/"/g, '&quot;') +
             '" onchange="excelOnNameChange(' +
             wIdx +
@@ -494,13 +494,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.7);opacity:0.3;" /></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.6);opacity:0.3;" /></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.06);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -508,7 +508,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:var(--slate-700);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.08);min-width:32px;">\u2014</td>';
+        ';text-align:center;color:var(--slate-700);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
     html +=
         '<td style="' +
         tdEmptyStyle +

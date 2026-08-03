@@ -197,7 +197,7 @@ function renderClientsDbList(query) {
         tr.style.cssText =
             'border-bottom:1px solid var(--border-glass); cursor:pointer; transition:background 0.15s;';
         tr.onmouseenter = () => {
-            tr.style.background = 'rgba(var(--accent-rgb), 0.06)';
+            tr.style.background = 'rgba(var(--accent-rgb), 0.05)';
         };
         tr.onmouseleave = () => {
             tr.style.background = 'transparent';

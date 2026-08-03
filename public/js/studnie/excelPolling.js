@@ -53,7 +53,9 @@ function _excelSyncAutoManualUI() {
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
         let isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
-        btnMode.style.background = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.25)';
+        btnMode.style.background = isAuto
+            ? 'rgba(var(--accent-rgb), 0.2)'
+            : 'rgba(var(--warn-rgb), 0.3)';
         btnMode.style.color = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         btnMode.title = isAuto
             ? 'Auto (klik = przełącz na Manual)'
@@ -62,7 +64,9 @@ function _excelSyncAutoManualUI() {
             btnRun.disabled = !isAuto;
             btnRun.style.opacity = isAuto ? '1' : '0.4';
             btnRun.style.cursor = isAuto ? 'pointer' : 'not-allowed';
-            btnRun.style.background = isAuto ? 'rgba(var(--accent-rgb), 0.35)' : 'rgba(var(--slate-500-rgb), 0.15)';
+            btnRun.style.background = isAuto
+                ? 'rgba(var(--accent-rgb), 0.3)'
+                : 'rgba(var(--slate-500-rgb), 0.15)';
             btnRun.style.color = isAuto ? 'var(--accent-text-light)' : 'var(--slate-500)';
             btnRun.style.borderColor = isAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)';
             btnRun.title = isAuto

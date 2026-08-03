@@ -40,8 +40,8 @@ body.spa-view-loading .spa-module-iframe[style*='display:block'] {
     opacity: 0;
     visibility: hidden;
     background:
-        radial-gradient(circle at 50% 26%, rgba(var(--accent-rgb), 0.14), transparent 34%),
-        rgba(var(--slate-950-rgb), 0.82);
+        radial-gradient(circle at 50% 26%, rgba(var(--accent-rgb), 0.15), transparent 34%),
+        rgba(var(--slate-950-rgb), 0.8);
     backdrop-filter: blur(10px);
     transition:
         opacity 0.2s ease,
@@ -58,9 +58,9 @@ body.spa-view-loading .spa-module-iframe[style*='display:block'] {
     align-items: center;
     gap: 0.8rem;
     padding: 0.85rem 1.1rem;
-    border: 1px solid rgba(var(--accent-rgb), 0.24);
+    border: 1px solid rgba(var(--accent-rgb), 0.2);
     border-radius: 10px;
-    background: rgba(var(--slate-950-rgb), 0.78);
+    background: rgba(var(--slate-950-rgb), 0.8);
     color: var(--blue);
     font:
         700 0.82rem/1.2 Inter,
@@ -72,7 +72,7 @@ body.spa-view-loading .spa-module-iframe[style*='display:block'] {
 .spa-transition-spinner {
     width: 18px;
     height: 18px;
-    border: 2px solid rgba(191, 219, 254, 0.24);
+    border: 2px solid rgba(191, 219, 254, 0.2);
     border-top-color: var(--accent2);
     border-radius: 50%;
     animation: spaSpin 0.75s linear infinite;

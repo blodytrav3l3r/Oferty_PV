@@ -93,7 +93,7 @@ function renderOfferItems() {
             let rowClass = '';
             let rowStyle = '';
             if (item.autoAdded) {
-                rowStyle = 'background:rgba(var(--warn-rgb), 0.04)';
+                rowStyle = 'background:rgba(var(--warn-rgb), 0.05)';
             } else if (is1m) {
                 rowClass = 'row-1m';
             }
@@ -161,7 +161,7 @@ function renderOfferItems() {
                     '<td class="text-center"><span class="order-qty-all">&mdash;</span></td>';
             }
             const orderedRowStyle = isOrdered
-                ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.04);'
+                ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.05);'
                 : '';
             const lockAttr = isLocked ? ' disabled' : '';
 

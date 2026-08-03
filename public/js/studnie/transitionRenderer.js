@@ -154,7 +154,8 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     // Kolumna dopłata (non-discountable)
     const doplataVal = item.doplata != null ? item.doplata : 0;
-    const doplataColor = doplataVal > 0 ? 'var(--success)' : doplataVal < 0 ? 'var(--danger)' : 'var(--warn-hover)';
+    const doplataColor =
+        doplataVal > 0 ? 'var(--success)' : doplataVal < 0 ? 'var(--danger)' : 'var(--warn-hover)';
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
@@ -172,7 +173,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
             : '';
 
     const extraPadding = opts.drillingBasePrice > 0 && opts.drillingProd ? '0.85rem' : '0.4rem';
-    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30,58,138,0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
+    return `<div ${dragAttrs} style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid ${flow.border}; border-radius:10px; min-height:64px; min-width: max-content; padding:0.4rem 0.45rem ${extraPadding} 0.45rem; box-sizing:border-box; position:relative; transition:all 0.2s ease; margin-bottom:0.4rem; display:flex; align-items:center; gap:0.5rem; ${cursorStyle}" ${highlightAttrs}>
       <!-- FLOW TYPE BUTTON -->
       <button onclick="openFlowTypePopup(${globalIndex})" title="Kliknij by zmienić na Wlot/Wylot" style="position:relative; background:${flow.bg}; color:${flow.color}; border:1px solid ${flow.border}; border-radius:8px; padding:0.15rem 0.4rem; display:flex; flex-direction:column; align-items:center; cursor:pointer; width:55px; min-width:55px; transition:all 0.2s;">
         ${numDisplay}

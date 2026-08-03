@@ -36,7 +36,7 @@ body.index-page::before {
     left: -10%;
     width: 60%;
     height: 60%;
-    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.07) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(var(--accent-rgb), 0.05) 0%, transparent 70%);
     pointer-events: none;
     z-index: 0;
     transition: opacity 0.6s;
@@ -44,7 +44,7 @@ body.index-page::before {
 
 body.index-page.logged-in::before {
     background:
-        radial-gradient(circle at 30% 20%, rgba(var(--accent-rgb), 0.08) 0%, transparent 60%),
+        radial-gradient(circle at 30% 20%, rgba(var(--accent-rgb), 0.1) 0%, transparent 60%),
         radial-gradient(circle at 70% 80%, rgba(var(--success-rgb), 0.05) 0%, transparent 50%);
 }
 
@@ -165,7 +165,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     border-color: var(--accent-border-dim);
     box-shadow:
         var(--shadow-lg),
-        0 0 30px rgba(var(--accent-rgb), 0.12);
+        0 0 30px rgba(var(--accent-rgb), 0.1);
 }
 
 .login-box h3 {
@@ -236,7 +236,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
         135deg,
         transparent 40%,
-        rgba(var(--white-rgb), 0.12) 50%,
+        rgba(var(--white-rgb), 0.1) 50%,
         transparent 60%
     );
     transform: translateX(-100%);
@@ -293,7 +293,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: 1rem;
     font-weight: 800;
     color: var(--white);
-    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.25);
+    box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3);
 }
 
 .user-info-text {
@@ -360,7 +360,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .btn-hero.btn-hero-danger {
     color: var(--danger-hover);
-    background: rgba(var(--danger-rgb), 0.08);
+    background: rgba(var(--danger-rgb), 0.1);
     border: 1px solid rgba(var(--danger-rgb), 0.15);
 }
 
@@ -557,9 +557,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    background: rgba(var(--success-rgb), 0.12);
+    background: rgba(var(--success-rgb), 0.1);
     color: var(--success-hover);
-    border: 1px solid rgba(var(--success-rgb), 0.25);
+    border: 1px solid rgba(var(--success-rgb), 0.3);
     padding: 0.3rem 0.7rem;
     border-radius: 20px;
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
@@ -614,7 +614,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     left: 0;
     right: 0;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.06), transparent);
+    background: linear-gradient(90deg, transparent, rgba(var(--white-rgb), 0.05), transparent);
 }
 
 .admin-stat-card:hover {
@@ -778,7 +778,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .admin-action-btn:hover {
-    background: rgba(var(--white-rgb), 0.06);
+    background: rgba(var(--white-rgb), 0.05);
     border-color: rgba(var(--white-rgb), 0.15);
 }
 
@@ -839,7 +839,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .token-badge {
     display: inline-block;
-    background: rgba(var(--white-rgb), 0.06);
+    background: rgba(var(--white-rgb), 0.05);
     border: 1px solid var(--border-glass);
     padding: 0.15rem 0.5rem;
     border-radius: 4px;
@@ -1090,7 +1090,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-users-list-compact label:hover {
-    background: rgba(var(--white-rgb), 0.06);
+    background: rgba(var(--white-rgb), 0.05);
 }
 
 .sub-user-checkbox {
@@ -1111,7 +1111,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-user-checkbox:hover {
-    background: rgba(var(--white-rgb), 0.06);
+    background: rgba(var(--white-rgb), 0.05);
 }
 
 /* Subordinates enhancement */

@@ -45,7 +45,7 @@ function renderPrecoPriceList() {
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
         html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius:8px; overflow:hidden;">`;
-        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.08); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:var(--danger);">`;
+        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.1); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:var(--danger);">`;
         html += `<span><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
         html += `<span style="font-size:0.7rem; color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
         html += `</div>`;

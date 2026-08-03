@@ -130,7 +130,7 @@ function renderWellConfig() {
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
-                <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(var(--black-rgb), 0.25); padding:2px 4px; border-radius:4px; min-width:24px;">
+                <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(var(--black-rgb), 0.3); padding:2px 4px; border-radius:4px; min-width:24px;">
                   <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
                   <span style="font-size:0.65rem; line-height:1; color:var(--text-primary); font-weight:800; margin:2px 0;">${index + 1}</span>
                   <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
@@ -167,7 +167,9 @@ function renderWellConfig() {
                                     : `${fracPerc ? fracPerc + '% uzup.' : 'Uzup.'}`;
                             }
                             const isPrecoDisabled = item.disablePreco;
-                            const precoColor = isPrecoDisabled ? 'var(--text-muted)' : 'var(--danger)';
+                            const precoColor = isPrecoDisabled
+                                ? 'var(--text-muted)'
+                                : 'var(--danger)';
                             const precoBg = isPrecoDisabled
                                 ? 'rgba(var(--white-rgb), 0.05)'
                                 : 'rgba(var(--danger-rgb), 0.1)';
@@ -185,7 +187,9 @@ function renderWellConfig() {
 
                         if (pehdType && pehdType !== 'brak' && p.doplataPEHD) {
                             const isPehdDisabled = item.disablePehd;
-                            const pehdColor = isPehdDisabled ? 'var(--text-muted)' : 'var(--blue-alt)';
+                            const pehdColor = isPehdDisabled
+                                ? 'var(--text-muted)'
+                                : 'var(--blue-alt)';
                             const pehdBg = isPehdDisabled
                                 ? 'rgba(var(--white-rgb), 0.05)'
                                 : 'rgba(var(--blue-alt-rgb), 0.1)';
@@ -232,16 +236,16 @@ function renderWellConfig() {
 
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
-                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
+                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.3); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
                 <span style="color:rgba(var(--white-rgb), 0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
-                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.25); font-weight:800; letter-spacing:0.6px; text-align:left;">CENA:</span>
+                <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.3); font-weight:800; letter-spacing:0.6px; text-align:left;">CENA:</span>
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.06); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius:6px; cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.4)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.06)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
+                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius:6px; cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.4)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
               </div>
             </div>
 
@@ -274,7 +278,7 @@ function renderWellConfig() {
                 const precoMult = 1 - discPreco / 100;
                 const precoFinal = precoCalc.suma * precoMult;
 
-                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(var(--danger-rgb), 0.12), rgba(var(--accent2-rgb), 0.08)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius:10px;">`;
+                html += `<div style="margin-top:0.5rem; padding:0.6rem 0.7rem; background:linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--accent2-rgb), 0.1)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius:10px;">`;
                 html += `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">`;
                 html += `<span style="font-weight:800; font-size:0.85rem; color:var(--danger);">🔧 Wkładka ${kinetaLabel}</span>`;
                 html += `<span style="font-weight:800; font-size:1rem; color:var(--success);">${fmtInt(precoFinal)} PLN</span>`;

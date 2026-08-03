@@ -5,23 +5,23 @@
 
 :root {
     --upm-accent: #2563eb;
-    --upm-bg: #1e293b;
-    --upm-bg-section: rgba(255, 255, 255, 0.03);
-    --upm-border: #334155;
-    --upm-border-subtle: rgba(255, 255, 255, 0.08);
-    --upm-text: #f1f5f9;
-    --upm-text-muted: #94a3b8;
-    --upm-text-dim: #64748b;
-    --upm-offer: #818cf8;
-    --upm-orderCurrent: #34d399;
-    --upm-orders: #fbbf24;
-    --upm-karta: #34d399;
+    --upm-bg: var(--slate-800);
+    --upm-bg-section: rgba(var(--white-rgb), 0.05);
+    --upm-border: var(--slate-700);
+    --upm-border-subtle: rgba(var(--white-rgb), 0.1);
+    --upm-text: var(--slate-100);
+    --upm-text-muted: var(--slate-400);
+    --upm-text-dim: var(--slate-500);
+    --upm-offer: var(--accent-hover);
+    --upm-orderCurrent: var(--success-hover);
+    --upm-orders: var(--warn-hover);
+    --upm-karta: var(--success-hover);
 }
 
 .upm-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(var(--black-rgb), 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -31,7 +31,7 @@
 }
 
 .upm-modal {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(180deg, var(--slate-800) 0%, var(--slate-950) 100%);
     border: 1px solid var(--upm-border);
     border-radius: 16px;
     width: 560px;
@@ -39,7 +39,7 @@
     max-height: 85vh;
     padding: 1.75rem 2rem 1.5rem;
     text-align: left;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+    box-shadow: 0 20px 50px rgba(var(--black-rgb), 0.6), 0 0 0 1px rgba(var(--white-rgb), 0.05) inset;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -104,8 +104,8 @@
 }
 
 .upm-close:hover {
-    background: rgba(239, 68, 68, 0.15);
-    border-color: rgba(239, 68, 68, 0.4);
+    background: rgba(var(--danger-rgb), 0.15);
+    border-color: rgba(var(--danger-rgb), 0.4);
     color: #fca5a5;
 }
 
@@ -161,7 +161,7 @@
 }
 
 .upm-section:hover {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(var(--white-rgb), 0.1);
 }
 
 .upm-section-header {
@@ -196,7 +196,7 @@
 .upm-badge {
     font-size: 0.72rem;
     font-weight: 700;
-    color: #a5b4fc;
+    color: var(--accent-text);
     background: rgba(165, 180, 252, 0.15);
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
@@ -237,29 +237,29 @@
 }
 
 .upm-btn-pdf {
-    background: rgba(239, 68, 68, 0.18);
+    background: rgba(var(--danger-rgb), 0.2);
     color: #fca5a5;
-    border-color: rgba(239, 68, 68, 0.55);
+    border-color: rgba(var(--danger-rgb), 0.6);
 }
 
 .upm-btn-pdf:hover {
-    background: rgba(239, 68, 68, 0.32);
-    border-color: rgba(239, 68, 68, 0.75);
+    background: rgba(var(--danger-rgb), 0.3);
+    border-color: rgba(var(--danger-rgb), 0.8);
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.25);
+    box-shadow: 0 6px 14px rgba(var(--danger-rgb), 0.3);
 }
 
 .upm-btn-docx {
-    background: rgba(59, 130, 246, 0.18);
+    background: rgba(var(--blue-rgb), 0.2);
     color: #93c5fd;
-    border-color: rgba(59, 130, 246, 0.55);
+    border-color: rgba(var(--blue-rgb), 0.6);
 }
 
 .upm-btn-docx:hover {
-    background: rgba(59, 130, 246, 0.32);
-    border-color: rgba(59, 130, 246, 0.75);
+    background: rgba(var(--blue-rgb), 0.3);
+    border-color: rgba(var(--blue-rgb), 0.8);
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(59, 130, 246, 0.25);
+    box-shadow: 0 6px 14px rgba(var(--blue-rgb), 0.3);
 }
 
 .upm-btn:active {
@@ -287,9 +287,9 @@
 .upm-btn-secondary {
     padding: 0.55rem 1.4rem;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #cbd5e1;
+    background: rgba(var(--white-rgb), 0.05);
+    border: 1px solid rgba(var(--white-rgb), 0.1);
+    color: var(--slate-300);
     cursor: pointer;
     font-size: 0.875rem;
     font-weight: 600;
@@ -298,7 +298,7 @@
 }
 
 .upm-btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(var(--white-rgb), 0.1);
     color: #fff;
 }
 
@@ -336,21 +336,21 @@
 }
 
 .upm-row-orders {
-    background: rgba(251, 191, 36, 0.08);
-    border-color: rgba(251, 191, 36, 0.18);
+    background: rgba(251, 191, 36, 0.1);
+    border-color: rgba(251, 191, 36, 0.2);
 }
 .upm-row-orders:hover {
-    background: rgba(251, 191, 36, 0.13);
-    border-color: rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.3);
 }
 
 .upm-row-karta {
-    background: rgba(52, 211, 153, 0.08);
-    border-color: rgba(52, 211, 153, 0.18);
+    background: rgba(52, 211, 153, 0.1);
+    border-color: rgba(52, 211, 153, 0.2);
 }
 .upm-row-karta:hover {
-    background: rgba(52, 211, 153, 0.13);
-    border-color: rgba(52, 211, 153, 0.35);
+    background: rgba(52, 211, 153, 0.15);
+    border-color: rgba(52, 211, 153, 0.3);
 }
 
 .upm-row-label {
@@ -411,9 +411,9 @@
     flex-shrink: 0;
 }
 
-.upm-status-new { background: rgba(96, 165, 250, 0.2); color: #93c5fd; border: 1px solid rgba(96, 165, 250, 0.35); }
-.upm-status-ordered { background: rgba(251, 191, 36, 0.2); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.35); }
-.upm-status-in_production { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.35); }
-.upm-status-available { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.35); }
-.upm-status-completed { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.35); }
-.upm-status-cancelled { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.35); }
+.upm-status-new { background: rgba(96, 165, 250, 0.2); color: #93c5fd; border: 1px solid rgba(96, 165, 250, 0.3); }
+.upm-status-ordered { background: rgba(251, 191, 36, 0.2); color: #fcd34d; border: 1px solid rgba(251, 191, 36, 0.3); }
+.upm-status-in_production { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.3); }
+.upm-status-available { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.3); }
+.upm-status-completed { background: rgba(var(--slate-400-rgb), 0.2); color: var(--slate-300); border: 1px solid rgba(var(--slate-400-rgb), 0.3); }
+.upm-status-cancelled { background: rgba(var(--danger-rgb), 0.2); color: #fca5a5; border: 1px solid rgba(var(--danger-rgb), 0.3); }

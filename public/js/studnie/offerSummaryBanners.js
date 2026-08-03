@@ -35,7 +35,7 @@ function renderPartialOrderProgress() {
     if (progress.ordered === 0 && availableCount === wells.length) return '';
 
     const progressColor = progress.percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
-    return `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb), 0.08); border:1px solid rgba(var(--blue-rgb), 0.2); border-radius:8px;">
+    return `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb), 0.1); border:1px solid rgba(var(--blue-rgb), 0.2); border-radius:8px;">
         <div class="flex-1">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
@@ -45,7 +45,7 @@ function renderPartialOrderProgress() {
                     ${progress.ordered} / ${progress.total} studni (${progress.percent}%)
                 </span>
             </div>
-            <div style="height:6px; background:rgba(var(--white-rgb), 0.08); border-radius:3px; overflow:hidden;">
+            <div style="height:6px; background:rgba(var(--white-rgb), 0.1); border-radius:3px; overflow:hidden;">
                 <div style="height:100%; width:${progress.percent}%; background:${progressColor}; border-radius:3px; transition:width 0.3s ease;"></div>
             </div>
         </div>

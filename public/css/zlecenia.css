@@ -106,11 +106,11 @@
     gap: 0.3rem;
 }
 .zlecenia-filter-tab:hover {
-    background: rgba(var(--white-rgb), 0.04);
+    background: rgba(var(--white-rgb), 0.05);
     color: var(--text-primary);
 }
 .zlecenia-filter-tab.active {
-    background: rgba(var(--accent-rgb), 0.12);
+    background: rgba(var(--accent-rgb), 0.1);
     border-color: rgba(var(--accent-rgb), 0.4);
     color: var(--accent-hover);
 }
@@ -152,7 +152,7 @@
 }
 .zlecenia-table td {
     padding: 0.8rem 1rem;
-    border-bottom: 1px solid rgba(var(--white-rgb), 0.03);
+    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
     color: var(--text-primary);
     vertical-align: middle;
     transition: background-color 0.2s;
@@ -162,7 +162,7 @@
     position: relative;
 }
 .zlecenia-table tbody tr:hover {
-    background: rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.1);
     box-shadow: inset 4px 0 0 var(--accent);
 }
 .zlecenia-table tbody tr:hover td {
@@ -211,7 +211,7 @@
 
 /* Odznaka zamówienia sprzedaży */
 .sales-order-badge {
-    background: rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.1);
     color: var(--accent-hover);
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     padding: 0.2rem 0.5rem;
@@ -240,7 +240,7 @@
     border-color: rgba(var(--blue-alt-rgb), 0.2);
 }
 .person-creator {
-    background: rgba(var(--slate-400-rgb), 0.08);
+    background: rgba(var(--slate-400-rgb), 0.1);
     color: var(--text-secondary);
     border-color: rgba(var(--slate-400-rgb), 0.15);
 }
@@ -258,7 +258,7 @@
     color: var(--danger-hover);
 }
 .action-btn-delete:hover {
-    background: rgba(var(--danger-rgb), 0.12);
+    background: rgba(var(--danger-rgb), 0.1);
 }
 
 /* Well name + project */
@@ -299,7 +299,7 @@
     padding: 0.8rem 1.2rem;
     background: linear-gradient(
         135deg,
-        rgba(var(--accent-rgb), 0.25) 0%,
+        rgba(var(--accent-rgb), 0.3) 0%,
         rgba(var(--accent-rgb), 0.15) 100%
     );
     border: 1px solid rgba(var(--accent-rgb), 0.4);
@@ -344,7 +344,7 @@
     padding: 0.4rem 0.8rem;
     border-radius: 8px;
     border: 1px solid var(--border-glass);
-    background: rgba(var(--white-rgb), 0.04);
+    background: rgba(var(--white-rgb), 0.05);
     color: var(--text-primary);
     font-size: 0.75rem;
     font-weight: 700;
@@ -363,14 +363,14 @@
     color: var(--blue-alt);
 }
 .batch-btn-print:hover {
-    background: rgba(var(--blue-alt-rgb), 0.12);
+    background: rgba(var(--blue-alt-rgb), 0.1);
 }
 .batch-btn-label {
     border-color: rgba(var(--accent2-rgb), 0.4);
     color: var(--purple-alt);
 }
 .batch-btn-label:hover {
-    background: rgba(var(--accent2-rgb), 0.12);
+    background: rgba(var(--accent2-rgb), 0.1);
 }
 
 /* Widok responsywny — Kartoteka Zleceń */

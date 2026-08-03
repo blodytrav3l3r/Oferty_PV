@@ -14,10 +14,10 @@
 }
 
 .modern-offer-card:hover {
-    border-color: rgba(var(--accent-rgb), 0.35);
+    border-color: rgba(var(--accent-rgb), 0.3);
     box-shadow:
-        0 8px 16px rgba(var(--accent-rgb), 0.12),
-        0 2px 4px rgba(var(--black-rgb), 0.08);
+        0 8px 16px rgba(var(--accent-rgb), 0.1),
+        0 2px 4px rgba(var(--black-rgb), 0.1);
 }
 
 .modern-offer-card:hover .offer-icon-wrapper {
@@ -187,7 +187,7 @@
     gap: 0.25rem;
     padding: 0.2rem 0.55rem;
     border-radius: 6px;
-    background: rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.1);
     border: 1px solid rgba(var(--accent-rgb), 0.15);
     font-size: 0.72rem;
     font-weight: 500;
@@ -218,9 +218,9 @@
     gap: 0.4rem;
     margin: 0 0 0.5rem;
     padding: 0.5rem 0.65rem;
-    border: 1px solid rgba(var(--success-rgb), 0.18);
+    border: 1px solid rgba(var(--success-rgb), 0.2);
     border-radius: 8px;
-    background: rgba(var(--slate-950-rgb), 0.52);
+    background: rgba(var(--slate-950-rgb), 0.5);
 }
 
 .offer-order-row {
@@ -230,9 +230,9 @@
     gap: 0.5rem;
     min-height: 36px;
     padding: 0.35rem 0.5rem;
-    border: 1px solid rgba(var(--slate-400-rgb), 0.12);
+    border: 1px solid rgba(var(--slate-400-rgb), 0.1);
     border-radius: 6px;
-    background: rgba(var(--slate-800-rgb), 0.58);
+    background: rgba(var(--slate-800-rgb), 0.6);
 }
 
 .offer-order-main {
@@ -261,7 +261,7 @@
     height: 24px;
     flex: 0 0 24px;
     border-radius: 6px;
-    background: rgba(var(--success-rgb), 0.12);
+    background: rgba(var(--success-rgb), 0.1);
     border: 1px solid rgba(var(--success-rgb), 0.2);
     color: var(--success-hover);
 }
@@ -327,13 +327,13 @@
 }
 
 .status-badge.success {
-    background: rgba(var(--success-rgb), 0.12);
-    border: 1px solid rgba(var(--success-rgb), 0.25);
+    background: rgba(var(--success-rgb), 0.1);
+    border: 1px solid rgba(var(--success-rgb), 0.3);
     color: var(--success-hover);
 }
 
 .status-badge.neutral {
-    background: rgba(var(--slate-500-rgb), 0.12);
+    background: rgba(var(--slate-500-rgb), 0.1);
     border: 1px solid rgba(var(--slate-500-rgb), 0.2);
     color: var(--text-secondary);
 }
@@ -354,7 +354,7 @@
     height: 34px;
     border-radius: 8px;
     border: none;
-    background: rgba(var(--accent-rgb), 0.08);
+    background: rgba(var(--accent-rgb), 0.1);
     border: 1px solid rgba(var(--accent-rgb), 0.15);
     color: var(--accent-text);
     cursor: pointer;
@@ -392,7 +392,7 @@
 }
 
 .action-btn.primary:hover {
-    box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.35);
+    box-shadow: 0 3px 10px rgba(var(--accent-rgb), 0.3);
 }
 
 .action-btn.secondary {
