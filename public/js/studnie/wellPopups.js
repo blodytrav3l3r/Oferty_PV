@@ -41,16 +41,17 @@ function openZakonczeniePopup() {
         pierscien_odciazajacy: 'Pierścień Odciążający'
     };
 
-    const typeColors = {
-        konus: 'rgba(124,58,237,0.15)',
-        plyta_din: 'rgba(30,58,95,0.3)',
-        plyta_najazdowa: 'rgba(30,58,95,0.3)',
-        plyta_zamykajaca: 'rgba(30,58,95,0.3)',
-        pierscien_odciazajacy: 'rgba(30,58,95,0.3)'
-    };
-
     const currentZak = well.zakonczenie;
     const dnLabel = dn === 'styczna' ? 'styczna (1000)' : dn;
+
+    const zakClosureColor = (componentType) => {
+        if (typeof SVG_COLORS !== 'undefined' && SVG_COLORS[componentType]) {
+            return SVG_COLORS[componentType];
+        }
+        return typeof SVG_COLORS !== 'undefined' && SVG_COLORS.fallback
+            ? SVG_COLORS.fallback
+            : '#334155';
+    };
 
     const renderTile = (p) => {
         const isActive = currentZak === p.id;
@@ -58,70 +59,46 @@ function openZakonczeniePopup() {
         const wkladkaPEHDZwienczenieActive =
             well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
         const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
-        const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
+        const accent = zakClosureColor(p.componentType);
         const icon = typeIcons[p.componentType] || 'circle';
         const typeLabel = typeLabels[p.componentType] || p.componentType;
+        const classList = ['recalc-tile', 'zak-tile'];
+        if (isActive) classList.push('active');
+        if (isDisabled) classList.push('zak-tile-blocked');
 
         if (isDisabled) {
-            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
-                padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
-                border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
-            ">
-                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;">
-                    <i data-lucide="${icon}" style="width:16px; height:16px; color:var(--text-muted);"></i>
-                    <span style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</span>
-                    <span style="margin-left:auto; font-size:0.55rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> ZABLOKOWANE</span>
-                </div>
-                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${p.name}</div>
-                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.2rem;">Brak możliwości wykonania wkładki PEHD</div>
-            </div>`;
+            return `
+            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" onclick="window.showKonusPehdResolverModal(currentWellIndex)">
+                <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
+                <span class="zak-tile-name">${escapeHtml(p.name)}</span>
+                <span class="zak-tile-note"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA &middot; Brak możliwości wykonania wkładki PEHD</span>
+            </button>`;
         }
 
-        return `<div onclick="selectZakonczenie('${p.id}')" style="
-            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
-            border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
-            background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
-            ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
-                <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
-                <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
-                ${isActive ? '<span style="margin-left:auto; font-size:0.55rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
-            </div>
-            <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">${p.name}</div>
-            <div style="display:flex; justify-content:space-between; margin-top:0.3rem; font-size:0.62rem; color:var(--text-muted);">
-                ${p.height ? '<span>H: ' + p.height + 'mm</span>' : '<span></span>'}
-                <span style="color:var(--success); font-weight:600;">${fmtInt(p.price)} PLN</span>
-            </div>
-        </div>`;
+        return `
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" onclick="selectZakonczenie('${escapeHtml(p.id)}')">
+            <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
+            <span class="zak-tile-name">${escapeHtml(p.name)}</span>
+            <span class="zak-tile-meta">
+                <span class="zak-tile-height">${p.height ? 'H: ' + escapeHtml(p.height) + ' mm' : ''}</span>
+                <span class="zak-tile-price">${fmtInt(p.price)} PLN</span>
+            </span>
+            <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
+        </button>`;
     };
 
     let tilesHtml = '';
     if (candidates.length === 0) {
-        tilesHtml =
-            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">Brak elementów zakończenia dla DN ' +
-            dnLabel +
-            '</div>';
+        tilesHtml = `<div class="recalc-empty">Brak elementów zakończenia dla DN ${escapeHtml(dnLabel)}</div>`;
     } else {
         const isAutoActive = !currentZak;
-        const sectionStyle =
-            'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
 
-        tilesHtml += `<div onclick="selectZakonczenie(null)" style="
-            grid-column:1/ -1;
-            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
-            border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
-            background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
-            ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="display:flex; align-items:center; gap:0.4rem;">
-                <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
-                <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${effectiveDn})</span>
-            </div>
-            <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${effectiveDn}</div>
-        </div>`;
+        tilesHtml += `
+        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:#a78bfa;" aria-pressed="${isAutoActive}" onclick="selectZakonczenie(null)">
+            <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(effectiveDn)})</span>
+            <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(effectiveDn)}</span>
+            <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
+        </button>`;
 
         const konuses = candidates.filter((p) => p.componentType === 'konus');
         const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
@@ -132,21 +109,19 @@ function openZakonczeniePopup() {
         );
 
         if (konuses.length) {
-            tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
+            tilesHtml += '<div class="recalc-section-label">Konus</div>';
             konuses.forEach((p) => {
                 tilesHtml += renderTile(p);
             });
-            if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
         }
         if (dinPlates.length) {
-            tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
+            tilesHtml += '<div class="recalc-section-label">Płyta DIN</div>';
             dinPlates.forEach((p) => {
                 tilesHtml += renderTile(p);
             });
-            if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
         }
         if (odcParts.length) {
-            tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
+            tilesHtml += '<div class="recalc-section-label">Płyta / Pierścień Odciążający</div>';
             odcParts.forEach((p) => {
                 tilesHtml += renderTile(p);
             });
@@ -157,24 +132,23 @@ function openZakonczeniePopup() {
         id: 'zakonczenie-modal',
         titleId: 'zakonczenie-title',
         html: `
-    <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; display:flex; align-items:flex-start; gap:0.8rem;">
-        <div class="flex-1">
-          <h3 id="zakonczenie-title" style="font-size:1.05rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:0.4rem;">
-            <i data-lucide="chevron-down" style="width:18px; height:18px;"></i> Zakończenie studni
-            <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">DN${dnLabel}</span>
-          </h3>
-          <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
-        </div>
+    <div class="modal recalc-modal zak-modal">
+      <div class="modal-header">
+        <h3 id="zakonczenie-title"><i data-lucide="chevron-down" aria-hidden="true"></i> Zakończenie studni <span class="zak-modal-badge">DN${escapeHtml(dnLabel)}</span></h3>
+        <button type="button" class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-        ${tilesHtml}
+      <div class="recalc-modal-body">
+        <p class="recalc-modal-desc">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
+        <div class="recalc-tile-grid">${tilesHtml}</div>
       </div>
-      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
-        <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+      <div class="recalc-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
       </div>
     </div>`
     });
+
+    const root = document.getElementById('zakonczenie-modal');
+    if (root && window.lucide) window.lucide.createIcons({ root });
 }
 
 // updateZakonczenieButton, updateRedukcjaButton, onRedukcjaMinChange,
@@ -217,81 +191,61 @@ function openRedukcjaZakonczeniePopup() {
         plyta_zamykajaca: 'Płyta Odciążająca',
         pierscien_odciazajacy: 'Pierścień Odciążający'
     };
-    const typeColors = {
-        konus: 'rgba(124,58,237,0.15)',
-        plyta_din: 'rgba(30,58,95,0.3)',
-        plyta_najazdowa: 'rgba(30,58,95,0.3)',
-        plyta_zamykajaca: 'rgba(30,58,95,0.3)',
-        pierscien_odciazajacy: 'rgba(30,58,95,0.3)'
-    };
 
     const currentZak = well.redukcjaZakonczenie;
     const wkladkaPEHDZwienczenieActive =
         well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
+
+    const zakClosureColor = (componentType) => {
+        if (typeof SVG_COLORS !== 'undefined' && SVG_COLORS[componentType]) {
+            return SVG_COLORS[componentType];
+        }
+        return typeof SVG_COLORS !== 'undefined' && SVG_COLORS.fallback
+            ? SVG_COLORS.fallback
+            : '#334155';
+    };
 
     const renderTile = (p, overrideLabel = null) => {
         if (!p) return '';
         const isKonus = p.componentType === 'konus';
         const isDisabled = isKonus && wkladkaPEHDZwienczenieActive;
         const isActive = currentZak === p.id;
-        const typeColor = typeColors[p.componentType] || 'rgba(255,255,255,0.05)';
+        const accent = zakClosureColor(p.componentType);
         const icon = typeIcons[p.componentType] || 'circle';
         const typeLabel = overrideLabel || typeLabels[p.componentType] || p.componentType;
+        const classList = ['recalc-tile', 'zak-tile'];
+        if (isActive) classList.push('active');
+        if (isDisabled) classList.push('zak-tile-blocked');
 
         if (isDisabled) {
-            return `<div onclick="window.showKonusPehdResolverModal(currentWellIndex)" style="
-                padding:0.7rem 0.9rem; border-radius:10px; cursor:not-allowed; opacity:0.5;
-                border:2px solid rgba(255,255,255,0.05); background:rgba(255,255,255,0.02);
-            ">
-                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;">
-                    <i data-lucide="${icon}" style="width:16px; height:16px; color:var(--text-muted);"></i>
-                    <span style="font-weight:700; font-size:0.82rem; color:var(--text-muted);">${typeLabel}</span>
-                    <span style="margin-left:auto; font-size:0.55rem; color:var(--warning); font-weight:700;"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA</span>
-                </div>
-                <div style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${p.name}</div>
-                <div style="font-size:0.6rem; color:var(--warning); margin-top:0.2rem;">Brak możliwości wkładki PEHD</div>
-            </div>`;
+            return `
+            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" onclick="window.showKonusPehdResolverModal(currentWellIndex)">
+                <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
+                <span class="zak-tile-name">${escapeHtml(p.name)}</span>
+                <span class="zak-tile-note"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA &middot; Brak możliwości wkładki PEHD</span>
+            </button>`;
         }
 
-        return `<div onclick="selectRedukcjaZakonczenie('${p.id}')" style="
-            padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
-            border:2px solid ${isActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
-            background:${isActive ? 'rgba(99,102,241,0.15)' : typeColor};
-            ${isActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-        " onmouseenter="if(!${isActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-           onmouseleave="if(!${isActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-            <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.25rem;">
-                <i data-lucide="${icon}" style="width:16px; height:16px; color:${isActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
-                <span style="font-weight:700; font-size:0.82rem; color:${isActive ? '#a78bfa' : 'var(--text-primary)'};">${typeLabel}</span>
-                ${isActive ? '<span style="margin-left:auto; font-size:0.55rem; color:#a78bfa; font-weight:700;"><i data-lucide="check" aria-hidden="true"></i> AKTYWNE</span>' : ''}
-            </div>
-            <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600;">${p.name}</div>
-            <div style="display:flex; justify-content:space-between; margin-top:0.3rem; font-size:0.62rem; color:var(--text-muted);">
-                ${p.height ? '<span>H: ' + p.height + 'mm</span>' : '<span></span>'}
-                <span style="color:var(--success); font-weight:600;">${fmtInt(p.price)} PLN</span>
-            </div>
-        </div>`;
+        return `
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" onclick="selectRedukcjaZakonczenie('${escapeHtml(p.id)}')">
+            <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
+            <span class="zak-tile-name">${escapeHtml(p.name)}</span>
+            <span class="zak-tile-meta">
+                <span class="zak-tile-height">${p.height ? 'H: ' + escapeHtml(p.height) + ' mm' : ''}</span>
+                <span class="zak-tile-price">${fmtInt(p.price)} PLN</span>
+            </span>
+            <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
+        </button>`;
     };
 
     let tilesHtml = '';
     const isAutoActive = !currentZak;
-    tilesHtml += `<div onclick="selectRedukcjaZakonczenie(null)" style="
-        grid-column:1/ -1;
-        padding:0.7rem 0.9rem; border-radius:10px; cursor:pointer; transition:all 0.15s;
-        border:2px solid ${isAutoActive ? 'rgba(99,102,241,0.6)' : 'rgba(255,255,255,0.08)'};
-        background:${isAutoActive ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)'};
-        ${isAutoActive ? 'box-shadow:0 0 12px rgba(99,102,241,0.2);' : ''}
-    " onmouseenter="if(!${isAutoActive})this.style.borderColor='rgba(99,102,241,0.3)'"
-       onmouseleave="if(!${isAutoActive})this.style.borderColor='rgba(255,255,255,0.08)'">
-        <div style="display:flex; align-items:center; gap:0.4rem;">
-            <i data-lucide="refresh-cw" style="width:16px; height:16px; color:${isAutoActive ? '#a78bfa' : 'var(--text-secondary)'};"></i>
-            <span style="font-weight:700; font-size:0.85rem; color:${isAutoActive ? '#a78bfa' : 'var(--text-primary)'};">Auto (Zakończenie DN${targetDn})</span>
-        </div>
-        <div style="font-size:0.65rem; color:var(--text-muted); margin-top:0.15rem; margin-left:1.4rem;">Automatyczny dobór zakończenia dla średnicy DN${targetDn}</div>
-    </div>`;
-
-    const sectionStyle =
-        'grid-column:1/ -1; font-size:0.7rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; padding:0.6rem 0 0.1rem; border-top:1px solid rgba(255,255,255,0.06);';
+    tilesHtml += `
+    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:#a78bfa;" aria-pressed="${isAutoActive}" onclick="selectRedukcjaZakonczenie(null)">
+        <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(targetDn)})</span>
+        <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(targetDn)}</span>
+        <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
+    </button>`;
 
     const konuses = candidates.filter((p) => p.componentType === 'konus');
     const dinPlates = candidates.filter((p) => p.componentType === 'plyta_din');
@@ -300,21 +254,19 @@ function openRedukcjaZakonczeniePopup() {
     );
 
     if (konuses.length) {
-        tilesHtml += `<div style="${sectionStyle}">Konus</div>`;
+        tilesHtml += '<div class="recalc-section-label">Konus</div>';
         konuses.forEach((p) => {
             tilesHtml += renderTile(p);
         });
-        if (konuses.length % 2 !== 0) tilesHtml += '<div></div>';
     }
     if (dinPlates.length) {
-        tilesHtml += `<div style="${sectionStyle}">Płyta DIN</div>`;
+        tilesHtml += '<div class="recalc-section-label">Płyta DIN</div>';
         dinPlates.forEach((p) => {
             tilesHtml += renderTile(p);
         });
-        if (dinPlates.length % 2 !== 0) tilesHtml += '<div></div>';
     }
     if (odcParts.length) {
-        tilesHtml += `<div style="${sectionStyle}">Płyta / Pierścień Odciążający</div>`;
+        tilesHtml += '<div class="recalc-section-label">Płyta / Pierścień Odciążający</div>';
         odcParts.forEach((p) => {
             tilesHtml += renderTile(p);
         });
@@ -324,23 +276,23 @@ function openRedukcjaZakonczeniePopup() {
         id: 'redukcja-zak-modal',
         titleId: 'redukcja-zak-title',
         html: `
-    <div class="modal" style="max-width:600px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3); max-height:85vh; display:flex; flex-direction:column;">
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; display:flex; align-items:flex-start; gap:0.8rem;">
-        <div class="flex-1">
-          <h3 id="redukcja-zak-title" style="font-size:1.05rem; font-weight:700; color:var(--text); display:flex; align-items:center; gap:0.4rem;">
-            <i data-lucide="chevron-down" style="width:18px; height:18px;"></i> Zakończenie redukcji DN${targetDn}
-          </h3>
-          <p style="font-size:0.72rem; color:var(--text-muted); margin-top:0.3rem;">Wybierz zakończenie górne dla sekcji redukcji DN${targetDn}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
-        </div>
+    <div class="modal recalc-modal zak-modal">
+      <div class="modal-header">
+        <h3 id="redukcja-zak-title"><i data-lucide="chevron-down" aria-hidden="true"></i> Zakończenie redukcji DN${escapeHtml(targetDn)}</h3>
+        <button type="button" class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="flex:1; overflow-y:auto; padding:0.8rem 0; display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-        ${tilesHtml}
+      <div class="recalc-modal-body">
+        <p class="recalc-modal-desc">Wybierz zakończenie górne dla sekcji redukcji DN${escapeHtml(targetDn)}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
+        <div class="recalc-tile-grid">${tilesHtml}</div>
       </div>
-      <div class="modal-footer" style="border-top:1px solid var(--border); padding-top:0.8rem; text-align:right;">
-        <button class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+      <div class="recalc-modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
       </div>
     </div>`
     });
+
+    const root = document.getElementById('redukcja-zak-modal');
+    if (root && window.lucide) window.lucide.createIcons({ root });
 }
 
 // showStycznaPopup, handleStycznaProductChoice przeniesione do popupsStyczna.js

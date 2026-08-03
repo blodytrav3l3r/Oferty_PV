@@ -78,21 +78,29 @@ function _recalcBuildClosureTile({ dn, id, name, componentType, height, isAuto, 
     </button>`;
 }
 
-function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
-    const safeDn = _recalcSafeDn(dn);
-    const dn1000Cand = _recalcSortClosures(
-        studnieProducts.filter(
+function _recalcClosureCandidates(products, dn, exampleMag, groupWells) {
+    // Współdzielimy logikę dostępności magazynu z solwerem/Excelem (SSoT: getAvailableProducts
+    // toleruje 1 | '1' | undefined — AGENTS.md DRY, unikamy duplikacji filtra magazynu).
+    const byWarehouse =
+        typeof getAvailableProducts === 'function'
+            ? getAvailableProducts({ magazyn: exampleMag })
+            : products;
+    return _recalcSortClosures(
+        products.filter(
             (p) =>
-                p.dn === 1000 &&
+                String(p.dn) === String(dn) &&
                 RECALC_CLOSURE_TYPES.includes(p.componentType) &&
-                ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
-                    (exampleMag !== 'Włocławek' && p.magazynKLB === 1)) &&
+                byWarehouse.includes(p) &&
                 groupWells.every(
                     (w) => typeof filterByWellParams !== 'function' || filterByWellParams(p, w)
                 )
         )
     );
-    const redTiles = [
+}
+
+function _recalcRedTilesHtml(dn, targetDn, exampleMag, groupWells) {
+    const targetCand = _recalcClosureCandidates(studnieProducts, targetDn, exampleMag, groupWells);
+    return [
         _recalcBuildClosureTile({
             dn,
             id: 'auto',
@@ -103,7 +111,7 @@ function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
             isActive: true,
             kind: 'red'
         }),
-        ...dn1000Cand.map((p) =>
+        ...targetCand.map((p) =>
             _recalcBuildClosureTile({
                 dn,
                 id: p.id,
@@ -116,27 +124,10 @@ function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
             })
         )
     ].join('');
-
-    return `
-    <div class="recalc-reduction">
-        <label class="recalc-checkbox-row">
-            <input type="checkbox" id="recalc-use-red-${safeDn}" onchange="window.recalcToggleRed(${safeDn})" />
-            <span>Wykonaj redukcję na DN1000</span>
-        </label>
-        <div class="recalc-red-box" id="recalc-red-box-${safeDn}" hidden>
-            <div class="recalc-red-field">
-                <label class="form-label" for="recalc-red-minh-${safeDn}">Min. wys. komory roboczej (m)</label>
-                <input type="number" id="recalc-red-minh-${safeDn}" class="form-input" value="2.5" step="0.1" />
-            </div>
-            <div class="recalc-section-label">Zakończenie komina DN1000</div>
-            <div class="recalc-tile-grid" id="recalc-red-tiles-${safeDn}">${redTiles}</div>
-        </div>
-    </div>`;
 }
 
-function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
-    const safeDn = _recalcSafeDn(dn);
-    const topTiles = [
+function _recalcTopTilesHtml(dn, products) {
+    return [
         _recalcBuildClosureTile({
             dn,
             id: 'auto',
@@ -147,7 +138,7 @@ function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
             isActive: true,
             kind: 'top'
         }),
-        ...availForDn.map((p) =>
+        ...products.map((p) =>
             _recalcBuildClosureTile({
                 dn,
                 id: p.id,
@@ -160,6 +151,70 @@ function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
             })
         )
     ].join('');
+}
+
+function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
+    const safeDn = _recalcSafeDn(dn);
+    const targetOpts = [1000, 1200].filter(
+        (t) => t === 1000 || [1500, 2000, 2500].includes(Number(dn))
+    );
+    const targetField =
+        targetOpts.length > 1
+            ? `<div class="recalc-red-field">
+                <label class="form-label" for="recalc-red-target-${safeDn}">Cel redukcji</label>
+                <select id="recalc-red-target-${safeDn}" class="form-input" onchange="window.recalcRedTargetChanged(${safeDn})">
+                    <option value="1000">Redukcja na DN1000</option>
+                    <option value="1200">Redukcja na DN1200</option>
+                </select>
+            </div>`
+            : `<input type="hidden" id="recalc-red-target-${safeDn}" value="1000" />`;
+
+    return `
+    <div class="recalc-reduction">
+        <label class="recalc-checkbox-row">
+            <input type="checkbox" id="recalc-use-red-${safeDn}" onchange="window.recalcToggleRed(${safeDn})" />
+            <span>Wykonaj redukcję</span>
+        </label>
+        <div class="recalc-red-box" id="recalc-red-box-${safeDn}" hidden>
+            <div class="recalc-red-field">
+                <label class="form-label" for="recalc-red-minh-${safeDn}">Min. wys. komory roboczej (m)</label>
+                <input type="number" id="recalc-red-minh-${safeDn}" class="form-input" value="2.5" step="0.1" />
+            </div>
+            ${targetField}
+            <div class="recalc-section-label" id="recalc-red-toplabel-${safeDn}">Zakończenie komina DN1000</div>
+            <div class="recalc-tile-grid" id="recalc-red-tiles-${safeDn}">${_recalcRedTilesHtml(
+                dn,
+                1000,
+                exampleMag,
+                groupWells
+            )}</div>
+        </div>
+    </div>`;
+}
+
+function _recalcBuildStycznaSection(dn, groupWells) {
+    const safeDn = _recalcSafeDn(dn);
+    const defaultDn = groupWells[0]?.stycznaNadbudowa1200 ? 1200 : 1000;
+    return `
+    <div class="recalc-reduction">
+        <label class="recalc-checkbox-row" for="recalc-styczna-dn-${safeDn}">
+            <i data-lucide="settings" aria-hidden="true"></i> Nadbudowa (wbudowana redukcja)
+        </label>
+        <div class="recalc-red-box">
+            <div class="recalc-red-field">
+                <label class="form-label" for="recalc-styczna-dn-${safeDn}">Średnica nadbudowy</label>
+                <select id="recalc-styczna-dn-${safeDn}" class="form-input" onchange="window.recalcStycznaDnChanged('${safeDn}')">
+                    <option value="1000"${defaultDn === 1000 ? ' selected' : ''}>DN1000</option>
+                    <option value="1200"${defaultDn === 1200 ? ' selected' : ''}>DN1200</option>
+                </select>
+            </div>
+        </div>
+    </div>`;
+}
+
+function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
+    const safeDn = _recalcSafeDn(dn);
+    const topTiles = _recalcTopTilesHtml(dn, availForDn);
 
     const emptyState =
         availForDn.length === 0
@@ -170,9 +225,12 @@ function _recalcBuildDnGroup(dn, count, availForDn, exampleMag, groupWells) {
 
     const hasRelief = availForDn.some((p) => RECALC_RELIEF_TYPES.includes(p.componentType));
 
-    const reductionHtml = RECALC_REDUCIBLE_DNS.includes(Number(dn))
-        ? _recalcBuildReductionSection(dn, exampleMag, groupWells)
-        : '';
+    let reductionHtml = '';
+    if (RECALC_REDUCIBLE_DNS.includes(Number(dn))) {
+        reductionHtml = _recalcBuildReductionSection(dn, exampleMag, groupWells);
+    } else if (dn === 'styczna') {
+        reductionHtml = _recalcBuildStycznaSection(dn, groupWells);
+    }
 
     return `
     <div class="recalc-group" data-dn="${safeDn}">
@@ -218,18 +276,13 @@ window.openGlobalRecalcModal = function () {
     const groupsHtml = uniqueDns
         .map((dn) => {
             const groupWells = wells.filter((w) => w.dn === dn);
-            const availForDn = _recalcSortClosures(
-                studnieProducts.filter(
-                    (p) =>
-                        String(p.dn) === String(dn) &&
-                        RECALC_CLOSURE_TYPES.includes(p.componentType) &&
-                        ((exampleMag === 'Włocławek' && p.magazynWL === 1) ||
-                            (exampleMag !== 'Włocławek' && p.magazynKLB === 1)) &&
-                        groupWells.every(
-                            (w) =>
-                                typeof filterByWellParams !== 'function' || filterByWellParams(p, w)
-                        )
-                )
+            const matchDn =
+                dn === 'styczna' ? (groupWells[0]?.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
+            const availForDn = _recalcClosureCandidates(
+                studnieProducts,
+                matchDn,
+                exampleMag,
+                groupWells
             );
             return _recalcBuildDnGroup(dn, groupWells.length, availForDn, exampleMag, groupWells);
         })
@@ -294,6 +347,45 @@ window.recalcToggleRed = function (dn) {
     if (cb && box) box.hidden = !cb.checked;
 };
 
+window.recalcRedTargetChanged = function (dn) {
+    const select = document.getElementById('recalc-red-target-' + dn);
+    const tilesBox = document.getElementById('recalc-red-tiles-' + dn);
+    const label = document.getElementById('recalc-red-toplabel-' + dn);
+    if (!select || !tilesBox) return;
+    const targetDn = [1000, 1200].includes(parseInt(select.value, 10))
+        ? parseInt(select.value, 10)
+        : 1000;
+    const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+    const groupWells = wells.filter((w) => String(w.dn) === String(dn));
+    tilesBox.innerHTML = _recalcRedTilesHtml(dn, targetDn, exampleMag, groupWells);
+    if (label) label.textContent = 'Zakończenie komina DN' + targetDn;
+    const input = document.getElementById('recalc-choice-redtop-' + dn);
+    if (input) input.value = 'auto';
+    if (window.lucide) window.lucide.createIcons({ root: tilesBox });
+};
+
+window.recalcStycznaDnChanged = function (dn) {
+    const select = document.getElementById('recalc-styczna-dn-' + dn);
+    const tilesBox = document.getElementById('recalc-top-tiles-' + dn);
+    const choice = document.getElementById('recalc-choice-top-' + dn);
+    if (!select || !tilesBox) return;
+    const effDn = [1000, 1200].includes(parseInt(select.value, 10))
+        ? parseInt(select.value, 10)
+        : 1000;
+    const exampleMag = wells[0]?.magazyn || 'Kluczbork';
+    const groupWells = wells.filter((w) => String(w.dn) === String(dn));
+    const availForDn = _recalcClosureCandidates(studnieProducts, effDn, exampleMag, groupWells);
+    const emptyState =
+        availForDn.length === 0
+            ? `<div class="recalc-empty">Brak dostępnych zakończeń w cenniku magazynu ${
+                  exampleMag === 'Włocławek' ? 'WL' : 'KLB'
+              } dla DN ${effDn}.</div>`
+            : '';
+    tilesBox.innerHTML = _recalcTopTilesHtml(dn, availForDn) + emptyState;
+    if (choice) choice.value = 'auto';
+    if (window.lucide) window.lucide.createIcons({ root: tilesBox });
+};
+
 window.recalcToggleConfirm = function () {
     const cb = document.getElementById('recalc-confirm-override');
     const btn = document.getElementById('recalc-apply-btn');
@@ -321,15 +413,24 @@ window.applyGlobalRecalc = async function () {
             const useRed = document.getElementById(`recalc-use-red-${dn}`)?.checked || false;
             let redTopId = 'auto';
             let redMinH = 2500;
+            let redTargetDN = 1000;
 
             if (useRed) {
                 redTopId = document.getElementById(`recalc-choice-redtop-${dn}`)?.value || 'auto';
+                const rawT = document.getElementById('recalc-red-target-' + dn)?.value;
+                const parsedT = parseInt(rawT || '1000', 10);
+                redTargetDN = [1000, 1200].includes(parsedT) ? parsedT : 1000;
                 const raw = document.getElementById(`recalc-red-minh-${dn}`)?.value;
                 const parsed = parseFloat(String(raw || '').replace(',', '.'));
                 redMinH = isNaN(parsed) ? 2500 : Math.round(parsed * 1000);
             }
 
-            prefs[dn] = { topId, useRed, redTopId, redMinH };
+            const rawStycznaDn = document.getElementById('recalc-styczna-dn-' + dn)?.value;
+            const stycznaDn = [1000, 1200].includes(parseInt(rawStycznaDn || '1000', 10))
+                ? parseInt(rawStycznaDn || '1000', 10)
+                : 1000;
+
+            prefs[dn] = { topId, useRed, redTopId, redMinH, redTargetDN, stycznaDn };
         });
 
         if (progress) progress.hidden = false;
@@ -357,11 +458,22 @@ window.applyGlobalRecalc = async function () {
                 progress.textContent = `Przeliczanie studni ${i + 1}/${wells.length} (DN ${w.dn})...`;
 
             w.zakonczenie = p.topId === 'auto' ? null : p.topId;
-            w.redukcjaDN1000 = p.useRed;
-            if (p.useRed) {
-                w.redukcjaMinH = p.redMinH;
-                w.redukcjaZakonczenie = p.redTopId === 'auto' ? null : p.redTopId;
-            } else {
+            const isReducibleDn = Number.isFinite(Number(w.dn));
+            if (isReducibleDn) {
+                w.redukcjaDN1000 = p.useRed;
+                w.redukcjaTargetDN = p.useRed ? p.redTargetDN : 1000;
+                if (p.useRed) {
+                    w.redukcjaMinH = p.redMinH;
+                    w.redukcjaZakonczenie = p.redTopId === 'auto' ? null : p.redTopId;
+                } else {
+                    w.redukcjaZakonczenie = null;
+                }
+            } else if (String(w.dn) === 'styczna') {
+                w.stycznaNadbudowa1200 = p.stycznaDn === 1200;
+                w.redukcjaTargetDN = p.stycznaDn;
+                // Studnia styczna nie używa redukcji — czyścimy resztki pól po poprzedniej
+                // konfiguracji (inaczej reductionForced zanieczyściłby scoring solvera).
+                w.redukcjaDN1000 = false;
                 w.redukcjaZakonczenie = null;
             }
             w.autoLocked = false;
