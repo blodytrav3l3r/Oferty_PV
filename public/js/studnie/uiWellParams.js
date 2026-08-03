@@ -261,7 +261,7 @@ function renderWellParams() {
             const isActive = val === currentVal;
             html += `<button onclick="updateWellParam('${def.key}','${val}')" style="
                 height: 34px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:${isActive ? '800' : '600'};
-                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+                border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};
                 background:${isActive ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};
                 color:${isActive ? 'var(--accent-text)' : 'var(--text-secondary)'};
                 transition:all 0.15s ease;

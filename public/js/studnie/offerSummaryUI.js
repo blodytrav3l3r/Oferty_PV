@@ -63,7 +63,7 @@ function updateOfferSummaryUI(totals) {
             'font-size:0.72rem; font-weight:800; line-height:1.15; color:var(--text-primary);';
         const detailStyle =
             'font-size:0.65rem; font-weight:600; line-height:1.15; color:rgba(var(--white-rgb), 0.8);';
-        const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.6);';
+        const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.8);';
         const disabledTile = `${tileBase} background:rgba(var(--white-rgb), 0.05); color:rgba(var(--slate-500-rgb), 0.5); border:1px solid rgba(var(--white-rgb), 0.05);`;
 
         const fmtDisc = (prefix, val, color) => {

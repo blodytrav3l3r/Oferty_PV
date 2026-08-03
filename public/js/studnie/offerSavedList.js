@@ -30,8 +30,8 @@ function renderSavedOffersStudnie() {
                     ? 'rgba(var(--success-rgb), 0.15)'
                     : 'rgba(var(--blue-rgb), 0.15)';
                 const badgeBorder = isFullyOrdered
-                    ? 'rgba(var(--success-rgb), 0.4)'
-                    : 'rgba(var(--blue-rgb), 0.4)';
+                    ? 'rgba(var(--success-rgb), 0.5)'
+                    : 'rgba(var(--blue-rgb), 0.5)';
 
                 orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
                 <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
@@ -88,7 +88,7 @@ function renderSavedOffersStudnie() {
                     })()}
                     
                     <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
-                        <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-rgb), 0.4);"><i data-lucide="save"></i> Zapisano</span>
+                        <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-rgb), 0.5);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
                 ${

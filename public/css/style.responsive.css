@@ -191,7 +191,7 @@
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
     color: var(--white);
-    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.4);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
 }
 
 /* Siatka ofert */
@@ -280,7 +280,7 @@
 
 .btn-order-badge.modified:hover {
     background: rgba(var(--warn-rgb), 0.2);
-    border-color: rgba(var(--warn-rgb), 0.6);
+    border-color: rgba(var(--warn-rgb), 0.8);
     box-shadow: 0 4px 12px rgba(var(--warn-rgb), 0.3);
 }
 
@@ -634,7 +634,7 @@
         --scrollbar-thumb: #999;
         --scrollbar-thumb-hover: #666;
         --highlight-bg: #fff3e0;
-        --glass: rgba(var(--white-rgb), 0.95);
+        --glass: rgba(var(--white-rgb), 0.8);
         --glass-border: rgba(var(--black-rgb), 0.1);
     }
 
@@ -736,7 +736,7 @@
     }
 
     .summary-card {
-        background: #f8f8f8 !important;
+        background: var(--slate-100) !important;
         border: 1px solid var(--slate-300) !important;
         padding: 0.5rem !important;
         text-align: center !important;

@@ -15,7 +15,7 @@ function updateZakonczenieButton() {
             : well.zakonczenie;
         btn.innerHTML =
             '<span class="text-xs"><i data-lucide="chevron-down"></i></span> ' + shortName;
-        btn.style.borderColor = 'rgba(var(--accent-rgb), 0.4)';
+        btn.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
         btn.style.color = 'var(--accent2-hover)';
     } else {
         btn.innerHTML =

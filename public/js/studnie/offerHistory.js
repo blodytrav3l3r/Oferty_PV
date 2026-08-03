@@ -130,7 +130,7 @@ async function showOfferHistoryStudnie(id) {
                     box-shadow: 0 25px 50px -12px rgba(var(--black-rgb), 0.5); border: 1px solid rgba(var(--white-rgb), 0.1);
                 }
                 .audit-card {
-                    background: rgba(var(--slate-800-rgb), 0.6);
+                    background: rgba(var(--slate-800-rgb), 0.8);
                     border: 1px solid rgba(var(--white-rgb), 0.05);
                     border-radius: 16px;
                     padding: 1.25rem 1.5rem;
@@ -141,7 +141,7 @@ async function showOfferHistoryStudnie(id) {
                     backdrop-filter: blur(10px);
                 }
                 .audit-card:hover {
-                    background: rgba(var(--slate-800-rgb), 0.95);
+                    background: rgba(var(--slate-800-rgb), 0.8);
                     border-color: rgba(var(--white-rgb), 0.15);
                     transform: translateY(-2px);
                     box-shadow: 0 10px 15px -3px rgba(var(--black-rgb), 0.3), 0 4px 6px -2px rgba(var(--black-rgb), 0.15);
@@ -177,7 +177,7 @@ async function showOfferHistoryStudnie(id) {
                     transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 6px;
                 }
                 .preview-btn:hover { background: rgba(var(--accent-rgb), 0.15); border-color: rgba(var(--accent-rgb), 0.3); color: var(--accent-hover); }
-                .restore-btn:hover { background: rgba(var(--success-rgb), 0.2); border-color: rgba(var(--success-rgb), 0.4); color: var(--success-hover); }
+                .restore-btn:hover { background: rgba(var(--success-rgb), 0.2); border-color: rgba(var(--success-rgb), 0.5); color: var(--success-hover); }
                 
                 .load-more-btn {
                     background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3); 

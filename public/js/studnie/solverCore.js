@@ -20,7 +20,8 @@ function buildConfigSegments(configItems, psiaBuda) {
     return configItems.map((item) => {
         const prod = studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
-        const isDennicaLike = prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
+        const isDennicaLike =
+            prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
         if (isDennicaLike && lastWasD) {
             h -= 100;
         }

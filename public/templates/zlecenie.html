@@ -5,6 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Zlecenie Produkcyjne {{NR_ZLECENIA}}</title>
         <style>
+            :root {
+                --slate-100: #f1f5f9;
+                --white: #ffffff;
+                --black: #000000;
+            }
             @page {
                 size: A4 portrait;
                 margin: 8mm 5mm 6mm 5mm;
@@ -17,8 +22,8 @@
             body {
                 font-family: Arial, sans-serif;
                 font-size: 9pt;
-                color: #000;
-                background: #fff;
+                color: var(--black);
+                background: var(--white);
             }
 
             .page {
@@ -34,7 +39,7 @@
             }
             td,
             th {
-                border: 0.5pt solid #000;
+                border: 0.5pt solid var(--black);
                 padding: 1px 3px;
                 vertical-align: middle;
                 font-size: 9pt;
@@ -52,7 +57,7 @@
                 font-weight: bold;
             }
             .bg-gray {
-                background: #f0f0f0;
+                background: var(--slate-100);
             }
 
             /* Szerokości kolumn głównej tabeli (11 kolumn) */

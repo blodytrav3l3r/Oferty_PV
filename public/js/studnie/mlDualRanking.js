@@ -696,7 +696,8 @@
             // Oznacz czy model jest świeży (uczenie aktywne)
             if (status.cacheSize > 0) {
                 dot.style.boxShadow =
-                    '0 0 4px ' + (status.aiInfluencePct > 0 ? 'var(--success)' : 'var(--slate-500)');
+                    '0 0 4px ' +
+                    (status.aiInfluencePct > 0 ? 'var(--success)' : 'var(--slate-500)');
             }
         } else {
             dot.style.background = 'var(--slate-400)';

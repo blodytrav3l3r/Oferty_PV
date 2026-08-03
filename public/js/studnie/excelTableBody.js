@@ -125,7 +125,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '"' +
             cbChecked +
-            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.6);" /></td>';
+            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></td>';
         /* AUTO/MANUAL */
         let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
         let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
@@ -494,7 +494,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.6);opacity:0.3;" /></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +

@@ -64,7 +64,7 @@ function _excelRegisterExcelListeners() {
         ov.style.cssText =
             'position:fixed;pointer-events:none;z-index:' +
             LAYERS.FOCUS_OVERLAY +
-            ';border:2px solid rgba(var(--accent-rgb), 0.6);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(var(--black-rgb), 0.3);';
+            ';border:2px solid rgba(var(--accent-rgb), 0.8);border-radius:3px;box-sizing:border-box;display:none;transition:all 0.1s ease;box-shadow:0 0 0 1px rgba(var(--black-rgb), 0.3);';
         document.body.appendChild(ov);
         _excelFocusOverlayEl = ov;
     } else {
@@ -186,10 +186,10 @@ function openExcelTableModal() {
     const modal = document.createElement('div');
     if (isDiagramVisible) {
         modal.style.cssText =
-            'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);';
+            'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
     } else {
         modal.style.cssText =
-            'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.6);';
+            'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius:4px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
     }
 
     modal.innerHTML = `

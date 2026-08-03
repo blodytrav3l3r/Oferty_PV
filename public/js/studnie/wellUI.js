@@ -132,7 +132,7 @@ window.renderWellsList = function renderWellsList() {
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${wellOrder.orderNumber} — kliknij aby otworzyć"
                         onclick="event.stopPropagation(); window.location.href='studnie.html?order=${wellOrder.id}'"
-                        style="font-size:0.55rem; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.4); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                        style="font-size:0.55rem; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${wellOrder.orderNumber}
                     </span>`;
                 } else {
@@ -146,15 +146,21 @@ window.renderWellsList = function renderWellsList() {
                 const isNeg = w.doplata < 0;
                 const badgeLabel = isNeg ? 'UPUST' : 'DOPŁATA';
                 const colorHex = isNeg ? 'var(--danger)' : 'var(--success)';
-                const bgRgba = isNeg ? 'rgba(var(--danger-rgb), 0.15)' : 'rgba(var(--success-rgb), 0.15)';
-                const borderRgba = isNeg ? 'rgba(var(--danger-rgb), 0.4)' : 'rgba(var(--success-rgb), 0.4)';
+                const bgRgba = isNeg
+                    ? 'rgba(var(--danger-rgb), 0.15)'
+                    : 'rgba(var(--success-rgb), 0.15)';
+                const borderRgba = isNeg
+                    ? 'rgba(var(--danger-rgb), 0.5)'
+                    : 'rgba(var(--success-rgb), 0.5)';
                 doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
             // Automatyczne sprawdzenie w locie dla wszystkich kart
             const hasErrors = validateAutomatedErrors(w);
 
-            const errorStyling = hasErrors ? ' background:rgba(var(--danger-rgb), 0.15) !important;' : '';
+            const errorStyling = hasErrors
+                ? ' background:rgba(var(--danger-rgb), 0.15) !important;'
+                : '';
             const errorNameStyle = hasErrors
                 ? 'color:var(--danger) !important; font-weight:700 !important;'
                 : '';

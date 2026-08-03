@@ -238,12 +238,12 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
                     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
                     padding: 1rem 1.25rem;
                     border-bottom: 1px solid rgba(var(--slate-400-rgb), 0.1);
-                    background: rgba(var(--slate-950-rgb), 0.95);
+                    background: rgba(var(--slate-950-rgb), 0.8);
                 }
                 .audit-modal-header h3 { margin: 0; color: var(--text-primary); font-size: 1rem; display: flex; align-items: center; gap: 0.55rem; }
                 .audit-modal-subtitle { color: var(--text-secondary); font-size: 0.78rem; margin-top: 0.18rem; }
                 .audit-list { padding: 1rem 1.25rem 1.25rem; overflow-y: auto; }
-                .audit-card { position: relative; padding: 0.9rem 1rem; margin-bottom: 0.75rem; border-radius: 8px; background: rgba(var(--slate-800-rgb), 0.6); border: 1px solid rgba(var(--slate-400-rgb), 0.1); }
+                .audit-card { position: relative; padding: 0.9rem 1rem; margin-bottom: 0.75rem; border-radius: 8px; background: rgba(var(--slate-800-rgb), 0.8); border: 1px solid rgba(var(--slate-400-rgb), 0.1); }
                 .audit-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
                 .audit-card.action-create::before { background: var(--accent-hover); }
                 .audit-card.action-update::before { background: var(--success-hover); }

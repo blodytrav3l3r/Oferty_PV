@@ -21,7 +21,7 @@ function openRedukcjaChoicePopup() {
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
         <button onclick="selectRedukcjaChoice(1000)" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
-            border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+            border:2px solid ${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};
             background:${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
             color:${isActive && currentTarget === 1000 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">
@@ -34,7 +34,7 @@ function openRedukcjaChoicePopup() {
                 ? `
         <button onclick="selectRedukcjaChoice(1200)" style="
             padding:0.8rem; border-radius:8px; cursor:pointer; text-align:left; transition:all 0.2s;
-            border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'};
+            border:2px solid ${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};
             background:${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
             color:${isActive && currentTarget === 1200 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">

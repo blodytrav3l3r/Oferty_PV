@@ -21,7 +21,7 @@
 .upm-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(var(--black-rgb), 0.6);
+    background: rgba(var(--black-rgb), 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -39,7 +39,7 @@
     max-height: 85vh;
     padding: 1.75rem 2rem 1.5rem;
     text-align: left;
-    box-shadow: 0 20px 50px rgba(var(--black-rgb), 0.6), 0 0 0 1px rgba(var(--white-rgb), 0.05) inset;
+    box-shadow: 0 20px 50px rgba(var(--black-rgb), 0.8), 0 0 0 1px rgba(var(--white-rgb), 0.05) inset;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -105,7 +105,7 @@
 
 .upm-close:hover {
     background: rgba(var(--danger-rgb), 0.15);
-    border-color: rgba(var(--danger-rgb), 0.4);
+    border-color: rgba(var(--danger-rgb), 0.5);
     color: #fca5a5;
 }
 
@@ -239,7 +239,7 @@
 .upm-btn-pdf {
     background: rgba(var(--danger-rgb), 0.2);
     color: #fca5a5;
-    border-color: rgba(var(--danger-rgb), 0.6);
+    border-color: rgba(var(--danger-rgb), 0.8);
 }
 
 .upm-btn-pdf:hover {
@@ -252,7 +252,7 @@
 .upm-btn-docx {
     background: rgba(var(--blue-rgb), 0.2);
     color: #93c5fd;
-    border-color: rgba(var(--blue-rgb), 0.6);
+    border-color: rgba(var(--blue-rgb), 0.8);
 }
 
 .upm-btn-docx:hover {
@@ -299,7 +299,7 @@
 
 .upm-btn-secondary:hover {
     background: rgba(var(--white-rgb), 0.1);
-    color: #fff;
+    color: var(--white);
 }
 
 .upm-btn-secondary:focus-visible {

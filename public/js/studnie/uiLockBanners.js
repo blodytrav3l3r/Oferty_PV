@@ -74,7 +74,7 @@ function renderOfferLockBanner() {
             <div style="display:flex; gap:0.4rem; align-items:center;">
                 ${
                     wellOrder
-                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(var(--success-rgb), 0.2); border:1px solid rgba(var(--success-rgb), 0.4); color:var(--success-hover); font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
+                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(var(--success-rgb), 0.2); border:1px solid rgba(var(--success-rgb), 0.5); color:var(--success-hover); font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
                         : ''

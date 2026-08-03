@@ -48,7 +48,7 @@ window.openTransitionManagerModal = function () {
         id: 'transition-manager-modal',
         titleId: 'tm-title',
         html: `
-    <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background:#111827; border-radius:12px; box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.3);">
+    <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background: var(--bg-secondary); border-radius:12px; box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.3);">
       
       <!-- Nagłówek -->
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
@@ -62,8 +62,8 @@ window.openTransitionManagerModal = function () {
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Kategoria źródłowa</div>
             <div id="tm-filter-material-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
                <div data-val="" onclick="tmSelectFilterMaterial('')"
-                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.6); color:var(--success-hover); transition:all 0.12s;"
-                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.6)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.6)'">Dowolna</div>
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
+                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolna</div>
                ${[...allMaterials]
                    .sort()
                    .map((m) => {
@@ -79,8 +79,8 @@ window.openTransitionManagerModal = function () {
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Średnica DN</div>
             <div id="tm-filter-dn-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
                <div data-val="" onclick="tmSelectFilterDn('')"
-                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.6); color:var(--success-hover); transition:all 0.12s;"
-                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.6)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.6)'">Dowolne</div>
+                    style="padding:0.2rem 0.4rem; border-radius:4px; cursor:pointer; font-size:0.62rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
+                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolne</div>
                ${[...allDNs]
                    .sort((a, b) => parseFloat(a) - parseFloat(b))
                    .map((dn) => {
@@ -94,7 +94,7 @@ window.openTransitionManagerModal = function () {
          </div>
          <div style="min-width:160px; flex:1;">
             <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Szukaj</div>
-            <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size:0.65rem; background:#1a2536; border:1.5px solid rgba(var(--white-rgb), 0.05); border-radius:4px; color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(var(--success-rgb), 0.4)'" onblur="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
+            <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size:0.65rem; background:var(--bg-tile); border:1.5px solid rgba(var(--white-rgb), 0.05); border-radius:4px; color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(var(--success-rgb), 0.5)'" onblur="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
          </div>
       </div>
 
@@ -131,8 +131,8 @@ window.openTransitionManagerModal = function () {
                <div style="font-size:0.6rem; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Docelowa kategoria (na co zamienić)</div>
                <div id="tm-target-cat-tiles" style="display:flex; flex-wrap:wrap; gap:0.2rem;">
                   <div data-val="" onclick="tmSelectTargetCat('')"
-                       style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.6); color:var(--success-hover); transition:all 0.12s;"
-                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.6)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.6)'">— Wybierz —</div>
+                       style="padding:0.25rem 0.5rem; border-radius:4px; cursor:pointer; font-size:0.65rem; font-weight:600; background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
+                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">— Wybierz —</div>
                   ${categories
                       .map((cat) => {
                           const safe = cat.replace(/'/g, "\\'");
@@ -144,7 +144,7 @@ window.openTransitionManagerModal = function () {
                </div>
             </div>
             <div style="flex-shrink:0;">
-               <button onclick="tmApplyChanges()" style="background:rgba(var(--success-rgb), 0.15); border:1.5px solid rgba(var(--success-rgb), 0.4); border-radius:5px; padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--success-hover); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.background='rgba(var(--success-rgb), 0.15)'">
+               <button onclick="tmApplyChanges()" style="background:rgba(var(--success-rgb), 0.15); border:1.5px solid rgba(var(--success-rgb), 0.5); border-radius:5px; padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--success-hover); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.background='rgba(var(--success-rgb), 0.15)'">
                   <i data-lucide="zap"></i> Zastosuj
                </button>
             </div>
@@ -243,7 +243,7 @@ function tmHighlightTiles(containerId, selectedVal) {
             ? 'rgba(var(--success-rgb), 0.2)'
             : 'rgba(var(--white-rgb), 0.05)';
         d.style.borderColor = isSel
-            ? 'rgba(var(--success-rgb), 0.6)'
+            ? 'rgba(var(--success-rgb), 0.8)'
             : 'rgba(var(--white-rgb), 0.05)';
         d.style.color = isSel ? 'var(--success-hover)' : 'var(--text-primary)';
     });
@@ -261,7 +261,7 @@ function tmHighlightTilesMulti(containerId, selectedVals) {
             ? 'rgba(var(--success-rgb), 0.2)'
             : 'rgba(var(--white-rgb), 0.05)';
         d.style.borderColor = isSel
-            ? 'rgba(var(--success-rgb), 0.6)'
+            ? 'rgba(var(--success-rgb), 0.8)'
             : 'rgba(var(--white-rgb), 0.05)';
         d.style.color = isSel ? 'var(--success-hover)' : 'var(--text-primary)';
     });
@@ -356,12 +356,12 @@ window.tmRenderTable = function () {
                 const locked = tmIsWellBlocked(w.wellIndex);
                 return `
             <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
-                  style="background:${isSel ? 'rgba(var(--success-rgb), 0.15)' : '#1a2536'};
-                         border:1px solid ${isSel ? 'rgba(var(--success-rgb), 0.4)' : 'rgba(var(--white-rgb), 0.05)'};
+                  style="background:${isSel ? 'rgba(var(--success-rgb), 0.15)' : 'var(--bg-tile)'};
+                         border:1px solid ${isSel ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                          border-radius:8px; padding:0.4rem 0.45rem; ${locked ? 'cursor:default;' : 'cursor:pointer;'}
                          transition:all 0.2s; display:flex; flex-direction:column; gap:0.1rem;"
                   ${locked ? '' : "onmouseenter=\"this.style.borderColor='rgba(var(--success-rgb), 0.3)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(var(--black-rgb), 0.3)'\""}
-                  ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(var(--success-rgb), 0.4)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
+                  ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
               <div style="display:flex; justify-content:space-between; align-items:center; gap:0.3rem;">
                 <div style="display:flex; align-items:center; gap:0.3rem; min-width:0; flex:1;">
                   <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
@@ -395,7 +395,7 @@ window.tmRenderTable = function () {
 
         const wellLocked = tmIsWellBlocked(w.wellIndex);
         html += `
-        <div style="background:#111827; border:1px solid ${wellLocked ? 'rgba(var(--danger-rgb), 0.2)' : wellSomeSel ? 'rgba(var(--success-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
+        <div style="background: var(--bg-secondary); border:1px solid ${wellLocked ? 'rgba(var(--danger-rgb), 0.2)' : wellSomeSel ? 'rgba(var(--success-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'}; border-radius:10px; margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
           <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(var(--white-rgb), 0.05); border-bottom:1px solid rgba(var(--white-rgb), 0.05);">
             <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
                    style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
@@ -533,8 +533,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
                 .map((cat) => {
                     const isCur = cat === currentCat;
                     return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
-                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:600;background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}${cat}</div>`;
                 })
                 .join('')}
           </div>
@@ -546,8 +546,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
                 .map((dn) => {
                     const isCur = dn === currentDn;
                     return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
-                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
+                   style="padding:0.3rem 0.45rem;border-radius:5px;cursor:pointer;font-size:0.7rem;font-weight:700;background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size:0.75rem;">◆</span>' : '<span style="color:transparent;font-size:0.75rem;">◆</span>'}DN${dn}</div>`;
                 })
                 .join('')}
           </div>
@@ -581,7 +581,7 @@ function tmEditSelectType(el, wellIdx, trIdx) {
         dot.style.color = 'transparent';
     });
     el.style.background = 'rgba(var(--success-rgb), 0.2)';
-    el.style.borderColor = 'rgba(var(--success-rgb), 0.6)';
+    el.style.borderColor = 'rgba(var(--success-rgb), 0.8)';
     el.style.color = 'var(--success-hover)';
     el.style.boxShadow = '0 0 8px rgba(var(--success-rgb), 0.15)';
     const dot = el.querySelector('span');
@@ -631,7 +631,7 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
         if (dot) dot.style.color = 'transparent';
     });
     el.style.background = 'rgba(var(--success-rgb), 0.2)';
-    el.style.borderColor = 'rgba(var(--success-rgb), 0.6)';
+    el.style.borderColor = 'rgba(var(--success-rgb), 0.8)';
     el.style.color = 'var(--success-hover)';
     el.style.boxShadow = '0 0 8px rgba(var(--success-rgb), 0.15)';
     const dot = el.querySelector('span');

@@ -54,18 +54,18 @@
 
 .connection-dot.is-online {
     background: var(--success);
-    box-shadow: 0 0 6px rgba(var(--success-rgb), 0.6);
+    box-shadow: 0 0 6px rgba(var(--success-rgb), 0.8);
     animation: dotPulse 2s ease-in-out infinite;
 }
 
 .connection-dot.is-offline {
     background: var(--danger);
-    box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.4);
+    box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.5);
 }
 
 .connection-dot.is-checking {
     background: var(--warn);
-    box-shadow: 0 0 6px rgba(var(--warn-rgb), 0.4);
+    box-shadow: 0 0 6px rgba(var(--warn-rgb), 0.5);
 }
 
 @keyframes dotPulse {
@@ -232,7 +232,7 @@
     padding: 0.35rem 0.5rem;
     border: 1px solid rgba(var(--slate-400-rgb), 0.1);
     border-radius: 6px;
-    background: rgba(var(--slate-800-rgb), 0.6);
+    background: rgba(var(--slate-800-rgb), 0.8);
 }
 
 .offer-order-main {

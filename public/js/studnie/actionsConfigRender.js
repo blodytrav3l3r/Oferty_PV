@@ -122,11 +122,11 @@ function renderWellConfig() {
 
         const isPlaceholder = item.isPlaceholder;
         const plStyle = isPlaceholder
-            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.4); pointer-events: none;'
+            ? 'opacity:0.7; box-shadow: 0 0 15px rgba(var(--blue-alt-rgb), 0.5); pointer-events: none;'
             : '';
 
         html += `<div data-cfg-idx="${index}" class="config-tile" draggable="true" ondragstart="handleCfgDragStart(event)" ondragover="handleCfgDragOver(event)" ondrop="handleCfgDrop(event)" ondragend="handleCfgDragEnd(event)" style="background:linear-gradient(90deg, ${badge.bg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:4px solid ${badge.bg.substring(0, 7)}; border-radius:8px; padding:0.25rem 0.4rem; position:relative; transition:all 0.2s ease; margin-bottom:0.25rem; cursor:grab; ${plStyle}"
-                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.4)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
+                      onmouseenter="if(!${isPlaceholder}){this.style.filter='brightness(1.5)'; this.style.borderColor='rgba(var(--white-rgb), 0.3)'; this.style.boxShadow='0 0 12px rgba(var(--accent-rgb), 0.5)'; window.highlightSvg('cfg', ${index})}" onmouseleave="if(!${isPlaceholder}){this.style.filter='brightness(1)'; this.style.borderColor='rgba(var(--white-rgb), 0.05)'; this.style.boxShadow='none'; window.unhighlightSvg('cfg', ${index})}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem;">
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
@@ -175,7 +175,7 @@ function renderWellConfig() {
                                 : 'rgba(var(--danger-rgb), 0.1)';
                             const precoBorder = isPrecoDisabled
                                 ? 'rgba(var(--white-rgb), 0.2)'
-                                : 'rgba(var(--danger-rgb), 0.4)';
+                                : 'rgba(var(--danger-rgb), 0.5)';
                             const precoText = isPrecoDisabled
                                 ? `<del>PRECO (${percDesc})</del>`
                                 : `PRECO (${percDesc})`;
@@ -195,7 +195,7 @@ function renderWellConfig() {
                                 : 'rgba(var(--blue-alt-rgb), 0.1)';
                             const pehdBorder = isPehdDisabled
                                 ? 'rgba(var(--white-rgb), 0.2)'
-                                : 'rgba(var(--blue-alt-rgb), 0.4)';
+                                : 'rgba(var(--blue-alt-rgb), 0.5)';
                             const pehdText = isPehdDisabled ? `<del>PEHD</del>` : `PEHD`;
 
                             badgesHtml += `<span onclick="window.toggleLinerDisabled(${index}, 'pehd')" style="cursor:pointer; font-size:0.55rem; color:${pehdColor}; font-weight:800; margin-left:4px; border:1px solid ${pehdBorder}; padding:1px 4px; border-radius:4px; background:${pehdBg}; white-space:nowrap; transition:all 0.2s;" title="Kliknij, aby włączyć/wyłączyć dopłatę PEHD dla tego elementu">${pehdText}</span>`;
@@ -206,7 +206,7 @@ function renderWellConfig() {
                             (p.componentType === 'krag' || p.componentType === 'krag_ot')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
                         if (
                             (well.dennicaMaterial === 'zelbetowa' ||
@@ -214,7 +214,7 @@ function renderWellConfig() {
                             p.componentType === 'dennica'
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                                ' <span class="color-warn" style="font-size:0.55rem; border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
                         }
                         if (
                             well.stopnie === 'nierdzewna' &&
@@ -224,7 +224,7 @@ function renderWellConfig() {
                                 p.componentType === 'dennica')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+                                ' <span class="color-accent" style="font-size:0.55rem; border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
                         }
 
                         return badgesHtml;
@@ -237,7 +237,7 @@ function renderWellConfig() {
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
                 <span style="font-size:0.52rem; color:rgba(var(--white-rgb), 0.3); font-weight:800; letter-spacing:0.6px; text-align:left;">WAGA:</span>
-                <span style="color:rgba(var(--white-rgb), 0.95); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
+                <span style="color:rgba(var(--white-rgb), 0.8); font-weight:700; font-size:0.82rem; white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
@@ -245,7 +245,7 @@ function renderWellConfig() {
                 <span style="font-size:1.0rem; font-weight:800; color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius:6px; cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.4)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
+                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius:6px; cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.5)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
               </div>
             </div>
 

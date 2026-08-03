@@ -224,7 +224,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             const isPos = item.surcharge > 0;
             const color = isPos ? 'var(--success-hover)' : 'var(--danger-hover)';
             const bg = isPos ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--danger-rgb), 0.1)';
-            const border = isPos ? 'rgba(var(--success-rgb), 0.4)' : 'rgba(var(--danger-rgb), 0.3)';
+            const border = isPos ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--danger-rgb), 0.3)';
             pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
         }
 

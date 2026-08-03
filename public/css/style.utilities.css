@@ -116,7 +116,7 @@
     background: rgba(var(--success-rgb), 0.2);
 }
 .border-success {
-    border-color: rgba(var(--success-rgb), 0.6);
+    border-color: rgba(var(--success-rgb), 0.8);
 }
 .border-danger-subtle {
     border-color: rgba(var(--danger-rgb), 0.3);
@@ -131,7 +131,7 @@
     background: rgba(var(--black-rgb), 0.2);
 }
 .bg-black-dim {
-    background: rgba(var(--black-rgb), 0.6);
+    background: rgba(var(--black-rgb), 0.8);
 }
 .bg-glass-ultra {
     background: rgba(var(--white-rgb), 0.05);

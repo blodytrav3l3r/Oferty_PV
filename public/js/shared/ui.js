@@ -209,10 +209,10 @@ function showUserSelectionPopup(users, defaultUserId) {
             html += `<button class="user-select-btn" data-user-id="${u.id}" style="
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
                 background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
-                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.4)' : 'rgba(var(--white-rgb), 0.05)'};
+                border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                 border-radius:10px; cursor:pointer; color:var(--text-primary); font:500 0.85rem Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
-            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.4)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
+            " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.5)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
                onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(var(--white-rgb), 0.05)';this.style.background='rgba(var(--white-rgb), 0.05)'}">
                 <span style="font-size:1.1rem;">${roleBadge}</span>
                 <div class="flex-1">
@@ -231,7 +231,7 @@ function showUserSelectionPopup(users, defaultUserId) {
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal" style="background:#1a2536; border:1px solid rgba(var(--white-rgb), 0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
+            html: `<div class="modal" style="            background: var(--bg-tile); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();
@@ -408,7 +408,7 @@ function _ensureConfirmStyles() {
     style.textContent = `
         .app-confirm-modal {
             background:var(--slate-950);
-            border:1px solid #2e2e75;
+            border:1px solid var(--accent-border-dim);
             border-radius:16px;
             width:100%; max-width:800px;
             padding:1.5rem 3rem;

@@ -301,7 +301,7 @@ function populateZleceniaForm(el) {
     let bannerHtml = '';
     if (isAccepted) {
         bannerHtml = `
-            <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.4); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+            <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.5); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
                 <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
                 <div style="flex:1;">
                     <div style="font-size:0.85rem; font-weight:800; color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>

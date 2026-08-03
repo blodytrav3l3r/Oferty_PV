@@ -82,7 +82,7 @@ function renderSavedOffers() {
                         ord.orderNumber ||
                         ord.offerNumber ||
                         (ord.id ? ord.id.substring(0, 8) : '—');
-                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.4); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
+                    return `<span style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.5); border-radius:6px; font-size:0.68rem; font-weight:800; color:var(--success-hover);">
                     <i data-lucide="package" class="icon-xxs"></i> Zamówienie ${escapeHtml(label)}
                 </span>`;
                 })

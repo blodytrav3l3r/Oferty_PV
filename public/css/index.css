@@ -572,7 +572,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .recycled-badge:hover {
     background: rgba(var(--success-rgb), 0.2);
-    border-color: rgba(var(--success-rgb), 0.4);
+    border-color: rgba(var(--success-rgb), 0.5);
 }
 
 .recycled-empty {
@@ -707,7 +707,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .admin-table td {
     padding: 0.4rem 0.6rem;
     font-size: 0.78rem;
-    border-bottom: 1px solid #14171c;
+    border-bottom: 1px solid var(--border-table-subtle);
     vertical-align: middle;
     text-align: center;
     color: var(--text-secondary);

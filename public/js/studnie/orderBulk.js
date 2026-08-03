@@ -299,7 +299,7 @@ function openBulkOrderSequencePopup() {
                     onkeydown="if(event.key === 'Enter') this.blur();"
                     style="width:72px; height:28px; text-align:center; padding:0;
                     background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.15)'};
-                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.4)'}; border-radius:6px;
+                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius:6px;
                     font-size:0.75rem; font-weight:800; color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
                 <span style="font-size:1rem; color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
                 <div style="flex:1;">
@@ -322,7 +322,7 @@ function openBulkOrderSequencePopup() {
     overlay = document.createElement('div');
     overlay.id = 'bulk-seq-overlay';
     overlay.style.cssText =
-        'position:fixed; inset:0; background:rgba(var(--black-rgb), 0.6); z-index:' +
+        'position:fixed; inset:0; background:rgba(var(--black-rgb), 0.8); z-index:' +
         LAYERS.BULK_ORDER +
         '; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
     overlay.innerHTML = `
@@ -337,7 +337,7 @@ function openBulkOrderSequencePopup() {
                 </button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
-            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.4); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
+            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
             </button>
         </div>

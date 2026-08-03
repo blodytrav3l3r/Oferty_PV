@@ -185,7 +185,7 @@ async function generateOfferHtml() {
         offerAssigneeUser &&
         String(offerCreatorUser.id) === String(offerAssigneeUser.id);
 
-    let contactHtml = `<div class="offer-contact-footer" style="margin-top:20px; padding-top:10px; border-top:1.5px solid #999; font-size:9pt;">`;
+    let contactHtml = `<div class="offer-contact-footer" style="margin-top:20px; padding-top:10px; border-top:1.5px solid var(--slate-400); font-size:9pt;">`;
     contactHtml += `<table style="width:100%; border:none;"><tr>`;
 
     const renderUser = (title, u) => {
@@ -195,10 +195,10 @@ async function generateOfferHtml() {
                 ? `${u.firstName} ${u.lastName}`
                 : u.displayName || u.username || 'Nieznany';
         let ht = `<td style="vertical-align:top; width:50%;">`;
-        ht += `<strong style="color:#999;">${title}:</strong><br>`;
+        ht += `<strong style="color:var(--slate-400);">${title}:</strong><br>`;
         ht += `<strong>${name}</strong><br>`;
         if (u.email)
-            ht += `Email: <a href="mailto:${u.email}" style="color:#333;text-decoration:none;">${u.email}</a><br>`;
+            ht += `Email: <a href="mailto:${u.email}" style="color:var(--slate-700);text-decoration:none;">${u.email}</a><br>`;
         if (u.phone) ht += `Telefon: ${u.phone}`;
         ht += `</td>`;
         return ht;

@@ -580,7 +580,7 @@
 
 .rury-action-btn--print {
     background: rgba(var(--accent-rgb), 0.15);
-    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
     color: var(--accent-text);
     grid-column: 1;
     grid-row: 2;
@@ -588,13 +588,13 @@
 
 .rury-action-btn--print:hover {
     background: rgba(var(--accent-rgb), 0.3);
-    border-color: rgba(var(--accent-rgb), 0.6);
+    border-color: rgba(var(--accent-rgb), 0.8);
     color: var(--accent-text-light);
 }
 
 .rury-action-btn--save {
     background: rgba(var(--success-rgb), 0.15);
-    border: 1px solid rgba(var(--success-rgb), 0.4);
+    border: 1px solid rgba(var(--success-rgb), 0.5);
     color: var(--success-hover);
     grid-column: 1;
     grid-row: 1;
@@ -602,13 +602,13 @@
 
 .rury-action-btn--save:hover {
     background: rgba(var(--success-rgb), 0.3);
-    border-color: rgba(var(--success-rgb), 0.6);
+    border-color: rgba(var(--success-rgb), 0.8);
     color: var(--success-hover);
 }
 
 .rury-action-btn--order {
     background: rgba(var(--warn-rgb), 0.15);
-    border: 1px solid rgba(var(--warn-rgb), 0.4);
+    border: 1px solid rgba(var(--warn-rgb), 0.5);
     color: var(--warn-hover);
     grid-column: 2;
     grid-row: 1 / 3;
@@ -616,7 +616,7 @@
 
 .rury-action-btn--order:hover {
     background: rgba(var(--warn-rgb), 0.3);
-    border-color: rgba(var(--warn-rgb), 0.6);
+    border-color: rgba(var(--warn-rgb), 0.8);
     color: var(--warn-hover);
 }
 
@@ -985,7 +985,7 @@
     border: 1px solid var(--border-glass);
     border-radius: 5px;
     background: rgba(var(--danger-rgb), 0.1);
-    color: rgba(var(--danger-rgb), 0.6);
+    color: rgba(var(--danger-rgb), 0.8);
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s, border-color 0.2s;
     line-height: 1.4;
@@ -993,7 +993,7 @@
 .zt-toggle-btn.active {
     background: rgba(var(--success-rgb), 0.2);
     color: var(--success);
-    border-color: rgba(var(--success-rgb), 0.4);
+    border-color: rgba(var(--success-rgb), 0.5);
 }
 .zt-toggle-btn:hover:not(.active) {
     background: rgba(var(--danger-rgb), 0.2);

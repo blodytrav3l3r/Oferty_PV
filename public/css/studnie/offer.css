@@ -112,7 +112,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    border-top: 2px solid rgba(var(--accent-rgb), 0.95);
+    border-top: 2px solid rgba(var(--accent-rgb), 0.8);
     z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
     pointer-events: none;
 }
@@ -125,7 +125,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    border-bottom: 2px solid rgba(var(--accent-rgb), 0.95);
+    border-bottom: 2px solid rgba(var(--accent-rgb), 0.8);
     z-index: 55; /* LAYERS_EXCEL.FOCUS_BORDER */
     pointer-events: none;
 }
@@ -133,13 +133,13 @@
 /* Lewa krawędź na pierwszej komórce */
 #excel-table-container tbody tr:focus-within td:first-child::before {
     height: 100%;
-    border-left: 2px solid rgba(var(--accent-rgb), 0.95);
+    border-left: 2px solid rgba(var(--accent-rgb), 0.8);
 }
 
 /* Prawa krawędź na ostatniej komórce */
 #excel-table-container tbody tr:focus-within td:last-child::after {
     height: 100%;
-    border-right: 2px solid rgba(var(--accent-rgb), 0.95);
+    border-right: 2px solid rgba(var(--accent-rgb), 0.8);
 }
 
 /* Poprawa kolorystyki tekstu w aktywnym wierszu dla lepszego kontrastu */
@@ -201,38 +201,38 @@
 }
 .summary-action-btn--save {
     background: rgba(var(--success-rgb), 0.15);
-    border: 1px solid rgba(var(--success-rgb), 0.4);
+    border: 1px solid rgba(var(--success-rgb), 0.5);
     color: var(--success-hover);
     grid-column: 1;
     grid-row: 1;
 }
 .summary-action-btn--save:hover {
     background: rgba(var(--success-rgb), 0.3);
-    border-color: rgba(var(--success-rgb), 0.6);
+    border-color: rgba(var(--success-rgb), 0.8);
     color: var(--success-hover);
 }
 .summary-action-btn--order {
     background: rgba(var(--warn-rgb), 0.15);
-    border: 1px solid rgba(var(--warn-rgb), 0.4);
+    border: 1px solid rgba(var(--warn-rgb), 0.5);
     color: var(--warn-hover);
     grid-column: 2;
     grid-row: 1 / 3;
 }
 .summary-action-btn--order:hover {
     background: rgba(var(--warn-rgb), 0.3);
-    border-color: rgba(var(--warn-rgb), 0.6);
+    border-color: rgba(var(--warn-rgb), 0.8);
     color: var(--warn-hover);
 }
 .summary-action-btn--print {
     background: rgba(var(--accent-rgb), 0.15);
-    border: 1px solid rgba(var(--accent-rgb), 0.4);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
     color: var(--accent-text);
     grid-column: 1;
     grid-row: 2;
 }
 .summary-action-btn--print:hover {
     background: rgba(var(--accent-rgb), 0.3);
-    border-color: rgba(var(--accent-rgb), 0.6);
+    border-color: rgba(var(--accent-rgb), 0.8);
     color: var(--accent-text);
 }
 /* —— Karty w dolnym pasku podsumowania (wzór rury) —— */

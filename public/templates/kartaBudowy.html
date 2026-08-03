@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Karta Budowy - Zamówienie</title>
     <style>
+        :root {
+            --slate-300: #cbd5e1;
+            --slate-100: #f1f5f9;
+            --slate-400: #94a3b8;
+            --white: #ffffff;
+        }
         @page {
             size: A4 portrait;
             margin: 10mm;
@@ -22,7 +28,7 @@
             font-family: Arial, sans-serif;
             font-size: 10pt;
             color: #1a1a2e;
-            background: #fff;
+            background: var(--white);
             line-height: 1.4;
         }
 
@@ -37,7 +43,7 @@
             text-align: center;
             margin-bottom: 12px;
             padding-bottom: 6px;
-            border-bottom: 2px solid #999;
+            border-bottom: 2px solid var(--slate-400);
         }
         .karta-title-main {
             font-size: 14pt;
@@ -56,8 +62,8 @@
         .section-header {
             font-size: 9pt;
             font-weight: 700;
-            color: #fff;
-            background: #999;
+            color: var(--white);
+            background: var(--slate-400);
             padding: 3px 6px;
             margin-top: 8px;
             margin-bottom: 3px;
@@ -74,7 +80,7 @@
 
         .info-row {
             display: flex;
-            border-bottom: 1px dotted #ccc;
+            border-bottom: 1px dotted var(--slate-300);
             padding: 1px 0;
         }
 
@@ -94,7 +100,7 @@
         }
 
         .notes-box {
-            background: #f9f9f9;
+            background: var(--slate-100);
             border: 1px solid #ddd;
             padding: 8px;
             font-size: 9pt;
@@ -111,13 +117,13 @@
         }
 
         table.przejscia-table th {
-            background: #999;
-            color: #fff;
+            background: var(--slate-400);
+            color: var(--white);
             padding: 2px 4px;
             text-align: center;
             font-size: 8pt;
             font-weight: 700;
-            border: 0.5pt solid #999;
+            border: 0.5pt solid var(--slate-400);
         }
 
         table.przejscia-table tr {
@@ -126,17 +132,17 @@
 
         table.przejscia-table td {
             padding: 2px 4px;
-            border: 0.5pt solid #ccc;
+            border: 0.5pt solid var(--slate-300);
             text-align: center;
         }
 
         table.przejscia-table tr:nth-child(even) {
-            background: #fafafa;
+            background: var(--slate-100);
         }
 
         .total-row td {
             font-weight: 700;
-            border-top: 2px solid #999;
+            border-top: 2px solid var(--slate-400);
         }
 
         .page-break {

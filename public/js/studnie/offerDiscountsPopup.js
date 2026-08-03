@@ -252,7 +252,7 @@ function renderOfferDiscountsPopupContent() {
         <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.4);"></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.5);"></span>
                     <span id="offer-dn-count-${dn}" style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
                     <span id="offer-dn-avg-${dn}" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
                 </div>
@@ -297,7 +297,7 @@ function renderOfferDiscountsPopupContent() {
         <div style="margin-top: 0.5rem; background: rgba(var(--blue-alt-rgb), 0.05); border: 1px solid rgba(var(--blue-alt-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-alt); box-shadow: 0 0 6px rgba(var(--blue-alt-rgb), 0.4);"></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-alt); box-shadow: 0 0 6px rgba(var(--blue-alt-rgb), 0.5);"></span>
                     <span style="font-weight: 800; font-size: 0.8rem; color: var(--blue-alt);">Wkładka PEHD <span style="font-size:0.65rem; font-weight:600; opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
                 </div>
                 <div style="color: var(--blue-alt); font-weight: 800; font-size: 0.8rem;"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
@@ -333,7 +333,7 @@ function renderOfferDiscountsPopupContent() {
         <div style="margin-top: 0.5rem; background: rgba(var(--accent2-rgb), 0.05); border: 1px solid rgba(var(--accent2-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
-                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 6px rgba(var(--accent2-rgb), 0.4);"></span>
+                    <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 6px rgba(var(--accent2-rgb), 0.5);"></span>
                     <span style="font-weight: 800; font-size: 0.8rem; color: var(--purple-alt);">Koszt malowania</span>
                 </div>
                 <span style="font-size: 0.6rem; color: var(--text-muted);">PLN / m²</span>

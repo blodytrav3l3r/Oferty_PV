@@ -246,7 +246,7 @@ function _excelShowPasteProgress(now, total) {
         el.style.cssText =
             'position:fixed;bottom:1rem;right:1rem;z-index:' +
             LAYERS.TOAST +
-            ';background:#1a1d27;border:1px solid rgba(var(--white-rgb), 0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(var(--black-rgb), 0.4);';
+            ';background:#1a1d27;border:1px solid rgba(var(--white-rgb), 0.1);border-radius:6px;padding:0.75rem 1rem;min-width:260px;box-shadow:0 4px 20px rgba(var(--black-rgb), 0.5);';
         el.innerHTML =
             '<div style="font-size:0.65rem;color:var(--slate-400);margin-bottom:0.35rem;">Wklejanie... <span id="excel-paste-pct">0%</span></div>' +
             '<div style="height:4px;background:var(--slate-950);border-radius:2px;overflow:hidden;">' +

@@ -20,7 +20,7 @@ function getFlowVisuals(flowType) {
         label: isWylot ? 'Wylot' : 'Wlot',
         bg: isWylot ? 'rgba(var(--danger-rgb), 0.2)' : 'rgba(var(--blue-rgb), 0.2)',
         color: isWylot ? 'var(--danger-hover)' : 'var(--blue-hover)',
-        border: isWylot ? 'rgba(var(--danger-rgb), 0.6)' : 'rgba(var(--blue-rgb), 0.6)',
+        border: isWylot ? 'rgba(var(--danger-rgb), 0.8)' : 'rgba(var(--blue-rgb), 0.8)',
         icon: isWylot ? '<i data-lucide="upload"></i>' : '<i data-lucide="download"></i>'
     };
 }

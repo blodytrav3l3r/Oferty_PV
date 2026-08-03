@@ -26,7 +26,7 @@ function renderWellHeaderRow(
     let featureBadges = '';
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
+            '<span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
     }
     if (
         (well.wkladkaDennica && well.wkladkaDennica !== 'brak') ||
@@ -34,27 +34,27 @@ function renderWellHeaderRow(
         (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
     ) {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+            '<span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
     }
     if (well.malowanieW && well.malowanieW !== 'brak') {
         if (well.malowanieZ === 'zewnatrz') {
             featureBadges +=
-                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
         } else {
             featureBadges +=
-                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
         }
     } else if (well.malowanieZ === 'zewnatrz') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
     }
     if (well.nadbudowa === 'zelbetowa' || well.dennicaMaterial === 'zelbetowa') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+            '<span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
     }
     if (well.stopnie === 'nierdzewna') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
     }
 
     let checkbox = '';
@@ -118,7 +118,7 @@ function getWellBadges(change, isOrdered, well) {
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
                 title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
-                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.4); display:inline-flex; align-items:center; gap:3px;">
+                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
             </span>`;
         } else {
@@ -205,14 +205,14 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             !item.disablePreco
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
+                ' <span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
         }
 
         const pehdType = getPehdTypeForComponent(well, p.componentType);
 
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+                ' <span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
         }
 
         if (
@@ -220,14 +220,14 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             (p.componentType === 'krag' || p.componentType === 'krag_ot')
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
         }
         if (
             (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
             p.componentType === 'dennica'
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
         }
         if (
             well.stopnie === 'nierdzewna' &&
@@ -236,7 +236,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
                 p.componentType === 'konus')
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.4); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+                ' <span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
         }
 
         html += `<tr style="opacity:0.8;">

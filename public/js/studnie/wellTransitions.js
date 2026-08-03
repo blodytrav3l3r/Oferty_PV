@@ -68,9 +68,9 @@ function renderInlinePrzejsciaApp(containerId) {
         <div style="padding:0.4rem 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
                 <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
-                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.4)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
+                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
             </div>
-            <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.4) transparent;">
+            <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
                     ${types
                         .map((t) => {
@@ -121,7 +121,7 @@ function renderInlinePrzejsciaApp(containerId) {
         ${
             selectedProduct
                 ? `
-        <div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.6); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
+        <div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <span style="font-size:1.0rem; font-weight:800; color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
                 <span style="font-size:0.95rem; color:var(--success); font-weight:800; font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size:0.6rem;">PLN</span></span>
@@ -554,7 +554,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.8) 0%, rgba(var(--slate-800-rgb), 0.95) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
+            html += `<div style="background:linear-gradient(90deg, rgba(30, 58, 138, 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="display:flex; align-items:center; gap:0.4rem;">
                   <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius:4px;">
@@ -570,7 +570,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
                     })
                     .join('')}
               </div>
@@ -582,7 +582,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.6)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
                     })
                     .join('')}
               </div>

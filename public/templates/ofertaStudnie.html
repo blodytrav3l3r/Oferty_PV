@@ -5,6 +5,14 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Oferta {{NR_OFERTY}}</title>
         <style>
+            :root {
+                --slate-300: #cbd5e1;
+                --slate-100: #f1f5f9;
+                --slate-700: #334155;
+                --slate-400: #94a3b8;
+                --white: #ffffff;
+                --black: #000000;
+            }
             @page {
                 size: A4 portrait;
                 margin: 0mm 10mm;
@@ -21,7 +29,7 @@
                 font-family: Arial, sans-serif;
                 font-size: 10pt;
                 color: #1a1a2e;
-                background: #fff;
+                background: var(--white);
                 line-height: 1.4;
             }
 
@@ -49,7 +57,7 @@
             .offer-title {
                 font-size: 16pt;
                 font-weight: 700;
-                color: #000;
+                color: var(--black);
                 text-align: center;
                 margin: 8px 0 4px;
             }
@@ -60,11 +68,11 @@
                 font-size: 10pt;
                 margin-bottom: 10px;
                 padding-bottom: 6px;
-                border-bottom: 2px solid #999;
+                border-bottom: 2px solid var(--slate-400);
             }
 
             .offer-meta strong {
-                color: #333;
+                color: var(--slate-700);
             }
 
             /* ===== INFO GRID (klient + inwestycja) ===== */
@@ -76,7 +84,7 @@
             }
 
             .info-box {
-                background: #f9f9f9;
+                background: var(--slate-100);
                 border: 1px solid #ddd;
                 border-radius: 4px;
                 padding: 8px 10px;
@@ -103,8 +111,8 @@
             .dn-header {
                 font-size: 11pt;
                 font-weight: 700;
-                color: #999;
-                border-bottom: 1.5px solid #999;
+                color: var(--slate-400);
+                border-bottom: 1.5px solid var(--slate-400);
                 padding-bottom: 3px;
                 margin-bottom: 6px;
             }
@@ -117,13 +125,13 @@
             }
 
             table.offer-table th {
-                background: #999;
-                color: #fff;
+                background: var(--slate-400);
+                color: var(--white);
                 padding: 4px 6px;
                 text-align: center;
                 font-size: 8pt;
                 font-weight: 700;
-                border: 0.5pt solid #999;
+                border: 0.5pt solid var(--slate-400);
             }
 
             table.offer-table tr {
@@ -133,12 +141,12 @@
 
             table.offer-table td {
                 padding: 3px 6px;
-                border: 0.5pt solid #ccc;
+                border: 0.5pt solid var(--slate-300);
                 vertical-align: middle;
             }
 
             table.offer-table tr:nth-child(even) {
-                background: #fafafa;
+                background: var(--slate-100);
             }
 
             .text-right {
@@ -160,9 +168,9 @@
 
             /* Wiersz sumy DN */
             .dn-summary-row td {
-                background: #f0f0f0;
+                background: var(--slate-100);
                 font-weight: 700;
-                border-top: 1.5px solid #999;
+                border-top: 1.5px solid var(--slate-400);
                 font-size: 9pt;
             }
 
@@ -174,8 +182,8 @@
             .summary-section h3 {
                 font-size: 11pt;
                 font-weight: 700;
-                color: #999;
-                border-bottom: 1.5px solid #999;
+                color: var(--slate-400);
+                border-bottom: 1.5px solid var(--slate-400);
                 padding-bottom: 3px;
                 margin-bottom: 6px;
             }
@@ -189,12 +197,12 @@
 
             table.summary-table td {
                 padding: 4px 8px;
-                border: 0.5pt solid #ccc;
+                border: 0.5pt solid var(--slate-300);
             }
 
             table.summary-table tr.grand-total td {
-                background: #999;
-                color: #fff;
+                background: var(--slate-400);
+                color: var(--white);
                 font-weight: 800;
                 font-size: 11pt;
                 border: none;
@@ -301,7 +309,7 @@
                                 style="
                                     font-size: 8pt;
                                     margin-top: 15px;
-                                    color: #333;
+                                    color: var(--slate-700);
                                     line-height: 1.35;
                                     text-align: justify;
                                     padding-bottom: 20px;
@@ -311,7 +319,7 @@
                                     style="
                                         font-size: 9pt;
                                         font-weight: 700;
-                                        color: #999;
+                                        color: var(--slate-400);
                                         margin-bottom: 5px;
                                         display: block;
                                     "
@@ -334,41 +342,41 @@
                                     "
                                 >
                                     <thead>
-                                        <tr style="background: #f0f0f0">
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                        <tr style="background: var(--slate-100)">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Zabezpieczenie transportu wg średnicy rur
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Cena netto [PLN]
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Zabezpieczenie transportu wg średnicy rur
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Cena netto [PLN]
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 300
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 13,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1400
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -377,24 +385,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 400
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 13,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -403,24 +411,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 14,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1600
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -429,24 +437,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 600
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 20,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1800
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -455,24 +463,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 800
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 20,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 2000
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -481,24 +489,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1000
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 40,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 2200
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -507,24 +515,24 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu DN 1200
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
                                             >
                                                 50,00
                                             </td>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Zabezpieczenie transportu WPUST ULICZNY
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -550,32 +558,32 @@
                                     "
                                 >
                                     <thead>
-                                        <tr style="background: #f0f0f0">
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                        <tr style="background: var(--slate-100)">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Pętle transportowe wg średnic studni
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Oznaczenie pętli
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Cena za sztukę [PLN]
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Liczba szt. na komplet
                                             </th>
-                                            <th style="border: 0.5pt solid #ccc; padding: 4px">
+                                            <th style="border: 0.5pt solid var(--slate-300); padding: 4px">
                                                 Cena kompletu [PLN]
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla studni DN1000
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -584,7 +592,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -593,7 +601,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -602,7 +610,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -611,12 +619,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla studni DN1200
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -625,7 +633,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -634,7 +642,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -643,7 +651,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -652,12 +660,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla studni DN1500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -666,7 +674,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -675,7 +683,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -684,7 +692,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -693,12 +701,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla studni DN2000
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -707,7 +715,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -716,7 +724,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -725,7 +733,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -734,12 +742,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla studni DN2500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -748,7 +756,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -757,7 +765,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -766,7 +774,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -775,12 +783,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla kręgów DN1500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -789,7 +797,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -798,7 +806,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -807,7 +815,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -816,12 +824,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla kręgów DN2000
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -830,7 +838,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -839,7 +847,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -848,7 +856,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -857,12 +865,12 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td style="border: 0.5pt solid #ccc; padding: 3px">
+                                            <td style="border: 0.5pt solid var(--slate-300); padding: 3px">
                                                 Pętle transportowe dla kręgów DN2500
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -871,7 +879,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -880,7 +888,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -889,7 +897,7 @@
                                             </td>
                                             <td
                                                 style="
-                                                    border: 0.5pt solid #ccc;
+                                                    border: 0.5pt solid var(--slate-300);
                                                     padding: 3px;
                                                     text-align: center;
                                                 "
@@ -1025,7 +1033,7 @@
                                     stronie
                                     <a
                                         href="https://www.pv-prefabet.com.pl"
-                                        style="color: #000; text-decoration: none"
+                                        style="color: var(--black); text-decoration: none"
                                         >www.pv-prefabet.com.pl</a
                                     >).<br />
                                     W zamówieniach prosimy powoływać się na nr niniejszej oferty.
@@ -1036,7 +1044,7 @@
                                     deklaracji dostępnych na
                                     <a
                                         href="https://www.pv-prefabet.com.pl"
-                                        style="color: #000; text-decoration: none"
+                                        style="color: var(--black); text-decoration: none"
                                         >https://www.pv-prefabet.com.pl</a
                                     >
                                     lub po przesłaniu przez odpowiedni dział P.V. Prefabet Kluczbork
@@ -1048,13 +1056,13 @@
                                     Warunki Sprzedaży dostępne na stronie internetowej
                                     <a
                                         href="https://www.pv-prefabet.com.pl"
-                                        style="color: #000; text-decoration: none"
+                                        style="color: var(--black); text-decoration: none"
                                         >www.pv-prefabet.com.pl</a
                                     >
                                     oraz Polityka Prywatności dostępna na stronie internetowej
                                     <a
                                         href="https://www.pv-prefabet.com.pl/rodo-dane"
-                                        style="color: #000; text-decoration: none"
+                                        style="color: var(--black); text-decoration: none"
                                         >www.pv-prefabet.com.pl/rodo-dane</a
                                     >
                                 </p>

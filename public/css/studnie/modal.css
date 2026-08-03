@@ -353,7 +353,7 @@
 
 .zlecenia-filter-btn.active {
     background: rgba(var(--accent-rgb), 0.15);
-    border-color: rgba(var(--accent-rgb), 0.4);
+    border-color: rgba(var(--accent-rgb), 0.5);
     color: var(--accent-text);
     font-weight: 700;
 }
@@ -414,7 +414,7 @@
 .recalc-modal {
     width: 980px;
     max-width: 96vw;
-    background: #111827;
+    background: var(--bg-secondary);
     display: flex;
     flex-direction: column;
     max-height: 90vh;
@@ -426,7 +426,7 @@
     max-height: 75vh;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(var(--accent-rgb), 0.4) transparent;
+    scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent;
 }
 
 .recalc-modal-desc {
@@ -447,7 +447,7 @@
 }
 
 .recalc-group {
-    background: rgba(var(--slate-800-rgb), 0.4);
+    background: rgba(var(--slate-800-rgb), 0.5);
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 0.8rem;
@@ -554,7 +554,7 @@
     position: absolute;
     top: 2px;
     right: 4px;
-    filter: drop-shadow(0 1px 1px rgba(var(--black-rgb), 0.6));
+    filter: drop-shadow(0 1px 1px rgba(var(--black-rgb), 0.8));
 }
 
 .recalc-tile.active .recalc-tile-check {

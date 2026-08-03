@@ -118,7 +118,7 @@
     --shadow: var(--shadow-md);
 
     /* Effects */
-    --glass: rgba(var(--slate-950-rgb), 0.6);
+    --glass: rgba(var(--slate-950-rgb), 0.8);
     --glass-border: rgba(var(--white-rgb), 0.1);
     --highlight-bg: #2d2510;
 
