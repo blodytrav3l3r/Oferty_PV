@@ -1574,7 +1574,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 /* ─── Studnie: option background ─── */
 select.form-input option {
-    background-color: #1b2334;
+    background-color: var(--slate-800);
     color: var(--white);
 }
 

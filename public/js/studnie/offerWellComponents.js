@@ -478,7 +478,7 @@ function renderComponentSubItems(
                             return '[' + e + ']';
                         });
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
                             dnParts.join(' / ') +
                             ') ' +
                             etyParts.join(' / ') +
@@ -488,7 +488,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
                             precoCalc.skrzynki.ilosc +
                             ' × ' +
                             fmt(precoCalc.skrzynki.cenaSzt) +
@@ -498,13 +498,13 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.spadekKineta > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
                             fmt(precoCalc.spadekKineta * precoMult) +
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
                             fmt(precoCalc.spadekMufa * precoMult) +
                             ' PLN</td></tr>';
                     }
@@ -515,7 +515,7 @@ function renderComponentSubItems(
                                 ? precoCalc.uniesieniaSzczegoly[0].mm
                                 : '';
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + uniesienie' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + uniesienie' +
                             (mm ? ' (' + mm + ' mm)' : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.uniesienie * precoMult) +
@@ -523,7 +523,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.redukcja > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + redukcja' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + redukcja' +
                             (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.redukcja * precoMult) +
@@ -541,7 +541,7 @@ function renderComponentSubItems(
                                         ? 'dopływ'
                                         : dw.typ || '';
                             html +=
-                                '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
+                                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
                                 dw.dn +
                                 (dwTyp ? ' (' + dwTyp + ')' : '') +
                                 ' [' +
@@ -553,7 +553,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:#fb7185;"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
+                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
                             precoCalc.pelnaWysokosc.metry.toFixed(2) +
                             ' m)</td><td class="text-right">' +
                             fmt(precoCalc.pelnaWysokosc.cena * precoMult) +
