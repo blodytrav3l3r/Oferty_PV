@@ -216,7 +216,7 @@ function showItemDiscountModal() {
         html: `
     <div class="modal" style="max-width:1200px; width:95%; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
-        <h3 id="item-discount-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text);">% Edytuj rabaty pozycji</h3>
+        <h3 id="item-discount-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);">% Edytuj rabaty pozycji</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
@@ -334,7 +334,7 @@ function renderDiscountModalItems() {
             onclick="this.select()"
             oninput="updateTempDiscount(${index}, this)"
             onchange="checkGasketDiscount(${index}, this)"
-            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius:4px; font-weight:700; color:var(--accent); background:var(--bg);">
+            style="width:65px; padding:0.3rem; text-align:center; border:1px solid var(--border); border-radius:4px; font-weight:700; color:var(--accent); background:var(--bg-input);">
           ${warningText}
         </td>
         <td id="modal-price-${index}" style="padding:0.4rem; text-align:right; font-size:0.8rem;">${fmt(priceAfterDiscount)} PLN</td>

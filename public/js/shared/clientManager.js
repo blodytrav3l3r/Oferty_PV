@@ -118,7 +118,7 @@ function showClientsDb() {
         html: `
     <div class="modal" style="max-width:1200px; width:95%; border-radius:12px; box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:0;">
-        <h3 style="font-size:1.25rem; font-weight:700; color:var(--text);"><i data-lucide="folder-open"></i> Baza klientów <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${clientsDb.length})</span></h3>
+        <h3 style="font-size:1.25rem; font-weight:700; color:var(--text-primary);"><i data-lucide="folder-open"></i> Baza klientów <span style="font-size:0.8rem; font-weight:400; color:var(--text-muted);">(${clientsDb.length})</span></h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:0.8rem 0; border-bottom:1px solid var(--border);">
@@ -126,7 +126,7 @@ function showClientsDb() {
           <div style="position:relative; flex:1;">
             <input type="text" id="clients-search-input" placeholder="Szukaj po nazwie lub NIP..." 
               oninput="filterClientsDb(this.value)"
-              style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.85rem; outline:none; transition:border-color 0.2s;"
+              style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius:8px; background:var(--bg-input); color:var(--text-primary); font-size:0.85rem; outline:none; transition:border-color 0.2s;"
               onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
           </div>
         </div>
@@ -233,7 +233,8 @@ function renderClientsDbList(query) {
             tr.appendChild(clientNumberTd);
 
             const nameTd = document.createElement('td');
-            nameTd.style.cssText = 'padding:0.6rem 0.8rem; font-weight:600; color:var(--text);';
+            nameTd.style.cssText =
+                'padding:0.6rem 0.8rem; font-weight:600; color:var(--text-primary);';
             nameTd.textContent = c.name;
             tr.appendChild(nameTd);
 

@@ -1,6 +1,6 @@
 ﻿# Plan: Tokenizacja kolorów (jeden spójny system var(--...))
 
-Data: 2026-08-03 | Status: w realizacji | Tryb: READ-ONLY → edycja po akceptacji
+Data: 2026-08-03 | Status: zakończono | Tryb: READ-ONLY → edycja po akceptacji
 
 ## Cel
 
@@ -55,3 +55,13 @@ Data: 2026-08-03 | Status: w realizacji | Tryb: READ-ONLY → edycja po akceptac
 
 - JS: node -c; CSS/HTML: npx prettier --write; TS: npm run typecheck; UI: npm run lint:frontend
 - Final: rg hexów (tylko style.base.css + vendor), npm run validate, npm test, testy ręczne 5 druków + batch + PDF.
+
+## Domknięcie (2026-08-03)
+
+Wykonane po commicie 54aa33a (zatwierdzone przez użytkownika):
+
+1. **`--shadow-navy: #2e2b6e`** dodany do `:root`; gołe `#fff` (btn-primary) → `var(--white)`, `#2e2b6e` ×3 (cienie, focus ring) → `var(--shadow-navy)`. Zero hexów poza `:root` w style.base.css.
+2. **Niezdefiniowane `--text`/`--bg`** (13 wystąpień w 7 plikach: clientManager, offerAddItems, offerExports, orderEditMode, orderSummary, popupsTransitionManager) → podmiana na istniejące tokeny `--text-primary`/`--bg-input`. Decyzja: mapowanie per-wystąpienie (bez aliasów w :root).
+3. **Test spójności 3 SSoT** — nowy `tests/printTokensConsistency.test.ts` (frontend/backend `PRINT_TOKENS_CSS` identyczne, 16 tokenów, wartości zgodne z `:root`).
+4. **Scalenie `configurator.css` → `studnie.css`** — analiza wykazała, że configurator.css (1505 linii) był w 99% duplikatem studnie.css (223/226 reguł identycznych). 3 unikalne reguły (`[data-partial]`, `.config-tile`, `.config-tile:hover`) przeniesione na koniec studnie.css, link usunięty z studnie.html, plik skasowany. Nowe testy regresyjne w `tests/responsive/studnie.test.ts`.
+5. **Do weryfikacji ręcznej przez użytkownika**: wygląd 5 szablonów druku + batch + PDF (backend), cienie `--shadow-navy`, kontrast modali po podmianie `--text`/`--bg`.

@@ -24,4 +24,16 @@ describe('Kreator studni — responsywność', () => {
         );
         expect(mqMatch).not.toBeNull();
     });
+
+    test('scalenie configurator.css - unikalne reguly przeniesione do studnie.css', () => {
+        const css = fs.readFileSync('public/css/studnie.css', 'utf-8');
+        expect(css).toContain('[data-partial] {');
+        expect(css).toContain('.config-tile:hover');
+        expect(css).toContain('cursor: pointer');
+    });
+
+    test('configurator.css nie jest juz ladowany w studnie.html', () => {
+        const html = fs.readFileSync('public/studnie.html', 'utf-8');
+        expect(html).not.toMatch(/configurator\.css/);
+    });
 });

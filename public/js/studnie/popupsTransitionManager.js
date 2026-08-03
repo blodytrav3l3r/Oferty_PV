@@ -52,7 +52,7 @@ window.openTransitionManagerModal = function () {
       
       <!-- Nagłówek -->
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
-        <h3 id="tm-title" style="font-size:1.1rem; font-weight:700; color:var(--text);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
+        <h3 id="tm-title" style="font-size:1.1rem; font-weight:700; color:var(--text-primary);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="window.closeTransitionManagerModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       

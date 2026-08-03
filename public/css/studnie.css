@@ -2286,3 +2286,16 @@ select.form-input option {
     outline: 2px dashed var(--blue);
     outline-offset: -2px;
 }
+
+/* Regel z configurator.css (scalone 2026-08-03) */
+[data-partial] {
+    min-height: 0;
+}
+
+.config-tile {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.config-tile:hover {
+    background: var(--slate-100);
+}

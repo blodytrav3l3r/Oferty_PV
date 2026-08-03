@@ -129,6 +129,7 @@
 
     /* Shadows */
     --shadow-color: rgba(var(--black-rgb), 0.5);
+    --shadow-navy: #2e2b6e;
     --shadow-sm: 0 2px 8px rgba(var(--black-rgb), 0.1);
     --shadow-md: 0 4px 16px var(--shadow-color);
     --shadow-lg: 0 8px 32px var(--shadow-color);
@@ -808,13 +809,13 @@ body::before {
 
 .btn-primary {
     background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
-    box-shadow: 0 4px 15px #2e2b6e;
+    color: var(--white);
+    box-shadow: 0 4px 15px var(--shadow-navy);
 }
 
 .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px #2e2b6e;
+    box-shadow: 0 6px 20px var(--shadow-navy);
 }
 
 .btn-secondary {
@@ -936,7 +937,7 @@ button.btn-order-save:hover {
 .form-select:focus,
 .form-textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px #2e2b6e;
+    box-shadow: 0 0 0 3px var(--shadow-navy);
 }
 
 .form-input:focus-visible,

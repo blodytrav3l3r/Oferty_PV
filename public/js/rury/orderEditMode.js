@@ -161,10 +161,10 @@ function renderStep2OrderBanner(orderData) {
         '<span style="font-size:1.3rem;">📦</span>' +
         '<span class="color-success fw-7">Dodajesz produkty do istniejącego zamówienia</span>' +
         '<span class="text-muted">|</span>' +
-        '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text);">' +
+        '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text-primary);">' +
         escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '\u2014') +
         '</strong></span>' +
-        '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text);">Dalej</strong> aby przejść do podsumowania.</span>' +
+        '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text-primary);">Dalej</strong> aby przejść do podsumowania.</span>' +
         '</div>' +
         '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');

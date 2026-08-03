@@ -156,7 +156,7 @@ function updateRuryOrderSummary(orderData) {
                 orderCell.innerHTML =
                     '<input type="number" class="order-partial-qty" value="' +
                     escapeHtml(String(currentQty)) +
-                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
+                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
                 var newInput = /** @type {HTMLInputElement} */ (
                     orderCell.querySelector('.order-partial-qty')
                 );
