@@ -1,4 +1,5 @@
 @echo off
+REM  Wersja: 1.10.0
 REM ===========================================================
 REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
@@ -11,13 +12,15 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
+set "APP_VERSION=1.10.0"
+
 set "MODE=dev"
 if /i "%1"=="--prod" set "MODE=prod"
 if /i "%1"=="prod" set "MODE=prod"
 
 echo ===========================================================
-if /i "%MODE%"=="dev" echo   WITROS Oferty PV - Development Mode
-if /i "%MODE%"=="prod" echo   WITROS Oferty PV - Production
+if /i "%MODE%"=="dev" echo   WITROS Oferty PV - Development Mode v%APP_VERSION%
+if /i "%MODE%"=="prod" echo   WITROS Oferty PV - Production v%APP_VERSION%
 echo ===========================================================
 echo.
 

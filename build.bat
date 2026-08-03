@@ -1,4 +1,5 @@
 @echo off
+REM  Wersja: 1.10.0
 REM ===========================================================
 REM  build.bat - Budowanie production bundle (final)
 REM ===========================================================
@@ -6,8 +7,10 @@ REM ===========================================================
 setlocal
 cd /d "%~dp0"
 
+set "APP_VERSION=1.10.0"
+
 echo ===========================================================
-echo   WITROS Oferty PV - Budowanie produkcyjne
+echo   WITROS Oferty PV - Budowanie produkcyjne v%APP_VERSION%
 echo ===========================================================
 echo.
 

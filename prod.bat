@@ -1,4 +1,5 @@
 @echo off
+REM  Wersja: 1.10.0
 REM ===========================================================
 REM  prod.bat - Production server start (final)
 REM ===========================================================
@@ -6,8 +7,10 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
+set "APP_VERSION=1.10.0"
+
 echo ===========================================================
-echo   WITROS Oferty PV - Produkcja
+echo   WITROS Oferty PV - Produkcja v%APP_VERSION%
 echo ===========================================================
 echo.
 

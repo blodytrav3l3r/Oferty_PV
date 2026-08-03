@@ -71,6 +71,22 @@ if (versionChangelog && versionFile && versionChangelog !== versionFile) {
     errors.push(`VERSION (${versionFile}) ≠ CHANGELOG.md [${versionChangelog}]`);
 }
 
+// ── Wersja w plikach .bat (ASCII, AGENTS.md — utrzymywana przez auto-bat-version.mjs) ──
+const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'prod.bat', 'scripts/ensure-db.bat'];
+const BAT_VERSION_RE = /(?:set "APP_VERSION=|REM  Wersja: )(\d+\.\d+\.\d+)/g;
+
+for (const file of BAT_FILES) {
+    const content = read(resolve(ROOT, file));
+    if (content == null) continue;
+    const found = [...content.matchAll(BAT_VERSION_RE)].map((m) => m[1]);
+    allVersions[file] = found.length > 0 ? found[0] : null;
+    if (SEMVER.test(versionFile) && found.length === 0) {
+        errors.push(`${file} — brak znacznika wersji (APP_VERSION / REM Wersja)`);
+    } else if (found.some((v) => v !== versionFile)) {
+        errors.push(`${file} (${found[0]}) ≠ VERSION (${versionFile})`);
+    }
+}
+
 // ── Raport ──
 const pad = (s, n) => s + ' '.repeat(Math.max(0, n - s.length));
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -78,7 +94,7 @@ console.log('  Version Guard — sprawdzenie spójności wersji');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 for (const [name, value] of Object.entries(allVersions)) {
-    console.log(`  ${pad(name, 16)} → ${value ?? '⚠ BRAK'}`);
+    console.log(`  ${pad(name, 26)} → ${value ?? '⚠ BRAK'}`);
 }
 console.log('');
 
