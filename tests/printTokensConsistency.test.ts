@@ -30,10 +30,39 @@ function getPrintTokensBlock(source: string): string {
     return m![1];
 }
 
-describe('Spójność tokenów kolorów (3 SSoT)', () => {
+/** Wyciąga pary klucz: 'HEX' z obiektu DOCX_COLORS (wartości bez prefiksu #). */
+function parseDocxColors(source: string): Record<string, string> {
+    const colors: Record<string, string> = {};
+    const pairRegex = /([a-zA-Z][\w]*)\s*:\s*'([0-9A-Fa-f]{6})'/g;
+    let m: RegExpExecArray | null;
+    while ((m = pairRegex.exec(source)) !== null) {
+        colors[m[1]] = m[2].toUpperCase();
+    }
+    return colors;
+}
+
+/** Mapowanie kluczy DOCX_COLORS na tokeny :root, które mają wspólną wartość. */
+const DOCX_TO_TOKEN: Record<string, string> = {
+    success: '--success',
+    successHover: '--success-hover',
+    danger: '--danger',
+    dangerHover: '--danger-hover',
+    warn: '--warn',
+    warnHover: '--warn-hover',
+    accent: '--accent',
+    accentHover: '--accent-hover',
+    accent2: '--accent2',
+    brandRed: '--danger-strong',
+    whiteText: '--white',
+    titleText: '--black',
+    pageBg: '--white'
+};
+
+describe('Spójność tokenów kolorów (4 SSoT)', () => {
     const cssRoot = parseTokens(getRootBlock(read('public/css/style.base.css')));
     const frontend = parseTokens(getPrintTokensBlock(read('public/js/shared/formatters.js')));
     const backend = parseTokens(getPrintTokensBlock(read('src/services/pdf/printTokens.ts')));
+    const docx = parseDocxColors(read('src/services/docx/colors.ts'));
 
     it('frontend i backend PRINT_TOKENS_CSS identyczne', () => {
         expect(frontend).toEqual(backend);
@@ -47,5 +76,18 @@ describe('Spójność tokenów kolorów (3 SSoT)', () => {
         for (const [name, value] of Object.entries(frontend)) {
             expect(cssRoot[name]).toBe(value);
         }
+    });
+
+    it('DOCX_COLORS (semantyczne klucze) ma wartości zgodne z :root', () => {
+        for (const [docxKey, cssToken] of Object.entries(DOCX_TO_TOKEN)) {
+            const docxVal = docx[docxKey];
+            const cssVal = cssRoot[cssToken]?.replace('#', '').toUpperCase();
+            if (docxVal !== cssVal) {
+                throw new Error(
+                    `Niespójność DOCX_COLORS.${docxKey} (${docxVal}) vs :root ${cssToken} (${cssVal})`
+                );
+            }
+        }
+        expect(true).toBe(true);
     });
 });
