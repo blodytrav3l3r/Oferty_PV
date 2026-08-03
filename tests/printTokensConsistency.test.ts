@@ -58,6 +58,28 @@ const DOCX_TO_TOKEN: Record<string, string> = {
     pageBg: '--white'
 };
 
+/** Klucze DOCX_COLORS bez odpowiednika w :root — celowo niezależna paleta dokumentów Word.
+ *  Wartości legacy (neutralne szarości, kolory strukturalne) nie mają odpowiednika w UI,
+ *  dlatego są jawnie wyłączone z synchronizacji z :root. */
+const DOCX_LEGACY_ALLOWED: Record<string, string> = {
+    bodyText: '1A1A2E',
+    labelText: '333333',
+    mutedText: '888888',
+    linkUnderline: '0000FF',
+    headerBg: 'F0F0F0',
+    headerText: '999999',
+    summaryBg: 'F0F0F0',
+    rowAlt: 'FAFAFA',
+    infoBg: 'F9F9F9',
+    noteBg: 'FFFBE6',
+    noteBorder: 'F5A623',
+    tableBorder: 'CCCCCC',
+    lightBorder: 'DDDDDD',
+    innerBorder: 'E0E0E0',
+    cardBg: 'F9F9F9',
+    tableHeaderBg: 'F0F0F0'
+};
+
 describe('Spójność tokenów kolorów (4 SSoT)', () => {
     const cssRoot = parseTokens(getRootBlock(read('public/css/style.base.css')));
     const frontend = parseTokens(getPrintTokensBlock(read('public/js/shared/formatters.js')));
@@ -87,6 +109,21 @@ describe('Spójność tokenów kolorów (4 SSoT)', () => {
                     `Niespójność DOCX_COLORS.${docxKey} (${docxVal}) vs :root ${cssToken} (${cssVal})`
                 );
             }
+        }
+        expect(true).toBe(true);
+    });
+
+    it('każdy klucz DOCX_COLORS jest zmapowany na :root LUB jawnie w allowliście legacy', () => {
+        const keys = Object.keys(docx);
+        const covered = new Set([
+            ...Object.keys(DOCX_TO_TOKEN),
+            ...Object.keys(DOCX_LEGACY_ALLOWED)
+        ]);
+        const missing = keys.filter((k) => !covered.has(k));
+        if (missing.length > 0) {
+            throw new Error(
+                `DOCX_COLORS ma niepokryte klucze: ${missing.join(', ')}. Dodaj do DOCX_TO_TOKEN (jeśli ma odpowiednik w :root) lub DOCX_LEGACY_ALLOWED (jeśli to celowa paleta dokumentu Word).`
+            );
         }
         expect(true).toBe(true);
     });
