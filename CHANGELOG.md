@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.10.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.9.1...v1.10.0) (2026-08-03)
+
+
+### Features
+
+* **studnie:** szersze i wyższe okno przeliczania oferty (980px, 75vh) ([cca9b59](https://github.com/blodytrav3l3r/Oferty_PV/commit/cca9b593948daa0bdcbf1a383053073668ee04fb))
+
 ### [1.9.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.9.0...v1.9.1) (2026-08-03)
 
 
