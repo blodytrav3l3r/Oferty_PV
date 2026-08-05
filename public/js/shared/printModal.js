@@ -164,10 +164,6 @@
         return `
             <div class="upm-combined-filters">
                 <label class="upm-combined-field">
-                    <span>Numer oferty / klient</span>
-                    <input type="text" class="upm-combined-select" data-combined-filter="q" placeholder="Szukaj..." />
-                </label>
-                <label class="upm-combined-field">
                     <span>Data od</span>
                     <input type="date" class="upm-combined-select" data-combined-filter="dateFrom" />
                 </label>
@@ -196,15 +192,13 @@
                 <div class="upm-combined-form">
                     <label class="upm-combined-field">
                         <span>Oferta rur</span>
-                        <select class="upm-combined-select" data-combined-field="rury">
-                            <option value="">Ładowanie...</option>
-                        </select>
+                        <input type="text" class="upm-combined-select" data-combined-field="rury" list="upm-rury-list" placeholder="Wpisz numer oferty rur..." autocomplete="off" />
+                        <datalist id="upm-rury-list"></datalist>
                     </label>
                     <label class="upm-combined-field">
                         <span>Oferta studni</span>
-                        <select class="upm-combined-select" data-combined-field="studnie">
-                            <option value="">Ładowanie...</option>
-                        </select>
+                        <input type="text" class="upm-combined-select" data-combined-field="studnie" list="upm-studnie-list" placeholder="Wpisz numer oferty studni..." autocomplete="off" />
+                        <datalist id="upm-studnie-list"></datalist>
                     </label>
                     <label class="upm-combined-field">
                         <span>Format</span>
@@ -226,24 +220,16 @@
         return `${num}${datePart}`;
     }
 
-    function fillSelect(select, items, currentId, labelKey) {
-        select.innerHTML = '';
-        if (!items.length) {
-            const emptyOpt = document.createElement('option');
-            emptyOpt.value = '';
-            emptyOpt.textContent = 'Brak ofert';
-            select.appendChild(emptyOpt);
-            return;
-        }
+    function fillOfferInput(input, datalist, items, currentId, labelKey) {
+        datalist.innerHTML = '';
         for (const item of items) {
             const opt = document.createElement('option');
-            opt.value = item.id;
-            opt.textContent = offerOptionLabel(item, labelKey);
-            select.appendChild(opt);
+            opt.value = offerOptionLabel(item, labelKey);
+            datalist.appendChild(opt);
         }
-        if (currentId && items.some((item) => item.id === currentId)) {
-            select.value = currentId;
-        }
+        const current = currentId && items.find((item) => item.id === currentId);
+        input.value = current ? offerOptionLabel(current, labelKey) : input.value || '';
+        input._upmItems = items;
     }
 
     async function fetchOfferList(url) {
@@ -259,7 +245,6 @@
         const getVal = (name) =>
             modal.querySelector(`[data-combined-filter="${name}"]`)?.value?.trim() || '';
         return {
-            q: getVal('q'),
             dateFrom: getVal('dateFrom'),
             dateTo: getVal('dateTo'),
             userId: getVal('userId')
@@ -270,7 +255,6 @@
         const params = new URLSearchParams();
         params.set('type', type);
         params.set('limit', '100');
-        if (filters.q) params.set('q', filters.q);
         if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
         if (filters.dateTo) params.set('dateTo', filters.dateTo);
         if (filters.userId) params.set('userId', filters.userId);
@@ -295,15 +279,31 @@
         }
     }
 
+    function resolveOfferId(input) {
+        if (!input) return '';
+        const items = input._upmItems || [];
+        const value = (input.value || '').trim();
+        if (!value) return '';
+        const direct = items.find(
+            (i) =>
+                i.id === value || i.number === value || (i.offer_number && i.offer_number === value)
+        );
+        if (direct) return direct.id;
+        const byLabel = items.find((i) => offerOptionLabel(i, 'number') === value);
+        return byLabel ? byLabel.id : '';
+    }
+
     async function populateCombinedSection(modal, cfg) {
         if (!modal || !cfg) return;
-        const rurySel = modal.querySelector('[data-combined-field="rury"]');
-        const studnieSel = modal.querySelector('[data-combined-field="studnie"]');
-        if (!rurySel || !studnieSel) return;
+        const ruryInput = modal.querySelector('[data-combined-field="rury"]');
+        const studnieInput = modal.querySelector('[data-combined-field="studnie"]');
+        const ruryList = modal.querySelector('#upm-rury-list');
+        const studnieList = modal.querySelector('#upm-studnie-list');
+        if (!ruryInput || !studnieInput || !ruryList || !studnieList) return;
 
-        const showFallback = (select) => {
-            if (select.options.length === 1 && select.options[0].value === '') {
-                select.options[0].textContent = 'Brak danych';
+        const showFallback = (input) => {
+            if (!input.value) {
+                input.placeholder = 'Brak danych';
             }
         };
 
@@ -313,39 +313,45 @@
                 fetchOfferList(buildSearchUrl('offer', filters)),
                 fetchOfferList(buildSearchUrl('studnia_oferta', filters))
             ]);
-            fillSelect(rurySel, ruryOffers, cfg.currentRuryId || '', 'number');
-            fillSelect(studnieSel, studnieOffers, cfg.currentStudnieId || '', 'number');
+            fillOfferInput(ruryInput, ruryList, ruryOffers, cfg.currentRuryId || '', 'number');
+            fillOfferInput(
+                studnieInput,
+                studnieList,
+                studnieOffers,
+                cfg.currentStudnieId || '',
+                'number'
+            );
             await populateUserFilter(modal);
         } catch (e) {
             if (typeof logger !== 'undefined') {
                 logger.error('printModal', 'Błąd ładowania list ofert (wydruk łączny)', e);
             }
-            showFallback(rurySel);
-            showFallback(studnieSel);
+            showFallback(ruryInput);
+            showFallback(studnieInput);
         }
     }
 
     window.combinedFilter_action = async function () {
         const modal = document.getElementById(MODAL_ID);
         if (!modal) return;
-        const rurySel = modal.querySelector('[data-combined-field="rury"]');
-        const studnieSel = modal.querySelector('[data-combined-field="studnie"]');
         const cfg = window.__upmCombinedCfg || {};
-        cfg.currentRuryId = rurySel?.value || cfg.currentRuryId || '';
-        cfg.currentStudnieId = studnieSel?.value || cfg.currentStudnieId || '';
+        cfg.currentRuryId = resolveOfferId(modal.querySelector('[data-combined-field="rury"]'));
+        cfg.currentStudnieId = resolveOfferId(
+            modal.querySelector('[data-combined-field="studnie"]')
+        );
         await populateCombinedSection(modal, cfg);
     };
 
     async function combinedExport_action() {
         const modal = document.getElementById(MODAL_ID);
         if (!modal) return;
-        const ruryId = modal.querySelector('[data-combined-field="rury"]')?.value?.trim();
-        const studnieId = modal.querySelector('[data-combined-field="studnie"]')?.value?.trim();
+        const ruryId = resolveOfferId(modal.querySelector('[data-combined-field="rury"]'));
+        const studnieId = resolveOfferId(modal.querySelector('[data-combined-field="studnie"]'));
         const format = modal.querySelector('[data-combined-field="format"]')?.value || 'pdf';
 
         if (!ruryId || !studnieId) {
             if (typeof showToast === 'function')
-                showToast('Wybierz ofertę rur i ofertę studni', 'error');
+                showToast('Wpisz numer oferty rur i numer oferty studni', 'error');
             return;
         }
         if (format !== 'pdf' && format !== 'docx') {
