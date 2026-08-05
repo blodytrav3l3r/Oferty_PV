@@ -44,6 +44,7 @@ env/
 
 # Build output
 dist/
+/dist-web/
 build/
 *.tsbuildinfo
 
@@ -111,7 +112,8 @@ docs/examples/
 
 # === Assets — źródłowe cenniki (CSV/XLSX) ===
 # Backup danych źródłowych (NIE serwowany przez aplikację).
-# Produkty seedowane z data/seed_rury.json i data/seed_studnie.json przez serwer.
+# Produkty ładowane z data/seed_rury.json i data/seed_studnie.json przez prisma/seed.ts
+# (wywoływany przez scripts/ensure-db.bat → scripts/check-db.js, instalator lub Docker).
 assets/
 
 # === Archived scripts (lokalne kopie starych wersji) ===

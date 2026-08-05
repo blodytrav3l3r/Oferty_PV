@@ -3,6 +3,7 @@ node_modules/
 
 # Build output (will be rebuilt in Docker)
 dist/
+/dist-web/
 
 # Generated Prisma client (will be regenerated)
 generated/
