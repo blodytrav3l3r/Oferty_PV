@@ -1,6 +1,6 @@
 # Tech Stack — stos technologiczny
 
-**Ostatnia aktualizacja:** 2026-07-22
+**Ostatnia aktualizacja:** 2026-08-05
 
 ## Licencje — podsumowanie
 
@@ -57,3 +57,18 @@
 **Wniosek**: Wszystkie technologie użyte w projekcie **mogą być używane komercyjnie** i **pozwalają na sprzedaż produktu**. Jedyny wymóg to zachowanie informacji o licencji (attribution) w dystrybucji — standardowe dla MIT/Apache/ISC/BSD.
 
 > ⚠ MPL-2.0 (2 pakiety): wymaga opensourczenia modyfikacji danego pliku, ale nie wpływa na całość produktu. Dotyczy pakietów niskiego poziomu, nie modyfikowanych bezpośrednio.
+
+## Telemetria AI — deduplikacja
+
+Telemetria AI deduplikuje identyczne zapisy konfiguracji studni, żeby nie zawyżać
+hitCount/confidence wzorców i nie mnożyć próbek treningowych ML:
+
+- **Backend** (`src/services/telemetry/telemetryService.ts`): dla źródła `AUTO_JS`
+  `recordConfig` porównuje kanoniczny `featureSnapshot` + posortowane `allComponentIds`
+  (`_dedupKey`) i przy identycznym wpisie robi `update` (lastUsedAt/usageCount/kontekst
+  oferty) zamiast `create`. Wspierane indeksami `idx_logs_well` / `idx_logs_source_well`.
+- **Frontend** (`public/js/studnie/telemetryBridge.js`, `public/js/studnie/offerSave.js`):
+  sesyjna mapa dedup (fingerprint treści + wyceny studni) oraz wysyłka tylko zmienionych
+  studni przy zapisie oferty.
+
+Szczegóły: [ARCHITECTURE.md](ARCHITECTURE.md)

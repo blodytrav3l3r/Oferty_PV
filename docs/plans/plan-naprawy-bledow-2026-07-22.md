@@ -1,4 +1,5 @@
 # Plan naprawy błędów po audycie projektu — 2026-07-22
+> **Stan: CZśćIOWO ZREALIZOWANE.** P0 wdrożone: P0.1 (ensureAdminExists rzuca throw e po błędzie - src/middleware/auth.ts:154), P0.2 (let i w pętlach - excelCellNavigation.js:188/192/217), P0.3 (mocki Prisma ujednolicone o executeRaw/queryRaw - 8/10 plików testowych). P1 - typecheck:frontend przechodzi. P2.8 - dodano próg skuteczności (expect(passed/total).toBeGreaterThanOrEqual(0.4) w massiveValidation.test.ts:1203). P2.9 (wyciek uchwytów), P3.10 (encoding - pliki .md wykluczone z checku) i P3.11 (audyt XSS/CSP - CSP nadal unsafe-inline, patrz csp-nonce-implementation-2026-07-22.md) pozostają otwarte. Treść ponizżej zachowana jako dokumentacja procesu.
 
 ## Cel
 

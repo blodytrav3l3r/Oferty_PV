@@ -316,6 +316,14 @@ Indeks: `idx_audit_entity` na `(entityType, entityId)`.
 | final_user_config    | String?    | Ostateczna konfiguracja   |
 | override_reason      | String?    | Powód nadpisania          |
 | createdAt            | String?    | Data zdarzenia            |
+| usageCount           | Int?       | Licznik użycia (inkrementowany przy dedup AUTO_JS) |
+| lastUsedAt           | String?    | Ostatnie użycie (odświeżane przy dedup AUTO_JS)     |
+| wellId               | String?    | ID studni (indeks `idx_logs_well`)                  |
+| solverSource         | String?    | Źródło konfiguracji (`AUTO_JS`/`MANUAL`/`AI_SUGGEST`) |
+| featureSnapshot      | String?    | Kanoniczny snapshot cech (klucz dedup)              |
+| allComponentIds      | String?    | Posortowana lista ID komponentów (klucz dedup)      |
+
+Dedyplikacja: rekordy `AUTO_JS` z identycznym kanonicznym `featureSnapshot` + `allComponentIds` dla tej samej studni aktualizują istniejący rekord (indeksy `idx_logs_well`, `idx_logs_source_well`).
 
 #### `ai_telemetry_events` — Zdarzenia telemetrii AI
 
@@ -430,7 +438,7 @@ Wydzielone od zwykłych komponentów ze względu na specyfikę danych.
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
-### Lista migracji (10)
+### Lista migracji (11)
 
 | Migracja                                        | Opis                         |
 | ----------------------------------------------- | ---------------------------- |
@@ -444,6 +452,7 @@ Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 | `20260705000001_ai_well_cases_unique`           | Unique key dla przypadków AI |
 | `20260707000000_ai_ml_models`                   | Modele ML                    |
 | `20260719000000_ai_unique_pattern_key`          | Unique pattern key           |
+| `20260805100000_telemetry_well_dedup`           | Indeksy dedup telemetrii AI (`idx_logs_well`, `idx_logs_source_well`) |
 
 ### Komendy
 

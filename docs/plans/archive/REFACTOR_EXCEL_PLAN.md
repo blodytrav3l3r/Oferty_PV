@@ -1,3 +1,6 @@
+> **Stan: ZREALIZOWANE — funkcje wdrożone (dedup telemetrii, TrainingPipeline, Excel). Plik archiwalny.**
+> Aktualizacja 2026-08-05: podział `excelTableManager.js` na moduły `excel*.js` został wdrożony (zgodnie z notką `Status: UKOŃCZONY` poniżej). Treść historyczna pozostaje bez zmian.
+
 # Plan podziału excelTableManager.js (5855 linii → 20 modułów)
 
 > **Status:** ✅ **UKOŃCZONY** (2026-07-16)

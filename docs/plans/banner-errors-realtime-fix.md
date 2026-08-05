@@ -1,4 +1,5 @@
 # Plan naprawy: banner „Błędy w konfiguracji studni:" — odświeżanie w czasie rzeczywistym
+> **Stan: CZśCIOWO ZREALIZOWANE (alternatywnie, commit 8149f19).** Problem odświeżania bannera rozwiązano innym mechanizmem niż zakładał plan: render przeniesiono do renderWellConfigErrors() w public/js/studnie/solverValidation.js, a refreshAllWellErrors() stał się wspólnym punktem odświeżania (renderuje banner bieżącej studni). Konkretne kroki planu (klucz treści errorsKey, _debouncedRefreshWells, test tests/studnie/updateHeightIndicator.test.ts) NIE zostały wdrożone. Treść ponizżej zachowana jako dokumentacja procesu.
 
 Data: 2026-08-02
 Moduł: studnie (frontend Vanilla JS, `public/js/studnie/`)

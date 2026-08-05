@@ -28,6 +28,12 @@ i użytkownikami. Wymagany ORM dla SQLite i prostota utrzymania.
 - **Rate limiting** — per-route limiter dla wszystkich tras.
 - **Helmet CSP** — `'unsafe-inline'` dozwolone dla legacy inline event handlerów.
 - **Logger** — `src/utils/logger.ts` zamiast `console.log`.
+- **Auto-heal indeksów przy starcie** — `src/app.ts` wykonuje idempotentne
+  `CREATE INDEX IF NOT EXISTS` (m.in. `idx_audit_created_at` oraz `idx_logs_well`/
+  `idx_logs_source_well` dla dedup telemetrii AI), bo bazy `db push` nie mają historii migracji.
+- **Deduplikacja telemetrii AUTO_JS** — `telemetryService.recordConfig` porównuje kanoniczny
+  `featureSnapshot` + posortowane `allComponentIds` i przy identycznej konfiguracji robi
+  `update` zamiast `create` (nie zawyża wzorców i zbioru treningowego ML).
 
 ## Architektura
 

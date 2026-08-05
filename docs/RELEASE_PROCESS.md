@@ -1,7 +1,7 @@
 # Proces wydawniczy (Release Process)
 
-**Wersja:** 1.9.0  
-**Ostatnia aktualizacja:** 2026-07-22
+**Wersja:** 1.10.0  
+**Ostatnia aktualizacja:** 2026-08-05
 
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
 
@@ -45,8 +45,8 @@ git push --follow-tags
 
 Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, który:
 
-- Uruchamia testy
-- Generuje GitHub Release z opisem z CHANGELOG
+- Uruchamia typecheck (`npm run typecheck`) i testy (`npm run test:quick`)
+- Generuje GitHub Release z automatycznie wygenerowanymi notatkami (`generate_release_notes: true`)
 
 ## Zasady
 

@@ -1,5 +1,45 @@
 # Code Deletion Log
 
+## [2026-08-05] Refactor Session 2 — Dead Code & Docs Cleanup
+
+### Unused Code Removed
+
+| Element                                  | Przyczyna                                                                                                            |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `KnowledgeBase.archivePattern`           | Pole nie było używane — archiwizacja wzorców nie była implementowana. Usunięte w commicie `fe1679f` (KnowledgeBase.ts). |
+| `LearningEngine.feedback` / `LearningEngine.ranker` | Publiczne pola subkomponentów nieistniejących w `getComponents()` — zwraca wyłącznie `kb`, `patterns`, `prefs`, `recommend`. Usunięte w commicie `fe1679f` (LearningEngine.ts). |
+
+### Artifacts Removed
+
+| Plik                                    | Przyczyna                                                                                  |
+| --------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `dataapp_database.sqlite` (root)        | Artefakt bazy utworzonej w katalogu głównym projektu (poza `data/`). Usunięty, dodano wpis `/*.sqlite*` do `.gitignore` (commit `c905934`), by zapobiec ponownemu trackowaniu. |
+
+### Documentation Updates
+
+| Plik                    | Zmiana                                                                                                                     |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `docs/CONTRIBUTING.md`, `docs/INSTRUKCJA_SERWER.md` | Zaktualizowano zalecenia migracji bazy: `prisma migrate dev` → `prisma migrate deploy` / `npx prisma db push` (w zależności od typu bazy). Część commitu `fe1679f`. |
+| `docs/DELETION_LOG.md`  | Ten wpis (Session 2).                                                                                                       |
+
+### Impact
+
+| Wskaźnik            | Wartość                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| Pola/eksporty usunięte | 2 (`archivePattern`, `feedback`/`ranker`)                     |
+| Artefakty usunięte  | 1 (`dataapp_database.sqlite`)                                  |
+| Wpisy .gitignore    | 1 (`/*.sqlite*`)                                               |
+| Linie kodu usunięte | ~14 (KnowledgeBase.ts) + ~10 (LearningEngine.ts)               |
+
+### Testing
+
+- [ ] Typecheck: przechodzi po usunięciu pól (commit `fe1679f`)
+- [ ] Testy: `npm test` — 1305 testów, wszystkie przechodzą (commit `fe1679f`)
+- [ ] Testy telemetrii: `tests/telemetryRoutes.test.ts` zaktualizowane pod kątem dedup AUTO_JS i braku referencji do usuniętych pól
+- [x] Encoding: `npm run encoding:check` — 0 błędów (4412 plików)
+
+---
+
 ## [2026-07-22] Refactor Session 1 — Dead Code & Consolidation
 
 ### Unused Files Deleted

@@ -1,4 +1,5 @@
 # Plan ulepszeń systemu ML — Oferty PV
+> **Stan: CZĘŚCIOWO ZREALIZOWANE (commit c905934).** Wdrożono Zmianę 2 (cache batch predict), naprawę okna treningowego ML w TrainingPipeline (sliding window) oraz Zmiany 5 i 6 (fallback technical score, badge AI status). Zmiany 1, 3, 4 pozostają otwarte. Oznaczenia przy poszczególnych zmianach. Treść poniżej zachowana jako dokumentacja procesu.
 
 ## Cel
 
@@ -16,6 +17,7 @@
 ---
 
 ## Zmiana 1: Seed startowego modelu ML
+> Status: NIEZREALIZOWANE - brak seedu modelu startowego w prisma/seed.ts.
 
 **Plik:** `prisma/seed.ts` (227 linii)
 
@@ -94,6 +96,7 @@ console.log(`  AiModel: ${existingAiModel === 0 ? '1 (startowy)' : existingAiMod
 ---
 
 ## Zmiana 2: Cache na batch predict
+> Status: WDROżONE (commit c905934) - predictionCache/cacheKey/cached:true w src/routes/telemetryAiMl.ts.
 
 **Plik:** `src/routes/telemetryAiMl.ts` (454 linie)
 
@@ -149,6 +152,7 @@ res.json({ scores });
 ---
 
 ## Zmiana 3: Natychmiastowy rollback AUC (sliding window)
+> Status: NIEZREALIZOWANE w tej formie - brak checkAndRollbackIfNeeded/recordPredictionResult w SelfEvaluation.ts. Pokrewna naprawa okna treningowego (sliding window desc+take+reverse, lastTrainedAt, newCount) wdrożona w src/services/ml/TrainingPipeline.ts (commit c905934).
 
 **Pliki:** `src/services/ml/SelfEvaluation.ts`, `src/routes/telemetryAiMl.ts`
 
@@ -260,6 +264,7 @@ if (data.wasAiRanked && data.scoreBefore !== undefined) {
 ---
 
 ## Zmiana 4: Feature importance raport
+> Status: NIEZREALIZOWANE - brak computeFeatureImportance w ModelRegistry.ts i endpointu GET /ai/feature-importance.
 
 **Pliki:** `src/services/ml/ModelRegistry.ts`, `src/routes/telemetryAiMl.ts`
 
@@ -311,6 +316,7 @@ router.get('/ai/feature-importance', requireAuth, async (_req: Request, res: Res
 ---
 
 ## Zmiana 5: Fallback technical score
+> Status: WDROŻONE - fallback w `rankCandidates` (L486-488): `aiScore < 0` → `finalScore = c.technicalScore`; dodatkowo `technicalNormalized` (0=best, 1=worst).
 
 **Plik:** `public/js/studnie/mlDualRanking.js` (808 linii)
 
@@ -395,6 +401,7 @@ Blok 4 (L375-379, catch):
 ---
 
 ## Zmiana 6: Badge AI status
+> Status: WDROŻONE - `updateAiStatusIndicator()` (L714-760) wyświetla AI Shadow/AI Offline wg `status.online`; eksport na `window` (L853), poller 30s (L823).
 
 **Plik:** `public/js/studnie/mlDualRanking.js` (808 linii)
 

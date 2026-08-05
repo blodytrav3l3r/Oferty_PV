@@ -1,3 +1,6 @@
+> **Stan: ZREALIZOWANE — funkcje wdrożone (dedup telemetrii, TrainingPipeline, Excel). Plik archiwalny.**
+> Aktualizacja 2026-08-05: błędy krytyczne i średnie opisane w tym planie zostały naprawione — LearningEngine wykrywa wzorce, TrainingPipeline używa `lastTrainedAt`, telemetria AUTO_JS jest deduplikowana. Treść historyczna poniżej pozostaje bez zmian.
+
 # PLAN NAPRAWY — Moduł AI/ML
 
 **Data:** 2026-07-19

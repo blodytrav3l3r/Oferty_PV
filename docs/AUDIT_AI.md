@@ -49,9 +49,8 @@
 │   └── POST /run            ← ręczne uruchomienie                       │
 │                                                                       │
 │   /api/telemetry/ai/knowledge/*                                    │
-│   ├── GET  /patterns?dn=X ← lista wzorców w bazie wiedzy             │
-│   ├── GET  /stats         ← statystyki bazy wiedzy (dashboard)       │
-│   └── POST /archive        ← archiwizacja wzorca                      │
+│   ├── GET  /patterns?dn=X ← wzorce + pola diagnostyczne             │
+│   └── GET  /stats         ← statystyki bazy wiedzy (dashboard)       │
 │                                                                       │
 │   /api/telemetry/ai/recommendations/*                               │
 │   ├── GET  /:telemetryId  ← top-N rekomendacji                       │
@@ -69,13 +68,12 @@
 │   └── learning/                 — silnik AI                           │
 │       ├── FeatureExtractor.ts      — cechy geometryczne             │
 │       ├── ConfidenceCalculator.ts  — krzywa confidence               │
-│       ├── PatternDetector.ts       — wykrywanie wzorców              │
+│       ├── PatternDetector.ts       — wykrywanie + persist wzorców    │
 │       ├── PreferenceEngine.ts      — preference (sub/add/rem)        │
-│       ├── RankingEngine.ts         — sortowanie wzorców             │
-│       ├── KnowledgeBase.ts        — baza wiedzy (CRUD)              │
+│       ├── KnowledgeBase.ts        — baza wiedzy (CRUD + countPatterns)│
 │       ├── RecommendationEngine.ts — generowanie rekomendacji        │
-│       ├── FeedbackProcessor.ts    — mapowanie eventów               │
-│       └── LearningEngine.ts        — orkiestracja pipeline'u       │
+│       └── LearningEngine.ts        — orkiestracja pipeline'u (bez   │
+│                                      feedback/ranker)                │
 │                                                                       │
 │   utils/cronService.ts                                             │
 │   └── Cykliczne zadania (hourly usage, 24h full cycle)               │
@@ -140,7 +138,7 @@ Pełna wersjonowana historia konfiguracji per studnia - z parent/child relations
 
 Rejestr wersji: `solver`, `rules`, `ai`, `embedding` - do reprodukcji decyzji.
 
-### 2.5 ai_knowledge_base (16 kolumn + 5 indeksów)
+### 2.5 ai_knowledge_base (18 kolumn + 5 indeksów)
 
 Baza wiedzy AI - wzorce i rekomendacje z confidence/hitCount/status.
 
@@ -180,19 +178,17 @@ Geometria przejść szczelnych z 16 wymiarami (dn, height, angle, collisions, im
 
 ---
 
-## 4. Moduł Learning Engine (8 modułów + index)
+## 4. Moduł Learning Engine (7 modułów + index)
 
 | Moduł                       | Rola                                       | Mechanizm                                                                         |
 | --------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
 | **FeatureExtractor.ts**     | Ekstrakcja cech geometrycznych z telemetry | Kategoryzacja: geometric, user, solver, transition, acceptance; wagi cech 0.5-1.0 |
 | **ConfidenceCalculator.ts** | Krzywe zaufania                            | log_30(hitCount), time-decay 5%/30 dni, success bias                              |
-| **KnowledgeBase.ts**        | CRUD na ai_knowledge_base                  | upsert z change tracking, stats, archive                                          |
-| **PatternDetector.ts**      | Detekcja 3 wzorców                         | dennica_swap, transition_layout, reduction_choice                                 |
+| **KnowledgeBase.ts**        | CRUD na ai_knowledge_base                  | upsert z change tracking, stats, countPatterns (bez archivePattern)               |
+| **PatternDetector.ts**      | Detekcja wzorców + persist                 | transition_layout, reduction_choice; persist do KB (UPSERT wg patternKey)         |
 | **PreferenceEngine.ts**     | Budowanie preferencji                      | substitution + addition + removal                                                 |
-| **RankingEngine.ts**        | Sortowanie wzorców                         | confidence + dn-match + recency boost                                             |
-| **FeedbackProcessor.ts**    | Mapowanie event→feedback                   | accept/reject/modify/fallback                                                     |
-| **RecommendationEngine.ts** | Generowanie rekomendacji                   | top-N wzorców per DN                                                              |
-| **LearningEngine.ts**       | Orkiestracja                               | pełny pipeline: 6 etapów z extract→detect→persist→recommend                       |
+| **RecommendationEngine.ts** | Generowanie rekomendacji                   | top-N wzorców per DN (wewnętrznie RankingEngine)                                  |
+| **LearningEngine.ts**       | Orkiestracja                               | fetchTelemetryRecords → buildCorrections → detectAllPatterns → persist → saveLastRun; getComponents: kb/patterns/prefs/recommend |
 
 Każdy moduł ma **jedną odpowiedzialność** (Single Responsibility Principle).
 
@@ -299,6 +295,7 @@ Wszystkie body są walidowane przez Zod przed zapisaniem do bazy.
 | ---------------- | ------------------- | ------------------------------------------------ |
 | 2026-06-30 19:00 | `telemetry_ai_prep` | 4 nowe tabele + rozszerzenie `ai_telemetry_logs` |
 | 2026-06-30 20:00 | `ai_knowledge_base` | 2 nowe tabele: KB + Recommendations              |
+| 2026-08-05 10:00 | `telemetry_well_dedup` | indeksy `idx_logs_well` + `idx_logs_source_well` (dedup AUTO_JS) |
 
 ### 8.2 Idempotentność
 
@@ -381,7 +378,7 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 | -------------------------------- | ------------------------------ |
 | Test Suites                      | 50                             |
 | Testy jednostkowe + integracyjne | **1226 / 1226** (100% pass)    |
-| Nowe testy telemetry             | 56 (w telemetryRoutes.test.ts) |
+| Nowe testy telemetry             | 58 (w telemetryRoutes.test.ts) |
 | Pokrycie modułu AI/telemetry     | **szacowane 95%**              |
 
 ### 12.2 Kategorie testów telemetryRoutes.test.ts
@@ -390,8 +387,8 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 | ------------------------- | -------: |
 | Schema walidacja          |        7 |
 | Telemetry wysokopoziomowe |        3 |
-| Wysokopoziomowe serwisu   |        2 |
-| FeatureExtractor          |        4 |
+| telemetryService wewnętrzne |      2 |
+| Deduplikacja AUTO_JS      |        6 |
 | ConfidenceCalculator      |        5 |
 | PatternDetector           |        3 |
 | PreferenceEngine          |        3 |
@@ -400,11 +397,15 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 | RecommendationEngine      |        3 |
 | LearningEngine            |        4 |
 | CronService               |        4 |
+| Bezpieczeństwo API - role |        3 |
+| Równoległe zapisy         |        1 |
+| Wersjonowanie i migracja  |        3 |
+| Integralność danych       |        2 |
 | Bezpieczeństwo            |        3 |
 | Równoległe zapisy         |        1 |
 | Wersjonowanie i migracja  |        3 |
 | Integralność danych       |        2 |
-| **Suma**                  |   **56** |
+| **Suma**                  |   **58** |
 
 ---
 
@@ -420,7 +421,7 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 | Dashboard AI (UI)                     |  ❌ 0%  | Wymaga `public/admin/ai-dashboard.html`               |
 | Cron cykliczny                        | ✅ 100% | `cronService.ts` działa                               |
 | Walidacja/bezpieczeństwo              | ✅ 100% | Zod + role + rate limit                               |
-| Testy                                 | ✅ 95%  | 1226/1226 +56 nowy                                    |
+| Testy                                 | ✅ 95%  | 1226/1226 +58 nowy                                    |
 | Learning Engine (analiza historyczna) | ✅ 80%  | Detektory gotowe; wxorzec counter jest już działający |
 | Wzorce w KB                           | ✅ 90%  | Schema jest, dane zapisywane, UI do podglądu wantuje  |
 | Rekomendacje                          | ⚠️ 60%  | Generowanie OK; akceptacja UI wantuje                 |
@@ -444,7 +445,7 @@ System telemetry AI jest **gotowy do produkcji**. Zawiera:
 - 7 modeli danych (7 z 2 migracji)
 - 17 endpointów REST API
 - 9 modułów TypeScript (Learning Engine + telemetry)
-- 56+ testów integracyjnych
+- 58+ testów integracyjnych
 - Pasywna integracja z JS solver
 - Cron for cykliczne uczenie
 - KnowledgeBase z confidence tracking

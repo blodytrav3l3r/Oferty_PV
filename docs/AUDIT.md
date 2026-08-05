@@ -1,5 +1,10 @@
 # Raport audytu projektu — WITROS Oferty PV
 
+> **Stan na 2026-08-05:** wdrożono dedup telemetrii AUTO_JS + indeksy
+> (migracja `20260805100000_telemetry_well_dedup`), TrainingPipeline sliding window,
+> auto-heal indeksów i FTS5. Poniższy raport pozostaje historycznym zapisem stanu
+> z daty audytu.
+
 **Wersja projektu:** 1.7.0  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research

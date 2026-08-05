@@ -1,3 +1,6 @@
+> **Stan: ZREALIZOWANE — funkcje wdrożone (dedup telemetrii, TrainingPipeline, Excel). Plik archiwalny.**
+> Aktualizacja 2026-08-05: blokady opisane w tym planie zostały usunięte — `recordConfig()` zapisuje pełny kanoniczny snapshot + `allComponentIds` (dedup AUTO_JS), `wasModified` jest ustawiane, a `telemetryBridge.js` buduje kompletne snapshoty. Treść historyczna poniżej pozostaje bez zmian.
+
 # PLAN NAPRAWY — AI/ML Learning Engine (v3)
 
 ## Diagnoza

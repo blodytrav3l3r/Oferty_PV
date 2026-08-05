@@ -247,6 +247,9 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 8. Zobaczysz: "Baza przywrócona z: ..."
 9. Uruchom aplikację (`start.bat`) — wszystkie dane są już na miejscu
 
+> Po uruchomieniu `start.bat` sam sprawdzi bazę (tabele, indeksy, wyszukiwarkę FTS5)
+> i uzupełni ewentualne braki — nie musisz nic robić ręcznie.
+
 ### ⚠️ WAŻNE PRZY PRZENOSZENIU:
 
 - **Wersja programu na starym i nowym komputerze powinna być taka sama** (sprawdź w pliku `VERSION`)

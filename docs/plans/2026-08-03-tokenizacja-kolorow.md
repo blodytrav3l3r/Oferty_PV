@@ -1,4 +1,5 @@
-﻿# Plan: Tokenizacja kolorów (jeden spójny system var(--...))
+# Plan: Tokenizacja kolorów (jeden spójny system var(--...))
+> **Stan: ZREALIZOWANE (commit 54aa33a i dalsze).** PRINT_TOKENS_CSS / printTokens.ts wdrożone, legacy public/css/style.css i configurator.css usunięte. Treść ponizżej zachowana jako dokumentacja procesu; szczegóły w sekcji "Domknięcie".
 
 Data: 2026-08-03 | Status: zakończono | Tryb: READ-ONLY → edycja po akceptacji
 

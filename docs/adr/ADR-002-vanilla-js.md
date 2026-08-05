@@ -30,6 +30,11 @@ kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano framewo
 - **Brak type safety** — frontend w czystym JS (karuzela typów). Planowana migracja na TS (Phase 2 planu).
 - **Więcej boilerplate'u** — modal, dropdown, select budowane od zera za każdym razem (planowana biblioteka helperów w Phase 3).
 - **Inline event handlers** — `onclick="..."` w HTML (zgodne z CSP `'unsafe-inline'` w Helmet).
+- **Deduplikacja telemetrii po stronie frontendu** — `public/js/studnie/telemetryBridge.js`
+  trzyma sesyjną mapę `autoJsDedupMap` (wellId → fingerprint treści + wyceny studni) i pomija
+  powtórki identycznych konfiguracji AUTO_JS; `public/js/studnie/offerSave.js` wysyła przy
+  zapisie oferty tylko studnie zmienione od ostatniego zapisu (`_filterChangedWells`).
+  To przykład wzorca „globalny stan w pamięci” typowego dla SPA bez frameworka.
 
 ## Alternatywy odrzucone
 

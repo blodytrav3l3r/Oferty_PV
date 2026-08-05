@@ -1,7 +1,7 @@
 # Bezpieczeństwo — WITROS Oferty PV
 
 **Wersja:** 1.10.0  
-**Ostatnia aktualizacja:** 2026-07-22
+**Ostatnia aktualizacja:** 2026-08-05
 
 ---
 
@@ -138,6 +138,14 @@ Walidacja chroni przed:
 - Brakującymi polami
 - Nieprawidłowymi typami danych
 - Zbyt długimi danymi
+
+### Ochrona przed XSS przy renderowaniu HTML
+
+Dynamicznie wstrzykiwany HTML nigdy nie interpoluje danych bezpośrednio do `innerHTML` —
+wszystkie wartości tekstowe przechodzą przez funkcję `escapeHtml(str)` (globalna na `window`).
+Dotyczy to również dashboardu AI (`public/js/admin/aiDashboard.js`), gdzie dane z bazy wiedzy,
+wzorce i metryki ML są renderowane wyłącznie przez `escapeHtml`. Po dynamicznym wstrzyknięciu
+fragmentów z ikonami Lucide wywoływana jest inicjalizacja `lucide.createIcons({ root: container })`.
 
 ---
 

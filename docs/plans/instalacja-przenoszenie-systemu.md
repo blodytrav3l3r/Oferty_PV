@@ -3,6 +3,9 @@
 > **Plik:** docs/plans/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.10.0
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
+> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.10.0) —
+> sekcje instalacji/aktualizacji opisują działające mechanizmy
+> (`install.bat` z `migrate deploy` + fallback `db push`), nie plany przyszłe.
 
 ---
 
@@ -181,11 +184,11 @@ npm run backup
 
 ```powershell
 # 1. Wykonaj standardową instalację (Kroki 1-3 z Sekcji 3)
-# 2. NIE uruchamiaj install.bat — pomiń seed!
-#    Zamiast tego wykonaj ręcznie:
-npm ci
-npx prisma generate
-npx prisma db push --skip-generate --accept-data-loss
+# 2. Uruchom instalator z pominięciem seeda:
+.\install.bat --skip-seed
+#    Instalator zainstaluje biblioteki, wygeneruje Prisma Client i zsynchronizuje
+#    schemat bazy (migrate deploy z fallbackiem db push — dla baz bez
+#    _prisma_migrations automatycznie wykona db push).
 
 # 3. Skopiuj plik backupu do data/backups/
 
@@ -197,13 +200,18 @@ npm run backup:restore -- data/backups/backup_*.sqlite
 .\dev.bat
 ```
 
+> **Wariant ręczny (bez `install.bat`):** `npm ci`, `npx prisma generate`, następnie
+> `npx prisma db push --skip-generate --accept-data-loss` — baza z backupu zwykle nie ma
+> tabeli `_prisma_migrations`, więc `prisma migrate deploy` na niej NIE zadziała.
+
 ### ⚠️ Uwagi przy przenoszeniu:
 
 | Kwestia            | Zalecenie                                                    |
 | ------------------ | ------------------------------------------------------------ |
 | **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`) |
-| **Różne wersje**   | Po restore uruchom `install.bat` — zaktualizuje schemat bazy |
-| **Migracje**       | `prisma db push` doda brakujące tabele, nie usunie danych    |
+| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy |
+| **Typ bazy**       | Baza z backupu (tworzona przez `db push`) nie ma tabeli `_prisma_migrations` — na niej `migrate deploy` zawodzi, używaj `db push` |
+| **Migracje**       | `db push` doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych |
 | **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika     |
 
 ---
@@ -326,9 +334,13 @@ git pull
 # 3. Zainstaluj ewentualne nowe biblioteki:
 npm ci
 
-# 4. Zaktualizuj schemat bazy:
-npx prisma generate
-npx prisma db push --skip-generate --accept-data-loss
+# 4. Zaktualizuj schemat bazy — sposób zależy od typu bazy:
+#    - baza z historią migracji (istnieje tabela _prisma_migrations):
+npx prisma migrate deploy
+#    - baza tworzona przez db push (brak _prisma_migrations):
+#      npx prisma db push --skip-generate --accept-data-loss
+#    Jak sprawdzić typ: npx prisma migrate status — jeśli pokazuje migracje
+#    jako niezastosowane mimo działającej aplikacji, baza jest typu db push.
 
 # 5. Jeśli były zmiany w seedzie (opcjonalnie):
 npm run prisma:seed
@@ -336,6 +348,13 @@ npm run prisma:seed
 # 6. Uruchom:
 .\dev.bat
 ```
+
+> **Indeksy i FTS5:** od wersji 1.10.0 `scripts/check-db.js` sprawdza również wymagane
+> indeksy deduplikacji telemetrii (`idx_logs_well`, `idx_logs_source_well`) — ich brak
+> kończy się kodem wyjścia 1, a `start.bat`/`dev.sh` uruchamiają `db push`. Przy starcie
+> serwera indeksy są też naprawiane automatycznie (auto-heal w `src/app.ts`), a brakująca
+> tabela FTS5 (`offers_search_fts`) tworzona jest przez `src/utils/fts5Sync.ts`
+> (z backfillem ofert).
 
 ### Użycie `install.bat` zamiast ręcznych kroków:
 
@@ -351,8 +370,11 @@ git pull
 # Sprawdź status migracji:
 npx prisma migrate status
 
-# Jeśli są oczekujące migracje:
+# Jeśli są oczekujące migracje (baza z historią _prisma_migrations):
 npx prisma migrate deploy
+
+# Dla baz tworzonych przez db push (brak _prisma_migrations) — migrate deploy NIE zadziała:
+npx prisma db push --skip-generate --accept-data-loss
 ```
 
 ### Aktualizacja wersji (release):
@@ -573,6 +595,8 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 | `prod.bat`                 | Uruchomienie produkcyjne             |
 | `scripts/backup.ts`        | Skrypt backupu                       |
 | `scripts/restore-db.js`    | Skrypt przywracania                  |
+| `scripts/check-db.js`      | Weryfikacja schematu bazy (tabele, indeksy dedup, dane) |
+| `src/utils/fts5Sync.ts`    | Auto-tworzenie tabeli FTS5 wyszukiwarki ofert |
 | `prisma/seed.ts`           | Dane początkowe                      |
 | `prisma/migrations/`       | Migracje schematu bazy               |
 | `docs/`                    | Dokumentacja                         |

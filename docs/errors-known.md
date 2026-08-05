@@ -151,3 +151,21 @@
 **Problem**: `closeExcelTableModal()` był asynchroniczny (dialog `appConfirm`). Podwójne Esc / podwójne kliknięcie ✕ przy `_excelDirty=true` otwierało dwa nakładające się dialogy — możliwy podwójny `excelSaveAll()` lub wyciek nierozwiązanego Promise. Dodatkowo `excelSaveAll()` sam wołał `closeExcelTableModal()`, tworząc kruche sprzężenie "Zapisz i zamknij" → `excelSaveAll` → rekurencyjne zamknięcie.
 **Objaw**: Migający przycisk "Zapisywanie...", podwójny `refreshAll`, podwójny toast przy próbie zapisu i zamknięcia z popupu "Niezapisane zmiany".
 **Fix**: Wydzielono `_excelCloseOverlay()` (fizyczne zamknięcie overlayu) i dodano guard `_excelClosing` w `closeExcelTableModal()` (`excelModal.js`). `excelSaveAll()` woła `_excelCloseOverlay()` zamiast `closeExcelTableModal()` (`excelWellActions.js`) — koniec rekurencji.
+
+## 24. Duplikaty telemetrii AUTO_JS (ten sam snapshot studni)
+
+**Problem**: Każdy render solvera zapisywał nowy rekord `ai_telemetry_logs` nawet dla identycznej konfiguracji — baza puchła od powtórek, `usageCount` nie odzwierciedlał rzeczywistego użycia.
+**Objaw**: Setki rekordów o identycznym `featureSnapshot` dla jednej studni; zafałszowane statystyki wzorców.
+**Fix** (`c905934`): deduplikacja w `telemetryService.ts` — dla źródła `AUTO_JS` przed INSERT liczona jest kanoniczna para kluczy (`_canonicalize` rekurencyjnie sortuje klucze JSON, `_dedupKey` = kanoniczny `featureSnapshot` + `||` + posortowane `allComponentIds`). Identyczny klucz → UPDATE istniejącego rekordu (inkrementacja `usageCount`, odświeżenie `lastUsedAt`, aktualizacja `offerId`/`clientId`/`projectId`/`warehouse`). Źródła `MANUAL`/`AI_SUGGEST` zawsze tworzą nowy rekord. Testy: describe „telemetryService - deduplikacja AUTO_JS" w `tests/telemetryRoutes.test.ts` (6 testów).
+
+## 25. Pełne skanowanie ai_telemetry_logs przy dedup (brak indeksów)
+
+**Problem**: Dedup AUTO_JS wymaga wyszukania najnowszego rekordu po `(wellId, solverSource)` — bez indeksu SQLite wykonywał pełny skan tabeli przy każdym zapisie.
+**Objaw**: Rosnący czas zapisu telemetrii wraz z rozmiarem tabeli (O(n) na rekord).
+**Fix** (`fe1679f`): migracja `20260805100000_telemetry_well_dedup` dodaje indeksy `idx_logs_well` (`wellId`) i `idx_logs_source_well` (`solverSource, wellId`). Auto-heal: `src/app.ts` tworzy indeksy idempotentnie (`CREATE INDEX IF NOT EXISTS`) przy starcie, a `scripts/check-db.js` wymienia je w `REQUIRED_INDEXES` i ostrzega przed brakiem.
+
+## 26. Brak indeksu FTS5 (full-text search) po aktualizacji
+
+**Problem**: Wyszukiwarka produktów oparta o FTS5 wymaga wirtualnej tabeli i indeksu; bazy przed migracją nie miały wymaganego schematu FTS5.
+**Objaw**: Błędy wyszukiwania lub powolne zapytania LIKE po aktualizacji istniejącej instalacji.
+**Fix** (`fe1679f`): `ensureFts5Schema` (`src/utils/fts5Sync.ts`) uruchamiane przy starcie serwera (`src/app.ts`) — idempotentne tworzenie/uzupełnianie schematu FTS5 z backfillem danych.

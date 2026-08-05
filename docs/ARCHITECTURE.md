@@ -1,7 +1,7 @@
 # Architektura — WITROS Oferty PV
 
 **Wersja:** 1.10.0  
-**Ostatnia aktualizacja:** 2026-07-22  
+**Ostatnia aktualizacja:** 2026-08-05  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
 
 ---
@@ -152,13 +152,48 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 
 5. **Utils** (`src/utils/`)
     - `cronService.ts` — serwis cron (setInterval)
-    - `fts5Sync.ts` — synchronizacja FTS5 dla wyszukiwarki
+    - `fts5Sync.ts` — synchronizacja FTS5 dla wyszukiwarki (auto-tworzenie tabeli wirtualnej + backfill przy starcie, nie tylko przebudowa przy braku kolumn)
     - `logger.ts` — logger aplikacji
     - `ownership.ts` — weryfikacja własności zasobów
     - `productionSearchUtils.ts` — narzędzia wyszukiwania produkcji
     - `roleFilter.ts` — filtrowanie po roli użytkownika
     - `searchCache.ts` — cache wyszukiwania
     - `searchUtils.ts` — narzędzia wyszukiwania
+
+### Telemetria AI i ML — kluczowe mechanizmy
+
+- **Deduplikacja telemetrii AUTO_JS** (`src/services/telemetry/telemetryService.ts`):
+  `recordConfig` dla źródła `AUTO_JS` porównuje kanoniczny `featureSnapshot` (rekurencyjny
+  deterministyczny serializator `_canonicalize`) + posortowaną listę `allComponentIds`
+  (`_dedupKey`). Identyczna konfiguracja nie tworzy nowego rekordu — robi `update`
+  `lastUsedAt`/`usageCount`/`offerId`/`clientId`/`projectId`/`warehouse` na ostatnim
+  rekordzie AUTO_JS studni (zapytanie `_findLatestAutoJs`). Duplikaty zawyżały
+  hitCount/confidence wzorców i mnożyły próbki treningowe ML. `MANUAL`/`AI_SUGGEST`
+  zawsze są zapisywane (sygnały decyzji użytkownika).
+- **Deduplikacja po stronie frontendu**: `public/js/studnie/telemetryBridge.js` — sesyjny
+  `autoJsDedupMap` (wellId → hash) z `wellContentFingerprint` (treść studni) +
+  `pricingFingerprint` (cena/waga — totalPrice jest cechą treningową ML) + `shouldSendAutoJs`;
+  `public/js/studnie/offerSave.js` — przy zapisie istniejącej oferty wysyła tylko zmienione
+  studnie (`_filterChangedWells` + `_wellSnapshot` + `_wellPricingStats`).
+- **Indeksy dedup telemetrii**: migracja `20260805100000_telemetry_well_dedup` + definicje
+  w `prisma/schema.prisma` (`idx_logs_well`, `idx_logs_source_well`). Auto-heal przy starcie
+  serwera (`src/app.ts`): `CREATE INDEX IF NOT EXISTS` dla obu indeksów obok
+  `idx_audit_created_at` — instalacje bez historii migracji (`db push`) nie tworzą nowych indeksów.
+- **Auto-heal FTS5** (`src/utils/fts5Sync.ts`): `ensureFts5Schema` tworzy tabelę wirtualną
+  FTS5 (`createFts5Table`) + robi `backfillFts5` także wtedy, gdy tabeli brak (świeża baza),
+  nie tylko gdy brakuje kolumn (przebudowa + backfill).
+- **TrainingPipeline** (`src/services/ml/TrainingPipeline.ts`): sliding window treningowy
+  (`orderBy createdAt desc` + `take TRAINING_BATCH_SIZE` + `reverse()`), znacznik
+  `lastTrainedAt` (zamiast `lastFeatureCount`), bramka nowych danych
+  `newCount = count(createdAt > lastTrainedAt)`.
+- **LearningEngine** (`src/services/telemetry/learning/LearningEngine.ts`): `getStatus` jest
+  async i czyta `lastRunAt` z bazy (`settings.learning_last_run` przez `loadLastRun`), aby
+  przetrwać restart serwera. Usunięte martwe pola feedback/ranker. `KnowledgeBase`
+  ma `countPatterns()` (licznik aktywnych wzorców), usunięto `archivePattern`.
+- **Diagnostyka „brak wzorców”**: `src/routes/telemetryAiDashboard.ts` — endpoint
+  `/ai/knowledge/patterns` zwraca `telemetryCount`, `patternsTotal`, `patternsOtherDn`,
+  `lastRunAt`, `minConfidence`; `public/js/admin/aiDashboard.js` renderuje komunikat
+  diagnostyczny `patternsEmptyHtml` (brak danych / brak cyklu / inne DN / niski próg).
 
 ### Konfiguracja
 
@@ -268,6 +303,10 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **AiEvaluation** — dzienne metryki ewaluacji ML
 - **aiRewardLog** — logi nagród ML
 
+- **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
+  `ai_telemetry_logs` — migracja `20260805100000_telemetry_well_dedup`, idempotentnie odtwarzane
+  przy starcie serwera (`CREATE INDEX IF NOT EXISTS` w `src/app.ts`).
+
 Szczegóły: [DATABASE.md](DATABASE.md)
 
 ---
@@ -298,7 +337,7 @@ Oferty_PV/
 ├── commitlint.config.js             # Conventional commits
 │
 ├── src/                             # Backend
-│   ├── app.ts                      # Konfiguracja Express
+│   ├── app.ts                      # Konfiguracja Express (auto-heal indeksów + FTS5 przy starcie)
 │   ├── prismaClient.ts             # Klient Prisma (singleton)
 │   ├── helpers.ts                  # Pomocnicze funkcje
 │   ├── version.ts                  # Wersja aplikacji
@@ -464,4 +503,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-07-16_
+_Ostatnia aktualizacja: 2026-08-05_

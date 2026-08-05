@@ -1,4 +1,5 @@
 # Plan implementacji: Blokada usuwania przy istniejących zleceniach produkcyjnych (PZ)
+> **Stan: ZREALIZOWANE (commit ae57cbc).** Treść ponizżej zachowana jako dokumentacja procesu - szczegóły w sekcji 10 "Stan wdrożenia".
 
 Data: 2026-08-02
 Moduły: studnie (oferty, zamówienia, elementy studni) — backend + frontend

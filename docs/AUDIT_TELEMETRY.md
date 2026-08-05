@@ -40,7 +40,6 @@
                           │  - LearningEngine (orquestracja)      │
                           │  - PatternDetector / PreferenceEngine  │
                           │  - FeatureExtractor                    │
-                          │  - RankingEngine                        │
                           │  - KnowledgeBase (storage)            │
                           └──────────────┬───────────────────────┘
                                          │ zapisy (UPSERT)
@@ -79,8 +78,12 @@ JSON.stringify(payload) (POST /api/telemetry/ai/config)
 [telemetryConfigSchema.safeParse — walidacja Zod]
         ↓
 [telemetryService.recordConfig]
-        ├─ ai_telemetry_logs (INSERT z dn, dennica, kręgami...)
-        ├─ ai_config_history (INSERT z configVersion + parentId)
+        ├─ DEDUP AUTO_JS (jeśli solverSource=AUTO_JS i wellId):
+        │   _findLatestAutoJs → _dedupKey(_canonicalize(featureSnapshot) + '||' + allComponentIds)
+        │   identyczny klucz → UPDATE lastUsedAt/usageCount+1/offerId/clientId/projectId/warehouse
+        │   (MANUAL/AI_SUGGEST zawsze zapisywane — sygnały decyzji użytkownika)
+        ├─ ai_telemetry_logs (INSERT z dn, dennica, kręgami...; featureSnapshot kanoniczny)
+        ├─ ai_config_history (INSERT z configVersion + parentId + diffFromParent z _computeDiff)
         └─ ai_transition_snapshots (INSERT każde przejście)
         ↓
 return { success: true, telemetryId }
@@ -109,20 +112,17 @@ JS → POST /api/telemetry/ai/acceptance-full
 [cronService.schedule 'analyzeUsagePreferences' (co godzinę)]
         ↓
 [LearningEngine.runFullCycle]
-        ├─ Odczytai ostatnie 200 rekordów telemetry + transitions
-        ├─ FeedbackProcessor.fromBatch → FeedbackEvent
-        ├─ PreferenceEngine:
-        │   ├─ buildSubstitution (X→Y)
-        │   ├─ buildAddition (dodane)
-        │   └─ buildRemoval (usunięte)
-        ├─ PatternDetector:
-        │   ├─ detectDennicaSwap
-        │   ├─ detectTransitionLayout
-        │   └─ detectReductionChoice
-        ├─ RankingEngine: wybiera top-5
-        └─ KnowledgeBase.upsertPattern (UPSERT z confidence)
-        ↓
-Zapis do ai_knowledge_base (UPSERT z confidence + history)
+        ├─ fetchTelemetryRecords (ostatnie 200 rekordów z dn != null, od lastRunAt)
+        ├─ buildCorrections (wasModified + final_user_config/original_auto_config)
+        ├─ detectAllPatterns:
+        │   ├─ PreferenceEngine: buildSubstitution (X→Y)
+        │   │                    buildAddition (dodane)
+        │   │                    buildRemoval (usunięte)
+        │   └─ PatternDetector: detectTransitionLayout
+        │                      detectReductionChoice
+        │   (bez FeedbackProcessor i RankingEngine — usunięte z pipeline)
+        ├─ PatternDetector.persist (UPSERT do ai_knowledge_base wg patternKey)
+        └─ saveLastRun (settings: learning_last_run)
         ↓
 Rekomendacje dostępne przez /recommendations/:telemetryId
 ```
@@ -165,7 +165,7 @@ Rekomendacje dostępne przez /recommendations/:telemetryId
 | `configVersion`, `parentConfigId`                               | int/string   | Łańcuch wersji                  |
 | `reviewStatus`                                                  | enum         | active/archived/shadowed        |
 | `featureSnapshot`, `labelSnapshot`, `predictionSnapshot`        | JSON         | Features/labels/preds (dane)    |
-| `usageCount`, `lastUsedAt`, `lastAcceptedAt`, `lastRejectedAt`  | tracking     | Popularność                     |
+| `usageCount`, `lastUsedAt`, `lastAcceptedAt`, `lastRejectedAt`  | tracking     | Popularność (dedup inkrementuje usageCount + odświeża lastUsedAt) |
 | `manualOverrideFlag`                                            | bool         | Zmiana ręczna                   |
 | `extraMeta`                                                     | JSON         | Rezerwa ewolucyjna              |
 
@@ -212,12 +212,18 @@ Rekomendacje dostępne przez /recommendations/:telemetryId
 
 | Metoda | Ścieżka                                                  | Funcja                          |
 | ------ | -------------------------------------------------------- | ------------------------------- |
-| GET    | /api/telemetry/learning/status                           | status silniczka                |
-| POST   | /api/telemetry/learning/run                              | wymusza pełny cykl uczenia      |
-| GET    | /api/telemetry/knowledge/patterns?dn=X&minConfidence=0.3 | wzorce per DN                   |
-| GET    | /api/telemetry/knowledge/stats                           | statystyki KB                   |
-| GET    | /api/telemetry/recommendations/:telemetryId              | rekomendacje dla rekordu        |
-| POST   | /api/telemetry/recommendations/decide                    | decyzja akceptacji rekomendacji |
+| GET    | /api/telemetry/ai/learning/status                        | status silniczka (async, await) |
+| POST   | /api/telemetry/ai/learning/run                           | wymusza pełny cykl uczenia      |
+| GET    | /api/telemetry/ai/knowledge/patterns?dn=X&minConfidence=0.3 | wzorce per DN + diagnostyka  |
+| GET    | /api/telemetry/ai/knowledge/stats                        | statystyki KB                   |
+| GET    | /api/telemetry/ai/recommendations/:telemetryId           | rekomendacje dla rekordu        |
+| POST   | /api/telemetry/ai/recommendations/decide                 | decyzja akceptacji rekomendacji |
+
+> GET /api/telemetry/ai/knowledge/patterns zwraca: { dn, minConfidence, items, total,
+> telemetryCount, patternsTotal, patternsForDn, patternsOtherDn, lastRunAt }. Pola
+> 	elemetryCount/patternsTotal/patternsOtherDn/lastRunAt zasilają komunikat
+> diagnostyczny patternsEmptyHtml() w public/js/admin/aiDashboard.js (4 warianty:
+> brak danych → brak cyklu → wzorce dla innych DN → próg pewności).
 
 ---
 
@@ -327,14 +333,21 @@ cronService.schedule('analyzeUsagePreferences', 60 * 60 * 1000, () =>
 cronService.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () => cronService.runFullCycle());
 ```
 
-`runFullCycle()`:
+`runFullCycle()` (`src/services/telemetry/learning/LearningEngine.ts`):
 
-1. Odczytaj ostatnie 200 rekordów telemetry (z dn != null)
-2. Przeczytaj powiązane transitions z ai_transition_snapshots
-3. PreferencesProcessor — substitution/addition/removal
-4. PatternDetector — dennica_swap, transition_layout, reduction_choice
-5. KnowledgeBase.upsertPattern (UPSERT wg patternKey)
-6. Update `lastRunAt`, czas trwania w `durationMs`
+1. `fetchTelemetryRecords(since)` — ostatnie 200 rekordów (`LEARNING_MAX_RECORDS`)
+   z `dn != null`, od `lastRunAt` (z settings `learning_last_run`), + transitions
+2. `buildCorrections(records)` — rekordy z `wasModified` + `final_user_config`
+   (JSON.parse `original_auto_config` / `final_user_config`)
+3. `detectAllPatterns`:
+   - PreferenceEngine: `buildSubstitution` / `buildAddition` / `buildRemoval`
+   - PatternDetector: `detectTransitionLayout` / `detectReductionChoice`
+   (FeedbackProcessor i RankingEngine nie są już częścią pipeline)
+4. `PatternDetector.persist(allPatterns)` — UPSERT do ai_knowledge_base wg patternKey
+5. `saveLastRun(now)` — settings `learning_last_run`, czas trwania w `durationMs`
+
+`getStatus()` jest async — czyta `lastRunAt` z bazy (przetrwa restart serwera).
+`getComponents()` zwraca wyłącznie: `{ kb, patterns, prefs, recommend }`.
 
 ---
 
@@ -380,7 +393,7 @@ cronService.schedule('fullLearningCycle', 24 * 60 * 60 * 1000, () => cronService
 | --------------------- | --------------------------------------------------------------------- | ------------------- |
 | Typecheck             | ✅ pass                                                               | 100%                |
 | Testy                 | ✅ 50/50 suitesy, 1226/1226 testy                                     | 100% pass           |
-| Testy telemetryRoutes | 56 testów                                                             | ↑ +56 nowych        |
+| Testy telemetryRoutes | 58 testów (w tym 6 dedup AUTO_JS)                                      | ↑ +6 dedup         |
 | Pokrycie warstwy AI   | ✅ FeatureExtractor, PatternDetector, PreferenceEngine, KnowledgeBase | 100% objęte testami |
 | Pokrycie ZIP API      | POST telemetry/ai/config — przez Zod schema                           | 100%                |
 
@@ -394,7 +407,7 @@ Moduł telemetry AI jest **kompletny pasywnie**:
 - 20 nowych endpointów REST (zapis + dashboard + learning)
 - 8 modeli danych (60+ kolumn telemetry + 32 KB nowe)
 - 10 nowych modułów TS (LearningEngine + 9 submodułów)
-- 56 testów E2E
+- 58 testów E2E (w tym deduplikacja AUTO_JS)
 - Cron uruchomiony co godzinę + co dzień
 
 **Ocena kompletności: 95%**

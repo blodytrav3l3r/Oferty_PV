@@ -72,6 +72,17 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 - Wzorzec: na końcu pliku `window.foo = foo;`
 - `lucide.createIcons({root: container})` po każdym `innerHTML = ...` z `data-lucide`
 
+### 8. Baza danych (SQLite + Prisma)
+
+- **Plik:** `data/app_database.sqlite` (SQLite, `DATABASE_URL` w `.env`); migracje w `prisma/migrations/`
+- **Synchronizacja schematu (instalacja/aktualizacja) zależy od typu bazy:**
+    - baza z historią migracji (tabela `_prisma_migrations`): `npm run prisma:deploy` (`npx prisma migrate deploy`)
+    - baza tworzona przez `db push` (brak `_prisma_migrations`): `npx prisma db push --skip-generate --accept-data-loss` — na niej `migrate deploy` ZAWODZI
+    - sprawdzenie typu: `npx prisma migrate status` — wszystkie migracje „niezastosowane" mimo działającej aplikacji = baza typu `db push`
+    - `npx prisma migrate dev` to wyłącznie narzędzie deweloperskie do tworzenia NOWYCH migracji (`npm run prisma:migrate`)
+- **`scripts/check-db.js`:** weryfikacja schematu przy starcie (`start.bat`/`dev.sh`) — sprawdza tabele, dane produktów ORAZ wymagane indeksy dedup telemetrii (`idx_logs_well`, `idx_logs_source_well`); brak → exit 1 → automatyczny `db push`
+- **Auto-heal przy starcie serwera (`src/app.ts`):** idempotentne `CREATE INDEX IF NOT EXISTS` dla indeksów dedup i `idx_audit_created_at`; pełny schemat FTS5 (`offers_search_fts`) tworzony/backfillowany przez `src/utils/fts5Sync.ts` (gdy tabeli brak lub brakuje kolumny `clientNumber`)
+
 ---
 
 ---
@@ -235,3 +246,5 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 | `npm run format`                      | Prettier                               |
 | `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
 | `npm run version:patch\|minor\|major` | Bump wersji                            |
+| `npm run prisma:deploy`               | Zastosuj migracje (baza z `_prisma_migrations`) |
+| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu dla baz bez `_prisma_migrations` |

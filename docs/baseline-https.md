@@ -1,5 +1,10 @@
 # Baseline HTTPS — WITROS Oferty PV
 
+> **Stan na 2026-08-05:** wdrożono dedup telemetrii AUTO_JS + indeksy
+> (migracja `20260805100000_telemetry_well_dedup`), TrainingPipeline sliding window,
+> auto-heal indeksów i FTS5. Poniższy baseline pozostaje historycznym zapisem stanu
+> z daty utworzenia dokumentu.
+
 **Data:** 2026-07-24
 **Cel:** Punkt odniesienia przed/po migracji HTTP → HTTPS.
 **Wersja aplikacji:** 1.9.0
