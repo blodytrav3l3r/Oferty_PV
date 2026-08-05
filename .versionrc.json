@@ -1,6 +1,7 @@
 {
     "bumpFiles": [
         "package.json",
+        "package-lock.json",
         {
             "filename": "VERSION",
             "updater": "scripts/version-updater.mjs"
