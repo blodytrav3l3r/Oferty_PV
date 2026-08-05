@@ -129,7 +129,7 @@ Wymaga autoryzacji.
 | DELETE | `/api/products/:id`       | Usunięcie produktu               |
 | PUT    | `/api/products/pricelist` | Aktualizacja całego cennika rur  |
 
-Produkty są automatycznie seedowane z pliku `data/seed_rury.json` przy starcie serwera, jeśli tabela jest pusta.
+Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_rury.json`. Seed nie jest uruchamiany automatycznie przy starcie serwera — wykonuje go `scripts/ensure-db.bat` → `scripts/check-db.js` → `prisma/seed.ts` (ręcznie: `npm run prisma:seed`).
 
 ---
 
@@ -146,7 +146,7 @@ Wymaga autoryzacji.
 | DELETE | `/api/products-studnie/:id`       | Usunięcie produktu                  |
 | PUT    | `/api/products-studnie/pricelist` | Aktualizacja całego cennika studni  |
 
-Produkty są automatycznie seedowane z pliku `data/seed_studnie.json`.
+Produkty są ładowane przez `prisma/seed.ts` z pliku `data/seed_studnie.json` (nie automatycznie przy starcie serwera).
 
 ---
 
@@ -278,19 +278,19 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji. Telemetria jest **pasywna** — solver JS pozostaje jedynym źródłem prawdy doboru komponentów studni.
 
-| Metoda | Ścieżka                            | Opis                                                            |
-| ------ | ---------------------------------- | --------------------------------------------------------------- |
-| POST   | `/api/telemetry/ai/config`         | Zapis pełnej konfiguracji studni z kontekstem                   |
-| POST   | `/api/telemetry/ai/event`          | Pojedyncze zdarzenie (user_change, accept, itp.)                |
-| POST   | `/api/telemetry/ai/events/bulk`    | Zapis wielu zdarzeń naraz (batch polling z JS)                  |
-| POST   | `/api/telemetry/ai/version`        | Rejestracja nowej wersji solvera/reguł/AI                       |
-| POST   | `/api/telemetry/ai/acceptance`     | Oznaczenie konfiguracji jako zaakceptowanej/odrzuconej          |
-| POST   | `/api/telemetry/ai/acceptance-full`| Rozszerzony acceptance (oferta + akceptacja + snapshot)         |
-| GET    | `/api/telemetry/ai/list`           | Ostatnie rekordy telemetry (admin)                              |
-| GET    | `/api/telemetry/ai/history/:wellId`| Historia konfiguracji studni (admin)                            |
-| GET    | `/api/telemetry/ai/transitions/:configId` | Snapshot przejść szczelnych (admin)                       |
-| GET    | `/api/telemetry/ai/events/:wellId` | Zdarzenia telemetryczne studni (admin)                          |
-| GET    | `/api/telemetry/ai/versions`       | Aktywne wersje solvera/reguł/AI (admin)                         |
+| Metoda | Ścieżka                                   | Opis                                                    |
+| ------ | ----------------------------------------- | ------------------------------------------------------- |
+| POST   | `/api/telemetry/ai/config`                | Zapis pełnej konfiguracji studni z kontekstem           |
+| POST   | `/api/telemetry/ai/event`                 | Pojedyncze zdarzenie (user_change, accept, itp.)        |
+| POST   | `/api/telemetry/ai/events/bulk`           | Zapis wielu zdarzeń naraz (batch polling z JS)          |
+| POST   | `/api/telemetry/ai/version`               | Rejestracja nowej wersji solvera/reguł/AI               |
+| POST   | `/api/telemetry/ai/acceptance`            | Oznaczenie konfiguracji jako zaakceptowanej/odrzuconej  |
+| POST   | `/api/telemetry/ai/acceptance-full`       | Rozszerzony acceptance (oferta + akceptacja + snapshot) |
+| GET    | `/api/telemetry/ai/list`                  | Ostatnie rekordy telemetry (admin)                      |
+| GET    | `/api/telemetry/ai/history/:wellId`       | Historia konfiguracji studni (admin)                    |
+| GET    | `/api/telemetry/ai/transitions/:configId` | Snapshot przejść szczelnych (admin)                     |
+| GET    | `/api/telemetry/ai/events/:wellId`        | Zdarzenia telemetryczne studni (admin)                  |
+| GET    | `/api/telemetry/ai/versions`              | Aktywne wersje solvera/reguł/AI (admin)                 |
 
 ### `POST /api/telemetry/ai/config` — deduplikacja AUTO_JS
 
@@ -313,14 +313,14 @@ W przypadku duplikatu AUTO_JS: `telemetryId` = id istniejącego rekordu, `config
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka                                    | Opis                                                         |
-| ------ | ------------------------------------------ | ------------------------------------------------------------ |
-| GET    | `/api/telemetry/ai/learning/status`        | Status silnika uczącego (endpoint asynchroniczny)            |
-| POST   | `/api/telemetry/ai/learning/run`           | Wymuszenie pełnego cyklu uczenia (analiza historyczna)       |
-| GET    | `/api/telemetry/ai/knowledge/patterns`     | Lista wzorców w bazie wiedzy per DN                          |
-| GET    | `/api/telemetry/ai/knowledge/stats`        | Statystyki bazy wiedzy                                       |
+| Metoda | Ścieżka                                          | Opis                                                   |
+| ------ | ------------------------------------------------ | ------------------------------------------------------ |
+| GET    | `/api/telemetry/ai/learning/status`              | Status silnika uczącego (endpoint asynchroniczny)      |
+| POST   | `/api/telemetry/ai/learning/run`                 | Wymuszenie pełnego cyklu uczenia (analiza historyczna) |
+| GET    | `/api/telemetry/ai/knowledge/patterns`           | Lista wzorców w bazie wiedzy per DN                    |
+| GET    | `/api/telemetry/ai/knowledge/stats`              | Statystyki bazy wiedzy                                 |
 | GET    | `/api/telemetry/ai/recommendations/:telemetryId` | Rekomendacje AI dla rekordu telemetry                  |
-| POST   | `/api/telemetry/ai/recommendations/decide` | Akceptacja/odrzucenie rekomendacji                           |
+| POST   | `/api/telemetry/ai/recommendations/decide`       | Akceptacja/odrzucenie rekomendacji                     |
 
 ### `GET /api/telemetry/ai/learning/status`
 
@@ -332,35 +332,35 @@ Parametry: `?dn=all_dn` (domyślnie) oraz `?minConfidence=0.3` (domyślnie).
 
 Pola odpowiedzi (oprócz listy `items` i `total`):
 
-| Pole              | Opis                                                       |
-| ----------------- | ---------------------------------------------------------- |
-| `dn`              | Filtrowana średnica (lub `all_dn`)                         |
-| `minConfidence`   | Próg pewności użyty do filtrowania wzorców                 |
-| `telemetryCount`  | Całkowita liczba rekordów telemetry (`ai_telemetry_logs`)  |
-| `patternsTotal`   | Całkowita liczba wzorców w bazie wiedzy (wszystkie DN)     |
-| `patternsForDn`   | Liczba wzorców dla wybranego DN (równa `total`)            |
-| `patternsOtherDn` | Wzorce dla innych średnic (różnica względem `all_dn`)      |
-| `lastRunAt`       | Czas ostatniego cyklu Learning Engine (ISO) lub `null`     |
+| Pole              | Opis                                                      |
+| ----------------- | --------------------------------------------------------- |
+| `dn`              | Filtrowana średnica (lub `all_dn`)                        |
+| `minConfidence`   | Próg pewności użyty do filtrowania wzorców                |
+| `telemetryCount`  | Całkowita liczba rekordów telemetry (`ai_telemetry_logs`) |
+| `patternsTotal`   | Całkowita liczba wzorców w bazie wiedzy (wszystkie DN)    |
+| `patternsForDn`   | Liczba wzorców dla wybranego DN (równa `total`)           |
+| `patternsOtherDn` | Wzorce dla innych średnic (różnica względem `all_dn`)     |
+| `lastRunAt`       | Czas ostatniego cyklu Learning Engine (ISO) lub `null`    |
 
 ## ML Pipeline (`/api/telemetry/ai`)
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                                | Opis                                            |
-| ------ | -------------------------------------- | ----------------------------------------------- |
-| POST   | `/api/telemetry/ai/predict`            | Predykcja akceptacji dla zestawu cech           |
-| POST   | `/api/telemetry/ai/predict/batch`      | Predykcja batch dla kandydujących konfiguracji  |
-| POST   | `/api/telemetry/ai/reward`             | Zapis nagrody (reward) za akcję                 |
-| GET    | `/api/telemetry/ai/settings`           | Poziom wpływu AI (`wells_ai_influence`)         |
-| POST   | `/api/telemetry/ai/settings`           | Ustawienie wpływu AI 0–100 (admin)              |
-| GET    | `/api/telemetry/ai/ml-status`          | Status pipeline ML (model, trening, cache)      |
-| GET    | `/api/telemetry/ai/health`             | Health ML + metryki jakości danych              |
-| GET    | `/api/telemetry/ai/models`             | Lista modeli                                    |
-| DELETE | `/api/telemetry/ai/models/:id`         | Usunięcie modelu (admin)                        |
-| POST   | `/api/telemetry/ai/models/:id/activate`| Aktywacja modelu (admin)                        |
-| POST   | `/api/telemetry/ai/train`              | Wymuszenie trenowania modelu (admin)            |
-| GET    | `/api/telemetry/ai/feature-schema`     | Wersja i nazwy cech ML                          |
-| POST   | `/api/telemetry/ai/rollback`           | Rollback do poprzedniego modelu (admin)         |
+| Metoda | Ścieżka                                 | Opis                                           |
+| ------ | --------------------------------------- | ---------------------------------------------- |
+| POST   | `/api/telemetry/ai/predict`             | Predykcja akceptacji dla zestawu cech          |
+| POST   | `/api/telemetry/ai/predict/batch`       | Predykcja batch dla kandydujących konfiguracji |
+| POST   | `/api/telemetry/ai/reward`              | Zapis nagrody (reward) za akcję                |
+| GET    | `/api/telemetry/ai/settings`            | Poziom wpływu AI (`wells_ai_influence`)        |
+| POST   | `/api/telemetry/ai/settings`            | Ustawienie wpływu AI 0–100 (admin)             |
+| GET    | `/api/telemetry/ai/ml-status`           | Status pipeline ML (model, trening, cache)     |
+| GET    | `/api/telemetry/ai/health`              | Health ML + metryki jakości danych             |
+| GET    | `/api/telemetry/ai/models`              | Lista modeli                                   |
+| DELETE | `/api/telemetry/ai/models/:id`          | Usunięcie modelu (admin)                       |
+| POST   | `/api/telemetry/ai/models/:id/activate` | Aktywacja modelu (admin)                       |
+| POST   | `/api/telemetry/ai/train`               | Wymuszenie trenowania modelu (admin)           |
+| GET    | `/api/telemetry/ai/feature-schema`      | Wersja i nazwy cech ML                         |
+| POST   | `/api/telemetry/ai/rollback`            | Rollback do poprzedniego modelu (admin)        |
 
 ## Feature Flags (`/api/feature-flags`)
 

@@ -193,7 +193,7 @@ npm run backup
 # 3. Skopiuj plik backupu do data/backups/
 
 # 4. Przywróć bazę:
-npm run backup:restore -- data/backups/backup_*.sqlite
+npm run restore -- data/backups/backup_*.sqlite
 # System zapyta: "Czy na pewno?" → wpisz "tak"
 
 # 5. Uruchom:
@@ -206,13 +206,13 @@ npm run backup:restore -- data/backups/backup_*.sqlite
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
-| Kwestia            | Zalecenie                                                    |
-| ------------------ | ------------------------------------------------------------ |
-| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`) |
-| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy |
+| Kwestia            | Zalecenie                                                                                                                         |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                      |
+| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                          |
 | **Typ bazy**       | Baza z backupu (tworzona przez `db push`) nie ma tabeli `_prisma_migrations` — na niej `migrate deploy` zawodzi, używaj `db push` |
-| **Migracje**       | `db push` doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych |
-| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika     |
+| **Migracje**       | `db push` doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                     |
+| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                          |
 
 ---
 
@@ -283,7 +283,7 @@ npm run backup
 
 ```powershell
 # Przywróć bazę z backupu:
-npm run backup:restore -- data/backups/backup_NAZWA_PLIKU.sqlite
+npm run restore -- data/backups/backup_NAZWA_PLIKU.sqlite
 
 # System zapyta o potwierdzenie — wpisz "tak"
 ```
@@ -415,7 +415,7 @@ git push --follow-tags
 | Uruchomienie serwera prod              |      ✅      |        | `prod.bat` → npm start                          |
 | Port check (3000)                      |      ✅      |        | PowerShell Get-NetTCPConnection                 |
 | Backup bazy                            |      ✅      |        | `npm run backup` (VACUUM INTO)                  |
-| Przywracanie backupu                   |              |   ✅   | `npm run backup:restore -- <file>`              |
+| Przywracanie backupu                   |              |   ✅   | `npm run restore -- <file>`                     |
 | Automatyczny backup cron               |              |   ✅   | `npm run backup:install-cron` (jako Admin)      |
 | Aktualizacja z gita                    |              |   ✅   | `git pull`                                      |
 | Release (wersja + changelog + tag)     |      ✅      |        | `npm run release:patch`                         |
@@ -567,40 +567,40 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 
 ### 10 najważniejszych komend:
 
-| #   | Komenda                            | Co robi                                     |
-| --- | ---------------------------------- | ------------------------------------------- |
-| 1   | `.\install.bat`                    | Instalacja (RAZ po pobraniu)                |
-| 2   | `.\dev.bat`                        | Uruchomienie (ZAWSZE do pracy)              |
-| 3   | `npm run backup`                   | Kopia bezpieczeństwa bazy                   |
-| 4   | `npm run backup:restore -- <plik>` | Przywróć bazę z kopii                       |
-| 5   | `npm run backup:install-cron`      | Automatyczny backup codziennie o 02:00      |
-| 6   | `git pull`                         | Pobierz aktualizacje                        |
-| 7   | `.\build.bat`                      | Zbuduj wersję produkcyjną                   |
-| 8   | `.\prod.bat`                       | Uruchom wersję produkcyjną                  |
-| 9   | `npm run test:quick`               | Szybkie testy (sprawdź czy wszystko działa) |
-| 10  | `npm run validate`                 | Pełna walidacja (typecheck + lint + test)   |
+| #   | Komenda                       | Co robi                                     |
+| --- | ----------------------------- | ------------------------------------------- |
+| 1   | `.\install.bat`               | Instalacja (RAZ po pobraniu)                |
+| 2   | `.\dev.bat`                   | Uruchomienie (ZAWSZE do pracy)              |
+| 3   | `npm run backup`              | Kopia bezpieczeństwa bazy                   |
+| 4   | `npm run restore -- <plik>`   | Przywróć bazę z kopii                       |
+| 5   | `npm run backup:install-cron` | Automatyczny backup codziennie o 02:00      |
+| 6   | `git pull`                    | Pobierz aktualizacje                        |
+| 7   | `.\build.bat`                 | Zbuduj wersję produkcyjną                   |
+| 8   | `.\prod.bat`                  | Uruchom wersję produkcyjną                  |
+| 9   | `npm run test:quick`          | Szybkie testy (sprawdź czy wszystko działa) |
+| 10  | `npm run validate`            | Pełna walidacja (typecheck + lint + test)   |
 
 ### Główne pliki i katalogi:
 
-| Ścieżka                    | Opis                                 |
-| -------------------------- | ------------------------------------ |
-| `data/app_database.sqlite` | **BAZA DANYCH** — najważniejszy plik |
-| `data/backups/`            | Kopie bezpieczeństwa bazy            |
-| `.env`                     | Konfiguracja (hasło, port, itp.)     |
-| `.env.example`             | Szablon konfiguracji                 |
-| `install.bat`              | Instalator                           |
-| `dev.bat`                  | Uruchomienie deweloperskie           |
-| `start.bat`                | Uruchomienie (to samo co dev.bat)    |
-| `build.bat`                | Budowa produkcyjna                   |
-| `prod.bat`                 | Uruchomienie produkcyjne             |
-| `scripts/backup.ts`        | Skrypt backupu                       |
-| `scripts/restore-db.js`    | Skrypt przywracania                  |
+| Ścieżka                    | Opis                                                    |
+| -------------------------- | ------------------------------------------------------- |
+| `data/app_database.sqlite` | **BAZA DANYCH** — najważniejszy plik                    |
+| `data/backups/`            | Kopie bezpieczeństwa bazy                               |
+| `.env`                     | Konfiguracja (hasło, port, itp.)                        |
+| `.env.example`             | Szablon konfiguracji                                    |
+| `install.bat`              | Instalator                                              |
+| `dev.bat`                  | Uruchomienie deweloperskie                              |
+| `start.bat`                | Uruchomienie (to samo co dev.bat)                       |
+| `build.bat`                | Budowa produkcyjna                                      |
+| `prod.bat`                 | Uruchomienie produkcyjne                                |
+| `scripts/backup.ts`        | Skrypt backupu                                          |
+| `scripts/restore-db.js`    | Skrypt przywracania                                     |
 | `scripts/check-db.js`      | Weryfikacja schematu bazy (tabele, indeksy dedup, dane) |
-| `src/utils/fts5Sync.ts`    | Auto-tworzenie tabeli FTS5 wyszukiwarki ofert |
-| `prisma/seed.ts`           | Dane początkowe                      |
-| `prisma/migrations/`       | Migracje schematu bazy               |
-| `docs/`                    | Dokumentacja                         |
-| `VERSION`                  | Aktualna wersja systemu              |
+| `src/utils/fts5Sync.ts`    | Auto-tworzenie tabeli FTS5 wyszukiwarki ofert           |
+| `prisma/seed.ts`           | Dane początkowe                                         |
+| `prisma/migrations/`       | Migracje schematu bazy                                  |
+| `docs/`                    | Dokumentacja                                            |
+| `VERSION`                  | Aktualna wersja systemu                                 |
 
 ---
 

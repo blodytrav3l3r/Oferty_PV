@@ -37,12 +37,18 @@ git push --follow-tags
 Proces release:
 
 1. `npm run release` automatycznie dobiera typ wersji na podstawie commitów
-2. Aktualizuje `VERSION`, `package.json`, `CHANGELOG.md`
-3. `scripts/auto-cache-bust.mjs` automatycznie aktualizuje `?v=` we wszystkich HTML do nowej wersji
-4. Tworzy tag git
+2. Aktualizuje `VERSION`, `package.json` i `package-lock.json` (lista plików z `bumpFiles` w `.versionrc.json`) oraz `CHANGELOG.md` (`infile`)
+3. Hook `postbump` uruchamia **trzy skrypty**:
+    - `scripts/auto-cache-bust.mjs` — aktualizuje `?v=` we wszystkich HTML (w tym `public/templates/*.html`) do nowej wersji
+    - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `docs/*.md`
+    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
+4. Tworzy commit `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`) oraz tag git
 5. Po pushu tagów GitHub automatycznie tworzy Release
+6. Po zmianie wersji zrestartuj serwer
 
 **Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
+
+**Pre-push validation:** hook `.husky/pre-push` uruchamia `npm run version:check` + `npm run typecheck` + `npm run typecheck:frontend` + `npm run test:quick`. Jeśli hook blokuje push, użyj obejścia: `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
 
 ## Świeża instalacja
 

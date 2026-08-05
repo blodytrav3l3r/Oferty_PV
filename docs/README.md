@@ -41,18 +41,18 @@ npx prisma migrate deploy
 # (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
 # Przywróć bazę z backupu:
-npm run backup:restore -- data/backups/backup_*.sqlite
+npm run restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
 ### Windows (batch)
 
-| Skrypt        | Opis                             |
-| ------------- | -------------------------------- |
-| `start.bat`   | Serwer produkcyjny               |
-| `dev.bat`     | Serwer deweloperski (hot-reload) |
-| `install.bat` | Instalacja + przygotowanie bazy  |
-| `build.bat`   | Budowa projektu                  |
+| Skrypt        | Opis                                                 |
+| ------------- | ---------------------------------------------------- |
+| `start.bat`   | Główne wejście — dev domyślnie, `--prod` produkcyjny |
+| `dev.bat`     | Serwer deweloperski (hot-reload)                     |
+| `install.bat` | Instalacja + przygotowanie bazy                      |
+| `build.bat`   | Budowa projektu                                      |
 
 ## HTTPS / Reverse proxy
 
@@ -78,7 +78,7 @@ aktywne przy `NODE_ENV=production`). Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 | `npm run validate`       | typecheck + lint + testy            |
 | `npm start`              | Serwer produkcyjny                  |
 | `npm run backup`         | Backup bazy danych                  |
-| `npm run backup:restore` | Przywróć bazę z backupu             |
+| `npm run restore`        | Przywróć bazę z backupu             |
 | `npm run release`        | Utwórz release (wersja + changelog) |
 | `npm run release:patch`  | Wymuś release typu patch            |
 | `npm run release:minor`  | Wymuś release typu minor            |
@@ -121,7 +121,7 @@ Własna implementacja Logistic Regression w TypeScript:
 
 1. Na starym urządzeniu: `npm run backup`
 2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
-3. Na nowym urządzeniu: `npm run backup:restore -- data/backups/backup_*.sqlite`
+3. Na nowym urządzeniu: `npm run restore -- data/backups/backup_*.sqlite`
    (restore synchronizuje schemat — tworzy brakujące tabele i indeksy przez `db push`)
 4. Przy ręcznym kopiowaniu pliku bazy (bez `restore`) zsynchronizuj schemat jawnie:
    `npx prisma db push --skip-generate --accept-data-loss`

@@ -1,4 +1,5 @@
 # Master Plan — Prisma jako źródło prawdy dla cenników
+
 > **Stan: ZREALIZOWANE (commity f943309 - migracja cenników do tabel Prisma - i 4969381 - przenoszenie cen przez data/price_defaults.json).** Zweryfikowano: modele ProductsRuryDefault, ProductsStudnieDefault, Preco* w schema.prisma; usunięte CategoriesRury/CategoriesStudnie i src/services/pricelistService.ts; brak seedowania z runtime w app.ts; istnieją scripts/migrate-settings-to-tables.ts i scripts/export-settings-to-seed.mjs. Treść ponizżej zachowana jako dokumentacja procesu.
 
 **Projekt:** WITROS Oferty PV
@@ -835,7 +836,7 @@ Jeśli nowy kod ma buga, rollback do starego kodu:
 cp data/app.sqlite data/app.sqlite.before_deploy2
 
 # W razie problemu:
-npm run backup:restore -- data/app.sqlite.before_deploy2
+npm run restore -- data/app.sqlite.before_deploy2
 ```
 
 #### 3. Reverse migration (Prisma → settings) — narzędzie recovery

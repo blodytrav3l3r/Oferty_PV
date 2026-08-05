@@ -369,7 +369,7 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
 2. Zbuduj projekt: `npm run build`
 3. Przywróć bazę:
     ```bash
-    npm run backup:restore -- data/backups/backup_*.sqlite
+    npm run restore -- data/backups/backup_*.sqlite
     ```
     lub ręcznie:
     ```bash

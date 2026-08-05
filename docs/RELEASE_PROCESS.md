@@ -26,9 +26,16 @@ npm run release        # Automatyczny dobór na podstawie commitów
 
 To wykonuje:
 
-- Podbicie wersji w `VERSION` i `package.json`
-- Aktualizację `CHANGELOG.md`
-- Commita `chore(release): X.Y.Z`
+- Podbicie wersji w `VERSION`, `package.json` i `package-lock.json` (lista plików
+  z `bumpFiles` w `.versionrc.json`; `VERSION` aktualizowany przez
+  `scripts/version-updater.mjs`)
+- Aktualizację `CHANGELOG.md` (plik wskazany jako `infile`)
+- Hook `postbump` uruchamia **trzy skrypty**:
+    - `scripts/auto-cache-bust.mjs` — podmienia `?v=` we wszystkich plikach HTML
+      (w tym `public/templates/*.html`) na nową wersję
+    - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `docs/*.md`
+    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
+- Commita `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`)
 - Tag `vX.Y.Z`
 
 ### 3. Weryfikacja
@@ -51,11 +58,13 @@ Push taga automatycznie uruchamia workflow `.github/workflows/release.yml`, któ
 ## Zasady
 
 - **Nigdy nie taguj ani nie zmieniaj wersji ręcznie** — wszystko obsługuje `standard-version`
-- `VERSION` i `package.json` muszą być zgodne (automatycznie po release)
-- Po zmianie wersji restart backendu
+- `VERSION`, `package.json` i `package-lock.json` muszą być zgodne (automatycznie po release)
+- Po zmianie wersji zrestartuj serwer (`npm run dev:backend` lub `npm start` w produkcji)
 - Release dopiero gdy zmiany są gotowe do produkcji
-- **Cache-bust assetów** (`?v=` w HTML) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
-- **Pre-push validation**: Husky pre-push sprawdza `npm run version:check` (blokuje push przy niespójnej wersji) oraz `typecheck` + testy.
+- **Cache-bust assetów** (`?v=` w HTML, w tym `public/templates/*.html`) jest automatycznie synchronizowany z `VERSION` podczas release (hook `postbump` w `scripts/auto-cache-bust.mjs`). Nie zmieniamy ręcznie parametrów `?v=` w plikach HTML.
+- **Pre-push validation**: hook `.husky/pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji), `npm run typecheck`, `npm run typecheck:frontend` oraz `npm run test:quick`.
+- **`--commit-all`**: standard-version domyślnie commituje tylko pliki objęte release; flaga `--commit-all` (np. `npm run release:patch -- --commit-all`) commituje wszystkie zmiany w working tree.
+- **`HUSKY=0`**: jeśli hook blokuje operację (np. pre-push), obejściem jest `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
 
 ## Release — podgląd (dry run)
 

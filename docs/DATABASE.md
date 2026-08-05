@@ -308,20 +308,20 @@ Indeks: `idx_audit_entity` na `(entityType, entityId)`.
 
 #### `ai_telemetry_logs` — Logi telemetrii AI
 
-| Kolumna              | Typ        | Opis                      |
-| -------------------- | ---------- | ------------------------- |
-| id                   | String @id | Identyfikator             |
-| userId               | String?    | ID użytkownika            |
-| original_auto_config | String?    | Automatyczna konfiguracja |
-| final_user_config    | String?    | Ostateczna konfiguracja   |
-| override_reason      | String?    | Powód nadpisania          |
-| createdAt            | String?    | Data zdarzenia            |
-| usageCount           | Int?       | Licznik użycia (inkrementowany przy dedup AUTO_JS) |
-| lastUsedAt           | String?    | Ostatnie użycie (odświeżane przy dedup AUTO_JS)     |
-| wellId               | String?    | ID studni (indeks `idx_logs_well`)                  |
+| Kolumna              | Typ        | Opis                                                  |
+| -------------------- | ---------- | ----------------------------------------------------- |
+| id                   | String @id | Identyfikator                                         |
+| userId               | String?    | ID użytkownika                                        |
+| original_auto_config | String?    | Automatyczna konfiguracja                             |
+| final_user_config    | String?    | Ostateczna konfiguracja                               |
+| override_reason      | String?    | Powód nadpisania                                      |
+| createdAt            | String?    | Data zdarzenia                                        |
+| usageCount           | Int?       | Licznik użycia (inkrementowany przy dedup AUTO_JS)    |
+| lastUsedAt           | String?    | Ostatnie użycie (odświeżane przy dedup AUTO_JS)       |
+| wellId               | String?    | ID studni (indeks `idx_logs_well`)                    |
 | solverSource         | String?    | Źródło konfiguracji (`AUTO_JS`/`MANUAL`/`AI_SUGGEST`) |
-| featureSnapshot      | String?    | Kanoniczny snapshot cech (klucz dedup)              |
-| allComponentIds      | String?    | Posortowana lista ID komponentów (klucz dedup)      |
+| featureSnapshot      | String?    | Kanoniczny snapshot cech (klucz dedup)                |
+| allComponentIds      | String?    | Posortowana lista ID komponentów (klucz dedup)        |
 
 Dedyplikacja: rekordy `AUTO_JS` z identycznym kanonicznym `featureSnapshot` + `allComponentIds` dla tej samej studni aktualizują istniejący rekord (indeksy `idx_logs_well`, `idx_logs_source_well`).
 
@@ -440,18 +440,18 @@ Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
 ### Lista migracji (11)
 
-| Migracja                                        | Opis                         |
-| ----------------------------------------------- | ---------------------------- |
-| `20260611000000_init`                           | Inicjalna migracja           |
-| `20260611000001_add_product_tables`             | Tabele produktów             |
-| `20260611170224_add_dn_studni_to_preco_zakresy` | DN studni w Preco zakresy    |
-| `20260630190000_telemetry_ai_prep`              | Przygotowanie telemetrii AI  |
-| `20260630200000_ai_knowledge_base`              | Baza wiedzy AI               |
-| `20260705000000_ai_well_cases_create`           | Przypadki studni AI          |
-| `20260705000000_feature_import_export`          | Feature flag import/eksport  |
-| `20260705000001_ai_well_cases_unique`           | Unique key dla przypadków AI |
-| `20260707000000_ai_ml_models`                   | Modele ML                    |
-| `20260719000000_ai_unique_pattern_key`          | Unique pattern key           |
+| Migracja                                        | Opis                                                                  |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| `20260611000000_init`                           | Inicjalna migracja                                                    |
+| `20260611000001_add_product_tables`             | Tabele produktów                                                      |
+| `20260611170224_add_dn_studni_to_preco_zakresy` | DN studni w Preco zakresy                                             |
+| `20260630190000_telemetry_ai_prep`              | Przygotowanie telemetrii AI                                           |
+| `20260630200000_ai_knowledge_base`              | Baza wiedzy AI                                                        |
+| `20260705000000_ai_well_cases_create`           | Przypadki studni AI                                                   |
+| `20260705000000_feature_import_export`          | Feature flag import/eksport                                           |
+| `20260705000001_ai_well_cases_unique`           | Unique key dla przypadków AI                                          |
+| `20260707000000_ai_ml_models`                   | Modele ML                                                             |
+| `20260719000000_ai_unique_pattern_key`          | Unique pattern key                                                    |
 | `20260805100000_telemetry_well_dedup`           | Indeksy dedup telemetrii AI (`idx_logs_well`, `idx_logs_source_well`) |
 
 ### Komendy
@@ -465,7 +465,7 @@ Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 | `npm run prisma:seed`     | Zasiej dane początkowe        |
 | `npm run prisma:reset`    | Reset bazy (utrata danych!)   |
 | `npm run backup`          | Backup bazy (VACUUM INTO)     |
-| `npm run backup:restore`  | Przywróć bazę z backupu       |
+| `npm run restore`         | Przywróć bazę z backupu       |
 
 ### Seed
 
@@ -481,7 +481,18 @@ Pliki źródłowe seed:
 - `data/seed_studnie.json` — produkty studnie
 - `data/seed_preco.json` — cenniki Preco
 
-Przy starcie serwera (`server.ts`) produkty są automatycznie seedowane, jeśli tabela jest pusta (funkcje `initRuryProductsTable()` i `initStudnieProductsTable()`).
+Przy starcie serwera (`server.ts`) produkty **nie są** automatycznie seedowane.
+
+Seed zapisuje dane w **jednej transakcji** `prisma.$transaction(...)` z użyciem
+`createMany` (per tabela: `ProductsRury`, `ProductsStudnie`, `PrecoKonfig`,
+`PrecoKinety`, `PrecoZakresy` oraz ich warianty `*Default`), a następnie tworzy
+startowy model ML (`AiModel`). Jeśli baza zawiera już dane produktów, seed
+przerywa działanie — chyba że uruchomisz go z flagą `--force`.
+
+Seed uruchamia łańcuch `scripts/ensure-db.bat` → `scripts/check-db.js`
+(który zwraca kod 2, gdy tabele produktów są puste) → `prisma/seed.ts`.
+Ręcznie wywołasz go przez `npm run prisma:seed`, a w Dockerze seed jest
+uruchamiany po `prisma db push` (na pustej bazie).
 
 ---
 
@@ -516,7 +527,7 @@ npm run backup:uninstall-cron  # Usuwa zadanie
 ### Przywrócenie z backupu (zalecane)
 
 ```bash
-npm run backup:restore -- data/backups/backup_2026-06-30_*.sqlite
+npm run restore -- data/backups/backup_2026-06-30_*.sqlite
 ```
 
 Skrypt weryfikuje wersję bazy (`PRAGMA user_version`) przed nadpisaniem.
@@ -535,7 +546,7 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
 3. Na nowym urządzeniu (po standardowej instalacji, bez seedowania):
     ```bash
-    npm run backup:restore -- data/backups/backup_*.sqlite
+    npm run restore -- data/backups/backup_*.sqlite
     ```
 4. Jeśli schemat różni się między wersjami:
     ```bash

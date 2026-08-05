@@ -35,12 +35,12 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 
 ### Wymagania wstępne
 
-| Składnik | Wersja minimalna | Pobierz                                                        |
-| -------- | ---------------- | -------------------------------------------------------------- |
-| Node.js  | 20.0.0           | [https://nodejs.org](https://nodejs.org) (wersja LTS)          |
-| npm      | 9+               | Instaluje się automatycznie z Node.js                          |
-| Git      | dowolna          | [https://git-scm.com](https://git-scm.com) (opcjonalnie)       |
-| Python   | 3.10+            | Tylko jeśli używasz silnika konfiguratora studni (opcjonalnie) |
+| Składnik | Wersja minimalna | Pobierz                                                                                                                            |
+| -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Node.js  | 20.0.0           | [https://nodejs.org](https://nodejs.org) (wersja LTS)                                                                              |
+| npm      | 9+               | Instaluje się automatycznie z Node.js                                                                                              |
+| Git      | dowolna          | [https://git-scm.com](https://git-scm.com) (opcjonalnie)                                                                           |
+| Python   | 3.10+            | Opcjonalnie — tylko do walidacji Excel w pre-commit (`scripts/excel-validator.py`); instalacja i uruchomienie NIE wymagają Pythona |
 
 **Sprawdź zainstalowane wersje:**
 
@@ -125,7 +125,7 @@ Aplikację uruchamiasz przez `start.bat` (główne wejście):
 
 Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
 
-> **Uwaga (Docker):** Przy uruchomieniu przez `docker compose up --build -d` aplikacja wewnątrz kontenera nasłuchuje na porcie **3000**, ale `docker-compose.yml` mapuje go na port zewnętrzny (domyślnie `3000:3000`). W razie potrzeby zmień mapowanie portów w `docker-compose.yml`.
+> **Uwaga (Docker):** Przy uruchomieniu przez `docker compose up --build -d` aplikacja wewnątrz kontenera nasłuchuje na porcie **10000** (`PORT=10000` w `docker-compose.yml`), a `docker-compose.yml` mapuje go `3000:10000` (host:kontener) — z hosta Docker aplikacja dostępna jest na porcie **3000**. W razie potrzeby zmień mapowanie portów w `docker-compose.yml`.
 
 #### 5. Pierwsze logowanie
 
