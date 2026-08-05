@@ -73,7 +73,6 @@
     "license": "SEE LICENSE IN LICENSE",
     "description": "WITROS Oferty - Generator ofert handlowych (TypeScript + Prisma)",
     "dependencies": {
-        "@eslint-community/eslint-utils": "^4.9.1",
         "@prisma/client": "^6.0.0",
         "@sentry/node": "^10.59.0",
         "bcryptjs": "^3.0.3",
@@ -111,7 +110,6 @@
         "lint-staged": "^17.0.7",
         "prettier": "^3.9.4",
         "prisma": "^6.0.0",
-        "rollup-plugin-visualizer": "^7.0.1",
         "standard-version": "^9.5.0",
         "supertest": "^7.2.2",
         "swagger-jsdoc": "^6.3.0",
