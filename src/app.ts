@@ -13,7 +13,13 @@ import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './swagger';
 
 import { ensureAdminExists } from './middleware/auth';
-import { httpsRedirect, securityHeaders, charsetMiddleware } from './middleware/security';
+import {
+    httpsRedirect,
+    securityHeaders,
+    charsetMiddleware,
+    cspNonceMiddleware,
+    cspReportOnly
+} from './middleware/security';
 import { createRateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
@@ -135,6 +141,10 @@ app.use(charsetMiddleware);
 app.use(httpsRedirect);
 app.use(compression());
 
+/* ===== CSP NONCE + REPORT-ONLY (Faza 1 planu CSP) ===== */
+app.use(cspNonceMiddleware);
+app.use(cspReportOnly);
+
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
@@ -229,6 +239,14 @@ app.use('/api/feature-flags', featureFlagsRoutes);
 app.use('/api/telemetry', aiMlRoutes); // ML prediction API
 app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
 app.use('/api/export-combined', exportCombinedRoutes);
+
+/* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
+app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {
+    if (req.body) {
+        logger.warn('CSP', 'Violacja polityki bezpieczeństwa:', String(req.body).slice(0, 2000));
+    }
+    res.status(204).end();
+});
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use(errorHandler);

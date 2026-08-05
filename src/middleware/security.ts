@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 /**
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
@@ -47,5 +48,38 @@ export function charsetMiddleware(_req: Request, res: Response, next: NextFuncti
         }
         return originalSend(body);
     };
+    next();
+}
+
+/**
+ * Generuje nonce CSP per request i przechowuje w res.locals.cspNonce.
+ * Używany w Content-Security-Policy-Report-Only do monitorowania violacji
+ * przed przejściem na enforce (Faza 4 planu CSP).
+ */
+export function cspNonceMiddleware(_req: Request, res: Response, next: NextFunction): void {
+    res.locals.cspNonce = crypto.randomBytes(16).toString('base64');
+    next();
+}
+
+/**
+ * Ustawia Content-Security-Policy-Report-Only z nonce dla script-src.
+ * Nie blokuje niczego — tylko raportuje violacje do /api/csp-report.
+ */
+export function cspReportOnly(_req: Request, res: Response, next: NextFunction): void {
+    const nonce = res.locals.cspNonce as string;
+    const reportPolicy = [
+        "default-src 'self'",
+        `script-src 'self' 'nonce-${nonce}'`,
+        "script-src-attr 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "connect-src 'self'",
+        "font-src 'self'",
+        "object-src 'none'",
+        "media-src 'self'",
+        "frame-src 'self'",
+        'report-uri /api/csp-report'
+    ].join('; ');
+    res.setHeader('Content-Security-Policy-Report-Only', reportPolicy);
     next();
 }
