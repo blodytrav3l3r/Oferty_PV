@@ -58,11 +58,12 @@ function normalize(vec: number[], mins: number[], maxs: number[]): number[] {
     });
 }
 
-function computeRocAuc(scores: number[], labels: number[]): number {
+export function computeRocAuc(scores: number[], labels: number[]): number {
     const n = scores.length;
     if (n < 2) return 0.5;
     const pairs = scores.map((s, i) => ({ score: s, label: labels[i] }));
-    pairs.sort((a, b) => b.score - a.score);
+    // Sortowanie rosnące: najniższy score = ranga 1, najwyższy = ranga n.
+    pairs.sort((a, b) => a.score - b.score);
     let pos = 0;
     let neg = 0;
     for (const p of pairs) {

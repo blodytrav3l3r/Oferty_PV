@@ -2,6 +2,7 @@ import { PrismaClient } from '../generated/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
 import { DN_SIZES, ZAKRESY_TYPES } from '../src/constants/precoSizes';
+import { FEATURE_NAMES } from '../src/config/mlConstants';
 
 const prisma = new PrismaClient();
 
@@ -206,12 +207,45 @@ async function main() {
         }
     });
 
+    // ── AiModel (startowy model ML) ──
+    console.log('  -> AiModel (startowy model ML)...');
+    const existingAiModel = await prisma.aiModel.count();
+    if (existingAiModel === 0) {
+        const zeros = FEATURE_NAMES.map(() => 0);
+        const ones = FEATURE_NAMES.map(() => 1);
+        await prisma.aiModel.create({
+            data: {
+                id: 'seed_' + Date.now(),
+                version: 'v0.1.0-starter',
+                weights: JSON.stringify(zeros),
+                bias: 0,
+                metrics: JSON.stringify({
+                    accuracy: 0.5,
+                    precision: 0.5,
+                    recall: 0.5,
+                    f1: 0.5,
+                    rocAuc: 0.5,
+                    trainSize: 0,
+                    valSize: 0
+                }),
+                features: JSON.stringify(FEATURE_NAMES),
+                featureMins: JSON.stringify(zeros),
+                featureMaxs: JSON.stringify(ones),
+                trainingRows: 0,
+                active: true,
+                notes: 'Model startowy — domyślne wagi (neutralne). Wytrenuj właściwy model przez API /ai/train.',
+                createdAt: new Date().toISOString()
+            }
+        });
+    }
+
     console.log(`Seed: zakonczono. Wgrano:`);
     console.log(`  ProductsRury / ProductsRuryDefault: ${ruryData.length}`);
     console.log(`  ProductsStudnie / ProductsStudnieDefault: ${studnieData.length}`);
     console.log(`  PrecoKonfig / PrecoKonfigDefault: ${konfigCount}`);
     console.log(`  PrecoKinety / PrecoKinetyDefault: ${kinetyCount}`);
     console.log(`  PrecoZakresy / PrecoZakresyDefault: ${zakresyCount}`);
+    console.log(`  AiModel: ${existingAiModel === 0 ? '1 (startowy)' : existingAiModel}`);
 }
 
 main()

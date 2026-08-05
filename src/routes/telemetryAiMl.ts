@@ -1,6 +1,7 @@
 import { Router, type Request, type Response } from 'express';
 import { modelRegistry } from '../services/ml/ModelRegistry';
 import { trainingPipeline } from '../services/ml/TrainingPipeline';
+import { selfEvaluation } from '../services/ml/SelfEvaluation';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
@@ -186,18 +187,43 @@ router.post(
             );
 
             const scores = candidates.map((c) => {
+                const key = cacheKey(c.features, c.wellType, c.warehouse, c.dn);
+                const cached = predictionCache.get(key);
+                if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+                    return {
+                        id: c.id,
+                        score: cached.result[0].score,
+                        version: cached.result[0].version,
+                        featureVersion: featureVersion || 'unknown',
+                        cached: true
+                    };
+                }
                 const score = model.predict(
                     normalizeFeatures(c.features, activeModel.featureMins, activeModel.featureMaxs)
                 );
-                return {
+                const result = {
                     id: c.id,
                     score: parseFloat(score.toFixed(4)),
                     version: activeModel.version,
                     featureVersion: featureVersion || 'unknown'
                 };
+                setCache(key, {
+                    result: [{ score: result.score, version: result.version }],
+                    timestamp: Date.now()
+                });
+                return result;
             });
 
             res.json({ scores });
+            // Fire-and-forget — nie blokuje odpowiedzi; pomija, gdy trwa trening
+            if (!trainingPipeline.getStatus().running) {
+                selfEvaluation.checkAndRollbackIfNeeded().catch((e) => {
+                    logger.error(
+                        'AiPredictBatchRoute',
+                        `Sliding AUC check failed: ${e instanceof Error ? e.message : String(e)}`
+                    );
+                });
+            }
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('AiPredictBatchRoute', `Blad predykcji batch: ${msg}`);
@@ -232,6 +258,14 @@ router.post(
                 wasAiRanked: data.wasAiRanked,
                 configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
             });
+
+            // Rejestruj wynik predykcji dla sliding AUC
+            if (data.wasAiRanked && data.scoreBefore !== undefined) {
+                selfEvaluation.recordPredictionResult(
+                    data.action === 'ACCEPT' ? 1 : 0,
+                    data.scoreBefore
+                );
+            }
 
             res.json({ status: 'ok' });
         } catch (e) {
@@ -446,6 +480,7 @@ router.post('/ai/models/:id/activate', requireAuth, requireAdmin, async (req, re
             res.status(404).json({ error: 'Model nie istnieje' });
             return;
         }
+        predictionCache.clear();
         await logAudit('ai_model', 'activate', authReq.user?.id || '', model.id, {
             version: model.version
         });
@@ -460,10 +495,29 @@ router.post('/ai/train', requireAuth, requireAdmin, async (req, res: Response) =
     const authReq = req as AuthenticatedRequest;
     try {
         const result = await trainingPipeline.run(true);
+        predictionCache.clear();
         await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
             trained: result?.trained ?? false
         });
         res.json(result);
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(500).json({ error: msg });
+    }
+});
+
+router.get('/ai/feature-importance', requireAuth, async (_req: Request, res: Response) => {
+    try {
+        const activeModel = await modelRegistry.getActiveModel();
+        if (!activeModel) {
+            res.status(503).json({ error: 'No active model' });
+            return;
+        }
+        const importances = modelRegistry.computeFeatureImportance(activeModel);
+        res.json({
+            modelVersion: activeModel.version,
+            features: importances
+        });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(500).json({ error: msg });
@@ -482,6 +536,7 @@ router.post('/ai/rollback', requireAuth, requireAdmin, async (req, res: Response
     const authReq = req as AuthenticatedRequest;
     try {
         const previous = await modelRegistry.rollbackToPrevious();
+        predictionCache.clear();
         await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
             rolledBack: !!previous,
             modelId: previous?.id || null

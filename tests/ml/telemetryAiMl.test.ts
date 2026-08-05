@@ -21,15 +21,39 @@ jest.mock('../../src/middleware/rateLimiters', () => ({
 
 const mockGetActiveModel = jest.fn<any>();
 const mockGetModelCount = jest.fn<any>().mockResolvedValue(0);
+const mockComputeFeatureImportance = jest.fn<any>().mockResolvedValue([]);
+const mockRollbackToPrevious = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../../src/services/ml/ModelRegistry', () => ({
     modelRegistry: {
         getActiveModel: (...args: any[]) => mockGetActiveModel(...args),
-        getModelCount: (...args: any[]) => mockGetModelCount(...args)
+        getModelCount: (...args: any[]) => mockGetModelCount(...args),
+        computeFeatureImportance: (...args: any[]) => mockComputeFeatureImportance(...args),
+        rollbackToPrevious: (...args: any[]) => mockRollbackToPrevious(...args)
     }
 }));
 
 jest.mock('../../src/services/telemetry/learning/KnowledgeBase', () => ({}));
+
+const mockGetStatus = jest.fn<any>().mockReturnValue({ running: false });
+const mockCheckAndRollback = jest
+    .fn<any>()
+    .mockResolvedValue({ rolledBack: false, slidingAuc: null });
+const mockRecordPredictionResult = jest.fn<any>();
+
+jest.mock('../../src/services/ml/TrainingPipeline', () => ({
+    trainingPipeline: {
+        run: jest.fn<any>().mockResolvedValue({ trained: false }),
+        getStatus: (...args: any[]) => mockGetStatus(...args)
+    }
+}));
+
+jest.mock('../../src/services/ml/SelfEvaluation', () => ({
+    selfEvaluation: {
+        checkAndRollbackIfNeeded: (...args: any[]) => mockCheckAndRollback(...args),
+        recordPredictionResult: (...args: any[]) => mockRecordPredictionResult(...args)
+    }
+}));
 
 let mockPredict: jest.Mock<any>;
 
@@ -187,6 +211,87 @@ describe('POST /api/telemetry/ai/predict', () => {
         expect(Array.isArray(res.body.scores)).toBe(true);
         expect(res.body.scores).toHaveLength(2);
         expect(res.body.scores[0]).toHaveProperty('score', 0.5);
+    });
+
+    it('batch predict z cache: drugi identyczny request dostaje cached: true', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            id: 'model-v1',
+            version: 'v1.0.0-test',
+            weights: new Array(20).fill(0.1),
+            bias: 0,
+            featureMins: new Array(20).fill(0),
+            featureMaxs: new Array(20).fill(1)
+        });
+        mockPredict.mockReturnValue(0.42);
+
+        const payload = {
+            candidates: [
+                {
+                    id: 7,
+                    features: [
+                        1600, 3200, 1, 0, 0, 1, 0, 0, 0, 5, 3, 2, 4100, 7200, 4, 1, 1, 1, 8000, 0
+                    ]
+                }
+            ]
+        };
+
+        const first = await request(app).post('/api/telemetry/ai/predict/batch').send(payload);
+        expect(first.status).toBe(200);
+        expect(first.body.scores[0].score).toBe(0.42);
+        expect(first.body.scores[0]).not.toHaveProperty('cached');
+
+        const second = await request(app).post('/api/telemetry/ai/predict/batch').send(payload);
+        expect(second.status).toBe(200);
+        expect(second.body.scores[0]).toHaveProperty('cached', true);
+        expect(second.body.scores[0].score).toBe(0.42);
+    });
+});
+
+describe('GET /api/telemetry/ai/feature-importance', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('zwraca 200 z malejącą listą cech gdy model aktywny', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            id: 'model-v1',
+            version: 'v1.0.0',
+            weights: [0.5, -0.2, 0.1, 0.9, 0.3],
+            bias: 0,
+            features: ['a', 'b', 'c', 'd', 'e'],
+            featureMins: [0, 0, 0, 0, 0],
+            featureMaxs: [10, 10, 10, 10, 10]
+        });
+        mockComputeFeatureImportance.mockReturnValue([
+            { featureName: 'd', importance: 9 },
+            { featureName: 'a', importance: 5 },
+            { featureName: 'e', importance: 3 },
+            { featureName: 'b', importance: 2 },
+            { featureName: 'c', importance: 1 }
+        ]);
+
+        const res = await request(app).get('/api/telemetry/ai/feature-importance');
+
+        expect(res.status).toBe(200);
+        expect(res.body).toHaveProperty('modelVersion', 'v1.0.0');
+        expect(res.body.features).toHaveLength(5);
+        expect(res.body.features[0].featureName).toBe('d');
+        expect(res.body.features[0].importance).toBeGreaterThan(res.body.features[1].importance);
+    });
+
+    it('zwraca 503 gdy brak aktywnego modelu', async () => {
+        mockGetActiveModel.mockResolvedValue(null);
+
+        const res = await request(app).get('/api/telemetry/ai/feature-importance');
+
+        expect(res.status).toBe(503);
+        expect(res.body).toHaveProperty('error');
     });
 });
 

@@ -188,6 +188,20 @@ export class ModelRegistry {
         return prisma.aiModel.count();
     }
 
+    computeFeatureImportance(
+        activeModel: StoredModel
+    ): Array<{ featureName: string; importance: number }> {
+        const importances = activeModel.weights.map((w, i) => {
+            const range = activeModel.featureMaxs[i] - activeModel.featureMins[i];
+            return {
+                featureName: activeModel.features[i] || `feature_${i}`,
+                importance: Math.abs(w) * (Number.isFinite(range) ? range : 0)
+            };
+        });
+        importances.sort((a, b) => b.importance - a.importance);
+        return importances;
+    }
+
     private recordToModel(
         record: NonNullable<Awaited<ReturnType<typeof prisma.aiModel.findFirst>>>
     ): StoredModel {
