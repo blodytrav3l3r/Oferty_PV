@@ -114,6 +114,7 @@ echo.
 if /i "%MODE%"=="prod" (
     echo   Produkcja: HTTPS za reverse proxy (Caddy/Nginx)
     echo   Wewnetrzny: http://127.0.0.1:3000
+    set "NODE_ENV=production"
     call npm start
 ) else (
     echo   Frontend: http://localhost:5173

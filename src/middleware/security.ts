@@ -5,6 +5,12 @@ import crypto from 'crypto';
  * Przekierowuje żądania HTTP na HTTPS w środowisku produkcyjnym.
  */
 export function httpsRedirect(req: Request, res: Response, next: NextFunction): void {
+    // Healthcheck Dockera i endpoint wersji działają po HTTP — nie przekierowuj ich na HTTPS.
+    if (req.path === '/health' || req.path === '/api/version') {
+        next();
+        return;
+    }
+
     // x-forwarded-proto może zawierać listę przy wielu proxy (np. "https, http") — bierzemy pierwszy wpis
     const forwardedProto = req.headers['x-forwarded-proto'];
     const isHttps =

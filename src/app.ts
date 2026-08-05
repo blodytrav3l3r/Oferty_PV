@@ -1,10 +1,13 @@
+// Wczytaj zmienne środowiskowe NAJWCZEŚNIEJ — importowane moduły mogą czytać process.env na starcie.
+import 'dotenv/config';
+
 /**
  * Aplikacja Express — centralny plik konfiguracyjny
  * Zawiera konfigurację middleware, routingu i obsługi błędów.
  */
 import express from 'express';
-import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -29,10 +32,22 @@ import { errorHandler } from './middleware/errorHandler';
 import { getVersion } from './version';
 import prisma from './prismaClient';
 
-dotenv.config();
-
 const app = express();
 const NODE_ENV = process.env.NODE_ENV || 'development';
+
+/**
+ * Rozwiązuje ścieżkę do katalogu public niezależnie od katalogu roboczego (process.cwd()).
+ * W dev (ts-node-dev) moduł działa z src/ → public jest o poziom wyżej,
+ * w prod (kompilacja tsc do dist/src) → dwa poziomy wyżej.
+ * Wybieramy faktycznie istniejący katalog — odporny na zmianę struktury po buildzie.
+ */
+function resolvePublicDir(): string {
+    const devPublic = path.resolve(__dirname, '../public');
+    if (fs.existsSync(devPublic)) {
+        return devPublic;
+    }
+    return path.resolve(__dirname, '../../public');
+}
 
 /* ===== SENTRY (monitoring błędów) ===== */
 if (process.env.SENTRY_DSN) {
@@ -150,10 +165,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
-const staticDir = 'public';
 if (NODE_ENV === 'production') {
     app.use(
-        express.static(path.join(process.cwd(), staticDir), {
+        express.static(resolvePublicDir(), {
             index: 'index.html',
             extensions: ['html'],
             maxAge: '7d'
@@ -169,7 +183,7 @@ if (NODE_ENV === 'production') {
         next();
     });
     app.use(
-        express.static(path.join(process.cwd(), staticDir), {
+        express.static(resolvePublicDir(), {
             index: 'index.html',
             extensions: ['html']
         })
@@ -325,14 +339,9 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Czyszczenie starych logów audytowych
-    cleanupAuditLogs().catch((err: unknown) =>
-        logger.error(
-            'AuditLog',
-            'Błąd czyszczenia logów przy starcie serwera',
-            err instanceof Error ? err.message : String(err)
-        )
-    );
+    // Czyszczenie starych logów audytowych (sekwencyjnie — unikamy równoległych zapisów do SQLite;
+    // funkcja sama łapie błędy wewnątrz, więc nie zablokuje startu)
+    await cleanupAuditLogs();
 
     // Cron Service - cykliczne zadania AI Learning Engine (pasywne, nie wplywa na solver JS)
     if (process.env.NODE_ENV !== 'test') {

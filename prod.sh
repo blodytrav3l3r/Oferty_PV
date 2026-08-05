@@ -47,4 +47,6 @@ log STEP "Uruchamiam: npm start (Ctrl+C stop)..."
 echo "  Endpoint: http://localhost:3000"
 echo
 
+# Wymuszenie trybu produkcyjnego (server.ts domyslnie uzywa development; dotenv nie nadpisze ustawionej zmiennej)
+export NODE_ENV=production
 npm start
