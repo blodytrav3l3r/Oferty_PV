@@ -79,7 +79,7 @@ Instalator automatycznie:
 - Utworzy plik `.env` z `.env.example` (jeśli nie istnieje)
 - Zainstaluje zależności (`npm install`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
-- Uruchomi migracje bazy danych (`npx prisma migrate dev`)
+- Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss` dla baz bez historii migracji)
 - Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
 - Przy pierwszym uruchomieniu serwera automatycznie odczyta plik `data/price_defaults.json`
   (jeśli istnieje) zawierający snapshot domyślnych cenników
@@ -99,8 +99,9 @@ copy .env.example .env
 # 3. Wygeneruj klienta Prisma
 npx prisma generate
 
-# 4. Uruchom migracje bazy danych
-npx prisma migrate dev
+# 4. Zsynchronizuj schemat bazy danych
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 
 # 5. Zasiej dane początkowe (produkty, cenniki)
 npm run prisma:seed
@@ -150,7 +151,8 @@ npm install
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
@@ -219,7 +221,12 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
 
     ```powershell
     copy /Y data\backups\backup_2026-07-14_*.sqlite data\app_database.sqlite
+    npx prisma db push --skip-generate --accept-data-loss
     ```
+
+    > **Uwaga:** `npm run restore` automatycznie synchronizuje schemat (tworzy brakujące
+    > tabele i indeksy przez `db push`). Przy ręcznym kopiowaniu pliku bazy ta synchronizacja
+    > **nie zachodzi** — po kopiowaniu uruchom `npx prisma db push --skip-generate --accept-data-loss`.
 
 5. **Uruchom serwer**:
 

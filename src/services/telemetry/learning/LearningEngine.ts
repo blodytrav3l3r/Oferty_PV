@@ -17,10 +17,8 @@ import { logger } from '../../../utils/logger';
 import { PatternDetector } from './PatternDetector';
 import { PreferenceEngine } from './PreferenceEngine';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
-import { RankingEngine } from './RankingEngine';
 import { KnowledgeBase } from './KnowledgeBase';
 import type { KnowledgePattern } from './KnowledgeBase';
-import { FeedbackProcessor } from './FeedbackProcessor';
 import { RecommendationEngine } from './RecommendationEngine';
 
 export interface LearningRunSummary {
@@ -35,9 +33,7 @@ export class LearningEngine {
     private kb: KnowledgeBase;
     private patterns: PatternDetector;
     private prefs: PreferenceEngine;
-    private feedback: FeedbackProcessor;
     private recommend: RecommendationEngine;
-    private ranker: RankingEngine;
     private _running: boolean = false;
     private lastRunAt: string | null = null;
     private initialized: boolean = false;
@@ -46,9 +42,7 @@ export class LearningEngine {
         this.kb = new KnowledgeBase();
         this.patterns = new PatternDetector();
         this.prefs = new PreferenceEngine();
-        this.feedback = new FeedbackProcessor();
         this.recommend = new RecommendationEngine();
-        this.ranker = new RankingEngine();
     }
 
     /**
@@ -306,9 +300,7 @@ export class LearningEngine {
             kb: this.kb,
             patterns: this.patterns,
             prefs: this.prefs,
-            feedback: this.feedback,
-            recommend: this.recommend,
-            ranker: this.ranker
+            recommend: this.recommend
         };
     }
 }

@@ -66,9 +66,35 @@
             well.redukcjaDN1000 ? '1' : '0',
             well.redukcjaTargetDN,
             well.wkladkaZwienczenie,
+            well.configSource || '',
+            pricingFingerprint(well),
             przejsciaKey,
             configKey
         ].join('§');
+    }
+
+    /**
+     * Fingerprint wyceny studni (cena + waga) — zmiana rabatu/cennika musi
+     * przepuścić ponowną wysyłkę, bo totalPrice jest cechą treningową ML.
+     * @param {Object} well
+     * @returns {string}
+     */
+    function pricingFingerprint(well) {
+        try {
+            if (typeof window.calcWellStats === 'function') {
+                const stats = window.calcWellStats(well);
+                if (stats && typeof stats.price === 'number' && typeof stats.weight === 'number') {
+                    return (
+                        Math.round(stats.price * 100) / 100 +
+                        ':' +
+                        Math.round(stats.weight * 100) / 100
+                    );
+                }
+            }
+        } catch (e) {
+            // silent
+        }
+        return '';
     }
 
     /**

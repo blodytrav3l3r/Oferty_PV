@@ -1,28 +1,28 @@
-# WITROS Oferty — Instrukcja uruchomienia serwera przez Internet
+# WITROS Oferty â€” Instrukcja uruchomienia serwera przez Internet
 
 **Wersja:** 1.10.0
 
-## Spis treści
+## Spis treĹ›ci
 
 1. [Wymagania](#1-wymagania)
-2. [Instalacja na nowym urządzeniu](#2-instalacja-na-nowym-urządzeniu)
-3. [Udostępnienie przez Internet](#3-udostępnienie-przez-internet)
+2. [Instalacja na nowym urzÄ…dzeniu](#2-instalacja-na-nowym-urzÄ…dzeniu)
+3. [UdostÄ™pnienie przez Internet](#3-udostÄ™pnienie-przez-internet)
     - Opcja A: VPS (serwer w chmurze)
     - Opcja B: Tunel (ngrok / Cloudflare Tunnel)
-    - Opcja C: Własny router (przekierowanie portów)
+    - Opcja C: WĹ‚asny router (przekierowanie portĂłw)
 4. [Zabezpieczenia](#4-zabezpieczenia)
 5. [Automatyczny restart serwera](#5-automatyczny-restart-serwera)
-6. [Rozwiązywanie problemów](#6-rozwiązywanie-problemów)
+6. [RozwiÄ…zywanie problemĂłw](#6-rozwiÄ…zywanie-problemĂłw)
 
 ---
 
 ## 1. Wymagania
 
-| Składnik              | Wersja  | Opis                                                          |
-| --------------------- | ------- | ------------------------------------------------------------- |
-| **Node.js**           | 20+     | [https://nodejs.org](https://nodejs.org) — pobierz wersję LTS |
-| **npm**               | 9+      | Instaluje się automatycznie z Node.js                         |
-| **Git** (opcjonalnie) | dowolna | Do pobierania aktualizacji                                    |
+| SkĹ‚adnik             | Wersja  | Opis                                                             |
+| --------------------- | ------- | ---------------------------------------------------------------- |
+| **Node.js**           | 20+     | [https://nodejs.org](https://nodejs.org) â€” pobierz wersjÄ™ LTS |
+| **npm**               | 9+      | Instaluje siÄ™ automatycznie z Node.js                           |
+| **Git** (opcjonalnie) | dowolna | Do pobierania aktualizacji                                       |
 
 ### Sprawdzenie instalacji:
 
@@ -33,7 +33,7 @@ npm --version
 
 ---
 
-## 2. Instalacja na nowym urządzeniu
+## 2. Instalacja na nowym urzÄ…dzeniu
 
 ### Szybki start (Windows)
 
@@ -45,38 +45,39 @@ cd Oferty_PV
 # 2. Uruchom instalator
 .\install.bat
 
-# 3. Edytuj plik .env — ustaw hasło administratora
+# 3. Edytuj plik .env â€” ustaw hasĹ‚o administratora
 #    DEFAULT_ADMIN_PASSWORD=twoje-haslo
 
 # 4. Uruchom serwer
 .\start.bat
 ```
 
-Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
+Aplikacja bÄ™dzie dostÄ™pna pod adresem: **http://localhost:3000**
 
-> **Uwaga (HTTPS):** do pracy zdalnej **HTTPS jest wymagane** — bez niego funkcje
-> przeglądarek (clipboard, `window.open()` itp.) mogą być blokowane na HTTP.
-> Zobacz sekcję [4. Zabezpieczenia](#4-zabezpieczenia) i
+> **Uwaga (HTTPS):** do pracy zdalnej **HTTPS jest wymagane** â€” bez niego funkcje
+> przeglÄ…darek (clipboard, `window.open()` itp.) mogÄ… byÄ‡ blokowane na HTTP.
+> Zobacz sekcjÄ™ [4. Zabezpieczenia](#4-zabezpieczenia) i
 > [ADR-006](adr/ADR-006-https-transport.md).
 
-### Instalacja ręczna (dowolny system)
+### Instalacja rÄ™czna (dowolny system)
 
-**Opcja A — nowa instalacja (z seedem danych początkowych):**
+**Opcja A â€” nowa instalacja (z seedem danych poczÄ…tkowych):**
 
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
 npm install
 cp .env.example .env
-# edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
+# edytuj .env â€” ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
 npm start
 ```
 
-**Opcja B — z istniejącą bazą cenników (przeniesiona z innego urządzenia):**
+**Opcja B â€” z istniejÄ…cÄ… bazÄ… cennikĂłw (przeniesiona z innego urzÄ…dzenia):**
 
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
@@ -85,40 +86,41 @@ npm install
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
-# Przywróć bazę z backupu (pomiń seed):
+# PrzywrĂłÄ‡ bazÄ™ z backupu (pomiĹ„ seed):
 npm run backup:restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
 ### Pierwsze logowanie
 
-1. Otwórz **http://localhost:10000**
-2. Zaloguj się: `admin` / hasło z `.env`
-3. Zmień hasło w ustawieniach profilu
+1. OtwĂłrz **http://localhost:10000**
+2. Zaloguj siÄ™: `admin` / hasĹ‚o z `.env`
+3. ZmieĹ„ hasĹ‚o w ustawieniach profilu
 
 ---
 
-## 3. Udostępnienie przez Internet
+## 3. UdostÄ™pnienie przez Internet
 
 ### Opcja A: Serwer VPS w chmurze (ZALECANA)
 
-Aplikacja działa 24/7 niezależnie od Twojego komputera.
+Aplikacja dziaĹ‚a 24/7 niezaleĹĽnie od Twojego komputera.
 
-#### Popularne usługi VPS:
+#### Popularne usĹ‚ugi VPS:
 
-| Usługa           | Cena od                 | Strona                                       |
-| ---------------- | ----------------------- | -------------------------------------------- |
-| **Mikr.us** 🇵🇱   | ~30 PLN/rok             | [mikr.us](https://mikr.us)                   |
-| **OVH** 🇵🇱       | ~20 PLN/mies.           | [ovh.pl](https://www.ovh.pl)                 |
-| **Hetzner**      | ~€4/mies.               | [hetzner.com](https://hetzner.com)           |
-| **DigitalOcean** | $6/mies.                | [digitalocean.com](https://digitalocean.com) |
-| **Oracle Cloud** | **DARMOWY** (free tier) | [cloud.oracle.com](https://cloud.oracle.com) |
+| UsĹ‚uga              | Cena od                 | Strona                                       |
+| -------------------- | ----------------------- | -------------------------------------------- |
+| **Mikr.us** đź‡µđź‡± | ~30 PLN/rok             | [mikr.us](https://mikr.us)                   |
+| **OVH** đź‡µđź‡±     | ~20 PLN/mies.           | [ovh.pl](https://www.ovh.pl)                 |
+| **Hetzner**          | ~â‚¬4/mies.             | [hetzner.com](https://hetzner.com)           |
+| **DigitalOcean**     | $6/mies.                | [digitalocean.com](https://digitalocean.com) |
+| **Oracle Cloud**     | **DARMOWY** (free tier) | [cloud.oracle.com](https://cloud.oracle.com) |
 
 #### Krok po kroku na VPS (Ubuntu/Debian):
 
-**1. Połącz się przez SSH:**
+**1. PoĹ‚Ä…cz siÄ™ przez SSH:**
 
 ```bash
 ssh root@TWOJ_ADRES_IP
@@ -137,7 +139,7 @@ sudo apt-get install -y nodejs git
 scp -r Oferty_PV root@TWOJ_ADRES_IP:/home/witros/
 ```
 
-Lub użyj **WinSCP** (graficzny klient SFTP).
+Lub uĹĽyj **WinSCP** (graficzny klient SFTP).
 
 **4. Zainstaluj i uruchom:**
 
@@ -147,16 +149,17 @@ npm install
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
 # Opcja A: nowa instalacja
 npm run prisma:seed
-# Opcja B: jeśli przenosisz bazę z innego urządzenia — zamiast seed:
+# Opcja B: jeĹ›li przenosisz bazÄ™ z innego urzÄ…dzenia â€” zamiast seed:
 # npm run backup:restore -- data/backups/backup_*.sqlite
 npm start
 ```
 
-**5. Otwórz w przeglądarce:**
+**5. OtwĂłrz w przeglÄ…darce:**
 
 ```
 http://TWOJ_ADRES_IP:10000
@@ -164,15 +167,15 @@ http://TWOJ_ADRES_IP:10000
 
 ---
 
-### Opcja B: Tunel (szybki sposób, bez VPS-a)
+### Opcja B: Tunel (szybki sposĂłb, bez VPS-a)
 
-Tunel udostępnia aplikację z Twojego komputera przez Internet bez konfiguracji routera.
+Tunel udostÄ™pnia aplikacjÄ™ z Twojego komputera przez Internet bez konfiguracji routera.
 
 #### Wariant 1: ngrok (najprostszy)
 
 ```powershell
 # 1. Pobierz ngrok: https://ngrok.com/download
-# 2. Załóż konto i pobierz token
+# 2. ZaĹ‚ĂłĹĽ konto i pobierz token
 # 3. Uruchom serwer
 .\start.bat
 
@@ -194,26 +197,26 @@ Otrzymasz adres: `https://xyz.trycloudflare.com`
 
 ---
 
-### Opcja C: Przekierowanie portów na routerze
+### Opcja C: Przekierowanie portĂłw na routerze
 
-> Wymaga stałego adresu IP lub Dynamic DNS (np. no-ip.com).
+> Wymaga staĹ‚ego adresu IP lub Dynamic DNS (np. no-ip.com).
 
 ```powershell
-# Sprawdź lokalny adres IP
+# SprawdĹş lokalny adres IP
 ipconfig
 # -> IPv4: 192.168.1.X
 ```
 
-W routerze (http://192.168.1.1) → Port Forwarding:
+W routerze (http://192.168.1.1) â†’ Port Forwarding:
 
-| Pole            | Wartość                       |
-| --------------- | ----------------------------- |
-| Port zewnętrzny | `10000`                       |
-| Port wewnętrzny | `10000`                       |
-| Adres IP        | `192.168.1.X` (Twój komputer) |
-| Protokół        | TCP                           |
+| Pole             | WartoĹ›Ä‡                      |
+| ---------------- | ------------------------------ |
+| Port zewnÄ™trzny | `10000`                        |
+| Port wewnÄ™trzny | `10000`                        |
+| Adres IP         | `192.168.1.X` (TwĂłj komputer) |
+| ProtokĂłĹ‚       | TCP                            |
 
-Sprawdź publiczny IP: [https://whatismyip.com](https://whatismyip.com)
+SprawdĹş publiczny IP: [https://whatismyip.com](https://whatismyip.com)
 
 Aplikacja: `http://TWOJ_PUBLICZNY_IP:10000`
 
@@ -235,8 +238,8 @@ sudo ufw allow 10000/tcp
 
 ### HTTPS przez Nginx + Let's Encrypt:
 
-> **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglądarki
-> mogą być blokowane na HTTP. W `.env` ustaw `COOKIE_SECURE=true`.
+> **HTTPS jest wymagane w produkcji.** Bez reverse proxy z TLS funkcje przeglÄ…darki
+> mogÄ… byÄ‡ blokowane na HTTP. W `.env` ustaw `COOKIE_SECURE=true`.
 
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
@@ -261,7 +264,7 @@ sudo ln -s /etc/nginx/sites-available/witros /etc/nginx/sites-enabled/
 sudo certbot --nginx -d twojadomena.pl
 ```
 
-### HTTPS przez Caddy (rekomendowany — automatyczny certyfikat)
+### HTTPS przez Caddy (rekomendowany â€” automatyczny certyfikat)
 
 ```bash
 sudo apt install caddy
@@ -271,22 +274,22 @@ caddy run --config Caddyfile
 ```
 
 Caddy automatycznie wydaje i odnawia certyfikat Let's Encrypt oraz przekierowuje
-HTTP → HTTPS. Konfiguracja w pliku `Caddyfile` w katalogu projektu.
+HTTP â†’ HTTPS. Konfiguracja w pliku `Caddyfile` w katalogu projektu.
 
 ---
 
 ## 5. Automatyczny restart serwera
 
-### Windows — Task Scheduler:
+### Windows â€” Task Scheduler:
 
-1. Otwórz **Harmonogram zadań** (`taskschd.msc`)
-2. Utwórz zadanie:
+1. OtwĂłrz **Harmonogram zadaĹ„** (`taskschd.msc`)
+2. UtwĂłrz zadanie:
     - Wyzwalacz: Przy uruchomieniu komputera
     - Akcja: Uruchom program
     - Program: `start.bat`
-    - Katalog startowy: ścieżka do projektu
+    - Katalog startowy: Ĺ›cieĹĽka do projektu
 
-### Linux (VPS) — PM2 (ZALECANE):
+### Linux (VPS) â€” PM2 (ZALECANE):
 
 ```bash
 npm install -g pm2
@@ -298,7 +301,7 @@ pm2 startup
 Przydatne komendy:
 
 ```bash
-pm2 list              # Lista procesów
+pm2 list              # Lista procesĂłw
 pm2 logs witros-oferty # Logi
 pm2 restart witros-oferty
 pm2 monit             # Monitor
@@ -306,16 +309,16 @@ pm2 monit             # Monitor
 
 ---
 
-## 6. Rozwiązywanie problemów
+## 6. RozwiÄ…zywanie problemĂłw
 
-| Problem                   | Rozwiązanie                                            |
-| ------------------------- | ------------------------------------------------------ |
-| `npm install` nie działa  | Sprawdź Node.js: `node --version`                      |
-| Port zajęty               | Zmień `PORT` w `.env`                                  |
-| Brak dostępu z zewnątrz   | Sprawdź firewall i przekierowanie portów               |
-| Strona się nie ładuje     | Sprawdź logi: `pm2 logs witros-oferty`                 |
-| Błąd bazy danych          | Uruchom `npm run prisma:reset` i `npm run prisma:seed` |
-| Błąd "Cannot find module" | Uruchom `npm run build`                                |
+| Problem                     | RozwiÄ…zanie                                           |
+| --------------------------- | ------------------------------------------------------ |
+| `npm install` nie dziaĹ‚a   | SprawdĹş Node.js: `node --version`                     |
+| Port zajÄ™ty                | ZmieĹ„ `PORT` w `.env`                                 |
+| Brak dostÄ™pu z zewnÄ…trz   | SprawdĹş firewall i przekierowanie portĂłw             |
+| Strona siÄ™ nie Ĺ‚aduje     | SprawdĹş logi: `pm2 logs witros-oferty`                |
+| BĹ‚Ä…d bazy danych          | Uruchom `npm run prisma:reset` i `npm run prisma:seed` |
+| BĹ‚Ä…d "Cannot find module" | Uruchom `npm run build`                                |
 
 ### Backup i przenoszenie danych:
 
@@ -323,12 +326,12 @@ pm2 monit             # Monitor
 # Backup
 npm run backup
 
-# Przywrócenie backupu na nowym urządzeniu:
+# PrzywrĂłcenie backupu na nowym urzÄ…dzeniu:
 npm run backup:restore -- data/backups/backup_*.sqlite
 ```
 
-Baza SQLite to jeden plik `data/app_database.sqlite` — backup i przeniesienie na inne urządzenie to kopiowanie tego pliku.
+Baza SQLite to jeden plik `data/app_database.sqlite` â€” backup i przeniesienie na inne urzÄ…dzenie to kopiowanie tego pliku.
 
 ---
 
-> **Podsumowanie:** Najszybszy start to **instalator (.bat) + ngrok** (5 minut). Najlepsza opcja na stałe to **VPS + PM2 + Nginx + HTTPS**. Darmowy VPS: **Oracle Cloud Free Tier**.
+> **Podsumowanie:** Najszybszy start to **instalator (.bat) + ngrok** (5 minut). Najlepsza opcja na staĹ‚e to **VPS + PM2 + Nginx + HTTPS**. Darmowy VPS: **Oracle Cloud Free Tier**.

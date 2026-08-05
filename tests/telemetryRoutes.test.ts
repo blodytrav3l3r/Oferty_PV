@@ -203,6 +203,51 @@ describe('telemetryService - deduplikacja AUTO_JS', () => {
         expect(count).toBe(1);
     });
 
+    it('zagnieżdżony featureSnapshot z przestawioną kolejnością kluczy → dedup działa', async () => {
+        // Te same dane, ale inna kolejność kluczy na poziomie top-level ORAZ
+        // wewnątrz zagnieżdżonego obiektu — kanoniczny serializer musi dać
+        // identyczny string (W1).
+        const snap1 = { a: 1, b: { x: 1, y: 2 }, c: [1, 2] };
+        const snap2 = { c: [1, 2], b: { y: 2, x: 1 }, a: 1 };
+        const r1 = await telemetryService.recordConfig(basePayload(snap1));
+        const r2 = await telemetryService.recordConfig(basePayload(snap2));
+
+        expect(r2.telemetryId).toBe(r1.telemetryId);
+        expect(r2.configHistoryId).toBeUndefined();
+        expect(r2.transitionsCreated).toBe(0);
+
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r1.telemetryId }
+        });
+        expect(row?.usageCount).toBe(2);
+
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(1);
+    });
+
+    it('identyczny featureSnapshot ale RÓŻNE allComponentIds → nowy rekord', async () => {
+        // Ten sam snapshot, ale inny zestaw komponentów — to realnie inna
+        // konfiguracja, dedup nie może jej pominąć (W2).
+        const snap = { a: 1, b: { c: 'x' } };
+        const r1 = await telemetryService.recordConfig(
+            basePayload(snap, { allComponentIds: ['COMP-A', 'COMP-B'] })
+        );
+        const r2 = await telemetryService.recordConfig(
+            basePayload(snap, { allComponentIds: ['COMP-A', 'COMP-C'] })
+        );
+
+        expect(r2.telemetryId).not.toBe(r1.telemetryId);
+        expect(r2.configHistoryId).toBeDefined();
+        expect(r2.transitionsCreated).toBe(0);
+
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(2);
+    });
+
     it('różny featureSnapshot AUTO_JS → nowy rekord', async () => {
         const r1 = await telemetryService.recordConfig(basePayload({ a: 1 }));
         const r2 = await telemetryService.recordConfig(basePayload({ a: 2 }));
@@ -622,9 +667,7 @@ describe('LearningEngine - pipeline', () => {
         expect(c.kb).toBeDefined();
         expect(c.patterns).toBeDefined();
         expect(c.prefs).toBeDefined();
-        expect(c.ranker).toBeDefined();
         expect(c.recommend).toBeDefined();
-        expect(c.feedback).toBeDefined();
     });
 });
 

@@ -279,15 +279,15 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Baza danych
 
-| Polecenie                 | Opis działania                         |
-| ------------------------- | -------------------------------------- |
-| `npm run prisma:generate` | Generuje klienta Prisma.               |
-| `npm run prisma:migrate`  | Tworzy nową migrację (dev).            |
-| `npm run prisma:deploy`   | Zastosowuje migracje w produkcji.      |
-| `npm run prisma:seed`     | Zasiewa dane początkowe.               |
-| `npm run prisma:studio`   | Otwiera Prisma Studio (GUI bazy).      |
-| `npm run prisma:reset`    | Resetuje bazę danych (utrata danych!). |
-| `npm run prisma:status`   | Sprawdza status migracji.              |
+| Polecenie                 | Opis działania                                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run prisma:generate` | Generuje klienta Prisma.                                                                                                                                                                                         |
+| `npm run prisma:migrate`  | Tworzy nową migrację (dev).                                                                                                                                                                                      |
+| `npm run prisma:deploy`   | Zastosowuje migracje w produkcji. Działa tylko dla baz z historią migracji; bazy utworzone przez `db push` (brak `_prisma_migrations`) aktualizuj przez `npx prisma db push --skip-generate --accept-data-loss`. |
+| `npm run prisma:seed`     | Zasiewa dane początkowe.                                                                                                                                                                                         |
+| `npm run prisma:studio`   | Otwiera Prisma Studio (GUI bazy).                                                                                                                                                                                |
+| `npm run prisma:reset`    | Resetuje bazę danych (utrata danych!).                                                                                                                                                                           |
+| `npm run prisma:status`   | Sprawdza status migracji.                                                                                                                                                                                        |
 
 ### Backup i przenoszenie bazy
 

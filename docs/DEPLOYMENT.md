@@ -41,7 +41,8 @@ npm install
 cp .env.example .env
 # edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
 ```
@@ -166,7 +167,8 @@ nano .env  # ustaw DEFAULT_ADMIN_PASSWORD, PORT, COOKIE_SECURE=true
 
 # 6. Przygotowanie bazy
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 
 # 7. Budowa
@@ -373,23 +375,37 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
     ```bash
     cp data/backups/backup_*.sqlite data/app_database.sqlite
     ```
-4. Uruchom serwer: `npm start`
+4. **Zsynchronizuj schemat bazy** (wymagane — backup zawiera tylko dane, a nowsza
+   wersja aplikacji może wymagać nowych tabel/indeksów):
+    ```bash
+    npx prisma db push --skip-generate --accept-data-loss
+    ```
+    > `npm run restore` synchronizuje schemat automatycznie; przy ręcznym `cp` ta
+    > synchronizacja **nie zachodzi** i musi być uruchomiona jawnie.
+5. Uruchom serwer: `npm start`
 
 ### Co gdy schemat bazy różni się między wersjami?
 
-Po przeniesieniu bazy na nowe urządzenie z nowszą wersją aplikacji uruchom migrację:
+Po przeniesieniu bazy na nowe urządzenie z nowszą wersją aplikacji zsynchronizuj schemat.
+Sposób zależy od historii bazy:
 
-```bash
-npx prisma migrate deploy
-```
-
-Jeśli migracje nie są dostępne:
-
-```bash
-npx prisma db push --skip-generate
-```
+- **Baza z historią migracji** (istnieje tabela `_prisma_migrations`):
+    ```bash
+    npx prisma migrate deploy
+    ```
+- **Baza tworzona przez `db push`** (brak `_prisma_migrations`): `migrate deploy` NIE zadziała
+  (próbowałby odtworzyć historię migracji na istniejących tabelach). Użyj:
+    ```bash
+    npx prisma db push --skip-generate --accept-data-loss
+    ```
+    Jak sprawdzić typ bazy: `npx prisma migrate status` — jeśli pokazuje migracje jako
+    niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
 
 Prisma automatycznie dostosuje schemat do aktualnego stanu bez utraty danych.
+
+> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Są one
+> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
 
 ### Weryfikacja
 

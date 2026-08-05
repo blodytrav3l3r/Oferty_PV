@@ -86,13 +86,58 @@ export async function fts5Exists(): Promise<boolean> {
 const FTS5_COLUMNS = ['id', 'offer_number', 'clientName', 'investName', 'clientNumber', 'type'];
 
 /**
+ * SQL tworzący tabelę wirtualną FTS5 (identyczna definicja jak w scripts/setup-fts5.ts).
+ */
+function createFts5Table(): string {
+    return `
+        CREATE VIRTUAL TABLE IF NOT EXISTS offers_search_fts USING fts5(
+            id UNINDEXED,
+            offer_number,
+            clientName,
+            investName,
+            clientNumber,
+            type UNINDEXED,
+            tokenize='porter unicode61'
+        )
+    `;
+}
+
+/**
+ * Backfill ofert (rury + studnie) do tabeli FTS5.
+ */
+async function backfillFts5(): Promise<void> {
+    await prisma.$executeRawUnsafe(`
+        INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
+        SELECT id, offer_number, clientName, investName,
+               COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
+               'rury'
+        FROM offers_rel WHERE id IS NOT NULL
+    `);
+    await prisma.$executeRawUnsafe(`
+        INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
+        SELECT id, offer_number, clientName, investName,
+               COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
+               'studnie'
+        FROM offers_studnie_rel WHERE id IS NOT NULL
+    `);
+}
+
+/**
  * Ensure FTS5 table exists with the full column set (idempotent).
- * On existing installs missing the clientNumber column the virtual table
- * is rebuilt (FTS5 has no ALTER TABLE ADD COLUMN) and backfilled.
+ * Gdy tabeli brak (świeża baza) — tworzy ją i robi backfill.
+ * Gdy tabela istnieje, ale brakuje kolumn (np. clientNumber na starszych
+ * instalacjach) — przebudowuje ją (FTS5 nie ma ALTER TABLE ADD COLUMN) i backfilluje.
  */
 export async function ensureFts5Schema(): Promise<void> {
     try {
-        if (!(await fts5Exists())) return;
+        if (!(await fts5Exists())) {
+            // Świeża baza — tabela wirtualna nie istnieje: utwórz ją i uzupełnij danymi
+            logger.info('Fts5', 'Brak tabeli FTS5 — tworzenie i backfill');
+            await prisma.$executeRawUnsafe(createFts5Table());
+            await backfillFts5();
+            return;
+        }
+
         const cols = await prisma.$queryRawUnsafe<{ name: string }[]>(
             'PRAGMA table_info(offers_search_fts)'
         );
@@ -105,31 +150,8 @@ export async function ensureFts5Schema(): Promise<void> {
             `FTS5 brak kolumn: ${missing.join(', ')} — przebudowa tabeli i backfill`
         );
         await prisma.$executeRawUnsafe('DROP TABLE offers_search_fts');
-        await prisma.$executeRawUnsafe(`
-            CREATE VIRTUAL TABLE IF NOT EXISTS offers_search_fts USING fts5(
-                id UNINDEXED,
-                offer_number,
-                clientName,
-                investName,
-                clientNumber,
-                type UNINDEXED,
-                tokenize='porter unicode61'
-            )
-        `);
-        await prisma.$executeRawUnsafe(`
-            INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
-            SELECT id, offer_number, clientName, investName,
-                   COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
-                   'rury'
-            FROM offers_rel WHERE id IS NOT NULL
-        `);
-        await prisma.$executeRawUnsafe(`
-            INSERT INTO offers_search_fts(id, offer_number, clientName, investName, clientNumber, type)
-            SELECT id, offer_number, clientName, investName,
-                   COALESCE(NULLIF(clientNumber, ''), json_extract(data, '$.clientNumber'), ''),
-                   'studnie'
-            FROM offers_studnie_rel WHERE id IS NOT NULL
-        `);
+        await prisma.$executeRawUnsafe(createFts5Table());
+        await backfillFts5();
     } catch (e) {
         // FTS5 niedostępny (np. build bez fts5) — nie blokuj startu serwera
         logger.warn(

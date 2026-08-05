@@ -100,6 +100,30 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
     > wystarczy skopiować `data/price_defaults.json` i uruchomić `start.bat` — nie jest
     > potrzebny backup SQLite ani `--skip-seed`.
 
+## Aktualizacja istniejącej instalacji (schemat bazy)
+
+1. Zawsze najpierw backup: `npm run backup`
+2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
+3. Zsynchronizuj schemat — sposób zależy od historii bazy:
+    - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
+      `npx prisma db push --skip-generate --accept-data-loss`
+      (komenda `migrate deploy` NIE zadziała — baza nie ma historii migracji).
+    - **Baza z historią migracji** (`_prisma_migrations` istnieje):
+      `npx prisma migrate deploy`
+    - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
+      migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
+4. Uruchom serwer (`start.bat`).
+
+> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
+> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
+> Na bazie bez `db push` można je utworzyć ręcznie:
+>
+> ```sql
+> CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");
+> CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId");
+> ```
+
 ## Dependabot
 
 Na GitHubie otwórz PR → zielony przycisk "Squash and merge". Tyle.

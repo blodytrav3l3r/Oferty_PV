@@ -23,7 +23,8 @@ Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV
 ```bash
 npm install
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed   # ← pomiń jeśli przenosisz bazę
 npm run build
 npm start
@@ -36,7 +37,8 @@ Jeśli przenosisz bazę z innego urządzenia, zamiast seedowania przywróć back
 ```bash
 npm install
 npx prisma generate
-npx prisma migrate dev
+npx prisma migrate deploy
+# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
 # Przywróć bazę z backupu:
 npm run backup:restore -- data/backups/backup_*.sqlite
@@ -120,6 +122,9 @@ Własna implementacja Logistic Regression w TypeScript:
 1. Na starym urządzeniu: `npm run backup`
 2. Skopiuj plik `data/backups/backup_*.sqlite` na nowe urządzenie
 3. Na nowym urządzeniu: `npm run backup:restore -- data/backups/backup_*.sqlite`
+   (restore synchronizuje schemat — tworzy brakujące tabele i indeksy przez `db push`)
+4. Przy ręcznym kopiowaniu pliku bazy (bez `restore`) zsynchronizuj schemat jawnie:
+   `npx prisma db push --skip-generate --accept-data-loss`
 
 Baza SQLite to pojedynczy plik — backup i przywracanie to kopiowanie jednego pliku.
 

@@ -286,6 +286,15 @@ export async function initApp(): Promise<void> {
         // ignoruj — indeks istnieje lub baza nie ma uprawnień
     }
 
+    // Indeksy deduplikacji telemetrii AI (auto-heal: na instalacjach bez migracji
+    // prisma db push nie tworzy nowych indeksów, a check-db.js sprawdza tylko tabele)
+    try {
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId")`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
+    } catch {
+        // ignoruj — tabela ai_telemetry_logs może nie istnieć (start przed db push)
+    }
+
     // Zapewnij pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne
     try {
         const { ensureFts5Schema } = await import('./utils/fts5Sync');

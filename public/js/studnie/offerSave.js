@@ -208,11 +208,35 @@ function _filterChangedWells(wellsArr, existingDoc) {
 }
 
 /**
+ * Statystyki wyceny studni (cena + waga) — używane do wykrywania zmian
+ * cenowych w telemetrii (totalPrice jest cechą treningową ML).
+ * @param {Object} well
+ * @returns {{price: number|null, weight: number|null}}
+ */
+function _wellPricingStats(well) {
+    try {
+        if (typeof window.calcWellStats === 'function') {
+            const stats = window.calcWellStats(well);
+            if (stats && typeof stats.price === 'number' && typeof stats.weight === 'number') {
+                return {
+                    price: Math.round(stats.price * 100) / 100,
+                    weight: Math.round(stats.weight * 100) / 100
+                };
+            }
+        }
+    } catch (e) {
+        // silent — brak wyceny nie może zablokować zapisu oferty
+    }
+    return { price: null, weight: null };
+}
+
+/**
  * Stabilny snapshot istotnych pól studni do porównania zmian.
  * @param {Object} well
  * @returns {Object}
  */
 function _wellSnapshot(well) {
+    const pricing = _wellPricingStats(well);
     return {
         dn: well.dn,
         rzednaDna: well.rzednaDna,
@@ -225,6 +249,9 @@ function _wellSnapshot(well) {
         redukcjaTargetDN: well.redukcjaTargetDN,
         wkladkaZwienczenie: well.wkladkaZwienczenie,
         przejscia: well.przejscia || [],
-        config: well.config || []
+        config: well.config || [],
+        configSource: well.configSource || null,
+        totalPrice: pricing.price,
+        totalWeight: pricing.weight
     };
 }

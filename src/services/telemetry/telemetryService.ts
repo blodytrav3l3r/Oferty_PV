@@ -45,12 +45,31 @@ class TelemetryService {
             if (payload.solverSource === 'AUTO_JS' && payload.wellId) {
                 const existing = await this._findLatestAutoJs(payload.wellId);
                 if (existing && existing.featureSnapshot && payload.featureSnapshot) {
-                    const snap = this._stableJson(payload.featureSnapshot);
-                    const storedSnap = this._stableJsonFromString(existing.featureSnapshot);
-                    if (snap !== '' && snap === storedSnap) {
+                    // Klucz porównawczy: kanoniczny featureSnapshot + posortowana
+                    // lista allComponentIds. Dwie konfiguracje o identycznym
+                    // snapshot ale innym zestawie komponentów to realnie inne
+                    // konfiguracje — nie mogą się dedupować (utrata danych ML).
+                    const payloadKey = this._dedupKey(
+                        this._stableJson(payload.featureSnapshot),
+                        payload.allComponentIds
+                    );
+                    const storedKey = this._dedupKey(
+                        this._stableJsonFromString(existing.featureSnapshot),
+                        existing.allComponentIds
+                    );
+                    if (payloadKey !== '' && payloadKey === storedKey) {
                         await prisma.ai_telemetry_logs.update({
                             where: { id: existing.id },
-                            data: { lastUsedAt: now, usageCount: { increment: 1 } }
+                            data: {
+                                lastUsedAt: now,
+                                usageCount: { increment: 1 },
+                                // Ta sama konfiguracja w innej ofercie/kliencie —
+                                // odśwież kontekst oferty, nie nadpisuj nullami.
+                                ...(payload.offerId ? { offerId: payload.offerId } : {}),
+                                ...(payload.clientId ? { clientId: payload.clientId } : {}),
+                                ...(payload.projectId ? { projectId: payload.projectId } : {}),
+                                ...(payload.warehouse ? { warehouse: payload.warehouse } : {})
+                            }
                         });
                         logger.info(
                             'Telemetry',
@@ -116,7 +135,7 @@ class TelemetryService {
                         configVersion: payload.configVersion ?? 1,
                         parentConfigId: payload.parentConfigId || null,
                         reviewStatus: payload.reviewStatus || 'active',
-                        featureSnapshot: JSON.stringify(payload.featureSnapshot || {}),
+                        featureSnapshot: this._stableJson(payload.featureSnapshot || {}),
                         labelSnapshot: JSON.stringify(payload.labelSnapshot || {}),
                         predictionSnapshot: JSON.stringify(payload.predictionSnapshot || null),
                         rewardValue: null,
@@ -475,12 +494,13 @@ class TelemetryService {
     private async _findLatestAutoJs(wellId: string): Promise<{
         id: string;
         featureSnapshot: string | null;
+        allComponentIds: string | null;
     } | null> {
         try {
             return await prisma.ai_telemetry_logs.findFirst({
                 where: { wellId, solverSource: 'AUTO_JS' },
                 orderBy: { createdAt: 'desc' },
-                select: { id: true, featureSnapshot: true }
+                select: { id: true, featureSnapshot: true, allComponentIds: true }
             });
         } catch (e) {
             logger.error('Telemetry', `Błąd _findLatestAutoJs: ${e}`);
@@ -494,11 +514,7 @@ class TelemetryService {
      */
     private _stableJson(obj: Record<string, unknown>): string {
         try {
-            const sorted: Record<string, unknown> = {};
-            for (const k of Object.keys(obj).sort()) {
-                sorted[k] = obj[k];
-            }
-            return JSON.stringify(sorted);
+            return this._canonicalize(obj);
         } catch {
             return '';
         }
@@ -511,13 +527,80 @@ class TelemetryService {
     private _stableJsonFromString(raw: string): string {
         try {
             const parsed = JSON.parse(raw);
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                return this._stableJson(parsed as Record<string, unknown>);
+            if (parsed && typeof parsed === 'object') {
+                return this._canonicalize(parsed);
             }
             return '';
         } catch {
             return '';
         }
+    }
+
+    /**
+     * Rekurencyjny kanoniczny serializer JSON (deterministyczny):
+     * - obiekty: klucze sortowane na KAŻDYM poziomie zagnieżdżenia,
+     * - tablice obiektów: elementy sortowane wg kanonicznego JSON (kolejność
+     *   elementów-obiektów nie wpływa na wynik porównania),
+     * - tablice prymitywów: kolejność zachowana (ma znaczenie, np. ringHeights),
+     * - prymitywy/null zachowywane bez zmian.
+     * Zwraca '' przy błędzie (pusty string = brak porównania).
+     */
+    private _canonicalize(value: unknown): string {
+        try {
+            if (value === null || typeof value !== 'object') {
+                return JSON.stringify(value);
+            }
+            if (Array.isArray(value)) {
+                const items = value.map((el) => this._canonicalize(el));
+                const allObjects = value.every(
+                    (el) => el !== null && typeof el === 'object' && !Array.isArray(el)
+                );
+                if (allObjects) {
+                    items.sort();
+                }
+                return '[' + items.join(',') + ']';
+            }
+            const record = value as Record<string, unknown>;
+            const parts = Object.keys(record)
+                .sort()
+                .map((k) => JSON.stringify(k) + ':' + this._canonicalize(record[k]));
+            return '{' + parts.join(',') + '}';
+        } catch {
+            return '';
+        }
+    }
+
+    /**
+     * Klucz porównawczy deduplikacji: kanoniczny featureSnapshot + separator +
+     * posortowana lista allComponentIds. Identyczny snapshot przy innym
+     * zestawie komponentów daje inny klucz — konfiguracje się nie dedupują.
+     */
+    private _dedupKey(snapshot: string, componentIds: unknown): string {
+        if (snapshot === '') {
+            return '';
+        }
+        return snapshot + '||' + JSON.stringify(this._normalizeIds(componentIds));
+    }
+
+    /**
+     * Normalizuje allComponentIds (array z payloadu lub string JSON z bazy)
+     * do posortowanej listy stringów. Brak/pusty zbiór → [] (identyczny klucz).
+     */
+    private _normalizeIds(raw: unknown): string[] {
+        let arr: unknown[] = [];
+        if (Array.isArray(raw)) {
+            arr = raw;
+        } else if (typeof raw === 'string') {
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    arr = parsed;
+                }
+            } catch {
+                return [];
+            }
+        }
+        return arr.filter((x): x is string => typeof x === 'string').sort();
     }
 
     private _computeDiff<T extends { productId?: string }>(

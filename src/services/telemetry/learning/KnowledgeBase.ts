@@ -302,18 +302,4 @@ export class KnowledgeBase {
             return 0;
         }
     }
-
-    /**
-     * Oznacz wzorzec jako 'stale' (nieużywany od dawna).
-     */
-    async archivePattern(id: string): Promise<void> {
-        try {
-            await prisma.ai_knowledge_base.update({
-                where: { id },
-                data: { status: 'archived', lastUpdatedAt: new Date().toISOString() }
-            });
-        } catch (e) {
-            logger.error('KnowledgeBase', `Błąd archive: ${e}`);
-        }
-    }
 }

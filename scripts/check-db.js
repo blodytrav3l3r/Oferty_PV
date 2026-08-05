@@ -23,6 +23,14 @@ const PRODUCT_TABLES = [
     'PrecoZakresy'
 ];
 
+// Indeksy wymagane do sprawnej deduplikacji telemetrii AI (dedup AUTO_JS).
+// Ich brak nie blokuje aplikacji, ale powoduje pełne skanowanie tabeli
+// ai_telemetry_logs przy każdej konfiguracji AUTO_JS.
+const REQUIRED_INDEXES = [
+    { index: 'idx_logs_well', table: 'ai_telemetry_logs' },
+    { index: 'idx_logs_source_well', table: 'ai_telemetry_logs' }
+];
+
 // Tabele ktore musza zawierac dane po udanym seedzie
 const PRODUCT_DATA_CHECKS = [
     { table: 'ProductsRury', minRows: 1 },
@@ -41,9 +49,11 @@ function checkWithNodeSqlite() {
     try {
         const stmt = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?");
         const missingAI = [];
+        const existingAI = [];
         for (const tbl of REQUIRED_TABLES) {
             const row = stmt.get(tbl);
             if (!row) missingAI.push(tbl);
+            else existingAI.push(tbl);
         }
 
         const missingProduct = [];
@@ -61,7 +71,18 @@ function checkWithNodeSqlite() {
             if (!row || row.cnt < check.minRows) emptyProduct.push(check.table);
         }
 
-        return { missingAI, missingProduct, emptyProduct };
+        const missingIndexes = [];
+        for (const { index, table } of REQUIRED_INDEXES) {
+            if (!existingAI.includes(table)) continue;
+            const row = db
+                .prepare(
+                    "SELECT name FROM sqlite_master WHERE type='index' AND name = ? AND tbl_name = ?"
+                )
+                .get(index, table);
+            if (!row) missingIndexes.push(index);
+        }
+
+        return { missingAI, missingProduct, emptyProduct, missingIndexes };
     } finally {
         db.close();
     }
@@ -74,18 +95,33 @@ function checkWithCli() {
     const allTables = [...REQUIRED_TABLES, ...PRODUCT_TABLES];
     for (const tbl of allTables) {
         try {
-            execSync(
+            const out = execSync(
                 `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='table' AND name='${tbl}' LIMIT 1"`,
                 { stdio: 'pipe' }
             );
+            if (!out.toString().trim()) missing.push(tbl);
         } catch (e) {
             missing.push(tbl);
+        }
+    }
+    const missingIndexes = [];
+    for (const { index, table } of REQUIRED_INDEXES) {
+        if (!allTables.includes(table) || missing.includes(table)) continue;
+        try {
+            const out = execSync(
+                `sqlite3 "${DB_PATH}" "SELECT name FROM sqlite_master WHERE type='index' AND name='${index}' AND tbl_name='${table}' LIMIT 1"`,
+                { stdio: 'pipe' }
+            );
+            if (!out.toString().trim()) missingIndexes.push(index);
+        } catch (e) {
+            missingIndexes.push(index);
         }
     }
     return {
         missingAI: missing.filter((t) => REQUIRED_TABLES.includes(t)),
         missingProduct: missing.filter((t) => PRODUCT_TABLES.includes(t)),
-        emptyProduct: []
+        emptyProduct: [],
+        missingIndexes
     };
 }
 
@@ -113,11 +149,19 @@ if (result.missingAI.length > 0 || result.missingProduct.length > 0) {
     process.exit(1);
 }
 
+if (result.missingIndexes && result.missingIndexes.length > 0) {
+    console.error('[check-db] BRAK INDEKSOW: ' + result.missingIndexes.join(', '));
+    console.error(
+        '[check-db] Wymagany prisma db push — synchronizacja schematu (indeksy telemetrii AI).'
+    );
+    process.exit(1);
+}
+
 if (result.emptyProduct.length > 0) {
     console.error('[check-db] PUSTE TABELE PRODUKTOW: ' + result.emptyProduct.join(', '));
     console.error('[check-db] Wymagany seed — uruchom npx ts-node prisma/seed.ts');
     process.exit(2);
 }
 
-console.log('[check-db] OK — wszystkie tabele i dane produktow obecne.');
+console.log('[check-db] OK — wszystkie tabele, dane produktow i indeksy obecne.');
 process.exit(0);
