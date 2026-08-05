@@ -147,9 +147,6 @@ function syncOfferClientSummary() {
     s('offer-disp-number', v('offer-number'));
     s('offer-disp-date', v('offer-date'));
     s('offer-disp-invest', v('invest-name'));
-    const km = v('transport-km');
-    const rate = v('transport-rate');
-    s('offer-disp-transport', km !== '—' && rate !== '—' ? `${km} km × ${rate} PLN/km` : '—');
 }
 
 /* ===== NUMER OFERTY ===== */

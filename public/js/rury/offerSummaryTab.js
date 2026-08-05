@@ -23,13 +23,6 @@ function renderOfferSummaryTab() {
     if (dispInvest)
         dispInvest.textContent = document.getElementById('offer-invest-name')?.value || '—';
 
-    const dispTransport = document.getElementById('offer-disp-transport');
-    if (dispTransport) {
-        const km = document.getElementById('transport-km')?.value || '0';
-        const rate = document.getElementById('transport-rate')?.value || '0';
-        dispTransport.textContent = `${km} km × ${rate} PLN/km`;
-    }
-
     // Auto-generuj uwagi do oferty (jak w studniach), potem uzupełnij puste pola
     if (typeof generateOfferNotes === 'function') {
         generateOfferNotes(false);
