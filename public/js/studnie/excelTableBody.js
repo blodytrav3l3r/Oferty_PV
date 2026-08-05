@@ -76,6 +76,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                     ? 'rgba(var(--blue-rgb), 0.28)'
                     : 'var(--bg-tertiary)';
         let przejscia = well.przejscia || [];
+        const solidBase = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        const stickyBg = _excelStickyCellBg(rowBg, solidBase);
         html +=
             '<tr data-widx="' +
             wIdx +
@@ -91,6 +93,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 : isDup
                   ? hoverDupSolid
                   : 'rgba(var(--blue-rgb), 0.18)') +
+            '" data-solid-bg="' +
+            solidBase +
             '" style="background:' +
             rowBg +
             ';transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
@@ -101,7 +105,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<td style="' +
             tdBaseStyle +
             'background:' +
-            rowBg +
+            stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
             wIdx +
             '"' +
@@ -115,7 +119,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<td style="' +
             tdBaseStyle +
             'background:' +
-            rowBg +
+            stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
@@ -155,7 +159,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'position:sticky;left:0;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
-            rowBg +
+            stickyBg +
             ';text-align:center;color:var(--slate-500);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">' +
             (idx + 1) +
             '</td>';
@@ -166,7 +170,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'position:sticky;left:32px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
-            rowBg +
+            stickyBg +
             ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" value="' +
             escapeHtml(well.name).replace(/"/g, '&quot;') +
             '" onchange="excelOnNameChange(' +
@@ -181,7 +185,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'position:sticky;left:162px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
-            rowBg +
+            stickyBg +
             ';text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
             '" onchange="excelOnRzednaChange(' +
@@ -196,7 +200,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'position:sticky;left:240px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
-            rowBg +
+            stickyBg +
             ';text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="' +
             (well.rzednaDna != null ? well.rzednaDna : '') +
             '" onchange="excelOnRzednaChange(' +
@@ -212,7 +216,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'position:sticky;left:318px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
-            rowBg +
+            stickyBg +
             ';text-align:center;color:' +
             dnColor +
             ';font-weight:600;" data-cell="height-' +

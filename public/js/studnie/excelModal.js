@@ -256,8 +256,9 @@ function openExcelTableModal() {
                 firstRow.setAttribute('data-orig-bg', baseRef);
                 /* Przywróć tło sticky kolumn */
                 let stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
+                let stSolid = firstRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
                 stTds.forEach(function (td) {
-                    td.style.background = baseRef;
+                    td.style.background = _excelStickyCellBg(baseRef, stSolid);
                 });
             }
         }
@@ -345,8 +346,9 @@ function excelSelectRow(wIdx) {
             /* Przywróć tło sticky kolumn do base-bg */
             let prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
             let baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
+            let prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             prevStickyTds.forEach(function (td) {
-                td.style.background = baseBg;
+                td.style.background = _excelStickyCellBg(baseBg, prevSolid);
             });
         }
     }
@@ -360,8 +362,9 @@ function excelSelectRow(wIdx) {
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
             let stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
+            let solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             stickyTds.forEach(function (td) {
-                td.style.background = activeBg;
+                td.style.background = _excelStickyCellBg(activeBg, solidBg);
             });
         }
     }

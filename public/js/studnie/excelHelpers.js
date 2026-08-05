@@ -642,6 +642,13 @@ function excelFilterWells(value) {
     });
 }
 
+/* ===== STICKY CELL OPAQUE BACKGROUND ===== */
+/* Nakłada tint (rowBg/activeBg) na nieprzezroczystą bazę, by sticky kolumny
+   nie prześwitywały podczas poziomego scrolla. */
+function _excelStickyCellBg(tint, solidBase) {
+    return 'linear-gradient(' + tint + ',' + tint + '),' + solidBase;
+}
+
 /* ===== COLUMN VISIBILITY FILTER ===== */
 function _excelFilterVisibleColumns(compCols) {
     if (!_excelHiddenColumnIds || _excelHiddenColumnIds.length === 0) return compCols;
