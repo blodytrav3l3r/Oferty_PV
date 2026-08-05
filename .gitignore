@@ -53,6 +53,7 @@ data/migration_backup/
 data/*.sqlite*
 data/*.sqlite-shm
 data/*.sqlite-wal
+/*.sqlite*
 
 # Generated
 /generated/prisma

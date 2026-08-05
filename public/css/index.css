@@ -1634,10 +1634,10 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--text-primary);
 }
 
-/* ── ML Pipeline grid (6 kolumn = jedna linia) ── */
+/* ── ML Pipeline grid (7 kolumn = jedna linia) ── */
 .ai-ml-stats-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 8px;
     margin-bottom: 16px;
     width: 100%;
@@ -1794,12 +1794,82 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-model-table tbody td:last-child {
-    text-align: left;
+    text-align: right;
+}
+
+.ai-model-actions-cell {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
 }
 
 .ai-model-active {
     color: var(--success-hover);
     font-weight: 700;
+}
+
+.ai-model-row-active {
+    background: var(--success-bg) !important;
+    box-shadow: inset 3px 0 0 var(--success-hover);
+}
+
+.ai-model-row-active td {
+    border-bottom-color: var(--success-border) !important;
+}
+
+.ai-model-used-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--success-hover);
+    color: var(--bg-card);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.ai-model-delete-btn,
+.ai-model-activate-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.ai-model-delete-btn {
+    color: var(--danger-hover);
+}
+
+.ai-model-activate-btn {
+    color: var(--success-hover);
+}
+
+.ai-model-delete-btn:hover {
+    background: var(--danger-bg);
+    border-color: var(--danger-border);
+}
+
+.ai-model-activate-btn:hover {
+    background: var(--success-bg);
+    border-color: var(--success-border);
+}
+
+.ai-model-delete-btn svg,
+.ai-model-activate-btn svg {
+    width: 14px;
+    height: 14px;
 }
 
 .ai-model-empty {

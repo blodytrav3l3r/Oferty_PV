@@ -317,10 +317,17 @@ async function fetchGlobalUsers() {
  * @param {string} [opts.cancelText='Anuluj'] - Tekst Anuluj
  * @param {'info'|'warning'|'danger'} [opts.type='info'] - Typ (ikona + kolor)
  * @param {boolean} [opts.allowHtml=false] - Czy zezwolić na HTML w tytule/treści
+ * @param {boolean} [opts.hideCancel=false] - Ukryj przycisk Anuluj (tylko OK)
  * @returns {Promise<boolean>}
  */
 function appConfirm(message, opts = {}) {
-    const { title = 'Potwierdzenie', okText = 'OK', cancelText = 'Anuluj', type = 'info' } = opts;
+    const {
+        title = 'Potwierdzenie',
+        okText = 'OK',
+        cancelText = 'Anuluj',
+        type = 'info',
+        hideCancel = false
+    } = opts;
 
     return new Promise((resolve) => {
         let resolved = false;
@@ -357,8 +364,8 @@ function appConfirm(message, opts = {}) {
                 <div class="app-confirm-title" id="app-confirm-title">${safeTitle}</div>
                 <div class="app-confirm-message" id="app-confirm-message">${safeMsg}</div>
                 <div class="app-confirm-actions">
-                    <button class="app-confirm-btn" id="app-confirm-cancel">${cancelText}</button>
-                    <button class="app-confirm-btn" id="app-confirm-ok" style="background:${accent}">${okText}</button>
+                    <button class="app-confirm-btn" id="app-confirm-cancel" style="${hideCancel ? 'display:none;' : ''}">${cancelText}</button>
+                    <button class="app-confirm-btn" id="app-confirm-ok" style="background:${accent}${hideCancel ? ';flex:1' : ''}">${okText}</button>
                 </div>
             </div>`;
 
@@ -397,6 +404,20 @@ function appConfirm(message, opts = {}) {
             });
         }, 50);
     });
+}
+
+/**
+ * In-app alert — zastępuje natywny alert().
+ * Modal z pojedynczym przyciskiem OK. Zwraca Promise<void>.
+ *
+ * @param {string} message - Treść komunikatu (obsługuje \n jako nową linię)
+ * @param {object} [opts] - Opcje (title, okText, type)
+ * @returns {Promise<void>}
+ */
+function appAlert(message, opts = {}) {
+    return appConfirm(message, Object.assign({}, opts, { okText: 'OK', hideCancel: true })).then(
+        () => {}
+    );
 }
 
 /** Tworzy style dla modala potwierdzenia jeśli jeszcze nie istnieją */
@@ -454,6 +475,7 @@ function _escapeHtml(str) {
 }
 
 window.appConfirm = appConfirm;
+window.appAlert = appAlert;
 
 /**
  * SaveIndicator — wizualny wskaźnik zapisu (saving / saved / error).

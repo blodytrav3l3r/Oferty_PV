@@ -46,13 +46,13 @@ export class SelfEvaluation {
         if (activeModel.metrics.rocAuc < ML_CONFIG.rollbackAucThreshold) {
             logger.warn(
                 'SelfEvaluation',
-                `ROC-AUC=${activeModel.metrics.rocAuc} < ${ML_CONFIG.rollbackAucThreshold} - rollback`
+                `ROC-AUC=${activeModel.metrics.rocAuc} < ${ML_CONFIG.rollbackAucThreshold} - promocja najlepszego modelu`
             );
-            const previous = await modelRegistry.rollbackToPrevious();
-            if (previous) {
+            const best = await modelRegistry.promoteBestModel();
+            if (best && best.id !== activeModel.id) {
                 logger.info(
                     'SelfEvaluation',
-                    `Rollback do ${previous.version} (AUC=${previous.metrics.rocAuc})`
+                    `Promowano ${best.version} (AUC=${best.metrics.rocAuc})`
                 );
                 return { rolledBack: true };
             }

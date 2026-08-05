@@ -286,15 +286,15 @@ export class LearningEngine {
     }
 
     /**
-     * Zwraca status silniczka.
+     * Zwraca status silniczka. lastRunAt czyta z bazy, by przetrwać restart serwera.
      */
-    getStatus(): {
+    async getStatus(): Promise<{
         initialized: boolean;
         lastRunAt: string | null;
-    } {
+    }> {
         return {
             initialized: this.initialized,
-            lastRunAt: this.lastRunAt
+            lastRunAt: await this.loadLastRun()
         };
     }
 

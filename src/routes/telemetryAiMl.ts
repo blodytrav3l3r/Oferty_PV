@@ -298,6 +298,8 @@ router.get('/ai/ml-status', requireAuth, async (_req: Request, res: Response) =>
         res.json({
             mlOnline: !!activeModel,
             modelVersion: activeModel?.version || null,
+            activeModelAuc: activeModel?.metrics?.rocAuc ?? null,
+            activeModelCreatedAt: activeModel?.createdAt || null,
             modelFeatureCount: activeModel?.featureMins.length || ML_CONSTANTS.FEATURE_COUNT,
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
             modelCount,
@@ -408,6 +410,46 @@ router.get('/ai/models', requireAuth, async (_req: Request, res: Response) => {
     try {
         const models = await modelRegistry.listModels(50);
         res.json({ models });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(500).json({ error: msg });
+    }
+});
+
+router.delete('/ai/models/:id', requireAuth, requireAdmin, async (req, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const deleted = await modelRegistry.deleteModel(req.params.id);
+        if (!deleted) {
+            res.status(404).json({ error: 'Model nie istnieje' });
+            return;
+        }
+        await logAudit('ai_model', 'delete', authReq.user?.id || '', deleted.id, {
+            version: deleted.version
+        });
+        res.json({ deleted: true, model: deleted });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('aktywnego modelu')) {
+            res.status(400).json({ error: msg });
+            return;
+        }
+        res.status(500).json({ error: msg });
+    }
+});
+
+router.post('/ai/models/:id/activate', requireAuth, requireAdmin, async (req, res: Response) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const model = await modelRegistry.activateModel(req.params.id);
+        if (!model) {
+            res.status(404).json({ error: 'Model nie istnieje' });
+            return;
+        }
+        await logAudit('ai_model', 'activate', authReq.user?.id || '', model.id, {
+            version: model.version
+        });
+        res.json({ activated: true, model });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(500).json({ error: msg });

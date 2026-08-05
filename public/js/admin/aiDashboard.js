@@ -32,6 +32,17 @@
         }
     }
 
+    /* Popup in-app (fallback do natywnych okien) */
+    function uiConfirm(msg, opts) {
+        if (typeof window.appConfirm === 'function') return window.appConfirm(msg, opts);
+        return Promise.resolve(window.confirm(msg));
+    }
+
+    function uiAlert(msg, opts) {
+        if (typeof window.appAlert === 'function') return window.appAlert(msg, opts);
+        return Promise.resolve(window.alert(msg));
+    }
+
     /* ===== HELPER: karta statystyczna ===== */
     function statCard(title, value, color, desc) {
         return (
@@ -169,10 +180,10 @@
                 return;
             }
             if (!data.items || data.items.length === 0) {
-                container.innerHTML =
-                    '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców dla DN=' +
-                    (dnFilter || 'all_dn') +
-                    '. Uruchom <strong>Learning Cycle</strong>.</div>';
+                container.innerHTML = patternsEmptyHtml(data, dnFilter || 'all_dn');
+                if (window.lucide && typeof lucide.createIcons === 'function') {
+                    lucide.createIcons({ root: container });
+                }
                 return;
             }
             var rows = data.items
@@ -221,6 +232,52 @@
         });
     }
 
+    /* ===== PATTERNS EMPTY - komunikat diagnostyczny ===== */
+    function patternsEmptyHtml(data, dnFilter) {
+        var tc = data.telemetryCount || 0;
+        var pt = data.patternsTotal || 0;
+        var otherDn = data.patternsOtherDn || 0;
+        var lastRun = data.lastRunAt ? new Date(data.lastRunAt).toLocaleString('pl-PL') : null;
+        var msg = '';
+        var icon = 'database';
+        if (tc === 0) {
+            msg =
+                '<strong>Brak danych telemetrycznych.</strong> Zacznij budować studnie, aby system zebrał dane do nauki.';
+            icon = 'inbox';
+        } else if (!lastRun) {
+            msg =
+                '<strong>Zebrano ' +
+                tc +
+                ' akcji, ale Learning Cycle nie był jeszcze uruchomiony.</strong> Kliknij <em>Uruchom Learning Cycle</em>, aby wykryć wzorce.';
+            icon = 'play';
+        } else if (otherDn > 0 && pt > 0) {
+            msg =
+                '<strong>Brak wzorców dla DN=' +
+                window.escapeHtml(dnFilter) +
+                '.</strong> System zna ' +
+                otherDn +
+                ' wzorce dla innych średnic — zmień filtr DN.';
+            icon = 'filter';
+        } else {
+            msg =
+                '<strong>Brak wzorców spełniających próg pewności (30%).</strong> Zebrano ' +
+                tc +
+                ' akcji, ostatni cykl: ' +
+                window.escapeHtml(lastRun || '—') +
+                '. Zbierz więcej danych lub obniż próg.';
+            icon = 'brain';
+        }
+        return (
+            '<div style="display:flex;align-items:flex-start;gap:10px;color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:14px">' +
+            '<i data-lucide="' +
+            icon +
+            '" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"></i>' +
+            '<div style="font-size:0.82rem;line-height:1.45">' +
+            msg +
+            '</div></div>'
+        );
+    }
+
     /* ===== ML STATUS ===== */
     function renderMlStatus(container) {
         var pStatus = fetchJson(ENDPOINTS.mlStatus);
@@ -240,6 +297,9 @@
 
             var online = status.mlOnline;
             var inf = status.aiInfluencePct || 0;
+            var activeVer = status.modelVersion || '—';
+            var activeAuc =
+                status.activeModelAuc != null ? ' AUC ' + status.activeModelAuc.toFixed(4) : '';
             var html =
                 '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
                 '<div class="ai-ml-stats-grid">' +
@@ -251,9 +311,15 @@
                 ) +
                 statCard(
                     'Wersja modelu',
-                    status.modelVersion || '—',
+                    window.escapeHtml(activeVer) + activeAuc,
                     'var(--accent2)',
-                    'Aktualna wersja wytrenowanego modelu ML'
+                    'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)'
+                ) +
+                statCard(
+                    'Data wdrożenia',
+                    (status.activeModelCreatedAt || '—').slice(0, 10),
+                    'var(--accent-hover)',
+                    'Kiedy aktywny model został wdrożony'
                 ) +
                 statCard(
                     'Liczba modeli',
@@ -305,12 +371,26 @@
                 modelRows = modelsData.models
                     .map(function (m) {
                         var statusHtml = m.active
-                            ? '<span class="ai-model-active">active</span>'
+                            ? '<span class="ai-model-active">● Aktywny</span>'
                             : (m.createdAt || '').slice(0, 10);
+                        var rowClass = m.active ? ' class="ai-model-row-active"' : '';
+                        var delBtn = m.active
+                            ? ''
+                            : '<div class="ai-model-actions-cell">' +
+                              '<button class="ai-model-activate-btn" data-id="' +
+                              window.escapeHtml(m.id || '') +
+                              '" title="Ustaw ten model jako aktywny"><i data-lucide="check-circle"></i></button>' +
+                              '<button class="ai-model-delete-btn" data-id="' +
+                              window.escapeHtml(m.id || '') +
+                              '" title="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
+                              '</div>';
                         return (
-                            '<tr>' +
+                            '<tr' +
+                            rowClass +
+                            '>' +
                             '<td>' +
                             window.escapeHtml(m.version || '—') +
+                            (m.active ? '<span class="ai-model-used-tag">W UŻYCIU</span>' : '') +
                             '</td>' +
                             '<td>' +
                             (m.auc != null ? m.auc.toFixed(4) : '—') +
@@ -323,6 +403,9 @@
                             '</td>' +
                             '<td>' +
                             statusHtml +
+                            '</td>' +
+                            '<td>' +
+                            delBtn +
                             '</td>' +
                             '</tr>'
                         );
@@ -340,6 +423,7 @@
                     '<th title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
                     '<th title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
                     '<th title="Czy model jest aktualnie aktywny">Status</th>' +
+                    '<th title="Ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
                     '</tr></thead><tbody>' +
                     modelRows +
                     '</tbody></table></div>';
@@ -385,7 +469,89 @@
             var trainBtn = document.getElementById('ai-ml-train-btn');
             var rollbackBtn = document.getElementById('ai-ml-rollback-btn');
             var mlContainer = container;
-
+            /* Usuwanie i ręczna aktywacja modeli (delegacja zdarzeń) */
+            var modelTableWrap = container.querySelector('.ai-model-table-wrap');
+            if (modelTableWrap) {
+                modelTableWrap.addEventListener('click', function (ev) {
+                    var btn = ev.target.closest ? ev.target.closest('.ai-model-delete-btn') : null;
+                    if (!btn) return;
+                    ev.preventDefault();
+                    uiConfirm('Na pewno usunąć ten model ML?', {
+                        title: 'Usuwanie modelu ML',
+                        okText: 'Usuń',
+                        type: 'danger'
+                    }).then(function (confirmed) {
+                        if (!confirmed) return;
+                        var id = btn.getAttribute('data-id');
+                        var p = fetchJson(ENDPOINTS.models + '/' + encodeURIComponent(id), {
+                            method: 'DELETE'
+                        });
+                        if (p) {
+                            p.then(function (result) {
+                                if (result && result.deleted) {
+                                    if (typeof window.showToast === 'function')
+                                        window.showToast('Usunięto model ML', 'success');
+                                    renderMlStatus(mlContainer);
+                                } else {
+                                    uiAlert('Nie udało się usunąć modelu ML.', {
+                                        title: 'Błąd usuwania',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            uiAlert('Brak dostępu do usuwania modeli ML.', {
+                                title: 'Błąd usuwania',
+                                type: 'warning'
+                            });
+                        }
+                    });
+                });
+                modelTableWrap.addEventListener('click', function (ev) {
+                    var btn = ev.target.closest
+                        ? ev.target.closest('.ai-model-activate-btn')
+                        : null;
+                    if (!btn) return;
+                    ev.preventDefault();
+                    uiConfirm(
+                        'Ustawić ten model jako aktywny? Obecnie aktywny model zostanie zastąpiony.',
+                        {
+                            title: 'Zmiana aktywnego modelu',
+                            okText: 'Użyj',
+                            type: 'info'
+                        }
+                    ).then(function (confirmed) {
+                        if (!confirmed) return;
+                        var id = btn.getAttribute('data-id');
+                        var p = fetchJson(
+                            ENDPOINTS.models + '/' + encodeURIComponent(id) + '/activate',
+                            { method: 'POST' }
+                        );
+                        if (p) {
+                            p.then(function (result) {
+                                if (result && result.activated) {
+                                    if (typeof window.showToast === 'function')
+                                        window.showToast(
+                                            'Aktywny model: ' + result.model.version,
+                                            'success'
+                                        );
+                                    renderMlStatus(mlContainer);
+                                } else {
+                                    uiAlert('Nie udało się zmienić aktywnego modelu.', {
+                                        title: 'Błąd zmiany',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
+                            uiAlert('Brak dostępu do zmiany modelu ML.', {
+                                title: 'Błąd zmiany',
+                                type: 'warning'
+                            });
+                        }
+                    });
+                });
+            }
             if (trainBtn) {
                 trainBtn.addEventListener('click', function () {
                     trainBtn.disabled = true;
@@ -397,11 +563,12 @@
                             trainBtn.disabled = false;
                             trainBtn.innerHTML = '<i data-lucide="play"></i> Uruchom trening ML';
                             if (result) {
-                                window.alert(
-                                    'Trening ML zako\u0144czony:\n' +
+                                uiAlert(
+                                    'Trening ML zakończony:\n' +
                                         'Wytrenowany: ' +
                                         (result.trained ? 'Tak' : 'Nie') +
-                                        (result.reason ? '\nPowód: ' + result.reason : '')
+                                        (result.reason ? '\nPowód: ' + result.reason : ''),
+                                    { title: 'Trening ML', type: 'info' }
                                 );
                                 renderMlStatus(mlContainer);
                             }
@@ -415,33 +582,46 @@
 
             if (rollbackBtn) {
                 rollbackBtn.addEventListener('click', function () {
-                    if (
-                        !window.confirm(
-                            'Rollback do poprzedniego modelu? Obecny model zostanie zdezaktywowany.'
-                        )
-                    )
-                        return;
-                    rollbackBtn.disabled = true;
-                    rollbackBtn.textContent = 'Rollback...';
-                    var p = fetchJson(ENDPOINTS.rollback, { method: 'POST' });
-                    if (p) {
-                        p.then(function (result) {
+                    uiConfirm(
+                        'Rollback do poprzedniego modelu? Obecny model zostanie zdezaktywowany.',
+                        {
+                            title: 'Rollback modelu',
+                            okText: 'Rollback',
+                            type: 'warning'
+                        }
+                    ).then(function (confirmed) {
+                        if (!confirmed) return;
+                        rollbackBtn.disabled = true;
+                        rollbackBtn.textContent = 'Rollback...';
+                        var p = fetchJson(ENDPOINTS.rollback, { method: 'POST' });
+                        if (p) {
+                            p.then(function (result) {
+                                rollbackBtn.disabled = false;
+                                rollbackBtn.innerHTML =
+                                    '<i data-lucide="undo-2"></i> Rollback modelu';
+                                if (result && result.rolledBack) {
+                                    uiAlert(
+                                        'Rollback wykonany. Poprzedni model: ' +
+                                            (result.model ? result.model.version : '—'),
+                                        { title: 'Rollback modelu', type: 'info' }
+                                    );
+                                    renderMlStatus(mlContainer);
+                                } else {
+                                    uiAlert('Brak poprzedniego modelu do rollbacku.', {
+                                        title: 'Rollback modelu',
+                                        type: 'warning'
+                                    });
+                                }
+                            });
+                        } else {
                             rollbackBtn.disabled = false;
                             rollbackBtn.innerHTML = '<i data-lucide="undo-2"></i> Rollback modelu';
-                            if (result && result.rolledBack) {
-                                window.alert(
-                                    'Rollback wykonany. Poprzedni model: ' +
-                                        (result.model ? result.model.version : '—')
-                                );
-                                renderMlStatus(mlContainer);
-                            } else {
-                                window.alert('Brak poprzedniego modelu do rollbacku.');
-                            }
-                        });
-                    } else {
-                        rollbackBtn.disabled = false;
-                        rollbackBtn.innerHTML = '<i data-lucide="undo-2"></i> Rollback modelu';
-                    }
+                            uiAlert('Brak dostępu do rollbacku modelu ML.', {
+                                title: 'Rollback modelu',
+                                type: 'warning'
+                            });
+                        }
+                    });
                 });
             }
         });
@@ -501,14 +681,15 @@
                         runBtn.innerHTML =
                             '<i data-lucide="refresh-cw"></i> Uruchom Learning Cycle';
                         if (result) {
-                            window.alert(
-                                'Learning cycle zako\u0144czony:\n' +
+                            uiAlert(
+                                'Learning cycle zakończony:\n' +
                                     'Przetworzone: ' +
                                     result.processed +
                                     '\nWykrytych wzorców: ' +
                                     result.patternsDetected +
                                     '\nZapisanych do KB: ' +
-                                    result.persistedToKb
+                                    result.persistedToKb,
+                                { title: 'Learning Cycle', type: 'info' }
                             );
                             renderStats(statsContainer);
                             renderPatterns(patternsContainer, dnInput ? dnInput.value : '');

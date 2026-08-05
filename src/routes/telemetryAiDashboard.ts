@@ -12,6 +12,7 @@ import { logger } from '../utils/logger';
 import { learningEngine } from '../services/telemetry/learning';
 import { KnowledgeBase } from '../services/telemetry/learning/KnowledgeBase';
 import { RecommendationEngine } from '../services/telemetry/learning/RecommendationEngine';
+import prisma from '../prismaClient';
 
 const router = express.Router();
 const kb = new KnowledgeBase();
@@ -25,7 +26,7 @@ const recommend = new RecommendationEngine();
  */
 router.get('/ai/learning/status', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
     try {
-        return res.json(learningEngine.getStatus());
+        return res.json(await learningEngine.getStatus());
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         logger.error('AiDashboard', `Error: ${message}`);
@@ -61,8 +62,25 @@ router.get('/ai/knowledge/patterns', requireAuth, requireAdmin, READ_LIMITER, as
     const dn = (req.query.dn as string) || 'all_dn';
     const minConfidence = parseFloat((req.query.minConfidence as string) || '0.3');
     try {
-        const patterns = await kb.getPatternsForDn(dn, minConfidence);
-        return res.json({ dn, minConfidence, items: patterns, total: patterns.length });
+        const [patterns, telemetryCount, patternsTotal, allDnPatterns, engineStatus] =
+            await Promise.all([
+                kb.getPatternsForDn(dn, minConfidence),
+                prisma.ai_telemetry_logs.count(),
+                kb.countPatterns(),
+                kb.getPatternsForDn('all_dn', minConfidence),
+                learningEngine.getStatus()
+            ]);
+        return res.json({
+            dn,
+            minConfidence,
+            items: patterns,
+            total: patterns.length,
+            telemetryCount,
+            patternsTotal,
+            patternsForDn: patterns.length,
+            patternsOtherDn: Math.max(0, allDnPatterns.length - patterns.length),
+            lastRunAt: engineStatus?.lastRunAt || null
+        });
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         logger.error('AiDashboard', `Error: ${message}`);

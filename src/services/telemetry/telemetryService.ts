@@ -37,6 +37,35 @@ class TelemetryService {
         const configHistoryId = crypto.randomUUID();
 
         try {
+            // Deduplikacja AUTO_JS (Etap 2): pomiń zapis identycznej konfiguracji
+            // z tego samego źródła dla tej samej studni. Duplikaty zawyżają
+            // hitCount/confidence wzorców i mnożą próbki treningowe ML.
+            // Porównanie po deterministycznym featureSnapshot — MANUAL/AI_SUGGEST
+            // zawsze zapisujemy (sygnały decyzji użytkownika).
+            if (payload.solverSource === 'AUTO_JS' && payload.wellId) {
+                const existing = await this._findLatestAutoJs(payload.wellId);
+                if (existing && existing.featureSnapshot && payload.featureSnapshot) {
+                    const snap = this._stableJson(payload.featureSnapshot);
+                    const storedSnap = this._stableJsonFromString(existing.featureSnapshot);
+                    if (snap !== '' && snap === storedSnap) {
+                        await prisma.ai_telemetry_logs.update({
+                            where: { id: existing.id },
+                            data: { lastUsedAt: now, usageCount: { increment: 1 } }
+                        });
+                        logger.info(
+                            'Telemetry',
+                            `Dedup AUTO_JS: pominięto duplikat ${existing.id} (well=${payload.wellId})`
+                        );
+                        return {
+                            success: true,
+                            telemetryId: existing.id,
+                            configHistoryId: undefined,
+                            transitionsCreated: 0
+                        };
+                    }
+                }
+            }
+
             await prisma.$transaction(async (tx) => {
                 // 1. Zapis głównego rekordu telemetry
                 await tx.ai_telemetry_logs.create({
@@ -437,6 +466,57 @@ class TelemetryService {
             return JSON.parse(value);
         } catch {
             return value;
+        }
+    }
+
+    /**
+     * Ostatni rekord AUTO_JS dla danej studni (używany do deduplikacji).
+     */
+    private async _findLatestAutoJs(wellId: string): Promise<{
+        id: string;
+        featureSnapshot: string | null;
+    } | null> {
+        try {
+            return await prisma.ai_telemetry_logs.findFirst({
+                where: { wellId, solverSource: 'AUTO_JS' },
+                orderBy: { createdAt: 'desc' },
+                select: { id: true, featureSnapshot: true }
+            });
+        } catch (e) {
+            logger.error('Telemetry', `Błąd _findLatestAutoJs: ${e}`);
+            return null;
+        }
+    }
+
+    /**
+     * Deterministyczny JSON z obiektu (stabilna kolejność kluczy) do porównania
+     * z zapisanym featureSnapshot.
+     */
+    private _stableJson(obj: Record<string, unknown>): string {
+        try {
+            const sorted: Record<string, unknown> = {};
+            for (const k of Object.keys(obj).sort()) {
+                sorted[k] = obj[k];
+            }
+            return JSON.stringify(sorted);
+        } catch {
+            return '';
+        }
+    }
+
+    /**
+     * Deterministyczny JSON z zapisanego stringa featureSnapshot — klucze
+     * sortowane, by porównanie nie zależało od kolejności nadania na froncie.
+     */
+    private _stableJsonFromString(raw: string): string {
+        try {
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                return this._stableJson(parsed as Record<string, unknown>);
+            }
+            return '';
+        } catch {
+            return '';
         }
     }
 

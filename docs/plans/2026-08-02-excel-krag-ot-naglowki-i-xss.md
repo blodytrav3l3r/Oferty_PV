@@ -44,11 +44,11 @@ Każdy krok = osobny commit ( est(...), ix(...), ix(...)).
   funkcji (brak IIFE/DOM na top-level), więc kontekst minimalny wystarczy:
   `js
 const context = {
-  window: {},
-  document: {},
-  logger: { info(){}, warn(){}, error(){} },
-  studnieProducts: [],
-  console
+window: {},
+document: {},
+logger: { info(){}, warn(){}, error(){} },
+studnieProducts: [],
+console
 };
 vm.createContext(context);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '../../public/js/studnie/excelHelpers.js'), 'utf8'), context);

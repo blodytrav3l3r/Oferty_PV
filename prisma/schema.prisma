@@ -94,6 +94,8 @@ model ai_telemetry_logs {
   @@index([wasModified], map: "idx_logs_wasmodified")
   @@index([createdAt], map: "idx_logs_createdat")
   @@index([dn], map: "idx_logs_dn")
+  @@index([wellId], map: "idx_logs_well")
+  @@index([solverSource, wellId], map: "idx_logs_source_well")
   @@index([wasModified, createdAt], map: "idx_logs_modified_created")
 }
 

@@ -68,6 +68,12 @@
     /** @type {string|null} */
     let activeModelVersion = null;
 
+    /** @type {number|null} */
+    let activeModelAuc = null;
+
+    /** @type {string|null} */
+    let activeModelCreatedAt = null;
+
     /** @type {number} */
     let aiInfluencePct = 0;
 
@@ -647,17 +653,55 @@
 
     /**
      * Status systemu ML
-     * @returns {{online:boolean, modelVersion:string|null, cacheSize:number, aiInfluencePct:number, rankingVersion:string, featureVersion:string}}
+     * @returns {{online:boolean, modelVersion:string|null, activeModelAuc:number|null, activeModelCreatedAt:string|null, cacheSize:number, aiInfluencePct:number, rankingVersion:string, featureVersion:string}}
      */
     function getMlStatus() {
         return {
             online: mlOnline,
             modelVersion: activeModelVersion,
+            activeModelAuc: activeModelAuc,
+            activeModelCreatedAt: activeModelCreatedAt,
             cacheSize: scoreCache.size,
             aiInfluencePct: aiInfluencePct,
             rankingVersion: RANKING_VERSION,
             featureVersion: FEATURE_VERSION
         };
+    }
+
+    /* ===== POBIERANIE PEŁNEGO STATUSU ML (AUC, data wdrożenia) ===== */
+
+    let _lastStatusFetch = 0;
+
+    function fetchMlStatusAsync() {
+        let now = Date.now();
+        if (now - _lastStatusFetch < 60000) return; // max co 60s
+        _lastStatusFetch = now;
+        try {
+            let controller = new AbortController();
+            let timeoutId = setTimeout(function () {
+                controller.abort();
+            }, 3000);
+            fetch(ML_STATUS_URL, { credentials: 'same-origin', signal: controller.signal })
+                .then(function (r) {
+                    return r.ok ? r.json() : null;
+                })
+                .then(function (status) {
+                    clearTimeout(timeoutId);
+                    if (!status) return;
+                    mlOnline = !!status.mlOnline;
+                    if (status.modelVersion) activeModelVersion = status.modelVersion;
+                    if (status.activeModelAuc != null) activeModelAuc = status.activeModelAuc;
+                    if (status.activeModelCreatedAt)
+                        activeModelCreatedAt = status.activeModelCreatedAt;
+                    if (status.aiInfluencePct != null) aiInfluencePct = status.aiInfluencePct;
+                    updateAiStatusIndicator();
+                })
+                .catch(function () {
+                    clearTimeout(timeoutId);
+                });
+        } catch (e) {
+            /* ignoruj — offline */
+        }
     }
 
     /* ===== WSKAŹNIK AI W UI ===== */
@@ -671,6 +715,8 @@
         let dot = document.getElementById('ai-status-dot');
         let text = document.getElementById('ai-status-text');
         if (!dot || !text) return;
+
+        fetchMlStatusAsync();
 
         let status = getMlStatus();
         let title = '';
@@ -688,6 +734,11 @@
             title +=
                 ' | model: ' +
                 (status.modelVersion || '?') +
+                (status.activeModelAuc != null
+                    ? ' (AUC ' + status.activeModelAuc.toFixed(4) + ')'
+                    : '') +
+                ' | wdrożony: ' +
+                (status.activeModelCreatedAt ? status.activeModelCreatedAt.slice(0, 10) : '?') +
                 ' | ranking: ' +
                 status.rankingVersion +
                 ' | feat: ' +

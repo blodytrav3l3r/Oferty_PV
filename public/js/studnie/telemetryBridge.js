@@ -28,6 +28,66 @@
     /* ===== STAN WEWNETRZNY ===== */
     let sequenceNo = 0;
 
+    // Deduplikacja AUTO_JS w pamięci: wellId -> hash treści ostatnio wysłanego configa.
+    // Pomijamy powtórki identycznej treści z tego samego źródła (re-render bez zmiany
+    // wejść), bo duplikaty zawyżają hitCount/confidence wzorców i mnożą próbki treningowe.
+    // Świadomie ograniczone do sesji — po reload strony historia znika (Opcja A, Etap 1).
+    const autoJsDedupMap = new Map();
+
+    /**
+     * Stabilny fingerprint treści studni — tylko pola, które wpływają na dobór
+     * elementów. Metadane (czas, liczba iteracji) są pomijane, by powtórka
+     * tego samego doboru nie tworzyła nowego rekordu.
+     * @param {Object} well
+     * @param {Array} configItems
+     * @returns {string}
+     */
+    function wellContentFingerprint(well, configItems) {
+        const configKey = (configItems || [])
+            .map(function (c) {
+                return (c.productId || '') + ':' + (c.quantity || 1);
+            })
+            .sort()
+            .join('|');
+        const przejsciaKey = (well.przejscia || [])
+            .map(function (p) {
+                return p.productId || '';
+            })
+            .sort()
+            .join('|');
+        return [
+            well.dn,
+            well.rzednaDna,
+            well.rzednaWlazu,
+            well.magazyn,
+            well.psiaBuda ? '1' : '0',
+            well.stycznaNadbudowa1200 ? '1' : '0',
+            well.zakonczenie,
+            well.redukcjaDN1000 ? '1' : '0',
+            well.redukcjaTargetDN,
+            well.wkladkaZwienczenie,
+            przejsciaKey,
+            configKey
+        ].join('§');
+    }
+
+    /**
+     * Sprawdza, czy identyczna treść AUTO_JS dla tej studni była już wysłana
+     * w bieżącej sesji. Jeśli tak — zwraca false (pomiń), wpp zapamiętuje i zwraca true.
+     * @param {Object} well
+     * @param {Array} configItems
+     * @returns {boolean}
+     */
+    function shouldSendAutoJs(well, configItems) {
+        const key = well.id || well.name || 'well-anon';
+        const fp = wellContentFingerprint(well, configItems);
+        if (autoJsDedupMap.get(key) === fp) {
+            return false;
+        }
+        autoJsDedupMap.set(key, fp);
+        return true;
+    }
+
     /**
      * Bezpieczny fetch z timeoutem. Nie rzuca wyjątków.
      */
@@ -197,6 +257,13 @@
             }
 
             const solverSource = normalizeSolverSource(options.solverSource);
+
+            // Deduplikacja AUTO_JS: pomiń powtórkę identycznej treści w bieżącej sesji.
+            // MANUAL/AI_SUGGEST zawsze przechodzą — to sygnały decyzji użytkownika.
+            if (solverSource === 'AUTO_JS' && !shouldSendAutoJs(well, configItems)) {
+                return;
+            }
+
             const wellHeight = safeHeightMm(well.rzednaWlazu, well.rzednaDna);
 
             const payload = {

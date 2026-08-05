@@ -4,7 +4,7 @@ import { AcceptanceModel } from './AcceptanceModel';
 import { modelRegistry, type ModelMetrics } from './ModelRegistry';
 import { featureExtractor } from './FeatureExtractor';
 import { ML_CONFIG } from './trainingConfig';
-import { FEATURE_NAMES } from '../../config/mlConstants';
+import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
 
 function applyForgetting(exampleAgeDays: number): number {
     const lambda = 0.01;
@@ -81,7 +81,7 @@ function computeRocAuc(scores: number[], labels: number[]): number {
 export class TrainingPipeline {
     private running = false;
     private mutex: Promise<void> | null = null;
-    private lastFeatureCount: number = 0;
+    private lastTrainedAt: string | null = null;
 
     private async acquire(): Promise<() => void> {
         let release: () => void;
@@ -109,10 +109,14 @@ export class TrainingPipeline {
         try {
             await featureExtractor.extractAndStore();
 
+            // Okno treningowe: najnowsze TRAINING_BATCH_SIZE wektorów (sliding window).
+            // Kolejność desc + reverse, by split train/val pozostał chronologiczny
+            // (train = starsze z okna, val = najnowsze z okna).
             const features = await prisma.aiFeature.findMany({
-                orderBy: { createdAt: 'asc' },
-                take: 2000
+                orderBy: { createdAt: 'desc' },
+                take: ML_CONSTANTS.TRAINING_BATCH_SIZE
             });
+            features.reverse();
 
             if (features.length < ML_CONFIG.minFeatureCountForTraining) {
                 logger.info(
@@ -122,7 +126,12 @@ export class TrainingPipeline {
                 return { trained: false, reason: `insufficient_data:${features.length}` };
             }
 
-            const newCount = features.length - this.lastFeatureCount;
+            const latestAt = features.length > 0 ? features[features.length - 1].createdAt : null;
+            const newCount = this.lastTrainedAt
+                ? await prisma.aiFeature.count({
+                      where: { createdAt: { gt: this.lastTrainedAt } }
+                  })
+                : features.length;
             if (!force && newCount < ML_CONFIG.minNewRecordsForTraining) {
                 logger.info(
                     'TrainingPipeline',
@@ -130,7 +139,6 @@ export class TrainingPipeline {
                 );
                 return { trained: false, reason: `insufficient_new_data:${newCount}` };
             }
-            this.lastFeatureCount = features.length;
 
             const { normalized, mins, maxs, dim } = await this.loadAndNormalizeFeatures(features);
 
@@ -147,36 +155,31 @@ export class TrainingPipeline {
 
             const metrics = this.evaluateModel(model, valSet, trainSet.length);
 
-            const existingActive = await modelRegistry.getActiveModel();
-            let shouldDeploy = true;
-            if (existingActive && !force) {
-                const oldAuc = existingActive.metrics.rocAuc;
-                shouldDeploy = metrics.rocAuc > oldAuc + 0.05;
-                if (!shouldDeploy) {
-                    logger.info(
-                        'TrainingPipeline',
-                        `Nowy model AUC=${metrics.rocAuc} nie przekracza starego ${oldAuc}+0.05`
-                    );
-                }
-            }
-
-            if (shouldDeploy || force) {
-                const version = await modelRegistry.saveModel(
-                    model,
-                    metrics,
-                    FEATURE_NAMES,
-                    mins,
-                    maxs,
-                    shouldDeploy
-                );
+            const bestAuc = await modelRegistry.getBestAuc();
+            const shouldDeploy =
+                bestAuc < 0 || metrics.rocAuc >= bestAuc + ML_CONFIG.deployAucImprovement;
+            if (!shouldDeploy) {
                 logger.info(
                     'TrainingPipeline',
-                    `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
+                    `Nowy model AUC=${metrics.rocAuc} nie przekracza najlepszego ${bestAuc}+${ML_CONFIG.deployAucImprovement}`
                 );
-                return { trained: true, version, metrics };
+                return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
             }
 
-            return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
+            const version = await modelRegistry.saveModel(
+                model,
+                metrics,
+                FEATURE_NAMES,
+                mins,
+                maxs,
+                true
+            );
+            this.lastTrainedAt = latestAt;
+            logger.info(
+                'TrainingPipeline',
+                `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
+            );
+            return { trained: true, version, metrics };
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('TrainingPipeline', `Błąd treningu: ${msg}`);

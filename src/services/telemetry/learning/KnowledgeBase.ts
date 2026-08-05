@@ -292,6 +292,18 @@ export class KnowledgeBase {
     }
 
     /**
+     * Liczba aktywnych wzorców w bazie wiedzy.
+     */
+    async countPatterns(): Promise<number> {
+        try {
+            return await prisma.ai_knowledge_base.count({ where: { status: 'active' } });
+        } catch (e) {
+            logger.error('KnowledgeBase', `Błąd countPatterns: ${e}`);
+            return 0;
+        }
+    }
+
+    /**
      * Oznacz wzorzec jako 'stale' (nieużywany od dawna).
      */
     async archivePattern(id: string): Promise<void> {

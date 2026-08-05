@@ -112,8 +112,14 @@ async function saveOfferStudnie() {
 
         renderSavedOffersStudnie();
 
-        // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI)
-        _sendAcceptanceTelemetry(wells, 'OFFER_SAVE');
+        // Pasywne uczenie — cichy POST (fire-and-forget, bez blokowania UI).
+        // Przy edycji istniejącej oferty wysyłamy tylko studnie zmienione od
+        // ostatniego zapisu — duplikaty identycznych studni zakłamują wzorce
+        // (hitCount/confidence) i zbiór treningowy ML.
+        const telemetryWells = editingOfferIdStudnie
+            ? _filterChangedWells(wells, existingDoc)
+            : wells;
+        _sendAcceptanceTelemetry(telemetryWells, 'OFFER_SAVE');
 
         // Auto-acceptance — rejestruj akceptację w ML pipeline
         if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
@@ -177,4 +183,48 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
             // silent
         }
     });
+}
+
+/**
+ * Zwraca studnie, które różnią się od stanu z ostatniego zapisu oferty.
+ * Porównanie oparte o stabilny JSON snapshota konfiguracji — studnie
+ * nietknięte od poprzedniego zapisu są pomijane (brak duplikatów telemetrii).
+ * @param {Array} wellsArr - aktualna tablica studni
+ * @param {Object|null} existingDoc - wcześniej zapisany dokument oferty
+ * @returns {Array} studnie z faktyczną różnicą
+ */
+function _filterChangedWells(wellsArr, existingDoc) {
+    if (!existingDoc || !Array.isArray(existingDoc.wells)) return wellsArr;
+    var prevMap = new Map(
+        existingDoc.wells.map(function (w) {
+            return [w.id, JSON.stringify(_wellSnapshot(w))];
+        })
+    );
+    return wellsArr.filter(function (w) {
+        var prev = prevMap.get(w.id);
+        if (prev === undefined) return true; // nowa studnia
+        return prev !== JSON.stringify(_wellSnapshot(w));
+    });
+}
+
+/**
+ * Stabilny snapshot istotnych pól studni do porównania zmian.
+ * @param {Object} well
+ * @returns {Object}
+ */
+function _wellSnapshot(well) {
+    return {
+        dn: well.dn,
+        rzednaDna: well.rzednaDna,
+        rzednaWlazu: well.rzednaWlazu,
+        magazyn: well.magazyn,
+        psiaBuda: !!well.psiaBuda,
+        stycznaNadbudowa1200: !!well.stycznaNadbudowa1200,
+        zakonczenie: well.zakonczenie,
+        redukcjaDN1000: !!well.redukcjaDN1000,
+        redukcjaTargetDN: well.redukcjaTargetDN,
+        wkladkaZwienczenie: well.wkladkaZwienczenie,
+        przejscia: well.przejscia || [],
+        config: well.config || []
+    };
 }

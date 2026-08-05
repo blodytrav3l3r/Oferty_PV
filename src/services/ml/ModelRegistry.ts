@@ -82,6 +82,20 @@ export class ModelRegistry {
         return this.recordToModel(record);
     }
 
+    async getBestAuc(): Promise<number> {
+        const records = await prisma.aiModel.findMany();
+        let best = -1;
+        for (const r of records) {
+            try {
+                const metrics = JSON.parse(r.metrics) as ModelMetrics;
+                if (metrics.rocAuc > best) best = metrics.rocAuc;
+            } catch {
+                // pomijamy uszkodzone metryki
+            }
+        }
+        return best;
+    }
+
     async getModelByVersion(version: string): Promise<StoredModel | null> {
         const record = await prisma.aiModel.findUnique({ where: { version } });
         if (!record) return null;
@@ -113,6 +127,61 @@ export class ModelRegistry {
             return null;
         }
         return null;
+    }
+
+    async activateModel(id: string): Promise<StoredModel | null> {
+        const target = await prisma.aiModel.findUnique({ where: { id } });
+        if (!target) return null;
+        if (target.active) return this.recordToModel(target);
+
+        const active = await prisma.aiModel.findFirst({ where: { active: true } });
+        if (active) {
+            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
+        }
+        await prisma.aiModel.update({ where: { id: target.id }, data: { active: true } });
+        logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
+        return this.recordToModel(target);
+    }
+
+    async promoteBestModel(): Promise<StoredModel | null> {
+        const records = await prisma.aiModel.findMany();
+        if (records.length === 0) return null;
+        let best = records[0];
+        let bestAuc = -1;
+        for (const r of records) {
+            let auc = -1;
+            try {
+                const metrics = JSON.parse(r.metrics) as ModelMetrics;
+                auc = metrics.rocAuc;
+            } catch {
+                // pomijamy uszkodzone metryki
+            }
+            if (auc > bestAuc) {
+                bestAuc = auc;
+                best = r;
+            }
+        }
+        const active = await prisma.aiModel.findFirst({ where: { active: true } });
+        if (active && active.id === best.id) {
+            return this.recordToModel(active);
+        }
+        if (active) {
+            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
+        }
+        await prisma.aiModel.update({ where: { id: best.id }, data: { active: true } });
+        logger.info('ModelRegistry', `Promowano najlepszy model ${best.version} (auc=${bestAuc})`);
+        return this.recordToModel(best);
+    }
+
+    async deleteModel(id: string): Promise<StoredModel | null> {
+        const record = await prisma.aiModel.findUnique({ where: { id } });
+        if (!record) return null;
+        if (record.active) {
+            throw new Error('Nie można usunąć aktywnego modelu');
+        }
+        await prisma.aiModel.delete({ where: { id } });
+        logger.info('ModelRegistry', `Usunięto model ${record.version}`);
+        return this.recordToModel(record);
     }
 
     async getModelCount(): Promise<number> {

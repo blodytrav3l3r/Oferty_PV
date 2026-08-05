@@ -159,6 +159,96 @@ describe('telemetryService wewnętrzne', () => {
     });
 });
 
+/* ===== Deduplikacja AUTO_JS (Etap 2) ===== */
+
+describe('telemetryService - deduplikacja AUTO_JS', () => {
+    const PREFIX = 'test_dedup_';
+    const wellId = PREFIX + crypto.randomUUID().slice(0, 8);
+    const basePayload = (
+        snapshot: Record<string, unknown>,
+        over: Record<string, unknown> = {}
+    ) => ({
+        solverSource: 'AUTO_JS' as const,
+        wellId,
+        dn: '1200',
+        wellHeight: 3000,
+        featureSnapshot: snapshot,
+        ...over
+    });
+
+    afterEach(async () => {
+        await prisma.ai_telemetry_logs.deleteMany({
+            where: { wellId: { startsWith: PREFIX } }
+        });
+    });
+
+    it('identyczny featureSnapshot AUTO_JS → update zamiast create', async () => {
+        const snap = { a: 1, b: { c: 'x' }, d: [1, 2] };
+        const r1 = await telemetryService.recordConfig(basePayload(snap));
+        const r2 = await telemetryService.recordConfig(basePayload(snap));
+
+        expect(r1.telemetryId).toBe(r2.telemetryId);
+        expect(r2.configHistoryId).toBeUndefined();
+        expect(r2.transitionsCreated).toBe(0);
+
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r1.telemetryId }
+        });
+        expect(row?.usageCount).toBe(2);
+        expect(typeof row?.lastUsedAt).toBe('string');
+
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(1);
+    });
+
+    it('różny featureSnapshot AUTO_JS → nowy rekord', async () => {
+        const r1 = await telemetryService.recordConfig(basePayload({ a: 1 }));
+        const r2 = await telemetryService.recordConfig(basePayload({ a: 2 }));
+
+        expect(r2.telemetryId).not.toBe(r1.telemetryId);
+        expect(r2.configHistoryId).toBeDefined();
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(2);
+    });
+
+    it('MANUAL z identycznym snapshot → NIE dedupowany', async () => {
+        const snap = { a: 1 };
+        await telemetryService.recordConfig(basePayload(snap));
+        await telemetryService.recordConfig(basePayload(snap, { solverSource: 'MANUAL' }));
+
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(2);
+    });
+
+    it('AUTO_JS bez wellId → NIE dedupowany', async () => {
+        const snap = { a: 1 };
+        const pid = PREFIX + crypto.randomUUID().slice(0, 8);
+        const r1 = await telemetryService.recordConfig({
+            solverSource: 'AUTO_JS',
+            projectId: pid,
+            featureSnapshot: snap
+        });
+        const r2 = await telemetryService.recordConfig({
+            solverSource: 'AUTO_JS',
+            projectId: pid,
+            featureSnapshot: snap
+        });
+
+        expect(r2.telemetryId).not.toBe(r1.telemetryId);
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { projectId: pid }
+        });
+        expect(count).toBe(2);
+        await prisma.ai_telemetry_logs.deleteMany({ where: { projectId: pid } });
+    });
+});
+
 /* ===== ConfidenceCalculator - matematyka ===== */
 
 describe('ConfidenceCalculator - krzywe confidence', () => {
@@ -521,8 +611,8 @@ describe('LearningEngine - pipeline', () => {
         expect(summary.error).toBeUndefined();
     });
 
-    it('getStatus zwraca strukturę', () => {
-        const s = le.getStatus();
+    it('getStatus zwraca strukturę', async () => {
+        const s = await le.getStatus();
         expect(s).toHaveProperty('initialized');
         expect(s).toHaveProperty('lastRunAt');
     });

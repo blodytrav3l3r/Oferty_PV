@@ -4,5 +4,6 @@ export const ML_CONFIG = {
     minHoursSinceLastTrain: 4,
     maxRecordsPerExtraction: 500,
     rollbackAucThreshold: 0.65,
-    deployAucImprovement: 0.05
+    // 0 = każdy model z wyższym AUC jest wdrażany automatycznie (najlepszy zawsze aktywny)
+    deployAucImprovement: 0
 };
