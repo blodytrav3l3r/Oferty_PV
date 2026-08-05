@@ -57,8 +57,8 @@ function processFile(filePath) {
     const original = content;
 
     const patterns = [
-        /(\*\*Wersja:\s*\*?\*?)\d+\.\d+\.\d+/g,
-        /(\*\*Wersja projektu:\s*\*?\*?)\d+\.\d+\.\d+/g,
+        /(\*\*Wersja:\*{0,2}\s*)\d+\.\d+\.\d+/g,
+        /(\*\*Wersja projektu:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(> Wersja:\s*)\d+\.\d+\.\d+/g
     ];
 
