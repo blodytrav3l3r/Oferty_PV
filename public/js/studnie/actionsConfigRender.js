@@ -139,7 +139,7 @@ function renderWellConfig() {
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
                   <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
                     <span style="background:${badge.bg}; color:var(--white); font-size:0.55rem; padding:1px 5px; border-radius:4px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
-                    <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
+                    <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';
 

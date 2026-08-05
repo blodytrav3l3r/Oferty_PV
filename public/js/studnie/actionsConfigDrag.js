@@ -112,13 +112,6 @@ window.handleCfgDragOver = function (e) {
     }
 };
 
-window.handleCfgDragLeave = function (e) {
-    const tile = e.target.closest('.config-tile');
-    if (tile && draggedCfgIndex !== null) {
-        tile.style.borderTop = '';
-    }
-};
-
 window.handleCfgDrop = function (e) {
     e.preventDefault();
     e.stopPropagation();

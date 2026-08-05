@@ -135,7 +135,7 @@ export function buildRurySectionHTML(data: RuryOfferData): {
 
                 tabelaPozycji += `<tr>
               <td class="text-center">${globalLp}</td>
-              <td>${displayName}<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">${productId}</span></td>
+              <td>${escapeHtml(displayName)}<br><span style="font-size:6.5pt;color:#${DOCX_COLORS.headerText};">${escapeHtml(productId)}</span></td>
               <td class="text-center">${hasLength ? displayMeters.toFixed(2) : '\u2014'}</td>
               <td class="text-center">${fmtIntLocal(quantity)}</td>
               <td class="text-right">${formatCurrency(unitPrice)}</td>

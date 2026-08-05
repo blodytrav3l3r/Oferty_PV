@@ -25,8 +25,14 @@ async function createOrderFromOffer() {
 
         if (isSavingOffer) {
             showToast('Trwa zapisywanie...', 'info');
-            while (isSavingOffer) {
+            let waitIterations = 0;
+            while (isSavingOffer && waitIterations < 100) {
                 await new Promise((r) => setTimeout(r, 200));
+                waitIterations++;
+            }
+            if (isSavingOffer) {
+                showToast('Zapis oferty trwał zbyt długo. Spróbuj ponownie.', 'error');
+                return;
             }
         } else {
             const saveResult = await saveOfferStudnie();

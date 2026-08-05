@@ -16,10 +16,10 @@ function buildClientInfoHtml() {
     const clientContact = getValue('client-contact');
 
     let html = '';
-    if (clientName) html += `<div><strong>${clientName}</strong></div>`;
-    if (clientNip) html += `<div>NIP: ${clientNip}</div>`;
-    if (clientAddress) html += `<div>${clientAddress}</div>`;
-    if (clientContact) html += `<div>Kontakt: ${clientContact}</div>`;
+    if (clientName) html += `<div><strong>${escapeHtml(clientName)}</strong></div>`;
+    if (clientNip) html += `<div>NIP: ${escapeHtml(clientNip)}</div>`;
+    if (clientAddress) html += `<div>${escapeHtml(clientAddress)}</div>`;
+    if (clientContact) html += `<div>Kontakt: ${escapeHtml(clientContact)}</div>`;
     if (!html) html = '<div>—</div>';
     return html;
 }
@@ -35,9 +35,9 @@ function buildInvestInfoHtml() {
     const investContractor = getValue('invest-contractor');
 
     let html = '';
-    if (investName) html += `<div><strong>${investName}</strong></div>`;
-    if (investAddress) html += `<div>${investAddress}</div>`;
-    if (investContractor) html += `<div>Wykonawca: ${investContractor}</div>`;
+    if (investName) html += `<div><strong>${escapeHtml(investName)}</strong></div>`;
+    if (investAddress) html += `<div>${escapeHtml(investAddress)}</div>`;
+    if (investContractor) html += `<div>Wykonawca: ${escapeHtml(investContractor)}</div>`;
     if (!html) html = '<div>—</div>';
     return html;
 }
@@ -196,10 +196,10 @@ async function generateOfferHtml() {
                 : u.displayName || u.username || 'Nieznany';
         let ht = `<td style="vertical-align:top; width:50%;">`;
         ht += `<strong style="color:var(--slate-400);">${title}:</strong><br>`;
-        ht += `<strong>${name}</strong><br>`;
+        ht += `<strong>${escapeHtml(name)}</strong><br>`;
         if (u.email)
-            ht += `Email: <a href="mailto:${u.email}" style="color:var(--slate-700);text-decoration:none;">${u.email}</a><br>`;
-        if (u.phone) ht += `Telefon: ${u.phone}`;
+            ht += `Email: <a href="mailto:${escapeHtml(u.email)}" style="color:var(--slate-700);text-decoration:none;">${escapeHtml(u.email)}</a><br>`;
+        if (u.phone) ht += `Telefon: ${escapeHtml(u.phone)}`;
         ht += `</td>`;
         return ht;
     };
@@ -691,112 +691,6 @@ async function exportStudnieOrderAsOffer_action(orderId, format) {
 }
 
 window.exportStudnieOrderAsOffer_action = exportStudnieOrderAsOffer_action;
-
-window.exportOfferToPDF_action = async function () {
-    document.getElementById('offer-export-modal').remove();
-
-    if (typeof showToast === 'function') {
-        showToast('Zapisywanie oferty przed eksportem...', 'info');
-    }
-
-    const savedOk = await saveOfferStudnie();
-    if (!savedOk && !editingOfferIdStudnie) {
-        if (typeof showToast === 'function') {
-            showToast('Eksport przerwany - nie udało się zapisać oferty.', 'error');
-        }
-        return;
-    }
-
-    if (typeof showToast === 'function') {
-        showToast('Generowanie pliku PDF...', 'info');
-    }
-
-    fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-pdf`, {
-        headers:
-            typeof authHeaders === 'function'
-                ? authHeaders()
-                : { 'Content-Type': 'application/json' }
-    })
-        .then(async (res) => {
-            if (!res.ok) {
-                const errText = await res.text().catch(() => res.statusText);
-                throw new Error(`Eksport PDF (${res.status}): ${errText.slice(0, 200)}`);
-            }
-            return res.blob();
-        })
-        .then((blob) => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `oferta_studnie_${editingOfferIdStudnie}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-            if (typeof showToast === 'function') {
-                showToast('Wyeksportowano ofertę do PDF', 'success');
-            }
-        })
-        .catch((err) => {
-            logger.error('offerPrintManager', '[Export Error]', err);
-            if (typeof showToast === 'function') {
-                showToast('Błąd eksportu: ' + err.message, 'error');
-            }
-        });
-};
-
-window.exportOfferToWord_action = async function () {
-    document.getElementById('offer-export-modal').remove();
-
-    if (typeof showToast === 'function') {
-        showToast('Zapisywanie oferty przed eksportem...', 'info');
-    }
-
-    const savedOk = await saveOfferStudnie();
-    if (!savedOk && !editingOfferIdStudnie) {
-        if (typeof showToast === 'function') {
-            showToast('Eksport przerwany - nie udało się zapisać oferty.', 'error');
-        }
-        return;
-    }
-
-    if (typeof showToast === 'function') {
-        showToast('Generowanie pliku DOCX...', 'info');
-    }
-
-    fetch(`/api/offers-studnie/${editingOfferIdStudnie}/export-docx`, {
-        headers:
-            typeof authHeaders === 'function'
-                ? authHeaders()
-                : { 'Content-Type': 'application/json' }
-    })
-        .then(async (res) => {
-            if (!res.ok) {
-                const errText = await res.text().catch(() => res.statusText);
-                throw new Error(`Eksport DOCX (${res.status}): ${errText.slice(0, 200)}`);
-            }
-            return res.blob();
-        })
-        .then((blob) => {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `oferta_studnie_${editingOfferIdStudnie}.docx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            a.remove();
-            if (typeof showToast === 'function') {
-                showToast('Wyeksportowano ofertę do DOCX', 'success');
-            }
-        })
-        .catch((err) => {
-            logger.error('offerPrintManager', '[Export Error]', err);
-            if (typeof showToast === 'function') {
-                showToast('Błąd eksportu: ' + err.message, 'error');
-            }
-        });
-};
 
 // ===== GLOBAL EXPORTS =====
 window.printOfferStudnie = printOfferStudnie;

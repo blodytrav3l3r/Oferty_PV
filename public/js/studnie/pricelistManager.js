@@ -191,7 +191,7 @@ function renderStudniePriceList() {
         items.forEach((p) => {
             html += `<tr>
         <td onclick="editStudnieCell(this,'id','${escapeHtml(p.id)}')" style="cursor:pointer; font-size:0.78rem; color:var(--text-muted);">${p.id}</td>
-        <td onclick="editStudnieCell(this,'name','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:500;">${p.name}</td>`;
+        <td onclick="editStudnieCell(this,'name','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight:500;">${escapeHtml(p.name)}</td>`;
 
             if (isPrzejscia) {
                 html += `

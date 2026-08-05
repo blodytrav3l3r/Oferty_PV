@@ -151,7 +151,7 @@ function renderZleceniaList() {
 
             html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})" style="margin-bottom:0.3rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${el.product.name}</div>
+                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
                         ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:var(--accent-hover); background:rgba(var(--accent-rgb), 0.2); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(var(--accent-rgb), 0.3);">${prodOrderNum}</div>` : ''}
                         ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${escapeHtml(savedOrder.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>` : ''}
@@ -243,7 +243,7 @@ function renderZleceniaWellConfig() {
                   <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="text-xs"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
-                  <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${p.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
+                  <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
                   <div style="font-size:0.55rem; color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
                 </div>
             </div>

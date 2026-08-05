@@ -51,10 +51,10 @@ export function buildStudnieSectionHTML(data: StudnieOfferData): {
                 return `
         <tr>
           <td class="text-center">${idx + 1}</td>
-          <td class="text-center bold">${wellName}</td>
+          <td class="text-center bold">${escapeHtml(wellName)}</td>
           <td class="text-center">${dnDisplay}</td>
           <td class="text-center">${fmtInt(height)}</td>
-          <td class="zwienczenie-cell text-center">${zwienczenie}</td>
+          <td class="zwienczenie-cell text-center">${escapeHtml(zwienczenie)}</td>
           <td class="text-center bold">${formatCurrency(price)}</td>
         </tr>
       `;

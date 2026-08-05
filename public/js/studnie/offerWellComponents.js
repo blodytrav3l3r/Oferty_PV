@@ -373,7 +373,7 @@ function renderComponentSubItems(
                 if (pr._drillingBasePrice > 0 && pr._drillingProd) {
                     const drillPrice = pr._drillingBasePrice * nadbudowaMult;
                     html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
-                        <td colspan="3" class="pl-lg">↳ + ${pr._drillingProd.name} ${pr._drillingProd.dn || ''}</td>
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}</td>
                         <td class="text-right">${fmt(drillPrice)} PLN</td>
                     </tr>`;
                 }

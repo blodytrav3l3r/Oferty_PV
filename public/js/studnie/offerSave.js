@@ -22,78 +22,77 @@ async function saveOfferStudnie() {
     // --- KONIEC TELEMETRII ---
 
     isSavingOffer = true;
-
-    const assignedUserRes = await assignOfferSupervisor(
-        currentUser,
-        !editingOfferIdStudnie,
-        editingOfferIdStudnie
-    );
-    if (assignedUserRes === undefined) {
-        showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
-        isSavingOffer = false;
-        return false;
-    }
-    if (assignedUserRes) {
-        editingOfferAssignedUserId = assignedUserRes.id;
-        editingOfferAssignedUserName = assignedUserRes.displayName || assignedUserRes.username;
-        const btnChangeUser = document.getElementById('btn-change-offer-user');
-        if (btnChangeUser)
-            btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
-    }
-
-    const { storageService } = await import('../shared/StorageService.js');
-
-    let existingDoc = null;
-    if (editingOfferIdStudnie) {
-        try {
-            existingDoc = await storageService.getOfferById(editingOfferIdStudnie);
-        } catch (e) {
-            logger.warn(
-                'offerManager',
-                '[OfferManager] Nie udało się pobrać istniejącej oferty studni do edycji:',
-                e
-            );
-        }
-    }
-
-    const simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
-    const pricing = calculateOfferPricing(
-        wells,
-        fields.transportKm,
-        fields.transportRate,
-        currentTransportMode
-    );
-
-    const base = buildBaseOfferDoc({
-        id: simpleId,
-        type: 'studnia_oferta',
-        fields: fields,
-        existingDoc: existingDoc,
-        currentUser: currentUser,
-        assignedUserId: editingOfferAssignedUserId,
-        assignedUserName: editingOfferAssignedUserName,
-        createdByUserId: editingOfferCreatedByUserId,
-        createdByUserName: editingOfferCreatedByUserName
-    });
-
-    const offerDoc = Object.assign({}, base, {
-        wells: structuredClone(wells),
-        wellsExport: pricing.wellsForExport,
-        visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
-        transportMode: currentTransportMode,
-        wellDiscounts:
-            typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts || {}) : {},
-        totalWeight: pricing.totalWeight,
-        totalNetto: pricing.totalNetto + pricing.totalTransportCostForOffer,
-        totalBrutto: (pricing.totalNetto + pricing.totalTransportCostForOffer) * 1.23,
-        wizard: {
-            globalParams: getWizardGlobalParams(),
-            currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,
-            version: 1
-        }
-    });
-
     try {
+        const assignedUserRes = await assignOfferSupervisor(
+            currentUser,
+            !editingOfferIdStudnie,
+            editingOfferIdStudnie
+        );
+        if (assignedUserRes === undefined) {
+            showToast('Anulowano zapis oferty - brak wybranego opiekuna', 'info');
+            isSavingOffer = false;
+            return false;
+        }
+        if (assignedUserRes) {
+            editingOfferAssignedUserId = assignedUserRes.id;
+            editingOfferAssignedUserName = assignedUserRes.displayName || assignedUserRes.username;
+            const btnChangeUser = document.getElementById('btn-change-offer-user');
+            if (btnChangeUser)
+                btnChangeUser.innerHTML = `<i data-lucide="user"></i> Opiekun: ${escapeHtml(editingOfferAssignedUserName)}`;
+        }
+
+        const { storageService } = await import('../shared/StorageService.js');
+
+        let existingDoc = null;
+        if (editingOfferIdStudnie) {
+            try {
+                existingDoc = await storageService.getOfferById(editingOfferIdStudnie);
+            } catch (e) {
+                logger.warn(
+                    'offerManager',
+                    '[OfferManager] Nie udało się pobrać istniejącej oferty studni do edycji:',
+                    e
+                );
+            }
+        }
+
+        const simpleId = editingOfferIdStudnie || 'offer_studnie_' + Date.now();
+        const pricing = calculateOfferPricing(
+            wells,
+            fields.transportKm,
+            fields.transportRate,
+            currentTransportMode
+        );
+
+        const base = buildBaseOfferDoc({
+            id: simpleId,
+            type: 'studnia_oferta',
+            fields: fields,
+            existingDoc: existingDoc,
+            currentUser: currentUser,
+            assignedUserId: editingOfferAssignedUserId,
+            assignedUserName: editingOfferAssignedUserName,
+            createdByUserId: editingOfferCreatedByUserId,
+            createdByUserName: editingOfferCreatedByUserName
+        });
+
+        const offerDoc = Object.assign({}, base, {
+            wells: structuredClone(wells),
+            wellsExport: pricing.wellsForExport,
+            visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
+            transportMode: currentTransportMode,
+            wellDiscounts:
+                typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts || {}) : {},
+            totalWeight: pricing.totalWeight,
+            totalNetto: pricing.totalNetto + pricing.totalTransportCostForOffer,
+            totalBrutto: (pricing.totalNetto + pricing.totalTransportCostForOffer) * 1.23,
+            wizard: {
+                globalParams: getWizardGlobalParams(),
+                currentStep: typeof currentWizardStep !== 'undefined' ? currentWizardStep : 3,
+                version: 1
+            }
+        });
+
         if (!offerDoc.wells || offerDoc.wells.length === 0) {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
             return false;

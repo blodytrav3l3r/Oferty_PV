@@ -1,4 +1,4 @@
-import { parseJsonField, getUserObject, filterRowsByRole, UserDoc, User } from '../src/helpers';
+import { parseJsonField, getUserObject, UserDoc } from '../src/helpers';
 
 // ─── parseJsonField ─────────────────────────────────────────────────
 
@@ -88,54 +88,5 @@ describe('getUserObject', () => {
         expect(user.firstName).toBeNull();
         expect(user.lastName).toBeNull();
         expect(user.email).toBeNull();
-    });
-});
-
-// ─── filterRowsByRole ───────────────────────────────────────────────
-
-describe('filterRowsByRole', () => {
-    const docs: UserDoc[] = [
-        { id: 'u1', username: 'a', password: 'x', role: 'user', subUsers: null },
-        { id: 'u2', username: 'b', password: 'x', role: 'user', subUsers: null },
-        { id: 'u3', username: 'c', password: 'x', role: 'user', subUsers: null }
-    ];
-
-    it('admin powinien widzieć wszystkie dokumenty', () => {
-        const admin: User = { id: 'admin1', username: 'admin', role: 'admin', subUsers: [] };
-        const result = filterRowsByRole(docs, admin);
-        expect(result).toHaveLength(3);
-    });
-
-    it('użytkownik powinien widzieć tylko własne dokumenty', () => {
-        const user: User = { id: 'u2', username: 'b', role: 'user', subUsers: [] };
-        const result = filterRowsByRole(docs, user);
-        expect(result).toHaveLength(1);
-        expect(result[0].id).toBe('u2');
-    });
-
-    it('pro powinien widzieć własne dokumenty oraz dokumenty podużytkowników (subUsers)', () => {
-        const pro: User = { id: 'u1', username: 'a', role: 'pro', subUsers: ['u3'] };
-        const result = filterRowsByRole(docs, pro);
-        expect(result).toHaveLength(2);
-        expect(result.map((d) => d.id)).toEqual(['u1', 'u3']);
-    });
-
-    it('pro bez podużytkowników powinien widzieć tylko własne dokumenty', () => {
-        const pro: User = { id: 'u1', username: 'a', role: 'pro', subUsers: [] };
-        const result = filterRowsByRole(docs, pro);
-        expect(result).toHaveLength(1);
-    });
-
-    it('nieznana rola powinna widzieć tylko własne dokumenty', () => {
-        const unknown: User = { id: 'u2', username: 'b', role: 'unknown', subUsers: [] };
-        const result = filterRowsByRole(docs, unknown);
-        expect(result).toHaveLength(1);
-        expect(result[0].id).toBe('u2');
-    });
-
-    it('powinien zwrócić pustą tablicę, jeśli nie ma pasujących dokumentów', () => {
-        const user: User = { id: 'nonexistent', username: 'x', role: 'user', subUsers: [] };
-        const result = filterRowsByRole(docs, user);
-        expect(result).toHaveLength(0);
     });
 });

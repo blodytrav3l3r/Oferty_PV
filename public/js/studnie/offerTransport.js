@@ -53,7 +53,11 @@ window.updateModalTransportDetails = function () {
     if (typeof wells !== 'undefined' && typeof calcWellStats === 'function') {
         wells.forEach((w) => (globalWeight += calcWellStats(w).weight));
     }
-    const fmt = (v) => v.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    const fmt = (v) =>
+        v
+            .toFixed(2)
+            .replace('.', ',')
+            .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
     let costPerTrip = 0;
     let totalTransports = 0;
     let totalTransportCost = 0;

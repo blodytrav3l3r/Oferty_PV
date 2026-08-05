@@ -99,7 +99,6 @@
         "@types/swagger-jsdoc": "^6.0.4",
         "@types/swagger-ui-express": "^4.1.8",
         "concurrently": "^10.0.3",
-        "esbuild": "^0.28.1",
         "eslint": "^10.6.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.4.0",

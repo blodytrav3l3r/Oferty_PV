@@ -732,7 +732,7 @@ window.tmUpdatePreview = function () {
                 pr.dn === p.dn
         );
 
-        const label = `${well.name || `Studnia ${wellIdx + 1}`} — ${p.category} DN${p.dn}`;
+        const label = `${escapeHtml(well.name || `Studnia ${wellIdx + 1}`)} — ${escapeHtml(p.category)} DN${p.dn}`;
         if (replacement) {
             replaceList.push(label);
         } else {

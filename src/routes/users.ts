@@ -125,11 +125,11 @@ router.put(
             const newSymbol = symbol !== undefined ? symbol : user.symbol;
             const newOrderStartNumber =
                 orderStartNumber !== undefined
-                    ? parseInt(orderStartNumber) || 1
+                    ? parseInt(orderStartNumber, 10) || 1
                     : user.orderStartNumber;
             const newProdOrderStartNumber =
                 productionOrderStartNumber !== undefined
-                    ? parseInt(productionOrderStartNumber) || 1
+                    ? parseInt(productionOrderStartNumber, 10) || 1
                     : user.productionOrderStartNumber || 1;
 
             const newSubUsersString =

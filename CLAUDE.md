@@ -136,7 +136,7 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 
 ### Sortowanie (krok 3 + zakładka Oferta)
 
-- Logika mirror w: `offerItems.js:578-635` (pełna tabela z subheaders) i `offerSummaryTab.js:111-153` (bez subheaders)
+- Jedyne źródło prawdy: `getSortedRuryItems(items)` w `public/js/rury/productHelpers.js:73` (export `window.getSortedRuryItems` ~:121); wołana z `offerSummaryTab.js:170`, `offerRendering.js:54`, `orderKartaBudowy.js:107-108` — nie duplikuj logiki sortowania
 - Algorytm: `grouped[category][diamKey]` → sort kat wg `CATEGORIES.indexOf()` → sort średnic numerycznie → wewnątrz (cat,diam) Bosy-Bosy pierwsze, potem `lengthM` asc
 - Fallback średnicy: `productId.split('-')[4]` jako int\*100 gdy `getProductDiameter` zwraca null
 - `CATEGORIES` kolejność: Rury Betonowe → Żelbetowe KL.A → Żelbetowe KL.S → Duże Żelbetowe II → Rury Jajowe Betonowe → Rury Jajowe Żelbetowe → Akcesoria PEHD → Uszczelki → Zabezpieczenie transportu
@@ -236,15 +236,15 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ## Przydatne komendy
 
-| Komenda                               | Co robi                                |
-| ------------------------------------- | -------------------------------------- |
-| `npm run dev:backend`                 | Uruchom backend (ts-node-dev)          |
-| `npm run typecheck`                   | TypeScript backend check               |
-| `npm run typecheck:frontend`          | TypeScript frontend check              |
-| `npm run test:quick`                  | Smoke tests (Jest bez coverage)        |
-| `npm run lint`                        | ESLint (tylko src/)                    |
-| `npm run format`                      | Prettier                               |
-| `npm run version:check`               | Sprawdź spójność VERSION/pkg/CHANGELOG |
-| `npm run version:patch\|minor\|major` | Bump wersji                            |
-| `npm run prisma:deploy`               | Zastosuj migracje (baza z `_prisma_migrations`) |
-| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu dla baz bez `_prisma_migrations` |
+| Komenda                                                 | Co robi                                         |
+| ------------------------------------------------------- | ----------------------------------------------- |
+| `npm run dev:backend`                                   | Uruchom backend (ts-node-dev)                   |
+| `npm run typecheck`                                     | TypeScript backend check                        |
+| `npm run typecheck:frontend`                            | TypeScript frontend check                       |
+| `npm run test:quick`                                    | Smoke tests (Jest bez coverage)                 |
+| `npm run lint`                                          | ESLint (tylko src/)                             |
+| `npm run format`                                        | Prettier                                        |
+| `npm run version:check`                                 | Sprawdź spójność VERSION/pkg/CHANGELOG          |
+| `npm run version:patch\|minor\|major`                   | Bump wersji                                     |
+| `npm run prisma:deploy`                                 | Zastosuj migracje (baza z `_prisma_migrations`) |
+| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu dla baz bez `_prisma_migrations`  |

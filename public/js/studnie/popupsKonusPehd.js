@@ -16,7 +16,7 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
         </h3>
         <p style="color:var(--slate-400); font-size:0.95rem; margin-bottom:1.8rem; line-height:1.6; font-family:Inter,sans-serif;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>
-            Wybierz alternatywne zakończenie dla studni <strong class="text-primary">${well.name || 'Bieżąca studnia'}</strong>:
+            Wybierz alternatywne zakończenie dla studni <strong class="text-primary">${escapeHtml(well.name || 'Bieżąca studnia')}</strong>:
         </p>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">

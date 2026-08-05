@@ -1,4 +1,4 @@
-import { normalizeDate, dateConversionSql, isValidId } from '../src/helpers';
+import { normalizeDate, isValidId } from '../src/helpers';
 
 describe('normalizeDate', () => {
     it('konwertuje timestamp number', () => {
@@ -29,31 +29,6 @@ describe('normalizeDate', () => {
     it('zwraca teraz dla null', () => {
         const result = normalizeDate(null);
         expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    });
-});
-
-describe('dateConversionSql', () => {
-    it('generuje fragment SQL z aliasem domyślnym', () => {
-        const sql = dateConversionSql('createdAt');
-        expect(sql).toContain('CASE WHEN "createdAt" GLOB');
-        expect(sql).toContain('ELSE "createdAt" END as "createdAt"');
-    });
-
-    it('generuje SQL dla kolumny kwalifikowanej tabelą z poprawnym aliasem', () => {
-        const sql = dateConversionSql('production_orders_rel."createdAt"');
-        expect(sql).toContain('production_orders_rel."createdAt"');
-        expect(sql).toContain('END as "createdAt"');
-    });
-
-    it('akceptuje jawny alias zamiast domyślnego', () => {
-        const sql = dateConversionSql('production_orders_rel."createdAt"', 'myCreated');
-        expect(sql).toContain('END as "myCreated"');
-    });
-
-    it('generuje fragment SQL z własnym aliasem', () => {
-        const sql = dateConversionSql('col', 'customAlias');
-        expect(sql).toContain('CASE WHEN "col" GLOB');
-        expect(sql).toContain('END as "customAlias"');
     });
 });
 

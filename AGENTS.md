@@ -164,7 +164,7 @@ Projekt stosuje **jednolite kodowanie UTF-8** dla wszystkich plików tekstowych:
 ### Moduł: Rury
 
 - **Sortowanie (krok 3 oraz zakładka Oferta)**:
-    - Logika ta jest zdublowana w dwóch plikach: `offerItems.js:578-635` (pełna tabela z podnagłówkami) oraz `offerSummaryTab.js:111-153` (tabela uproszczona, bez podnagłówków). Dbaj o to, by zmiany w logice sortowania były nanoszone w obu miejscach równolegle.
+    - Jedyne źródło prawdy sortowania: `getSortedRuryItems(items)` w `public/js/rury/productHelpers.js:73` (export `window.getSortedRuryItems` na ~linii 121). Funkcja zwraca `{ grouped, sortedCategories, flat }`. Jest wołana przez `offerSummaryTab.js:170`, `offerRendering.js:54` i `orderKartaBudowy.js:107-108` — nie duplikuj jej logiki w innych plikach, zawsze korzystaj z `getSortedRuryItems`.
     - Kategorie są sortowane według kolejności w tablicy `CATEGORIES`:
       `Rury Betonowe` → `Żelbetowe KL.A` → `Żelbetowe KL.S` → `Duże Żelbetowe II` → `Rury Jajowe Betonowe` → `Rury Jajowe Żelbetowe` → `Akcesoria PEHD` → `Uszczelki` → `Zabezpieczenie transportu`.
     - Średnice są sortowane numerycznie. Jeśli `getProductDiameter` zwraca `null`, pobierz średnicę z ID produktu: `productId.split('-')[4]` pomnożone przez 100.

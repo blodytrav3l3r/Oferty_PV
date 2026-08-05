@@ -25,6 +25,10 @@ function getFlowVisuals(flowType) {
     };
 }
 
+function escapeHtmlAttr(str) {
+    return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function getAngleColor(angle) {
     return angle === 0 || angle === '0' ? 'var(--accent)' : 'var(--accent-hover)';
 }
@@ -141,7 +145,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     let priceSubInfo = '';
     if (opts.drillingBasePrice > 0 && opts.drillingProd) {
-        priceSubInfo = `<div style="font-size:0.55rem; color:var(--warn); text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${opts.drillingProd.name}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
+        priceSubInfo = `<div style="font-size:0.55rem; color:var(--warn); text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${escapeHtmlAttr(opts.drillingProd.name)}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
     }
 
     const priceHTML = showPrice
@@ -332,59 +336,6 @@ function computeHeightFromElement(mmFromBottom, configMap) {
 }
 
 // ──────────────────────────────────────
-// Renderuj odfiltrowaną listę przejść (tryb lustrzany dla zamówień)
-// ──────────────────────────────────────
-
-/**
- * Renderuje odfiltrowaną listę przejść do kontenera.
- * Używane przez okno zamówienia do wyświetlania tylko przejść dla konkretnego elementu.
- *
- * @param {HTMLElement} container       - Element DOM do renderowania.
- * @param {Array}       items           - Podzbiór well.przejscia przypisany do tego elementu.
- * @param {Object}      well            - Pełny obiekt studni (do wyszukania globalIndex).
- * @param {Function}    findProductFn   - Funkcja(productId) => produkt.
- * @param {Array}       configMap       - Mapa konfiguracji z buildConfigMap().
- * @param {number}      rzDna           - Rzędna dna ze studni.
- */
-function renderMirrorTransitions(container, items, well, findProductFn, configMap, rzDna) {
-    if (!container) return;
-
-    if (items.length === 0) {
-        container.innerHTML =
-            '<div style="padding:1.2rem; text-align:center; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px; font-size:0.75rem;">Brak przejść szczelnych<br>w tym elemencie.</div>';
-        return;
-    }
-
-    container.innerHTML = items
-        .map((item) => {
-            const globalIndex = well.przejscia.indexOf(item);
-            const product = findProductFn(item.productId);
-
-            let pel = parseFloat(item.rzednaWlaczenia);
-            if (isNaN(pel)) pel = rzDna;
-            const mmFromBottom = (pel - rzDna) * 1000;
-            const heightMm = computeHeightFromElement(mmFromBottom, configMap);
-
-            return renderTransitionTileHTML(item, globalIndex, product, {
-                heightMm,
-                showEditBtn: false,
-                showDeleteBtn: false,
-                showPrice: false,
-                spadekKinetaLabel: 'Spadek w k.',
-                spadekMufaLabel: 'Spadek w m.',
-                enableDragDrop: false,
-                well: well
-            });
-        })
-        .join('');
-}
-
-// Eksport do okna (window) dla użycia bez modułów
-window.renderTransitionTileHTML = renderTransitionTileHTML;
-window.buildConfigMap = buildConfigMap;
-window.findAssignedElement = findAssignedElement;
-window.computeHeightFromElement = computeHeightFromElement;
-window.renderMirrorTransitions = renderMirrorTransitions;
 
 /**
  * Nadaje displayIndex przejściom na podstawie kątów (ruch wskazówek zegara).
@@ -402,4 +353,8 @@ function ensureDisplayIndices(przejscia) {
         p.displayIndex = idx;
     });
 }
+window.renderTransitionTileHTML = renderTransitionTileHTML;
+window.buildConfigMap = buildConfigMap;
+window.findAssignedElement = findAssignedElement;
+window.computeHeightFromElement = computeHeightFromElement;
 window.ensureDisplayIndices = ensureDisplayIndices;

@@ -9,7 +9,7 @@ import {
     SESSION_MAX_AGE_MS,
     AuthenticatedRequest
 } from '../middleware/auth';
-import { LOGIN_LIMITER } from '../middleware/rateLimiters';
+import { LOGIN_LIMITER, CHANGE_PASSWORD_LIMITER } from '../middleware/rateLimiters';
 import {
     loginSchema,
     registerSchema,
@@ -49,7 +49,7 @@ router.post('/login', loginLimiter, validateData(loginSchema), async (req, res) 
         }
 
         res.cookie('authToken', token, {
-            httpOnly: true, // true - cookie недоступний JavaScript
+            httpOnly: true, // true - cookie niedostępne dla JavaScript
             maxAge: SESSION_MAX_AGE_MS,
             secure: isCookieSecure(),
             sameSite: 'lax', // lax zamiast strict dla nawigacji między stronami
@@ -81,6 +81,7 @@ router.post(
     '/register',
     requireAuth,
     requireAdmin,
+    CHANGE_PASSWORD_LIMITER,
     validateData(registerSchema),
     async (req, res) => {
         const {
@@ -122,8 +123,8 @@ router.post(
                     email: email || '',
                     symbol: symbol || '',
                     subUsers: subUsersString,
-                    orderStartNumber: parseInt(orderStartNumber) || 1,
-                    productionOrderStartNumber: parseInt(productionOrderStartNumber) || 1,
+                    orderStartNumber: parseInt(orderStartNumber, 10) || 1,
+                    productionOrderStartNumber: parseInt(productionOrderStartNumber, 10) || 1,
                     createdAt: new Date().toISOString()
                 }
             });
@@ -182,6 +183,7 @@ router.get('/me', requireAuth, (req, res) => {
 router.post(
     '/change-password',
     requireAuth,
+    CHANGE_PASSWORD_LIMITER,
     validateData(changePasswordSchema),
     async (req, res) => {
         const authReq = req as AuthenticatedRequest;

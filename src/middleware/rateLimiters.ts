@@ -50,6 +50,17 @@ export const LOGIN_LIMITER = createRateLimiter({
     message: 'Zbyt wiele prób logowania. Odczekaj minutę.'
 });
 
+/**
+ * Rate limiter dla zmiany hasła (anti-bruteforce).
+ * 5 prób na 15 minut na IP — okno dłuższe niż przy logowaniu,
+ * bo to operacja wrażliwa (wymaga podania starego hasła).
+ */
+export const CHANGE_PASSWORD_LIMITER = createRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxHits: 5,
+    message: 'Zbyt wiele prób zmiany hasła. Odczekaj 15 minut.'
+});
+
 export const ADMIN_USERS_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
     maxHits: 30,

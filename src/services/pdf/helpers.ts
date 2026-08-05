@@ -37,7 +37,7 @@ export function mapWellsToItems(wells: unknown[]): {
 
         if (!itemsByDN[dn]) itemsByDN[dn] = [];
         itemsByDN[dn].push({
-            productName: String(well.name ?? `Studnia DN${dn}`),
+            productName: escapeHtml(String(well.name ?? `Studnia DN${dn}`)),
             quantity: 1,
             price: wellPrice,
             DN: dn,

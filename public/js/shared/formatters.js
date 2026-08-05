@@ -146,3 +146,5 @@ function applyPrintTokens(html) {
 
 window.PRINT_TOKENS_CSS = PRINT_TOKENS_CSS;
 window.applyPrintTokens = applyPrintTokens;
+window.fmt = fmt;
+window.fmtInt = fmtInt;

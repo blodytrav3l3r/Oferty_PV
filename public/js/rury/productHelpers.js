@@ -10,7 +10,7 @@
 function getProductLength(id) {
     const parts = id.split('-');
     if (parts.length >= 4) {
-        const code = parseInt(parts[3]);
+        const code = parseInt(parts[3], 10);
         if (!isNaN(code) && code >= 10) return code * 100; // mm
     }
     return null;
@@ -24,11 +24,11 @@ function getProductLength(id) {
 function getProductDiameter(id) {
     const parts = id.split('-');
     if (parts.length >= 3) {
-        const code = parseInt(parts[2]);
+        const code = parseInt(parts[2], 10);
         if (!isNaN(code) && code > 0) return code * 100; // mm
     }
     if (parts.length === 2 && parts[0] === 'ZT') {
-        const code = parseInt(parts[1]);
+        const code = parseInt(parts[1], 10);
         if (!isNaN(code) && code > 0) return code; // ZT-0300 → 300 (DN)
     }
     return null;
@@ -80,7 +80,7 @@ function getSortedRuryItems(items) {
         if (!diameter && item.productId) {
             const parts = item.productId.split('-');
             if (parts.length >= 5) {
-                const code = parseInt(parts[4]);
+                const code = parseInt(parts[4], 10);
                 if (!isNaN(code) && code > 0) diameter = code * 100;
             }
         }
@@ -98,8 +98,8 @@ function getSortedRuryItems(items) {
     const flat = [];
     sortedCategories.forEach((cat) => {
         const diamKeys = Object.keys(grouped[cat]).sort((a, b) => {
-            const da = parseInt(a.replace('DN ', '')) || 99999;
-            const db = parseInt(b.replace('DN ', '')) || 99999;
+            const da = parseInt(a.replace('DN ', ''), 10) || 99999;
+            const db = parseInt(b.replace('DN ', ''), 10) || 99999;
             return da - db;
         });
         diamKeys.forEach((dk) => {

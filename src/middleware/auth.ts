@@ -59,7 +59,8 @@ export async function getSession(token: string | undefined): Promise<Session | n
             return null;
         }
         return session as Session;
-    } catch (_e) {
+    } catch (e) {
+        logger.error('Auth', 'Błąd odczytu sesji', e);
         return null;
     }
 }
@@ -99,7 +100,8 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
         req.user = getUserObject(user);
         next();
-    } catch (_e) {
+    } catch (e) {
+        logger.error('Auth', 'Błąd bazy danych w requireAuth', e);
         res.status(500).json({ error: 'Błąd bazy danych' });
     }
 }

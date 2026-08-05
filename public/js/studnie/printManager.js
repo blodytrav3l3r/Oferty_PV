@@ -786,59 +786,6 @@ async function printEtykieta() {
     silentPrint(html);
 }
 
-async function printEtykietaAll() {
-    if (!zleceniaElementsList || zleceniaElementsList.length === 0) {
-        showToast('Brak elementów do druku', 'error');
-        return;
-    }
-
-    showToast('Generowanie wydruku zbiorczego...', 'info');
-
-    const template = await getTemplate('templates/etykieta.html');
-    if (!template) return;
-
-    // Szukamy bloku ze strukturalną zawartością widoku do duplikacji
-    const pageMatch = template.match(
-        /<div class="page">([\s\S]*?)<\/div>\s*<!-- KONIEC BLOKU "page" -->/
-    );
-    if (!pageMatch) {
-        showToast('Błąd szablonu etykiety - brak bloku div.page', 'error');
-        return;
-    }
-
-    const pageTemplate = pageMatch[0];
-    const htmlBefore = applyPrintTokens(template.substring(0, pageMatch.index));
-    const htmlAfter = template.substring(pageMatch.index + pageTemplate.length);
-
-    let allPagesHTML = '';
-    const savedIdx = zleceniaSelectedIdx;
-
-    for (let i = 0; i < zleceniaElementsList.length; i++) {
-        zleceniaSelectedIdx = i;
-        const pageData = collectPrintData();
-        if (!pageData) continue;
-
-        let populatedPage = buildEtykietaHtml(pageTemplate, pageData);
-
-        if (i < zleceniaElementsList.length - 1) {
-            populatedPage += '\n<div class="page-break"></div>\n';
-        }
-
-        allPagesHTML += populatedPage;
-    }
-
-    zleceniaSelectedIdx = savedIdx;
-
-    if (!allPagesHTML) {
-        showToast('Brak danych do druku', 'warning');
-        return;
-    }
-
-    const finalHTML = htmlBefore + allPagesHTML + htmlAfter;
-    silentPrint(finalHTML);
-}
-
 // ===== GLOBAL EXPORTS =====
 window.printZlecenie = printZlecenie;
 window.printEtykieta = printEtykieta;
-window.printEtykietaAll = printEtykietaAll;

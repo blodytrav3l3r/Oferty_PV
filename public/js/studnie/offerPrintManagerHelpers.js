@@ -83,7 +83,7 @@ function buildDiameterTableHtml(dn, wellsGroup, globalLpOffset, transportCostMap
 
         html += `<tr>
             <td class="text-center">${lp}</td>
-            <td class="text-center bold">${well.name || '—'}</td>
+            <td class="text-center bold">${escapeHtml(well.name || '—')}</td>
             <td class="text-center">${dnDisplay}</td>
             <td class="text-center">${fmtInt(stats.height)}</td>
             <td class="zwienczenie-cell text-center">${zwienczenie}</td>

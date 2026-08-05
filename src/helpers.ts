@@ -55,23 +55,6 @@ export function getUserObject(doc: UserDoc): User {
 }
 
 /**
- * Filtruje wiersze (np. oferty, klientów) na podstawie roli i uprawnień użytkownika
- */
-export function filterRowsByRole(docs: UserDoc[], user: User): UserDoc[] {
-    if (user.role === 'admin') {
-        return docs;
-    }
-    if (user.role === 'user') {
-        return docs.filter((d) => d.id === user.id);
-    }
-    if (user.role === 'pro') {
-        const subs = new Set([user.id, ...(user.subUsers || [])]);
-        return docs.filter((d) => subs.has(d.id));
-    }
-    return docs.filter((d) => d.id === user.id);
-}
-
-/**
  * Bezpiecznie parsuje pole JSON z bazy danych
  */
 export function parseJsonField<T>(raw: string | null | undefined, fallback: T): T {
@@ -95,20 +78,6 @@ export function normalizeDate(raw: unknown): string {
         return raw;
     }
     return new Date().toISOString();
-}
-
-/**
- * Zwraca fragment SQL konwertujący kolumnę z timestamp (13-cyfrowy ms) na ISO string.
- * Używany w raw queries dla tabel z mieszanymi formatami dat.
- */
-export function dateConversionSql(column: string, alias?: string): string {
-    const col = column.includes('.') ? column : `"${column}"`;
-    const aliasStr = alias || column.split('.').pop()?.replace(/"/g, '') || column;
-    return (
-        `CASE WHEN ${col} GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' ` +
-        `THEN datetime(CAST(${col} AS INTEGER)/1000, 'unixepoch') ` +
-        `ELSE ${col} END as "${aliasStr}"`
-    );
 }
 
 /**

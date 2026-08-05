@@ -29,7 +29,7 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
             : 'all',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
-        limit: Math.min(100, Math.max(1, parseInt(String(query.limit)) || 50)),
+        limit: Math.min(100, Math.max(1, parseInt(String(query.limit), 10) || 50)),
         sort: ['createdAt', 'offer_number'].includes(query.sort as string)
             ? (query.sort as SearchParams['sort'])
             : 'createdAt',

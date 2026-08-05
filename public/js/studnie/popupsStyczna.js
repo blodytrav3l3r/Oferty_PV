@@ -19,7 +19,7 @@ function showStycznaPopup(mode = 'select') {
            onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.1)'; this.style.background='rgba(var(--white-rgb), 0.05)'">
             <div>
                 <div style="font-size:0.82rem; font-weight:700; color:var(--text-primary, var(--white));">DN${p.dn}</div>
-                <div style="font-size:0.65rem; color:var(--text-muted, var(--slate-500)); margin-top:1px;">${p.name}</div>
+                <div style="font-size:0.65rem; color:var(--text-muted, var(--slate-500)); margin-top:1px;">${escapeHtml(p.name)}</div>
             </div>
             <div style="font-size:0.72rem; color:var(--text-muted);">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
             <div style="font-size:0.85rem; font-weight:800; color:var(--success, var(--success));">${fmtInt(p.price)} PLN</div>

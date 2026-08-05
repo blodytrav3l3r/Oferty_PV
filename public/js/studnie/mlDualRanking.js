@@ -823,17 +823,6 @@
         _statusPollerInterval = setInterval(updateAiStatusIndicator, 30000);
     }
 
-    function stopMlPollers() {
-        if (_cacheCleanInterval) {
-            clearInterval(_cacheCleanInterval);
-            _cacheCleanInterval = null;
-        }
-        if (_statusPollerInterval) {
-            clearInterval(_statusPollerInterval);
-            _statusPollerInterval = null;
-        }
-    }
-
     // Uruchom po załadowaniu DOM
     setTimeout(validateFeatureSchema, 3000); // walidacja schematu cech z backendem
 
@@ -851,7 +840,6 @@
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
     window.updateAiStatusIndicator = updateAiStatusIndicator;
-    window.stopMlPollers = stopMlPollers;
 
     // Stare API (kompatybilność)
     window.mlEnrichLayout = mlEnrichLayout;

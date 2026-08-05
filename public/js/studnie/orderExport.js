@@ -16,33 +16,6 @@ function refreshGlobalMetrics() {
     }
 }
 
-window.showKartaBudowyExportChoice = function () {
-    if (!orderEditMode || !orderEditMode.orderId) {
-        showToast('Brak aktywnego zamówienia', 'error');
-        return;
-    }
-    const orderId = orderEditMode.orderId;
-    const modalHtml = `
-    <div id="karta-export-modal" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(var(--black-rgb), 0.8); display: flex; justify-content: center; align-items: center; z-index: ${LAYERS.EXPORT_MODAL}; backdrop-filter: blur(4px);">
-        <div style="background: var(--slate-800); border: 1px solid var(--slate-700); border-radius: 12px; width: 350px; padding: 1.5rem; text-align: center; box-shadow: 0 10px 25px rgba(var(--black-rgb), 0.5);">
-            <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--white); font-weight: 700;">Wydruk Karty Budowy</h3>
-            <p style="font-size: 0.8rem; color: var(--border); margin-bottom: 1.5rem;">Wybierz format eksportu karty budowy zamówienia</p>
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-bottom: 1.5rem;">
-                <button onclick="exportKartaToPDF_action('${escapeHtml(orderId)}')" style="flex: 1; background: rgba(var(--danger-rgb), 0.2); color: var(--danger-hover); border: 2px solid rgba(var(--danger-rgb), 0.8); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.2)'">
-                    <span style="font-size: 2rem;"><i data-lucide="file-text"></i></span> PDF
-                </button>
-                <button onclick="exportKartaToWord_action('${escapeHtml(orderId)}')" style="flex: 1; background: rgba(var(--blue-rgb), 0.2); color: var(--blue-hover); border: 2px solid rgba(var(--blue-rgb), 0.8); padding: 1rem; border-radius: 10px; cursor: pointer; font-weight: 800; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; transition: all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--blue-rgb), 0.2)'">
-                    <span style="font-size: 2rem;"><i data-lucide="edit"></i></span> Word
-                </button>
-            </div>
-            <button style="padding: 0.5rem 1rem; border-radius: 6px; background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.1); color: var(--text-muted); cursor: pointer;" onclick="document.getElementById('karta-export-modal').remove()">Anuluj</button>
-        </div>
-    </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-};
-
 window.exportKartaToPDF_action = async function (orderId) {
     const modal = document.getElementById('karta-export-modal');
     if (modal) modal.remove();
