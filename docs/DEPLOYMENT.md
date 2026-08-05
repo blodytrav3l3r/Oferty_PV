@@ -1,6 +1,6 @@
 # Wdrożenie — WITROS Oferty PV
 
-**Wersja:** 1.11.0  
+**Wersja:** 1.11.1  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Ostatnia aktualizacja:** 2026-08-01
 

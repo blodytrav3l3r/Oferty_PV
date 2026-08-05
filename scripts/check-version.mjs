@@ -33,7 +33,7 @@ function parseVersionFromPkg(pkgJson) {
 function parseLastVersionFromChangelog(cl) {
     // Najnowsza wersja jest na GÓRZE pliku (Keep a Changelog).
     // Bierzemy pierwszy nagłówek "## [X.Y.Z]" lub "## X.Y.Z".
-    const m = [...(cl ?? '').matchAll(/^##[ \t]*\[?(\d+\.\d+\.\d+)\]?[^\n\r]*/gm)];
+    const m = [...(cl ?? '').matchAll(/^#{2,3}[ \t]*\[?(\d+\.\d+\.\d+)\]?[^\n\r]*/gm)];
     return m.length > 0 ? m[0][1] : null;
 }
 

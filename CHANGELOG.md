@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.11.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.0...v1.11.1) (2026-08-05)
+
+
+### Bug Fixes
+
+* **build:** wyjscie Vite do osobnego katalogu dist-web ([716eea6](https://github.com/blodytrav3l3r/Oferty_PV/commit/716eea63798650c371bc7a08edbfa52a4ed16b78))
+* **dev:** naprawa wait-and-start - /health, PORT z env, kill childa ([7e36c06](https://github.com/blodytrav3l3r/Oferty_PV/commit/7e36c0605f23a0c57d030587333e9da497ddad49))
+* **docker:** seed przy pustej bazie, wymagany DEFAULT_ADMIN_PASSWORD, bez npm prune --production ([0d5acc7](https://github.com/blodytrav3l3r/Oferty_PV/commit/0d5acc7932068dc586605c0c88aa6112e93cccf2))
+* **start:** graceful shutdown, EADDRINUSE, NODE_ENV=production w prod ([adcfa9a](https://github.com/blodytrav3l3r/Oferty_PV/commit/adcfa9a7b63d51ff2f26f7ab36b870eec11bb4df))
+
 ## [1.11.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.10.0...v1.11.0) (2026-08-05)
 
 

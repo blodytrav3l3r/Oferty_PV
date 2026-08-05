@@ -1,6 +1,6 @@
 # Architektura — WITROS Oferty PV
 
-**Wersja:** 1.11.0  
+**Wersja:** 1.11.1  
 **Ostatnia aktualizacja:** 2026-08-05  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
 
