@@ -4,6 +4,29 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.11.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.10.0...v1.11.0) (2026-08-05)
+
+
+### Features
+
+* **build:** wersja w plikach bat z auto-aktualizacja przy release ([845c242](https://github.com/blodytrav3l3r/Oferty_PV/commit/845c242979ef811ccd17acab963961478a246eb6))
+* **ml:** seed startowego modelu, cache batch predict, sliding window AUC z auto-rollbackiem i feature importance ([0a3292a](https://github.com/blodytrav3l3r/Oferty_PV/commit/0a3292a91f79d175a00fd8b5d3131fecce8863e1))
+* **offer:** uproszczenie sekcji Dane klienta i oferty ([d87944b](https://github.com/blodytrav3l3r/Oferty_PV/commit/d87944b3d1b5809a0cd46b8b3c4fae284bfc3ddb))
+* **print:** wydruk laczny z filtrami i kategoriami, pelne uwagi z franco per sekcja ([cbb2e73](https://github.com/blodytrav3l3r/Oferty_PV/commit/cbb2e73051646cb02513dc2cbb3d85e489a1f7bf))
+* **security:** CSP Faza 1 - nonce middleware, Content-Security-Policy-Report-Only i endpoint raportow violacji ([6d0b179](https://github.com/blodytrav3l3r/Oferty_PV/commit/6d0b1799be7219f135fec416e9a1d0347ad0db78))
+* **telemetry:** deduplikacja AUTO_JS, naprawa okna treningowego ML i diagnostyka braku wzorcow ([c905934](https://github.com/blodytrav3l3r/Oferty_PV/commit/c905934689d5cd10bcedd5149324032eacc48a8a))
+
+
+### Bug Fixes
+
+* **excel:** nieprzezroczyste tlo sticky kolumn przy poziomym scrollu ([b74bcca](https://github.com/blodytrav3l3r/Oferty_PV/commit/b74bcca07c651e5e6ba20b4c44999ab87964072b))
+* **print:** puste pola ofert w wydruku laczanym, automatyczne odswiezanie listy po zmianie daty ([ef9f4be](https://github.com/blodytrav3l3r/Oferty_PV/commit/ef9f4bed063148d455647d0346114a60263889de))
+* **print:** wpisywalne pola ofert zamiast listy w wydruku laczanym, usuniecie filtra numeru ([db74990](https://github.com/blodytrav3l3r/Oferty_PV/commit/db74990959fee4333e53ebf6521648771b9de13d))
+* **studnie:** blokada edycji studni w Excelu przy PZ accepted i zamowieniu ([ab7cc9c](https://github.com/blodytrav3l3r/Oferty_PV/commit/ab7cc9c90386c31bd9b076ade932745418c26337))
+* **style:** podmiana niedefiniowanych tokenow --primary-alpha i --muted ([2063372](https://github.com/blodytrav3l3r/Oferty_PV/commit/20633724315ebe69534c9df66dc4880a3f5f50ca))
+* **style:** redukcja unikalnych kolorow do 307 (tokens, alfa-rounding) ([7146343](https://github.com/blodytrav3l3r/Oferty_PV/commit/71463439bd46f19e8b574d9233b99707869c582d))
+* **telemetry:** auto-heal indeksow dedup i FTS5, kanoniczny dedup AUTO_JS, wykrywanie zmian cen w telemetrii, aktualizacja dokumentacji schematu bazy ([fe1679f](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe1679ff06b67bfd4892645a226bd4aee41b07e7))
+
 ## [1.10.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.9.1...v1.10.0) (2026-08-03)
 
 ### Features
