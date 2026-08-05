@@ -220,15 +220,13 @@
         return `${num}${datePart}`;
     }
 
-    function fillOfferInput(input, datalist, items, currentId, labelKey) {
+    function fillOfferInput(input, datalist, items) {
         datalist.innerHTML = '';
         for (const item of items) {
             const opt = document.createElement('option');
-            opt.value = offerOptionLabel(item, labelKey);
+            opt.value = offerOptionLabel(item, 'number');
             datalist.appendChild(opt);
         }
-        const current = currentId && items.find((item) => item.id === currentId);
-        input.value = current ? offerOptionLabel(current, labelKey) : input.value || '';
         input._upmItems = items;
     }
 
@@ -313,14 +311,8 @@
                 fetchOfferList(buildSearchUrl('offer', filters)),
                 fetchOfferList(buildSearchUrl('studnia_oferta', filters))
             ]);
-            fillOfferInput(ruryInput, ruryList, ruryOffers, cfg.currentRuryId || '', 'number');
-            fillOfferInput(
-                studnieInput,
-                studnieList,
-                studnieOffers,
-                cfg.currentStudnieId || '',
-                'number'
-            );
+            fillOfferInput(ruryInput, ruryList, ruryOffers);
+            fillOfferInput(studnieInput, studnieList, studnieOffers);
             await populateUserFilter(modal);
         } catch (e) {
             if (typeof logger !== 'undefined') {
@@ -334,12 +326,7 @@
     window.combinedFilter_action = async function () {
         const modal = document.getElementById(MODAL_ID);
         if (!modal) return;
-        const cfg = window.__upmCombinedCfg || {};
-        cfg.currentRuryId = resolveOfferId(modal.querySelector('[data-combined-field="rury"]'));
-        cfg.currentStudnieId = resolveOfferId(
-            modal.querySelector('[data-combined-field="studnie"]')
-        );
-        await populateCombinedSection(modal, cfg);
+        await populateCombinedSection(modal, window.__upmCombinedCfg || {});
     };
 
     async function combinedExport_action() {
@@ -478,4 +465,17 @@
         const btn = ev.target.closest('[data-action="__upm_close"]');
         if (btn) close();
     });
+    if (typeof document !== 'undefined' && !window.__upmFilterListenerInstalled) {
+        document.addEventListener('change', function (ev) {
+            const el =
+                ev.target && ev.target.closest ? ev.target.closest('[data-combined-filter]') : null;
+            if (!el) return;
+            const modal = document.getElementById(MODAL_ID);
+            if (!modal || !modal.contains(el)) return;
+            if (typeof window.combinedFilter_action === 'function') {
+                window.combinedFilter_action();
+            }
+        });
+        window.__upmFilterListenerInstalled = true;
+    }
 })();

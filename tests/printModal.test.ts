@@ -219,6 +219,22 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
             const { sandbox } = loadPrintModalInSandbox();
             expect(typeof sandbox.window.combinedExport_action).toBe('function');
         });
+
+        it('renderuje Oferta rur i Oferta studni jako puste pola input z datalist', () => {
+            const { sandbox, bodyEl } = loadPrintModalInSandbox();
+            sandbox.window.showUniversalPrintModal({
+                combinedSection: { title: 'Wydruk łączny' }
+            });
+            expect(bodyEl.insertedHtml).toMatch(
+                /<input type="text" class="upm-combined-select" data-combined-field="rury"/
+            );
+            expect(bodyEl.insertedHtml).toMatch(
+                /<input type="text" class="upm-combined-select" data-combined-field="studnie"/
+            );
+            expect(bodyEl.insertedHtml).toMatch(/<datalist id="upm-rury-list"><\/datalist>/);
+            expect(bodyEl.insertedHtml).toMatch(/<datalist id="upm-studnie-list"><\/datalist>/);
+            expect(bodyEl.insertedHtml).not.toMatch(/data-combined-filter="q"/);
+        });
     });
 
     describe('Dispatcher (event delegation)', () => {
