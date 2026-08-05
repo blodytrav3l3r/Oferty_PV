@@ -1,6 +1,6 @@
 # Plan: CSP nonce (`'unsafe-inline'` → nonce-based)
 
-**Status:** PLAN (do wykonania w innym terminie)
+**Status:** FAZA 1 ZREALIZOWANA (nonce middleware + Content-Security-Policy-Report-Only + endpoint /api/csp-report). Fazy 2-4 (migracja onclick → event delegation, obsługa innerHTML, enforce) do wykonania w innym terminie.
 **Utworzono:** 2026-07-22
 **Szacowany czas:** ~20-36h (full) / ~3h (Faza 1)
 
