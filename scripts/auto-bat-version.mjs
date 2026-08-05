@@ -26,7 +26,7 @@ if (!VERSION) {
     process.exit(1);
 }
 
-const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'prod.bat', 'scripts/ensure-db.bat'];
+const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'scripts/ensure-db.bat'];
 
 function processFile(filePath) {
     const absPath = resolve(ROOT, filePath);

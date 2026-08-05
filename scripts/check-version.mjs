@@ -72,7 +72,7 @@ if (versionChangelog && versionFile && versionChangelog !== versionFile) {
 }
 
 // ── Wersja w plikach .bat (ASCII, AGENTS.md — utrzymywana przez auto-bat-version.mjs) ──
-const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'prod.bat', 'scripts/ensure-db.bat'];
+const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'scripts/ensure-db.bat'];
 const BAT_VERSION_RE = /(?:set "APP_VERSION=|REM  Wersja: )(\d+\.\d+\.\d+)/g;
 
 for (const file of BAT_FILES) {
