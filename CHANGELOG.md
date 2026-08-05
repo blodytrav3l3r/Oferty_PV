@@ -9,11 +9,6 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 ### Features
 
 - **studnie:** szersze i wyższe okno przeliczania oferty (980px, 75vh) ([cca9b59](https://github.com/blodytrav3l3r/Oferty_PV/commit/cca9b593948daa0bdcbf1a383053073668ee04fb))
-- **telemetry:** deduplikacja AUTO_JS, naprawa okna treningowego ML i diagnostyka braku wzorcow ([c905934](https://github.com/blodytrav3l3r/Oferty_PV/commit/c905934689d5cd10bcedd5149324032eacc48a8a)) — migracja `20260805100000_telemetry_well_dedup` (indeksy `idx_logs_well`, `idx_logs_source_well`)
-
-### Bug Fixes
-
-- **telemetry:** auto-heal indeksow dedup i FTS5, kanoniczny dedup AUTO_JS, wykrywanie zmian cen w telemetrii, aktualizacja dokumentacji schematu bazy ([fe1679f](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe1679ff06b67bfd4892645a226bd4aee41b07e7)) — check-db.js sprawdza indeksy, auto-heal w `src/app.ts`, FTS5 tworzony przez `src/utils/fts5Sync.ts`
 
 ### [1.9.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.9.0...v1.9.1) (2026-08-03)
 
