@@ -338,6 +338,11 @@ function _excelPasteSync(lines, visibleRows, startColIdx) {
  * @param {string} val
  */
 function _excelSetCellValue(target, val) {
+    /* Centralny punkt mutacji — blokada studni z PZ accepted / zamówieniem.
+       Obejmuje paste, Delete, Ctrl+X, Ctrl+D, Ctrl+R (wszystkie ida przez to miejsce). */
+    const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
+    const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
+    if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return;
     if (target.tagName === 'SELECT') {
         let _sel = /** @type {HTMLSelectElement} */ (target);
         let opt = Array.from(_sel.options).find(function (o) {

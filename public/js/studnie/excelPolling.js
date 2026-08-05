@@ -45,6 +45,8 @@ function _excelSyncAutoManualUI() {
     for (let i = 0; i < wells.length; i++) {
         let w = wells[i];
         if (!w) continue;
+        if (_excelIsWellLocked(i))
+            continue; /* zablokowana — nie synchronizuj, przyciski wylaczone */
         let btnMode = document.getElementById('excel-mode-btn-' + i);
         let btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */

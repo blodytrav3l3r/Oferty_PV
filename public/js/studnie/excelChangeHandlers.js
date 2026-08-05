@@ -7,6 +7,7 @@ function excelOnRzednaChange(wIdx) {
     if (!row) return;
     const well = wells[wIdx];
     if (!well) return;
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
@@ -48,6 +49,13 @@ function excelOnRzednaChange(wIdx) {
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
 function excelRemoveTransitionColumn() {
     let tab = _excelActiveTab || '1000';
+    if (_excelAnyWellLockedInTab(tab)) {
+        showToast(
+            'Nie można usunąć kolumny przejścia — w tej zakładce są zablokowane studnie',
+            'error'
+        );
+        return;
+    }
     let curMax = _excelMaxTransitions[tab] || 1;
     if (curMax <= 1 && wells.length > 0) {
         showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
@@ -90,6 +98,13 @@ function excelRemoveTransitionColumn() {
 }
 function excelAddTransitionColumn() {
     let tab = _excelActiveTab || '1000';
+    if (_excelAnyWellLockedInTab(tab)) {
+        showToast(
+            'Nie można dodać kolumny przejścia — w tej zakładce są zablokowane studnie',
+            'error'
+        );
+        return;
+    }
     _excelMaxTransitions[tab] = (_excelMaxTransitions[tab] || 1) + 1;
     let newMax = _excelMaxTransitions[tab];
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
@@ -117,6 +132,7 @@ function _excelCleanEmptyPrzejscia(well) {
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     let hasExisting = trIdx < wells[wIdx].przejscia.length;
@@ -139,6 +155,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
 }
 
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
@@ -160,6 +177,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
 }
 
 function excelOnWlazChange(wIdx, productId) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     const well = wells[wIdx];
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -186,6 +204,7 @@ function _excelMarkManual(well) {
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
@@ -329,6 +348,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
 }
 
 function excelOnKinetaChange(wIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
@@ -337,6 +357,7 @@ function excelOnKinetaChange(wIdx, value) {
 }
 
 function excelOnPsiaBudaChange(wIdx, checked) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
@@ -365,6 +386,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 async function excelOnReductionSelectChange(wIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelSaveUndoSnapshot();
     let well = wells[wIdx];
     if (!well) return;

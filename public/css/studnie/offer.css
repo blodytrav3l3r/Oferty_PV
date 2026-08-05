@@ -68,6 +68,10 @@
     color: var(--slate-200);
 }
 
+#excel-table-container tr.excel-row-locked {
+    opacity: 0.55;
+}
+
 #excel-table-container .excel-sel-wrap {
     display: flex !important;
     width: 100% !important;

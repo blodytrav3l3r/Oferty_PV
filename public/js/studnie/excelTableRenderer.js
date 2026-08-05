@@ -302,6 +302,8 @@ function _excelRenderTable(dn) {
     _excelInitColumnSelect();
     _excelUpdateHeaderProdCodes();
     _excelApplyStickyColumns();
+    /* Wylacz pola edycyjne w wierszach zablokowanych (PZ / zamówienie) */
+    _excelApplyLockedRows();
     /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try {

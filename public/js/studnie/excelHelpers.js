@@ -661,3 +661,57 @@ function _excelGetVisibleComponentColumns(dn, well) {
     var compCols = _excelBuildComponentColumns(dn, well);
     return _excelFilterVisibleColumns(compCols);
 }
+
+/* ===== BLOKADA EDYCJI STUDNI (PZ accepted / zamówienie) ===== */
+/* Wrapper na isWellLocked(wIdx) z glownego UI — Excel ma wlasne indeksy wierszy,
+   a currentWellIndex bywa -1 przy otwartym modalu, dlatego zawsze z jawnym argumentem. */
+function _excelIsWellLocked(wIdx) {
+    if (typeof isWellLocked === 'function') return isWellLocked(wIdx);
+    return false;
+}
+
+/* Guard clause: zwraca true gdy studnia jest edytowalna, przy blokadzie pokazuje toast. */
+function _excelGuardWellLocked(wIdx) {
+    if (!_excelIsWellLocked(wIdx)) return true;
+    showToast('Studnia zablokowana — edycja niedostępna (PZ / zamówienie)', 'error');
+    return false;
+}
+
+/* Czy jakakolwiek studnia w zakladce jest zablokowana (operacje globalne, np. kolumny przejscia) */
+function _excelAnyWellLockedInTab(tab) {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return false;
+    for (let i = 0; i < wells.length; i++) {
+        if (_excelWellMatchesTab(wells[i], tab) && _excelIsWellLocked(i)) return true;
+    }
+    return false;
+}
+
+/* Warstwa wizualna: wylacz wszystkie pola edycyjne w wierszach zablokowanych */
+function _excelApplyLockedRows() {
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    container.querySelectorAll('tbody tr[data-widx]').forEach(function (tr) {
+        const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+        if (isNaN(wIdx) || !_excelIsWellLocked(wIdx)) return;
+        tr.classList.add('excel-row-locked');
+        tr.querySelectorAll('input, select, button').forEach(function (el) {
+            el.disabled = true;
+        });
+    });
+}
+
+/* Undo/Redo: zapamietaj zablokowane studnie, by przywracanie snapshotu ich nie zmodyfikowalo */
+function _excelSnapshotLockedWells() {
+    const locked = {};
+    if (typeof wells === 'undefined') return locked;
+    for (let i = 0; i < wells.length; i++) {
+        if (_excelIsWellLocked(i)) locked[i] = wells[i];
+    }
+    return locked;
+}
+function _excelRestoreLockedWells(locked) {
+    if (typeof wells === 'undefined') return;
+    for (const i in locked) {
+        if (wells[i]) wells[i] = locked[i];
+    }
+}

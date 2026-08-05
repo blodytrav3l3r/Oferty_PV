@@ -20,6 +20,7 @@ function excelSaveAll() {
 function _excelUpdateWellParam(wIdx, paramKey, value) {
     const well = wells[wIdx];
     if (!well) return;
+    if (!_excelGuardWellLocked(wIdx)) return;
     well[paramKey] = value;
     if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
         wells.forEach(function (w) {
@@ -151,6 +152,7 @@ function excelRefreshParamsPopup(wIdx) {
 
 /* ===== EDYCJA NAZWY STUDNI ===== */
 function excelOnNameChange(wIdx, value) {
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     const name = (value || '').trim();
@@ -189,6 +191,14 @@ async function excelDeleteWell(wIdx) {
     if (!well) return;
     if (typeof isWellLocked === 'function' && isWellLocked(wIdx)) {
         showToast('Ta studnia jest zablokowana — nie można usunąć', 'error');
+        return;
+    }
+    if (
+        typeof window.pzGuard !== 'undefined' &&
+        window.pzGuard.hasPzForWell &&
+        window.pzGuard.hasPzForWell(well.id)
+    ) {
+        showToast('Nie można usunąć — studnia posiada zlecenia produkcyjne', 'error');
         return;
     }
     if (!(await appConfirm(`Usunąć "${well.name}"?`, { title: 'Usuwanie studni', type: 'danger' })))

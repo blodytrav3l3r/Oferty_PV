@@ -4,6 +4,7 @@
 async function _excelAutoSelectForWell(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
+    if (_excelIsWellLocked(wIdx)) return; /* blokada PZ / zamówienie */
     if (well.rzednaWlazu == null || well.rzednaDna == null) return;
     if (well.autoSelect === false) return; /* Manual skip */
     if (typeof autoSelectComponents !== 'function') return;
@@ -23,6 +24,7 @@ async function _excelAutoSelectForWell(wIdx) {
 /* Per-row toggle: przelacz well.autoSelect (bez regresami Auto/Manual naglowka) */
 function _excelToggleWellAutoMode(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
+    if (!_excelGuardWellLocked(wIdx)) return;
     _excelSaveUndoSnapshot();
     _excelMarkDirty();
     wells[wIdx].autoSelect = wells[wIdx].autoSelect === false;
@@ -68,6 +70,7 @@ async function _excelRunAutoSelectForWell(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
     let well = wells[wIdx];
     if (!well) return;
+    if (!_excelGuardWellLocked(wIdx)) return;
     if (well.autoSelect === false) {
         showToast('Przełącz w tryb Auto aby uruchomić', 'warning');
         return;

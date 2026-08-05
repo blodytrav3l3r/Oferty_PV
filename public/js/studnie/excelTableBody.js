@@ -34,6 +34,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     );
     tabWells.forEach(function (well, idx) {
         let wIdx = wells.indexOf(well);
+        let isLockedRow = _excelIsWellLocked(wIdx);
         let isEven = idx % 2 === 0;
         let isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
         let nameKey = (well.name || '').trim().toLowerCase();
@@ -97,7 +98,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             solidBase +
             '" style="background:' +
             rowBg +
-            ';transition:background 0.15s;" onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
+            ';transition:background 0.15s;"' +
+            (isLockedRow
+                ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
+                : '') +
+            ' onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
         let tdBaseStyle = _EXCEL_FONT;
         /* Checkbox */
         let cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
@@ -455,6 +460,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<td style="' +
             tdBaseStyle +
             'text-align:center;white-space:nowrap;"><div style="display:flex;gap:2px;justify-content:center;">';
+        if (isLockedRow) {
+            html +=
+                '<span title="Studnia zablokowana — edycja niedostępna" style="color:var(--danger-hover);display:inline-flex;align-items:center;margin-right:2px;"><i data-lucide="lock" style="width:14px;height:14px;" aria-hidden="true"></i></span>';
+        }
         html +=
             '<button onclick="excelOpenWellParams(' +
             wIdx +

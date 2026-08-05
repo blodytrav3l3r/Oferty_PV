@@ -136,6 +136,18 @@ function _excelBulkSetMode(enabled) {
         targets = sel;
         showToast((enabled ? 'Auto' : 'Manual') + ' dla ' + targets.length + ' studni', 'success');
     }
+    /* Pomin studnie zablokowane (PZ accepted / zamówienie) */
+    const editableTargets = targets.filter(function (i) {
+        return !_excelIsWellLocked(i);
+    });
+    if (editableTargets.length !== targets.length) {
+        showToast(
+            'Pominięto ' + (targets.length - editableTargets.length) + ' zablokowanych studni',
+            'warning'
+        );
+    }
+    targets = editableTargets;
+    if (targets.length === 0) return;
     _excelSaveUndoSnapshot();
     _excelMarkDirty();
     targets.forEach(function (i) {
@@ -177,7 +189,9 @@ function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
     _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
     let snap = _excelUndoStack.pop();
+    const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);
+    _excelRestoreLockedWells(locked);
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
@@ -188,7 +202,9 @@ function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
     _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
     let snap = _excelRedoStack.pop();
+    const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);
+    _excelRestoreLockedWells(locked);
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
