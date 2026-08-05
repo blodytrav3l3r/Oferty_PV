@@ -1,68 +1,23 @@
 import fs from 'fs';
 import path from 'path';
-import { logger } from '../../utils/logger';
 import type { StudnieOfferData } from './types';
-import { fmtInt, escapeHtml } from './helpers';
+import { fmtInt, escapeHtml, formatDatePL } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
 import { PRINT_TOKENS_CSS } from './printTokens';
+import { loadLetterheadBase64 } from './letterhead';
 
-export async function generateStudnieHTML(data: StudnieOfferData): Promise<string> {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return new Date().toLocaleDateString('pl-PL');
-        const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
-        try {
-            return new Date(normalized).toLocaleDateString('pl-PL');
-        } catch {
-            return dateStr;
-        }
-    };
-
+/**
+ * Buduje sekcję treści oferty studni (tabele per DN + podsumowanie).
+ * Współdzielona przez generateStudnieHTML oraz wydruk łączny (rury + studnie).
+ */
+export function buildStudnieSectionHTML(data: StudnieOfferData): {
+    tables: string;
+    summary: string;
+    grandTotal: number;
+} {
     const formatCurrency = (val: number) => {
         return val.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
-
-    const validityString = data.validity || '30 dni';
-    const isOrder = data.documentType === 'order';
-    const docNumber = isOrder && data.orderNumber ? data.orderNumber : data.offerNumber;
-    const titleText = isOrder ? `ZAMÓWIENIE ${docNumber}` : `OFERTA HANDLOWA ${docNumber}`;
-    const validitySection = isOrder
-        ? ''
-        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
-
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaStudnie.html');
-    const template = fs
-        .readFileSync(templatePath, 'utf-8')
-        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
-
-    const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
-    const stopkaPath = path.join(process.cwd(), 'public', 'images', 'letterhead-footer.png');
-    let naglowekBase64 = '';
-    let stopkaBase64 = '';
-    try {
-        const naglowekBuf = fs.readFileSync(naglowekPath);
-        naglowekBase64 = `data:image/png;base64,${naglowekBuf.toString('base64')}`;
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-header.png', e);
-    }
-    try {
-        const stopkaBuf = fs.readFileSync(stopkaPath);
-        stopkaBase64 = `data:image/png;base64,${stopkaBuf.toString('base64')}`;
-    } catch (e) {
-        logger.warn('PdfAssets', 'Nie udało się załadować letterhead-footer.png', e);
-    }
-
-    const daneKlienta = `
-    <div><strong>${escapeHtml(data.clientName)}</strong></div>
-    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
-    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
-    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
-    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
-  `.trim();
-
-    const daneInwestycji = `
-    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
-    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
-  `.trim();
 
     const itemsByDN: Record<string, typeof data.items> = {};
     for (const item of data.items) {
@@ -168,6 +123,42 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     </div>
   `;
 
+    return { tables: tabeleDN, summary: podsumowanie, grandTotal };
+}
+
+export async function generateStudnieHTML(data: StudnieOfferData): Promise<string> {
+    const validityString = data.validity || '30 dni';
+    const isOrder = data.documentType === 'order';
+    const docNumber = isOrder && data.orderNumber ? data.orderNumber : data.offerNumber;
+    const titleText = isOrder ? `ZAMÓWIENIE ${docNumber}` : `OFERTA HANDLOWA ${docNumber}`;
+    const validitySection = isOrder
+        ? ''
+        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
+
+    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaStudnie.html');
+    const template = fs
+        .readFileSync(templatePath, 'utf-8')
+        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+
+    const letterhead = loadLetterheadBase64();
+    const naglowekBase64 = letterhead.header;
+    const stopkaBase64 = letterhead.footer;
+
+    const daneKlienta = `
+    <div><strong>${escapeHtml(data.clientName)}</strong></div>
+    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
+    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
+    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
+  `.trim();
+
+    const daneInwestycji = `
+    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>—</div>'}
+    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
+  `.trim();
+
+    const { tables, summary } = buildStudnieSectionHTML(data);
+
     let sekcjaUwagi = '';
     if (data.notes) {
         sekcjaUwagi += `
@@ -193,12 +184,13 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     html = html.replace(/\{\{TYTUL_DOKUMENTU\}\}/g, escapeHtml(titleText));
     html = html.replace(/\{\{VALIDITY_SECTION\}\}/g, validitySection);
     html = html.replace(/\{\{NR_OFERTY\}\}/g, docNumber);
-    html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDate(data.createdAt));
+    html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDatePL(data.createdAt));
     html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
-    html = html.replace(/\{\{TABELE_DN\}\}/g, tabeleDN);
-    html = html.replace(/\{\{PODSUMOWANIE\}\}/g, podsumowanie);
+    html = html.replace(/\{\{TABELE_DN\}\}/g, tables);
+    html = html.replace(/\{\{TABELA_RUR\}\}/g, '');
+    html = html.replace(/\{\{PODSUMOWANIE\}\}/g, summary);
     html = html.replace(/\{\{SEKCJA_UWAGI\}\}/g, sekcjaUwagi);
     html = html.replace(/\{\{DANE_KONTAKTOWE\}\}/g, daneKontaktowe);
     html = html.replace(/\{\{BASE_URL\}\}\/images\/letterhead-header\.png/g, naglowekBase64);

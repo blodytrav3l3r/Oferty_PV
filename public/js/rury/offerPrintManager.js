@@ -61,7 +61,12 @@ function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
                       title: 'Wydruk Karty Budowy',
                       description: 'Wybierz zamówienie i format Karty Budowy:'
                   }
-                : null
+                : null,
+        combinedSection: {
+            currentRuryId: targetOfferId || '',
+            title: 'Wydruk łączny (Rury + Studnie)',
+            description: 'Połącz ofertę rur z ofertą studni w jeden plik:'
+        }
     };
 
     if (typeof window.__upmHelperShow === 'function') {
@@ -83,7 +88,10 @@ function getCurrentOfferForExport() {
     const investName = document.getElementById('invest-name')?.value?.trim() || '';
     const investAddress = document.getElementById('invest-address')?.value?.trim() || '';
     const investContractor = document.getElementById('invest-contractor')?.value?.trim() || '';
-    const notes = document.getElementById('offer-notes')?.value?.trim() || '';
+    const notes =
+        document.getElementById('offer-tab-notes')?.value?.trim() ||
+        document.getElementById('offer-notes')?.value?.trim() ||
+        '';
     const paymentTerms = document.getElementById('offer-payment-terms')?.value?.trim() || '';
     const validity = document.getElementById('offer-validity')?.value?.trim() || '';
 
@@ -279,7 +287,7 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
         investName: getVal('invest-name'),
         investAddress: getVal('invest-address'),
         investContractor: getVal('invest-contractor'),
-        notes: getVal('offer-notes'),
+        notes: getVal('offer-tab-notes') || getVal('offer-notes'),
         paymentTerms: getVal('offer-payment-terms'),
         validity: getVal('offer-validity'),
         date: document.getElementById('offer-date')?.value || new Date().toISOString(),

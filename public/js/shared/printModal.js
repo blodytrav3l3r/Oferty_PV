@@ -148,6 +148,252 @@
             </div>`;
     }
 
+    function renderCombinedFilters() {
+        const canFilterUsers =
+            typeof currentUser !== 'undefined' &&
+            currentUser &&
+            (currentUser.role === 'admin' || currentUser.role === 'pro');
+        const userField = canFilterUsers
+            ? `<label class="upm-combined-field">
+                        <span>Użytkownik</span>
+                        <select class="upm-combined-select" data-combined-filter="userId">
+                            <option value="">Wszyscy użytkownicy</option>
+                        </select>
+                    </label>`
+            : '';
+        return `
+            <div class="upm-combined-filters">
+                <label class="upm-combined-field">
+                    <span>Numer oferty / klient</span>
+                    <input type="text" class="upm-combined-select" data-combined-filter="q" placeholder="Szukaj..." />
+                </label>
+                <label class="upm-combined-field">
+                    <span>Data od</span>
+                    <input type="date" class="upm-combined-select" data-combined-filter="dateFrom" />
+                </label>
+                <label class="upm-combined-field">
+                    <span>Data do</span>
+                    <input type="date" class="upm-combined-select" data-combined-filter="dateTo" />
+                </label>
+                ${userField}
+                <button class="upm-btn upm-btn-sm" data-action="combinedFilter_action" type="button">
+                    Filtruj
+                </button>
+            </div>`;
+    }
+
+    function renderCombinedSection(cfg) {
+        if (!cfg) return '';
+        return `
+            <div class="upm-section" data-section="combined">
+                <div class="upm-section-header">
+                    <h4 class="upm-title upm-title-combined">
+                        <i data-lucide="files"></i> ${window.escapeHtml(cfg.title || 'Wydruk łączny')}
+                    </h4>
+                    <p class="upm-desc">${window.escapeHtml(cfg.description || 'Połącz ofertę rur i studni w jeden plik:')}</p>
+                </div>
+                ${renderCombinedFilters()}
+                <div class="upm-combined-form">
+                    <label class="upm-combined-field">
+                        <span>Oferta rur</span>
+                        <select class="upm-combined-select" data-combined-field="rury">
+                            <option value="">Ładowanie...</option>
+                        </select>
+                    </label>
+                    <label class="upm-combined-field">
+                        <span>Oferta studni</span>
+                        <select class="upm-combined-select" data-combined-field="studnie">
+                            <option value="">Ładowanie...</option>
+                        </select>
+                    </label>
+                    <label class="upm-combined-field">
+                        <span>Format</span>
+                        <select class="upm-combined-select" data-combined-field="format">
+                            <option value="pdf">PDF</option>
+                            <option value="docx">Word (DOCX)</option>
+                        </select>
+                    </label>
+                    <button class="upm-btn upm-btn-combined" data-action="combinedExport_action" type="button">
+                        <span class="upm-btn-icon"><i data-lucide="files"></i></span> Eksportuj
+                    </button>
+                </div>
+            </div>`;
+    }
+
+    function offerOptionLabel(item, key) {
+        const num = item[key] || item.title || item.id || '—';
+        const datePart = item.createdAt ? ` (${String(item.createdAt).slice(0, 10)})` : '';
+        return `${num}${datePart}`;
+    }
+
+    function fillSelect(select, items, currentId, labelKey) {
+        select.innerHTML = '';
+        if (!items.length) {
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = 'Brak ofert';
+            select.appendChild(emptyOpt);
+            return;
+        }
+        for (const item of items) {
+            const opt = document.createElement('option');
+            opt.value = item.id;
+            opt.textContent = offerOptionLabel(item, labelKey);
+            select.appendChild(opt);
+        }
+        if (currentId && items.some((item) => item.id === currentId)) {
+            select.value = currentId;
+        }
+    }
+
+    async function fetchOfferList(url) {
+        if (typeof fetch !== 'function') return [];
+        const headers = typeof authHeaders === 'function' ? authHeaders() : {};
+        const res = await fetch(url, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        return Array.isArray(json.data) ? json.data : [];
+    }
+
+    function readCombinedFilters(modal) {
+        const getVal = (name) =>
+            modal.querySelector(`[data-combined-filter="${name}"]`)?.value?.trim() || '';
+        return {
+            q: getVal('q'),
+            dateFrom: getVal('dateFrom'),
+            dateTo: getVal('dateTo'),
+            userId: getVal('userId')
+        };
+    }
+
+    function buildSearchUrl(type, filters) {
+        const params = new URLSearchParams();
+        params.set('type', type);
+        params.set('limit', '100');
+        if (filters.q) params.set('q', filters.q);
+        if (filters.dateFrom) params.set('dateFrom', filters.dateFrom);
+        if (filters.dateTo) params.set('dateTo', filters.dateTo);
+        if (filters.userId) params.set('userId', filters.userId);
+        return `/api/offers/search?${params.toString()}`;
+    }
+
+    async function populateUserFilter(modal) {
+        const userSel = modal.querySelector('[data-combined-filter="userId"]');
+        if (!userSel || userSel.options.length > 1) return;
+        if (typeof fetch !== 'function') return;
+        const headers = typeof authHeaders === 'function' ? authHeaders() : {};
+        const res = await fetch('/api/users-for-assignment', { headers });
+        if (!res.ok) return;
+        const json = await res.json();
+        const users = Array.isArray(json.data) ? json.data : [];
+        for (const u of users) {
+            const opt = document.createElement('option');
+            opt.value = u.id;
+            const name = [u.firstName, u.lastName].filter(Boolean).join(' ') || u.username || u.id;
+            opt.textContent = name;
+            userSel.appendChild(opt);
+        }
+    }
+
+    async function populateCombinedSection(modal, cfg) {
+        if (!modal || !cfg) return;
+        const rurySel = modal.querySelector('[data-combined-field="rury"]');
+        const studnieSel = modal.querySelector('[data-combined-field="studnie"]');
+        if (!rurySel || !studnieSel) return;
+
+        const showFallback = (select) => {
+            if (select.options.length === 1 && select.options[0].value === '') {
+                select.options[0].textContent = 'Brak danych';
+            }
+        };
+
+        try {
+            const filters = readCombinedFilters(modal);
+            const [ruryOffers, studnieOffers] = await Promise.all([
+                fetchOfferList(buildSearchUrl('offer', filters)),
+                fetchOfferList(buildSearchUrl('studnia_oferta', filters))
+            ]);
+            fillSelect(rurySel, ruryOffers, cfg.currentRuryId || '', 'number');
+            fillSelect(studnieSel, studnieOffers, cfg.currentStudnieId || '', 'number');
+            await populateUserFilter(modal);
+        } catch (e) {
+            if (typeof logger !== 'undefined') {
+                logger.error('printModal', 'Błąd ładowania list ofert (wydruk łączny)', e);
+            }
+            showFallback(rurySel);
+            showFallback(studnieSel);
+        }
+    }
+
+    window.combinedFilter_action = async function () {
+        const modal = document.getElementById(MODAL_ID);
+        if (!modal) return;
+        const rurySel = modal.querySelector('[data-combined-field="rury"]');
+        const studnieSel = modal.querySelector('[data-combined-field="studnie"]');
+        const cfg = window.__upmCombinedCfg || {};
+        cfg.currentRuryId = rurySel?.value || cfg.currentRuryId || '';
+        cfg.currentStudnieId = studnieSel?.value || cfg.currentStudnieId || '';
+        await populateCombinedSection(modal, cfg);
+    };
+
+    async function combinedExport_action() {
+        const modal = document.getElementById(MODAL_ID);
+        if (!modal) return;
+        const ruryId = modal.querySelector('[data-combined-field="rury"]')?.value?.trim();
+        const studnieId = modal.querySelector('[data-combined-field="studnie"]')?.value?.trim();
+        const format = modal.querySelector('[data-combined-field="format"]')?.value || 'pdf';
+
+        if (!ruryId || !studnieId) {
+            if (typeof showToast === 'function')
+                showToast('Wybierz ofertę rur i ofertę studni', 'error');
+            return;
+        }
+        if (format !== 'pdf' && format !== 'docx') {
+            if (typeof showToast === 'function')
+                showToast('Nieobsługiwany format eksportu', 'error');
+            return;
+        }
+
+        try {
+            if (typeof showToast === 'function') {
+                showToast(`Generowanie wydruku łącznego (${format.toUpperCase()})...`, 'info');
+            }
+            const res = await fetch(`/api/export-combined/${format}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(typeof authHeaders === 'function' ? authHeaders() : {})
+                },
+                body: JSON.stringify({ offerRuryId: ruryId, offerStudnieId: studnieId })
+            });
+            if (!res.ok) {
+                const errText = await res.text().catch(() => res.statusText);
+                throw new Error(`Eksport łączny (${res.status}): ${errText.slice(0, 200)}`);
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `oferta_laczna_${ruryId.substring(0, 8)}_${studnieId.substring(0, 8)}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            if (typeof showToast === 'function') showToast('Pobrano wydruk łączny', 'success');
+        } catch (err) {
+            if (typeof logger !== 'undefined') {
+                logger.error('printModal', 'combinedExport_action error:', err);
+            }
+            if (typeof showToast === 'function') {
+                showToast(
+                    'Błąd eksportu łącznego: ' + (err instanceof Error ? err.message : err),
+                    'error'
+                );
+            }
+        }
+    }
+    window.combinedExport_action = combinedExport_action;
+
     function handleClick(ev) {
         const btn = ev.target.closest('[data-action]');
         if (!btn) return;
@@ -183,7 +429,8 @@
             renderOfferSection(config.offerSection) +
             renderOrderCurrentSection(config.orderCurrentSection) +
             renderOrdersSection(config.ordersSection) +
-            renderKartaSection(config.kartaSection);
+            renderKartaSection(config.kartaSection) +
+            renderCombinedSection(config.combinedSection);
 
         if (!sectionsHtml.trim()) {
             if (typeof showToast === 'function')
@@ -214,11 +461,13 @@
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
+        if (config.combinedSection) {
+            window.__upmCombinedCfg = config.combinedSection;
+            populateCombinedSection(document.getElementById(MODAL_ID), config.combinedSection);
+        }
     };
 
-    window.__upmShow = window.showUniversalPrintModal;
     window.__upmHelperShow = window.showUniversalPrintModal;
-    window.__upmClose = close;
     document.addEventListener('click', function (ev) {
         const btn = ev.target.closest('[data-action="__upm_close"]');
         if (btn) close();

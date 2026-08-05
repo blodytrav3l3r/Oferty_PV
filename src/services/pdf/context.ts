@@ -12,6 +12,34 @@ import type {
 
 const MAX_TRANSPORT_WEIGHT = 24000;
 
+/**
+ * Uzupełnia pozycje rur o kategorię produktu (pobierana z ProductsRury),
+ * jeśli pozycja jej nie ma — frontend nie zapisuje `category` w items.
+ */
+async function enrichRuryItemsWithCategories(items: unknown[]): Promise<unknown[]> {
+    const missingCategories = items.filter((it) => {
+        const item = it as Record<string, unknown>;
+        return !item.category && item.productId;
+    });
+    if (missingCategories.length === 0) return items;
+
+    const productIds = missingCategories.map((it) =>
+        String((it as { productId?: string }).productId)
+    );
+    const products = await prisma.productsRury.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, category: true }
+    });
+    const categoryById = new Map(products.map((p) => [p.id, p.category]));
+
+    return items.map((it) => {
+        const item = it as Record<string, unknown>;
+        if (item.category) return item;
+        const category = item.productId ? categoryById.get(String(item.productId)) : undefined;
+        return category ? { ...item, category } : item;
+    });
+}
+
 export async function buildRuryOfferContextFromOfferId(offerId: string): Promise<RuryOfferData> {
     const offer = await prisma.offers_rel.findUnique({
         where: { id: offerId }
@@ -33,6 +61,7 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
     });
 
     const enhancedItems: unknown[] = Array.isArray(offerData.items) ? offerData.items : items;
+    const withCategories = await enrichRuryItemsWithCategories(enhancedItems);
 
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
@@ -49,7 +78,7 @@ export async function buildRuryOfferContextFromOfferId(offerId: string): Promise
         investName: String(offerData.investName ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
         investContractor: String(offerData.investContractor ?? ''),
-        items: enhancedItems,
+        items: withCategories,
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
         validityDays: Number(offerData.validityDays ?? 30),
         notes: String(offerData.notes ?? ''),
@@ -188,6 +217,7 @@ export async function buildStudnieOfferContextFromOfferId(
         ),
         investName: String(offerData.investName ?? offerData.budowa ?? ''),
         investAddress: String(offerData.investAddress ?? ''),
+        investContractor: String(offerData.investContractor ?? ''),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
         createdAt: String(offerData.date ?? offer.createdAt ?? new Date().toISOString()),
@@ -267,6 +297,7 @@ export async function buildStudnieOrderContextFromOrderId(
         ),
         investName: String(orderData.investName ?? orderData.budowa ?? ''),
         investAddress: String(orderData.investAddress ?? ''),
+        investContractor: String(orderData.investContractor ?? ''),
         items: items as StudnieOfferData['items'],
         transportCost: totalTransportCost,
         createdAt: String(orderData.date ?? order.createdAt ?? new Date().toISOString()),

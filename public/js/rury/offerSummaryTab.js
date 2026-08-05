@@ -30,10 +30,14 @@ function renderOfferSummaryTab() {
         dispTransport.textContent = `${km} km × ${rate} PLN/km`;
     }
 
-    // Jeśli pole uwag i warunków są puste, skopiuj defaulty
-    const tabNotes = document.getElementById('offer-tab-notes');
-    if (tabNotes && !tabNotes.value) {
-        tabNotes.value = document.getElementById('offer-notes')?.value || '';
+    // Auto-generuj uwagi do oferty (jak w studniach), potem uzupełnij puste pola
+    if (typeof generateOfferNotes === 'function') {
+        generateOfferNotes(false);
+    } else {
+        const tabNotes = document.getElementById('offer-tab-notes');
+        if (tabNotes && !tabNotes.value) {
+            tabNotes.value = document.getElementById('offer-notes')?.value || '';
+        }
     }
 
     const tabPayment = document.getElementById('offer-tab-payment-terms');

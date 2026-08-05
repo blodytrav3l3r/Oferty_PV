@@ -167,6 +167,31 @@
                 font-size: 9pt;
             }
 
+            /* Sekcja rur (wydruk łączny) */
+            .cat-section {
+                margin-bottom: 14px;
+            }
+
+            .cat-header {
+                font-size: 11pt;
+                font-weight: 700;
+                color: var(--slate-400);
+                border-bottom: 1.5px solid var(--slate-400);
+                padding-bottom: 3px;
+                margin-bottom: 6px;
+            }
+
+            .cat-summary-row td {
+                background: var(--slate-100);
+                font-weight: 700;
+                border-top: 1.5px solid var(--slate-400);
+                font-size: 9pt;
+            }
+
+            .nowrap {
+                white-space: nowrap;
+            }
+
             /* ===== PODSUMOWANIE OGÓLNE ===== */
             .summary-section {
                 margin-top: 16px;
@@ -289,6 +314,9 @@
 
                             <!-- ====== TABELE PER ŚREDNICA ====== -->
                             {{TABELE_DN}}
+
+                            <!-- ====== TABELE RUR (WYDRUK ŁĄCZNY) ====== -->
+                            {{TABELA_RUR}}
 
                             <!-- ====== PODSUMOWANIE OGÓLNE ====== -->
                             {{PODSUMOWANIE}}

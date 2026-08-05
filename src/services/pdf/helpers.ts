@@ -2,6 +2,16 @@ export function fmtInt(val: number): string {
     return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 }
 
+export function formatDatePL(dateStr: string): string {
+    if (!dateStr) return new Date().toLocaleDateString('pl-PL');
+    const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
+    try {
+        return new Date(normalized).toLocaleDateString('pl-PL');
+    } catch {
+        return dateStr;
+    }
+}
+
 export function escapeHtml(input: unknown): string {
     if (input === null || input === undefined) return '';
     return String(input)

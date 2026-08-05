@@ -1,26 +1,20 @@
-import { Packer } from 'docx';
+import { Document, ISectionOptions, Packer } from 'docx';
 import prisma from '../../../prismaClient';
 import {
     buildRuryOfferContextFromOfferId,
     buildRuryOrderContextFromOrderId
 } from '../../pdfGenerator';
 import type { UserContactInfo } from '../../pdfGenerator';
-import { buildRuryDocument } from './builder';
+import { buildRuryDocument, buildRurySection } from './builder';
 import { logger } from '../../../utils/logger';
 import type { RuryOfferDataBlob, RuryOrderDataBlob } from '../../../types/offerData';
 
 /**
- * Generuje dokument DOCX dla oferty rur.
- *
- * Pobiera ofertę rur z bazy, parsuje dane JSON z offers_rel.data,
- * przygotowuje dane klienta oraz informacje o autorze i opiekunie handlowym,
- * następnie buduje kompletny dokument Word z tabelami pozycji i podsumowaniem.
- *
- * @param offerId - ID oferty rur w bazie danych
- * @returns Buffer zawierający wygenerowany dokument DOCX
- * @throws Error gdy oferta nie zostanie znaleziona
+ * Pobiera z bazy dane oferty rur i przygotowuje wszystkie elementy
+ * potrzebne do zbudowania dokumentu DOCX (kontekst + sparsowane dane + klient).
+ * Współdzielone przez generowanie pojedynczej oferty i wydruk łączny.
  */
-export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
+export async function loadRuryOfferData(offerId: string) {
     const ctx = await buildRuryOfferContextFromOfferId(offerId);
 
     const offer = await prisma.offers_rel.findUnique({ where: { id: offerId } });
@@ -37,9 +31,19 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
 
+    return { ctx, offerData, client };
+}
+
+/**
+ * Generuje obiekt dokumentu DOCX dla oferty rur (bez pakowania do bufora).
+ * Wykorzystywany przez generateOfferRuryDOCX oraz wydruk łączny.
+ */
+export async function buildRuryOfferDocument(offerId: string): Promise<Document> {
+    const { ctx, offerData, client } = await loadRuryOfferData(offerId);
+
     logger.info('DocxRury', `Generowanie DOCX dla oferty ${offerId}, pozycji: ${ctx.items.length}`);
 
-    const doc = buildRuryDocument(
+    return buildRuryDocument(
         { offer_number: ctx.offerNumber },
         offerData,
         client,
@@ -47,7 +51,38 @@ export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
         ctx.authorUser ?? null,
         ctx.guardianUser ?? null
     );
-    return Packer.toBuffer(doc);
+}
+
+/**
+ * Generuje pojedynczą sekcję DOCX oferty rur (children + nagłówek/stopka).
+ * Umożliwia złożenie wydruku łącznego (rury + studnie) w jednym dokumencie.
+ */
+export async function buildRuryOfferSection(offerId: string): Promise<ISectionOptions> {
+    const { ctx, offerData, client } = await loadRuryOfferData(offerId);
+
+    return buildRurySection(
+        { offer_number: ctx.offerNumber },
+        offerData,
+        client,
+        ctx.items as Record<string, unknown>[],
+        ctx.authorUser ?? null,
+        ctx.guardianUser ?? null
+    );
+}
+
+/**
+ * Generuje dokument DOCX dla oferty rur.
+ *
+ * Pobiera ofertę rur z bazy, parsuje dane JSON z offers_rel.data,
+ * przygotowuje dane klienta oraz informacje o autorze i opiekunie handlowym,
+ * następnie buduje kompletny dokument Word z tabelami pozycji i podsumowaniem.
+ *
+ * @param offerId - ID oferty rur w bazie danych
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ * @throws Error gdy oferta nie zostanie znaleziona
+ */
+export async function generateOfferRuryDOCX(offerId: string): Promise<Buffer> {
+    return Packer.toBuffer(await buildRuryOfferDocument(offerId));
 }
 
 /**

@@ -4,7 +4,7 @@
  * Publiczne API do generowania dokumentów DOCX dla ofert studni.
  */
 
-import { Packer } from 'docx';
+import { Document, ISectionOptions, Packer } from 'docx';
 import prisma from '../../../prismaClient';
 import {
     lookupOfferUsers,
@@ -12,29 +12,15 @@ import {
     buildStudnieOrderContextFromOrderId
 } from '../../pdfGenerator';
 import type { UserContactInfo } from '../../pdfGenerator';
-import { buildStudnieDocument } from './builder';
+import { buildStudnieDocument, buildStudnieSection } from './builder';
 import { logger } from '../../../utils/logger';
 
 /**
- * Generuje dokument DOCX dla oferty studni.
- *
- * Pobiera ofertę studni z bazy, parsuje dane JSON zawierające studnie (wellsExport),
- * przygotowuje dane klienta oraz informacje o autorze i opiekunie handlowym,
- * następnie buduje kompletny dokument Word z tabelami studni i podsumowaniem.
- *
- * @param offerId - ID oferty studni w bazie danych
- * @returns Buffer zawierający wygenerowany dokument DOCX
- * @throws Error gdy oferta nie zostanie znaleziona
- *
- * @example
- * ```ts
- * const docxBuffer = await generateOfferStudnieDOCX('studnie-456');
- * res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
- * res.setHeader('Content-Disposition', 'attachment; filename="oferta.docx"');
- * res.send(docxBuffer);
- * ```
+ * Pobiera z bazy dane oferty studni i przygotowuje wszystkie elementy
+ * potrzebne do zbudowania dokumentu DOCX (dane oferty + studnie + klient).
+ * Współdzielone przez generowanie pojedynczej oferty i wydruk łączny.
  */
-export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer> {
+export async function loadStudnieOfferData(offerId: string) {
     const offer = await prisma.offers_studnie_rel.findUnique({ where: { id: offerId } });
     if (!offer) throw new Error('Oferta studni nie znaleziona');
 
@@ -52,14 +38,51 @@ export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer>
         wells = offerData.wells;
     }
 
-    logger.info('DocxStudnie', `Generowanie DOCX dla oferty ${offerId}, studni: ${wells.length}`);
-
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
     const { authorUser, guardianUser } = await lookupOfferUsers(offerData, offer.userId);
-    const doc = buildStudnieDocument(offer, offerData, client, wells, authorUser, guardianUser);
-    return Packer.toBuffer(doc);
+
+    return { offer, offerData, client, wells, authorUser, guardianUser };
+}
+
+/**
+ * Generuje obiekt dokumentu DOCX dla oferty studni (bez pakowania do bufora).
+ * Wykorzystywany przez generateOfferStudnieDOCX oraz wydruk łączny.
+ */
+export async function buildStudnieOfferDocument(offerId: string): Promise<Document> {
+    const { offer, offerData, client, wells, authorUser, guardianUser } =
+        await loadStudnieOfferData(offerId);
+
+    logger.info('DocxStudnie', `Generowanie DOCX dla oferty ${offerId}, studni: ${wells.length}`);
+
+    return buildStudnieDocument(offer, offerData, client, wells, authorUser, guardianUser);
+}
+
+/**
+ * Generuje pojedynczą sekcję DOCX oferty studni (children + nagłówek/stopka).
+ * Umożliwia złożenie wydruku łącznego (rury + studnie) w jednym dokumencie.
+ */
+export async function buildStudnieOfferSection(offerId: string): Promise<ISectionOptions> {
+    const { offer, offerData, client, wells, authorUser, guardianUser } =
+        await loadStudnieOfferData(offerId);
+
+    return buildStudnieSection(offer, offerData, client, wells, authorUser, guardianUser);
+}
+
+/**
+ * Generuje dokument DOCX dla oferty studni.
+ *
+ * Pobiera ofertę studni z bazy, parsuje dane JSON zawierające studnie (wellsExport),
+ * przygotowuje dane klienta oraz informacje o autorze i opiekunie handlowym,
+ * następnie buduje kompletny dokument Word z tabelami studni i podsumowaniem.
+ *
+ * @param offerId - ID oferty studni w bazie danych
+ * @returns Buffer zawierający wygenerowany dokument DOCX
+ * @throws Error gdy oferta nie zostanie znaleziona
+ */
+export async function generateOfferStudnieDOCX(offerId: string): Promise<Buffer> {
+    return Packer.toBuffer(await buildStudnieOfferDocument(offerId));
 }
 
 /**

@@ -190,6 +190,37 @@ describe('printModal helper (public/js/shared/printModal.js)', () => {
         });
     });
 
+    describe('Sekcja WYDRUK ŁĄCZNY', () => {
+        it('renderuje listboxy ofert (rury/studnie), format i przycisk Eksportuj', () => {
+            const { sandbox, bodyEl } = loadPrintModalInSandbox();
+            sandbox.window.showUniversalPrintModal({
+                combinedSection: {
+                    currentRuryId: 'r-1',
+                    title: 'Wydruk łączny',
+                    description: 'Połącz ofertę rur i studni w jeden plik:'
+                }
+            });
+            expect(bodyEl.insertedHtml).toMatch(/data-section="combined"/);
+            expect(bodyEl.insertedHtml).toMatch(/upm-title-combined/);
+            expect(bodyEl.insertedHtml).toMatch(/data-combined-field="rury"/);
+            expect(bodyEl.insertedHtml).toMatch(/data-combined-field="studnie"/);
+            expect(bodyEl.insertedHtml).toMatch(/data-combined-field="format"/);
+            expect(bodyEl.insertedHtml).toMatch(/data-action="combinedExport_action"/);
+            expect(bodyEl.insertedHtml).toMatch(/Eksportuj/);
+        });
+
+        it('pomija sekcję gdy brak combinedSection', () => {
+            const { sandbox, bodyEl } = loadPrintModalInSandbox();
+            sandbox.window.showUniversalPrintModal({});
+            expect(bodyEl.insertedHtml).not.toMatch(/data-section="combined"/);
+        });
+
+        it('rejestruje globalną akcję combinedExport_action', () => {
+            const { sandbox } = loadPrintModalInSandbox();
+            expect(typeof sandbox.window.combinedExport_action).toBe('function');
+        });
+    });
+
     describe('Dispatcher (event delegation)', () => {
         it('dispatcher wywołuje window[action](id, format) po click na btn w modalu', () => {
             const { sandbox, documentMock, registeredListeners, calls } = loadPrintModalInSandbox();

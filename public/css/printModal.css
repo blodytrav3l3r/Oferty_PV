@@ -205,6 +205,67 @@
 .upm-title-karta {
     color: var(--upm-karta);
 }
+.upm-title-combined {
+    color: var(--upm-karta);
+}
+
+.upm-combined-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.upm-combined-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.7rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--upm-border);
+    border-radius: 8px;
+    background: rgba(var(--white-rgb), 0.02);
+}
+
+.upm-combined-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: var(--upm-text-muted);
+    font-weight: 600;
+    text-align: left;
+}
+
+.upm-combined-select {
+    background: rgba(var(--white-rgb), 0.05);
+    border: 1px solid var(--upm-border);
+    border-radius: 8px;
+    color: var(--upm-text);
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+    font-family: inherit;
+    width: 100%;
+}
+
+.upm-combined-select:focus-visible {
+    outline: 2px solid var(--upm-accent);
+    outline-offset: 2px;
+}
+
+.upm-btn-combined {
+    background: rgba(52, 211, 153, 0.2);
+    color: var(--success-hover);
+    border-color: rgba(52, 211, 153, 0.8);
+    flex-direction: row;
+    justify-content: center;
+}
+
+.upm-btn-combined:hover {
+    background: rgba(52, 211, 153, 0.3);
+    border-color: rgba(52, 211, 153, 0.8);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(52, 211, 153, 0.3);
+}
 
 .upm-badge {
     font-size: 0.72rem;

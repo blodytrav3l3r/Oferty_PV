@@ -384,7 +384,12 @@ window.showUniversalPrintModal = /** @type {function(...[*]=): void} */ (
                           title: 'Wydruk Karty Budowy',
                           description: 'Wybierz zamówienie i format Karty Budowy:'
                       }
-                    : null
+                    : null,
+            combinedSection: {
+                currentStudnieId: finalOfferId || '',
+                title: 'Wydruk łączny (Rury + Studnie)',
+                description: 'Połącz ofertę studni z ofertą rur w jeden plik:'
+            }
         };
 
         // Deleguj do wspólnego modala

@@ -41,6 +41,7 @@ export interface StudnieOfferData {
     clientPhone: string;
     investName: string;
     investAddress: string;
+    investContractor: string;
     items: Array<{
         productId?: string | null;
         productName?: string | null;

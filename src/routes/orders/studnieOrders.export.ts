@@ -192,6 +192,7 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
             clientPhone: String(body.clientContact ?? ''),
             investName: String(body.investName ?? ''),
             investAddress: String(body.investAddress ?? ''),
+            investContractor: String(body.investContractor ?? ''),
             items,
             transportCost: totalTransportCost,
             createdAt: String(body.date ?? new Date().toISOString()),

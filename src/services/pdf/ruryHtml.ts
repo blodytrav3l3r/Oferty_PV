@@ -1,103 +1,57 @@
 import fs from 'fs';
 import path from 'path';
-import { logger } from '../../utils/logger';
 import { DOCX_COLORS } from '../docx/colors';
-import { escapeHtml } from './helpers';
+import { escapeHtml, formatDatePL } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
 import { PRINT_TOKENS_CSS } from './printTokens';
+import { loadLetterheadBase64 } from './letterhead';
 
-export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
-    const formatDate = (dateStr: string) => {
-        if (!dateStr) return new Date().toLocaleDateString('pl-PL');
-        const normalized = /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? dateStr + 'T00:00:00' : dateStr;
-        try {
-            return new Date(normalized).toLocaleDateString('pl-PL');
-        } catch {
-            return dateStr;
-        }
-    };
+const CATEGORY_ORDER = [
+    'Rury Betonowe',
+    'Żelbetowe KL. A (II)',
+    'Żelbetowe KL. S (I)',
+    'Duże Żelbetowe II',
+    'Rury Jajowe Betonowe',
+    'Rury Jajowe Żelbetowe',
+    'Akcesoria PEHD',
+    'Uszczelki',
+    'Zabezpieczenie transportu'
+];
 
+const getProductCategory = (item: Record<string, unknown>): string => {
+    return String(item.category ?? 'Inne');
+};
+const getProductDiameter = (item: Record<string, unknown>): number => {
+    const id = String(item.productId ?? '');
+    const parts = id.split('-');
+    if (parts.length >= 3) {
+        const code = parseInt(parts[2]);
+        if (!isNaN(code) && code > 0) return code * 100;
+    }
+    return 99999;
+};
+const isBosy = (item: Record<string, unknown>): boolean => {
+    const name = String(item.name ?? '').toLowerCase();
+    const id = String(item.productId ?? '');
+    return name.includes('bosy') || id.endsWith('-B00');
+};
+
+/**
+ * Buduje sekcję treści oferty rur (tabele per kategoria + podsumowanie).
+ * Współdzielona przez generateRuryHTML oraz wydruk łączny (rury + studnie).
+ */
+export function buildRurySectionHTML(data: RuryOfferData): {
+    tables: string;
+    summary: string;
+    grandTotal: number;
+} {
     const formatCurrency = (val: number) => {
         return val.toLocaleString('pl-PL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
 
     const fmtIntLocal = (val: number) => {
         return val.toLocaleString('pl-PL', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-    };
-
-    const validityString = data.validity || `${data.validityDays} dni`;
-    const isOrder = data.documentType === 'order';
-    const docNumber = isOrder && data.orderNumber ? data.orderNumber : data.offerNumber;
-    const titleText = isOrder ? `ZAMÓWIENIE ${docNumber}` : `OFERTA HANDLOWA ${docNumber}`;
-    const validitySection = isOrder
-        ? ''
-        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
-
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaRury.html');
-    const template = fs
-        .readFileSync(templatePath, 'utf-8')
-        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
-
-    const naglowekPath = path.join(process.cwd(), 'public', 'images', 'letterhead-header.png');
-    const stopkaPath = path.join(process.cwd(), 'public', 'images', 'letterhead-footer.png');
-    let naglowekBase64 = '';
-    let stopkaBase64 = '';
-    try {
-        const buf = fs.readFileSync(naglowekPath);
-        naglowekBase64 = `data:image/png;base64,${buf.toString('base64')}`;
-    } catch (e) {
-        logger.warn('PdfAssets', 'Brak letterhead-header.png', e);
-    }
-    try {
-        const buf = fs.readFileSync(stopkaPath);
-        stopkaBase64 = `data:image/png;base64,${buf.toString('base64')}`;
-    } catch (e) {
-        logger.warn('PdfAssets', 'Brak letterhead-footer.png', e);
-    }
-
-    const daneKlienta = `
-    <div><strong>${escapeHtml(data.clientName)}</strong></div>
-    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
-    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
-    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
-    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
-  `.trim();
-
-    const daneInwestycji = `
-    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>\u2014</div>'}
-    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
-    ${data.investContractor ? `<div>Wykonawca: ${escapeHtml(data.investContractor)}</div>` : ''}
-  `.trim();
-
-    const CATEGORY_ORDER = [
-        'Rury Betonowe',
-        'Żelbetowe KL. A (II)',
-        'Żelbetowe KL. S (I)',
-        'Duże Żelbetowe II',
-        'Rury Jajowe Betonowe',
-        'Rury Jajowe Żelbetowe',
-        'Akcesoria PEHD',
-        'Uszczelki',
-        'Zabezpieczenie transportu'
-    ];
-
-    const getProductCategory = (item: Record<string, unknown>): string => {
-        return String(item.category ?? 'Inne');
-    };
-    const getProductDiameter = (item: Record<string, unknown>): number => {
-        const id = String(item.productId ?? '');
-        const parts = id.split('-');
-        if (parts.length >= 3) {
-            const code = parseInt(parts[2]);
-            if (!isNaN(code) && code > 0) return code * 100;
-        }
-        return 99999;
-    };
-    const isBosy = (item: Record<string, unknown>): boolean => {
-        const name = String(item.name ?? '').toLowerCase();
-        const id = String(item.productId ?? '');
-        return name.includes('bosy') || id.endsWith('-B00');
     };
 
     const items = data.items as Record<string, unknown>[];
@@ -209,6 +163,43 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     </table>
   </div>`;
 
+    return { tables: tabelaPozycji, summary: podsumowanie, grandTotal: grandTotalNet };
+}
+
+export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
+    const validityString = data.validity || `${data.validityDays} dni`;
+    const isOrder = data.documentType === 'order';
+    const docNumber = isOrder && data.orderNumber ? data.orderNumber : data.offerNumber;
+    const titleText = isOrder ? `ZAMÓWIENIE ${docNumber}` : `OFERTA HANDLOWA ${docNumber}`;
+    const validitySection = isOrder
+        ? ''
+        : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
+
+    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaRury.html');
+    const template = fs
+        .readFileSync(templatePath, 'utf-8')
+        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+
+    const letterhead = loadLetterheadBase64();
+    const naglowekBase64 = letterhead.header;
+    const stopkaBase64 = letterhead.footer;
+
+    const daneKlienta = `
+    <div><strong>${escapeHtml(data.clientName)}</strong></div>
+    ${data.clientAddress ? `<div>${escapeHtml(data.clientAddress)}</div>` : ''}
+    ${data.clientNip ? `<div>NIP: ${escapeHtml(data.clientNip)}</div>` : ''}
+    ${data.clientNumber ? `<div>Nr klienta: ${escapeHtml(data.clientNumber)}</div>` : ''}
+    ${data.clientPhone ? `<div>Kontakt: ${escapeHtml(data.clientPhone)}</div>` : ''}
+  `.trim();
+
+    const daneInwestycji = `
+    ${data.investName ? `<div><strong>Budowa:</strong> ${escapeHtml(data.investName)}</div>` : '<div>\u2014</div>'}
+    ${data.investAddress ? `<div>Adres: ${escapeHtml(data.investAddress)}</div>` : ''}
+    ${data.investContractor ? `<div>Wykonawca: ${escapeHtml(data.investContractor)}</div>` : ''}
+  `.trim();
+
+    const { tables, summary } = buildRurySectionHTML(data);
+
     let sekcjaUwagi = '';
     if (data.notes) {
         sekcjaUwagi += `<div class="notes-section"><div class="note-box">${escapeHtml(data.notes).replace(/\n/g, '<br>')}</div></div>`;
@@ -228,13 +219,13 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
     html = html.replace(/\{\{TYTUL_DOKUMENTU\}\}/g, escapeHtml(titleText));
     html = html.replace(/\{\{VALIDITY_SECTION\}\}/g, validitySection);
     html = html.replace(/\{\{NR_OFERTY\}\}/g, docNumber);
-    html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDate(data.createdAt));
+    html = html.replace(/\{\{DATA_OFERTY\}\}/g, formatDatePL(data.createdAt));
     html = html.replace(/\{\{DATA_WAZNOSCI\}\}/g, validityString);
     html = html.replace(/\{\{DANE_KLIENTA\}\}/g, daneKlienta);
     html = html.replace(/\{\{DANE_INWESTYCJI\}\}/g, daneInwestycji);
-    html = html.replace(/\{\{TABELA_POZYCJI\}\}/g, tabelaPozycji);
+    html = html.replace(/\{\{TABELA_POZYCJI\}\}/g, tables);
     html = html.replace(/\{\{TABELA_TRANSPORTU\}\}/g, '');
-    html = html.replace(/\{\{PODSUMOWANIE\}\}/g, podsumowanie);
+    html = html.replace(/\{\{PODSUMOWANIE\}\}/g, summary);
     html = html.replace(/\{\{SEKCJA_UWAGI\}\}/g, sekcjaUwagi);
     html = html.replace(/\{\{WARUNKI_STATYCZNE\}\}/g, warunkiStatyczne);
     html = html.replace(/\{\{DANE_KONTAKTOWE\}\}/g, daneKontaktowe);

@@ -81,12 +81,21 @@
             <label style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700">
                 <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
             </label>
+            <button
+                type="button"
+                class="btn btn-secondary btn-sm"
+                onclick="generateOfferNotes()"
+                style="font-size: 0.7rem; padding: 0.3rem 0.6rem"
+            >
+                <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
+                Auto-generuj uwagi
+            </button>
         </div>
         <textarea
             id="offer-tab-notes"
             class="wizard-form-input"
             rows="4"
-            placeholder="Wpisz uwagi do oferty..."
+            placeholder="Uwagi zostaną automatycznie wygenerowane..."
             style="resize: vertical; width: 100%; font-size: 0.75rem"
         ></textarea>
     </div>

@@ -164,9 +164,7 @@ interface Window {
     /* printModal.js — funkcja ma wiele sygnatur (config obiekt lub 3 parametry) */
     showUniversalPrintModal: (...args: any[]) => void;
     __upmListenerInstalled: boolean;
-    __upmShow: (config: PrintModalConfig) => void;
     __upmHelperShow: (config: PrintModalConfig) => void;
-    __upmClose: () => void;
 
     /* calcInput.js */
     parseCalcExpression(expr: string): number | null;

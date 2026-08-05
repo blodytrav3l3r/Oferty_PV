@@ -4,7 +4,7 @@
  * Składa kompletny obiekt Document DOCX z poszczególnych sekcji.
  */
 
-import { Document, Paragraph, Table } from 'docx';
+import { Document, ISectionOptions, Paragraph, Table } from 'docx';
 import { UserContactInfo } from '../../pdfGenerator';
 import { fmtDate } from '../helpers';
 import { buildImageHeader, buildImageFooter } from '../headerFooter';
@@ -36,6 +36,77 @@ export function buildStudnieDocument(
     guardianUser: UserContactInfo | null,
     documentType: 'offer' | 'order' = 'offer'
 ): Document {
+    return new Document({
+        sections: [
+            buildStudnieSection(
+                offer,
+                offerData,
+                client,
+                wells,
+                authorUser,
+                guardianUser,
+                documentType
+            )
+        ]
+    });
+}
+
+/**
+ * Buduje pojedynczą sekcję dokumentu studni (children + marginesy + nagłówek/stopka).
+ * Wydzielona, aby można było łączyć sekcje rur i studni w jednym dokumencie
+ * (wydruk łączny).
+ */
+export function buildStudnieSection(
+    offer: Record<string, unknown>,
+    offerData: Record<string, unknown>,
+    client: Record<string, unknown> | null,
+    wells: unknown[],
+    authorUser: UserContactInfo | null,
+    guardianUser: UserContactInfo | null,
+    documentType: 'offer' | 'order' = 'offer'
+): ISectionOptions {
+    const children = buildStudnieSectionChildren(
+        offer,
+        offerData,
+        client,
+        wells,
+        authorUser,
+        guardianUser,
+        documentType
+    );
+
+    return {
+        properties: {
+            page: {
+                margin: {
+                    top: 60,
+                    bottom: 280,
+                    right: 570,
+                    left: 570,
+                    header: 60,
+                    footer: 280
+                }
+            }
+        },
+        headers: { default: buildImageHeader() },
+        footers: { default: buildImageFooter() },
+        children
+    };
+}
+
+/**
+ * Buduje listę elementów (akapity + tabele) dokumentu studni — sekcję treści.
+ * Współdzielona przez buildStudnieDocument oraz wydruk łączny (rury + studnie).
+ */
+export function buildStudnieSectionChildren(
+    offer: Record<string, unknown>,
+    offerData: Record<string, unknown>,
+    client: Record<string, unknown> | null,
+    wells: unknown[],
+    authorUser: UserContactInfo | null,
+    guardianUser: UserContactInfo | null,
+    documentType: 'offer' | 'order' = 'offer'
+): (Paragraph | Table)[] {
     const isOrder = documentType === 'order';
     const rawNumber =
         isOrder && offerData.orderNumber
@@ -101,25 +172,5 @@ export function buildStudnieDocument(
     // 9. Dane kontaktowe
     children.push(...buildContactSection(authorUser, guardianUser));
 
-    return new Document({
-        sections: [
-            {
-                properties: {
-                    page: {
-                        margin: {
-                            top: 60,
-                            bottom: 280,
-                            right: 570,
-                            left: 570,
-                            header: 60,
-                            footer: 280
-                        }
-                    }
-                },
-                headers: { default: buildImageHeader() },
-                footers: { default: buildImageFooter() },
-                children
-            }
-        ]
-    });
+    return children;
 }

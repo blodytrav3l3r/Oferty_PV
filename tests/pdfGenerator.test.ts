@@ -45,7 +45,8 @@ jest.mock('../src/prismaClient', () => ({
         clients_rel: { findUnique: jest.fn() },
         offers_studnie_rel: { findUnique: jest.fn() },
         orders_studnie_rel: { findUnique: jest.fn() },
-        users: { findUnique: jest.fn() }
+        users: { findUnique: jest.fn() },
+        productsRury: { findMany: jest.fn() }
     }
 }));
 
@@ -84,6 +85,9 @@ describe('pdfGenerator Service', () => {
             (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOffer);
             (prisma.clients_rel.findUnique as jest.Mock).mockResolvedValue(mockClient);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue(mockItems);
+            (prisma.productsRury.findMany as jest.Mock).mockResolvedValue([
+                { id: 'p-1', category: 'Rury Betonowe' }
+            ]);
 
             const result = await pdfGen.generateOfferRuryPDF('o-1');
             expect(result).toBeInstanceOf(Buffer);

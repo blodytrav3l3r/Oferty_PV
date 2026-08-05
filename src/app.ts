@@ -194,6 +194,7 @@ import aiMlRoutes from './routes/telemetryAiMl';
 import searchRoutes from './routes/offers/search';
 import productionSearchRoutes from './routes/orders/productionSearch';
 import priceOverridesRoutes from './routes/priceOverrides';
+import exportCombinedRoutes from './routes/exportCombined';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -227,6 +228,7 @@ app.use('/api/preco-pricing', apiLimiter, precoPricingRoutes);
 app.use('/api/feature-flags', featureFlagsRoutes);
 app.use('/api/telemetry', aiMlRoutes); // ML prediction API
 app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
+app.use('/api/export-combined', exportCombinedRoutes);
 
 /* ===== GLOBALNA OBSŁUGA BŁĘDÓW ===== */
 app.use(errorHandler);
