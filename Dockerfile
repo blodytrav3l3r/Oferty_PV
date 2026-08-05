@@ -22,9 +22,8 @@ RUN npm run build
 # Actual Prisma client is at /app/generated/prisma — symlink bridges the path
 RUN ln -sf /app/generated /app/dist/generated
 
-# Usuwamy zależności deweloperskie dla środowiska produkcyjnego
-RUN npm prune --production && \
-    npm cache clean --force
+# NIE uruchamiamy npm prune --production - devDeps (ts-node, Prisma CLI)
+# sa potrzebne w runtime do seedowania (prisma/seed.ts) i db push (docker-entrypoint.sh).
 
 # Tworzymy katalog danych dla trwałego wolumenu Docker (/var/data)
 RUN mkdir -p /var/data && \

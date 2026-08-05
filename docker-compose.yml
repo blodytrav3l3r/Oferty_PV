@@ -13,6 +13,8 @@ services:
             - NODE_ENV=production
             - PORT=10000
             - HOST=0.0.0.0
+            # Wymagane przy pierwszym starcie - ensureAdminExists() rzuci wyjatek bez tej zmiennej
+            - "DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}"
         volumes:
             - witros_data:/var/data
         networks:
@@ -28,7 +30,7 @@ services:
             interval: 30s
             timeout: 10s
             retries: 3
-            start_period: 10s
+            start_period: 30s
 
 volumes:
     witros_data:
