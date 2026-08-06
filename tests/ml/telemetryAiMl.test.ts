@@ -16,7 +16,8 @@ jest.mock('../../src/middleware/auth', () => ({
 }));
 
 jest.mock('../../src/middleware/rateLimiters', () => ({
-    WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
+    WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
+    READ_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
 const mockGetActiveModel = jest.fn<any>();
@@ -68,6 +69,7 @@ jest.mock('../../src/services/ml/AcceptanceModel', () => {
 
 let mockTelemetryLogsFindMany = jest.fn<any>().mockResolvedValue([]);
 let mockTelemetryLogsCount = jest.fn<any>().mockResolvedValue(0);
+let mockTelemetryLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -83,7 +85,8 @@ jest.mock('../../src/prismaClient', () => ({
         },
         ai_telemetry_logs: {
             findMany: (...args: any[]) => mockTelemetryLogsFindMany(...args),
-            count: (...args: any[]) => mockTelemetryLogsCount(...args)
+            count: (...args: any[]) => mockTelemetryLogsCount(...args),
+            findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args)
         },
         aiRewardLog: {
             count: jest.fn<any>().mockResolvedValue(0)
@@ -144,6 +147,26 @@ describe('POST /api/telemetry/ai/predict', () => {
         expect(res.body.scores[0]).toHaveProperty('score', 0.73);
         expect(res.body.scores[0]).toHaveProperty('version', 'v1.0.0-test');
         expect(res.body).toHaveProperty('cached', false);
+    });
+
+    it('zwraca 400 FEATURE_VERSION_MISMATCH gdy featureVersion niezgodna z ML_CONSTANTS', async () => {
+        mockGetActiveModel.mockResolvedValue({
+            id: 'model-v1',
+            version: 'v1.0.0-test',
+            weights: new Array(24).fill(0.1),
+            bias: 0,
+            featureMins: new Array(24).fill(0),
+            featureMaxs: new Array(24).fill(1)
+        });
+        mockPredict.mockReturnValue(0.5);
+
+        const res = await request(app).post('/api/telemetry/ai/predict').send({
+            features: FEATURES_24,
+            featureVersion: 'stale-version'
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error', 'FEATURE_VERSION_MISMATCH');
     });
 
     it('zwraca 400 dla zlej liczby cech (nie 24)', async () => {
@@ -405,5 +428,55 @@ describe('GET /api/telemetry/ai/health', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.driftPct).toBeGreaterThan(0);
+    });
+});
+
+describe('POST /api/telemetry/ai/reward', () => {
+    let app: express.Application;
+
+    beforeEach(async () => {
+        jest.clearAllMocks();
+        const { default: router } = await import('../../src/routes/telemetryAiMl');
+        app = express();
+        app.use(express.json());
+        app.use('/api/telemetry', router);
+    });
+
+    it('zwraca 400 WELL_NOT_FOUND gdy wellId nie ma telemetrii (blokada reward farmingu)', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue(null);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-fake-999',
+            scoreBefore: 0.9,
+            scoreAfter: 0.95,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error', 'WELL_NOT_FOUND');
+    });
+
+    it('zwraca 400 gdy scoreBefore poza zakresem [0,1]', async () => {
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-fake-999',
+            scoreBefore: 1.5,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error');
+    });
+
+    it('zwraca 400 gdy brak wymaganego wellId', async () => {
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            scoreBefore: 0.9,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.body).toHaveProperty('error');
     });
 });

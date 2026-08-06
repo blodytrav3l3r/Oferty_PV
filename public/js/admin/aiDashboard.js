@@ -5,11 +5,10 @@
     var ENDPOINTS = {
         stats: '/api/telemetry/ai/knowledge/stats',
         patterns: '/api/telemetry/ai/knowledge/patterns',
-        recommendations: '/api/telemetry/ai/recommendations/',
         runCycle: '/api/telemetry/ai/learning/run',
-        status: '/api/telemetry/ai/learning/status',
         mlStatus: '/api/telemetry/ai/ml-status',
         models: '/api/telemetry/ai/models',
+        featureImportance: '/api/telemetry/ai/feature-importance',
         train: '/api/telemetry/ai/train',
         rollback: '/api/telemetry/ai/rollback',
         settings: '/api/telemetry/ai/settings'
@@ -21,7 +20,8 @@
             var resp = fetch(url, Object.assign({ credentials: 'same-origin' }, options || {}));
             return resp
                 .then(function (r) {
-                    if (!r.ok) return null;
+                    if (r.status === 403) return { error: 'forbidden' };
+                    if (!r.ok) return { error: 'server' };
                     return r.json();
                 })
                 .catch(function () {
@@ -30,6 +30,30 @@
         } catch (e) {
             return null;
         }
+    }
+
+    /* Bezpieczne parsowanie JSON (backend może zwrócić obiekt lub string JSON) */
+    function safeJson(v) {
+        if (v == null) return null;
+        if (typeof v === 'object') return v;
+        try {
+            return JSON.parse(v);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /* Komunikat błędu API — fetchJson rozróżnia {error:'forbidden'} (403) od {error:'server'} */
+    function apiErrorHtml(errorCode) {
+        var msg =
+            errorCode === 'forbidden'
+                ? 'Brak dostępu (wymagana rola admin)'
+                : 'Błąd serwera — nie udało się pobrać danych';
+        return (
+            '<div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);padding:12px;color:var(--danger-hover)">' +
+            msg +
+            '</div>'
+        );
     }
 
     /* Popup in-app (fallback do natywnych okien) */
@@ -384,6 +408,17 @@
                               window.escapeHtml(m.id || '') +
                               '" title="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
                               '</div>';
+                        /* Backend zwraca StoredModel: metrics (JSON z rocAuc), features, trainingRows, featureVersion */
+                        var metrics = safeJson(m.metrics);
+                        var rocAuc =
+                            metrics &&
+                            metrics.rocAuc != null &&
+                            Number.isFinite(Number(metrics.rocAuc))
+                                ? Number(metrics.rocAuc)
+                                : null;
+                        var featureCount = Array.isArray(m.features)
+                            ? m.features.length
+                            : (safeJson(m.features) || []).length;
                         return (
                             '<tr' +
                             rowClass +
@@ -393,13 +428,16 @@
                             (m.active ? '<span class="ai-model-used-tag">W UŻYCIU</span>' : '') +
                             '</td>' +
                             '<td>' +
-                            (m.auc != null ? m.auc.toFixed(4) : '—') +
+                            (rocAuc != null ? rocAuc.toFixed(4) : '—') +
                             '</td>' +
                             '<td>' +
-                            (m.featureCount || 0) +
+                            (featureCount || 0) +
                             '</td>' +
                             '<td>' +
-                            (m.trainingSamples || 0) +
+                            (m.trainingRows || 0) +
+                            '</td>' +
+                            '<td>' +
+                            window.escapeHtml(m.featureVersion || '—') +
                             '</td>' +
                             '<td>' +
                             statusHtml +
@@ -422,6 +460,7 @@
                     '<th title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
                     '<th title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
                     '<th title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
+                    '<th title="Wersja schematu cech u\u017cytego do trenowania modelu">Wersja cech</th>' +
                     '<th title="Czy model jest aktualnie aktywny">Status</th>' +
                     '<th title="Ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
                     '</tr></thead><tbody>' +
@@ -627,6 +666,72 @@
         });
     }
 
+    /* ===== FEATURE IMPORTANCE ===== */
+    /* GET /api/telemetry/ai/feature-importance zwraca { modelVersion, features: [{featureName, importance}] }
+       posortowane malejąco wg importance. 503 (brak aktywnego modelu) jest normalizowane przez fetchJson
+       na {error:'server'} — dla pustej listy cech pokazujemy komunikat o braku modelu. */
+    function renderFeatureImportance(container) {
+        var p = fetchJson(ENDPOINTS.featureImportance);
+        if (!p) {
+            container.innerHTML = apiErrorHtml('server');
+            return;
+        }
+        p.then(function (data) {
+            if (!data) {
+                container.innerHTML = apiErrorHtml('server');
+                return;
+            }
+            if (data.error === 'forbidden' || data.error === 'server') {
+                container.innerHTML = apiErrorHtml(data.error);
+                return;
+            }
+            var feats = data.features || [];
+            if (!Array.isArray(feats) || feats.length === 0) {
+                container.innerHTML =
+                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                return;
+            }
+            var max = feats.reduce(function (mx, f) {
+                return Math.max(mx, f.importance || 0);
+            }, 0);
+            max = max > 0 ? max : 1;
+            var rows = feats
+                .map(function (f) {
+                    var val = f.importance || 0;
+                    var pct = Math.round((val / max) * 100);
+                    return (
+                        '<div style="margin-bottom:6px">' +
+                        '<div style="display:flex;justify-content:space-between;font-size:0.76rem;margin-bottom:2px">' +
+                        '<span style="color:var(--text-secondary)">' +
+                        window.escapeHtml(f.featureName || '—') +
+                        '</span>' +
+                        '<span style="color:var(--text-primary);font-weight:600">' +
+                        val.toFixed(4) +
+                        '</span>' +
+                        '</div>' +
+                        '<div style="background:var(--bg-tertiary);border-radius:4px;height:8px;overflow:hidden">' +
+                        '<div style="width:' +
+                        pct +
+                        '%;height:100%;background:var(--accent);border-radius:4px"></div>' +
+                        '</div>' +
+                        '</div>'
+                    );
+                })
+                .join('');
+            container.innerHTML =
+                '<div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;margin-top:10px">' +
+                '<h4 style="margin:0 0 4px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="bar-chart-3" style="width:14px;height:14px;color:var(--accent)"></i> Feature Importance</h4>' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:10px">Ważność cech aktywnego modelu: <strong>' +
+                window.escapeHtml(data.modelVersion || '—') +
+                '</strong></div>' +
+                rows +
+                '</div>';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: container });
+            }
+        });
+    }
+
     /* ===== ENTRY POINT ===== */
     window.aiDashboardRender = function (containerId) {
         var container = document.getElementById(containerId);
@@ -650,11 +755,13 @@
             /* Sekcja: ML Pipeline */
             '<div id="ai-ml-section">' +
             '<div id="ai-ml-status"></div>' +
+            '<div id="ai-feature-importance"></div>' +
             '</div>' +
             '</div>';
 
         renderStats(document.getElementById('ai-stats'));
         renderMlStatus(document.getElementById('ai-ml-status'));
+        renderFeatureImportance(document.getElementById('ai-feature-importance'));
         renderPatterns(document.getElementById('ai-patterns'));
 
         var filterBtn = document.getElementById('ai-filter-btn');

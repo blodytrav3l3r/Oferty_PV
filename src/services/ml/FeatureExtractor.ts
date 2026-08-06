@@ -51,6 +51,7 @@ export interface TelemetryRecordWithDetails {
     featureSnapshot?: string | null;
     kineta?: string | null;
     dennicaHeight?: number | null;
+    computationMs?: number | null;
 }
 
 function shannonEntropy(items: string[]): number {
@@ -67,6 +68,25 @@ function shannonEntropy(items: string[]): number {
     }
     const maxEntropy = Math.log2(counts.size);
     return maxEntropy > 0 ? entropy / maxEntropy : 0;
+}
+
+/**
+ * Identyfikacja kregow po ID produktu. Backend w allComponentIds ma goly
+ * string ID (bez componentType), wiec typ musi byc rozpoznany po wzorcu.
+ * Wzorzec pokrywa aktualne dane (prisma/seed_studnie.json): krag/krag_ot
+ * maja wylacznie prefiksy KDB- / KDZ-. Uwaga: K2KAN-* to przejscia, NIE kregi.
+ */
+function isRingProductId(id: string): boolean {
+    return /^KDB-|^KDZ-/i.test(id);
+}
+
+/**
+ * Identyfikacja dennicy po ID. Dennice: DDD-<dn>-<wysokosc> (cyfra po
+ * drugim myslniku); styczne DDD-<dn>-STYCZNA maja po drugim myslniku
+ * litery i sa wylaczone.
+ */
+function isDennicaProductId(id: string): boolean {
+    return /^DDD-\d+-\d/.test(id);
 }
 
 function getSeason(dateStr?: string | null): string {
@@ -176,7 +196,7 @@ export class FeatureExtractor {
             ...new Set([...componentIds, ...reductionIds, ...konusIds, ...sealIds])
         ];
         const ringCount = Math.max(
-            componentIds.filter((id) => /-K-/i.test(id) || /krag/i.test(id)).length,
+            componentIds.filter(isRingProductId).length,
             record.ringCount || 0
         );
         const connectionCount = sealIds.length;
@@ -192,7 +212,8 @@ export class FeatureExtractor {
         const totalPrice = snapshot.totalPrice || record.totalPrice || 0;
         const totalWeight = snapshot.totalWeight || record.totalWeight || 0;
 
-        const ringVarietyValue = shannonEntropy(allDistinct);
+        const ringIds = [...new Set(componentIds.filter(isRingProductId))];
+        const ringVarietyValue = shannonEntropy(ringIds);
 
         let label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' = 'ACCEPTED';
         if (record.wasRejected) label = 'REJECTED';
@@ -205,7 +226,7 @@ export class FeatureExtractor {
         else if (record.solverSource === 'MANUAL') reward = -0.5;
         else if (record.wasRejected) reward = -1.0;
 
-        const decisionMs = 0;
+        const decisionMs = record.computationMs || 0;
 
         let topType = 'unknown';
         if (konusIds.length > 0) {
@@ -213,7 +234,7 @@ export class FeatureExtractor {
         }
 
         let bottomType = 'unknown';
-        const dennPos = allDistinct.findIndex((id) => id.includes('D-'));
+        const dennPos = allDistinct.findIndex(isDennicaProductId);
         if (dennPos >= 0) bottomType = allDistinct[dennPos];
 
         // v6: kineta — surowa wartość z payloadu (frontend wysyła 'brak', 'beton',

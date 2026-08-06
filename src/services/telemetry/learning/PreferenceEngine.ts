@@ -36,15 +36,22 @@ export class PreferenceEngine {
             if (!c.originalConfig || !c.finalConfig || !c.dn) continue;
             const removedIds = this._extractIds(c.originalConfig);
             const addedIds = this._extractIds(c.finalConfig);
-            for (const r of removedIds) {
-                for (const a of addedIds) {
-                    const key = c.dn + '|sub|' + r + '->' + a;
-                    if (!map.has(key)) {
-                        map.set(key, { count: 0, removed: r, added: a, dn: c.dn });
-                    }
-                    map.get(key)!.count++;
+            // Parowanie 1:1 (zip po indeksie) zamiast iloczynu kartezjańskiego —
+            // korekta "usuń 2, dodaj 2" daje 2 pary, a nie 4 (nie zawyża hitCount).
+            const paired = Math.min(removedIds.length, addedIds.length);
+            for (let i = 0; i < paired; i++) {
+                const removed = removedIds[i];
+                const added = addedIds[i];
+                // Ten sam identyfikator na tej pozycji to nie zamiana, tylko bez zmian.
+                if (!removed || !added || removed === added) continue;
+                const key = c.dn + '|sub|' + removed + '->' + added;
+                if (!map.has(key)) {
+                    map.set(key, { count: 0, removed, added, dn: c.dn });
                 }
+                map.get(key)!.count++;
             }
+            // Nadmiar (różnica liczby elementów) nie tworzy par substytucji —
+            // czyste dodania/usunięcia obsługują buildAddition/buildRemoval.
         }
         const out: KnowledgePattern[] = [];
         for (const [key, val] of map) {

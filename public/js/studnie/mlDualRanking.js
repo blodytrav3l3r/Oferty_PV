@@ -166,6 +166,29 @@
 
     /* ===== BUDOWA WEKTORA CECH ===== */
 
+    /**
+     * Entropia Shannona znormalizowana przez entropie maksymalna (0..1).
+     * IDENTYCZNY wzor jak backend (FeatureExtractor.ts) — wymagane, by
+     * cecha ringVariety miala ta sama semantyke w treningu i na serve.
+     * @param {string[]} items - lista ID (np. unikalnych ID kregow)
+     * @returns {number}
+     */
+    function shannonEntropy(items) {
+        if (!items || items.length === 0) return 0;
+        const counts = new Map();
+        for (const item of items) {
+            counts.set(item, (counts.get(item) || 0) + 1);
+        }
+        let entropy = 0;
+        const total = items.length;
+        for (const count of counts.values()) {
+            const p = count / total;
+            entropy -= p * Math.log2(p);
+        }
+        const maxEntropy = Math.log2(counts.size);
+        return maxEntropy > 0 ? entropy / maxEntropy : 0;
+    }
+
     function getSeasonNum() {
         var m = new Date().getMonth() + 1;
         if (m >= 3 && m <= 5) return 0;
@@ -222,12 +245,27 @@
         let hasReduction = !!well.redukcjaDN1000;
         let hasPsiaBuda = wellType === 'psia_buda';
         let hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
-        let ringCount = layout.ringCount || 0;
+        // ringCount: solver nie ustawia layout.ringCount w solution — licz
+        // z kregItems (liczba pozycji kregow), identycznie z backendem
+        // FeatureExtractor i telemetryBridge (componentType krag/krag_ot).
+        let ringCount = layout.ringCount || (layout.kregItems && layout.kregItems.length) || 0;
         let connectionCount = layout.sealCount || 0;
         let transitionsAboveDennica = Math.max(0, connectionCount - 1);
         let totalPrice = layout.totalPrice || 0;
         let totalWeight = layout.totalWeight || 0;
-        let ringVariety = layout.ringVariety || 0;
+        // ringVariety: entropia Shannona z UNIKALNYCH ID kregow — identyczna
+        // semantyka jak backend (shannonEntropy nad unikalnymi ID kregow).
+        const ringUniqueIds = [];
+        if (Array.isArray(layout.kregItems)) {
+            const seenRingIds = new Set();
+            for (const ki of layout.kregItems) {
+                if (ki && ki.productId && !seenRingIds.has(ki.productId)) {
+                    seenRingIds.add(ki.productId);
+                    ringUniqueIds.push(ki.productId);
+                }
+            }
+        }
+        let ringVariety = shannonEntropy(ringUniqueIds);
 
         // === v6: kineta (one-hot) + dennicaHeight ===
         let kineta = (well.kineta || '').toLowerCase();

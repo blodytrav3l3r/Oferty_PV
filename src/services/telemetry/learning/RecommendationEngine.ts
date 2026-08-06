@@ -36,9 +36,8 @@ export class RecommendationEngine {
      * Zwraca rekomendacje dla podanego rekordu telemetry.
      */
     async recommendForTelemetry(telemetryId: string, dn?: string): Promise<TopRecommendation[]> {
-        const patterns = dn
-            ? await this.kb.getPatternsForDn(dn)
-            : await this.kb.getPatternsForDn('all_dn');
+        // Brak dn (lub 'all_dn') = wszystkie wzorce (KnowledgeBase traktuje 'all_dn' jako wildcard).
+        const patterns = await this.kb.getPatternsForDn(dn || 'all_dn');
         if (patterns.length === 0) return [];
         const dummyFeatures: FeatureVector = {
             wellId: 'unknown',

@@ -15,13 +15,6 @@ import { KnowledgeBase } from './KnowledgeBase';
 import { ConfidenceCalculator } from './ConfidenceCalculator';
 import { logger } from '../../../utils/logger';
 
-interface Correction {
-    originalConfig?: unknown[];
-    finalConfig?: unknown[];
-    overrideReason?: string;
-    dn?: string;
-}
-
 export class PatternDetector {
     private knowledge: KnowledgeBase;
     private confidence: ConfidenceCalculator;
@@ -29,69 +22,6 @@ export class PatternDetector {
     constructor() {
         this.knowledge = new KnowledgeBase();
         this.confidence = new ConfidenceCalculator();
-    }
-
-    /**
-     * Wykrywa wzorce SUBSTITUTION: użytkownik zamienia dennicę/kręg/redukcję.
-     */
-    detectDennicaSwap(corrections: Correction[], dn: string): KnowledgePattern[] {
-        const patterns: KnowledgePattern[] = [];
-        const swapMap = new Map<
-            string,
-            { removed: Set<string>; added: Set<string>; count: number }
-        >();
-
-        for (const c of corrections) {
-            if (!c.originalConfig || !c.finalConfig) continue;
-            const origDennice = (
-                c.originalConfig as { componentType?: string; productId?: string }[]
-            )
-                .filter(function (x) {
-                    return (x.componentType || '').toLowerCase().includes('dennica');
-                })
-                .map(function (x) {
-                    return x.productId || '';
-                });
-            const finalDennice = (c.finalConfig as { componentType?: string; productId?: string }[])
-                .filter(function (x) {
-                    return (x.componentType || '').toLowerCase().includes('dennica');
-                })
-                .map(function (x) {
-                    return x.productId || '';
-                });
-            const removed = origDennice.filter(function (x) {
-                return !finalDennice.includes(x);
-            });
-            const added = finalDennice.filter(function (x) {
-                return !origDennice.includes(x);
-            });
-            if (removed.length === 0 || added.length === 0) continue;
-            const key = dn + '|' + removed.join(',') + '->' + added.join(',');
-            if (!swapMap.has(key)) {
-                swapMap.set(key, { removed: new Set(removed), added: new Set(added), count: 0 });
-            }
-            swapMap.get(key)!.count++;
-        }
-
-        for (const [key, val] of swapMap) {
-            if (val.count < 3) continue;
-            patterns.push({
-                patternType: 'dennica_swap',
-                patternKey: key,
-                dn: dn,
-                hitCount: val.count,
-                successCount: val.count,
-                rejectionCount: 0,
-                confidence: this.confidence.rawConfidence(val.count),
-                recommendation: {
-                    removed: Array.from(val.removed),
-                    added: Array.from(val.added),
-                    count: val.count
-                },
-                description: 'Wzorzec podmiany dennicy w ' + dn
-            });
-        }
-        return patterns;
     }
 
     /**

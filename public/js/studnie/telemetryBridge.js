@@ -306,6 +306,17 @@
                 return acc;
             }, 0);
 
+            // Liczba kregow (cecha treningowa ringCount). Tylko komponenty o
+            // componentType 'krag'/'krag_ot' — spójnie z backendem FeatureExtractor
+            // (wzorzec ID KDB-*/KDZ-*) i buildFeatureVector (layout.kregItems).
+            const ringCount = configItems.reduce(function (acc, ci) {
+                const prod = studnieProducts.find(function (p) {
+                    return p.id === ci.productId;
+                });
+                const type = prod ? String(prod.componentType || '').toLowerCase() : '';
+                return type === 'krag' || type === 'krag_ot' ? acc + 1 : acc;
+            }, 0);
+
             const payload = {
                 // Kontekst
                 wellId: well.id || undefined,
@@ -328,6 +339,7 @@
                 zwiencenieType: well.wkladkaZwienczenie || undefined,
                 kineta: well.kineta || undefined,
                 dennicaHeight: dennicaHeightTotal > 0 ? dennicaHeightTotal : undefined,
+                ringCount: ringCount,
 
                 // Komponenty
                 appliedReductions: appliedReductions,
@@ -367,7 +379,7 @@
                     isReduction: !!well.redukcjaDN1000,
                     transitionCount: (well.przejscia || []).length,
                     warehouse: well.magazyn || 'unknown',
-                    ringCount: configItems.length,
+                    ringCount: ringCount,
                     totalPrice: totalPrice,
                     totalWeight: totalWeight,
                     targetHeightMm: wellHeight || 0,

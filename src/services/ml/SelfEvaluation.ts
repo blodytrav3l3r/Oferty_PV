@@ -4,13 +4,21 @@ import { logger } from '../../utils/logger';
 import { modelRegistry } from './ModelRegistry';
 import { trainingPipeline, computeRocAuc } from './TrainingPipeline';
 import { ML_CONFIG } from './trainingConfig';
+import { ML_CONSTANTS } from '../../config/mlConstants';
 
 export class SelfEvaluation {
     private lastRunAt: number = 0;
     private slidingWindow: Array<{ label: number; score: number }> = [];
     private readonly SLIDING_WINDOW_SIZE = 200;
+    private featureVersion: string = ML_CONSTANTS.FEATURE_VERSION;
 
     recordPredictionResult(actualLabel: number, predictedScore: number): void {
+        // Zmiana wersji cech (FEATURE_VERSION) unieważnia historyczne predykcje —
+        // okno czyścimy, by sliding AUC nie mieszał wektorów z różnych wersji cech.
+        if (ML_CONSTANTS.FEATURE_VERSION !== this.featureVersion) {
+            this.slidingWindow = [];
+            this.featureVersion = ML_CONSTANTS.FEATURE_VERSION;
+        }
         this.slidingWindow.push({ label: actualLabel, score: predictedScore });
         if (this.slidingWindow.length > this.SLIDING_WINDOW_SIZE) {
             this.slidingWindow.shift();
@@ -25,6 +33,13 @@ export class SelfEvaluation {
 
         const scores = window.map((w) => w.score);
         const labels = window.map((w) => w.label);
+
+        // Okno z tylko jedną klasą (np. same ACCEPT) nie ma sensu dla AUC —
+        // computeRocAuc zwraca wtedy degeneracyjne 0.5, co wywołałoby fałszywy auto-rollback.
+        if (labels.every((l) => l === 1) || labels.every((l) => l === 0)) {
+            return { rolledBack: false, slidingAuc: null };
+        }
+
         const slidingAuc = computeRocAuc(scores, labels);
 
         if (slidingAuc < ML_CONFIG.rollbackAucThreshold) {

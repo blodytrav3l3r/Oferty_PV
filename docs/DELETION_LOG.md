@@ -1,5 +1,64 @@
 # Code Deletion Log
 
+## [2026-08-06] Refactor Session 4 — Martwe endpointy i pola w API ML
+
+### Martwe endpointy usunięte (`src/routes/telemetryAiDashboard.ts`)
+
+| Endpoint                                             | Dowód (grep)                                                                                                                            |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /api/telemetry/ai/learning/status`              | Brak konsumenta w `public/js` — grep `learning/status` tylko w `docs/*` i src. Frontend (`aiDashboard.js`) usunął `status` z ENDPOINTS. |
+| `GET /api/telemetry/ai/recommendations/:telemetryId` | Brak konsumenta w `public/js` — grep `recommendations` tylko w docs/schema/tests. Frontend usunął `recommendations` z ENDPOINTS.        |
+| `POST /api/telemetry/ai/recommendations/decide`      | jw. Serwis `RecommendationEngine` **zostaje** — wołany przez `LearningEngine.ts` (grep: import w linii 22, użycie w 36/45).             |
+
+Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `AuthenticatedRequest`, `const recommend`.
+
+### Martwe pola odpowiedzi usunięte (`GET /api/telemetry/ai/knowledge/patterns`)
+
+| Pole            | Dowód (grep)                                                                                                                                                                              |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dn`            | Frontend (`aiDashboard.js`) czyta tylko `items`, `telemetryCount`, `patternsTotal`, `patternsOtherDn`, `lastRunAt` — pola `dn`, `minConfidence`, `total`, `patternsForDn` bez konsumenta. |
+| `minConfidence` | jw. (query params `?dn=`/`?minConfidence=` nadal przyjmowane, nie zwracane w response).                                                                                                   |
+| `total`         | jw.                                                                                                                                                                                       |
+| `patternsForDn` | jw. `patternsOtherDn` **zostaje** (frontend go czyta; `all_dn` naprawia inny agent w KnowledgeBase).                                                                                      |
+
+### Over-fetch zredukowany (`src/services/ml/ModelRegistry.ts`)
+
+- `listModels()` zwraca teraz nowy interfejs `ModelListItem` zamiast pełnego `StoredModel`.
+- Usunięte z odpowiedzi: `weights`, `bias`, `featureMins`, `featureMaxs` (4 tablice liczb na model — główny ciężar payloadu).
+- Zostaje: `id`, `version`, `active`, `createdAt`, `featureVersion`, `metrics` (sparsowane), `features` (tablica — frontend czyta `Array.isArray(m.features) ? m.features.length : ...`; zwrócenie liczby dałoby 0 cech), `trainingRows`.
+- Typ `StoredModel` globalnie NIE zmieniony — mapowanie tylko w `listModels()`. Pozostałe metody (`getActiveModel`, `rollbackToPrevious`, `activateModel`, `promoteBestModel`, `deleteModel`) bez zmian.
+- Konsument `listModels` — wyłącznie `GET /api/telemetry/ai/models` (`telemetryAiMl.ts:445`).
+
+### Naprawa testu (`tests/ml/telemetryAiMl.test.ts`)
+
+- Pre-existing failure: test mockował `rateLimiters` tylko z `WRITE_LIMITER`, a `telemetryAiMl.ts` używa też `READ_LIMITER` → `Route.get() requires a callback function`. Błąd występował na czystym HEAD (zweryfikowane przez `git stash`). Dodano `READ_LIMITER` do mocka — test przechodzi.
+
+### P4 — usunięto po sesji (`KnowledgeBase.getStats` pole `stale`)
+
+- Brak konsumenta pola `stale` w frontendzie (grep `stats.stale` — 0 trafień) — usunięte z `getStats` (typ, `count({ where: { status: 'stale' } })` i catch) w sesji obejmującej `KnowledgeBase.ts`.
+
+### Martwa metoda usunięta (`PatternDetector.detectDennicaSwap`)
+
+- `detectDennicaSwap` (PatternDetector.ts) — jedyny konsument to test `telemetryRoutes.test.ts` (describe `detectDennicaSwap: minimum 3 powtórzeń`); nie wołana z `LearningEngine.ts` ani nigdzie indziej. Usunięta wraz z nieużywanym interfejsem `Correction` i testem.
+
+### Impact
+
+| Wskaźnik                 | Wartość                                  |
+| ------------------------ | ---------------------------------------- |
+| Endpointy usunięte       | 3                                        |
+| Pola odpowiedzi usunięte | 4                                        |
+| Pola modelu (over-fetch) | 4 tablice liczb na model w `listModels`  |
+| Linie kodu usunięte      | ~73 (`telemetryAiDashboard.ts` 159 → 86) |
+
+### Testing
+
+- [x] `npm run typecheck` — OK
+- [x] `npx jest tests/telemetryRoutes.test.ts` — 58 passed
+- [x] `npx jest tests/ml/telemetryAiMl.test.ts` — 16 passed
+- [x] Prettier na zmodyfikowanych plikach
+
+---
+
 ## [2026-08-05] Refactor Session 2 â€” Dead Code & Docs Cleanup
 
 ### Unused Code Removed

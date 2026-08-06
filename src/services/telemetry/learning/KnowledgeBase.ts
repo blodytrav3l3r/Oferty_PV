@@ -127,9 +127,11 @@ export class KnowledgeBase {
      */
     async getPatternsForDn(dn: string, minConfidence: number = 0.3): Promise<KnowledgePattern[]> {
         try {
+            // 'all_dn' (i brak DN) = wildcard — bez filtra po średnicy,
+            // bo wzorce zapisywane są z REALNYM DN, nie 'all_dn'.
             const rows = await prisma.ai_knowledge_base.findMany({
                 where: {
-                    dn,
+                    ...(dn && dn !== 'all_dn' ? { dn } : {}),
                     status: 'active',
                     confidence: { gte: minConfidence }
                 },
@@ -210,7 +212,6 @@ export class KnowledgeBase {
     async getStats(): Promise<{
         total: number;
         active: number;
-        stale: number;
         archived: number;
         avgConfidence: number;
         totalRecommendations: number;
@@ -223,7 +224,6 @@ export class KnowledgeBase {
             const [
                 total,
                 active,
-                stale,
                 archived,
                 allActive,
                 totalRecommendations,
@@ -233,7 +233,6 @@ export class KnowledgeBase {
             ] = await Promise.all([
                 prisma.ai_knowledge_base.count(),
                 prisma.ai_knowledge_base.count({ where: { status: 'active' } }),
-                prisma.ai_knowledge_base.count({ where: { status: 'stale' } }),
                 prisma.ai_knowledge_base.count({ where: { status: 'archived' } }),
                 prisma.ai_knowledge_base.findMany({
                     where: { status: 'active' },
@@ -265,7 +264,6 @@ export class KnowledgeBase {
             return {
                 total,
                 active,
-                stale,
                 archived,
                 avgConfidence,
                 totalRecommendations,
@@ -279,7 +277,6 @@ export class KnowledgeBase {
             return {
                 total: 0,
                 active: 0,
-                stale: 0,
                 archived: 0,
                 avgConfidence: 0,
                 totalRecommendations: 0,

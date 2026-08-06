@@ -6,33 +6,17 @@
  */
 
 import express from 'express';
-import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { requireAuth, requireAdmin } from '../middleware/auth';
 import { READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import { learningEngine } from '../services/telemetry/learning';
 import { KnowledgeBase } from '../services/telemetry/learning/KnowledgeBase';
-import { RecommendationEngine } from '../services/telemetry/learning/RecommendationEngine';
 import prisma from '../prismaClient';
 
 const router = express.Router();
 const kb = new KnowledgeBase();
-const recommend = new RecommendationEngine();
 
 /* ===== LEARNING ENGINE ===== */
-
-/**
- * GET /api/telemetry/ai/learning/status
- * Status silnika uczącego.
- */
-router.get('/ai/learning/status', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
-    try {
-        return res.json(await learningEngine.getStatus());
-    } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        logger.error('AiDashboard', `Error: ${message}`);
-        return res.status(500).json({ error: 'Błąd' });
-    }
-});
 
 /**
  * POST /api/telemetry/ai/learning/run
@@ -71,13 +55,9 @@ router.get('/ai/knowledge/patterns', requireAuth, requireAdmin, READ_LIMITER, as
                 learningEngine.getStatus()
             ]);
         return res.json({
-            dn,
-            minConfidence,
             items: patterns,
-            total: patterns.length,
             telemetryCount,
             patternsTotal,
-            patternsForDn: patterns.length,
             patternsOtherDn: Math.max(0, allDnPatterns.length - patterns.length),
             lastRunAt: engineStatus?.lastRunAt || null
         });
@@ -102,58 +82,5 @@ router.get('/ai/knowledge/stats', requireAuth, requireAdmin, READ_LIMITER, async
         return res.status(500).json({ error: 'Błąd' });
     }
 });
-
-/* ===== RECOMMENDATIONS ===== */
-
-/**
- * GET /api/telemetry/ai/recommendations/:telemetryId
- * Zwraca rekomendacje AI dla danego rekordu telemetry.
- */
-router.get(
-    '/ai/recommendations/:telemetryId',
-    requireAuth,
-    requireAdmin,
-    READ_LIMITER,
-    async (req, res) => {
-        try {
-            const dn = req.query.dn as string | undefined;
-            const recs = await recommend.recommendForTelemetry(req.params.telemetryId, dn);
-            return res.json({ items: recs, total: recs.length });
-        } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
-            logger.error('AiDashboard', `Error: ${message}`);
-            return res.status(500).json({ error: 'Błąd' });
-        }
-    }
-);
-
-/**
- * POST /api/telemetry/ai/recommendations/decide
- * Decyzja akceptacji/odrzucenia rekomendacji.
- */
-router.post(
-    '/ai/recommendations/decide',
-    requireAuth,
-    requireAdmin,
-    READ_LIMITER,
-    async (req, res) => {
-        try {
-            const { id, accepted } = req.body;
-            if (!id || typeof accepted !== 'boolean') {
-                return res.status(400).json({ error: 'Brak id lub accepted' });
-            }
-            await recommend.applyDecision(
-                id,
-                accepted,
-                (req as AuthenticatedRequest).user?.id || 'unknown'
-            );
-            return res.json({ success: true });
-        } catch (e) {
-            const message = e instanceof Error ? e.message : String(e);
-            logger.error('AiDashboard', `Error: ${message}`);
-            return res.status(500).json({ error: 'Błąd' });
-        }
-    }
-);
 
 export default router;

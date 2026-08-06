@@ -29,6 +29,23 @@ export interface StoredModel {
     featureVersion: string | null;
 }
 
+/**
+ * Okrojona reprezentacja modelu dla listy (GET /ai/models).
+ * Pomija ciężkie pola (weights, bias, featureMins, featureMaxs),
+ * których dashboard nie używa. `features` pozostaje tablicą —
+ * frontend czyta z niej wyłącznie `.length`.
+ */
+export interface ModelListItem {
+    id: string;
+    version: string;
+    active: boolean;
+    createdAt: string;
+    featureVersion: string | null;
+    metrics: ModelMetrics | null;
+    features: string[];
+    trainingRows: number;
+}
+
 export class ModelRegistry {
     async saveModel(
         model: AcceptanceModel,
@@ -111,12 +128,35 @@ export class ModelRegistry {
         return best;
     }
 
-    async listModels(limit = 20): Promise<StoredModel[]> {
+    async listModels(limit = 20): Promise<ModelListItem[]> {
         const records = await prisma.aiModel.findMany({
             orderBy: { createdAt: 'desc' },
             take: limit
         });
-        return records.map((r) => this.recordToModel(r));
+        return records.map((r) => {
+            let metrics: ModelMetrics | null = null;
+            try {
+                metrics = JSON.parse(r.metrics) as ModelMetrics;
+            } catch {
+                // pomijamy uszkodzone metryki
+            }
+            let features: string[] = [];
+            try {
+                features = JSON.parse(r.features) as string[];
+            } catch {
+                // pomijamy uszkodzoną listę cech
+            }
+            return {
+                id: r.id,
+                version: r.version,
+                active: r.active,
+                createdAt: r.createdAt,
+                featureVersion: r.featureVersion,
+                metrics,
+                features,
+                trainingRows: r.trainingRows
+            };
+        });
     }
 
     async rollbackToPrevious(): Promise<StoredModel | null> {

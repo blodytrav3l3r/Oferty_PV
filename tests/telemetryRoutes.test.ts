@@ -355,20 +355,6 @@ describe('PatternDetector - detekcja wzorców', () => {
         pd = new PatternDetector();
     });
 
-    it('detectDennicaSwap: minimum 3 powtórzeń', () => {
-        const out = pd.detectDennicaSwap(
-            Array(2)
-                .fill(0)
-                .map(() => ({
-                    dn: '1200',
-                    originalConfig: [{ productId: 'DEN-A', componentType: 'dennica' }],
-                    finalConfig: [{ productId: 'DEN-B', componentType: 'dennica' }]
-                })),
-            '1200'
-        );
-        expect(out.length).toBe(0); // za mało danych
-    });
-
     it('detectTransitionLayout: pomija poniżej progu', () => {
         const out = pd.detectTransitionLayout(
             Array(2)

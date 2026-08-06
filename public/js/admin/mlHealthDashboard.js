@@ -130,6 +130,15 @@
                     d.mlOnline ? 'model v' + d.modelVersion : 'brak modelu'
                 ) +
                 healthCard('Nagrody', d.totalRewards, true) +
+                /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
+                healthCard(
+                    'Drift danych',
+                    d.driftPct === null || d.driftPct === undefined ? '—' : d.driftPct + '%',
+                    d.driftPct !== null && d.driftPct !== undefined && d.driftPct < 20,
+                    d.driftPct === null || d.driftPct === undefined
+                        ? 'brak danych'
+                        : 'odsetek wartosci poza zakresem modelu'
+                ) +
                 '</div>' +
                 /* Jakosc danych */
                 '<div class="ai-dq-section">' +

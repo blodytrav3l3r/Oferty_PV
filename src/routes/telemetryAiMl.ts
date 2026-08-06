@@ -6,7 +6,7 @@ import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
 import { logger } from '../utils/logger';
-import { WRITE_LIMITER } from '../middleware/rateLimiters';
+import { READ_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { logAudit } from '../services/auditService';
 import { z } from 'zod';
@@ -38,12 +38,14 @@ const batchPredictSchema = z.object({
     featureVersion: z.string().optional()
 });
 
+// P1: wellId wymagany — nagroda tylko dla studni, która przeszła przez telemetrię;
+// scoreBefore/scoreAfter ograniczone do [0,1] (wynik modelu) — blokada reward farmingu.
 const rewardSchema = z.object({
     action: z.enum(['ACCEPT', 'REJECT', 'MODIFY', 'ADJUST', 'SWAP']),
-    wellId: z.string().optional(),
+    wellId: z.string().min(1),
     dn: z.number().optional(),
-    scoreBefore: z.number().optional(),
-    scoreAfter: z.number().optional(),
+    scoreBefore: z.number().min(0).max(1).optional(),
+    scoreAfter: z.number().min(0).max(1).optional(),
     wasAiRanked: z.boolean().optional(),
     configSnapshot: z.record(z.string(), z.unknown()).optional()
 });
@@ -69,6 +71,15 @@ function cacheKey(features: number[], wellType?: string, warehouse?: string, dn?
     const dnStr = dn !== undefined && dn !== null ? String(dn) : '';
     return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dnStr}`;
 }
+
+// P4: Indeksy cech do detekcji driftu wyznaczane z FEATURE_NAMES zamiast sztywnych 12/13 —
+// zmiana kolejności cech w mlConstants nie zepsuje obliczeń. Brak cechy w FEATURE_NAMES
+// (idx === -1) wyklucza ją z pomiaru driftu.
+const PRICE_FEATURE_IDX = FEATURE_NAMES.indexOf('totalPrice');
+const WEIGHT_FEATURE_IDX = FEATURE_NAMES.indexOf('totalWeight');
+const DRIFT_FEATURES: Array<{ key: string; idx: number }> = [];
+if (PRICE_FEATURE_IDX !== -1) DRIFT_FEATURES.push({ key: 'totalPrice', idx: PRICE_FEATURE_IDX });
+if (WEIGHT_FEATURE_IDX !== -1) DRIFT_FEATURES.push({ key: 'totalWeight', idx: WEIGHT_FEATURE_IDX });
 
 async function runPrediction(
     features: number[],
@@ -116,6 +127,13 @@ router.post('/ai/predict', requireAuth, WRITE_LIMITER, async (req: Request, res:
         }
 
         const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
+
+        // P5: featureVersion z requestu nie jest tylko echem — niezgodna wersja cech
+        // oznacza stare/niewspierane cechy po stronie klienta (featury wyliczane inaczej).
+        if (featureVersion !== undefined && featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+            res.status(400).json({ error: 'FEATURE_VERSION_MISMATCH' });
+            return;
+        }
         const key = cacheKey(features, wellType, warehouse, dn);
         const cached = predictionCache.get(key);
         if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -159,6 +177,12 @@ router.post(
             }
 
             const { candidates, featureVersion } = parsed.data;
+
+            // P5: analogicznie jak w /ai/predict — odrzuć requesty ze starą wersją cech
+            if (featureVersion !== undefined && featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+                res.status(400).json({ error: 'FEATURE_VERSION_MISMATCH' });
+                return;
+            }
 
             const activeModel = await modelRegistry.getActiveModel();
             if (!activeModel) {
@@ -248,6 +272,20 @@ router.post(
             }
 
             const data = parsed.data;
+
+            // P1: blokada reward farmingu — nagroda tylko dla studni, która faktycznie
+            // wygenerowała telemetrię konfiguracji (przeszła przez solver/akceptację).
+            // Fire-and-forget z frontendu nie sprawdza odpowiedzi, więc 400 nie psuje UX;
+            // zysk: wysyłka dowolnego wellId/wasAiRanked nie zawyża totalReward ani sliding AUC.
+            const telemetryWell = await prisma.ai_telemetry_logs.findFirst({
+                where: { wellId: data.wellId },
+                select: { id: true }
+            });
+            if (!telemetryWell) {
+                res.status(400).json({ error: 'WELL_NOT_FOUND' });
+                return;
+            }
+
             await rewardCalculator.processAction({
                 userId: req.user?.id || 'unknown',
                 action: data.action,
@@ -278,7 +316,7 @@ router.post(
 
 /* ===== FEATURE FLAG: AI influence level ===== */
 
-router.get('/ai/settings', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/settings', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
     try {
         const setting = await prisma.settings.findUnique({
             where: { key: 'wells_ai_influence' }
@@ -318,7 +356,7 @@ router.post('/ai/settings', requireAuth, requireAdmin, async (req, res: Response
     }
 });
 
-router.get('/ai/ml-status', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
     try {
         const activeModel = await modelRegistry.getActiveModel();
         const modelCount = await modelRegistry.getModelCount();
@@ -349,7 +387,7 @@ router.get('/ai/ml-status', requireAuth, async (_req: Request, res: Response) =>
     }
 });
 
-router.get('/ai/health', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/health', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
     try {
         const telemetryCount = await prisma.ai_telemetry_logs.count();
         const featureCount = await featureExtractor.getFeatureCount();
@@ -395,11 +433,8 @@ router.get('/ai/health', requireAuth, async (_req: Request, res: Response) => {
                     } catch {
                         continue;
                     }
-                    const checks: Array<{ key: string; idx: number }> = [
-                        { key: 'totalPrice', idx: 12 },
-                        { key: 'totalWeight', idx: 13 }
-                    ];
-                    for (const { key, idx } of checks) {
+                    // P4: indeksy cech z DRIFT_FEATURES (wyznaczane z FEATURE_NAMES na starcie modułu)
+                    for (const { key, idx } of DRIFT_FEATURES) {
                         const val = Number(snap[key]);
                         if (isNaN(val)) continue;
                         totalChecks++;
@@ -510,31 +545,43 @@ router.post('/ai/train', requireAuth, requireAdmin, async (req, res: Response) =
     }
 });
 
-router.get('/ai/feature-importance', requireAuth, async (_req: Request, res: Response) => {
-    try {
-        const activeModel = await modelRegistry.getActiveModel();
-        if (!activeModel) {
-            res.status(503).json({ error: 'No active model' });
-            return;
+// P3: wagi modelu to metryka admina (dashboard AI) — dostęp tylko dla admina
+router.get(
+    '/ai/feature-importance',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const activeModel = await modelRegistry.getActiveModel();
+            if (!activeModel) {
+                res.status(503).json({ error: 'No active model' });
+                return;
+            }
+            const importances = modelRegistry.computeFeatureImportance(activeModel);
+            res.json({
+                modelVersion: activeModel.version,
+                features: importances
+            });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
         }
-        const importances = modelRegistry.computeFeatureImportance(activeModel);
-        res.json({
-            modelVersion: activeModel.version,
-            features: importances
-        });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
     }
-});
+);
 
-router.get('/ai/feature-schema', requireAuth, async (_req: Request, res: Response) => {
-    res.json({
-        version: ML_CONSTANTS.FEATURE_VERSION,
-        count: ML_CONSTANTS.FEATURE_COUNT,
-        names: FEATURE_NAMES
-    });
-});
+router.get(
+    '/ai/feature-schema',
+    requireAuth,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        res.json({
+            version: ML_CONSTANTS.FEATURE_VERSION,
+            count: ML_CONSTANTS.FEATURE_COUNT,
+            names: FEATURE_NAMES
+        });
+    }
+);
 
 router.post('/ai/rollback', requireAuth, requireAdmin, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
