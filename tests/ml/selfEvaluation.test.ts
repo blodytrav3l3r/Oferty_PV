@@ -140,4 +140,15 @@ describe('SelfEvaluation - sliding window', () => {
         expect(result.slidingAuc).toBeNull();
         expect(mockRollbackToPrevious).not.toHaveBeenCalled();
     });
+
+    it('okno samych REJECT (label=0) nie wyzwala rollbacku', async () => {
+        const ev = new SelfEvaluationClass();
+        for (let i = 0; i < 20; i++) {
+            ev.recordPredictionResult(0, 0.2 + (i % 5) * 0.1);
+        }
+        const result = await ev.checkAndRollbackIfNeeded();
+        expect(result.rolledBack).toBe(false);
+        expect(result.slidingAuc).toBeNull();
+        expect(mockRollbackToPrevious).not.toHaveBeenCalled();
+    });
 });

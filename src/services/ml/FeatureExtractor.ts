@@ -89,6 +89,18 @@ function isDennicaProductId(id: string): boolean {
     return /^DDD-\d+-\d/.test(id);
 }
 
+/**
+ * Normalizacja magazynu do kodu 'KLB'/'WL'. Telemetria wysyła pełną nazwę
+ * ('Kluczbork'/'Włocławek'), trening i serve porównują kody — bez tej
+ * normalizacji bity warehouse w oneHotEncode były zawsze 0/0 (train)
+ * vs 1/0 (serve fallback 'KLB').
+ */
+function normalizeWarehouse(raw?: string | null): string {
+    const v = (raw || '').toUpperCase();
+    if (v.includes('WŁOCŁAWEK') || v.includes('WLOCLAWEK') || v === 'WL') return 'WL';
+    return 'KLB';
+}
+
 function getSeason(dateStr?: string | null): string {
     if (!dateStr) return 'unknown';
     const date = new Date(dateStr);
@@ -250,7 +262,7 @@ export class FeatureExtractor {
         return {
             dn,
             heightMm: Math.round(record.wellHeight || 0),
-            warehouse: (record.warehouse || 'KLB').toUpperCase(),
+            warehouse: normalizeWarehouse(record.warehouse),
             wellType,
             hasReduction,
             hasPsiaBuda,

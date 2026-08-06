@@ -20,8 +20,14 @@ function seasonToNum(s: string): number {
     return 0;
 }
 
+function normalizeWarehouse(raw?: string | null): string {
+    const v = (raw || '').toUpperCase();
+    if (v.includes('WŁOCŁAWEK') || v.includes('WLOCLAWEK') || v === 'WL') return 'WL';
+    return 'KLB';
+}
+
 function oneHotEncode(raw: Record<string, unknown>): number[] {
-    const warehouse = ((raw.warehouse as string) || 'KLB').toUpperCase();
+    const warehouse = normalizeWarehouse(raw.warehouse as string);
     const wellType = ((raw.wellType as string) || 'standard').toLowerCase();
     const dn = Number(raw.dn) || 0;
     const ringCount = Number(raw.ringCount) || 0;

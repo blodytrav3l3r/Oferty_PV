@@ -228,6 +228,15 @@
                 well.type = 'standard';
             }
         }
+
+        // GAP B: frontend trzyma magazyn w well.magazyn ('Kluczbork'/'Włocławek'),
+        // a nie well.warehouse. Normalizuj do kodu KLB/WL spójnie z backendem
+        // (FeatureExtractor.normalizeWarehouse / TrainingPipeline.oneHotEncode).
+        if (!well.warehouse) {
+            const m = String(well.magazyn || 'Kluczbork').toUpperCase();
+            well.warehouse =
+                m.includes('WŁOCŁAWEK') || m.includes('WLOCLAWEK') || m === 'WL' ? 'WL' : 'KLB';
+        }
     }
 
     /**
@@ -245,26 +254,53 @@
         let hasReduction = !!well.redukcjaDN1000;
         let hasPsiaBuda = wellType === 'psia_buda';
         let hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
-        // ringCount: solver nie ustawia layout.ringCount w solution — licz
-        // z kregItems (liczba pozycji kregow), identycznie z backendem
-        // FeatureExtractor i telemetryBridge (componentType krag/krag_ot).
-        let ringCount = layout.ringCount || (layout.kregItems && layout.kregItems.length) || 0;
-        let connectionCount = layout.sealCount || 0;
+        // GAP C: connectionCount na serve musi liczyć uszczelki tak jak trening
+        // (FeatureExtractor: sealIds.length) i recalcGaskets — solver nie emituje
+        // layout.sealCount, więc liczymy unikalne DN nośników uszczelek w layout.
+        // recalcGaskets dodaje uszczelki tylko gdy well.uszczelka !== 'brak' —
+        // przy 'brak' connectionCount=0 (spójnie z appliedSeals w treningu).
+        const ringPattern = /^KDB-|^KDZ-/i;
+        let connectionCount = 0;
+        let ringCount = layout.ringCount || 0;
+        const ringUniqueIds = [];
+        const seenRingIds = new Set();
+        const gasketsEnabled = !!(well.uszczelka && well.uszczelka !== 'brak');
+        if (Array.isArray(layout.kregItems)) {
+            const sealDns = new Set();
+            for (const ki of layout.kregItems) {
+                if (!ki || !ki.productId) continue;
+                const prod =
+                    typeof window.studnieProducts !== 'undefined'
+                        ? window.studnieProducts.find((p) => p.id === ki.productId)
+                        : undefined;
+                if (prod && prod.dn && gasketsEnabled) {
+                    const type = String(prod.componentType || '').toLowerCase();
+                    // recalcGaskets: uszczelki dla krag/krag_ot/plyta_din/plyta_redukcyjna/konus
+                    if (
+                        type === 'krag' ||
+                        type === 'krag_ot' ||
+                        type === 'plyta_din' ||
+                        type === 'plyta_redukcyjna' ||
+                        type === 'konus'
+                    ) {
+                        sealDns.add(String(prod.dn));
+                    }
+                }
+                if (ringPattern.test(ki.productId)) {
+                    if (!seenRingIds.has(ki.productId)) {
+                        seenRingIds.add(ki.productId);
+                        ringUniqueIds.push(ki.productId);
+                    }
+                    if (ringCount === 0) ringCount++;
+                }
+            }
+            connectionCount = sealDns.size;
+        }
         let transitionsAboveDennica = Math.max(0, connectionCount - 1);
         let totalPrice = layout.totalPrice || 0;
         let totalWeight = layout.totalWeight || 0;
-        // ringVariety: entropia Shannona z UNIKALNYCH ID kregow — identyczna
-        // semantyka jak backend (shannonEntropy nad unikalnymi ID kregow).
-        const ringUniqueIds = [];
-        if (Array.isArray(layout.kregItems)) {
-            const seenRingIds = new Set();
-            for (const ki of layout.kregItems) {
-                if (ki && ki.productId && !seenRingIds.has(ki.productId)) {
-                    seenRingIds.add(ki.productId);
-                    ringUniqueIds.push(ki.productId);
-                }
-            }
-        }
+        // ringVariety: entropia Shannona z UNIKALNYCH ID kregow (KDB-/KDZ-) —
+        // identyczna semantyka jak backend (shannonEntropy nad unikalnymi ID kregow).
         let ringVariety = shannonEntropy(ringUniqueIds);
 
         // === v6: kineta (one-hot) + dennicaHeight ===
@@ -285,6 +321,24 @@
             if (prod && prod.height) dennicaHeightMm = parseFloat(prod.height) || 0;
         }
 
+        // GAP A: hasKnownTop w treningu = topType ustawiany tylko z konusa
+        // (FeatureExtractor: konusIds.length > 0). Serve sprawdza czy topItems
+        // zawiera konus — wcześniej liczył dowolne topItems (zawsze 1).
+        let topHasKnown = false;
+        if (Array.isArray(layout.topItems)) {
+            for (const ti of layout.topItems) {
+                if (!ti || !ti.productId) continue;
+                const prod =
+                    typeof window.studnieProducts !== 'undefined'
+                        ? window.studnieProducts.find((p) => p.id === ti.productId)
+                        : undefined;
+                if (prod && String(prod.componentType || '').toLowerCase() === 'konus') {
+                    topHasKnown = true;
+                    break;
+                }
+            }
+        }
+
         return [
             dn,
             heightMm,
@@ -303,7 +357,7 @@
             ringVariety,
             getSeasonNum(),
             layout.dennica ? 1 : 0,
-            layout.topItems && layout.topItems.length > 0 ? 1 : 0,
+            topHasKnown ? 1 : 0,
             dn * ringCount,
             warehouse === 'KLB' && wellType === 'standard' ? 1 : 0,
             isKinetaPreco ? 1 : 0,

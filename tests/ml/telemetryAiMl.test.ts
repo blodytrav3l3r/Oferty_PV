@@ -70,6 +70,7 @@ jest.mock('../../src/services/ml/AcceptanceModel', () => {
 let mockTelemetryLogsFindMany = jest.fn<any>().mockResolvedValue([]);
 let mockTelemetryLogsCount = jest.fn<any>().mockResolvedValue(0);
 let mockTelemetryLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
+let mockRewardFindFirst = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -89,7 +90,8 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args)
         },
         aiRewardLog: {
-            count: jest.fn<any>().mockResolvedValue(0)
+            count: jest.fn<any>().mockResolvedValue(0),
+            findFirst: (...args: any[]) => mockRewardFindFirst(...args)
         }
     }
 }));
@@ -478,5 +480,21 @@ describe('POST /api/telemetry/ai/reward', () => {
 
         expect(res.status).toBe(400);
         expect(res.body).toHaveProperty('error');
+    });
+
+    it('ignoruje duplikat reward dla tej samej pary (wellId, action) — anti-poisoning', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
+        mockRewardFindFirst.mockResolvedValue({ id: 'existing-reward' });
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-existing-1',
+            scoreBefore: 0.9,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ status: 'ok', duplicate: true });
+        expect(mockRecordPredictionResult).not.toHaveBeenCalled();
     });
 });

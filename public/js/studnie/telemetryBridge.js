@@ -329,8 +329,10 @@
                 wellHeight: wellHeight,
                 wellType: well.psiaBuda
                     ? 'psia_buda'
-                    : well.stycznaNadbudowa1200
-                      ? 'styczna_1200'
+                    : well.dn === 'styczna'
+                      ? well.stycznaNadbudowa1200
+                          ? 'styczna_1200'
+                          : 'styczna'
                       : 'standard',
                 terminationType: well.zakonczenie || undefined,
                 reductionType: well.redukcjaDN1000

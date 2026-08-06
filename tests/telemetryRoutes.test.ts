@@ -529,6 +529,21 @@ describe('KnowledgeBase - operacje na DB', () => {
         expect(result.length).toBeGreaterThanOrEqual(1);
     });
 
+    it('getPatternsForDn all_dn traktuje jako wildcard (bez filtra DN)', async () => {
+        const dn = 'kb_' + crypto.randomUUID().slice(0, 6);
+        await kb.upsertPattern({
+            ...testPattern,
+            patternKey: dn + '|y',
+            hitCount: 3,
+            confidence: 0.4,
+            dn
+        });
+        const wildcard = await kb.getPatternsForDn('all_dn', 0.1);
+        const specific = await kb.getPatternsForDn(dn, 0.1);
+        // all_dn nie filtruje po średnicy, więc musi zawierać co najmniej tyle wzorców co wariant specyficzny
+        expect(wildcard.length).toBeGreaterThanOrEqual(specific.length);
+    });
+
     it('getStats zwraca strukturę', async () => {
         const stats = await kb.getStats();
         expect(stats).toHaveProperty('total');

@@ -286,6 +286,19 @@ router.post(
                 return;
             }
 
+            // P2: dedup reward per (wellId, action) — blokada poisoningu sliding AUC.
+            // Wielokrotne wysyłanie (label=1, score=0) dla tej samej studni wypychało
+            // window ku AUC<0.65 i wywoływało auto-rollback (SelfEvaluation). Pierwszy
+            // sygnał dla pary jest rejestrowany, kolejne ignorowane (idempotentnie).
+            const existingReward = await prisma.aiRewardLog.findFirst({
+                where: { wellId: data.wellId, action: data.action },
+                select: { id: true }
+            });
+            if (existingReward) {
+                res.json({ status: 'ok', duplicate: true });
+                return;
+            }
+
             await rewardCalculator.processAction({
                 userId: req.user?.id || 'unknown',
                 action: data.action,
