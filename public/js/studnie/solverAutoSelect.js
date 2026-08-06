@@ -126,22 +126,6 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         well.configErrors = errors;
         well.configSource = jsResult.aiUsed ? 'AUTO_AI' : 'AUTO_JS';
 
-        // Wzbogacenie AI score — tylko do telemetrii, nie zmienia wyboru
-        if (typeof window.mlEnrichLayout === 'function') {
-            window
-                .mlEnrichLayout(well.config, well)
-                .then(function (enriched) {
-                    if (enriched && enriched._aiScore !== undefined) {
-                        well._aiScore = enriched._aiScore;
-                        well._mlOnline = enriched._mlOnline;
-                        well._modelVersion = enriched._modelVersion;
-                    }
-                })
-                .catch(function () {
-                    // pasywnie — ignoruj
-                });
-        }
-
         try {
             sortWellConfigByOrder();
             if (typeof recalcGaskets === 'function') recalcGaskets(well);
@@ -1101,13 +1085,33 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             });
 
             if (rankResult.ranked && rankResult.ranked.length > 0) {
-                const explored = window.selectWithExploration(rankResult.ranked);
-                const aiWinner = explored.solution;
+                // Eksploracja tylko gdy AI aktywne (influence>0) i model online —
+                // w shadow mode / ML offline auto-dobór pozostaje deterministyczny
+                // (wcześniej losowa próbka z top-puli zmieniała wynik użytkownika).
+                const anyOnline = rankResult.ranked.some(function (r) {
+                    return typeof r.aiScore === 'number' && r.aiScore >= 0;
+                });
+                const canExplore = rankResult.aiInfluencePct > 0 && anyOnline;
+                const explored = canExplore
+                    ? window.selectWithExploration(rankResult.ranked)
+                    : {
+                          solution: rankResult.ranked[0].solution,
+                          aiWinner: rankResult.ranked[0].solution,
+                          explorationTriggered: false,
+                          exploredFrom: null
+                      };
+                // aiWinner to czysty wybór modelu (ranked[0]); explored.solution może być
+                // próbką eksploracyjną (losową) — to NIE jest decyzja AI.
+                const aiWinner = explored.aiWinner;
+                const winner =
+                    explored.explorationTriggered && explored.solution
+                        ? explored.solution
+                        : aiWinner;
 
                 window.recordAiRankDecision({
                     well: well,
                     ranked: rankResult.ranked,
-                    technicalWinner: solution,
+                    technicalWinner: rankResult.technicalWinner || solution,
                     aiWinner: aiWinner,
                     explorationTriggered: explored.explorationTriggered,
                     exploredFrom: explored.exploredFrom,
@@ -1117,12 +1121,39 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     featureVersion: rankResult.featureVersion
                 });
 
-                // aiUsed tylko gdy AI realnie oceniło kandydatów (aiScore >= 0).
-                // aiInfluencePct>0 to ustawienie, nie gwarancja działania modelu —
-                // przy ML offline wszystkie aiScore=-1 i ranking jest techniczny.
-                if (window.shouldMarkAiSelection(rankResult, aiWinner)) {
-                    solution = aiWinner;
+                // Zapamiętaj aiScore finalnego wyboru do reward (scoreBefore) — odblokowuje
+                // sliding AUC / auto-rollback w SelfEvaluation (backend /ai/reward).
+                const winnerEntry = rankResult.ranked.find(function (r) {
+                    return r.solution === winner;
+                });
+                well._aiRankInfo = {
+                    scoreBefore:
+                        winnerEntry &&
+                        typeof winnerEntry.aiScore === 'number' &&
+                        winnerEntry.aiScore >= 0
+                            ? winnerEntry.aiScore
+                            : undefined,
+                    modelVersion: rankResult.modelVersion,
+                    aiInfluencePct: rankResult.aiInfluencePct,
+                    explorationTriggered: explored.explorationTriggered,
+                    timestamp: Date.now()
+                };
+
+                // AUTO_AI tylko gdy AI realnie zmieniło wybór (aiWinner !== technicalWinner)
+                // i wybór nie pochodzi z eksploracji. aiInfluencePct>0 to ustawienie, nie
+                // gwarancja działania modelu — przy ML offline wszystkie aiScore=-1.
+                if (
+                    window.shouldMarkAiSelection(
+                        rankResult,
+                        aiWinner,
+                        explored.explorationTriggered
+                    )
+                ) {
+                    solution = winner;
                     aiUsed = true;
+                } else if (explored.explorationTriggered) {
+                    // Eksploracja używa losowej próbki z top-puli — bez oznaczenia AI.
+                    solution = winner;
                 }
             }
         } catch (e) {
@@ -1225,14 +1256,28 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
  * w runJsAutoSelection(). Zwraca true tylko gdy:
  *  - aiInfluencePct > 0 (AI aktywne, nie shadow mode),
  *  - co najmniej jeden kandydat ma realny aiScore >= 0 (model online),
- *  - istnieje zwycięzca AI (aiWinner).
+ *  - istnieje zwycięzca AI (aiWinner),
+ *  - wybór nie pochodzi z eksploracji (losowej próbki z top-puli),
+ *  - aiWinner realnie różni się od technicalWinner (AI zmieniło wybór,
+ *    a nie tylko potwierdziło technicznie najlepszy wariant).
  * Używa tego sama pętla solvera oraz testy regresyjne (tests/studnie/aiSelection.test.ts).
  */
-window.shouldMarkAiSelection = function shouldMarkAiSelection(rankResult, aiWinner) {
+window.shouldMarkAiSelection = function shouldMarkAiSelection(
+    rankResult,
+    aiWinner,
+    explorationTriggered
+) {
     if (!rankResult || !rankResult.ranked || !Array.isArray(rankResult.ranked)) return false;
     if (!(rankResult.aiInfluencePct > 0)) return false;
     if (!aiWinner) return false;
-    return rankResult.ranked.some(function (r) {
+    if (explorationTriggered) return false;
+    // Model online (co najmniej jeden realny score)
+    const online = rankResult.ranked.some(function (r) {
         return typeof r.aiScore === 'number' && r.aiScore >= 0;
     });
+    if (!online) return false;
+    // Realny flip: AI wskazało innego zwycięzcę niż najlepszy technicznie.
+    // Gdy technicalWinner nieznany — nie deklarujemy wpływu AI.
+    if (!rankResult.technicalWinner || rankResult.technicalWinner === aiWinner) return false;
+    return true;
 };

@@ -20,7 +20,6 @@
     /* ===== KONFIGURACJA ===== */
 
     let BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
-    let SINGLE_PREDICT_URL = '/api/telemetry/ai/predict';
     let SETTINGS_URL = '/api/telemetry/ai/settings';
     let ML_STATUS_URL = '/api/telemetry/ai/ml-status';
     let FETCH_TIMEOUT = 3000;
@@ -30,9 +29,12 @@
     let RELATIVE_GAP_THRESHOLD = 0.1;
     let EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
     let EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
+    // Minimalny rozrzut (1-aiScore) w poolu, przy którym AI w ogóle wpływa na ranking.
+    // Przy auc~0.5 score zdegenerowanego modelu różnią się tylko na 4. miejscu po przecinku;
+    // min-max bez progu rozciągałby ten szum do pełnej skali i produkował fałszywe flipy.
+    let AI_COST_MIN_RANGE = 0.05;
 
     let FEATURE_VERSION = 'v6';
-    let EXPECTED_FEATURE_COUNT = 24;
     let _featureVersionFetched = false;
     let RANKING_VERSION = 'dual_v1';
 
@@ -68,25 +70,6 @@
 
     /* ===== FEATURE FLAG — hierarchia: URL override > localStorage > backend > 0 ===== */
 
-    async function validateFeatureSchema() {
-        try {
-            let res = await fetch('/api/telemetry/ai/feature-schema', {
-                credentials: 'same-origin'
-            });
-            if (!res.ok) return;
-            let schema = await res.json();
-            if (schema.count !== EXPECTED_FEATURE_COUNT) {
-                console.warn(
-                    'mlDualRanking: FEATURE_COUNT mismatch',
-                    schema.count,
-                    'vs expected ' + EXPECTED_FEATURE_COUNT
-                );
-            }
-        } catch (e) {
-            /* ignoruj — fallback do lokalnej definicji */
-        }
-    }
-
     async function fetchFeatureVersionFromBackend() {
         try {
             let controller = new AbortController();
@@ -106,8 +89,10 @@
         }
     }
 
-    async function resolveFeatureVersion() {
-        if (_featureVersionFetched) return FEATURE_VERSION;
+    // force=true wymusza ponowne pobranie wersji cech z backendu (używane przy
+    // FEATURE_VERSION_MISMATCH — jednorazowy 400 nie może zablokować AI na całą sesję).
+    async function resolveFeatureVersion(force) {
+        if (_featureVersionFetched && !force) return FEATURE_VERSION;
         let backend = await fetchFeatureVersionFromBackend();
         if (backend !== null) {
             FEATURE_VERSION = backend;
@@ -252,7 +237,8 @@
         // przy 'brak' connectionCount=0 (spójnie z appliedSeals w treningu).
         const ringPattern = /^KDB-|^KDZ-/i;
         let connectionCount = 0;
-        let ringCount = layout.ringCount || 0;
+        let ringCount =
+            typeof layout.ringCount === 'number' && layout.ringCount > 0 ? layout.ringCount : 0;
         const ringUniqueIds = [];
         const seenRingIds = new Set();
         const gasketsEnabled = !!(well.uszczelka && well.uszczelka !== 'brak');
@@ -278,18 +264,39 @@
                     }
                 }
                 if (ringPattern.test(ki.productId)) {
+                    // Liczba kręgów = liczba elementów kregowych (spójnie z treningiem
+                    // FeatureExtractor/telemetryBridge liczącymi itemy, nie quantity).
+                    ringCount++;
                     if (!seenRingIds.has(ki.productId)) {
                         seenRingIds.add(ki.productId);
                         ringUniqueIds.push(ki.productId);
                     }
-                    if (ringCount === 0) ringCount++;
                 }
             }
             connectionCount = sealDns.size;
         }
         let transitionsAboveDennica = Math.max(0, connectionCount - 1);
+        // totalPrice/totalWeight: kandydaci z solve() nie mają layout.totalPrice/Weight —
+        // licz z komponentów rozwiązania (wzór jak telemetryBridge.js), żeby model widział
+        // koszty przy rankingowaniu (wcześniej zawsze 0 → cechy martwe na serve).
         let totalPrice = layout.totalPrice || 0;
         let totalWeight = layout.totalWeight || 0;
+        if ((!totalPrice || !totalWeight) && typeof window.studnieProducts !== 'undefined') {
+            const itemLists = [
+                ...(layout.kregItems || []),
+                ...(layout.topItems || []),
+                ...(layout.avrItems || []),
+                ...(layout.dennica ? [layout.dennica] : [])
+            ];
+            for (const it of itemLists) {
+                if (!it || !it.productId) continue;
+                const prod = window.studnieProducts.find((p) => p.id === it.productId);
+                if (prod) {
+                    totalPrice += (parseFloat(prod.price) || 0) * (it.quantity || 1);
+                    totalWeight += (parseFloat(prod.weight) || 0) * (it.quantity || 1);
+                }
+            }
+        }
         // ringVariety: entropia Shannona z UNIKALNYCH ID kregow (KDB-/KDZ-) —
         // identyczna semantyka jak backend (shannonEntropy nad unikalnymi ID kregow).
         let ringVariety = shannonEntropy(ringUniqueIds);
@@ -358,84 +365,25 @@
         ];
     }
 
-    /* ===== POJEDYNCZA PREDYKCJA (fallback) ===== */
-
-    /**
-     * Pojedyncza predykcja AI — fallback dla mlEnrichLayout (zachowana kompatybilność).
-     * @param {Object} layout
-     * @param {Object} well
-     * @returns {Promise<number>} AI score [0-1] lub -1 gdy offline
-     */
-    async function fetchAiScore(layout, well) {
-        await resolveFeatureVersion();
-        let features = buildFeatureVector(layout, well);
-        let key = features.join(',');
-
-        let cached = scoreCache.get(key);
-        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-            return cached.score;
-        }
-
-        try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
-                controller.abort();
-            }, FETCH_TIMEOUT);
-
-            let res = await fetch(SINGLE_PREDICT_URL, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    features: features,
-                    wellType: well.type || '',
-                    warehouse: well.warehouse || 'KLB',
-                    dn: parseInt(well.dn) || 0,
-                    featureVersion: FEATURE_VERSION
-                }),
-                signal: controller.signal
-            });
-
-            clearTimeout(timeoutId);
-
-            if (!res.ok) {
-                mlOnline = false;
-                return -1;
-            }
-
-            let data = await res.json();
-            if (data.scores && data.scores.length > 0) {
-                let s = data.scores[0];
-                activeModelVersion = s.version;
-                setScoreCache(key, { score: s.score, timestamp: Date.now() });
-                mlOnline = true;
-                return s.score;
-            }
-            mlOnline = false;
-            return -1;
-        } catch (e) {
-            mlOnline = false;
-            return -1;
-        }
-    }
-
     /* ===== BATCH PREDYKCJA (dla rankCandidates) ===== */
 
     /**
      * Pobiera AI score dla wszystkich kandydatów w 1 requeście.
      * @param {Array<{id:number, solution:Object, technicalScore:number}>} candidates
      * @param {Object} well
+     * @param {boolean} [retried] - wewn. flaga ponownej próby po FEATURE_VERSION_MISMATCH
      * @returns {Promise<Map<number, number>>} mapa candidateId → aiScore
      */
-    async function fetchAiScoresBatch(candidates, well) {
+    async function fetchAiScoresBatch(candidates, well, retried) {
         let resultMap = new Map();
         let toFetch = [];
-        await resolveFeatureVersion();
+        await resolveFeatureVersion(retried);
 
         for (let i = 0; i < candidates.length; i++) {
             let c = candidates[i];
             let features = buildFeatureVector(c.solution, well);
-            let key = features.join(',');
+            // Klucz cache zawiera featureVersion — zmiana wersji cech nie serwuje starych score'ów.
+            let key = FEATURE_VERSION + '|' + features.join(',');
 
             let cached = scoreCache.get(key);
             if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
@@ -477,6 +425,18 @@
 
             if (!res.ok) {
                 mlOnline = false;
+                // Jednorazowy 400 FEATURE_VERSION_MISMATCH nie może zablokować AI na całą
+                // sesję — odśwież wersję cech z backendu i ponów zapytanie (max 1 raz).
+                if (res.status === 400 && !retried) {
+                    try {
+                        let err = await res.json();
+                        if (err && err.error === 'FEATURE_VERSION_MISMATCH') {
+                            return fetchAiScoresBatch(candidates, well, true);
+                        }
+                    } catch (e) {
+                        /* ignoruj — zejdź do fallbacku -1 */
+                    }
+                }
                 // Fill uncached with -1
                 for (let j = 0; j < toFetch.length; j++) {
                     resultMap.set(toFetch[j].id, -1);
@@ -496,7 +456,7 @@
                         return t.id === s.id;
                     });
                     if (featKey) {
-                        let fk = featKey.features.join(',');
+                        let fk = FEATURE_VERSION + '|' + featKey.features.join(',');
                         setScoreCache(fk, { score: s.score, timestamp: Date.now() });
                     }
                 }
@@ -572,6 +532,7 @@
      *   ranked: Array<{id:number, finalScore:number, technicalScore:number, technicalNormalized:number, aiScore:number, solution:Object}>,
      *   mlOnline: boolean,
      *   modelVersion: string|null,
+     *   technicalWinner: Object,
      *   aiInfluencePct: number,
      *   rankingVersion: string,
      *   featureVersion: string
@@ -586,6 +547,7 @@
                 ranked: [],
                 mlOnline: false,
                 modelVersion: null,
+                technicalWinner: null,
                 aiInfluencePct: 0,
                 rankingVersion: RANKING_VERSION,
                 featureVersion: FEATURE_VERSION
@@ -611,20 +573,42 @@
         let aiWeight = influencePct / 100;
         let techWeight = 1 - aiWeight;
 
+        // 5a. Surowy "koszt" AI (lower is better) dla kandydatów online.
+        // Min-max w poolu — analogicznie do technicalNormalized. Bez tego każdy kandydat
+        // ma identyczny aiCost (nasycony sigmoid ~0.9994) i AI nie zmienia kolejności.
+        let rawAiCosts = normalized.map(function (c) {
+            let aiScore = aiScoreMap.get(c.id);
+            if (aiScore === undefined) aiScore = -1;
+            return aiScore >= 0 ? 1 - aiScore : null;
+        });
+        let onlineCosts = rawAiCosts.filter(function (v) {
+            return v !== null;
+        });
+        let minCost = onlineCosts.length > 0 ? Math.min.apply(null, onlineCosts) : 0;
+        let maxCost = onlineCosts.length > 0 ? Math.max.apply(null, onlineCosts) : 0;
+        let costRange = maxCost - minCost;
+
         let ranked = normalized.map(function (c) {
             let aiScore = aiScoreMap.get(c.id);
             if (aiScore === undefined) aiScore = -1;
 
             let finalScore;
             if (aiScore < 0) {
-                // ML offline — fallback do technical score
-                finalScore = c.technicalScore;
+                // ML offline — spójna skala z normalizacją AI (0=best, 1=worst).
+                finalScore = c.technicalNormalized;
             } else {
                 // technicalNormalized: 0=best, 1=worst (lower is better)
                 // aiScore: 0=worst, 1=best (higher is better)
-                // Konwertuj AI na format "lower is better"
+                // Konwertuj AI na format "lower is better" i normalizuj w poolu.
+                // Neutral (0) gdy <2 kandydatów online (brak względem kogo) lub rozrzut
+                // <= AI_COST_MIN_RANGE (szum) — wtedy ranking pozostaje czysto techniczny,
+                // a pojedynczy kandydat online nie dostaje kary 0.5 względem offline.
                 let aiCost = 1 - aiScore;
-                finalScore = techWeight * c.technicalNormalized + aiWeight * aiCost;
+                let aiCostNormalized =
+                    onlineCosts.length < 2 || costRange <= AI_COST_MIN_RANGE
+                        ? 0
+                        : (aiCost - minCost) / costRange;
+                finalScore = techWeight * c.technicalNormalized + aiWeight * aiCostNormalized;
             }
 
             return {
@@ -646,6 +630,7 @@
             ranked: ranked,
             mlOnline: mlOnline,
             modelVersion: activeModelVersion,
+            technicalWinner: candidates[0].solution,
             aiInfluencePct: influencePct,
             rankingVersion: RANKING_VERSION,
             featureVersion: FEATURE_VERSION
@@ -658,14 +643,24 @@
      * Confidence-based exploration.
      * Mała różnica między top-2 → większa szansa na eksplorację.
      *
+     * Eksploracja to celowy losowy wybór z top-puli — NIE jest to decyzja AI.
+     * Zwracamy osobno aiWinner (czysty wybór modelu: ranked[0]) i ewentualny
+     * solution po eksploracji, by caller nie oznaczył próbki eksploracyjnej jako AUTO_AI.
+     *
      * @param {Array<{finalScore:number, solution:Object}>} ranked
-     * @returns {{solution:Object, explorationTriggered:boolean, exploredFrom:number|null}}
+     * @returns {{solution:Object|null, aiWinner:Object|null, explorationTriggered:boolean, exploredFrom:number|null}}
      */
     function selectWithExploration(ranked) {
         if (!ranked || ranked.length === 0) {
-            return { solution: null, explorationTriggered: false, exploredFrom: null };
+            return {
+                solution: null,
+                aiWinner: null,
+                explorationTriggered: false,
+                exploredFrom: null
+            };
         }
 
+        let aiWinner = ranked[0].solution;
         let winner = ranked[0];
         let triggered = false;
         let exploredFrom = null;
@@ -690,6 +685,7 @@
 
         return {
             solution: winner.solution,
+            aiWinner: aiWinner,
             explorationTriggered: triggered,
             exploredFrom: exploredFrom
         };
@@ -765,33 +761,12 @@
         });
     }
 
-    /* ===== WARSTWA ZGODNOŚCI (zachowanie starych API) ===== */
-
-    /**
-     * Stary interfejs — wzbogaca layout o AI score (telemetry, nie zmienia wyboru).
-     * @deprecated Użyj rankCandidates() zamiast.
-     */
-    async function mlEnrichLayout(layout, well) {
-        let aiScore = await fetchAiScore(layout, well);
-        layout._aiScore = aiScore;
-        layout._mlOnline = mlOnline;
-        layout._modelVersion = activeModelVersion;
-        return layout;
-    }
-
     /* ===== EKSPORT ===== */
 
-    // Uruchom po załadowaniu DOM
-    setTimeout(validateFeatureSchema, 3000); // walidacja schematu cech z backendem
-
-    // Nowe API (główne)
+    // Główne API
     window.rankCandidates = rankCandidates;
     window.recordAiRankDecision = recordAiRankDecision;
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
     window.buildFeatureVector = buildFeatureVector;
-
-    // Stare API (kompatybilność)
-    window.mlEnrichLayout = mlEnrichLayout;
-    window.fetchAiScore = fetchAiScore;
 })();

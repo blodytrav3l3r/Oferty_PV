@@ -49,6 +49,15 @@
             snap.aiRankSnapshot = params.aiRankSnapshot;
         }
 
+        // scoreBefore/scoreAfter z ostatniej decyzji rankingu (well._aiRankInfo ustawiany
+        // w solverAutoSelect.js po AI DUAL-RANKING). Jawna wartość z callera ma priorytet.
+        // To odblokowuje sliding AUC / auto-rollback w SelfEvaluation (backend /ai/reward).
+        const rankInfo = (well && well._aiRankInfo) || {};
+        const scoreBefore =
+            params.scoreBefore !== undefined ? params.scoreBefore : rankInfo.scoreBefore;
+        const scoreAfter =
+            params.scoreAfter !== undefined ? params.scoreAfter : rankInfo.scoreAfter;
+
         // Domyślna wartość wasAiRanked wyprowadzana z configSource studni (AUTO_AI = dobór
         // z rankingiem AI). Jawna wartość z callera ma priorytet — flaga jest wtedy spójna
         // z konkretną studnią akceptowaną w pętli (np. zapis oferty/wielu studni).
@@ -61,8 +70,8 @@
             action: params.action,
             wellId: well.id || 'unknown',
             dn: parseInt(well.dn) || 0,
-            scoreBefore: params.scoreBefore,
-            scoreAfter: params.scoreAfter,
+            scoreBefore: scoreBefore,
+            scoreAfter: scoreAfter,
             wasAiRanked: wasAiRanked,
             configSnapshot: snap
         };
