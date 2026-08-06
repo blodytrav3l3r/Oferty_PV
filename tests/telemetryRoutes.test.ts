@@ -17,7 +17,6 @@ import { describe, expect, it, beforeEach, afterEach } from '@jest/globals';
 import prisma from '../src/prismaClient';
 import crypto from 'crypto';
 import {
-    telemetryAcceptanceSchema,
     telemetryConfigSchema,
     telemetryEventSchema,
     telemetryVersionSchema
@@ -86,15 +85,6 @@ describe('telemetryRoutes E2E - schema walidacja', () => {
                 }).success
             ).toBe(true);
         });
-    });
-
-    it('acceptance schema wymaga accepted (boolean)', () => {
-        expect(
-            telemetryAcceptanceSchema.safeParse({ telemetryId: 't1', accepted: true }).success
-        ).toBe(true);
-        expect(
-            telemetryAcceptanceSchema.safeParse({ telemetryId: 't1', accepted: 'yes' }).success
-        ).toBe(false);
     });
 });
 

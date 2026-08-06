@@ -183,16 +183,6 @@ export const telemetryEventSchema = z.object({
 export type TelemetryEventInputType = z.infer<typeof telemetryEventSchema>;
 
 // =============================================================================
-// Bulk events
-// =============================================================================
-
-export const telemetryEventsBulkSchema = z.object({
-    events: z.array(telemetryEventSchema).min(1).max(500)
-});
-
-export type TelemetryEventsBulkInput = z.infer<typeof telemetryEventsBulkSchema>;
-
-// =============================================================================
 // Wersja (solver/reguły/AI)
 // =============================================================================
 
@@ -205,17 +195,6 @@ export const telemetryVersionSchema = z.object({
 });
 
 export type TelemetryVersionInput = z.infer<typeof telemetryVersionSchema>;
-
-// =============================================================================
-// Acceptance update (tryb pasywnego ML)
-// =============================================================================
-
-export const telemetryAcceptanceSchema = z.object({
-    telemetryId: z.string(),
-    accepted: z.boolean()
-});
-
-export type TelemetryAcceptanceInput = z.infer<typeof telemetryAcceptanceSchema>;
 
 // =============================================================================
 // Acceptance Full — rozszerzony acceptance z pełnym kontekstem oferty

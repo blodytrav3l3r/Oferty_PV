@@ -268,41 +268,6 @@ class TelemetryService {
     }
 
     /**
-     * Zapisuje wiele zdarzeń naraz (bulk insert przez wiele create).
-     */
-    async recordEventsBulk(
-        events: TelemetryEventInput[],
-        userId?: string
-    ): Promise<{ success: boolean; created: number }> {
-        if (events.length === 0) return { success: true, created: 0 };
-
-        const now = new Date().toISOString();
-        const data = events.map((ev) => ({
-            id: crypto.randomUUID(),
-            telemetryId: ev.telemetryId || null,
-            eventType: ev.eventType,
-            userId: userId || null,
-            wellId: ev.wellId || null,
-            componentId: ev.componentId || null,
-            previousValue: ev.previousValue || null,
-            newValue: ev.newValue || null,
-            changeReason: ev.changeReason || null,
-            msSinceConfig: ev.msSinceConfig ?? null,
-            orderInSession: ev.orderInSession ?? null,
-            sequenceNo: ev.sequenceNo ?? 0,
-            createdAt: now
-        }));
-
-        try {
-            await prisma.ai_telemetry_events.createMany({ data });
-            return { success: true, created: data.length };
-        } catch (e) {
-            logger.error('Telemetry', `Błąd batch insertu eventów: ${e}`);
-            throw e;
-        }
-    }
-
-    /**
      * Rejestruje wersję solvera/reguł/AI.
      * Używane przy deployu lub gdy zmienia się logika solvera.
      */
@@ -333,88 +298,6 @@ class TelemetryService {
         } catch (e) {
             const message = e instanceof Error ? e.message : String(e);
             logger.error('Telemetry', `Błąd rejestracji wersji: ${message}`);
-            throw e;
-        }
-    }
-
-    /**
-     * Pobiera najnowsze rekordy telemetry (bez paginacji - do dashboardu admina).
-     */
-    async listRecent(limit: number = 100): Promise<Array<Record<string, unknown>>> {
-        try {
-            const logs = await prisma.ai_telemetry_logs.findMany({
-                orderBy: { createdAt: 'desc' },
-                take: limit
-            });
-            return logs.map((l) => this._safeDeserialize(l));
-        } catch (e) {
-            logger.error('Telemetry', `Błąd listy: ${e}`);
-            throw e;
-        }
-    }
-
-    /**
-     * Pobiera historię konfiguracji dla danej studni (well).
-     */
-    async getConfigHistory(wellId: string): Promise<Array<Record<string, unknown>>> {
-        try {
-            const history = await prisma.ai_config_history.findMany({
-                where: { wellId },
-                orderBy: { configVersion: 'desc' }
-            });
-            return history.map((h) => ({
-                ...h,
-                diffFromParent: this._safeJson(h.diffFromParent)
-            }));
-        } catch (e) {
-            logger.error('Telemetry', `Błąd pobierania historii: ${e}`);
-            throw e;
-        }
-    }
-
-    /**
-     * Pobiera snapshot przejść szczelnych dla danej konfiguracji.
-     */
-    async getTransitions(configId: string): Promise<Array<Record<string, unknown>>> {
-        try {
-            const trans = await prisma.ai_transition_snapshots.findMany({
-                where: { configId },
-                orderBy: { transitionNo: 'asc' }
-            });
-            return trans;
-        } catch (e) {
-            logger.error('Telemetry', `Błąd pobierania przejść: ${e}`);
-            throw e;
-        }
-    }
-
-    /**
-     * Pobiera zdarzenia telemetry dla danej studni (well).
-     */
-    async getEvents(wellId: string): Promise<Array<Record<string, unknown>>> {
-        try {
-            const events = await prisma.ai_telemetry_events.findMany({
-                where: { wellId },
-                orderBy: { createdAt: 'asc' }
-            });
-            return events;
-        } catch (e) {
-            logger.error('Telemetry', `Błąd pobierania eventów: ${e}`);
-            throw e;
-        }
-    }
-
-    /**
-     * Pobiera aktywne wersje solvera/reguł/AI.
-     */
-    async getActiveVersions(): Promise<Array<Record<string, unknown>>> {
-        try {
-            return await prisma.ai_telemetry_versions.findMany({
-                where: { isActive: true },
-                orderBy: { createdAt: 'desc' }
-            });
-        } catch (e) {
-            logger.error('Telemetry', `Błąd listy wersji: ${e}`);
             throw e;
         }
     }
@@ -469,47 +352,6 @@ class TelemetryService {
                 `Nie udało się zaktualizować acceptance dla ${telemetryId}: ${e}`
             );
             throw e;
-        }
-    }
-
-    /**
-     * Pomocnik: bezpieczna deserializacja JSON z obiektu Prisma.
-     */
-    private _safeDeserialize<T extends Record<string, unknown>>(obj: T): Record<string, unknown> {
-        const result: Record<string, unknown> = { ...obj };
-        const jsonFields = [
-            'ringHeights',
-            'appliedReductions',
-            'appliedKonus',
-            'appliedHatches',
-            'appliedSeals',
-            'allComponentIds',
-            'featureSnapshot',
-            'labelSnapshot',
-            'predictionSnapshot',
-            'original_auto_config',
-            'final_user_config',
-            'extraMeta'
-        ];
-        for (const field of jsonFields) {
-            const val = result[field];
-            if (typeof val === 'string') {
-                try {
-                    result[field] = JSON.parse(val);
-                } catch {
-                    /* zostaw surowy string */
-                }
-            }
-        }
-        return result;
-    }
-
-    private _safeJson(value: string | null | undefined): unknown {
-        if (!value) return value;
-        try {
-            return JSON.parse(value);
-        } catch {
-            return value;
         }
     }
 

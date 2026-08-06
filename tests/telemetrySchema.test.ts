@@ -9,7 +9,6 @@
 
 import { describe, expect, it } from '@jest/globals';
 import {
-    telemetryAcceptanceSchema,
     telemetryConfigSchema,
     telemetryEventSchema,
     telemetryVersionSchema
@@ -191,22 +190,6 @@ describe('telemetryVersionSchema', () => {
                 version: '1.0.0'
             }).success
         ).toBe(false);
-    });
-});
-
-/* ===== Walidacja telemetryAcceptanceSchema ===== */
-
-describe('telemetryAcceptanceSchema', () => {
-    it('wymaga telemetryId i accepted', () => {
-        expect(
-            telemetryAcceptanceSchema.safeParse({
-                telemetryId: 'a1',
-                accepted: true
-            }).success
-        ).toBe(true);
-
-        expect(telemetryAcceptanceSchema.safeParse({ accepted: true }).success).toBe(false);
-        expect(telemetryAcceptanceSchema.safeParse({ telemetryId: 'a1' }).success).toBe(false);
     });
 });
 

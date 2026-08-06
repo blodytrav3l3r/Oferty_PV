@@ -278,19 +278,12 @@ Wymaga autoryzacji.
 
 Wymaga autoryzacji. Telemetria jest **pasywna** — solver JS pozostaje jedynym źródłem prawdy doboru komponentów studni.
 
-| Metoda | Ścieżka                                   | Opis                                                    |
-| ------ | ----------------------------------------- | ------------------------------------------------------- |
-| POST   | `/api/telemetry/ai/config`                | Zapis pełnej konfiguracji studni z kontekstem           |
-| POST   | `/api/telemetry/ai/event`                 | Pojedyncze zdarzenie (user_change, accept, itp.)        |
-| POST   | `/api/telemetry/ai/events/bulk`           | Zapis wielu zdarzeń naraz (batch polling z JS)          |
-| POST   | `/api/telemetry/ai/version`               | Rejestracja nowej wersji solvera/reguł/AI               |
-| POST   | `/api/telemetry/ai/acceptance`            | Oznaczenie konfiguracji jako zaakceptowanej/odrzuconej  |
-| POST   | `/api/telemetry/ai/acceptance-full`       | Rozszerzony acceptance (oferta + akceptacja + snapshot) |
-| GET    | `/api/telemetry/ai/list`                  | Ostatnie rekordy telemetry (admin)                      |
-| GET    | `/api/telemetry/ai/history/:wellId`       | Historia konfiguracji studni (admin)                    |
-| GET    | `/api/telemetry/ai/transitions/:configId` | Snapshot przejść szczelnych (admin)                     |
-| GET    | `/api/telemetry/ai/events/:wellId`        | Zdarzenia telemetryczne studni (admin)                  |
-| GET    | `/api/telemetry/ai/versions`              | Aktywne wersje solvera/reguł/AI (admin)                 |
+| Metoda | Ścieżka                             | Opis                                                    |
+| ------ | ----------------------------------- | ------------------------------------------------------- |
+| POST   | `/api/telemetry/ai/config`          | Zapis pełnej konfiguracji studni z kontekstem           |
+| POST   | `/api/telemetry/ai/event`           | Pojedyncze zdarzenie (user_change, accept, itp.)        |
+| POST   | `/api/telemetry/ai/version`         | Rejestracja nowej wersji solvera/reguł/AI               |
+| POST   | `/api/telemetry/ai/acceptance-full` | Rozszerzony acceptance (oferta + akceptacja + snapshot) |
 
 ### `POST /api/telemetry/ai/config` — deduplikacja AUTO_JS
 
@@ -313,32 +306,22 @@ W przypadku duplikatu AUTO_JS: `telemetryId` = id istniejącego rekordu, `config
 
 Wymaga autoryzacji (administrator).
 
-| Metoda | Ścieżka                                          | Opis                                                   |
-| ------ | ------------------------------------------------ | ------------------------------------------------------ |
-| GET    | `/api/telemetry/ai/learning/status`              | Status silnika uczącego (endpoint asynchroniczny)      |
-| POST   | `/api/telemetry/ai/learning/run`                 | Wymuszenie pełnego cyklu uczenia (analiza historyczna) |
-| GET    | `/api/telemetry/ai/knowledge/patterns`           | Lista wzorców w bazie wiedzy per DN                    |
-| GET    | `/api/telemetry/ai/knowledge/stats`              | Statystyki bazy wiedzy                                 |
-| GET    | `/api/telemetry/ai/recommendations/:telemetryId` | Rekomendacje AI dla rekordu telemetry                  |
-| POST   | `/api/telemetry/ai/recommendations/decide`       | Akceptacja/odrzucenie rekomendacji                     |
-
-### `GET /api/telemetry/ai/learning/status`
-
-Endpoint **asynchroniczny** — wykonuje zapytania do bazy (m.in. wczytuje `lastRunAt`, które przetrwa restart serwera) i zwraca status Learning Engine w momencie żądania.
+| Metoda | Ścieżka                                | Opis                                                   |
+| ------ | -------------------------------------- | ------------------------------------------------------ |
+| POST   | `/api/telemetry/ai/learning/run`       | Wymuszenie pełnego cyklu uczenia (analiza historyczna) |
+| GET    | `/api/telemetry/ai/knowledge/patterns` | Lista wzorców w bazie wiedzy per DN                    |
+| GET    | `/api/telemetry/ai/knowledge/stats`    | Statystyki bazy wiedzy                                 |
 
 ### `GET /api/telemetry/ai/knowledge/patterns`
 
 Parametry: `?dn=all_dn` (domyślnie) oraz `?minConfidence=0.3` (domyślnie).
 
-Pola odpowiedzi (oprócz listy `items` i `total`):
+Pola odpowiedzi (oprócz listy `items`):
 
 | Pole              | Opis                                                      |
 | ----------------- | --------------------------------------------------------- |
-| `dn`              | Filtrowana średnica (lub `all_dn`)                        |
-| `minConfidence`   | Próg pewności użyty do filtrowania wzorców                |
 | `telemetryCount`  | Całkowita liczba rekordów telemetry (`ai_telemetry_logs`) |
 | `patternsTotal`   | Całkowita liczba wzorców w bazie wiedzy (wszystkie DN)    |
-| `patternsForDn`   | Liczba wzorców dla wybranego DN (równa `total`)           |
 | `patternsOtherDn` | Wzorce dla innych średnic (różnica względem `all_dn`)     |
 | `lastRunAt`       | Czas ostatniego cyklu Learning Engine (ISO) lub `null`    |
 
