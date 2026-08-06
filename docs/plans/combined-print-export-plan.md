@@ -1,4 +1,5 @@
 # Implementation Plan: Wydruk Laczny Oferty (Rury + Studnie -> PDF/DOCX)
+
 > **Stan: ZREALIZOWANE (commit cbb2e73; wcześniejsze commity z serii feat(print)).** Treść ponizżej zachowana jako dokumentacja procesu. Odchylenia od planu: endpoint w src/routes/exportCombined.ts (nie src/routes/offers/exportsCombined.ts), ścieżka /api/export-combined (nie /api/offers-combined), frontend przez upmCombinedPrepare (printModal.js + oba offerPrintManager.js), testy jako tests/combinedDocument.test.ts i tests/exportCombined.test.ts. Funkcjonalność rozszerzona później o filtry/kategorie i wpisywalne pola.
 
 Status: do akceptacji

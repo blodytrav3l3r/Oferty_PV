@@ -19,8 +19,14 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
         status: ['all', 'draft', 'accepted'].includes(query.status as string)
             ? (query.status as string)
             : 'all',
-        dateFrom: typeof query.dateFrom === 'string' ? query.dateFrom : '',
-        dateTo: typeof query.dateTo === 'string' ? query.dateTo : '',
+        dateFrom:
+            typeof query.dateFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateFrom)
+                ? query.dateFrom
+                : '',
+        dateTo:
+            typeof query.dateTo === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateTo)
+                ? query.dateTo
+                : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',

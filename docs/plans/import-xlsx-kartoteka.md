@@ -1,4 +1,5 @@
 # Implementation Plan: Przycisk "Import XLSX" w kartotece ofert
+
 > **Stan: ZREALIZOWANE (commit 10b213e).** Przycisk "Import XLSX (zewn.)" i metoda showImportXlsxDialog() w public/js/sales/pvImportExportToolbar.js. Treść ponizżej zachowana jako dokumentacja procesu.
 
 ## Overview

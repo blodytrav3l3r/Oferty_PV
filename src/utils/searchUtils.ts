@@ -21,8 +21,14 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
         type: ['all', 'offer', 'studnia_oferta'].includes(query.type as string)
             ? (query.type as SearchParams['type'])
             : 'all',
-        dateFrom: typeof query.dateFrom === 'string' ? query.dateFrom : '',
-        dateTo: typeof query.dateTo === 'string' ? query.dateTo : '',
+        dateFrom:
+            typeof query.dateFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateFrom)
+                ? query.dateFrom
+                : '',
+        dateTo:
+            typeof query.dateTo === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateTo)
+                ? query.dateTo
+                : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
         orderStatus: ['all', 'with_order', 'without_order'].includes(query.orderStatus as string)
             ? (query.orderStatus as SearchParams['orderStatus'])

@@ -3,6 +3,7 @@ import prisma, { Prisma } from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
+import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
 import { syncFts5, removeFts5 } from '../../utils/fts5Sync';
 import { logger } from '../../utils/logger';
@@ -220,17 +221,7 @@ router.post(
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
                 const clientNumber = o.clientNumber || null;
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = normalizeDate(o.createdAt);
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
                 const resolved = resolveWriteUserId(authReq.user, o.userId);
@@ -340,16 +331,7 @@ router.put(
                     (o.clientNip as string) || (dataPayload.clientNip as string) || null;
                 const clientNumber =
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = normalizeDate(o.createdAt, { exactMs: true });
 
                 await prisma.offers_studnie_rel.upsert({
                     where: { id: docId },

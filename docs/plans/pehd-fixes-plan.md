@@ -1,4 +1,5 @@
 # Plan napraw: dopłata wkładki PEHD w module studni
+
 > **Stan: ZREALIZOWANE (commit f2895d1).** Wspólne helpery getPehdTypeForComponent/getPehdSurcharge w actionsWellPainting.js (używane przez actionsConfigRender, actionsWellPricing, offerWellComponents, solverValidation), seed uzupełniony o doplataPEHD (265 produktów; przejścia/kinety/konusy bez dopłaty), scripts/fill-pehd-seed.mjs, test tests/studnie/pehdPricing.test.ts, ruleEngine.getTopClosure respektuje forcedId z blokadą konusa przy wkładce, solverAutoSelect z fallbackiem Płyta DIN, tests/studnie/selectionRules.test.ts zaktualizowany. Treść ponizżej zachowana jako dokumentacja procesu.
 
 Status: W TRAKCIE WDRAŻANIA (specyfikacja napraw realizowanych równolegle)

@@ -127,7 +127,7 @@ function renderTiles() {
             }
 
             html += `<div class="tile ${activeClass}" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeHtml(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeHtml(p.id)}')`}" ondragend="dragEndWellComponent(event)">
-        <div class="tile-name">${p.name}</div>
+        <div class="tile-name">${escapeHtml(p.name)}</div>
         <div class="tile-meta">
           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
           <span class="tile-price">${fmtInt(displayPrice)} PLN</span>
@@ -186,7 +186,7 @@ function renderTiles() {
                         : '';
 
                     html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeHtml(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeHtml(p.id)}')`}" ondragend="dragEndWellComponent(event)">
-                        <div class="tile-name">${p.name}</div>
+                        <div class="tile-name">${escapeHtml(p.name)}</div>
                         <div class="tile-meta">
                           <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
                           <span class="tile-price">${fmtInt(p.price)} PLN</span>
@@ -289,7 +289,7 @@ function renderTiles() {
                         }
 
                         html += `<div class="tile" data-type="${p.componentType}" style="${lockedStyle}" onclick="addWellComponent('${escapeHtml(p.id)}')" draggable="${!isLocked}" ondragstart="${isLocked ? 'return false;' : `dragWellComponent(event, '${escapeHtml(p.id)}')`}" ondragend="dragEndWellComponent(event)">
-                            <div class="tile-name">${p.name}</div>
+                            <div class="tile-name">${escapeHtml(p.name)}</div>
                             <div class="tile-meta">
                               <span>${p.weight ? fmtInt(p.weight) + ' kg' : ''}</span>
                               <span class="tile-price">${fmtInt(displayPrice)} PLN</span>

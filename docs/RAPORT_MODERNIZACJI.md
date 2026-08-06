@@ -2,6 +2,7 @@
 
 > **Stan na dzień 2026-08-05 (notka aktualizacyjna, wnioski historyczne poniżej bez zmian):**
 > Od czasu publikacji raportu zrealizowano kolejne modernizacje:
+>
 > - **Dedup telemetrii AI** — `telemetryService.recordConfig` deduplikuje rekordy `AUTO_JS` (kanoniczny snapshot konfiguracji + `allComponentIds`); dedup oparty o `_canonicalize()`, `_dedupKey()`, `_normalizeIds()`.
 > - **Indeksy dedup** — `scripts/check-db.js` weryfikuje wymagane indeksy (`REQUIRED_INDEXES`), a `src/app.ts` wykonuje auto-heal indeksów oraz auto-create schematu FTS5 przy starcie.
 > - **TrainingPipeline** — okno treningowe działa w oparciu o `lastTrainedAt` (zamiast licznika `lastFeatureCount`); diagnostyka braku wzorców.

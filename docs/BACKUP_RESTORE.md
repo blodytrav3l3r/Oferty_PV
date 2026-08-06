@@ -45,7 +45,7 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 
 > **Uwaga:** ręczne skopiowanie pliku **nie tworzy nowych indeksów/kolumn** (np. indeksy
 > telemetrii AI). Po ręcznym restore uruchom `npx prisma db push --skip-generate
-> --accept-data-loss`. Przy starcie serwera indeksy telemetrii AI i tak są uzupełniane
+--accept-data-loss`. Przy starcie serwera indeksy telemetrii AI i tak są uzupełniane
 > automatycznie (auto-heal w `src/app.ts`), ale dla spójności pełnego schematu użyj `db push`.
 
 ## Przenoszenie bazy na nowe urządzenie

@@ -1,4 +1,5 @@
 # Unified Pricing System — Plan usunięcia reliktów
+
 > **Stan: NIE ZREALIZOWANE - plan odrzucony.** Wdrożono kierunek przeciwny: Prisma jako źródło prawdy (patrz docs/plans/prisma-only-pricing.md, commity f943309/4969381) - pricelistService.ts usunięty, tabele Products*Default/Preco* istnieją, settings nie jest już runtime source of truth cenników. Treść ponizżej zachowana jako dokumentacja historyczna rozważanego wariantu.
 
 ## Cel

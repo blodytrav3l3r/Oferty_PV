@@ -1,4 +1,5 @@
 # Implementation Plan: Excel — nagłówki krag_ot (bug "750 z otworem") + escapeHtml + dane KDB-25-75-OT
+
 > **Stan: ZREALIZOWANE (commit 3a0cf8d).** Wszystkie 3 kroki wdrożone: test regresyjny tests/studnie/excelHelpers.test.ts, escapeHtml w nagłówkach H1/H2 (excelTableRenderer.js), korekta danych KDB-25-75-OT (height 750 - także weight 2250 i area 4.71, szerzej niż zakładał plan) w data/seed_studnie.json i data/price_defaults.json. Treść ponizżej zachowana jako dokumentacja procesu.
 
 > Data: 2026-08-02 | Obszar: public/js/studnie/ (tabela Excel) | Testy: ests/studnie/

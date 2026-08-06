@@ -30,6 +30,20 @@ describe('normalizeDate', () => {
         const result = normalizeDate(null);
         expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     });
+
+    it('exactMs: konwertuje 13-cyfrowy timestamp string na ISO', () => {
+        const result = normalizeDate('1700000000000', { exactMs: true });
+        expect(result).toMatch(/^2023-/);
+    });
+
+    it('exactMs: zostawia krotszy (np. sekundowy) timestamp string bez zmian', () => {
+        const raw = '1700000000';
+        expect(normalizeDate(raw, { exactMs: true })).toBe(raw);
+    });
+
+    it('exactMs: domyslne zachowanie (bez opcji) nadal konwertuje numeryczny string', () => {
+        expect(normalizeDate('1700000000')).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    });
 });
 
 describe('isValidId', () => {

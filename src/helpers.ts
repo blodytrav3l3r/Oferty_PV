@@ -69,12 +69,15 @@ export function parseJsonField<T>(raw: string | null | undefined, fallback: T): 
 /**
  * Normalizuje wartość daty do ISO string.
  * Obsługuje: timestamp number, Date object, ISO string, timestamp string.
+ * Przy `exactMs` numeryczne stringi konwertowane są tylko wtedy,
+ * gdy mają dokładnie 13 cyfr (timestamp w milisekundach).
  */
-export function normalizeDate(raw: unknown): string {
+export function normalizeDate(raw: unknown, opts: { exactMs?: boolean } = {}): string {
     if (typeof raw === 'number') return new Date(raw).toISOString();
     if (raw instanceof Date) return raw.toISOString();
     if (typeof raw === 'string') {
-        if (/^\d+$/.test(raw)) return new Date(Number(raw)).toISOString();
+        const numericPattern = opts.exactMs ? /^\d{13}$/ : /^\d+$/;
+        if (numericPattern.test(raw)) return new Date(Number(raw)).toISOString();
         return raw;
     }
     return new Date().toISOString();

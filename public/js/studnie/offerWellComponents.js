@@ -117,9 +117,9 @@ function getWellBadges(change, isOrdered, well) {
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
-                title="Zamówienie ${wellOrder.orderNumber} — kliknij aby otworzyć"
+                title="Zamówienie ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
                 style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
-                <i data-lucide="package" aria-hidden="true"></i> ${wellOrder.orderNumber}
+                <i data-lucide="package" aria-hidden="true"></i> ${escapeHtml(wellOrder.orderNumber)}
             </span>`;
         } else {
             html +=
@@ -240,7 +240,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         }
 
         html += `<tr style="opacity:0.8;">
-            <td style="color:var(--text-secondary);">↳ ${p.name}${badgesHtml}${discStr}</td>
+            <td style="color:var(--text-secondary);">↳ ${escapeHtml(p.name)}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
             <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
@@ -393,7 +393,7 @@ function renderComponentSubItems(
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
             html +=
                 '<tr style="opacity:0.6; font-size:0.7rem; color:var(--pink-hover);"><td colspan="3" class="pl-lg">↳ + ' +
-                (kp ? kp.name : 'Kineta') +
+                escapeHtml(kp ? kp.name : 'Kineta') +
                 '</td><td class="text-right">' +
                 fmt(kPrice) +
                 ' PLN</td></tr>';

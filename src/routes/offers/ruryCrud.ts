@@ -3,6 +3,7 @@ import prisma from '../../prismaClient';
 import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import crypto from 'crypto';
+import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
 import { syncFts5 } from '../../utils/fts5Sync';
 import { buildRoleWhereClause } from '../../utils/roleFilter';
@@ -181,16 +182,7 @@ router.post(
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
                 const clientNumber = o.clientNumber || null;
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = normalizeDate(o.createdAt, { exactMs: true });
                 const updated = new Date().toISOString();
                 const offerNumber = o.offer_number || o.number || '';
                 const dataStr = JSON.stringify(o);
@@ -322,16 +314,7 @@ router.put(
                 const investName = o.investName || null;
                 const clientNip = o.clientNip || null;
                 const clientNumber = o.clientNumber || null;
-                const created = (() => {
-                    const raw = o.createdAt;
-                    if (typeof raw === 'number') return new Date(raw).toISOString();
-                    if (raw instanceof Date) return raw.toISOString();
-                    if (typeof raw === 'string') {
-                        if (/^\d{13}$/.test(raw)) return new Date(Number(raw)).toISOString();
-                        return raw;
-                    }
-                    return new Date().toISOString();
-                })();
+                const created = normalizeDate(o.createdAt, { exactMs: true });
                 const dataStr = JSON.stringify(o);
 
                 await prisma.offers_rel.upsert({

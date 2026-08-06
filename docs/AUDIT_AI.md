@@ -180,14 +180,14 @@ Geometria przejść szczelnych z 16 wymiarami (dn, height, angle, collisions, im
 
 ## 4. Moduł Learning Engine (7 modułów + index)
 
-| Moduł                       | Rola                                       | Mechanizm                                                                         |
-| --------------------------- | ------------------------------------------ | --------------------------------------------------------------------------------- |
-| **FeatureExtractor.ts**     | Ekstrakcja cech geometrycznych z telemetry | Kategoryzacja: geometric, user, solver, transition, acceptance; wagi cech 0.5-1.0 |
-| **ConfidenceCalculator.ts** | Krzywe zaufania                            | log_30(hitCount), time-decay 5%/30 dni, success bias                              |
-| **KnowledgeBase.ts**        | CRUD na ai_knowledge_base                  | upsert z change tracking, stats, countPatterns (bez archivePattern)               |
-| **PatternDetector.ts**      | Detekcja wzorców + persist                 | transition_layout, reduction_choice; persist do KB (UPSERT wg patternKey)         |
-| **PreferenceEngine.ts**     | Budowanie preferencji                      | substitution + addition + removal                                                 |
-| **RecommendationEngine.ts** | Generowanie rekomendacji                   | top-N wzorców per DN (wewnętrznie RankingEngine)                                  |
+| Moduł                       | Rola                                       | Mechanizm                                                                                                                        |
+| --------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **FeatureExtractor.ts**     | Ekstrakcja cech geometrycznych z telemetry | Kategoryzacja: geometric, user, solver, transition, acceptance; wagi cech 0.5-1.0                                                |
+| **ConfidenceCalculator.ts** | Krzywe zaufania                            | log_30(hitCount), time-decay 5%/30 dni, success bias                                                                             |
+| **KnowledgeBase.ts**        | CRUD na ai_knowledge_base                  | upsert z change tracking, stats, countPatterns (bez archivePattern)                                                              |
+| **PatternDetector.ts**      | Detekcja wzorców + persist                 | transition_layout, reduction_choice; persist do KB (UPSERT wg patternKey)                                                        |
+| **PreferenceEngine.ts**     | Budowanie preferencji                      | substitution + addition + removal                                                                                                |
+| **RecommendationEngine.ts** | Generowanie rekomendacji                   | top-N wzorców per DN (wewnętrznie RankingEngine)                                                                                 |
 | **LearningEngine.ts**       | Orkiestracja                               | fetchTelemetryRecords → buildCorrections → detectAllPatterns → persist → saveLastRun; getComponents: kb/patterns/prefs/recommend |
 
 Każdy moduł ma **jedną odpowiedzialność** (Single Responsibility Principle).
@@ -291,10 +291,10 @@ Wszystkie body są walidowane przez Zod przed zapisaniem do bazy.
 
 ### 8.1 Migracje
 
-| Data             | Nazwa               | Opis                                             |
-| ---------------- | ------------------- | ------------------------------------------------ |
-| 2026-06-30 19:00 | `telemetry_ai_prep` | 4 nowe tabele + rozszerzenie `ai_telemetry_logs` |
-| 2026-06-30 20:00 | `ai_knowledge_base` | 2 nowe tabele: KB + Recommendations              |
+| Data             | Nazwa                  | Opis                                                             |
+| ---------------- | ---------------------- | ---------------------------------------------------------------- |
+| 2026-06-30 19:00 | `telemetry_ai_prep`    | 4 nowe tabele + rozszerzenie `ai_telemetry_logs`                 |
+| 2026-06-30 20:00 | `ai_knowledge_base`    | 2 nowe tabele: KB + Recommendations                              |
 | 2026-08-05 10:00 | `telemetry_well_dedup` | indeksy `idx_logs_well` + `idx_logs_source_well` (dedup AUTO_JS) |
 
 ### 8.2 Idempotentność
@@ -383,29 +383,29 @@ Migracje są standardowe Prisma - rollback przez `migrate resolve` lub przywróc
 
 ### 12.2 Kategorie testów telemetryRoutes.test.ts
 
-| Kategoria                 | # testów |
-| ------------------------- | -------: |
-| Schema walidacja          |        7 |
-| Telemetry wysokopoziomowe |        3 |
-| telemetryService wewnętrzne |      2 |
-| Deduplikacja AUTO_JS      |        6 |
-| ConfidenceCalculator      |        5 |
-| PatternDetector           |        3 |
-| PreferenceEngine          |        3 |
-| FeedbackProcessor         |        5 |
-| KnowledgeBase (real DB)   |        4 |
-| RecommendationEngine      |        3 |
-| LearningEngine            |        4 |
-| CronService               |        4 |
-| Bezpieczeństwo API - role |        3 |
-| Równoległe zapisy         |        1 |
-| Wersjonowanie i migracja  |        3 |
-| Integralność danych       |        2 |
-| Bezpieczeństwo            |        3 |
-| Równoległe zapisy         |        1 |
-| Wersjonowanie i migracja  |        3 |
-| Integralność danych       |        2 |
-| **Suma**                  |   **58** |
+| Kategoria                   | # testów |
+| --------------------------- | -------: |
+| Schema walidacja            |        7 |
+| Telemetry wysokopoziomowe   |        3 |
+| telemetryService wewnętrzne |        2 |
+| Deduplikacja AUTO_JS        |        6 |
+| ConfidenceCalculator        |        5 |
+| PatternDetector             |        3 |
+| PreferenceEngine            |        3 |
+| FeedbackProcessor           |        5 |
+| KnowledgeBase (real DB)     |        4 |
+| RecommendationEngine        |        3 |
+| LearningEngine              |        4 |
+| CronService                 |        4 |
+| Bezpieczeństwo API - role   |        3 |
+| Równoległe zapisy           |        1 |
+| Wersjonowanie i migracja    |        3 |
+| Integralność danych         |        2 |
+| Bezpieczeństwo              |        3 |
+| Równoległe zapisy           |        1 |
+| Wersjonowanie i migracja    |        3 |
+| Integralność danych         |        2 |
+| **Suma**                    |   **58** |
 
 ---
 
