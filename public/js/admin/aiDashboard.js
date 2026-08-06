@@ -52,12 +52,14 @@
     }
 
     /* ===== HELPER: karta statystyczna ===== */
-    function statCard(title, value, color, desc) {
+    function statCard(title, value, color, desc, tooltip) {
         return (
             '<div class="ai-stat-card" ' +
             (desc ? 'title="' + window.escapeHtml(desc) + '"' : '') +
             ' style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;text-align:center">' +
-            '<div style="font-size:1.5rem;font-weight:600;color:' +
+            '<div' +
+            (tooltip ? ' title="' + window.escapeHtml(tooltip) + '"' : '') +
+            ' style="font-size:var(--stat-val-size, 1.5rem);font-weight:600;color:' +
             (color || 'var(--accent)') +
             '">' +
             value +
@@ -329,7 +331,9 @@
                     'Wersja modelu',
                     window.escapeHtml(activeVer) + activeAuc,
                     'var(--accent2)',
-                    'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)'
+                    'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
+                    activeVer +
+                        (status.activeModelAuc != null ? ' AUC ' + status.activeModelAuc : '')
                 ) +
                 statCard(
                     'Data wdrożenia',
@@ -362,7 +366,7 @@
                     "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
                 ) +
                 '</div>' +
-                '<div class="ai-influence-widget" style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;margin-top:10px">' +
+                '<div class="ai-influence-widget">' +
                 '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
                 '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +
                 '<span style="font-size:0.82rem;color:var(--text-primary);white-space:nowrap">Wp\u0142yw AI: <strong id="ai-influence-value">' +

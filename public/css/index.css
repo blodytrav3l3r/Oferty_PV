@@ -1270,29 +1270,36 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     box-shadow: var(--shadow-sm);
 }
 
-/* ── Grid health (3 kolumny) ── */
+/* ── Grid health (2 rzędy: 3 + 4 kafelki) ── */
 .ai-health-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     gap: 8px;
     margin-bottom: 14px;
 }
 
+.ai-health-grid .ai-health-card:nth-child(-n + 3) {
+    grid-column: span 4;
+}
+
+.ai-health-grid .ai-health-card:nth-child(n + 4) {
+    grid-column: span 3;
+}
+
 @media (max-width: 768px) {
-    .ai-health-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .ai-health-grid .ai-health-card {
+        grid-column: span 6;
     }
 }
 
 @media (max-width: 480px) {
-    .ai-health-grid {
-        grid-template-columns: 1fr;
+    .ai-health-grid .ai-health-card {
+        grid-column: span 12;
     }
 }
 
-.ai-health-card:hover {
-    border-color: var(--accent-border-dim);
-    box-shadow: var(--shadow-sm);
+.ai-health-card > svg {
+    flex-shrink: 0;
 }
 
 /* ── Karta statystyk AI ── */
@@ -1634,31 +1641,47 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--text-primary);
 }
 
-/* ── ML Pipeline grid (7 kolumn = jedna linia) ── */
+/* ── ML Pipeline grid (2 rzędy: 3 + 4 kafelki) ── */
 .ai-ml-stats-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(12, 1fr);
     gap: 8px;
     margin-bottom: 16px;
     width: 100%;
+    --stat-val-size: 1.1rem;
+}
+
+.ai-ml-stats-grid .ai-stat-card:nth-child(-n + 3) {
+    grid-column: span 4;
+}
+
+.ai-ml-stats-grid .ai-stat-card:nth-child(n + 4) {
+    grid-column: span 3;
 }
 
 @media (max-width: 768px) {
-    .ai-ml-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+    .ai-ml-stats-grid .ai-stat-card {
+        grid-column: span 6;
     }
 }
 
 @media (max-width: 480px) {
-    .ai-ml-stats-grid {
-        grid-template-columns: 1fr;
+    .ai-ml-stats-grid .ai-stat-card {
+        grid-column: span 12;
     }
+}
+
+.ai-ml-stats-grid .ai-stat-card > div:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* ── ML status header ── */
 .ai-ml-header {
     margin: 0 0 12px;
-    font-size: 0.82rem;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -1667,9 +1690,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 .ai-ml-header i,
 .ai-ml-header svg {
-    width: 14px;
-    height: 14px;
-    color: var(--accent2);
+    width: 18px;
+    height: 18px;
+    color: var(--accent);
 }
 
 /* ── ML action buttons ── */
@@ -1681,6 +1704,10 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-influence-widget {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 12px;
     margin-bottom: 14px;
 }
 
