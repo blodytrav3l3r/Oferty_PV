@@ -133,6 +133,11 @@
 | `esbuild` usuniety z devDependencies | Uzywany tylko w konfiguracji Vite (`minify`), nie jako bezposrednia zaleznosc. |
 | `jszip` juz w devDependencies        | Import tylko w `tests/combinedDocument.test.ts` - nie wymagal przeniesienia.   |
 
+> **Aktualizacja (commit `deeb32a`, 2026-08-06):** `esbuild` zostal **ponownie dodany** do
+> `devDependencies` (`^0.28.1`). Vite 8 traktuje `esbuild` jako opcjonalna zaleznosc peer —
+> bez niego `npm run build:frontend` (z `minify: 'esbuild'` w `vite.config.js`) konczy sie bledem.
+> Nie usuwac ponownie (patrz AGENTS.md #25 oraz ADR-003).
+
 ### Bug Fix
 
 | Element                               | Opis                                                                                                                                                                    |

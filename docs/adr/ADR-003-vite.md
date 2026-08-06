@@ -27,6 +27,8 @@ TypeScript, code splitting, i szybkiego HMR. Rozważano: Vite, Webpack, esbuild 
 - **TypeScript tylko transpilacja** — typecheck wymaga osobnego `npm run typecheck:frontend` (`tsc --noEmit`).
 - **Proxy HMR nie jest w pełni zintegrowane** — backend i frontend to osobne procesy (przez `concurrently`).
 - **esbuild minify** — szybszy niż terser, ale mniej opcji transformacji (akceptowalne dla celów ES2015).
+  Od Vite 8 `esbuild` jest **opcjonalną zależnością peer** — musi być jawnie w `devDependencies`
+  (`^0.28.1`), inaczej `npm run build:frontend` z `minify: 'esbuild'` kończy się błędem (commit `deeb32a`).
 - **Wyjście do osobnego katalogu `dist-web/`** — frontend bundlowany przez Vite trafia do `dist-web/`,
   oddzielonego od `dist/` (output kompilacji backendu przez `tsc`). Dzięki temu `vite build`
   (z `emptyOutDir: true`) nie kasuje skompilowanego `dist/server.js` przy budowie równoległej.
