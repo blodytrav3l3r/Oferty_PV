@@ -3,6 +3,7 @@ import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { AcceptanceModel } from './AcceptanceModel';
 import { ML_CONSTANTS } from '../../config/mlConstants';
+import { ML_CONFIG } from './trainingConfig';
 
 export interface ModelMetrics {
     accuracy: number;
@@ -44,6 +45,17 @@ export interface ModelListItem {
     metrics: ModelMetrics | null;
     features: string[];
     trainingRows: number;
+}
+
+// Wyciąga rocAUC z zapisanych metryk; uszkodzony JSON lub brak pola rocAuc traktujemy jak -1.
+// Używany przez getBestAuc, promoteBestModel i pruneOldModels.
+function getRocAuc(metricsJson: string): number {
+    try {
+        const rocAuc = (JSON.parse(metricsJson) as ModelMetrics).rocAuc;
+        return typeof rocAuc === 'number' ? rocAuc : -1;
+    } catch {
+        return -1;
+    }
 }
 
 export class ModelRegistry {
@@ -101,6 +113,9 @@ export class ModelRegistry {
             });
         });
 
+        // Retencja: po zapisie nowego modelu przycinamy stary rejestr (metoda nigdy nie rzuca)
+        await this.pruneOldModels();
+
         logger.info(
             'ModelRegistry',
             `Zapisano model ${version} (active=${shouldActivate}, auc=${metrics.rocAuc.toFixed(4)})`
@@ -126,12 +141,8 @@ export class ModelRegistry {
         });
         let best = -1;
         for (const r of records) {
-            try {
-                const metrics = JSON.parse(r.metrics) as ModelMetrics;
-                if (metrics.rocAuc > best) best = metrics.rocAuc;
-            } catch {
-                // pomijamy uszkodzone metryki
-            }
+            const auc = getRocAuc(r.metrics);
+            if (auc > best) best = auc;
         }
         return best;
     }
@@ -223,13 +234,7 @@ export class ModelRegistry {
         let best = records[0];
         let bestAuc = -1;
         for (const r of records) {
-            let auc = -1;
-            try {
-                const metrics = JSON.parse(r.metrics) as ModelMetrics;
-                auc = metrics.rocAuc;
-            } catch {
-                // pomijamy uszkodzone metryki
-            }
+            const auc = getRocAuc(r.metrics);
             if (auc > bestAuc) {
                 bestAuc = auc;
                 best = r;
@@ -260,6 +265,86 @@ export class ModelRegistry {
 
     async getModelCount(): Promise<number> {
         return prisma.aiModel.count();
+    }
+
+    /**
+     * Przycina rejestr modeli ML do polityki retencji z ML_CONFIG:
+     * - wszystkie modele aktywne (active: true) — nigdy nie usuwane,
+     * - top-keepBest najlepszych wg rocAUC bieżącej wersji cech,
+     * - ostatnie keepLast wg createdAt bieżącej wersji cech (zapas dla rollbacku).
+     * Metoda NIGDY nie rzuca — błąd jest logowany i zwracany jest {0, []}.
+     */
+    async pruneOldModels(): Promise<{ deletedCount: number; deletedVersions: string[] }> {
+        try {
+            return await prisma.$transaction(async (tx) => {
+                // Select bez ciężkich pól (weights, bias, features, featureMins, featureMaxs)
+                const records = await tx.aiModel.findMany({
+                    select: {
+                        id: true,
+                        version: true,
+                        active: true,
+                        metrics: true,
+                        featureVersion: true,
+                        createdAt: true
+                    }
+                });
+
+                const keep = new Set<string>();
+
+                // 1. Wszystkie aktywne modele — pas bezpieczeństwa przed usunięciem aktywnego modelu
+                for (const r of records) {
+                    if (r.active) keep.add(r.id);
+                }
+
+                // Polityka retencji dotyczy wyłącznie bieżącej wersji cech — stare wersje
+                // (inna liczba cech) nie nadają się ani do rollbacku, ani do promote.
+                const current = records.filter(
+                    (r) => r.featureVersion === ML_CONSTANTS.FEATURE_VERSION
+                );
+
+                // 2. Najlepsze wg rocAUC (sort na kopii — nie mutujemy tablicy Prisma)
+                const byAuc = [...current].sort(
+                    (a, b) => getRocAuc(b.metrics) - getRocAuc(a.metrics)
+                );
+                for (const r of byAuc.slice(0, ML_CONFIG.retention.keepBest)) keep.add(r.id);
+
+                // 3. Najnowsze wg createdAt (zapas dla rollbackToPrevious)
+                const byDate = [...current].sort((a, b) =>
+                    a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0
+                );
+                for (const r of byDate.slice(0, ML_CONFIG.retention.keepLast)) keep.add(r.id);
+
+                const candidates = records.filter((r) => !keep.has(r.id));
+                const deletedVersions: string[] = [];
+                let deletedCount = 0;
+
+                // Usuwanie partiami po 500 — guard active:false to pas bezpieczeństwa
+                // (kandydaci z definicji nie są aktywni, ale deleteMany nie dotknie aktywnego)
+                for (let i = 0; i < candidates.length; i += 500) {
+                    const chunk = candidates.slice(i, i + 500);
+                    const result = await tx.aiModel.deleteMany({
+                        where: { id: { in: chunk.map((c) => c.id) }, active: false }
+                    });
+                    deletedCount += result.count;
+                    deletedVersions.push(...chunk.map((c) => c.version));
+                }
+
+                if (deletedCount > 0) {
+                    logger.info(
+                        'ModelRegistry',
+                        `Przycięto rejestr modeli: usunięto ${deletedCount} (${deletedVersions.join(', ')})`
+                    );
+                }
+                return { deletedCount, deletedVersions };
+            });
+        } catch (e) {
+            logger.error(
+                'ModelRegistry',
+                'Błąd przycinania rejestru modeli:',
+                e instanceof Error ? e.message : e
+            );
+            return { deletedCount: 0, deletedVersions: [] };
+        }
     }
 
     computeFeatureImportance(

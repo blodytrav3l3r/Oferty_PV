@@ -343,9 +343,13 @@
                 ) +
                 statCard(
                     'Liczba modeli',
-                    status.modelCount || 0,
+                    status.modelCount +
+                        ' / ' +
+                        (status.retention
+                            ? status.retention.keepLast + status.retention.keepBest
+                            : '—'),
                     'var(--accent-hover)',
-                    'Całkowita liczba zapisanych modeli w rejestrze'
+                    'Zapisane modele ML (limit retencji)'
                 ) +
                 statCard(
                     'Trening trwa',

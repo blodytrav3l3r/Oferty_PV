@@ -436,6 +436,16 @@ body::before {
     height: 28px;
 }
 
+/* Stała szerokość logo — nazwa modułu zmienia długość tekstu, ale nie może
+   przesuwać kafeli nawigacji (nav-apps) między zakładkami */
+#spa-logo-text {
+    display: inline-block;
+    min-width: 14rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /* Nawigacja */
 .nav {
     display: flex;

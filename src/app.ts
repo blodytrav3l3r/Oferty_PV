@@ -26,6 +26,7 @@ import {
 import { createRateLimiter } from './middleware/rateLimiter';
 import { logger } from './utils/logger';
 import { cleanupAuditLogs } from './services/auditService';
+import { modelRegistry } from './services/ml/ModelRegistry';
 import { priceOverrideService } from './services/priceOverrideService';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
@@ -342,6 +343,18 @@ export async function initApp(): Promise<void> {
     // Czyszczenie starych logów audytowych (sekwencyjnie — unikamy równoległych zapisów do SQLite;
     // funkcja sama łapie błędy wewnątrz, więc nie zablokuje startu)
     await cleanupAuditLogs();
+
+    // Retencja rejestru modeli ML — przycięcie starych modeli do polityki z ML_CONFIG
+    // (metoda sama łapie błędy; try/catch to dodatkowy pas bezpieczeństwa, nie blokuje startu)
+    try {
+        await modelRegistry.pruneOldModels();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Przyciecie rejestru modeli ML nie powiodlo sie:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
 
     // Cron Service - cykliczne zadania AI Learning Engine (pasywne, nie wplywa na solver JS)
     if (process.env.NODE_ENV !== 'test') {

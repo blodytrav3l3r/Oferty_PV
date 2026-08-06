@@ -23,10 +23,12 @@ jest.mock('../../src/prismaClient', () => ({
         aiModel: {
             findFirst: (...args: any[]) => mockFindFirst(...args),
             findUnique: jest.fn<any>(),
-            findMany: jest.fn<any>(),
+            // saveModel woła pruneOldModels — findMany/deleteMany muszą mieć sensowne odpowiedzi
+            findMany: jest.fn<any>().mockResolvedValue([]),
             create: jest.fn<any>(),
             update: jest.fn<any>(),
-            count: jest.fn<any>()
+            count: jest.fn<any>(),
+            deleteMany: jest.fn<any>().mockResolvedValue({ count: 0 })
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
         users: { update: jest.fn<any>() }

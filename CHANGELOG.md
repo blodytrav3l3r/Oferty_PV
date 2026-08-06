@@ -6,24 +6,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ### [1.11.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.2...v1.11.3) (2026-08-06)
 
-
 ### Bug Fixes
 
-* **ml:** naprawy dashboardu AI/ML po audycie (skew etykiet, security, UI) ([e3959ac](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3959ac749a371dabd723a76ffc5b37945efc0ea))
+- **ml:** naprawy dashboardu AI/ML po audycie (skew etykiet, security, UI) ([e3959ac](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3959ac749a371dabd723a76ffc5b37945efc0ea))
 
 ### [1.11.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.1...v1.11.2) (2026-08-06)
 
-
 ### Features
 
-* **ml:** audyt v6 (24 cechy) + domkniecie planu remediacji ([6c7a40a](https://github.com/blodytrav3l3r/Oferty_PV/commit/6c7a40a3f77850064e68912abb0c71391c7e2066))
-
+- **ml:** audyt v6 (24 cechy) + domkniecie planu remediacji ([6c7a40a](https://github.com/blodytrav3l3r/Oferty_PV/commit/6c7a40a3f77850064e68912abb0c71391c7e2066))
 
 ### Bug Fixes
 
-* **security:** audyt - XSS, build frontendu i walidacja dat ([deeb32a](https://github.com/blodytrav3l3r/Oferty_PV/commit/deeb32aee062b5ce0bda8efa335403d56763d5b7)), closes [#24-26](https://github.com/blodytrav3l3r/Oferty_PV/issues/24-26)
-* **security:** naprawa XSS, rate-limit i sprzatanie po audycie ([3eb1897](https://github.com/blodytrav3l3r/Oferty_PV/commit/3eb1897f8c27c26a923a57a658e193acdbf0da5e))
-* **version:** regex auto-docs-version lapie format **Wersja:** 1.11.1 ([b24605d](https://github.com/blodytrav3l3r/Oferty_PV/commit/b24605de83e36af22ff0f3e580726be9708ef39e))
+- **security:** audyt - XSS, build frontendu i walidacja dat ([deeb32a](https://github.com/blodytrav3l3r/Oferty_PV/commit/deeb32aee062b5ce0bda8efa335403d56763d5b7)), closes [#24-26](https://github.com/blodytrav3l3r/Oferty_PV/issues/24-26)
+- **security:** naprawa XSS, rate-limit i sprzatanie po audycie ([3eb1897](https://github.com/blodytrav3l3r/Oferty_PV/commit/3eb1897f8c27c26a923a57a658e193acdbf0da5e))
+- **version:** regex auto-docs-version lapie format **Wersja:** 1.11.1 ([b24605d](https://github.com/blodytrav3l3r/Oferty_PV/commit/b24605de83e36af22ff0f3e580726be9708ef39e))
 
 ### [1.11.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.0...v1.11.1) (2026-08-05)
 

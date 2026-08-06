@@ -5,6 +5,7 @@ import { selfEvaluation } from '../services/ml/SelfEvaluation';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
+import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
 import { READ_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
@@ -393,12 +394,17 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             activeModelCreatedAt: activeModel?.createdAt || null,
             modelFeatureCount: activeModel?.featureMins.length || ML_CONSTANTS.FEATURE_COUNT,
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+            rankingVersion: ML_CONSTANTS.RANKING_VERSION,
             modelCount,
             featureCount,
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
             cacheSize: predictionCache.size,
-            aiInfluencePct: parseInt(aiInfluence?.value || '0', 10)
+            aiInfluencePct: parseInt(aiInfluence?.value || '0', 10),
+            retention: {
+                keepLast: ML_CONFIG.retention.keepLast,
+                keepBest: ML_CONFIG.retention.keepBest
+            }
         });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);

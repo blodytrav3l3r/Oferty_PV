@@ -1441,17 +1441,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--white);
 }
 
-/* ── Status badge ── */
-.ai-status-online {
-    color: var(--success-hover);
-    font-weight: 700;
-}
-
-.ai-status-offline {
-    color: var(--danger-hover);
-    font-weight: 700;
-}
-
 /* ── Pattern type code ── */
 .ai-pattern-code {
     background: var(--bg-tertiary);

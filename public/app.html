@@ -73,6 +73,36 @@
                         style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem"
                     >
                         <span
+                            id="ai-status-indicator"
+                            style="
+                                visibility: hidden;
+                                align-items: center;
+                                gap: 4px;
+                                padding: 0.15rem 0.45rem;
+                                border: 1px solid var(--border-glass);
+                                border-radius: 20px;
+                                background: var(--bg-glass);
+                                font-size: 0.68rem;
+                                font-weight: 500;
+                                color: var(--text-secondary);
+                                white-space: nowrap;
+                                margin-right: 0.4rem;
+                            "
+                        >
+                            <span
+                                id="ai-status-dot"
+                                style="
+                                    width: 6px;
+                                    height: 6px;
+                                    border-radius: 50%;
+                                    display: inline-block;
+                                    background: var(--slate-500);
+                                    flex-shrink: 0;
+                                "
+                            ></span>
+                            <span id="ai-status-text" style="min-width: 13ch">AI...</span>
+                        </span>
+                        <span
                             id="header-username"
                             style="color: var(--text-secondary); font-weight: 500"
                         ></span>
@@ -148,6 +178,7 @@
         <script src="js/spa/router.js?v=1.11.3"></script>
         <script src="js/shared/iconsSlim.js?v=1.11.3"></script>
         <script src="js/versionDisplay.js?v=1.11.3"></script>
+        <script src="js/aiStatusIndicator.js?v=1.11.3"></script>
         <script src="js/shared/priceDefaults.js?v=1.11.3"></script>
     </body>
 </html>

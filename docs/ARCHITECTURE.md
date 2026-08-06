@@ -186,6 +186,15 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
   (`orderBy createdAt desc` + `take TRAINING_BATCH_SIZE` + `reverse()`), znacznik
   `lastTrainedAt` (zamiast `lastFeatureCount`), bramka nowych danych
   `newCount = count(createdAt > lastTrainedAt)`.
+- **Retencja rejestru modeli ML** (`src/services/ml/ModelRegistry.ts` — `pruneOldModels`):
+  po każdym `saveModel` oraz przy starcie serwera rejestr `AiModel` jest przycinany do
+  polityki `ML_CONFIG.retention` (`src/services/ml/trainingConfig.ts`, domyślnie
+  `keepLast: 10`, `keepBest: 3`). Zawsze zostają: wszystkie modele aktywne, top-`keepBest`
+  wg `rocAUC` oraz ostatnie `keepLast` wg `createdAt` (oba zbiory liczone tylko dla bieżącej
+  `FEATURE_VERSION`); reszta jest usuwana `deleteMany` partiami po 500 z guardem
+  `active: false`. Metoda nigdy nie rzuca (błąd logowany, start serwera nie jest blokowany).
+  Limit widoczny w dashboardzie: `GET /api/telemetry/ai/ml-status` → `retention`
+  (statCard "Liczba modeli" pokazuje `modelCount / (keepLast+keepBest)`).
 - **LearningEngine** (`src/services/telemetry/learning/LearningEngine.ts`): `getStatus` jest
   async i czyta `lastRunAt` z bazy (`settings.learning_last_run` przez `loadLastRun`), aby
   przetrwać restart serwera. Usunięte martwe pola feedback/ranker. `KnowledgeBase`

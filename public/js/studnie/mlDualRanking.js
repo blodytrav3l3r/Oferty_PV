@@ -66,15 +66,6 @@
     /** @type {string|null} */
     let activeModelVersion = null;
 
-    /** @type {number|null} */
-    let activeModelAuc = null;
-
-    /** @type {string|null} */
-    let activeModelCreatedAt = null;
-
-    /** @type {number} */
-    let aiInfluencePct = 0;
-
     /* ===== FEATURE FLAG — hierarchia: URL override > localStorage > backend > 0 ===== */
 
     async function validateFeatureSchema() {
@@ -606,7 +597,6 @@
         if (influencePct === undefined || influencePct === null) {
             influencePct = await getAiInfluencePct();
         }
-        aiInfluencePct = influencePct;
 
         // 2. Limit do MAX_AI_CANDIDATES
         let pool = candidates.slice(0, MAX_AI_CANDIDATES);
@@ -773,11 +763,6 @@
             wellId: opts.well ? opts.well.id : 'unknown',
             changeReason: JSON.stringify(reason)
         });
-
-        // Odśwież wskaźnik UI — pokaże modelVersion, online, influence
-        if (typeof updateAiStatusIndicator === 'function') {
-            updateAiStatusIndicator();
-        }
     }
 
     /* ===== WARSTWA ZGODNOŚCI (zachowanie starych API) ===== */
@@ -794,199 +779,19 @@
         return layout;
     }
 
-    /**
-     * Status systemu ML
-     * @returns {{online:boolean, modelVersion:string|null, activeModelAuc:number|null, activeModelCreatedAt:string|null, cacheSize:number, aiInfluencePct:number, rankingVersion:string, featureVersion:string}}
-     */
-    function getMlStatus() {
-        return {
-            online: mlOnline,
-            modelVersion: activeModelVersion,
-            activeModelAuc: activeModelAuc,
-            activeModelCreatedAt: activeModelCreatedAt,
-            cacheSize: scoreCache.size,
-            aiInfluencePct: aiInfluencePct,
-            rankingVersion: RANKING_VERSION,
-            featureVersion: FEATURE_VERSION
-        };
-    }
-
-    /* ===== POBIERANIE PEŁNEGO STATUSU ML (AUC, data wdrożenia) ===== */
-
-    let _lastStatusFetch = 0;
-
-    function fetchMlStatusAsync() {
-        let now = Date.now();
-        if (now - _lastStatusFetch < 60000) return; // max co 60s
-        _lastStatusFetch = now;
-        try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
-                controller.abort();
-            }, 3000);
-            fetch(ML_STATUS_URL, { credentials: 'same-origin', signal: controller.signal })
-                .then(function (r) {
-                    return r.ok ? r.json() : null;
-                })
-                .then(function (status) {
-                    clearTimeout(timeoutId);
-                    if (!status) return;
-                    mlOnline = !!status.mlOnline;
-                    if (status.modelVersion) activeModelVersion = status.modelVersion;
-                    if (status.activeModelAuc != null) activeModelAuc = status.activeModelAuc;
-                    if (status.activeModelCreatedAt)
-                        activeModelCreatedAt = status.activeModelCreatedAt;
-                    if (status.aiInfluencePct != null) aiInfluencePct = status.aiInfluencePct;
-                    updateAiStatusIndicator();
-                })
-                .catch(function () {
-                    clearTimeout(timeoutId);
-                });
-        } catch (e) {
-            /* ignoruj — offline */
-        }
-    }
-
-    /* ===== WSKAŹNIK AI W UI ===== */
-
-    /**
-     * Aktualizuje mały wskaźnik obok przycisku Auto w kreatorze studni.
-     * Pokazuje: online/offline, poziom wpływu, model version, learning status.
-     * Wywoływane okresowo i po każdym rankingu.
-     */
-    function updateAiStatusIndicator() {
-        let dot = document.getElementById('ai-status-dot');
-        let text = document.getElementById('ai-status-text');
-        if (!dot || !text) return;
-
-        fetchMlStatusAsync();
-
-        let status = getMlStatus();
-        let title = '';
-
-        if (status.online) {
-            if (status.aiInfluencePct > 0) {
-                dot.style.background = 'var(--success)';
-                text.textContent = 'AI ' + status.aiInfluencePct + '%';
-                title = 'AI ranking aktywny (' + status.aiInfluencePct + '%)';
-            } else {
-                dot.style.background = 'var(--slate-500)';
-                text.textContent = 'AI Shadow';
-                title = 'AI online, tryb shadow (0%) — tylko obserwacja';
-            }
-            title +=
-                ' | model: ' +
-                (status.modelVersion || '?') +
-                (status.activeModelAuc != null
-                    ? ' (AUC ' + status.activeModelAuc.toFixed(4) + ')'
-                    : '') +
-                ' | wdrożony: ' +
-                (status.activeModelCreatedAt ? status.activeModelCreatedAt.slice(0, 10) : '?') +
-                ' | ranking: ' +
-                status.rankingVersion +
-                ' | feat: ' +
-                status.featureVersion;
-
-            // Oznacz czy model jest świeży (uczenie aktywne)
-            if (status.cacheSize > 0) {
-                dot.style.boxShadow =
-                    '0 0 4px ' +
-                    (status.aiInfluencePct > 0 ? 'var(--success)' : 'var(--slate-500)');
-            }
-        } else {
-            dot.style.background = 'var(--slate-400)';
-            dot.style.boxShadow = 'none';
-            text.textContent = 'AI Offline';
-            title = 'Brak wytrenowanego modelu ML — ranking techniczny';
-        }
-
-        text.title = title + '\nKliknij Auto, aby uruchomić solver z AI rankingiem';
-
-        // W tle sprawdź learning status (baza wiedzy)
-        fetchLearningStatusAsync();
-    }
-
-    /**
-     * W tle sprawdza czy LearningEngine wykrył wzorce — aktualizuje tooltip.
-     */
-    let _lastLearningCheck = 0;
-
-    function fetchLearningStatusAsync() {
-        let now = Date.now();
-        if (now - _lastLearningCheck < 60000) return; // max co 60s
-        _lastLearningCheck = now;
-
-        try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
-                controller.abort();
-            }, 3000);
-            fetch('/api/telemetry/ai/knowledge/stats', {
-                credentials: 'same-origin',
-                signal: controller.signal
-            })
-                .then(function (r) {
-                    return r.ok ? r.json() : null;
-                })
-                .then(function (stats) {
-                    clearTimeout(timeoutId);
-                    let text = document.getElementById('ai-status-text');
-                    if (!text || !stats) return;
-                    let existing = text.title || '';
-                    text.title =
-                        existing.split('\n')[0] +
-                        '\nWzorce AI: ' +
-                        (stats.active || 0) +
-                        ' aktywnych, ' +
-                        (stats.total || 0) +
-                        ' total' +
-                        '\nConfidence: ' +
-                        (stats.avgConfidence ? Math.round(stats.avgConfidence * 100) + '%' : '—') +
-                        '\nRekomendacje: ' +
-                        (stats.acceptedRecommendations || 0) +
-                        '/' +
-                        (stats.totalRecommendations || 0) +
-                        ' zaakc.';
-                })
-                .catch(function () {
-                    clearTimeout(timeoutId);
-                });
-        } catch (e) {
-            /* ignoruj */
-        }
-    }
-
-    /**
-     * Odświeża wskaźnik AI okresowo (co 30s).
-     */
-    var _statusPollerInterval = null;
-
-    function startAiStatusPoller() {
-        updateAiStatusIndicator();
-        _statusPollerInterval = setInterval(updateAiStatusIndicator, 30000);
-    }
+    /* ===== EKSPORT ===== */
 
     // Uruchom po załadowaniu DOM
     setTimeout(validateFeatureSchema, 3000); // walidacja schematu cech z backendem
-
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(startAiStatusPoller, 2000); // 2s delay — daj czas na init
-    } else {
-        document.addEventListener('DOMContentLoaded', startAiStatusPoller);
-    }
-
-    /* ===== EKSPORT ===== */
 
     // Nowe API (główne)
     window.rankCandidates = rankCandidates;
     window.recordAiRankDecision = recordAiRankDecision;
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
-    window.updateAiStatusIndicator = updateAiStatusIndicator;
     window.buildFeatureVector = buildFeatureVector;
 
     // Stare API (kompatybilność)
     window.mlEnrichLayout = mlEnrichLayout;
-    window.getMlStatus = getMlStatus;
     window.fetchAiScore = fetchAiScore;
 })();

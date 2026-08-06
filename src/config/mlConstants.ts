@@ -27,6 +27,7 @@ export const FEATURE_NAMES = [
 
 export const ML_CONSTANTS = {
     FEATURE_VERSION: process.env.ML_FEATURE_VERSION || 'v6',
+    RANKING_VERSION: process.env.ML_RANKING_VERSION || 'dual_v1',
     FEATURE_COUNT: FEATURE_NAMES.length,
     PREDICTION_CACHE_TTL_MS: 15 * 60 * 1000,
     TRAINING_BATCH_SIZE: 2000,

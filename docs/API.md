@@ -329,21 +329,21 @@ Pola odpowiedzi (oprócz listy `items`):
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                                 | Opis                                           |
-| ------ | --------------------------------------- | ---------------------------------------------- |
-| POST   | `/api/telemetry/ai/predict`             | Predykcja akceptacji dla zestawu cech          |
-| POST   | `/api/telemetry/ai/predict/batch`       | Predykcja batch dla kandydujących konfiguracji |
-| POST   | `/api/telemetry/ai/reward`              | Zapis nagrody (reward) za akcję                |
-| GET    | `/api/telemetry/ai/settings`            | Poziom wpływu AI (`wells_ai_influence`)        |
-| POST   | `/api/telemetry/ai/settings`            | Ustawienie wpływu AI 0–100 (admin)             |
-| GET    | `/api/telemetry/ai/ml-status`           | Status pipeline ML (model, trening, cache)     |
-| GET    | `/api/telemetry/ai/health`              | Health ML + metryki jakości danych             |
-| GET    | `/api/telemetry/ai/models`              | Lista modeli                                   |
-| DELETE | `/api/telemetry/ai/models/:id`          | Usunięcie modelu (admin)                       |
-| POST   | `/api/telemetry/ai/models/:id/activate` | Aktywacja modelu (admin)                       |
-| POST   | `/api/telemetry/ai/train`               | Wymuszenie trenowania modelu (admin)           |
-| GET    | `/api/telemetry/ai/feature-schema`      | Wersja i nazwy cech ML                         |
-| POST   | `/api/telemetry/ai/rollback`            | Rollback do poprzedniego modelu (admin)        |
+| Metoda | Ścieżka                                 | Opis                                                 |
+| ------ | --------------------------------------- | ---------------------------------------------------- |
+| POST   | `/api/telemetry/ai/predict`             | Predykcja akceptacji dla zestawu cech                |
+| POST   | `/api/telemetry/ai/predict/batch`       | Predykcja batch dla kandydujących konfiguracji       |
+| POST   | `/api/telemetry/ai/reward`              | Zapis nagrody (reward) za akcję                      |
+| GET    | `/api/telemetry/ai/settings`            | Poziom wpływu AI (`wells_ai_influence`)              |
+| POST   | `/api/telemetry/ai/settings`            | Ustawienie wpływu AI 0–100 (admin)                   |
+| GET    | `/api/telemetry/ai/ml-status`           | Status pipeline ML (model, trening, cache, retencja) |
+| GET    | `/api/telemetry/ai/health`              | Health ML + metryki jakości danych                   |
+| GET    | `/api/telemetry/ai/models`              | Lista modeli                                         |
+| DELETE | `/api/telemetry/ai/models/:id`          | Usunięcie modelu (admin)                             |
+| POST   | `/api/telemetry/ai/models/:id/activate` | Aktywacja modelu (admin)                             |
+| POST   | `/api/telemetry/ai/train`               | Wymuszenie trenowania modelu (admin)                 |
+| GET    | `/api/telemetry/ai/feature-schema`      | Wersja i nazwy cech ML                               |
+| POST   | `/api/telemetry/ai/rollback`            | Rollback do poprzedniego modelu (admin)              |
 
 ## Feature Flags (`/api/feature-flags`)
 
