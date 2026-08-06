@@ -309,7 +309,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
         selectedWellsCopy.forEach(function (w) {
             if (w.config && w.config.length > 0) {
-                window.mlRewardHooks.onWellAccepted({ eventType: 'ORDER_CONFIRMED' });
+                window.mlRewardHooks.onWellAccepted({
+                    eventType: 'ORDER_CONFIRMED',
+                    wasAiRanked: w.configSource === 'AUTO_AI'
+                });
             }
         });
     }

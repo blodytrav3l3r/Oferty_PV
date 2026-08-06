@@ -1,6 +1,12 @@
 // @ts-check
 /* ===== EXCEL POLLING — Polling i synchronizacja AUTO/MAN dla tabeli konfiguracyjnej studni ===== */
 
+/* Wspólny helper: czy studnia jest w trybie automatycznym (AUTO / AUTO_JS / AUTO_AI) */
+function isWellAuto(well) {
+    return well.autoSelect !== false && well.configSource !== 'MANUAL';
+}
+window.isWellAuto = isWellAuto;
+
 function _excelStartPolling() {
     if (_excelPollInterval || typeof wells === 'undefined') return;
     /* Snapshot dla taniego porownywania - hash konfigow wszystkich studni */
@@ -51,9 +57,15 @@ function _excelSyncAutoManualUI() {
         let btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
         /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
-        if (w.configSource === 'AUTO' && w.autoSelect === false) w.autoSelect = true;
+        if (
+            (w.configSource === 'AUTO' ||
+                w.configSource === 'AUTO_JS' ||
+                w.configSource === 'AUTO_AI') &&
+            w.autoSelect === false
+        )
+            w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
-        let isAuto = w.autoSelect !== false && w.configSource !== 'MANUAL';
+        let isAuto = window.isWellAuto(w);
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
         btnMode.style.background = isAuto
             ? 'rgba(var(--accent-rgb), 0.2)'

@@ -276,7 +276,7 @@ Wymaga autoryzacji.
 
 ## Telemetria AI (`/api/telemetry/ai`)
 
-Wymaga autoryzacji. Telemetria jest **pasywna** — solver JS pozostaje jedynym źródłem prawdy doboru komponentów studni.
+Wymaga autoryzacji. Telemetria jest **pasywna** — solver JS pozostaje źródłem prawdy **reguł** doboru komponentów studni. AI (dual-ranking) może wybrać innego kandydata spośród kandydatów solvera — wtedy `solverSource: 'AI_SUGGEST'`.
 
 | Metoda | Ścieżka                             | Opis                                                    |
 | ------ | ----------------------------------- | ------------------------------------------------------- |

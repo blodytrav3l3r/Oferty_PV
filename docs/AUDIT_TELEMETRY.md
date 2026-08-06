@@ -24,7 +24,8 @@
                           │       JS Solver (frontend)             │
                           │  - autodobór (deterministyczny)        │
                           │  - DP kręgi, reguły, geometria         │
-                          │  - 100% AUTONOMICZNY — nigdy AI       │
+                          │  - deterministyczny + opcjonalny      │
+                          │    dual-ranking AI                     │
                           └──────────────┬───────────────────────┘
                                          │ pasywny hook (telemetryBridge.js)
                                          ▼
@@ -36,7 +37,8 @@
                           └──────────────┬───────────────────────┘
                                          ▼
                           ┌──────────────────────────────────┐
-                          │  Warstwa AI (w pełni pasywna!)         │
+                          │  Warstwa AI (dual-ranking +          │
+                          │  telemetria pasywna)                  │
                           │  - LearningEngine (orquestracja)      │
                           │  - PatternDetector / PreferenceEngine  │
                           │  - FeatureExtractor                    │
@@ -58,9 +60,11 @@
 
 ### 1.3 Granica wsparcia AI
 
-**SOLVER JS NIE JEST MODYFIKOWALNY PRZE AI.**
+**SOLVER JS NIE JEST MODYFIKOWALNY PRZEZ AI.** AI nie zmienia reguł ani geometrii solvera (wellSolver.js, ringOptimizer.js, ruleEngine.js).
 
-Jedyny "wpływ" AI na użytkownika to **rekomendacja** wyświetlana w `/api/telemetry/ai/recommendations/:telemetryId` — i nawet **zastosowanie** przez usera (accepted/rejected) jest tylko zapisem do AI, bez wpływu na dobor.
+Jedyny "wpływ" AI na **dobór** to **dual-ranking** (`rankCandidates` w `mlDualRanking.js`): gdy AI realnie oceni kandydatów (co najmniej jeden `aiScore >= 0`) i przy `aiInfluencePct > 0` zmieni zwycięzcę, studnia dostaje `configSource: 'AUTO_AI'`, a telemetria `solverSource: 'AI_SUGGEST'`. Przy awarii AI fallback do rankingu technicznego solvera.
+
+Rekomendacja wyświetlana w `/api/telemetry/ai/recommendations/:telemetryId` pozostaje osobnym kanałem — i nawet **zastosowanie** przez usera (accepted/rejected) jest tylko zapisem do AI, bez wpływu na dobór.
 
 ---
 
@@ -418,4 +422,4 @@ Brakujące 5%:
 - Auto-trigger acceptance z saveOffer
 - pytest dla zachowania samodzielności Pythona (poza scope)
 
-Praca wykonana zgodnie z zasadą: **solver obowiązuje, AI rekomenduje**.
+Praca wykonana zgodnie z zasadą: **solver obowiązuje, AI może korygować wybór kandydata (dual-ranking), telemetria pasywna**.

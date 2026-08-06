@@ -117,7 +117,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             cbChecked +
             ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></td>';
         /* AUTO/MANUAL */
-        let isAuto = well.autoSelect !== false && well.configSource !== 'MANUAL';
+        let isAuto = window.isWellAuto(well);
         let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
         let autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         html +=

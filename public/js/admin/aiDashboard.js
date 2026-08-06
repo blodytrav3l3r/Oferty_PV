@@ -11,7 +11,8 @@
         featureImportance: '/api/telemetry/ai/feature-importance',
         train: '/api/telemetry/ai/train',
         rollback: '/api/telemetry/ai/rollback',
-        settings: '/api/telemetry/ai/settings'
+        settings: '/api/telemetry/ai/settings',
+        wellSelections: '/api/telemetry/ai/well-selections'
     };
 
     /* fetchJson — wspólny helper z shared/ui.js (window.fetchJson) */
@@ -770,6 +771,93 @@
         });
     }
 
+    /* ===== STUDNIE DOBRANE PRZEZ AI (well selections) ===== */
+    function renderWellSelections(container) {
+        container.innerHTML = loadingHtml();
+        var p = window.fetchJson(ENDPOINTS.wellSelections);
+        if (!p) {
+            container.innerHTML = apiErrorHtml('server');
+            return;
+        }
+        p.then(function (data) {
+            if (!data || data.error) {
+                container.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
+                return;
+            }
+            var items = data.items || [];
+            if (items.length === 0) {
+                container.innerHTML =
+                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
+                return;
+            }
+            var shown = items.slice(0, 20);
+            var rows = shown
+                .map(function (w, i) {
+                    var lastSeen = w.lastSeenAt
+                        ? new Date(w.lastSeenAt).toLocaleString('pl-PL')
+                        : '—';
+                    return (
+                        '<tr style="border-bottom:1px solid var(--border-glass)">' +
+                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem">' +
+                        (i + 1) +
+                        '</td>' +
+                        '<td style="padding:6px;font-family:monospace;font-size:0.78rem;color:var(--accent-text)">' +
+                        window.escapeHtml(w.dn || '—') +
+                        '</td>' +
+                        '<td style="padding:6px;color:var(--text-primary)">' +
+                        window.escapeHtml(w.warehouse || '—') +
+                        '</td>' +
+                        '<td style="padding:6px;text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
+                        (w.count || 0) +
+                        '</td>' +
+                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem;white-space:nowrap">' +
+                        window.escapeHtml(lastSeen) +
+                        '</td>' +
+                        '</tr>'
+                    );
+                })
+                .join('');
+            container.innerHTML =
+                '<div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px">' +
+                '<h4 style="margin:0 0 8px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="wand-2" style="width:14px;height:14px;color:var(--accent)"></i> Studnie dobrane przez AI</h4>' +
+                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+                statCard(
+                    'Studnie (AI)',
+                    data.totalWells || 0,
+                    'var(--accent)',
+                    'Liczba studni, w których AI zmieniło wynik doboru elementów'
+                ) +
+                statCard(
+                    'Wszystkie dobory (AI)',
+                    data.totalSelections || 0,
+                    'var(--success)',
+                    'Łączna liczba rekordów telemetrii z nadpisaniem przez AI'
+                ) +
+                '</div>' +
+                '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
+                '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.82rem">' +
+                '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px">' +
+                '<th style="padding:6px;text-align:left;font-weight:700">Lp</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Średnica nominalna studni">DN</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Magazyn / zakład produkcyjny">Magazyn</th>' +
+                '<th style="padding:6px;text-align:right;font-weight:700" title="Liczba rekordów telemetrii z nadpisaniem przez AI">Liczba rekordów</th>' +
+                '<th style="padding:6px;text-align:left;font-weight:700" title="Kiedy AI ostatnio zmieniło dobór dla tej studni">Ostatnio użyto</th>' +
+                '</tr></thead><tbody>' +
+                rows +
+                '</tbody></table></div>' +
+                (items.length > shown.length
+                    ? '<div style="font-size:0.72rem;color:var(--text-muted);text-align:right;margin-top:6px">Pokazano ' +
+                      shown.length +
+                      ' z ' +
+                      items.length +
+                      ' studni</div>'
+                    : '') +
+                '</div>';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: container });
+            }
+        });
+    }
     /* ===== ENTRY POINT ===== */
     window.aiDashboardRender = function (containerId) {
         var container = document.getElementById(containerId);
@@ -795,11 +883,17 @@
             '<div id="ai-ml-status"></div>' +
             '<div id="ai-feature-importance"></div>' +
             '</div>' +
+            /* Sekcja: Studnie dobrane przez AI */
+            '<hr style="border:none;border-top:1px solid var(--border-glass);margin:4px 0">' +
+            '<div id="ai-well-selections-section">' +
+            '<div id="ai-well-selections"></div>' +
+            '</div>' +
             '</div>';
 
         renderStats(document.getElementById('ai-stats'));
         renderMlStatus(document.getElementById('ai-ml-status'));
         renderFeatureImportance(document.getElementById('ai-feature-importance'));
+        renderWellSelections(document.getElementById('ai-well-selections'));
         renderPatterns(document.getElementById('ai-patterns'));
 
         var filterBtn = document.getElementById('ai-filter-btn');

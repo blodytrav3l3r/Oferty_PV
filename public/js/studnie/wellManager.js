@@ -293,6 +293,12 @@ function toggleAutoLock() {
     /* Odswiez Excel jesli otwarty */
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
+    /* Odblokowanie = faktyczny auto-dobor (solver nadpisze configSource
+       na AUTO_JS/AUTO_AI); bez tego stary manualny config zostalby
+       klamliwie oznaczony jako automatyczny. */
+    if (!well.autoLocked && typeof window.autoSelectComponents === 'function') {
+        window.autoSelectComponents(true);
+    }
 }
 
 // updateAutoLockUI() przeniesiona do wellUI.js

@@ -124,7 +124,10 @@ async function saveOfferStudnie() {
         if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
             wells.forEach(function (w) {
                 if (w.config && w.config.length > 0) {
-                    window.mlRewardHooks.onWellAccepted({ eventType: 'OFFER_SAVED' });
+                    window.mlRewardHooks.onWellAccepted({
+                        eventType: 'OFFER_SAVED',
+                        wasAiRanked: w.configSource === 'AUTO_AI'
+                    });
                     // Wyślij acceptance-full do backendu (wspólny helper z telemetryBridge.js)
                     if (typeof window.telemetryRecordAcceptanceFull === 'function') {
                         try {

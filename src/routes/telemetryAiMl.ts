@@ -328,6 +328,84 @@ router.post(
     }
 );
 
+/* ===== STUDNIE DOBRANE PRZEZ AI (well selections) ===== */
+
+router.get(
+    '/ai/well-selections',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            // Indeks idx_logs_source_well (solverSource, wellId) — filtr po solverSource.
+            const logs = await prisma.ai_telemetry_logs.findMany({
+                where: { solverSource: 'AI_SUGGEST' },
+                select: {
+                    wellId: true,
+                    dn: true,
+                    warehouse: true,
+                    aiVersion: true,
+                    createdAt: true
+                },
+                orderBy: { createdAt: 'desc' }
+            });
+
+            // Agregacja w pamieci — dane sa male (brak groupBy w Prisma/SQLite dla tego modelu).
+            const byWell = new Map<
+                string,
+                {
+                    wellId: string;
+                    dn: string | null;
+                    warehouse: string | null;
+                    modelVersion: string | null;
+                    count: number;
+                    lastSeenAt: string | null;
+                }
+            >();
+
+            for (const log of logs) {
+                if (!log.wellId) continue;
+                const existing = byWell.get(log.wellId);
+                if (!existing) {
+                    byWell.set(log.wellId, {
+                        wellId: log.wellId,
+                        dn: log.dn ?? null,
+                        warehouse: log.warehouse ?? null,
+                        modelVersion: log.aiVersion ?? null,
+                        count: 1,
+                        lastSeenAt: log.createdAt ?? null
+                    });
+                } else {
+                    existing.count += 1;
+                    if (
+                        log.createdAt &&
+                        (!existing.lastSeenAt ||
+                            Date.parse(log.createdAt) > Date.parse(existing.lastSeenAt))
+                    ) {
+                        existing.lastSeenAt = log.createdAt;
+                    }
+                }
+            }
+
+            const items = Array.from(byWell.values()).sort((a, b) => {
+                const ta = a.lastSeenAt ? Date.parse(a.lastSeenAt) : 0;
+                const tb = b.lastSeenAt ? Date.parse(b.lastSeenAt) : 0;
+                return tb - ta;
+            });
+
+            res.json({
+                totalWells: items.length,
+                totalSelections: items.reduce((sum, w) => sum + w.count, 0),
+                items
+            });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            logger.error('AiWellSelections', `Blad agregacji studni AI: ${msg}`);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
 /* ===== FEATURE FLAG: AI influence level ===== */
 
 router.get('/ai/settings', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {

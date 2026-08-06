@@ -49,13 +49,21 @@
             snap.aiRankSnapshot = params.aiRankSnapshot;
         }
 
+        // Domyślna wartość wasAiRanked wyprowadzana z configSource studni (AUTO_AI = dobór
+        // z rankingiem AI). Jawna wartość z callera ma priorytet — flaga jest wtedy spójna
+        // z konkretną studnią akceptowaną w pętli (np. zapis oferty/wielu studni).
+        const wasAiRanked =
+            params.wasAiRanked !== undefined
+                ? !!params.wasAiRanked
+                : well.configSource === 'AUTO_AI';
+
         let payload = {
             action: params.action,
             wellId: well.id || 'unknown',
             dn: parseInt(well.dn) || 0,
             scoreBefore: params.scoreBefore,
             scoreAfter: params.scoreAfter,
-            wasAiRanked: params.wasAiRanked,
+            wasAiRanked: wasAiRanked,
             configSnapshot: snap
         };
 

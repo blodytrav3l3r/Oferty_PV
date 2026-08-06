@@ -124,7 +124,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             well.configStatus = 'OK';
         }
         well.configErrors = errors;
-        well.configSource = 'AUTO_JS';
+        well.configSource = jsResult.aiUsed ? 'AUTO_AI' : 'AUTO_JS';
 
         // Wzbogacenie AI score — tylko do telemetrii, nie zmienia wyboru
         if (typeof window.mlEnrichLayout === 'function') {
@@ -171,7 +171,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
                 window.telemetryRecordConfig({
                     well: well,
                     configItems: well.config || [],
-                    solverSource: 'AUTO_JS',
+                    solverSource: well.configSource,
                     computationMs: Math.round(jsMsEnd - jsMsStart),
                     iterationCount: 1,
                     checkedVariants: (availProducts || []).length,
@@ -1083,6 +1083,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     let solution = candidates[0].solution;
+    let aiUsed = false;
 
     // === AI DUAL-RANKING ===
     if (
@@ -1116,14 +1117,16 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     featureVersion: rankResult.featureVersion
                 });
 
-                if (rankResult.aiInfluencePct > 0 && aiWinner) {
+                // aiUsed tylko gdy AI realnie oceniło kandydatów (aiScore >= 0).
+                // aiInfluencePct>0 to ustawienie, nie gwarancja działania modelu —
+                // przy ML offline wszystkie aiScore=-1 i ranking jest techniczny.
+                if (window.shouldMarkAiSelection(rankResult, aiWinner)) {
                     solution = aiWinner;
+                    aiUsed = true;
                 }
             }
         } catch (e) {
-            if (typeof logger !== 'undefined' && logger.warn) {
-                logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
-            }
+            logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
         }
     }
 
@@ -1211,6 +1214,25 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         errors: solution.errors,
         topLabel: solution.topLabel,
         fallback,
-        fallbackReason
+        fallbackReason,
+        aiUsed
     };
 }
+
+/**
+ * Decyzja: czy oznaczyć wynik auto-doboru jako wybór AI (AUTO_AI).
+ * Czysta funkcja testowalna — wyodrębniona z sekcji AI DUAL-RANKING
+ * w runJsAutoSelection(). Zwraca true tylko gdy:
+ *  - aiInfluencePct > 0 (AI aktywne, nie shadow mode),
+ *  - co najmniej jeden kandydat ma realny aiScore >= 0 (model online),
+ *  - istnieje zwycięzca AI (aiWinner).
+ * Używa tego sama pętla solvera oraz testy regresyjne (tests/studnie/aiSelection.test.ts).
+ */
+window.shouldMarkAiSelection = function shouldMarkAiSelection(rankResult, aiWinner) {
+    if (!rankResult || !rankResult.ranked || !Array.isArray(rankResult.ranked)) return false;
+    if (!(rankResult.aiInfluencePct > 0)) return false;
+    if (!aiWinner) return false;
+    return rankResult.ranked.some(function (r) {
+        return typeof r.aiScore === 'number' && r.aiScore >= 0;
+    });
+};

@@ -364,6 +364,8 @@ Indeks: `idx_audit_entity` na `(entityType, entityId)`.
 
 Dedyplikacja: rekordy `AUTO_JS` z identycznym kanonicznym `featureSnapshot` + `allComponentIds` dla tej samej studni aktualizują istniejący rekord (indeksy `idx_logs_well`, `idx_logs_source_well`).
 
+Frontend mapuje wewnętrzny `configSource` (`AUTO_AI` → `AI_SUGGEST`, `AUTO`/`AUTO_JS` → `AUTO_JS`, `MANUAL`/`MANUAL_SWAP` → `MANUAL`) przez `telemetryBridge.normalizeSolverSource()` — kolumna przechowuje wyłącznie wartości z enum backendu (`AUTO_JS`/`MANUAL`/`AI_SUGGEST`).
+
 #### `ai_telemetry_events` — Zdarzenia telemetrii AI
 
 | Kolumna    | Typ        | Opis                                 |

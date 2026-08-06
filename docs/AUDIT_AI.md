@@ -101,6 +101,7 @@
 
 - ✅ może **czytać** wszystkie dane (pasywny obserwator),
 - ✅ może **zapisywać** do telemetry, KnowledgeBase, Recommendations,
+- ✅ może zmienić **wybór zwycięzcy** spośród kandydatów solvera (dual-ranking, `aiUsed` → `configSource: 'AUTO_AI'`) — bez zmiany reguł geometrycznych, z fallbackiem do rankingu technicznego przy awarii AI,
 - ❌ **NIE MOŻE** modyfikować solvera JS (wellSolver.js, ringOptimizer.js, ruleEngine.js),
 - ❌ **NIE MOŻE** zmieniać reguł geometrycznych, technologicznych czy reguł przejść szczelnych.
 
@@ -206,7 +207,7 @@ Pasywny moduł z 3 funkcjami:
 
 **Zasada:** brak zależności czasowej (timeout 1500ms), `safeFetch` nie rzuca wyjątków.
 
-### 5.2 Hook w wellSolver.js
+### 5.2 Hook w solverAutoSelect.js
 
 Dodane **po zakończeniu renderu** (linia +20-30 po `renderWellConfig()`). NIE modyfikuje solvera - tylko obserwuje wynik.
 
@@ -216,7 +217,8 @@ try {
         window.telemetryRecordConfig({
             well: well,
             configItems: well.config || [],
-            solverSource: 'AUTO_JS',
+            // solverSource: well.configSource — telemetryBridge.normalizeSolverSource() mapuje AUTO_AI → AI_SUGGEST
+            solverSource: well.configSource,
             computationMs: jsMsEnd - jsMsStart,
             iterationCount: 1,
             checkedVariants: (availProducts || []).length,

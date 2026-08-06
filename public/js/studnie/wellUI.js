@@ -108,7 +108,10 @@ window.renderWellsList = function renderWellsList() {
 
             // Ikona źródła konfiguracji
             let sourceBadge = '';
-            if (w.configSource === 'AUTO_JS' || w.configSource === 'AUTO_AI') {
+            if (w.configSource === 'AUTO_AI') {
+                sourceBadge =
+                    '<span title="Dobór AI / ML" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(160deg) saturate(300%);"><i data-lucide="bot"></i></span>';
+            } else if (w.configSource === 'AUTO_JS' || w.configSource === 'AUTO') {
                 sourceBadge =
                     '<span title="Dobór Automatyczny" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
             } else {

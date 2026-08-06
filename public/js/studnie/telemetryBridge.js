@@ -154,9 +154,9 @@
      * żeby Zod na /ai/config nie odrzucał payloadu (400).
      */
     function normalizeSolverSource(src) {
-        if (src === 'AI_SUGGEST') return 'AI_SUGGEST';
+        if (src === 'AI_SUGGEST' || src === 'AUTO_AI') return 'AI_SUGGEST';
         if (src === 'MANUAL' || src === 'MANUAL_SWAP' || src == null || src === '') return 'MANUAL';
-        return 'AUTO_JS'; // 'AUTO', 'AUTO_JS', 'AUTO_AI', cokolwiek innego
+        return 'AUTO_JS'; // 'AUTO', 'AUTO_JS', cokolwiek innego
     }
 
     /**

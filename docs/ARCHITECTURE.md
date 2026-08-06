@@ -162,6 +162,13 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 
 ### Telemetria AI i ML — kluczowe mechanizmy
 
+- **Dual-ranking AI** (`public/js/studnie/mlDualRanking.js`): `rankCandidates` może zmienić
+  zwycięzcę spośród kandydatów solvera, gdy AI realnie je oceniło (co najmniej jeden
+  `aiScore >= 0`) i `aiInfluencePct > 0` — studnia dostaje `configSource: 'AUTO_AI'`
+  (`solverAutoSelect.js`), przy awarii AI fallback do rankingu technicznego.
+- **Mapowanie AUTO_AI → AI_SUGGEST**: `telemetryBridge.normalizeSolverSource()` mapuje
+  wewnętrzny `configSource` (`AUTO_AI`, `AUTO`, `MANUAL_SWAP`, ...) do backendowego enum
+  `solverSource` (`AUTO_JS`/`MANUAL`/`AI_SUGGEST`) — `AUTO_AI` → `AI_SUGGEST`.
 - **Deduplikacja telemetrii AUTO_JS** (`src/services/telemetry/telemetryService.ts`):
   `recordConfig` dla źródła `AUTO_JS` porównuje kanoniczny `featureSnapshot` (rekurencyjny
   deterministyczny serializator `_canonicalize`) + posortowaną listę `allComponentIds`
