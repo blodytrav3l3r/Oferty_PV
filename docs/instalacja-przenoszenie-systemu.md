@@ -1,6 +1,6 @@
 # Instalacja i przenoszenie systemu WITROS Oferty PV
 
-> **Plik:** docs/plans/instalacja-przenoszenie-systemu.md
+> **Plik:** docs/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.11.3
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
 > **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.10.0) —
