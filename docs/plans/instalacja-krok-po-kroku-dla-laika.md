@@ -1,7 +1,7 @@
 # Instrukcja instalacji WITROS Oferty PV — krok po kroku dla laika
 
 > **Plik:** docs/plans/instalacja-krok-po-kroku-dla-laika.md
-> **Wersja:** 1.11.1
+> **Wersja:** 1.11.2
 > **Dla kogo:** Osób bez doświadczenia technicznego
 
 ---
