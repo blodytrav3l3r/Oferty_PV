@@ -2,6 +2,7 @@ import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { AcceptanceModel } from './AcceptanceModel';
+import { ML_CONSTANTS } from '../../config/mlConstants';
 
 export interface ModelMetrics {
     accuracy: number;
@@ -25,6 +26,7 @@ export interface StoredModel {
     trainingRows: number;
     active: boolean;
     createdAt: string;
+    featureVersion: string | null;
 }
 
 export class ModelRegistry {
@@ -38,7 +40,11 @@ export class ModelRegistry {
         notes?: string
     ): Promise<string> {
         const now = new Date();
-        const version = `v1.0.0-${now.toISOString().slice(0, 10).replace(/-/g, '')}`;
+        // wersja musi być unikalna (kolumna @unique) — suffix zapobiega
+        // kolizji przy dwóch treningach tego samego dnia
+        const version = `v1.0.0-${now.toISOString().slice(0, 10).replace(/-/g, '')}-${crypto
+            .randomUUID()
+            .slice(0, 8)}`;
 
         const id = crypto.randomUUID();
         await prisma.aiModel.create({
@@ -54,6 +60,7 @@ export class ModelRegistry {
                 trainingRows: metrics.trainSize,
                 active: shouldActivate,
                 notes: notes || null,
+                featureVersion: ML_CONSTANTS.FEATURE_VERSION,
                 createdAt: now.toISOString()
             }
         });
@@ -77,13 +84,21 @@ export class ModelRegistry {
     }
 
     async getActiveModel(): Promise<StoredModel | null> {
-        const record = await prisma.aiModel.findFirst({ where: { active: true } });
-        if (!record) return null;
-        return this.recordToModel(record);
+        // Prefer aktywny model bieżącej wersji cech — model starszej wersji
+        // (inna liczba cech) dałby FEATURE_COUNT_MISMATCH na predict.
+        const record = await prisma.aiModel.findFirst({
+            where: { active: true, featureVersion: ML_CONSTANTS.FEATURE_VERSION }
+        });
+        if (record) return this.recordToModel(record);
+        // Fallback: jeśli brak modelu w bieżącej wersji, nie zwracaj modelu
+        // starszej wersji — frontend obsłuży 503 (technical fallback) zamiast 400.
+        return null;
     }
 
     async getBestAuc(): Promise<number> {
-        const records = await prisma.aiModel.findMany();
+        const records = await prisma.aiModel.findMany({
+            where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
+        });
         let best = -1;
         for (const r of records) {
             try {
@@ -96,12 +111,6 @@ export class ModelRegistry {
         return best;
     }
 
-    async getModelByVersion(version: string): Promise<StoredModel | null> {
-        const record = await prisma.aiModel.findUnique({ where: { version } });
-        if (!record) return null;
-        return this.recordToModel(record);
-    }
-
     async listModels(limit = 20): Promise<StoredModel[]> {
         const records = await prisma.aiModel.findMany({
             orderBy: { createdAt: 'desc' },
@@ -111,9 +120,11 @@ export class ModelRegistry {
     }
 
     async rollbackToPrevious(): Promise<StoredModel | null> {
-        const active = await prisma.aiModel.findFirst({ where: { active: true } });
+        const active = await prisma.aiModel.findFirst({
+            where: { active: true, featureVersion: ML_CONSTANTS.FEATURE_VERSION }
+        });
         const previous = await prisma.aiModel.findFirst({
-            where: { active: false },
+            where: { active: false, featureVersion: ML_CONSTANTS.FEATURE_VERSION },
             orderBy: { createdAt: 'desc' }
         });
         if (active && previous) {
@@ -134,6 +145,19 @@ export class ModelRegistry {
         if (!target) return null;
         if (target.active) return this.recordToModel(target);
 
+        // Model spoza bieżącej wersji cech nie może być aktywny — inna liczba
+        // cech dałaby FEATURE_COUNT_MISMATCH na predict (a getActiveModel i tak
+        // go nie zwróci, więc status "active" byłby mylący).
+        if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+            logger.warn(
+                'ModelRegistry',
+                `Odrzucono aktywację modelu ${target.version} (featureVersion=${target.featureVersion ?? 'null'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+            );
+            throw new Error(
+                `Nie można aktywować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+            );
+        }
+
         const active = await prisma.aiModel.findFirst({ where: { active: true } });
         if (active) {
             await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
@@ -144,7 +168,9 @@ export class ModelRegistry {
     }
 
     async promoteBestModel(): Promise<StoredModel | null> {
-        const records = await prisma.aiModel.findMany();
+        const records = await prisma.aiModel.findMany({
+            where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
+        });
         if (records.length === 0) return null;
         let best = records[0];
         let bestAuc = -1;
@@ -216,7 +242,8 @@ export class ModelRegistry {
             featureMaxs: JSON.parse(record.featureMaxs) as number[],
             trainingRows: record.trainingRows,
             active: record.active,
-            createdAt: record.createdAt
+            createdAt: record.createdAt,
+            featureVersion: record.featureVersion
         };
     }
 }

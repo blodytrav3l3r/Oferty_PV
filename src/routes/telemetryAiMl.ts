@@ -440,7 +440,7 @@ router.get('/ai/health', requireAuth, async (_req: Request, res: Response) => {
     }
 });
 
-router.get('/ai/models', requireAuth, async (_req: Request, res: Response) => {
+router.get('/ai/models', requireAuth, requireAdmin, async (_req: Request, res: Response) => {
     try {
         const models = await modelRegistry.listModels(50);
         res.json({ models });
@@ -487,6 +487,10 @@ router.post('/ai/models/:id/activate', requireAuth, requireAdmin, async (req, re
         res.json({ activated: true, model });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        if (msg.includes('wersji cech')) {
+            res.status(400).json({ error: msg });
+            return;
+        }
         res.status(500).json({ error: msg });
     }
 });

@@ -2,7 +2,7 @@ import { PrismaClient } from '../generated/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
 import { DN_SIZES, ZAKRESY_TYPES } from '../src/constants/precoSizes';
-import { FEATURE_NAMES } from '../src/config/mlConstants';
+import { FEATURE_NAMES, ML_CONSTANTS } from '../src/config/mlConstants';
 
 const prisma = new PrismaClient();
 
@@ -233,6 +233,7 @@ async function main() {
                 featureMaxs: JSON.stringify(ones),
                 trainingRows: 0,
                 active: true,
+                featureVersion: ML_CONSTANTS.FEATURE_VERSION,
                 notes: 'Model startowy — domyślne wagi (neutralne). Wytrenuj właściwy model przez API /ai/train.',
                 createdAt: new Date().toISOString()
             }

@@ -26,6 +26,10 @@ function oneHotEncode(raw: Record<string, unknown>): number[] {
     const dn = Number(raw.dn) || 0;
     const ringCount = Number(raw.ringCount) || 0;
 
+    // v6: kineta — one-hot (preco/precotop→preco, unolith, reszta→standard).
+    // Spójne z buildFeatureVector (mlDualRanking.js): 'brak'/nieznane → wszystkie 0.
+    const kineta = String(raw.kinetaType ?? raw.kineta ?? '').toLowerCase();
+
     const vec: number[] = [];
     vec.push(dn);
     vec.push(Number(raw.heightMm) || 0);
@@ -47,6 +51,10 @@ function oneHotEncode(raw: Record<string, unknown>): number[] {
     vec.push(raw.topType && String(raw.topType) !== 'unknown' ? 1 : 0);
     vec.push(dn * ringCount);
     vec.push(warehouse === 'KLB' && wellType === 'standard' ? 1 : 0);
+    vec.push(kineta === 'preco' || kineta === 'precotop' ? 1 : 0);
+    vec.push(kineta === 'unolith' ? 1 : 0);
+    vec.push(kineta === 'beton' || kineta === '' ? 1 : 0);
+    vec.push(Number(raw.dennicaHeight) || 0);
     return vec;
 }
 
@@ -216,7 +224,9 @@ export class TrainingPipeline {
                 ringVariety: f.ringVariety,
                 season: f.season,
                 bottomType: f.bottomType,
-                topType: f.topType
+                topType: f.topType,
+                kinetaType: f.kinetaType,
+                dennicaHeight: f.dennicaHeight
             };
             const createdAt = new Date(f.createdAt);
             const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);

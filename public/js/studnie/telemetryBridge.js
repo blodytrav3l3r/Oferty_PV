@@ -66,6 +66,8 @@
             well.redukcjaDN1000 ? '1' : '0',
             well.redukcjaTargetDN,
             well.wkladkaZwienczenie,
+            well.kineta || '',
+            well.dennicaMaterial || '',
             well.configSource || '',
             pricingFingerprint(well),
             przejsciaKey,
@@ -292,6 +294,18 @@
 
             const wellHeight = safeHeightMm(well.rzednaWlazu, well.rzednaDna);
 
+            // Suma wysokości dennic z configu (produkty mają height w mm).
+            // Cecha treningowa dennicaHeight (v6) — musi być spójna z buildFeatureVector.
+            const dennicaHeightTotal = configItems.reduce(function (acc, ci) {
+                const prod = studnieProducts.find(function (p) {
+                    return p.id === ci.productId;
+                });
+                if (prod && prod.componentType === 'dennica' && prod.height) {
+                    return acc + (parseFloat(prod.height) || 0);
+                }
+                return acc;
+            }, 0);
+
             const payload = {
                 // Kontekst
                 wellId: well.id || undefined,
@@ -312,6 +326,8 @@
                     ? 'DN' + (well.redukcjaTargetDN || 1000)
                     : undefined,
                 zwiencenieType: well.wkladkaZwienczenie || undefined,
+                kineta: well.kineta || undefined,
+                dennicaHeight: dennicaHeightTotal > 0 ? dennicaHeightTotal : undefined,
 
                 // Komponenty
                 appliedReductions: appliedReductions,
@@ -354,7 +370,10 @@
                     ringCount: configItems.length,
                     totalPrice: totalPrice,
                     totalWeight: totalWeight,
-                    targetHeightMm: wellHeight || 0
+                    targetHeightMm: wellHeight || 0,
+                    kineta: well.kineta || 'unknown',
+                    dennicaHeight: dennicaHeightTotal,
+                    dennicaMaterial: well.dennicaMaterial || 'unknown'
                 }
             };
 

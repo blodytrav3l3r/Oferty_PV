@@ -70,18 +70,6 @@ export class RewardCalculator {
             `Reward ${event.action}: ${reward.toFixed(3)} dla well ${event.wellId}`
         );
     }
-
-    async getAggregateReward(userId: string): Promise<{ total: number; count: number }> {
-        const result = await prisma.aiRewardLog.aggregate({
-            where: { userId },
-            _sum: { reward: true },
-            _count: { reward: true }
-        });
-        return {
-            total: result._sum.reward ?? 0,
-            count: result._count.reward ?? 0
-        };
-    }
 }
 
 export const rewardCalculator = new RewardCalculator();

@@ -8,7 +8,6 @@
  */
 
 import express from 'express';
-import crypto from 'crypto';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { WRITE_LIMITER, READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
@@ -180,7 +179,11 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
 
     try {
         const data = parse.data as TelemetryAcceptanceFullInput;
-        await telemetryService.recordAcceptance(data.telemetryId, data.accepted);
+        await telemetryService.recordAcceptance(
+            data.telemetryId,
+            data.accepted,
+            data.wellId || undefined
+        );
 
         if (data.accepted && data.configSnapshot) {
             const snap = data.configSnapshot;
@@ -338,10 +341,5 @@ router.get('/ai/versions', requireAuth, READ_LIMITER, async (req, res) => {
         return res.status(500).json({ error: 'Błąd bazy' });
     }
 });
-
-// Generator ID (eksportowany dla testów)
-export function _generateId(): string {
-    return crypto.randomUUID();
-}
 
 export default router;

@@ -1,6 +1,8 @@
 # Plan ulepszeń systemu ML — Oferty PV
 
 > **Stan: ZREALIZOWANE.** Wszystkie 6 zmian wdrożone: Zmiana 1 (seed modelu startowego), Zmiana 2 (cache batch predict), Zmiana 3 (sliding window AUC + natychmiastowy rollback), Zmiana 4 (feature importance), Zmiany 5 i 6 (fallback technical score, badge AI status — commit c905934). Treść poniżej zachowana jako dokumentacja procesu.
+>
+> **Aktualizacja v6:** Wersja cech ML podniesiona z v5 (20 cech) do v6 (24 cechy — dodane kineta one-hot ×3 + dennicaHeight). Spójna implementacja po stronie backendu (`src/config/mlConstants.ts`, `src/services/ml/TrainingPipeline.ts`, `src/services/ml/FeatureExtractor.ts`) i frontendu (`public/js/studnie/mlDualRanking.js`, `public/js/studnie/telemetryBridge.js`). Nowe kolumny w bazie: `AiFeature.kinetaType`/`dennicaHeight`, `AiModel.featureVersion`, `ai_telemetry_logs.kineta`/`dennicaHeight`. Predykcja i trening walidują zgodność liczby cech; aktywacja modelu o starszej `featureVersion` jest blokowana.
 
 ## Cel
 

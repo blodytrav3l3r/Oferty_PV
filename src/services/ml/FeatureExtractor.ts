@@ -20,6 +20,8 @@ export interface FeatureVector {
     totalWeight: number;
     ringVariety: number;
     season: string;
+    kinetaType: string;
+    dennicaHeight: number;
     label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED';
     reward: number;
     decisionMs: number;
@@ -47,6 +49,8 @@ export interface TelemetryRecordWithDetails {
     solverSource?: string | null;
     rankingScore?: number | null;
     featureSnapshot?: string | null;
+    kineta?: string | null;
+    dennicaHeight?: number | null;
 }
 
 function shannonEntropy(items: string[]): number {
@@ -139,6 +143,8 @@ export class FeatureExtractor {
                 totalWeight: fv.totalWeight,
                 ringVariety: fv.ringVariety,
                 season: fv.season,
+                kinetaType: fv.kinetaType,
+                dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
                 label: fv.label,
                 reward: fv.reward,
                 decisionMs: fv.decisionMs > 0 ? fv.decisionMs : null,
@@ -210,6 +216,16 @@ export class FeatureExtractor {
         const dennPos = allDistinct.findIndex((id) => id.includes('D-'));
         if (dennPos >= 0) bottomType = allDistinct[dennPos];
 
+        // v6: kineta — surowa wartość z payloadu (frontend wysyła 'brak', 'beton',
+        // 'preco', 'precotop', 'unolith'). oneHotEncode tłumaczy ją na bity —
+        // 'brak'/nieznane = wszystkie bity 0 (spójnie z buildFeatureVector).
+        let kinetaType = String(record.kineta || '').toLowerCase();
+        if (kinetaType === 'precotop') kinetaType = 'preco';
+
+        const dennicaHeight = record.dennicaHeight
+            ? Math.round(record.dennicaHeight)
+            : snapshot.dennicaHeight || 0;
+
         return {
             dn,
             heightMm: Math.round(record.wellHeight || 0),
@@ -227,6 +243,8 @@ export class FeatureExtractor {
             totalWeight,
             ringVariety: parseFloat(ringVarietyValue.toFixed(4)),
             season: getSeason(record.createdAt),
+            kinetaType,
+            dennicaHeight,
             label,
             reward: parseFloat(reward.toFixed(4)),
             decisionMs

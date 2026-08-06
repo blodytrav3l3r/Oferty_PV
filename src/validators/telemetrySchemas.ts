@@ -88,6 +88,7 @@ export const telemetryConfigSchema = z.object({
         .transform((v) =>
             v === undefined ? undefined : typeof v === 'string' ? parseFloat(v) : v
         ),
+    kineta: z.string().optional(),
     ringCount: z.number().int().optional(),
     ringHeights: z.array(z.number()).optional(),
 

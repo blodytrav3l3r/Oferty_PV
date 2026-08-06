@@ -107,6 +107,7 @@ class TelemetryService {
                         zwiencenieType: payload.zwiencenieType || null,
                         dennicaType: payload.dennicaType || null,
                         dennicaHeight: payload.dennicaHeight ?? null,
+                        kineta: payload.kineta || null,
                         ringCount: payload.ringCount ?? null,
                         ringHeights: JSON.stringify(payload.ringHeights || []),
                         appliedReductions: JSON.stringify(payload.appliedReductions || []),
@@ -421,23 +422,47 @@ class TelemetryService {
     /**
      * Oznacza konfigurację jako zaakceptowaną przez użytkownika
      * (pasuje do passive_learner.record_acceptance).
+     *
+     * Naprawa F2: offerSave.js wysyła `telemetryId: w.id` (ID studni, np. 'well-...'),
+     * nie UUID rekordu telemetrii — updateMany po `id` nie znajdował rekordu i
+     * etykiety OFFER_SAVE cicho ginęły. Gdy `telemetryId` nie jest UUID rekordu,
+     * oznaczamy najnowszy rekord danej studni (wellId).
      */
-    async recordAcceptance(telemetryId: string, accepted: boolean): Promise<void> {
+    async recordAcceptance(telemetryId: string, accepted: boolean, wellId?: string): Promise<void> {
         try {
+            const now = new Date().toISOString();
+            const updates = {
+                wasAccepted: accepted,
+                wasRejected: !accepted,
+                lastAcceptedAt: accepted ? now : null,
+                lastRejectedAt: !accepted ? now : null,
+                usageCount: { increment: 1 },
+                lastUsedAt: now
+            };
+
             // updateMany zamiast update: brak rekordu (np. gdy /config nie dotarł
-            // wcześniej albo telemetryId to ID studni) nie może rzucić P2025 —
-            // telemetria jest pasywna, brak rekordu nie jest błędem.
-            await prisma.ai_telemetry_logs.updateMany({
+            // wcześniej) nie może rzucić P2025 — telemetria jest pasywna,
+            // brak rekordu nie jest błędem.
+            const result = await prisma.ai_telemetry_logs.updateMany({
                 where: { id: telemetryId },
-                data: {
-                    wasAccepted: accepted,
-                    wasRejected: !accepted,
-                    lastAcceptedAt: accepted ? new Date().toISOString() : null,
-                    lastRejectedAt: !accepted ? new Date().toISOString() : null,
-                    usageCount: { increment: 1 },
-                    lastUsedAt: new Date().toISOString()
-                }
+                data: updates
             });
+
+            // Fallback: telemetryId to ID studni (wellId) — oznacz najnowszy
+            // rekord konfiguracji tej studni.
+            if (result.count === 0 && wellId) {
+                const latest = await prisma.ai_telemetry_logs.findFirst({
+                    where: { wellId },
+                    orderBy: { createdAt: 'desc' },
+                    select: { id: true }
+                });
+                if (latest) {
+                    await prisma.ai_telemetry_logs.updateMany({
+                        where: { id: latest.id },
+                        data: updates
+                    });
+                }
+            }
         } catch (e) {
             logger.error(
                 'Telemetry',

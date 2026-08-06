@@ -41,6 +41,7 @@ model ai_telemetry_logs {
   zwiencenieType       String?
   dennicaType          String?
   dennicaHeight        Float?
+  kineta               String? // 'preco' | 'precotop' | 'unolith' | 'beton' | 'brak'
   ringCount            Int?
   ringHeights          String? // JSON array
 
@@ -601,6 +602,8 @@ model AiFeature {
   ringCount               Int      @default(0)
   bottomType              String
   topType                 String
+  kinetaType              String? // 'preco' | 'unolith' | 'standard' | 'brak' (null = brak danych)
+  dennicaHeight           Float? // wysokość dennicy w mm (suma dennicy z config)
   connectionCount         Int      @default(0)
   transitionsAboveDennica Int      @default(0)
   totalPrice              Float    @default(0)
@@ -631,6 +634,7 @@ model AiModel {
   featureMins String               // JSON: min wartości do normalizacji
   featureMaxs String               // JSON: max wartości do normalizacji
   trainingRows Int                 // ile rekordów uzyto do treningu
+  featureVersion String?           // wersja cech ML (np. 'v5', 'v6') — null dla starych modeli
   active     Boolean  @default(false)
   notes      String?
   createdAt  String

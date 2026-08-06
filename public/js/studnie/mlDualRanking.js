@@ -26,17 +26,15 @@
     let FETCH_TIMEOUT = 3000;
 
     let MAX_AI_CANDIDATES = 10;
-    let MIN_AI_CANDIDATES = 3;
 
     let RELATIVE_GAP_THRESHOLD = 0.1;
     let EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
     let EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
 
-    let FEATURE_VERSION = 'v5';
+    let FEATURE_VERSION = 'v6';
+    let EXPECTED_FEATURE_COUNT = 24;
     let _featureVersionFetched = false;
-    let _cachedFeatureNames = null;
     let RANKING_VERSION = 'dual_v1';
-    let SOLVER_VERSION = 'wellSolver_v5';
 
     /** @type {Map<string, {score:number, timestamp:number}>} */
     let scoreCache = new Map();
@@ -86,15 +84,12 @@
             });
             if (!res.ok) return;
             let schema = await res.json();
-            if (schema.count !== 20) {
+            if (schema.count !== EXPECTED_FEATURE_COUNT) {
                 console.warn(
                     'mlDualRanking: FEATURE_COUNT mismatch',
                     schema.count,
-                    'vs expected 20'
+                    'vs expected ' + EXPECTED_FEATURE_COUNT
                 );
-            }
-            if (schema.names) {
-                _cachedFeatureNames = schema.names;
             }
         } catch (e) {
             /* ignoruj — fallback do lokalnej definicji */
@@ -180,11 +175,45 @@
     }
 
     /**
+     * Uzupełnia brakujące pola feature-context studni (fix train/serve skew).
+     * Backend (telemetryBridge.js) liczy wellHeight = (rzednaWlazu - rzednaDna) * 1000
+     * oraz wellType z psiaBuda / stycznaNadbudowa1200 — front musi robić dokładnie to samo,
+     * zanim buildFeatureVector zbuduje wektor predykcji.
+     * Mutacja w pamięci — nie wpływa na zapis oferty.
+     * @param {Object} well
+     */
+    function ensureWellFeatureContext(well) {
+        if (!well) return;
+
+        let h = parseFloat(well.wellHeight);
+        if (well.wellHeight === undefined || well.wellHeight === null || isNaN(h)) {
+            let a = parseFloat(well.rzednaWlazu);
+            let b = parseFloat(well.rzednaDna);
+            if (Number.isFinite(a) && Number.isFinite(b)) {
+                well.wellHeight = Math.round((a - b) * 1000);
+            } else {
+                well.wellHeight = 0;
+            }
+        }
+
+        if (!well.type) {
+            if (well.psiaBuda) {
+                well.type = 'psia_buda';
+            } else if (well.dn === 'styczna') {
+                well.type = well.stycznaNadbudowa1200 ? 'styczna_1200' : 'styczna';
+            } else {
+                well.type = 'standard';
+            }
+        }
+    }
+
+    /**
      * @param {Object} layout - layout konfiguracji studni
      * @param {Object} well - parametry studni
-     * @returns {number[]} wektor 15 cech
+     * @returns {number[]} wektor 24 cech (v6)
      */
     function buildFeatureVector(layout, well) {
+        ensureWellFeatureContext(well);
         let dn = parseInt(well.dn) || 0;
         let heightMm = parseInt(well.wellHeight) || 0;
         let warehouse = (well.warehouse || 'KLB').toUpperCase();
@@ -199,6 +228,24 @@
         let totalPrice = layout.totalPrice || 0;
         let totalWeight = layout.totalWeight || 0;
         let ringVariety = layout.ringVariety || 0;
+
+        // === v6: kineta (one-hot) + dennicaHeight ===
+        let kineta = (well.kineta || '').toLowerCase();
+        let isKinetaPreco = kineta === 'preco' || kineta === 'precotop';
+        let isKinetaUnolith = kineta === 'unolith';
+        let isKinetaStandard = kineta === 'beton' || kineta === '';
+        // ponytail: dennicaHeight = wysokość dennicy ocenianego kandydata (layout.dennica).
+        // Solver emituje 1 dennnicę na studnię, więc jest to spójne z telemetryBridge
+        // (sumą dennicy z finalnego configa). Przy konfiguracji z 2+ dennnicami byłby
+        // minimalny skew train/serve — zaakceptowany (rzadki przypadek, height w mm całkowitych).
+        let dennicaHeightMm = 0;
+        if (layout.dennica && layout.dennica.productId) {
+            let prods = typeof window.studnieProducts !== 'undefined' ? window.studnieProducts : [];
+            let prod = prods.find(function (p) {
+                return p.id === layout.dennica.productId;
+            });
+            if (prod && prod.height) dennicaHeightMm = parseFloat(prod.height) || 0;
+        }
 
         return [
             dn,
@@ -220,7 +267,11 @@
             layout.dennica ? 1 : 0,
             layout.topItems && layout.topItems.length > 0 ? 1 : 0,
             dn * ringCount,
-            warehouse === 'KLB' && wellType === 'standard' ? 1 : 0
+            warehouse === 'KLB' && wellType === 'standard' ? 1 : 0,
+            isKinetaPreco ? 1 : 0,
+            isKinetaUnolith ? 1 : 0,
+            isKinetaStandard ? 1 : 0,
+            dennicaHeightMm
         ];
     }
 
@@ -840,6 +891,7 @@
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
     window.updateAiStatusIndicator = updateAiStatusIndicator;
+    window.buildFeatureVector = buildFeatureVector;
 
     // Stare API (kompatybilność)
     window.mlEnrichLayout = mlEnrichLayout;

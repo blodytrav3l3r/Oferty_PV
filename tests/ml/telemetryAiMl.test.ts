@@ -98,6 +98,16 @@ jest.mock('../../src/services/auditService', () => ({
 describe('POST /api/telemetry/ai/predict', () => {
     let app: express.Application;
 
+    // 24 cechy v6: ... isKLBstandard, kineta_preco, kineta_unolith, kineta_standard, dennicaHeight
+    const FEATURES_24 = [
+        1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1, 0, 0, 1, 0
+    ];
+    const MIN_24 = [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const MAX_24 = [
+        2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1, 1, 1, 1,
+        1000
+    ];
+
     beforeEach(async () => {
         jest.clearAllMocks();
         const { default: router } = await import('../../src/routes/telemetryAiMl');
@@ -106,33 +116,27 @@ describe('POST /api/telemetry/ai/predict', () => {
         app.use('/api/telemetry', router);
     });
 
-    it('zwraca 200 i score z aktywnego modelu dla 15 cech', async () => {
+    it('zwraca 200 i score z aktywnego modelu dla 24 cech', async () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
             weights: [
                 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 0, 0, 0,
-                0, 0
+                0, 0, 0, 0, 0, 0
             ],
             bias: 0.5,
-            featureMins: [800, 500, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-            featureMaxs: [
-                2000, 4000, 1, 1, 1, 1, 1, 1, 1, 20, 15, 15, 5000, 10000, 10, 3, 1, 1, 20000, 1
-            ]
+            featureMins: MIN_24,
+            featureMaxs: MAX_24
         });
         mockPredict.mockReturnValue(0.73);
 
-        const res = await request(app)
-            .post('/api/telemetry/ai/predict')
-            .send({
-                features: [
-                    1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1
-                ],
-                wellType: 'standard',
-                warehouse: 'KLB',
-                dn: 1000,
-                featureVersion: 'v5'
-            });
+        const res = await request(app).post('/api/telemetry/ai/predict').send({
+            features: FEATURES_24,
+            wellType: 'standard',
+            warehouse: 'KLB',
+            dn: 1000,
+            featureVersion: 'v6'
+        });
 
         expect(res.status).toBe(200);
         expect(res.body).toHaveProperty('scores');
@@ -142,7 +146,7 @@ describe('POST /api/telemetry/ai/predict', () => {
         expect(res.body).toHaveProperty('cached', false);
     });
 
-    it('zwraca 400 dla zlej liczby cech (nie 15)', async () => {
+    it('zwraca 400 dla zlej liczby cech (nie 24)', async () => {
         const res = await request(app)
             .post('/api/telemetry/ai/predict')
             .send({ features: [1, 2, 3] });
@@ -164,11 +168,7 @@ describe('POST /api/telemetry/ai/predict', () => {
 
         const res = await request(app)
             .post('/api/telemetry/ai/predict')
-            .send({
-                features: [
-                    1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000, 1
-                ]
-            });
+            .send({ features: FEATURES_24 });
 
         expect(res.status).toBe(503);
         expect(res.body).toHaveProperty('error');
@@ -178,10 +178,10 @@ describe('POST /api/telemetry/ai/predict', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(20).fill(0.1),
+            weights: new Array(24).fill(0.1),
             bias: 0,
-            featureMins: new Array(20).fill(0),
-            featureMaxs: new Array(20).fill(1)
+            featureMins: new Array(24).fill(0),
+            featureMaxs: new Array(24).fill(1)
         });
         mockPredict.mockReturnValue(0.5);
 
@@ -193,14 +193,14 @@ describe('POST /api/telemetry/ai/predict', () => {
                         id: 1,
                         features: [
                             1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000,
-                            1
+                            1, 0, 0, 1, 0
                         ]
                     },
                     {
                         id: 2,
                         features: [
                             1200, 3500, 0, 1, 0, 1, 0, 0, 0, 4, 3, 2, 3000, 6000, 4, 1, 0, 1, 4200,
-                            0
+                            0, 1, 0, 0, 0
                         ]
                     }
                 ]
@@ -217,10 +217,10 @@ describe('POST /api/telemetry/ai/predict', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(20).fill(0.1),
+            weights: new Array(24).fill(0.1),
             bias: 0,
-            featureMins: new Array(20).fill(0),
-            featureMaxs: new Array(20).fill(1)
+            featureMins: new Array(24).fill(0),
+            featureMaxs: new Array(24).fill(1)
         });
         mockPredict.mockReturnValue(0.42);
 
@@ -229,7 +229,8 @@ describe('POST /api/telemetry/ai/predict', () => {
                 {
                     id: 7,
                     features: [
-                        1600, 3200, 1, 0, 0, 1, 0, 0, 0, 5, 3, 2, 4100, 7200, 4, 1, 1, 1, 8000, 0
+                        1600, 3200, 1, 0, 0, 1, 0, 0, 0, 5, 3, 2, 4100, 7200, 4, 1, 1, 1, 8000, 0,
+                        0, 0, 1, 0
                     ]
                 }
             ]

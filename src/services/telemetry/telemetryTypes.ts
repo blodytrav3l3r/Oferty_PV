@@ -80,6 +80,7 @@ export interface TelemetryConfigPayload {
     zwiencenieType?: string;
     dennicaType?: string;
     dennicaHeight?: number;
+    kineta?: string;
     ringCount?: number;
     ringHeights?: number[];
 
