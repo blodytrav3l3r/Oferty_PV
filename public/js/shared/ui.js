@@ -645,6 +645,28 @@ async function syncPriceOverrides() {
 window.syncPriceOverrides = syncPriceOverrides;
 
 /**
+ * Wspólny fetch JSON z normalizacją błędów (P1).
+ * Zwraca:
+ * - `{error:'forbidden'}` przy 403,
+ * - `{error:'server'}` przy innym statusie nie-OK,
+ * - `null` przy braku `fetch` lub błędzie sieci,
+ * - parsowany JSON w pozostałych przypadkach.
+ */
+async function fetchJson(url, options) {
+    if (!window.fetch) return null;
+    try {
+        const resp = await fetch(url, Object.assign({ credentials: 'same-origin' }, options || {}));
+        if (resp.status === 403) return { error: 'forbidden' };
+        if (!resp.ok) return { error: 'server' };
+        return resp.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+window.fetchJson = fetchJson;
+
+/**
  * Auto-zaznaczenie zawartości pola number po wejściu w nie (focus).
  * Pozwala od razu wpisać nową wartość bez ręcznego kasowania poprzedniej.
  * Delegacja na document obejmuje także pola generowane dynamicznie.

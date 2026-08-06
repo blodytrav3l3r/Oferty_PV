@@ -64,34 +64,42 @@ export class ModelRegistry {
             .slice(0, 8)}`;
 
         const id = crypto.randomUUID();
-        await prisma.aiModel.create({
-            data: {
-                id,
-                version,
-                weights: JSON.stringify(model.getWeights()),
-                bias: model.getBias(),
-                metrics: JSON.stringify(metrics),
-                features: JSON.stringify(features),
-                featureMins: JSON.stringify(featureMins),
-                featureMaxs: JSON.stringify(featureMaxs),
-                trainingRows: metrics.trainSize,
-                active: shouldActivate,
-                notes: notes || null,
-                featureVersion: ML_CONSTANTS.FEATURE_VERSION,
-                createdAt: now.toISOString()
-            }
-        });
 
-        if (shouldActivate) {
-            const existing = await prisma.aiModel.findFirst({ where: { active: true } });
-            if (existing) {
-                await prisma.aiModel.update({
-                    where: { id: existing.id },
-                    data: { active: false }
-                });
-                logger.info('ModelRegistry', `Dezaktywowano poprzedni model ${existing.version}`);
+        // Transakcja gwarantuje atomowość: dezaktywacja starych + utworzenie nowego
+        // — zapobiega race condition z dwoma aktywnymi modelami jednocześnie.
+        await prisma.$transaction(async (tx) => {
+            if (shouldActivate) {
+                const existing = await tx.aiModel.findFirst({ where: { active: true } });
+                if (existing) {
+                    await tx.aiModel.update({
+                        where: { id: existing.id },
+                        data: { active: false }
+                    });
+                    logger.info(
+                        'ModelRegistry',
+                        `Dezaktywowano poprzedni model ${existing.version}`
+                    );
+                }
             }
-        }
+
+            await tx.aiModel.create({
+                data: {
+                    id,
+                    version,
+                    weights: JSON.stringify(model.getWeights()),
+                    bias: model.getBias(),
+                    metrics: JSON.stringify(metrics),
+                    features: JSON.stringify(features),
+                    featureMins: JSON.stringify(featureMins),
+                    featureMaxs: JSON.stringify(featureMaxs),
+                    trainingRows: metrics.trainSize,
+                    active: shouldActivate,
+                    notes: notes || null,
+                    featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    createdAt: now.toISOString()
+                }
+            });
+        });
 
         logger.info(
             'ModelRegistry',

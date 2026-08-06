@@ -166,6 +166,9 @@ describe('ModelRegistry', () => {
         const createSpy = jest.fn<any>().mockResolvedValue({ id: 'saved-id' });
         (prisma.aiModel as any).create = createSpy;
         (prisma.aiModel as any).findFirst = jest.fn<any>().mockResolvedValue(null);
+        // saveModel używa $transaction — wykonaj callback z prisma jako tx,
+        // aby mocki aiModel.create/findFirst działały wewnątrz transakcji.
+        (prisma as any).$transaction = async (cb: (tx: any) => Promise<any>) => cb(prisma);
 
         const model = new AcceptanceModel(2);
         const version = await modelRegistry.saveModel(

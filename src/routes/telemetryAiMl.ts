@@ -345,29 +345,35 @@ router.get('/ai/settings', requireAuth, READ_LIMITER, async (_req: Request, res:
     }
 });
 
-router.post('/ai/settings', requireAuth, requireAdmin, async (req, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const { value } = req.body;
-        const pct = parseInt(value, 10);
-        if (isNaN(pct) || pct < 0 || pct > 100) {
-            res.status(400).json({ error: 'Wartosc musi byc liczba 0-100' });
-            return;
+router.post(
+    '/ai/settings',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const { value } = req.body;
+            const pct = parseInt(value, 10);
+            if (isNaN(pct) || pct < 0 || pct > 100) {
+                res.status(400).json({ error: 'Wartosc musi byc liczba 0-100' });
+                return;
+            }
+            await prisma.settings.upsert({
+                where: { key: 'wells_ai_influence' },
+                update: { value: String(pct) },
+                create: { key: 'wells_ai_influence', value: String(pct) }
+            });
+            await logAudit('settings', 'update', authReq.user?.id || '', 'wells_ai_influence', {
+                newValue: pct
+            });
+            res.json({ key: 'wells_ai_influence', value: String(pct) });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
         }
-        await prisma.settings.upsert({
-            where: { key: 'wells_ai_influence' },
-            update: { value: String(pct) },
-            create: { key: 'wells_ai_influence', value: String(pct) }
-        });
-        await logAudit('settings', 'update', authReq.user?.id || '', 'wells_ai_influence', {
-            newValue: pct
-        });
-        res.json({ key: 'wells_ai_influence', value: String(pct) });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
     }
-});
+);
 
 router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
     try {

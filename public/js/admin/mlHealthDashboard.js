@@ -3,17 +3,7 @@
 
     var HEALTH_URL = '/api/telemetry/ai/health';
 
-    function fetchJson(url) {
-        if (!window.fetch) return Promise.resolve(null);
-        return fetch(url, { credentials: 'same-origin' })
-            .then(function (r) {
-                if (!r.ok) return null;
-                return r.json();
-            })
-            .catch(function () {
-                return null;
-            });
-    }
+    /* fetchJson — wspólny helper z shared/ui.js (window.fetchJson) */
 
     function timeAgo(iso) {
         if (!iso) return '—';
@@ -83,8 +73,8 @@
         container.innerHTML =
             '<div style="display:flex;justify-content:center;padding:20px;color:var(--text-secondary)">Ladowanie...</div>';
 
-        fetchJson(HEALTH_URL).then(function (d) {
-            if (!d) {
+        window.fetchJson(HEALTH_URL).then(function (d) {
+            if (!d || d.error) {
                 container.innerHTML =
                     '<div style="padding:12px;text-align:center;color:var(--danger);font-size:0.85rem">Nie mozna pobrac danych</div>';
                 return;
