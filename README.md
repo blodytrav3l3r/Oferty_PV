@@ -1,6 +1,6 @@
 # WITROS Oferty PV — Generator ofert handlowych
 
-**Wersja:** 1.11.2  
+**Wersja:** 1.11.3  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** WITROS

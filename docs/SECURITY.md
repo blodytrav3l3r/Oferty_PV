@@ -1,6 +1,6 @@
 # Bezpieczeństwo — WITROS Oferty PV
 
-**Wersja:** 1.11.2  
+**Wersja:** 1.11.3  
 **Ostatnia aktualizacja:** 2026-08-05
 
 ---

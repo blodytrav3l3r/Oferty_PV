@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.11.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.2...v1.11.3) (2026-08-06)
+
+
+### Bug Fixes
+
+* **ml:** naprawy dashboardu AI/ML po audycie (skew etykiet, security, UI) ([e3959ac](https://github.com/blodytrav3l3r/Oferty_PV/commit/e3959ac749a371dabd723a76ffc5b37945efc0ea))
+
 ### [1.11.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.1...v1.11.2) (2026-08-06)
 
 

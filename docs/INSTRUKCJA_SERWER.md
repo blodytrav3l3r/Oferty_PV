@@ -1,6 +1,6 @@
 # WITROS Oferty — Instrukcja uruchomienia serwera przez Internet
 
-**Wersja:** 1.11.2
+**Wersja:** 1.11.3
 
 ## Spis treści
 
