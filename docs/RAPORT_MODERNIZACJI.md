@@ -122,5 +122,5 @@ Po publikacji raportu zrealizowano migrację na transport **HTTPS** (commit `dc7
 | Testy regresyjne    | Nowe testy HTTPS w `tests/security.test.ts` (HSTS, `httpsRedirect`, `x-forwarded-proto`).                                  |
 | Walidacja           | `npm run validate` przechodzi w 100% — **1305 testów** (raport bazował na 1153 testach).                                   |
 
-Pełny plan migracji: `docs/plans/https-migration-plan.md` (status: **Zakończony (kod)**).
+Pełny plan migracji: `docs/plans/archive/https-migration-plan.md` (status: **Zakończony (kod)**).
 Kryteria zakończenia dotyczące deployu i weryfikacji w przeglądarkach (`isSecureContext`, mixed content) pozostają do potwierdzenia manualnego na środowisku produkcyjnym.

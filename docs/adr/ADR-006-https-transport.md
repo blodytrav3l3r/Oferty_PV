@@ -118,6 +118,6 @@ Aplikacja utrzymuje podwójny mechanizm autoryzacji: token sesji w `localStorage
 
 ## Referencje
 
-- Plan migracji: `docs/plans/https-migration-plan.md`
+- Plan migracji: `docs/plans/archive/https-migration-plan.md`
 - Konfiguracja: `Caddyfile` (produkcja), `Caddyfile.dev` (dev)
 - Testy: `tests/security.test.ts`

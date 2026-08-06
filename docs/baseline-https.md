@@ -69,5 +69,5 @@
 ## 5. Uwagi
 
 - Zmiany wprowadzone podczas migracji: patrz `docs/adr/ADR-006-https-transport.md`
-  oraz plan `docs/plans/https-migration-plan.md`.
+  oraz plan `docs/plans/archive/https-migration-plan.md`.
 - Pliki konfiguracyjne: `Caddyfile` (produkcja), `Caddyfile.dev` (lokalny dev z mkcert).
