@@ -316,3 +316,97 @@ describe('ModelRegistry', () => {
         expect(createSpy).toHaveBeenCalledTimes(1);
     });
 });
+
+describe('TrainingPipeline.run() — guardy (K6)', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    function makeFeature(label: string, i = 0): any {
+        return {
+            dn: 1000,
+            heightMm: 3000,
+            warehouse: 'KLB',
+            wellType: 'standard',
+            hasReduction: false,
+            hasPsiaBuda: false,
+            hasStyczna: false,
+            ringCount: 3,
+            connectionCount: 2,
+            transitionsAboveDennica: 1,
+            totalPrice: 2500 + i,
+            totalWeight: 5000 + i,
+            ringVariety: 1,
+            season: 'summer',
+            bottomType: 'unknown',
+            topType: 'unknown',
+            kinetaType: '',
+            dennicaHeight: 0,
+            label,
+            createdAt: '2026-07-01T12:00:00Z',
+            telemetryId: `tel-${i}`
+        };
+    }
+
+    async function setupRun(): Promise<any> {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const { default: prisma } = await import('../../src/prismaClient');
+        // run() woła pre-treningowe kroki ekstrakcji — wyciszamy je (realny
+        // FeatureExtractor testowany osobno w tym pliku).
+        const spies = [
+            jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0),
+            jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0),
+            jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0)
+        ];
+        // getBestAuc: brak poprzednich modeli → isFirstModel=true (próg >0.5)
+        (prisma.aiModel as any).findMany = jest.fn<any>().mockResolvedValue([]);
+        return { trainingPipeline, prisma, spies };
+    }
+
+    it('za mało danych (< minFeatureCountForTraining) → insufficient_data', async () => {
+        const { trainingPipeline } = await setupRun();
+        mockFindMany.mockResolvedValue([]);
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/insufficient_data/);
+    });
+
+    it('jedna klasa w treningu/val (same ACCEPTED) → insufficient_label_diversity', async () => {
+        const { trainingPipeline } = await setupRun();
+        const onlyAccepted = Array.from({ length: 120 }, (_, i) => makeFeature('ACCEPTED', i));
+        mockFindMany.mockResolvedValue(onlyAccepted);
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/insufficient_label_diversity:train=1/);
+    });
+
+    it('pierwszy model z AUC=0.5 (gorzej niż losowe) → auc_insufficient (gate >0.5)', async () => {
+        const { trainingPipeline } = await setupRun();
+        const mixed = Array.from({ length: 200 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
+        );
+        mockFindMany.mockResolvedValue(mixed);
+        // Wymuś zdegenerowany AUC=0.5 — prawdziwy trening na syntetycznych danych
+        // mógłby przypadkiem przekroczyć 0.5 (test nie może być flaky).
+        const metrics = {
+            accuracy: 0.5,
+            precision: 0.5,
+            recall: 0.5,
+            f1: 0.5,
+            rocAuc: 0.5,
+            trainSize: 96,
+            valSize: 24
+        };
+        (trainingPipeline as any).evaluateModel = jest.fn<any>().mockReturnValue(metrics);
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/auc_insufficient:0.5/);
+    });
+});

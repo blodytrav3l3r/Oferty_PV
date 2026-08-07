@@ -6,32 +6,48 @@ Cel: doprowadzić pipeline ML (telemetry → FeatureExtractor → TrainingPipeli
 
 Plan NIE zakłada zmian w kodzie na start — wykorzystuje istniejące mechanizmy (cron 15 min, endpointy `/ai/health`, `/ai/ml-status`, `/ai/models`, `/ai/train`, `/ai/feature-importance`, dashboard `mlHealthDashboard`/`aiDashboard`). Ewentualne zmiany (nowe cechy, wpływ AI) są wskazane jako decyzje na późniejszych punktach kontrolnych.
 
+## Wykonane poprawki (audyt 6 subagentów → Faza A wdrożona, Faza B przetestowana)
+
+Zanim start zaczęto zbierać dane, usunięto znalezione w audycie wady uniemożliwiające zbudowanie **poprawnego** pierwszego modelu. Commit `5580abe` (Faza A) + testy K6 (Faza B):
+
+| #   | Poprawka                                           | Zakres                                                                                                                                                             |
+| --- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| K1  | Cache predykcji (osobny moduł)                     | `src/services/ml/predictionCache.ts` (TTL 15 min, max 1000); invalidacja w `ModelRegistry` (save/rollback/activate/promote)                                        |
+| K2  | Domyślna etykieta `NO_FEEDBACK` zamiast `ACCEPTED` | `deriveLabel`+`labelToReward` jako wspólne źródło; filtr `NO_FEEDBACK` w `loadAndNormalizeFeatures`                                                                |
+| K3  | Skośność cen/wag o uszczelki (frontend)            | `buildFeatureVector` (mlDualRanking.js): `sealQtyByDn`, doliczanie uszczelek do `totalPrice`/`totalWeight`                                                         |
+| K5  | `resyncFeatures` selektywny UPDATE                 | koniec N+1 i samoodtwarzającego filtra; porównanie 20 pól przed zapisem                                                                                            |
+| N5  | Walidacja `/ai/settings` (zod)                     | `z.coerce.number().int().min(0).max(100)`                                                                                                                          |
+| N6  | Sync etykiety w `recordAcceptance` w try/catch     | błąd sync nie zamienia sukcesu w 500 (klient fire-and-forget)                                                                                                      |
+| K6  | Testy guardów i ścieżek                            | `TrainingPipeline.run()`: `insufficient_data`, `insufficient_label_diversity`, `auc_insufficient` (gate >0.5); ścieżka sukcesu `/ai/reward` (ACCEPT/MODIFY/REJECT) |
+
 ## Realne progi (zweryfikowane w kodzie)
 
 Źródło: `src/services/ml/trainingConfig.ts`, `src/config/mlConstants.ts`, `src/services/ml/TrainingPipeline.ts`, `src/services/ml/ModelRegistry.ts`, `src/services/ml/SelfEvaluation.ts`.
 
-| Parametr                       | Wartość                       | Znaczenie                                                                                 |
-| ------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------- |
-| `minFeatureCountForTraining`   | **100**                       | minimalna liczba wektorów w `AiFeature` do pierwszego treningu                            |
-| `minNewRecordsForTraining`     | **50**                        | minimalna liczba NOWYCH wektorów od ostatniego treningu do kolejnego treningu (auto)      |
-| `deployAucImprovement`         | **0**                         | każdy nowy model z AUC >= bestAuc jest wdrażany                                           |
-| Pierwszy model (`bestAuc < 0`) | **wdrażany zawsze**           | przy braku modelu gate AUC jest otwarty — nawet AUC=0.5 zostanie wdrożone automatycznie   |
-| `rollbackAucThreshold`         | **0.65**                      | sliding AUC < 0.65 → auto-rollback; rocAuc aktywnego < 0.65 → promote najlepszego         |
-| `minHoursSinceLastTrain`       | 4                             | limit częstotliwości treningu w SelfEvaluation (cykl 24h) — **nie dotyczy** cronga 15-min |
-| `TRAINING_BATCH_SIZE`          | 2000                          | sliding window: najnowsze 2000 wektorów                                                   |
-| Split train/val                | 80/20                         | val = **najnowsze 20%** okna (chronologiczny)                                             |
-| `FEATURE_NAMES`                | 24 cechy (v6)                 | predict wymaga dokładnie 24 (inaczej 400 `FEATURE_COUNT_MISMATCH`)                        |
-| Cron                           | 15 min trening, 24h self-eval | `src/utils/cronService.ts`                                                                |
-| `resyncLabels` limit           | 500                           | re-synchronizacja etykiet obejmuje tylko 500 najnowszych rekordów telemetrii              |
-| `wells_ai_influence`           | 80 (obecnie)                  | po wdrożeniu model od razu wpływa na ranking produkcyjny                                  |
+| Parametr                       | Wartość                         | Znaczenie                                                                                                                                                      |
+| ------------------------------ | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minFeatureCountForTraining`   | **100**                         | minimalna liczba wektorów w `AiFeature` do pierwszego treningu                                                                                                 |
+| `minNewRecordsForTraining`     | **50**                          | minimalna liczba NOWYCH wektorów od ostatniego treningu do kolejnego treningu (auto)                                                                           |
+| `deployAucImprovement`         | **0**                           | każdy nowy model z AUC >= bestAuc jest wdrażany                                                                                                                |
+| Pierwszy model (`bestAuc < 0`) | **gate AUC > 0.5**              | K6 (zaimplementowane): pierwszy model wymaga AUC **wyraźnie powyżej losowej** (>0.5), inaczej `auc_insufficient` — słaby baseline NIE wdroży się automatycznie |
+| `rollbackAucThreshold`         | **0.65**                        | sliding AUC < 0.65 → auto-rollback; rocAuc aktywnego < 0.65 → promote najlepszego                                                                              |
+| `minHoursSinceLastTrain`       | 4                               | limit częstotliwości treningu w SelfEvaluation (cykl 24h) — **nie dotyczy** cronga 15-min                                                                      |
+| `TRAINING_BATCH_SIZE`          | 2000                            | sliding window: najnowsze 2000 wektorów                                                                                                                        |
+| Split train/val                | 80/20                           | val = **najnowsze 20%** okna (chronologiczny)                                                                                                                  |
+| `FEATURE_NAMES`                | 24 cechy (v6)                   | predict wymaga dokładnie 24 (inaczej 400 `FEATURE_COUNT_MISMATCH`)                                                                                             |
+| Cron                           | 15 min trening, 24h self-eval   | `src/utils/cronService.ts`                                                                                                                                     |
+| `resyncLabels` limit           | **2000**                        | re-synchronizacja etykiet obejmuje 2000 najnowszych rekordów telemetrii (K6: było 500)                                                                         |
+| `wells_ai_influence`           | **20 (rekomendowane na start)** | ustawić PRZED startem zbierania danych — słaby baseline nie zaburza doboru, a `scoreBefore` (przez `wasAiRanked`) wypełnia sliding AUC                         |
 
 ### Ważne niuanse (wpływają na interpretację metryk)
 
-1. **Pierwszy model wdroży się automatycznie** nawet ze słabym AUC (gate otwarty). To nie jest "poprawny model" — to dopiero baseline. "Poprawność" definiujemy jako AUC >= 0.65 na walidacji (próg rollbacku) przy sensownej liczbie próbek walidacyjnych.
+1. **Pierwszy model NIE wdroży się automatycznie ze słabym AUC** (K6, zaimplementowane): gate `rocAuc > 0.5` na pierwszym modelu (`bestAuc < 0`) — model z AUC<=0.5 dostaje `auc_insufficient` i nie jest zapisywany. "Poprawność" definiujemy jako AUC >= 0.65 na walidacji (próg rollbacku) przy sensownej liczbie próbek walidacyjnych.
 2. **AUC na małym val secie jest hałaśliwe**: przy 100 wektorach val = 20 próbek → AUC o wysokiej wariancji (przedział ufności rzędu ±0.1). Dopiero ~200+ wektorów (val >= 40) daje stabilną estymację.
 3. **Sliding AUC jest pusty do czasu użycia AI w rankingu**: `recordPredictionResult` wywoływane tylko z `/ai/reward`, gdy `wasAiRanked && scoreBefore !== undefined`. Dopóki model nie jest aktywny i AI nie wpływa na wybór, auto-rollback nie ma danych.
 4. **Etykiety zależą od feedbacku**: `resyncLabels` ustawia REJECTED/MODIFIED tylko gdy `wasRejected`/`wasModified`. Jeśli użytkownicy nie odrzucają/modyfikują, klasa negatywna nie powstaje → model degeneruje się do predykcji ~1.0 (AUC 0.5).
 5. **`trainingEligible: true` ustawiane zawsze** przy zapisie telemetrii (`telemetryService.ts:134`) — każdy rekord z `dn` + `wellType` przechodzi do ekstrakcji.
+6. **`NO_FEEDBACK` jako domyślna etykieta (K2, zaimplementowane)**: brak jakiegokolwiek feedbacku (także MANUAL bez akceptacji) → `NO_FEEDBACK` zamiast `ACCEPTED`. Wektory `NO_FEEDBACK` są odfiltrowywane w `loadAndNormalizeFeatures` (`TrainingPipeline.ts`) — nie zanieczyszczają klasy pozytywnej. `wasAccepted` ma priorytet nad `MANUAL`.
+7. **Skośność cen/wag o uszczelki (K3, zaimplementowane)**: `buildFeatureVector` (mlDualRanking.js) dolicza uszczelki do `totalPrice`/`totalWeight` i ma nową cechę `sealQtyByDn` (ilości uszczelek per DN, mirror `recalcGaskets`) — wersja wektora po stronie frontendu jest spójna z backendem.
 
 ## Metryki do monitorowania
 
@@ -93,14 +109,14 @@ Kryterium wejścia: `featureCount >= 100` (brama `minFeatureCountForTraining`).
 Co się stanie automatycznie:
 
 - Cron co 15 min wywoła `trainingPipeline.run()` → ekstrakcja, `resyncLabels`, `resyncFeatures`, trening na 80% okna, walidacja na 20% (n=20), zapis modelu.
-- **Gate wdrożenia otwarty** (`bestAuc < 0`) → model zostanie zapisany jako `active: true` z każdym AUC (także 0.5–0.6).
+- **Gate wdrożenia: pierwszy model wymaga AUC > 0.5** (`auc_insufficient` przy <= 0.5) — zdegenerowany baseline (stałe predykcje) nie zostanie wdrożony.
 - `lastTrainedAt` ustawione; kolejne treningi wymagają >= 50 nowych wektorów.
 
 Punkt kontrolny A — decyzja o wpływie na produkcję (KRYTYCZNY):
 
-- Model staje się aktywny → `/ai/predict` i `mlDualRanking.js` zaczynają działać, a `wells_ai_influence=80` oznacza, że AI wpływa na ranking od razu.
-- **Zalecenie**: przy pierwszym modelu z `rocAuc < 0.65` tymczasowo obniż `wells_ai_influence` do ~20–30 (ustawienie w `/api/telemetry/ai/settings`), żeby słaby baseline nie zaburzał doboru, a jednocześnie zbierać `scoreBefore` (dzięki `wasAiRanked`) do wypełnienia sliding AUC.
-- Alternatywa (jeśli model od razu ma AUC >= 0.65): pozostaw influence = 80.
+- Model staje się aktywny → `/ai/predict` i `mlDualRanking.js` zaczynają działać, a `wells_ai_influence` decyduje o sile wpływu na ranking.
+- **Zalecenie (K6, wdrożone przed startem)**: ustaw `wells_ai_influence = 20` od razu (`/api/telemetry/ai/settings`) — AI wpływa słabo na ranking (nie psuje doboru), a jednocześnie zbiera `scoreBefore` (dzięki `wasAiRanked`) do wypełnienia sliding AUC.
+- Alternatywa (jeśli model od razu ma AUC >= 0.65): podnieś influence do 80.
 
 Działania weryfikacyjne po pierwszym treningu:
 
@@ -144,7 +160,7 @@ Kryterium wejścia: min. 4 tygodnie od Etapu 2 (lub `featureCount >= 500`) i `ro
 Checklista diagnostyczna (w tej kolejności):
 
 1. **Dystrybucja etykiet** (najczęstsza przyczyna): `SELECT label, COUNT(*) FROM AiFeature GROUP BY label`.
-    - Brak REJECTED/MODIFIED → model nie ma klasy negatywnej → AUC degeneracyjne 0.5. Sprawdź, czy frontend wysyła feedback (`/ai/reward` z akcjami REJECT/MODIFY) i czy `resyncLabels` je łapie (limit 500 — przy >500 wektorach starsze mogą mieć złe etykiety; `resyncFeatures` nie naprawia etykiet).
+    - Brak REJECTED/MODIFIED → model nie ma klasy negatywnej → AUC degeneracyjne 0.5. Sprawdź, czy frontend wysyła feedback (`/ai/reward` z akcjami REJECT/MODIFY) i czy `resyncLabels` je łapie (limit 2000 — przy >2000 wektorach starsze mogą mieć złe etykiety; `resyncFeatures` nie naprawia etykiet).
     - Działanie: poprawić obieg feedbacku (to zmiana w kodzie — osobny task).
 2. **Jakość danych**: `dataQuality` pct < 95 → brak `featureSnapshot`/`solverSource`/`wellType` → cechy puste (0) → model nie ma sygnału. Sprawdź `extractProductId` (stringi vs obiekty) i czy `allComponentIds` nie jest puste.
 3. **Cechy bez wariancji**: sprawdź w `AiFeature` min/max dla `ringCount`, `totalPrice`, `dennicaHeight` — jeśli stałe (np. wszystkie studnie identyczne DN), model nie ma czego się nauczyć. `normalize()` przy range=0 zwraca 0 (cecha martwa).
@@ -179,15 +195,15 @@ Rekomendacja (minimalny nakład):
 
 ## Ryzyka i mitigacje
 
-| Ryzyko                                                                                     | Wpływ                                                         | Mitigacja                                                                                          |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Pierwszy model (AUC 0.5–0.6) wdrożony automatycznie wpływa na produkcję** (influence=80) | Zły ranking studni                                            | Punkt kontrolny A: obniżyć influence do 20–30 do czasu AUC >= 0.65 (ustawienie istnieje, bez kodu) |
-| Brak klasy negatywnej (feedback nie dociera)                                               | AUC degeneracyjne 0.5, model przewiduje ~1.0                  | Diagnostyka Etap 4.1; weryfikacja `/ai/reward` i `resyncLabels` na starcie                         |
-| AUC na małym val secie (n=20 przy 100 wektorach)                                           | Fałszywa ocena jakości                                        | Nie oceniać modelu przed `valSize >= 30`; obserwować trend, nie pojedynczy punkt                   |
-| Sliding AUC pusty (AI nie używane w rankingu)                                              | Brak auto-rollbacka / brak sygnału degradacji                 | Upewnić się, że `wasAiRanked` + `scoreBefore` są wysyłane po wdrożeniu modelu                      |
-| `resyncLabels` limit 500                                                                   | Starsze wektory z niepoprawnymi etykietami przy >500 próbkach | Okresowo weryfikować dystrybucję etykiet; przy przekroczeniu limitu rozważyć pętlę (osobny task)   |
-| Zero nowych rekordów (telemetria nie wywoływana)                                           | Pipeline nigdy nie ruszy                                      | Etap 1.1 — weryfikacja wywołań `telemetryRecordConfig` w solver/offerManager                       |
-| Zmiana `FEATURE_VERSION` przedwcześnie                                                     | Czyści sliding AUC i unieważnia modele                        | Nowe cechy (rzDna/terminationType/dennicaMaterial) tylko po diagnozie Etapu 4.7                    |
+| Ryzyko                                                                                     | Wpływ                                                          | Mitigacja                                                                                          |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Pierwszy model (AUC 0.5–0.6) wdrożony automatycznie wpływa na produkcję** (influence=80) | Zły ranking studni                                             | Punkt kontrolny A: obniżyć influence do 20–30 do czasu AUC >= 0.65 (ustawienie istnieje, bez kodu) |
+| Brak klasy negatywnej (feedback nie dociera)                                               | AUC degeneracyjne 0.5, model przewiduje ~1.0                   | Diagnostyka Etap 4.1; weryfikacja `/ai/reward` i `resyncLabels` na starcie                         |
+| AUC na małym val secie (n=20 przy 100 wektorach)                                           | Fałszywa ocena jakości                                         | Nie oceniać modelu przed `valSize >= 30`; obserwować trend, nie pojedynczy punkt                   |
+| Sliding AUC pusty (AI nie używane w rankingu)                                              | Brak auto-rollbacka / brak sygnału degradacji                  | Upewnić się, że `wasAiRanked` + `scoreBefore` są wysyłane po wdrożeniu modelu                      |
+| `resyncLabels` limit 2000                                                                  | Starsze wektory z niepoprawnymi etykietami przy >2000 próbkach | Okresowo weryfikować dystrybucję etykiet; przy przekroczeniu limitu rozważyć pętlę (osobny task)   |
+| Zero nowych rekordów (telemetria nie wywoływana)                                           | Pipeline nigdy nie ruszy                                       | Etap 1.1 — weryfikacja wywołań `telemetryRecordConfig` w solver/offerManager                       |
+| Zmiana `FEATURE_VERSION` przedwcześnie                                                     | Czyści sliding AUC i unieważnia modele                         | Nowe cechy (rzDna/terminationType/dennicaMaterial) tylko po diagnozie Etapu 4.7                    |
 
 ## Kryteria sukcesu (definicja celu)
 

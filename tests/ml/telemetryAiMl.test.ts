@@ -56,6 +56,23 @@ jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     }
 }));
 
+const mockProcessAction = jest.fn<any>().mockResolvedValue(undefined);
+
+jest.mock('../../src/services/ml/RewardCalculator', () => ({
+    rewardCalculator: {
+        processAction: (...args: any[]) => mockProcessAction(...args)
+    }
+}));
+
+const mockUpdateLabelByTelemetry = jest.fn<any>().mockResolvedValue(undefined);
+
+jest.mock('../../src/services/ml/FeatureExtractor', () => ({
+    featureExtractor: {
+        updateLabelByTelemetry: (...args: any[]) => mockUpdateLabelByTelemetry(...args),
+        getFeatureCount: jest.fn<any>().mockResolvedValue(24)
+    }
+}));
+
 let mockPredict: jest.Mock<any>;
 
 jest.mock('../../src/services/ml/AcceptanceModel', () => {
@@ -87,7 +104,8 @@ jest.mock('../../src/prismaClient', () => ({
         ai_telemetry_logs: {
             findMany: (...args: any[]) => mockTelemetryLogsFindMany(...args),
             count: (...args: any[]) => mockTelemetryLogsCount(...args),
-            findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args)
+            findFirst: (...args: any[]) => mockTelemetryLogsFindFirst(...args),
+            update: jest.fn<any>().mockResolvedValue({})
         },
         aiRewardLog: {
             count: jest.fn<any>().mockResolvedValue(0),
@@ -495,6 +513,80 @@ describe('POST /api/telemetry/ai/reward', () => {
 
         expect(res.status).toBe(200);
         expect(res.body).toEqual({ status: 'ok', duplicate: true });
+        expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+    });
+
+    it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, scoreBefore)', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
+        mockRewardFindFirst.mockResolvedValue(null);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-1',
+            scoreBefore: 0.9,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(res.body).toEqual({ status: 'ok' });
+        expect(mockProcessAction).toHaveBeenCalledWith(
+            expect.objectContaining({
+                action: 'ACCEPT',
+                wellId: 'well-1',
+                scoreBefore: 0.9,
+                wasAiRanked: true
+            })
+        );
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9);
+    });
+
+    it('MODIFY synchronizuje etykiete MODIFIED na najnowszym rekordzie telemetrii', async () => {
+        mockTelemetryLogsFindFirst
+            .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
+            .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
+        mockRewardFindFirst.mockResolvedValue(null);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'MODIFY',
+            wellId: 'well-1',
+            scoreBefore: 0.8,
+            scoreAfter: 0.6,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('latest-log', 'MODIFIED');
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.8);
+    });
+
+    it('REJECT synchronizuje etykiete REJECTED i rejestruje predykcje negatywna', async () => {
+        mockTelemetryLogsFindFirst
+            .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
+            .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
+        mockRewardFindFirst.mockResolvedValue(null);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'REJECT',
+            wellId: 'well-1',
+            scoreBefore: 0.95,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(mockUpdateLabelByTelemetry).toHaveBeenCalledWith('latest-log', 'REJECTED');
+        expect(mockRecordPredictionResult).toHaveBeenCalledWith(0, 0.95);
+    });
+
+    it('ACCEPT bez wasAiRanked nie rejestruje predykcji (sliding AUC)', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
+        mockRewardFindFirst.mockResolvedValue(null);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-1'
+        });
+
+        expect(res.status).toBe(200);
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
     });
 });
