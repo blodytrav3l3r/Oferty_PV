@@ -468,7 +468,10 @@ body::before {
     justify-content: center;
     gap: 0.45rem;
     padding: 0.35rem 0.8rem;
-    height: auto;
+    height: 2.25rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1;
     border: 1px solid var(--border);
     border-radius: 8px;
     background: var(--border-glass);
@@ -521,6 +524,7 @@ body::before {
     font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.2px;
+    white-space: nowrap;
 }
 
 .nav-tile:focus-visible {
