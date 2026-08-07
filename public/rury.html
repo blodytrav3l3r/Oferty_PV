@@ -16,7 +16,7 @@
         <link rel="stylesheet" href="css/printModal.css?v=1.11.4" />
     </head>
 
-    <body>
+    <body class="rury-page">
         <div id="partial-header" data-partial="partials/rury/header.html"></div>
 
         <main class="main">
@@ -42,7 +42,8 @@
             <!-- ===== WSPÓLNY DOLNY PASEK NAWIGACJI ===== -->
             <div class="wizard-nav wizard-nav-fixed" id="wizard-bottom-nav">
                 <div class="wizard-nav-left">
-                    <button type="button"
+                    <button
+                        type="button"
                         class="wizard-btn wizard-btn-prev"
                         id="wizard-nav-prev"
                         onclick="phasePrev()"
@@ -52,7 +53,8 @@
                 </div>
                 <span class="wizard-step-info" id="wizard-nav-step-info">Krok 1 z 5</span>
                 <div class="wizard-nav-right">
-                    <button type="button"
+                    <button
+                        type="button"
                         class="wizard-btn wizard-btn-next"
                         id="wizard-nav-next"
                         onclick="phaseNext()"

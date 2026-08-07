@@ -7,6 +7,13 @@
     margin: 0 auto;
 }
 
+/* Pasek kroków kreatora równo z górą, pełna szerokość (jak w studniach) */
+body.rury-page > .main:has(#section-builder.active) {
+    padding-top: 0 !important;
+    padding-left: 0;
+    padding-right: 0;
+}
+
 /* Margins (uzupełnienie shared w style.css dla porządku) */
 .mb-0 { margin-bottom: 0; }
 .mb-1 { margin-bottom: 1rem; }
