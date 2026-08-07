@@ -1,6 +1,6 @@
 {
     "name": "witros-oferty",
-    "version": "1.11.3",
+    "version": "1.11.4",
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
