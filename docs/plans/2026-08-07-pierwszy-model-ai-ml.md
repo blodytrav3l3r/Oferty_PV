@@ -114,7 +114,7 @@ Co się stanie automatycznie:
 
 Punkt kontrolny A — decyzja o wpływie na produkcję (KRYTYCZNY):
 
-- Model staje się aktywny → `/ai/predict` i `mlDualRanking.js` zaczynają działać, a `wells_ai_influence` decyduje o sile wpływu na ranking.
+- Model staje się aktywny → `/ai/predict/batch` i `mlDualRanking.js` zaczynają działać, a `wells_ai_influence` decyduje o sile wpływu na ranking.
 - **Zalecenie (K6, wdrożone przed startem)**: ustaw `wells_ai_influence = 20` od razu (`/api/telemetry/ai/settings`) — AI wpływa słabo na ranking (nie psuje doboru), a jednocześnie zbiera `scoreBefore` (dzięki `wasAiRanked`) do wypełnienia sliding AUC.
 - Alternatywa (jeśli model od razu ma AUC >= 0.65): podnieś influence do 80.
 

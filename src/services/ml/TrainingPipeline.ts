@@ -11,7 +11,7 @@ function applyForgetting(exampleAgeDays: number): number {
     return Math.exp(-lambda * exampleAgeDays);
 }
 
-function seasonToNum(s: string): number {
+export function seasonToNum(s: string): number {
     const lower = (s || 'unknown').toLowerCase();
     if (lower === 'spring') return 0;
     if (lower === 'summer') return 1;
@@ -20,7 +20,8 @@ function seasonToNum(s: string): number {
     return 0;
 }
 
-function oneHotEncode(raw: Record<string, unknown>): number[] {
+// Eksportowany dla testu parytetu cech train/serve (tests/ml/featureParity.test.ts).
+export function oneHotEncode(raw: Record<string, unknown>): number[] {
     const warehouse = normalizeWarehouse(raw.warehouse as string);
     const wellType = ((raw.wellType as string) || 'standard').toLowerCase();
     const dn = Number(raw.dn) || 0;

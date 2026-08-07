@@ -23,14 +23,6 @@ import {
 
 const router = Router();
 
-const predictSchema = z.object({
-    features: z.array(z.number()).length(ML_CONSTANTS.FEATURE_COUNT),
-    wellType: z.string().optional(),
-    warehouse: z.string().optional(),
-    dn: z.number().optional(),
-    featureVersion: z.string().optional()
-});
-
 /* ===== BATCH PREDICT ===== */
 
 const batchCandidateSchema = z.object({
@@ -66,86 +58,12 @@ const DRIFT_FEATURES: Array<{ key: string; idx: number }> = [];
 if (PRICE_FEATURE_IDX !== -1) DRIFT_FEATURES.push({ key: 'totalPrice', idx: PRICE_FEATURE_IDX });
 if (WEIGHT_FEATURE_IDX !== -1) DRIFT_FEATURES.push({ key: 'totalWeight', idx: WEIGHT_FEATURE_IDX });
 
-async function runPrediction(
-    features: number[],
-    featureVersion?: string
-): Promise<{ score: number; version: string; featureVersion: string } | { error: string }> {
-    const activeModel = await modelRegistry.getActiveModel();
-    if (!activeModel) {
-        return { error: 'No active model' };
-    }
-
-    const expectedDim = activeModel.featureMins.length;
-    if (features.length !== expectedDim) {
-        return { error: 'FEATURE_COUNT_MISMATCH' };
-    }
-
-    const model = new AcceptanceModel(
-        activeModel.weights.length,
-        activeModel.weights,
-        activeModel.bias
-    );
-
-    const score = model.predict(
-        normalizeFeatures(features, activeModel.featureMins, activeModel.featureMaxs)
-    );
-    return {
-        score: parseFloat(score.toFixed(4)),
-        version: activeModel.version,
-        featureVersion: featureVersion || 'unknown'
-    };
-}
-
 function normalizeFeatures(features: number[], mins: number[], maxs: number[]): number[] {
     return features.map((v, i) => {
         const range = maxs[i] - mins[i];
         return range === 0 ? 0 : (v - mins[i]) / range;
     });
 }
-
-router.post('/ai/predict', requireAuth, WRITE_LIMITER, async (req: Request, res: Response) => {
-    try {
-        const parsed = predictSchema.safeParse(req.body);
-        if (!parsed.success) {
-            res.status(400).json({ error: 'Invalid input', details: parsed.error.issues });
-            return;
-        }
-
-        const { features, wellType, warehouse, dn, featureVersion } = parsed.data;
-
-        // P5: featureVersion z requestu nie jest tylko echem — niezgodna wersja cech
-        // oznacza stare/niewspierane cechy po stronie klienta (featury wyliczane inaczej).
-        if (featureVersion !== undefined && featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
-            res.status(400).json({ error: 'FEATURE_VERSION_MISMATCH' });
-            return;
-        }
-        const key = cacheKey(features, wellType, warehouse, dn);
-        const cached = getCached(key);
-        if (cached) {
-            res.json({ scores: cached.result, cached: true });
-            return;
-        }
-
-        const result = await runPrediction(features, featureVersion);
-        if ('error' in result) {
-            if (result.error === 'No active model') {
-                res.status(503).json({ error: 'No active model', scores: [] });
-            } else {
-                res.status(400).json(result);
-            }
-            return;
-        }
-
-        const scoreResult = [result];
-        setCache(key, { result: scoreResult, timestamp: Date.now() });
-
-        res.json({ scores: scoreResult, cached: false });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        logger.error('AiPredictRoute', `Blad predykcji: ${msg}`);
-        res.status(500).json({ error: 'Prediction failed' });
-    }
-});
 
 /* ===== BATCH PREDICT (dla rankCandidates) ===== */
 

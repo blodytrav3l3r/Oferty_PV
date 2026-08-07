@@ -331,7 +331,6 @@ Wymaga autoryzacji.
 
 | Metoda | Ścieżka                                 | Opis                                                 |
 | ------ | --------------------------------------- | ---------------------------------------------------- |
-| POST   | `/api/telemetry/ai/predict`             | Predykcja akceptacji dla zestawu cech                |
 | POST   | `/api/telemetry/ai/predict/batch`       | Predykcja batch dla kandydujących konfiguracji       |
 | POST   | `/api/telemetry/ai/reward`              | Zapis nagrody (reward) za akcję                      |
 | GET    | `/api/telemetry/ai/settings`            | Poziom wpływu AI (`wells_ai_influence`)              |
