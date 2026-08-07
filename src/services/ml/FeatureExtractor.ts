@@ -22,7 +22,7 @@ export interface FeatureVector {
     season: string;
     kinetaType: string;
     dennicaHeight: number;
-    label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED';
+    label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
     reward: number;
     decisionMs: number;
 }
@@ -122,12 +122,53 @@ function safeJsonParse(str: string | null | undefined): unknown[] {
 }
 
 function extractProductId(item: unknown): string {
+    // allComponentIds/appliedSeals/appliedKonus przechowują albo gołe stringi
+    // ID ("KDB-12-05-D"), albo obiekty z polem productId — obsłuż oba.
+    if (typeof item === 'string') return item;
     return typeof item === 'object' &&
         item !== null &&
         'productId' in item &&
         typeof (item as Record<string, unknown>).productId === 'string'
         ? ((item as Record<string, unknown>).productId as string)
         : '';
+}
+
+export type FeatureLabel = 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
+
+/**
+ * Wyprowadza etykietę treningową z flag feedbacku rekordu telemetrii.
+ * Jedno źródło prawdy dla extract() i resyncLabels() — obie ścieżki muszą
+ * produkować IDENTYCZNE etykiety, inaczej resync rozjeżdża się z ekstrakcją.
+ *
+ * Semantyka (G1/G2 z audytu):
+ * - REJECTED  — jawny sygnał odrzucenia (recordAcceptance/reward REJECT).
+ * - ACCEPTED  — jawna akceptacja (recordAcceptance/reward ACCEPT / acceptance-full).
+ * - NO_FEEDBACK — brak jakiegokolwiek feedbacku ORAZ konfiguracja ręczna (MANUAL):
+ *   user sam zbudował studnię bez sugestii AI, to nie jest ani plus, ani minus.
+ * - MODIFIED  — sugestia AUTO/AI zmieniona przez użytkownika (reward MODIFY) —
+ *   negatywny sygnał względem oryginalnej sugestii.
+ *
+ * WAS_ACCEPTED ma priorytet nad MANUAL: acceptance-full z wasAccepted=true to
+ * potwierdzona finalna konfiguracja (pozytywna), nie NO_FEEDBACK.
+ */
+function deriveLabel(record: {
+    wasAccepted?: boolean;
+    wasRejected?: boolean;
+    wasModified?: boolean;
+    solverSource?: string | null;
+}): FeatureLabel {
+    if (record.wasRejected) return 'REJECTED';
+    if (record.wasAccepted) return 'ACCEPTED';
+    if (record.solverSource === 'MANUAL') return 'NO_FEEDBACK';
+    if (record.wasModified) return 'MODIFIED';
+    return 'NO_FEEDBACK';
+}
+
+function labelToReward(label: FeatureLabel): number {
+    if (label === 'ACCEPTED') return 1.0;
+    if (label === 'REJECTED') return -1.0;
+    if (label === 'MODIFIED') return -0.3;
+    return 0.0;
 }
 
 export class FeatureExtractor {
@@ -138,7 +179,7 @@ export class FeatureExtractor {
                 wellType: { not: null },
                 trainingEligible: true
             },
-            orderBy: { createdAt: 'asc' },
+            orderBy: { createdAt: 'desc' },
             take: 500
         });
 
@@ -227,16 +268,8 @@ export class FeatureExtractor {
         const ringIds = [...new Set(componentIds.filter(isRingProductId))];
         const ringVarietyValue = shannonEntropy(ringIds);
 
-        let label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' = 'ACCEPTED';
-        if (record.wasRejected) label = 'REJECTED';
-        else if (record.wasModified && (record.modificationCount || 0) > 0) label = 'MODIFIED';
-
-        let reward = 0.0;
-        if (record.wasAccepted && !record.wasModified) reward = 1.0;
-        else if (record.wasAccepted && (record.modificationCount || 0) < 2) reward = 0.2;
-        else if (record.wasModified && (record.modificationCount || 0) >= 2) reward = -0.3;
-        else if (record.solverSource === 'MANUAL') reward = -0.5;
-        else if (record.wasRejected) reward = -1.0;
+        let label = deriveLabel(record);
+        let reward = labelToReward(label);
 
         const decisionMs = record.computationMs || 0;
 
@@ -290,6 +323,193 @@ export class FeatureExtractor {
         if (lower.includes('stycz')) return 'styczna';
         if (lower === 'styczna_1200') return 'styczna_1200';
         return 'standard';
+    }
+
+    /**
+     * Aktualizuje etykietę (oraz reward) wyekstrahowanych cech na podstawie
+     * aktualnej flagi feedbacki z rekordu telemetrii. Wołane, gdy feedback
+     * (accept/reject/modify) nadejdzie PO ekstrakcji — dotąd etykieta w
+     * aiFeature zamrażała się na 'ACCEPTED' (brak klasy negatywnej).
+     *
+     * @param label 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK'
+     */
+    async updateLabelByTelemetry(
+        telemetryId: string | null | undefined,
+        label: FeatureLabel
+    ): Promise<void> {
+        if (!telemetryId) return;
+        const reward = labelToReward(label);
+        await prisma.aiFeature.updateMany({
+            where: { telemetryId },
+            data: { label, reward }
+        });
+    }
+
+    /**
+     * Pełna re-synchronizacja etykiet cech z aktualnym stanem feedbacku
+     * (wasRejected / wasModified / wasAccepted) w źródle telemetrii. Naprawia
+     * historyczny problem: wszystkie wektory miały 'ACCEPTED', bo ekstrakcja
+     * wyprzedzała akceptację/odrzucenie. Wołane przed każdym treningiem oraz przez
+     * recordAcceptance. Nie tworzy nowych wierszy — tylko koryguje etykiety.
+     */
+    async resyncLabels(limit = 2000): Promise<number> {
+        const records = await prisma.ai_telemetry_logs.findMany({
+            where: { trainingEligible: true },
+            orderBy: { createdAt: 'desc' },
+            take: limit,
+            select: {
+                id: true,
+                wasAccepted: true,
+                wasRejected: true,
+                wasModified: true,
+                modificationCount: true,
+                solverSource: true
+            }
+        });
+
+        const labelByTelemetry = new Map<string, FeatureLabel>();
+        for (const r of records) {
+            labelByTelemetry.set(r.id, deriveLabel(r));
+        }
+
+        const existing = await prisma.aiFeature.findMany({
+            where: { telemetryId: { in: records.map((r) => r.id) } },
+            select: { id: true, telemetryId: true, label: true }
+        });
+
+        const updates: Array<{ id: string; label: FeatureLabel; reward: number }> = [];
+        for (const f of existing) {
+            const target = f.telemetryId ? labelByTelemetry.get(f.telemetryId) : undefined;
+            if (target && target !== f.label) {
+                updates.push({
+                    id: f.id,
+                    label: target,
+                    reward: labelToReward(target)
+                });
+            }
+        }
+
+        let updated = 0;
+        for (const u of updates) {
+            await prisma.aiFeature.update({
+                where: { id: u.id },
+                data: { label: u.label, reward: u.reward }
+            });
+            updated++;
+        }
+        logger.info('FeatureExtractor', `ResyncLabels: zsynchronizowano ${updated} etykiet`);
+        return updated;
+    }
+
+    /**
+     * Re-ekstrakcja cech istniejących wierszy aiFeature. Historyczne wektory
+     * zostały policzone przez starsze wersje ekstraktora (puste ringCount /
+     * connectionCount / bottomType / dennicaHeight), a extractAndStore pomija
+     * rekordy już istniejące. Wołane przed każdym treningiem.
+     */
+    async resyncFeatures(): Promise<number> {
+        const features = await prisma.aiFeature.findMany({
+            where: {
+                OR: [
+                    { ringCount: 0, connectionCount: 0 },
+                    { bottomType: 'unknown' },
+                    { dennicaHeight: null }
+                ]
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1000
+        });
+        const telemetryIds = features
+            .map((f) => f.telemetryId)
+            .filter((id): id is string => Boolean(id));
+        if (telemetryIds.length === 0) return 0;
+
+        const telemetry = await prisma.ai_telemetry_logs.findMany({
+            where: { id: { in: telemetryIds } },
+            select: {
+                id: true,
+                dn: true,
+                warehouse: true,
+                wellType: true,
+                wellHeight: true,
+                ringCount: true,
+                wasAccepted: true,
+                wasRejected: true,
+                wasModified: true,
+                modificationCount: true,
+                allComponentIds: true,
+                appliedReductions: true,
+                appliedKonus: true,
+                appliedSeals: true,
+                createdAt: true,
+                solverSource: true,
+                featureSnapshot: true,
+                kineta: true,
+                dennicaHeight: true,
+                computationMs: true
+            }
+        });
+        const byId = new Map(telemetry.map((t) => [t.id, t]));
+
+        let updated = 0;
+        for (const f of features) {
+            const t = f.telemetryId ? byId.get(f.telemetryId) : undefined;
+            if (!t) continue;
+            const fv = this.extract(t as TelemetryRecordWithDetails);
+            // Selektywny UPDATE (K5): pomiń wiersze, których cechy się nie zmieniły
+            // (np. legalnie 0 kręgów / 0 uszczelek) — bez tego resyncFeatures
+            // przepisywał te same wartości co trening (N+1, niekończący się filtr).
+            const same =
+                f.dn === fv.dn &&
+                f.heightMm === fv.heightMm &&
+                f.warehouse === fv.warehouse &&
+                f.wellType === fv.wellType &&
+                f.hasReduction === fv.hasReduction &&
+                f.hasPsiaBuda === fv.hasPsiaBuda &&
+                f.hasStyczna === fv.hasStyczna &&
+                f.ringCount === fv.ringCount &&
+                f.bottomType === fv.bottomType &&
+                f.topType === fv.topType &&
+                f.connectionCount === fv.connectionCount &&
+                f.transitionsAboveDennica === fv.transitionsAboveDennica &&
+                f.totalPrice === fv.totalPrice &&
+                f.totalWeight === fv.totalWeight &&
+                f.ringVariety === fv.ringVariety &&
+                f.season === fv.season &&
+                (f.kinetaType ?? null) === fv.kinetaType &&
+                (f.dennicaHeight ?? null) === (fv.dennicaHeight > 0 ? fv.dennicaHeight : null) &&
+                f.label === fv.label &&
+                f.reward === fv.reward;
+            if (same) continue;
+            await prisma.aiFeature.update({
+                where: { id: f.id },
+                data: {
+                    dn: fv.dn,
+                    heightMm: fv.heightMm,
+                    warehouse: fv.warehouse,
+                    wellType: fv.wellType,
+                    hasReduction: fv.hasReduction,
+                    hasPsiaBuda: fv.hasPsiaBuda,
+                    hasStyczna: fv.hasStyczna,
+                    ringCount: fv.ringCount,
+                    bottomType: fv.bottomType,
+                    topType: fv.topType,
+                    connectionCount: fv.connectionCount,
+                    transitionsAboveDennica: fv.transitionsAboveDennica,
+                    totalPrice: fv.totalPrice,
+                    totalWeight: fv.totalWeight,
+                    ringVariety: fv.ringVariety,
+                    season: fv.season,
+                    kinetaType: fv.kinetaType,
+                    dennicaHeight: fv.dennicaHeight > 0 ? fv.dennicaHeight : null,
+                    label: fv.label,
+                    reward: fv.reward
+                }
+            });
+            updated++;
+        }
+        logger.info('FeatureExtractor', `ResyncFeatures: przeliczone cechy ${updated} wektorów`);
+        return updated;
     }
 
     async getFeatureCount(): Promise<number> {

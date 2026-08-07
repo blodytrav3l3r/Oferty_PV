@@ -333,6 +333,7 @@ class TelemetryService {
 
             // Fallback: telemetryId to ID studni (wellId) — oznacz najnowszy
             // rekord konfiguracji tej studni.
+            let resolvedId: string | null = result.count > 0 ? telemetryId : null;
             if (result.count === 0 && wellId) {
                 const latest = await prisma.ai_telemetry_logs.findFirst({
                     where: { wellId },
@@ -344,6 +345,28 @@ class TelemetryService {
                         where: { id: latest.id },
                         data: updates
                     });
+                    resolvedId = latest.id;
+                }
+            }
+
+            // Feedback nadszedł PO ekstrakcji cech — zsynchronizuj etykietę w
+            // aiFeature, żeby klasa negatywna (REJECTED) trafiła do treningu.
+            // updateLabelByTelemetry musi dostać UUID rekordu telemetrii (nie wellId),
+            // inaczej updateMany po telemetryId nie znajdzie wiersza aiFeature.
+            if (resolvedId) {
+                try {
+                    const { featureExtractor } = await import('../ml/FeatureExtractor');
+                    await featureExtractor.updateLabelByTelemetry(
+                        resolvedId,
+                        accepted ? 'ACCEPTED' : 'REJECTED'
+                    );
+                } catch (labelErr) {
+                    // Sync etykiety to krok wtórny — acceptance już zapisany.
+                    // Błąd nie może zamienić sukcesu w 500 (klient fire-and-forget).
+                    logger.error(
+                        'Telemetry',
+                        `Nie udało się zsynchronizować etykiety dla ${resolvedId}: ${labelErr}`
+                    );
                 }
             }
         } catch (e) {

@@ -610,7 +610,7 @@ model AiFeature {
   totalWeight             Float    @default(0)
   ringVariety             Float    @default(0) // Shannon entropy kregow [0-1]
   season                  String   // winter | spring | summer | autumn
-  label                   String   // ACCEPTED | REJECTED | MODIFIED
+  label                   String   // ACCEPTED | REJECTED | MODIFIED | NO_FEEDBACK
   reward                  Float    @default(0) // -1.0 to +1.0
   decisionMs              Int?     // czas od wyswietlenia do decyzji
   createdAt               String

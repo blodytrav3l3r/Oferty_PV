@@ -64,6 +64,31 @@ describe('computeRocAuc', () => {
         expect(auc).toBeGreaterThan(0.1);
         expect(auc).toBeLessThan(0.9);
     });
+
+    it("tie'y dostają średnią rangę (AUC nie zależy od kolejności przy saturowanym sigmoidzie)", () => {
+        // Saturowany model daje identyczne predykcje — bez tie-correction AUC
+        // był artefaktem kolejności rekordów (0 lub 1 zależnie od sortu).
+        const scores = [0.9999, 0.9999, 0.9999, 0.9999, 0.9999, 0.9999];
+        const labelsA = [1, 1, 1, 0, 0, 0];
+        const labelsB = [1, 0, 0, 1, 1, 0];
+        const aucA = computeRocAuc(scores, labelsA);
+        const aucB = computeRocAuc(scores, labelsB);
+        // Wszystkie równe → rankSum pozytywnych = średnia ranga grupy * pos,
+        // AUC powinno być spójne dla obu permutacji i zależeć tylko od liczby
+        // pozytywów (a nie ich kolejności).
+        expect(aucA).toBe(0.5);
+        expect(aucB).toBe(0.5);
+    });
+
+    it("częściowe tie'y uśredniają rangi (Mann-Whitney z tie-correction)", () => {
+        // score 0.5 występuje 3× (2 pos, 1 neg) — średnia ranga = (2+3+4)/3 = 3.
+        const scores = [0.9, 0.5, 0.5, 0.5, 0.1];
+        const labels = [1, 1, 0, 1, 0];
+        const auc = computeRocAuc(scores, labels);
+        // Pos (3): 0.9(rank5) + 0.5(rank3) + 0.5(rank3) → rankSum=11.
+        // auc = (11 - 3*4/2) / (3*2) = 5/6 ≈ 0.8333.
+        expect(auc).toBe(0.8333);
+    });
 });
 
 describe('SelfEvaluation - sliding window', () => {

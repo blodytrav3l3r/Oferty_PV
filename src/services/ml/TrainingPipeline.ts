@@ -76,8 +76,6 @@ export function computeRocAuc(scores: number[], labels: number[]): number {
     const n = scores.length;
     if (n < 2) return 0.5;
     const pairs = scores.map((s, i) => ({ score: s, label: labels[i] }));
-    // Sortowanie rosnące: najniższy score = ranga 1, najwyższy = ranga n.
-    pairs.sort((a, b) => a.score - b.score);
     let pos = 0;
     let neg = 0;
     for (const p of pairs) {
@@ -85,9 +83,23 @@ export function computeRocAuc(scores: number[], labels: number[]): number {
         else neg++;
     }
     if (pos === 0 || neg === 0) return 0.5;
+    // Sortowanie rosnące: najniższy score = ranga 1, najwyższy = ranga n.
+    // Równe wartości dostają ŚREDNIĄ rangę grupy (Mann-Whitney z tie-correction) —
+    // bez tego saturowany sigmoid (identyczne predykcje) daje zdegenerowany AUC
+    // zależny od kolejności rekordów i fałszywy auto-rollback.
+    pairs.sort((a, b) => a.score - b.score);
     let rankSum = 0;
-    for (let i = 0; i < n; i++) {
-        if (pairs[i].label === 1) rankSum += i + 1;
+    let i = 0;
+    while (i < n) {
+        let j = i;
+        while (j + 1 < n && pairs[j + 1].score === pairs[i].score) {
+            j++;
+        }
+        const avgRank = (i + 1 + j + 1) / 2;
+        for (let k = i; k <= j; k++) {
+            if (pairs[k].label === 1) rankSum += avgRank;
+        }
+        i = j + 1;
     }
     const auc = (rankSum - (pos * (pos + 1)) / 2) / (pos * neg);
     return parseFloat(auc.toFixed(4));
@@ -123,6 +135,13 @@ export class TrainingPipeline {
         this.running = true;
         try {
             await featureExtractor.extractAndStore();
+            // Feedback (accept/reject/modify) często nadchodzi PO ekstrakcji cech.
+            // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej
+            // model jest zdegenerowany — stała predykcja ~1.0 dla wszystkich kandydatów).
+            await featureExtractor.resyncLabels();
+            // Historyczne wektory policzone przez stare wersje ekstraktora mają puste
+            // cechy (ringCount/connectionCount/bottomType) — przelicz je w miejscu.
+            await featureExtractor.resyncFeatures();
 
             // Okno treningowe: najnowsze TRAINING_BATCH_SIZE wektorów (sliding window).
             // Kolejność desc + reverse, by split train/val pozostał chronologiczny
@@ -161,6 +180,23 @@ export class TrainingPipeline {
             const trainSet = normalized.slice(0, splitIdx);
             const valSet = normalized.slice(splitIdx);
 
+            // Guarda balansu klas: model trenowany na jednej klasie (np. same
+            // ACCEPTED) daje zdegenerowane predykcje ~1.0 i AUC=0.5 — nie ma
+            // sensu go trenować ani tym bardziej wdrażać (gate bestAuc<0 był
+            // otwarty i pierwszy taki model deployował się automatycznie).
+            const trainClasses = new Set(trainSet.map((ex) => ex.label));
+            const valClasses = new Set(valSet.map((ex) => ex.label));
+            if (trainClasses.size < 2 || valClasses.size < 2) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Brak balansu klas (train=${trainClasses.size}, val=${valClasses.size}) — pomijam trening`
+                );
+                return {
+                    trained: false,
+                    reason: `insufficient_label_diversity:train=${trainClasses.size},val=${valClasses.size}`
+                };
+            }
+
             const model = new AcceptanceModel(dim);
             model.train(
                 trainSet.map((ex) => ({ features: ex.vec, label: ex.label, weight: ex.weight })),
@@ -171,12 +207,18 @@ export class TrainingPipeline {
             const metrics = this.evaluateModel(model, valSet, trainSet.length);
 
             const bestAuc = await modelRegistry.getBestAuc();
+            const isFirstModel = bestAuc < 0;
+            // Pierwszy model nie może być wdrożony z AUC=0.5 (gorzej niż losowe) —
+            // wymagamy wartości wyraźnie powyżej losowej, zanim zacznie wpływać
+            // na ranking (wells_ai_influence). Kolejne modele porównujemy z bestAuc.
+            const meetsMinAuc = !isFirstModel || metrics.rocAuc > 0.5;
             const shouldDeploy =
-                bestAuc < 0 || metrics.rocAuc >= bestAuc + ML_CONFIG.deployAucImprovement;
+                meetsMinAuc &&
+                (bestAuc < 0 || metrics.rocAuc >= bestAuc + ML_CONFIG.deployAucImprovement);
             if (!shouldDeploy) {
                 logger.info(
                     'TrainingPipeline',
-                    `Nowy model AUC=${metrics.rocAuc} nie przekracza najlepszego ${bestAuc}+${ML_CONFIG.deployAucImprovement}`
+                    `Nowy model AUC=${metrics.rocAuc} nie kwalifikuje się do wdrożenia (best=${bestAuc}, minAucRequired=${isFirstModel ? '>0.5' : bestAuc + '+' + ML_CONFIG.deployAucImprovement})`
                 );
                 return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
             }
@@ -213,31 +255,35 @@ export class TrainingPipeline {
         maxs: number[];
         dim: number;
     }> {
-        const examples = features.map((f) => {
-            const raw: Record<string, unknown> = {
-                dn: f.dn,
-                heightMm: f.heightMm,
-                warehouse: f.warehouse,
-                wellType: f.wellType,
-                hasReduction: f.hasReduction,
-                hasPsiaBuda: f.hasPsiaBuda,
-                hasStyczna: f.hasStyczna,
-                ringCount: f.ringCount,
-                connectionCount: f.connectionCount,
-                transitionsAboveDennica: f.transitionsAboveDennica,
-                totalPrice: f.totalPrice,
-                totalWeight: f.totalWeight,
-                ringVariety: f.ringVariety,
-                season: f.season,
-                bottomType: f.bottomType,
-                topType: f.topType,
-                kinetaType: f.kinetaType,
-                dennicaHeight: f.dennicaHeight
-            };
-            const createdAt = new Date(f.createdAt);
-            const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-            return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };
-        });
+        const examples = features
+            // NO_FEEDBACK (brak jakiegokolwiek sygnału użytkownika) nie niesie
+            // informacji — wrzucenie go do klasy negatywnej zanieczyściłoby model.
+            .filter((f) => f.label !== 'NO_FEEDBACK')
+            .map((f) => {
+                const raw: Record<string, unknown> = {
+                    dn: f.dn,
+                    heightMm: f.heightMm,
+                    warehouse: f.warehouse,
+                    wellType: f.wellType,
+                    hasReduction: f.hasReduction,
+                    hasPsiaBuda: f.hasPsiaBuda,
+                    hasStyczna: f.hasStyczna,
+                    ringCount: f.ringCount,
+                    connectionCount: f.connectionCount,
+                    transitionsAboveDennica: f.transitionsAboveDennica,
+                    totalPrice: f.totalPrice,
+                    totalWeight: f.totalWeight,
+                    ringVariety: f.ringVariety,
+                    season: f.season,
+                    bottomType: f.bottomType,
+                    topType: f.topType,
+                    kinetaType: f.kinetaType,
+                    dennicaHeight: f.dennicaHeight
+                };
+                const createdAt = new Date(f.createdAt);
+                const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
+                return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };
+            });
 
         const dim = FEATURE_NAMES.length;
         const mins = new Array(dim).fill(Infinity);

@@ -9,6 +9,8 @@ const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
 const mockCreate = jest.fn<any>();
 const mockCount = jest.fn<any>();
+const mockUpdate = jest.fn<any>();
+const mockUpdateMany = jest.fn<any>();
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -18,6 +20,8 @@ jest.mock('../../src/prismaClient', () => ({
             findFirst: (...args: any[]) => mockFindFirst(...args),
             findMany: (...args: any[]) => mockFindMany(...args),
             create: (...args: any[]) => mockCreate(...args),
+            update: (...args: any[]) => mockUpdate(...args),
+            updateMany: (...args: any[]) => mockUpdateMany(...args),
             count: (...args: any[]) => mockCount(...args)
         },
         aiModel: {
@@ -117,6 +121,124 @@ describe('FeatureExtractor', () => {
         expect(fv.label).toBe('REJECTED');
         expect(fv.reward).toBe(-1.0);
         expect(fv.wellType).toBe('psia_buda');
+    });
+
+    it('updateLabelByTelemetry ustawia etykiete negatywna (REJECTED) w aiFeature', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        await featureExtractor.updateLabelByTelemetry('telemetry-1', 'REJECTED');
+        expect(mockUpdateMany).toHaveBeenCalledWith({
+            where: { telemetryId: 'telemetry-1' },
+            data: { label: 'REJECTED', reward: -1.0 }
+        });
+    });
+
+    it('updateLabelByTelemetry pomija brak telemetryId', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        mockUpdateMany.mockClear();
+        await featureExtractor.updateLabelByTelemetry(null, 'REJECTED');
+        await featureExtractor.updateLabelByTelemetry(undefined, 'REJECTED');
+        expect(mockUpdateMany).not.toHaveBeenCalled();
+    });
+
+    it('resyncLabels nadpisuje ACCEPTED na MODIFIED gdy feedback sie zmienil', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        mockFindMany
+            // 1. ai_telemetry_logs.findMany — rekordy źródłowe z feedbackiem
+            .mockResolvedValueOnce([
+                { id: 'log-1', wasRejected: false, wasModified: true, modificationCount: 2 }
+            ])
+            // 2. aiFeature.findMany — już wyekstrahowane (stara etykieta ACCEPTED)
+            .mockResolvedValueOnce([{ id: 'feat-1', telemetryId: 'log-1', label: 'ACCEPTED' }]);
+        mockUpdate.mockResolvedValue({ id: 'feat-1' });
+
+        const updated = await featureExtractor.resyncLabels();
+        expect(updated).toBe(1);
+        expect(mockUpdate).toHaveBeenCalledWith({
+            where: { id: 'feat-1' },
+            data: { label: 'MODIFIED', reward: -0.3 }
+        });
+    });
+
+    it('extract() daje NO_FEEDBACK gdy brak jakiegokolwiek feedbacku (K2)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-nf',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: false,
+            wasRejected: false,
+            wasModified: false,
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'AUTO_JS'
+        } as any);
+
+        expect(fv.label).toBe('NO_FEEDBACK');
+        expect(fv.reward).toBe(0.0);
+    });
+
+    it('extract() nie klasyfikuje konfiguracji MANUAL jako MODIFIED (G2)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-manual',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: false,
+            wasRejected: false,
+            wasModified: true,
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'MANUAL'
+        } as any);
+
+        expect(fv.label).toBe('NO_FEEDBACK');
+        expect(fv.reward).toBe(0.0);
+    });
+
+    it('extract() traktuje wasAccepted=true jako ACCEPTED nawet przy MANUAL (G2)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-manual-accepted',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: true,
+            wasRejected: false,
+            wasModified: false,
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'MANUAL'
+        } as any);
+
+        expect(fv.label).toBe('ACCEPTED');
+        expect(fv.reward).toBe(1.0);
+    });
+});
+
+describe('predictionCache', () => {
+    it('clear() opróżnia cache po TTL-cechach', async () => {
+        const { setCache, getCached, clearPredictionCache } =
+            await import('../../src/services/ml/predictionCache');
+
+        setCache('k1', { result: [{ score: 0.9, version: 'v1' }], timestamp: Date.now() });
+        expect(getCached('k1')).toBeDefined();
+
+        clearPredictionCache();
+        expect(getCached('k1')).toBeUndefined();
     });
 });
 

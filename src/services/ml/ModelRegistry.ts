@@ -4,6 +4,7 @@ import { logger } from '../../utils/logger';
 import type { AcceptanceModel } from './AcceptanceModel';
 import { ML_CONSTANTS } from '../../config/mlConstants';
 import { ML_CONFIG } from './trainingConfig';
+import { clearPredictionCache } from './predictionCache';
 
 export interface ModelMetrics {
     accuracy: number;
@@ -116,6 +117,9 @@ export class ModelRegistry {
         // Retencja: po zapisie nowego modelu przycinamy stary rejestr (metoda nigdy nie rzuca)
         await this.pruneOldModels();
 
+        // Aktywny model się zmienił → predykcje w cache są nieaktualne.
+        if (shouldActivate) clearPredictionCache();
+
         logger.info(
             'ModelRegistry',
             `Zapisano model ${version} (active=${shouldActivate}, auc=${metrics.rocAuc.toFixed(4)})`
@@ -190,6 +194,7 @@ export class ModelRegistry {
             await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
             await prisma.aiModel.update({ where: { id: previous.id }, data: { active: true } });
             logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
+            clearPredictionCache();
             return this.recordToModel(previous);
         }
         if (active && !previous) {
@@ -223,6 +228,7 @@ export class ModelRegistry {
         }
         await prisma.aiModel.update({ where: { id: target.id }, data: { active: true } });
         logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
+        clearPredictionCache();
         return this.recordToModel(target);
     }
 
@@ -249,6 +255,7 @@ export class ModelRegistry {
         }
         await prisma.aiModel.update({ where: { id: best.id }, data: { active: true } });
         logger.info('ModelRegistry', `Promowano najlepszy model ${best.version} (auc=${bestAuc})`);
+        clearPredictionCache();
         return this.recordToModel(best);
     }
 

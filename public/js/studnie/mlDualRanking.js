@@ -220,6 +220,21 @@
      * @param {Object} well - parametry studni
      * @returns {number[]} wektor 24 cech (v6)
      */
+    /**
+     * Nazwa produktu uszczelki dla danego DN i typu uszczelki — identyczna mapa
+     * jak w recalcGaskets (actionsWellSync.js). Serve używa jej do doliczenia
+     * kosztu uszczelek do totalPrice/totalWeight (spójność z treningiem).
+     */
+    function gasketNameForDn(uType, dnStr) {
+        let uTypeNorm = String(uType || '').toUpperCase();
+        if (uTypeNorm === 'GSG') return 'Uszczelka GSG DN' + dnStr;
+        if (uTypeNorm === 'SDV') return 'Uszczelka SDV DN' + dnStr;
+        if (uTypeNorm === 'SDV PO')
+            return 'Uszczelka SDV DN' + dnStr + ' SDV z pierścieniem odciążającym';
+        if (uTypeNorm === 'NBR') return 'Uszczelka GSG DN' + dnStr + ' z NBR';
+        return 'Uszczelka GSG DN' + dnStr;
+    }
+
     function buildFeatureVector(layout, well) {
         ensureWellFeatureContext(well);
         let dn = parseInt(well.dn) || 0;
@@ -242,27 +257,45 @@
         const ringUniqueIds = [];
         const seenRingIds = new Set();
         const gasketsEnabled = !!(well.uszczelka && well.uszczelka !== 'brak');
+        // GASKET_CARRIERS = nośniki uszczelek wg recalcGaskets (actionsWellSync.js).
+        // connectionCount = liczba UNIKALNYCH DN nośników ze WSZYSTKICH list layoutu
+        // (kregItems + topItems + avrItems + dennica), spójnie z treningiem
+        // (FeatureExtractor liczy unikalne DN w appliedSeals = 1 uszczelka per DN).
+        const sealDns = new Set();
+        const sealQtyByDn = {};
+        const gasketCarrierLists = [
+            ...(Array.isArray(layout.kregItems) ? layout.kregItems : []),
+            ...(Array.isArray(layout.topItems) ? layout.topItems : []),
+            ...(Array.isArray(layout.avrItems) ? layout.avrItems : []),
+            layout.dennica ? [layout.dennica] : []
+        ];
+        for (const ki of gasketCarrierLists) {
+            if (!ki || !ki.productId) continue;
+            const prod =
+                typeof window.studnieProducts !== 'undefined'
+                    ? window.studnieProducts.find((p) => p.id === ki.productId)
+                    : undefined;
+            if (prod && prod.dn && gasketsEnabled) {
+                const type = String(prod.componentType || '').toLowerCase();
+                if (
+                    type === 'krag' ||
+                    type === 'krag_ot' ||
+                    type === 'plyta_din' ||
+                    type === 'plyta_redukcyjna' ||
+                    type === 'konus'
+                ) {
+                    const dnStr = String(prod.dn);
+                    sealDns.add(dnStr);
+                    // recalcGaskets sumuje ILOŚCI nośników per DN (nie tylko unikalne
+                    // DN jak connectionCount) — patrz requiredGaskets w actionsWellSync.js.
+                    sealQtyByDn[dnStr] = (sealQtyByDn[dnStr] || 0) + (ki.quantity || 1);
+                }
+            }
+        }
+        connectionCount = sealDns.size;
         if (Array.isArray(layout.kregItems)) {
-            const sealDns = new Set();
             for (const ki of layout.kregItems) {
                 if (!ki || !ki.productId) continue;
-                const prod =
-                    typeof window.studnieProducts !== 'undefined'
-                        ? window.studnieProducts.find((p) => p.id === ki.productId)
-                        : undefined;
-                if (prod && prod.dn && gasketsEnabled) {
-                    const type = String(prod.componentType || '').toLowerCase();
-                    // recalcGaskets: uszczelki dla krag/krag_ot/plyta_din/plyta_redukcyjna/konus
-                    if (
-                        type === 'krag' ||
-                        type === 'krag_ot' ||
-                        type === 'plyta_din' ||
-                        type === 'plyta_redukcyjna' ||
-                        type === 'konus'
-                    ) {
-                        sealDns.add(String(prod.dn));
-                    }
-                }
                 if (ringPattern.test(ki.productId)) {
                     // Liczba kręgów = liczba elementów kregowych (spójnie z treningiem
                     // FeatureExtractor/telemetryBridge liczącymi itemy, nie quantity).
@@ -273,7 +306,6 @@
                     }
                 }
             }
-            connectionCount = sealDns.size;
         }
         let transitionsAboveDennica = Math.max(0, connectionCount - 1);
         // totalPrice/totalWeight: kandydaci z solve() nie mają layout.totalPrice/Weight —
@@ -294,6 +326,25 @@
                 if (prod) {
                     totalPrice += (parseFloat(prod.price) || 0) * (it.quantity || 1);
                     totalWeight += (parseFloat(prod.weight) || 0) * (it.quantity || 1);
+                }
+            }
+            // GAP D (K3): recalcGaskets dokłada uszczelki do well.config, więc trening
+            // (telemetryBridge sumuje configItems Z uszczelkami) ma wyższą totalPrice/
+            // totalWeight niż serve (layout nie zawiera uszczelek). Dodaj koszt uszczelek
+            // z tych samych nazw produktów co recalcGaskets — inaczej cena/waga na serve
+            // jest systematycznie zaniżona (skew cech train/serve).
+            if (gasketsEnabled) {
+                for (const dnStr of Object.keys(sealQtyByDn)) {
+                    const gasketProd = window.studnieProducts.find(
+                        (p) =>
+                            p.componentType === 'uszczelka' &&
+                            p.name === gasketNameForDn(well.uszczelka, dnStr)
+                    );
+                    if (gasketProd) {
+                        const qty = sealQtyByDn[dnStr];
+                        totalPrice += (parseFloat(gasketProd.price) || 0) * qty;
+                        totalWeight += (parseFloat(gasketProd.weight) || 0) * qty;
+                    }
                 }
             }
         }

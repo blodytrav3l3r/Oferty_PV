@@ -13,6 +13,13 @@ import { logAudit } from '../services/auditService';
 import { z } from 'zod';
 import prisma from '../prismaClient';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../config/mlConstants';
+import {
+    cacheKey,
+    setCache,
+    getCached,
+    clearPredictionCache,
+    predictionCacheSize
+} from '../services/ml/predictionCache';
 
 const router = Router();
 
@@ -51,30 +58,7 @@ const rewardSchema = z.object({
     configSnapshot: z.record(z.string(), z.unknown()).optional()
 });
 
-interface CacheEntry {
-    result: { score: number; version: string }[];
-    timestamp: number;
-}
-
-const predictionCache = new Map<string, CacheEntry>();
-const CACHE_TTL = ML_CONSTANTS.PREDICTION_CACHE_TTL_MS;
-const CACHE_MAX_SIZE = 1000;
-
-function setCache(key: string, entry: CacheEntry): void {
-    if (predictionCache.size >= CACHE_MAX_SIZE) {
-        const oldest = predictionCache.keys().next().value;
-        if (oldest !== undefined) predictionCache.delete(oldest);
-    }
-    predictionCache.set(key, entry);
-}
-
-function cacheKey(features: number[], wellType?: string, warehouse?: string, dn?: number): string {
-    const dnStr = dn !== undefined && dn !== null ? String(dn) : '';
-    return `${features.join(',')}|${wellType || ''}|${warehouse || ''}|${dnStr}`;
-}
-
-// P4: Indeksy cech do detekcji driftu wyznaczane z FEATURE_NAMES zamiast sztywnych 12/13 —
-// zmiana kolejności cech w mlConstants nie zepsuje obliczeń. Brak cechy w FEATURE_NAMES
+// P4: Indeksy cech do detekcji driftu wyznaczane z FEATURE_NAMES zamiast sztywnych 12/13 —// zmiana kolejności cech w mlConstants nie zepsuje obliczeń. Brak cechy w FEATURE_NAMES
 // (idx === -1) wyklucza ją z pomiaru driftu.
 const PRICE_FEATURE_IDX = FEATURE_NAMES.indexOf('totalPrice');
 const WEIGHT_FEATURE_IDX = FEATURE_NAMES.indexOf('totalWeight');
@@ -136,8 +120,8 @@ router.post('/ai/predict', requireAuth, WRITE_LIMITER, async (req: Request, res:
             return;
         }
         const key = cacheKey(features, wellType, warehouse, dn);
-        const cached = predictionCache.get(key);
-        if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+        const cached = getCached(key);
+        if (cached) {
             res.json({ scores: cached.result, cached: true });
             return;
         }
@@ -213,8 +197,8 @@ router.post(
 
             const scores = candidates.map((c) => {
                 const key = cacheKey(c.features, c.wellType, c.warehouse, c.dn);
-                const cached = predictionCache.get(key);
-                if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+                const cached = getCached(key);
+                if (cached) {
                     return {
                         id: c.id,
                         score: cached.result[0].score,
@@ -310,6 +294,32 @@ router.post(
                 wasAiRanked: data.wasAiRanked,
                 configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
             });
+
+            // Feedback MODIFY/REJECT to sygnał negatywny dla treningu ML. Oznacz
+            // rekord telemetrii (wasModified/wasRejected) i zsynchronizuj etykietę
+            // w aiFeature — inaczej klasa negatywna nigdy nie trafi do modelu.
+            // WAŻNE: tylko NAJNOWSZY rekord studni — updateMany po wellId skazywał
+            // WSZYSTKIE historyczne konfiguracje na MODIFIED (niszczyło klasę
+            // negatywną w treningu).
+            if (data.action === 'MODIFY' || data.action === 'REJECT') {
+                const flags =
+                    data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
+                const latest = await prisma.ai_telemetry_logs.findFirst({
+                    where: { wellId: data.wellId },
+                    orderBy: { createdAt: 'desc' },
+                    select: { id: true }
+                });
+                if (latest) {
+                    await prisma.ai_telemetry_logs.update({
+                        where: { id: latest.id },
+                        data: flags
+                    });
+                    await featureExtractor.updateLabelByTelemetry(
+                        latest.id,
+                        data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED'
+                    );
+                }
+            }
 
             // Rejestruj wynik predykcji dla sliding AUC
             if (data.wasAiRanked && data.scoreBefore !== undefined) {
@@ -432,12 +442,18 @@ router.post(
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
-            const { value } = req.body;
-            const pct = parseInt(value, 10);
-            if (isNaN(pct) || pct < 0 || pct > 100) {
-                res.status(400).json({ error: 'Wartosc musi byc liczba 0-100' });
+            const aiSettingsSchema = z.object({
+                value: z.coerce.number().int().min(0).max(100)
+            });
+            const parsed = aiSettingsSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'Wartosc musi byc liczba 0-100',
+                    details: parsed.error.issues
+                });
                 return;
             }
+            const pct = parsed.data.value;
             await prisma.settings.upsert({
                 where: { key: 'wells_ai_influence' },
                 update: { value: String(pct) },
@@ -477,7 +493,7 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             featureCount,
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
-            cacheSize: predictionCache.size,
+            cacheSize: predictionCacheSize(),
             aiInfluencePct: parseInt(aiInfluence?.value || '0', 10),
             retention: {
                 keepLast: ML_CONFIG.retention.keepLast,
@@ -618,7 +634,7 @@ router.post('/ai/models/:id/activate', requireAuth, requireAdmin, async (req, re
             res.status(404).json({ error: 'Model nie istnieje' });
             return;
         }
-        predictionCache.clear();
+        clearPredictionCache();
         await logAudit('ai_model', 'activate', authReq.user?.id || '', model.id, {
             version: model.version
         });
@@ -637,7 +653,7 @@ router.post('/ai/train', requireAuth, requireAdmin, async (req, res: Response) =
     const authReq = req as AuthenticatedRequest;
     try {
         const result = await trainingPipeline.run(true);
-        predictionCache.clear();
+        clearPredictionCache();
         await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
             trained: result?.trained ?? false
         });
@@ -690,7 +706,7 @@ router.post('/ai/rollback', requireAuth, requireAdmin, async (req, res: Response
     const authReq = req as AuthenticatedRequest;
     try {
         const previous = await modelRegistry.rollbackToPrevious();
-        predictionCache.clear();
+        clearPredictionCache();
         await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
             rolledBack: !!previous,
             modelId: previous?.id || null
