@@ -915,7 +915,7 @@ svg.lucide {
     padding: 0.3rem 0;
 }
 
-.well-app-layout:not(.intro-mode) .wizard-indicator {
+.well-app-layout .wizard-indicator {
     margin-top: 0.8rem;
 }
 
