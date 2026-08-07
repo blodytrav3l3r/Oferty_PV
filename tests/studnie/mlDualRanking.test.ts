@@ -70,6 +70,7 @@ function loadModule() {
         },
         logger: { info: () => {}, warn: () => {}, error: () => {} },
         console: { warn: () => {}, log: () => {} },
+        authHeaders: () => ({ 'Content-Type': 'application/json', 'X-Auth-Token': 'test-token' }),
         fetch: null as any,
         AbortController,
         setTimeout,

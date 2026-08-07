@@ -95,7 +95,7 @@ function isDennicaProductId(id: string): boolean {
  * normalizacji bity warehouse w oneHotEncode były zawsze 0/0 (train)
  * vs 1/0 (serve fallback 'KLB').
  */
-function normalizeWarehouse(raw?: string | null): string {
+export function normalizeWarehouse(raw?: string | null): string {
     const v = (raw || '').toUpperCase();
     if (v.includes('WŁOCŁAWEK') || v.includes('WLOCLAWEK') || v === 'WL') return 'WL';
     return 'KLB';

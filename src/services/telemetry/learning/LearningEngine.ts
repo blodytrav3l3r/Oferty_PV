@@ -17,9 +17,7 @@ import { logger } from '../../../utils/logger';
 import { PatternDetector } from './PatternDetector';
 import { PreferenceEngine } from './PreferenceEngine';
 import { ML_CONSTANTS } from '../../../config/mlConstants';
-import { KnowledgeBase } from './KnowledgeBase';
 import type { KnowledgePattern } from './KnowledgeBase';
-import { RecommendationEngine } from './RecommendationEngine';
 
 export interface LearningRunSummary {
     processed: number;
@@ -30,19 +28,15 @@ export interface LearningRunSummary {
 }
 
 export class LearningEngine {
-    private kb: KnowledgeBase;
     private patterns: PatternDetector;
     private prefs: PreferenceEngine;
-    private recommend: RecommendationEngine;
     private _running: boolean = false;
     private lastRunAt: string | null = null;
     private initialized: boolean = false;
 
     constructor() {
-        this.kb = new KnowledgeBase();
         this.patterns = new PatternDetector();
         this.prefs = new PreferenceEngine();
-        this.recommend = new RecommendationEngine();
     }
 
     /**
@@ -289,18 +283,6 @@ export class LearningEngine {
         return {
             initialized: this.initialized,
             lastRunAt: await this.loadLastRun()
-        };
-    }
-
-    /**
-     * Dostęp do subkompnentów.
-     */
-    getComponents() {
-        return {
-            kb: this.kb,
-            patterns: this.patterns,
-            prefs: this.prefs,
-            recommend: this.recommend
         };
     }
 }

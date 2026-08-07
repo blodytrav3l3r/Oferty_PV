@@ -655,7 +655,9 @@ window.syncPriceOverrides = syncPriceOverrides;
 async function fetchJson(url, options) {
     if (!window.fetch) return null;
     try {
-        const resp = await fetch(url, Object.assign({ credentials: 'same-origin' }, options || {}));
+        const opts = Object.assign({ credentials: 'same-origin' }, options || {});
+        if (!opts.headers && typeof authHeaders === 'function') opts.headers = authHeaders();
+        const resp = await fetch(url, opts);
         if (resp.status === 403) return { error: 'forbidden' };
         if (!resp.ok) return { error: 'server' };
         return resp.json();

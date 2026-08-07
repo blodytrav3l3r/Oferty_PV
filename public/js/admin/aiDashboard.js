@@ -23,7 +23,7 @@
         if (typeof v === 'object') return v;
         try {
             return JSON.parse(v);
-        } catch (e) {
+        } catch (_e) {
             return null;
         }
     }

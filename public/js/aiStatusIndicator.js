@@ -69,7 +69,7 @@
         if (now - _lastKnowledgeFetch < KNOWLEDGE_THROTTLE_MS) return;
         _lastKnowledgeFetch = now;
         try {
-            fetch(KNOWLEDGE_URL, { credentials: 'same-origin' })
+            fetch(KNOWLEDGE_URL, { headers: authHeaders(), credentials: 'same-origin' })
                 .then(function (response) {
                     return response.ok ? response.json() : null;
                 })
@@ -104,7 +104,7 @@
         if (now - _lastFetch < POLL_INTERVAL_MS) return;
         _lastFetch = now;
         try {
-            fetch(STATUS_URL, { credentials: 'same-origin' })
+            fetch(STATUS_URL, { headers: authHeaders(), credentials: 'same-origin' })
                 .then(function (response) {
                     return response.ok ? response.json() : null;
                 })

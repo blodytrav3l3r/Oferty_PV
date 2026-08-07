@@ -131,7 +131,7 @@ class TelemetryService {
                         modificationCount: payload.modificationCount ?? 0,
                         confidenceScore: payload.confidenceScore ?? null,
                         learningWeight: payload.learningWeight ?? null,
-                        trainingEligible: true,
+                        trainingEligible: this._isTrainingEligible(payload),
                         feedbackProcessed: false,
                         configVersion: payload.configVersion ?? 1,
                         parentConfigId: payload.parentConfigId || null,
@@ -408,6 +408,19 @@ class TelemetryService {
         } catch {
             return '';
         }
+    }
+
+    /**
+     * Rekord jest kandydatem do treningu TYLKO gdy zawiera komplet danych:
+     * niepustą listę komponentów i niezerową cenę z featureSnapshot
+     * (totalPrice=0 sygnalizuje martwe cechy — np. brak produktów studni).
+     */
+    private _isTrainingEligible(payload: TelemetryConfigPayload): boolean {
+        const components = payload.allComponentIds || [];
+        if (components.length === 0) return false;
+        const snap = payload.featureSnapshot || {};
+        const totalPrice = Number(snap.totalPrice) || 0;
+        return totalPrice > 0;
     }
 
     /**

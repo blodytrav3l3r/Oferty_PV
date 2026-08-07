@@ -8,7 +8,6 @@
  * Solver JS pozostaje niezmienny; AI dostarcza tylko ranking opcjonalny.
  */
 
-import type { PatternType } from './KnowledgeBase';
 import { KnowledgeBase } from './KnowledgeBase';
 import type { FeatureVector } from './types';
 import { RankingEngine } from './RankingEngine';
@@ -66,35 +65,5 @@ export class RecommendationEngine {
     async recommendForDn(features: FeatureVector, topN: number = 5) {
         const patterns = await this.kb.getPatternsForDn(features.dn);
         return this.re.rank(features, patterns, topN);
-    }
-
-    /**
-     * Zapis rekomendacji do tabeli ai_recommendations.
-     */
-    async persistRecommendation(input: {
-        patternType: PatternType | string;
-        patternKey: string;
-        dn?: string;
-        wellId?: string;
-        score: number;
-        confidence: number;
-        payload?: Record<string, unknown>;
-    }): Promise<string> {
-        return this.kb.recordRecommendation({
-            patternType: input.patternType as PatternType,
-            patternKey: input.patternKey,
-            dn: input.dn,
-            wellId: input.wellId,
-            score: input.score,
-            confidence: input.confidence,
-            payload: input.payload
-        });
-    }
-
-    /**
-     * Decyzja acceptance/rejection rekomendacji.
-     */
-    async applyDecision(id: string, accepted: boolean, decidedBy: string): Promise<void> {
-        await this.kb.decideRecommendation(id, accepted, decidedBy);
     }
 }

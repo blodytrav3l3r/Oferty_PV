@@ -93,7 +93,7 @@
                     );
                 }
             }
-        } catch (e) {
+        } catch (_e) {
             // silent
         }
         return '';
@@ -127,7 +127,7 @@
             return fetch(url, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })
@@ -142,7 +142,7 @@
                         console.warn('[telemetry] Backend unavailable:', err);
                     }
                 });
-        } catch (e) {
+        } catch (_e) {
             return Promise.resolve();
         }
     }
@@ -267,8 +267,8 @@
             let totalPrice = 0;
             let totalWeight = 0;
             for (let idx = 0; idx < configItems.length; idx++) {
-                let ci = configItems[idx];
-                let prod = studnieProducts.find(function (p) {
+                const ci = configItems[idx];
+                const prod = studnieProducts.find(function (p) {
                     return p.id === ci.productId;
                 });
                 if (prod) {
@@ -393,7 +393,7 @@
 
             // Wyślij pasywnie (bez oczekiwania na response)
             safeFetch(TELEMETRY_URL, payload);
-        } catch (e) {
+        } catch (_e) {
             /* pasywne — ignore */
         }
     };
@@ -409,7 +409,7 @@
             sequenceNo++;
             const payload = Object.assign({ sequenceNo: sequenceNo }, event);
             safeFetch(EVENT_URL, payload);
-        } catch (e) {
+        } catch (_e) {
             /* ignore */
         }
     };
@@ -437,7 +437,7 @@
                 warehouse: options.warehouse || undefined,
                 configSnapshot: options.configSnapshot || undefined
             });
-        } catch (e) {
+        } catch (_e) {
             /* pasywne — ignore */
         }
     };
@@ -457,7 +457,7 @@
                 version: RULES_VERSION,
                 description: 'Reguły doboru elementów studni'
             });
-        } catch (e) {
+        } catch (_e) {
             /* ignore */
         }
     };

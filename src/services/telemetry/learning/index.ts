@@ -8,7 +8,6 @@ export { KnowledgeBase } from './KnowledgeBase';
 export { PreferenceEngine } from './PreferenceEngine';
 export { RankingEngine } from './RankingEngine';
 export { RecommendationEngine } from './RecommendationEngine';
-export { FeedbackProcessor } from './FeedbackProcessor';
 export { ConfidenceCalculator } from './ConfidenceCalculator';
 export { LearningEngine, learningEngine } from './LearningEngine';
 
@@ -17,7 +16,5 @@ export type { PatternType, KnowledgePattern, RecommendationRecord } from './Know
 export type { RankedRecommendation } from './RankingEngine';
 
 export type { TopRecommendation } from './RecommendationEngine';
-
-export type { FeedbackEvent } from './FeedbackProcessor';
 
 export type { LearningRunSummary } from './LearningEngine';

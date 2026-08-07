@@ -19,28 +19,28 @@
 
     /* ===== KONFIGURACJA ===== */
 
-    let BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
-    let SETTINGS_URL = '/api/telemetry/ai/settings';
-    let ML_STATUS_URL = '/api/telemetry/ai/ml-status';
-    let FETCH_TIMEOUT = 3000;
+    const BATCH_PREDICT_URL = '/api/telemetry/ai/predict/batch';
+    const SETTINGS_URL = '/api/telemetry/ai/settings';
+    const ML_STATUS_URL = '/api/telemetry/ai/ml-status';
+    const FETCH_TIMEOUT = 3000;
 
-    let MAX_AI_CANDIDATES = 10;
+    const MAX_AI_CANDIDATES = 10;
 
-    let RELATIVE_GAP_THRESHOLD = 0.1;
-    let EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
-    let EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
+    const RELATIVE_GAP_THRESHOLD = 0.1;
+    const EXPLORE_RATE_LOW_CONFIDENCE = 0.3;
+    const EXPLORE_RATE_HIGH_CONFIDENCE = 0.05;
     // Minimalny rozrzut (1-aiScore) w poolu, przy którym AI w ogóle wpływa na ranking.
     // Przy auc~0.5 score zdegenerowanego modelu różnią się tylko na 4. miejscu po przecinku;
     // min-max bez progu rozciągałby ten szum do pełnej skali i produkował fałszywe flipy.
-    let AI_COST_MIN_RANGE = 0.05;
+    const AI_COST_MIN_RANGE = 0.05;
 
     let FEATURE_VERSION = 'v6';
     let _featureVersionFetched = false;
-    let RANKING_VERSION = 'dual_v1';
+    const RANKING_VERSION = 'dual_v1';
 
     /** @type {Map<string, {score:number, timestamp:number}>} */
-    let scoreCache = new Map();
-    let CACHE_TTL = 15 * 60 * 1000;
+    const scoreCache = new Map();
+    const CACHE_TTL = 15 * 60 * 1000;
     var CACHE_MAX_SIZE = 200;
 
     function setScoreCache(key, value) {
@@ -72,19 +72,20 @@
 
     async function fetchFeatureVersionFromBackend() {
         try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
-            let res = await fetch(ML_STATUS_URL, {
+            const res = await fetch(ML_STATUS_URL, {
+                headers: authHeaders(),
                 credentials: 'same-origin',
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
             if (!res.ok) return null;
-            let data = await res.json();
+            const data = await res.json();
             return typeof data.featureVersion === 'string' ? data.featureVersion : null;
-        } catch (e) {
+        } catch (_e) {
             return null;
         }
     }
@@ -93,7 +94,7 @@
     // FEATURE_VERSION_MISMATCH — jednorazowy 400 nie może zablokować AI na całą sesję).
     async function resolveFeatureVersion(force) {
         if (_featureVersionFetched && !force) return FEATURE_VERSION;
-        let backend = await fetchFeatureVersionFromBackend();
+        const backend = await fetchFeatureVersionFromBackend();
         if (backend !== null) {
             FEATURE_VERSION = backend;
         }
@@ -103,37 +104,38 @@
 
     async function fetchAiInfluenceFromBackend() {
         try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function () {
                 controller.abort();
             }, 2000);
-            let res = await fetch(SETTINGS_URL, {
+            const res = await fetch(SETTINGS_URL, {
+                headers: authHeaders(),
                 credentials: 'same-origin',
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
             if (!res.ok) return null;
-            let data = await res.json();
+            const data = await res.json();
             return parseInt(data.value, 10);
-        } catch (e) {
+        } catch (_e) {
             return null;
         }
     }
 
     async function getAiInfluencePct() {
         // 1. URL override (dev/test)
-        let urlMatch = window.location.search.match(/[?&]ai_influence=(\d+)/);
+        const urlMatch = window.location.search.match(/[?&]ai_influence=(\d+)/);
         if (urlMatch) return parseInt(urlMatch[1], 10);
 
         // 2. localStorage override
-        let local = window.localStorage.getItem('wells_ai_influence');
+        const local = window.localStorage.getItem('wells_ai_influence');
         if (local !== null) {
-            let p = parseInt(local, 10);
+            const p = parseInt(local, 10);
             if (!isNaN(p) && p >= 0 && p <= 100) return p;
         }
 
         // 3. Backend config (DB settings)
-        let backend = await fetchAiInfluenceFromBackend();
+        const backend = await fetchAiInfluenceFromBackend();
         if (backend !== null && backend >= 0 && backend <= 100) return backend;
 
         // 4. Default: shadow mode
@@ -184,10 +186,10 @@
     function ensureWellFeatureContext(well) {
         if (!well) return;
 
-        let h = parseFloat(well.wellHeight);
+        const h = parseFloat(well.wellHeight);
         if (well.wellHeight === undefined || well.wellHeight === null || isNaN(h)) {
-            let a = parseFloat(well.rzednaWlazu);
-            let b = parseFloat(well.rzednaDna);
+            const a = parseFloat(well.rzednaWlazu);
+            const b = parseFloat(well.rzednaDna);
             if (Number.isFinite(a) && Number.isFinite(b)) {
                 well.wellHeight = Math.round((a - b) * 1000);
             } else {
@@ -226,7 +228,7 @@
      * kosztu uszczelek do totalPrice/totalWeight (spójność z treningiem).
      */
     function gasketNameForDn(uType, dnStr) {
-        let uTypeNorm = String(uType || '').toUpperCase();
+        const uTypeNorm = String(uType || '').toUpperCase();
         if (uTypeNorm === 'GSG') return 'Uszczelka GSG DN' + dnStr;
         if (uTypeNorm === 'SDV') return 'Uszczelka SDV DN' + dnStr;
         if (uTypeNorm === 'SDV PO')
@@ -237,14 +239,14 @@
 
     function buildFeatureVector(layout, well) {
         ensureWellFeatureContext(well);
-        let dn = parseInt(well.dn) || 0;
-        let heightMm = parseInt(well.wellHeight) || 0;
-        let warehouse = (well.warehouse || 'KLB').toUpperCase();
-        let wellType = (well.type || 'standard').toLowerCase();
+        const dn = parseInt(well.dn) || 0;
+        const heightMm = parseInt(well.wellHeight) || 0;
+        const warehouse = (well.warehouse || 'KLB').toUpperCase();
+        const wellType = (well.type || 'standard').toLowerCase();
 
-        let hasReduction = !!well.redukcjaDN1000;
-        let hasPsiaBuda = wellType === 'psia_buda';
-        let hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
+        const hasReduction = !!well.redukcjaDN1000;
+        const hasPsiaBuda = wellType === 'psia_buda';
+        const hasStyczna = wellType === 'styczna' || wellType === 'styczna_1200';
         // GAP C: connectionCount na serve musi liczyć uszczelki tak jak trening
         // (FeatureExtractor: sealIds.length) i recalcGaskets — solver nie emituje
         // layout.sealCount, więc liczymy unikalne DN nośników uszczelek w layout.
@@ -307,7 +309,7 @@
                 }
             }
         }
-        let transitionsAboveDennica = Math.max(0, connectionCount - 1);
+        const transitionsAboveDennica = Math.max(0, connectionCount - 1);
         // totalPrice/totalWeight: kandydaci z solve() nie mają layout.totalPrice/Weight —
         // licz z komponentów rozwiązania (wzór jak telemetryBridge.js), żeby model widział
         // koszty przy rankingowaniu (wcześniej zawsze 0 → cechy martwe na serve).
@@ -350,21 +352,22 @@
         }
         // ringVariety: entropia Shannona z UNIKALNYCH ID kregow (KDB-/KDZ-) —
         // identyczna semantyka jak backend (shannonEntropy nad unikalnymi ID kregow).
-        let ringVariety = shannonEntropy(ringUniqueIds);
+        const ringVariety = shannonEntropy(ringUniqueIds);
 
         // === v6: kineta (one-hot) + dennicaHeight ===
-        let kineta = (well.kineta || '').toLowerCase();
-        let isKinetaPreco = kineta === 'preco' || kineta === 'precotop';
-        let isKinetaUnolith = kineta === 'unolith';
-        let isKinetaStandard = kineta === 'beton' || kineta === '';
+        const kineta = (well.kineta || '').toLowerCase();
+        const isKinetaPreco = kineta === 'preco' || kineta === 'precotop';
+        const isKinetaUnolith = kineta === 'unolith';
+        const isKinetaStandard = kineta === 'beton' || kineta === '';
         // ponytail: dennicaHeight = wysokość dennicy ocenianego kandydata (layout.dennica).
         // Solver emituje 1 dennnicę na studnię, więc jest to spójne z telemetryBridge
         // (sumą dennicy z finalnego configa). Przy konfiguracji z 2+ dennnicami byłby
         // minimalny skew train/serve — zaakceptowany (rzadki przypadek, height w mm całkowitych).
         let dennicaHeightMm = 0;
         if (layout.dennica && layout.dennica.productId) {
-            let prods = typeof window.studnieProducts !== 'undefined' ? window.studnieProducts : [];
-            let prod = prods.find(function (p) {
+            const prods =
+                typeof window.studnieProducts !== 'undefined' ? window.studnieProducts : [];
+            const prod = prods.find(function (p) {
                 return p.id === layout.dennica.productId;
             });
             if (prod && prod.height) dennicaHeightMm = parseFloat(prod.height) || 0;
@@ -426,17 +429,17 @@
      * @returns {Promise<Map<number, number>>} mapa candidateId → aiScore
      */
     async function fetchAiScoresBatch(candidates, well, retried) {
-        let resultMap = new Map();
-        let toFetch = [];
+        const resultMap = new Map();
+        const toFetch = [];
         await resolveFeatureVersion(retried);
 
         for (let i = 0; i < candidates.length; i++) {
-            let c = candidates[i];
-            let features = buildFeatureVector(c.solution, well);
+            const c = candidates[i];
+            const features = buildFeatureVector(c.solution, well);
             // Klucz cache zawiera featureVersion — zmiana wersji cech nie serwuje starych score'ów.
-            let key = FEATURE_VERSION + '|' + features.join(',');
+            const key = FEATURE_VERSION + '|' + features.join(',');
 
-            let cached = scoreCache.get(key);
+            const cached = scoreCache.get(key);
             if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
                 resultMap.set(c.id, cached.score);
             } else {
@@ -456,15 +459,15 @@
         }
 
         try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function () {
                 controller.abort();
             }, FETCH_TIMEOUT);
 
-            let res = await fetch(BATCH_PREDICT_URL, {
+            const res = await fetch(BATCH_PREDICT_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify({
                     candidates: toFetch,
                     featureVersion: FEATURE_VERSION
@@ -480,11 +483,11 @@
                 // sesję — odśwież wersję cech z backendu i ponów zapytanie (max 1 raz).
                 if (res.status === 400 && !retried) {
                     try {
-                        let err = await res.json();
+                        const err = await res.json();
                         if (err && err.error === 'FEATURE_VERSION_MISMATCH') {
                             return fetchAiScoresBatch(candidates, well, true);
                         }
-                    } catch (e) {
+                    } catch (_e) {
                         /* ignoruj — zejdź do fallbacku -1 */
                     }
                 }
@@ -495,19 +498,19 @@
                 return resultMap;
             }
 
-            let data = await res.json();
+            const data = await res.json();
             if (data.scores && data.scores.length > 0) {
                 mlOnline = true;
                 for (let k = 0; k < data.scores.length; k++) {
-                    let s = data.scores[k];
+                    const s = data.scores[k];
                     activeModelVersion = s.version;
                     resultMap.set(s.id, s.score);
                     // Update cache
-                    let featKey = toFetch.find(function (t) {
+                    const featKey = toFetch.find(function (t) {
                         return t.id === s.id;
                     });
                     if (featKey) {
-                        let fk = FEATURE_VERSION + '|' + featKey.features.join(',');
+                        const fk = FEATURE_VERSION + '|' + featKey.features.join(',');
                         setScoreCache(fk, { score: s.score, timestamp: Date.now() });
                     }
                 }
@@ -523,7 +526,7 @@
                     resultMap.set(toFetch[m].id, -1);
                 }
             }
-        } catch (e) {
+        } catch (_e) {
             mlOnline = false;
             for (let n = 0; n < toFetch.length; n++) {
                 resultMap.set(toFetch[n].id, -1);
@@ -553,12 +556,12 @@
             });
         }
 
-        let scores = candidates.map(function (c) {
+        const scores = candidates.map(function (c) {
             return c.technicalScore;
         });
-        let min = Math.min.apply(null, scores);
-        let max = Math.max.apply(null, scores);
-        let range = max - min || 1;
+        const min = Math.min.apply(null, scores);
+        const max = Math.max.apply(null, scores);
+        const range = max - min || 1;
 
         return candidates.map(function (c) {
             return {
@@ -590,8 +593,8 @@
      * }>}
      */
     async function rankCandidates(opts) {
-        let candidates = opts.candidates;
-        let well = opts.well;
+        const candidates = opts.candidates;
+        const well = opts.well;
 
         if (!candidates || candidates.length === 0) {
             return {
@@ -612,34 +615,34 @@
         }
 
         // 2. Limit do MAX_AI_CANDIDATES
-        let pool = candidates.slice(0, MAX_AI_CANDIDATES);
+        const pool = candidates.slice(0, MAX_AI_CANDIDATES);
 
         // 3. Normalizacja technical score (min-max w poolu)
-        let normalized = normalizeTechnicalScores(pool);
+        const normalized = normalizeTechnicalScores(pool);
 
         // 4. Batch predict AI scores
-        let aiScoreMap = await fetchAiScoresBatch(pool, well);
+        const aiScoreMap = await fetchAiScoresBatch(pool, well);
 
         // 5. Oblicz final score
-        let aiWeight = influencePct / 100;
-        let techWeight = 1 - aiWeight;
+        const aiWeight = influencePct / 100;
+        const techWeight = 1 - aiWeight;
 
         // 5a. Surowy "koszt" AI (lower is better) dla kandydatów online.
         // Min-max w poolu — analogicznie do technicalNormalized. Bez tego każdy kandydat
         // ma identyczny aiCost (nasycony sigmoid ~0.9994) i AI nie zmienia kolejności.
-        let rawAiCosts = normalized.map(function (c) {
+        const rawAiCosts = normalized.map(function (c) {
             let aiScore = aiScoreMap.get(c.id);
             if (aiScore === undefined) aiScore = -1;
             return aiScore >= 0 ? 1 - aiScore : null;
         });
-        let onlineCosts = rawAiCosts.filter(function (v) {
+        const onlineCosts = rawAiCosts.filter(function (v) {
             return v !== null;
         });
-        let minCost = onlineCosts.length > 0 ? Math.min.apply(null, onlineCosts) : 0;
-        let maxCost = onlineCosts.length > 0 ? Math.max.apply(null, onlineCosts) : 0;
-        let costRange = maxCost - minCost;
+        const minCost = onlineCosts.length > 0 ? Math.min.apply(null, onlineCosts) : 0;
+        const maxCost = onlineCosts.length > 0 ? Math.max.apply(null, onlineCosts) : 0;
+        const costRange = maxCost - minCost;
 
-        let ranked = normalized.map(function (c) {
+        const ranked = normalized.map(function (c) {
             let aiScore = aiScoreMap.get(c.id);
             if (aiScore === undefined) aiScore = -1;
 
@@ -654,8 +657,8 @@
                 // Neutral (0) gdy <2 kandydatów online (brak względem kogo) lub rozrzut
                 // <= AI_COST_MIN_RANGE (szum) — wtedy ranking pozostaje czysto techniczny,
                 // a pojedynczy kandydat online nie dostaje kary 0.5 względem offline.
-                let aiCost = 1 - aiScore;
-                let aiCostNormalized =
+                const aiCost = 1 - aiScore;
+                const aiCostNormalized =
                     onlineCosts.length < 2 || costRange <= AI_COST_MIN_RANGE
                         ? 0
                         : (aiCost - minCost) / costRange;
@@ -711,24 +714,24 @@
             };
         }
 
-        let aiWinner = ranked[0].solution;
+        const aiWinner = ranked[0].solution;
         let winner = ranked[0];
         let triggered = false;
         let exploredFrom = null;
 
         if (ranked.length > 1) {
-            let gap =
+            const gap =
                 (ranked[1].finalScore - ranked[0].finalScore) / Math.abs(ranked[0].finalScore || 1);
-            let lowConfidence = gap < RELATIVE_GAP_THRESHOLD;
-            let rate = lowConfidence ? EXPLORE_RATE_LOW_CONFIDENCE : EXPLORE_RATE_HIGH_CONFIDENCE;
+            const lowConfidence = gap < RELATIVE_GAP_THRESHOLD;
+            const rate = lowConfidence ? EXPLORE_RATE_LOW_CONFIDENCE : EXPLORE_RATE_HIGH_CONFIDENCE;
 
             if (Math.random() < rate) {
                 exploredFrom = 0;
                 // Losuj z top-5 (lub top-3 gdy wysoka pewność)
-                let poolSize = lowConfidence
+                const poolSize = lowConfidence
                     ? Math.min(5, ranked.length)
                     : Math.min(3, ranked.length);
-                let randomIdx = 1 + Math.floor(Math.random() * (poolSize - 1));
+                const randomIdx = 1 + Math.floor(Math.random() * (poolSize - 1));
                 winner = ranked[randomIdx];
                 triggered = true;
             }
@@ -776,7 +779,7 @@
             }
         }
 
-        let reason = {
+        const reason = {
             candidateCount: opts.ranked ? opts.ranked.length : 0,
             technicalWinnerIdx: technicalWinnerIdx,
             aiWinnerIdx: aiWinnerIdx,

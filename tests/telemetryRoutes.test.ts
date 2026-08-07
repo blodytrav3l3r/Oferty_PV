@@ -27,7 +27,6 @@ import { KnowledgeBase } from '../src/services/telemetry/learning/KnowledgeBase'
 import { PatternDetector } from '../src/services/telemetry/learning/PatternDetector';
 import { RecommendationEngine } from '../src/services/telemetry/learning/RecommendationEngine';
 import { PreferenceEngine } from '../src/services/telemetry/learning/PreferenceEngine';
-import { FeedbackProcessor } from '../src/services/telemetry/learning/FeedbackProcessor';
 import { LearningEngine } from '../src/services/telemetry/learning/LearningEngine';
 import { cronService } from '../src/utils/cronService';
 
@@ -282,6 +281,51 @@ describe('telemetryService - deduplikacja AUTO_JS', () => {
         expect(count).toBe(2);
         await prisma.ai_telemetry_logs.deleteMany({ where: { projectId: pid } });
     });
+
+    /* ===== Guardy jakości treningowej (Faza 1) ===== */
+
+    const QUALITY_PREFIX = 'test_quality_';
+    const qualityPayload = (over: Record<string, unknown> = {}) => ({
+        solverSource: 'AUTO_JS' as const,
+        wellId: QUALITY_PREFIX + crypto.randomUUID().slice(0, 8),
+        dn: '1200',
+        wellHeight: 3000,
+        allComponentIds: ['KDB-12-05-D', 'KDB-12-04-B'],
+        featureSnapshot: { totalPrice: 1200, totalWeight: 340 },
+        ...over
+    });
+
+    afterEach(async () => {
+        await prisma.ai_telemetry_logs.deleteMany({
+            where: { wellId: { startsWith: QUALITY_PREFIX } }
+        });
+    });
+
+    it('rekord z komponentami i totalPrice>0 → trainingEligible=true', async () => {
+        const r = await telemetryService.recordConfig(qualityPayload());
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r.telemetryId }
+        });
+        expect(row?.trainingEligible).toBe(true);
+    });
+
+    it('rekord z totalPrice=0 → trainingEligible=false', async () => {
+        const r = await telemetryService.recordConfig(
+            qualityPayload({ featureSnapshot: { totalPrice: 0, totalWeight: 0 } })
+        );
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r.telemetryId }
+        });
+        expect(row?.trainingEligible).toBe(false);
+    });
+
+    it('rekord bez allComponentIds → trainingEligible=false', async () => {
+        const r = await telemetryService.recordConfig(qualityPayload({ allComponentIds: [] }));
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r.telemetryId }
+        });
+        expect(row?.trainingEligible).toBe(false);
+    });
 });
 
 /* ===== ConfidenceCalculator - matematyka ===== */
@@ -427,57 +471,6 @@ describe('PreferenceEngine - budowanie preferencji', () => {
     });
 });
 
-/* ===== FeedbackProcessor - mapowanie ===== */
-
-describe('FeedbackProcessor', () => {
-    let fp: FeedbackProcessor;
-    beforeEach(() => {
-        fp = new FeedbackProcessor();
-    });
-
-    it('feedback telemetry -> FeedbackEvent mapping', () => {
-        const accept = fp.fromTelemetryEvent({
-            eventType: 'accept',
-            createdAt: NOW()
-        });
-        expect(accept?.type).toBe('accept');
-    });
-
-    it('unknown event → null', () => {
-        const x = fp.fromTelemetryEvent({ eventType: 'unknown', createdAt: NOW() });
-        expect(x).toBeNull();
-    });
-
-    it('fallback_triggered -> type fallback', () => {
-        const f = fp.fromTelemetryEvent({
-            eventType: 'fallback_triggered',
-            createdAt: NOW()
-        });
-        expect(f?.type).toBe('fallback');
-    });
-
-    it('user_change z previousValue/newValue', () => {
-        const ev = fp.fromTelemetryEvent({
-            eventType: 'user_change',
-            previousValue: 'A',
-            newValue: 'B',
-            createdAt: NOW()
-        });
-        expect(ev?.type).toBe('modify');
-        expect(ev?.details?.from).toBe('A');
-        expect(ev?.details?.to).toBe('B');
-    });
-
-    it('fromBatch mapuje wiele eventów', () => {
-        const out = fp.fromBatch([
-            { eventType: 'accept', createdAt: NOW() } as { eventType: string },
-            { eventType: 'reject', createdAt: NOW() } as { eventType: string },
-            { eventType: 'unknown', createdAt: NOW() } as { eventType: string }
-        ]);
-        expect(out.length).toBe(2);
-    });
-});
-
 /* ===== Real DB tests ===== */
 
 describe('KnowledgeBase - operacje na DB', () => {
@@ -575,18 +568,6 @@ describe('RecommendationEngine', () => {
         expect(Array.isArray(out)).toBe(true);
     });
 
-    it('persistRecommendation + applyDecision', async () => {
-        const id = await re.persistRecommendation({
-            patternType: 'dennica_swap',
-            patternKey: 'rec_e2e_' + crypto.randomUUID().slice(0, 6),
-            dn: '1200',
-            score: 0.5,
-            confidence: 0.7
-        });
-        expect(typeof id).toBe('string');
-        await re.applyDecision(id, true, 'admin');
-    });
-
     it('recommendForDn - top N', async () => {
         const fv = {
             wellId: 'w',
@@ -651,14 +632,6 @@ describe('LearningEngine - pipeline', () => {
         const s = await le.getStatus();
         expect(s).toHaveProperty('initialized');
         expect(s).toHaveProperty('lastRunAt');
-    });
-
-    it('getComponents udostępnia subkomponenty', () => {
-        const c = le.getComponents();
-        expect(c.kb).toBeDefined();
-        expect(c.patterns).toBeDefined();
-        expect(c.prefs).toBeDefined();
-        expect(c.recommend).toBeDefined();
     });
 });
 

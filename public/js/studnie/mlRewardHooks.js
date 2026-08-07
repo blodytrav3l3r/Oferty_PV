@@ -85,7 +85,7 @@
             fetch(REWARD_URL, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })

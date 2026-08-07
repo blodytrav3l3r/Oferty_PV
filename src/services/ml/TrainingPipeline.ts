@@ -2,7 +2,7 @@ import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import { AcceptanceModel } from './AcceptanceModel';
 import { modelRegistry, type ModelMetrics } from './ModelRegistry';
-import { featureExtractor } from './FeatureExtractor';
+import { featureExtractor, normalizeWarehouse } from './FeatureExtractor';
 import { ML_CONFIG } from './trainingConfig';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
 
@@ -18,12 +18,6 @@ function seasonToNum(s: string): number {
     if (lower === 'autumn') return 2;
     if (lower === 'winter') return 3;
     return 0;
-}
-
-function normalizeWarehouse(raw?: string | null): string {
-    const v = (raw || '').toUpperCase();
-    if (v.includes('WŁOCŁAWEK') || v.includes('WLOCLAWEK') || v === 'WL') return 'WL';
-    return 'KLB';
 }
 
 function oneHotEncode(raw: Record<string, unknown>): number[] {
