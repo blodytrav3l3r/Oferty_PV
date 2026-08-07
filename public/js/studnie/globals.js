@@ -5,6 +5,18 @@ let studnieProducts = [];
 let currentUser = null;
 let currentCennikTab = 'dn1000';
 
+// window.studnieProducts — proxy na zmienną modułową. telemetryBridge/mlDualRanking
+// czytają przez window, a lista jest wymieniana w miejscu (appStudnie.js, pricelist*).
+// Getter gwarantuje aktualną referencję niezależnie od tego, kiedy odczyt następuje;
+// setter (np. externalExportTemplate) zapisuje do tej samej zmiennej.
+Object.defineProperty(window, 'studnieProducts', {
+    configurable: true,
+    get: () => studnieProducts,
+    set: (v) => {
+        studnieProducts = v;
+    }
+});
+
 // System wielu studni
 let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
