@@ -707,7 +707,7 @@
     /* ===== FEATURE IMPORTANCE ===== */
     /* GET /api/telemetry/ai/feature-importance zwraca { modelVersion, features: [{featureName, importance}] }
        posortowane malejąco wg importance. 503 (brak aktywnego modelu) jest normalizowane przez fetchJson
-       na {error:'server'} — dla pustej listy cech pokazujemy komunikat o braku modelu. */
+       na {error:'unavailable'} — dla braku modelu pokazujemy komunikat o uruchomieniu treningu ML. */
     function renderFeatureImportance(container) {
         container.innerHTML = loadingHtml();
         var p = window.fetchJson(ENDPOINTS.featureImportance);

@@ -659,6 +659,7 @@ async function fetchJson(url, options) {
         if (!opts.headers && typeof authHeaders === 'function') opts.headers = authHeaders();
         const resp = await fetch(url, opts);
         if (resp.status === 403) return { error: 'forbidden' };
+        if (resp.status === 503) return { error: 'unavailable' };
         if (!resp.ok) return { error: 'server' };
         return resp.json();
     } catch (e) {
