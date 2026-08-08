@@ -119,9 +119,10 @@
     border-color: var(--bg-tertiary);
 }
 .zlecenia-filter-tab.active {
-    background: rgba(var(--accent-rgb), 0.1);
-    border-color: rgba(var(--accent-rgb), 0.5);
-    color: var(--accent-hover);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border-color: transparent;
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
 }
 .zlecenia-filter-tab:focus-visible {
     outline: 2px solid var(--accent);
