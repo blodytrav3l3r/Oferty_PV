@@ -369,9 +369,20 @@ function _excelHandleKeydown(e) {
         return;
     }
 
-    /* Ctrl+D = kopiuj w dół */
+    /* Ctrl+D = kopiuj w dół (z zaznaczeniem) / duplikacja studni (bez zaznaczenia) */
     if (isCtrl && (e.key === 'd' || e.key === 'D')) {
-        if (_excelSelectedCells.length === 0) return;
+        if (_excelSelectedCells.length === 0) {
+            /* Bez zaznaczenia komórek: duplikuj aktywny wiersz jako nową studnię */
+            let activeRow = document.activeElement
+                ? document.activeElement.closest('tr[data-widx]')
+                : null;
+            if (!activeRow) return;
+            let dupWIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+            if (isNaN(dupWIdx)) return;
+            e.preventDefault();
+            if (typeof excelDuplicateWell === 'function') excelDuplicateWell(dupWIdx);
+            return;
+        }
         e.preventDefault();
         _excelSaveUndoSnapshot();
         _excelSelectedCells.forEach(function (cell) {
@@ -413,6 +424,13 @@ function _excelHandleKeydown(e) {
             );
         });
         showToast('Skopiowano w prawo', 'info');
+        return;
+    }
+    /* Ctrl+Enter = wypełnij zaznaczenie wartością komórki aktywnej */
+    if (isCtrl && e.key === 'Enter') {
+        if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
+        e.preventDefault();
+        if (typeof _excelHandleFillDown === 'function') _excelHandleFillDown();
         return;
     }
 }

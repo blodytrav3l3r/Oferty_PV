@@ -316,9 +316,16 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     /* Pełny re-render tylko dla kręgów — konwersja krag/krag_ot musi pokazać
        finalny config (poprawka błędu #21 z AGENTS.md). Dla pozostałych komponentów
        wystarczy _excelMarkAsManual (linia 209) + odświeżenie komórek — pełny
-       re-render przy każdym znaku blokowałby wpisywanie wielocyfrowych ilości. */
+       re-render przy każdym znaku blokowałby wpisywanie wielocyfrowych ilości.
+       Podczas batch (fill/paste) re-render jest odkładany do jednego przebiegu
+       na koniec operacji — inaczej wypełnianie kolumny kręgów renderuje tabelę
+       po każdej komórce (H1). */
     if (componentType === 'krag' || componentType === 'krag_ot') {
-        _excelMarkManual(well);
+        if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) {
+            if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = true;
+        } else {
+            _excelMarkManual(well);
+        }
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);

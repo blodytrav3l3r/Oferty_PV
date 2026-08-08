@@ -223,7 +223,10 @@ function openExcelTableModal() {
             </div>
             <div style="display:flex;gap:0.4rem;align-items:center;">
 
-                <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:3px;padding:0.25rem 0.4rem;font-size:0.6rem;color:var(--slate-200);outline:none;width:100px;" />
+                <div style="position:relative;display:flex;align-items:center;">
+                    <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:3px;padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size:0.6rem;color:var(--slate-200);outline:none;width:220px;" />
+                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" style="display:none;position:absolute;right:4px;background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:0.7rem;padding:2px;line-height:1;">✕</button>
+                </div>
                 <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" title="Pokaż/ukryj kolumny" style="background:rgba(var(--accent2-rgb), 0.1);color:var(--accent2-hover);border:1px solid rgba(var(--accent2-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="columns" style="width:12px;height:12px;"></i> Kolumny</button>
                 <button onclick="openPrzejsciaVisibilityPopup('excel')" title="Pokaż/ukryj typy przejść" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="eye" style="width:12px;height:12px;"></i> Przejścia</button>
                 <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
@@ -241,6 +244,9 @@ function openExcelTableModal() {
     _excelRegisterExcelListeners();
 
     _excelLoadColumnVisibility();
+    _excelLoadColWidths();
+    /* Aktualne statusy konfiguracji przed renderem (podświetlenie wierszy F4) */
+    if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
     _excelActiveTab = DN_TABS[0];
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);

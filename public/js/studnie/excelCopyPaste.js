@@ -390,3 +390,114 @@ function _excelSetCellValue(target, val) {
         target.dispatchEvent(new Event('change', { bubbles: true }));
     }
 }
+
+/* ===== FILL ZAZNACZENIA (Ctrl+Enter) ===== */
+
+/* Czysta funkcja budująca plan wypełnienia — bez DOM, testowalna.
+   Pomija: kolumny strukturalne + nazwę (colIdx <= 3), aktywną komórkę
+   (źródło wartości), wiersze ukryte filtrem (rowsMeta[w].hidden) i
+   zablokowane (rowsMeta[w].locked). Zwraca posortowane, zdduplikowane komórki. */
+function _excelBuildFillPlan(opts) {
+    let cells = opts && opts.cells ? opts.cells : [];
+    let cols = opts && opts.cols ? opts.cols : [];
+    let active = opts && opts.active ? opts.active : null;
+    let rowsMeta = (opts && opts.rowsMeta) || {};
+    let plan = [];
+    let seen = {};
+    let add = function (wIdx, colIdx) {
+        if (colIdx <= 3) return; /* strukturalne + nazwa studni — nigdy */
+        let meta = rowsMeta[wIdx] || {};
+        if (meta.hidden || meta.locked) return;
+        if (active && wIdx === active.wIdx && colIdx === active.colIdx) return;
+        let key = wIdx + ':' + colIdx;
+        if (seen[key]) return;
+        seen[key] = true;
+        plan.push({ wIdx: wIdx, colIdx: colIdx });
+    };
+    cells.forEach(function (c) {
+        add(c.wIdx, c.colIdx);
+    });
+    cols.forEach(function (ci) {
+        Object.keys(rowsMeta).forEach(function (wk) {
+            let wIdx = parseInt(wk, 10);
+            if (!isNaN(wIdx)) add(wIdx, ci);
+        });
+    });
+    plan.sort(function (a, b) {
+        return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
+    });
+    return plan;
+}
+
+/* Wypełnia zaznaczony zakres wartością komórki aktywnej (Ctrl+Enter).
+   Jeden snapshot undo + flaga _excelPasteInProgress (wzorzec wklejania, #29). */
+function _excelHandleFillDown() {
+    if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
+    let activeEl = document.activeElement;
+    let value = undefined;
+    if (activeEl) {
+        if (activeEl.tagName === 'INPUT' || activeEl.tagName === 'SELECT') {
+            /* Źródło NIE może być checkboxem (wartość "on") ani kolumną
+               strukturalną (checkbox 0, A/M 1, Lp 2, nazwa 3) — nadpisałoby
+               komórki danych bezsensowną wartością (S1). */
+            if (activeEl.tagName === 'INPUT' && activeEl.type === 'checkbox') return;
+            let srcTd = activeEl.closest('td');
+            let srcColIdx = -1;
+            if (srcTd && srcTd.parentElement) {
+                srcColIdx = Array.from(srcTd.parentElement.children).indexOf(srcTd);
+            }
+            if (srcColIdx >= 0 && srcColIdx <= 3) return;
+            value = /** @type {HTMLInputElement | HTMLSelectElement} */ (activeEl).value;
+        } else {
+            let wrap = activeEl.closest ? activeEl.closest('td') : null;
+            if (wrap) {
+                let t = wrap.querySelector('input, select');
+                if (t) value = /** @type {HTMLInputElement | HTMLSelectElement} */ (t).value;
+            }
+        }
+    }
+    if (value === undefined) return;
+    /* rowsMeta: ukrycie filtrem + blokada PZ per wiersz */
+    let rowsMeta = {};
+    document.querySelectorAll('#excel-table-container tbody tr[data-widx]').forEach(function (row) {
+        let wIdx = parseInt(row.getAttribute('data-widx'), 10);
+        if (isNaN(wIdx)) return;
+        rowsMeta[wIdx] = {
+            hidden: row.style.display === 'none',
+            locked: typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)
+        };
+    });
+    let active =
+        _excelLastClickedCell && _excelLastClickedCell.wIdx !== undefined
+            ? _excelLastClickedCell
+            : null;
+    let plan = _excelBuildFillPlan({
+        cells: _excelSelectedCells,
+        cols: _excelSelectedCols,
+        active: active,
+        rowsMeta: rowsMeta
+    });
+    if (plan.length === 0) return;
+    if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = false;
+    _excelSaveUndoSnapshot();
+    _excelPasteInProgress = true;
+    try {
+        plan.forEach(function (cell) {
+            let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!row) return;
+            let td = row.children[cell.colIdx];
+            let target = td ? td.querySelector('input, select') : null;
+            if (target) _excelSetCellValue(target, value);
+        });
+        /* Krag/krag_ot: jeden pełny render po całym fill (konwersja musi pokazać
+           finalny config), zamiast re-rendera po każdej komórce (H1). */
+        if (typeof _excelBatchKragTouched !== 'undefined' && _excelBatchKragTouched) {
+            _excelBatchKragTouched = false;
+            if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+        }
+        _excelDebouncedRefresh();
+        showToast('Wypełniono ' + plan.length + ' komórek', 'info');
+    } finally {
+        _excelPasteInProgress = false;
+    }
+}

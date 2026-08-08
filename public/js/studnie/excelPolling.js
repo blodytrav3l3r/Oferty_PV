@@ -19,6 +19,8 @@ function _excelStartPolling() {
             lastSnapshot = snap;
             /* Lekka aktualizacja — nie re-render caly, tylko tryb AUTO/MAN */
             _excelSyncAutoManualUI();
+            /* Tła wierszy zależne od configStatus (zmiana statusu z głównego panelu) */
+            if (typeof _excelRefreshDupColors === 'function') _excelRefreshDupColors();
         }
     }, 200);
     /* Inicjalny snapshot */
@@ -39,7 +41,9 @@ function _excelBuildWellsSnapshot() {
                 ':' +
                 (w.autoSelect === false ? '0' : '1') +
                 ':' +
-                (w.config ? w.config.length : 0)
+                (w.config ? w.config.length : 0) +
+                ':' +
+                (w.configStatus || '-')
         );
     }
     return parts.join('|');
@@ -104,6 +108,17 @@ function _excelDebouncedRefresh() {
         _excelRefreshTimer = null;
         /* Tylko odśwież kody h3 — NIE refreshAll (zbyt wolne przy 50+ studniach) */
         _excelUpdateHeaderProdCodes();
+        /* Przelicz błędy aktywnej studni (lekko, jedna studnia) i odśwież tła */
+        if (
+            typeof recalculateWellErrors === 'function' &&
+            typeof currentWellIndex !== 'undefined' &&
+            currentWellIndex >= 0 &&
+            typeof wells !== 'undefined' &&
+            wells[currentWellIndex]
+        ) {
+            recalculateWellErrors(wells[currentWellIndex]);
+            if (typeof _excelRefreshDupColors === 'function') _excelRefreshDupColors();
+        }
         /* Odśwież główny panel gdy Excel jest otwarty */
         if (typeof window.updateSummary === 'function') window.updateSummary();
         if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();

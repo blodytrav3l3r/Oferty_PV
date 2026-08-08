@@ -81,6 +81,8 @@ function _excelInitColumnResize() {
                 colsToResize.forEach((ci) => {
                     _excelColWidths[_excelActiveTab + '-' + ci] = newWidth;
                 });
+                /* Trwałość szerokości po zakończeniu przeciągania (localStorage) */
+                if (typeof _excelSaveColWidths === 'function') _excelSaveColWidths();
             };
 
             document.addEventListener('mousemove', onMove);

@@ -184,10 +184,40 @@ function excelOnNameChange(wIdx, value) {
 function excelDuplicateWell(wIdx) {
     const src = wells[wIdx];
     if (!src) return;
+    if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)) {
+        showToast('Nie można duplikować — studnia zablokowana (PZ / zamówienie)', 'error');
+        return;
+    }
+    _excelSaveUndoSnapshot();
+    _excelMarkDirty();
     const copy = structuredClone(src);
     copy.id = 'well_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
     copy.name = src.name + ' (kopia)';
+    /* Kopia nie dziedziczy cache resolution (wskazywałby nieaktualne produkty) */
+    delete copy.__resCache;
     wells.splice(wIdx + 1, 0, copy);
+    /* Wstawienie przesuwa indeksy studni po wIdx o +1 — przesuń też zaznaczenia
+       (S2), inaczej selekcje komórek i checkboxy wskazują sąsiednie studnie. */
+    if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
+        _excelSelectedCells.forEach(function (cell) {
+            if (cell.wIdx > wIdx) cell.wIdx += 1;
+        });
+    }
+    if (_excelLastClickedCell && _excelLastClickedCell.wIdx > wIdx) {
+        _excelLastClickedCell.wIdx += 1;
+    }
+    /* Kopia nie dziedziczy zaznaczenia checkboxa wiersza (kluczowane indeksem) */
+    if (typeof _excelRowSelectStates !== 'undefined') {
+        const shifted = {};
+        Object.keys(_excelRowSelectStates).forEach(function (k) {
+            const i = parseInt(k, 10);
+            if (!isNaN(i)) {
+                shifted[i > wIdx ? i + 1 : i] = _excelRowSelectStates[k];
+            }
+        });
+        shifted[wIdx + 1] = false;
+        _excelRowSelectStates = shifted;
+    }
     _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);

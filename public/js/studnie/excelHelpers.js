@@ -543,7 +543,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
     let extraClass = disabled ? ' disabled' : '';
     let wrapperEvents = disabled
         ? ''
-        : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
+        : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(!event.ctrlKey&&(event.key==='Enter'||event.key===' ')){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
     let selectEvents = disabled
         ? ' disabled'
         : ' tabindex="-1" onchange="' +
@@ -620,6 +620,8 @@ function excelFilterWells(value) {
     const q = (value || '').trim().toLowerCase();
     const container = document.getElementById('excel-table-container');
     if (!container) return;
+    const clearBtn = document.getElementById('excel-search-clear');
+    if (clearBtn) clearBtn.style.display = q ? 'inline-flex' : 'none';
     const rows = container.querySelectorAll('tbody tr[data-widx]');
     let visibleCount = 0;
     rows.forEach(function (row) {
@@ -660,6 +662,15 @@ function excelFilterWells(value) {
         }
         if (targetTab) excelSwitchTab(targetTab);
     }
+}
+
+/* ===== CLEAR SEARCH ===== */
+function excelClearSearch() {
+    const si = document.getElementById('excel-search-input');
+    if (!si) return;
+    si.value = '';
+    excelFilterWells('');
+    si.focus();
 }
 
 /* ===== STICKY CELL OPAQUE BACKGROUND ===== */

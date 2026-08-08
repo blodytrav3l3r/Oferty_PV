@@ -90,6 +90,9 @@ const DN_COLORS = {
 const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
 let _excelPasteInProgress = false;
+/* Batch dotknął kręgu krag/krag_ot — wymaga jednego odroczonego pełnego
+   re-rendera na koniec operacji (fill/paste), zamiast re-rendera per komórka. */
+let _excelBatchKragTouched = false;
 
 let _excelUndoStack = [];
 let _excelRedoStack = [];
@@ -122,11 +125,38 @@ function _excelResetColumnVisibility() {
     _excelResetLayoutDependentState();
     _excelHiddenColumnIds = [];
     _excelSaveColumnVisibility();
+    /* Wyczyść szerokości kolumn aktywnej zakładki — tylko klucze "tab-" */
+    Object.keys(_excelColWidths).forEach((k) => {
+        if (k.indexOf(_excelActiveTab + '-') === 0) delete _excelColWidths[k];
+    });
+    _excelSaveColWidths();
     _excelRenderTable(_excelActiveTab);
 }
 
 function _excelIsColumnHidden(colId) {
     return _excelHiddenColumnIds.indexOf(colId) >= 0;
+}
+
+/* ===== Column Widths State (trwałość szerokości kolumn, wzorzec jak visibility) ===== */
+const _EXCEL_COL_WIDTHS_KEY = 'witros_excel_col_widths';
+
+function _excelLoadColWidths() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(_EXCEL_COL_WIDTHS_KEY));
+        if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
+            _excelColWidths = saved;
+        } else {
+            _excelColWidths = {};
+        }
+    } catch (e) {
+        _excelColWidths = {};
+    }
+}
+
+function _excelSaveColWidths() {
+    try {
+        localStorage.setItem(_EXCEL_COL_WIDTHS_KEY, JSON.stringify(_excelColWidths));
+    } catch (e) {}
 }
 
 /* Reset stanu selekcji zależnego od układu tabeli. Wołaj przy każdej zmianie
