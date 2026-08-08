@@ -187,33 +187,36 @@
 }
 
 .kartoteka-filter-bar .pv-type-filter-btn,
-.kartoteka-filter-bar .pv-filter-btn {
+.kartoteka-filter-bar .pv-filter-btn,
+.kartoteka-filter-bar .pv-date-preset-btn {
     transition:
         transform 0.2s,
         box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .kartoteka-filter-bar .pv-type-filter-btn:hover,
-.kartoteka-filter-bar .pv-filter-btn:hover {
+.kartoteka-filter-bar .pv-filter-btn:hover,
+.kartoteka-filter-bar .pv-date-preset-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
 }
 
 .kartoteka-filter-bar .pv-type-filter-btn.active,
-.kartoteka-filter-bar .pv-filter-btn.active {
+.kartoteka-filter-bar .pv-filter-btn.active,
+.kartoteka-filter-bar .pv-date-preset-btn.active {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
     color: var(--white);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
 }
 
-/* Kontrolki paska filtrów — spójne z toolbar zleceń (34px, prostokątne) */
+/* Kontrolki paska filtrów — spójne z toolbar zleceń (32px, prostokątne) */
 .kartoteka-filter-bar button,
 .kartoteka-filter-bar select {
-    height: 34px;
+    height: 32px;
     border-radius: var(--radius-sm) !important;
-    padding: 0 0.7rem !important;
-    font-size: 0.8rem !important;
+    padding: 0 0.5rem !important;
+    font-size: 0.75rem !important;
     background: var(--bg-tertiary);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
@@ -226,6 +229,18 @@
 }
 .kartoteka-filter-bar .search-box input {
     height: 34px;
+}
+/* Wiersz filtrów — kompaktowe odstępy, aby mieścił się w jednej linii */
+.kartoteka-filter-bar > div[style*='flex'] {
+    gap: 0.5rem !important;
+}
+.kartoteka-filter-bar > div[style*='flex'] > div {
+    gap: 0.35rem !important;
+}
+.kartoteka-filter-bar input[type='date'] {
+    height: 32px;
+    width: 115px;
+    font-size: 0.75rem;
 }
 
 /* Wskaźnik końca listy — wzór zleceń (zlecenia-sentinel) */

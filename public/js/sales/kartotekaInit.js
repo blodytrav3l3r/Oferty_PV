@@ -134,38 +134,14 @@ function initAdvancedFilterEvents(ui) {
         btn.addEventListener('click', () => ui.setDatePreset(btn.dataset.dateRange));
     });
 
-    const rangeBtn = document.getElementById('pv-date-range-btn');
-    const popover = document.getElementById('pv-date-popover');
     const dateFrom = document.getElementById('pv-date-from');
     const dateTo = document.getElementById('pv-date-to');
 
-    if (rangeBtn && popover) {
-        rangeBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (popover.style.display !== 'none') {
-                hideDatePopover(ui, popover, dateFrom, dateTo);
-            } else {
-                showDatePopover(ui, popover, rangeBtn);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (popover.style.display === 'none') return;
-            if (
-                !popover.contains(/** @type {Node} */ (e.target)) &&
-                e.target !== rangeBtn &&
-                !rangeBtn.contains(/** @type {Node} */ (e.target))
-            ) {
-                hideDatePopover(ui, popover, dateFrom, dateTo);
-            }
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && popover.style.display !== 'none') {
-                hideDatePopover(ui, popover, dateFrom, dateTo);
-            }
-        });
-    }
+    document.getElementById('pv-date-clear')?.addEventListener('click', () => {
+        if (dateFrom) dateFrom.value = '';
+        if (dateTo) dateTo.value = '';
+        ui.onDateRangeChange('', '');
+    });
 
     if (dateFrom)
         dateFrom.addEventListener('change', () =>
@@ -175,40 +151,6 @@ function initAdvancedFilterEvents(ui) {
         dateTo.addEventListener('change', () =>
             ui.onDateRangeChange(dateFrom?.value || '', dateTo.value)
         );
-
-    document
-        .getElementById('pv-clear-filters-btn')
-        ?.addEventListener('click', () => ui.clearFilters());
-}
-
-function showDatePopover(ui, popover, anchor) {
-    var rect = anchor.getBoundingClientRect();
-    popover.style.display = 'block';
-    popover.style.left = rect.left + 'px';
-    popover.style.top = rect.bottom + 6 + 'px';
-    popover.style.opacity = '0';
-    popover.style.transform = 'translateY(-4px)';
-    ui.filters.date.mode = 'range';
-    ui.filters.date.preset = '';
-    ui._syncFilterUI();
-    ui.filterLocalOffers();
-    requestAnimationFrame(function () {
-        popover.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
-        popover.style.opacity = '1';
-        popover.style.transform = 'translateY(0)';
-    });
-}
-
-function hideDatePopover(ui, popover, dateFrom, dateTo) {
-    popover.style.display = 'none';
-    popover.style.opacity = '';
-    popover.style.transform = '';
-    popover.style.transition = '';
-    if (dateFrom && dateTo && !dateFrom.value && !dateTo.value) {
-        ui.filters.date.mode = 'none';
-        ui._syncFilterUI();
-        ui.filterLocalOffers();
-    }
 }
 
 window.initAdvancedFilterEvents = initAdvancedFilterEvents;

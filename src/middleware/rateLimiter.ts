@@ -54,7 +54,7 @@ export function createRateLimiter({
         if (record.count > maxHits) {
             const retryAfterSec = Math.ceil((record.resetAt - now) / 1000);
             res.setHeader('Retry-After', retryAfterSec);
-            res.status(429).json({ error: message });
+            res.status(429).json({ error: message, retryAfter: retryAfterSec });
             return;
         }
 

@@ -128,352 +128,339 @@
                         class="kartoteka-filter-bar"
                         style="
                             display: flex;
-                            gap: 1rem;
+                            flex-direction: column;
+                            gap: 0.8rem;
                             margin-bottom: 0.8rem;
-                            flex-wrap: wrap;
-                            align-items: center;
                             padding: 0.8rem 1rem;
                             background: var(--bg-glass);
                             border: 1px solid var(--border-glass);
                             border-radius: var(--radius-sm);
                         "
                     >
-                        <!-- Type Filters -->
-                        <div
-                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
-                        >
-                            <span
+                        <!-- Row 1: filtry -->
+                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap">
+                            <!-- Type Filters -->
+                            <div
                                 style="
-                                    font-size: 0.75rem;
-                                    color: var(--text-muted);
-                                    font-weight: 600;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.3px;
-                                "
-                                >Typ:</span
-                            >
-                            <button
-                                type="button"
-                                class="btn btn-sm pv-type-filter-btn active"
-                                data-type-filter="all"
-                                onclick="filterByType('all')"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
+                                    display: flex;
+                                    gap: 0.5rem;
+                                    align-items: center;
+                                    flex-wrap: wrap;
                                 "
                             >
-                                Wszystkie
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-type-filter-btn"
-                                data-type-filter="offer"
-                                onclick="filterByType('offer')"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-type-filter-btn"
-                                data-type-filter="studnia_oferta"
-                                onclick="filterByType('studnia_oferta')"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                <i data-lucide="cylinder"></i> Studnie
-                            </button>
-                        </div>
-
-                        <!-- Divider -->
-                        <div
-                            style="width: 1px; height: 24px; background: var(--border-glass)"
-                        ></div>
-
-                        <!-- Status Filters -->
-                        <div
-                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
-                        >
-                            <span
-                                style="
-                                    font-size: 0.75rem;
-                                    color: var(--text-muted);
-                                    font-weight: 600;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.3px;
-                                "
-                                >Status:</span
-                            >
-                            <button
-                                type="button"
-                                class="btn btn-sm pv-filter-btn active"
-                                data-filter="all"
-                                onclick="
-                                    window.pvSalesUI && window.pvSalesUI.setFilterLocalOffers('all')
-                                "
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                Wszystkie
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-filter-btn"
-                                data-filter="with_order"
-                                onclick="
-                                    window.pvSalesUI &&
-                                        window.pvSalesUI.setFilterLocalOffers('with_order')
-                                "
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                <i data-lucide="package"></i> Z zamówieniem
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-filter-btn"
-                                data-filter="without_order"
-                                onclick="
-                                    window.pvSalesUI &&
-                                        window.pvSalesUI.setFilterLocalOffers('without_order')
-                                "
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                Bez zamówienia
-                            </button>
-                        </div>
-
-                        <!-- Divider -->
-                        <div
-                            style="width: 1px; height: 24px; background: var(--border-glass)"
-                        ></div>
-
-                        <!-- User Filter -->
-                        <div
-                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
-                        >
-                            <span
-                                style="
-                                    font-size: 0.75rem;
-                                    color: var(--text-muted);
-                                    font-weight: 600;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.3px;
-                                "
-                                >Opiekun:</span
-                            >
-                            <select
-                                id="pv-user-filter"
-                                class="btn btn-sm"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                    appearance: none;
-                                    -webkit-appearance: none;
-                                    cursor: pointer;
-                                    background: var(--bg-glass);
-                                    border: 1px solid var(--border-glass);
-                                    color: var(--text-primary);
-                                    min-width: 130px;
-                                "
-                            >
-                                <option value="">Użytkownik: wszyscy</option>
-                            </select>
-                        </div>
-
-                        <!-- Divider -->
-                        <div
-                            style="width: 1px; height: 24px; background: var(--border-glass)"
-                        ></div>
-
-                        <!-- Date Filter -->
-                        <div
-                            style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap"
-                        >
-                            <span
-                                style="
-                                    font-size: 0.75rem;
-                                    color: var(--text-muted);
-                                    font-weight: 600;
-                                    text-transform: uppercase;
-                                    letter-spacing: 0.3px;
-                                "
-                                >Data:</span
-                            >
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-date-preset-btn"
-                                data-date-range="today"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                Dzisiaj
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-date-preset-btn"
-                                data-date-range="7d"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                7 dni
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-date-preset-btn"
-                                data-date-range="30d"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                30 dni
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary pv-date-preset-btn"
-                                data-date-range="month"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                Ten miesiąc
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary"
-                                id="pv-date-range-btn"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                <i data-lucide="calendar"></i> Zakres
-                            </button>
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-secondary"
-                                id="pv-clear-filters-btn"
-                                style="
-                                    border-radius: 20px;
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
-                                "
-                            >
-                                <i data-lucide="x"></i> Wyczyść
-                            </button>
-                        </div>
-
-                        <!-- Date Range Popover (hidden by default) -->
-                        <div
-                            id="pv-date-popover"
-                            style="
-                                display: none;
-                                position: fixed;
-                                z-index: 1000;
-                                background: var(--bg-card);
-                                border: 1px solid var(--border-glass);
-                                border-radius: 12px;
-                                padding: 0.75rem 1rem;
-                                box-shadow: 0 8px 32px rgba(var(--black-rgb), 0.3);
-                            "
-                        >
-                            <div style="display: flex; gap: 0.75rem; align-items: flex-start">
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem">
-                                    <label
-                                        for="pv-date-from"
-                                        style="
-                                            font-size: 0.65rem;
-                                            color: var(--text-muted);
-                                            font-weight: 600;
-                                            text-transform: uppercase;
-                                        "
-                                        >Od</label
-                                    >
-                                    <input
-                                        type="date"
-                                        id="pv-date-from"
-                                        class="form-input form-input-sm"
-                                        style="font-size: 0.78rem; width: 140px"
-                                    />
-                                </div>
-                                <div style="display: flex; flex-direction: column; gap: 0.25rem">
-                                    <label
-                                        for="pv-date-to"
-                                        style="
-                                            font-size: 0.65rem;
-                                            color: var(--text-muted);
-                                            font-weight: 600;
-                                            text-transform: uppercase;
-                                        "
-                                        >Do</label
-                                    >
-                                    <input
-                                        type="date"
-                                        id="pv-date-to"
-                                        class="form-input form-input-sm"
-                                        style="font-size: 0.78rem; width: 140px"
-                                    />
-                                </div>
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.3px;
+                                    "
+                                    >Typ:</span
+                                >
+                                <button
+                                    type="button"
+                                    class="btn btn-sm pv-type-filter-btn active"
+                                    data-type-filter="all"
+                                    onclick="filterByType('all')"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                    data-type-filter="offer"
+                                    onclick="filterByType('offer')"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                    data-type-filter="studnia_oferta"
+                                    onclick="filterByType('studnia_oferta')"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    <i data-lucide="cylinder"></i> Studnie
+                                </button>
                             </div>
+
+                            <!-- Divider -->
+                            <div
+                                style="width: 1px; height: 24px; background: var(--border-glass)"
+                            ></div>
+
+                            <!-- Status Filters -->
+                            <div
+                                style="
+                                    display: flex;
+                                    gap: 0.5rem;
+                                    align-items: center;
+                                    flex-wrap: wrap;
+                                "
+                            >
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.3px;
+                                    "
+                                    >Status:</span
+                                >
+                                <button
+                                    type="button"
+                                    class="btn btn-sm pv-filter-btn active"
+                                    data-filter="all"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('all')
+                                    "
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    data-filter="with_order"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('with_order')
+                                    "
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Z zamówieniem
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    data-filter="without_order"
+                                    onclick="
+                                        window.pvSalesUI &&
+                                            window.pvSalesUI.setFilterLocalOffers('without_order')
+                                    "
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Bez zamówienia
+                                </button>
+                            </div>
+
+                            <!-- Divider -->
+                            <div
+                                style="width: 1px; height: 24px; background: var(--border-glass)"
+                            ></div>
+
+                            <!-- Date Filter -->
+                            <div
+                                style="
+                                    display: flex;
+                                    gap: 0.5rem;
+                                    align-items: center;
+                                    flex-wrap: wrap;
+                                "
+                            >
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.3px;
+                                    "
+                                    >Data:</span
+                                >
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    data-date-range="today"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Dzisiaj
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    data-date-range="7d"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    7 dni
+                                </button>
+                                <button
+                                    type="button"
+                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    data-date-range="month"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Ten miesiąc
+                                </button>
+                                <span
+                                    style="
+                                        font-size: 0.7rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                    "
+                                    >od</span
+                                >
+                                <input
+                                    type="date"
+                                    id="pv-date-from"
+                                    class="form-input form-input-sm"
+                                    style="font-size: 0.78rem; border-radius: 20px"
+                                    title="Data od"
+                                    aria-label="Data od"
+                                />
+                                <span style="color: var(--text-muted)">&ndash;</span>
+                                <span
+                                    style="
+                                        font-size: 0.7rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                    "
+                                    >do</span
+                                >
+                                <input
+                                    type="date"
+                                    id="pv-date-to"
+                                    class="form-input form-input-sm"
+                                    style="font-size: 0.78rem; border-radius: 20px"
+                                    title="Data do"
+                                    aria-label="Data do"
+                                />
+                                <button
+                                    type="button"
+                                    id="pv-date-clear"
+                                    class="btn btn-sm btn-secondary"
+                                    title="Wyczyść zakres dat"
+                                    aria-label="Wyczyść zakres dat"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    <i data-lucide="x"></i>
+                                </button>
+                            </div>
+
+                            <!-- Divider -->
+                            <div
+                                style="width: 1px; height: 24px; background: var(--border-glass)"
+                            ></div>
+
+                            <!-- User Filter -->
+                            <div
+                                style="
+                                    display: flex;
+                                    gap: 0.5rem;
+                                    align-items: center;
+                                    flex-wrap: wrap;
+                                "
+                            >
+                                <span
+                                    style="
+                                        font-size: 0.75rem;
+                                        color: var(--text-muted);
+                                        font-weight: 600;
+                                        text-transform: uppercase;
+                                        letter-spacing: 0.3px;
+                                    "
+                                    >Opiekun:</span
+                                >
+                                <select
+                                    id="pv-user-filter"
+                                    class="btn btn-sm"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                        appearance: none;
+                                        -webkit-appearance: none;
+                                        cursor: pointer;
+                                        background: var(--bg-glass);
+                                        border: 1px solid var(--border-glass);
+                                        color: var(--text-primary);
+                                        min-width: 130px;
+                                    "
+                                >
+                                    <option value="">Użytkownik: wszyscy</option>
+                                </select>
+
+                                <button
+                                    type="button"
+                                    id="pv-clear-filters"
+                                    class="btn btn-secondary btn-sm"
+                                    onclick="window.pvSalesUI && window.pvSalesUI.clearAllFilters()"
+                                    title="Wyczyść wszystkie aktywne filtry"
+                                    style="
+                                        border-radius: 20px;
+                                        padding: 0.35rem 0.9rem;
+                                        font-size: 0.75rem;
+                                    "
+                                >
+                                    Wyczyść filtry (0)
+                                </button>
+                            </div>
+
+                            <!-- Compact Mode Toggle -->
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-secondary"
+                                id="btn-compact-mode"
+                                onclick="toggleCompactMode()"
+                                style="
+                                    margin-left: auto;
+                                    border-radius: 20px;
+                                    padding: 0.35rem 0.9rem;
+                                    font-size: 0.75rem;
+                                "
+                                title="Przełącz tryb kompaktowy"
+                            >
+                                <i data-lucide="panel-right-close"></i> Kompakt
+                            </button>
                         </div>
 
-                        <!-- Compact Mode Toggle -->
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-secondary"
-                            id="btn-compact-mode"
-                            onclick="toggleCompactMode()"
-                            style="
-                                margin-left: auto;
-                                border-radius: 20px;
-                                padding: 0.35rem 0.9rem;
-                                font-size: 0.75rem;
-                            "
-                            title="Przełącz tryb kompaktowy"
-                        >
-                            <i data-lucide="panel-right-close"></i> Kompakt
-                        </button>
-
-                        <!-- Search + Refresh row -->
-                        <div
-                            style="
-                                display: flex;
-                                flex: 1;
-                                gap: 0.5rem;
-                                align-items: center;
-                                min-width: 200px;
-                            "
-                        >
+                        <!-- Row 2: szukaj + odśwież -->
+                        <div style="display: flex; width: 100%; gap: 0.5rem; align-items: center">
                             <div
                                 class="search-box"
                                 style="margin: 0; flex: 1; max-width: none; position: relative"

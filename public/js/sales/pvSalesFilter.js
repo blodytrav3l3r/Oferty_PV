@@ -19,11 +19,13 @@ export default {
             }
         });
 
+        this.updateFilterCount();
         this.searchOffers(this.buildSearchParams());
     },
 
     setTypeFilter(typeFilter) {
         this.currentTypeFilter = typeFilter;
+        this.updateFilterCount();
         this.searchOffers(this.buildSearchParams());
     },
 
@@ -48,11 +50,45 @@ export default {
             btn.classList.toggle('active', isActive);
             btn.classList.toggle('btn-secondary', !isActive);
         });
-        const rangeBtn = document.getElementById('pv-date-range-btn');
-        if (rangeBtn) {
-            rangeBtn.classList.toggle('active', this.filters.date.mode === 'range');
-            rangeBtn.classList.toggle('btn-secondary', this.filters.date.mode !== 'range');
-        }
+        this.updateFilterCount();
+    },
+
+    /**
+     * Aktualizuje licznik aktywnych filtrów przy przycisku "Wyczyść filtry (N)".
+     */
+    updateFilterCount() {
+        const input = document.getElementById('pv-local-search-input');
+        const q = input ? input.value.trim() : '';
+        const dateActive =
+            this.filters.date.mode === 'preset' || this.filters.date.mode === 'range';
+        const count =
+            (q ? 1 : 0) +
+            (this.currentTypeFilter !== 'all' ? 1 : 0) +
+            (this.currentFilter !== 'all' ? 1 : 0) +
+            (this.filters.user ? 1 : 0) +
+            (dateActive ? 1 : 0);
+        const btn = document.getElementById('pv-clear-filters');
+        if (btn) btn.textContent = 'Wyczyść filtry (' + count + ')';
+    },
+
+    /**
+     * Zeruje wszystkie filtry kartoteki (typ, status, opiekun, data, szukaj).
+     */
+    clearAllFilters() {
+        this.currentFilter = 'all';
+        this.currentTypeFilter = 'all';
+        this.filters.user = '';
+        this.filters.date = { mode: 'none', preset: '', from: '', to: '' };
+
+        const searchInput = document.getElementById('pv-local-search-input');
+        if (searchInput) searchInput.value = '';
+        const dateFrom = document.getElementById('pv-date-from');
+        const dateTo = document.getElementById('pv-date-to');
+        if (dateFrom) dateFrom.value = '';
+        if (dateTo) dateTo.value = '';
+
+        this._syncFilterUI();
+        this.searchOffers(this.buildSearchParams());
     },
 
     setUserFilter(userId) {
@@ -71,7 +107,6 @@ export default {
         }
         this.filters.date.from = '';
         this.filters.date.to = '';
-        this._closeDatePopover();
         this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
@@ -103,24 +138,6 @@ export default {
         const mo = Number(m[2]);
         const d = Number(m[3]) + (isEnd ? 1 : 0);
         return new Date(y, mo - 1, d).toISOString();
-    },
-
-    clearFilters() {
-        this.filters.user = '';
-        this.filters.date.mode = 'none';
-        this.filters.date.preset = '';
-        this.filters.date.from = '';
-        this.filters.date.to = '';
-        this.currentFilter = 'all';
-        this.currentTypeFilter = 'all';
-        this._closeDatePopover();
-        this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
-    },
-
-    _closeDatePopover() {
-        const popover = document.getElementById('pv-date-popover');
-        if (popover) popover.style.display = 'none';
     },
 
     populateUserFilter() {

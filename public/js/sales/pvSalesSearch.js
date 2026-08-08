@@ -160,6 +160,13 @@ export default {
 
             if (!resp.ok) {
                 const errBody = await resp.json().catch(() => ({}));
+                if (resp.status === 429 && Number(errBody.retryAfter) > 0) {
+                    this.showError(
+                        errBody.error || window.httpErrorMessage(429),
+                        Number(errBody.retryAfter)
+                    );
+                    return;
+                }
                 throw new Error(errBody.error || window.httpErrorMessage(resp.status));
             }
             const json = await resp.json();
@@ -279,23 +286,59 @@ export default {
     },
 
     /**
-     * Wyświetla błąd w kontenerze listy
+     * Wyświetla błąd w kontenerze listy. Przy 429 pokazuje licznik odliczający
+     * czas pozostały do możliwej ponownej próby (retryAfter w sekundach).
      */
-    showError(message) {
+    showError(message, retryAfter) {
         const listDiv = document.getElementById('pv-local-offers-list');
         if (!listDiv) return;
-        listDiv.innerHTML =
+        const hasCountdown = Number(retryAfter) > 0;
+        let html =
             '<div style="text-align:center; padding:2rem; color:var(--text-danger);">' +
             '<strong>Błąd:</strong><br/>' +
             '<span style="font-size:0.85rem; opacity:0.8;">' +
             window.escapeHtml(message) +
-            '</span><br/>' +
+            '</span><br/>';
+        if (hasCountdown) {
+            html +=
+                '<span id="pv-retry-countdown" style="font-size:0.85rem; opacity:0.9; display:inline-block; margin-top:0.5rem;">' +
+                'Ponów próbę za <strong>' +
+                Math.ceil(retryAfter) +
+                '</strong> s</span><br/>';
+        }
+        html +=
             '<button class="btn btn-sm btn-secondary" style="margin-top:1rem;" data-action="retry-search">' +
             '<i data-lucide="refresh-cw"></i> Odśwież</button></div>';
+        listDiv.innerHTML = html;
+
         const retryBtn = listDiv.querySelector('[data-action="retry-search"]');
         if (retryBtn) {
             retryBtn.addEventListener('click', () => this.searchOffers(this.buildSearchParams()));
+            if (hasCountdown) retryBtn.disabled = true;
         }
+
+        if (hasCountdown && retryBtn) {
+            if (this._rateLimitTimer) clearInterval(this._rateLimitTimer);
+            let sec = Math.ceil(retryAfter);
+            this._rateLimitTimer = setInterval(() => {
+                const el = document.getElementById('pv-retry-countdown');
+                if (!el) {
+                    clearInterval(this._rateLimitTimer);
+                    this._rateLimitTimer = null;
+                    return;
+                }
+                sec--;
+                if (sec <= 0) {
+                    clearInterval(this._rateLimitTimer);
+                    this._rateLimitTimer = null;
+                    el.textContent = 'Możesz spróbować ponownie.';
+                    retryBtn.disabled = false;
+                } else {
+                    el.innerHTML = 'Ponów próbę za <strong>' + sec + '</strong> s';
+                }
+            }, 1000);
+        }
+
         setTimeout(() => {
             if (window.lucide) lucide.createIcons();
         }, 50);
