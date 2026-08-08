@@ -48,7 +48,7 @@ Proces release:
 
 **Uwaga:** Nie zmieniaj ręcznie parametrów `?v=` w HTML — są synchronizowane z `VERSION` podczas release.
 
-**Pre-push validation:** hook `.husky/pre-push` uruchamia `npm run version:check` + `npm run typecheck` + `npm run typecheck:frontend` + `npm run test:quick`. Jeśli hook blokuje push, użyj obejścia: `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
+**Pre-push validation:** hook `.husky/pre-push` uruchamia `npm run version:check` + `npm run encoding:check` (pełny skan repo, blokada przy mojibake/niepoprawnym UTF-8) + `npm run typecheck` + `npm run typecheck:frontend` + `npm run test:quick`. Jeśli hook blokuje push, użyj obejścia: `HUSKY=0 git push` (lub `git -c core.hooksPath=/dev/null push`).
 
 ## Świeża instalacja
 
@@ -177,3 +177,4 @@ npm run lint:fix         # ESLint z auto-naprawą
 - W plikach `.bat` NIE używaj polskich znaków ani znaków spoza ASCII (np. `—` em dash). Zastąp je odpowiednikami ASCII (`-` zamiast `—`, `l` zamiast `ł`, `s` zamiast `ś` itp.).
 - We wszystkich pozostałych plikach używaj swobodnie polskich znaków w UTF-8.
 - Unikaj BOM (Byte Order Mark) na początku plików UTF-8.
+- **Zakaz mojibake (podwójnego kodowania):** nie zapisuj plików z polskimi znakami przez narzędzia interpretujące CP1250/Windows-1250 i zapisujące ponownie jako UTF-8. Po edycji uruchom `npm run encoding:check`; przy ERROR — `npm run encoding:fix`. `encoding:check` uruchamia się też w `pre-push` (pełny skan repo) i w CI (job `lint`).

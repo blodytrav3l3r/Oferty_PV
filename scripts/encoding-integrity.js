@@ -11,6 +11,7 @@ const IGNORE_DIRS = new Set([
     'data',
     'generated',
     'graphify-out',
+    'ECC',
     '.husky/_'
 ]);
 const IGNORE_EXT = new Set([
@@ -270,6 +271,113 @@ function detectW1250(buffer) {
     return { w1250Count, totalNonASCII };
 }
 
+// =========================================================
+// Mojibake (double-encoding) detection
+// =========================================================
+// Map: key = sequence of codepoints found in a double-encoded file,
+// value = the correct single character it should be.
+// Uwaga: komentarze uzywaja zapisu hex (bajty UTF-8 oryginalnego znaku),
+// bo literaly mojibake wykrylyby samego siebie.
+const MOJIBAKE_MAP = [
+    // polskie litery — wariant CP1250 (potwierdzony w repo)
+    ['\u00C4\u2026', 'ą'], // [C4 85] -> a z ogonkiem
+    ['\u00C4\u2020', 'Ć'], // [C4 86] -> C z kreska (step4-build-card.html — DOPISYWAĆ)
+    ['\u00C4\u2021', 'ć'], // [C4 87] -> c z kreska
+    ['\u00C4\u2122', 'ę'], // [C4 99] -> e z ogonkiem
+    ['\u0139\u201A', 'ł'], // [C5 82] -> l ze skosna kreska
+    ['\u0139\u201E', 'ń'], // [C5 84] -> n z ogonkiem
+    ['\u0102\u0142', 'ó'], // [C3 B3] -> o z kreska
+    ['\u0139\u203A', 'ś'], // [C5 9B] -> s z kreska
+    ['\u0139\u015F', 'ź'], // [C5 BA] -> z z kropka (CP1250 0xBA)
+    ['\u0139\u013D', 'ż'], // [C5 BC] -> z z kropka
+    // warianty CP1252 (pliki przekodowane przez narzedzia "western")
+    ['\u00C4\u0153', 'ę'], // [C4 99] -> e z ogonkiem (CP1252)
+    ['\u0139\u00BA', 'ź'], // [C5 BA] -> z z kropka (CP1252 0xBA)
+    // interpunkcja i symbole
+    ['\u00E2\u20AC\u201D', '—'], // [E2 80 94] -> em dash
+    ['\u00E2\u20AC\u201C', '–'], // [E2 80 93] -> en dash
+    ['\u00E2\u20AC\u017E', '„'], // [E2 80 9E] -> cudzyslow dolny
+    ['\u00E2\u20AC\u015B', '"'], // [E2 80 9C] -> cudzyslow gorny otwierajacy
+    ['\u00E2\u20AC\u2122', "'"], // [E2 80 99] -> apostrof
+    ['\u00E2\u20AC\u0161', '…'], // [E2 80 A6] -> wielokropek (CP1250)
+    ['\u00E2\u20AC\u2026', '…'], // [E2 80 A6] -> wielokropek (CP1252)
+    ['\u00E2\u2020\u2019', '→'] // [E2 86 92] -> strzalka w prawo (DELETION_LOG.md)
+];
+
+// Sort by length descending so longest sequences match first in the regex.
+let MOJIBAKE_RE = null;
+function mojibakeRegex() {
+    if (MOJIBAKE_RE) return MOJIBAKE_RE;
+    const sorted = [...MOJIBAKE_MAP].sort((a, b) => b[0].length - a[0].length);
+    const parts = sorted.map(([seq]) => seq.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    MOJIBAKE_RE = new RegExp(parts.join('|'), 'g');
+    return MOJIBAKE_RE;
+}
+
+// Counts correct Polish characters — used to decide WARN vs ERROR policy.
+function countPolishContext(text) {
+    let count = 0;
+    for (const ch of text) {
+        const code = ch.codePointAt(0);
+        if (
+            (code >= 0x0104 && code <= 0x0107) || // Ą Ć ą ć
+            code === 0x0118 ||
+            code === 0x0119 || // Ę ę
+            code === 0x0141 ||
+            code === 0x0142 || // Ł ł
+            code === 0x0143 ||
+            code === 0x0144 || // Ń ń
+            code === 0x00f3 || // ó
+            (code >= 0x015a && code <= 0x015b) || // Ś ś
+            (code >= 0x0179 && code <= 0x017c) // Ź Ż ź ż
+        ) {
+            count++;
+        }
+    }
+    return count;
+}
+
+function detectMojibake(text) {
+    const re = mojibakeRegex();
+    re.lastIndex = 0;
+    const matches = [];
+    let m;
+    while ((m = re.exec(text)) !== null) {
+        // find the matching seq to get its replacement
+        const entry = MOJIBAKE_MAP.find(([seq]) => seq === m[0]);
+        matches.push({ seq: m[0], fixed: entry ? entry[1] : m[0] });
+        if (m.index === re.lastIndex) re.lastIndex++; // guard against zero-length
+    }
+    return matches;
+}
+
+function fixMojibake(text) {
+    let result = text;
+    for (const [seq, fixed] of [...MOJIBAKE_MAP].sort((a, b) => b[0].length - a[0].length)) {
+        result = result.split(seq).join(fixed);
+    }
+    return result;
+}
+
+// Returns true for files that must be Polish by project convention (AGENTS.md §3).
+function isPolishConventionFile(filePath) {
+    const rel = path.relative(ROOT, filePath).replace(/\\/g, '/');
+    const ext = path.extname(rel).toLowerCase();
+    if (['.html', '.md', '.ts', '.js', '.css', '.json', '.yml', '.yaml', '.sql'].includes(ext)) {
+        const first = rel.split('/')[0];
+        if (['public', 'src', 'docs', 'tests', 'scripts', 'prisma'].includes(first)) return true;
+    }
+    return false;
+}
+
+function classifyMojibake(mojibakeCount, hasPolishContext, isConventionFile) {
+    if (mojibakeCount === 0) return 'OK';
+    if (isConventionFile) return 'ERROR';
+    if (hasPolishContext) return 'ERROR';
+    if (mojibakeCount >= 2) return 'ERROR';
+    return 'WARN';
+}
+
 function analyzeFile(filePath) {
     const buffer = fs.readFileSync(filePath);
     const result = {
@@ -307,6 +415,35 @@ function analyzeFile(filePath) {
     const polishCount = countPolishUTF8(buffer);
     if (polishCount > 0 && result.status === 'OK') {
         result.polishUTF8 = polishCount;
+    }
+
+    // Mojibake (double-encoding) detection — valid UTF-8, wrong characters
+    if (result.status === 'OK' || result.status === 'WARN') {
+        const text = buffer.toString('utf8');
+        const mojibake = detectMojibake(text);
+        if (mojibake.length > 0) {
+            const hasPolishContext = countPolishContext(text) > 0;
+            const isConventionFile = isPolishConventionFile(filePath);
+            const mojibakeStatus = classifyMojibake(
+                mojibake.length,
+                hasPolishContext,
+                isConventionFile
+            );
+            if (mojibakeStatus === 'ERROR' || mojibakeStatus === 'WARN') {
+                if (mojibakeStatus === 'ERROR' || result.status === 'OK') {
+                    result.status = mojibakeStatus;
+                }
+                result.mojibake = mojibake;
+                const examples = mojibake
+                    .slice(0, 5)
+                    .map((m) => `'${m.seq}' → '${m.fixed}'`)
+                    .join(', ');
+                const more = mojibake.length > 5 ? ` +${mojibake.length - 5} więcej` : '';
+                result.issues.push(
+                    `Mojibake (double-encoding): ${examples}${more} — popraw ręcznie lub uruchom encoding:fix`
+                );
+            }
+        }
     }
 
     return result;
@@ -353,6 +490,35 @@ function fixFile(filePath) {
         console.log(`  ERROR: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — ${e.message}`);
         return false;
     }
+}
+
+function fixMojibakeFile(filePath) {
+    const buffer = fs.readFileSync(filePath);
+    if (!validateUTF8(buffer).isValid) {
+        console.log(
+            `  SKIP: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — invalid UTF-8, convert W1250 first`
+        );
+        return false;
+    }
+
+    const text = buffer.toString('utf8');
+    const matches = detectMojibake(text);
+    if (matches.length === 0) return false;
+
+    const fixedText = fixMojibake(text);
+    const verify = validateUTF8(Buffer.from(fixedText, 'utf8'));
+    if (!verify.isValid || detectMojibake(fixedText).length > 0) {
+        console.log(
+            `  FAIL: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — mojibake fix produced residual issues`
+        );
+        return false;
+    }
+
+    fs.writeFileSync(filePath, Buffer.from(fixedText, 'utf8'));
+    console.log(
+        `  FIXED: ${path.relative(ROOT, filePath).replace(/\\/g, '/')} — ${matches.length} mojibake sequences`
+    );
+    return true;
 }
 
 function main() {
@@ -409,6 +575,9 @@ function main() {
             const result = analyzeFile(file);
             if (result.status === 'FIXABLE') {
                 if (fixFile(file)) fixedCount++;
+                else failCount++;
+            } else if (result.mojibake && result.mojibake.length > 0) {
+                if (fixMojibakeFile(file)) fixedCount++;
                 else failCount++;
             } else {
                 skipCount++;
@@ -481,10 +650,21 @@ function main() {
         }
     } else {
         console.log('Usage: node encoding-integrity.js <check|fix|staged> [path]');
-        console.log('  check  — Scan project for encoding issues (default)');
-        console.log('  fix    — Auto-convert Windows-1250 files to UTF-8');
+        console.log('  check  — Scan project for encoding issues (UTF-8, BOM, mojibake) (default)');
+        console.log('  fix    — Auto-convert Windows-1250 files to UTF-8 and fix mojibake');
         console.log('  staged — Check only staged git files (for pre-commit)');
     }
 }
 
-main();
+if (require.main === module) {
+    main();
+}
+
+module.exports = {
+    detectMojibake,
+    fixMojibake,
+    classifyMojibake,
+    countPolishContext,
+    isPolishConventionFile,
+    MOJIBAKE_MAP
+};

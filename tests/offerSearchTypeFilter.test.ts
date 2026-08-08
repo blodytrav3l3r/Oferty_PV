@@ -1,4 +1,4 @@
-﻿import request from 'supertest';
+import request from 'supertest';
 import express from 'express';
 import searchRoutes from '../src/routes/offers/search';
 import prisma from '../src/prismaClient';
@@ -72,7 +72,7 @@ function createApp() {
     return app;
 }
 
-describe('Wyszukiwarka ofert â€” filtr typu (rury vs studnie)', () => {
+describe('Wyszukiwarka ofert — filtr typu (rury vs studnie)', () => {
     let app: express.Application;
 
     beforeEach(() => {

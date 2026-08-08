@@ -109,7 +109,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
     4. Wyślij tag na repozytorium zdalne: `git push --follow-tags`.
 - **Nigdy nie taguj gita ręcznie!** Wszystko obsługuje `npm run release`. Po zmianie wersji zrestartuj backend (`npm run dev:backend` lub `npm start` w produkcji).
 - **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
-- **Pre-push validation**: Husky `pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji) oraz `typecheck` + testy.
+- **Pre-push validation**: Husky `pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji), `npm run encoding:check` oraz `typecheck` + testy.
 
 ### Punkty Wejścia i SPA (Single Page Application)
 
@@ -144,18 +144,20 @@ Projekt stosuje **jednolite kodowanie UTF-8** dla wszystkich plików tekstowych:
 - W plikach `.bat` NIE używaj polskich znaków (ąćęłńóśźż) ani znaków spoza ASCII (np. `—` em dash). Zastąp je odpowiednikami ASCII (`-` zamiast `—`, `l` zamiast `ł`, `s` zamiast `ś` itp.).
 - We wszystkich pozostałych plikach używaj swobodnie polskich znaków w UTF-8.
 - Unikaj BOM (Byte Order Mark) na początku plików UTF-8 — może powodować problemy z narzędziami Node.js i konsolą.
+- **Zakaz mojibake (podwójnego kodowania):** nigdy nie zapisuj pliku z polskimi znakami przez narzędzie/edytor interpretujące je jako CP1250/Windows-1250 i zapisujące ponownie jako UTF-8. Typowe sygnatury mojibake (bajty UTF-8 oryginalnego znaku): `C4 85` (ą), `C4 86` (Ć), `C4 87` (ć), `C4 99` (ę), `C5 82` (ł), `C5 84` (ń), `C3 B3` (ó), `C5 9B` (ś), `C5 BA` (ź), `C5 BC` (ż), `E2 80 94` (—), `E2 86 92` (→). Sekwencje te są poprawnym UTF-8, więc zwykła walidacja ich nie złapie — `encoding:check` ma do tego osobną warstwę detekcji.
 - Weryfikacja: `npm run encoding:check` (jeśli skrypt istnieje) lub ręcznie przez `node -c` dla plików JS.
 
 **Zabezpieczenia automatyczne (nie pomijaj):**
 
 - `.editorconfig` wymusza `charset = utf-8` na wszystkich plikach tekstowych (z wyjątkiem binarnych: `.sqlite`, `.db`, `.exe`, `.dll`).
-- `lint-staged` uruchamia `encoding-integrity.js` przy każdym commitcie — wykrywa pliki z BOM lub nie-ASCII w `.bat`.
+- `lint-staged` uruchamia `encoding-integrity.js` przy każdym commitcie — wykrywa niepoprawny UTF-8 oraz mojibake (podwójne kodowanie).
 - `.prettierrc` ustawia `endOfLine: "lf"` (spójne z `.editorconfig`).
-- Husky pre-commit hook blokuje commity z naruszeniami kodowania.
+- Husky pre-commit hook blokuje commity z naruszeniami kodowania; **pre-push** uruchamia pełny `npm run encoding:check` (blokada pusha przy mojibake/niepoprawnym UTF-8 w całym repo). Ta sama kontrola jest w CI (job `lint`).
+- `encoding:check` ignoruje katalog `ECC/` (zewnętrzny, niewersjonowany projekt vendor).
 
 **Jak naprawić problemy z kodowaniem:**
 
-- `npm run encoding:fix` — automatycznie usuwa BOM i naprawia kodowanie plików.
+- `npm run encoding:fix` — automatycznie usuwa BOM, konwertuje Windows-1250 na UTF-8 oraz naprawia mojibake (podwójne kodowanie) w plikach.
 - `npm run encoding:check` — sprawdza integralność kodowania bez zmian.
 
 ---
@@ -260,6 +262,7 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 | 31  | **Tła sticky nieaktualizowane przy duplikatach nazw (Excel)**                                | `_excelRefreshDupColors()` ustawiał `row.style.background`, ale kolumny sticky (pierwsze 7 td: Lp, nazwa, rzędne) mają osobne tło z `_excelStickyCellBg()` — część wiersza zostawała w starej barwie.                                                                                                                               | Po zmianie tła wiersza zaktualizuj komórki sticky: `row.querySelectorAll('td:nth-child(-n+7)').forEach(td => td.style.background = _excelStickyCellBg(rowBg, solidBg))` (excelTableBody.js).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 32  | **Wyjątek w `excelSaveAll` blokował modal na stałe (Excel)**                                 | `_excelCloseOverlay()` wołany po `refreshAll()` — jeśli `refreshAll()` rzucił wyjątek, overlay nie był zamykany, a guard `_excelClosing` zostawał `true` na stałe (kolejne otwarcia modala kończyły się early-return).                                                                                                              | `try { ... } catch { toast błędu } finally { _excelCloseOverlay(); }` — overlay zawsze usuwany, guard resetowany (excelWellActions.js).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | 33  | **`select()` po re-renderze uniemożliwiał wpisanie wielocyfrowej ilości (Excel)**            | Restore fokusa po `_excelRenderTable` używał `restoreEl.select()` — zaznaczenie całej wartości powodowało, że kolejny klawisz zastępował całość (wpisanie „12" dawało „2").                                                                                                                                                         | Kursor na koniec zamiast zaznaczenia: `restoreEl.setSelectionRange(len, len)` (excelTableRenderer.js). Powiązane z #21 — bezwarunkowy pełny re-render potęgował objaw.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 34  | **Mojibake (podwójne kodowanie UTF-8) w plikach źródłowych**                                 | Polskie znaki UTF-8 zapisane ponownie przez edytor/narzędzie interpretujące CP1250/Windows-1250 (np. `Ć` C4 86 → C3 84 E2 80 A0). Bajty są poprawnym UTF-8, więc dotychczasowy `encoding:check` (walidacja sekwencji/BOM/ASCII) ich nie wykrywał. Przykład: `public/partials/studnie/step4-build-card.html:96` `(TU DOPISYWA` + C3 84 E2 80 A0 + `)`, `docs/DELETION_LOG.md` (78 znaków). | `scripts/encoding-integrity.js` ma warstwę semantyczną `detectMojibake`/`fixMojibake` (mapa sygnatur CP1250/CP1252, wykrywanie par/tripletów — zero fałszywych pozytywów dla niemieckich umlautów). Polityka: pliki w `public/`/`src/`/`docs/`/`tests/`/`scripts/`/`prisma/` → ERROR; `npm run encoding:fix` naprawia automatycznie. Trzy warstwy guarda: lint-staged (pre-commit) → pre-push → CI job `lint`. Test regresyjny: `tests/encodingMojibake.test.ts`. |
 
 ---
 
@@ -333,10 +336,10 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Kodowanie
 
-| Polecenie                | Opis działania                                             |
-| ------------------------ | ---------------------------------------------------------- |
-| `npm run encoding:check` | Sprawdza kodowanie plików (UTF-8 bez BOM, ASCII dla .bat). |
-| `npm run encoding:fix`   | Naprawia kodowanie plików.                                 |
+| Polecenie                | Opis działania                                                       |
+| ------------------------ | -------------------------------------------------------------------- |
+| `npm run encoding:check` | Sprawdza kodowanie plików (UTF-8 bez BOM, ASCII dla .bat, mojibake). |
+| `npm run encoding:fix`   | Naprawia kodowanie plików (BOM, Windows-1250, mojibake).             |
 
 ### Skills (narzędzia agentów AI)
 

@@ -94,53 +94,53 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 
 ---
 
-## [2026-08-05] Refactor Session 2 â€” Dead Code & Docs Cleanup
+## [2026-08-05] Refactor Session 2 — Dead Code & Docs Cleanup
 
 ### Unused Code Removed
 
-| Element                                             | Przyczyna                                                                                                                                                                              |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `KnowledgeBase.archivePattern`                      | Pole nie byĹ‚o uĹĽywane â€” archiwizacja wzorcĂłw nie byĹ‚a implementowana. UsuniÄ™te w commicie `fe1679f` (KnowledgeBase.ts).                                                         |
-| `LearningEngine.feedback` / `LearningEngine.ranker` | Publiczne pola subkomponentĂłw nieistniejÄ…cych w `getComponents()` â€” zwraca wyĹ‚Ä…cznie `kb`, `patterns`, `prefs`, `recommend`. UsuniÄ™te w commicie `fe1679f` (LearningEngine.ts). |
+| Element                                             | Przyczyna                                                                                                                                                                       |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KnowledgeBase.archivePattern`                      | Pole nie było używane — archiwizacja wzorców nie była implementowana. Usunięte w commicie `fe1679f` (KnowledgeBase.ts).                                                         |
+| `LearningEngine.feedback` / `LearningEngine.ranker` | Publiczne pola subkomponentów nieistniejących w `getComponents()` — zwraca wyłącznie `kb`, `patterns`, `prefs`, `recommend`. Usunięte w commicie `fe1679f` (LearningEngine.ts). |
 
 ### Artifacts Removed
 
-| Plik                             | Przyczyna                                                                                                                                                                         |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dataapp_database.sqlite` (root) | Artefakt bazy utworzonej w katalogu gĹ‚Ăłwnym projektu (poza `data/`). UsuniÄ™ty, dodano wpis `/*.sqlite*` do `.gitignore` (commit `c905934`), by zapobiec ponownemu trackowaniu. |
+| Plik                             | Przyczyna                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dataapp_database.sqlite` (root) | Artefakt bazy utworzonej w katalogu głównym projektu (poza `data/`). Usunięty, dodano wpis `/*.sqlite*` do `.gitignore` (commit `c905934`), by zapobiec ponownemu trackowaniu. |
 
 ### Documentation Updates
 
-| Plik                                                | Zmiana                                                                                                                                                                     |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `docs/CONTRIBUTING.md`, `docs/INSTRUKCJA_SERWER.md` | Zaktualizowano zalecenia migracji bazy: `prisma migrate dev` â†’ `prisma migrate deploy` / `npx prisma db push` (w zaleĹĽnoĹ›ci od typu bazy). CzÄ™Ĺ›Ä‡ commitu `fe1679f`. |
-| `docs/DELETION_LOG.md`                              | Ten wpis (Session 2).                                                                                                                                                      |
+| Plik                                                | Zmiana                                                                                                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/CONTRIBUTING.md`, `docs/INSTRUKCJA_SERWER.md` | Zaktualizowano zalecenia migracji bazy: `prisma migrate dev` → `prisma migrate deploy` / `npx prisma db push` (w zależności od typu bazy). Część commitu `fe1679f`. |
+| `docs/DELETION_LOG.md`                              | Ten wpis (Session 2).                                                                                                                                               |
 
 ### Impact
 
-| WskaĹşnik               | WartoĹ›Ä‡                                        |
-| ----------------------- | ------------------------------------------------ |
-| Pola/eksporty usuniÄ™te | 2 (`archivePattern`, `feedback`/`ranker`)        |
-| Artefakty usuniÄ™te     | 1 (`dataapp_database.sqlite`)                    |
-| Wpisy .gitignore        | 1 (`/*.sqlite*`)                                 |
-| Linie kodu usuniÄ™te    | ~14 (KnowledgeBase.ts) + ~10 (LearningEngine.ts) |
+| Wskaźnik               | Wartość                                          |
+| ---------------------- | ------------------------------------------------ |
+| Pola/eksporty usunięte | 2 (`archivePattern`, `feedback`/`ranker`)        |
+| Artefakty usunięte     | 1 (`dataapp_database.sqlite`)                    |
+| Wpisy .gitignore       | 1 (`/*.sqlite*`)                                 |
+| Linie kodu usunięte    | ~14 (KnowledgeBase.ts) + ~10 (LearningEngine.ts) |
 
 ### Testing
 
-- [ ] Typecheck: przechodzi po usuniÄ™ciu pĂłl (commit `fe1679f`)
-- [ ] Testy: `npm test` â€” 1305 testĂłw, wszystkie przechodzÄ… (commit `fe1679f`)
-- [ ] Testy telemetrii: `tests/telemetryRoutes.test.ts` zaktualizowane pod kÄ…tem dedup AUTO_JS i braku referencji do usuniÄ™tych pĂłl
-- [x] Encoding: `npm run encoding:check` â€” 0 bĹ‚Ä™dĂłw (4412 plikĂłw)
+- [ ] Typecheck: przechodzi po usunięciu pól (commit `fe1679f`)
+- [ ] Testy: `npm test` — 1305 testów, wszystkie przechodzą (commit `fe1679f`)
+- [ ] Testy telemetrii: `tests/telemetryRoutes.test.ts` zaktualizowane pod kątem dedup AUTO_JS i braku referencji do usuniętych pól
+- [x] Encoding: `npm run encoding:check` — 0 błędów (4412 plików)
 
 ---
 
-## [2026-07-22] Refactor Session 1 â€” Dead Code & Consolidation
+## [2026-07-22] Refactor Session 1 — Dead Code & Consolidation
 
 ### Unused Files Deleted
 
-| Plik                   | Przyczyna                                                                                                             |
-| ---------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `scripts/backup-db.js` | Martwy. backup.js uĹĽywa `VACUUM INTO` (WAL-safe); backup-db.js tylko kopiowaĹ‚ plik. Nie miaĹ‚ wpisu w package.json. |
+| Plik                   | Przyczyna                                                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `scripts/backup-db.js` | Martwy. backup.js używa `VACUUM INTO` (WAL-safe); backup-db.js tylko kopiował plik. Nie miał wpisu w package.json. |
 
 ### Dependencies Removed
 
@@ -148,48 +148,48 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 | ------- | ------------------------------------- |
 | (brak)  | Na razie tylko logika, nie paczki npm |
 
-### Unused Directories (oczekujÄ… na potwierdzenie)
+### Unused Directories (oczekują na potwierdzenie)
 
-| Katalog                   | ZawartoĹ›Ä‡                                                                                                                            | Status   |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `data/backup/` (singular) | KilkadziesiÄ…t plikĂłw `.json` (np. pv_offers.json, pv_clients.json itp.) â€” wyglÄ…dajÄ… na pozostaĹ‚oĹ›ci z debugowania lub eksportu | OCZEKUJE |
-| `data/migration_backup/`  | To samo + `_migration_info.json`                                                                                                       | OCZEKUJE |
+| Katalog                   | Zawartość                                                                                                                      | Status   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `data/backup/` (singular) | Kilkadziesiąt plików `.json` (np. pv_offers.json, pv_clients.json itp.) — wyglądają na pozostałości z debugowania lub eksportu | OCZEKUJE |
+| `data/migration_backup/`  | To samo + `_migration_info.json`                                                                                               | OCZEKUJE |
 
-**Uwaga:** backup.ts uĹĽywa `data/backups/` (plural), ktĂłry jest poprawnym i aktywnym katalogiem backupu. Katalog `data/backup/` (singular) nie ma ĹĽadnego czytnika w kodzie.
+**Uwaga:** backup.ts używa `data/backups/` (plural), który jest poprawnym i aktywnym katalogiem backupu. Katalog `data/backup/` (singular) nie ma żadnego czytnika w kodzie.
 
 ### Files Consolidated
 
-| Pliki                   | Operacja                                                                             | Uzasadnienie                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `start.bat` + `dev.bat` | start.bat: przepisany, Ĺ‚Ä…czy logikÄ™ obu. dev.bat: alias (call do start.bat --dev) | ~90% duplikacja. Zunifikowany port-check, wsparcie `--dev` (domyĹ›lne) i `--prod`. |
+| Pliki                   | Operacja                                                                          | Uzasadnienie                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `start.bat` + `dev.bat` | start.bat: przepisany, łączy logikę obu. dev.bat: alias (call do start.bat --dev) | ~90% duplikacja. Zunifikowany port-check, wsparcie `--dev` (domyślne) i `--prod`. |
 
 ### Package.json Changes
 
-| Wpis      | Operacja                                                                                |
-| --------- | --------------------------------------------------------------------------------------- |
-| `restore` | DODANO: `"restore": "node scripts/restore-db.js"` â€” skrypt istniaĹ‚, brakowaĹ‚o wpisu |
+| Wpis      | Operacja                                                                            |
+| --------- | ----------------------------------------------------------------------------------- |
+| `restore` | DODANO: `"restore": "node scripts/restore-db.js"` — skrypt istniał, brakowało wpisu |
 
 ### Documentation Updates
 
-| Plik                   | Zmiana                                                                              |
-| ---------------------- | ----------------------------------------------------------------------------------- |
-| `docs/ARCHITECTURE.md` | UsuniÄ™to wiersz z `backup-db.js` (linia byĹ‚a pomiÄ™dzy backup.ts a restore-db.js) |
-| `docs/AUDIT_AI.md`     | Zmieniono backup-db.js na backup.ts                                                 |
+| Plik                   | Zmiana                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| `docs/ARCHITECTURE.md` | Usunięto wiersz z `backup-db.js` (linia była pomiędzy backup.ts a restore-db.js) |
+| `docs/AUDIT_AI.md`     | Zmieniono backup-db.js na backup.ts                                              |
 
 ### Impact
 
-| WskaĹşnik            | WartoĹ›Ä‡                                                                   |
-| -------------------- | --------------------------------------------------------------------------- |
-| Pliki usuniÄ™te      | 1 (`scripts/backup-db.js`)                                                  |
-| Pliki poĹ‚Ä…czone    | 2 (`start.bat` + `dev.bat`)                                                 |
-| Pliki dodane         | 0 (tylko modyfikacje i aliasy)                                              |
-| Linie kodu usuniÄ™te | ~11 (backup-db.js) + ~180 (duplikacja w batach usuniÄ™ta, start.bat ma ~80) |
-| Komendy npm dodane   | 1                                                                           |
+| Wskaźnik            | Wartość                                                                    |
+| ------------------- | -------------------------------------------------------------------------- |
+| Pliki usunięte      | 1 (`scripts/backup-db.js`)                                                 |
+| Pliki połączone     | 2 (`start.bat` + `dev.bat`)                                                |
+| Pliki dodane        | 0 (tylko modyfikacje i aliasy)                                             |
+| Linie kodu usunięte | ~11 (backup-db.js) + ~180 (duplikacja w batach usunięta, start.bat ma ~80) |
+| Komendy npm dodane  | 1                                                                          |
 
 ### Testing
 
-- [ ] Typecheck: N/A (backup-db.js nie TypeScript; start.bat/bar, aliasy nie sÄ… typowane)
-- [ ] Logika: zweryfikowana porĂłwnaniem kodu (start.bat vs dev.bat vs prod.bat)
+- [ ] Typecheck: N/A (backup-db.js nie TypeScript; start.bat/bar, aliasy nie są typowane)
+- [ ] Logika: zweryfikowana porównaniem kodu (start.bat vs dev.bat vs prod.bat)
 - [ ] Testy bazowe: N/A
 
 ## [2026-08-05] Refactor Session 3 - Dead Code Cleanup
