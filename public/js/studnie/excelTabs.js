@@ -36,7 +36,7 @@ function _excelUpdateWellCount() {
 
 function excelSwitchTab(tab) {
     _excelActiveTab = tab;
-    _excelLastDataCol = -1; /* reset zapamiętanej kolumny przy zmianie zakładki */
+    _excelResetLayoutDependentState(); /* reset selekcji zależnych od układu */
     _excelRenderTabs();
     _excelRenderTable(tab);
     _excelUpdateHeaderProdCodes();
@@ -76,6 +76,12 @@ function excelCreateFromEmpty() {
     const rzdRaw = rzdEl ? rzdEl.value : '';
     const rzw = rzwRaw !== '' ? parseFloat(rzwRaw) : null;
     const rzd = rzdRaw !== '' ? parseFloat(rzdRaw) : null;
+
+    if ((rzw !== null && isNaN(rzw)) || (rzd !== null && isNaN(rzd))) {
+        showToast('Nieprawidłowa wartość rzędnej', 'error');
+        _excelCreatingLock = false;
+        return;
+    }
 
     if (!name && rzw === null && rzd === null) {
         _excelCreatingLock = false;

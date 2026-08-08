@@ -102,7 +102,6 @@ function _excelOnRowSelectChange(e) {
         let wIdx = parseInt(target.getAttribute('data-widx'), 10);
         if (!isNaN(wIdx)) {
             _excelRowSelectStates[wIdx] = target.checked;
-            _excelUpdateBulkButtons();
             /* sync select-all checkbox */
             let allBoxes = document.querySelectorAll(
                 '#excel-table-container tbody tr[data-widx] input.excel-row-select'
@@ -343,13 +342,16 @@ window.refreshExcelFromConfig = function () {
 };
 
 /* Sync UI z wells[i].configSource/autoSelect (bez pelnego re-render) — dla zmian z glownego panelu */
+/* Oryginał z excelPolling.js przechwytujemy PRZED nadpisaniem window — inaczej
+   wrapper woła sam siebie (shadowing) i realna synchronizacja nigdy nie działa. */
+const _excelSyncAutoManualUIReal = _excelSyncAutoManualUI;
 window._excelSyncAutoManualUI = function () {
     if (!document.getElementById('excel-table-overlay')) return;
     let fn = /** @type {any} */ (window._excelSyncAutoManualUI);
     if (fn._inProgress) return;
     fn._inProgress = true;
     try {
-        _excelSyncAutoManualUI();
+        _excelSyncAutoManualUIReal();
     } finally {
         fn._inProgress = false;
     }
@@ -372,4 +374,3 @@ function _excelParsePasteData(text) {
     }
     return result;
 }
-window._excelParsePasteData = _excelParsePasteData;

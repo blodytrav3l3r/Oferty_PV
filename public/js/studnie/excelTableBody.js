@@ -39,7 +39,6 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         let isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
         let nameKey = (well.name || '').trim().toLowerCase();
         let isDup = dupNames.has(nameKey);
-        let tabKey = dn === 'styczne' ? 'styczne' : String(dn);
         let dnKey = dn === 'styczne' ? 'styczne' : dn;
         let nameDnList = nameDnMap[nameKey] || [];
         let otherDns = nameDnList.filter(function (d) {
@@ -739,5 +738,11 @@ function _excelRefreshDupColors() {
         row.setAttribute('data-hover-bg', hoverBg);
         row.setAttribute('data-active-bg', activeBg);
         row.style.background = rowBg;
+        /* Zaktualizuj tła kolumn sticky — inaczej część wiersza (Lp, nazwa,
+           rzędne) ma inną barwę niż reszta (bug S4). */
+        const solidBg = row.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+        row.querySelectorAll('td:nth-child(-n+7)').forEach(function (td) {
+            td.style.background = _excelStickyCellBg(rowBg, solidBg);
+        });
     });
 }

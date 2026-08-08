@@ -106,22 +106,6 @@ function _excelToggleSelectAll(checked) {
     });
     let hdrAll = document.getElementById('excel-select-all');
     if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
-    _excelUpdateBulkButtons();
-}
-
-function _excelUpdateBulkButtons() {
-    let btnAuto = document.getElementById('excel-bulk-auto');
-    let btnManual = document.getElementById('excel-bulk-manual');
-    let count = 0;
-    for (let k in _excelRowSelectStates) {
-        if (
-            Object.prototype.hasOwnProperty.call(_excelRowSelectStates, k) &&
-            _excelRowSelectStates[k]
-        )
-            count++;
-    }
-    if (btnAuto) btnAuto.textContent = 'Auto';
-    if (btnManual) btnManual.textContent = 'Manual';
 }
 
 /** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */

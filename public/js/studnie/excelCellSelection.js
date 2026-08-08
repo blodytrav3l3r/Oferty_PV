@@ -79,20 +79,10 @@ function _excelOnMouseDown(e) {
         _excelDeselectAllCells();
         _excelSelectCell(wIdx, colIdx, false, false);
     } else if (e.shiftKey && _excelLastClickedCell) {
-        _excelDeselectAllCells();
-        for (
-            let r = Math.min(_excelLastClickedCell.wIdx, wIdx);
-            r <= Math.max(_excelLastClickedCell.wIdx, wIdx);
-            r++
-        ) {
-            for (
-                let c = Math.min(_excelLastClickedCell.colIdx, colIdx);
-                c <= Math.max(_excelLastClickedCell.colIdx, colIdx);
-                c++
-            ) {
-                _excelSelectCell(r, c, false, false);
-            }
-        }
+        /* Shift+klik: zakres zaznaczy handler click (excelModal.js _excelOnClickCell)
+           względem _excelLastClickedCell. Tu tylko zapamiętaj, że to był shift — inaczej
+           mouseup kolaapsuje zaznaczenie do pojedynczej komórki (bug W2). */
+        _excelDragState.additiveFromShift = true;
     }
     /* Dla ctrl: nic nie rob (toggle bedzie przy mouseup) */
 }
@@ -159,8 +149,9 @@ function _excelOnMouseUp() {
             /* 'add' mode: dodaj zakres do istniejacej selekcji */
             _excelSelectRange(s.wIdx, s.colIdx, en.wIdx, en.colIdx, true);
         }
-    } else if (mode === 'new') {
-        /* Sam anchor replacement: pojedyncze klikniecie = zaznacz komorke */
+    } else if (mode === 'new' && !_excelDragState.additiveFromShift) {
+        /* Sam anchor replacement: pojedyncze klikniecie = zaznacz komorke.
+           Shift+klik obsługuje handler click (zakres od _excelLastClickedCell). */
         _excelDeselectAllCells();
         _excelSelectCell(s.wIdx, s.colIdx, false, false);
     }

@@ -46,7 +46,6 @@ function _excelRenderTable(dn) {
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].includes(dn);
 
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
-    const dnBg = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).activeBg;
 
     let html =
         '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
@@ -324,9 +323,12 @@ function _excelRenderTable(dn) {
                     currentWellIndex = savedFocus.wIdx;
                 }
                 restoreEl.focus();
-                // Jeśli to input, zaznacz zawartość
-                if (restoreEl.tagName === 'INPUT' && restoreEl.select) {
-                    restoreEl.select();
+                /* Kursor na koniec zamiast select() — zaznaczenie całej wartości
+                   sprawia, że kolejny klawisz ją zastępuje (niemożliwe było
+                   wpisanie wielocyfrowej ilości). */
+                if (restoreEl.tagName === 'INPUT' && restoreEl.setSelectionRange) {
+                    const _len = restoreEl.value ? restoreEl.value.length : 0;
+                    restoreEl.setSelectionRange(_len, _len);
                 }
             }
         }

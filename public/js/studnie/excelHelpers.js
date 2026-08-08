@@ -1,12 +1,6 @@
 // @ts-check
 /* ===== EXCEL HELPERS — Funkcje pomocnicze dla tabeli konfiguracyjnej studni ===== */
 
-/* Helper: sprawdź czy studnia ma obsługę redukcji (DN1200-2500) */
-function getHasReduction(well, dn) {
-    if (!well) return !!dn && ['1200', '1500', '2000', '2500'].includes(String(dn));
-    return ['1200', '1500', '2000', '2500'].includes(String(well.dn));
-}
-
 function _excelWellMatchesTab(well, tab) {
     if (tab === 'styczne') return well.dn === 'styczna';
     return String(well.dn) === String(tab);

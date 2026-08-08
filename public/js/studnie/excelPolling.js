@@ -88,7 +88,6 @@ function _excelSyncAutoManualUI() {
                 : 'Przełącz na Auto aby uruchomić';
         }
     }
-    _excelUpdateBulkButtons();
 }
 
 function _excelStopPolling() {

@@ -314,6 +314,7 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         _excelSaveUndoSnapshot();
         _excelSelectedCells.forEach(function (cell) {
+            if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             /* Rozwiąż przez indeks TD — colIdx to indeks td, nie index z rowEls */
@@ -337,7 +338,7 @@ function _excelHandleKeydown(e) {
             if (isNaN(wIdx)) return;
             let tds = row.querySelectorAll('td');
             tds.forEach(function (td, cIdx) {
-                if (cIdx < 2) return; /* pomiń Lp + Nr Studni */
+                if (cIdx < 4) return; /* pomiń checkbox, A/M, Lp + Nr Studni (nazwa nigdy) */
                 _excelSelectedCells.push({ wIdx: wIdx, colIdx: cIdx });
                 td.classList.add('cell-selected');
             });
@@ -356,6 +357,7 @@ function _excelHandleKeydown(e) {
         /* Potem wyczyść */
         _excelSaveUndoSnapshot();
         _excelSelectedCells.forEach(function (cell) {
+            if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             let td = row.children[cell.colIdx];
@@ -397,7 +399,7 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         _excelSaveUndoSnapshot();
         _excelSelectedCells.forEach(function (cell) {
-            if (cell.colIdx <= 1) return;
+            if (cell.colIdx <= 3) return; /* nazwa studni i kolumny strukturalne — nie kopiuj */
             let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
             if (!row) return;
             let tdR = row.children[cell.colIdx];

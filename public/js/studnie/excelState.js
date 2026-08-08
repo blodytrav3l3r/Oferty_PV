@@ -89,7 +89,7 @@ const DN_COLORS = {
 
 const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
-let _excelPasteCancelFlag = false;
+let _excelPasteInProgress = false;
 
 let _excelUndoStack = [];
 let _excelRedoStack = [];
@@ -119,7 +119,7 @@ function _excelSaveColumnVisibility() {
 }
 
 function _excelResetColumnVisibility() {
-    _excelDeselectAllCols();
+    _excelResetLayoutDependentState();
     _excelHiddenColumnIds = [];
     _excelSaveColumnVisibility();
     _excelRenderTable(_excelActiveTab);
@@ -127,4 +127,21 @@ function _excelResetColumnVisibility() {
 
 function _excelIsColumnHidden(colId) {
     return _excelHiddenColumnIds.indexOf(colId) >= 0;
+}
+
+/* Reset stanu selekcji zależnego od układu tabeli. Wołaj przy każdej zmianie
+   struktury: zmianie zakładki DN, toggle widoczności kolumn, dodaniu/usunięciu
+   kolumny przejścia oraz zamknięciu modala (reguła AGENTS.md sekcja 4). */
+function _excelResetLayoutDependentState() {
+    if (_excelSelectedCells.length > 0) {
+        const copy = [..._excelSelectedCells];
+        _excelSelectedCells = [];
+        copy.forEach(function (cell) {
+            _excelToggleCellClass(cell.wIdx, cell.colIdx, false);
+        });
+    }
+    if (_excelSelectedCols.length > 0) _excelDeselectAllCols();
+    _excelLastClickedCell = null;
+    _excelLastDataCol = -1;
+    _excelLastClickedCol = -1;
 }

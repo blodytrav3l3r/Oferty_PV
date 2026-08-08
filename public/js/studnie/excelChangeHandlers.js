@@ -8,6 +8,8 @@ function excelOnRzednaChange(wIdx) {
     const well = wells[wIdx];
     if (!well) return;
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
@@ -71,7 +73,7 @@ function excelRemoveTransitionColumn() {
                 if (
                     (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '') ||
                     (p.productId !== null && p.productId !== '') ||
-                    (p.kat && p.kat !== 0)
+                    (p.angle && p.angle !== 0)
                 ) {
                     hasData = true;
                     break;
@@ -91,6 +93,7 @@ function excelRemoveTransitionColumn() {
             }
         });
     }
+    _excelResetLayoutDependentState();
     _excelMaxTransitions[tab] = Math.max(1, curMax - 1);
     _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
@@ -105,6 +108,7 @@ function excelAddTransitionColumn() {
         );
         return;
     }
+    _excelResetLayoutDependentState();
     _excelMaxTransitions[tab] = (_excelMaxTransitions[tab] || 1) + 1;
     let newMax = _excelMaxTransitions[tab];
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
@@ -126,13 +130,16 @@ function _excelCleanEmptyPrzejscia(well) {
         return (
             (p.productId && p.productId !== '') ||
             (p.tempCategory && p.tempCategory !== '') ||
-            (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '')
+            (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '') ||
+            (p.angle && p.angle !== 0)
         );
     });
 }
 
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     let hasExisting = trIdx < wells[wIdx].przejscia.length;
@@ -141,7 +148,14 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
     }
     const prz = wells[wIdx].przejscia[trIdx];
-    prz[field] = field === 'angle' ? parseFloat(value) || 0 : value || null;
+    prz[field] =
+        field === 'angle'
+            ? parseFloat(value) || 0
+            : field === 'rzednaWlaczenia'
+              ? value !== '' && !isNaN(parseFloat(String(value).replace(',', '.')))
+                  ? parseFloat(String(value).replace(',', '.'))
+                  : null
+              : value || null;
     if (field === 'angle') {
         prz.angleExecution = parseFloat(prz.angle) || 0;
         prz.angleGony = (parseFloat(prz.angle) || 0).toFixed(2);
@@ -156,6 +170,8 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
 
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
@@ -171,13 +187,22 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
             wells[wIdx].przejscia[trIdx].productId = '';
         }
     }
+    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     currentWellIndex = -1;
     _excelRenderTable(_excelActiveTab);
+    /* Przywróć zaznaczenie — inaczej kody produktów w h3 zostają w fallbacku
+       i aktywny wiersz traci podświetlenie (bug S7). */
+    if (savedIdx >= 0) {
+        currentWellIndex = savedIdx;
+        if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
+    }
     _excelDebouncedRefresh();
 }
 
 function excelOnWlazChange(wIdx, productId) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     const well = wells[wIdx];
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -205,7 +230,9 @@ function _excelMarkManual(well) {
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
     if (!_excelGuardWellLocked(wIdx)) return;
-    _excelSaveUndoSnapshot();
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+            _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
@@ -286,9 +313,13 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             }
         }
     }
-    /* Odśwież tabelę PO konwersji krag/krag_ot — inaczej komórki kręgów
-       pokazują starą wartość (re-render przed konwersją był nieaktualny). */
-    _excelMarkManual(well);
+    /* Pełny re-render tylko dla kręgów — konwersja krag/krag_ot musi pokazać
+       finalny config (poprawka błędu #21 z AGENTS.md). Dla pozostałych komponentów
+       wystarczy _excelMarkAsManual (linia 209) + odświeżenie komórek — pełny
+       re-render przy każdym znaku blokowałby wpisywanie wielocyfrowych ilości. */
+    if (componentType === 'krag' || componentType === 'krag_ot') {
+        _excelMarkManual(well);
+    }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
@@ -349,6 +380,8 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
 
 function excelOnKinetaChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
@@ -358,6 +391,8 @@ function excelOnKinetaChange(wIdx, value) {
 
 function excelOnPsiaBudaChange(wIdx, checked) {
     if (!_excelGuardWellLocked(wIdx)) return;
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
@@ -387,7 +422,8 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 /* ===== Redukcja — pojedynczy select: Brak / DN1000 / DN1200 ===== */
 async function excelOnReductionSelectChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
-    _excelSaveUndoSnapshot();
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
+        _excelSaveUndoSnapshot();
     let well = wells[wIdx];
     if (!well) return;
     if (!value) {

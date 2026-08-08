@@ -306,7 +306,7 @@ function _excelOnDnSelectAll(dnKey, checked) {
         if (dnKey === '_base' && !c.fromReduction) ids.push(col.id);
         else if (c.fromReduction && g === dnKey) ids.push(col.id);
     });
-    _excelDeselectAllCols();
+    _excelResetLayoutDependentState();
     ids.forEach(function (id) {
         if (checked) {
             let idx = _excelHiddenColumnIds.indexOf(id);
@@ -321,7 +321,7 @@ function _excelOnDnSelectAll(dnKey, checked) {
 }
 
 function _excelOnCellToggleAll(ids, checked) {
-    _excelDeselectAllCols();
+    _excelResetLayoutDependentState();
     ids.forEach(function (id) {
         if (checked) {
             let idx = _excelHiddenColumnIds.indexOf(id);
@@ -336,7 +336,7 @@ function _excelOnCellToggleAll(ids, checked) {
 }
 
 function _excelOnColumnToggle(colId, checked) {
-    _excelDeselectAllCols();
+    _excelResetLayoutDependentState();
     if (checked) {
         let idx = _excelHiddenColumnIds.indexOf(colId);
         if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);

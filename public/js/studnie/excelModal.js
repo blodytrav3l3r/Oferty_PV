@@ -273,7 +273,6 @@ function openExcelTableModal() {
             if (w && typeof w.autoSelect === 'undefined') w.autoSelect = true;
         });
     }
-    _excelUpdateBulkButtons();
 
     if (typeof lucide !== 'undefined') lucide.createIcons({ root: overlay });
 }
@@ -285,7 +284,7 @@ let _excelClosing = false;
 function _excelCloseOverlay() {
     _excelStopPolling();
     _excelUnregisterExcelListeners();
-    _excelLastDataCol = -1;
+    _excelResetLayoutDependentState();
     const overlay = document.getElementById('excel-table-overlay');
     if (overlay) {
         overlay.remove();
