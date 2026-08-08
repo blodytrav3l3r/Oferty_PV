@@ -21,7 +21,7 @@ kalkulator rur, tabela konfiguracyjna, generowanie PDF/DOCX). Rozważano framewo
 3. **Legacy codebase** — aplikacja rozwijana od 2024, migracja do frameworka = przepisanie 37k+ linii JS.
 4. **Full control** — 100% kontrola nad DOM, SVG, Web API. Żadne frameworkowe abstrakcje nie ograniczają.
 5. **IIFE pattern** — każdy moduł to IIFE lub funkcja globalna. Prosty, przewidywalny.
-6. **Vite bundler** — rozwiązuje problem bundle'owania, HMR i code splitting bez frameworka.
+6. **Wsparcie Vite (historyczne)** — Vite rozwiązywał bundle'owanie, HMR i code splitting bez frameworka; wycofany w ADR-005 (Express jako jedyny serwer).
 
 ## Konsekwencje
 

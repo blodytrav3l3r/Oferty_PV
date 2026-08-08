@@ -360,7 +360,6 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 | Komenda                      | Opis                               |
 | ---------------------------- | ---------------------------------- |
-| `npm run dev:frontend`       | Uruchom Vite dev server            |
 | `npm run typecheck:frontend` | Sprawdź typy TypeScript (frontend) |
 | `npm run lint:frontend`      | ESLint dla kodu frontendowego      |
 
@@ -472,7 +471,6 @@ Oferty_PV/
 ├── .github/                   # CI/CD, CODE_OF_CONDUCT
 ├── .husky/                    # Git hooks (pre-push, commit-msg)
 ├── *.bat / *.sh               # Skrypty startowe (start, dev, install, build)
-├── vite.config.js             # Konfiguracja Vite (frontend bundler)
 ├── eslint.config.mjs          # Konfiguracja ESLint (flat config)
 ├── tsconfig.json              # TypeScript (backend)
 ├── tsconfig.frontend.json     # TypeScript (frontend)

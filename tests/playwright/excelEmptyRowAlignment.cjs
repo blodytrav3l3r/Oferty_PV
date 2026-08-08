@@ -6,14 +6,14 @@
  *
  * Run:        node tests/playwright/excelEmptyRowAlignment.cjs
  * Requires:   playwright (available in npx cache or node_modules)
- * Requires:   backend + Vite running on localhost:3000 / :5174
+ * Requires:   backend running on localhost:3000
  *
  * Exit code:
  *   0 = all tabs aligned
  *   1 = at least one column misaligned or error
  */
 
-const BASE = 'http://localhost:5173';
+const BASE = 'http://localhost:3000';
 
 /* ── Playwright resolution ── */
 function resolvePlaywright() {

@@ -1,6 +1,6 @@
 # ADR-003: Vite jako dev server frontendu
 
-**Status:** Zaakceptowany (zweryfikowany 2026-08-08 — bundling uchylony)
+**Status:** Superseded przez ADR-005 (2026-08-08) — Vite wycofany w całości
 **Data:** 2026-06-20  
 **Autor:** Hermes Agent
 
@@ -27,11 +27,13 @@ uchylony** (patrz Konsekwencje).
   nie kopiuje klasycznych `<script src>` modułów studni/rur ani katalogów
   `partials/`/`templates/` (Vite bundluje wyłącznie `<script type="module">`),
   więc artefakt `dist-web/` był z definicji niekompletny — moduł studni nie działał
-  na `vite preview` (port 4173). Produkcja serwuje `public/` wprost przez Express,
-  dev używa Vite (5173). Usunięto: `build:frontend`, `preview:frontend`, `dist-web/`.
-- **Vite i esbuild pozostają w devDependencies** wyłącznie dla dev servera.
+  na `vite preview` (port 4173). Produkcja serwuje `public/` wprost przez Express.
+  Usunięto: `build:frontend`, `preview:frontend`, `dist-web/`.
+- **Dev server również uchylony (2026-08-08)** — frontend nie używał żadnych cech Vite
+  (klasyczne `<script>`, brak HMR/TS/`import.meta.env`), a Express serwował `public/`
+  w dev. Usunięto: `vite`, `esbuild`, `concurrently`, `wait-on`, `vite.config.js`,
+  `scripts/wait-and-start.mjs`. Patrz ADR-005.
 - **TypeScript tylko transpilacja** — typecheck wymaga osobnego `npm run typecheck:frontend` (`tsc --noEmit`).
-- **Proxy HMR nie jest w pełni zintegrowane** — backend i frontend to osobne procesy (przez `concurrently`).
 
 ## Konfiguracja
 

@@ -1,5 +1,40 @@
 # Code Deletion Log
 
+## [2026-08-08] Wycofanie Vite — Express jako jedyny serwer (ADR-005)
+
+### Usunięte pliki
+
+| Plik                         | Przyczyna                                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `vite.config.js`             | Jedyny konsument to `vite` (dev:frontend); frontend nie używał żadnych cech Vite (klasyczne `<script>`, brak HMR/TS/`import.meta.env`). |
+| `scripts/wait-and-start.mjs` | Spawnował Vite po healthchecku backendu — zbędne, gdy `npm run dev` = sam backend (Express serwuje `public/`).                          |
+| `dist-web/` (katalog)        | Martwy artefakt `vite build` — niekompletny z definicji (brak klasycznych scriptów/partials).                                           |
+
+### Dependencies
+
+| Zmiana                                    | Przyczyna                                                                                                   |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `vite` usuniety z devDependencies         | Tylko dla `dev:frontend`/`build:frontend`, oba usuniete (patrz ADR-005).                                    |
+| `esbuild` usuniety z devDependencies      | Optional peer dep Vite 8 dla `minify` — build frontendu usuniety. Uchyla poprzednia aktualizacje `deeb32a`. |
+| `concurrently` usuniety z devDependencies | Tylko w skrypcie `dev` — skrypt uproszczony do `npm run dev:backend`.                                       |
+| `wait-on` usuniety z devDependencies      | Tylko w `wait-and-start.mjs` (usuniety).                                                                    |
+
+### Scripts
+
+| Skrypt             | Zmiana                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| `dev`              | `concurrently backend + frontend` → `npm run dev:backend` (jeden proces na :3000). |
+| `dev:frontend`     | Usuniety.                                                                          |
+| `build:frontend`   | Usuniety (wczesniej, commit 0693fa9).                                              |
+| `preview:frontend` | Usuniety (wczesniej, commit 0693fa9).                                              |
+
+### Inne
+
+- `start.bat` / `dev.sh`: komunikaty `:5173` → `http://localhost:3000`.
+- Testy Playwright (`excelEmptyRowAlignment.cjs`, `partialOrderRury.cjs`): `BASE` z `:5173` → `:3000`.
+- `src/app.ts` CSP: usuniety `ws://localhost:*` (relikt HMR Vite).
+- ADR-003 oznaczony jako Superseded przez nowy ADR-005.
+
 ## [2026-08-06] Refactor Session 4 — Martwe endpointy i pola w API ML
 
 ### Martwe endpointy usunięte (`src/routes/telemetryAiDashboard.ts`)

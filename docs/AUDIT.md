@@ -32,15 +32,15 @@
 
 ## 2. Architektura
 
-| Element                          | Status | Uwagi                                         |
-| -------------------------------- | ------ | --------------------------------------------- |
-| Backend: Express.js (TypeScript) | ✔      | Dobrze skonfigurowany, typowany               |
-| ORM: Prisma 6.0                  | ✔      | SQLite, generowany klient                     |
-| Frontend: Vanilla JS SPA         | ✔      | Bez frameworka — lekkie, szybkie              |
-| Bundler: Vite 8.0 (dev)          | ✔      | Tylko w dev, w produkcji serwowane statycznie |
-| Baza danych: SQLite              | ✔      | Lokalna, WAL-safe backup                      |
-| Swagger API docs                 | ✔      | `/api/docs`                                   |
-| Sentry monitoring                | ✔      | Opcjonalny, aktywny po ustawieniu DSN         |
+| Element                          | Status | Uwagi                                     |
+| -------------------------------- | ------ | ----------------------------------------- |
+| Backend: Express.js (TypeScript) | ✔      | Dobrze skonfigurowany, typowany           |
+| ORM: Prisma 6.0                  | ✔      | SQLite, generowany klient                 |
+| Frontend: Vanilla JS SPA         | ✔      | Bez frameworka — lekkie, szybkie          |
+| Serwer: Express (dev i prod)     | ✔      | Frontend serwowany statycznie z `public/` |
+| Baza danych: SQLite              | ✔      | Lokalna, WAL-safe backup                  |
+| Swagger API docs                 | ✔      | `/api/docs`                               |
+| Sentry monitoring                | ✔      | Opcjonalny, aktywny po ustawieniu DSN     |
 
 ## 3. API
 

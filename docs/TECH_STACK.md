@@ -30,8 +30,6 @@
 | Express          | ^4.21.0  | MIT           | Framework backend         | https://expressjs.com                                      |     ✅      |
 | Prisma           | ^6.0.0   | Apache-2.0    | ORM / baza danych         | https://prisma.io                                          |     ✅      |
 | SQLite           | —        | Public Domain | Baza danych               | https://sqlite.org                                         |     ✅      |
-| Vite             | ^8.0.14  | MIT           | Bundler frontend          | https://vitejs.dev                                         |     ✅      |
-| esbuild          | ^0.28.1  | MIT           | Minifikacja frontendu     | https://esbuild.github.io                                  |     ✅      |
 | Jest             | ^30.3.0  | MIT           | Testy                     | https://jestjs.io                                          |     ✅      |
 | Puppeteer        | ^24.40.0 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                           |     ✅      |
 | Sentry           | ^10.59.0 | MIT           | Monitoring błędów         | https://sentry.io                                          |     ✅      |

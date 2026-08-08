@@ -7,7 +7,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 ## Stack
 
 - **Backend**: TypeScript + Express + Prisma + SQLite; `server.ts`, `src/`, `scripts/`, `tests/`
-- **Frontend**: Vanilla JS (bez frameworka), Vite dev server (`npm run dev:frontend`); moduły w `public/js/rury/` i `public/js/studnie/`
+- **Frontend**: Vanilla JS (bez frameworka), serwowany przez Express z `public/`; moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
 
@@ -15,12 +15,13 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 Kluczowe decyzje — szczegóły w `docs/adr/`:
 
-| ADR     | Decyzja                         | Plik                                 |
-| ------- | ------------------------------- | ------------------------------------ |
-| ADR-001 | SQLite jako baza produkcyjna    | `docs/adr/ADR-001-sqlite.md`         |
-| ADR-002 | Vanilla JS SPA (bez frameworka) | `docs/adr/ADR-002-vanilla-js.md`     |
-| ADR-003 | Vite jako bundler frontendu     | `docs/adr/ADR-003-vite.md`           |
-| ADR-004 | Express + Prisma backend        | `docs/adr/ADR-004-express-prisma.md` |
+| ADR     | Decyzja                             | Plik                                        |
+| ------- | ----------------------------------- | ------------------------------------------- |
+| ADR-001 | SQLite jako baza produkcyjna        | `docs/adr/ADR-001-sqlite.md`                |
+| ADR-002 | Vanilla JS SPA (bez frameworka)     | `docs/adr/ADR-002-vanilla-js.md`            |
+| ADR-003 | Vite jako dev server (wycofany)     | `docs/adr/ADR-003-vite.md`                  |
+| ADR-004 | Express + Prisma backend            | `docs/adr/ADR-004-express-prisma.md`        |
+| ADR-005 | Express jedynym serwerem (dev/prod) | `docs/adr/ADR-005-express-jedyny-serwer.md` |
 
 ---
 

@@ -13,7 +13,7 @@
 
 ```
 ┌───────────────────────────────────────────────────────────────────────┐
-│                       BROWSER (Vite SPA)                              │
+│                       BROWSER (Express SPA)                            │
 │                                                                       │
 │   studnie.html/rury.html                                             │
 │   ├── telemetryBridge.js (pasywny obserwator)                        │

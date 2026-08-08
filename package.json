@@ -4,9 +4,8 @@
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
-        "dev": "concurrently -k -n backend,frontend -c cyan,green \"npm run dev:backend\" \"node scripts/wait-and-start.mjs\"",
+        "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
-        "dev:frontend": "vite",
         "build": "tsc",
         "build:watch": "tsc --watch",
         "test": "jest --coverage",
@@ -96,8 +95,6 @@
         "@types/supertest": "^7.2.0",
         "@types/swagger-jsdoc": "^6.0.4",
         "@types/swagger-ui-express": "^4.1.8",
-        "concurrently": "^10.0.3",
-        "esbuild": "^0.28.1",
         "eslint": "^10.6.0",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.4.0",
@@ -116,9 +113,7 @@
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",
         "typescript": "^6.0.2",
-        "typescript-eslint": "^8.62.1",
-        "vite": "^8.0.14",
-        "wait-on": "^9.0.10"
+        "typescript-eslint": "^8.62.1"
     },
     "prisma": {
         "seed": "ts-node prisma/seed.ts"

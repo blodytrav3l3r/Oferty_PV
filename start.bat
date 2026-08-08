@@ -3,7 +3,7 @@ REM  Wersja: 1.11.4
 REM ===========================================================
 REM  start.bat - Jedno wejscie: caly system
 REM  Uruchamia:
-REM    - Backend Express (Prisma + SQLite) + Frontend Vite
+REM    - Backend Express (Prisma + SQLite) serwuje API i frontend z public/
 REM  Uruchomienie: start.bat [--dev]
 REM    --dev: uruchom w trybie deweloperskim (domyslne)
 REM    prod:  odpowiednik prod.bat (produkcyjne)
@@ -117,7 +117,7 @@ if /i "%MODE%"=="prod" (
     set "NODE_ENV=production"
     call npm start
 ) else (
-    echo   Frontend: http://localhost:5173
+    echo   Aplikacja: http://localhost:3000
     echo   Backend:  http://localhost:3000/health
     echo   HTTPS:    https://localhost:3443 (Caddyfile.dev + mkcert, opcjonalnie)
     set "NODE_ENV=development"

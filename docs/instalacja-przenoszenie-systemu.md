@@ -33,9 +33,9 @@
 ├─────────────────┬───────────────────┬───────────────────┤
 │   Backend        │   Frontend         │   Baza danych     │
 │   Express 4.21   │   Vanilla JS SPA   │   SQLite          │
-│   TypeScript     │   Vite 8           │   (1 plik)        │
-│   Port 10000     │   Port 5173 (dev)  │   data/*.sqlite   │
-│                  │   Serwowane z dist/│                   │
+│   TypeScript     │   serwowany z public/ │   (1 plik)    │
+│   Port 3000      │   przez Express    │   data/*.sqlite   │
+│                  │   (dev i prod)     │                   │
 ├─────────────────┴───────────────────┴───────────────────┤
 │   Dodatkowo: Puppeteer (PDF), docx (DOCX), Sentry (logs)│
 │   Opcjonalnie: Python 3.10+ (well_configurator_backend/) │
@@ -44,15 +44,15 @@
 
 ### Komponenty:
 
-| Komponent       | Technologia                 | Rola                                               |
-| --------------- | --------------------------- | -------------------------------------------------- |
-| **Backend**     | TypeScript + Express 4.21   | API, logika biznesowa, generowanie PDF/DOCX        |
-| **Frontend**    | Vanilla JS (ES2020), Vite 8 | UI w iframe'ach, kompilowany przez Vite do `dist/` |
-| **Baza danych** | SQLite przez Prisma 6       | Jeden plik `data/app_database.sqlite`              |
-| **ORM**         | Prisma 6                    | Migracje, seed, zapytania                          |
-| **PDF**         | Puppeteer 24                | Generowanie dokumentów PDF (Chromium ~300 MB)      |
-| **DOCX**        | docx 9                      | Generowanie dokumentów Word                        |
-| **Monitoring**  | Sentry 10 (opcjonalnie)     | Zbieranie błędów                                   |
+| Komponent       | Technologia                       | Rola                                                        |
+| --------------- | --------------------------------- | ----------------------------------------------------------- |
+| **Backend**     | TypeScript + Express 4.21         | API, logika biznesowa, generowanie PDF/DOCX                 |
+| **Frontend**    | Vanilla JS (ES2020), bez bundlera | UI w iframe'ach, serwowany wprost przez Express z `public/` |
+| **Baza danych** | SQLite przez Prisma 6             | Jeden plik `data/app_database.sqlite`                       |
+| **ORM**         | Prisma 6                          | Migracje, seed, zapytania                                   |
+| **PDF**         | Puppeteer 24                      | Generowanie dokumentów PDF (Chromium ~300 MB)               |
+| **DOCX**        | docx 9                            | Generowanie dokumentów Word                                 |
+| **Monitoring**  | Sentry 10 (opcjonalnie)           | Zbieranie błędów                                            |
 
 ---
 
@@ -90,7 +90,7 @@
 3. Skopiuj .env.example → .env, ustaw DEFAULT_ADMIN_PASSWORD
 4. Kliknij 2x na install.bat
 5. Kliknij 2x na dev.bat
-   → Otwórz http://localhost:5173
+   → Otwórz http://localhost:3000
 ```
 
 ### Krok 1: Node.js
@@ -158,7 +158,7 @@ Co robi instalator:
 
 Po uruchomieniu `dev.bat`:
 
-- Frontend: **http://localhost:5173**
+- Aplikacja: **http://localhost:3000**
 - Backend API: **http://localhost:3000/health**
 - Logowanie: **admin** / hasło z `.env`
 

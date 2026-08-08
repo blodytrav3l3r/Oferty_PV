@@ -134,7 +134,7 @@
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Wyzwalacz**                     | Uruchomienie `.\start.bat` (tryb dev, domyślnie) lub `.\start.bat --prod` (tryb produkcyjny).                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. Auto-instaluje `node_modules` jeśli brak\ 3. Auto-generuje Prisma Client jeśli brak\ 4. Tworzy `data/` jeśli nie istnieje\ 5. Sprawdza schemat DB (`node scripts/check-db.js` — tabele, dane produktów ORAZ wymagane indeksy deduplikacji telemetrii `idx_logs_well` / `idx_logs_source_well`); w razie braków uruchamia automatycznie `db push` przez `ensure-db`\ 6. Sprawdza port 3000 przez `netstat` — pyta czy zabić proces\ 7. Uruchamia `npm run dev` (dev) lub `npm start` (prod) |
-| **Weryfikacja przez użytkownika** | Tryb dev: Frontend `http://localhost:5173`, Backend `http://localhost:3000/health`. Tryb prod: Aplikacja na `http://localhost:3000`.                                                                                                                                                                                                                                                                                                                                                                               |
+| **Weryfikacja przez użytkownika** | Tryb dev i prod: Aplikacja na `http://localhost:3000`. Backend health: `http://localhost:3000/health`.                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 > **Auto-heal przy starcie serwera** (`src/app.ts`): serwer wykonuje idempotentne operacje naprawcze — tworzy indeksy deduplikacji telemetrii (`CREATE INDEX IF NOT EXISTS idx_logs_well` / `idx_logs_source_well`), indeks `idx_audit_created_at` oraz upewnia się o pełnym schemacie FTS5 (`src/utils/fts5Sync.ts` — tworzy tabelę `offers_search_fts` z backfillem ofert, gdy jej brak lub brakuje kolumny `clientNumber`). Dzięki temu starsze bazy (bez migracji) samoczynnie zyskują brakujące indeksy po restarcie serwera.
 
@@ -254,9 +254,8 @@ Chcesz uruchomić w Dockerze?
 ```
 Cel instalacji:
 ├── Development (praca nad kodem)
-│   ├── install.bat → start.bat (hot-reload, backend + frontend)
-│   ├── Backend: http://localhost:3000
-│   ├── Frontend: http://localhost:5173 (Vite)
+│   ├── install.bat → start.bat (hot-reload backendu)
+│   ├── Aplikacja: http://localhost:3000
 │   └── Zmiany w kodzie → auto-restart backendu
 │
 ├── Lokalna produkcja (użytkowanie, nie kodowanie)

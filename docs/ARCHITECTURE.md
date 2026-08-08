@@ -2,7 +2,7 @@
 
 **Wersja:** 1.11.4  
 **Ostatnia aktualizacja:** 2026-08-05  
-**Stack:** Express + Prisma + SQLite + VanillaJS SPA + Vite + ML Pipeline
+**Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
 
@@ -13,7 +13,7 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 - **Backend API** — Express.js (TypeScript) obsługujący logikę biznesową i dane
 - **Frontend SPA** — Vanilla JavaScript z osobnymi widokami HTML (bez frameworka)
 - **Baza danych** — SQLite przez Prisma ORM
-- **Serwer deweloperski** — Vite dla frontendu (tylko w dev)
+- **Serwer** — Express jako jedyny serwer (dev i prod), serwuje API i `public/`
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -218,7 +218,6 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 | `server.ts`              | Główny plik aplikacji — inicjalizacja Express, middleware, routes |
 | `tsconfig.json`          | Konfiguracja TypeScript dla backendu                              |
 | `tsconfig.frontend.json` | Konfiguracja TypeScript dla frontendu                             |
-| `vite.config.js`         | Konfiguracja Vite                                                 |
 | `jest.config.ts`         | Konfiguracja Jest                                                 |
 
 ---
@@ -233,7 +232,6 @@ Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
 | HTML                    | Widoki (6 plików .html)            |
 | CSS                     | Style (w public/css/)              |
 | IndexedDB (opcjonalnie) | Pamięć lokalna dla trybu offline   |
-| Vite (dev only)         | Serwer deweloperski, HMR           |
 
 ### Widoki
 
@@ -348,7 +346,6 @@ Oferty_PV/
 ├── server.ts                        # Główny plik aplikacji
 ├── package.json                     # Zależności i skrypty
 ├── tsconfig.json                    # TypeScript backend
-├── vite.config.js                   # Vite config
 ├── jest.config.ts                   # Jest config
 ├── commitlint.config.js             # Conventional commits
 │
@@ -472,7 +469,6 @@ Oferty_PV/
 │   ├── normalize-seed-studnie.mjs   # Normalizacja seed studni
 │   ├── skill-cli.mjs                # CLI dla skilli
 │   ├── version-updater.mjs          # Aktualizator wersji
-│   ├── wait-and-start.mjs           # Opóźniony start
 │   ├── fix-css-encoding.js          # Naprawa kodowania CSS
 │   ├── encoding-integrity.js        # Spójność kodowania
 │   └── excel-validator.py           # Walidacja Excel

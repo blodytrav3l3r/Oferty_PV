@@ -630,9 +630,7 @@ function excelFilterWells(value) {
         }
         /* Kolumna Nr Studni (tr.children[3]: checkbox, A/M, Lp, Nr Studni) */
         let nameInp = row.children[3] ? row.children[3].querySelector('input') : null;
-        let name = nameInp
-            ? nameInp.value
-            : (row.children[3] || {}).textContent || '';
+        let name = nameInp ? nameInp.value : (row.children[3] || {}).textContent || '';
         name = (name || '').toLowerCase();
         const show = name.indexOf(q) >= 0;
         row.style.display = show ? '' : 'none';

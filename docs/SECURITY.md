@@ -200,7 +200,7 @@ export function httpsRedirect(req: Request, res: Response, next: NextFunction): 
 - CSP (Content Security Policy) kontroluje dozwolone źródła:
     - Skrypty: `'self'` + `'unsafe-inline'` (dla Vanilla JS event handlerów)
     - Style: `'self'` + `'unsafe-inline'`
-    - Połączenia: `'self'` (+ `ws://localhost:*` tylko w trybie development dla HMR Vite)
+    - Połączenia: `'self'`
 
 ---
 

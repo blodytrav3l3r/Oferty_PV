@@ -139,10 +139,7 @@ app.use(
                 scriptSrcAttr: ["'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
-                connectSrc: [
-                    "'self'",
-                    ...(process.env.NODE_ENV !== 'production' ? ['ws://localhost:*'] : [])
-                ],
+                connectSrc: ["'self'"],
                 fontSrc: ["'self'"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],

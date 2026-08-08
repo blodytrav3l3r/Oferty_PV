@@ -43,7 +43,7 @@ Krok 1: Wejdź na https://nodejs.org → kliknij duży zielony przycisk → zain
 Krok 2: Wejdź na https://github.com/blodytrav3l3r/Oferty_PV → Code → Download ZIP → rozpakuj
 Krok 3: W folderze: edytuj .env (auto-kopiowany z .env.example) i zmień hasło
 Krok 4: Kliknij 2x na install.bat → poczekaj aż się skończy
-Krok 5: Kliknij 2x na start.bat (lub dev.bat) → otwórz http://localhost:5173
+Krok 5: Kliknij 2x na start.bat (lub dev.bat) → otwórz http://localhost:3000
 ```
 
 Poniżej każdy krok jest szczegółowo opisany.
@@ -184,7 +184,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 5. **Poczekaj** aż zobaczysz w oknie:
 
     ```
-    Frontend: http://localhost:5173
+    Aplikacja: http://localhost:3000
     Backend:  http://localhost:3000/health
     ```
 
@@ -192,7 +192,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 
 6. **NIE ZAMYKAJ** tego okna! Dopóki jest otwarte, aplikacja działa
 7. Otwórz swoją przeglądarkę (Chrome, Edge, Firefox)
-8. W pasku adresu (na górze) wpisz: **http://localhost:5173**
+8. W pasku adresu (na górze) wpisz: **http://localhost:3000**
 9. Naciśnij Enter
 
 ### Logowanie:
@@ -208,7 +208,7 @@ Teraz uruchomisz aplikację i zobaczysz ją w przeglądarce.
 >
 > 1. Otwórz folder
 > 2. Kliknij 2x na `start.bat` (lub `dev.bat` — to to samo)
-> 3. Otwórz http://localhost:5173 w przeglądarce
+> 3. Otwórz http://localhost:3000 w przeglądarce
 > 4. Gdy skończysz pracę, zamknij czarne okno
 
 ---
@@ -313,10 +313,10 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 **Rozwiązanie:**
 
 1. Sprawdź czy czarne okno (dev.bat) jest otwarte
-2. W oknie powinno być napisane `Frontend: http://localhost:5173`
+2. W oknie powinno być napisane `Aplikacja: http://localhost:3000`
 3. Jeśli nie ma takiego napisu — poczekaj jeszcze chwilę
 4. Jeśli okno jest zamknięte — uruchom `dev.bat` ponownie
-5. W pasku adresu przeglądarki wpisz dokładnie: **http://localhost:5173** (nie https!)
+5. W pasku adresu przeglądarki wpisz dokładnie: **http://localhost:3000** (nie https!)
 
 ### Nie mogę się zalogować — "Nieprawidłowe hasło"
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================
 #  dev.sh - Development mode (rewritten 2026-07-01)
-#  Backend (ts-node-dev) + Frontend (Vite)
+#  Backend (ts-node-dev) - serwuje API i frontend z public/
 #  Poprawki:
 #    - timestamps w logach
 #    - kolory ANSI w stdout
@@ -97,8 +97,8 @@ fi
 # 6. Start aplikacji
 log STEP "Krok 6/6 - Uruchamiam npm run dev (Ctrl+C stop)"
 echo
-echo "  Backend:  http://localhost:3000"
-echo "  Frontend: Vite proxy (3000)"
+echo "  Aplikacja: http://localhost:3000"
+echo "  Backend:   http://localhost:3000/health"
 echo
 echo "Nacisnij Ctrl+C aby zatrzymac"
 echo
