@@ -93,7 +93,6 @@
     flex-shrink: 0;
 }
 .zlecenia-filter-tab {
-    flex: 1;
     padding: 0.4rem 0.9rem;
     border-radius: 8px;
     border: 1px solid var(--border-glass);
@@ -467,9 +466,10 @@
         gap: 0.6rem;
     }
     .zlecenia-filters {
+        flex: 1 1 100%;
         justify-content: stretch;
     }
-    .zlecenia-filter-tab {
+    .zlecenia-filters .zlecenia-filter-tab {
         flex: 1;
         text-align: center;
     }

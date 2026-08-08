@@ -32,35 +32,8 @@
 
                     <!-- Main card -->
                     <section style="margin-bottom: 2rem">
-                        <!-- Header: filters + search + refresh -->
+                        <!-- Header: search + refresh -->
                         <div class="zlecenia-header">
-                            <div class="zlecenia-filters">
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab active"
-                                    data-filter="all"
-                                    onclick="AppZlecenia.setFilter('all')"
-                                >
-                                    Wszystkie
-                                </button>
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab"
-                                    data-filter="draft"
-                                    onclick="AppZlecenia.setFilter('draft')"
-                                >
-                                    <i data-lucide="hourglass-2"></i> Oczekujące
-                                </button>
-                                <button
-                                    type="button"
-                                    class="zlecenia-filter-tab"
-                                    data-filter="accepted"
-                                    onclick="AppZlecenia.setFilter('accepted')"
-                                >
-                                    <i data-lucide="check-check"></i> Zatwierdzone
-                                </button>
-                            </div>
-
                             <div
                                 class="search-box"
                                 style="margin: 0; position: relative; flex: 1; min-width: 300px"
@@ -106,8 +79,35 @@
                             </button>
                         </div>
 
-                        <!-- Toolbar dodatkowych filtrów: daty, użytkownik, czyszczenie + chipsy -->
+                        <!-- Toolbar dodatkowych filtrów: status, daty, użytkownik, czyszczenie -->
                         <div class="zlecenia-virtual-toolbar" id="zlecenia-toolbar">
+                            <div class="zlecenia-filters">
+                                <button
+                                    type="button"
+                                    class="zlecenia-filter-tab active"
+                                    data-filter="all"
+                                    onclick="AppZlecenia.setFilter('all')"
+                                >
+                                    Wszystkie
+                                </button>
+                                <button
+                                    type="button"
+                                    class="zlecenia-filter-tab"
+                                    data-filter="draft"
+                                    onclick="AppZlecenia.setFilter('draft')"
+                                >
+                                    <i data-lucide="hourglass-2"></i> Oczekujące
+                                </button>
+                                <button
+                                    type="button"
+                                    class="zlecenia-filter-tab"
+                                    data-filter="accepted"
+                                    onclick="AppZlecenia.setFilter('accepted')"
+                                >
+                                    <i data-lucide="check-check"></i> Zatwierdzone
+                                </button>
+                            </div>
+
                             <div class="zlecenia-date-filter" id="zlecenia-date-filter">
                                 <span class="toolbar-label">Data od</span>
                                 <input
