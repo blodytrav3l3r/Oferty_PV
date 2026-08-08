@@ -77,7 +77,7 @@ export function auditFormatValue(self, value) {
     if (typeof value === 'boolean') return value ? 'tak' : 'nie';
     if (Array.isArray(value)) return `${value.length} poz.`;
     if (typeof value === 'object') return 'zmieniono dane';
-    return self.escapeHtml(value);
+    return escapeHtml(value);
 }
 
 export function auditGetSnapshotTitle(self, data, type) {
@@ -99,10 +99,10 @@ export function auditGetSnapshotSummary(self, data, type) {
     const money = data.totalBrutto || data.totalNetto || data.totalTotalNetto;
     if (money) parts.push(`wartość: ${self.formatAuditValue(Number(money))} PLN`);
     if (data.clientName || data.company)
-        parts.push(`klient: ${self.escapeHtml(data.clientName || data.company)}`);
-    if (data.orderNumber) parts.push(`zamówienie: ${self.escapeHtml(data.orderNumber)}`);
+        parts.push(`klient: ${escapeHtml(data.clientName || data.company)}`);
+    if (data.orderNumber) parts.push(`zamówienie: ${escapeHtml(data.orderNumber)}`);
     if (data.offerNumber || data.number)
-        parts.push(`oferta: ${self.escapeHtml(data.offerNumber || data.number)}`);
+        parts.push(`oferta: ${escapeHtml(data.offerNumber || data.number)}`);
     if (type === 'order' && data.kartaBudowy) parts.push('zawiera kartę budowy');
     return parts.length ? parts.join(' • ') : 'Zapisano pełną migawkę dokumentu.';
 }
@@ -144,10 +144,10 @@ export function auditRenderEntry(self, log, id, type) {
     const oldData = log.oldData || {};
     const isDiff = data._diffMode === true;
     const source = log.action === 'delete' ? oldData : data;
-    const title = self.escapeHtml(self.getAuditSnapshotTitle(source, type));
-    const summary = self.escapeHtml(self.getAuditSnapshotSummary(source, type));
+    const title = escapeHtml(self.getAuditSnapshotTitle(source, type));
+    const summary = escapeHtml(self.getAuditSnapshotSummary(source, type));
     const date = log.createdAt ? new Date(log.createdAt).toLocaleString('pl-PL') : 'brak daty';
-    const author = self.escapeHtml(log.userName || log.userId || 'System');
+    const author = escapeHtml(log.userName || log.userId || 'System');
 
     let detailsHtml = '';
     if (isDiff) {
@@ -157,7 +157,7 @@ export function auditRenderEntry(self, log, id, type) {
                   .map(
                       (change) => `
                 <div class="audit-change-row">
-                    <span class="audit-change-name">${self.escapeHtml(change.label)}</span>
+                    <span class="audit-change-name">${escapeHtml(change.label)}</span>
                     <span class="audit-change-values">
                         <span class="audit-old">${self.formatAuditValue(change.oldValue)}</span>
                         <i data-lucide="arrow-right"></i>
@@ -398,7 +398,7 @@ export function auditShowSnapshotModal(self, data, type) {
         .map(
             ([key, value]) => `
             <div class="audit-change-row">
-                <span class="audit-change-name">${self.escapeHtml(self.getAuditFieldLabel(key))}</span>
+                <span class="audit-change-name">${escapeHtml(self.getAuditFieldLabel(key))}</span>
                 <span class="audit-change-values"><span class="audit-new">${self.formatAuditValue(value)}</span></span>
             </div>`
         )
@@ -424,7 +424,7 @@ export function auditShowSnapshotModal(self, data, type) {
             <div class="audit-modal-header">
                 <div>
                     <h3 id="audit-snapshot-title"><i data-lucide="eye"></i> Podgląd historyczny</h3>
-                    <div class="audit-modal-subtitle">${self.escapeHtml(self.getAuditContextLabel(type))}</div>
+                    <div class="audit-modal-subtitle">${escapeHtml(self.getAuditContextLabel(type))}</div>
                 </div>
                 <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); width:32px; height:32px;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
