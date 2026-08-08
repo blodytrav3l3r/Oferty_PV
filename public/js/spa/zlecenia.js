@@ -14,7 +14,6 @@ const AppZlecenia = (() => {
     let searchDebounceTimer = null;
     let requestSeq = 0;
     let sentinelObserver = null;
-    const userMap = new Map(); // nazwy użytkowników dla chipsów
     const SEARCH_LIMIT = 500;
     const MAX_LOADED = 1000;
 
@@ -415,7 +414,7 @@ const AppZlecenia = (() => {
             : '<span>Koniec listy — ' + items.length + '/' + total + '</span>';
     }
 
-    /* ===== FILTRY DODATKOWE: UżYTKOWNIK I CHIPSY ===== */
+    /* ===== FILTRY DODATKOWE ===== */
 
     async function populateUserFilter() {
         const select = document.getElementById('zlecenia-user-filter');
@@ -427,11 +426,9 @@ const AppZlecenia = (() => {
             if (!resp.ok) return;
             const json = await resp.json();
             const users = json.data || [];
-            userMap.clear();
             users.forEach((u) => {
                 const name =
                     u.firstName && u.lastName ? u.firstName + ' ' + u.lastName : u.username || u.id;
-                userMap.set(u.id, name);
                 const option = document.createElement('option');
                 option.value = u.id;
                 option.textContent = name;
@@ -1081,7 +1078,6 @@ const AppZlecenia = (() => {
         setFilter,
         toggleSelectAll,
         selectAllRows,
-        clearAllSelection,
         printSingleZlecenie,
         printSingleEtykieta,
         printBatchZlecenia,
