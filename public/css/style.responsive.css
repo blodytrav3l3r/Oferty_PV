@@ -19,7 +19,11 @@
     }
 
     .offer-title {
-        font-size: 0.9rem;
+        font-size: 1rem;
+    }
+
+    .offer-subtitle {
+        font-size: 1rem;
     }
 
     .offer-price {
@@ -53,13 +57,18 @@
         justify-content: flex-start;
     }
 
+    .offer-author-badges {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
     .kartoteka-filter-bar {
         flex-direction: column;
         align-items: stretch;
         gap: 0.75rem;
     }
 
-    .kartoteka-filter-bar > div[style*='flex: 1'] {
+    .kartoteka-filter-bar>div[style*='flex: 1'] {
         display: none;
     }
 
@@ -79,6 +88,7 @@
 }
 
 @media (max-width: 600px) {
+
     #offer-items-body table th:nth-child(4),
     #offer-items-body table td:nth-child(4),
     #offer-items-body table th:nth-child(9),
@@ -106,11 +116,11 @@
     }
 
     .offer-title {
-        font-size: 0.85rem;
+        font-size: 0.95rem;
     }
 
     .offer-subtitle {
-        font-size: 0.72rem;
+        font-size: 0.95rem;
     }
 
     .offer-price {
@@ -121,7 +131,7 @@
         font-size: 0.65rem;
     }
 
-    .author-badge {
+    .offer-author-badges .author-badge {
         font-size: 0.7rem;
         padding: 0.3rem 0.6rem;
     }
@@ -155,11 +165,9 @@
 
 /* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
-    background: linear-gradient(
-        135deg,
-        rgba(var(--slate-800-rgb), 0.8),
-        rgba(var(--accent-rgb), 0.1)
-    );
+    background: linear-gradient(135deg,
+            rgba(var(--slate-800-rgb), 0.8),
+            rgba(var(--accent-rgb), 0.1));
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     box-shadow:
         0 4px 12px rgba(var(--black-rgb), 0.15),
@@ -214,6 +222,7 @@
     text-align: center;
     color: var(--text-muted);
 }
+
 .kartoteka-offers-grid .loading-shimmer::after {
     content: '';
     position: absolute;
@@ -226,6 +235,7 @@
     0% {
         transform: translateX(-100%);
     }
+
     100% {
         transform: translateX(100%);
     }
@@ -329,7 +339,7 @@
     margin-top: 0.3rem;
 }
 
-.offer-client-badges > div {
+.offer-client-badges>div {
     font-size: 0.68rem;
     padding: 0.15rem 0.45rem;
     border-radius: var(--radius-sm);
@@ -341,7 +351,7 @@
     gap: 0.2rem;
 }
 
-.offer-client-badges > div strong {
+.offer-client-badges>div strong {
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -601,6 +611,7 @@
    Print styles for PDF / Paper printing
    ======================================== */
 @media print {
+
     /* Reset ciemnego motywu */
     :root {
         --bg-primary: var(--white);
@@ -827,6 +838,7 @@
 .print-footer {
     display: none;
 }
+
 /* --- Pomocnicze UI (wyodrębnione ze stylów inline) --- */
 .ui-text-muted-sm {
     font-size: 0.6rem;
@@ -835,49 +847,62 @@
     margin-bottom: 0.1rem;
     letter-spacing: 0.5px;
 }
+
 .ui-text-mute {
     color: var(--text-muted);
 }
+
 .ui-text-sec {
     color: var(--text-secondary);
 }
+
 .ui-badge {
     padding: 0.35rem 0.5rem;
     font-size: 0.65rem;
 }
+
 .ui-badge-sm {
     padding: 0.3rem 0.4rem;
     font-size: 0.7rem;
 }
+
 .ui-col-5 {
     width: 5%;
 }
+
 .ui-col-6 {
     width: 6%;
 }
+
 .ui-col-8 {
     width: 8%;
 }
+
 .ui-row-gap {
     display: flex;
     gap: 0.25rem;
     flex-wrap: wrap;
     margin-top: 0.2rem;
 }
+
 .ui-center-min {
     text-align: center;
     min-width: 60px;
 }
+
 .ui-text-lg {
     font-size: 0.78rem;
 }
+
 .ui-text-sm {
     font-size: 0.72rem;
 }
+
 .ui-pointer-bold {
     cursor: pointer;
     font-weight: 600;
 }
+
 .ui-flex-between {
     display: flex;
     justify-content: space-between;
@@ -1028,6 +1053,7 @@ svg.lucide {
         opacity: 0;
         transform: translateY(16px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1337,6 +1363,7 @@ html {
 
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {

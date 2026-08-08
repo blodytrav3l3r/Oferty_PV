@@ -6,25 +6,23 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ### [1.11.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.3...v1.11.4) (2026-08-07)
 
-
 ### Features
 
-* **ai:** oznaczanie studni dobranych przez AI/ML + sekcja w dashboardzie ([7c543d9](https://github.com/blodytrav3l3r/Oferty_PV/commit/7c543d952b7f39b2e6b93c36ae31ffeaf3cd775d))
-* **spa:** spójny pasek górny - stała szerokość logo, refaktor wskaźnika AI, retencja modeli ML ([3265aff](https://github.com/blodytrav3l3r/Oferty_PV/commit/3265aff9febcd646050e9dbd4ca57506db227806))
-
+- **ai:** oznaczanie studni dobranych przez AI/ML + sekcja w dashboardzie ([7c543d9](https://github.com/blodytrav3l3r/Oferty_PV/commit/7c543d952b7f39b2e6b93c36ae31ffeaf3cd775d))
+- **spa:** spójny pasek górny - stała szerokość logo, refaktor wskaźnika AI, retencja modeli ML ([3265aff](https://github.com/blodytrav3l3r/Oferty_PV/commit/3265aff9febcd646050e9dbd4ca57506db227806))
 
 ### Bug Fixes
 
-* **admin:** estetyka dashboardu AI/ML - siatki 2-rzedowe i ellipsis wartosci ([42ff11d](https://github.com/blodytrav3l3r/Oferty_PV/commit/42ff11d405f0b13ddc2433d6f2c5ce17d571f2fa))
-* **ml-dashboard:** rate limit na settings, wspólny fetchJson, loading state ([506e38c](https://github.com/blodytrav3l3r/Oferty_PV/commit/506e38c9dc69402d6e3d2634400be3dc2a2e61af))
-* **ml:** czysta semantyka etykiet, scentralizowana inwalidacja cache i spójność cech train/serve ([5580abe](https://github.com/blodytrav3l3r/Oferty_PV/commit/5580abe5d481cc0580accad3ddfaef378764ffa6))
-* **ml:** czytelny opis limitu retencji modeli w panelu AI ([fa72a08](https://github.com/blodytrav3l3r/Oferty_PV/commit/fa72a0889603db4d921cf2be8914f87ae235b52f))
-* **ml:** nagłówki auth w fetch'ach AI/ML + guardy jakości telemetrii ([b84b240](https://github.com/blodytrav3l3r/Oferty_PV/commit/b84b2409a2c381b9f4fc2de453273df3bbe04ca4))
-* **ml:** poprawna obsluga 503 w fetchJson - komunikat o braku modelu ML zamiast bledu serwera w Feature Importance ([36c9fd6](https://github.com/blodytrav3l3r/Oferty_PV/commit/36c9fd606f1a245048d7bc2809ad0fe0fbf7d1b0))
-* **ml:** usunięcie train/serve skew cech ML i anti-poisoning rewardów ([657366e](https://github.com/blodytrav3l3r/Oferty_PV/commit/657366e613ee98f44a18805faa7b612cb3ef5ebd))
-* **studnie:** proxy window.studnieProducts na zmienna modulowa ([e39be2a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e39be2aa7626df24fea3589ec7bf78567dddbe4e))
-* **studnie:** uczciwe AUTO_AI i realne cechy w dual-rankingu AI ([249e538](https://github.com/blodytrav3l3r/Oferty_PV/commit/249e538cad486b86085545fbbbfe8e19b83a04f2))
-* **ui:** wyrownanie wysokosci kafli nawigacji w naglowku ([726dd58](https://github.com/blodytrav3l3r/Oferty_PV/commit/726dd58ecefd7ee8ef5b508cdb7036f35b9874dc))
+- **admin:** estetyka dashboardu AI/ML - siatki 2-rzedowe i ellipsis wartosci ([42ff11d](https://github.com/blodytrav3l3r/Oferty_PV/commit/42ff11d405f0b13ddc2433d6f2c5ce17d571f2fa))
+- **ml-dashboard:** rate limit na settings, wspólny fetchJson, loading state ([506e38c](https://github.com/blodytrav3l3r/Oferty_PV/commit/506e38c9dc69402d6e3d2634400be3dc2a2e61af))
+- **ml:** czysta semantyka etykiet, scentralizowana inwalidacja cache i spójność cech train/serve ([5580abe](https://github.com/blodytrav3l3r/Oferty_PV/commit/5580abe5d481cc0580accad3ddfaef378764ffa6))
+- **ml:** czytelny opis limitu retencji modeli w panelu AI ([fa72a08](https://github.com/blodytrav3l3r/Oferty_PV/commit/fa72a0889603db4d921cf2be8914f87ae235b52f))
+- **ml:** nagłówki auth w fetch'ach AI/ML + guardy jakości telemetrii ([b84b240](https://github.com/blodytrav3l3r/Oferty_PV/commit/b84b2409a2c381b9f4fc2de453273df3bbe04ca4))
+- **ml:** poprawna obsluga 503 w fetchJson - komunikat o braku modelu ML zamiast bledu serwera w Feature Importance ([36c9fd6](https://github.com/blodytrav3l3r/Oferty_PV/commit/36c9fd606f1a245048d7bc2809ad0fe0fbf7d1b0))
+- **ml:** usunięcie train/serve skew cech ML i anti-poisoning rewardów ([657366e](https://github.com/blodytrav3l3r/Oferty_PV/commit/657366e613ee98f44a18805faa7b612cb3ef5ebd))
+- **studnie:** proxy window.studnieProducts na zmienna modulowa ([e39be2a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e39be2aa7626df24fea3589ec7bf78567dddbe4e))
+- **studnie:** uczciwe AUTO_AI i realne cechy w dual-rankingu AI ([249e538](https://github.com/blodytrav3l3r/Oferty_PV/commit/249e538cad486b86085545fbbbfe8e19b83a04f2))
+- **ui:** wyrownanie wysokosci kafli nawigacji w naglowku ([726dd58](https://github.com/blodytrav3l3r/Oferty_PV/commit/726dd58ecefd7ee8ef5b508cdb7036f35b9874dc))
 
 ### [1.11.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.2...v1.11.3) (2026-08-06)
 

@@ -245,6 +245,12 @@
     font-size: 0.85rem;
     font-family: inherit;
     width: 100%;
+    color-scheme: dark;
+}
+
+.upm-combined-select option {
+    background-color: var(--slate-800);
+    color: var(--slate-100);
 }
 
 .upm-combined-select:focus-visible {

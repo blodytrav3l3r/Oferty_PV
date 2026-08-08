@@ -326,8 +326,6 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                 <div class="offer-subtitle">
                                     <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Nr klienta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
                                     ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${dd.investInfo}</span>` : ''}
-                                    ${dd.creatorName ? `<span class="offer-separator">•</span><span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${dd.creatorName}</span>` : ''}
-                                    ${dd.userName ? `<span class="offer-separator">•</span><span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''}><i data-lucide="briefcase" aria-hidden="true"></i> ${dd.userName}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">
@@ -339,6 +337,10 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                         <div class="offer-actions-row">
                             <div class="order-status-badge">
                                 ${orderBadge}
+                            </div>
+                            <div class="offer-author-badges">
+                                ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}
+                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
                             </div>
                             <div class="action-buttons">
                                 ${

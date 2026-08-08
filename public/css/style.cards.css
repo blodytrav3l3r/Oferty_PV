@@ -69,11 +69,13 @@
 }
 
 @keyframes dotPulse {
+
     0%,
     100% {
         transform: scale(1);
         opacity: 1;
     }
+
     50% {
         transform: scale(1.3);
         opacity: 0.6;
@@ -96,11 +98,9 @@
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(
-        135deg,
-        rgba(var(--accent-rgb), 0.15) 0%,
-        rgba(var(--accent2-rgb), 0.1) 100%
-    );
+    background: linear-gradient(135deg,
+            rgba(var(--accent-rgb), 0.15) 0%,
+            rgba(var(--accent2-rgb), 0.1) 100%);
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     display: flex;
     align-items: center;
@@ -117,7 +117,7 @@
 
 .offer-title {
     margin: 0 0 0.25rem 0;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
@@ -130,20 +130,13 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.78rem;
-    color: var(--text-secondary);
+    font-size: 1.1rem;
+    color: var(--text-primary);
     flex-wrap: wrap;
-}
-
-.offer-subtitle .author-badge {
-    padding: 0.1rem 0.45rem;
-    font-size: 0.7rem;
-    border-radius: 6px;
 }
 
 .offer-client {
     font-weight: 500;
-    color: var(--text-secondary);
 }
 
 .client-nip {
@@ -155,10 +148,6 @@
 
 .offer-separator {
     color: var(--text-muted);
-}
-
-.offer-invest {
-    color: var(--text-secondary);
 }
 
 .offer-price-section {
@@ -180,7 +169,17 @@
     margin-top: 0.15rem;
 }
 
-/* Odznaki autora – renderowane inline w .offer-subtitle */
+/* Odznaki autora – renderowane w .offer-actions-row */
+.offer-author-badges {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
 .author-badge {
     display: inline-flex;
     align-items: center;
@@ -496,16 +495,20 @@
 }
 
 .compact-mode .offer-title {
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     margin-bottom: 0.1rem;
 }
 
 .compact-mode .offer-subtitle {
-    font-size: 0.7rem;
+    font-size: 0.95rem;
     gap: 0.3rem;
 }
 
-.compact-mode .offer-subtitle .author-badge {
+.compact-mode .offer-author-badges {
+    gap: 0.25rem;
+}
+
+.compact-mode .offer-author-badges .author-badge {
     font-size: 0.62rem;
     padding: 0.05rem 0.35rem;
 }
