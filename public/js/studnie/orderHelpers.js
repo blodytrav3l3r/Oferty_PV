@@ -218,11 +218,15 @@ function getOrderChanges(order) {
         const origStats = calcWellStats(orig[i]);
         const currStats = calcWellStats(curr[i]);
 
-        if (Math.abs(currStats.price - origStats.price) > 0.01) {
+        const roundToGrosz = (v) => Math.round(v * 100) / 100;
+        const origPrice = roundToGrosz(origStats.price);
+        const currPrice = roundToGrosz(currStats.price);
+
+        if (Math.abs(currPrice - origPrice) > 0.01) {
             changes[i] = {
                 type: 'modified',
                 fields: ['price'],
-                priceDiff: currStats.price - origStats.price
+                priceDiff: currPrice - origPrice
             };
         }
     }
