@@ -19,7 +19,23 @@ const writeOrdersLimiter = WRITE_LIMITER;
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        const idsParam = req.query.ids;
+        const offerIds =
+            typeof idsParam === 'string' && idsParam
+                ? idsParam
+                      .split(',')
+                      .map((s) => s.trim())
+                      .filter(Boolean)
+                      .slice(0, 200)
+                : [];
+        let whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        if (offerIds.length > 0) {
+            const idCond = Prisma.sql`"offerId" IN (${Prisma.join(offerIds)})`;
+            whereCondition =
+                whereCondition !== Prisma.empty
+                    ? Prisma.sql`${whereCondition} AND ${idCond}`
+                    : Prisma.sql`WHERE ${idCond}`;
+        }
         const orders = await prisma.$queryRaw<
             Array<{
                 id: string;

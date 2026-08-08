@@ -212,6 +212,7 @@ export default {
         params.limit = 50;
 
         await this.searchOffers(params);
+        this.notifyOrderMutation();
     },
 
     /**

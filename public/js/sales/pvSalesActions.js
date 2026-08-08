@@ -17,7 +17,7 @@ export default {
         return { offerId: '', order: null };
     },
 
-    async loadOrdersMap() {
+    async loadOrdersMap(offerIds) {
         try {
             const headers =
                 typeof authHeaders === 'function'
@@ -25,11 +25,18 @@ export default {
                     : { 'Content-Type': 'application/json' };
             const timestamp = Date.now();
 
+            const idList = Array.isArray(offerIds)
+                ? offerIds.map((id) => this.normalizeId(id)).filter(Boolean)
+                : [];
+            const idsParam = idList.length ? '&ids=' + encodeURIComponent(idList.join(',')) : '';
+
             this.ordersMap.clear();
             let totalOrders = 0;
 
             // Studnie
-            const studnieResp = await fetch(`/api/orders-studnie?t=${timestamp}`, { headers });
+            const studnieResp = await fetch(`/api/orders-studnie?t=${timestamp}${idsParam}`, {
+                headers
+            });
             if (studnieResp.ok) {
                 const json = await studnieResp.json();
                 (json.data || []).forEach((order) => {
@@ -44,7 +51,7 @@ export default {
             }
 
             // Rury
-            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}`, { headers });
+            const ruryResp = await fetch(`/api/orders-rury?t=${timestamp}${idsParam}`, { headers });
             if (ruryResp.ok) {
                 const json = await ruryResp.json();
                 (json.data || []).forEach((order) => {
@@ -78,7 +85,9 @@ export default {
      * Odświeża ordersMap w tle i odświeża widok kartoteki.
      */
     notifyOrderMutation() {
-        this.loadOrdersMap()
+        const offerIds = (this.searchResults?.items || []).map((o) => o.id);
+        if (offerIds.length === 0) return;
+        this.loadOrdersMap(offerIds)
             .then(() => {
                 if (this.searchResults?.items) this.renderResults();
             })

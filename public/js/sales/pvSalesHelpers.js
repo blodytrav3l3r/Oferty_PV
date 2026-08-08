@@ -83,7 +83,7 @@ function offerMatchesDate(offer, dateFilter, boundaries) {
 function resolveDatePreset(preset) {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayEnd = new Date(today.getTime() + 86400000);
+    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
     switch (preset) {
         case 'today':
             return { from: today.toISOString(), to: todayEnd.toISOString() };

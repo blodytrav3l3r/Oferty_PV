@@ -63,6 +63,7 @@ export default {
     setUserFilter(userId) {
         this.filters.user = userId || '';
         this.filters.myOffers = false;
+        this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
 
@@ -72,9 +73,14 @@ export default {
             this.filters.user = '';
         } else {
             this.filters.myOffers = true;
-            const uid = window.currentUser?.id || window.currentUser?.username || '';
-            this.filters.user = uid;
+            try {
+                const u = JSON.parse(sessionStorage.getItem('user') || '{}');
+                this.filters.user = u.id || '';
+            } catch {
+                this.filters.user = '';
+            }
         }
+        this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
 
@@ -89,18 +95,7 @@ export default {
         this.filters.date.from = '';
         this.filters.date.to = '';
         this._closeDatePopover();
-        this.searchOffers(this.buildSearchParams());
-    },
-
-    toggleDateRange() {
-        if (this.filters.date.mode === 'range') {
-            this.filters.date.mode = 'none';
-            this.filters.date.from = '';
-            this.filters.date.to = '';
-        } else {
-            this.filters.date.mode = 'range';
-            this.filters.date.preset = '';
-        }
+        this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
 
@@ -111,9 +106,26 @@ export default {
         } else {
             this.filters.date.mode = 'none';
         }
-        this.filters.date.from = from || '';
-        this.filters.date.to = to || '';
+        // Granice zakresu liczone lokalnie i konwertowane do UTC (tak jak presety),
+        // aby backend porównywał createdAt (UTC ISO) bez dryfu strefy czasowej.
+        this.filters.date.from = this._toIsoBound(from, false);
+        this.filters.date.to = this._toIsoBound(to, true);
+        this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
+    },
+
+    /**
+     * Konwertuje YYYY-MM-DD (lokalna data z input[type=date]) na granicę ISO w UTC.
+     * isEnd=true → północ następnego dnia (górna granica wyłączna).
+     */
+    _toIsoBound(dateStr, isEnd) {
+        if (!dateStr) return '';
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+        if (!m) return dateStr;
+        const y = Number(m[1]);
+        const mo = Number(m[2]);
+        const d = Number(m[3]) + (isEnd ? 1 : 0);
+        return new Date(y, mo - 1, d).toISOString();
     },
 
     clearFilters() {
@@ -123,7 +135,10 @@ export default {
         this.filters.date.preset = '';
         this.filters.date.from = '';
         this.filters.date.to = '';
+        this.currentFilter = 'all';
+        this.currentTypeFilter = 'all';
         this._closeDatePopover();
+        this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
 
@@ -167,9 +182,8 @@ export default {
                 displayName = window.globalUsersMap.get(prev);
             select.innerHTML += `<option value="${window.escapeHtml(prev)}">${window.escapeHtml(displayName)}</option>`;
             select.value = prev;
-        } else {
+        } else if (!this.filters.myOffers) {
             this.filters.user = '';
-            this.filters.myOffers = false;
         }
     }
 };

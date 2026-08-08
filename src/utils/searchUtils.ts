@@ -1,6 +1,10 @@
 import { Prisma } from '../../generated/prisma';
 import { buildFts5Query } from './fts5Sync';
 
+// Akceptuje YYYY-MM-DD (zakres z input[type=date]) oraz pełny ISO z czasem
+// (YYYY-MM-DDTHH:MM:SS(.mmm)Z) — preset "Dzisiaj/7d/30d/miesiąc" (resolveDatePreset).
+const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z?)?$/;
+
 export interface SearchParams {
     q: string;
     type: 'all' | 'offer' | 'studnia_oferta';
@@ -22,11 +26,11 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
             ? (query.type as SearchParams['type'])
             : 'all',
         dateFrom:
-            typeof query.dateFrom === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateFrom)
+            typeof query.dateFrom === 'string' && DATE_PARAM_RE.test(query.dateFrom)
                 ? query.dateFrom
                 : '',
         dateTo:
-            typeof query.dateTo === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query.dateTo)
+            typeof query.dateTo === 'string' && DATE_PARAM_RE.test(query.dateTo)
                 ? query.dateTo
                 : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
@@ -79,7 +83,12 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
         parts.push(Prisma.sql`"createdAt" >= ${input.dateFrom}`);
     }
     if (input.dateTo) {
-        parts.push(Prisma.sql`"createdAt" <= ${input.dateTo + 'T23:59:59.999Z'}`);
+        // Pełny ISO (preset) to już górna granica półotwarta [from, to);
+        // goła data (zakres) = koniec dnia UTC.
+        const isFullIso = input.dateTo.includes('T');
+        const toBound = isFullIso ? input.dateTo : input.dateTo + 'T23:59:59.999Z';
+        const op = isFullIso ? '<' : '<=';
+        parts.push(Prisma.sql`"createdAt" ${Prisma.raw(op)} ${toBound}`);
     }
 
     if (input.userId) {
