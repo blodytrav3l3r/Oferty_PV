@@ -107,15 +107,7 @@ export default {
             dateTo = this.filters.date.to;
         }
 
-        let userId = this.filters.user;
-        if (this.filters.myOffers) {
-            try {
-                const u = JSON.parse(sessionStorage.getItem('user') || '{}');
-                userId = u.id || '';
-            } catch {
-                userId = '';
-            }
-        }
+        const userId = this.filters.user;
 
         return {
             q,
@@ -272,15 +264,17 @@ export default {
     },
 
     /**
-     * Aktualizuje licznik ofert
+     * Aktualizuje licznik ofert pod listą (wzór: "Koniec listy — 5/5")
      */
     updateOfferCounter(shown, total) {
         const el = document.getElementById('pv-offer-count');
         if (!el) return;
-        if (total != null) {
-            el.textContent = 'Pokazuje ' + shown + ' z ' + total + ' ofert';
+        const hasMore = !!(this.searchResults && this.searchResults.hasMore);
+        if (total != null && shown > 0 && !hasMore) {
+            el.textContent = 'Koniec listy — ' + shown + '/' + total;
+            el.classList.remove('hidden');
         } else {
-            el.textContent = '';
+            el.classList.add('hidden');
         }
     },
 

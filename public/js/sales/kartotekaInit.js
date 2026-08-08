@@ -130,10 +130,6 @@ function initAdvancedFilterEvents(ui) {
         userSelect.addEventListener('change', () => ui.setUserFilter(userSelect.value));
     }
 
-    document
-        .getElementById('pv-my-offers-btn')
-        ?.addEventListener('click', () => ui.toggleMyOffers());
-
     document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
         btn.addEventListener('click', () => ui.setDatePreset(btn.dataset.dateRange));
     });

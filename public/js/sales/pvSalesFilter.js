@@ -41,11 +41,6 @@ export default {
         });
         const sel = document.getElementById('pv-user-filter');
         if (sel) sel.value = this.filters.user;
-        const myBtn = document.getElementById('pv-my-offers-btn');
-        if (myBtn) {
-            myBtn.classList.toggle('active', this.filters.myOffers);
-            myBtn.classList.toggle('btn-secondary', !this.filters.myOffers);
-        }
         document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
             const isActive =
                 this.filters.date.mode === 'preset' &&
@@ -62,24 +57,6 @@ export default {
 
     setUserFilter(userId) {
         this.filters.user = userId || '';
-        this.filters.myOffers = false;
-        this._syncFilterUI();
-        this.searchOffers(this.buildSearchParams());
-    },
-
-    toggleMyOffers() {
-        if (this.filters.myOffers) {
-            this.filters.myOffers = false;
-            this.filters.user = '';
-        } else {
-            this.filters.myOffers = true;
-            try {
-                const u = JSON.parse(sessionStorage.getItem('user') || '{}');
-                this.filters.user = u.id || '';
-            } catch {
-                this.filters.user = '';
-            }
-        }
         this._syncFilterUI();
         this.searchOffers(this.buildSearchParams());
     },
@@ -130,7 +107,6 @@ export default {
 
     clearFilters() {
         this.filters.user = '';
-        this.filters.myOffers = false;
         this.filters.date.mode = 'none';
         this.filters.date.preset = '';
         this.filters.date.from = '';
@@ -166,7 +142,7 @@ export default {
 
         const prev = this.filters.user;
         select.innerHTML =
-            '<option value="">Wszyscy</option>' +
+            '<option value="">Użytkownik: wszyscy</option>' +
             sorted
                 .map(
                     ([id, name]) =>
@@ -182,7 +158,7 @@ export default {
                 displayName = window.globalUsersMap.get(prev);
             select.innerHTML += `<option value="${window.escapeHtml(prev)}">${window.escapeHtml(displayName)}</option>`;
             select.value = prev;
-        } else if (!this.filters.myOffers) {
+        } else {
             this.filters.user = '';
         }
     }

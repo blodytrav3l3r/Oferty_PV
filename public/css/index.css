@@ -4,12 +4,6 @@
    Uses CSS variables from style.css for consistency.
    ══════════════════════════════════════════════════════════ */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 body.index-page {
     font-family:
         'Inter',
@@ -72,7 +66,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     padding: 1rem 2rem;
     margin: 0 auto;
     width: 100%;
-    max-width: 1300px;
+    max-width: var(--section-max-width);
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -121,7 +115,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-weight: 400;
     letter-spacing: 3px;
     text-transform: uppercase;
-    margin-bottom: 2rem;
+    margin-bottom: var(--section-gap-lg);
 }
 
 /* ═══ Glass utility ═══ */
@@ -265,9 +259,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: var(--section-gap-lg);
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--section-max-width);
     background: var(--glass);
     padding: 0.75rem 1.5rem;
     border-radius: 60px;
@@ -374,9 +368,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .launch-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    gap: var(--section-gap);
     width: 100%;
-    max-width: 1100px;
+    max-width: var(--section-max-width);
 }
 
 .launch-card {
@@ -490,8 +484,8 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     flex-direction: column;
     gap: 1rem;
     width: 100%;
-    max-width: 1100px;
-    margin-top: 2rem;
+    max-width: var(--section-max-width);
+    margin-top: var(--section-gap-lg);
     text-align: left;
 }
 
@@ -1212,7 +1206,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     justify-content: center;
     gap: 0.6rem;
     padding: 0.6rem 1rem;
-    margin: 1.5rem 0 0.8rem;
+    margin: 0.8rem 0;
     background: linear-gradient(90deg, transparent, var(--accent-bg), transparent);
     border-radius: var(--radius-sm);
 }
@@ -2009,11 +2003,6 @@ body.index-page .header.visible {
     color: var(--text-muted);
     z-index: 1;
     margin-top: auto;
-}
-
-/* ── Utilities ── */
-.hidden {
-    display: none !important;
 }
 
 /* ═══ Responsywność ═══ */

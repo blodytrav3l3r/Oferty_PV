@@ -13,7 +13,7 @@ window.PvImportExportToolbar = {
         host.dataset.ieInitialized = '1';
 
         host.innerHTML =
-            '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:1.5rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
+            '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:0.8rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
             '<span style="font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport</span>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" style="width:14px;height:14px;"></i>Eksport XLSX (zewn.)</button>' +
             '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" style="width:14px;height:14px;"></i>Eksport 1:1 (JSON)</button>' +

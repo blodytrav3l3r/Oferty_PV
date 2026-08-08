@@ -220,7 +220,6 @@ const AppZlecenia = (() => {
             } else {
                 renderTable();
             }
-            renderFooter();
             startAutoRefresh();
         } catch (error) {
             if (error.name === 'AbortError') return;
@@ -354,26 +353,6 @@ const AppZlecenia = (() => {
                 stats.today -= 1;
             }
         });
-    }
-
-    /* ===== STOPKA + STATYSTYKI (Wyświetlono X z Y) ===== */
-
-    function renderFooter() {
-        const container = document.getElementById('zlecenia-footer');
-        if (!container) return;
-        const shown = searchResults ? searchResults.items.length : 0;
-        const total =
-            searchResults && searchResults.totalCount != null ? searchResults.totalCount : null;
-        const hitLimit = searchResults ? searchResults.items.length >= MAX_LOADED : false;
-        let html =
-            total != null
-                ? 'Wy\u015Bwietlono <strong>' + shown + '</strong> z <strong>' + total + '</strong>'
-                : 'Wy\u015Bwietlono <strong>' + shown + '</strong>';
-        if (hitLimit && total != null && shown < total) {
-            html +=
-                ' &middot; <span class="zlecenia-footer-hint">doprecyzuj filtry, aby zobaczy\u0107 wi\u0119cej</span>';
-        }
-        container.innerHTML = html;
     }
 
     /* ===== INFINITE SCROLL (SENTINEL) ===== */
@@ -945,7 +924,6 @@ const AppZlecenia = (() => {
             selectedIds.delete(id);
             renderStats();
             renderTable();
-            renderFooter();
             showToast('Zlecenie usuni\u0119te', 'info');
 
             if (
@@ -1028,7 +1006,6 @@ const AppZlecenia = (() => {
             selectedIds.clear();
             renderStats();
             renderTable();
-            renderFooter();
             updateSentinel();
             updateBatchBar();
             let toastMsg = 'Usuni\u0119to ' + deletedTotal + ' zlece\u0144';

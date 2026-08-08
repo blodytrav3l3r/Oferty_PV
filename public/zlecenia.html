@@ -31,7 +31,7 @@
                     <div class="zlecenia-stats" id="zlecenia-stats"></div>
 
                     <!-- Main card -->
-                    <section style="margin-bottom: 2rem">
+                    <section style="margin-bottom: var(--section-gap-lg)">
                         <!-- Header: search + refresh -->
                         <div class="zlecenia-header">
                             <div
@@ -137,6 +137,7 @@
                                 </button>
                             </div>
 
+                            <span class="toolbar-label">Opiekun:</span>
                             <select
                                 id="zlecenia-user-filter"
                                 class="form-select zlecenia-select-sm"
@@ -158,10 +159,7 @@
                         </div>
 
                         <!-- Batch action bar (visible when items selected) -->
-                        <div
-                            class="zlecenia-batch-bar zlecenia-batch-bar--sticky"
-                            id="zlecenia-batch-bar"
-                        >
+                        <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
                             <div class="batch-info">
                                 <i data-lucide="check-check"></i> Zaznaczono:
                                 <span class="batch-count">0</span>
@@ -245,7 +243,6 @@
                             </table>
                         </div>
                         <div class="zlecenia-sentinel" id="zlecenia-sentinel"></div>
-                        <div class="zlecenia-footer" id="zlecenia-footer"></div>
                     </section>
                 </div>
             </div>

@@ -1,16 +1,16 @@
 /* ===== Kartoteka Zleceń — Premium Design ===== */
 
 .zlecenia-page {
-    max-width: 1860px;
+    max-width: var(--section-max-width);
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 var(--section-pad-x);
 }
 
 /* Pasek statystyk podsumowania */
 .zlecenia-stats {
     display: flex;
     gap: 0.6rem;
-    margin-bottom: 1rem;
+    margin-bottom: var(--section-gap-lg);
     flex-wrap: wrap;
 }
 .zlecenia-stat-card {
@@ -93,7 +93,7 @@
     flex-shrink: 0;
 }
 .zlecenia-filter-tab {
-    height: 30px;
+    height: 34px;
     padding: 0 0.9rem;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-glass);
@@ -132,7 +132,10 @@
     max-width: none;
 }
 .zlecenia-header .btn-secondary.btn-sm {
-    height: 30px;
+    height: 34px;
+}
+.zlecenia-header .search-box input {
+    height: 34px;
 }
 
 /* Filtrowanie dat — zakres od-do */
@@ -350,20 +353,20 @@
     align-items: center;
     gap: 1rem;
     padding: 0.8rem 1.2rem;
+    position: sticky;
+    bottom: 10px;
+    z-index: 50;
+    border: 1px solid rgba(var(--pink-rgb), 0.5);
+    border-radius: 14px;
+    margin-bottom: var(--section-gap);
     background: linear-gradient(
         135deg,
-        rgba(var(--accent-rgb), 0.3) 0%,
-        rgba(var(--accent-rgb), 0.15) 100%
+        rgba(var(--pink-rgb), 0.28) 0%,
+        rgba(var(--pink-rgb), 0.12) 100%
     );
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    border: 1px solid rgba(var(--accent-rgb), 0.5);
-    border-radius: 14px;
-    margin-bottom: 1.2rem;
     box-shadow:
         0 8px 32px rgba(var(--black-rgb), 0.5),
-        0 0 20px rgba(var(--accent-rgb), 0.1);
+        0 0 20px rgba(var(--pink-rgb), 0.15);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -602,7 +605,7 @@
 .zlecenia-virtual-toolbar .form-select.zlecenia-select-sm,
 .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'],
 .zlecenia-virtual-toolbar .btn-secondary.btn-sm {
-    height: 30px;
+    height: 34px;
     padding: 0 0.7rem;
     font-size: 0.8rem;
     background: var(--bg-tertiary);
@@ -700,28 +703,13 @@
         transform: rotate(360deg);
     }
 }
-/* Różowa tożsamość modułu — pasek zbiorczy przyklejony do dołu okna */
-.zlecenia-batch-bar--sticky {
-    bottom: 10px;
-    z-index: 50;
-    margin-bottom: 0;
-    background: linear-gradient(
-        135deg,
-        rgba(var(--pink-rgb), 0.28) 0%,
-        rgba(var(--pink-rgb), 0.12) 100%
-    );
-    border-color: rgba(var(--pink-rgb), 0.5);
-    box-shadow:
-        0 8px 32px rgba(var(--black-rgb), 0.5),
-        0 0 20px rgba(var(--pink-rgb), 0.15);
-}
-.zlecenia-batch-bar--sticky .batch-info {
+.zlecenia-batch-bar .batch-info {
     color: var(--pink-hover);
 }
-.zlecenia-batch-bar--sticky .batch-info svg {
+.zlecenia-batch-bar .batch-info svg {
     width: 16px;
     height: 16px;
 }
-.zlecenia-batch-bar--sticky .batch-count {
+.zlecenia-batch-bar .batch-count {
     background: rgba(var(--pink-rgb), 0.2);
 }

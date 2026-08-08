@@ -68,7 +68,7 @@
         gap: 0.75rem;
     }
 
-    .kartoteka-filter-bar>div[style*='flex: 1'] {
+    .kartoteka-filter-bar > div[style*='flex: 1'] {
         display: none;
     }
 
@@ -88,7 +88,6 @@
 }
 
 @media (max-width: 600px) {
-
     #offer-items-body table th:nth-child(4),
     #offer-items-body table td:nth-child(4),
     #offer-items-body table th:nth-child(9),
@@ -165,9 +164,11 @@
 
 /* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
-    background: linear-gradient(135deg,
-            rgba(var(--slate-800-rgb), 0.8),
-            rgba(var(--accent-rgb), 0.1));
+    background: linear-gradient(
+        135deg,
+        rgba(var(--slate-800-rgb), 0.8),
+        rgba(var(--accent-rgb), 0.1)
+    );
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     box-shadow:
         0 4px 12px rgba(var(--black-rgb), 0.15),
@@ -204,6 +205,38 @@
     border-color: transparent;
     color: var(--white);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.5);
+}
+
+/* Kontrolki paska filtrów — spójne z toolbar zleceń (34px, prostokątne) */
+.kartoteka-filter-bar button,
+.kartoteka-filter-bar select {
+    height: 34px;
+    border-radius: var(--radius-sm) !important;
+    padding: 0 0.7rem !important;
+    font-size: 0.8rem !important;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.kartoteka-filter-bar button:hover {
+    background: var(--bg-glass);
+    border-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+.kartoteka-filter-bar .search-box input {
+    height: 34px;
+}
+
+/* Wskaźnik końca listy — wzór zleceń (zlecenia-sentinel) */
+.kartoteka-list-end {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem;
+    margin-top: -2rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
 }
 
 /* Siatka ofert */
@@ -339,7 +372,7 @@
     margin-top: 0.3rem;
 }
 
-.offer-client-badges>div {
+.offer-client-badges > div {
     font-size: 0.68rem;
     padding: 0.15rem 0.45rem;
     border-radius: var(--radius-sm);
@@ -351,7 +384,7 @@
     gap: 0.2rem;
 }
 
-.offer-client-badges>div strong {
+.offer-client-badges > div strong {
     font-weight: 600;
     color: var(--text-primary);
 }
@@ -611,7 +644,6 @@
    Print styles for PDF / Paper printing
    ======================================== */
 @media print {
-
     /* Reset ciemnego motywu */
     :root {
         --bg-primary: var(--white);
@@ -1363,7 +1395,6 @@ html {
 
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {

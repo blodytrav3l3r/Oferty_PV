@@ -15,7 +15,6 @@ class PVSalesUI {
         this.currentTypeFilter = 'all';
         this.filters = {
             user: '',
-            myOffers: false,
             date: {
                 mode: 'none',
                 preset: '',
