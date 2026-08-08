@@ -2,12 +2,17 @@ import { Router } from 'express';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
-import { parseSearchParams, mapProductionOrderRow } from '../../utils/productionSearchUtils';
+import {
+    parseSearchParams,
+    mapProductionOrderRow,
+    buildProductionSearchWhere,
+    normalizedCreatedAtSql
+} from '../../utils/productionSearchUtils';
 import { searchCache } from '../../utils/searchCache';
 
 const router = Router();
 
-const SEARCH_LIMIT_MAX = 100;
+const SEARCH_LIMIT_MAX = 500;
 
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -15,86 +20,16 @@ router.get('/', requireAuth, async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
     const params = parseSearchParams(req.query as Record<string, unknown>);
-    const { q, status, dateFrom, dateTo, userId, cursor, cursorId, limit, order } = params;
 
     const cacheKey: Record<string, unknown> = { ...params, _userId: user.id };
     const cached = searchCache.get('production', cacheKey);
     if (cached) return res.json(cached);
 
     const roleSql = buildRoleWhereCondition(user);
-    const sortDir = order === 'asc' ? 'ASC' : 'DESC';
-    const limitVal = Math.min(limit, SEARCH_LIMIT_MAX);
+    const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
+    const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
-    const whereParts: Prisma.Sql[] = [];
-
-    if (cursor && cursorId) {
-        const op = order === 'desc' ? '<' : '>';
-        whereParts.push(
-            Prisma.sql`(production_orders_rel."createdAt" ${Prisma.raw(op)} ${cursor}
-                OR (production_orders_rel."createdAt" = ${cursor}
-                    AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
-        );
-    }
-
-    if (status === 'draft') {
-        whereParts.push(Prisma.sql`(
-            production_orders_rel.data IS NULL
-            OR json_extract(production_orders_rel.data, '$.status') IS NOT 'accepted'
-            OR json_extract(production_orders_rel.data, '$.status') IS NULL
-        )`);
-    } else if (status === 'accepted') {
-        whereParts.push(
-            Prisma.sql`json_extract(production_orders_rel.data, '$.status') = 'accepted'`
-        );
-    }
-
-    if (dateFrom) {
-        whereParts.push(Prisma.sql`production_orders_rel."createdAt" >= ${dateFrom}`);
-    }
-    if (dateTo) {
-        whereParts.push(
-            Prisma.sql`production_orders_rel."createdAt" <= ${dateTo + 'T23:59:59.999Z'}`
-        );
-    }
-
-    if (userId) {
-        whereParts.push(
-            Prisma.sql`(production_orders_rel."userId" = ${userId}
-                OR production_orders_rel."creatorId" = ${userId})`
-        );
-    }
-
-    const whereSql =
-        roleSql !== Prisma.empty
-            ? Prisma.sql`${roleSql}${
-                  whereParts.length > 0
-                      ? Prisma.sql` AND ${Prisma.join(whereParts, ' AND ')}`
-                      : Prisma.empty
-              }`
-            : whereParts.length > 0
-              ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
-              : Prisma.empty;
-
-    let searchWhere = Prisma.empty;
-    if (q) {
-        const searchParts: Prisma.Sql[] = [
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.wellName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.projectName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.obiekt') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.elementName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.snr') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u1."firstName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u1."lastName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u2."firstName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u2."lastName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`
-        ];
-        searchWhere =
-            whereSql === Prisma.empty
-                ? Prisma.sql`WHERE (${Prisma.join(searchParts, ' OR ')})`
-                : Prisma.sql`AND (${Prisma.join(searchParts, ' OR ')})`;
-    }
+    const { whereSql, searchWhere } = buildProductionSearchWhere(params, roleSql);
 
     try {
         const sql = Prisma.sql`
@@ -145,9 +80,16 @@ router.get('/', requireAuth, async (req, res) => {
         }
 
         let totalCount: number | null = null;
-        if (!cursor) {
-            const countSql = Prisma.sql`
-                SELECT COUNT(*) as cnt
+        let stats: { total: number; accepted: number; draft: number; today: number } | null = null;
+        if (!params.cursor) {
+            // Agregaty całego zbioru w jednym zapytaniu — współdzielą whereSql/searchWhere
+            // (rola użytkownika + aktywne filtry) identycznie z głównym search.
+            const statsSql = Prisma.sql`
+                SELECT COUNT(*) as total,
+                       SUM(CASE WHEN json_extract(production_orders_rel.data, '$.status') = 'accepted' THEN 1 ELSE 0 END) as accepted,
+                       SUM(CASE WHEN production_orders_rel.data IS NULL
+                                OR json_extract(production_orders_rel.data, '$.status') IS NOT 'accepted' THEN 1 ELSE 0 END) as draft,
+                       SUM(CASE WHEN ${normalizedCreatedAtSql()} >= datetime('now', 'start of day') THEN 1 ELSE 0 END) as today
                 FROM production_orders_rel
                 LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
                 LEFT JOIN users u2 ON production_orders_rel."creatorId" = u2.id
@@ -155,17 +97,30 @@ router.get('/', requireAuth, async (req, res) => {
                 ${whereSql}
                 ${searchWhere}
             `;
-            const countResult: Array<{ cnt: number }> = (await prisma.$queryRaw(
-                countSql
-            )) as Array<{
-                cnt: number;
+            const statsRows: Array<{
+                total: number;
+                accepted: number;
+                draft: number;
+                today: number;
+            }> = (await prisma.$queryRaw(statsSql)) as Array<{
+                total: number;
+                accepted: number;
+                draft: number;
+                today: number;
             }>;
-            totalCount = Number(countResult[0]?.cnt || 0);
+            const statsRow = statsRows[0] || { total: 0, accepted: 0, draft: 0, today: 0 };
+            stats = {
+                total: Number(statsRow.total || 0),
+                accepted: Number(statsRow.accepted || 0),
+                draft: Number(statsRow.draft || 0),
+                today: Number(statsRow.today || 0)
+            };
+            totalCount = stats.total;
         }
 
         const data = dataRows.map((row) => mapProductionOrderRow(row));
 
-        const result = { data, totalCount, hasMore, nextCursor, nextCursorId };
+        const result = { data, totalCount, hasMore, nextCursor, nextCursorId, stats };
         searchCache.set('production', cacheKey, result);
         res.json(result);
     } catch (e: unknown) {

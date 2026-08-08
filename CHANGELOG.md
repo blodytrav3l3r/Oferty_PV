@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [Unreleased]
+
+### Features
+
+- **zlecenia:** zgodność kartoteki Zleceń Produkcyjnych z wizualizacją — kontener scrolla `min(480px, 60vh)` z sentinelem infinite scroll w kontenerze (`IntersectionObserver` z `root: kontener`), tri-state select-all 3-stanowy (none/visible/all) z batch bar i scope („wszystkie spełniające filtr" / „widoczne"), agregaty COUNT w zapytaniu search (total/accepted/draft/today) + `renderStats` z `searchResults.stats`, toolbar `.zlecenia-virtual-toolbar` z filtrami dat, selectem użytkownika i przyciskiem „Wyczyść filtry (N)", chipsy aktywnych filtrów, sticky różowy batch bar, spinner w sentinelu i stat-icon klasy zamiast inline styli
+- **zlecenia:** batch-delete pomija zatwierdzone (accepted) i zwraca `{ deleted, skipped }` zamiast 403; frontend chunkuje ids po 200 (sekwencyjnie, rate limiter 60/min) z toastem „Usunięto X, pominięto Y"
+
+### Bug Fixes
+
+- **zlecenia:** naprawa `typecheck:frontend` (3 błędy TS2339) przez guard `instanceof HTMLElement` przy delegacji zdarzeń na `event.target`
+- **zlecenia:** cursor paginacji porównywał surowe `createdAt` ze znormalizowaną wartością SELECT — przy danych mieszanych (epoch-ms + ISO) pomijał/duplikował wiersze; klauzula kursora używa teraz `normalizedCreatedAtSql()`
+- **zlecenia:** sentinel infinite scroll odpalał eager-load w pętli po dodaniu kontenera scrolla — IntersectionObserver wymaga `root: kontener`
+- **zlecenia:** usunięcie martwego `GET /registry`, dedupe mapowania PZ do `mapProductionOrderRow`, usunięcie martwych eksportów `stopAutoRefresh`/`toggleSelect` i zbędnych re-rejestracji `window.*`, DRY `buildZleceniePayload`/`buildEtykietaPayload`
+
 ### [1.11.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.3...v1.11.4) (2026-08-07)
 
 ### Features

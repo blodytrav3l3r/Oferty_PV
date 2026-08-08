@@ -43,11 +43,12 @@ function getCertData(dn) {
 
 /* ===== FORMATTERS ===== */
 
-/** Escape for JS single-quoted strings inside onclick attributes */
+/** Escape for JS strings inside onclick attributes */
 function escapeJsStr(str) {
     return String(str ?? '')
         .replace(/\\/g, '\\\\')
-        .replace(/'/g, "\\'");
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"');
 }
 
 /** Pobiera szablon HTML, używa cache-busting dla dewelopmentu */
@@ -390,8 +391,8 @@ function generateSvgFromPO(po) {
 
 /* ===== PRINT BUILDERS ===== */
 
-/** Buduje pełny HTML zlecenia z danych PO + szablonu */
-function buildZlecenieFromPO(template, po) {
+/** Buduje payload zlecenia wspólny dla druku pojedynczego i wsadowego */
+function buildZleceniePayload(po) {
     const przejsciaRows = buildPrzejsciaRowsFromPO(po);
 
     const payload = {
@@ -498,13 +499,16 @@ function buildZlecenieFromPO(template, po) {
         )
         .join('');
 
-    return renderTemplate(template, payload);
+    return payload;
 }
 
-/** Build Etykieta HTML from PO data, with unique SVG IDs for batch mode */
-function buildEtykietaFromPO(template, po, pageIndex) {
-    if (pageIndex === undefined) pageIndex = 0;
+/** Buduje pełny HTML zlecenia z danych PO + szablonu */
+function buildZlecenieFromPO(template, po) {
+    return renderTemplate(template, buildZleceniePayload(po));
+}
 
+/** Buduje payload etykiety wspólny dla druku pojedynczego i wsadowego */
+function buildEtykietaPayload(po) {
     const cert = getCertData(po.srednica || po.dn);
 
     // Zbuduj wiersze elementów z zapisanego migawki
@@ -526,11 +530,7 @@ function buildEtykietaFromPO(template, po, pageIndex) {
         )
         .join('');
 
-    // Użyj unikalnych ID SVG dla każdej strony przy drukowaniu wsadowym
-    const snrSvgId = 'snr-svg-' + pageIndex;
-    const orderSvgId = 'order-svg-' + pageIndex;
-
-    const payload = {
+    return {
         SNR: po.snr || po.wellName || '',
         MAIN_ELEMENT: po.productName || '',
         NR_ZLECENIA: po.productionOrderNumber || '',
@@ -539,6 +539,17 @@ function buildEtykietaFromPO(template, po, pageIndex) {
         CERT_ALT: cert.alt,
         CERT_TEXT: cert.text
     };
+}
+
+/** Buduje pełny HTML etykiety z danych PO, z unikalnymi ID SVG dla trybu wsadowego */
+function buildEtykietaFromPO(template, po, pageIndex) {
+    if (pageIndex === undefined) pageIndex = 0;
+
+    const payload = buildEtykietaPayload(po);
+
+    // Użyj unikalnych ID SVG dla każdej strony przy drukowaniu wsadowym
+    const snrSvgId = 'snr-svg-' + pageIndex;
+    const orderSvgId = 'order-svg-' + pageIndex;
 
     // Zastąp ID SVG w szablonie unikalnymi dla każdej strony
     let html = renderTemplate(template, payload);
@@ -552,143 +563,12 @@ function buildEtykietaFromPO(template, po, pageIndex) {
 
 /** Buduje pojedynczy blok strony zlecenia (bez <html>/<head>/<body>) */
 function buildZlecenieFromPageBlock(pageTemplate, po) {
-    const przejsciaRows = buildPrzejsciaRowsFromPO(po);
-
-    const payload = {
-        NR_ZLECENIA: po.productionOrderNumber || '',
-        OBIEKT: po.obiekt || '',
-        ADRES: po.adres || '',
-        WYKONAWCA: po.wykonawca || '',
-        FAKTUROWANE: po.fakturowane || '',
-        DATA_PRODUKCJI: po.dataProdukcji || '',
-        SNR: po.snr || po.wellName || '',
-        SREDNICA: po.srednica || po.dn || '',
-        WYSOKOSC: po.wysokosc || '',
-        GLEBOKOSC: po.glebokosc || '',
-        DNO_KINETA: po.dnoKineta || '',
-        UWAGI: po.uwagi || '',
-        DATA: po.data || '',
-        NAZWISKO: po.nazwisko || '',
-        RED_KINETY: paramLabel(po.redukcjaKinety) || 'Brak',
-        SPOCZNIK_H: paramLabel(po.spocznikH) || 'Brak',
-        USYTUOWANIE: paramLabel(po.usytuowanie) || 'Brak',
-        DIN: po.din || 'Brak',
-        KINETA: paramLabel(po.kineta) || 'Brak',
-        SPOCZNIK: paramLabel(po.spocznik) || 'Brak',
-        RODZAJ_STOPNI:
-            paramLabel(po.rodzajStopni) + (po.stopnieInne ? ' — ' + po.stopnieInne : '') || 'Brak',
-        KLASA_BETONU: po.klasaBetonu || 'Brak',
-        KAT_STOPNI: po.katStopni ? po.katStopni + '°' : 'Brak',
-        WYKONANIE: po.wykonanie || 'Brak',
-        POWLOKA: getPowloka(po),
-        GRAFIKA_KATOW: generateSvgFromPO(po)
-    };
-
-    for (let i = 0; i < 4; i++) {
-        if (przejsciaRows[i]) {
-            payload['PRZEJSCIA_ROW_' + i] =
-                '<td>' +
-                przejsciaRows[i].label +
-                '</td>' +
-                '<td>' +
-                przejsciaRows[i].rodzaj +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].srednica +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].spadekKineta +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].spadekMufa +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].katStopien +
-                '</td>' +
-                '<td>' +
-                przejsciaRows[i].uwagi +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].katGon +
-                '</td>' +
-                '<td class="center">' +
-                przejsciaRows[i].katWykonania +
-                '</td>';
-        } else {
-            payload['PRZEJSCIA_ROW_' + i] = '<td colspan="9"></td>';
-        }
-    }
-
-    payload['PRZEJSCIA_ROWS_REST'] = przejsciaRows
-        .slice(4)
-        .map(
-            (r) =>
-                '<tr>' +
-                '<td colspan="2"></td>' +
-                '<td>' +
-                r.label +
-                '</td>' +
-                '<td>' +
-                r.rodzaj +
-                '</td>' +
-                '<td class="center">' +
-                r.srednica +
-                '</td>' +
-                '<td class="center">' +
-                r.spadekKineta +
-                '</td>' +
-                '<td class="center">' +
-                r.spadekMufa +
-                '</td>' +
-                '<td class="center">' +
-                r.katStopien +
-                '</td>' +
-                '<td>' +
-                r.uwagi +
-                '</td>' +
-                '<td class="center">' +
-                r.katGon +
-                '</td>' +
-                '<td class="center">' +
-                r.katWykonania +
-                '</td>' +
-                '</tr>'
-        )
-        .join('');
-
-    return renderTemplate(pageTemplate, payload);
+    return renderTemplate(pageTemplate, buildZleceniePayload(po));
 }
 
 /** Buduje pojedynczy blok strony etykiety z unikalnymi ID SVG */
 function buildEtykietaPageBlock(pageTemplate, po, pageIndex) {
-    const cert = getCertData(po.srednica || po.dn);
-    const elementy = po.etykietaElementy || [];
-    const elementRows = elementy
-        .map(
-            (e) =>
-                '<tr>' +
-                '<td class="el-qty">' +
-                e.ilosc +
-                '</td>' +
-                '<td class="el-idx">' +
-                e.indeks +
-                '</td>' +
-                '<td class="el-name">' +
-                e.nazwa +
-                '</td>' +
-                '</tr>'
-        )
-        .join('');
-
-    const payload = {
-        SNR: po.snr || po.wellName || '',
-        MAIN_ELEMENT: po.productName || '',
-        NR_ZLECENIA: po.productionOrderNumber || '',
-        ELEMENTY_ROWS: elementRows,
-        CERT_IMG: cert.img,
-        CERT_ALT: cert.alt,
-        CERT_TEXT: cert.text
-    };
+    const payload = buildEtykietaPayload(po);
 
     let html = renderTemplate(pageTemplate, payload);
 
@@ -702,11 +582,7 @@ function buildEtykietaPageBlock(pageTemplate, po, pageIndex) {
 /* ===== REGISTER ON WINDOW ===== */
 
 window.escapeJsStr = escapeJsStr;
-window.formatDate = formatDate;
-window.paramLabel = paramLabel;
-window.renderTemplate = renderTemplate;
 window.fetchTemplate = fetchTemplate;
-window.silentPrint = silentPrint;
 window.buildPrzejsciaRowsFromPO = buildPrzejsciaRowsFromPO;
 window.generateSvgFromPO = generateSvgFromPO;
 window.buildZlecenieFromPO = buildZlecenieFromPO;

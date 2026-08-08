@@ -1,5 +1,71 @@
 # Code Deletion Log
 
+## [2026-08-08] Faza 1 — Cleanup Kartoteki Zleceń (refactor(zlecenia))
+
+### Martwy endpoint usunięty (`src/routes/orders/production.ts`)
+
+| Endpoint                       | Dowód (grep)                                                                                                                                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /registry` (ok. 80 linii) | Brak konsumenta w `src/` i `public/` — grep `production/registry` tylko w `docs/plans/archive`. Duplikat `GET /` (jedyna różnica: `ORDER BY createdAt DESC`). Usunięcie trasy nie koliduje z `GET /:id` (brak wołań `/registry`). |
+
+### Deduplikacja mapowania PZ
+
+- `production.ts` GET `/`: inline mapping (33 linie) zastąpiony `mapProductionOrderRow(o)` z `src/utils/productionSearchUtils.ts` (import dodany). To samo mapowanie już używa `productionSearch.ts` — jedna kopia zamiast trzech.
+
+### Martwe eksporty usunięte z public API `AppZlecenia` (`public/js/spa/zlecenia.js`)
+
+| Eksport           | Dowód (grep)                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `stopAutoRefresh` | Wywołania tylko wewnętrzne (`startAutoRefresh`); zero `AppZlecenia.stopAutoRefresh` na zewnątrz.                                     |
+| `toggleSelect`    | Wywołania tylko wewnętrzne (delegacja checkboxów); zero `AppZlecenia.toggleSelect` na zewnątrz (grep łapie tylko `toggleSelectAll`). |
+
+Funkcje zostają wewnętrzne w IIFE — usunięte tylko z `return {}`.
+
+### Zbędne re-rejestracje `window.*` usunięte (`public/js/spa/zleceniaHelpers.js`)
+
+| Linia | Rejestracja             | Powód                                                                                      |
+| ----- | ----------------------- | ------------------------------------------------------------------------------------------ |
+| 706   | `window.formatDate`     | Już globalna z `js/shared/formatters.js:29` (deklaracja `function` na poziomie top-level). |
+| 707   | `window.paramLabel`     | jw. `formatters.js:95`.                                                                    |
+| 708   | `window.renderTemplate` | jw. `formatters.js:64`.                                                                    |
+| 710   | `window.silentPrint`    | jw. `formatters.js:72`.                                                                    |
+
+Zostają: `escapeJsStr`, `fetchTemplate` (definiowane w tym pliku) oraz buildery `buildPrzejsciaRowsFromPO`/`generateSvgFromPO`/`buildZlecenieFromPO`/`buildEtykietaFromPO`/`buildZlecenieFromPageBlock`/`buildEtykietaPageBlock`.
+
+### Nieużywany identyfikator usunięty (`public/zlecenia.html`)
+
+| Zmiana                                | Dowód (grep)                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------- |
+| `id="zlecenia-filter-tabs"` (HTML:37) | Brak użycia w JS/CSS — JS operuje na klasie `.zlecenia-filter-tab` (`setFilter`). |
+
+### Komentarze kolumn poprawione (`public/css/zlecenia.css`)
+
+Media 768px (selektory bez zmian): `nth-child(4)=Budowa/Studnia` (było „Element"), `nth-child(6)=Element` (było „Wygenerował"), `nth-child(7)=Opiekun` (było „Data").
+Media 600px: `nth-child(3)=Data` (było „Nr zamówienia"), `nth-child(5)=Nr zamówienia` (było „Opiekun").
+Selektorów nie ruszano — nie znano intencji; sam zestaw ukrywanych kolumn (Budowa/Studnia przy 768px) wygląda podejrzanie, ale to decyzja poza zakresem (patrz raport).
+
+### Komentarz nagłówka poprawiony (`public/js/spa/zlecenia.js`)
+
+`wersja z paginacją` → `przewijanie nieskończone`.
+
+### DRY builderów druku (`public/js/spa/zleceniaHelpers.js`)
+
+| Nowa funkcja               | Z czego wydzielona                                                                                                                |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `buildZleceniePayload(po)` | Wspólny payload + wiersze przejść z `buildZlecenieFromPO` i `buildZlecenieFromPageBlock` (były ~90% identyczne, ~55 linii mniej). |
+| `buildEtykietaPayload(po)` | Wspólny payload z `buildEtykietaFromPO` i `buildEtykietaPageBlock`.                                                               |
+
+Zachowanie bez zmian: buildery nadal robią `renderTemplate` na swoim szablonie i (dla etykiet) podmiany ID SVG jak poprzednio.
+
+### Impact
+
+- Usunięto ok. 100 linii (endpoint `/registry` ~80 + inline mapping ~30 − dodane ~10).
+- Bez zmian w bundle size frontendu (tylko reorganizacja).
+
+### Testing
+
+- `node -c` oba pliki JS ✅, `npm run typecheck` ✅, `npm run lint` ✅ (backend), `npm run typecheck:frontend` ✅, `npm run lint:frontend` ✅ (0 błędów; warningi pre-existing w `public/js/studnie/*`), `npm test` ✅ (81 suite'ów, 1510 testów), `tests/responsive/zlecenia.test.ts` 4/4 ✅, `tests/i18n/comments.test.ts` 3/3 ✅, `npm run format` (unchanged) ✅, `npm run encoding:check` (0 ERROR) ✅.
+
 ## [2026-08-08] Wycofanie Vite — Express jako jedyny serwer (ADR-005)
 
 ### Usunięte pliki

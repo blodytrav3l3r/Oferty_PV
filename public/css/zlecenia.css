@@ -23,7 +23,10 @@
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+    transition:
+        border-color 0.3s,
+        transform 0.3s,
+        box-shadow 0.3s;
     cursor: default;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -42,7 +45,9 @@
 .zlecenia-stat-card:hover {
     border-color: rgba(var(--accent-rgb), 0.3);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px -5px rgba(var(--black-rgb), 0.3), 0 0 12px rgba(var(--accent-rgb), 0.1);
+    box-shadow:
+        0 6px 20px -5px rgba(var(--black-rgb), 0.3),
+        0 0 12px rgba(var(--accent-rgb), 0.1);
 }
 .zlecenia-stat-icon {
     font-size: 1.1rem;
@@ -97,7 +102,10 @@
     font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s;
     white-space: nowrap;
     text-align: center;
     display: inline-flex;
@@ -119,6 +127,23 @@
     max-width: none;
 }
 
+/* Filtrowanie dat — zakres od-do */
+.zlecenia-date-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+.zlecenia-date-filter input[type='date'] {
+    width: 150px;
+    color-scheme: dark;
+}
+.zlecenia-date-sep {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
 /* Stylowanie tabeli */
 .zlecenia-table-container {
     overflow-x: auto;
@@ -138,7 +163,8 @@
 .zlecenia-table th {
     text-align: left;
     padding: 0.7rem 1rem;
-    background: rgba(var(--black-rgb), 0.2);
+    /* Nieprzezroczyste tło — treść nie prześwituje pod nagłówkiem */
+    background: var(--bg-card);
     color: var(--text-muted);
     font-weight: 700;
     font-size: 0.7rem;
@@ -158,7 +184,9 @@
     transition: background-color 0.2s;
 }
 .zlecenia-table tbody tr {
-    transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition:
+        background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 .zlecenia-table tbody tr:hover {
@@ -191,19 +219,37 @@
     height: 14px;
 }
 .status-draft {
-    background: linear-gradient(135deg, rgba(var(--warn-rgb), 0.15) 0%, rgba(var(--warn-rgb), 0.05) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(var(--warn-rgb), 0.15) 0%,
+        rgba(var(--warn-rgb), 0.05) 100%
+    );
     color: var(--warn-hover);
     border: 1px solid rgba(var(--warn-rgb), 0.5);
     box-shadow: 0 0 15px rgba(var(--warn-rgb), 0.1);
     animation: pulse-draft 3s infinite;
 }
 @keyframes pulse-draft {
-    0% { box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05); }
-    50% { box-shadow: 0 0 20px rgba(var(--warn-rgb), 0.2); }
-    100% { box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05); }
+    0% {
+        box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(var(--warn-rgb), 0.2);
+    }
+    100% {
+        box-shadow: 0 0 10px rgba(var(--warn-rgb), 0.05);
+    }
+}
+/* Gate animacji — wyłącz pulse-draft przy wielu oczekujących wierszach (jank scroll) */
+.zlecenia-table--flat .status-draft {
+    animation: none;
 }
 .status-accepted {
-    background: linear-gradient(135deg, rgba(var(--success-rgb), 0.15) 0%, rgba(var(--success-rgb), 0.05) 100%);
+    background: linear-gradient(
+        135deg,
+        rgba(var(--success-rgb), 0.15) 0%,
+        rgba(var(--success-rgb), 0.05) 100%
+    );
     color: var(--success-hover);
     border: 1px solid rgba(var(--success-rgb), 0.5);
     box-shadow: 0 0 15px rgba(var(--success-rgb), 0.1);
@@ -293,7 +339,7 @@
 
 /* Batch action bar */
 .zlecenia-batch-bar {
-    display: none;
+    display: flex;
     align-items: center;
     gap: 1rem;
     padding: 0.8rem 1.2rem;
@@ -302,10 +348,15 @@
         rgba(var(--accent-rgb), 0.3) 0%,
         rgba(var(--accent-rgb), 0.15) 100%
     );
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
     border: 1px solid rgba(var(--accent-rgb), 0.5);
     border-radius: 14px;
     margin-bottom: 1.2rem;
-    box-shadow: 0 8px 32px rgba(var(--black-rgb), 0.5), 0 0 20px rgba(var(--accent-rgb), 0.1);
+    box-shadow:
+        0 8px 32px rgba(var(--black-rgb), 0.5),
+        0 0 20px rgba(var(--accent-rgb), 0.1);
     -webkit-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
     animation: batchBarIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -334,6 +385,16 @@
     border-radius: 8px;
     font-weight: 800;
     font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 3.2em;
+    text-align: center;
+}
+/* Zakres zaznaczenia: widoczne / wszystkie załadowane */
+.batch-scope {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-left: 0.15rem;
 }
 .batch-actions {
     display: flex;
@@ -349,7 +410,10 @@
     font-size: 0.75rem;
     font-weight: 700;
     cursor: pointer;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        color 0.2s;
     display: flex;
     align-items: center;
     gap: 0.3rem;
@@ -371,6 +435,13 @@
 }
 .batch-btn-label:hover {
     background: rgba(var(--accent2-rgb), 0.1);
+}
+.batch-btn-delete {
+    border-color: rgba(var(--danger-rgb), 0.5);
+    color: var(--danger-hover);
+}
+.batch-btn-delete:hover {
+    background: rgba(var(--danger-rgb), 0.1);
 }
 
 /* Widok responsywny — Kartoteka Zleceń */
@@ -399,11 +470,11 @@
         max-width: 100%;
     }
     /* Ukryj mniej ważne kolumny */
-    .zlecenia-table th:nth-child(4),  /* Element */
+    .zlecenia-table th:nth-child(4),  /* Budowa / Studnia */
     .zlecenia-table td:nth-child(4),
-    .zlecenia-table th:nth-child(6),  /* Wygenerował */
+    .zlecenia-table th:nth-child(6),  /* Element */
     .zlecenia-table td:nth-child(6),
-    .zlecenia-table th:nth-child(7),  /* Data */
+    .zlecenia-table th:nth-child(7),  /* Opiekun */
     .zlecenia-table td:nth-child(7) {
         display: none;
     }
@@ -417,9 +488,9 @@
         min-width: auto;
     }
     /* Ukryj więcej kolumn */
-    .zlecenia-table th:nth-child(3),  /* Nr zamówienia */
+    .zlecenia-table th:nth-child(3),  /* Data */
     .zlecenia-table td:nth-child(3),
-    .zlecenia-table th:nth-child(5),  /* Opiekun */
+    .zlecenia-table th:nth-child(5),  /* Nr zamówienia */
     .zlecenia-table td:nth-child(5) {
         display: none;
     }
@@ -452,9 +523,180 @@
 
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .status-draft,
-  .zlecenia-batch-bar {
-    animation: none !important;
-    transition: none !important;
-  }
+    .status-draft,
+    .zlecenia-batch-bar,
+    .zlecenia-sentinel-spin {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Empty state wiersza tabeli */
+.zlecenia-empty td {
+    text-align: center;
+    padding: 2.5rem;
+    font-style: italic;
+    color: var(--text-muted);
+}
+.zlecenia-empty td.is-error {
+    color: var(--danger);
+}
+
+/* Checkboxy zaznaczania wierszy */
+.zlecenia-row-cb,
+.zlecenia-master-cb {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-hover);
+}
+
+/* Infinite scroll — sentinel */
+.zlecenia-sentinel {
+    height: 2px;
+}
+.zlecenia-sentinel.hidden {
+    display: none;
+}
+
+/* Stopka "Wyświetlono X z Y" */
+.zlecenia-footer {
+    padding: 0.6rem 1rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.zlecenia-footer strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+.zlecenia-footer-hint {
+    opacity: 0.75;
+}
+
+/* Toolbar dodatkowych filtrów — daty, użytkownik, czyszczenie + chipsy */
+.zlecenia-virtual-toolbar {
+    display: flex;
+    gap: 0.6rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.8rem;
+}
+.zlecenia-virtual-toolbar .form-select,
+.zlecenia-virtual-toolbar .form-input {
+    width: auto;
+}
+.zlecenia-virtual-toolbar .form-select.zlecenia-select-sm {
+    padding: 0.35rem 2.2rem 0.35rem 0.55rem !important;
+    font-size: 0.8rem !important;
+}
+.zlecenia-virtual-toolbar .toolbar-label {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
+    width: 145px;
+}
+/* Chipsy aktywnych filtrów — różowa tożsamość modułu */
+.zlecenia-chips {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+}
+.zlecenia-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(var(--pink-rgb), 0.12);
+    border: 1px solid rgba(var(--pink-rgb), 0.4);
+    color: var(--pink-hover);
+    border-radius: 20px;
+    padding: 0.15rem 0.65rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.zlecenia-chip svg {
+    width: 12px;
+    height: 12px;
+    cursor: pointer;
+}
+/* Warianty kolorystyczne ikon statystyk — bez stylów wbudowanych */
+.zlecenia-stat-icon--accent {
+    background: rgba(var(--accent-rgb), 0.12);
+    color: var(--accent-hover);
+}
+.zlecenia-stat-icon--success {
+    background: rgba(var(--success-rgb), 0.12);
+    color: var(--success-hover);
+}
+.zlecenia-stat-icon--warn {
+    background: rgba(var(--warn-rgb), 0.12);
+    color: var(--warn-hover);
+}
+.zlecenia-stat-icon--purple {
+    background: rgba(var(--purple-rgb), 0.12);
+    color: var(--purple-hover);
+}
+.zlecenia-stat-icon svg {
+    width: 18px;
+    height: 18px;
+}
+/* Źródło wartości statystyk — cały zbiór lub załadowane okno */
+.zlecenia-stat-source {
+    font-size: 0.62rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+/* Wskaźnik końca listy — animowany pierścień + komunikat */
+.zlecenia-sentinel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.9rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+.zlecenia-sentinel-spin {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(var(--accent-rgb), 0.25);
+    border-top-color: var(--accent-hover);
+    animation: zlecenia-obrot 0.8s linear infinite;
+}
+@keyframes zlecenia-obrot {
+    to {
+        transform: rotate(360deg);
+    }
+}
+/* Różowa tożsamość modułu — pasek zbiorczy przyklejony do dołu okna */
+.zlecenia-batch-bar--sticky {
+    bottom: 10px;
+    z-index: 50;
+    margin-bottom: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--pink-rgb), 0.28) 0%,
+        rgba(var(--pink-rgb), 0.12) 100%
+    );
+    border-color: rgba(var(--pink-rgb), 0.5);
+    box-shadow:
+        0 8px 32px rgba(var(--black-rgb), 0.5),
+        0 0 20px rgba(var(--pink-rgb), 0.15);
+}
+.zlecenia-batch-bar--sticky .batch-info {
+    color: var(--pink-hover);
+}
+.zlecenia-batch-bar--sticky .batch-info svg {
+    width: 16px;
+    height: 16px;
+}
+.zlecenia-batch-bar--sticky .batch-count {
+    background: rgba(var(--pink-rgb), 0.2);
 }

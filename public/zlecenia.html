@@ -26,7 +26,6 @@
 
         <main class="main">
             <div class="section active" id="section-zlecenia">
-
                 <div class="zlecenia-page">
                     <!-- Summary stats -->
                     <div class="zlecenia-stats" id="zlecenia-stats"></div>
@@ -35,22 +34,25 @@
                     <section style="margin-bottom: 2rem">
                         <!-- Header: filters + search + refresh -->
                         <div class="zlecenia-header">
-                            <div class="zlecenia-filters" id="zlecenia-filter-tabs">
-                                <button type="button"
+                            <div class="zlecenia-filters">
+                                <button
+                                    type="button"
                                     class="zlecenia-filter-tab active"
                                     data-filter="all"
                                     onclick="AppZlecenia.setFilter('all')"
                                 >
                                     Wszystkie
                                 </button>
-                                <button type="button"
+                                <button
+                                    type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="draft"
                                     onclick="AppZlecenia.setFilter('draft')"
                                 >
                                     <i data-lucide="hourglass-2"></i> Oczekujące
                                 </button>
-                                <button type="button"
+                                <button
+                                    type="button"
                                     class="zlecenia-filter-tab"
                                     data-filter="accepted"
                                     onclick="AppZlecenia.setFilter('accepted')"
@@ -93,7 +95,8 @@
                                 />
                             </div>
 
-                            <button type="button"
+                            <button
+                                type="button"
                                 class="btn btn-secondary btn-sm"
                                 onclick="AppZlecenia.loadOrders()"
                                 title="Odśwież bazę zleceń"
@@ -103,23 +106,104 @@
                             </button>
                         </div>
 
+                        <!-- Toolbar dodatkowych filtrów: daty, użytkownik, czyszczenie + chipsy -->
+                        <div class="zlecenia-virtual-toolbar" id="zlecenia-toolbar">
+                            <div class="zlecenia-date-filter" id="zlecenia-date-filter">
+                                <span class="toolbar-label">Data od</span>
+                                <input
+                                    type="date"
+                                    id="zlecenia-date-from"
+                                    class="form-input form-input-sm"
+                                    title="Data od"
+                                    aria-label="Data od"
+                                />
+                                <span class="zlecenia-date-sep" aria-hidden="true">&ndash;</span>
+                                <span class="toolbar-label">Data do</span>
+                                <input
+                                    type="date"
+                                    id="zlecenia-date-to"
+                                    class="form-input form-input-sm"
+                                    title="Data do"
+                                    aria-label="Data do"
+                                />
+                                <button
+                                    type="button"
+                                    id="zlecenia-date-clear"
+                                    class="btn btn-sm btn-secondary"
+                                    title="Wyczyść filtr dat"
+                                    aria-label="Wyczyść filtr dat"
+                                >
+                                    <i data-lucide="x"></i>
+                                </button>
+                            </div>
+
+                            <select
+                                id="zlecenia-user-filter"
+                                class="form-select zlecenia-select-sm"
+                                aria-label="Użytkownik"
+                                title="Filtruj po użytkowniku"
+                            >
+                                <option value="">Użytkownik: wszyscy</option>
+                            </select>
+
+                            <button
+                                type="button"
+                                id="zlecenia-clear-filters"
+                                class="btn btn-secondary btn-sm"
+                                onclick="AppZlecenia.clearAllFilters()"
+                                title="Wyczyść wszystkie aktywne filtry"
+                            >
+                                Wyczyść filtry (0)
+                            </button>
+
+                            <div class="zlecenia-chips" id="zlecenia-chips"></div>
+                        </div>
+
                         <!-- Batch action bar (visible when items selected) -->
-                        <div class="zlecenia-batch-bar" id="zlecenia-batch-bar">
+                        <div
+                            class="zlecenia-batch-bar zlecenia-batch-bar--sticky"
+                            id="zlecenia-batch-bar"
+                        >
                             <div class="batch-info">
-                                <i data-lucide="check-check"></i> Zaznaczono: <span class="batch-count">0</span>
+                                <i data-lucide="check-check"></i> Zaznaczono:
+                                <span class="batch-count">0</span>
+                                <span class="batch-scope"></span>
                             </div>
                             <div class="batch-actions">
-                                <button type="button"
+                                <button
+                                    type="button"
                                     class="batch-btn batch-btn-print"
                                     onclick="AppZlecenia.printBatchZlecenia()"
                                 >
                                     <i data-lucide="printer"></i> Drukuj zlecenia
                                 </button>
-                                <button type="button"
+                                <button
+                                    type="button"
                                     class="batch-btn batch-btn-label"
                                     onclick="AppZlecenia.printBatchEtykiety()"
                                 >
                                     <i data-lucide="tag"></i> Drukuj etykiety
+                                </button>
+                                <button
+                                    type="button"
+                                    class="batch-btn batch-btn-clear-visible"
+                                    onclick="AppZlecenia.clearVisibleSelection()"
+                                >
+                                    <i data-lucide="eye-off"></i> Odznacz widoczne
+                                </button>
+                                <button
+                                    type="button"
+                                    class="batch-btn batch-btn-clear-all"
+                                    onclick="AppZlecenia.clearAllSelection()"
+                                >
+                                    <i data-lucide="x-square"></i> Odznacz wszystko
+                                </button>
+                                <button
+                                    type="button"
+                                    class="batch-btn batch-btn-delete"
+                                    onclick="AppZlecenia.deleteSelectedOrders()"
+                                >
+                                    <i data-lucide="trash-2"></i> Usuń zaznaczone
                                 </button>
                             </div>
                         </div>
@@ -133,14 +217,11 @@
                                             <input
                                                 type="checkbox"
                                                 id="zlecenia-select-all"
+                                                class="zlecenia-master-cb"
                                                 onclick="AppZlecenia.toggleSelectAll(this)"
-                                                style="
-                                                    cursor: pointer;
-                                                    width: 16px;
-                                                    height: 16px;
-                                                    accent-color: var(--accent-hover);
-                                                "
-                                                title="Zaznacz wszystkie"
+                                                title="Klik: nic -> widoczne -> wszystkie spełniające filtr -> nic"
+                                                aria-label="Zaznacz wszystkie"
+                                                aria-checked="false"
                                             />
                                         </th>
                                         <th style="width: 140px">Nr zlecenia</th>
@@ -171,6 +252,8 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="zlecenia-sentinel" id="zlecenia-sentinel"></div>
+                        <div class="zlecenia-footer" id="zlecenia-footer"></div>
                     </section>
                 </div>
             </div>
@@ -193,9 +276,12 @@
         <script>
             if (window.top === window.self) {
                 const module =
-                    location.pathname.split('/').pop().replace(/\.html?$/, '') || 'zlecenia';
+                    location.pathname
+                        .split('/')
+                        .pop()
+                        .replace(/\.html?$/, '') || 'zlecenia';
                 window.location.replace('/app.html#/' + module);
             }
         </script>
-</body>
+    </body>
 </html>
