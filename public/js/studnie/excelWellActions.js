@@ -173,6 +173,11 @@ function excelOnNameChange(wIdx, value) {
     _excelRenderTabs();
     _excelUpdateWellCount();
     _excelDebouncedRefresh();
+    /* Re-aplikuj filtr wyszukiwarki — nazwa mogła przestać pasować do zapytania */
+    if (typeof excelFilterWells === 'function') {
+        const si = document.getElementById('excel-search-input');
+        if (si && si.value) excelFilterWells(si.value);
+    }
 }
 
 /* ===== DUPLIKOWANIE STUDNI Z TABELI ===== */

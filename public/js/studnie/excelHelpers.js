@@ -621,19 +621,47 @@ function excelFilterWells(value) {
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     const rows = container.querySelectorAll('tbody tr[data-widx]');
+    let visibleCount = 0;
     rows.forEach(function (row) {
         if (!q) {
             row.style.display = '';
+            visibleCount++;
             return;
         }
-        /* Najpierw szukaj inputa — dopiero potem fallback do TD */
-        let nameInp = row.querySelector('td:nth-child(2) input');
+        /* Kolumna Nr Studni (tr.children[3]: checkbox, A/M, Lp, Nr Studni) */
+        let nameInp = row.children[3] ? row.children[3].querySelector('input') : null;
         let name = nameInp
             ? nameInp.value
-            : (row.querySelector('td:nth-child(2)') || {}).textContent || '';
+            : (row.children[3] || {}).textContent || '';
         name = (name || '').toLowerCase();
-        row.style.display = name.indexOf(q) >= 0 ? '' : 'none';
+        const show = name.indexOf(q) >= 0;
+        row.style.display = show ? '' : 'none';
+        if (show) visibleCount++;
     });
+    /* Tabela renderuje tylko studnie aktywnej zakładki DN — gdy zapytanie nie
+       pasuje do niczego na bieżącej zakładce, ale pasuje do studni na innej,
+       przełącz na nią (excelSwitchTab re-renderuje i ponownie aplikuje filtr). */
+    if (
+        q &&
+        visibleCount === 0 &&
+        typeof wells !== 'undefined' &&
+        Array.isArray(wells) &&
+        typeof excelSwitchTab === 'function'
+    ) {
+        let targetTab = null;
+        for (let i = 0; i < wells.length; i++) {
+            const w = wells[i];
+            if (!w || !w.name) continue;
+            if (String(w.name).toLowerCase().indexOf(q) >= 0) {
+                const t = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+                if (t !== _excelActiveTab) {
+                    targetTab = t;
+                    break;
+                }
+            }
+        }
+        if (targetTab) excelSwitchTab(targetTab);
+    }
 }
 
 /* ===== STICKY CELL OPAQUE BACKGROUND ===== */
