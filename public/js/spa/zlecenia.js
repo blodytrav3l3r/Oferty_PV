@@ -138,18 +138,6 @@ const AppZlecenia = (() => {
                 searchOffers(buildSearchParams());
             });
         }
-        const chipsContainer = document.getElementById('zlecenia-chips');
-        if (chipsContainer) {
-            chipsContainer.addEventListener('click', (event) => {
-                const target = event.target;
-                if (!(target instanceof HTMLElement)) return;
-                const removeEl = target.closest('.chip-remove');
-                if (!removeEl) return;
-                const chipEl = removeEl.closest('.zlecenia-chip');
-                if (!chipEl) return;
-                removeChip(chipEl.dataset.chipType);
-            });
-        }
     }
 
     function setFilter(filter) {
@@ -454,10 +442,8 @@ const AppZlecenia = (() => {
         }
     }
 
-    /* Chipsy odzwierciedlają aktywne filtry; licznik przy przycisku czyszczenia */
+    /* Licznik aktywnych filtrów przy przycisku czyszczenia */
     function updateChips() {
-        const container = document.getElementById('zlecenia-chips');
-        if (!container) return;
         const qInput = document.getElementById('zlecenia-search-input');
         const fromInput = document.getElementById('zlecenia-date-from');
         const toInput = document.getElementById('zlecenia-date-to');
@@ -467,64 +453,15 @@ const AppZlecenia = (() => {
         const dateTo = toInput ? toInput.value : '';
         const userId = userSelect ? userSelect.value : '';
 
-        const chips = [];
-        if (dateFrom || dateTo) {
-            let label = 'Data:';
-            if (dateFrom) label += ' od ' + dateFrom;
-            if (dateTo) label += ' do ' + dateTo;
-            chips.push(['date', label]);
-        }
-        if (userId) {
-            chips.push(['user', 'Użytkownik: ' + (userMap.get(userId) || userId)]);
-        }
-        if (q) {
-            chips.push(['q', 'Szukanie: ' + q]);
-        }
-        if (activeFilter !== 'all') {
-            chips.push([
-                'status',
-                'Status: ' + (activeFilter === 'accepted' ? 'Zatwierdzone' : 'Oczekujące')
-            ]);
-        }
-
-        container.innerHTML = chips
-            .map(
-                ([type, label]) =>
-                    '<span class="zlecenia-chip" data-chip-type="' +
-                    type +
-                    '"><span class="chip-label">' +
-                    escapeHtml(label) +
-                    '</span><i data-lucide="x" class="chip-remove" title="Usuń filtr" role="button" aria-label="Usuń filtr"></i></span>'
-            )
-            .join('');
-
+        const count =
+            (dateFrom || dateTo ? 1 : 0) +
+            (userId ? 1 : 0) +
+            (q ? 1 : 0) +
+            (activeFilter !== 'all' ? 1 : 0);
         const clearBtn = document.getElementById('zlecenia-clear-filters');
         if (clearBtn) {
-            clearBtn.textContent = 'Wyczyść filtry (' + chips.length + ')';
+            clearBtn.textContent = 'Wyczyść filtry (' + count + ')';
         }
-        lucide.createIcons({ root: container });
-    }
-
-    /* Usunięcie pojedynczego filtra z chipsa */
-    function removeChip(type) {
-        if (type === 'q') {
-            const input = document.getElementById('zlecenia-search-input');
-            if (input) input.value = '';
-        } else if (type === 'date') {
-            const from = document.getElementById('zlecenia-date-from');
-            const to = document.getElementById('zlecenia-date-to');
-            if (from) from.value = '';
-            if (to) to.value = '';
-        } else if (type === 'user') {
-            const select = document.getElementById('zlecenia-user-filter');
-            if (select) select.value = '';
-        } else if (type === 'status') {
-            activeFilter = 'all';
-            document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
-                btn.classList.toggle('active', btn.dataset.filter === 'all');
-            });
-        }
-        searchOffers(buildSearchParams());
     }
 
     /* Wyzerowanie wszystkich filtrów naraz */
@@ -643,14 +580,33 @@ const AppZlecenia = (() => {
             if (batchCountEl) batchCountEl.textContent = String(selectedIds.size);
             if (scopeEl) scopeEl.textContent = selectedIds.size > 0 ? '— widoczne' : '';
         }
+        updateSelectAllButton();
     }
 
-    function clearVisibleSelection() {
-        // Odznacz tylko identyfikatory z widocznego okna; załadowane poza widokiem zostają zaznaczone
+    function updateSelectAllButton() {
+        const btn = document.getElementById('zlecenia-select-all-btn');
+        if (!btn) return;
+        const hasSelection = selectState > 0;
+        const icon = btn.querySelector('i');
+        if (icon) icon.setAttribute('data-lucide', hasSelection ? 'x-square' : 'check-check');
+        btn.lastChild.textContent = hasSelection ? ' Odznacz wszystkie' : ' Zaznacz wszystkie';
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons({ root: btn });
+        }
+    }
+
+    function selectAllRows() {
+        if (selectState > 0) {
+            // Odznacz wszystko
+            clearAllSelection();
+            return;
+        }
+        // Zaznacz wszystkie załadowane zlecenia spełniające filtr (limit MAX_LOADED)
+        const items = searchResults?.items || [];
+        items.forEach((o) => selectedIds.add(o.id));
         const checkboxes = document.querySelectorAll('.zlecenia-row-cb');
         checkboxes.forEach((cb) => {
-            cb.checked = false;
-            selectedIds.delete(cb.dataset.id);
+            if (selectedIds.has(cb.dataset.id)) cb.checked = true;
         });
         updateSelectAllState();
         updateBatchBar();
@@ -1124,15 +1080,14 @@ const AppZlecenia = (() => {
         deleteOrder,
         setFilter,
         toggleSelectAll,
-        clearVisibleSelection,
+        selectAllRows,
         clearAllSelection,
         printSingleZlecenie,
         printSingleEtykieta,
         printBatchZlecenia,
         printBatchEtykiety,
         deleteSelectedOrders,
-        clearAllFilters,
-        removeChip
+        clearAllFilters
     };
 })();
 window.AppZlecenia = AppZlecenia;

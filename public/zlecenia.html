@@ -155,8 +155,6 @@
                             >
                                 Wyczyść filtry (0)
                             </button>
-
-                            <div class="zlecenia-chips" id="zlecenia-chips"></div>
                         </div>
 
                         <!-- Batch action bar (visible when items selected) -->
@@ -186,17 +184,11 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="batch-btn batch-btn-clear-visible"
-                                    onclick="AppZlecenia.clearVisibleSelection()"
+                                    class="batch-btn batch-btn-select-all"
+                                    id="zlecenia-select-all-btn"
+                                    onclick="AppZlecenia.selectAllRows()"
                                 >
-                                    <i data-lucide="eye-off"></i> Odznacz widoczne
-                                </button>
-                                <button
-                                    type="button"
-                                    class="batch-btn batch-btn-clear-all"
-                                    onclick="AppZlecenia.clearAllSelection()"
-                                >
-                                    <i data-lucide="x-square"></i> Odznacz wszystko
+                                    <i data-lucide="check-check"></i> Zaznacz wszystkie
                                 </button>
                                 <button
                                     type="button"

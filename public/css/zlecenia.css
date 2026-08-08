@@ -443,6 +443,13 @@
 .batch-btn-delete:hover {
     background: rgba(var(--danger-rgb), 0.1);
 }
+.batch-btn-select-all {
+    border-color: rgba(var(--accent-rgb), 0.5);
+    color: var(--accent-hover);
+}
+.batch-btn-select-all:hover {
+    background: rgba(var(--accent-rgb), 0.1);
+}
 
 /* Widok responsywny — Kartoteka Zleceń */
 
@@ -601,30 +608,6 @@
     width: 145px;
 }
 /* Chipsy aktywnych filtrów — różowa tożsamość modułu */
-.zlecenia-chips {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-    flex-basis: 100%;
-    flex-wrap: wrap;
-}
-.zlecenia-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    background: rgba(var(--pink-rgb), 0.12);
-    border: 1px solid rgba(var(--pink-rgb), 0.4);
-    color: var(--pink-hover);
-    border-radius: 20px;
-    padding: 0.15rem 0.65rem;
-    font-size: 0.72rem;
-    font-weight: 700;
-}
-.zlecenia-chip svg {
-    width: 12px;
-    height: 12px;
-    cursor: pointer;
-}
 /* Warianty kolorystyczne ikon statystyk — bez stylów wbudowanych */
 .zlecenia-stat-icon--accent {
     background: rgba(var(--accent-rgb), 0.12);
