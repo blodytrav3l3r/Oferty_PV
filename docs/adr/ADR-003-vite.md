@@ -1,37 +1,37 @@
-# ADR-003: Vite jako bundler frontendu
+# ADR-003: Vite jako dev server frontendu
 
-**Status:** Zaakceptowany  
+**Status:** Zaakceptowany (zweryfikowany 2026-08-08 — bundling uchylony)
 **Data:** 2026-06-20  
 **Autor:** Hermes Agent
 
 ## Kontekst
 
-Frontend aplikacji to wielostronicowa SPA z 6 wejściami HTML. Wymaga bundlera dla
-TypeScript, code splitting, i szybkiego HMR. Rozważano: Vite, Webpack, esbuild standalone.
+Frontend aplikacji to wielostronicowa SPA z 6 wejściami HTML. Rozważano bundler
+(Vite, Webpack, esbuild standalone) dla TypeScript, code splitting i HMR.
 
 ## Decyzja
 
-**Vite** jako bundler i dev server dla frontendu.
+**Vite** jako dev server dla frontendu. **Bundling produkcyjny przez Vite został
+uchylony** (patrz Konsekwencje).
 
 ## Uzasadnienie
 
 1. **Błyskawiczny HMR** — natywny ESM w dev, podmiana modułów w <100ms.
 2. **Wsparcie TypeScript** — natywne TS (tylko transpilacja, bez typecheck — osobny `tsc --noEmit`).
-3. **Multi-page setup** — 6 wejść HTML (`index.html`, `studnie.html`, `rury.html`, itd.) przez `rollupOptions.input`.
-4. **Proxy do backendu** — `server.proxy` kieruje `/api` na Express (port 3000).
-5. **Code splitting** — automatyczne chunkowanie vendorów (xlsx osobno) przez `manualChunks`.
-6. **Minimal config** — ~40 linii konfiguracyjnych vs 100+ dla Webpack.
+3. **Proxy do backendu** — `server.proxy` kieruje `/api` na Express (port 3000).
+4. **Minimal config** — kilka linii konfiguracyjnych.
 
 ## Konsekwencje
 
+- **Bundling produkcyjny uchylony (2026-08-08)**. `vite build` z `root: 'public'`
+  nie kopiuje klasycznych `<script src>` modułów studni/rur ani katalogów
+  `partials/`/`templates/` (Vite bundluje wyłącznie `<script type="module">`),
+  więc artefakt `dist-web/` był z definicji niekompletny — moduł studni nie działał
+  na `vite preview` (port 4173). Produkcja serwuje `public/` wprost przez Express,
+  dev używa Vite (5173). Usunięto: `build:frontend`, `preview:frontend`, `dist-web/`.
+- **Vite i esbuild pozostają w devDependencies** wyłącznie dla dev servera.
 - **TypeScript tylko transpilacja** — typecheck wymaga osobnego `npm run typecheck:frontend` (`tsc --noEmit`).
 - **Proxy HMR nie jest w pełni zintegrowane** — backend i frontend to osobne procesy (przez `concurrently`).
-- **esbuild minify** — szybszy niż terser, ale mniej opcji transformacji (akceptowalne dla celów ES2015).
-  Od Vite 8 `esbuild` jest **opcjonalną zależnością peer** — musi być jawnie w `devDependencies`
-  (`^0.28.1`), inaczej `npm run build:frontend` z `minify: 'esbuild'` kończy się błędem (commit `deeb32a`).
-- **Wyjście do osobnego katalogu `dist-web/`** — frontend bundlowany przez Vite trafia do `dist-web/`,
-  oddzielonego od `dist/` (output kompilacji backendu przez `tsc`). Dzięki temu `vite build`
-  (z `emptyOutDir: true`) nie kasuje skompilowanego `dist/server.js` przy budowie równoległej.
 
 ## Konfiguracja
 
@@ -39,20 +39,9 @@ TypeScript, code splitting, i szybkiego HMR. Rozważano: Vite, Webpack, esbuild 
 // vite.config.js
 export default defineConfig({
     root: 'public',
-    build: {
-        outDir: '../dist-web',
-        rollupOptions: {
-            input: {
-                index: 'public/index.html',
-                studnie: 'public/studnie.html',
-                rury: 'public/rury.html',
-                kartoteka: 'public/kartoteka.html',
-                zlecenia: 'public/zlecenia.html',
-                app: 'public/app.html'
-            }
-        }
-    },
+    base: '/',
     server: {
+        port: 5173,
         proxy: { '/api': 'http://localhost:3000' }
     }
 });

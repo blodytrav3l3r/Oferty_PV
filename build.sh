@@ -30,11 +30,4 @@ npx prisma generate
 log STEP "TypeScript compile..."
 npx tsc
 
-if [ -f vite.config.js ]; then
-    log STEP "Vite build (opcjonalny)..."
-    npm run build:frontend || log WARN "Frontend build opcjonalny - pomijam"
-else
-    log SKIP "Brak vite.config.js"
-fi
-
 log OK "Gotowe do produkcji (uruchom prod.bat / prod.sh)"

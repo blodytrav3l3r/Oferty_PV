@@ -53,18 +53,6 @@ if errorlevel 1 (
 )
 echo [OK] dist\
 
-REM Vite build (opcja)
-if exist "vite.config.js" (
-    echo [INFO] Vite build...
-    call npm run build:frontend
-    if errorlevel 1 (
-        echo [BLAD] Vite build nie powiodl sie.
-        pause
-        exit /b 1
-    )
-    echo [OK] Vite
-)
-
 echo ===========================================================
 echo   Build zakonczony
 echo ===========================================================

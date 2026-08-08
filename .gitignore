@@ -44,7 +44,6 @@ env/
 
 # Build output
 dist/
-/dist-web/
 build/
 *.tsbuildinfo
 

@@ -410,7 +410,7 @@ git push --follow-tags
 | Migracja bazy danych                   |      ✅      |        | `install.bat` → prisma migrate deploy / db push |
 | Seed danych początkowych               |      ✅      |        | `install.bat` → prisma/seed.ts (opcjonalnie)    |
 | Typecheck TypeScript                   |      ✅      |        | `install.bat` → tsc --noEmit                    |
-| Budowa (TS→JS + frontend)              |      ✅      |        | `build.bat` → tsc + vite build                  |
+| Budowa (TS→JS)                         |      ✅      |        | `build.bat` → tsc                               |
 | Uruchomienie serwera dev               |      ✅      |        | `dev.bat` → npm run dev                         |
 | Uruchomienie serwera prod              |      ✅      |        | `prod.bat` → npm start                          |
 | Port check (3000)                      |      ✅      |        | PowerShell Get-NetTCPConnection                 |

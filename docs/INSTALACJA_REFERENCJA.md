@@ -114,11 +114,11 @@
 
 ### 2.3 `build.bat` / `build.sh` — Budowanie produkcyjne
 
-| Pole                              | Opis                                                                                                                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wyzwalacz**                     | Uruchomienie `.\build.bat` lub `bash build.sh`.                                                                                                                                         |
-| **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. `npm ci` jeśli brak `node_modules`\ 3. `npx prisma generate`\ 4. `npx tsc` (kompilacja TypeScript)\ 5. `npm run build:frontend` jeśli istnieje `vite.config.js` |
-| **Weryfikacja przez użytkownika** | Komunikat `Build zakonczony`. Plik `dist/server.js` istnieje.                                                                                                                           |
+| Pole                              | Opis                                                                                                                       |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Wyzwalacz**                     | Uruchomienie `.\build.bat` lub `bash build.sh`.                                                                            |
+| **Co robi wewnętrznie**           | 1. Sprawdza Node.js\ 2. `npm ci` jeśli brak `node_modules`\ 3. `npx prisma generate`\ 4. `npx tsc` (kompilacja TypeScript) |
+| **Weryfikacja przez użytkownika** | Komunikat `Build zakonczony`. Plik `dist/server.js` istnieje.                                                              |
 
 ### 2.4 `prod.bat` / `prod.sh` — Uruchomienie produkcyjne
 

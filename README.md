@@ -361,7 +361,6 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | Komenda                      | Opis                               |
 | ---------------------------- | ---------------------------------- |
 | `npm run dev:frontend`       | Uruchom Vite dev server            |
-| `npm run build:frontend`     | Zbuduj frontend (Vite)             |
 | `npm run typecheck:frontend` | Sprawdź typy TypeScript (frontend) |
 | `npm run lint:frontend`      | ESLint dla kodu frontendowego      |
 

@@ -25,7 +25,7 @@ Projekt wspiera płynne przełączanie się dewelopera między różnymi aplikac
 Aplikacja jest zbudowana z podziałem na backend i frontend (SPA oparte na iframe'ach):
 
 - **Backend**: TypeScript + Express + Prisma + SQLite (`server.ts`, katalogi `src/`, `scripts/`, `tests/`).
-- **Frontend**: Czysty Vanilla JS (bez frameworków SPA), Vite jako dev server (`build:frontend`). Kod modułów znajduje się w `public/js/rury/` oraz `public/js/studnie/`.
+- **Frontend**: Czysty Vanilla JS (bez frameworków SPA), Vite jako dev server (`npm run dev:frontend`). Kod modułów znajduje się w `public/js/rury/` oraz `public/js/studnie/`.
 - **SPA (Single Page Application)**: Plik `app.html` jest jedynym punktem wejścia (entry point). Moduły (`studnie.html`, `rury.html`) są ładowane jako iframe wewnątrz `app.html`.
 
 - **Kompilacja/Build**: TypeScript kompiluje wyłącznie katalogi `src/**`, `server.ts`, `scripts/**` oraz `tests/**`. Pliki w katalogu `public/` są wykluczone z kompilacji `tsc`, ale **są sprawdzane przez ESLint** (z osobnym zestawem reguł dla przeglądarki w `eslint.config.mjs`).
@@ -265,13 +265,12 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Dewelopment i build
 
-| Polecenie                | Opis działania                                                                    |
-| ------------------------ | --------------------------------------------------------------------------------- |
-| `npm run dev`            | Uruchamia backend + frontend równolegle (concurrently).                           |
-| `npm run dev:backend`    | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev). |
-| `npm run dev:frontend`   | Uruchamia Vite dev server dla frontendu.                                          |
-| `npm run build`          | Kompilacja TypeScript backendu.                                                   |
-| `npm run build:frontend` | Budowa frontendu przez Vite.                                                      |
+| Polecenie              | Opis działania                                                                    |
+| ---------------------- | --------------------------------------------------------------------------------- |
+| `npm run dev`          | Uruchamia backend + frontend równolegle (concurrently).                           |
+| `npm run dev:backend`  | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev). |
+| `npm run dev:frontend` | Uruchamia Vite dev server dla frontendu.                                          |
+| `npm run build`        | Kompilacja TypeScript backendu.                                                   |
 
 ### Walidacja i jakość kodu
 

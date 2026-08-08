@@ -7,7 +7,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 ## Stack
 
 - **Backend**: TypeScript + Express + Prisma + SQLite; `server.ts`, `src/`, `scripts/`, `tests/`
-- **Frontend**: Vanilla JS (bez frameworka), Vite dev server (`build:frontend`); moduły w `public/js/rury/` i `public/js/studnie/`
+- **Frontend**: Vanilla JS (bez frameworka), Vite dev server (`npm run dev:frontend`); moduły w `public/js/rury/` i `public/js/studnie/`
 - **SPA**: `app.html` jako jedyne entry point; moduły (`studnie.html`, `rury.html`) jako iframe w `app.html`
 - **Build**: TypeScript tylko `src/**`, `server.ts`, `scripts/**`, `tests/**` — `public/` wykluczone z tsc/eslint
 
