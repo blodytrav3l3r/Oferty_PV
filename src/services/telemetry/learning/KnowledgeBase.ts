@@ -208,6 +208,12 @@ export class KnowledgeBase {
 
     /**
      * Statystyki bazy wiedzy do dashboardu.
+     *
+     * Statystyki rekomendacji czyta się z ai_telemetry_logs (wasAccepted/wasRejected),
+     * bo tabela ai_recommendations nie jest zasilana w produkcji (endpointy
+     * /recommendations/* usunięte — DELETION_LOG). Rekomendacja = konfiguracja
+     * studni zapisana do telemetrii; decyzję użytkownika odzwierciedla
+     * wasAccepted/wasRejected na rekordzie.
      */
     async getStats(): Promise<{
         total: number;
@@ -238,9 +244,9 @@ export class KnowledgeBase {
                     where: { status: 'active' },
                     select: { confidence: true, patternType: true }
                 }),
-                prisma.ai_recommendations.count(),
-                prisma.ai_recommendations.count({ where: { wasAccepted: true } }),
-                prisma.ai_recommendations.count({ where: { wasRejected: true } }),
+                prisma.ai_telemetry_logs.count(),
+                prisma.ai_telemetry_logs.count({ where: { wasAccepted: true } }),
+                prisma.ai_telemetry_logs.count({ where: { wasRejected: true } }),
                 prisma.ai_knowledge_base.count({
                     where: {
                         firstDetectedAt: {
