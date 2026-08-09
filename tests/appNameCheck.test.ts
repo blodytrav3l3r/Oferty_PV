@@ -52,7 +52,7 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
             'docs/adr/ADR-001.md': 'ADR WITROS Oferty PV',
             'CHANGELOG.md': '## [1.0.0] WITROS Oferty PV',
             'data/seed.json': '{"name": "WITROS Oferty PV seed"}',
-            'LICENSE': 'WITROS Oferty PV — licence'
+            LICENSE: 'WITROS Oferty PV — licence'
         });
         const out = runCli(dir);
         expect(out).toContain('✓');
@@ -62,7 +62,11 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
         const dir = makeFixture({});
         fs.mkdirSync(path.join(dir, 'public'), { recursive: true });
         fs.writeFileSync(path.join(dir, 'public', 'img.svg'), 'WITROS Oferty PV', 'utf-8');
-        fs.writeFileSync(path.join(dir, 'public', 'bin.dat'), 'WITROS Oferty PV\u0000\x00\x00', 'utf-8');
+        fs.writeFileSync(
+            path.join(dir, 'public', 'bin.dat'),
+            'WITROS Oferty PV\u0000\x00\x00',
+            'utf-8'
+        );
         const out = runCli(dir);
         expect(out).toContain('✓');
     });

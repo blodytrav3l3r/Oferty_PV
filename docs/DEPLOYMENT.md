@@ -138,11 +138,11 @@ Aplikacja dostępna pod: `http://localhost:3000`
 4. Skopiuj dane:
    `docker run --rm -v witros_data:/from -v sok_data:/to alpine:3.20 sh -c "cp -a /from/. /to/"`
 5. **Weryfikacja kopii (obowiązkowo):**
-   ```
-   docker run --rm -v witros_data:/from alpine:3.20 sh -c "sha256sum /from/app_database.sqlite"
-   docker run --rm -v sok_data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
-   ```
-   → identyczne sumy; `ls -la /to` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
+    ```
+    docker run --rm -v witros_data:/from alpine:3.20 sh -c "sha256sum /from/app_database.sqlite"
+    docker run --rm -v sok_data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
+    ```
+    → identyczne sumy; `ls -la /to` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
 6. Zaktualizuj pliki (docker-compose.yml / docs) i uruchom:
    `docker compose up -d --build`.
 7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health`

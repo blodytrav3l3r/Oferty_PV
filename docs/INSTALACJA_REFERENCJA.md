@@ -177,7 +177,7 @@
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Wyzwalacz**                     | `docker compose up --build -d` (ręcznie)                                                                                                                                                                                                                                                                                                                                                      |
 | **Co robi wewnętrznie**           | 1. Buduje obraz z `Dockerfile` (node:22-slim + openssl)\ 2. `npm install` w obrazie\ 3. `npx prisma generate` w obrazie\ 4. `npm run build` (tsc) w obrazie\ 5. `npm prune --production` + cache clean\ 6. Przy starcie kontenera: `docker-entrypoint.sh` → ustawia DATABASE_URL, migruje PRECO z 3 tabel do settings, `prisma db push`, uruchamia serwer\ 7. Healthcheck co 30s na `/health` |
-| **Weryfikacja przez użytkownika** | `docker ps` → kontener `sok-oferty` działa. `curl http://localhost:3000/health` → 200.                                                                                                                                                                                                                                                                                                     |
+| **Weryfikacja przez użytkownika** | `docker ps` → kontener `sok-oferty` działa. `curl http://localhost:3000/health` → 200.                                                                                                                                                                                                                                                                                                        |
 
 ---
 
@@ -333,7 +333,7 @@ Cel instalacji:
 | `docker: command not found` | Brak Docker CLI         | Zainstaluj Docker Desktop                                                                      |
 | Port 3000 już zajęty        | Inny serwer             | Zatrzymaj inny proces lub zmień mapowanie portów w `docker-compose.yml` (np. `'3001:10000'`)   |
 | Baza nie utworzona          | Brak wolumenu           | Sprawdź: `docker volume ls`. Jeśli brak: `docker compose down -v && docker compose up --build` |
-| Healthcheck failing         | Aplikacja nie startuje  | `docker logs sok-oferty` zobacz błędy.                                                      |
+| Healthcheck failing         | Aplikacja nie startuje  | `docker logs sok-oferty` zobacz błędy.                                                         |
 
 ### 4.8 Release się nie udaje
 
