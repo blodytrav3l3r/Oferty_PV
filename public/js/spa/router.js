@@ -101,9 +101,16 @@ const SpaRouter = (() => {
         const logoText = document.getElementById('spa-logo-text');
         if (logoText) logoText.innerHTML = config.logo;
 
-        const lgSpa = document.getElementById('lg-spa');
-        if (lgSpa) {
-            lgSpa.className = 'logo logo-' + module;
+        // Kolor nazwy modułu pod logo (zielony/niebieski/bursztynowy/różowy)
+        const logoApp = document.querySelector('.logo-app');
+        if (logoApp) {
+            logoApp.classList.remove(
+                'logo-rury',
+                'logo-studnie',
+                'logo-kartoteka',
+                'logo-zlecenia'
+            );
+            logoApp.classList.add('logo-' + module);
         }
     }
 

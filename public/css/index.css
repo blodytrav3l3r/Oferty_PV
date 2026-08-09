@@ -99,6 +99,18 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     transition: font-size 0.3s;
 }
 
+.index-logo .index-logo-sok {
+    display: block;
+    width: min(420px, 90vw);
+    height: auto;
+    margin: 0 auto;
+    transition: width 0.3s;
+}
+
+.container.logged-in .index-logo .index-logo-sok {
+    width: min(300px, 70vw);
+}
+
 @keyframes logoShimmer {
     0%,
     100% {

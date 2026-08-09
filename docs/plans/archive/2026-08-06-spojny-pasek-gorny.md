@@ -1,6 +1,6 @@
 # Plan: Spójny pasek górny SPA — naprawa „przesuwania ikon" między zakładkami
 
-Data: 2026-08-06 | Status: ZREALIZOWANY (kroki A-D wdrożone, E/F poza zakresem) | Tryb: wdrożenie po akceptacji
+Data: 2026-08-06 | Status: ZREALIZOWANY (kroki A-D wdrożone; E pominięty — niska wartość; F wdrożony w 19778a5/0542b2b) | Tryb: wdrożenie po akceptacji
 
 > Plan finalny po weryfikacji kodu. Wszystkie ustalenia z poprzednich analiz
 > potwierdzone w repo — lokalizacje podane w sekcji 2.
@@ -52,7 +52,7 @@ Dodatkowo potwierdzone:
 | **C: tooltip race**       | `aiStatusIndicator.js` jest JEDYNYM właścicielem badge; `mlDualRanking.js` przestaje dotykać badge (usunięcie bloku „WSKAŹNIK AI W UI"), logika „Wzorce AI..." przeniesiona do `aiStatusIndicator.js` | Badge żyje w app.html; aiStatusIndicator działa globalnie (też poza modułem studni) i ma już poll 30 s na ten sam endpoint. Usunięcie z iframe eliminuje race u źródła (SRP). Linia „Kliknij Auto, aby uruchomić solver z AI rankingiem" NIE jest przenoszona — to wskazówka kontekstowa solvera studni, a badge jest globalny (myląca w Rurach/Kartotece); decyzja produktowa, łatwa do odwrócenia (stała linia w aiStatusIndicator). |
 | **D: rankingVersion**     | Dodać stałą `RANKING_VERSION` do `ML_CONSTANTS` (backend) + pole w `/ai/ml-status`                                                                                                                    | Backend staje się źródłem prawdy (wzorzec jak `FEATURE_VERSION`); frontend przestaje zgadywać (koniec `ranking: ?`). Wartość domyślna `'dual_v1'` zgodna z obecną stałą frontendową.                                                                                                                                                                                                                                                   |
 | **E: klasa CSS badge**    | Przenieść inline style badge do klasy `.ai-status-badge` w `spa.css`, usunąć martwe `.ai-status-online/offline`                                                                                       | Czystość (SRP CSS/HTML), miejsce na `min-width`/`.is-visible`; tani, opcjonalny.                                                                                                                                                                                                                                                                                                                                                       |
-| **F: headerUser.js**      | Osobna iteracja (POZA tym taskiem)                                                                                                                                                                    | Przebudowa 4–6 plików z header-right; nie blokuje naprawy przesuwania.                                                                                                                                                                                                                                                                                                                                                                 |
+| **F: headerUser.js**      | Osobna iteracja (POZA tym taskiem) — ✅ zrealizowana w 19778a5/0542b2b                                                                                                                                | Przebudowa 4–6 plików z header-right; nie blokuje naprawy przesuwania.                                                                                                                                                                                                                                                                                                                                                                 |
 
 ## 4. Zakres zmian — kroki implementacyjne
 
@@ -109,10 +109,12 @@ Dodatkowo potwierdzone:
 - **Plik**: `public/css/index.css:1444-1453` — usunąć martwe `.ai-status-online` / `.ai-status-offline`.
 - **Priorytet**: niski. **Ryzyko**: niskie. **Weryfikacja**: `npm run format`; podgląd badge (wygląd bez zmian, brak skoku).
 
-### Krok F — headerUser.js: konsolidacja header-right (PÓŹNIEJ, osobna iteracja)
+### Krok F — headerUser.js: konsolidacja header-right (✅ WDROŻONY w 19778a5/0542b2b)
 
-- Wspólny moduł `public/js/shared/headerUser.js` inicjalizujący header-right (username, rola, wyloguj, wersja, badge AI) przez `data-header-user`; podpięcie w `app.html`, `kartoteka.html`, `partials/header.html`, `partials/rury/header.html` (+ warianty studni).
-- **Poza zakresem tego tasku** — wymaga przebudowy wielu plików, nie blokuje naprawy przesuwania.
+- Wspólny moduł `public/js/shared/headerUser.js` (`window.headerUser.render(user)`) renderujący username i badge roli w nagłówku wszystkich wejściówek.
+- **Realizacja (19778a5)**: moduł podpięty w `index.html`, `app.html`, `kartoteka.html`, `rury.html`, `studnie.html`; `dashboard.js` deleguje do `headerUser.render` (poprawka roli PRO); usunięto martwe `nav-accent-*`.
+- **Realizacja (0542b2b)**: wspólne klasy `.header-user-info`/`.header-username`/`.header-role-badge`/`.header-version`/`.header-logout` w `style.base.css`; usunięto martwe `.dash-*` (index.css) i `.rury-header-*`/`.rury-role-badge`/`.rury-btn-logout` (rury.css) oraz inline style/handlery hover z nagłówków.
+- **Poza zakresem tego tasku** (wtedy) — zrealizowane jako osobna iteracja, zgodnie z planem konsolidacyjnym 2026-08-09.
 
 ## 5. Kolejność wdrożenia i zależności
 
@@ -131,9 +133,9 @@ Dodatkowo potwierdzone:
 
 **PÓŹNIEJ**:
 
-- **E** (klasa badge + martwe klasy) — zalecany w tej samej iteracji (tani, ~20 linii), jeśli czas pozwoli.
-- **F** (headerUser.js) — osobna iteracja.
-- **P3** (`nav-accent-builder/offer/pricelist` bez stylów) — drobna kosmetyka, można dołączyć do E (dodać reguły akcentu w `spa.css`/`rury.css`); nie wpływa na przesuwanie.
+- **E** (klasa badge + martwe klasy) — zalecany w tej samej iteracji (tani, ~20 linii), jeśli czas pozwoli. **Nie zrealizowany** (niska wartość — patrz plan konsolidacyjny 2026-08-09).
+- **F** (headerUser.js) — osobna iteracja. **✅ Zrealizowany** w 19778a5/0542b2b (wspólne klasy `.header-*` + `public/js/shared/headerUser.js`).
+- **P3** (`nav-accent-builder/offer/pricelist` bez stylów) — drobna kosmetyka, można dołączyć do E (dodać reguły akcentu w `spa.css`/`rury.css`); nie wpływa na przesuwanie. **✅ Zrealizowany** w 19778a5 (usunięto martwe atrybuty, grep = 0).
 
 ## 7. Strategia testów
 

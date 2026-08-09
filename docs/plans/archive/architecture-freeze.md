@@ -271,9 +271,9 @@ Poniższe ID są używane przez `document.getElementById()` w kodzie JS. Jakakol
 | `spa-app-kartoteka`   | app.html                                      |
 | `spa-app-zlecenia`    | app.html                                      |
 | `spa-logo-text`       | app.html                                      |
-| `header-user-info`    | studnie.html, rury.html, app.html             |
-| `header-username`     | studnie.html, rury.html, app.html             |
-| `header-role-badge`   | studnie.html, rury.html, app.html             |
+| `header-user-info`    | studnie.html, rury.html, app.html, index.html |
+| `header-username`     | studnie.html, rury.html, app.html, index.html |
+| `header-role-badge`   | studnie.html, rury.html, app.html, index.html |
 | `app-version-toolbar` | app.html, index.html, studnie.html, rury.html |
 | `connection-dot`      | app.html                                      |
 | `section-builder`     | studnie.html, rury.html                       |
@@ -281,8 +281,6 @@ Poniższe ID są używane przez `document.getElementById()` w kodzie JS. Jakakol
 | `section-pricelist`   | studnie.html, rury.html                       |
 | `toast-container`     | wszystkie HTML                                |
 | `dash-header`         | index.html                                    |
-| `dash-username`       | index.html                                    |
-| `dash-role`           | index.html                                    |
 
 #### Wizard (studnie + rury)
 

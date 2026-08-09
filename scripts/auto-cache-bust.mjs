@@ -4,7 +4,7 @@
  *                       i synchronizacja wersji w dokumentacji.
  *
  * Czyta wersję z VERSION i podmienia:
- *   - ?v= w lokalnych assetach (.js/.css) w plikach HTML
+ *   - ?v= w lokalnych assetach (.js/.css/.svg) w plikach HTML
  *   - **Wersja:** X.Y.Z w plikach .md
  *
  * Użycie:
@@ -67,7 +67,7 @@ function processFile(filePath) {
     const original = content;
 
     content = content.replace(
-        /(src|href)\s*=\s*"([^"]*?\.(js|css))(?:\?[^"]*)?"/gi,
+        /(src|href)\s*=\s*"([^"]*?\.(js|css|svg))(?:\?[^"]*)?"/gi,
         (match, attr, url) => {
             if (!isLocalPath(url)) return match;
 
@@ -101,10 +101,7 @@ function processMdFile(filePath) {
     let content = readFileSync(absPath, 'utf-8');
     const original = content;
 
-    content = content.replace(
-        /(\*\*Wersja:\*\*)\s*\d+\.\d+\.\d+/g,
-        `$1 ${VERSION}`
-    );
+    content = content.replace(/(\*\*Wersja:\*\*)\s*\d+\.\d+\.\d+/g, `$1 ${VERSION}`);
 
     if (content === original) {
         console.log(`  - ${filePath} (bez zmian)`);

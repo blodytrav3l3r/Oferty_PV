@@ -4,6 +4,12 @@
 
 Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV, studnie, rury). Backend API + frontend SPA w iframe'ach + zintegrowany pipeline ML.
 
+Nazwa aplikacji na pulpicie i stronie logowania: **S.O.K. (System Ofert i Kalkulacji)** (rebranding z 2026-08-09, commit `a4b853f`).
+
+<div align="center" style="background:#111827;border-radius:22px;padding:16px;margin:16px 0">
+    <img src="../public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
+</div>
+
 ## Tech Stack
 
 | Warstwa   | Technologia                              |

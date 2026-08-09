@@ -432,7 +432,11 @@ body::before {
 .logo {
     font-size: 1.3rem;
     font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: linear-gradient(
+        135deg,
+        var(--logo-start, var(--accent)),
+        var(--logo-end, var(--accent2))
+    );
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -445,6 +449,36 @@ body::before {
 .logo svg {
     width: 28px;
     height: 28px;
+}
+
+.logo .logo-sok {
+    display: block;
+    height: 40px;
+    width: auto;
+    max-width: 100%;
+}
+
+/* Logo SPA: nowy sygnet S.O.K. + nazwa modułu pod spodem */
+.logo-app {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    line-height: 1.1;
+}
+
+.logo-app .logo-sok {
+    height: 30px;
+}
+
+.logo-app-module {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+#spa-logo-text.logo-app-module {
+    min-width: 0;
 }
 
 /* Stała szerokość logo — nazwa modułu zmienia długość tekstu, ale nie może
@@ -611,6 +645,33 @@ body::before {
     height: 2px;
     background: var(--nav-accent, var(--accent));
     border-radius: 1px;
+}
+
+/* Modyfikatory koloru aktywnego kafelka — per moduł (zamiast inline style).
+   Używane z klasą .active; domyślnie kafelek używa fallbacków --accent/--bg-hover. */
+.nav-tile--studnie {
+    --nav-accent: var(--success);
+    --nav-glow: var(--slate-800);
+}
+
+.nav-tile--rury {
+    --nav-accent: var(--accent);
+    --nav-glow: var(--accent-bg);
+}
+
+.nav-tile--kartoteka {
+    --nav-accent: var(--warn);
+    --nav-glow: var(--warn-bg);
+}
+
+.nav-tile--oferta {
+    --nav-accent: var(--blue);
+    --nav-glow: var(--slate-800);
+}
+
+.nav-tile--cennik {
+    --nav-accent: var(--accent2);
+    --nav-glow: var(--slate-800);
 }
 
 .nav-tile-icon {

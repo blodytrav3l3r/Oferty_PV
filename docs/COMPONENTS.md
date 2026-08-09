@@ -81,18 +81,53 @@ Sticky top bar, tło `--bg-secondary`, border-bottom, z-index 100.
 
 **Responsywność:** 700px → flex wrap, 480px → centrowanie.
 
-### `.logo`
+### `.header-user-info` / `.header-username` / `.header-role-badge` / `.header-version` / `.header-logout`
 
-Gradientowy tekst (accent→accent2) z ikoną SVG, font-weight 800.
+Wspólne klasy prawej strony nagłówka — jedno źródło prawdy dla wszystkich wejściówek
+(index.html/Pulpit, app.html, studnie, rury, kartoteka). Zdefiniowane w `style.base.css`
+(po unifikacji z 2026-08-09, commity 19778a5/0542b2b — usunięto martwe `.dash-*`
+z index.css oraz `.rury-header-*`/`.rury-role-badge`/`.rury-btn-logout` z rury.css).
 
 ```html
-<div class="logo">
-    <svg>...</svg>
-    <span>WITROS Oferty</span>
+<div id="header-user-info" class="header-user-info">
+    <span id="header-username" class="header-username"></span>
+    <span id="header-role-badge" class="header-role-badge"></span>
+    <span id="app-version-toolbar" class="header-version"></span>
+    <button type="button" class="header-logout" onclick="appLogout()">Wyloguj</button>
 </div>
 ```
 
-Palety: `.logo-rury`, `.logo-studnie`, `.logo-kartoteka`, `.logo-zlecenia`.
+- **Render użytkownika**: dane (`#header-username` = „Imię Nazwisko", `#header-role-badge` = ADMIN/PRO/USER) ustawia **wyłącznie** `public/js/shared/headerUser.js` przez `window.headerUser.render(user)` — nie duplikuj inicjalizacji w modułach.
+- **Kolory roli**: `.role-admin` / `.role-pro` / `.role-user` (z `style.utilities.css`).
+- **Wyloguj**: bazuje na `.header-logout:hover` (bez inline handlerów hover).
+
+### `.logo`
+
+Gradientowy tekst (domyślnie accent→accent2) z logo systemu **S.O.K.**, font-weight 800.
+Sam znak graficzny to plik `public/images/logo-sok.svg` (animowany sygnet + napis „S.O.K."),
+osadzany przez `<img class="logo-sok">`.
+
+Palety kolorów tekstu: `.logo-rury`, `.logo-studnie`, `.logo-kartoteka`, `.logo-zlecenia`
+(ustawiają `--logo-start`/`--logo-end`, których używa gradient `.logo` — fallback: accent/accent2).
+
+- **Pulpit (`public/index.html`)**: nagłówek `.logo` + `<img class="logo-sok">`; centralnie `.index-logo`
+  z `<img class="index-logo-sok">`.
+- **SPA (`public/app.html`)**: `.logo.logo-app` (kolumna) — `<img class="logo-sok">` + nazwa modułu
+  pod spodem w `#spa-logo-text.logo-app-module`. Router (`public/js/spa/router.js`) ustawia tekst modułu
+  oraz klasę koloru `logo-<moduł>`.
+
+```html
+<!-- Pulpit: nagłówek -->
+<div class="logo">
+    <img class="logo-sok" src="images/logo-sok.svg?v=..." alt="S.O.K." />
+</div>
+
+<!-- SPA: logo + nazwa modułu pod spodem -->
+<div class="logo logo-app logo-studnie">
+    <img class="logo-sok" src="images/logo-sok.svg?v=..." alt="S.O.K." />
+    <span id="spa-logo-text" class="logo-app-module">Kalkulator Studni</span>
+</div>
+```
 
 ### `.nav-tile`
 
@@ -697,4 +732,4 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-05_
+_Ostatnia aktualizacja: 2026-08-09_
