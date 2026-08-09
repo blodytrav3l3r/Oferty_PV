@@ -123,10 +123,10 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     max-width: 400px;
     margin: 2rem auto 2.5rem;
     padding: 2rem;
-    border-radius: 20px;
+    border-radius: var(--radius);
     background: var(--glass);
-    -webkit-backdrop-filter: blur(16px) saturate(1.2);
-    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(var(--blur-glass)) saturate(1.2);
+    backdrop-filter: blur(var(--blur-glass)) saturate(1.2);
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-lg);
     transition:
@@ -198,9 +198,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     max-width: var(--section-max-width);
     background: var(--glass);
     padding: 0.75rem 1.5rem;
-    border-radius: 60px;
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    border-radius: var(--radius);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
     border: 1px solid var(--glass-border);
 }
 
@@ -249,43 +249,6 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.5rem;
 }
 
-.btn-hero {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 1rem;
-    background: var(--bg-deep);
-    border: 1px solid var(--border-glass);
-    border-radius: 20px;
-    color: var(--text-secondary);
-    font:
-        600 0.8rem 'Inter',
-        sans-serif;
-    text-decoration: none;
-    transition:
-        background-color 0.25s,
-        transform 0.25s;
-    cursor: pointer;
-}
-
-.btn-hero svg {
-    width: 14px;
-    height: 14px;
-}
-
-.btn-hero:hover {
-    background: var(--glass-border);
-    border-color: rgba(var(--white-rgb), 0.15);
-    color: var(--text-primary);
-    transform: translateY(-1px);
-}
-
-.btn-hero.btn-accent {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: var(--white);
-}
-
 /* ── Karty uruchamiania (launch-grid) ── */
 .launch-grid {
     display: grid;
@@ -302,7 +265,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     padding: 1.5rem 2rem;
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius);
     text-decoration: none;
     color: var(--text-primary);
     transition:
@@ -341,9 +304,11 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .launch-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
     border-color: var(--accent-border-dim);
-    box-shadow: 0 20px 40px -10px rgba(var(--black-rgb), 0.5);
+    box-shadow:
+        0 8px 16px rgba(var(--accent-rgb), 0.1),
+        0 2px 4px rgba(var(--black-rgb), 0.1);
 }
 
 .launch-icon {
@@ -387,7 +352,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .launch-btn-label {
     padding: 0.4rem 1rem;
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     font-size: 0.65rem;
     font-weight: 900;
     letter-spacing: 0.5px;
@@ -473,7 +438,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--success-hover);
     border: 1px solid rgba(var(--success-rgb), 0.3);
     padding: 0.3rem 0.7rem;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     font-family: 'JetBrains Mono', 'Fira Code', monospace;
     font-weight: 700;
     font-size: 0.85rem;
@@ -726,7 +691,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     font-size: 0.58rem;
     font-weight: 900;
     padding: 0.15rem 0.5rem;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -951,7 +916,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--accent-hover);
     background: var(--accent-bg);
     border: 1px solid var(--accent-border);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 0.2rem 0.55rem;
     margin-right: auto;
 }
@@ -1325,7 +1290,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
@@ -1627,7 +1592,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.4rem;
     background: linear-gradient(135deg, var(--accent), var(--accent2));
     border: none;
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     color: var(--white);
     font:
         600 0.8rem 'Inter',
@@ -1657,7 +1622,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     gap: 0.4rem;
     background: var(--bg-deep);
     border: 1px solid var(--warn-border);
-    border-radius: 20px;
+    border-radius: var(--radius-sm);
     color: var(--warn);
     font:
         600 0.8rem 'Inter',
@@ -1886,7 +1851,7 @@ body.index-page .header.visible {
 .dash-role-badge {
     font-size: 0.6rem;
     padding: 0.15rem 0.5rem;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -1950,7 +1915,7 @@ body.index-page .header.visible {
         flex-direction: column;
         text-align: center;
         gap: 0.8rem;
-        border-radius: 20px;
+        border-radius: var(--radius);
         padding: 0.8rem;
     }
     .user-profile-card {

@@ -149,6 +149,10 @@
     --radius: 12px;
     --radius-sm: 8px;
     --radius-md: 16px;
+    --radius-lg: 20px;
+
+    /* Rozmycie glass */
+    --blur-glass: 10px;
 
     /* Pink accent (zlecenia module) — merged with Colors section above */
     --pink-hover: #f472b6;
@@ -774,24 +778,6 @@ body::before {
     border-radius: 4px;
     font-weight: 600;
     letter-spacing: 0.5px;
-}
-
-.role-admin {
-    background: var(--danger-bg);
-    color: var(--danger-hover);
-    border: 1px solid var(--danger-bg);
-}
-
-.role-pro {
-    background: var(--warn-bg);
-    color: var(--warn-hover);
-    border: 1px solid var(--warn-bg);
-}
-
-.role-user {
-    background: var(--success-bg);
-    color: var(--success-hover);
-    border: 1px solid var(--success-bg);
 }
 
 /* Utility semantic colors for JS dynamic styling */
