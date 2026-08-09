@@ -100,7 +100,7 @@ jobs:
 
             - name: Health check
               run: |
-                  docker run -d --name test-container sok-oferty:${{ github.sha }}
+                  docker run -d --name test-container -e DEFAULT_ADMIN_PASSWORD=test-admin-pass sok-oferty:${{ github.sha }}
                   echo "Sprawdzanie stanu kontenera..."
                   for i in $(seq 1 15); do
                     if docker exec test-container node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
@@ -117,7 +117,7 @@ jobs:
                     sleep 2
                   done
                   docker exec test-container node scripts/check-appname.cjs
-                  docker exec test-container node -e "const http=require('http');http.get('http://localhost:10000/index.html',r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<title>\s*S\.O\.K\./.test(b)?0:1)})})"
+                  docker exec test-container node -e "const http=require('http');http.get({host:'localhost',port:10000,path:'/index.html',headers:{'x-forwarded-proto':'https'}},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<title>\s*S\.O\.K\./.test(b)?0:1)})})"
                   docker stop test-container
                   docker rm test-container
 
@@ -139,11 +139,6 @@ jobs:
 
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
-
-            - name: Przygotuj bazę e2e
-              run: |
-                  npx prisma db push --skip-generate --accept-data-loss
-                  npx prisma db seed
 
             - name: Run appname E2E
               run: npm run test:e2e-appname:spawn
