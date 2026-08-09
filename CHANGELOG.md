@@ -4,19 +4,36 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
-## [Unreleased]
+### [1.11.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.4...v1.11.5) (2026-08-09)
 
 ### Features
 
-- **zlecenia:** zgodność kartoteki Zleceń Produkcyjnych z wizualizacją — kontener scrolla `min(480px, 60vh)` z sentinelem infinite scroll w kontenerze (`IntersectionObserver` z `root: kontener`), tri-state select-all 3-stanowy (none/visible/all) z batch bar i scope („wszystkie spełniające filtr" / „widoczne"), agregaty COUNT w zapytaniu search (total/accepted/draft/today) + `renderStats` z `searchResults.stats`, toolbar `.zlecenia-virtual-toolbar` z filtrami dat, selectem użytkownika i przyciskiem „Wyczyść filtry (N)", chipsy aktywnych filtrów, sticky różowy batch bar, spinner w sentinelu i stat-icon klasy zamiast inline styli
-- **zlecenia:** batch-delete pomija zatwierdzone (accepted) i zwraca `{ deleted, skipped }` zamiast 403; frontend chunkuje ids po 200 (sekwencyjnie, rate limiter 60/min) z toastem „Usunięto X, pominięto Y"
+- **kartoteka:** pasek filtrów wzorem zleceń, wyczyść filtry (N) i licznik rate-limit ([63fc69f](https://github.com/blodytrav3l3r/Oferty_PV/commit/63fc69f15c5feabc47d13cf84a65de5e9965ad27))
+- **ml:** rejestrowanie odrzucen przy zapisie oferty studni ([a295ab6](https://github.com/blodytrav3l3r/Oferty_PV/commit/a295ab6a8c32adf174dcdb8c5bdbd06636a75e30))
+- **orders:** aktywne filtry jak w kartotece ([000fa7f](https://github.com/blodytrav3l3r/Oferty_PV/commit/000fa7f6b5fee1dc0472471d9c93f3f1221ec644))
+- **orders:** filtry statusu w jednym wierszu toolbaru ([28472d7](https://github.com/blodytrav3l3r/Oferty_PV/commit/28472d781c3b754ad06603933d552fc03ab734a3))
+- **orders:** jednolita wysokosc kontrolek toolbaru i porzadki w stylach ([3584c59](https://github.com/blodytrav3l3r/Oferty_PV/commit/3584c5924e33ac8a2f140fafb55c288f869d7706))
+- **orders:** lista zlecen produkcyjnych - tri-state, toolbar, batch bar ([f5f4e8b](https://github.com/blodytrav3l3r/Oferty_PV/commit/f5f4e8b8389c52c283ab21420e47c54eedee4cf8))
+- **orders:** przycisk zaznacz/odznacz wszystkie i usuniecie chipsow ([efedd8b](https://github.com/blodytrav3l3r/Oferty_PV/commit/efedd8be1519e1ff5c7080a3dbf2af62ad662d70))
+- **sales:** przeprojektowanie kafli ofert w kartotece - odznaki autora w osobnym rzedzie i wieksza typografia ([ba5e4e8](https://github.com/blodytrav3l3r/Oferty_PV/commit/ba5e4e8ed3273d9a6bb7edbba5edc7b066ecddf0))
+- **studnie:** usprawnienia modulu excela - fill Ctrl+Enter, duplikacja Ctrl+D, szerokosci kolumn, tla bledow, wyszukiwarka ([aadd710](https://github.com/blodytrav3l3r/Oferty_PV/commit/aadd7105e510b312f7a0893d3b385080435f74e2))
+- **studnie:** usprawnienia modulu excela - fill Ctrl+Enter, duplikacja Ctrl+D, szerokosci kolumn, tla bledow, wyszukiwarka ([3c3d29d](https://github.com/blodytrav3l3r/Oferty_PV/commit/3c3d29d7af2fc6839c058387ab35c58ea625126e))
+- **ui:** in-app prompt zastepuje natywne popupy w calej aplikacji ([6b02ecb](https://github.com/blodytrav3l3r/Oferty_PV/commit/6b02ecb506e89f544dac5045a93cc1be91b82215))
+- **ui:** spójne kontrole i koniec listy w kartotece i zleceniach ([f7e0f5b](https://github.com/blodytrav3l3r/Oferty_PV/commit/f7e0f5b89e579477fd3d7e4e6ef2986dc65ef857))
 
 ### Bug Fixes
 
-- **zlecenia:** naprawa `typecheck:frontend` (3 błędy TS2339) przez guard `instanceof HTMLElement` przy delegacji zdarzeń na `event.target`
-- **zlecenia:** cursor paginacji porównywał surowe `createdAt` ze znormalizowaną wartością SELECT — przy danych mieszanych (epoch-ms + ISO) pomijał/duplikował wiersze; klauzula kursora używa teraz `normalizedCreatedAtSql()`
-- **zlecenia:** sentinel infinite scroll odpalał eager-load w pętli po dodaniu kontenera scrolla — IntersectionObserver wymaga `root: kontener`
-- **zlecenia:** usunięcie martwego `GET /registry`, dedupe mapowania PZ do `mapProductionOrderRow`, usunięcie martwych eksportów `stopAutoRefresh`/`toggleSelect` i zbędnych re-rejestracji `window.*`, DRY `buildZleceniePayload`/`buildEtykietaPayload`
+- **auth:** cookie Secure wg rzeczywistego protokolu (req.secure) ([17f97a9](https://github.com/blodytrav3l3r/Oferty_PV/commit/17f97a984d2be69d7f8feccf004db37ebbb3260a))
+- **encoding:** wykrywanie i naprawa mojibake UTF-8 + trwale zabezpieczenia ([eec8484](https://github.com/blodytrav3l3r/Oferty_PV/commit/eec848434c2e952f3c21205864b3a358cfbfbe91))
+- **kartoteka:** self.escapeHtml -> escapeHtml w historii zmian ([700ed5b](https://github.com/blodytrav3l3r/Oferty_PV/commit/700ed5bb4b388fde18443fe3c22ae48667ec7cc2))
+- **sales:** poprawa filtrow daty i synchronizacji UI w kartotece ofert ([26f4aa9](https://github.com/blodytrav3l3r/Oferty_PV/commit/26f4aa927ce3f026f5713a335fde59ce3d65ac2c)), closes [#26](https://github.com/blodytrav3l3r/Oferty_PV/issues/26)
+- **security:** uszczelnienie xss w showtoast i oknie wydruku oferty ([ce2fc70](https://github.com/blodytrav3l3r/Oferty_PV/commit/ce2fc7024afe67a09406a550d25745344d0a3583))
+- **studnie:** jednakowa pozycja wskaznika krokow kreatora na kazdej zakladce ([48e592f](https://github.com/blodytrav3l3r/Oferty_PV/commit/48e592f07ca8fd0056de89acde81f26f29c8ac6a))
+- **studnie:** naprawy tabeli konfiguracyjnej studni (Excel) ([4828446](https://github.com/blodytrav3l3r/Oferty_PV/commit/4828446a1b40ed97b8dc8c2c4916c5a7294cfd75)), closes [#21](https://github.com/blodytrav3l3r/Oferty_PV/issues/21) [#33](https://github.com/blodytrav3l3r/Oferty_PV/issues/33) [S3/#29](https://github.com/S3/Oferty_PV/issues/29) [P1-1/#30](https://github.com/P1-1/Oferty_PV/issues/30) [S4/#31](https://github.com/S4/Oferty_PV/issues/31) [S1/#32](https://github.com/S1/Oferty_PV/issues/32) [S2/#28](https://github.com/S2/Oferty_PV/issues/28)
+- **studnie:** porownanie ceny studni w groszach przy wykrywaniu zmiany ([6bad321](https://github.com/blodytrav3l3r/Oferty_PV/commit/6bad3218d3c61218b91cb2d6c360d51a83d020a4))
+- **studnie:** wyszukiwarka w tabeli Excel szuka po numerze studni ([2c21f64](https://github.com/blodytrav3l3r/Oferty_PV/commit/2c21f6484c78f0f8ba2833b5442bfd3ea32d2df1))
+- **ui:** jednakowa pozycja paska krokow kreatora w studniach i rurach ([9c44d07](https://github.com/blodytrav3l3r/Oferty_PV/commit/9c44d077cf21f87433f403aa4ddb1fb1c96bc913))
+- **ui:** usuniecie zbednego przycisku kartoteka z pulpitu ([56718c4](https://github.com/blodytrav3l3r/Oferty_PV/commit/56718c432af315c527bc3ea2294ccd0cf72f71f0))
 
 ### [1.11.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.3...v1.11.4) (2026-08-07)
 
