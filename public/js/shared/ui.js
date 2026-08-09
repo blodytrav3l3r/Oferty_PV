@@ -421,6 +421,107 @@ function appAlert(message, opts = {}) {
     );
 }
 
+/**
+ * In-app prompt — zastępuje natywny prompt().
+ * Modal z polem tekstowym. Zwraca Promise<string|null> (null = Anuluj/Escape).
+ *
+ * @param {string} message - Treść pytania
+ * @param {string} [defaultValue=''] - Wartość początkowa
+ * @param {object} [opts] - Opcje
+ * @param {string} [opts.title='Wprowadź dane'] - Tytuł
+ * @param {string} [opts.okText='OK'] - Tekst OK
+ * @param {string} [opts.cancelText='Anuluj'] - Tekst Anuluj
+ * @param {'info'|'warning'|'danger'} [opts.type='info'] - Typ (ikona + kolor)
+ * @param {string} [opts.inputType='text'] - Typ inputa (np. 'text', 'password', 'number')
+ * @returns {Promise<string|null>}
+ */
+function appPrompt(message, defaultValue = '', opts = {}) {
+    const {
+        title = 'Wprowadź dane',
+        okText = 'OK',
+        cancelText = 'Anuluj',
+        type = 'info',
+        inputType = 'text'
+    } = opts;
+
+    return new Promise((resolve) => {
+        let resolved = false;
+        const once = (result) => {
+            if (!resolved) {
+                resolved = true;
+                resolve(result);
+            }
+        };
+
+        _ensureConfirmStyles();
+
+        const iconMap = {
+            info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>',
+            warning:
+                '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>',
+            danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>'
+        };
+        const accentMap = {
+            info: 'var(--accent)',
+            warning: 'var(--warn)',
+            danger: 'var(--danger)'
+        };
+        const accent = accentMap[type] || accentMap.info;
+
+        const safeTitle = _escapeHtml(title);
+        const safeMsg = _escapeHtml(message).replace(/\n/g, '<br>');
+        const safeDefault = _escapeHtml(defaultValue);
+        const inputName = `app-prompt-${Math.random().toString(36).slice(2, 9)}`;
+
+        const html = `
+            <div class="app-confirm-modal">
+                <div class="app-confirm-icon">${iconMap[type] || iconMap.info}</div>
+                <div class="app-confirm-title">${safeTitle}</div>
+                <div class="app-confirm-message">${safeMsg}</div>
+                <input id="${inputName}" class="app-prompt-input" type="${_escapeHtml(inputType)}" value="${safeDefault}" autocomplete="off" />
+                <div class="app-confirm-actions">
+                    <button class="app-confirm-btn" id="app-prompt-cancel">${cancelText}</button>
+                    <button class="app-confirm-btn" id="app-prompt-ok" style="background:${accent}">${okText}</button>
+                </div>
+            </div>`;
+
+        const overlay = showModal({
+            id: 'app-prompt-overlay',
+            html: html,
+            onClose: () => once(null)
+        });
+
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+            setTimeout(() => window.lucide.createIcons({ root: overlay }), 10);
+        }
+
+        setTimeout(() => {
+            const input = /** @type {HTMLInputElement|null} */ (document.getElementById(inputName));
+            const okBtn = document.getElementById('app-prompt-ok');
+            const cancelBtn = document.getElementById('app-prompt-cancel');
+            if (!input || !okBtn || !cancelBtn) return;
+
+            input.focus();
+            const len = input.value.length;
+            if (input.setSelectionRange) input.setSelectionRange(len, len);
+
+            const submit = () => {
+                overlay.remove();
+                once(input.value);
+            };
+
+            okBtn.addEventListener('click', submit);
+            cancelBtn.addEventListener('click', () => {
+                overlay.remove();
+                once(null);
+            });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') submit();
+            });
+        }, 50);
+    });
+}
+
 /** Tworzy style dla modala potwierdzenia jeśli jeszcze nie istnieją */
 function _ensureConfirmStyles() {
     if (document.getElementById('app-confirm-styles')) return;
@@ -467,6 +568,14 @@ function _ensureConfirmStyles() {
             border:1px solid rgba(var(--white-rgb), 0.1);
         }
         #app-confirm-cancel:hover { color:var(--white); background:var(--slate-700); }
+        .app-prompt-input {
+            width:100%; padding:0.6rem 0.8rem; margin-bottom:1.25rem;
+            border-radius:8px; border:1px solid rgba(var(--white-rgb), 0.15);
+            background:var(--slate-900); color:var(--white);
+            font:500 0.9rem 'Inter',sans-serif; text-align:center;
+            box-sizing:border-box; outline:none;
+        }
+        .app-prompt-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb), 0.25); }
     `;
     document.head.appendChild(style);
 }
@@ -477,6 +586,7 @@ function _escapeHtml(str) {
 
 window.appConfirm = appConfirm;
 window.appAlert = appAlert;
+window.appPrompt = appPrompt;
 
 /**
  * SaveIndicator — wizualny wskaźnik zapisu (saving / saved / error).

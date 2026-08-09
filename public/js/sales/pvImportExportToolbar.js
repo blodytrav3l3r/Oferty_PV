@@ -130,7 +130,7 @@ window.PvImportExportToolbar = {
                 ).value;
                 const number = document.getElementById('ie-' + uid + '-number').value.trim();
                 if (!number) {
-                    alert('Podaj numer');
+                    await appAlert('Podaj numer', { type: 'warning' });
                     return;
                 }
 
@@ -197,7 +197,7 @@ window.PvImportExportToolbar = {
                 ).value;
                 const number = document.getElementById('ie-' + uid + '-number').value.trim();
                 if (!number) {
-                    alert('Podaj numer');
+                    await appAlert('Podaj numer', { type: 'warning' });
                     return;
                 }
 
@@ -252,7 +252,7 @@ window.PvImportExportToolbar = {
             async () => {
                 const input = document.getElementById('ie-json-file-input');
                 if (!input.files || !input.files[0]) {
-                    alert('Wybierz plik JSON');
+                    await appAlert('Wybierz plik JSON', { type: 'warning' });
                     return;
                 }
                 const progress = document.getElementById('ie-json-progress');
@@ -278,23 +278,26 @@ window.PvImportExportToolbar = {
 
                     this._closeModal();
                     if (result.skipped) {
-                        alert('Import pominiety.');
+                        await appAlert('Import pominiety.', { type: 'warning' });
                     } else if (result.success) {
-                        alert(
+                        await appAlert(
                             (preview.kind === 'witros-order-transfer'
                                 ? 'Zamówienie'
                                 : 'Oferta ' +
                                   (result.action === 'clone' ? 'sklonowana' : 'zaimportowana')) +
-                                ' pomyslnie.'
+                                ' pomyslnie.',
+                            { type: 'info' }
                         );
                     } else {
-                        alert('Blad: ' + (result.message || 'Nieznany blad'));
+                        await appAlert('Blad: ' + (result.message || 'Nieznany blad'), {
+                            type: 'warning'
+                        });
                     }
                     if (window.pvSalesUI) {
                         window.pvSalesUI.loadLocalOffers();
                     }
                 } catch (err) {
-                    alert('Blad: ' + err.message);
+                    await appAlert('Blad: ' + err.message, { type: 'warning' });
                     progress.style.display = 'none';
                 }
             }
@@ -320,7 +323,7 @@ window.PvImportExportToolbar = {
                 ).value;
                 const input = document.getElementById('ie-' + uid + '-file-input');
                 if (!input.files || !input.files[0]) {
-                    alert('Wybierz plik XLSX');
+                    await appAlert('Wybierz plik XLSX', { type: 'warning' });
                     return;
                 }
                 const progress = document.getElementById('ie-' + uid + '-progress');
@@ -346,12 +349,12 @@ window.PvImportExportToolbar = {
                     let message = 'Zaimportowano ofert: ' + imported + '.';
                     if (skipped) message += ' Pominieto: ' + skipped + '.';
                     if (errors.length) message += '\nBledy:\n' + errors.join('\n');
-                    alert(message);
+                    await appAlert(message, { type: errors.length ? 'warning' : 'info' });
                     if (window.pvSalesUI) {
                         window.pvSalesUI.loadLocalOffers();
                     }
                 } catch (err) {
-                    alert('Blad: ' + err.message);
+                    await appAlert('Blad: ' + err.message, { type: 'warning' });
                     progress.style.display = 'none';
                 }
             }

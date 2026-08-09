@@ -239,14 +239,14 @@ function selectWell(index) {
     refreshAll(true);
 }
 
-function renameWell(index) {
+async function renameWell(index) {
     if (isWellLocked(index)) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     const well = wells[index];
     if (!well) return;
-    const name = prompt('Nazwa studni:', well.name);
+    const name = await appPrompt('Nazwa studni:', well.name || '');
     if (name && name.trim()) {
         well.numer = name.trim().replace(/ (PRE|UTH)$/, '');
         if (typeof autoUpdateWellName === 'function') {

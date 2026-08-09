@@ -197,7 +197,7 @@ async function applyGlobalParamsToAllWells() {
     if (locked.length > 0) {
         msg += `\n${locked.length} studni zostanie pominiętych (zablokowane).`;
     }
-    if (!confirm(msg)) return;
+    if (!(await appConfirm(msg, { title: 'Parametry ogólne' }))) return;
     const prevWellIndex = currentWellIndex;
     for (const { well, index } of editable) {
         for (const key of Object.keys(gp)) {

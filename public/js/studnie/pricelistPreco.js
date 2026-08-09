@@ -243,8 +243,8 @@ function updatePrecoGrupaKey(dn, fieldBase, oldKey, newKey) {
     renderPrecoPriceList();
 }
 
-function addPrecoGrupaCol(dn, fieldBase) {
-    const newDn = prompt("Podaj nazwę nowej grupy DN (np. '800-1000'):");
+async function addPrecoGrupaCol(dn, fieldBase) {
+    const newDn = await appPrompt("Podaj nazwę nowej grupy DN (np. '800-1000'):", '');
     if (!newDn || !/^\d+-\d+$/.test(newDn)) {
         if (newDn) showToast('Dozwolony format: liczby-liczby (np. 150-200)', 'error');
         return;

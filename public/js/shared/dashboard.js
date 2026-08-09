@@ -452,7 +452,7 @@ async function createUser() {
 }
 
 async function deleteUser(id) {
-    if (!confirm('Czy na pewno usunąć tego użytkownika?')) return;
+    if (!(await appConfirm('Czy na pewno usunąć tego użytkownika?', { type: 'danger' }))) return;
     try {
         await fetch('/api/users/' + id, { method: 'DELETE', headers: authHeaders() });
         loadUsers();
@@ -461,30 +461,37 @@ async function deleteUser(id) {
     }
 }
 
-function showChangePassword() {
-    const oldPw = prompt('Podaj stare hasło:');
+async function showChangePassword() {
+    const oldPw = await appPrompt('Podaj stare hasło:', '', {
+        inputType: 'password',
+        title: 'Zmiana hasła'
+    });
     if (!oldPw) return;
-    const newPw = prompt('Podaj nowe hasło (min. 4 znaki):');
+    const newPw = await appPrompt('Podaj nowe hasło (min. 4 znaki):', '', {
+        inputType: 'password',
+        title: 'Zmiana hasła'
+    });
     if (!newPw) return;
     if (newPw.length < 4) {
-        alert('Hasło musi mieć min. 4 znaki');
+        await appAlert('Hasło musi mieć min. 4 znaki', { type: 'warning' });
         return;
     }
 
-    fetch('/api/auth/change-password', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
-    })
-        .then((r) => r.json())
-        .then((data) => {
-            if (data.ok) {
-                alert('Hasło zmienione!');
-            } else {
-                alert(data.error || 'Błąd zmiany hasła');
-            }
-        })
-        .catch(() => alert('Błąd połączenia'));
+    try {
+        const r = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw })
+        });
+        const data = await r.json();
+        if (data.ok) {
+            await appAlert('Hasło zmienione!', { type: 'info' });
+        } else {
+            await appAlert(data.error || 'Błąd zmiany hasła', { type: 'warning' });
+        }
+    } catch (e) {
+        await appAlert('Błąd połączenia', { type: 'warning' });
+    }
 }
 
 /* ===== YEAR LETTER MANAGEMENT ===== */
@@ -508,7 +515,7 @@ async function loadYearLetter() {
 async function saveYearLetter() {
     const letter = (document.getElementById('year-letter-input').value || '').trim().toUpperCase();
     if (!letter || letter.length !== 1) {
-        alert('Litera musi być pojedynczym znakiem (A-Z)');
+        await appAlert('Litera musi być pojedynczym znakiem (A-Z)', { type: 'warning' });
         return;
     }
     try {
@@ -521,11 +528,11 @@ async function saveYearLetter() {
         if (data.ok) {
             const preview = document.getElementById('year-letter-preview');
             if (preview) preview.textContent = letter;
-            alert('Litera roku zapisana: ' + letter);
+            await appAlert('Litera roku zapisana: ' + letter, { type: 'info' });
         } else {
-            alert(data.error || 'Błąd zapisu');
+            await appAlert(data.error || 'Błąd zapisu', { type: 'warning' });
         }
     } catch (e) {
-        alert('Błąd połączenia');
+        await appAlert('Błąd połączenia', { type: 'warning' });
     }
 }

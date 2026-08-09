@@ -83,7 +83,7 @@ window.StudnieExternalExportTemplate = {
     async generateAndDownload(offerId) {
         const offers = XlsxImportShared.getLoadedOffers();
         if (!offers.length) {
-            alert('Brak zaladowanych ofert. Otworz kartoteke.');
+            await appAlert('Brak zaladowanych ofert. Otworz kartoteke.', { type: 'warning' });
             return;
         }
 
@@ -115,7 +115,7 @@ window.StudnieExternalExportTemplate = {
         }
 
         if (!rows.length) {
-            alert('Brak pozycji do eksportu dla wybranej oferty.');
+            await appAlert('Brak pozycji do eksportu dla wybranej oferty.', { type: 'warning' });
             return;
         }
 
@@ -138,7 +138,9 @@ window.StudnieExternalExportTemplate = {
         const rows = this._wellRows(data, offerNumber);
 
         if (!rows.length) {
-            alert('Brak pozycji do eksportu dla wybranego zamówienia.');
+            await appAlert('Brak pozycji do eksportu dla wybranego zamówienia.', {
+                type: 'warning'
+            });
             return;
         }
 

@@ -2,7 +2,7 @@ window.RuryExternalExportTemplate = {
     async generateAndDownload(offerId) {
         const offers = XlsxImportShared.getLoadedOffers();
         if (!offers.length) {
-            alert('Brak zaladowanych ofert. Otworz kartoteke.');
+            await appAlert('Brak zaladowanych ofert. Otworz kartoteke.', { type: 'warning' });
             return;
         }
 
@@ -34,7 +34,7 @@ window.RuryExternalExportTemplate = {
         }
 
         if (!rows.length) {
-            alert('Brak pozycji do eksportu dla wybranej oferty.');
+            await appAlert('Brak pozycji do eksportu dla wybranej oferty.', { type: 'warning' });
             return;
         }
 
@@ -46,7 +46,7 @@ window.RuryExternalExportTemplate = {
         const offerNumber = orderData.offer_number || orderData.number || '';
         const items = orderData.items || [];
         if (!items.length) {
-            alert('Brak pozycji w zamówieniu.');
+            await appAlert('Brak pozycji w zamówieniu.', { type: 'warning' });
             return;
         }
 

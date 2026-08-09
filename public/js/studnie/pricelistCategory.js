@@ -1,11 +1,9 @@
 /* ===== ZARZĄDZANIE KATEGORIAMI PRZEJŚĆ ===== */
-function addPrzejsciaCategory() {
-    let name = prompt('Podaj nazwę nowej kategorii (np. GRP, Incor):');
+async function addPrzejsciaCategory() {
+    const name = await appPrompt('Podaj nazwę nowej kategorii (np. GRP, Incor):', '');
     if (!name) return;
-    name = name.trim();
-    if (!name) return;
-
-    const catName = name;
+    const catName = name.trim();
+    if (!catName) return;
 
     if (studnieProducts.some((p) => p.componentType === 'przejscie' && p.category === catName)) {
         showToast('Taka kategoria już istnieje', 'error');
@@ -66,15 +64,15 @@ function _tabDefaults() {
     };
 }
 
-function addStudnieCategory() {
+async function addStudnieCategory() {
     const defaults = _tabDefaults();
 
     if (defaults.isPrzejscia) {
-        addPrzejsciaCategory();
+        await addPrzejsciaCategory();
         return;
     }
 
-    const name = prompt('Podaj nazwę nowej kategorii elementów:');
+    const name = await appPrompt('Podaj nazwę nowej kategorii elementów:', '');
     if (!name || !name.trim()) return;
 
     const catName = name.trim();
@@ -136,10 +134,10 @@ async function addStudnieElement(groupKey) {
         }
     }
 
-    const id = prompt('Podaj indeks nowego elementu:', template ? '' : '');
+    const id = await appPrompt('Podaj indeks nowego elementu:', '');
     if (!id || !id.trim()) return;
 
-    const name = prompt('Podaj nazwę nowego elementu:', '');
+    const name = await appPrompt('Podaj nazwę nowego elementu:', '');
     if (!name) return;
 
     const newProduct = {
@@ -167,7 +165,7 @@ async function addStudnieElement(groupKey) {
         newProduct.zapasGora = template?.zapasGora || 300;
         newProduct.zapasDolMin = template?.zapasDolMin || 150;
         newProduct.zapasGoraMin = template?.zapasGoraMin || 150;
-        const dnStr = prompt('Średnica DN:', template?.dn?.toString() || '200');
+        const dnStr = await appPrompt('Średnica DN:', template?.dn?.toString() || '200');
         if (dnStr) newProduct.dn = isNaN(Number(dnStr)) ? dnStr : Number(dnStr);
     }
 
