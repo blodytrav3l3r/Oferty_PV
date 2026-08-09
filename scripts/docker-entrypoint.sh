@@ -3,7 +3,7 @@ set -e
 # Wymuszenie trybu produkcyjnego (server.ts domyslnie uzywa development; dotenv nie nadpisze ustawionej zmiennej)
 export NODE_ENV=production
 
-echo "[INFO] Uruchamianie punktu wejścia Docker WITROS Oferty..."
+echo "[INFO] Uruchamianie punktu wejścia Docker S.O.K..."
 echo "[DEBUG] Wersja Node: $(node -v)"
 echo "[DEBUG] Bieżący katalog: $(pwd)"
 

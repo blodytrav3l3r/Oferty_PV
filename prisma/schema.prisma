@@ -1,4 +1,4 @@
-// Schemat bazy danych Prisma dla systemu WITROS Oferty
+// Schemat bazy danych Prisma dla systemu S.O.K.
 // Ten plik definiuje modele danych dla SQLite
 
 generator client {

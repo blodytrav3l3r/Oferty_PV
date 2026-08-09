@@ -90,7 +90,7 @@ ECC/
 # Temp debug
 check_db_temp.js
 
-# === AI Agent configs (autogenerowane, NIE część WITROS) ===
+# === AI Agent configs (autogenerowane, NIE część S.O.K.) ===
 .kilo/
 .agents/
 .opencode/
@@ -132,7 +132,7 @@ cookies.txt
 .claude/
 .codex/
 
-# Graf wiedzy graphify (auto-rebuild po commicie, nie jest częścią WITROS)
+# Graf wiedzy graphify (auto-rebuild po commicie, nie jest częścią S.O.K.)
 graphify-out/
 
 # Backup manifestów

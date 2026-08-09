@@ -1,6 +1,6 @@
 // @ts-check
 /* ============================
-   WITROS — Wydruk Oferty Studni
+   S.O.K. — Wydruk Oferty Studni
    offerPrintManager.js
    ============================ */
 
@@ -114,7 +114,7 @@ async function generateOfferHtml() {
 
     // Budowanie tabel
     let tablesHtml = '';
-    let currentLp = 1;
+    const currentLp = 1;
     const summaries = [];
 
     groups.forEach((groupWells, dn) => {

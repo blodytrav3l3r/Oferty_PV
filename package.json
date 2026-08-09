@@ -68,7 +68,7 @@
     "keywords": [],
     "author": "",
     "license": "SEE LICENSE IN LICENSE",
-    "description": "WITROS Oferty - Generator ofert handlowych (TypeScript + Prisma)",
+    "description": "S.O.K. - System Ofert i Kalkulacji (TypeScript + Prisma)",
     "dependencies": {
         "@prisma/client": "^6.0.0",
         "@sentry/node": "^10.59.0",

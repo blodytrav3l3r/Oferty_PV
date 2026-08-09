@@ -1,6 +1,6 @@
 // @ts-check
 /* ============================
-   WITROS — Kalkulator Studni
+   S.O.K. — Kalkulator Studni
    app_studnie.js  (Orchestrator - Entry Point)
    ============================ */
 

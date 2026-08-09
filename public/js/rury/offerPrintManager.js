@@ -1,6 +1,6 @@
 // @ts-check
 /* ============================
-   WITROS — Wydruk Karty Budowy Rury
+   S.O.K. — Wydruk Karty Budowy Rury
    offerPrintManager.js
    ============================ */
 

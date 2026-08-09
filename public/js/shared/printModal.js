@@ -1,6 +1,6 @@
 // @ts-check
 /* ============================
-   WITROS — Uniwersalny Modal Wydruku
+   S.O.K. — Uniwersalny Modal Wydruku
    printModal.js
    Helper wspólny dla studni i rur.
    Renderuje modal z sekcjami:

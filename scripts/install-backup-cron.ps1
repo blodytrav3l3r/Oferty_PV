@@ -39,7 +39,7 @@ Register-ScheduledTask `
     -Action $action `
     -Trigger $trigger `
     -Settings $settings `
-    -Description "Codzienny backup SQLite (data/app_database.sqlite) dla WITROS Oferty. VACUUM INTO jest WAL-safe - nie blokuje aplikacji." `
+    -Description "Codzienny backup SQLite (data/app_database.sqlite) dla S.O.K. VACUUM INTO jest WAL-safe - nie blokuje aplikacji." `
     -RunLevel Highest
 
 Write-Host ""

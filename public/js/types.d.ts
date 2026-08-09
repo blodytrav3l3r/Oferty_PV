@@ -1,5 +1,5 @@
 /**
- * types.d.ts — Globalne deklaracje typów dla frontendu WITROS Oferty PV.
+ * types.d.ts — Globalne deklaracje typów dla frontendu S.O.K. — System Ofert i Kalkulacji.
  * Plik jest automatycznie używany przez TypeScript (include w tsconfig.frontend.json).
  */
 

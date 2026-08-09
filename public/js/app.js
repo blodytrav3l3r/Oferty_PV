@@ -1,5 +1,5 @@
 // @ts-check
-/* ===== WITROS PRECISION OS — APP.JS (RDZEŃ) ===== */
+/* ===== S.O.K. — APP.JS (RDZEŃ) ===== */
 /* Zredukowany z 3108 linii do rdzenia: stan globalny, nawigacja, inicjalizacja DOM */
 /* Logika wydzielona do modułów w js/rury/: */
 /*   productHelpers.js — helpery wymiarów produktu */

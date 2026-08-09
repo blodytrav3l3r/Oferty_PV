@@ -1,6 +1,6 @@
 // @ts-check
 /* ============================
-   WITROS — Druk Zleceń Produkcyjnych
+   S.O.K. — Druk Zleceń Produkcyjnych
    printManager.js
    ============================ */
 
@@ -294,7 +294,7 @@ async function printZlecenie() {
 
 function getPowlokaString(well) {
     if (!well) return 'Brak';
-    let parts = [];
+    const parts = [];
     if (well.malowanieW && well.malowanieW !== 'brak') {
         let malWDesc = '';
         if (well.malowanieW === 'kineta') malWDesc = 'Kineta';

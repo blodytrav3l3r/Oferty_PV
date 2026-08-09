@@ -1,6 +1,6 @@
 // @ts-check
 /**
- * SPA Router — Router oparty na iframe dla WITROS.
+ * SPA Router — Router oparty na iframe dla S.O.K.
  *
  * Każdy moduł (rury, studnie) działa we własnym iframe,
  * zapewniając PEŁNĄ izolację JS, CSS i stanu DOM.

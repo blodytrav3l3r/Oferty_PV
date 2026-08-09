@@ -1,4 +1,4 @@
-# CI/CD Pipeline dla WITROS Oferty PV
+# CI/CD Pipeline dla S.O.K.
 # - push na develop → lint + typecheck + testy + deploy na test
 # - push na main → lint + typecheck + testy + Docker build + weryfikacja + deploy na produkcję
 # - PR na main → lint + typecheck + testy
