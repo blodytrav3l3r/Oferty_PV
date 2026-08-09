@@ -101,8 +101,8 @@ document.addEventListener('keydown', (e) => {
             return;
         }
         e.preventDefault();
-        if (typeof window.saveOfferRury === 'function') {
-            window.saveOfferRury();
+        if (typeof window.saveOfferOrOrder === 'function') {
+            window.saveOfferOrOrder();
         } else if (typeof window.saveOfferStudnie === 'function') {
             window.saveOfferStudnie();
         } else if (typeof window.saveCurrentOrder === 'function') {

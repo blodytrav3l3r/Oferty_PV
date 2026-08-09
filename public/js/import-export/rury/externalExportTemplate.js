@@ -38,7 +38,7 @@ window.RuryExternalExportTemplate = {
             return;
         }
 
-        const wb = XlsxImportShared.generateExternalXlsx('rury', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
         XLSX.writeFile(wb, 'eksport_rury_zewn.xlsx');
     },
 
@@ -65,7 +65,7 @@ window.RuryExternalExportTemplate = {
             LP: i + 1
         }));
 
-        const wb = XlsxImportShared.generateExternalXlsx('rury', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('rury', rows);
         const safeNumber = (orderData.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
         XLSX.writeFile(wb, 'eksport_zamowienie_rury_' + safeNumber + '.xlsx');
     }

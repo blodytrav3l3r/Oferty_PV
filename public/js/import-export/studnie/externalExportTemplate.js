@@ -119,7 +119,7 @@ window.StudnieExternalExportTemplate = {
             return;
         }
 
-        const wb = XlsxImportShared.generateExternalXlsx('studnie', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('studnie', rows);
         XLSX.writeFile(wb, 'eksport_studnie_zewn.xlsx');
     },
 
@@ -144,7 +144,7 @@ window.StudnieExternalExportTemplate = {
             return;
         }
 
-        const wb = XlsxImportShared.generateExternalXlsx('studnie', rows);
+        const wb = await XlsxImportShared.generateExternalXlsx('studnie', rows);
         const safeNumber = (orderData.orderNumber || 'zamowienie').replace(/[^a-zA-Z0-9_-]/g, '_');
         XLSX.writeFile(wb, 'eksport_zamowienie_studnie_' + safeNumber + '.xlsx');
     }

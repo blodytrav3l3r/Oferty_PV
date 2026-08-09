@@ -272,6 +272,19 @@ if (process.env.SENTRY_DSN) {
  * Inicjalizacja aplikacji — administracja i PRAGMA user_version.
  */
 export async function initApp(): Promise<void> {
+    // WAL + synchronous=NORMAL — przyspiesza zapisy (oferty, audit logi) i
+    // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite).
+    try {
+        await prisma.$executeRawUnsafe('PRAGMA journal_mode=WAL');
+        await prisma.$executeRawUnsafe('PRAGMA synchronous=NORMAL');
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się ustawić PRAGMA WAL/synchronous:',
+            err instanceof Error ? err.message : err
+        );
+    }
+
     // Ustawienie wersji bazy danych (2.0.0 → 20000)
     try {
         await prisma.$executeRawUnsafe('PRAGMA user_version = 20000');

@@ -31,8 +31,9 @@ window.XlsxImportShared = {
     parseExternalXlsx(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
+                    await ensureXlsx();
                     const data = new Uint8Array(e.target.result);
                     const wb = XLSX.read(data, { type: 'array', cellDates: false, raw: false });
                     const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -87,7 +88,8 @@ window.XlsxImportShared = {
             : [];
     },
 
-    generateExternalXlsx(module, rows) {
+    async generateExternalXlsx(module, rows) {
+        await ensureXlsx();
         const ws = XLSX.utils.json_to_sheet(rows, { header: this.REQUIRED_COLS });
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, 'Import');

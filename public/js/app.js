@@ -44,8 +44,8 @@ async function changeOfferUser() {
                         escapeHtml(editingOfferAssignedUserName);
 
                 if (editingOfferId) {
-                    if (typeof window.saveOfferRury === 'function') {
-                        await window.saveOfferRury();
+                    if (typeof window.saveOfferOrOrder === 'function') {
+                        await window.saveOfferOrOrder();
                     } else if (typeof window.saveOfferStudnie === 'function') {
                         await window.saveOfferStudnie();
                     }

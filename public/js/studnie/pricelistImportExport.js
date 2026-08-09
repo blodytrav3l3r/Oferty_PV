@@ -1,10 +1,11 @@
-function exportStudnieToExcel() {
+async function exportStudnieToExcel() {
     if (!studnieProducts || studnieProducts.length === 0) {
         showToast('Brak danych do eksportu', 'error');
         return;
     }
 
     try {
+        await ensureXlsx();
         const wb = XLSX.utils.book_new();
 
         function getSheetName(p) {
@@ -182,6 +183,7 @@ async function importStudnieFromExcel(event) {
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
+            await ensureXlsx();
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
 

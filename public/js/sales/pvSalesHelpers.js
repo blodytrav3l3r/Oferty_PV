@@ -329,7 +329,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                 </div>
                             </div>
                             <div class="offer-price-section">
-                                <div class="offer-price">${typeof formatCurrency === 'function' ? formatCurrency(priceVal) : priceVal.toFixed(2) + ' PLN'}</div>
+                                <div class="offer-price">${typeof window.fmt === 'function' ? window.fmt(priceVal) + ' PLN' : priceVal.toFixed(2) + ' PLN'}</div>
                                 <div class="offer-meta">${dateStr} • ${itemCount} ${isWell ? 'studni' : 'poz.'}</div>
                             </div>
                         </div>

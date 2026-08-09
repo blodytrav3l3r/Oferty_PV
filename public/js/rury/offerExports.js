@@ -425,9 +425,10 @@ function applyItemDiscounts() {
 
 /* ===== EKSPORT XLSX ===== */
 
-function exportOfferXlsx(id) {
+async function exportOfferXlsx(id) {
     const offer = offers.find((o) => o.id === id);
     if (!offer) return;
+    await ensureXlsx();
 
     const costPerTrip = offer.transportCostPerTrip || 0;
     const transportResult = calculateTransports(offer.items);
@@ -510,6 +511,7 @@ function importOfferFromXlsx() {
         const reader = new FileReader();
         reader.onload = async (ev) => {
             try {
+                await ensureXlsx();
                 const data = new Uint8Array(/** @type {ArrayBuffer} */ (ev.target.result));
                 const wb = XLSX.read(data, { type: 'array' });
 

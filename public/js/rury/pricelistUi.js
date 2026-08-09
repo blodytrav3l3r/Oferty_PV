@@ -316,12 +316,13 @@ RURY_EXPORT_COLUMNS.forEach((col) => {
     RURY_HEADER_TO_KEY[col.header] = col.key;
 });
 
-function exportRuryToExcel() {
+async function exportRuryToExcel() {
     if (!products || products.length === 0) {
         showToast('Brak danych do eksportu', 'error');
         return;
     }
     try {
+        await ensureXlsx();
         const wb = XLSX.utils.book_new();
 
         const rows = products.map((p) => {
@@ -371,6 +372,7 @@ async function importRuryFromExcel(event) {
     const reader = new FileReader();
     reader.onload = async function (e) {
         try {
+            await ensureXlsx();
             const data = new Uint8Array(/** @type {ArrayBuffer} */ (e.target.result));
             const workbook = XLSX.read(data, { type: 'array' });
             const firstSheetName = workbook.SheetNames[0];
