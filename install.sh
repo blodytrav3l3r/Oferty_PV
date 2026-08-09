@@ -12,7 +12,7 @@ err() { printf "\033[1;31m[%s] [ERR] %b\033[0m\n" "$(ts)" "$*"; exit 1; }
 warn() { printf "\033[1;33m[%s] [WARN] %b\033[0m\n" "$(ts)" "$*"; }
 
 log INIT "========================================================"
-log INIT "  WITROS Oferty PV - Instalator (bash)"
+log INIT "  S.O.K. - Instalator (bash)"
 log INIT "========================================================"
 
 # 1. Node.js

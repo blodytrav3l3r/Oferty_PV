@@ -11,7 +11,7 @@ cd /d "%~dp0"
 set "APP_VERSION=1.12.0"
 
 echo ===========================================================
-echo   WITROS Oferty PV - Instalator v%APP_VERSION%
+echo   S.O.K. - Instalator v%APP_VERSION%
 echo ===========================================================
 echo.
 

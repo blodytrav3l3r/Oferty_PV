@@ -10,7 +10,7 @@ ts() { date +%H:%M:%S; }
 log() { printf "\033[1;36m[%s]\033[0m [%s] %b\n" "$(ts)" "$1" "$2"; }
 
 log INIT "========================================================"
-log INIT "  WITROS Oferty PV - Produkcja"
+log INIT "  S.O.K. - Produkcja"
 log INIT "========================================================"
 
 # Walidacja

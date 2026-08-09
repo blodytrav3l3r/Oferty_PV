@@ -19,8 +19,8 @@ if /i "%1"=="--prod" set "MODE=prod"
 if /i "%1"=="prod" set "MODE=prod"
 
 echo ===========================================================
-if /i "%MODE%"=="dev" echo   WITROS Oferty PV - Development Mode v%APP_VERSION%
-if /i "%MODE%"=="prod" echo   WITROS Oferty PV - Production v%APP_VERSION%
+if /i "%MODE%"=="dev" echo   S.O.K. - Development Mode v%APP_VERSION%
+if /i "%MODE%"=="prod" echo   S.O.K. - Production v%APP_VERSION%
 echo ===========================================================
 echo.
 

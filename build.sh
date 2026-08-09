@@ -10,7 +10,7 @@ ts() { date +%H:%M:%S; }
 log() { printf "\033[1;36m[%s]\033[0m [%s] %b\n" "$(ts)" "$1" "$2"; }
 
 log INIT "========================================================"
-log INIT "  WITROS Oferty PV - Budowanie produkcyjne"
+log INIT "  S.O.K. - Budowanie produkcyjne"
 log INIT "========================================================"
 
 command -v node >/dev/null || { log ERR "Brak Node.js"; exit 1; }

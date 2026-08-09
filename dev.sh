@@ -30,7 +30,7 @@ log() {
 NC="\033[0m"
 
 log INIT "========================================================"
-log INIT "  WITROS Oferty PV - Development Mode (bash)"
+log INIT "  S.O.K. - Development Mode (bash)"
 log INIT "========================================================"
 
 # 1. Walidacja Node.js
@@ -81,7 +81,7 @@ fi
 
 if [ -n "$PORT_PID" ]; then
     log WARN "Port 3000 uzywany przez PID $PORT_PID"
-    read -p "Zatrzymac proces i uruchomic WITROS? [T/N] " STO
+    read -p "Zatrzymac proces i uruchomic S.O.K.? [T/N] " STO
     if [ "$STO" = "T" ] || [ "$STO" = "t" ]; then
         kill -9 "$PORT_PID" 2>/dev/null
         sleep 2
