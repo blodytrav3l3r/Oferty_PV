@@ -23,8 +23,15 @@ if (!VERSION) {
 }
 
 const DOCS_DIR = resolve(ROOT, 'docs');
-
-const SKIP_DIRS = new Set(['plans', 'audits', 'adr', 'baseline', 'import-export', 'examples', 'node_modules']);
+const SKIP_DIRS = new Set([
+    'plans',
+    'audits',
+    'adr',
+    'baseline',
+    'import-export',
+    'examples',
+    'node_modules'
+]);
 
 function collectMdFiles(dir) {
     const files = [];
@@ -59,7 +66,10 @@ function processFile(filePath) {
     const patterns = [
         /(\*\*Wersja:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(\*\*Wersja projektu:\*{0,2}\s*)\d+\.\d+\.\d+/g,
-        /(> Wersja:\s*)\d+\.\d+\.\d+/g
+        /(\*\*Wersja aplikacji:\*{0,2}\s*)\d+\.\d+\.\d+/g,
+        /(> Wersja:\s*)\d+\.\d+\.\d+/g,
+        /("version":\s*")\d+\.\d+\.\d+"/g,
+        /("dbVersion":\s*")\d+\.\d+\.\d+"/g
     ];
 
     for (const re of patterns) {
@@ -67,10 +77,7 @@ function processFile(filePath) {
     }
 
     // aktualizacja ?v= w docs (np w przykładowych HTML)
-    content = content.replace(
-        /(\?v=)\d+\.\d+\.\d+/g,
-        (match, prefix) => `${prefix}${VERSION}`
-    );
+    content = content.replace(/(\?v=)\d+\.\d+\.\d+/g, (match, prefix) => `${prefix}${VERSION}`);
 
     if (content === original) {
         console.log(`  - ${filePath.replace(ROOT + '\\', '')} (bez zmian)`);
@@ -85,7 +92,9 @@ function processFile(filePath) {
 function main() {
     console.log(`\n  auto-docs-version  |  VERSION=${VERSION}\n`);
 
-    const files = collectMdFiles(DOCS_DIR).filter(f => !f.endsWith('CHANGELOG.md'));
+    const files = collectMdFiles(DOCS_DIR)
+        .filter((f) => !f.endsWith('CHANGELOG.md'))
+        .concat(resolve(ROOT, 'README.md'));
     if (files.length === 0) {
         console.log('  Brak plikow .md do przetworzenia\n');
         return;

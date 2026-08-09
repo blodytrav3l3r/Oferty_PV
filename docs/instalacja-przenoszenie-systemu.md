@@ -1,9 +1,9 @@
 # Instalacja i przenoszenie systemu WITROS Oferty PV
 
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
-> **Wersja:** 1.11.5
+> **Wersja:** 1.12.0
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
-> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.10.0) —
+> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.12.0) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy
 > (`install.bat` z `migrate deploy` + fallback `db push`), nie plany przyszłe.
 

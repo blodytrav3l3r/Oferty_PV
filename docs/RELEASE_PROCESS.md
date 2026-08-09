@@ -1,6 +1,6 @@
 # Proces wydawniczy (Release Process)
 
-**Wersja:** 1.11.5  
+**Wersja:** 1.12.0  
 **Ostatnia aktualizacja:** 2026-08-05
 
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
@@ -33,10 +33,24 @@ To wykonuje:
 - Hook `postbump` uruchamia **trzy skrypty**:
     - `scripts/auto-cache-bust.mjs` — podmienia `?v=` we wszystkich plikach HTML
       (w tym `public/templates/*.html`) na nową wersję
-    - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `docs/*.md`
+    - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji
+      `README.md` + `docs/*.md` (`**Wersja:**`, `**Wersja projektu:**`,
+      `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON
+      `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
+      (start, install, build, ensure-db)
 - Commita `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`)
 - Tag `vX.Y.Z`
+
+**Pełna lista miejsc z numerem wersji** (weryfikacja `npm run version:check`):
+
+1. `VERSION` (root) — źródło prawdy
+2. `package.json` / `package-lock.json` → `version`
+3. `CHANGELOG.md` (nagłówki)
+4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
+5. `*.bat` (start, install, build, ensure-db) → `APP_VERSION`
+6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
+7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 
 ### 3. Weryfikacja
 

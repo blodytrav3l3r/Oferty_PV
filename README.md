@@ -4,7 +4,7 @@
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />
 </div>
 
-**Wersja:** 1.11.5  
+**Wersja:** 1.12.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Licencja:** Własnościowa — szczegóły w pliku [LICENSE](LICENSE)  
 **Autor:** WITROS
@@ -398,6 +398,23 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run version:patch` | Podbij wersję patch                                        |
 | `npm run version:minor` | Podbij wersję minor                                        |
 | `npm run version:major` | Podbij wersję major                                        |
+
+**Gdzie żyje numer wersji (pełna lista):**
+
+Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.versionrc.json`). **Nie zmieniaj ręcznie** — poniższa lista służy weryfikacji spójności (`npm run version:check`) i kontroli, czy nic nie zostało pominięte:
+
+| #   | Lokalizacja                                                | Automat (release)               |
+| --- | ---------------------------------------------------------- | ------------------------------- |
+| 1   | `VERSION` (root) — źródło prawdy                           | `standard-version` (bumpFiles)  |
+| 2   | `package.json` → `version`                                 | `standard-version` (bumpFiles)  |
+| 3   | `package-lock.json` → `version` (root)                     | `standard-version` (bumpFiles)  |
+| 4   | `CHANGELOG.md` (nagłówki wersji)                           | `standard-version` (infile)     |
+| 5   | `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`   | `scripts/auto-cache-bust.mjs`   |
+| 6   | `*.bat` (start, install, build, ensure-db) → `APP_VERSION` | `scripts/auto-bat-version.mjs`  |
+| 7   | `README.md` + `docs/*.md` → `**Wersja:**` itd.             | `scripts/auto-docs-version.mjs` |
+| 8   | `docs/API.md` przykłady JSON (`"version"`/`"dbVersion"`)   | `scripts/auto-docs-version.mjs` |
+
+**Nieedytowalne ręcznie (tylko przez release):** `VERSION`, `?v=` w HTML, wersje w `.bat`, `**Wersja:**` w docs.
 
 ### Release
 

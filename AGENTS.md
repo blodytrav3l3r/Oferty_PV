@@ -104,10 +104,20 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
     3. Release automatycznie wykonuje:
         - Podbicie `VERSION` i `package.json` (przez `standard-version`)
         - **Cache-bust assetów** — skrypt `scripts/auto-cache-bust.mjs` (przez hook `postbump`) podmienia wszystkie `?v=` w HTML (w tym `public/templates/*.html`) na nową wersję
+        - **Wersje w `.bat`** — `scripts/auto-bat-version.mjs` (start.bat, install.bat, build.bat, ensure-db.bat)
+        - **Wersje w dokumentacji** — `scripts/auto-docs-version.mjs` (README.md + `docs/*.md`: `**Wersja:**`, `**Wersja aplikacji:**`, `> Wersja:`, oraz przykłady JSON `"version"`/`"dbVersion"` w `docs/API.md`)
         - Generowanie `CHANGELOG.md`
         - Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`
     4. Wyślij tag na repozytorium zdalne: `git push --follow-tags`.
 - **Nigdy nie taguj gita ręcznie!** Wszystko obsługuje `npm run release`. Po zmianie wersji zrestartuj backend (`npm run dev:backend` lub `npm start` w produkcji).
+- **Pełna lista miejsc, gdzie żyje numer wersji** (weryfikacja przez `npm run version:check`):
+    1. `VERSION` (root) — źródło prawdy
+    2. `package.json` / `package-lock.json` → `version`
+    3. `CHANGELOG.md` (nagłówki)
+    4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
+    5. `*.bat` (start, install, build, ensure-db) → `APP_VERSION`
+    6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
+    7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 - **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
 - **Pre-push validation**: Husky `pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji), `npm run encoding:check` oraz `typecheck` + testy.
 

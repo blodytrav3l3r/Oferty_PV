@@ -1,6 +1,6 @@
 # S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.11.5
+**Wersja:** 1.12.0
 
 Aplikacja webowa do generowania ofert handlowych dla firmy WITROS (instalacje PV, studnie, rury). Backend API + frontend SPA w iframe'ach + zintegrowany pipeline ML.
 
