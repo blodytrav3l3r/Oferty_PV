@@ -13,21 +13,12 @@
  */
 
 const { execFileSync, spawn } = require('child_process');
-const { existsSync, readFileSync } = require('fs');
 const { join, resolve } = require('path');
 
 const ROOT = resolve(__dirname, '..', '..');
 const SPAWN = process.argv.includes('--spawn');
+const SPAWN_VERBOSE = process.env.SPAWN_VERBOSE === '1';
 const BASE = SPAWN ? 'http://localhost:3177' : 'http://localhost:3000';
-
-const MODULES = {
-    app: 'app.html',
-    index: 'index.html',
-    kartoteka: 'kartoteka.html',
-    rury: 'rury.html',
-    studnie: 'studnie.html',
-    zlecenia: 'zlecenia.html'
-};
 
 /* ── Playwright resolution (wzorzec excelEmptyRowAlignment.cjs) ── */
 function resolvePlaywright() {
@@ -114,8 +105,6 @@ async function startServer() {
     }
     return server;
 }
-
-const SPAWN_VERBOSE = process.env.SPAWN_VERBOSE === '1';
 
 /* ── Main ── */
 (async () => {

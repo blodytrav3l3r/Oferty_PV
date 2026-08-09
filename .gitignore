@@ -55,6 +55,7 @@ data/*.sqlite-shm
 data/*.sqlite-wal
 /*.sqlite*
 /*.db
+prisma/data/
 
 # Generated
 /generated/prisma

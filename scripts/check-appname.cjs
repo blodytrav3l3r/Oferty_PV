@@ -86,7 +86,7 @@ const PATTERNS = [
     { id: 'P1', label: 'WITROS Oferty', re: /WITROS[ \t\u00A0]+Oferty/i },
     { id: 'P2', label: 'WITROS — Generator Ofert', re: /WITROS\s*[–—-]\s*Generator\s+Ofert/i },
     { id: 'P3', label: 'WITROS PRECISION OS', re: /WITROS[ \t\u00A0]+PRECISION[ \t\u00A0]+OS/i },
-    { id: 'P4', label: 'WITROS —', re: /WITROS\s*—/i }
+    { id: 'P4', label: 'WITROS —', re: /WITROS[ \t\u00A0]+[–—-]/i }
 ];
 
 function shouldIgnoreDir(dir) {

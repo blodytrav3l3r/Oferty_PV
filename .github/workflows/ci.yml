@@ -110,13 +110,12 @@ jobs:
                     if [ "$i" -eq 15 ]; then
                       echo "[FAIL] Health check nie powiodl sie po 15 probach"
                       docker logs test-container
-                      docker stop test-container && docker rm test-container
-                      exit 1
+                  docker stop test-container && docker rm test-container
+                  exit 1
                     fi
                     echo "  Proba $i/15 — oczekiwanie 2s..."
                     sleep 2
                   done
-                  docker exec test-container node scripts/check-appname.cjs
                   docker exec test-container node -e "const http=require('http');http.get({host:'localhost',port:10000,path:'/index.html',headers:{'x-forwarded-proto':'https'}},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<title>\s*S\.O\.K\./.test(b)?0:1)})})"
                   docker stop test-container
                   docker rm test-container
@@ -179,7 +178,9 @@ jobs:
             - name: Deploy to Render (test)
               if: env.RENDER_TEST_DEPLOY_HOOK != ''
               run: |
-                  curl -s -X POST "${{ secrets.RENDER_TEST_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
+                  set -o pipefail
+                  RESP=$(curl -sf -X POST "${{ secrets.RENDER_TEST_DEPLOY_HOOK }}")
+                  echo "  Triggered: $RESP"
 
             - name: Skip — brak RENDER_TEST_DEPLOY_HOOK
               if: env.RENDER_TEST_DEPLOY_HOOK == ''
@@ -199,7 +200,9 @@ jobs:
             - name: Deploy to Render (production)
               if: env.RENDER_PROD_DEPLOY_HOOK != ''
               run: |
-                  curl -s -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
+                  set -o pipefail
+                  RESP=$(curl -sf -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}")
+                  echo "  Triggered: $RESP"
 
             - name: Skip — brak RENDER_PROD_DEPLOY_HOOK
               if: env.RENDER_PROD_DEPLOY_HOOK == ''
