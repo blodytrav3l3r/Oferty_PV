@@ -20,6 +20,7 @@ function _excelDeselectAllCells() {
     copy.forEach(function (cell) {
         _excelToggleCellClass(cell.wIdx, cell.colIdx, false);
     });
+    _excelUpdateSelectionSummary();
 }
 
 function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
@@ -52,6 +53,56 @@ function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
         _excelToggleCellClass(wIdx, colIdx, true);
     }
     _excelLastClickedCell = { wIdx: wIdx, colIdx: colIdx };
+    _excelUpdateSelectionSummary();
+}
+
+/* ===== SELECTION SUMMARY — suma zaznaczonych wartości (pasek w nagłówku) ===== */
+/* Czysta suma wartości numerycznych (liczby z przecinkiem). Testowalna. */
+function _excelSumNumericValues(values) {
+    let sum = 0;
+    let count = 0;
+    values.forEach(function (v) {
+        if (v === '' || v == null) return;
+        const num = parseFloat(String(v).replace(',', '.'));
+        if (!isNaN(num)) {
+            sum += num;
+            count++;
+        }
+    });
+    return { sum: sum, count: count };
+}
+
+function _excelUpdateSelectionSummary() {
+    const el = document.getElementById('excel-selection-summary');
+    if (!el) return;
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    let values = [];
+    if (_excelSelectedCols.length > 0) {
+        _excelGetVisibleRows().forEach(function (row) {
+            _excelSelectedCols.forEach(function (ci) {
+                const td = row.children[ci];
+                const t = td ? td.querySelector('input, select') : null;
+                values.push(t ? /** @type {HTMLInputElement} */ (t).value || '' : '');
+            });
+        });
+    } else {
+        _excelSelectedCells.forEach(function (cell) {
+            const row = container.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+            if (!row) return;
+            const td = row.children[cell.colIdx];
+            const t = td ? td.querySelector('input, select') : null;
+            values.push(t ? /** @type {HTMLInputElement} */ (t).value || '' : '');
+        });
+    }
+    const res = _excelSumNumericValues(values);
+    if (res.count > 0) {
+        el.textContent = 'Σ ' + res.sum.toLocaleString('pl-PL');
+        el.style.display = 'inline-block';
+    } else {
+        el.textContent = '';
+        el.style.display = 'none';
+    }
 }
 
 /* ===== MOUSE DRAG SELECTION (Excel-like) ===== */
@@ -157,6 +208,7 @@ function _excelOnMouseUp() {
     }
     _excelClearDragPreview();
     _excelDragState = null;
+    _excelUpdateSelectionSummary();
 }
 
 /* ===== FOCUS OVERLAY ===== */

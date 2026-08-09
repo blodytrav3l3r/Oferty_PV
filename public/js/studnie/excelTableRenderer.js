@@ -238,9 +238,9 @@ function _excelRenderTable(dn) {
                   (wells[currentWellIndex] && wells[currentWellIndex].redukcjaTargetDN) ||
                   1000)
             : dnTh3(ct);
-        h1 += `<th style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
-        h2 += `<th style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h1 += `<th data-col-id="${escapeHtml(c.id)}" style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
+        h2 += `<th data-col-id="${escapeHtml(c.id)}" style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
+        h3 += `<th data-col-id="${escapeHtml(c.id)}" style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;
@@ -303,6 +303,8 @@ function _excelRenderTable(dn) {
     _excelApplyStickyColumns();
     /* Wylacz pola edycyjne w wierszach zablokowanych (PZ / zamówienie) */
     _excelApplyLockedRows();
+    /* Zastosuj aktywne sortowanie (render przywraca naturalną kolejność wells[]) */
+    if (typeof _excelApplySortIfActive === 'function') _excelApplySortIfActive();
     /* Odśwież ikony Lucide w kontenerze (nie skanuj całego dokumentu) */
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try {

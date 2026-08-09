@@ -23,6 +23,20 @@ function _excelInitColumnSelect() {
         });
     });
 
+    /* Prawy przycisk na dowolnym wierszu nagłówka (H1/H2/H3) → menu kontekstowe kolumny */
+    const allHeaders = table.querySelectorAll('thead th');
+    allHeaders.forEach((th) => {
+        th.addEventListener('contextmenu', (/** @type {MouseEvent} */ e) => {
+            if (e.target.closest('.excel-col-resize-handle')) return;
+            if (e.target.closest('button')) return;
+            if (e.target.closest('input')) return;
+            if (typeof _excelOpenColContextMenu !== 'function') return;
+            e.preventDefault();
+            e.stopPropagation();
+            _excelOpenColContextMenu(th, e.clientX, e.clientY);
+        });
+    });
+
     // Klik w wiersz/tbody odznacza kolumny
     table.addEventListener('mousedown', (/** @type {MouseEvent} */ e) => {
         if (e.target.closest('thead')) return;
@@ -67,6 +81,7 @@ function _excelSelectCol(colIdx, ctrl, shift) {
     }
 
     _excelLastClickedCol = colIdx;
+    if (typeof _excelUpdateSelectionSummary === 'function') _excelUpdateSelectionSummary();
 }
 
 function _excelDeselectAllCols() {

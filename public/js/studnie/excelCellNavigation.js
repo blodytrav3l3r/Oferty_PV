@@ -290,17 +290,30 @@ function _excelHandleKeydown(e) {
 
     let isCtrl = e.ctrlKey || e.metaKey;
 
-    /* Ctrl+Z = undo */
-    if (isCtrl && !e.shiftKey && e.key === 'z') {
+    /* Ctrl+F = focus wyszukiwarki */
+    if (isCtrl && (e.key === 'f' || e.key === 'F')) {
+        e.preventDefault();
+        const input = document.getElementById('excel-search-input');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+        return;
+    }
+
+    /* Ctrl+Z = undo (poza edycją w inpucie — tam natywne undo pola) */
+    if (isCtrl && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+        if (e.target.tagName === 'INPUT') return; /* natywne undo wpisywania */
         e.preventDefault();
         _excelUndo();
         return;
     }
     /* Ctrl+Y / Ctrl+Shift+Z = redo */
     if (
-        (isCtrl && !e.shiftKey && e.key === 'y') ||
+        (isCtrl && !e.shiftKey && (e.key === 'y' || e.key === 'Y')) ||
         (isCtrl && e.shiftKey && (e.key === 'z' || e.key === 'Z'))
     ) {
+        if (e.target.tagName === 'INPUT') return; /* natywne redo pola */
         e.preventDefault();
         _excelRedo();
         return;
@@ -310,28 +323,63 @@ function _excelHandleKeydown(e) {
     if (e.key === 'Delete' || e.key === 'Backspace') {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT')
             return; /* edycja w komórce */
+        if (e.target.tagName === 'BUTTON') return; /* fokus na przycisku wiersza */
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        _excelSelectedCells.forEach(function (cell) {
-            if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
-            let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
-            if (!row) return;
-            /* Rozwiąż przez indeks TD — colIdx to indeks td, nie index z rowEls */
-            let td = row.children[cell.colIdx];
-            let target = td ? td.querySelector('input, select') : null;
-            if (!target) return;
-            _excelSetCellValue(target, '');
-        });
-        showToast('Wyczyszczono ' + _excelSelectedCells.length + ' komórek', 'info');
+        _excelPasteInProgress = true;
+        try {
+            _excelSelectedCells.forEach(function (cell) {
+                if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
+                let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                if (!row) return;
+                /* Rozwiąż przez indeks TD — colIdx to indeks td, nie index z rowEls */
+                let td = row.children[cell.colIdx];
+                let target = td ? td.querySelector('input, select') : null;
+                if (!target) return;
+                _excelSetCellValue(target, '');
+            });
+            showToast('Wyczyszczono ' + _excelSelectedCells.length + ' komórek', 'info');
+        } finally {
+            _excelPasteInProgress = false;
+        }
         return;
     }
 
-    /* Ctrl+A = zaznacz wszystko */
-    if (isCtrl && (e.key === 'a' || e.key === 'A')) {
+    /* Ctrl+M = przełącz AUTO/MANUAL dla aktywnego wiersza */
+    if (isCtrl && (e.key === 'm' || e.key === 'M')) {
+        let activeRow = document.activeElement
+            ? document.activeElement.closest('tr[data-widx]')
+            : null;
+        if (!activeRow) return;
+        let wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+        if (isNaN(wIdx)) return;
         e.preventDefault();
-        let allRows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
+        if (typeof _excelToggleWellAutoMode === 'function') _excelToggleWellAutoMode(wIdx);
+        return;
+    }
+
+    /* Ctrl+Shift+A = auto-dobór elementów dla aktywnego wiersza (jak przycisk Run) */
+    if (isCtrl && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        let activeRow = document.activeElement
+            ? document.activeElement.closest('tr[data-widx]')
+            : null;
+        if (!activeRow) return;
+        let wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+        if (isNaN(wIdx)) return;
+        e.preventDefault();
+        if (typeof _excelRunAutoSelectForWell === 'function') _excelRunAutoSelectForWell(wIdx);
+        return;
+    }
+
+    /* Ctrl+A = zaznacz wszystko (bez Shift — Ctrl+Shift+A to auto-dobór) */
+    if (isCtrl && !e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        /* Tylko wiersze widoczne (filtr wyszukiwarki) — ukryte pomijamy,
+           inaczej Delete/Ctrl+X po Ctrl+A wyczyściłby ukryte studnie. */
+        let allRows = _excelGetVisibleRows();
         _excelDeselectAllCells();
+        _excelDeselectAllCols();
         allRows.forEach(function (row) {
             /* wIdx z atrybutu — DOM order może się różnić (filtrowanie, wstawianie) */
             let wIdx = parseInt(row.getAttribute('data-widx'), 10);
@@ -344,34 +392,24 @@ function _excelHandleKeydown(e) {
             });
         });
         _excelLastClickedCell = null;
+        _excelUpdateSelectionSummary();
         showToast('Zaznaczono wszystkie komórki', 'info');
         return;
     }
 
-    /* Ctrl+X = wytnij */
+    /* Ctrl+X = wytnij. Nie przechwytujemy w keydown — natywny `cut` event
+       (obsługiwany na document, wzorzec jak Ctrl+C) dostarcza ClipboardEvent
+       z clipboardData; _excelHandleCopy wtedy poprawnie wypełnia schowek.
+       Wcześniejszy kod wołał _excelHandleCopy na KeyboardEvent (brak
+       clipboardData) → schowek pusty, a komórki wyczyszczone = utrata danych. */
     if (isCtrl && (e.key === 'x' || e.key === 'X')) {
-        if (_excelSelectedCells.length === 0) return;
-        e.preventDefault();
-        /* Uzyj oryginalnego eventu — clipboardData istnieje w keydown */
-        _excelHandleCopy(/** @type {any} */ (e));
-        /* Potem wyczyść */
-        _excelSaveUndoSnapshot();
-        _excelSelectedCells.forEach(function (cell) {
-            if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
-            let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
-            if (!row) return;
-            let td = row.children[cell.colIdx];
-            let target = td ? td.querySelector('input, select') : null;
-            if (!target) return;
-            _excelSetCellValue(target, '');
-        });
-        showToast('Wycinanie: ' + _excelSelectedCells.length + ' komórek', 'info');
+        if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
         return;
     }
 
     /* Ctrl+D = kopiuj w dół (z zaznaczeniem) / duplikacja studni (bez zaznaczenia) */
-    if (isCtrl && (e.key === 'd' || e.key === 'D')) {
-        if (_excelSelectedCells.length === 0) {
+    if (isCtrl && !e.shiftKey && (e.key === 'd' || e.key === 'D')) {
+        if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) {
             /* Bez zaznaczenia komórek: duplikuj aktywny wiersz jako nową studnię */
             let activeRow = document.activeElement
                 ? document.activeElement.closest('tr[data-widx]')
@@ -383,47 +421,65 @@ function _excelHandleKeydown(e) {
             if (typeof excelDuplicateWell === 'function') excelDuplicateWell(dupWIdx);
             return;
         }
+        if (_excelSelectedCells.length === 0) {
+            /* Zaznaczone tylko kolumny — deleguj do _excelHandleFillDown,
+               który obsługuje kolumny (wypełnia kolumnę wartością aktywnej komórki). */
+            e.preventDefault();
+            if (typeof _excelHandleFillDown === 'function') _excelHandleFillDown();
+            return;
+        }
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        _excelSelectedCells.forEach(function (cell) {
-            if (cell.wIdx === 0) return;
-            let srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
-            let dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
-            if (!srcRow || !dstRow) return;
-            let tdDst = dstRow.children[cell.colIdx];
-            let tdSrc = srcRow.children[cell.colIdx];
-            let target = tdDst ? tdDst.querySelector('input, select') : null;
-            let src = tdSrc ? tdSrc.querySelector('input, select') : null;
-            if (!target || !src) return;
-            _excelSetCellValue(
-                target,
-                /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
-            );
-        });
-        showToast('Skopiowano w dół', 'info');
+        _excelPasteInProgress = true;
+        try {
+            _excelSelectedCells.forEach(function (cell) {
+                if (cell.wIdx === 0) return;
+                if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie nadpisuj */
+                let srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
+                let dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                if (!srcRow || !dstRow) return;
+                let tdDst = dstRow.children[cell.colIdx];
+                let tdSrc = srcRow.children[cell.colIdx];
+                let target = tdDst ? tdDst.querySelector('input, select') : null;
+                let src = tdSrc ? tdSrc.querySelector('input, select') : null;
+                if (!target || !src) return;
+                _excelSetCellValue(
+                    target,
+                    /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
+                );
+            });
+            showToast('Skopiowano w dół', 'info');
+        } finally {
+            _excelPasteInProgress = false;
+        }
         return;
     }
 
-    /* Ctrl+R = kopiuj w prawo */
-    if (isCtrl && (e.key === 'r' || e.key === 'R')) {
+    /* Ctrl+R = kopiuj w prawo (Ctrl+Shift+R = twarde odświeżenie przeglądarki) */
+    if (isCtrl && !e.shiftKey && (e.key === 'r' || e.key === 'R')) {
         if (_excelSelectedCells.length === 0) return;
         e.preventDefault();
         _excelSaveUndoSnapshot();
-        _excelSelectedCells.forEach(function (cell) {
-            if (cell.colIdx <= 3) return; /* nazwa studni i kolumny strukturalne — nie kopiuj */
-            let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
-            if (!row) return;
-            let tdR = row.children[cell.colIdx];
-            let tdRSrc = row.children[cell.colIdx - 1];
-            let target = tdR ? tdR.querySelector('input, select') : null;
-            let src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
-            if (!target || !src) return;
-            _excelSetCellValue(
-                target,
-                /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
-            );
-        });
-        showToast('Skopiowano w prawo', 'info');
+        _excelPasteInProgress = true;
+        try {
+            _excelSelectedCells.forEach(function (cell) {
+                if (cell.colIdx <= 3) return; /* nazwa studni i kolumny strukturalne — nie kopiuj */
+                let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                if (!row) return;
+                let tdR = row.children[cell.colIdx];
+                let tdRSrc = row.children[cell.colIdx - 1];
+                let target = tdR ? tdR.querySelector('input, select') : null;
+                let src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
+                if (!target || !src) return;
+                _excelSetCellValue(
+                    target,
+                    /** @type {HTMLInputElement | HTMLSelectElement} */ (src).value
+                );
+            });
+            showToast('Skopiowano w prawo', 'info');
+        } finally {
+            _excelPasteInProgress = false;
+        }
         return;
     }
     /* Ctrl+Enter = wypełnij zaznaczenie wartością komórki aktywnej */

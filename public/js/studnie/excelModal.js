@@ -52,6 +52,7 @@ function _excelRegisterExcelListeners() {
     container.addEventListener('focusin', _excelOnFocusInRow);
     container.addEventListener('click', _excelOnClickCell);
     document.addEventListener('copy', _excelHandleCopy);
+    document.addEventListener('cut', _excelHandleCut);
     container.addEventListener('paste', _excelHandlePaste, true);
     container.addEventListener('keydown', _excelHandleKeydown);
     container.addEventListener('change', _excelOnRowSelectChange);
@@ -92,6 +93,7 @@ function _excelUnregisterExcelListeners() {
         );
     }
     document.removeEventListener('copy', _excelHandleCopy);
+    document.removeEventListener('cut', _excelHandleCut);
     if (_container) _container.removeEventListener('paste', _excelHandlePaste, true);
     if (_container) _container.removeEventListener('mousedown', _excelOnMouseDown);
     document.removeEventListener('mousemove', _excelOnMouseMove);
@@ -170,7 +172,51 @@ function openExcelTableModal() {
         if (e.target === overlay) closeExcelTableModal();
     });
     overlay.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeExcelTableModal();
+        /* Ctrl+S = zapisz i zamknij (jak przycisk "Gotowe") — blokuje też
+           przeglądarkowe "Zapisz stronę" (dashboard.js:97 nie robi preventDefault
+           przy focusie w inpucie). */
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof excelSaveAll === 'function') excelSaveAll();
+            return;
+        }
+        /* Ctrl+R: w kontenerze robi to _excelHandleKeydown (fill right);
+           poza kontenerem (wyszukiwarka) blokujemy refresh przeglądarki. */
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+            if (!e.defaultPrevented) e.preventDefault();
+            return;
+        }
+        if (e.key !== 'Escape') return;
+        const t = /** @type {EventTarget | null} */ (e.target);
+        /* Esc 1×: wyjście z edycji komórki (anuluj, nie zamykaj modala) */
+        if (
+            t instanceof HTMLElement &&
+            t.closest('#excel-table-container') &&
+            (t.tagName === 'INPUT' || t.tagName === 'SELECT')
+        ) {
+            e.preventDefault();
+            e.stopPropagation();
+            /** @type {HTMLElement} */ (t).blur();
+            _excelResetLayoutDependentState();
+            return;
+        }
+        /* Esc 1×: wyczyść wyszukiwarkę gdy aktywny filtr */
+        const si = document.getElementById('excel-search-input');
+        if (t === si && si && si.value) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof excelClearSearch === 'function') excelClearSearch();
+            return;
+        }
+        /* Esc 1×: usuń zaznaczenie komórek/kolumn */
+        if (_excelSelectedCells.length > 0 || _excelSelectedCols.length > 0) {
+            e.preventDefault();
+            e.stopPropagation();
+            _excelResetLayoutDependentState();
+            return;
+        }
+        closeExcelTableModal();
     });
 
     /* Nasłuchuj resize — odśwież pozycjonowanie */
@@ -194,6 +240,7 @@ function openExcelTableModal() {
 
     modal.innerHTML = `
         <style>
+            #excel-table-overlay .excel-toolbar-btn { flex:0 1 auto; min-width:8.5rem; justify-content:center; white-space:nowrap; text-align:center; }
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
             #excel-table-overlay ::-webkit-scrollbar-track { background:rgba(var(--white-rgb), 0.05); }
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(var(--white-rgb), 0.3); border-radius:4px; }
@@ -220,6 +267,7 @@ function openExcelTableModal() {
                 <i data-lucide="table" style="width:16px;height:16px;color:var(--success);"></i>
                 <span style="font-size:0.75rem;font-weight:700;color:var(--slate-200);letter-spacing:0.3px;">Tabela konfiguracyjna</span>
                 <span id="excel-well-count" style="font-size:0.6rem;color:var(--slate-500);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius:3px;"></span>
+                <span id="excel-selection-summary" style="display:none;font-size:0.6rem;color:var(--accent-text);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius:3px;"></span>
             </div>
             <div style="display:flex;gap:0.4rem;align-items:center;">
 
@@ -227,10 +275,11 @@ function openExcelTableModal() {
                     <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:3px;padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size:0.6rem;color:var(--slate-200);outline:none;width:220px;" />
                     <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" style="display:none;position:absolute;right:4px;background:none;border:none;color:var(--slate-400);cursor:pointer;font-size:0.7rem;padding:2px;line-height:1;">✕</button>
                 </div>
-                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" title="Pokaż/ukryj kolumny" style="background:rgba(var(--accent2-rgb), 0.1);color:var(--accent2-hover);border:1px solid rgba(var(--accent2-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="columns" style="width:12px;height:12px;"></i> Kolumny</button>
-                <button onclick="openPrzejsciaVisibilityPopup('excel')" title="Pokaż/ukryj typy przejść" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:0.3rem;"><i data-lucide="eye" style="width:12px;height:12px;"></i> Przejścia</button>
-                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" title="Pełny ekran / okno" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
-                <button onclick="excelSaveAll()" id="excel-save-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(var(--success-rgb), 0.15);color:var(--success-hover);border:1px solid rgba(var(--success-rgb), 0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
+                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny" style="background:rgba(var(--accent2-rgb), 0.1);color:var(--accent2-hover);border:1px solid rgba(var(--accent2-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;">Kolumny</button>
+                <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;">Przejścia</button>
+                <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;display:flex;align-items:center;">Skróty</button>
+                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius:3px;font-size:0.6rem;font-weight:600;cursor:pointer;">Pełny</button>
+                <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(var(--success-rgb), 0.15);color:var(--success-hover);border:1px solid rgba(var(--success-rgb), 0.3);padding:0.3rem 0.9rem;border-radius:3px;font-size:0.65rem;font-weight:700;cursor:pointer;">Gotowe (Zapisz)</button>
                 <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(var(--danger-rgb), 0.1);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.3rem 0.7rem;border-radius:3px;font-size:0.65rem;font-weight:600;cursor:pointer;">✕</button>
             </div>
         </div>
@@ -291,6 +340,7 @@ function _excelCloseOverlay() {
     _excelStopPolling();
     _excelUnregisterExcelListeners();
     _excelResetLayoutDependentState();
+    if (typeof _excelResetSort === 'function') _excelResetSort();
     const overlay = document.getElementById('excel-table-overlay');
     if (overlay) {
         overlay.remove();

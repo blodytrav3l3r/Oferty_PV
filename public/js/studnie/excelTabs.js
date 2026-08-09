@@ -37,6 +37,7 @@ function _excelUpdateWellCount() {
 function excelSwitchTab(tab) {
     _excelActiveTab = tab;
     _excelResetLayoutDependentState(); /* reset selekcji zależnych od układu */
+    if (typeof _excelResetSort === 'function') _excelResetSort();
     _excelRenderTabs();
     _excelRenderTable(tab);
     _excelUpdateHeaderProdCodes();

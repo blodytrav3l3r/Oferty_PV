@@ -89,6 +89,7 @@ async function _excelRunAutoSelectForWell(wIdx) {
     try {
         currentWellIndex = wIdx;
         _excelMarkDirty();
+        _excelSaveUndoSnapshot();
         /* WZORZEC z wellActions.js:1390 - czyscimy config i przeładowujemy solver */
         well.configSource = 'AUTO';
         well.config = [];

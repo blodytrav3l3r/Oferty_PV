@@ -108,6 +108,42 @@ function _excelHandleCopy(e) {
     }
 }
 
+function _excelHandleCut(e) {
+    /* Tylko gdy Excel otwarty */
+    if (!document.getElementById('excel-table-overlay')) return;
+    if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
+    /* ClipboardEvent ma clipboardData — wypełnij schowek (wzorzec jak Ctrl+C) */
+    _excelHandleCopy(e);
+    _excelSaveUndoSnapshot();
+    _excelPasteInProgress = true;
+    try {
+        if (_excelSelectedCells.length > 0) {
+            _excelSelectedCells.forEach(function (cell) {
+                if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
+                let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                if (!row) return;
+                let td = row.children[cell.colIdx];
+                let target = td ? td.querySelector('input, select') : null;
+                if (!target) return;
+                _excelSetCellValue(target, '');
+            });
+        } else {
+            /* Zaznaczone kolumny — czyść we wszystkich widocznych wierszach */
+            _excelGetVisibleRows().forEach(function (row) {
+                _excelSelectedCols.forEach(function (colIdx) {
+                    if (colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
+                    let td = row.children[colIdx];
+                    let target = td ? td.querySelector('input, select') : null;
+                    if (target) _excelSetCellValue(target, '');
+                });
+            });
+        }
+        showToast('Wycinto: ' + _excelSelectedCells.length + ' komorek', 'info');
+    } finally {
+        _excelPasteInProgress = false;
+    }
+}
+
 function _excelHandlePaste(e) {
     /* Tylko gdy Excel otwarty */
     if (!document.getElementById('excel-table-overlay')) return;
@@ -199,6 +235,7 @@ function _excelHandlePaste(e) {
                 let parts = line.split('	');
                 cols.forEach(function (colIdx, ci) {
                     if (ci >= parts.length) return;
+                    if (colIdx === 3) return; /* nazwa studni — nigdy nie nadpisuj */
                     let tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
                     let target = tdInner ? tdInner.querySelector('input, select') : null;
                     if (!target) return;
@@ -364,6 +401,12 @@ function _excelSetCellValue(target, val) {
     const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
     const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
     if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return;
+    /* Nazwa studni (colIdx 3) — nigdy przez mutacje zbiorcze (paste/cut/delete/fill).
+       Bezpieczne, bo edycja nazwy idzie przez excelOnNameChange, nie tutaj. */
+    const td = target && target.closest ? target.closest('td') : null;
+    const colIdx =
+        td && td.parentElement ? Array.prototype.indexOf.call(td.parentElement.children, td) : -1;
+    if (colIdx === 3) return;
     if (target.tagName === 'SELECT') {
         let _sel = /** @type {HTMLSelectElement} */ (target);
         let opt = Array.from(_sel.options).find(function (o) {
