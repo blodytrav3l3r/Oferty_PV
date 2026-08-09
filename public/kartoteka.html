@@ -287,25 +287,11 @@
                                     flex-wrap: wrap;
                                 "
                             >
-                                <span
-                                    style="
-                                        font-size: 0.75rem;
-                                        color: var(--text-muted);
-                                        font-weight: 600;
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Data:</span
-                                >
+                                <span class="toolbar-label">Data:</span>
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-secondary pv-date-preset-btn"
                                     data-date-range="today"
-                                    style="
-                                        border-radius: 20px;
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
-                                    "
                                 >
                                     Dzisiaj
                                 </button>
@@ -313,11 +299,6 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary pv-date-preset-btn"
                                     data-date-range="7d"
-                                    style="
-                                        border-radius: 20px;
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
-                                    "
                                 >
                                     7 dni
                                 </button>
@@ -325,44 +306,23 @@
                                     type="button"
                                     class="btn btn-sm btn-secondary pv-date-preset-btn"
                                     data-date-range="month"
-                                    style="
-                                        border-radius: 20px;
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
-                                    "
                                 >
                                     Ten miesiąc
                                 </button>
-                                <span
-                                    style="
-                                        font-size: 0.7rem;
-                                        color: var(--text-muted);
-                                        font-weight: 600;
-                                    "
-                                    >od</span
-                                >
+                                <span class="toolbar-label">Data od</span>
                                 <input
                                     type="date"
                                     id="pv-date-from"
                                     class="form-input form-input-sm"
-                                    style="font-size: 0.78rem; border-radius: 20px"
                                     title="Data od"
                                     aria-label="Data od"
                                 />
-                                <span style="color: var(--text-muted)">&ndash;</span>
-                                <span
-                                    style="
-                                        font-size: 0.7rem;
-                                        color: var(--text-muted);
-                                        font-weight: 600;
-                                    "
-                                    >do</span
-                                >
+                                <span class="kartoteka-date-sep" aria-hidden="true">&ndash;</span>
+                                <span class="toolbar-label">Data do</span>
                                 <input
                                     type="date"
                                     id="pv-date-to"
                                     class="form-input form-input-sm"
-                                    style="font-size: 0.78rem; border-radius: 20px"
                                     title="Data do"
                                     aria-label="Data do"
                                 />
@@ -372,11 +332,6 @@
                                     class="btn btn-sm btn-secondary"
                                     title="Wyczyść zakres dat"
                                     aria-label="Wyczyść zakres dat"
-                                    style="
-                                        border-radius: 20px;
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
-                                    "
                                 >
                                     <i data-lucide="x"></i>
                                 </button>
