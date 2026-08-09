@@ -84,7 +84,7 @@ version: '3.8'
 services:
     app:
         build: .
-        container_name: witros-oferty
+        container_name: sok-oferty
         restart: unless-stopped
         ports:
             - '3000:10000'

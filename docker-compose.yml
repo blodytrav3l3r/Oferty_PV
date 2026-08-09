@@ -5,7 +5,7 @@ services:
         build:
             context: .
             dockerfile: Dockerfile
-        container_name: witros-oferty
+        container_name: sok-oferty
         restart: unless-stopped
         ports:
             - '3000:10000'

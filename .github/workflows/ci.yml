@@ -91,11 +91,11 @@ jobs:
             - uses: actions/checkout@v7
 
             - name: Build Docker image
-              run: docker build -t witros-oferty:${{ github.sha }} .
+              run: docker build -t sok-oferty:${{ github.sha }} .
 
             - name: Health check
               run: |
-                  docker run -d --name test-container witros-oferty:${{ github.sha }}
+                  docker run -d --name test-container sok-oferty:${{ github.sha }}
                   echo "Sprawdzanie stanu kontenera..."
                   for i in $(seq 1 15); do
                     if docker exec test-container node -e "require('http').get('http://localhost:10000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" 2>/dev/null; then
