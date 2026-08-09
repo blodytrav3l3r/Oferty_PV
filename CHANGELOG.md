@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.12.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.5...v1.12.0) (2026-08-09)
+
+### Features
+
+- **studnie:** ochrona nazw studni w mutacjach zbiorczych excel + popup skrótów, sortowanie i menu kolumn ([e1eb742](https://github.com/blodytrav3l3r/Oferty_PV/commit/e1eb7424a2ee2d312e95120af88e9403ef48fd1a))
+- **ui:** nowe logo sok (logo-sok.svg) w naglowkach i readme ([389dd6e](https://github.com/blodytrav3l3r/Oferty_PV/commit/389dd6e11f2afcae5447459d25f04eb1c64438bb))
+- **ui:** rebranding nazwy aplikacji na S.O.K. ([7075879](https://github.com/blodytrav3l3r/Oferty_PV/commit/7075879f1f7967b854ae4285764c2448320c6209))
+- **ui:** rebranding pulpitu na nowa nazwe systemu ([a4b853f](https://github.com/blodytrav3l3r/Oferty_PV/commit/a4b853f37db177d076be8640e350f7528843a52e))
+
+### Bug Fixes
+
+- **studnie:** panel lewy i prawy siegaja gornego paska nawigacji (wizard-indicator wraca do kolumny srodkowej) ([af3452b](https://github.com/blodytrav3l3r/Oferty_PV/commit/af3452bebd5293d052411868c2cfbfa8e996431f))
+
 ### [1.11.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.4...v1.11.5) (2026-08-09)
 
 ### Features
