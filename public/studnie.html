@@ -22,33 +22,6 @@
 
         <main class="main">
             <div class="section active" id="section-builder">
-                <!-- Wizard Step Indicator -->
-                <div class="wizard-indicator" id="wizard-indicator">
-                    <div class="wizard-step-dot active" data-step="1" onclick="wizardNavStep(1)">
-                        <div class="wizard-dot-number">1</div>
-                        <div class="wizard-dot-label">Dane klienta</div>
-                    </div>
-                    <div class="wizard-step-line" id="wizard-line-1"></div>
-                    <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
-                        <div class="wizard-dot-number">2</div>
-                        <div class="wizard-dot-label">Parametry studni</div>
-                    </div>
-                    <div class="wizard-step-line" id="wizard-line-2"></div>
-                    <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
-                        <div class="wizard-dot-number">3</div>
-                        <div class="wizard-dot-label">Oferta</div>
-                    </div>
-                    <div class="wizard-step-line" id="wizard-line-3"></div>
-                    <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
-                        <div class="wizard-dot-number">4</div>
-                        <div class="wizard-dot-label">Karta budowy</div>
-                    </div>
-                    <div class="wizard-step-line" id="wizard-line-4"></div>
-                    <div class="wizard-step-dot" data-step="5" onclick="wizardNavStep(5)">
-                        <div class="wizard-dot-number">5</div>
-                        <div class="wizard-dot-label">Zamówienie</div>
-                    </div>
-                </div>
                 <div class="well-app-layout intro-mode">
                     <!-- LEFT: Well Diagram -->
                     <div
@@ -168,6 +141,34 @@
 
                     <!-- CENTER COLUMN -->
                     <div class="well-center-column">
+                        <!-- Wizard Step Indicator -->
+                        <div class="wizard-indicator" id="wizard-indicator">
+                            <div class="wizard-step-dot active" data-step="1" onclick="wizardNavStep(1)">
+                                <div class="wizard-dot-number">1</div>
+                                <div class="wizard-dot-label">Dane klienta</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-1"></div>
+                            <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
+                                <div class="wizard-dot-number">2</div>
+                                <div class="wizard-dot-label">Parametry studni</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-2"></div>
+                            <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
+                                <div class="wizard-dot-number">3</div>
+                                <div class="wizard-dot-label">Oferta</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-3"></div>
+                            <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
+                                <div class="wizard-dot-number">4</div>
+                                <div class="wizard-dot-label">Karta budowy</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-4"></div>
+                            <div class="wizard-step-dot" data-step="5" onclick="wizardNavStep(5)">
+                                <div class="wizard-dot-number">5</div>
+                                <div class="wizard-dot-label">Zamówienie</div>
+                            </div>
+                        </div>
+
                         <!-- Spinner ładowania widoczny podczas wczytywania danych z URL -->
                         <div
                             id="wizard-loading-spinner"
