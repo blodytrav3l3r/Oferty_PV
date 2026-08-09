@@ -68,12 +68,12 @@ function processFile(filePath) {
         /(\*\*Wersja projektu:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(\*\*Wersja aplikacji:\*{0,2}\s*)\d+\.\d+\.\d+/g,
         /(> Wersja:\s*)\d+\.\d+\.\d+/g,
-        /("version":\s*")\d+\.\d+\.\d+"/g,
-        /("dbVersion":\s*")\d+\.\d+\.\d+"/g
+        /("version":\s*")\d+\.\d+\.\d+(")/g,
+        /("dbVersion":\s*")\d+\.\d+\.\d+(")/g
     ];
 
     for (const re of patterns) {
-        content = content.replace(re, (match, prefix) => `${prefix}${VERSION}`);
+        content = content.replace(re, (match, prefix, suffix) => `${prefix}${VERSION}${suffix}`);
     }
 
     // aktualizacja ?v= w docs (np w przykładowych HTML)

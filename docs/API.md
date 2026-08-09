@@ -35,12 +35,12 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.12.0,
+    "version": "1.12.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.12.0
+    "dbVersion": "1.12.0"
 }
 ```
 
