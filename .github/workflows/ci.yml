@@ -171,16 +171,18 @@ jobs:
         needs: test
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         environment: test
+        env:
+            RENDER_TEST_DEPLOY_HOOK: ${{ secrets.RENDER_TEST_DEPLOY_HOOK }}
         steps:
             - uses: actions/checkout@v7
 
             - name: Deploy to Render (test)
-              if: secrets.RENDER_TEST_DEPLOY_HOOK != ''
+              if: env.RENDER_TEST_DEPLOY_HOOK != ''
               run: |
                   curl -s -X POST "${{ secrets.RENDER_TEST_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
 
             - name: Skip — brak RENDER_TEST_DEPLOY_HOOK
-              if: secrets.RENDER_TEST_DEPLOY_HOOK == ''
+              if: env.RENDER_TEST_DEPLOY_HOOK == ''
               run: echo "[INFO] Pomijam deploy testowy — ustaw RENDER_TEST_DEPLOY_HOOK w secrets"
 
     deploy-production:
@@ -189,14 +191,16 @@ jobs:
         needs: [docker-build, version-check]
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         environment: production
+        env:
+            RENDER_PROD_DEPLOY_HOOK: ${{ secrets.RENDER_PROD_DEPLOY_HOOK }}
         steps:
             - uses: actions/checkout@v7
 
             - name: Deploy to Render (production)
-              if: secrets.RENDER_PROD_DEPLOY_HOOK != ''
+              if: env.RENDER_PROD_DEPLOY_HOOK != ''
               run: |
                   curl -s -X POST "${{ secrets.RENDER_PROD_DEPLOY_HOOK }}" | echo "  Triggered: $(cat)"
 
             - name: Skip — brak RENDER_PROD_DEPLOY_HOOK
-              if: secrets.RENDER_PROD_DEPLOY_HOOK == ''
+              if: env.RENDER_PROD_DEPLOY_HOOK == ''
               run: echo "[INFO] Pomijam deploy produkcyjny — ustaw RENDER_PROD_DEPLOY_HOOK w secrets"
