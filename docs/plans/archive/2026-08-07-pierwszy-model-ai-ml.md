@@ -1,5 +1,7 @@
 # Implementation Plan: Pierwszy poprawny, wdrożony model AI/ML
 
+> Status: ZREALIZOWANY (Faza A wdrożona, Faza B przetestowana — commit `5580abe`). Plan operacyjny w toku: monitorowanie zbierania danych i AUC per punkty kontrolne.
+
 ## Overview
 
 Cel: doprowadzić pipeline ML (telemetry → FeatureExtractor → TrainingPipeline → AiModel → mlDualRanking) do stanu, w którym pierwszy **poprawny** model zostanie wytrenowany, zwalidowany i wdrożony jako aktywny. Po wyczyszczeniu wszystkich tabel AI/ML system startuje od zera — plan definiuje etapy zbierania danych, progi, kryteria wdrożenia oraz ścieżkę diagnostyczną, gdy AUC nie rośnie.

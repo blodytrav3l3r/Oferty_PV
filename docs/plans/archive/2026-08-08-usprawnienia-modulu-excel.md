@@ -1,5 +1,7 @@
 # Implementation Plan: Usprawnienia modułu Excel (wypełnianie, kolumny, duplikacja, błędy, wyszukiwarka)
 
+> Status: ZREALIZOWANY (wdrożone w commitach 9c44d07/e1eb742 — F1–F5, skróty, sortowanie, menu kolumn).
+
 ## Overview
 
 Cel: 5 usprawnień w tabeli konfiguracyjnej studni (modal Excel) podnoszących tempo pracy przy masowym konfigurowaniu studni. Wszystkie zmiany są frontendowe (`public/js/studnie/excel*.js`) i nie dotykają plików zastrzeżonych (offerCrud.js, offerManager.js, offerItems.js, wizard.js, router.js).

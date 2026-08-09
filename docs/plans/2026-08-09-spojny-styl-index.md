@@ -1,6 +1,6 @@
 # Plan: Spójny styl index.html z design systemem SPA (kartoteka / zlecenia)
 
-Data: 2026-08-09 | Status: DO WDROŻENIA (plan read-only) | Tryb: wdrożenie po akceptacji
+Data: 2026-08-09 | Status: ZREALIZOWANY (wdrożone w commicie 8de47f8) | Tryb: wdrożenie po akceptacji
 
 > Plan finalny po weryfikacji kodu (czytanie: `index.html`, `index.css`,
 > `style.base.css`, `style.cards.css`, `style.utilities.css`, `zlecenia.css`,

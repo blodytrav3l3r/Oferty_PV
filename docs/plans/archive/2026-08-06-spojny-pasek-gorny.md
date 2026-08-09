@@ -1,6 +1,6 @@
 # Plan: Spójny pasek górny SPA — naprawa „przesuwania ikon" między zakładkami
 
-Data: 2026-08-06 | Status: DO WDROŻENIA (plan read-only) | Tryb: wdrożenie po akceptacji
+Data: 2026-08-06 | Status: ZREALIZOWANY (kroki A-D wdrożone, E/F poza zakresem) | Tryb: wdrożenie po akceptacji
 
 > Plan finalny po weryfikacji kodu. Wszystkie ustalenia z poprzednich analiz
 > potwierdzone w repo — lokalizacje podane w sekcji 2.

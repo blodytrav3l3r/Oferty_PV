@@ -1,7 +1,7 @@
 ﻿# Plan: Kartoteka Zleceń — zgodność z wizualizacją (aktualizacja 2026-08-08)
 
 Data: 2026-08-08
-Status: **W trakcie realizacji — fazy 0–6 wdrożone, faza 7 zablokowana (brak reguły biznesowej), faza 8 opcjonalna (wymaga wyraźnego żądania pixel-parity)**
+Status: **ZREALIZOWANY (fazy 0–6 wdrożone) — faza 7 zablokowana (brak reguły biznesowej), faza 8 opcjonalna (wymaga wyraźnego żądania pixel-parity)**
 Pierwotny status planu: **Plan wdrożenia — nadpisuje poprzednią rekomendację „wariant C (nie wirtualizować)"**
 Decyzja użytkownika: stan na żywo ma być zgodny z wizualizacją (`zlecenia-preview.html`), z minimalnym ryzykiem regresji.
 Zakres: `public/zlecenia.html`, `public/js/spa/zlecenia.js`, `public/js/spa/zleceniaHelpers.js`, `public/css/zlecenia.css`, `src/routes/orders/production.ts`, `src/routes/orders/productionSearch.ts`, `src/utils/productionSearchUtils.ts`, `tests/`
