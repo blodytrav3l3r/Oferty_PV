@@ -1,4 +1,4 @@
-# Pricelist Button Documentation — WITROS Oferty PV
+# Pricelist Button Documentation — S.O.K. — System Ofert i Kalkulacji
 
 > **Last updated:** 2026-07-23
 > **Scope:** All 3 modules: Rury, Studnie, PRECO

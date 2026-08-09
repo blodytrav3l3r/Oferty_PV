@@ -1,4 +1,4 @@
-# Instrukcja instalacji WITROS Oferty PV — krok po kroku dla laika
+# Instrukcja instalacji S.O.K. — System Ofert i Kalkulacji — krok po kroku dla laika
 
 > **Plik:** docs/instalacja-krok-po-kroku-dla-laika.md
 > **Wersja:** 1.12.0
@@ -391,5 +391,5 @@ Jeśli całkowicie zablokowałeś system:
 
 ---
 
-> **Dokumentacja wygenerowana na podstawie analizy projektu WITROS Oferty PV**
+> **Dokumentacja wygenerowana na podstawie analizy projektu S.O.K. — System Ofert i Kalkulacji**
 > W razie problemów: skontaktuj się z administratorem systemu

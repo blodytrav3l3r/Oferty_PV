@@ -1,4 +1,4 @@
-# Instalacja i przenoszenie systemu WITROS Oferty PV
+# Instalacja i przenoszenie systemu S.O.K. — System Ofert i Kalkulacji
 
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.12.0
@@ -29,7 +29,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    WITROS Oferty PV                       │
+│           S.O.K. — System Ofert i Kalkulacji            │
 ├─────────────────┬───────────────────┬───────────────────┤
 │   Backend        │   Frontend         │   Baza danych     │
 │   Express 4.21   │   Vanilla JS SPA   │   SQLite          │

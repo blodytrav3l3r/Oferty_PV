@@ -1,4 +1,4 @@
-# Katalog Komponentów — WITROS Oferty PV
+# Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
 > Wersja: 1.12.0 | Data: 2026-08-05 | Źródło: analiza CSS (`public/css/`)
 

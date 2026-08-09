@@ -1,4 +1,4 @@
-# WITROS Oferty PV — Konwencje projektowe
+# S.O.K. — System Ofert i Kalkulacji — Konwencje projektowe
 
 Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline, Roo Code).
 

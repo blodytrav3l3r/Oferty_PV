@@ -1,4 +1,4 @@
-# Wdrożenie — WITROS Oferty PV
+# Wdrożenie — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.12.0  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  

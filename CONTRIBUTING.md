@@ -1,4 +1,4 @@
-# Zasady pracy — WITROS Oferty PV
+# Zasady pracy — S.O.K. — System Ofert i Kalkulacji
 
 ## Codzienna praca
 

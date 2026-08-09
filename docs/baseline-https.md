@@ -1,4 +1,4 @@
-# Baseline HTTPS — WITROS Oferty PV
+# Baseline HTTPS — S.O.K. — System Ofert i Kalkulacji
 
 > **Stan na 2026-08-05:** wdrożono dedup telemetrii AUTO_JS + indeksy
 > (migracja `20260805100000_telemetry_well_dedup`), TrainingPipeline sliding window,

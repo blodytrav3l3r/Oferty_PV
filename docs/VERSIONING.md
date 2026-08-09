@@ -1,6 +1,6 @@
 # Wersjonowanie — Semantic Versioning
 
-Projekt **WITROS Oferty PV** używa **Semantic Versioning 2.0.0**.
+Projekt **S.O.K. — System Ofert i Kalkulacji** używa **Semantic Versioning 2.0.0**.
 
 ## Format
 

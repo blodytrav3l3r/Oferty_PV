@@ -1,4 +1,4 @@
-# WITROS Oferty PV — Instalacja: Automatyzacja vs. Praca Ręczna
+# S.O.K. — System Ofert i Kalkulacji — Instalacja: Automatyzacja vs. Praca Ręczna
 
 > **Cel dokumentu:** Kompletne rozdzielenie kroków automatycznych od manualnych w procesie uruchomienia systemu. Dla administratorów, deweloperów i wdrożeniowców.
 

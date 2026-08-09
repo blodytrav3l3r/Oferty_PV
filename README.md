@@ -13,7 +13,7 @@
 
 ## Opis
 
-WITROS Oferty PV to aplikacja webowa do generowania ofert handlowych dla branży kanalizacyjnej — studni oraz rur betonowych do kanalizacji i odwodnienia dróg. Umożliwia zarządzanie produktami, klientami, tworzenie ofert (zarówno dla rur jak i studni), generowanie dokumentów PDF/DOCX, monitorowanie zamówień oraz inteligentne rankowanie rozwiązań (ML).
+S.O.K. — System Ofert i Kalkulacji to aplikacja webowa do generowania ofert handlowych dla branży kanalizacyjnej — studni oraz rur betonowych do kanalizacji i odwodnienia dróg. Umożliwia zarządzanie produktami, klientami, tworzenie ofert (zarówno dla rur jak i studni), generowanie dokumentów PDF/DOCX, monitorowanie zamówień oraz inteligentne rankowanie rozwiązań (ML).
 
 Nazwa aplikacji wyświetlana na pulpicie i stronie logowania: **S.O.K. (System Ofert i Kalkulacji)** (rebranding z 2026-08-09, commit `a4b853f`).
 
@@ -70,7 +70,7 @@ cd Oferty_PV
 **Opcja B — z archiwum ZIP:**
 
 1. Pobierz ZIP z [https://github.com/blodytrav3l3r/Oferty_PV](https://github.com/blodytrav3l3r/Oferty_PV)
-2. Rozpakuj w docelowym folderze (np. `C:\WITROS_Oferty`)
+2. Rozpakuj w docelowym folderze (np. `C:\SOK_Oferty`)
 3. Otwórz terminal w tym folderze
 
 #### 2. Uruchom instalator (Windows)

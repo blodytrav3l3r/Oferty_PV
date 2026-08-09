@@ -1,4 +1,4 @@
-# Baza danych — WITROS Oferty PV
+# Baza danych — S.O.K. — System Ofert i Kalkulacji
 
 **Silnik:** SQLite  
 **ORM:** Prisma 6.0  

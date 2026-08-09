@@ -1,4 +1,4 @@
-# Architektura — WITROS Oferty PV
+# Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.12.0  
 **Ostatnia aktualizacja:** 2026-08-05  
@@ -8,7 +8,7 @@
 
 ## Przegląd architektury
 
-Aplikacja WITROS Oferty PV to pojedyncza aplikacja webowa (monolit) złożona z:
+Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (monolit) złożona z:
 
 - **Backend API** — Express.js (TypeScript) obsługujący logikę biznesową i dane
 - **Frontend SPA** — Vanilla JavaScript z osobnymi widokami HTML (bez frameworka)

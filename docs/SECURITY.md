@@ -1,4 +1,4 @@
-# Bezpieczeństwo — WITROS Oferty PV
+# Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.12.0  
 **Ostatnia aktualizacja:** 2026-08-05

@@ -1,4 +1,4 @@
-# Polityka bezpieczeństwa — WITROS Oferty PV
+# Polityka bezpieczeństwa — S.O.K. — System Ofert i Kalkulacji
 
 ## Wspierane wersje
 

@@ -1,4 +1,4 @@
-# WITROS Oferty — Instrukcja uruchomienia serwera przez Internet
+# S.O.K. — Instrukcja uruchomienia serwera przez Internet
 
 **Wersja:** 1.12.0
 

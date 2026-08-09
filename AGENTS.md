@@ -1,6 +1,6 @@
-# WITROS Oferty PV — Konwencje i Instrukcje dla Agenta AI (v2)
+# S.O.K. — System Ofert i Kalkulacji — Konwencje i Instrukcje dla Agenta AI (v2)
 
-Niniejszy dokument stanowi uniwersalny zestaw reguł i wytycznych dla każdego modelu AI (OpenCode, DeepSeek, Claude, Cursor itp.) pracującego nad projektem WITROS Oferty PV.
+Niniejszy dokument stanowi uniwersalny zestaw reguł i wytycznych dla każdego modelu AI (OpenCode, DeepSeek, Claude, Cursor itp.) pracującego nad projektem S.O.K.
 
 ### Przełączanie Między Modelami i Aplikacjami (Multi-Agent/Multi-Model)
 
