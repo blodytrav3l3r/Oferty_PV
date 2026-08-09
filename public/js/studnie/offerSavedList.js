@@ -115,8 +115,8 @@ function renderSavedOffersStudnie() {
                               let buttonsHtml = '';
                               offerOrders.forEach((order) => {
                                   buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeHtml(order.id)}'" title="Otwórz zamówienie ${order.orderNumber || ''}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${order.orderNumber || ''}</button>
-                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeHtml(order.id)}')" title="Usuń zamówienie ${order.orderNumber || ''}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeHtml(order.id)}'" title="Otwórz zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${escapeHtml(order.orderNumber || '')}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeHtml(order.id)}')" title="Usuń zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="trash-2"></i></button>
                                 `;
                               });
                               return buttonsHtml;

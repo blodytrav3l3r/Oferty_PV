@@ -339,7 +339,7 @@ function renderComponentSubItems(
 
             if (pr.frozenTransitionPrice != null) {
                 html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${pr.frozenName || prProd.category} ${prProd.dn || ''} (${pr.angle}°)</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
@@ -352,14 +352,14 @@ function renderComponentSubItems(
                 }
                 if (pr.frozenDrillingPrice > 0) {
                     html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
-                        <td colspan="3" class="pl-lg">↳ + ${pr.frozenDrillingName || 'Wiercenie'} ${pr.frozenDrillingDn || ''}</td>
+                        <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}</td>
                         <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
                     </tr>`;
                 }
             } else {
                 const prPrice = (prProd.price || 0) * nadbudowaMult;
                 html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
-                    <td colspan="3" class="pl-lg">↳ + Przejście: ${prProd.category} ${prProd.dn} (${pr.angle}°)</td>
+                    <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
@@ -399,8 +399,8 @@ function renderComponentSubItems(
                 ' PLN</td></tr>';
 
             if (kp && typeof getItemPriceBreakdown === 'function') {
-                let kBd = getItemPriceBreakdown(well, kp, true, kineta);
-                let kQ = kineta.quantity || 1;
+                const kBd = getItemPriceBreakdown(well, kp, true, kineta);
+                const kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
                     html +=
                         '<tr style="opacity:0.5; font-size:0.65rem; color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
@@ -468,13 +468,13 @@ function renderComponentSubItems(
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
             if (precoAlloc.isBottomMostDennica && typeof calcPrecoPricing === 'function') {
-                let precoCalc = calcPrecoPricing(well);
+                const precoCalc = calcPrecoPricing(well);
                 if (precoCalc && precoCalc.suma > 0) {
                     if (precoCalc.bazowa > 0 && precoCalc.kinetaGlowna) {
-                        let dnParts = precoCalc.kinetaGlowna.dn.map(function (d) {
+                        const dnParts = precoCalc.kinetaGlowna.dn.map(function (d) {
                             return 'DN' + d;
                         });
-                        let etyParts = precoCalc.kinetaGlowna.etykiety.map(function (e) {
+                        const etyParts = precoCalc.kinetaGlowna.etykiety.map(function (e) {
                             return '[' + e + ']';
                         });
                         html +=
@@ -509,7 +509,7 @@ function renderComponentSubItems(
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.uniesienie > 0) {
-                        let mm =
+                        const mm =
                             precoCalc.uniesieniaSzczegoly &&
                             precoCalc.uniesieniaSzczegoly.length > 0
                                 ? precoCalc.uniesieniaSzczegoly[0].mm
@@ -531,8 +531,8 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.dodWloty && precoCalc.dodWloty.length > 0) {
                         for (let dwi = 0; dwi < precoCalc.dodWloty.length; dwi++) {
-                            let dw = precoCalc.dodWloty[dwi];
-                            let dwTyp =
+                            const dw = precoCalc.dodWloty[dwi];
+                            const dwTyp =
                                 dw.typ === 'kaskada'
                                     ? 'kaskada'
                                     : dw.typ === 'sciana'
