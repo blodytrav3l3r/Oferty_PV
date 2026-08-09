@@ -75,7 +75,7 @@
 
 - Docker Desktop (Windows) lub Docker Engine (Linux)
 - Obraz: node:22-slim (~150 MB)
-- Wolumen: `witros_data:/var/data` (trwałość bazy)
+- Wolumen: `sok_data:/var/data` (trwałość bazy)
 
 ---
 
@@ -236,7 +236,7 @@ docker compose up --build -d
     - Migruje dane PRECO (jeśli stare tabele istnieją)
     - Wykonuje `prisma db push --skip-generate` (aktualizacja schematu)
     - Uruchamia `npm start` (serwer produkcyjny)
-3. Montuje wolumen `witros_data:/var/data` (baza trwała)
+3. Montuje wolumen `sok_data:/var/data` (baza trwała)
 4. Healthcheck co 30s na `/health`
 
 ### Docker — komendy:

@@ -16,9 +16,9 @@ services:
             # Wymagane przy pierwszym starcie - ensureAdminExists() rzuci wyjatek bez tej zmiennej
             - "DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}"
         volumes:
-            - witros_data:/var/data
+            - sok_data:/var/data
         networks:
-            - witros-network
+            - sok-network
         healthcheck:
             test:
                 [
@@ -33,9 +33,9 @@ services:
             start_period: 30s
 
 volumes:
-    witros_data:
+    sok_data:
         driver: local
 
 networks:
-    witros-network:
+    sok-network:
         driver: bridge

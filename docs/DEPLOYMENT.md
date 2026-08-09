@@ -93,7 +93,7 @@ services:
             - PORT=10000
             - HOST=0.0.0.0
         volumes:
-            - witros_data:/var/data
+            - sok_data:/var/data
         healthcheck:
             test:
                 [
@@ -108,10 +108,10 @@ services:
             start_period: 10s
 
 volumes:
-    witros_data:
+    sok_data:
 
 networks:
-    witros-network:
+    sok-network:
         driver: bridge
 ```
 
@@ -122,6 +122,34 @@ docker compose up --build -d
 ```
 
 Aplikacja dostępna pod: `http://localhost:3000`
+
+### Migracja wolumenu `witros_data` → `sok_data` (Wariant B)
+
+> **KRYTYCZNE:** wolumen zawiera bazę SQLite. Zmiana nazwy bez migracji = nowy
+> PUSTY wolumen = seed pustej bazy (pozorowana utrata danych). Postępuj ściśle wg
+> poniższych kroków — NIGDY nie używaj `docker compose down -v` przy tej operacji.
+
+1. Pre-check: `docker compose ps` (aplikacja działa), `git status` czyste,
+   `docker network inspect witros-network` — jeśli na sieci są OBCE kontenery
+   (zewnętrzny proxy), NIE zmieniaj nazwy sieci (wróć do `witros-network`).
+2. Czysty shutdown (SQLite WAL → checkpoint do `app_database.sqlite`):
+   `docker compose down` (bez `-v`).
+3. Utwórz nowy wolumen: `docker volume create sok_data`.
+4. Skopiuj dane:
+   `docker run --rm -v witros_data:/from -v sok_data:/to alpine:3.20 sh -c "cp -a /from/. /to/"`
+5. **Weryfikacja kopii (obowiązkowo):**
+   ```
+   docker run --rm -v witros_data:/from alpine:3.20 sh -c "sha256sum /from/app_database.sqlite"
+   docker run --rm -v sok_data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
+   ```
+   → identyczne sumy; `ls -la /to` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
+6. Zaktualizuj pliki (docker-compose.yml / docs) i uruchom:
+   `docker compose up -d --build`.
+7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health`
+   → 200, logowanie → istniejące oferty/zamówienia widoczne.
+8. **Retencja:** NIE usuwaj `witros_data` przez minimum 2 cykle release.
+   Usunięcie tylko po potwierdzeniu stabilności:
+   `docker volume rm witros_data`.
 
 ### Health check
 
