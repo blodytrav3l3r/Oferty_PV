@@ -39,6 +39,9 @@ jobs:
             - name: Run encoding check
               run: npm run encoding:check
 
+            - name: Run appname check
+              run: npm run appname:check
+
     typecheck:
         name: Typecheck (tsc)
         runs-on: ubuntu-latest
@@ -108,8 +111,37 @@ jobs:
                     echo "  Proba $i/15 — oczekiwanie 2s..."
                     sleep 2
                   done
+                  docker exec test-container node scripts/check-appname.cjs
+                  docker exec test-container node -e "const http=require('http');http.get('http://localhost:10000/index.html',r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<title>\s*S\.O\.K\./.test(b)?0:1)})})"
                   docker stop test-container
                   docker rm test-container
+
+    e2e-appname:
+        name: E2E — spójność nazwy aplikacji
+        runs-on: ubuntu-latest
+        needs: test
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Setup Chromium (Playwright)
+              run: npx playwright install --with-deps chromium
+
+            - name: Przygotuj bazę e2e
+              run: |
+                  npx prisma db push --skip-generate --accept-data-loss
+                  npx prisma db seed
+
+            - name: Run appname E2E
+              run: npm run test:e2e-appname:spawn
 
     version-check:
         name: Version check (standard-version dry-run)

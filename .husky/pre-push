@@ -1,3 +1,4 @@
 npm run version:check 2>&1 || { echo "❌ Wersja niespójna — przerwano push"; exit 1; }
 npm run encoding:check 2>&1 || { echo "❌ Błąd kodowania (mojibake/UTF-8) — uruchom npm run encoding:fix i dodaj poprawki"; exit 1; }
+npm run appname:check 2>&1 || { echo "❌ Nazwa aplikacji odbiega od S.O.K. — uruchom npm run appname:check i napraw wzorce"; exit 1; }
 npm run typecheck && npm run typecheck:frontend && npm run test:quick
