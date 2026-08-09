@@ -42,7 +42,7 @@ process.on('unhandledRejection', (reason: unknown) => {
     }
 
     const server = app.listen(PORT, HOST, () => {
-        logger.info('Server', `WITROS Oferty — serwer działa na: http://localhost:${PORT}`);
+        logger.info('Server', `S.O.K. — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
         logger.info('Server', 'Baza: SQLite (lokalna)');
     });

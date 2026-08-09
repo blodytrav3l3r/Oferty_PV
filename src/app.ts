@@ -115,7 +115,7 @@ app.use(
     '/api/docs',
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
-        customSiteTitle: 'WITROS Oferty PV — API Docs',
+        customSiteTitle: 'S.O.K. — API Docs',
         customfavIcon: '/favicon.ico',
         swaggerOptions: {
             persistAuthorization: true,

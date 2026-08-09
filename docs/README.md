@@ -1,4 +1,4 @@
-# WITROS Oferty PV — Generator Ofert Handlowych
+# S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.11.5
 

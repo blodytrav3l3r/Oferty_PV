@@ -233,7 +233,7 @@ Aplikacja: `http://TWOJ_PUBLICZNY_IP:3000`
 ### Firewall na Windows:
 
 ```powershell
-New-NetFirewallRule -DisplayName "WITROS Oferty" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
+New-NetFirewallRule -DisplayName "S.O.K." -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
 ```
 
 ### Firewall na Linux (VPS):

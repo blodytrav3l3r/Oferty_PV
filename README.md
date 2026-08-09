@@ -1,4 +1,4 @@
-# WITROS Oferty PV — Generator ofert handlowych
+# S.O.K. — System Ofert i Kalkulacji
 
 <div align="center" style="background:#111827;border-radius:22px;padding:16px;margin:16px 0">
     <img src="public/images/logo-sok.svg" alt="S.O.K. — System Ofert i Kalkulacji" width="480" />

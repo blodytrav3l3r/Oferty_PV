@@ -5,7 +5,7 @@ const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'WITROS Oferty PV — API',
+            title: 'S.O.K. — API',
             version: getVersion().version,
             description:
                 'Generator ofert handlowych dla branży kanalizacyjnej. Zarządzanie produktami (rury betonowe, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',

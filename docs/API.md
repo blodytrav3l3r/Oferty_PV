@@ -35,9 +35,12 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.9.0",
-    "name": "WITROS Oferty",
-    "node": "v24.14.1"
+    "version": "1.11.5",
+    "commitHash": "389dd6e",
+    "branch": "main",
+    "buildDate": "2026-08-09T00:00:00.000Z",
+    "environment": "development",
+    "dbVersion": "1.11.5"
 }
 ```
 
