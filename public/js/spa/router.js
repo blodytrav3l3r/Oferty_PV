@@ -114,7 +114,7 @@ const SpaRouter = (() => {
         nav.innerHTML = sections
             .map(
                 (s, i) => `
-            <button class="nav-btn nav-tile nav-accent-${s.id}${i === 0 ? ' active' : ''}"
+            <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
                 onclick="${s.isLink ? `window.location.hash='${s.href}'` : `SpaRouter.showSection('${s.id}')`}">
                 <span class="nav-tile-icon">${s.icon}</span>
@@ -381,43 +381,8 @@ const SpaRouter = (() => {
             }
 
             // Wyświetl użytkownika w nagłówku
-            const userEl = document.getElementById('header-username');
-            const roleEl = document.getElementById('header-role-badge');
-            const displayName =
-                authData.user.firstName && authData.user.lastName
-                    ? `${authData.user.firstName} ${authData.user.lastName}`
-                    : authData.user.username;
-            if (userEl) {
-                userEl.textContent = '';
-                const icon = document.createElement('i');
-                icon.setAttribute('data-lucide', 'user');
-                userEl.appendChild(icon);
-                userEl.appendChild(document.createTextNode(' ' + displayName));
-            }
-            if (roleEl) {
-                const role = authData.user.role;
-                roleEl.textContent = role === 'admin' ? 'ADMIN' : role === 'pro' ? 'PRO' : 'USER';
-                const colorMap = {
-                    admin: {
-                        bg: 'rgba(var(--warn-rgb), 0.15)',
-                        fg: 'var(--warn)',
-                        border: 'rgba(var(--warn-rgb), 0.3)'
-                    },
-                    pro: {
-                        bg: 'rgba(var(--success-rgb), 0.15)',
-                        fg: 'var(--success)',
-                        border: 'rgba(var(--success-rgb), 0.3)'
-                    },
-                    user: {
-                        bg: 'rgba(var(--blue-rgb), 0.15)',
-                        fg: 'var(--blue-hover)',
-                        border: 'rgba(var(--blue-rgb), 0.3)'
-                    }
-                };
-                const c = colorMap[role] || colorMap.user;
-                roleEl.style.background = c.bg;
-                roleEl.style.color = c.fg;
-                roleEl.style.border = '1px solid ' + c.border;
+            if (window.headerUser) {
+                window.headerUser.render(authData.user);
             }
 
             window.currentUser = authData.user;

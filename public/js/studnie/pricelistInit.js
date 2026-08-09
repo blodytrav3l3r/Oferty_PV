@@ -22,15 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
     }
 
-    const userEl = document.getElementById('header-username');
-    const roleEl = document.getElementById('header-role-badge');
-    if (userEl)
-        userEl.textContent = currentUser.firstName
-            ? `${currentUser.firstName} ${currentUser.lastName || ''}`.trim()
-            : currentUser.username;
-    if (roleEl) {
-        roleEl.textContent = currentUser.role;
-        roleEl.classList.add(currentUser.role === 'admin' ? 'role-admin' : 'role-user');
+    if (window.headerUser) {
+        window.headerUser.render(currentUser);
     }
 
     document.querySelectorAll('.nav-btn').forEach((/** @type {HTMLElement} */ btn) => {

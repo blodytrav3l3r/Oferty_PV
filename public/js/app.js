@@ -128,16 +128,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Wyświetl info o użytkowniku w nagłówku
-    const userEl = document.getElementById('header-username');
-    if (userEl)
-        userEl.innerHTML =
-            '<i data-lucide="user"></i> ' +
-            escapeHtml(currentUser.displayName || currentUser.username);
-
-    const roleEl = document.getElementById('header-role-badge');
-    if (roleEl) {
-        roleEl.textContent = currentUser.role === 'admin' ? 'ADMIN' : 'USER';
-        roleEl.classList.add(currentUser.role === 'admin' ? 'role-admin' : 'role-user');
+    if (window.headerUser) {
+        window.headerUser.render(currentUser);
     }
 
     // Pokaż przycisk „Zmień opiekuna" dla admin/pro

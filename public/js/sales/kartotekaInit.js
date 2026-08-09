@@ -20,33 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const user = authData.user;
         sessionStorage.setItem('user', JSON.stringify(user));
 
-        const userEl = document.getElementById('header-username');
-        const roleEl = document.getElementById('header-role-badge');
-        if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + escapeHtml(user.username);
-        if (roleEl) {
-            roleEl.textContent =
-                user.role === 'admin' ? 'ADMIN' : user.role === 'pro' ? 'PRO' : 'USER';
-            const colorMap = {
-                admin: {
-                    bg: 'rgba(var(--warn-rgb), 0.15)',
-                    fg: 'var(--warn)',
-                    border: 'rgba(var(--warn-rgb), 0.3)'
-                },
-                pro: {
-                    bg: 'rgba(var(--success-rgb), 0.15)',
-                    fg: 'var(--success)',
-                    border: 'rgba(var(--success-rgb), 0.3)'
-                },
-                user: {
-                    bg: 'rgba(var(--blue-rgb), 0.15)',
-                    fg: 'var(--blue-hover)',
-                    border: 'rgba(var(--blue-rgb), 0.3)'
-                }
-            };
-            const c = colorMap[user.role] || colorMap.user;
-            roleEl.style.background = c.bg;
-            roleEl.style.color = c.fg;
-            roleEl.style.border = '1px solid ' + c.border;
+        if (window.headerUser) {
+            window.headerUser.render(user);
         }
     } catch (e) {
         window.location.href = 'index.html';

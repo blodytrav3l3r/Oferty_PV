@@ -35,21 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Wyświetlenie danych w nagłówku
-    const userEl = document.getElementById('header-username');
-    const roleEl = document.getElementById('header-role-badge');
-    const displayName =
-        currentUser.firstName && currentUser.lastName
-            ? `${currentUser.firstName} ${currentUser.lastName}`
-            : currentUser.username;
-    if (userEl) userEl.innerHTML = '<i data-lucide="user"></i> ' + escapeHtml(displayName);
-    if (roleEl) {
-        roleEl.textContent =
-            currentUser.role === 'admin' ? 'ADMIN' : currentUser.role === 'pro' ? 'PRO' : 'USER';
-        if (currentUser.role === 'admin') {
-            roleEl.classList.add('role-admin');
-        } else if (currentUser.role === 'pro') {
-            roleEl.classList.add('role-pro');
-        }
+    if (window.headerUser) {
+        window.headerUser.render(currentUser);
     }
 
     // Pokaż przycisk „Zmień opiekuna" dla admin/pro
