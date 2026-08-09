@@ -77,6 +77,15 @@ async function pollHealth(url, tries = 30) {
 /* ── Spawn serwera (izolowany, port 3177, e2e.sqlite) ── */
 async function startServer() {
     const dbUrl = 'file:./data/e2e.sqlite';
+    const { rmSync, existsSync, symlinkSync } = require('fs');
+    const dbFile = join(ROOT, 'prisma', 'data', 'e2e.sqlite');
+    for (const f of [dbFile, dbFile + '-wal', dbFile + '-shm']) {
+        if (existsSync(f)) rmSync(f);
+    }
+    const distGen = join(ROOT, 'dist', 'generated');
+    if (!existsSync(distGen)) {
+        symlinkSync(join(ROOT, 'generated'), distGen, 'junction');
+    }
     execFileSync(process.execPath, [require.resolve('prisma/build/index.js'), 'db', 'push', '--skip-generate', '--accept-data-loss'], {
         cwd: ROOT,
         env: { ...process.env, DATABASE_URL: dbUrl },
@@ -94,7 +103,7 @@ async function startServer() {
             PORT: '3177',
             DATABASE_URL: dbUrl,
             DEFAULT_ADMIN_PASSWORD: ADMIN_PASSWORD,
-            NODE_ENV: 'production'
+            NODE_ENV: 'development'
         },
         stdio: 'pipe'
     });
@@ -115,7 +124,7 @@ const SPAWN_VERBOSE = process.env.SPAWN_VERBOSE === '1';
     let server = null;
     if (SPAWN) {
         console.log('▶ Budowanie + start izolowanego serwera...');
-        execFileSync('npm', ['run', 'build'], { cwd: ROOT, stdio: 'pipe' });
+        execFileSync('npm', ['run', 'build'], { cwd: ROOT, stdio: 'pipe', shell: true });
         server = await startServer();
     }
 
