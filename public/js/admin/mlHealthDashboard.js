@@ -72,13 +72,11 @@
         var container = document.getElementById(containerId);
         if (!container) return;
 
-        container.innerHTML =
-            '<div style="display:flex;justify-content:center;padding:20px;color:var(--text-secondary)">Ładowanie...</div>';
+        container.innerHTML = '<div class="ai-ml-loading">Ładowanie...</div>';
 
         window.fetchJson(HEALTH_URL).then(function (d) {
             if (!d || d.error) {
-                container.innerHTML =
-                    '<div style="padding:12px;text-align:center;color:var(--danger);font-size:0.85rem">Nie można pobrać danych</div>';
+                container.innerHTML = '<div class="ai-ml-error">Nie można pobrać danych</div>';
                 return;
             }
 
@@ -94,10 +92,7 @@
             var html =
                 /* Naglowek */
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-                '<div style="display:flex;align-items:center;gap:6px">' +
-                '<i data-lucide="heart-pulse" style="width:18px;height:18px;color:var(--accent)"></i>' +
-                '<span style="font-size:0.9rem;font-weight:600;color:var(--text-primary)">Stan pipeline ML</span>' +
-                '</div>' +
+                '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
                 '<span style="font-size:0.7rem;color:var(--text-secondary)">' +
                 new Date().toLocaleString('pl-PL') +
                 '</span>' +

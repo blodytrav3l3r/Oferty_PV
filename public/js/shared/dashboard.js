@@ -66,11 +66,13 @@ async function loadRecycledNumbers(user) {
         const container = document.getElementById('recycled-numbers-list');
 
         if (data.recycled && data.recycled.length > 0) {
-            const yearShort = String(new Date().getFullYear()).slice(-2);
+            const yearShort = data.yearShort || String(new Date().getFullYear()).slice(-2);
+            const yearLetter = data.yearLetter || '?';
+            const symbol = data.symbol || u.symbol || '?';
             container.innerHTML = data.recycled
                 .map(
                     (num) =>
-                        `<span class="recycled-badge">${escapeHtml(u.symbol || '?')}/.../${String(num).padStart(5, '0')}/${yearShort}</span>`
+                        `<span class="recycled-badge">${escapeHtml(symbol)}/${escapeHtml(yearLetter)}/${String(num).padStart(5, '0')}/${escapeHtml(yearShort)}</span>`
                 )
                 .join('');
         } else {

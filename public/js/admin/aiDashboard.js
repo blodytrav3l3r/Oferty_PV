@@ -34,11 +34,7 @@
             errorCode === 'forbidden'
                 ? 'Brak dostępu (wymagana rola admin)'
                 : 'Błąd serwera — nie udało się pobrać danych';
-        return (
-            '<div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);padding:12px;color:var(--danger-hover)">' +
-            msg +
-            '</div>'
-        );
+        return '<div class="ai-ml-error">' + msg + '</div>';
     }
 
     /* Popup in-app (fallback do natywnych okien) */
@@ -57,15 +53,15 @@
         return (
             '<div class="ai-stat-card" ' +
             (desc ? 'title="' + window.escapeHtml(desc) + '"' : '') +
-            ' style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;text-align:center">' +
+            '>' +
             '<div' +
             (tooltip ? ' title="' + window.escapeHtml(tooltip) + '"' : '') +
-            ' style="font-size:var(--stat-val-size, 1.5rem);font-weight:600;color:' +
+            ' style="color:' +
             (color || 'var(--accent)') +
             '">' +
             value +
             '</div>' +
-            '<div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px">' +
+            '<div>' +
             title +
             '</div>' +
             '</div>'
@@ -79,7 +75,7 @@
     }
 
     function loadingHtml() {
-        return '<div style="display:flex;justify-content:center;padding:20px;color:var(--text-secondary);font-size:0.82rem">Ładowanie...</div>';
+        return '<div class="ai-ml-loading">Ładowanie...</div>';
     }
 
     /* ===== LEARNING ENGINE STATS ===== */
@@ -88,7 +84,7 @@
         var p = window.fetchJson(ENDPOINTS.stats);
         if (!p) {
             container.innerHTML =
-                '<div style="background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-md);padding:12px;color:var(--danger-hover)">Brak dostępu do statystyk (wymagana rola admin)</div>';
+                '<div class="ai-ml-error">Brak dostępu do statystyk (wymagana rola admin)</div>';
             return;
         }
         p.then(function (stats) {
@@ -148,16 +144,16 @@
                 ) +
                 '</div>' +
                 (stats.byPatternType
-                    ? '<div style="background:var(--bg-card);border-radius:var(--radius-md);padding:12px;margin-bottom:16px;border:1px solid var(--border-glass)">' +
-                      '<h4 style="margin:0 0 8px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="pie-chart" style="width:14px;height:14px;color:var(--accent)"></i> Rozk\u0142ad wg typu</h4>' +
+                    ? '<div class="ai-pattern-list">' +
+                      '<h4 class="ai-section-title"><i data-lucide="pie-chart"></i> Rozk\u0142ad wg typu</h4>' +
                       Object.keys(stats.byPatternType)
                           .map(function (k) {
                               return (
-                                  '<div style="display:flex;justify-content:space-between;border-bottom:1px solid var(--border-glass);padding:5px 0;font-size:0.8rem">' +
-                                  '<span style="color:var(--text-secondary)">' +
+                                  '<div class="ai-pattern-row">' +
+                                  '<span>' +
                                   window.escapeHtml(k) +
                                   '</span>' +
-                                  '<strong style="color:var(--text-primary)">' +
+                                  '<strong>' +
                                   window.escapeHtml(stats.byPatternType[k]) +
                                   '</strong></div>'
                               );
@@ -186,7 +182,7 @@
         var p = window.fetchJson(url);
         if (!p) {
             container.innerHTML =
-                '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców (lub brak dostępu)</div>';
+                '<div class="ai-ml-unavailable">Brak wzorców (lub brak dostępu)</div>';
             return;
         }
         p.then(function (data) {
@@ -194,7 +190,7 @@
                 container.innerHTML =
                     data && data.error
                         ? apiErrorHtml(data.error)
-                        : '<div style="color:var(--text-muted);text-align:center;padding:20px">Brak wzorców (lub brak dostępu)</div>';
+                        : '<div class="ai-ml-unavailable">Brak wzorców (lub brak dostępu)</div>';
                 return;
             }
             if (!data.items || data.items.length === 0) {
@@ -213,22 +209,22 @@
                               ? 'var(--warn)'
                               : 'var(--text-muted)';
                     return (
-                        '<tr style="border-bottom:1px solid var(--border-glass)">' +
-                        '<td style="padding:6px"><code style="background:var(--bg-tertiary);padding:2px 6px;border-radius:4px;font-size:0.72rem;color:var(--accent-text)">' +
+                        '<tr>' +
+                        '<td><code class="ai-pattern-code">' +
                         window.escapeHtml(p.patternType || '') +
                         '</code></td>' +
-                        '<td style="padding:6px;font-family:monospace;font-size:0.7rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                        '<td style="font-family:monospace;font-size:0.7rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
                         window.escapeHtml((p.patternKey || '').slice(0, 60)) +
                         '</td>' +
-                        '<td style="padding:6px;text-align:right;color:' +
+                        '<td style="text-align:right;color:' +
                         confColor +
                         ';font-weight:700">' +
                         Math.round((p.confidence || 0) * 100) +
                         '%</td>' +
-                        '<td style="padding:6px;text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
+                        '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
                         (p.hitCount || 0) +
                         '</td>' +
-                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                        '<td style="color:var(--text-muted);font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
                         window.escapeHtml((p.description || '').slice(0, 80)) +
                         '</td>' +
                         '</tr>'
@@ -236,14 +232,14 @@
                 })
                 .join('');
             container.innerHTML =
-                '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
-                '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.82rem">' +
-                '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px">' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Typ wykrytego wzorca">Typ</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Klucz wzorca">Pattern</th>' +
-                '<th style="padding:6px;text-align:right;font-weight:700" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +
-                '<th style="padding:6px;text-align:right;font-weight:700" title="Liczba trafie\u0144 (zastosowa\u0144 wzorca)">Hits</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Opis wzorca">Opis</th>' +
+                '<div class="ai-table-wrap">' +
+                '<table class="ai-table">' +
+                '<thead><tr>' +
+                '<th title="Typ wykrytego wzorca">Typ</th>' +
+                '<th title="Klucz wzorca">Pattern</th>' +
+                '<th style="text-align:right" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +
+                '<th style="text-align:right" title="Liczba trafie\u0144 (zastosowa\u0144 wzorca)">Hits</th>' +
+                '<th title="Opis wzorca">Opis</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>';
@@ -764,7 +760,7 @@
                 .join('');
             container.innerHTML =
                 '<div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;margin-top:10px">' +
-                '<h4 style="margin:0 0 4px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="bar-chart-3" style="width:14px;height:14px;color:var(--accent)"></i> Feature Importance</h4>' +
+                '<h4 class="ai-section-title"><i data-lucide="bar-chart-3"></i> Feature Importance</h4>' +
                 '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:10px">Ważność cech aktywnego modelu: <strong>' +
                 window.escapeHtml(data.modelVersion || '—') +
                 '</strong></div>' +
@@ -802,20 +798,20 @@
                         ? new Date(w.lastSeenAt).toLocaleString('pl-PL')
                         : '—';
                     return (
-                        '<tr style="border-bottom:1px solid var(--border-glass)">' +
-                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem">' +
+                        '<tr>' +
+                        '<td style="color:var(--text-muted);font-size:0.72rem">' +
                         (i + 1) +
                         '</td>' +
-                        '<td style="padding:6px;font-family:monospace;font-size:0.78rem;color:var(--accent-text)">' +
+                        '<td style="font-family:monospace;font-size:0.78rem;color:var(--accent-text)">' +
                         window.escapeHtml(w.dn || '—') +
                         '</td>' +
-                        '<td style="padding:6px;color:var(--text-primary)">' +
+                        '<td style="color:var(--text-primary)">' +
                         window.escapeHtml(w.warehouse || '—') +
                         '</td>' +
-                        '<td style="padding:6px;text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
+                        '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
                         (w.count || 0) +
                         '</td>' +
-                        '<td style="padding:6px;color:var(--text-muted);font-size:0.72rem;white-space:nowrap">' +
+                        '<td style="color:var(--text-muted);font-size:0.72rem;white-space:nowrap">' +
                         window.escapeHtml(lastSeen) +
                         '</td>' +
                         '</tr>'
@@ -824,8 +820,8 @@
                 .join('');
             container.innerHTML =
                 '<div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px">' +
-                '<h4 style="margin:0 0 8px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="wand-2" style="width:14px;height:14px;color:var(--accent)"></i> Studnie dobrane przez AI</h4>' +
-                '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">' +
+                '<h4 class="ai-section-title"><i data-lucide="wand-2"></i> Studnie dobrane przez AI</h4>' +
+                '<div class="ai-toolbar">' +
                 statCard(
                     'Studnie (AI)',
                     data.totalWells || 0,
@@ -839,14 +835,14 @@
                     'Łączna liczba rekordów telemetrii z nadpisaniem przez AI'
                 ) +
                 '</div>' +
-                '<div style="overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border-glass)">' +
-                '<table style="width:100%;border-collapse:collapse;color:var(--text-primary);font-size:0.82rem">' +
-                '<thead><tr style="background:var(--bg-tertiary);color:var(--text-muted);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.4px">' +
-                '<th style="padding:6px;text-align:left;font-weight:700">Lp</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Średnica nominalna studni">DN</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Magazyn / zakład produkcyjny">Magazyn</th>' +
-                '<th style="padding:6px;text-align:right;font-weight:700" title="Liczba rekordów telemetrii z nadpisaniem przez AI">Liczba rekordów</th>' +
-                '<th style="padding:6px;text-align:left;font-weight:700" title="Kiedy AI ostatnio zmieniło dobór dla tej studni">Ostatnio użyto</th>' +
+                '<div class="ai-table-wrap">' +
+                '<table class="ai-table">' +
+                '<thead><tr>' +
+                '<th>Lp</th>' +
+                '<th title="Średnica nominalna studni">DN</th>' +
+                '<th title="Magazyn / zakład produkcyjny">Magazyn</th>' +
+                '<th style="text-align:right" title="Liczba rekordów telemetrii z nadpisaniem przez AI">Liczba rekordów</th>' +
+                '<th title="Kiedy AI ostatnio zmieniło dobór dla tej studni">Ostatnio użyto</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>' +
@@ -872,12 +868,12 @@
             '<div style="display:grid;grid-template-columns:1fr;gap:20px">' +
             /* Sekcja: Learning Engine */
             '<div id="ai-learning-section">' +
-            '<h4 style="margin:0 0 10px;font-size:0.82rem;color:var(--text-primary);display:flex;align-items:center;gap:6px"><i data-lucide="brain" style="width:14px;height:14px;color:var(--accent)"></i> Learning Engine (baza wiedzy)</h4>' +
+            '<h4 class="ai-section-title"><i data-lucide="brain"></i> Learning Engine (baza wiedzy)</h4>' +
             '<div id="ai-stats"></div>' +
-            '<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">' +
-            '<input type="text" id="ai-dn-filter" placeholder="DN (np. 1200)" style="background:var(--bg-input);border:1px solid var(--border-glass);color:var(--text-primary);padding:6px 12px;border-radius:var(--radius-sm);font-size:0.82rem;width:110px">' +
-            '<button id="ai-filter-btn" class="btn-hero" style="padding:0.35rem 0.8rem;font-size:0.78rem" title="Filtruj wzorce po \u015brednicy nominalnej (DN)"><i data-lucide="filter"></i> Filtruj</button>' +
-            '<button id="ai-run-cycle" class="btn-hero btn-accent" style="padding:0.35rem 0.8rem;font-size:0.78rem" title="Uruchamia cykl uczenia — analizuje dane telemetryczne i wykrywa nowe wzorce"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
+            '<div class="ai-toolbar">' +
+            '<input type="text" id="ai-dn-filter" class="ai-filter-input" placeholder="DN (np. 1200)">' +
+            '<button id="ai-filter-btn" class="ai-btn" title="Filtruj wzorce po \u015brednicy nominalnej (DN)"><i data-lucide="filter"></i> Filtruj</button>' +
+            '<button id="ai-run-cycle" class="ai-btn ai-btn-primary" title="Uruchamia cykl uczenia — analizuje dane telemetryczne i wykrywa nowe wzorce"><i data-lucide="refresh-cw"></i> Uruchom Learning Cycle</button>' +
             '</div>' +
             '<div id="ai-patterns"></div>' +
             '</div>' +

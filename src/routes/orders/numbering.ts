@@ -11,11 +11,20 @@ router.get('/recycled', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const year = new Date().getFullYear();
+        const yearShort = String(year).slice(-2);
+        const letterKey = 'year_letter_' + year;
+        const letterRow = await prisma.settings.findUnique({ where: { key: letterKey } });
+        const yearLetter = letterRow ? letterRow.value : '?';
         const rows = await prisma.recycled_production_numbers.findMany({
             where: { userId: authReq.user?.id, year },
             orderBy: { seqNumber: 'asc' }
         });
-        res.json({ recycled: rows.map((r) => r.seqNumber) });
+        res.json({
+            recycled: rows.map((r) => r.seqNumber),
+            symbol: authReq.user?.symbol || '??',
+            yearLetter,
+            yearShort
+        });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         res.status(500).json({ error: message });
