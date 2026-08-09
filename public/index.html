@@ -66,16 +66,16 @@
                 </div>
 
                 <div class="header-right">
-                    <div class="dash-user-info">
-                        <span class="dash-username" id="dash-username"></span>
-                        <span class="dash-role-badge" id="dash-role"></span>
-                        <span class="dash-version" id="app-version-toolbar"></span>
+                    <div id="header-user-info" class="header-user-info">
+                        <span id="header-username" class="header-username"></span>
+                        <span id="header-role-badge" class="header-role-badge"></span>
+                        <span id="app-version-toolbar" class="header-version"></span>
                         <span
                             class="connection-dot is-checking"
                             id="connection-dot"
                             title="Sprawdzanie połączenia..."
                         ></span>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="doLogout()">
+                        <button type="button" onclick="appLogout()" class="header-logout">
                             Wyloguj
                         </button>
                     </div>
@@ -518,6 +518,7 @@
         <div id="toast-container" class="toast-container"></div>
 
         <script src="js/shared/ui.js?v=1.11.5"></script>
+        <script src="js/shared/headerUser.js?v=1.11.5"></script>
         <script src="js/shared/dashboard.js?v=1.11.5"></script>
         <script src="js/shared/iconsSlim.js?v=1.11.5"></script>
         <script src="js/admin/aiDashboard.js?v=1.11.5"></script>

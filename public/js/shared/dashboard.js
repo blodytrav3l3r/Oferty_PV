@@ -145,20 +145,10 @@ function showLoggedIn(user) {
     const roleEl = document.getElementById('user-display-role');
     roleEl.textContent = user.role.toUpperCase();
 
-    // Pokaz naglowek nawigacji pulpitu
+    // Pokaz naglowek nawigacji pulpitu (jedno źródło prawdy: headerUser.js)
     document.getElementById('dash-header').classList.add('visible');
-    const dashUser = document.getElementById('dash-username');
-    const dashRole = document.getElementById('dash-role');
-    if (dashUser) {
-        dashUser.textContent = '';
-        const icon = document.createElement('i');
-        icon.setAttribute('data-lucide', 'user');
-        dashUser.appendChild(icon);
-        dashUser.appendChild(document.createTextNode(' ' + user.username));
-    }
-    if (dashRole) {
-        dashRole.textContent = user.role === 'admin' ? 'ADMIN' : 'USER';
-        dashRole.classList.add(user.role === 'admin' ? 'role-admin' : 'role-user');
+    if (window.headerUser) {
+        window.headerUser.render(user);
     }
 
     if (user.role === 'admin') {

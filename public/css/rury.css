@@ -15,8 +15,12 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* Margins (uzupełnienie shared w style.css dla porządku) */
-.mb-0 { margin-bottom: 0; }
-.mb-1 { margin-bottom: 1rem; }
+.mb-0 {
+    margin-bottom: 0;
+}
+.mb-1 {
+    margin-bottom: 1rem;
+}
 
 /* ── Karty ── */
 .rury-card {
@@ -110,8 +114,12 @@ body.rury-page > .main:has(#section-builder.active) {
     border: 1px solid var(--border-glass);
     border-radius: 8px;
     color: var(--text-primary);
-    font: 500 0.82rem 'Inter', sans-serif;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    font:
+        500 0.82rem 'Inter',
+        sans-serif;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
 }
 
 .rury-form-input:focus {
@@ -130,8 +138,12 @@ body.rury-page > .main:has(#section-builder.active) {
     border: 1px solid var(--border-glass);
     border-radius: 8px;
     color: var(--text-primary);
-    font: 500 0.82rem 'Inter', sans-serif;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    font:
+        500 0.82rem 'Inter',
+        sans-serif;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
     resize: vertical;
     min-height: 40px;
 }
@@ -154,9 +166,13 @@ body.rury-page > .main:has(#section-builder.active) {
     border-radius: 8px;
     background: var(--bg-tile);
     color: var(--text-muted);
-    font: 600 0.8rem 'Inter', sans-serif;
+    font:
+        600 0.8rem 'Inter',
+        sans-serif;
     cursor: pointer;
-    transition: border-color 0.25s, color 0.25s;
+    transition:
+        border-color 0.25s,
+        color 0.25s;
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -247,7 +263,9 @@ body.rury-page > .main:has(#section-builder.active) {
     font-weight: 600;
     vertical-align: middle;
     outline: none;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
 }
 .order-partial-qty:focus {
     border-color: var(--warn);
@@ -347,7 +365,9 @@ body.rury-page > .main:has(#section-builder.active) {
     color: var(--text-primary);
     cursor: pointer;
     white-space: nowrap;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
 }
 
 .rury-table .length-editor:hover {
@@ -423,13 +443,13 @@ body.rury-page > .main:has(#section-builder.active) {
     text-align: center;
     white-space: nowrap;
 }
-.rury-table tbody td[data-status="ordered"] i {
+.rury-table tbody td[data-status='ordered'] i {
     filter: drop-shadow(0 0 4px rgba(var(--accent-rgb), 0.3));
 }
-.rury-table tbody td[data-status="available"] {
+.rury-table tbody td[data-status='available'] {
     opacity: 0.5;
 }
-.rury-table tbody td[data-status="available"]:hover {
+.rury-table tbody td[data-status='available']:hover {
     opacity: 1;
 }
 
@@ -537,7 +557,10 @@ body.rury-page > .main:has(#section-builder.active) {
     font-weight: 600;
     cursor: pointer;
     border-radius: 8px;
-    transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+    transition:
+        background-color 0.2s,
+        border-color 0.2s,
+        color 0.2s;
     width: 100%;
     height: 100%;
     display: inline-flex;
@@ -565,13 +588,19 @@ body.rury-page > .main:has(#section-builder.active) {
 .rury-action-btn {
     padding: 0.4rem 0.8rem;
     border-radius: 8px;
-    font: 600 0.75rem 'Inter', sans-serif;
+    font:
+        600 0.75rem 'Inter',
+        sans-serif;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.15s;
+    transition:
+        background 0.2s,
+        border-color 0.2s,
+        color 0.2s,
+        transform 0.15s;
     white-space: nowrap;
     width: 100%;
     height: 100%;
@@ -642,34 +671,6 @@ body.rury-page > .main:has(#section-builder.active) {
     display: inline-flex;
 }
 
-/* ── Przycisk wylogowania ── */
-.rury-btn-logout {
-    padding: 0.35rem 0.8rem;
-    border: 1px solid var(--border-glass);
-    border-radius: 6px;
-    background: var(--bg-glass);
-    color: var(--text-muted);
-    font: 500 0.75rem 'Inter', sans-serif;
-    cursor: pointer;
-    transition: color 0.2s, border-color 0.2s;
-}
-
-.rury-btn-logout:hover {
-    color: var(--danger-hover);
-    border-color: var(--danger-border-deep);
-}
-
-/* ── Badge roli użytkownika ── */
-.rury-role-badge {
-    font-size: 0.6rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 20px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-    margin-right: 0.5rem;
-}
-
 /* ── Pasek narzędzi cennika ── */
 .rury-toolbar {
     display: flex;
@@ -710,7 +711,9 @@ body.rury-page > .main:has(#section-builder.active) {
 .rury-catalog-tab {
     padding: 0.3rem 0.7rem;
     border-radius: 4px;
-    font: 500 0.75rem 'Inter', sans-serif;
+    font:
+        500 0.75rem 'Inter',
+        sans-serif;
     border: 1px solid var(--border);
     background: var(--bg-tertiary-alt-2);
     color: var(--text-secondary);
@@ -728,19 +731,6 @@ body.rury-page > .main:has(#section-builder.active) {
     background: var(--accent);
     color: var(--white);
     border-color: var(--accent);
-}
-
-/* ── Header user info ── */
-.rury-header-user {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.78rem;
-}
-
-.rury-header-username {
-    color: var(--text-secondary);
-    font-weight: 500;
 }
 
 /* ── Flex/Grid helpers ── */
@@ -912,23 +902,66 @@ body.rury-page > .main:has(#section-builder.active) {
         padding: 0.6rem 0.8rem;
     }
 
-    .wizard-dot-label { display: none; }
-    .wizard-step-dot { gap: 0; }
-    .wizard-step-line { width: 24px; }
-    .wizard-nav { flex-direction: column; gap: 0.5rem; }
-    .wizard-nav .wizard-btn { width: 100%; justify-content: center; }
-    .wizard-nav-fixed { padding: 0 0.6rem; column-gap: 0.5rem; height: 56px; box-sizing: border-box; }
-    .wizard-nav-fixed .wizard-nav-left { gap: 0.4rem; }
-    .wizard-nav-fixed .wizard-nav-right { gap: 0.4rem; }
-    .wizard-nav-fixed .wizard-btn { min-width: 90px; height: 34px; padding: 0 0.7rem; font-size: 0.75rem; }
-    .wizard-nav-fixed .wizard-step-info { font-size: 0.6rem; padding: 0.2rem 0.6rem; height: 26px; letter-spacing: 0.4px; }
+    .wizard-dot-label {
+        display: none;
+    }
+    .wizard-step-dot {
+        gap: 0;
+    }
+    .wizard-step-line {
+        width: 24px;
+    }
+    .wizard-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .wizard-nav .wizard-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .wizard-nav-fixed {
+        padding: 0 0.6rem;
+        column-gap: 0.5rem;
+        height: 56px;
+        box-sizing: border-box;
+    }
+    .wizard-nav-fixed .wizard-nav-left {
+        gap: 0.4rem;
+    }
+    .wizard-nav-fixed .wizard-nav-right {
+        gap: 0.4rem;
+    }
+    .wizard-nav-fixed .wizard-btn {
+        min-width: 90px;
+        height: 34px;
+        padding: 0 0.7rem;
+        font-size: 0.75rem;
+    }
+    .wizard-nav-fixed .wizard-step-info {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        height: 26px;
+        letter-spacing: 0.4px;
+    }
 
-    .wizard-card { padding: 1rem 0.8rem; }
-    .wizard-card-header { flex-wrap: wrap; }
-    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
-    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
-    .wizard-form-grid[style*="grid-template-columns: 1fr 1fr 1fr 1fr"] { grid-template-columns: 1fr !important; }
-    .wizard-form-grid[style*="grid-template-columns: 3fr 1fr"] { grid-template-columns: 1fr !important; }
+    .wizard-card {
+        padding: 1rem 0.8rem;
+    }
+    .wizard-card-header {
+        flex-wrap: wrap;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
+    .wizard-form-grid[style*='grid-template-columns: 3fr 1fr'] {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 @media (max-width: 600px) {
@@ -952,17 +985,23 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* ===== KARTA BUDOWY — responsywność ===== */
 @media (max-width: 768px) {
-    .flex-wrap-start { gap: 0.6rem; }
-    .flex-1-180, .flex-1-240, .flex-2-240 { min-width: 100%; }
+    .flex-wrap-start {
+        gap: 0.6rem;
+    }
+    .flex-1-180,
+    .flex-1-240,
+    .flex-2-240 {
+        min-width: 100%;
+    }
 }
 
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
-  .rury-fade-in,
-  .rury-slide-up {
-    animation: none !important;
-    transition: none !important;
-  }
+    .rury-fade-in,
+    .rury-slide-up {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 /* ===== ZABEZPIECZENIE TRANSPORTU — TOGGLE TAK/NIE ===== */
@@ -988,13 +1027,18 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 .zt-toggle-btn {
     padding: 0.35rem 2rem;
-    font: 600 0.78rem 'Inter', sans-serif;
+    font:
+        600 0.78rem 'Inter',
+        sans-serif;
     border: 1px solid var(--border-glass);
     border-radius: 5px;
     background: rgba(var(--danger-rgb), 0.1);
     color: rgba(var(--danger-rgb), 0.8);
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    transition:
+        background-color 0.2s,
+        color 0.2s,
+        border-color 0.2s;
     line-height: 1.4;
 }
 .zt-toggle-btn.active {

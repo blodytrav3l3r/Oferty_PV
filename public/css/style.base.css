@@ -480,6 +480,7 @@ body::before {
     gap: 0.45rem;
     padding: 0.35rem 0.8rem;
     height: 2.25rem;
+    min-width: 9.5rem;
     font-family: inherit;
     font-size: 0.75rem;
     line-height: 1;
@@ -499,6 +500,92 @@ body::before {
 .nav-btn {
     padding: 0.35rem 0.8rem;
     font-size: 0.75rem;
+}
+
+/* ── Prawa strona nagłówka — spójna z kafelkami nawigacji ── */
+.header-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+}
+
+.header-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 2.25rem;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--border-glass);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.header-ai-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: var(--slate-500);
+}
+
+.header-username {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.header-username i,
+.header-username svg {
+    width: 14px;
+    height: 14px;
+    color: var(--accent);
+}
+
+.header-role-badge {
+    display: inline-flex;
+    align-items: center;
+    height: 2.25rem;
+    padding: 0.15rem 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.header-version {
+    color: var(--text-secondary);
+    font-size: 0.7rem;
+    padding: 0.35rem 0.5rem;
+    opacity: 0.65;
+    font-feature-settings: 'tnum';
+}
+
+.header-logout {
+    height: 2.25rem;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--border-glass);
+    color: var(--text-muted);
+    font:
+        500 0.75rem 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.header-logout:hover {
+    color: var(--danger-hover);
+    border-color: var(--slate-800);
 }
 
 .nav-tile:hover {
@@ -543,6 +630,14 @@ body::before {
     outline-offset: 2px;
 }
 
+/* Węższe okna (700-1100px): zerowanie min-width kafelków, aby nagłówek
+   nie przelał się poziomo - pełny wrap i ukrycie tekstu dopiero <=700px */
+@media (max-width: 1100px) {
+    .nav-tile {
+        min-width: 0;
+    }
+}
+
 @media (max-width: 700px) {
     .header-inner {
         flex-wrap: wrap;
@@ -563,6 +658,7 @@ body::before {
     }
     .nav-tile {
         padding: 0.3rem 0.5rem;
+        min-width: 0;
     }
     .nav-tile-text {
         display: none;

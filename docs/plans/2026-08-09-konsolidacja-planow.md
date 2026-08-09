@@ -12,25 +12,25 @@ czy istnieje lepsze rozwiązanie na dziś.
 
 ## 2. Weryfikacja: co zostało faktycznie wdrożone
 
-| Plan (archiwum)                          | Status w kodzie (potwierdzony grepem/commitem)                                        |
-| ---------------------------------------- | ------------------------------------------------------------------------------------- |
-| 2026-08-06-retencja-modeli-ml            | WDROŻONE                                                                               |
-| 2026-08-06-spojny-pasek-gorny            | Kroki A–D wdrożone; E/F nie (patrz niżej)                                             |
-| 2026-08-07-naprawy-ai-ml-dashboard       | WDROŻONE (commit b84b240, testy 1481/1481)                                            |
-| 2026-08-07-pierwszy-model-ai-ml          | Faza A wdrożona, Faza B przetestowana; operacyjnie w toku                             |
-| 2026-08-08-usprawnienia-modulu-excel     | WDROŻONE (commity 9c44d07/e1eb742)                                                    |
-| 2026-08-08-zlecenia-wirtualizacja        | Fazy 0–6 wdrożone; 7 zablokowana, 8 opcjonalna                                        |
-| 2026-08-09-spojny-styl-index             | WDROŻONE (commit 8de47f8)                                                             |
+| Plan (archiwum)                      | Status w kodzie (potwierdzony grepem/commitem)            |
+| ------------------------------------ | --------------------------------------------------------- |
+| 2026-08-06-retencja-modeli-ml        | WDROŻONE                                                  |
+| 2026-08-06-spojny-pasek-gorny        | Kroki A–D wdrożone; E/F nie (patrz niżej)                 |
+| 2026-08-07-naprawy-ai-ml-dashboard   | WDROŻONE (commit b84b240, testy 1481/1481)                |
+| 2026-08-07-pierwszy-model-ai-ml      | Faza A wdrożona, Faza B przetestowana; operacyjnie w toku |
+| 2026-08-08-usprawnienia-modulu-excel | WDROŻONE (commity 9c44d07/e1eb742)                        |
+| 2026-08-08-zlecenia-wirtualizacja    | Fazy 0–6 wdrożone; 7 zablokowana, 8 opcjonalna            |
+| 2026-08-09-spojny-styl-index         | WDROŻONE (commit 8de47f8)                                 |
 
 ## 3. Pozostałe otwarte pozycje — ocena aktualności
 
-| # | Pozycja                                          | Źródło (plan)                  | Stan | Ocena dziś |
-| - | ------------------------------------------------- | ------------------------------ | ---- | ---------- |
-| 1 | **Krok E** — klasa `.ai-status-badge` w `spa.css` (przeniesienie inline style z `app.html`), usunięcie martwych `.ai-status-online/offline` | pasek-gorny E | Opcjonalny, tani (~20 linii) | **Niskiej wartości** — martwe klasy `.ai-status-online/offline` już usunięte (grep = 0); inline style działa i nie migocze (krok B wdrożony). Przeniesienie do klasy = czystość CSS, zero funkcji. |
-| 2 | **Krok F** — konsolidacja `header-right` do `public/js/shared/headerUser.js` | pasek-gorny F | Świadomie poza zakresem (osobna iteracja) | **Jedyna pozycja z realną wartością refaktoru**: header-right zduplikowany w 4–6 plikach (`app.html`, `kartoteka.html`, `partials/header.html`, `partials/rury/header.html` + warianty studni). SRP/DRY. |
-| 3 | **P3** — klasy `nav-accent-builder/offer/pricelist` bez definicji w CSS | pasek-gorny P3 | Drobna kosmetyka | **Martwe atrybuty** — klasy niezdefiniowane nigdzie; usunąć albo zdefiniować akcent. Niska wartość, ale zero ryzyka. |
-| 4 | **Faza 7** — duplikaty PZ w zleceniach | zlecenia-wirtualizacja | ZABLOKOWANA (brak reguły biznesowej) | **Nie robić** — semantyka „duplikatu PZ" wymaga decyzji użytkownika. Zostaje w archiwum jako przypis. |
-| 5 | **Faza 8** — grid-swap (pełna wirtualizacja renderera) | zlecenia-wirtualizacja | OPCJONALNA (tylko na żądanie pixel-parity) | **Nie robić** — `MAX_LOADED` + kontener scrolla już rozwiązują jank; utrzymywanie 2 rendererów to anty-wzorzec. |
+| #   | Pozycja                                                                                                                                     | Źródło (plan)          | Stan                                       | Ocena dziś                                                                                                                                                                                               |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Krok E** — klasa `.ai-status-badge` w `spa.css` (przeniesienie inline style z `app.html`), usunięcie martwych `.ai-status-online/offline` | pasek-gorny E          | Opcjonalny, tani (~20 linii)               | **Niskiej wartości** — martwe klasy `.ai-status-online/offline` już usunięte (grep = 0); inline style działa i nie migocze (krok B wdrożony). Przeniesienie do klasy = czystość CSS, zero funkcji.       |
+| 2   | **Krok F** — konsolidacja `header-right` do `public/js/shared/headerUser.js`                                                                | pasek-gorny F          | Świadomie poza zakresem (osobna iteracja)  | **Jedyna pozycja z realną wartością refaktoru**: header-right zduplikowany w 4–6 plikach (`app.html`, `kartoteka.html`, `partials/header.html`, `partials/rury/header.html` + warianty studni). SRP/DRY. |
+| 3   | **P3** — klasy `nav-accent-builder/offer/pricelist` bez definicji w CSS                                                                     | pasek-gorny P3         | Drobna kosmetyka                           | **Martwe atrybuty** — klasy niezdefiniowane nigdzie; usunąć albo zdefiniować akcent. Niska wartość, ale zero ryzyka.                                                                                     |
+| 4   | **Faza 7** — duplikaty PZ w zleceniach                                                                                                      | zlecenia-wirtualizacja | ZABLOKOWANA (brak reguły biznesowej)       | **Nie robić** — semantyka „duplikatu PZ" wymaga decyzji użytkownika. Zostaje w archiwum jako przypis.                                                                                                    |
+| 5   | **Faza 8** — grid-swap (pełna wirtualizacja renderera)                                                                                      | zlecenia-wirtualizacja | OPCJONALNA (tylko na żądanie pixel-parity) | **Nie robić** — `MAX_LOADED` + kontener scrolla już rozwiązują jank; utrzymywanie 2 rendererów to anty-wzorzec.                                                                                          |
 
 ## 4. Rekomendacja
 

@@ -499,6 +499,12 @@
     margin-top: 1.2rem;
 }
 
+/* Okno "Zamówienia oferty" — szersze, by przyciski i ikony się nie zawijały */
+#offer-orders-modal .modal {
+    width: 95%;
+    max-width: 900px;
+}
+
 /* Okno historii (audit) — spójne z resztą modalów */
 .audit-modal-inner {
     width: 95%;
