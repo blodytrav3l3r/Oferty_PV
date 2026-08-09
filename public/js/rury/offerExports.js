@@ -107,7 +107,7 @@ function exportOfferPDF(id) {
 
     const printWin = window.open('', '_blank');
     printWin.document
-        .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${offer.number}</title>
+        .write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Oferta ${escapeHtml(offer.number)}</title>
   <style>
     ${PRINT_TOKENS_CSS}
     body{font-family:Arial,sans-serif;color:var(--slate-950);padding:30px;font-size:13px;line-height:1.5}
@@ -134,8 +134,8 @@ function exportOfferPDF(id) {
   <div class="header-line" style="margin-top:20px;">
     <h1>OFERTA HANDLOWA</h1>
     <div style="display:flex;justify-content:space-between">
-      <span><strong>Nr:</strong> ${offer.number}</span>
-      <span><strong>Data:</strong> ${offer.date}</span>
+      <span><strong>Nr:</strong> ${escapeHtml(offer.number)}</span>
+      <span><strong>Data:</strong> ${escapeHtml(offer.date)}</span>
     </div>
   </div>
   <div class="info-grid">
@@ -173,15 +173,15 @@ function exportOfferPDF(id) {
   ${transportHtml}
   <div class="summary">
     <div class="summary-row"><span>RAZEM netto (produkty + transport):</span><span>${fmt(totalNetto)} PLN</span></div>
-    ${costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${offer.transportKm || '?'} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
+    ${costPerTrip > 0 ? `<div class="summary-row transport"><span>w tym transport: ${escapeHtml(offer.transportKm || '?')} km × ${fmt(offer.transportRate || 0)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${typeof formatTransportCount === 'function' ? formatTransportCount(exportTransports, offerMode) : transportResult.totalTransports} kursów</span><span>${fmt(transportCost)} PLN</span></div>` : ''}
     <div class="summary-row"><span>RAZEM netto:</span><span>${fmt(totalNetto)} PLN</span></div>
     <div class="summary-row"><span>VAT (23%):</span><span>${fmt(totalVat)} PLN</span></div>
     <div class="summary-row total"><span>SUMA BRUTTO:</span><span>${fmt(totalBrutto)} PLN</span></div>
   </div>
   ${offer.notes ? `<div class="notes"><strong>Uwagi:</strong> ${escapeHtml(offer.notes)}</div>` : ''}
   <div style="margin-top: 15px; font-size: 11px;">
-    <strong>Warunki płatności:</strong> ${offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.'}<br>
-    <strong>Data ważności oferty:</strong> ${offer.validity || '7 dni'}
+    <strong>Warunki płatności:</strong> ${escapeHtml(offer.paymentTerms || 'Do uzgodnienia lub według indywidualnych warunków handlowych.')}<br>
+    <strong>Data ważności oferty:</strong> ${escapeHtml(offer.validity || '7 dni')}
   </div>
   <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
   <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
@@ -354,7 +354,7 @@ function renderDiscountModalItems() {
 }
 
 function updateTempDiscount(index, inputEl) {
-    let val = inputEl.value;
+    const val = inputEl.value;
     let v = parseFloat(val);
     if (isNaN(v)) v = 0;
     if (v < 0) v = 0;

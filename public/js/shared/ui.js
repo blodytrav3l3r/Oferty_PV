@@ -79,17 +79,18 @@ function showToast(msg, type = 'info') {
     toast.setAttribute('aria-live', 'polite');
 
     const text = document.createElement('span');
-    // Bezpieczne: wyciągnij ikony Lucide przed eskejpowaniem HTML
+    // Bezpieczne: wyciągnij nazwę ikony Lucide przed eskejpowaniem HTML,
+    // a tag odtwórz od zera (surowy <i> mógł nieść dowolne atrybuty, np. onclick)
     const iconRegex = /<i\s+[^>]*data-lucide="([^"]*)"[^>]*><\/i>/gi;
     const icons = [];
-    const safe = msg.replace(iconRegex, (m) => {
-        icons.push(m);
+    const safe = msg.replace(iconRegex, (_, name) => {
+        icons.push(name);
         return `\x00ICON${icons.length - 1}\x00`;
     });
     text.innerHTML = escapeHtml(safe).replace(
         /* eslint-disable-next-line no-control-regex */
         /\x00ICON(\d+)\x00/g,
-        (_, i) => icons[parseInt(i)] || ''
+        (_, i) => `<i data-lucide="${escapeHtml(icons[parseInt(i)] || '')}" aria-hidden="true"></i>`
     );
     if (window.lucide) lucide.createIcons();
     text.style.flex = '1';
