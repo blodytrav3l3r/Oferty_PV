@@ -4,6 +4,27 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.13.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.12.0...v1.13.0) (2026-08-10)
+
+### Features
+
+- **branding:** centralizacja nazwy aplikacji (APP_NAME) ([bf7c331](https://github.com/blodytrav3l3r/Oferty_PV/commit/bf7c3319a42ab0957b3b64e7aa7c27ff18be0744))
+- **data:** migracja kluczy localStorage witros_excel_* na sok_excel_* + appliedFrom z APP_NAME ([6070106](https://github.com/blodytrav3l3r/Oferty_PV/commit/607010664a1f5f2b2a550a857fb27831959308d0))
+
+### Bug Fixes
+
+- bledy odczytu katalogu w guard nazwy nie sa maskowane (exit 2) ([b31d227](https://github.com/blodytrav3l3r/Oferty_PV/commit/b31d227a9501eaed008452908ad20974bb88f681))
+- **ci:** docker health check i e2e - DEFAULT_ADMIN_PASSWORD, DATABASE_URL, https przez proxy ([35460fe](https://github.com/blodytrav3l3r/Oferty_PV/commit/35460fe46da0fc9998892abe9a599a480fe7e5d5))
+- **ci:** pipefail w deployu i silniejszy guard nazwy ([5577677](https://github.com/blodytrav3l3r/Oferty_PV/commit/55776777c8265e527ee20b229523ecc43cc27a68))
+- **ci:** secrets niedostepne w if - przeniesione do env jobow deploy ([53bc260](https://github.com/blodytrav3l3r/Oferty_PV/commit/53bc260b953fbe521484fa7898fe721b9bd8b573))
+- **ci:** testy telemetry nie mialy DATABASE_URL - dodano przygotowanie bazy SQLite ([d4db9a1](https://github.com/blodytrav3l3r/Oferty_PV/commit/d4db9a1f0f0d0d2f9d5a1e0e69da32c9290881db))
+- escapowanie nazw uzytkownika w module studni ([71a7616](https://github.com/blodytrav3l3r/Oferty_PV/commit/71a761617271516980bffb5a87e72f04fb502a1f))
+- PRAGMA WAL/synchronous przez queryRaw (executeRaw nie akceptuje wierszy w SQLite) ([fa22f86](https://github.com/blodytrav3l3r/Oferty_PV/commit/fa22f863fee472bdd1073eef7fb2b285e810d504))
+- **tests:** appName E2E - nie twardo-koduj sciezki chromium (Windows path w CI Linux) ([f9b4f91](https://github.com/blodytrav3l3r/Oferty_PV/commit/f9b4f91095f61e47c37afb16cc2c8fc19c424c6c))
+- **tests:** appNameCheck dla interpolacji APP_NAME w orderEditMode ([a6b3b02](https://github.com/blodytrav3l3r/Oferty_PV/commit/a6b3b02791919966bbcbe4f018689614cf5bcd39))
+- **tests:** E2E appName uruchamialny lokalnie (Windows + izolowany serwer) ([a9e31fb](https://github.com/blodytrav3l3r/Oferty_PV/commit/a9e31fb7e556c2fc15bc9a9a6a8900dd3dad7e3d))
+- **ui:** tytul zakladki sok w trybie edycji zamowienia rur ([534faa8](https://github.com/blodytrav3l3r/Oferty_PV/commit/534faa8de22175e3f8b7fae45157915519836848))
+
 ## [1.12.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.11.5...v1.12.0) (2026-08-09)
 
 ### Features
