@@ -267,4 +267,74 @@ describe('recalculateWellErrors — czyszczenie błędów przy pustym configu', 
         ctx.recalculateWellErrors(well);
         expect(well.configErrors.some((e) => e.includes('Rzędna włączenia przejścia'))).toBe(false);
     });
+
+    test('rzednaDna równa rzednaWlazu: twardy błąd ERROR', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaWlazu: 100,
+            rzednaDna: 100,
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(true);
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('rzednaDna większa niż rzednaWlazu: twardy błąd ERROR', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaWlazu: 90,
+            rzednaDna: 100,
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(true);
+        expect(well.configStatus).toBe('ERROR');
+    });
+
+    test('rzednaDna mniejsza niż rzednaWlazu: brak błędu', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaWlazu: 100,
+            rzednaDna: 90,
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(false);
+    });
+
+    test('brak rzednaWlazu (null): pominięcie walidacji rzędnej dna', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaWlazu: null,
+            rzednaDna: 100,
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(false);
+    });
+
+    test('naprawa rzędnej dna usuwa stary błąd rzędnej przy przeliczeniu', () => {
+        const ctx = loadSolver();
+        const well = {
+            config: [],
+            configSource: 'MANUAL',
+            rzednaWlazu: 90,
+            rzednaDna: 100,
+            przejscia: []
+        };
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(true);
+        well.rzednaDna = 80;
+        ctx.recalculateWellErrors(well);
+        expect(well.configErrors.some((e) => e.includes('Rzędna dna'))).toBe(false);
+    });
 });

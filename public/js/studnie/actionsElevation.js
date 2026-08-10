@@ -27,6 +27,17 @@ function updateElevations() {
         wlazInput.value = String(wlazVal);
     if (dnaVal !== null && dnaInput.value.trim().startsWith('=')) dnaInput.value = String(dnaVal);
 
+    if (
+        wlazVal !== null &&
+        dnaVal !== null &&
+        wlazInput.value.trim() !== '' &&
+        dnaInput.value.trim() !== '' &&
+        dnaVal >= wlazVal
+    ) {
+        showToast('Rzędna dna nie może być większa lub równa rzędnej włazu', 'error');
+        return;
+    }
+
     well.rzednaWlazu = wlazVal;
     well.rzednaDna = dnaVal;
 
@@ -57,8 +68,10 @@ function syncElevationInputs() {
         updateHeightIndicator();
         return;
     }
-    if (wlazInput) wlazInput.value = well.rzednaWlazu != null ? well.rzednaWlazu : '';
-    if (dnaInput) dnaInput.value = well.rzednaDna != null ? well.rzednaDna : '';
+    if (wlazInput && document.activeElement !== wlazInput)
+        wlazInput.value = well.rzednaWlazu != null ? well.rzednaWlazu : '';
+    if (dnaInput && document.activeElement !== dnaInput)
+        dnaInput.value = well.rzednaDna != null ? well.rzednaDna : '0';
     if (doplataInput) {
         const dVal = well.doplata != null ? well.doplata : 0;
         doplataInput.value = dVal;

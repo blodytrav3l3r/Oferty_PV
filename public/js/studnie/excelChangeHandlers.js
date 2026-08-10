@@ -22,10 +22,10 @@ function excelOnRzednaChange(wIdx) {
         rzWlazuInput.style.outline = '1px solid var(--danger)';
         rzDnaInput.style.outline = '1px solid var(--danger)';
         showToast('Rzędna włazu musi być większa od rzędnej dna', 'error');
-    } else {
-        if (rzWlazuInput) rzWlazuInput.style.outline = '';
-        if (rzDnaInput) rzDnaInput.style.outline = '';
+        return;
     }
+    if (rzWlazuInput) rzWlazuInput.style.outline = '';
+    if (rzDnaInput) rzDnaInput.style.outline = '';
 
     well.rzednaWlazu = rzWlazu;
     well.rzednaDna = rzDna;

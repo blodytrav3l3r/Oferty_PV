@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.13.033  
+**Wersja:** 1.13.133  
 **Ostatnia aktualizacja:** 2026-08-10  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
@@ -35,12 +35,12 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.13.0",
+    "version": "1.13.1",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.13.0"
+    "dbVersion": "1.13.1"
 }
 ```
 
@@ -301,14 +301,13 @@ Wymaga autoryzacji.
 | PATCH  | `/api/preco-pricing`         | Częściowa aktualizacja            |
 | GET    | `/api/preco-pricing/default` | Pobranie domyślnego cennika Preco |
 
-## Price Overrides (`/api/price-overrides`)
+## Domyślne cenniki (`/api/price-overrides`)
 
-Wymaga autoryzacji (administrator).
+Wymaga autoryzacji (administrator). Zapisuje bieżący stan wszystkich cenników (rury, studnie, PRECO) jako nowe domyślne (`*_Default`) oraz do pliku `data/price_defaults.json` (transfer między komputerami).
 
-| Metoda | Ścieżka                     | Opis                                 |
-| ------ | --------------------------- | ------------------------------------ |
-| POST   | `/api/price-overrides/sync` | Synchronizacja nadpisań cen (cennik) |
-| POST   | `/api/price-overrides`      | Utworzenie nadpisania ceny           |
+| Metoda | Ścieżka                              | Opis                                   |
+| ------ | ------------------------------------ | -------------------------------------- |
+| POST   | `/api/price-overrides/save-defaults` | Zapis bieżących cenników jako domyślne |
 
 ## Łączny eksport (`/api/export-combined`)
 

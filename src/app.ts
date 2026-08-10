@@ -307,17 +307,6 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Aplikuj nadpisania cen z price_overrides.json (jeśli istnieje)
-    try {
-        await priceOverrideService.applyOverrides();
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się aplikować nadpisań cen:',
-            err instanceof Error ? err.message : String(err)
-        );
-    }
-
     // Przywróć domyślne cenniki z price_defaults.json (jeśli istnieje)
     try {
         await priceOverrideService.restoreDefaultsFromJson();

@@ -24,9 +24,21 @@ function recalculateWellErrors(well) {
                       !e.includes('nie spełnia zapasów') &&
                       !e.includes('zastosowano luzy minimalne') &&
                       !e.includes('Rzędna włączenia przejścia') &&
+                      !e.includes('Rzędna dna') &&
                       !e.includes('brak dopłaty PEHD')
               )
             : [];
+
+    // --- WALIDACJA RZĘDNEJ DNA vs RZĘDNEJ WŁAZU ---
+    // Rzędna dna nie może być większa lub równa rzędnej włazu (właz jest wyżej).
+    if (well.rzednaWlazu != null && well.rzednaDna != null) {
+        const rzWlazu = parseFloat(well.rzednaWlazu);
+        const rzDna = parseFloat(well.rzednaDna);
+        if (!isNaN(rzWlazu) && !isNaN(rzDna) && rzDna >= rzWlazu) {
+            const errStr = `Rzędna dna (${rzDna.toFixed(3)} m) nie może być większa lub równa rzędnej włazu (${rzWlazu.toFixed(3)} m)`;
+            if (!liveErrors.includes(errStr)) liveErrors.push(errStr);
+        }
+    }
 
     // --- WALIDACJA RZĘDNEJ WŁĄCZENIA PRZEJŚCIA ---
     // Rzędna włączenia przejścia nie może być niższa niż rzędna dna studni.

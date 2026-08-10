@@ -64,7 +64,7 @@ ze względu na hierarchiczną strukturę danych.
 ### Pozytywne
 
 - Spójne zachowanie dla użytkownika we wszystkich modułach
-- Jednolity mechanizm synchronizacji cen między komputerami (price_overrides.json)
+- Jednolity mechanizm synchronizacji cen między komputerami (price_defaults.json)
 - Ochrona przed race condition (writeLock) i nieautoryzowanym dostępem (requireAdmin)
 - Niższe ryzyko błędów przy dalszym rozwoju
 
