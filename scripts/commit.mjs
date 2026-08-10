@@ -51,6 +51,7 @@ const SCOPE_ENUM = [
     'release'
 ];
 const HEADER_MAX = 72;
+const BODY_LINE_MAX = 100;
 
 const argv = process.argv.slice(2);
 const amend = argv[0] === '--amend';
@@ -81,6 +82,12 @@ if (!m) {
         errors.push('temat musi być małymi literami (subject-case: lower-case)');
     if (/[A-Z]/.test(scope)) errors.push('scope musi być małymi literami (scope-case: lower-case)');
     if (subject.endsWith('.')) errors.push('temat nie może kończyć się kropką (subject-full-stop)');
+}
+
+for (const line of bodyLines) {
+    if (line.length > BODY_LINE_MAX) {
+        errors.push(`linia body (${line.length} znaków) > ${BODY_LINE_MAX} (body-max-line-length)`);
+    }
 }
 
 if (errors.length > 0) {
