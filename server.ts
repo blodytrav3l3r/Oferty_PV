@@ -8,6 +8,7 @@ import 'dotenv/config';
 import app, { initApp } from './src/app';
 import { logger } from './src/utils/logger';
 import { cronService } from './src/utils/cronService';
+import { APP_NAME } from './src/constants/appMeta';
 import prisma from './src/prismaClient';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -42,7 +43,7 @@ process.on('unhandledRejection', (reason: unknown) => {
     }
 
     const server = app.listen(PORT, HOST, () => {
-        logger.info('Server', `S.O.K. — serwer działa na: http://localhost:${PORT}`);
+        logger.info('Server', `${APP_NAME} — serwer działa na: http://localhost:${PORT}`);
         logger.info('Server', `Tryb: ${NODE_ENV === 'production' ? 'PRODUKCJA' : 'DEVELOPMENT'}`);
         logger.info('Server', 'Baza: SQLite (lokalna)');
     });

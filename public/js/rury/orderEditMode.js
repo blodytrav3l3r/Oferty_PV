@@ -89,7 +89,7 @@ function exitOrderEditMode() {
     document.getElementById('btn-order-create')?.style.removeProperty('display');
     if (window.lucide) lucide.createIcons();
     if (typeof goToPhase === 'function') goToPhase(1);
-    document.title = 'S.O.K. — Generator Ofert';
+    document.title = `${window.APP_NAME || 'S.O.K.'} — Generator Ofert`;
 }
 window.exitOrderEditMode = exitOrderEditMode;
 

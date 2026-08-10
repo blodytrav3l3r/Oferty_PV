@@ -1,11 +1,12 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import { getVersion } from './version';
+import { APP_NAME } from './constants/appMeta';
 
 const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'S.O.K. — API',
+            title: `${APP_NAME} — API`,
             version: getVersion().version,
             description:
                 'Generator ofert handlowych dla branży kanalizacyjnej. Zarządzanie produktami (rury betonowe, studnie), ofertami, zamówieniami, klientami i wycenami Preco.',

@@ -31,6 +31,7 @@ import { priceOverrideService } from './services/priceOverrideService';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
 import { getVersion } from './version';
+import { APP_NAME } from './constants/appMeta';
 import prisma from './prismaClient';
 
 const app = express();
@@ -115,7 +116,7 @@ app.use(
     '/api/docs',
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
-        customSiteTitle: 'S.O.K. — API Docs',
+        customSiteTitle: `${APP_NAME} — API Docs`,
         customfavIcon: '/favicon.ico',
         swaggerOptions: {
             persistAuthorization: true,
