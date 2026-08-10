@@ -177,9 +177,9 @@ export function auditRenderEntry(self, log, id, type) {
     const canRestore =
         log.action !== 'delete' && !isDiff && type !== 'order' && type !== 'production_order';
     const restoreBtn = canRestore
-        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.pvSalesUI.restoreOfferVersionUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
+        ? `<button class="btn btn-sm btn-secondary restore-btn" onclick="window.kartotekaUI.restoreOfferVersionUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="refresh-cw"></i> Przywróć</button>`
         : '';
-    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.pvSalesUI.viewHistorySnapshotUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
+    const previewBtn = `<button class="btn btn-sm btn-secondary preview-btn" onclick="window.kartotekaUI.viewHistorySnapshotUnified('${escapeHtml(id)}', '${escapeHtml(log.id)}', '${escapeHtml(type)}')"><i data-lucide="eye"></i> Podgląd</button>`;
 
     return `
         <div class="audit-card ${meta.className}">
@@ -223,7 +223,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
         const loadMoreHtml =
             logs.length < total
                 ? `<div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                <button class="btn btn-sm btn-secondary" onclick="window.pvSalesUI.loadMoreAuditLogs('${escapeHtml(type)}', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
+                <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeHtml(type)}', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${total - logs.length})</button>
             </div>`
                 : '';
 
@@ -251,7 +251,7 @@ export async function auditShowHistory(self, id, type = 'studnia_oferta') {
         self.currentAuditEntityType = type;
         self._renderEntry = (log) => self.renderAuditEntry(log, id, type);
     } catch (error) {
-        logger.error('pvSalesUi', 'Błąd wyświetlania historii:', error);
+        logger.error('kartotekaUi', 'Błąd wyświetlania historii:', error);
         if (typeof window.showToast === 'function') {
             window.showToast('Błąd pobierania historii', 'error');
         }
@@ -290,13 +290,13 @@ export async function auditLoadMore(self, entityType, entityId, limit) {
                 'beforeend',
                 `
                 <div id="audit-load-more-wrap-kartoteka" class="audit-load-more-wrap">
-                    <button class="btn btn-sm btn-secondary" onclick="window.pvSalesUI.loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
+                    <button class="btn btn-sm btn-secondary" onclick="window.kartotekaUI.loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Pokaż starsze zmiany (${remaining})</button>
                 </div>`
             );
         }
         if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
     } catch (e) {
-        logger.error('pvSalesUi', 'Błąd ładowania logów:', e);
+        logger.error('kartotekaUi', 'Błąd ładowania logów:', e);
     }
 }
 
@@ -334,7 +334,7 @@ export async function auditRestoreVersion(self, offerId, logId, type) {
         if (typeof window.showToast === 'function')
             window.showToast('Wersja przywrócona do edytora.', 'success');
     } catch (error) {
-        logger.error('pvSalesUi', 'Błąd przywracania wersji:', error);
+        logger.error('kartotekaUi', 'Błąd przywracania wersji:', error);
     }
 }
 
@@ -407,7 +407,7 @@ export async function auditViewSnapshot(self, id, logId, type) {
 
         self.openOfferForEdit(rebuiltData, id, type);
     } catch (error) {
-        logger.error('pvSalesUi', 'Błąd podglądu historii:', error);
+        logger.error('kartotekaUi', 'Błąd podglądu historii:', error);
         if (typeof window.showToast === 'function') window.showToast(error.message, 'error');
     }
 }

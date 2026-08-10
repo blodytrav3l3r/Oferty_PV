@@ -457,8 +457,11 @@ const SpaRouter = (() => {
             } else if (module === 'kartoteka') {
                 if (win.AppKartoteka && typeof win.AppKartoteka.loadOffers === 'function') {
                     win.AppKartoteka.loadOffers();
-                } else if (win.pvSalesUI && typeof win.pvSalesUI.loadLocalOffers === 'function') {
-                    win.pvSalesUI.loadLocalOffers();
+                } else if (
+                    win.kartotekaUI &&
+                    typeof win.kartotekaUI.loadLocalOffers === 'function'
+                ) {
+                    win.kartotekaUI.loadLocalOffers();
                 }
             }
         } catch (e) {

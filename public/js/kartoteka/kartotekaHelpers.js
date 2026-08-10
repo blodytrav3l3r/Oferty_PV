@@ -340,7 +340,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                             </div>
                             <div class="offer-author-badges">
                                 ${dd.creatorName ? `<span class="author-badge"><i data-lucide="pen-tool" aria-hidden="true"></i> ${escapeHtml(dd.creatorName)}</span>` : ''}
-                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.pvSalesUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
+                                ${dd.userName ? `<span class="author-badge${isClickable ? ' clickable-user' : ''}" ${isClickable ? `onclick="event.stopPropagation(); window.kartotekaUI.changeOfferUserFromList('${escapeHtml(offer.id)}')"` : ''} title="Zmień opiekuna"><i data-lucide="briefcase" aria-hidden="true"></i> ${escapeHtml(dd.userName)}</span>` : ''}
                             </div>
                             <div class="action-buttons">
                                 ${
@@ -391,7 +391,7 @@ function navigateToModule(offerType, entityId, mode) {
             window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
         }
     } catch (err) {
-        logger.error('pvSalesUi', 'Błąd nawigacji:', err);
+        logger.error('kartotekaUi', 'Błąd nawigacji:', err);
         window.location.href = `app.html#/${targetModule}?${mode}=${entityId}`;
     }
 }

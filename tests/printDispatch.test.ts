@@ -8,7 +8,7 @@
  *
  * Fix:
  *   - kartoteka.html loads rury/offerPrintManager.js too
- *   - pvSalesUi.js dispatches by data-offer-type → showUniversalPrintModalRury
+ *   - kartotekaUi.js dispatches by data-offer-type → showUniversalPrintModalRury
  *   - export errors include server response text for better diagnostics
  */
 
@@ -20,9 +20,9 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 const KARTOTEKA_HTML = path.join(PUBLIC, 'kartoteka.html');
 const STUDNIE_PM = path.join(PUBLIC, 'js', 'studnie', 'offerPrintManager.js');
 const RURY_PM = path.join(PUBLIC, 'js', 'rury', 'offerPrintManager.js');
-const PV_SALES_UI = path.join(PUBLIC, 'js', 'sales', 'pvSalesUi.js');
-const PV_SALES_HELPERS = path.join(PUBLIC, 'js', 'sales', 'pvSalesHelpers.js');
-const PV_SALES_ACTIONS = path.join(PUBLIC, 'js', 'sales', 'pvSalesActions.js');
+const KARTOTEKA_UI = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaUi.js');
+const KARTOTEKA_HELPERS = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaHelpers.js');
+const KARTOTEKA_ACTIONS = path.join(PUBLIC, 'js', 'kartoteka', 'kartotekaActions.js');
 
 function readFile(p: string): string {
     return fs.readFileSync(p, 'utf-8');
@@ -43,21 +43,21 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
             expect(html).toMatch(/js\/rury\/offerPrintManager\.js/);
         });
 
-        it('ładuje rury/offerPrintManager.js PRZED pvSalesUi.js (kolejność wykonania)', () => {
+        it('ładuje rury/offerPrintManager.js PRZED kartotekaUi.js (kolejność wykonania)', () => {
             const ruryIdx = html.search(/js\/rury\/offerPrintManager\.js/);
-            const pvIdx = html.search(/js\/sales\/pvSalesUi\.js/);
+            const kartotekaIdx = html.search(/js\/kartoteka\/kartotekaUi\.js/);
             expect(ruryIdx).toBeGreaterThan(-1);
-            expect(pvIdx).toBeGreaterThan(-1);
-            expect(ruryIdx).toBeLessThan(pvIdx);
+            expect(kartotekaIdx).toBeGreaterThan(-1);
+            expect(ruryIdx).toBeLessThan(kartotekaIdx);
         });
     });
 
-    describe('Static: pvSalesUi.js / pvSalesHelpers.js / pvSalesActions.js dispatch on offerType', () => {
+    describe('Static: kartotekaUi.js / kartotekaHelpers.js / kartotekaActions.js dispatch on offerType', () => {
         let helpersSrc: string;
         let actionsSrc: string;
         beforeAll(() => {
-            helpersSrc = readFile(PV_SALES_HELPERS);
-            actionsSrc = readFile(PV_SALES_ACTIONS);
+            helpersSrc = readFile(KARTOTEKA_HELPERS);
+            actionsSrc = readFile(KARTOTEKA_ACTIONS);
         });
 
         it('dispatchuje rura_oferta → showUniversalPrintModalRury (fix #1)', () => {
@@ -69,14 +69,14 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
 
         it('.btn-karta-budowy ma data-offer-type (dispatch Karta Budowy)', () => {
-            // Sprawdza template HTML btn-karta-budowy w pvSalesHelpers.js
+            // Sprawdza template HTML btn-karta-budowy w kartotekaHelpers.js
             const pattern =
                 /class="action-btn success btn-karta-budowy"[\s\S]{0,200}data-offer-type/;
             expect(helpersSrc).toMatch(pattern);
         });
 
         it('.btn-print-order (modal) ma data-offer-type (dispatch Karta)', () => {
-            // Template w pvSalesHelpers.js
+            // Template w kartotekaHelpers.js
             const pattern =
                 /class="btn btn-sm btn-secondary btn-print-order"[\s\S]{0,250}data-offer-type/;
             expect(helpersSrc).toMatch(pattern);
@@ -84,7 +84,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('modal .btn-print-order handler dispatchuje przez openPrintModal', () => {
             // Po unifikacji: btn-print-order wywołuje openPrintModal (nie inline logic)
-            // Listener jest w showOfferOrdersPopup (overlay) w pvSalesActions.js
+            // Listener jest w showOfferOrdersPopup (overlay) w kartotekaActions.js
             const pattern =
                 /overlay\.querySelectorAll\(['"]\.btn-print-order['"]\)[\s\S]{0,800}openPrintModal\s*\(/;
             expect(actionsSrc).toMatch(pattern);
@@ -164,12 +164,12 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: pvSalesHelpers.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
+    describe('Static: kartotekaHelpers.js dispatch obsługuje legacy "offer" + inferencję po ID', () => {
         let helpersSrc: string;
         let actionsSrc: string;
         beforeAll(() => {
-            helpersSrc = readFile(PV_SALES_HELPERS);
-            actionsSrc = readFile(PV_SALES_ACTIONS);
+            helpersSrc = readFile(KARTOTEKA_HELPERS);
+            actionsSrc = readFile(KARTOTEKA_ACTIONS);
         });
 
         it('dispatch inferuje rury z offerType === "rura_oferta" + legacy "offer" + ID prefix', () => {
@@ -233,12 +233,12 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
         });
     });
 
-    describe('Static: openPrintModal (pvSalesHelpers) + ordersMap (pvSalesActions)', () => {
+    describe('Static: openPrintModal (kartotekaHelpers) + ordersMap (kartotekaActions)', () => {
         let helpersSrc: string;
         let actionsSrc: string;
         beforeAll(() => {
-            helpersSrc = readFile(PV_SALES_HELPERS);
-            actionsSrc = readFile(PV_SALES_ACTIONS);
+            helpersSrc = readFile(KARTOTEKA_HELPERS);
+            actionsSrc = readFile(KARTOTEKA_ACTIONS);
         });
 
         it('openPrintModal akceptuje 4. param relatedOrders', () => {
@@ -337,13 +337,13 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
     });
 
     describe('Static: martwy kod usunięty (openExportPopupUnified + handleExportClick)', () => {
-        it('pvSalesUi.js NIE zawiera już openExportPopupUnified', () => {
-            const src = readFile(PV_SALES_UI);
+        it('kartotekaUi.js NIE zawiera już openExportPopupUnified', () => {
+            const src = readFile(KARTOTEKA_UI);
             expect(src).not.toMatch(/openExportPopupUnified/);
         });
 
-        it('pvSalesUi.js NIE zawiera już handleExportClick', () => {
-            const src = readFile(PV_SALES_UI);
+        it('kartotekaUi.js NIE zawiera już handleExportClick', () => {
+            const src = readFile(KARTOTEKA_UI);
             expect(src).not.toMatch(/handleExportClick/);
         });
     });

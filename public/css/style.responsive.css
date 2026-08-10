@@ -186,24 +186,24 @@
         0 2px 4px rgba(var(--black-rgb), 0.1);
 }
 
-.kartoteka-filter-bar .pv-type-filter-btn,
-.kartoteka-filter-bar .pv-filter-btn,
-.kartoteka-filter-bar .pv-date-preset-btn {
+.kartoteka-filter-bar .ka-type-filter-btn,
+.kartoteka-filter-bar .ka-filter-btn,
+.kartoteka-filter-bar .ka-date-preset-btn {
     transition:
         transform 0.2s,
         box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.kartoteka-filter-bar .pv-type-filter-btn:hover,
-.kartoteka-filter-bar .pv-filter-btn:hover,
-.kartoteka-filter-bar .pv-date-preset-btn:hover {
+.kartoteka-filter-bar .ka-type-filter-btn:hover,
+.kartoteka-filter-bar .ka-filter-btn:hover,
+.kartoteka-filter-bar .ka-date-preset-btn:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(var(--accent-rgb), 0.2);
 }
 
-.kartoteka-filter-bar .pv-type-filter-btn.active,
-.kartoteka-filter-bar .pv-filter-btn.active,
-.kartoteka-filter-bar .pv-date-preset-btn.active {
+.kartoteka-filter-bar .ka-type-filter-btn.active,
+.kartoteka-filter-bar .ka-filter-btn.active,
+.kartoteka-filter-bar .ka-date-preset-btn.active {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
     border-color: transparent;
     color: var(--white);

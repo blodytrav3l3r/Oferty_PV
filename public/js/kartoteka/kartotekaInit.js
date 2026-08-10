@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 function filterByType(type) {
     currentTypeFilter = type;
 
-    document.querySelectorAll('.pv-type-filter-btn').forEach((btn) => {
+    document.querySelectorAll('.ka-type-filter-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.typeFilter === type);
         if (btn.dataset.typeFilter === type) {
             btn.classList.remove('btn-secondary');
@@ -41,15 +41,15 @@ function filterByType(type) {
         }
     });
 
-    if (window.pvSalesUI) {
-        window.pvSalesUI.setTypeFilter(type);
+    if (window.kartotekaUI) {
+        window.kartotekaUI.setTypeFilter(type);
     }
 }
 
 let compactModeEnabled = localStorage.getItem('kartoteka-compact-mode') === 'true';
 
 function applyCompactMode() {
-    const grid = document.getElementById('pv-local-offers-list');
+    const grid = document.getElementById('ka-offers-list');
     if (!grid) return;
     if (compactModeEnabled) {
         grid.classList.add('compact-mode');
@@ -79,14 +79,14 @@ let compactObserver = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     applyCompactMode();
-    const grid = document.getElementById('pv-local-offers-list');
+    const grid = document.getElementById('ka-offers-list');
     if (grid) {
         compactObserver = new MutationObserver(() => applyCompactMode());
         compactObserver.observe(grid, { childList: true, subtree: true });
     }
 
-    if (window.PvImportExportToolbar) {
-        window.PvImportExportToolbar.init('ie-toolbar-host');
+    if (window.importExportToolbar) {
+        window.importExportToolbar.init('ie-toolbar-host');
     }
 });
 
@@ -100,19 +100,19 @@ window.addEventListener('pagehide', () => {
 function initAdvancedFilterEvents(ui) {
     if (!ui) return;
 
-    const userSelect = document.getElementById('pv-user-filter');
+    const userSelect = document.getElementById('ka-user-filter');
     if (userSelect) {
         userSelect.addEventListener('change', () => ui.setUserFilter(userSelect.value));
     }
 
-    document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
+    document.querySelectorAll('.ka-date-preset-btn').forEach((btn) => {
         btn.addEventListener('click', () => ui.setDatePreset(btn.dataset.dateRange));
     });
 
-    const dateFrom = document.getElementById('pv-date-from');
-    const dateTo = document.getElementById('pv-date-to');
+    const dateFrom = document.getElementById('ka-date-from');
+    const dateTo = document.getElementById('ka-date-to');
 
-    document.getElementById('pv-date-clear')?.addEventListener('click', () => {
+    document.getElementById('ka-date-clear')?.addEventListener('click', () => {
         if (dateFrom) dateFrom.value = '';
         if (dateTo) dateTo.value = '';
         ui.onDateRangeChange('', '');

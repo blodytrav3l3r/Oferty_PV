@@ -10,7 +10,7 @@ export default {
     setFilterLocalOffers(filterType) {
         this.currentFilter = filterType;
 
-        document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
+        document.querySelectorAll('.ka-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === filterType);
             if (btn.dataset.filter === filterType) {
                 btn.classList.remove('btn-secondary');
@@ -30,20 +30,20 @@ export default {
     },
 
     _syncFilterUI() {
-        document.querySelectorAll('.pv-filter-btn').forEach((btn) => {
+        document.querySelectorAll('.ka-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === this.currentFilter);
             btn.classList.toggle('btn-secondary', btn.dataset.filter !== this.currentFilter);
         });
-        document.querySelectorAll('.pv-type-filter-btn').forEach((btn) => {
+        document.querySelectorAll('.ka-type-filter-btn').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.typeFilter === this.currentTypeFilter);
             btn.classList.toggle(
                 'btn-secondary',
                 btn.dataset.typeFilter !== this.currentTypeFilter
             );
         });
-        const sel = document.getElementById('pv-user-filter');
+        const sel = document.getElementById('ka-user-filter');
         if (sel) sel.value = this.filters.user;
-        document.querySelectorAll('.pv-date-preset-btn').forEach((btn) => {
+        document.querySelectorAll('.ka-date-preset-btn').forEach((btn) => {
             const isActive =
                 this.filters.date.mode === 'preset' &&
                 btn.dataset.dateRange === this.filters.date.preset;
@@ -57,7 +57,7 @@ export default {
      * Aktualizuje licznik aktywnych filtrów przy przycisku "Wyczyść filtry (N)".
      */
     updateFilterCount() {
-        const input = document.getElementById('pv-local-search-input');
+        const input = document.getElementById('ka-local-search-input');
         const q = input ? input.value.trim() : '';
         const dateActive =
             this.filters.date.mode === 'preset' || this.filters.date.mode === 'range';
@@ -67,7 +67,7 @@ export default {
             (this.currentFilter !== 'all' ? 1 : 0) +
             (this.filters.user ? 1 : 0) +
             (dateActive ? 1 : 0);
-        const btn = document.getElementById('pv-clear-filters');
+        const btn = document.getElementById('ka-clear-filters');
         if (btn) btn.textContent = 'Wyczyść filtry (' + count + ')';
     },
 
@@ -80,10 +80,10 @@ export default {
         this.filters.user = '';
         this.filters.date = { mode: 'none', preset: '', from: '', to: '' };
 
-        const searchInput = document.getElementById('pv-local-search-input');
+        const searchInput = document.getElementById('ka-local-search-input');
         if (searchInput) searchInput.value = '';
-        const dateFrom = document.getElementById('pv-date-from');
-        const dateTo = document.getElementById('pv-date-to');
+        const dateFrom = document.getElementById('ka-date-from');
+        const dateTo = document.getElementById('ka-date-to');
         if (dateFrom) dateFrom.value = '';
         if (dateTo) dateTo.value = '';
 
@@ -141,7 +141,7 @@ export default {
     },
 
     populateUserFilter() {
-        const select = document.getElementById('pv-user-filter');
+        const select = document.getElementById('ka-user-filter');
         if (!select) return;
 
         const offers = this.searchResults?.items || [];

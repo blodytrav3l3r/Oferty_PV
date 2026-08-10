@@ -1,4 +1,4 @@
-window.PvImportExportToolbar = {
+window.importExportToolbar = {
     hostId: null,
 
     async init(hostId) {
@@ -66,7 +66,7 @@ window.PvImportExportToolbar = {
     },
 
     async _findOrderByNumber(number, module) {
-        const ordersMap = window.pvSalesUI && window.pvSalesUI.ordersMap;
+        const ordersMap = window.kartotekaUI && window.kartotekaUI.ordersMap;
         if (ordersMap) {
             for (const orders of ordersMap.values()) {
                 for (const order of orders) {
@@ -293,8 +293,8 @@ window.PvImportExportToolbar = {
                             type: 'warning'
                         });
                     }
-                    if (window.pvSalesUI) {
-                        window.pvSalesUI.loadLocalOffers();
+                    if (window.kartotekaUI) {
+                        window.kartotekaUI.loadLocalOffers();
                     }
                 } catch (err) {
                     await appAlert('Blad: ' + err.message, { type: 'warning' });
@@ -350,8 +350,8 @@ window.PvImportExportToolbar = {
                     if (skipped) message += ' Pominieto: ' + skipped + '.';
                     if (errors.length) message += '\nBledy:\n' + errors.join('\n');
                     await appAlert(message, { type: errors.length ? 'warning' : 'info' });
-                    if (window.pvSalesUI) {
-                        window.pvSalesUI.loadLocalOffers();
+                    if (window.kartotekaUI) {
+                        window.kartotekaUI.loadLocalOffers();
                     }
                 } catch (err) {
                     await appAlert('Blad: ' + err.message, { type: 'warning' });

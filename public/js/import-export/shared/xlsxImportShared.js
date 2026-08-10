@@ -82,7 +82,7 @@ window.XlsxImportShared = {
     },
 
     getLoadedOffers() {
-        const ui = window.pvSalesUI;
+        const ui = window.kartotekaUI;
         return ui && ui.searchResults && Array.isArray(ui.searchResults.items)
             ? ui.searchResults.items
             : [];

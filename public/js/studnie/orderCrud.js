@@ -298,8 +298,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         'success'
     );
 
-    if (window.pvSalesUI) {
-        window.pvSalesUI.notifyOrderMutation();
+    if (window.kartotekaUI) {
+        window.kartotekaUI.notifyOrderMutation();
     }
 
     if (typeof _sendAcceptanceTelemetry === 'function') {
@@ -399,8 +399,8 @@ async function saveOrderStudnie() {
 
     await saveOrdersDataStudnie(ordersStudnie);
     showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
-    if (window.pvSalesUI) {
-        window.pvSalesUI.notifyOrderMutation();
+    if (window.kartotekaUI) {
+        window.kartotekaUI.notifyOrderMutation();
     }
 }
 
@@ -458,8 +458,8 @@ async function deleteOrderStudnie(orderId) {
         refreshAll();
     }
 
-    if (window.pvSalesUI) {
-        window.pvSalesUI.notifyOrderMutation();
+    if (window.kartotekaUI) {
+        window.kartotekaUI.notifyOrderMutation();
     }
 }
 
@@ -817,8 +817,8 @@ async function saveCurrentOrder(options = {}) {
         showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
         renderOrderModeBanner();
         if (typeof renderOfferSummary === 'function') renderOfferSummary();
-        if (window.pvSalesUI) {
-            window.pvSalesUI.notifyOrderMutation();
+        if (window.kartotekaUI) {
+            window.kartotekaUI.notifyOrderMutation();
         }
     } catch (err) {
         logger.error('orderManager', 'Błąd zapisu zamówienia:', err);

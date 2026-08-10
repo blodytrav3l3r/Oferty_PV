@@ -196,8 +196,8 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie utworzone', 'success');
 
-        if (window.pvSalesUI) {
-            window.pvSalesUI.notifyOrderMutation();
+        if (window.kartotekaUI) {
+            window.kartotekaUI.notifyOrderMutation();
         }
 
         editingRuryOrderId = orderId;
@@ -240,8 +240,8 @@ async function saveRuryOrder() {
     try {
         await saveOrdersDataRury(ordersRury);
         showToast('Zamówienie zaktualizowane', 'success');
-        if (window.pvSalesUI) {
-            window.pvSalesUI.notifyOrderMutation();
+        if (window.kartotekaUI) {
+            window.kartotekaUI.notifyOrderMutation();
         }
         const savedOrder = ordersRury[orderIndex];
         if (typeof renderOrderModeBanner === 'function') renderOrderModeBanner(savedOrder);

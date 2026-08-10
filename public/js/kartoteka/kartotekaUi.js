@@ -1,12 +1,12 @@
 // @ts-check
 // Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
 import { storageService } from '../shared/StorageService.js';
-import pvSalesSearch from './pvSalesSearch.js';
-import pvSalesFilter from './pvSalesFilter.js';
-import pvSalesHistory from './pvSalesHistory.js';
-import pvSalesActions from './pvSalesActions.js';
+import kartotekaSearch from './kartotekaSearch.js';
+import kartotekaFilter from './kartotekaFilter.js';
+import kartotekaHistory from './kartotekaHistory.js';
+import kartotekaActions from './kartotekaActions.js';
 
-class PVSalesUI {
+class KartotekaUI {
     constructor() {
         this.syncManager = null;
         this.isSyncUpToDate = true;
@@ -37,28 +37,28 @@ class PVSalesUI {
 
     /** Deleguje do domiksowanej implementacji (Object.assign poniżej) */
     init() {
-        if (typeof pvSalesSearch.init === 'function') {
-            return pvSalesSearch.init.call(this);
+        if (typeof kartotekaSearch.init === 'function') {
+            return kartotekaSearch.init.call(this);
         }
     }
 }
 
-Object.assign(PVSalesUI.prototype, pvSalesSearch);
-Object.assign(PVSalesUI.prototype, pvSalesFilter);
-Object.assign(PVSalesUI.prototype, pvSalesHistory);
-Object.assign(PVSalesUI.prototype, pvSalesActions);
+Object.assign(KartotekaUI.prototype, kartotekaSearch);
+Object.assign(KartotekaUI.prototype, kartotekaFilter);
+Object.assign(KartotekaUI.prototype, kartotekaHistory);
+Object.assign(KartotekaUI.prototype, kartotekaActions);
 
 document.addEventListener('DOMContentLoaded', () => {
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');
 
     if (isKartoteka) {
-        window.pvSalesUI = new PVSalesUI();
+        window.kartotekaUI = new KartotekaUI();
     }
 
     // Cleanup przy odpięciu iframe
     window.addEventListener('pagehide', () => {
-        if (window.pvSalesUI) {
-            window.pvSalesUI._stopAutoRefresh();
+        if (window.kartotekaUI) {
+            window.kartotekaUI._stopAutoRefresh();
         }
     });
 });

@@ -15,7 +15,7 @@ import {
     auditRestoreVersion,
     auditShowSnapshotModal,
     auditViewSnapshot
-} from './pvSalesAudit.js';
+} from './kartotekaAudit.js';
 
 export default {
     getAuditContextLabel(type) {

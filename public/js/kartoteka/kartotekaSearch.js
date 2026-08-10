@@ -11,12 +11,12 @@ export default {
             if (!userStr) {
                 this.initRetryCount++;
                 if (this.initRetryCount > this.initRetryMax) {
-                    logger.error('pvSalesUi', 'Przekroczono limit prób inicjalizacji');
+                    logger.error('kartotekaUi', 'Przekroczono limit prób inicjalizacji');
                     return;
                 }
                 logger.info(
-                    'pvSalesUi',
-                    '[PVSalesUI] Czekam na dane użytkownika w sessionStorage (ponowienie ' +
+                    'kartotekaUi',
+                    '[KartotekaUI] Czekam na dane użytkownika w sessionStorage (ponowienie ' +
                         this.initRetryCount +
                         '/' +
                         this.initRetryMax +
@@ -30,7 +30,7 @@ export default {
 
             const user = JSON.parse(userStr);
             this.role = user.role || 'user';
-            logger.info('pvSalesUi', 'Inicjalizacja dla użytkownika:', user.username);
+            logger.info('kartotekaUi', 'Inicjalizacja dla użytkownika:', user.username);
 
             await storageService.init();
             if (typeof fetchGlobalUsers === 'function') await fetchGlobalUsers();
@@ -47,15 +47,15 @@ export default {
                 window.initAdvancedFilterEvents(this);
             }
         } catch (error) {
-            logger.error('pvSalesUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
-            const listDiv = document.getElementById('pv-local-offers-list');
+            logger.error('kartotekaUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
+            const listDiv = document.getElementById('ka-offers-list');
             if (listDiv)
                 listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${window.escapeHtml(error.message)}</div>`;
         }
     },
 
     async loadLocalOffers() {
-        logger.info('pvSalesUi', 'loadLocalOffers: Delegowanie do searchOffers...');
+        logger.info('kartotekaUi', 'loadLocalOffers: Delegowanie do searchOffers...');
         await this.searchOffers(this.buildSearchParams());
         this.notifyOrderMutation();
     },
@@ -65,7 +65,7 @@ export default {
         this.autoRefreshInterval = setInterval(() => {
             if (!document.hidden) {
                 this.searchOffers(this.buildSearchParams()).catch((e) =>
-                    logger.error('pvSalesUi', 'Auto-refresh error:', e)
+                    logger.error('kartotekaUi', 'Auto-refresh error:', e)
                 );
             }
         }, 60000);
@@ -93,7 +93,7 @@ export default {
      * Buduje parametry wyszukiwania z obecnego stanu filtrów
      */
     buildSearchParams() {
-        const input = document.getElementById('pv-local-search-input');
+        const input = document.getElementById('ka-local-search-input');
         const q = input ? input.value.trim() : '';
 
         let dateFrom = '';
@@ -192,7 +192,7 @@ export default {
             this.updateOfferCounter(this.searchResults.items.length, this.searchResults.totalCount);
         } catch (error) {
             if (error.name === 'AbortError') return;
-            logger.error('pvSalesUi', 'Błąd wyszukiwania ofert:', error);
+            logger.error('kartotekaUi', 'Błąd wyszukiwania ofert:', error);
             this.showError(error.message || 'Błąd sieci');
         } finally {
             this.isLoading = false;
@@ -218,7 +218,7 @@ export default {
      * Renderuje wyniki wyszukiwania do kontenera kart
      */
     renderResults() {
-        const listDiv = document.getElementById('pv-local-offers-list');
+        const listDiv = document.getElementById('ka-offers-list');
         if (!listDiv) return;
 
         const items = this.searchResults?.items || [];
@@ -236,7 +236,7 @@ export default {
         if (this.searchResults?.hasMore) {
             listDiv.insertAdjacentHTML('beforeend', this.renderLoadMore());
             document
-                .getElementById('pv-load-more-btn')
+                .getElementById('ka-load-more-btn')
                 ?.addEventListener('click', () => this.loadMore());
         }
     },
@@ -251,7 +251,7 @@ export default {
             total != null ? 'Pokaż więcej (' + shown + ' z ' + total + ')' : 'Pokaż więcej';
         return (
             '<div class="load-more-container" style="text-align:center; padding:1rem;">' +
-            '<button class="btn btn-sm btn-secondary" id="pv-load-more-btn">' +
+            '<button class="btn btn-sm btn-secondary" id="ka-load-more-btn">' +
             label +
             '</button></div>'
         );
@@ -261,7 +261,7 @@ export default {
      * Wyświetla spinner ładowania
      */
     showLoadingSpinner() {
-        const el = document.getElementById('pv-local-offers-list');
+        const el = document.getElementById('ka-offers-list');
         if (!el) return;
         el.innerHTML =
             '<div style="text-align:center; padding:2rem; color:var(--text-muted);">' +
@@ -274,7 +274,7 @@ export default {
      * Aktualizuje licznik ofert pod listą (wzór: "Koniec listy — 5/5")
      */
     updateOfferCounter(shown, total) {
-        const el = document.getElementById('pv-offer-count');
+        const el = document.getElementById('ka-offer-count');
         if (!el) return;
         const hasMore = !!(this.searchResults && this.searchResults.hasMore);
         if (total != null && shown > 0 && !hasMore) {
@@ -290,7 +290,7 @@ export default {
      * czas pozostały do możliwej ponownej próby (retryAfter w sekundach).
      */
     showError(message, retryAfter) {
-        const listDiv = document.getElementById('pv-local-offers-list');
+        const listDiv = document.getElementById('ka-offers-list');
         if (!listDiv) return;
         const hasCountdown = Number(retryAfter) > 0;
         let html =
@@ -301,7 +301,7 @@ export default {
             '</span><br/>';
         if (hasCountdown) {
             html +=
-                '<span id="pv-retry-countdown" style="font-size:0.85rem; opacity:0.9; display:inline-block; margin-top:0.5rem;">' +
+                '<span id="ka-retry-countdown" style="font-size:0.85rem; opacity:0.9; display:inline-block; margin-top:0.5rem;">' +
                 'Ponów próbę za <strong>' +
                 Math.ceil(retryAfter) +
                 '</strong> s</span><br/>';
@@ -321,7 +321,7 @@ export default {
             if (this._rateLimitTimer) clearInterval(this._rateLimitTimer);
             let sec = Math.ceil(retryAfter);
             this._rateLimitTimer = setInterval(() => {
-                const el = document.getElementById('pv-retry-countdown');
+                const el = document.getElementById('ka-retry-countdown');
                 if (!el) {
                     clearInterval(this._rateLimitTimer);
                     this._rateLimitTimer = null;

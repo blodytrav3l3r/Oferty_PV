@@ -8,7 +8,7 @@
 function renderSavedOffers() {
     const container = document.getElementById('saved-offers-list');
     if (!container) {
-        if (window.pvSalesUI) window.pvSalesUI.loadLocalOffers();
+        if (window.kartotekaUI) window.kartotekaUI.loadLocalOffers();
         return;
     }
     if (offers.length === 0) {

@@ -119,7 +119,7 @@
                                 >
                                 <button
                                     type="button"
-                                    class="btn btn-sm pv-type-filter-btn active"
+                                    class="btn btn-sm ka-type-filter-btn active"
                                     data-type-filter="all"
                                     onclick="filterByType('all')"
                                     style="
@@ -132,7 +132,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
                                     data-type-filter="offer"
                                     onclick="filterByType('offer')"
                                     style="
@@ -145,7 +145,7 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
                                     data-type-filter="studnia_oferta"
                                     onclick="filterByType('studnia_oferta')"
                                     style="
@@ -184,11 +184,11 @@
                                 >
                                 <button
                                     type="button"
-                                    class="btn btn-sm pv-filter-btn active"
+                                    class="btn btn-sm ka-filter-btn active"
                                     data-filter="all"
                                     onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('all')
+                                        window.kartotekaUI &&
+                                            window.kartotekaUI.setFilterLocalOffers('all')
                                     "
                                     style="
                                         border-radius: 20px;
@@ -200,11 +200,11 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn"
                                     data-filter="with_order"
                                     onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('with_order')
+                                        window.kartotekaUI &&
+                                            window.kartotekaUI.setFilterLocalOffers('with_order')
                                     "
                                     style="
                                         border-radius: 20px;
@@ -216,11 +216,11 @@
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn"
                                     data-filter="without_order"
                                     onclick="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.setFilterLocalOffers('without_order')
+                                        window.kartotekaUI &&
+                                            window.kartotekaUI.setFilterLocalOffers('without_order')
                                     "
                                     style="
                                         border-radius: 20px;
@@ -249,21 +249,21 @@
                                 <span class="toolbar-label">Data:</span>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    class="btn btn-sm btn-secondary ka-date-preset-btn"
                                     data-date-range="today"
                                 >
                                     Dzisiaj
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    class="btn btn-sm btn-secondary ka-date-preset-btn"
                                     data-date-range="7d"
                                 >
                                     7 dni
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary pv-date-preset-btn"
+                                    class="btn btn-sm btn-secondary ka-date-preset-btn"
                                     data-date-range="month"
                                 >
                                     Ten miesiąc
@@ -271,7 +271,7 @@
                                 <span class="toolbar-label">Data od</span>
                                 <input
                                     type="date"
-                                    id="pv-date-from"
+                                    id="ka-date-from"
                                     class="form-input form-input-sm"
                                     title="Data od"
                                     aria-label="Data od"
@@ -280,14 +280,14 @@
                                 <span class="toolbar-label">Data do</span>
                                 <input
                                     type="date"
-                                    id="pv-date-to"
+                                    id="ka-date-to"
                                     class="form-input form-input-sm"
                                     title="Data do"
                                     aria-label="Data do"
                                 />
                                 <button
                                     type="button"
-                                    id="pv-date-clear"
+                                    id="ka-date-clear"
                                     class="btn btn-sm btn-secondary"
                                     title="Wyczyść zakres dat"
                                     aria-label="Wyczyść zakres dat"
@@ -321,7 +321,7 @@
                                     >Opiekun:</span
                                 >
                                 <select
-                                    id="pv-user-filter"
+                                    id="ka-user-filter"
                                     class="btn btn-sm"
                                     style="
                                         border-radius: 20px;
@@ -341,9 +341,9 @@
 
                                 <button
                                     type="button"
-                                    id="pv-clear-filters"
+                                    id="ka-clear-filters"
                                     class="btn btn-secondary btn-sm"
-                                    onclick="window.pvSalesUI && window.pvSalesUI.clearAllFilters()"
+                                    onclick="window.kartotekaUI && window.kartotekaUI.clearAllFilters()"
                                     title="Wyczyść wszystkie aktywne filtry"
                                     style="
                                         border-radius: 20px;
@@ -397,7 +397,7 @@
                                     <path d="m21 21-4.35-4.35" />
                                 </svg>
                                 <label
-                                    for="pv-local-search-input"
+                                    for="ka-local-search-input"
                                     style="
                                         position: absolute;
                                         width: 1px;
@@ -412,7 +412,7 @@
                                 >
                                 <input
                                     type="text"
-                                    id="pv-local-search-input"
+                                    id="ka-local-search-input"
                                     class="form-input form-input-sm"
                                     placeholder="Szukaj po numerze oferty, kliencie, NIP, numerze zamówienia..."
                                     style="
@@ -422,9 +422,9 @@
                                         font-size: 0.8rem;
                                     "
                                     oninput="
-                                        window.pvSalesUI &&
-                                            window.pvSalesUI.onSearchInput &&
-                                            window.pvSalesUI.onSearchInput()
+                                        window.kartotekaUI &&
+                                            window.kartotekaUI.onSearchInput &&
+                                            window.kartotekaUI.onSearchInput()
                                     "
                                 />
                             </div>
@@ -432,7 +432,7 @@
                             <button
                                 type="button"
                                 class="btn btn-secondary btn-sm"
-                                onclick="window.pvSalesUI && window.pvSalesUI.loadLocalOffers()"
+                                onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
                                 style="
                                     border-radius: 20px;
@@ -460,7 +460,7 @@
                             margin-bottom: var(--section-gap-lg);
                         "
                     >
-                        <div id="pv-local-offers-list" class="kartoteka-offers-grid">
+                        <div id="ka-offers-list" class="kartoteka-offers-grid">
                             <div
                                 style="
                                     text-align: center;
@@ -485,7 +485,7 @@
                             </div>
                         </div>
                     </section>
-                    <div id="pv-offer-count" class="kartoteka-list-end hidden"></div>
+                    <div id="ka-offer-count" class="kartoteka-list-end hidden"></div>
                 </div>
             </div>
         </main>
@@ -509,10 +509,10 @@
         <link rel="stylesheet" href="css/printModal.css?v=1.12.0" />
         <script defer src="js/studnie/offerPrintManager.js?v=1.12.0"></script>
         <script defer src="js/rury/offerPrintManager.js?v=1.12.0"></script>
-        <script defer src="js/sales/pvSalesHelpers.js?v=1.12.0"></script>
-        <script type="module" src="js/sales/pvSalesUi.js?v=1.12.0"></script>
+        <script defer src="js/kartoteka/kartotekaHelpers.js?v=1.12.0"></script>
+        <script type="module" src="js/kartoteka/kartotekaUi.js?v=1.12.0"></script>
 
-        <script defer src="js/sales/kartotekaInit.js?v=1.12.0"></script>
+        <script defer src="js/kartoteka/kartotekaInit.js?v=1.12.0"></script>
         <script defer src="js/shared/iconsSlim.js?v=1.12.0"></script>
 
         <!-- SheetJS do XLSX — ładowany leniwie przy pierwszej operacji importu/eksportu -->

@@ -66,11 +66,11 @@ export default {
             }
 
             logger.info(
-                'pvSalesUi',
-                `[PVSalesUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
+                'kartotekaUi',
+                `[KartotekaUI] Załadowano ${totalOrders} zamówień (studnie+rury) powiązanych z ${this.ordersMap.size} ofertami.`
             );
         } catch (error) {
-            logger.warn('pvSalesUi', 'Nie udało się pobrać zamówień:', error.message);
+            logger.warn('kartotekaUi', 'Nie udało się pobrać zamówień:', error.message);
             if (typeof window.showToast === 'function') {
                 window.showToast(
                     'Nie udało się pobrać zamówień — oferty mogą być niekompletne',
@@ -91,7 +91,7 @@ export default {
             .then(() => {
                 if (this.searchResults?.items) this.renderResults();
             })
-            .catch((e) => logger.warn('pvSalesUi', 'notifyOrderMutation:', e.message));
+            .catch((e) => logger.warn('kartotekaUi', 'notifyOrderMutation:', e.message));
     },
 
     /** @returns {{ hasOrder: boolean, orders: Array<Object>, order: Object|null }} */
@@ -146,7 +146,7 @@ export default {
                     this.ordersMap.set(offerKey, orders);
                 }
             } catch (e) {
-                logger.warn('pvSalesUi', 'Błąd pobierania zamówień:', e);
+                logger.warn('kartotekaUi', 'Błąd pobierania zamówień:', e);
             }
         }
 
@@ -176,7 +176,7 @@ export default {
         try {
             if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
         } catch (err) {
-            logger.error('pvSalesUi', 'Lucide icons error in showOfferOrdersPopup:', err);
+            logger.error('kartotekaUi', 'Lucide icons error in showOfferOrdersPopup:', err);
         }
 
         // Attach modal closing event listeners
@@ -236,8 +236,7 @@ export default {
         container.addEventListener('click', async (e) => {
             const btn = e.target.closest(
                 '.action-btn, .btn-order-badge, .btn-edit-order, .btn-change-owner, ' +
-                    '.btn-edit-pv-offer, .btn-copy-pv-offer, .btn-history-pv-offer, ' +
-                    '.btn-export-pv-offer, .btn-delete-pv-offer, .btn-delete-order, ' +
+                    '.btn-delete-order, ' +
                     '.btn-history-order, .btn-karta-budowy'
             );
             if (!btn) return;
@@ -306,7 +305,7 @@ export default {
                     const doc = await storageService.getOfferById(id);
                     this.openOfferForEdit(doc, id, typeAttr);
                 } catch (err) {
-                    logger.error('pvSalesUi', 'Błąd pobierania do edycji:', err);
+                    logger.error('kartotekaUi', 'Błąd pobierania do edycji:', err);
                 }
                 return;
             }
@@ -416,7 +415,7 @@ export default {
                 const rawOffer = offerWrapper?.data || offerWrapper;
 
                 if (rawOffer) {
-                    logger.info('pvSalesUi', 'Odblokowywanie oferty:', offerWrapper.id);
+                    logger.info('kartotekaUi', 'Odblokowywanie oferty:', offerWrapper.id);
                     rawOffer.id = offerWrapper.id;
                     rawOffer.type = offerWrapper.type || offerType;
                     rawOffer.state =
@@ -440,7 +439,7 @@ export default {
 
             await this.loadLocalOffers();
         } catch (error) {
-            logger.error('pvSalesUi', 'Błąd podczas usuwania zamówienia:', error);
+            logger.error('kartotekaUi', 'Błąd podczas usuwania zamówienia:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas usuwania zamówienia: ' + error.message, 'error');
             }
@@ -464,7 +463,7 @@ export default {
             }
             this.loadLocalOffers(); // Odświeżenie listy ofert
         } catch (error) {
-            logger.error('pvSalesUi', 'Błąd podczas usuwania:', error);
+            logger.error('kartotekaUi', 'Błąd podczas usuwania:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast(
                     (error && error.message) || 'Błąd podczas usuwania oferty.',
@@ -579,7 +578,7 @@ export default {
             await this.loadLocalOffers();
             this.filterLocalOffers(); // Zaaplikuj aktualny filtr jeśli istnieje
         } catch (error) {
-            logger.error('pvSalesUi', 'Błąd podczas kopiowania oferty:', error);
+            logger.error('kartotekaUi', 'Błąd podczas kopiowania oferty:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas kopiowania oferty.', 'error');
             }
@@ -644,10 +643,14 @@ export default {
                             })
                         });
                         if (!patchResp.ok) {
-                            logger.warn('pvSalesUi', 'Odpowiedz PATCH opiekuna:', patchResp.status);
+                            logger.warn(
+                                'kartotekaUi',
+                                'Odpowiedz PATCH opiekuna:',
+                                patchResp.status
+                            );
                         }
                     } catch (e) {
-                        logger.error('pvSalesUi', 'Błąd aktualizacji opiekuna w zamówieniu:', e);
+                        logger.error('kartotekaUi', 'Błąd aktualizacji opiekuna w zamówieniu:', e);
                     }
                 }
 
@@ -657,7 +660,7 @@ export default {
                 await this.loadLocalOffers();
             }
         } catch (error) {
-            logger.error('pvSalesUi', 'Błąd zmiany opiekuna:', error);
+            logger.error('kartotekaUi', 'Błąd zmiany opiekuna:', error);
             if (typeof window.showToast === 'function') {
                 window.showToast('Błąd podczas zmiany opiekuna: ' + error.message, 'error');
             }
