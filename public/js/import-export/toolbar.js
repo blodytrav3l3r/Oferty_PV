@@ -245,7 +245,7 @@ window.PvImportExportToolbar = {
         const modal = this._createModal(
             'Import 1:1 (JSON)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
-                '<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 1rem 0;">Obsługiwane formaty: witros-offer-transfer (oferta+zamówienia), witros-order-transfer (zamówienie).</p>' +
+                '<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 1rem 0;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
                 '<input type="file" id="ie-json-file-input" accept=".json" class="form-input" style="display:block;margin-bottom:1rem;width:100%;">' +
                 '<div id="ie-json-progress" style="display:none;color:var(--accent);font-size:0.85rem;">Importowanie...</div>',
             'Importuj',
