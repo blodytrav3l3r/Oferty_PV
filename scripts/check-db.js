@@ -129,7 +129,11 @@ function check() {
     try {
         return checkWithNodeSqlite();
     } catch (e) {
-        if (e.code === 'ERR_BROWSER_NOT_SUPPORTED' || e.code === 'MODULE_NOT_FOUND') {
+        if (
+            e.code === 'ERR_BROWSER_NOT_SUPPORTED' ||
+            e.code === 'MODULE_NOT_FOUND' ||
+            e.code === 'ERR_UNKNOWN_BUILTIN_MODULE'
+        ) {
             try {
                 return checkWithCli();
             } catch (cliErr) {

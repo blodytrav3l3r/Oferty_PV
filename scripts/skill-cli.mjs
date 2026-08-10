@@ -25,6 +25,7 @@
 
 import { readFileSync, existsSync, writeFileSync } from 'fs';
 import { resolve, join } from 'path';
+import { homedir } from 'os';
 import yaml from 'js-yaml';
 
 const ROOT = resolve(process.cwd());
@@ -44,11 +45,12 @@ function approxTokensFromBytes(bytes) {
 function resolveInstallPath(src) {
     if (!src) return null;
     if (src.startsWith('profile:')) {
-        // profile:pv:path/to/skill
+        // profile:pv:path/to/skill — profil hermes w katalogu domowym (przenośnie)
         const parts = src.split(':');
         const sub = parts.slice(2).join(':');
+        const profilesDir = process.env.HERMES_PROFILES_DIR || join(homedir(), 'AppData', 'Local', 'hermes', 'profiles');
         return [
-            'C:\\Users\\blody\\AppData\\Local\\hermes\\profiles\\pv\\skills',
+            profilesDir,
             ...parts.slice(1, 2),
             sub,
             'SKILL.md'

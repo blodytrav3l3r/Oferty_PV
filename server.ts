@@ -24,8 +24,8 @@ process.on('unhandledRejection', (reason: unknown) => {
         'UnhandledRejection:',
         reason instanceof Error ? reason.message : String(reason)
     );
-    // Oznacz proces do wyjścia z kodem błędu zamiast cichego maskowania problemu.
-    process.exitCode = 1;
+    // Proces nie może sensownie kontynuować po nieobsłużonej rejectcji — zakończ go.
+    process.exit(1);
 });
 
 /* ===== INICJALIZACJA ===== */

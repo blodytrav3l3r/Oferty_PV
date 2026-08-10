@@ -6,8 +6,8 @@ Watchdog pattern: cicho gdy OK, raportuje tylko problemy.
 """
 import os, re, sys
 
-REPO = r'I:\GitHub\Oferty_PV'
-STUDNIE = os.path.join(REPO, r'public\js\studnie')
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+STUDNIE = os.path.join(REPO, 'public', 'js', 'studnie')
 
 errors = []
 

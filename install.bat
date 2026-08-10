@@ -119,7 +119,7 @@ set "SKIP_SEED="
 for %%a in (%*) do if /i "%%a"=="--skip-seed" set "SKIP_SEED=1"
 if not defined SKIP_SEED (
     if exist "prisma\seed.ts" (
-        echo [INFO] Seed (--skip-seed aby pominac)...
+        echo [INFO] Seed ^(--skip-seed aby pominac^)...
         call npx ts-node prisma\seed.ts
         if !errorlevel! equ 0 (
             echo [OK] Seed OK
@@ -129,13 +129,13 @@ if not defined SKIP_SEED (
             echo [INFO]   install.bat --skip-seed
             echo [INFO]   npm run restore data/backups/nazwa_backupu.sqlite
             echo [INFO] Lekka alternatywa: skopiuj price_defaults.json do data\
-            echo [INFO] (ceny zostana przywrocone automatycznie po starcie)
+            echo [INFO] ^(ceny zostana przywrocone automatycznie po starcie^)
             pause
             exit /b 1
         )
     )
 ) else (
-    echo [INFO] Seed pominiety (--skip-seed)
+    echo [INFO] Seed pominiety ^(--skip-seed^)
 )
 
 REM 10. Typecheck

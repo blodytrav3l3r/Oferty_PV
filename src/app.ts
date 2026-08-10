@@ -297,8 +297,16 @@ export async function initApp(): Promise<void> {
         );
     }
 
-    // Admin
-    await ensureAdminExists();
+    // Admin — błąd nie może crashować serwera (ts-node-dev --respawn pętliłby się w nieskończoność).
+    try {
+        await ensureAdminExists();
+    } catch (err) {
+        logger.error(
+            'Server',
+            'Nie udało się sprawdzić/utworzyć konta administratora:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
 
     // Aplikuj nadpisania cen z price_overrides.json (jeśli istnieje)
     try {

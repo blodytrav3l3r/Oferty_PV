@@ -68,7 +68,9 @@ REM ---------- 5. Schema DB + Seed ----------
 echo [INFO] Sprawdzanie bazy danych...
 call scripts\ensure-db.bat
 if errorlevel 1 (
-    echo [WARN] Baza danych moze byc niekompletna.
+    echo [BLAD] Nie udalo sie przygotowac bazy danych. Uruchom install.bat i sprobuj ponownie.
+    pause
+    exit /b 1
 )
 
 REM ---------- Production: verify build ----------
@@ -112,14 +114,14 @@ echo ===========================================================
 echo.
 
 if /i "%MODE%"=="prod" (
-    echo   Produkcja: HTTPS za reverse proxy (Caddy/Nginx)
+    echo   Produkcja: HTTPS za reverse proxy ^(Caddy/Nginx^)
     echo   Wewnetrzny: http://127.0.0.1:3000
     set "NODE_ENV=production"
     call npm start
 ) else (
     echo   Aplikacja: http://localhost:3000
     echo   Backend:  http://localhost:3000/health
-    echo   HTTPS:    https://localhost:3443 (Caddyfile.dev + mkcert, opcjonalnie)
+    echo   HTTPS:    https://localhost:3443 ^(Caddyfile.dev + mkcert, opcjonalnie^)
     set "NODE_ENV=development"
     call npm run dev
 )
