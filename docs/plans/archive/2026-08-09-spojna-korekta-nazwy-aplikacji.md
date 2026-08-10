@@ -172,7 +172,7 @@ Zasada per-line: „WITROS” = firma („© WITROS”, „Autor: WITROS”, „
 | `docs/instalacja-krok-po-kroku-dla-laika.md` | 1, 394 | H1 + stopka „...analizy projektu WITROS Oferty PV”                                                      |
 | `docs/instalacja-przenoszenie-systemu.md`    | 1, 32  | H1 + ramka ASCII `WITROS Oferty PV` (wyrównać szerokość ramki!)                                         |
 
-- **NIE ruszać:** `docs/README.md` (nagłówek już S.O.K.; linie 5,139 = firma),
+- **NIE ruszać:** `README.md` (root — nagłówek już S.O.K.; linie 5,139 = firma),
   `docs/import-export/ARCHITECTURE.md:97` (kind transferu), `docs/plans/archive/**`,
   `docs/adr/**`, `docs/AUDIT.md`, `CHANGELOG.md`, `LICENSE`, wszystkie linie ops.
 - **Weryfikacja:** `npm run version:check`; `npm run encoding:check`;
