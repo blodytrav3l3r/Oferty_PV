@@ -73,7 +73,15 @@ function processFile(filePath) {
     ];
 
     for (const re of patterns) {
-        content = content.replace(re, (match, prefix, suffix) => `${prefix}${VERSION}${suffix}`);
+        // UWAGA: dla wzorców z 1 grupą przechwytującą 3. argument callbacka
+        // to OFFSET dopasowania (liczba), nie sufiks — doklejanie go psuło wersję
+        // (np. 1.13.1 + 238 => 1.13.1238). Sufiks dołączaj TYLKO gdy jest stringiem
+        // (wzorce JSON mają 2 grupy: prefix + zamykający cudzysłów).
+        content = content.replace(
+            re,
+            (match, prefix, suffix) =>
+                `${prefix}${VERSION}${typeof suffix === 'string' ? suffix : ''}`
+        );
     }
 
     // aktualizacja ?v= w docs (np w przykładowych HTML)

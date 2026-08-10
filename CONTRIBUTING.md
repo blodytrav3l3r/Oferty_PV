@@ -6,10 +6,12 @@
 - Commit: `git add -A` → `git commit -m "typ(scope): opis"` → `git push`
 - Przed commitem: `npm run validate` (typecheck backend+frontend, lint backend+frontend, testy)
 - Po modyfikacji kodu frontendowego: `npm run format`
+- **OBOWIĄZKOWO przed każdym commitem i pushem**: `npm run version:check` — waliduje spójność wersji we WSZYSTKICH źródłach (VERSION, package.json, CHANGELOG.md, *.bat, HTML `?v=`, oraz markery `**Wersja:**`/`> Wersja:`/JSON w `README.md` i `docs/*.md`). **Bez wyjątków** — także przy samych poprawkach dokumentacji. Rozjazd = blokada (pre-push).
 - **Uwaga:** Husky pre-commit hook może blokować commity (znany błąd z `well.magazyn`). Obejście:
     ```bash
     git -c core.hooksPath=/dev/null commit -m "typ(scope): opis"
     ```
+    (Obejście hooka NIE zwalnia z obowiązku `npm run version:check` — uruchom go ręcznie przed commitem.)
 
 ## Workflow
 
@@ -45,6 +47,8 @@ Proces release:
 4. Tworzy commit `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`) oraz tag git
 5. Po pushu tagów GitHub automatycznie tworzy Release
 6. Po zmianie wersji zrestartuj serwer
+
+> **WAŻNE — po KAŻDYM release:** natychmiast uruchom `npm run version:check` i potwierdź EXIT=0 przed `git push --follow-tags`. Od wersji 1.13.1 `version:check` waliduje **wszystkie** źródła wersji, w tym markery w `README.md` i `docs/*.md` — rozjazd w JAKIMKOLWIEK miejscu (także w dokach) = blokada pre-push. Bez wyjątków.
 
 **Pełna lista miejsc z numerem wersji** (weryfikacja `npm run version:check`):
 

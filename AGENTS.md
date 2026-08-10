@@ -121,6 +121,14 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 - **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
 - **Pre-push validation**: Husky `pre-push` sprawdza `npm run version:check` (blokuje push przy niespójnej wersji), `npm run encoding:check` oraz `typecheck` + testy.
 
+#### BEZWZGLĘDNE ZASADY SPÓJNOŚCI WERSJI (bez wyjątków!)
+
+- **`npm run version:check` jest OBOWIĄZKOWE** po KAŻDEJ zmianie dowolnego pliku zawierającego numer wersji oraz przed każdym commitem/pushem. Od wersji 1.13.1 `check-version.mjs` waliduje **WSZYSTKIE** źródła wersji: `VERSION`, `package.json`, `CHANGELOG.md`, `*.bat`, **markery wersji w `README.md` i `docs/*.md`** (`**Wersja:**`, `**Wersja projektu:**`, `**Wersja aplikacji:**`, `> Wersja:`, przykłady JSON `"version"`/`"dbVersion"`, `?v=`) **oraz cache-bust `?v=` w `public/*.html` i `public/templates/*.html`**.
+- **Rozjazd w JAKIMKOLWIEK miejscu = błąd = blokada.** Żaden wyjątek: nie pomijaj `version:check` przy drobnych poprawkach dokumentacji, komentarzy, README, plikach `.bat` ani `?v=`. Każdy marker wersji musi być identyczny z `VERSION` co do znaku.
+- **Nie edytuj ręcznie** numerów wersji w `README.md`/`docs/*.md`, `*.bat`, `?v=` w HTML, `CHANGELOG.md` ani `package.json` — aktualizuje je wyłącznie `npm run release` (hook `postbump`: `auto-cache-bust.mjs` → `auto-docs-version.mjs` → `auto-bat-version.mjs`).
+- **Po release** natychmiast uruchom `npm run version:check` i potwierdź EXIT=0 przed `git push`. Skrypt `auto-docs-version.mjs` jest idempotentny — ponowne uruchomienie z tą samą wersją nie zmienia niczego.
+- **Nigdy nie dodawaj do docs nowych markerów wersji** poza wzorcami obsługiwanymi przez `auto-docs-version.mjs` (lista w `check-version.mjs` → `DOC_VERSION_RES`). Nowy format markera nie objęty guardem = ryzyko cichego rozjazdu.
+
 ### Punkty Wejścia i SPA (Single Page Application)
 
 - Moduły aplikacji (np. `studnie.html`, `rury.html`) osadzane są w tagu `iframe` wewnątrz pliku głównego `app.html`. Router w `app.html` automatycznie ukrywa nagłówki osadzonych stron.
@@ -338,18 +346,18 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Wersjonowanie i release
 
-| Polecenie               | Opis działania                                                                            |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| `npm run version:check` | Sprawdza spójność numeracji wersji w pliku `VERSION`, `package.json` oraz `CHANGELOG.md`. |
-| `npm run version:patch` | Podbija wersję patch.                                                                     |
-| `npm run version:minor` | Podbija wersję minor.                                                                     |
-| `npm run version:major` | Podbija wersję major.                                                                     |
-| `npm run release`       | Automatyczny release (dobór patch/minor/major na bazie commitów).                         |
-| `npm run release:patch` | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                  |
-| `npm run release:minor` | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                      |
-| `npm run release:major` | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                       |
-| `npm run release:dry`   | Podgląd changeloga bez zapisywania.                                                       |
-| `npm run release:first` | Pierwszy release (pomija semver).                                                         |
+| Polecenie               | Opis działania                                                                                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run version:check` | Sprawdza spójność wersji w `VERSION`, `package.json`, `CHANGELOG.md`, `*.bat` oraz markerach `README.md`/`docs/*.md` (**OBOWIĄZKOWE przed każdym commit/push**). |
+| `npm run version:patch` | Podbija wersję patch.                                                                                                                                            |
+| `npm run version:minor` | Podbija wersję minor.                                                                                                                                            |
+| `npm run version:major` | Podbija wersję major.                                                                                                                                            |
+| `npm run release`       | Automatyczny release (dobór patch/minor/major na bazie commitów).                                                                                                |
+| `npm run release:patch` | Tworzy nową wersję typu patch, generuje changelog i taguje commit w git.                                                                                         |
+| `npm run release:minor` | Tworzy nową wersję typu minor (nowe funkcje wstecznie kompatybilne).                                                                                             |
+| `npm run release:major` | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                                                                                              |
+| `npm run release:dry`   | Podgląd changeloga bez zapisywania.                                                                                                                              |
+| `npm run release:first` | Pierwszy release (pomija semver).                                                                                                                                |
 
 ### Kodowanie
 

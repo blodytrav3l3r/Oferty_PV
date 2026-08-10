@@ -1,6 +1,6 @@
 # Proces wydawniczy (Release Process)
 
-**Wersja:** 1.13.139  
+**Wersja:** 1.13.1  
 **Ostatnia aktualizacja:** 2026-08-05
 
 Projekt używa **jednej gałęzi `main`** — brak gałęzi `develop`, `release/*`, `hotfix/*`.
