@@ -23,7 +23,8 @@ który serwuje API i `public/`.
 ## Uzasadnienie
 
 1. **Zero zużywanych cech Vite** — klasyczne skrypty, brak HMR/TS/`import.meta.env`
-   w frontendzie; jedyny moduł ESM (`pvSalesUi.js`) to natywny ESM działający bez bundlera.
+   w frontendzie; nieliczne moduły ESM (np. `public/js/kartoteka/kartotekaUi.js`)
+   to natywny ESM działający bez bundlera.
 2. **Express już serwował `public/` w dev** — przejście na :3000 nie wymagało zmian w runtime.
 3. **Mniej złożoności** — 4 pakiety + transitywne, jeden port zamiast dwóch, jeden proces
    zamiast trzech, koniec race condition vite↔backend i logiki `wait-and-start.mjs`.

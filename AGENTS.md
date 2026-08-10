@@ -229,8 +229,8 @@ Tabela konfiguracyjna studni (plik `studnie.html`, moduły `public/js/studnie/ex
 
 ### Import i Eksport (Kartoteka)
 
-- Logika znajduje się w katalogu `public/js/import-export/` oraz pliku `public/js/sales/pvImportExportToolbar.js`.
-- Moduł importu/eksportu jest aktywowany flagą funkcjonalną (feature flag) `feature_import_export_enabled` w tabeli bazy danych `settings` (domyślnie włączona). Toolbar inicjalizuje się w `pvSalesUi.js:307`.
+- Logika znajduje się w katalogu `public/js/import-export/` (toolbar: `public/js/import-export/toolbar.js`, global `window.importExportToolbar`).
+- Moduł importu/eksportu jest aktywowany flagą funkcjonalną (feature flag) `feature_import_export_enabled` w tabeli bazy danych `settings` (domyślnie włączona). Toolbar inicjalizuje się w `public/js/kartoteka/kartotekaInit.js:89` (`window.importExportToolbar.init('ie-toolbar-host')`); globalne API kartoteki to `window.kartotekaUI` (dawniej `pvSalesUI`).
 - Nowe funkcjonalności importu/eksportu **nie mogą** modyfikować kluczowych plików rdzenia systemu: `offerCrud.js`, `offerManager.js`, `offerItems.js`, `wizard.js`, `router.js`.
 - Eksport do formatu XLSX opiera się na 12 wspólnych kolumnach. Kolumna `NR_STUDNI` w przypadku modułu rur przechowuje typ wykładziny PEHD, natomiast dla modułu studni – nazwę własną studni.
 

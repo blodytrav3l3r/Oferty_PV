@@ -169,3 +169,33 @@
 **Problem**: Wyszukiwarka produktów oparta o FTS5 wymaga wirtualnej tabeli i indeksu; bazy przed migracją nie miały wymaganego schematu FTS5.
 **Objaw**: Błędy wyszukiwania lub powolne zapytania LIKE po aktualizacji istniejącej instalacji.
 **Fix** (`fe1679f`): `ensureFts5Schema` (`src/utils/fts5Sync.ts`) uruchamiane przy starcie serwera (`src/app.ts`) — idempotentne tworzenie/uzupełnianie schematu FTS5 z backfillem danych.
+
+## 35. `typecheck:frontend` TS2339 na `event.target.classList`/`dataset` (zlecenia)
+
+**Problem**: Przy delegacji zdarzeń `event.target` ma typ `EventTarget`, który nie posiada `classList`/`dataset` — TS2339 w `zlecenia.js:375,378`. Blokował `npm run typecheck:frontend` (pre-push/`validate`).
+**Objaw**: Błędy typowania w checku frontendowym.
+**Fix**: Guard typowania: `if (!(target instanceof HTMLElement) || !target.classList.contains(...)) return;` przed dostępem do `classList`/`dataset`. W testach vm/jsdom bez okna używać `target && target.dataset` z optional chaining.
+
+## 36. Batch-delete 400 przy >200 zaznaczonych (zlecenia)
+
+**Problem**: Endpoint `POST /batch-delete` ma limit 200 ids/request (ochrona payloadu + rate limiter 60/min); zaznaczenie wszystkich wierszy (tri-state `all`) przekraczało limit → 400.
+**Objaw**: Batch-delete wszystkich wierszy kończył się błędem 400.
+**Fix**: Frontend `deleteSelectedOrders` chunkuje ids po 200 i wysyła sekwencyjnie (z `await`), zlicza `{ deleted, skipped }` i pokazuje toast „Usunięto X, pominięto Y". Nie podnosić limitu serwera.
+
+## 37. Sentinel infinite scroll odpala eager-load w pętli (zlecenia)
+
+**Problem**: Po dodaniu kontenera scrolla (`.zlecenia-table-container`, `height: min(480px, 60vh)`) sentinel bez `root: kontener` w `IntersectionObserver` jest zawsze w viewport (kontener 480px < iframe) → doładowywanie w pętli aż do `MAX_LOADED`.
+**Objaw**: Eager-load wszystkich stron przy otwarciu listy zleceń.
+**Fix**: `new IntersectionObserver(cb, { root: kontener, rootMargin: '300px 0px' })` — sentinel przeniesiony do środka kontenera (za `</table>`); bez tego eager-load w pętli. Sticky `th` z nieprzezroczystym tłem `var(--bg-card)`.
+
+## 38. Cursor paginacji mieszał surowe/znormalizowane createdAt (zlecenia)
+
+**Problem**: Klauzula kursora (`productionSearchUtils.ts:64-71`) porównywała **surowe** `createdAt` z kursorem ze **znormalizowanej** wartości SELECT → przy danych mieszanych (epoch-ms legacy + ISO) pomijała/duplikowała wiersze.
+**Objaw**: Pomijane lub duplikowane wiersze przy paginacji nieskończonej.
+**Fix**: Używać `normalizedCreatedAtSql()` w gałęzi `cursor && cursorId` — porównanie zawsze na znormalizowanej wartości, spójnej z SELECT.
+
+## 39. `escapeHtml` nie escapuje `"` w atrybutach HTML
+
+**Problem**: `escapeHtml` (wzorzec z #3) nie zamienia `"`, więc interpolacja do atrybutów (`aria-label`, `title` itd.) przez `escapeHtml` jest podatna na iniekcję atrybutu — cudzysłów może zamknąć atrybut.
+**Objaw**: Potencjalna iniekcja atrybutu przy interpolacji danych do `aria-label`/`title`.
+**Fix**: W atrybutach używać `escapeJsStr` (jest w `zleceniaHelpers.js`) lub istniejącego `escapeHtmlAttr` — nigdy `escapeHtml` dla kontekstu atrybutu; `escapeHtml` tylko dla treści tekstowej (innerHTML).

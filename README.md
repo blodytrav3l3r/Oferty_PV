@@ -29,7 +29,8 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 - [Skrypty startowe (.bat)](#skrypty-startowe-bat)
 - [Komendy](#komendy)
 - [Struktura projektu](#struktura-projektu)
-- [Dokumentacja](#dokumentacja)
+- [Dokumentacja API](#dokumentacja-api)
+- [AI/ML Pipeline](#aiml-pipeline)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [Security](#security)
@@ -398,6 +399,18 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run version:patch` | Podbij wersję patch                                        |
 | `npm run version:minor` | Podbij wersję minor                                        |
 | `npm run version:major` | Podbij wersję major                                        |
+| `npm run version:bump`  | Podbij wersję (typ z argumentu)                            |
+
+### Nazwa aplikacji i skill CLI
+
+| Komenda                   | Opis                                        |
+| ------------------------- | ------------------------------------------- |
+| `npm run appname:check`   | Sprawdź spójność nazwy aplikacji (pre-push) |
+| `npm run skills:build`    | Oblicz koszt budowy skilli                  |
+| `npm run skills:stats`    | Statystyki skilli                           |
+| `npm run skills:validate` | Walidacja manifestów skilli                 |
+| `npm run skills:cost`     | Koszt tokenów skilli                        |
+| `npm run skills:deps`     | Zależności między skillami                  |
 
 **Gdzie żyje numer wersji (pełna lista):**
 
@@ -448,26 +461,40 @@ Oferty_PV/
 │   ├── routes/                # Endpointy API
 │   │   ├── offers/            # CRUD ofert (rury + studnie)
 │   │   ├── orders/            # Zamówienia, zlecenia
+│   │   ├── productsV2.ts      # CRUD produktów (rury)
+│   │   ├── productsStudnieV2.ts # CRUD produktów (studnie)
+│   │   ├── clients.ts         # Baza klientów
+│   │   ├── settings.ts        # Ustawienia systemowe
+│   │   ├── audit.ts           # Logi audytowe
+│   │   ├── featureFlags.ts    # Flagi funkcjonalne
+│   │   ├── exportCombined.ts  # Łączny eksport PDF/DOCX
+│   │   ├── precoPricingV2.ts  # Cenniki Preco
+│   │   ├── priceOverrides.ts  # Nadpisania cen
 │   │   └── telemetryAiMl.ts   # Endpointy ML (predict, reward, train, rollback)
 │   ├── services/              # Logika biznesowa
 │   │   ├── ml/                # AI/ML Pipeline
-│   │   ├── pdfGenerator.ts    # Generowanie PDF (Puppeteer)
+│   │   ├── pdf/               # Generowanie PDF (Puppeteer)
 │   │   ├── docx/              # Generowanie MS Word
+│   │   ├── telemetry/         # Telemetria AI (learning engine)
 │   │   └── auditService.ts    # Service audytu
+│   ├── constants/appMeta.ts   # APP_NAME — SSoT nazwy aplikacji
+│   ├── version.ts             # getVersion() — VERSION jako SSoT
 │   ├── middleware/            # Autoryzacja, bezpieczeństwo, rate limiting
 │   ├── validators/            # Schematy walidacji Zod
-│   ├── utils/                 # Narzędzia (logger, helpers)
+│   ├── utils/                 # Narzędzia (logger, helpers, productionOrderGuard)
 │   └── types/                 # Typy TypeScript
 ├── public/                    # Frontend (Vanilla JS SPA)
 │   ├── app.html               # Shell SPA (jedyny entry point)
 │   ├── studnie.html           # Moduł studnie (iframe)
 │   ├── rury.html              # Moduł rury (iframe)
 │   ├── js/                    # Skrypty JS
-│   │   ├── shared/            # auth, ui, icons, clientManager, dashboard
-│   │   ├── studnie/           # WellManager, solver, ruleEngine, ML hooks
+│   │   ├── shared/            # auth, ui, icons, headerUser, clientManager, dashboard
+│   │   ├── studnie/           # WellManager, solver, ruleEngine, ML hooks, Excel
 │   │   ├── rury/              # OfferItems, offerSummary, PEHD
-│   │   ├── sales/             # PV marketplace, kartoteka, import/export
-│   │   └── spa/               # Router SPA
+│   │   ├── kartoteka/         # Kartoteka ofert i zamówień (kartoteka*)
+│   │   ├── import-export/     # Import/eksport XLSX + JSON 1:1 (toolbar.js)
+│   │   ├── admin/             # Panel admina (AI dashboard)
+│   │   └── spa/               # Router SPA (router.js)
 │   ├── css/                   # Style CSS
 │   └── templates/             # Szablony do druku
 ├── prisma/                    # Schema + migracje Prisma
@@ -476,20 +503,27 @@ Oferty_PV/
 ├── tests/                     # Testy (Jest, Playwright)
 │   ├── ml/                    # Testy pipeline'u ML
 │   ├── studnie/               # Testy modułu studnie
+│   ├── sales/                 # Testy kartoteki (filtry, batch, search)
 │   ├── playwright/            # Testy Playwright (regresyjne)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne (ADR-001..004)
-│   ├── plans/                 # Plany i taski
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..006)
+│   ├── plans/                 # Plany i taski (+ archive/)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...
 ├── scripts/                   # Skrypty narzędziowe
 │   ├── backup.ts              # Backup bazy danych
-│   ├── bump-version.mjs       # Podbijanie wersji
+│   ├── restore-db.js          # Przywracanie bazy z backupu
+│   ├── check-db.js            # Weryfikacja schematu przy starcie
 │   ├── check-version.mjs      # Weryfikacja spójności wersji
+│   ├── check-appname.cjs      # Sprawdzanie nazwy aplikacji (pre-push)
 │   ├── auto-cache-bust.mjs    # Cache-bust assetów przy release
+│   ├── auto-docs-version.mjs  # Wersje w dokumentacji przy release
+│   ├── auto-bat-version.mjs   # Wersje w .bat przy release
+│   ├── bump-version.mjs       # Podbijanie wersji
 │   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8
 │   ├── skill-cli.mjs          # Skill CLI (build cost, stats)
+│   ├── export-settings-to-seed.mjs # Eksport ustawień do seed
 │   └── ...
 ├── .github/                   # CI/CD, CODE_OF_CONDUCT
 ├── .husky/                    # Git hooks (pre-push, commit-msg)

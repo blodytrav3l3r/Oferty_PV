@@ -1,7 +1,7 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.12.0  
-**Ostatnia aktualizacja:** 2026-08-05  
+**Ostatnia aktualizacja:** 2026-08-10  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -122,7 +122,8 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `telemetryAiMl.ts` — pipeline ML (trenowanie, ewaluacja)
     - `telemetryAiDashboard.ts` — dashboard telemetrii
     - `featureFlags.ts` — zarządzanie flagami funkcjonalnymi
-    - `pvMarketplace.ts` — integracja PV Marketplace
+    - `exportCombined.ts` — łączny eksport (PDF/DOCX)
+    - `priceOverrides.ts` — nadpisania cen
     - `precoPricingV2.ts` — cenniki Preco
 
 3. **Services** (`src/services/`)
@@ -156,9 +157,14 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `logger.ts` — logger aplikacji
     - `ownership.ts` — weryfikacja własności zasobów
     - `productionSearchUtils.ts` — narzędzia wyszukiwania produkcji
+    - `productionOrderGuard.ts` — guard PZ (blokada usuwania ofert/zamówień/elementów z przypisanymi zleceniami produkcyjnymi)
     - `roleFilter.ts` — filtrowanie po roli użytkownika
     - `searchCache.ts` — cache wyszukiwania
     - `searchUtils.ts` — narzędzia wyszukiwania
+
+6. **Constants / wersja**
+    - `constants/appMeta.ts` — `APP_NAME = 'S.O.K.'` — SSoT nazwy aplikacji
+    - `version.ts` — `getVersion()` czyta `VERSION` (root) — SSoT numeru wersji
 
 ### Telemetria AI i ML — kluczowe mechanizmy
 
@@ -246,11 +252,15 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 ### Frontend — struktura JS
 
-| Katalog              | Liczba plików | Opis                                                                    |
-| -------------------- | ------------- | ----------------------------------------------------------------------- |
-| `public/js/rury/`    | 30            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
-| `public/js/studnie/` | 132           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
-| `public/js/sales/`   | 9             | Narzędzia sprzedaży (kartoteka, import/eksport)                         |
+| Katalog                    | Liczba plików | Opis                                                                    |
+| -------------------------- | ------------- | ----------------------------------------------------------------------- |
+| `public/js/rury/`          | 31            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
+| `public/js/studnie/`       | 136           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
+| `public/js/shared/`        | 16            | Wspólne helpery (auth, ui, headerUser, clientManager)                   |
+| `public/js/kartoteka/`     | 8             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)         |
+| `public/js/import-export/` | 11            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)       |
+| `public/js/spa/`           | 3             | Router SPA (router.js)                                                  |
+| `public/js/admin/`         | 2             | Panel admina (AI dashboard)                                             |
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -391,13 +401,14 @@ Oferty_PV/
 │   │   │   └── productionSearch.ts # Wyszukiwanie produkcji
 │   │   ├── audit.ts                # Logi audytowe
 │   │   ├── settings.ts             # Ustawienia
+│   │   ├── exportCombined.ts       # Łączny eksport PDF/DOCX
 │   │   ├── telemetry.ts            # Telemetria AI
 │   │   ├── telemetryAi.ts          # Endpointy AI
 │   │   ├── telemetryAiMl.ts        # Pipeline ML
 │   │   ├── telemetryAiDashboard.ts # Dashboard AI
 │   │   ├── featureFlags.ts         # Feature flags
 │   │   ├── precoPricingV2.ts       # Cenniki Preco
-│   │   └── pvMarketplace.ts        # PV Marketplace
+│   │   └── priceOverrides.ts       # Nadpisania cen
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
 │   │   ├── pdfGenerator.ts         # Generowanie PDF
@@ -451,37 +462,39 @@ Oferty_PV/
 ├── scripts/                         # Skrypty narzędziowe
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO)
 │   ├── restore-db.js                # Restore bazy z backupu
-│   ├── checkDb.ts                   # Sprawdzenie bazy
-│   ├── check-db.js                  # Sprawdzenie bazy (JS)
-│   ├── cleanup.ts                   # Czyszczenie
-│   ├── createDocxTemplate.ts        # Szablon DOCX
-│   ├── downloadFonts.js             # Pobieranie fontów
-│   ├── extract.js                   # Ekstrakcja danych
-│   ├── migrateEmojis.js             # Migracja emoji
-│   ├── migrate-to-tables.ts         # Migracja do tabel
-│   ├── screenshot.js                # Zrzut ekranu
+│   ├── check-db.js                  # Weryfikacja schematu przy starcie
+│   ├── check-version.mjs            # Sprawdzenie spójności wersji
+│   ├── check-appname.cjs            # Sprawdzenie nazwy aplikacji (pre-push)
+│   ├── auto-cache-bust.mjs          # Cache-bust assetów przy release
+│   ├── auto-docs-version.mjs        # Wersje w dokumentacji przy release
+│   ├── auto-bat-version.mjs         # Wersje w .bat przy release
+│   ├── bump-version.mjs             # Podbicie wersji
+│   ├── version-updater.mjs          # Aktualizator wersji
+│   ├── skill-cli.mjs                # CLI dla skilli
+│   ├── export-settings-to-seed.mjs  # Eksport ustawień do seed
+│   ├── migrate-settings-to-tables.ts# Migracja ustawień do tabel
+│   ├── migrate-preco-from-tables.cjs# Migracja Preco z tabel
+│   ├── reverse-migration-to-settings.mjs # Cofnięcie migracji ustawień
+│   ├── migration-validate.mjs       # Walidacja migracji
 │   ├── docker-entrypoint.sh         # Entrypoint Docker
 │   ├── install-backup-cron.ps1      # Cron backup (Windows)
 │   ├── uninstall-backup-cron.ps1    # Odinstaluj cron backup (Windows)
-│   ├── auto-cache-bust.mjs          # Cache-bust assetów przy release
-│   ├── bump-version.mjs             # Podbicie wersji
-│   ├── check-version.mjs            # Sprawdzenie wersji
-│   ├── normalize-seed-studnie.mjs   # Normalizacja seed studni
-│   ├── skill-cli.mjs                # CLI dla skilli
-│   ├── version-updater.mjs          # Aktualizator wersji
-│   ├── fix-css-encoding.js          # Naprawa kodowania CSS
 │   ├── encoding-integrity.js        # Spójność kodowania
-│   └── excel-validator.py           # Walidacja Excel
+│   └── excel-validator.py           # Walidacja Excel (pre-commit)
 │
-├── tests/                           # Testy (34+ plików .test.ts)
+├── tests/                           # Testy (Jest + Playwright)
 │   ├── auth.test.ts
 │   ├── offers.crud.test.ts
 │   ├── products.test.ts
-│   ├── pricelistService.test.ts
+│   ├── sales/                       # Testy kartoteki (filtry, batch, search)
+│   ├── ml/                          # Testy pipeline'u ML
+│   ├── studnie/                     # Testy modułu studni (w tym Excel)
+│   ├── playwright/                  # Testy Playwright (regresyjne)
 │   └── ...
 │
 ├── docs/                            # Dokumentacja
-│   ├── CHANGELOG.md
+│   ├── ARCHITECTURE.md              # Ten dokument
+│   ├── DELETION_LOG.md              # Log usuniętego kodu
 │   ├── INSTRUKCJA_SERWER.md
 │   └── ...
 │
@@ -515,4 +528,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-05_
+_Ostatnia aktualizacja: 2026-08-10_

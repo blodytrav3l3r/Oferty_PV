@@ -1,7 +1,7 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.12.0  
-**Ostatnia aktualizacja:** 2026-08-05  
+**Ostatnia aktualizacja:** 2026-08-10  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
 > **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
@@ -167,7 +167,6 @@ Wymaga autoryzacji.
 | GET    | `/api/offers-rury/search?q=`       | Wyszukiwanie ofert          |
 | GET    | `/api/offers-rury/:id/export-pdf`  | Eksport oferty do PDF       |
 | GET    | `/api/offers-rury/:id/export-docx` | Eksport oferty do DOCX      |
-| PUT    | `/api/offers-rury/dispatch`        | Wysyłka (dispatch) ofert    |
 
 ---
 
@@ -191,31 +190,67 @@ Wymaga autoryzacji. Alias do `/api/offers-rury/studnie`.
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                        | Opis                                  |
-| ------ | ------------------------------ | ------------------------------------- |
-| GET    | `/api/orders-rury`             | Lista zamówień rur                    |
-| GET    | `/api/orders-rury/:id`         | Szczegóły zamówienia                  |
-| POST   | `/api/orders-rury`             | Utworzenie zamówienia                 |
-| PUT    | `/api/orders-rury/:id`         | Aktualizacja zamówienia               |
-| DELETE | `/api/orders-rury/:id`         | Anulowanie zamówienia                 |
-| GET    | `/api/orders-rury/next-number` | Pobranie następnego numeru zamówienia |
-
----
+| Metoda | Ścieżka                                      | Opis                          |
+| ------ | -------------------------------------------- | ----------------------------- |
+| GET    | `/api/orders-rury`                           | Lista zamówień rur            |
+| GET    | `/api/orders-rury/:id`                       | Szczegóły zamówienia          |
+| POST   | `/api/orders-rury`                           | Utworzenie zamówienia         |
+| PUT    | `/api/orders-rury/:id`                       | Aktualizacja zamówienia       |
+| PATCH  | `/api/orders-rury/:id`                       | Częściowa aktualizacja        |
+| DELETE | `/api/orders-rury/:id`                       | Anulowanie zamówienia         |
+| POST   | `/api/orders-rury/claim-rury-number/:userId` | Przypisanie numeru zamówienia |
+| GET    | `/api/orders-rury/:id/export-pdf`            | Eksport zamówienia do PDF     |
+| GET    | `/api/orders-rury/:id/export-docx`           | Eksport zamówienia do DOCX    |
+| GET    | `/api/orders-rury/:id/export-karta-pdf`      | Eksport karty budowy do PDF   |
+| GET    | `/api/orders-rury/:id/export-karta-docx`     | Eksport karty budowy do DOCX  |
 
 ## Zamówienia — Studnie (`/api/orders-studnie`)
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka                           | Opis                                  |
-| ------ | --------------------------------- | ------------------------------------- |
-| GET    | `/api/orders-studnie`             | Lista zamówień studni                 |
-| GET    | `/api/orders-studnie/:id`         | Szczegóły zamówienia                  |
-| POST   | `/api/orders-studnie`             | Utworzenie zamówienia                 |
-| PUT    | `/api/orders-studnie/:id`         | Aktualizacja zamówienia               |
-| DELETE | `/api/orders-studnie/:id`         | Anulowanie zamówienia                 |
-| GET    | `/api/orders-studnie/next-number` | Pobranie następnego numeru zamówienia |
+| Metoda | Ścieżka                                     | Opis                               |
+| ------ | ------------------------------------------- | ---------------------------------- |
+| GET    | `/api/orders-studnie`                       | Lista zamówień studni              |
+| GET    | `/api/orders-studnie/:id`                   | Szczegóły zamówienia               |
+| PUT    | `/api/orders-studnie`                       | Utworzenie/aktualizacja zamówienia |
+| PATCH  | `/api/orders-studnie/:id`                   | Częściowa aktualizacja             |
+| DELETE | `/api/orders-studnie/:id`                   | Anulowanie zamówienia              |
+| GET    | `/api/orders-studnie/:id/export-pdf`        | Eksport zamówienia do PDF          |
+| GET    | `/api/orders-studnie/:id/export-docx`       | Eksport zamówienia do DOCX         |
+| GET    | `/api/orders-studnie/:id/export-karta-pdf`  | Eksport karty budowy do PDF        |
+| GET    | `/api/orders-studnie/:id/export-karta-docx` | Eksport karty budowy do DOCX       |
 
----
+## Zlecenia produkcyjne (`/api/orders-studnie/production`)
+
+Wymaga autoryzacji.
+
+| Metoda | Ścieżka                                       | Opis                                        |
+| ------ | --------------------------------------------- | ------------------------------------------- |
+| GET    | `/api/orders-studnie/production`              | Lista zleceń produkcyjnych (PZ)             |
+| POST   | `/api/orders-studnie/production`              | Utworzenie zlecenia produkcyjnego           |
+| PUT    | `/api/orders-studnie/production`              | Aktualizacja zlecenia produkcyjnego         |
+| GET    | `/api/orders-studnie/production/:id`          | Szczegóły zlecenia                          |
+| DELETE | `/api/orders-studnie/production/:id`          | Usunięcie zlecenia (writeProductionLimiter) |
+| POST   | `/api/orders-studnie/production/batch-delete` | Masowe usunięcie (chunkowane po 200 ids)    |
+
+## Wyszukiwanie produkcji (`/api/orders-studnie/production/search`)
+
+Wymaga autoryzacji. Wyszukiwanie z kursorem (infinite scroll), paginacja po znormalizowanym `createdAt`.
+
+| Metoda | Ścieżka                                 | Opis                   |
+| ------ | --------------------------------------- | ---------------------- |
+| GET    | `/api/orders-studnie/production/search` | Wyszukiwanie zleceń PZ |
+
+## Numeracja (`/api/orders-studnie`)
+
+Wymaga autoryzacji. Montowana przed trasami `/:id` (barrel `orders/index.ts`).
+
+| Metoda | Ścieżka                                               | Opis                         |
+| ------ | ----------------------------------------------------- | ---------------------------- |
+| GET    | `/api/orders-studnie/next-number/:userId`             | Następny numer zamówienia    |
+| POST   | `/api/orders-studnie/claim-number/:userId`            | Rezerwacja numeru zamówienia |
+| POST   | `/api/orders-studnie/claim-production-number/:userId` | Rezerwacja numeru PZ         |
+| GET    | `/api/orders-studnie/recycled`                        | Recykling numerów            |
 
 ## Klienci (`/api/clients`)
 
@@ -259,10 +294,30 @@ Wymaga autoryzacji (administrator).
 
 Wymaga autoryzacji.
 
-| Metoda | Ścieżka              | Opis                       |
-| ------ | -------------------- | -------------------------- |
-| GET    | `/api/preco-pricing` | Pobranie cennika Preco     |
-| PUT    | `/api/preco-pricing` | Aktualizacja cennika Preco |
+| Metoda | Ścieżka                      | Opis                              |
+| ------ | ---------------------------- | --------------------------------- |
+| GET    | `/api/preco-pricing`         | Pobranie cennika Preco            |
+| PUT    | `/api/preco-pricing`         | Aktualizacja cennika Preco        |
+| PATCH  | `/api/preco-pricing`         | Częściowa aktualizacja            |
+| GET    | `/api/preco-pricing/default` | Pobranie domyślnego cennika Preco |
+
+## Price Overrides (`/api/price-overrides`)
+
+Wymaga autoryzacji (administrator).
+
+| Metoda | Ścieżka                     | Opis                                 |
+| ------ | --------------------------- | ------------------------------------ |
+| POST   | `/api/price-overrides/sync` | Synchronizacja nadpisań cen (cennik) |
+| POST   | `/api/price-overrides`      | Utworzenie nadpisania ceny           |
+
+## Łączny eksport (`/api/export-combined`)
+
+Wymaga autoryzacji. Łączy oferty rur i studni w jeden dokument.
+
+| Metoda | Ścieżka                     | Opis                             |
+| ------ | --------------------------- | -------------------------------- |
+| POST   | `/api/export-combined/pdf`  | Eksport do PDF (EXPORT_LIMITER)  |
+| POST   | `/api/export-combined/docx` | Eksport do DOCX (EXPORT_LIMITER) |
 
 ---
 

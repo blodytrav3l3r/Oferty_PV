@@ -29,13 +29,14 @@ public/js/import-export/
 │   ├── externalImport.js       # RuryExternalImport — XLSX → API
 │   ├── externalExportTemplate.js  # RuryExternalExportTemplate — API → XLSX
 │   └── transferJson.js         # RuryTransferJson — 1:1 JSON + orders
-└── studnie/
-    ├── externalImport.js       # StudnieExternalImport — XLSX → API
-    ├── externalExportTemplate.js  # StudnieExternalExportTemplate — API → XLSX
-    └── transferJson.js         # StudnieTransferJson — 1:1 JSON + orders
+├── studnie/
+│   ├── externalImport.js       # StudnieExternalImport — XLSX → API
+│   ├── externalExportTemplate.js  # StudnieExternalExportTemplate — API → XLSX
+│   └── transferJson.js         # StudnieTransferJson — 1:1 JSON + orders
+└── toolbar.js                  # ImportExportToolbar — UI toolbar w kartotece (window.importExportToolbar)
 
-public/js/sales/
-└── pvImportExportToolbar.js    # UI toolbar w kartotece
+public/js/kartoteka/
+└── kartotekaInit.js            # Inicjalizacja: window.importExportToolbar.init('ie-toolbar-host')
 
 src/routes/
 └── featureFlags.ts             # Backend: GET/PUT feature flags + audit
