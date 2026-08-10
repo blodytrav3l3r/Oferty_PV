@@ -275,8 +275,8 @@ export async function initApp(): Promise<void> {
     // WAL + synchronous=NORMAL — przyspiesza zapisy (oferty, audit logi) i
     // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite).
     try {
-        await prisma.$executeRawUnsafe('PRAGMA journal_mode=WAL');
-        await prisma.$executeRawUnsafe('PRAGMA synchronous=NORMAL');
+        await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
+        await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
     } catch (err) {
         logger.warn(
             'Server',
