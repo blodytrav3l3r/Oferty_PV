@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.12.0  
+**Wersja:** 1.13.033  
 **Ostatnia aktualizacja:** 2026-08-10  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
@@ -35,12 +35,12 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.12.0",
+    "version": "1.13.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.12.0"
+    "dbVersion": "1.13.0"
 }
 ```
 
