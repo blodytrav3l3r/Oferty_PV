@@ -124,7 +124,8 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
             'utf-8'
         );
         expect(src).not.toMatch(/WITROS\s*[—-]\s*Generator\s+Ofert/i);
-        expect(src).toMatch(/S\.O\.K\.\s*[—-]\s*Generator\s+Ofert/);
+        expect(src).toMatch(/window\.APP_NAME\s*\|\|\s*'S\.O\.K\.'/);
+        expect(src).toMatch(/\$\{window\.APP_NAME \|\| 'S\.O\.K\.'\}\s*[—-]\s*Generator\s+Ofert/);
     });
 
     it('integracja: validateRepo(repo) → 0 naruszeń', () => {
