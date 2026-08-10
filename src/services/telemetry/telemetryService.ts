@@ -13,6 +13,7 @@
 
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
+import { APP_NAME } from '../../constants/appMeta';
 import prisma from '../../prismaClient';
 import {
     type TelemetryConfigPayload,
@@ -286,7 +287,7 @@ class TelemetryService {
                     description: input.description || null,
                     schemaVersion: input.schemaVersion || null,
                     isActive: input.isActive ?? true,
-                    appliedFrom: 'Oferty_PV @ ' + now,
+                    appliedFrom: `${APP_NAME} @ ` + now,
                     createdAt: now
                 }
             });

@@ -100,10 +100,24 @@ const _EXCEL_UNDO_LIMIT = 20;
 
 /* ===== Column Visibility State ===== */
 let _excelHiddenColumnIds = [];
-const _EXCEL_COL_VISIBILITY_KEY = 'witros_excel_hidden_columns';
+const _EXCEL_COL_VISIBILITY_KEY = 'sok_excel_hidden_columns';
+const _EXCEL_COL_VISIBILITY_LEGACY_KEY = 'witros_excel_hidden_columns';
+
+/* Jednorazowa migracja: przenieś dane użytkownika ze starego (legacy) klucza
+   "witros_*" na nowy "sok_*", spójny ze STORAGE_PREFIX. */
+function _excelMigrateLegacyKey(newKey, legacyKey) {
+    try {
+        if (localStorage.getItem(legacyKey) === null) return;
+        if (localStorage.getItem(newKey) === null) {
+            localStorage.setItem(newKey, localStorage.getItem(legacyKey));
+        }
+        localStorage.removeItem(legacyKey);
+    } catch (e) {}
+}
 
 function _excelLoadColumnVisibility() {
     try {
+        _excelMigrateLegacyKey(_EXCEL_COL_VISIBILITY_KEY, _EXCEL_COL_VISIBILITY_LEGACY_KEY);
         const saved = JSON.parse(localStorage.getItem(_EXCEL_COL_VISIBILITY_KEY));
         if (Array.isArray(saved)) {
             _excelHiddenColumnIds = saved;
@@ -138,10 +152,12 @@ function _excelIsColumnHidden(colId) {
 }
 
 /* ===== Column Widths State (trwałość szerokości kolumn, wzorzec jak visibility) ===== */
-const _EXCEL_COL_WIDTHS_KEY = 'witros_excel_col_widths';
+const _EXCEL_COL_WIDTHS_KEY = 'sok_excel_col_widths';
+const _EXCEL_COL_WIDTHS_LEGACY_KEY = 'witros_excel_col_widths';
 
 function _excelLoadColWidths() {
     try {
+        _excelMigrateLegacyKey(_EXCEL_COL_WIDTHS_KEY, _EXCEL_COL_WIDTHS_LEGACY_KEY);
         const saved = JSON.parse(localStorage.getItem(_EXCEL_COL_WIDTHS_KEY));
         if (saved && typeof saved === 'object' && !Array.isArray(saved)) {
             _excelColWidths = saved;
