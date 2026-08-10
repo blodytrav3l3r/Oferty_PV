@@ -173,34 +173,3 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSection('builder');
     }
 });
-
-/* ===== AUTO-LOAD Z URL ===== */
-
-document.addEventListener('DOMContentLoaded', async () => {
-    const params = new URLSearchParams(window.location.search);
-    const editId = params.get('edit');
-
-    if (editId) {
-        // Czekaj na inicjalizację pvSalesUI
-        const checkInit = setInterval(async () => {
-            if (window.pvSalesUI && window.pvSalesUI.marketplaceManager) {
-                clearInterval(checkInit);
-                try {
-                    const doc = await window.pvSalesUI.marketplaceManager.localOffers.get(editId);
-                    const restoreIdx = params.get('restore');
-
-                    if (restoreIdx !== null && doc.history && doc.history[restoreIdx]) {
-                        logger.info('app', '[App] Przywracanie wersji historycznej:', restoreIdx);
-                        window.loadSavedOfferData(doc.history[restoreIdx], editId);
-                        showToast('Wersja historyczna oferty załadowana', 'success');
-                    } else if (typeof window.loadSavedOfferData === 'function') {
-                        window.loadSavedOfferData(doc, editId);
-                        showToast('Oferta załadowana do edycji', 'success');
-                    }
-                } catch (err) {
-                    logger.error('app', '[App] Błąd auto-ładowania oferty:', err);
-                }
-            }
-        }, 100);
-    }
-});

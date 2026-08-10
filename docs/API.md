@@ -255,17 +255,6 @@ Wymaga autoryzacji (administrator).
 
 ---
 
-## PV Marketplace (`/api/pv-marketplace`)
-
-Wymaga autoryzacji.
-
-| Metoda | Ścieżka               | Opis                       |
-| ------ | --------------------- | -------------------------- |
-| GET    | `/api/pv-marketplace` | Lista danych z marketplace |
-| POST   | `/api/pv-marketplace` | Dodanie danych marketplace |
-
----
-
 ## Preco Pricing (`/api/preco-pricing`)
 
 Wymaga autoryzacji.

@@ -50,21 +50,9 @@ Object.assign(PVSalesUI.prototype, pvSalesActions);
 
 document.addEventListener('DOMContentLoaded', () => {
     const isKartoteka = (window.location.pathname.split('/').pop() || '').startsWith('kartoteka');
-    const navSales = document.getElementById('nav-sales');
 
     if (isKartoteka) {
         window.pvSalesUI = new PVSalesUI();
-    } else if (navSales) {
-        window.pvSalesUI = new PVSalesUI();
-        navSales.addEventListener('click', () => {
-            if (window.pvSalesUI) {
-                if (!window.pvSalesUI.initialized) {
-                    window.pvSalesUI.init();
-                } else {
-                    window.pvSalesUI.loadLocalOffers();
-                }
-            }
-        });
     }
 
     // Cleanup przy odpięciu iframe

@@ -205,7 +205,6 @@ import offerRoutes from './routes/offers/index';
 import orderRoutes from './routes/orders/index';
 import ruryOrdersRoutes from './routes/orders/ruryOrders';
 import clientRoutes from './routes/clients';
-import pvMarketplaceRoutes from './routes/pvMarketplace';
 import auditRoutes from './routes/audit';
 import settingsRoutes from './routes/settings';
 import telemetryRoutes from './routes/telemetry';
@@ -238,7 +237,6 @@ app.use('/api/orders-studnie/production/search', apiLimiter, productionSearchRou
 app.use('/api/orders-studnie', apiLimiter, orderRoutes);
 app.use('/api/orders-rury', apiLimiter, ruryOrdersRoutes);
 app.use('/api/clients', apiLimiter, express.json({ limit: '1mb' }), clientRoutes);
-app.use('/api/pv-marketplace', apiLimiter, pvMarketplaceRoutes);
 app.use('/api/audit', apiLimiter, auditRoutes);
 app.use('/api/settings', apiLimiter, settingsRoutes);
 app.use('/api/telemetry', telemetryRoutes);

@@ -263,27 +263,6 @@ export const userUpdateSchema = z.object({
 export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
 
 // =============================================================================
-// MARKETPLACE
-// =============================================================================
-
-export const marketplaceSearchSchema = z.object({
-    query: z.string().optional(),
-    category: z.string().optional(),
-    minPrice: z.number().min(0).optional(),
-    maxPrice: z.number().min(0).optional(),
-    limit: z.number().int().min(1).max(100).default(50),
-    skip: z.number().int().min(0).default(0)
-});
-
-export const marketplaceModerateSchema = z.object({
-    action: z.enum(['approve', 'reject', 'hide'], 'Nieprawidłowa akcja moderacji'),
-    reason: z.string().optional()
-});
-
-export type MarketplaceSearchInput = z.infer<typeof marketplaceSearchSchema>;
-export type MarketplaceModerateInput = z.infer<typeof marketplaceModerateSchema>;
-
-// =============================================================================
 // PAGINACJA
 // =============================================================================
 
