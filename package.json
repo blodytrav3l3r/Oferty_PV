@@ -44,6 +44,7 @@
         "version:major": "node scripts/bump-version.mjs major",
         "version:bump": "node scripts/bump-version.mjs",
         "appname:check": "node scripts/check-appname.cjs",
+        "commit": "node scripts/commit.mjs",
         "skills:build": "node scripts/skill-cli.mjs build-cost",
         "skills:stats": "node scripts/skill-cli.mjs stats",
         "skills:validate": "node scripts/skill-cli.mjs validate",

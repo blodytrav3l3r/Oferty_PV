@@ -25,6 +25,7 @@
     - `refactor(scope):` — refaktoryzacja
     - `docs(scope):` — zmiany w dokumentacji
     - `chore(scope):` — zadania techniczne (zależności, konfiguracja)
+    - **Zalecany helper (bez mojibake z konsoli Windows):** `node scripts/commit.mjs "typ(scope): temat" ["linia body"...]` (lub `npm run commit`). Waliduje reguły commitlint (scope z listy, ≤72 znaki, małe litery) i zapisuje wiadomość przez plik UTF-8.
 6. Push na `main`
 
 ## Release

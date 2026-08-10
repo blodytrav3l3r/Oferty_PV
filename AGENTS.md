@@ -81,6 +81,18 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 
 ## 3. Konwencje Deweloperskie
 
+### Commity (commitlint + encoding)
+
+- **Reguły commitlint** (`commitlint.config.js`): typ ∈ `feat, fix, refactor, chore, docs, perf, test, style`; **scope ∈ dozwolona lista** (24 scopy: `rury, studnie, offers, orders, prisma, auth, ui, api, seed, deploy, clients, audit, settings, preco, telemetry, deps, docs, ci, config, test, docker, security, chore, release`); nagłówek **≤ 72 znaki**; temat i scope **małymi literami**; temat nie kończy się kropką. Naruszenia blokuje hook `commit-msg`.
+- **Zalecane: `node scripts/commit.mjs`** (lub `npm run commit`) zamiast surowego `git commit -m` — helper waliduje te same reguły PRZED hookiem i **zapisywanie wiadomości przez plik UTF-8**, dzięki czemu polskie znaki (ł, ś, ż itd.) nie są zniekształcane przez konsolę Windows:
+    ```bash
+    node scripts/commit.mjs "fix(config): naprawa wersji w docs"
+    node scripts/commit.mjs "feat(studnie): nowa kolumna w excel" "linia body" "kolejna linia"
+    node scripts/commit.mjs --amend "fix(config): poprawka treści"
+    ```
+- **Dlaczego**: PowerShell/cmd przekazują argumenty do `git.exe` w kodepage ANSI, przez co polskie znaki w `-m` zamieniają się w mojibake (np. `ł` → `³`). Node odbiera argumenty jako UTF-16 (bez zniekształceń), a `git commit -F` czyta plik UTF-8 — stąd czysty komunikat.
+- Przed każdym commitem: `npm run version:check` + `npm run validate` (patrz sekcja 6).
+
 ### Język i Dokumentacja
 
 - **Komunikacja z użytkownikiem**: Zawsze w języku **polskim** (odpowiedzi, plany, wyjaśnienia).
