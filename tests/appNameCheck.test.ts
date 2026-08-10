@@ -3,7 +3,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const { validateRepo } = require('../scripts/check-appname.cjs');
+const { validateRepo, readErrors } = require('../scripts/check-appname.cjs');
 
 const SCRIPT = path.resolve(__dirname, '../scripts/check-appname.cjs');
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -130,5 +130,52 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
     it('integracja: validateRepo(repo) → 0 naruszeń', () => {
         const results = validateRepo(REPO_ROOT);
         expect(results).toHaveLength(0);
+    });
+
+    it('błąd odczytu katalogu nie jest maskowany — trafia do readErrors', () => {
+        const dir = makeFixture({ 'ok.js': '// czysty plik' });
+        const real = fs.readdirSync;
+        const spy = jest.spyOn(fs, 'readdirSync').mockImplementation((...args: any[]) => {
+            const target = String(args[0]).replace(/\\/g, '/');
+            if (target.endsWith('/sub')) {
+                const err = new Error('EACCES: permission denied') as NodeJS.ErrnoException;
+                err.code = 'EACCES';
+                throw err;
+            }
+            return real(...(args as [string]));
+        });
+        try {
+            fs.mkdirSync(path.join(dir, 'sub'));
+            const results = validateRepo(dir);
+            expect(results).toHaveLength(0);
+            expect(readErrors.some((e: string) => e.replace(/\\/g, '/').includes('/sub'))).toBe(
+                true
+            );
+        } finally {
+            spy.mockRestore();
+        }
+    });
+
+    it('readErrors jest czyszczone między wywołaniami validateRepo', () => {
+        const dir = makeFixture({ 'sub/ok.js': '// czysty plik' });
+        const real = fs.readdirSync;
+        const spy = jest.spyOn(fs, 'readdirSync').mockImplementation((...args: any[]) => {
+            const target = String(args[0]).replace(/\\/g, '/');
+            if (target.endsWith('/sub')) {
+                const err = new Error('EACCES: permission denied') as NodeJS.ErrnoException;
+                err.code = 'EACCES';
+                throw err;
+            }
+            return real(...(args as [string]));
+        });
+        try {
+            validateRepo(dir);
+            expect(readErrors.length).toBeGreaterThan(0);
+            const clean = validateRepo(makeFixture({ 'a.js': '// x' }));
+            expect(clean).toHaveLength(0);
+            expect(readErrors).toHaveLength(0);
+        } finally {
+            spy.mockRestore();
+        }
     });
 });

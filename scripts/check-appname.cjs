@@ -99,21 +99,27 @@ function shouldIgnoreFile(full) {
     return IGNORE_FILES.has(base) || IGNORE_REL.has(rel);
 }
 
+const readErrors = [];
+
 function walkDir(dir, files = []) {
+    let entries;
     try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const entry of entries) {
-            const full = path.join(dir, entry.name);
-            if (entry.isDirectory()) {
-                if (!shouldIgnoreDir(full)) walkDir(full, files);
-            } else if (entry.isFile()) {
-                const ext = path.extname(entry.name).toLowerCase();
-                if (!IGNORE_EXT.has(ext) && !shouldIgnoreFile(full)) {
-                    files.push(full);
-                }
+        entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch (err) {
+        readErrors.push(`Nie można odczytać katalogu ${dir}: ${err.message}`);
+        return files;
+    }
+    for (const entry of entries) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            if (!shouldIgnoreDir(full)) walkDir(full, files);
+        } else if (entry.isFile()) {
+            const ext = path.extname(entry.name).toLowerCase();
+            if (!IGNORE_EXT.has(ext) && !shouldIgnoreFile(full)) {
+                files.push(full);
             }
         }
-    } catch {}
+    }
     return files;
 }
 
@@ -147,6 +153,7 @@ function scanFiles(files) {
 }
 
 function validateRepo(root) {
+    readErrors.length = 0;
     const files = fs.statSync(root).isDirectory() ? walkDir(root) : [root];
     return scanFiles(files);
 }
@@ -159,6 +166,15 @@ function main() {
     if (idx !== -1 && args[idx + 1]) root = path.resolve(process.cwd(), args[idx + 1]);
 
     const results = validateRepo(root);
+
+    if (readErrors.length > 0) {
+        console.error('\n  ✗ Błędy skanowania (niekompletny skan — pliki mogły zostać pominięte):');
+        for (const e of readErrors) {
+            console.error(`    - ${e}`);
+        }
+        console.error('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+        process.exit(2);
+    }
 
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('  App Name Guard — spójność nazwy aplikacji (S.O.K.)');
@@ -185,4 +201,4 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { scanFiles, validateRepo, PATTERNS, scanFile };
+module.exports = { scanFiles, validateRepo, PATTERNS, scanFile, readErrors };
