@@ -79,6 +79,15 @@ describe('GET /api/telemetry/ai/knowledge/patterns', () => {
         // co zapytanie o nieistniejącą średnicę
         expect(all.body.items.length).toBeGreaterThanOrEqual(specific.body.items.length);
     });
+
+    it('obsługuje nieprawidłowe minConfidence (NaN) przywracając domyślną wartość 0.3', async () => {
+        const res = await request(app).get(
+            '/api/telemetry/ai/knowledge/patterns?minConfidence=invalid'
+        );
+
+        expect(res.status).toBe(200);
+        expect(Array.isArray(res.body.items)).toBe(true);
+    });
 });
 
 describe('POST /api/telemetry/ai/learning/run', () => {

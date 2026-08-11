@@ -44,7 +44,8 @@ router.post('/ai/learning/run', requireAuth, requireAdmin, READ_LIMITER, async (
  */
 router.get('/ai/knowledge/patterns', requireAuth, requireAdmin, READ_LIMITER, async (req, res) => {
     const dn = (req.query.dn as string) || 'all_dn';
-    const minConfidence = parseFloat((req.query.minConfidence as string) || '0.3');
+    const rawConf = parseFloat((req.query.minConfidence as string) || '0.3');
+    const minConfidence = isNaN(rawConf) ? 0.3 : rawConf;
     try {
         const [patterns, telemetryCount, patternsTotal, allDnPatterns, engineStatus] =
             await Promise.all([

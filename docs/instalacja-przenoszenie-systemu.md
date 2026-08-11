@@ -561,6 +561,19 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 
 **Rozwiązanie:** Uruchom Docker Desktop z menu Start.
 
+### AI / ML Dashboard — "Brak dostępu" / "Nie można pobrać danych"
+
+**Przyczyna:**
+
+1. Zalogowano na konto użytkownika bez roli `admin` (dashboardy AI/ML są dostępne wyłącznie dla administratora).
+2. Świeżo przeniesiona baza danych nie zawiera jeszcze zarejestrowanych zapytań telemetrii ani wytrenowanego modelu ML.
+
+**Rozwiązanie:**
+
+1. Zaloguj się na konto administratora (`admin` i hasło podane w `.env` jako `DEFAULT_ADMIN_PASSWORD`).
+2. Upewnij się, że w nagłówku aplikacji po zalogowaniu widnieje etykieta **ADMIN**.
+3. W panelu AI kliknij przycisk **"Uruchom uczenie (Manual Run)"** lub **"Trenuj nowy model ML"**, aby zasilić bazę wiedzy i utworzyć pierwszy model ML.
+
 ---
 
 ## 11. Ściągawka

@@ -76,7 +76,11 @@
 
         window.fetchJson(HEALTH_URL).then(function (d) {
             if (!d || d.error) {
-                container.innerHTML = '<div class="ai-ml-error">Nie można pobrać danych</div>';
+                var msg =
+                    d && d.error === 'forbidden'
+                        ? 'Brak dostępu do stanu ML (wymagana rola admin)'
+                        : 'Błąd serwera — nie udało się pobrać stanu ML';
+                container.innerHTML = '<div class="ai-ml-error">' + msg + '</div>';
                 return;
             }
 
@@ -134,19 +138,25 @@
                 '<div class="ai-dq-section">' +
                 '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakość danych</div>' +
                 '<div class="ai-dq-bars">' +
-                qualityBar(d.dataQuality.withFeatureSnapshotPct, 'FeatureSnapshot') +
-                qualityBar(d.dataQuality.withSolverSourcePct, 'SolverSource') +
-                qualityBar(d.dataQuality.withWellTypePct, 'WellType') +
+                qualityBar(
+                    d.dataQuality ? d.dataQuality.withFeatureSnapshotPct || 0 : 0,
+                    'FeatureSnapshot'
+                ) +
+                qualityBar(
+                    d.dataQuality ? d.dataQuality.withSolverSourcePct || 0 : 0,
+                    'SolverSource'
+                ) +
+                qualityBar(d.dataQuality ? d.dataQuality.withWellTypePct || 0 : 0, 'WellType') +
                 '</div>' +
                 '</div>' +
                 /* Ostrzezenia */
                 '<div class="ai-dq-warnings">' +
-                (d.dataQuality.manualOverrideCount > 0
+                (d.dataQuality && d.dataQuality.manualOverrideCount > 0
                     ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
                       d.dataQuality.manualOverrideCount +
                       '</span>'
                     : '') +
-                (d.telemetryCount > 0 && d.dataQuality.withFeatureSnapshotPct < 95
+                (d.telemetryCount > 0 && d.dataQuality && d.dataQuality.withFeatureSnapshotPct < 95
                     ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
                     : '') +
                 '</div>';

@@ -304,9 +304,10 @@
         Promise.all([pStatus, pModels]).then(function (results) {
             var status = results[0];
             var modelsData = results[1];
-            if (!status) {
-                container.innerHTML =
-                    '<div class="ai-ml-unavailable">ML pipeline nieaktywny lub brak dostępu</div>';
+            if (!status || status.error) {
+                container.innerHTML = apiErrorHtml(
+                    status && status.error ? status.error : 'server'
+                );
                 return;
             }
 
@@ -721,7 +722,16 @@
                 container.innerHTML = apiErrorHtml('server');
                 return;
             }
-            if (data.error === 'forbidden' || data.error === 'server') {
+            if (data.error) {
+                if (data.error === 'forbidden' || data.error === 'server') {
+                    container.innerHTML = apiErrorHtml(data.error);
+                    return;
+                }
+                if (data.error === 'unavailable') {
+                    container.innerHTML =
+                        '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                    return;
+                }
                 container.innerHTML = apiErrorHtml(data.error);
                 return;
             }
