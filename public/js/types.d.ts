@@ -241,6 +241,21 @@ declare function updateTransportCostSummary(...args: any[]): any;
 declare function calculateTransportTrips(...args: any[]): any;
 declare function formatCurrency(amount: any, precision?: number): string;
 
+/* ===== Warstwa renderowania zleceń (zleceniaRender.js) ===== */
+declare var zleceniaRender: {
+    showLoadingSpinner(hasItems: boolean): void;
+    showError(message: string): void;
+    renderStats(state: Record<string, unknown>): void;
+    renderTable(state: Record<string, unknown>): number;
+    renderOrderRow(o: Record<string, unknown>, selectedIds: Set<string>): string;
+    updateSentinel(state: Record<string, unknown>): void;
+    updateChips(activeFilter: string): void;
+    updateAnimationGate(items: Array<Record<string, unknown>>): void;
+    updateSelectAllState(loaded: number, selected: number): number;
+    updateBatchBar(selectState: number, loaded: number, selected: number): void;
+    updateSelectAllButton(selectState: number): void;
+};
+
 /* ===== Typy dla Print Modal ===== */
 interface PrintModalSection {
     id?: string;

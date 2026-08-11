@@ -47,7 +47,7 @@ prisma/migrations/
 
 ## Zależności
 
-- `XLSX` (SheetJS) — wymagany, już istnieje w `public/js/shared/xlsx.full.min.js`
+- `XLSX` (SheetJS) — wymagany, już istnieje w `public/vendor/xlsx.full.min.js`
 - `lucide` — wymagany, już istnieje
 - `fetch` — standardowy
 

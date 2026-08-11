@@ -17,7 +17,7 @@ function ensureXlsx() {
     if (!_xlsxPromise) {
         _xlsxPromise = new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'js/shared/xlsx.full.min.js';
+            script.src = 'vendor/xlsx.full.min.js';
             script.onload = () => resolve(window.XLSX);
             script.onerror = () => {
                 _xlsxPromise = null;
