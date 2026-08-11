@@ -15,6 +15,8 @@ jobs:
         runs-on: ubuntu-latest
         permissions:
             contents: write
+        env:
+            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
         steps:
             - name: Checkout repository
               uses: actions/checkout@v7
@@ -30,8 +32,14 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
+            - name: Generate Prisma client
+              run: npx prisma generate
+
             - name: Typecheck
               run: npm run typecheck
+
+            - name: Przygotuj testową bazę SQLite
+              run: npx prisma db push --skip-generate
 
             - name: Run tests
               run: npm run test:quick
