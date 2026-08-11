@@ -42,3 +42,37 @@ describe('injectAppNameScript', () => {
         expect(out.startsWith('<script>window.APP_NAME=')).toBe(true);
     });
 });
+
+describe('injectAppNameScript/applyBrandTokens — bezpieczeństwo przy niestandardowej nazwie', () => {
+    function withEnvName(
+        name: string,
+        run: (inject: typeof injectAppNameScript, tokens: typeof applyBrandTokens) => void
+    ): void {
+        const prev = process.env.APP_NAME;
+        process.env.APP_NAME = name;
+        jest.isolateModules(() => {
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            const mod = require('../src/utils/brandHtml');
+            run(mod.injectAppNameScript, mod.applyBrandTokens);
+        });
+        if (prev === undefined) delete process.env.APP_NAME;
+        else process.env.APP_NAME = prev;
+    }
+
+    it('nazwa z `</script>` nie przerywa wstrzykniętego skryptu', () => {
+        const payload = '</script><script>alert(1)</script>';
+        withEnvName(payload, (inject) => {
+            const out = inject('<html><head></head><body></body></html>');
+            expect(out).not.toContain(payload);
+            expect(out).toContain('\\u003c/script');
+        });
+    });
+
+    it('escapuje nazwę w kontekście atrybutu (XSS przez cudzysłów)', () => {
+        withEnvName('X" onmouseover="alert(1)', (_inject, tokens) => {
+            const out = tokens('<img alt="{{APP_NAME}}" />');
+            expect(out).not.toContain('" onmouseover=');
+            expect(out).toContain('&quot;');
+        });
+    });
+});

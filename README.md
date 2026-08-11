@@ -44,7 +44,7 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 
 | Składnik | Wersja minimalna | Pobierz                                                                                                                            |
 | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js  | >= 22.13         | [https://nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)                                                          |
+| Node.js  | >= 22.13         | [https://nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)                                                           |
 | npm      | 9+               | Instaluje się automatycznie z Node.js                                                                                              |
 | Git      | dowolna          | [https://git-scm.com](https://git-scm.com) (opcjonalnie)                                                                           |
 | Python   | 3.10+            | Opcjonalnie — tylko do walidacji Excel w pre-commit (`scripts/excel-validator.py`); instalacja i uruchomienie NIE wymagają Pythona |
@@ -295,6 +295,8 @@ Plik `data/app_database.sqlite` przechowuje:
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                    | Nie      |
 | `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`     | Nie      |
 | `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                  | Nie      |
+| `APP_NAME`               | Nazwa aplikacji (tytuły stron, branding)                                                                          | `S.O.K.`                             | Nie      |
+| `APP_SUBTITLE`           | Podtytuł aplikacji (aria-label logo, wydruki)                                                                     | `System Ofert i Kalkulacji`          | Nie      |
 
 > **Ważne:** `DEFAULT_ADMIN_PASSWORD` jest wymagane tylko przy **pierwszym** uruchomieniu. Po utworzeniu konta admina zmiana hasła w `.env` nie wpływa na istniejące konto.
 
@@ -337,13 +339,13 @@ Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz 
 
 Projekt zawiera wygodne skrypty dla systemu Windows:
 
-| Skrypt        | Opis                                                                 |
-| ------------- | -------------------------------------------------------------------- |
-| `start.bat`   | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`  |
-| `dev.bat`     | Alias do `start.bat` (zachowany dla kompatybilności)                 |
-| `build.bat`   | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005)                    |
-| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                                                  |
-| `prod.bat`    | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                                                    |
+| Skrypt        | Opis                                                                                          |
+| ------------- | --------------------------------------------------------------------------------------------- |
+| `start.bat`   | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                           |
+| `dev.bat`     | Alias do `start.bat` (zachowany dla kompatybilności)                                          |
+| `build.bat`   | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005) |
+| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                             |
+| `prod.bat`    | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                               |
 
 ---
 

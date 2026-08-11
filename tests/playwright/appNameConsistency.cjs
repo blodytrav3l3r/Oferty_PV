@@ -1,7 +1,8 @@
 /**
- * Test E2E: spójność nazwy aplikacji S.O.K. (T1–T6).
+ * Test E2E: spójność nazwy aplikacji (domyślnie S.O.K., konfigurowalna przez
+ * APP_NAME/APP_SUBTITLE w env).
  *
- * Weryfikuje, że nazwa aplikacji to "S.O.K.", a nie "WITROS Oferty" —
+ * Weryfikuje, że nazwa aplikacji to APP_NAME, a nie "WITROS Oferty" —
  * tytuły stron, nagłówek SPA, loginy/pulpit oraz regresję #92
  * (document.title w trybie edycji zamówienia rur).
  *
@@ -49,6 +50,14 @@ const { chromium } = resolvePlaywright();
 const CHROME_PATH = process.env.CHROME_PATH;
 
 const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD || 'anim123456';
+
+/* Nazwa aplikacji — sparametryzowana przez env (--spawn przekazuje env do serwera). */
+const APP_NAME = process.env.APP_NAME || 'S.O.K.';
+const APP_SUBTITLE = process.env.APP_SUBTITLE || 'System Ofert i Kalkulacji';
+function escRe(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+const APP_NAME_RE = new RegExp(escRe(APP_NAME));
 
 function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
 
@@ -142,16 +151,16 @@ async function startServer() {
         await page.goto(`${BASE}/app.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await page.waitForTimeout(1000);
         const t1 = await page.title();
-        check('T1 app.html title', /S\.O\.K\./.test(t1) && !/WITROS/i.test(t1), `title="${t1}"`);
+        check('T1 app.html title', APP_NAME_RE.test(t1) && !/WITROS/i.test(t1), `title="${t1}"`);
 
         // T2 — statyczne <title> wszystkich modułów (fetch omija iframe redirect)
         const TITLES = {
-            'app.html': /<title>\s*S\.O\.K\./,
-            'index.html': /<title>\s*S\.O\.K\./,
-            'kartoteka.html': /<title>\s*S\.O\.K\./,
-            'rury.html': /<title>\s*S\.O\.K\./,
-            'studnie.html': /<title>\s*S\.O\.K\./,
-            'zlecenia.html': /<title>\s*S\.O\.K\./
+            'app.html': new RegExp('<title>\\s*' + escRe(APP_NAME)),
+            'index.html': new RegExp('<title>\\s*' + escRe(APP_NAME)),
+            'kartoteka.html': new RegExp('<title>\\s*' + escRe(APP_NAME)),
+            'rury.html': new RegExp('<title>\\s*' + escRe(APP_NAME)),
+            'studnie.html': new RegExp('<title>\\s*' + escRe(APP_NAME)),
+            'zlecenia.html': new RegExp('<title>\\s*' + escRe(APP_NAME))
         };
         for (const [file, re] of Object.entries(TITLES)) {
             const resp = await page.request.get(`${BASE}/${file}`);
@@ -172,11 +181,12 @@ async function startServer() {
         await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await page.waitForTimeout(1200);
         const t4title = await page.title();
-        const t4logo = await page.locator('img.index-logo-sok[alt="S.O.K."]').count();
+        const t4logoCount = await page.locator('img.index-logo-sok').count();
+        const t4logoAlt = t4logoCount ? await page.locator('img.index-logo-sok').first().getAttribute('alt') : null;
         const t4sub = await page.locator('.subtitle').first().textContent().catch(() => '');
-        check('T4 Pulpit title', /S\.O\.K\. — Generator Ofert/.test(t4title), `title="${t4title}"`);
-        check('T4 logo', t4logo === 1, `img.index-logo-sok count=${t4logo}`);
-        check('T4 subtitle', (t4sub || '').includes('System Ofert i Kalkulacji'), `subtitle="${t4sub}"`);
+        check('T4 Pulpit title', new RegExp(escRe(APP_NAME) + ' — Generator Ofert').test(t4title), `title="${t4title}"`);
+        check('T4 logo', t4logoCount === 1 && t4logoAlt === APP_NAME, `img.index-logo-sok count=${t4logoCount} alt="${t4logoAlt}"`);
+        check('T4 subtitle', (t4sub || '').includes(APP_SUBTITLE), `subtitle="${t4sub}"`);
 
         // T3 — nagłówek SPA w app.html
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'domcontentloaded', timeout: 30000 });
@@ -193,7 +203,7 @@ async function startServer() {
             const textVal = text ? text.textContent.trim() : '';
             return { logoAlt, text: textVal };
         });
-        check('T3 SPA logo', t3.logoAlt === 'S.O.K.', `alt="${t3.logoAlt}"`);
+        check('T3 SPA logo', t3.logoAlt === APP_NAME, `alt="${t3.logoAlt}"`);
         check('T3 module name', t3.text === 'Kalkulator Studni', `#spa-logo-text="${t3.text}"`);
         check('T3 no WITROS', !/WITROS/i.test(t3.text), `text="${t3.text}"`);
 
@@ -270,7 +280,7 @@ async function startServer() {
 
         check('T5 enter title', /Zamówienie:/.test(enterTitle) && !/WITROS/i.test(enterTitle), `title="${enterTitle}"`);
         if (!exitError) {
-            check('T5 exit title', exitTitle === 'S.O.K. — Generator Ofert', `title="${exitTitle}"`);
+            check('T5 exit title', exitTitle === APP_NAME + ' — Generator Ofert', `title="${exitTitle}"`);
         } else {
             console.log(`  ⚠ T5 exitError (soft): ${exitError}`);
         }
@@ -292,7 +302,7 @@ async function startServer() {
             errors.forEach((e) => console.error('  ' + e));
             process.exitCode = 1;
         } else {
-            console.log('\n✅ PASS: nazwa aplikacji spójna (S.O.K.) we wszystkich testach T1–T6');
+            console.log(`\n✅ PASS: nazwa aplikacji spójna (${APP_NAME}) we wszystkich testach T1–T6`);
         }
     }
 })();

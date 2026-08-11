@@ -79,21 +79,21 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 ### Stack
 
-| Technologia | Wersja | Rola                            |
-| ----------- | ------ | ------------------------------- |
+| Technologia | Wersja   | Rola                            |
+| ----------- | -------- | ------------------------------- |
 | Node.js     | >= 22.13 | Środowisko uruchomieniowe       |
-| TypeScript  | ~6.0   | Język programowania             |
-| Express.js  | ~4.21  | Framework webowy                |
-| Prisma      | ~6.0   | ORM (Object-Relational Mapping) |
-| Zod         | ~4.3   | Walidacja danych wejściowych    |
-| bcryptjs    | ~3.0   | Haszowanie haseł                |
-| Helmet      | ~8.1   | Nagłówki bezpieczeństwa HTTP    |
-| Sentry      | ~10.59 | Monitoring błędów               |
-| docx        | ~9.6   | Generowanie dokumentów DOCX     |
-| Puppeteer   | ~24.40 | Generowanie PDF                 |
-| ts-node-dev | ~2.0   | Hot-reload w dev                |
-| Jest        | ~30.0  | Framework testowy               |
-| Swagger     | 6.x    | Dokumentacja API                |
+| TypeScript  | ~6.0     | Język programowania             |
+| Express.js  | ~4.21    | Framework webowy                |
+| Prisma      | ~6.0     | ORM (Object-Relational Mapping) |
+| Zod         | ~4.3     | Walidacja danych wejściowych    |
+| bcryptjs    | ~3.0     | Haszowanie haseł                |
+| Helmet      | ~8.1     | Nagłówki bezpieczeństwa HTTP    |
+| Sentry      | ~10.59   | Monitoring błędów               |
+| docx        | ~9.6     | Generowanie dokumentów DOCX     |
+| Puppeteer   | ~24.40   | Generowanie PDF                 |
+| ts-node-dev | ~2.0     | Hot-reload w dev                |
+| Jest        | ~30.0    | Framework testowy               |
+| Swagger     | 6.x      | Dokumentacja API                |
 
 ### Warstwy
 
@@ -163,7 +163,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `searchUtils.ts` — narzędzia wyszukiwania
 
 6. **Constants / wersja**
-    - `constants/appMeta.ts` — `APP_NAME = 'S.O.K.'` — SSoT nazwy aplikacji
+    - `constants/appMeta.ts` — `APP_NAME` z env (domyślnie `S.O.K.`) — SSoT nazwy aplikacji
     - `version.ts` — `getVersion()` czyta `VERSION` (root) — SSoT numeru wersji
 
 ### Telemetria AI i ML — kluczowe mechanizmy

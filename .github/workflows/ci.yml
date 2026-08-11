@@ -116,7 +116,7 @@ jobs:
                     echo "  Proba $i/15 — oczekiwanie 2s..."
                     sleep 2
                   done
-                  docker exec test-container node -e "const http=require('http');http.get({host:'localhost',port:10000,path:'/index.html',headers:{'x-forwarded-proto':'https'}},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<title>\s*S\.O\.K\./.test(b)?0:1)})})"
+                  docker exec test-container node -e "const http=require('http');http.get({host:'localhost',port:10000,path:'/index.html',headers:{'x-forwarded-proto':'https'}},r=>{let b='';r.on('data',d=>b+=d);r.on('end',()=>{process.exit(/<script[^>]*>window\.APP_NAME=/.test(b)?0:1)})})"
                   docker stop test-container
                   docker rm test-container
 

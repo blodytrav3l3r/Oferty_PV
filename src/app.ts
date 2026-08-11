@@ -156,14 +156,21 @@ app.use(cookieParser());
  * nazwy; podmieniamy je przy serwowaniu i wstrzykujemy window.APP_NAME
  * dla frontendu. Nazwę ustawia się w .env (APP_NAME, APP_SUBTITLE). */
 app.use((req, res, next) => {
-    if (req.method !== 'GET') return next();
-    const clean = req.path.replace(/^\/+/, '');
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    const raw = req.path;
+    // Twardy guard path traversal / niejednoznacznych ścieżek.
+    if (raw.includes('..') || raw.includes('\\') || raw.includes('//')) return next();
+    const clean = raw.replace(/^\/+/, '').replace(/\/+$/, '');
+    // Serwujemy tylko strony HTML (dokładny plik lub pojedynczy segment bez rozszerzenia).
+    const isHtmlPage =
+        clean === '' || clean.endsWith('.html') || (!clean.includes('/') && !clean.includes('.'));
+    if (!isHtmlPage) return next();
     const rel = clean === '' ? 'index.html' : clean.endsWith('.html') ? clean : clean + '.html';
     const file = path.join(resolvePublicDir(), rel);
     if (!fs.existsSync(file)) return next();
     try {
         let html = applyBrandTokens(fs.readFileSync(file, 'utf-8'));
-        html = injectAppNameScript(html);
+        html = injectAppNameScript(html, res.locals.cspNonce as string | undefined);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
         res.send(html);

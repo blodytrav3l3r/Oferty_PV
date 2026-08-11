@@ -182,7 +182,7 @@ function exportOfferPDF(id) {
     <strong>Data ważności oferty:</strong> ${escapeHtml(offer.validity || '7 dni')}
   </div>
   <img src="${window.location.origin}/images/letterhead-footer.png" class="letterhead-footer" onload="window._fLoaded=true" onerror="window._fLoaded=true" />
-  <div class="footer">Oferta wygenerowana automatycznie • WITROS</div>
+  <div class="footer">Oferta wygenerowana automatycznie • ${escapeHtml(window.APP_NAME || 'S.O.K.')}</div>
   </body></html>`);
     printWin.document.close();
     let rounds = 0;
