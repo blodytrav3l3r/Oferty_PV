@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.13.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.3...v1.13.4) (2026-08-11)
+
+### Bug Fixes
+
+- **telemetry:** obsluga bledow i weryfikacja w ai dashboard ([5f4d8f7](https://github.com/blodytrav3l3r/Oferty_PV/commit/5f4d8f7ff3c23f3915abde6c7e2163b101e2f574))
+
 ### [1.13.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.2...v1.13.3) (2026-08-11)
 
 ### Bug Fixes

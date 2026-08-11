@@ -1,6 +1,6 @@
 # Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
-> Wersja: 1.13.3 | Data: 2026-08-05 | Źródło: analiza CSS (`public/css/`)
+> Wersja: 1.13.4 | Data: 2026-08-05 | Źródło: analiza CSS (`public/css/`)
 
 ---
 
