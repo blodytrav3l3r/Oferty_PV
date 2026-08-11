@@ -119,9 +119,6 @@
         "typescript": "^6.0.2",
         "typescript-eslint": "^8.62.1"
     },
-    "prisma": {
-        "seed": "ts-node prisma/seed.ts"
-    },
     "lint-staged": {
         "*.{js,ts,mjs}": [
             "eslint --fix",
