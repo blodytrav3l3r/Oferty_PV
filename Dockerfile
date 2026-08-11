@@ -17,7 +17,8 @@ RUN npm ci --no-audit --no-fund
 
 COPY . .
 
-# Generujemy klienta Prisma
+# Generujemy klienta Prisma (wymaga DATABASE_URL przez prisma.config.ts)
+ENV DATABASE_URL=file:/var/data/app_database.sqlite
 RUN npx prisma generate
 
 # Budujemy projekt
@@ -39,7 +40,6 @@ RUN sed -i 's/\r$//' ./scripts/docker-entrypoint.sh && \
     chmod +x ./scripts/docker-entrypoint.sh
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:/var/data/app_database.sqlite
 ENV PORT=10000
 ENV HOST=0.0.0.0
 # Secure cookie wymagane za reverse proxy (HTTPS zakończony poza kontenerem)

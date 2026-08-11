@@ -63,7 +63,7 @@
 | Zasób        | Wymaganie                                                  |
 | ------------ | ---------------------------------------------------------- |
 | **System**   | Windows 10/11, Linux (Ubuntu 20+), macOS 12+               |
-| **Node.js**  | >= 22.13 LTS (rekomendowane 22.x / 24.x)                    |
+| **Node.js**  | >= 22.13 LTS (rekomendowane 22.x / 24.x)                   |
 | **npm**      | >= 9.0.0 (dołączony do Node.js)                            |
 | **RAM**      | 512 MB (1 GB zalecane)                                     |
 | **Dysk**     | ~500 MB wolnego miejsca (w tym Chromium ~300 MB)           |
@@ -401,7 +401,7 @@ git push --follow-tags
 
 | Czynność                               | Automatyczne | Ręczne | Uwagi                                           |
 | -------------------------------------- | :----------: | :----: | ----------------------------------------------- |
-| Instalacja Node.js >= 22.13          |              |   ✅   | Pobrać z https://nodejs.org                     |
+| Instalacja Node.js >= 22.13            |              |   ✅   | Pobrać z https://nodejs.org                     |
 | Pobranie kodu (git clone / ZIP)        |              |   ✅   | GitHub → Code → Download ZIP                    |
 | Kopiowanie .env.example → .env         |              |   ✅   | `copy .env.example .env`                        |
 | Ustawienie DEFAULT_ADMIN_PASSWORD      |              |   ✅   | Edycja .env                                     |

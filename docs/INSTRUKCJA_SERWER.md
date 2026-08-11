@@ -18,11 +18,11 @@
 
 ## 1. Wymagania
 
-| Składnik              | Wersja  | Opis                                                          |
-| --------------------- | ------- | ------------------------------------------------------------- |
+| Składnik              | Wersja   | Opis                                                                        |
+| --------------------- | -------- | --------------------------------------------------------------------------- |
 | **Node.js**           | >= 22.13 | [https://nodejs.org](https://nodejs.org) — pobierz wersję LTS (22.x / 24.x) |
-| **npm**               | 9+      | Instaluje się automatycznie z Node.js                         |
-| **Git** (opcjonalnie) | dowolna | Do pobierania aktualizacji                                    |
+| **npm**               | 9+       | Instaluje się automatycznie z Node.js                                       |
+| **Git** (opcjonalnie) | dowolna  | Do pobierania aktualizacji                                                  |
 
 ### Sprawdzenie instalacji:
 
@@ -325,10 +325,10 @@ pm2 monit             # Monitor
 
 | Problem                   | Rozwiązanie                                            |
 | ------------------------- | ------------------------------------------------------ |
-| `npm install` nie działa  | Sprawdź Node.js: `node --version` (wymagane >= 22.13)    |
+| `npm install` nie działa  | Sprawdź Node.js: `node --version` (wymagane >= 22.13)  |
 | Port zajęty               | Zmień `PORT` w `.env`                                  |
 | Brak dostępu z zewnątrz   | Sprawdź firewall i przekierowanie portów               |
-| Strona się nie ładuje     | Sprawdź logi: `pm2 logs sok-oferty`                 |
+| Strona się nie ładuje     | Sprawdź logi: `pm2 logs sok-oferty`                    |
 | Błąd bazy danych          | Uruchom `npm run prisma:reset` i `npm run prisma:seed` |
 | Błąd "Cannot find module" | Uruchom `npm run build`                                |
 

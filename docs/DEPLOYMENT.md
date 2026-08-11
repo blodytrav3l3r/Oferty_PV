@@ -19,7 +19,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 | `DATABASE_URL`           | Ścieżka do bazy SQLite                             | Nie      | `file:../data/app_database.sqlite`      |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
 | `COOKIE_SECURE`          | Wymuszenie `Secure` flagi na ciastku sesji         | Nie*     | `true`                                  |
-| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (1 lub 2)      | Nie      | `1`                                     |
+| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (1 lub 2)     | Nie      | `1`                                     |
 
 > \* `COOKIE_SECURE=true` jest wymagane, gdy aplikacja jest serwowana przez HTTPS
 > w trybie innym niż `production` (w `production` flaga jest wymuszana automatycznie).
@@ -401,8 +401,8 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
 1. Zainstaluj aplikację według instrukcji w README (kroki 1–3, bez seedowania)
 2. Zbuduj projekt: `npm run build`
 
-   > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma:
-   > `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`.
+    > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma:
+    > `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`.
 
 3. Przywróć bazę:
     ```bash
