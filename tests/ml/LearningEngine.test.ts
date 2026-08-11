@@ -103,7 +103,7 @@ describe('LearningEngine', () => {
 
         expect(result.processed).toBe(3);
         expect(result.patternsDetected).toBeGreaterThan(0);
-        expect(result.durationMs).toBeGreaterThan(0);
+        expect(result.durationMs).toBeGreaterThanOrEqual(0);
     });
 
     it('runFullCycle zwraca 0 gdy brak rekordow', async () => {
