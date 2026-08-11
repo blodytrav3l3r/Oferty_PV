@@ -89,9 +89,9 @@ function _excelBuildComponentColumns(dn, well) {
     });
 
     /* ===== SEKCJA REDUKCJI ===== */
-    let _redResult = _excelBuildReductionColumns(dn, well, cols);
-    let hasRedTab = _redResult.hasRedTab;
-    let anyRed = _redResult.anyRed;
+    const _redResult = _excelBuildReductionColumns(dn, well, cols);
+    const hasRedTab = _redResult.hasRedTab;
+    const anyRed = _redResult.anyRed;
 
     /* 3. Konus / Stożek — grupowany po wysokości, jak krąg */
     const konusProducts = [...(groups['konus'] || [])].sort(
@@ -331,10 +331,10 @@ function _excelBuildComponentColumns(dn, well) {
 
     /* ===== NOWE: Uszczelki ===== */
     /* R.Uszczelki — dla każdego targetDn (tylko gdy redukcja aktywna) */
-    let hasRedTabU = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
+    const hasRedTabU = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     if (hasRedTabU) {
         let anyRedU = false;
-        let tabWellsListU =
+        const tabWellsListU =
             typeof wells !== 'undefined'
                 ? wells.filter(function (w) {
                       return (
@@ -359,20 +359,20 @@ function _excelBuildComponentColumns(dn, well) {
             if (!refWellU)
                 refWellU =
                     well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-            let targetDnsU = [1000];
+            const targetDnsU = [1000];
             if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
                 targetDnsU.push(1200);
             }
             targetDnsU.forEach(function (tDn) {
-                let redGroupsU = _excelGetComponentsForDn(String(tDn), refWellU);
+                const redGroupsU = _excelGetComponentsForDn(String(tDn), refWellU);
                 let uszczProductsU = redGroupsU['uszczelka'] || [];
                 if (typeof filterSealsByWellType === 'function') {
                     uszczProductsU = filterSealsByWellType(uszczProductsU, refWellU);
                 }
-                let dnPfxU = targetDnsU.length > 1 ? tDn + '_' : '';
-                let dnLblU = targetDnsU.length > 1 ? '(' + tDn + ') ' : '';
+                const dnPfxU = targetDnsU.length > 1 ? tDn + '_' : '';
+                const dnLblU = targetDnsU.length > 1 ? '(' + tDn + ') ' : '';
                 uszczProductsU.forEach(function (p) {
-                    let lbl = _excelShortLabel(p.name || '', 'uszczelka');
+                    const lbl = _excelShortLabel(p.name || '', 'uszczelka');
                     cols.push({
                         id: 'red_uszczelka_' + dnPfxU + p.id,
                         key: 'red_uszczelka_' + dnPfxU + p.id,
@@ -396,7 +396,7 @@ function _excelBuildComponentColumns(dn, well) {
         mainUszczProducts = filterSealsByWellType(mainUszczProducts, well);
     }
     mainUszczProducts.forEach(function (p) {
-        let lbl = _excelShortLabel(p.name || '', 'uszczelka');
+        const lbl = _excelShortLabel(p.name || '', 'uszczelka');
         cols.push({
             id: 'uszczelka_' + p.id,
             key: 'uszczelka_' + p.id,

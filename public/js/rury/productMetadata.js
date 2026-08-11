@@ -28,3 +28,6 @@ const GASKET_MAP = {
     'RGZ-2-20-30-BU-BU': 'Y-U-GZ-U-2000',
     'RGZ-2-22-25-BU-BU': 'Y-U-GZ-U-2200'
 };
+
+window.CATEGORIES = CATEGORIES;
+window.GASKET_MAP = GASKET_MAP;

@@ -184,9 +184,6 @@ function updateRuryOrderSummary(orderData) {
         });
     }
 
-    const snapItems =
-        (orderData && orderData.originalSnapshot && orderData.originalSnapshot.items) || [];
-
     dst.querySelectorAll('tr:not(.offer-cat-header):not(.offer-diam-header)').forEach((row) => {
         const firstCell = row.querySelector('td');
         if (!firstCell) return;
@@ -201,7 +198,6 @@ function updateRuryOrderSummary(orderData) {
         firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');
 
         if (isOrderMode) {
-            const snapIdx = snapItems.findIndex((it) => it.uid === uid);
             const curIdx = (orderCurrentItems || []).findIndex((it) => it.uid === uid);
             const change = curIdx >= 0 ? changes.items[curIdx] : null;
             if (change) {

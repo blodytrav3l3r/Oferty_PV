@@ -50,7 +50,7 @@ window.addEventListener('DOMContentLoaded', async () => {
                 showLoggedIn(data.user);
                 return;
             }
-        } catch (e) {}
+        } catch (_e) {}
     }
     showLogin();
 });
@@ -197,7 +197,7 @@ async function doLogin() {
         localStorage.setItem('authToken', data.token);
         sessionStorage.setItem('user', JSON.stringify(data.user));
         showLoggedIn(data.user);
-    } catch (e) {
+    } catch (_e) {
         errorEl.textContent = 'Błąd połączenia z serwerem';
     }
 }
@@ -205,7 +205,7 @@ async function doLogin() {
 async function doLogout() {
     try {
         await fetch('/api/auth/logout', { method: 'POST', headers: authHeaders() });
-    } catch (e) {}
+    } catch (_e) {}
     localStorage.removeItem('authToken');
     showLogin();
     document.getElementById('login-username').value = '';
@@ -436,7 +436,7 @@ async function createUser() {
         }
         cancelEditUser(); // Clears form and resets state
         loadUsers();
-    } catch (e) {
+    } catch (_e) {
         errorEl.textContent = 'Błąd połączenia';
     }
 }
@@ -479,7 +479,7 @@ async function showChangePassword() {
         } else {
             await appAlert(data.error || 'Błąd zmiany hasła', { type: 'warning' });
         }
-    } catch (e) {
+    } catch (_e) {
         await appAlert('Błąd połączenia', { type: 'warning' });
     }
 }
@@ -522,7 +522,18 @@ async function saveYearLetter() {
         } else {
             await appAlert(data.error || 'Błąd zapisu', { type: 'warning' });
         }
-    } catch (e) {
+    } catch (_e) {
         await appAlert('Błąd połączenia', { type: 'warning' });
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.updateSubUsers = updateSubUsers;
+window.startEditUser = startEditUser;
+
+/* ===== Rejestracja globali ===== */
+window.doLogout = doLogout;
+window.createUser = createUser;
+window.deleteUser = deleteUser;
+window.showChangePassword = showChangePassword;
+window.saveYearLetter = saveYearLetter;

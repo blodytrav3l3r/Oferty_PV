@@ -144,3 +144,6 @@ function drawPrecoInsertLine(well, canvas) {
 
     return svg;
 }
+
+/* ===== Rejestracja globali ===== */
+window.drawPrecoInsertLine = drawPrecoInsertLine;

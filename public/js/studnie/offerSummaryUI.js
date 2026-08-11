@@ -155,3 +155,6 @@ function updateOfferSummaryUI(totals) {
             lucide.createIcons({ root: discountsInfoEl });
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.updateOfferSummaryUI = updateOfferSummaryUI;

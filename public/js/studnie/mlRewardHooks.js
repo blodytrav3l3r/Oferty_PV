@@ -34,12 +34,12 @@
     function sendReward(params) {
         if (_rewardInFlight) return;
 
-        let well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+        const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
         if (!well) return;
 
         _rewardInFlight = true;
 
-        let snap = Object.assign({}, getConfigSnapshot(well));
+        const snap = Object.assign({}, getConfigSnapshot(well));
         if (params.eventType) {
             snap.eventType = params.eventType;
         }
@@ -66,7 +66,7 @@
                 ? !!params.wasAiRanked
                 : well.configSource === 'AUTO_AI';
 
-        let payload = {
+        const payload = {
             action: params.action,
             wellId: well.id || 'unknown',
             dn: parseInt(well.dn) || 0,
@@ -77,8 +77,8 @@
         };
 
         try {
-            let controller = new AbortController();
-            let timeoutId = setTimeout(function () {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(function () {
                 controller.abort();
             }, TIMEOUT_MS);
 
@@ -96,7 +96,7 @@
                 .catch(function () {
                     _rewardInFlight = false;
                 });
-        } catch (e) {
+        } catch (_e) {
             _rewardInFlight = false;
         }
     }
@@ -159,9 +159,9 @@
 
     /**
      * Hook: modyfikacja konfiguracji
-     * @param {number} [modCount]
+     * @param {number} [_modCount]
      */
-    function onWellModified(modCount) {
+    function onWellModified(_modCount) {
         sendReward({
             action: 'MODIFY',
             wasAiRanked: false

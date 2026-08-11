@@ -125,3 +125,9 @@ async function saveOffersData(data) {
         logger.error('dataService', 'Błąd saveOffersData:', err);
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.loadProducts = loadProducts;
+window.saveProducts = saveProducts;
+window.loadOffers = loadOffers;
+window.saveOffersData = saveOffersData;

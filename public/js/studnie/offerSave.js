@@ -152,7 +152,7 @@ async function saveOfferStudnie() {
                             warehouse: w.magazyn
                         }
                     });
-                } catch (e) {}
+                } catch (_e) {}
             }
         });
 
@@ -188,7 +188,7 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
                 iterationCount: 0,
                 checkedVariants: 0
             });
-        } catch (e) {
+        } catch (_e) {
             // silent
         }
     });
@@ -233,7 +233,7 @@ function _wellPricingStats(well) {
                 };
             }
         }
-    } catch (e) {
+    } catch (_e) {
         // silent — brak wyceny nie może zablokować zapisu oferty
     }
     return { price: null, weight: null };
@@ -264,3 +264,6 @@ function _wellSnapshot(well) {
         totalWeight: pricing.weight
     };
 }
+
+/* ===== Rejestracja globali ===== */
+window.saveOfferStudnie = saveOfferStudnie;

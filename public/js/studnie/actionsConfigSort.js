@@ -142,14 +142,14 @@ function _moveWlazToTop(well) {
     if (!well || !well.config || well.config.length < 2) return;
     let wlazIdx = -1;
     for (let i = 0; i < well.config.length; i++) {
-        let p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+        const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
         if (p && p.componentType === 'wlaz') {
             wlazIdx = i;
             break;
         }
     }
     if (wlazIdx > 0) {
-        let item = well.config.splice(wlazIdx, 1)[0];
+        const item = well.config.splice(wlazIdx, 1)[0];
         well.config.unshift(item);
     }
 }
@@ -157,3 +157,6 @@ function _moveWlazToTop(well) {
 // Eksport do window dla innych modułów
 window.enforceSingularTopClosures = enforceSingularTopClosures;
 window.sortWellConfigByOrder = sortWellConfigByOrder;
+
+/* ===== Rejestracja globali ===== */
+window.findClosureForDn = findClosureForDn;

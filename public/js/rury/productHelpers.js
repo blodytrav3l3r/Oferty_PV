@@ -119,3 +119,7 @@ function getSortedRuryItems(items) {
 }
 
 window.getSortedRuryItems = getSortedRuryItems;
+
+/* ===== Rejestracja globali ===== */
+window.getPipeInnerArea = getPipeInnerArea;
+window.isOneMetrePipe = isOneMetrePipe;

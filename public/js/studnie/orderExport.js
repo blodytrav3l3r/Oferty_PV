@@ -11,7 +11,7 @@ function refreshGlobalMetrics() {
         ) {
             window.parent.SpaRouter.refreshModule('zlecenia');
         }
-    } catch (e) {
+    } catch (_e) {
         /* ignore cross-origin or missing parent */
     }
 }
@@ -77,3 +77,6 @@ window.exportKartaToWord_action = async function (orderId) {
             showToast('Błąd eksportu: ' + err.message, 'error');
         });
 };
+
+/* ===== Rejestracja globali ===== */
+window.refreshGlobalMetrics = refreshGlobalMetrics;

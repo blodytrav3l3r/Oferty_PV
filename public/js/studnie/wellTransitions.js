@@ -707,3 +707,6 @@ window.handlePrzDragEnd = function (e) {
     document.querySelectorAll('[data-prz-idx]').forEach((t) => (t.style.borderTop = ''));
     draggedPrzIndex = null;
 };
+
+/* ===== Rejestracja globali ===== */
+window.renderInlinePrzejsciaApp = renderInlinePrzejsciaApp;

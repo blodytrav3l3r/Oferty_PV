@@ -115,33 +115,33 @@ function _excelToggleSelectAll(checked) {
             _excelRowSelectStates[i] = checked;
         }
     }
-    let boxes = document.querySelectorAll('.excel-row-select');
+    const boxes = document.querySelectorAll('.excel-row-select');
     boxes.forEach(function (cb) {
         cb.checked = checked;
     });
-    let hdrAll = document.getElementById('excel-select-all');
+    const hdrAll = document.getElementById('excel-select-all');
     if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
 }
 
 /** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */
 function _excelGetNavElements(row) {
-    let els = [];
-    let cells = row.querySelectorAll('td');
+    const els = [];
+    const cells = row.querySelectorAll('td');
     for (let i = 0; i < cells.length; i++) {
         // Priorytet: wrapper selecta (DIV.excel-sel-wrap)
-        let wrap = cells[i].querySelector('.excel-sel-wrap');
+        const wrap = cells[i].querySelector('.excel-sel-wrap');
         if (wrap) {
             els.push(wrap);
             continue;
         }
         // INPUT — pomiń checkbox wyboru wiersza (excel-row-select); checkbox "Psia buda" bez klasy zostaje
-        let inp = cells[i].querySelector('input:not(.excel-row-select)');
+        const inp = cells[i].querySelector('input:not(.excel-row-select)');
         if (inp) {
             els.push(inp);
             continue;
         }
         // Fallback: natywny select bez wrappera
-        let sel = cells[i].querySelector('select');
+        const sel = cells[i].querySelector('select');
         if (sel) {
             els.push(sel);
         }

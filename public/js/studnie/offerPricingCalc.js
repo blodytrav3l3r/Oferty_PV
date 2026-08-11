@@ -183,3 +183,7 @@ function calculateLinePricing(
 
     return { totalLinePrice, totalLineWeight };
 }
+
+/* ===== Rejestracja globali ===== */
+window.calculateOfferTotals = calculateOfferTotals;
+window.calculateLinePricing = calculateLinePricing;

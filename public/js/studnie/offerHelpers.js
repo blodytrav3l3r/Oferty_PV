@@ -73,3 +73,11 @@ function normalizeValidityValue(val) {
     if (/^\d+$/.test(trimmed)) return trimmed + ' dni';
     return trimmed;
 }
+
+/* ===== Rejestracja globali ===== */
+window.getWellRowStyle = getWellRowStyle;
+window.getOfferColumnsCount = getOfferColumnsCount;
+window.getWellErrorCell = getWellErrorCell;
+window.getDiscountStr = getDiscountStr;
+window.migrateWellData = migrateWellData;
+window.normalizeValidityValue = normalizeValidityValue;

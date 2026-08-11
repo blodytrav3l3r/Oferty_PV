@@ -24,7 +24,6 @@
 function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
     if (dimLinesY.length === 0) return '';
 
-    const { mT, drawH } = canvas;
     const uniqueY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort(
         (a, b) => b - a
     );
@@ -126,3 +125,8 @@ function drawDnLabel(cx, bodyDN, canvas) {
     const labelDN = typeof bodyDN === 'number' ? `DN${bodyDN}` : 'Styczna';
     return `<text x="${cx}" y="${mT + drawH + mB - 2}" text-anchor="middle" style="fill:${SVG_COLORS.dnLabel}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${labelDN}</text>`;
 }
+
+/* ===== Rejestracja globali ===== */
+window.drawSegmentDimensions = drawSegmentDimensions;
+window.drawTotalHeightBar = drawTotalHeightBar;
+window.drawDnLabel = drawDnLabel;

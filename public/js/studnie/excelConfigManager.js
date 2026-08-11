@@ -141,9 +141,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
     }
     _excelSortConfig(well);
     if ((componentType === 'krag' || componentType === 'krag_ot') && qty > 1) {
-        let _exp = [];
+        const _exp = [];
         for (let _i = 0; _i < well.config.length; _i++) {
-            let _pr =
+            const _pr =
                 typeof studnieProducts !== 'undefined'
                     ? studnieProducts.find(function (x) {
                           return x.id === well.config[_i].productId;
@@ -171,7 +171,7 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
 
 function _excelSortConfig(well) {
     if (!well || !well.config) return;
-    let typeOrder = {
+    const typeOrder = {
         wlaz: 0,
         avr: 1,
         plyta_din: 2,
@@ -186,17 +186,17 @@ function _excelSortConfig(well) {
         kineta: 7,
         uszczelka: 8
     };
-    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+    const sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
     well.config = [...well.config].sort(function (a, b) {
-        let pA = sz.find(function (p) {
+        const pA = sz.find(function (p) {
             return p.id === a.productId;
         });
-        let pB = sz.find(function (p) {
+        const pB = sz.find(function (p) {
             return p.id === b.productId;
         });
         if (!pA || !pB) return 0;
-        let oA = typeOrder[pA.componentType] || 100;
-        let oB = typeOrder[pB.componentType] || 100;
+        const oA = typeOrder[pA.componentType] || 100;
+        const oB = typeOrder[pB.componentType] || 100;
         return oA - oB;
     });
     _excelMoveWlazToTop(well);
@@ -204,10 +204,10 @@ function _excelSortConfig(well) {
 
 function _excelMoveWlazToTop(well) {
     if (!well || !well.config || well.config.length < 2) return;
-    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+    const sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
     let found = null;
     for (let i = 0; i < well.config.length; i++) {
-        let p = sz.find(function (pr) {
+        const p = sz.find(function (pr) {
             return pr.id === well.config[i].productId;
         });
         if (p && p.componentType === 'wlaz') {
@@ -216,7 +216,7 @@ function _excelMoveWlazToTop(well) {
         }
     }
     if (found !== null && found !== 0) {
-        let item = well.config.splice(found, 1)[0];
+        const item = well.config.splice(found, 1)[0];
         well.config.unshift(item);
     }
 }

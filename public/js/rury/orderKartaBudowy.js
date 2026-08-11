@@ -49,12 +49,10 @@ function initKartaBudowyStep4(primaryOfferNumber) {
     const offerInput = document.getElementById('step4-offer-nr-input');
     const adresWysylkiInput = document.getElementById('step4-adres-wysylki');
     const osobaKontaktInput = document.getElementById('step4-osoba-kontakt');
-    const emailFakturaInput = document.getElementById('step4-email-faktura');
 
     const offerNumber = document.getElementById('offer-number')?.value?.trim() || '';
     if (offerInput) offerInput.value = primaryOfferNumber || offerNumber;
 
-    const clientName = document.getElementById('client-name')?.value?.trim() || '';
     const clientAddress = document.getElementById('client-address')?.value?.trim() || '';
     const clientContact = document.getElementById('client-contact')?.value?.trim() || '';
 

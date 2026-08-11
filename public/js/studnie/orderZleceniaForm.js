@@ -33,7 +33,7 @@ function renderZleceniaSvgPreview(well) {
 }
 
 function populateZleceniaForm(el) {
-    const { well, product, configItem, elementIndex, wellIndex } = el;
+    const { well, product, elementIndex } = el;
     const container = document.getElementById('zlecenia-form-content');
     if (!container) return;
 
@@ -42,7 +42,7 @@ function populateZleceniaForm(el) {
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
     let displayWysokosc = parsed.wysokosc || product.height || 0;
-    let dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
+    const dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
     let actualNextProduct = null;
@@ -82,9 +82,6 @@ function populateZleceniaForm(el) {
 
     const din = getStudniaDIN(well.dn);
     const todayStr = new Date().toISOString().split('T')[0];
-    const orderNumber = orderEditMode
-        ? orderEditMode.order.number
-        : document.getElementById('offer-number')?.value || '';
 
     const userName = currentUser
         ? ((currentUser.firstName || '') + ' ' + (currentUser.lastName || '')).trim() ||
@@ -242,7 +239,7 @@ function populateZleceniaForm(el) {
         ['C70/80(HSR!!!!)', 'C70/80 HSR']
     ];
 
-    let autoUwagi = [];
+    const autoUwagi = [];
 
     if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3')
         autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
@@ -250,7 +247,7 @@ function populateZleceniaForm(el) {
     if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
         autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
 
-    let wklUwagi = [];
+    const wklUwagi = [];
     if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
         wklUwagi.push('Dennica ' + well.wkladkaDennica);
     if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
@@ -321,12 +318,6 @@ function populateZleceniaForm(el) {
                 ${liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>')}
             </div>
         `;
-    }
-
-    let przejsciaAppVisible = false;
-    const existingPrzejsciaContainer = document.getElementById('zl-inline-przejscia-app-container');
-    if (existingPrzejsciaContainer && existingPrzejsciaContainer.style.display !== 'none') {
-        przejsciaAppVisible = true;
     }
 
     let daneZleceniaVisible = false;
@@ -841,3 +832,6 @@ window.renderZleceniaSvgPreview = renderZleceniaSvgPreview;
 window.selectZleceniaTile = selectZleceniaTile;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;
 window.onZleceniaKatChange = onZleceniaKatChange;
+
+/* ===== Rejestracja globali ===== */
+window.populateZleceniaForm = populateZleceniaForm;

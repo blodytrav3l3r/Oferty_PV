@@ -5,7 +5,7 @@ window._customPrzejscieRows = [];
 window._offerPrzejscieRows = [];
 window._przejsciaInitialized = false;
 
-function renderPrzejsciaDetailsTable(existingData) {
+function renderPrzejsciaDetailsTable(_existingData) {
     const container = document.getElementById('step4-przejscia-details-table');
     if (!container) return;
 
@@ -34,7 +34,7 @@ function renderPrzejsciaDetailsTable(existingData) {
         </thead>
         <tbody>`;
 
-    allRows.forEach((row, idx) => {
+    allRows.forEach((row, _idx) => {
         const isCustom = row.source === 'custom';
         html += `<tr>
             <td>
@@ -131,3 +131,6 @@ function handlePrzejsciaZamowioneChange(select) {
     }
 }
 window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;
+
+/* ===== Rejestracja globali ===== */
+window.collectPrzejsciaDetailsFromTable = collectPrzejsciaDetailsFromTable;

@@ -324,10 +324,10 @@ function _generateDefaultUwagi() {
           : [];
     if (selectedWells.length === 0 || typeof wellDiscounts === 'undefined') return;
 
-    let lines = [];
-    let precoDiscounts = new Set();
-    let pehdDiscounts = new Set();
-    let paintingLines = new Set();
+    const lines = [];
+    const precoDiscounts = new Set();
+    const pehdDiscounts = new Set();
+    const paintingLines = new Set();
 
     const uniqueDns = [...new Set(selectedWells.map((w) => w.dn))];
     uniqueDns.forEach((dn) => {
@@ -339,7 +339,7 @@ function _generateDefaultUwagi() {
             const pre = parseFloat(d.preco || 0);
             const pehd = parseFloat(d.pehd || 0);
 
-            let parts = [];
+            const parts = [];
             if (den > 0) parts.push(`Dennica: ${den.toFixed(2).replace('.', ',')}%`);
             if (nad > 0) parts.push(`Nadbudowa: ${nad.toFixed(2).replace('.', ',')}%`);
 
@@ -747,3 +747,11 @@ function collectKartaBudowyDataStep4() {
         createdAt: new Date().toISOString()
     };
 }
+
+/* ===== Rejestracja globali ===== */
+window.initKartaBudowyStep4 = initKartaBudowyStep4;
+window.copyKartaBudowyFromOrder = copyKartaBudowyFromOrder;
+
+/* ===== Rejestracja globali ===== */
+window.step4NextAction = step4NextAction;
+window.showKartaBudowyCopyPicker = showKartaBudowyCopyPicker;

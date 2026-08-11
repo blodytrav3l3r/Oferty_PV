@@ -39,7 +39,6 @@ function calculateConnectionRequirements(transitions, rzDna) {
 
     if (!transitions || transitions.length === 0) return result;
 
-    const SAFETY = 15;
     let allAboveBottom = true;
 
     for (const pr of transitions) {
@@ -64,7 +63,6 @@ function calculateConnectionRequirements(transitions, rzDna) {
 
         const pipeTop = hcInvert + dnVal;
         const isNearBottom = hcInvert <= 0;
-        const isAboveDennica = false; // determined per-candidate later
 
         result.pipes.push({
             hcInvert,
@@ -486,3 +484,11 @@ function getKregiList(products, dn, warehouse) {
 
     return kregiSorted;
 }
+
+/* ===== Rejestracja globali ===== */
+window.estimateBottomSection = estimateBottomSection;
+window.getLowestDennica = getLowestDennica;
+window.getLowestDennicaHybrid = getLowestDennicaHybrid;
+window.getReductionPlate = getReductionPlate;
+window.getTopClosure = getTopClosure;
+window.getKregiList = getKregiList;

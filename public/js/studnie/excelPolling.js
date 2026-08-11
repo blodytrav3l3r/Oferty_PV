@@ -14,7 +14,7 @@ function _excelStartPolling() {
     _excelPollInterval = setInterval(function () {
         if (_excelUserEditing) return;
         if (!document.getElementById('excel-table-overlay')) return;
-        let snap = _excelBuildWellsSnapshot();
+        const snap = _excelBuildWellsSnapshot();
         if (snap !== lastSnapshot) {
             lastSnapshot = snap;
             /* Lekka aktualizacja — nie re-render caly, tylko tryb AUTO/MAN */
@@ -30,9 +30,9 @@ function _excelStartPolling() {
 /* Snapshot stanu configSource + autoSelect wszystkich studzien */
 function _excelBuildWellsSnapshot() {
     if (typeof wells === 'undefined') return '';
-    let parts = [];
+    const parts = [];
     for (let i = 0; i < wells.length; i++) {
-        let w = wells[i];
+        const w = wells[i];
         if (!w) continue;
         parts.push(
             i +
@@ -53,12 +53,12 @@ function _excelBuildWellsSnapshot() {
 function _excelSyncAutoManualUI() {
     if (typeof wells === 'undefined') return;
     for (let i = 0; i < wells.length; i++) {
-        let w = wells[i];
+        const w = wells[i];
         if (!w) continue;
         if (_excelIsWellLocked(i))
             continue; /* zablokowana — nie synchronizuj, przyciski wylaczone */
-        let btnMode = document.getElementById('excel-mode-btn-' + i);
-        let btnRun = document.getElementById('excel-run-auto-' + i);
+        const btnMode = document.getElementById('excel-mode-btn-' + i);
+        const btnRun = document.getElementById('excel-run-auto-' + i);
         if (!btnMode) continue; /* wiersz nie widoczny / nie renderowany */
         /* Sync autoSelect z configSource (gdy glowny panel zmieni configSource) */
         if (
@@ -69,7 +69,7 @@ function _excelSyncAutoManualUI() {
         )
             w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
-        let isAuto = window.isWellAuto(w);
+        const isAuto = window.isWellAuto(w);
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
         btnMode.style.background = isAuto
             ? 'rgba(var(--accent-rgb), 0.2)'

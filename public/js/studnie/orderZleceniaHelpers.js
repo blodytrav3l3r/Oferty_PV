@@ -72,3 +72,10 @@ function buildEtykietaElementsSnapshot(well) {
     );
     return items;
 }
+
+/* ===== Rejestracja globali ===== */
+window.getElementStatus = getElementStatus;
+window.parseWysokoscGlebokosc = parseWysokoscGlebokosc;
+window.getStudniaDIN = getStudniaDIN;
+window.calcStopnieExecution = calcStopnieExecution;
+window.buildEtykietaElementsSnapshot = buildEtykietaElementsSnapshot;

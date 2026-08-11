@@ -192,7 +192,6 @@ function buildPrzejsciaRows(data) {
         // Sprawdź czy na tym indeksie jest ślepa kineta
         const blind = blindEntries[i - assignedPrzejscia.length];
         if (blind) {
-            const blindAngleNum = angleToLabelNum[parseFloat(blind.angle) || 0] ?? i;
             rows.push(formatBlindKinetaRow('Wlot ', blind, findProductFn));
             continue;
         }
@@ -370,7 +369,6 @@ function generateWellSvg(data) {
 
     // Oceniamy z jakich kątów korzystamy
     let useKatWykonania = false;
-    let angleTypeTitle = 'Wg Kąt Stopień';
 
     // Pobranie z normalizacją do liczby (DN '1000' -> 1000)
     const dnStr = String(well.dn || '');
@@ -384,13 +382,10 @@ function generateWellSvg(data) {
 
     if (isKragOt) {
         useKatWykonania = false;
-        angleTypeTitle = 'Kąty: Kąt Stopień';
     } else if (numDn === 2000 || numDn === 2500) {
         useKatWykonania = false;
-        angleTypeTitle = 'Kąty: Kąt Stopień';
     } else if ([1000, 1200, 1500].includes(numDn)) {
         useKatWykonania = true;
-        angleTypeTitle = 'Kąty: Kąt Wykonania';
     }
 
     // Budujemy elementy SVG do tablicy — viewBox dokleimy na końcu
@@ -550,8 +545,6 @@ function generateWellSvg(data) {
     let maxX = center + radius + 5;
     let minY = center - radius - 5;
     let maxY = center + radius + 5;
-
-    const estimateTextWidth = (text) => text.length * 5.5;
 
     labels.forEach((l) => {
         const textHeight = (l.lines.length + 1) * lineHeight;

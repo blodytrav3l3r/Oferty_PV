@@ -41,7 +41,7 @@ function buildAutoOrderData(el, sharedData) {
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';
     let displayWysokosc = parsed.wysokosc || product.height || 0;
-    let dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
+    const dnoKinetaVal = parsed.wysokosc - parsed.glebokosc;
     let displayDnoKineta = dnoKinetaVal > 0 ? dnoKinetaVal : '—';
 
     let actualNextProduct = null;
@@ -79,7 +79,7 @@ function buildAutoOrderData(el, sharedData) {
     const isKragOt = product && product.componentType === 'krag_ot';
     const shouldForceBrak = shouldReduce || isKragOt;
 
-    let domyslnyRodzajStudni =
+    const domyslnyRodzajStudni =
         product.componentType === 'dennica'
             ? well.dennicaMaterial === 'zelbetowa'
                 ? 'zelbet'
@@ -111,7 +111,7 @@ function buildAutoOrderData(el, sharedData) {
         autoUwagi.push('Agresja chem. ' + well.agresjaChemiczna);
     if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3')
         autoUwagi.push('Agresja mroz. ' + well.agresjaMrozowa);
-    let wklUwagi2 = [];
+    const wklUwagi2 = [];
     if (well.wkladkaDennica && well.wkladkaDennica !== 'brak')
         wklUwagi2.push('Dennica ' + well.wkladkaDennica);
     if (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak')
@@ -282,7 +282,7 @@ function openBulkOrderSequencePopup() {
         return;
     }
 
-    let itemsHtml = groupList
+    const itemsHtml = groupList
         .map((g) => {
             const disabled = g.openCount === 0;
             const dnLabel = g.wellDn === 'styczna' ? 'Styczna' : 'DN' + g.wellDn;

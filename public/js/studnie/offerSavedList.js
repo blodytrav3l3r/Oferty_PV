@@ -129,3 +129,6 @@ function renderSavedOffersStudnie() {
         })
         .join('');
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderSavedOffersStudnie = renderSavedOffersStudnie;

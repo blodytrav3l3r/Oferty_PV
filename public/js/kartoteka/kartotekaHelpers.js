@@ -250,7 +250,6 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
 }
 
 function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
-    const isAdminOrPro = role === 'admin' || role === 'pro';
     const orderList = orders && orders.length > 0 ? orders : [];
     const orderCount = orderList.length;
 

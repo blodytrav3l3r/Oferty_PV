@@ -1,6 +1,5 @@
 // @ts-check
 /* ===== KARTOTEKA INITIALIZATION ===== */
-let currentTypeFilter = 'all';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const token = getAuthToken();
@@ -23,15 +22,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (window.headerUser) {
             window.headerUser.render(user);
         }
-    } catch (e) {
+    } catch (_e) {
         window.location.href = 'index.html';
         return;
     }
 });
 
 function filterByType(type) {
-    currentTypeFilter = type;
-
     document.querySelectorAll('.ka-type-filter-btn').forEach((btn) => {
         btn.classList.toggle('active', btn.dataset.typeFilter === type);
         if (btn.dataset.typeFilter === type) {
@@ -129,3 +126,6 @@ function initAdvancedFilterEvents(ui) {
 }
 
 window.initAdvancedFilterEvents = initAdvancedFilterEvents;
+
+/* ===== Rejestracja globali ===== */
+window.filterByType = filterByType;

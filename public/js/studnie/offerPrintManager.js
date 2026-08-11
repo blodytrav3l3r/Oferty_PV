@@ -107,14 +107,13 @@ async function generateOfferHtml() {
         '';
 
     // Transport
-    const { map: transportMap, totalTransportCost } = calculateWellTransportMap(wells);
+    const { map: transportMap } = calculateWellTransportMap(wells);
 
     // Grupy po średnicach
     const groups = groupWellsByDiameter(wells);
 
     // Budowanie tabel
     let tablesHtml = '';
-    const currentLp = 1;
     const summaries = [];
 
     groups.forEach((groupWells, dn) => {
@@ -694,3 +693,6 @@ window.exportStudnieOrderAsOffer_action = exportStudnieOrderAsOffer_action;
 
 // ===== GLOBAL EXPORTS =====
 window.printOfferStudnie = printOfferStudnie;
+
+/* ===== Rejestracja globali ===== */
+window.exportOfferToWord = exportOfferToWord;

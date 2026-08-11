@@ -305,8 +305,8 @@ function updateDNButtons() {
             return;
         }
 
-        let btnText = b.textContent.trim().toLowerCase();
-        let wellDnStr = String(well.dn).toLowerCase();
+        const btnText = b.textContent.trim().toLowerCase();
+        const wellDnStr = String(well.dn).toLowerCase();
 
         if (btnText === wellDnStr) {
             b.classList.add('active');
@@ -315,3 +315,13 @@ function updateDNButtons() {
         }
     });
 }
+
+/* ===== Rejestracja globali ===== */
+window.selectDN = selectDN;
+
+/* ===== Rejestracja globali ===== */
+window.selectZakonczenie = selectZakonczenie;
+window.toggleRedukcja = toggleRedukcja;
+window.togglePsiaBuda = togglePsiaBuda;
+window.toggleStyczna1200 = toggleStyczna1200;
+window.selectRedukcjaZakonczenie = selectRedukcjaZakonczenie;

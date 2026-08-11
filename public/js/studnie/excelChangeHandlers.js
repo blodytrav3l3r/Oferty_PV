@@ -50,7 +50,7 @@ function excelOnRzednaChange(wIdx) {
 
 /* ===== DODAWANIE / USUWANIE KOLUMNY PRZEJŚCIA ===== */
 function excelRemoveTransitionColumn() {
-    let tab = _excelActiveTab || '1000';
+    const tab = _excelActiveTab || '1000';
     if (_excelAnyWellLockedInTab(tab)) {
         showToast(
             'Nie można usunąć kolumny przejścia — w tej zakładce są zablokowane studnie',
@@ -58,7 +58,7 @@ function excelRemoveTransitionColumn() {
         );
         return;
     }
-    let curMax = _excelMaxTransitions[tab] || 1;
+    const curMax = _excelMaxTransitions[tab] || 1;
     if (curMax <= 1 && wells.length > 0) {
         showToast('Nie można usunąć — minimum 1 kolumna przejścia', 'error');
         return;
@@ -100,7 +100,7 @@ function excelRemoveTransitionColumn() {
     showToast('Usunięto kolumnę przejścia', 'info');
 }
 function excelAddTransitionColumn() {
-    let tab = _excelActiveTab || '1000';
+    const tab = _excelActiveTab || '1000';
     if (_excelAnyWellLockedInTab(tab)) {
         showToast(
             'Nie można dodać kolumny przejścia — w tej zakładce są zablokowane studnie',
@@ -110,7 +110,7 @@ function excelAddTransitionColumn() {
     }
     _excelResetLayoutDependentState();
     _excelMaxTransitions[tab] = (_excelMaxTransitions[tab] || 1) + 1;
-    let newMax = _excelMaxTransitions[tab];
+    const newMax = _excelMaxTransitions[tab];
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((w) => {
             if (!_excelWellMatchesTab(w, tab)) return;
@@ -142,7 +142,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
-    let hasExisting = trIdx < wells[wIdx].przejscia.length;
+    const hasExisting = trIdx < wells[wIdx].przejscia.length;
     if (!hasExisting && (!value || value === '')) return;
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());
@@ -340,17 +340,17 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             componentType === 'plyta_zamykajaca' ||
             componentType === 'pierscien_odciazajacy')
     ) {
-        let isRing = componentType === 'pierscien_odciazajacy';
-        let partnerTypes = isRing
+        const isRing = componentType === 'pierscien_odciazajacy';
+        const partnerTypes = isRing
             ? ['plyta_najazdowa', 'plyta_zamykajaca']
             : ['pierscien_odciazajacy'];
-        let _avail =
+        const _avail =
             typeof getAvailableProducts === 'function'
                 ? getAvailableProducts(well)
                 : studnieProducts || [];
         let hasPartner = false;
         for (let ci = 0; ci < (well.config || []).length; ci++) {
-            let cp = _avail.find(function (pr) {
+            const cp = _avail.find(function (pr) {
                 return pr.id === well.config[ci].productId;
             });
             if (cp && partnerTypes.indexOf(cp.componentType) !== -1) {
@@ -373,7 +373,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
                 });
             }
             if (partnerCandidates.length > 0) {
-                let partner = partnerCandidates[0];
+                const partner = partnerCandidates[0];
                 _excelInsertConfigItem(well, partner.componentType, partner.id, 1);
                 _excelSortConfig(well);
                 _excelRenderTable(_excelActiveTab);
@@ -431,7 +431,7 @@ async function excelOnReductionSelectChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot();
-    let well = wells[wIdx];
+    const well = wells[wIdx];
     if (!well) return;
     if (!value) {
         well.redukcjaDN1000 = false;
@@ -449,4 +449,22 @@ async function excelOnReductionSelectChange(wIdx, value) {
     }
     _excelRenderTable(_excelActiveTab);
     _excelDebouncedRefresh();
+}
+
+/* ===== Rejestracja globali ===== */
+if (typeof window !== 'undefined') {
+    window.excelOnRzednaChange = excelOnRzednaChange;
+    window.excelRemoveTransitionColumn = excelRemoveTransitionColumn;
+    window.excelAddTransitionColumn = excelAddTransitionColumn;
+    window.excelOnPrzejscieChange = excelOnPrzejscieChange;
+    window.excelOnPrzejscieTypeChange = excelOnPrzejscieTypeChange;
+    window.excelOnWlazChange = excelOnWlazChange;
+    window.excelOnCompChange = excelOnCompChange;
+    window.excelOnKinetaChange = excelOnKinetaChange;
+    window.excelOnPsiaBudaChange = excelOnPsiaBudaChange;
+}
+
+/* ===== Rejestracja globali ===== */
+if (typeof window !== 'undefined') {
+    window.excelOnReductionSelectChange = excelOnReductionSelectChange;
 }

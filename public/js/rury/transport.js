@@ -132,9 +132,6 @@ function updateOfferSummary() {
     const costPerTrip = getCostPerTrip();
     const activeItems = getActiveItemsArray();
 
-    // Pre-calculate transport distribution
-    const transportDist = calculateTransportDistribution(activeItems);
-
     activeItems.forEach((item) => {
         const basePriceAfterDiscount = item.unitPrice * (1 - item.discount / 100);
         const pehdCost = item.pehdCostPerUnit || 0;
@@ -700,3 +697,6 @@ window.toggleTransportBreakdown = function () {
 window.toggleOrderTransportBreakdown = function () {
     window.toggleTransportBreakdown();
 };
+
+/* ===== Rejestracja globali ===== */
+window.calculateTransportDistributionStandalone = calculateTransportDistributionStandalone;

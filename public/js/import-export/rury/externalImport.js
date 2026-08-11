@@ -11,7 +11,7 @@ window.RuryExternalImport = {
         const number = offerGroup.number;
         const rows = offerGroup.rows;
 
-        const items = rows.map((r, i) => {
+        const items = rows.map((r, _i) => {
             const unitPrice = parseFloat(r['CENA_JEDNOSTKOWA']) || 0;
             const qty = parseInt(r['ILOSC']) || 0;
             const hasDiscount = r['RABAT'] !== '';

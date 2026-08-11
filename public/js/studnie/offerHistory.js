@@ -330,3 +330,9 @@ async function restoreHistorySnapshot(logId) {
 
     closeModal();
 }
+
+/* ===== Rejestracja globali ===== */
+window.showOfferHistoryStudnie = showOfferHistoryStudnie;
+window.loadMoreAuditLogs = loadMoreAuditLogs;
+window.viewHistorySnapshot = viewHistorySnapshot;
+window.restoreHistorySnapshot = restoreHistorySnapshot;

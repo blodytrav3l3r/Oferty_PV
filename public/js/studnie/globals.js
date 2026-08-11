@@ -188,3 +188,118 @@ function normalizeId(id) {
 }
 
 window.showSection = showSectionStudnie;
+
+/* ===== Żywe bindingi window.* dla zmiennych stanu ===== */
+// Klasyczne skrypty: top-level `let` nie tworzy właściwości window.
+// Kod w innych plikach czyta/zapisuje część stanu przez window (np. window.wellDiscounts,
+// window.wells) — gettery/settery utrzymują spójność z tymi samymi zmiennymi (wzorzec studnieProducts).
+const _GLOBAL_BINDINGS = {
+    currentUser: () => currentUser,
+    currentCennikTab: () => currentCennikTab,
+    wells: () => wells,
+    currentWellIndex: () => currentWellIndex,
+    wellCounter: () => wellCounter,
+    wellDiscounts: () => wellDiscounts,
+    precoPricing: () => precoPricing,
+    offerDefaultZakonczenie: () => offerDefaultZakonczenie,
+    offerDefaultRedukcja: () => offerDefaultRedukcja,
+    offerDefaultRedukcjaMinH: () => offerDefaultRedukcjaMinH,
+    offerDefaultRedukcjaZak: () => offerDefaultRedukcjaZak,
+    offersStudnie: () => offersStudnie,
+    ordersStudnie: () => ordersStudnie,
+    editingOfferIdStudnie: () => editingOfferIdStudnie,
+    editingOfferAssignedUserId: () => editingOfferAssignedUserId,
+    editingOfferAssignedUserName: () => editingOfferAssignedUserName,
+    editingOfferCreatedByUserId: () => editingOfferCreatedByUserId,
+    editingOfferCreatedByUserName: () => editingOfferCreatedByUserName,
+    isSavingOffer: () => isSavingOffer,
+    orderEditMode: () => orderEditMode,
+    expandedWellIndices: () => expandedWellIndices,
+    currentWizardStep: () => currentWizardStep,
+    wizardConfirmedParams: () => wizardConfirmedParams,
+    studnieViewTransitionTimer: () => studnieViewTransitionTimer,
+    WIZARD_REQUIRED_PARAMS: () => WIZARD_REQUIRED_PARAMS
+};
+const _GLOBAL_SETTERS = {
+    currentUser: (v) => {
+        currentUser = v;
+    },
+    currentCennikTab: (v) => {
+        currentCennikTab = v;
+    },
+    wells: (v) => {
+        wells = v;
+    },
+    currentWellIndex: (v) => {
+        currentWellIndex = v;
+    },
+    wellCounter: (v) => {
+        wellCounter = v;
+    },
+    wellDiscounts: (v) => {
+        wellDiscounts = v;
+    },
+    precoPricing: (v) => {
+        precoPricing = v;
+    },
+    offerDefaultZakonczenie: (v) => {
+        offerDefaultZakonczenie = v;
+    },
+    offerDefaultRedukcja: (v) => {
+        offerDefaultRedukcja = v;
+    },
+    offerDefaultRedukcjaMinH: (v) => {
+        offerDefaultRedukcjaMinH = v;
+    },
+    offerDefaultRedukcjaZak: (v) => {
+        offerDefaultRedukcjaZak = v;
+    },
+    offersStudnie: (v) => {
+        offersStudnie = v;
+    },
+    ordersStudnie: (v) => {
+        ordersStudnie = v;
+    },
+    editingOfferIdStudnie: (v) => {
+        editingOfferIdStudnie = v;
+    },
+    editingOfferAssignedUserId: (v) => {
+        editingOfferAssignedUserId = v;
+    },
+    editingOfferAssignedUserName: (v) => {
+        editingOfferAssignedUserName = v;
+    },
+    editingOfferCreatedByUserId: (v) => {
+        editingOfferCreatedByUserId = v;
+    },
+    editingOfferCreatedByUserName: (v) => {
+        editingOfferCreatedByUserName = v;
+    },
+    isSavingOffer: (v) => {
+        isSavingOffer = v;
+    },
+    orderEditMode: (v) => {
+        orderEditMode = v;
+    },
+    currentWizardStep: (v) => {
+        currentWizardStep = v;
+    },
+    wizardConfirmedParams: (v) => {
+        wizardConfirmedParams = v;
+    },
+    studnieViewTransitionTimer: (v) => {
+        studnieViewTransitionTimer = v;
+    }
+};
+for (const key of Object.keys(_GLOBAL_BINDINGS)) {
+    Object.defineProperty(window, key, {
+        configurable: true,
+        get: _GLOBAL_BINDINGS[key],
+        set: _GLOBAL_SETTERS[key]
+    });
+}
+
+/* ===== Rejestracja globali ===== */
+window.toggleCard = toggleCard;
+window.generateOfferNumberStudnie = generateOfferNumberStudnie;
+window.normalizeId = normalizeId;

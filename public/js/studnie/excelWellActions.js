@@ -3,7 +3,7 @@
 
 /* ===== SAVE ===== */
 function excelSaveAll() {
-    let btn = document.getElementById('excel-save-btn');
+    const btn = document.getElementById('excel-save-btn');
     if (btn) {
         btn.disabled = true;
         btn.textContent = 'Zapisywanie...';
@@ -41,7 +41,7 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     }
     _excelDebouncedRefresh();
     _excelRenderTable(_excelActiveTab);
-    let existing = document.getElementById('excel-params-popup');
+    const existing = document.getElementById('excel-params-popup');
     if (existing) {
         existing.remove();
         excelOpenWellParams(wIdx);
@@ -257,3 +257,12 @@ async function excelDeleteWell(wIdx) {
     if (typeof renderWellConfig === 'function') renderWellConfig();
     showToast('Studnia usunięta', 'info');
 }
+
+/* ===== Rejestracja globali ===== */
+window.excelSaveAll = excelSaveAll;
+window.excelRefreshParamsPopup = excelRefreshParamsPopup;
+window.excelOnNameChange = excelOnNameChange;
+window.excelDuplicateWell = excelDuplicateWell;
+
+/* ===== Rejestracja globali ===== */
+window.excelDeleteWell = excelDeleteWell;

@@ -102,3 +102,5 @@ const COMPONENT_THEME = {
         label: 'Płyta red.'
     }
 };
+
+window.COMPONENT_THEME = COMPONENT_THEME;

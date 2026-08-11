@@ -12,7 +12,7 @@ const CENNIK_TAB_FILTERS = {
     kinety: (p) => p.componentType === 'kineta' || (p.category && p.category.startsWith('Kinety'))
 };
 
-let _studniePricelistDirty = false;
+let _studniePricelistDirty = false; // eslint-disable-line prefer-const -- mutowany cross-file (pricelistCellEdit, pricelistCategory itd.)
 
 function updateStudnieSaveBtn() {
     const btn = document.getElementById('btn-save-studnie-pricelist');
@@ -83,3 +83,8 @@ EXPORT_COLUMNS.forEach((c) => {
 });
 // Kompatybilność wsteczna: stary nagłówek 'Forma std.' mapuje do formaStandardowa (WL)
 HEADER_TO_KEY['Forma std.'] = 'formaStandardowa';
+
+/* ===== Rejestracja globali ===== */
+window.updateStudnieSaveBtn = updateStudnieSaveBtn;
+window.selectCennikTab = selectCennikTab;
+window.CENNIK_TAB_FILTERS = CENNIK_TAB_FILTERS;

@@ -1,6 +1,5 @@
 // @ts-check
 // Wersja 2.0 - Zarzadzanie zamowieniami w Kartotece
-import { storageService } from '../shared/StorageService.js';
 import kartotekaSearch from './kartotekaSearch.js';
 import kartotekaFilter from './kartotekaFilter.js';
 import kartotekaHistory from './kartotekaHistory.js';

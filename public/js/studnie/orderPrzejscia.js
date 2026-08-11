@@ -55,7 +55,7 @@ function buildOfferPrzejsciaTypes() {
             stringDnMap.get(cat).dnStrings.push(p.dn);
         } else {
             // Numeryczny DN — śledó min/max
-            let dn = parseFloat(p.dn) || 0;
+            const dn = parseFloat(p.dn) || 0;
             if (!typeMap.has(cat)) {
                 typeMap.set(cat, { dnMin: dn, dnMax: dn });
             } else {
@@ -527,3 +527,13 @@ function collectPrzejsciaDetailsFromTable() {
     });
     return result;
 }
+
+/* ===== Rejestracja globali ===== */
+window.handlePrzejsciaZamowioneChange = handlePrzejsciaZamowioneChange;
+window.updatePrzejscieDnOptions = updatePrzejscieDnOptions;
+window.updatePrzejscieSelectStyle = updatePrzejscieSelectStyle;
+window.addCustomPrzejscieRow = addCustomPrzejscieRow;
+window.collectPrzejsciaDetailsFromTable = collectPrzejsciaDetailsFromTable;
+
+/* ===== Rejestracja globali ===== */
+window.removePrzejscieRow = removePrzejscieRow;

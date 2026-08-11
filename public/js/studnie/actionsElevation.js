@@ -255,3 +255,9 @@ const _debouncedRefreshFull = window.debounce
           updateSummary();
           renderOfferSummary();
       };
+
+/* ===== Rejestracja globali ===== */
+window.updateElevations = updateElevations;
+window.syncElevationInputs = syncElevationInputs;
+window.updateWellNumer = updateWellNumer;
+window.updateDoplata = updateDoplata;

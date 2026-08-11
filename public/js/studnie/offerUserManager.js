@@ -128,3 +128,7 @@ async function changeOfferUserFromListStudnie(offerId) {
         showToast('Wystąpił błąd przy zmianie opiekuna', 'error');
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.changeOfferUser = changeOfferUser;
+window.changeOfferUserFromListStudnie = changeOfferUserFromListStudnie;

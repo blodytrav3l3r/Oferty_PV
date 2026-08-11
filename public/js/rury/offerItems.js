@@ -75,3 +75,6 @@ function setupOfferForm() {
     renderCatalogTabs();
     renderCatalogProducts();
 }
+
+/* ===== Rejestracja globali ===== */
+window.setupOfferForm = setupOfferForm;

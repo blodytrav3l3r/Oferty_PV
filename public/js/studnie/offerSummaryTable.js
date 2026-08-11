@@ -170,7 +170,6 @@ function renderOfferSummaryFooter(
 
         sortedDnKeys.forEach((dn) => {
             const g = dnGroups[dn];
-            const avgPrice = g.sumPrice / g.count;
             const avgHeight = g.sumHeight / g.count;
 
             let priceDiffCell = '';
@@ -237,3 +236,6 @@ function renderOfferSummaryFooter(
       </tfoot>`;
     return html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderOfferSummaryTable = renderOfferSummaryTable;

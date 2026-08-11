@@ -13,7 +13,7 @@
  *   (domyślnie) → #/rury
  */
 
-const SpaRouter = (() => {
+(() => {
     // ── Stan ──
     let currentModule = null;
     const iframes = {};
@@ -190,7 +190,7 @@ const SpaRouter = (() => {
                     window.setTimeout(complete, 120);
                     return;
                 }
-            } catch (e) {
+            } catch (_e) {
                 // Oczekiwano iframe tej samej domeny, ale nawigacja pozostaje odporna.
             }
 
@@ -334,7 +334,7 @@ const SpaRouter = (() => {
         // Auto-odświeżanie danych, jeśli moduł ma funkcję odświeżania
         try {
             refreshModule(module);
-        } catch (e) {
+        } catch (_e) {
             // Problemy z kontekstem - ignoruj
         }
 
@@ -398,7 +398,7 @@ const SpaRouter = (() => {
             if (typeof refreshDefaultsTimestamp === 'function') {
                 refreshDefaultsTimestamp();
             }
-        } catch (e) {
+        } catch (_e) {
             window.location.href = 'index.html';
             return;
         }

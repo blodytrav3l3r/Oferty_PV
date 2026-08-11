@@ -172,7 +172,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             showToast('Błąd generowania numeru zamówienia: ' + (claimData.error || ''), 'error');
             return;
         }
-    } catch (e) {
+    } catch (_e) {
         showToast('Błąd połączenia przy generowaniu numeru zamówienia', 'error');
         return;
     }
@@ -855,3 +855,4 @@ async function syncSourceData(options = {}) {
     return synced;
 }
 window.syncSourceData = syncSourceData;
+window.pendingOrderCreationData = pendingOrderCreationData;

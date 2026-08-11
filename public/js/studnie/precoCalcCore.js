@@ -3,12 +3,12 @@
     function _findPrecoGroup(grupy, dnRury) {
         let bestMatchKey = null;
         let minDiff = Infinity;
-        for (let key in grupy) {
+        for (const key in grupy) {
             if (!Object.prototype.hasOwnProperty.call(grupy, key)) continue;
-            let parts = key.split('-').map(Number);
+            const parts = key.split('-').map(Number);
             if (parts.length === 2) {
-                let min = parts[0];
-                let max = parts[1];
+                const min = parts[0];
+                const max = parts[1];
                 if (dnRury >= min && dnRury <= max) {
                     return grupy[key];
                 }
@@ -17,7 +17,7 @@
                     bestMatchKey = key;
                 }
             } else if (parts.length === 1) {
-                let val = parts[0];
+                const val = parts[0];
                 if (val === dnRury) return grupy[key];
                 if (val > dnRury && val - dnRury < minDiff) {
                     minDiff = val - dnRury;
@@ -33,11 +33,11 @@
 
     function _findPrecoRange(table, value, dnRury) {
         if (!table || table.length === 0 || value == null || value === '') return 0;
-        let numVal = Math.abs(parseFloat(value));
+        const numVal = Math.abs(parseFloat(value));
         if (isNaN(numVal) || numVal === 0) return 0;
         let maxRow = table[0];
         for (let i = 0; i < table.length; i++) {
-            let row = table[i];
+            const row = table[i];
             if (numVal >= row.min && numVal <= row.max) {
                 return _findPrecoGroup(row.grupy, dnRury);
             }
@@ -53,13 +53,13 @@
 
     function mergeOverlappingRanges(ranges) {
         if (!ranges || ranges.length === 0) return [];
-        let sorted = ranges.slice().sort(function (a, b) {
+        const sorted = ranges.slice().sort(function (a, b) {
             return a.bottom - b.bottom;
         });
-        let merged = [{ bottom: sorted[0].bottom, top: sorted[0].top }];
+        const merged = [{ bottom: sorted[0].bottom, top: sorted[0].top }];
         for (let i = 1; i < sorted.length; i++) {
-            let current = merged[merged.length - 1];
-            let next = sorted[i];
+            const current = merged[merged.length - 1];
+            const next = sorted[i];
             if (next.bottom < current.top) {
                 current.top = Math.max(current.top, next.top);
             } else {
@@ -71,14 +71,14 @@
 
     function ensureDisplayIndices(przejscia) {
         if (!przejscia || przejscia.length === 0) return;
-        let sorted = przejscia.slice().sort(function (a, b) {
+        const sorted = przejscia.slice().sort(function (a, b) {
             return (parseFloat(a.angle) || 0) - (parseFloat(b.angle) || 0);
         });
         let currentIdx = 0;
         let prevAngle = null;
         for (let i = 0; i < sorted.length; i++) {
-            let p = sorted[i];
-            let angle = parseFloat(p.angle) || 0;
+            const p = sorted[i];
+            const angle = parseFloat(p.angle) || 0;
             if (prevAngle !== null && angle !== prevAngle) {
                 currentIdx++;
             }
@@ -89,11 +89,11 @@
 
     function calcPrecoPricingPure(well, helpers) {
         if (!helpers) helpers = {};
-        let precoPricing = helpers.precoPricing;
+        const precoPricing = helpers.precoPricing;
         if (!precoPricing) return emptyResult();
-        let studnieProducts = helpers.studnieProducts || [];
-        let FLOW_TYPES = helpers.FLOW_TYPES || { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' };
-        let showToast = helpers.showToast;
+        const studnieProducts = helpers.studnieProducts || [];
+        const FLOW_TYPES = helpers.FLOW_TYPES || { WYLOT: 'wylot', WLOT: 'wlot', DOLOT: 'dolot' };
+        const showToast = helpers.showToast;
 
         function emptyResult() {
             return {
@@ -108,16 +108,16 @@
             };
         }
 
-        let result = emptyResult();
+        const result = emptyResult();
 
-        let dnStudni = parseInt(well.dn);
+        const dnStudni = parseInt(well.dn);
         if (!dnStudni || !precoPricing[dnStudni]) return result;
-        let cennik = precoPricing[dnStudni];
+        const cennik = precoPricing[dnStudni];
 
         if (well.wkladkaOsadnikPreco === 'tak') {
-            let heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
-            let baseCost = cennik.cenaDnoOsadnika || 0;
-            let heightCost = (heightMm / 1000) * (cennik.cenaPelnaWysMB || 0);
+            const heightMm = parseFloat(well.wkladkaOsadnikH) || 0;
+            const baseCost = cennik.cenaDnoOsadnika || 0;
+            const heightCost = (heightMm / 1000) * (cennik.cenaPelnaWysMB || 0);
             result.bazowa = baseCost;
             result.bazowaDN = [well.dn];
             result.bazowaEtykiety = ['Osadnik'];
@@ -138,7 +138,7 @@
             if (cennik.kinety[ki].dn > maxKinetaDn) maxKinetaDn = cennik.kinety[ki].dn;
         }
 
-        let allPipes = (well.przejscia || [])
+        const allPipes = (well.przejscia || [])
             .map(function (p, index) {
                 let prod = null;
                 for (let si = 0; si < studnieProducts.length; si++) {
@@ -173,7 +173,7 @@
         });
 
         for (let pi = 0; pi < allPipes.length; pi++) {
-            let p = allPipes[pi];
+            const p = allPipes[pi];
             if (p.dnRury > maxKinetaDn) {
                 result.error =
                     'Brak możliwości wykonania wkładki. Włączenie DN' +
@@ -191,17 +191,17 @@
         if (allPipes.length === 0) return result;
 
         // 2. Wybór kinety głównej (dwa największe DN)
-        let candidates = allPipes.slice();
-        let getZeroScore = function (kat) {
+        const candidates = allPipes.slice();
+        const getZeroScore = function (kat) {
             return Math.min(Math.abs(kat), Math.abs(kat - 360));
         };
         candidates.sort(function (a, b) {
             if (b.dnRury !== a.dnRury) return b.dnRury - a.dnRury;
             return getZeroScore(a.kat) - getZeroScore(b.kat);
         });
-        let mainPipes = candidates.splice(0, 2);
-        let doloty = candidates;
-        let przejscia = mainPipes.concat(
+        const mainPipes = candidates.splice(0, 2);
+        const doloty = candidates;
+        const przejscia = mainPipes.concat(
             doloty.sort(function (a, b) {
                 return b.dnRury - a.dnRury;
             })
@@ -232,36 +232,36 @@
         if (!kinetaRow) kinetaRow = cennik.kinety[cennik.kinety.length - 1];
         result.bazowa = kinetaRow ? kinetaRow.prosta : 0;
 
-        let rzDnaBase = parseFloat(well.rzednaDna) || 0;
+        const rzDnaBase = parseFloat(well.rzednaDna) || 0;
         przejscia.forEach(function (p) {
-            let rzWl = p.rzednaWlaczenia || rzDnaBase;
+            const rzWl = p.rzednaWlaczenia || rzDnaBase;
             p._mmFromBottom = (rzWl - rzDnaBase) * 1000;
             p._goraPrzejscia = p._mmFromBottom + p.dnRury;
         });
 
-        let rangesForMerge = przejscia.map(function (p) {
+        const rangesForMerge = przejscia.map(function (p) {
             return { bottom: p._mmFromBottom, top: p._goraPrzejscia };
         });
-        let mergedRanges = mergeOverlappingRanges(rangesForMerge);
-        let precoInsertTop = mergedRanges[0] ? mergedRanges[0].top : 0;
+        const mergedRanges = mergeOverlappingRanges(rangesForMerge);
+        const precoInsertTop = mergedRanges[0] ? mergedRanges[0].top : 0;
 
         // 3. Doloty (trzecie i kolejne przejścia)
         for (let di = 2; di < przejscia.length; di++) {
-            let dp = przejscia[di];
-            let rzDnaD = parseFloat(well.rzednaDna) || 0;
-            let rzWlD = dp.rzednaWlaczenia || rzDnaD;
-            let mmFromBottomD = (rzWlD - rzDnaD) * 1000;
-            let goraPrzejsciaD = mmFromBottomD + dp.dnRury;
+            const dp = przejscia[di];
+            const rzDnaD = parseFloat(well.rzednaDna) || 0;
+            const rzWlD = dp.rzednaWlaczenia || rzDnaD;
+            const mmFromBottomD = (rzWlD - rzDnaD) * 1000;
+            const goraPrzejsciaD = mmFromBottomD + dp.dnRury;
 
             if (mmFromBottomD >= precoInsertTop) {
                 let isKaskada = false;
                 for (let ok = 0; ok < przejscia.length; ok++) {
-                    let other = przejscia[ok];
+                    const other = przejscia[ok];
                     if (other === dp) continue;
                     if (Math.abs(other.kat - dp.kat) >= 1) continue;
-                    let rzWlOther = other.rzednaWlaczenia || rzDnaD;
-                    let mmOther = (rzWlOther - rzDnaD) * 1000;
-                    let goraOther = mmOther + other.dnRury;
+                    const rzWlOther = other.rzednaWlaczenia || rzDnaD;
+                    const mmOther = (rzWlOther - rzDnaD) * 1000;
+                    const goraOther = mmOther + other.dnRury;
                     if (goraOther < goraPrzejsciaD) {
                         isKaskada = true;
                         break;
@@ -275,7 +275,7 @@
                     }
                 }
                 if (dodRow) {
-                    let typ = isKaskada ? 'kaskada' : 'sciana';
+                    const typ = isKaskada ? 'kaskada' : 'sciana';
                     result.dodWloty.push({
                         _id: dp._oryginalnyIndex,
                         dn: dp.dnRury,
@@ -306,7 +306,7 @@
 
         // 5. Skrzynki włazowe (od DN >= 500)
         if (mainPipes[0].dnRury >= 500 && cennik.skrzynkaWlazowa) {
-            let ilosc = Math.max(0, Math.floor(mainPipes[0].dnRury / 250) - 1);
+            const ilosc = Math.max(0, Math.floor(mainPipes[0].dnRury / 250) - 1);
             result.skrzynki = {
                 ilosc: ilosc,
                 cenaSzt: cennik.skrzynkaWlazowa,
@@ -318,7 +318,7 @@
         result.spadkiSzczegoly = [];
         przejscia.forEach(function (pp) {
             if (pp.spadekKineta) {
-                let kwota = _findPrecoRange(cennik.spadekKineta, pp.spadekKineta, pp.dnRury);
+                const kwota = _findPrecoRange(cennik.spadekKineta, pp.spadekKineta, pp.dnRury);
                 if (kwota > 0) {
                     result.spadekKineta += kwota;
                     result.spadkiSzczegoly.push({
@@ -331,7 +331,7 @@
                 }
             }
             if (pp.spadekMufa) {
-                let kwota2 = _findPrecoRange(cennik.spadekMufa, pp.spadekMufa, pp.dnRury);
+                const kwota2 = _findPrecoRange(cennik.spadekMufa, pp.spadekMufa, pp.dnRury);
                 if (kwota2 > 0) {
                     result.spadekMufa += kwota2;
                     result.spadkiSzczegoly.push({
@@ -351,19 +351,23 @@
         if (mainPipes.length > 0) {
             let mainSelected = mainPipes[0];
             if (mainPipes.length > 1) {
-                let p0 = mainPipes[0];
-                let p1 = mainPipes[1];
+                const p0 = mainPipes[0];
+                const p1 = mainPipes[1];
                 if (p1.dnRury < p0.dnRury && p1._goraPrzejscia <= p0._goraPrzejscia) {
                     mainSelected = p0;
                 } else {
-                    let dist0 = precoInsertTop - p0._mmFromBottom;
-                    let dist1 = precoInsertTop - p1._mmFromBottom;
+                    const dist0 = precoInsertTop - p0._mmFromBottom;
+                    const dist1 = precoInsertTop - p1._mmFromBottom;
                     mainSelected = dist0 >= dist1 ? p0 : p1;
                 }
             }
-            let uniesienieMm = precoInsertTop - mainSelected._goraPrzejscia;
+            const uniesienieMm = precoInsertTop - mainSelected._goraPrzejscia;
             if (uniesienieMm > 0) {
-                let kwotaU = _findPrecoRange(cennik.uniesienie, uniesienieMm, mainPipes[0].dnRury);
+                const kwotaU = _findPrecoRange(
+                    cennik.uniesienie,
+                    uniesienieMm,
+                    mainPipes[0].dnRury
+                );
                 if (kwotaU > 0) {
                     result.uniesienie += kwotaU;
                     result.uniesieniaSzczegoly.push({
@@ -378,11 +382,11 @@
         }
 
         for (let ui = 2; ui < przejscia.length; ui++) {
-            let up = przejscia[ui];
+            const up = przejscia[ui];
             if (up._mmFromBottom >= precoInsertTop) continue;
-            let uniesienieMm2 = precoInsertTop - up._goraPrzejscia;
+            const uniesienieMm2 = precoInsertTop - up._goraPrzejscia;
             if (uniesienieMm2 > 0) {
-                let kwotaU2 = _findPrecoRange(cennik.uniesienie, uniesienieMm2, up.dnRury);
+                const kwotaU2 = _findPrecoRange(cennik.uniesienie, uniesienieMm2, up.dnRury);
                 if (kwotaU2 > 0) {
                     result.uniesienie += kwotaU2;
                     result.uniesieniaSzczegoly.push({
@@ -403,7 +407,7 @@
             mainPipes[0].dnRury !== mainPipes[1].dnRury &&
             cennik.redukcja
         ) {
-            let roznicaSrednic = Math.abs(mainPipes[0].dnRury - mainPipes[1].dnRury);
+            const roznicaSrednic = Math.abs(mainPipes[0].dnRury - mainPipes[1].dnRury);
             result.redukcja = _findPrecoRange(
                 cennik.redukcja,
                 roznicaSrednic,
@@ -421,7 +425,7 @@
             let dennicaHeight = 0;
             if (well.config) {
                 for (let ci = 0; ci < well.config.length; ci++) {
-                    let item = well.config[ci];
+                    const item = well.config[ci];
                     if (item.disablePreco) continue;
                     let prod2 = null;
                     for (let si2 = 0; si2 < studnieProducts.length; si2++) {
@@ -438,9 +442,9 @@
                     }
                 }
             }
-            let pozostaloMm = dennicaHeight - precoInsertTop;
+            const pozostaloMm = dennicaHeight - precoInsertTop;
             if (pozostaloMm > 0) {
-                let metry = pozostaloMm / 1000;
+                const metry = pozostaloMm / 1000;
                 result.pelnaWysokosc = {
                     metry: metry,
                     cena: metry * cennik.cenaPelnaWysMB,

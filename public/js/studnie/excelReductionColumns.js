@@ -3,11 +3,11 @@
 
 function _excelBuildReductionColumns(dn, well, cols) {
     /* 11. Redukcja — elementy nadbudowy (tylko gdy któraś studnia w zakładce ma redukcję) */
-    let hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
+    const hasRedTab = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
     let anyRed = false;
     if (hasRedTab) {
         /* Sprawdź czy KTÓRAś studnia w zakładce ma redukcję */
-        let tabWellsList =
+        const tabWellsList =
             typeof wells !== 'undefined'
                 ? wells.filter(function (w) {
                       return (
@@ -21,7 +21,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                 break;
             }
         }
-        let targetDns = [];
+        const targetDns = [];
         if (anyRed) {
             targetDns.push(1000);
             if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
@@ -40,34 +40,34 @@ function _excelBuildReductionColumns(dn, well, cols) {
             if (!refWell)
                 refWell =
                     well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-            let mainDn =
+            const mainDn =
                 dn === 'styczne'
                     ? refWell && refWell.stycznaNadbudowa1200
                         ? 1200
                         : 1000
                     : parseInt(String(dn));
-            let mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
-            let allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function (p) {
+            const mainGroups = _excelGetComponentsForDn(String(mainDn), refWell);
+            const allRedPlyta = (mainGroups['plyta_redukcyjna'] || []).filter(function (p) {
                 return p.dn !== null;
             });
 
             targetDns.forEach(function (tDn) {
                 /* Buduj Zestawy kolumn DLA KAŻDEGO tDn */
-                let redGroups = _excelGetComponentsForDn(String(tDn), refWell);
-                let redDnSpecific = {};
+                const redGroups = _excelGetComponentsForDn(String(tDn), refWell);
+                const redDnSpecific = {};
                 Object.keys(redGroups).forEach(function (gk) {
                     redDnSpecific[gk] = redGroups[gk].filter(function (p) {
                         return p.dn !== null;
                     });
                 });
 
-                let dnPfx = targetDns.length > 1 ? tDn + '_' : '';
-                let dnLbl = targetDns.length > 1 ? '(' + tDn + ') ' : '';
+                const dnPfx = targetDns.length > 1 ? tDn + '_' : '';
+                const dnLbl = targetDns.length > 1 ? '(' + tDn + ') ' : '';
 
                 /* Red. AVR */
                 (redDnSpecific['avr'] || []).forEach(function (p) {
-                    let nameShort = (p.name || '').replace(/AVR\s*/i, '').trim() || p.id;
-                    let lbl = _excelShortLabel(p.name || '', 'avr');
+                    const nameShort = (p.name || '').replace(/AVR\s*/i, '').trim() || p.id;
+                    const lbl = _excelShortLabel(p.name || '', 'avr');
                     cols.push({
                         id: 'red_avr_' + dnPfx + p.id,
                         key: 'red_avr_' + dnPfx + p.id,
@@ -83,18 +83,18 @@ function _excelBuildReductionColumns(dn, well, cols) {
                     });
                 });
                 /* Red. Konus */
-                let rKonus = [...(redDnSpecific['konus'] || [])].sort(function (a, b) {
+                const rKonus = [...(redDnSpecific['konus'] || [])].sort(function (a, b) {
                     return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
                 });
-                let seenRKH = {};
+                const seenRKH = {};
                 rKonus.forEach(function (p) {
-                    let h = parseInt(p.height) || 0;
+                    const h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRKH[h]) {
                         seenRKH[h] = true;
-                        let matching = rKonus.filter(function (k) {
+                        const matching = rKonus.filter(function (k) {
                             return parseInt(k.height) === h;
                         });
-                        let lbl = _excelShortLabel(p.name || '', 'konus');
+                        const lbl = _excelShortLabel(p.name || '', 'konus');
                         cols.push({
                             id: 'red_konus_' + dnPfx + h,
                             key: 'red_konus_' + dnPfx + h,
@@ -125,16 +125,16 @@ function _excelBuildReductionColumns(dn, well, cols) {
                             return parseInt(p.height) === 200;
                         });
                     }
-                    let seenH = {};
+                    const seenH = {};
                     prods.forEach(function (p) {
-                        let h = parseInt(p.height) || 0;
+                        const h = parseInt(p.height) || 0;
                         if (h > 0 && !seenH[h]) {
                             seenH[h] = true;
-                            let matching = prods.filter(function (k) {
+                            const matching = prods.filter(function (k) {
                                 return parseInt(k.height) === h;
                             });
-                            let lbl = _excelShortLabel(p.name || '', ct);
-                            let det = ct === 'pierscien_odciazajacy' ? '' : String(h);
+                            const lbl = _excelShortLabel(p.name || '', ct);
+                            const det = ct === 'pierscien_odciazajacy' ? '' : String(h);
                             cols.push({
                                 id: 'red_' + ct + '_' + dnPfx + h + '_' + h,
                                 key: 'red_' + ct + '_' + dnPfx + h + '_' + h,
@@ -164,18 +164,18 @@ function _excelBuildReductionColumns(dn, well, cols) {
                     });
                 });
                 /* Red. Kręgi */
-                let rKreg = [...(redDnSpecific['krag'] || [])].sort(function (a, b) {
+                const rKreg = [...(redDnSpecific['krag'] || [])].sort(function (a, b) {
                     return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
                 });
-                let seenRKH2 = {};
+                const seenRKH2 = {};
                 rKreg.forEach(function (p) {
-                    let h = parseInt(p.height) || 0;
+                    const h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRKH2[h]) {
                         seenRKH2[h] = true;
-                        let matching = rKreg.filter(function (k) {
+                        const matching = rKreg.filter(function (k) {
                             return parseInt(k.height) === h;
                         });
-                        let lbl = _excelShortLabel(p.name || '', 'krag');
+                        const lbl = _excelShortLabel(p.name || '', 'krag');
                         cols.push({
                             id: 'red_krag_' + dnPfx + h,
                             key: 'red_krag_' + dnPfx + h,
@@ -193,7 +193,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
                 });
                 /* Red. Osadniki (per produkt) */
                 (redDnSpecific['osadnik'] || []).forEach(function (p) {
-                    let lbl = _excelShortLabel(p.name || '', 'osadnik');
+                    const lbl = _excelShortLabel(p.name || '', 'osadnik');
                     cols.push({
                         id: 'red_osadnik_' + dnPfx + p.id,
                         key: 'red_osadnik_' + dnPfx + p.id,
@@ -209,18 +209,18 @@ function _excelBuildReductionColumns(dn, well, cols) {
                     });
                 });
                 /* Red. Kręgi OT */
-                let rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function (a, b) {
+                const rKragOt = [...(redDnSpecific['krag_ot'] || [])].sort(function (a, b) {
                     return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
                 });
-                let seenROtH = {};
+                const seenROtH = {};
                 rKragOt.forEach(function (p) {
-                    let h = parseInt(p.height) || 0;
+                    const h = parseInt(p.height) || 0;
                     if (h > 0 && !seenROtH[h]) {
                         seenROtH[h] = true;
-                        let matching = rKragOt.filter(function (k) {
+                        const matching = rKragOt.filter(function (k) {
                             return parseInt(k.height) === h;
                         });
-                        let lbl = _excelShortLabel(p.name || '', 'krag_ot');
+                        const lbl = _excelShortLabel(p.name || '', 'krag_ot');
                         cols.push({
                             id: 'red_krag_ot_' + dnPfx + h,
                             key: 'red_krag_ot_' + dnPfx + h,
@@ -237,18 +237,18 @@ function _excelBuildReductionColumns(dn, well, cols) {
                     }
                 });
                 /* R.Dennica */
-                let rDennica = [...(redDnSpecific['dennica'] || [])].sort(function (a, b) {
+                const rDennica = [...(redDnSpecific['dennica'] || [])].sort(function (a, b) {
                     return (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0);
                 });
-                let seenRDH = {};
+                const seenRDH = {};
                 rDennica.forEach(function (p) {
-                    let h = parseInt(p.height) || 0;
+                    const h = parseInt(p.height) || 0;
                     if (h > 0 && !seenRDH[h]) {
                         seenRDH[h] = true;
-                        let matching = rDennica.filter(function (k) {
+                        const matching = rDennica.filter(function (k) {
                             return parseInt(k.height) === h;
                         });
-                        let lbl = _excelShortLabel(p.name || '', 'dennica');
+                        const lbl = _excelShortLabel(p.name || '', 'dennica');
                         cols.push({
                             id: 'red_dennica_' + dnPfx + h,
                             key: 'red_dennica_' + dnPfx + h,
@@ -268,7 +268,7 @@ function _excelBuildReductionColumns(dn, well, cols) {
 
             /* Płyty redukcyjne — dodawane RAZ (niezależnie od targetDns, bo mają dn studni głównej) */
             allRedPlyta.forEach(function (p) {
-                let lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
+                const lbl = _excelShortLabel(p.name || '', 'plyta_redukcyjna');
                 cols.push({
                     id: 'red_plyta_red_' + p.id,
                     key: 'red_plyta_red_' + p.id,

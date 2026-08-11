@@ -921,3 +921,9 @@ function showSkippedPopup(skippedDetails, targetCat) {
     });
     if (window.lucide) window.lucide.createIcons();
 }
+
+/* ===== Rejestracja globali ===== */
+window.tmEditSelectType = tmEditSelectType;
+
+/* ===== Rejestracja globali ===== */
+window.tmEditApply = tmEditApply;

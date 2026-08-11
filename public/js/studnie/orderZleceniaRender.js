@@ -278,3 +278,6 @@ function selectZleceniaElement(idx) {
 
 window.filterZleceniaList = filterZleceniaList;
 window.selectZleceniaElement = selectZleceniaElement;
+
+/* ===== Rejestracja globali ===== */
+window.buildZleceniaWellList = buildZleceniaWellList;

@@ -129,3 +129,6 @@ function renderWellDiagram(targetSvg, targetWell) {
     svg.innerHTML =
         componentsSvg + transitionsSvg + precoLineSvg + segmentDimSvg + totalHeightSvg + dnLabelSvg;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderWellDiagram = renderWellDiagram;

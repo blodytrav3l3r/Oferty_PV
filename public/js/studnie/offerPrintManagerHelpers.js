@@ -126,7 +126,7 @@ function buildOfferSummaryHtml(summaries, totalNettoAll) {
     return html;
 }
 
-function buildOfferNotesHtml(notes, paymentTerms, validity) {
+function buildOfferNotesHtml(notes, paymentTerms, _validity) {
     let html = '';
 
     if (notes) {
@@ -143,3 +143,9 @@ function buildOfferNotesHtml(notes, paymentTerms, validity) {
 
     return html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.groupWellsByDiameter = groupWellsByDiameter;
+window.buildDiameterTableHtml = buildDiameterTableHtml;
+window.buildOfferSummaryHtml = buildOfferSummaryHtml;
+window.buildOfferNotesHtml = buildOfferNotesHtml;

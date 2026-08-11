@@ -7,7 +7,7 @@ function dragWellComponent(ev, productId) {
     window.currentDraggedPlaceholderId = productId;
 }
 
-function dragEndWellComponent(ev) {
+function dragEndWellComponent(_ev) {
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.remove('drag-over');
 
@@ -35,7 +35,7 @@ function allowDropWellComponent(ev) {
     let found = false;
     const grps = Array.from(dz.querySelectorAll('g.diag-comp-grp'));
 
-    for (let g of grps) {
+    for (const g of grps) {
         const rect = g.getBoundingClientRect();
         if (ev.clientY < rect.top + rect.height / 2) {
             targetIdx = parseInt(g.getAttribute('data-cfg-idx'));
@@ -49,7 +49,6 @@ function allowDropWellComponent(ev) {
 
     if (window.currentDraggedPlaceholderId) {
         const plIdx = well.config.findIndex((c) => c.isPlaceholder);
-        let currentEffIdx = plIdx;
         let newEffIdx = targetIdx;
         if (plIdx > -1 && plIdx < targetIdx) newEffIdx -= 1;
 
@@ -90,12 +89,12 @@ function allowDropWellComponent(ev) {
     }
 }
 
-function dragLeaveWellComponent(ev) {
+function dragLeaveWellComponent(_ev) {
     const dz = document.getElementById('drop-zone-diagram');
     if (dz) dz.classList.remove('drag-over');
 }
 
-window.injectPairIfReliefComponent = function (well, productId) {
+window.injectPairIfReliefComponent = function (well, _productId) {
     if (typeof window.ensureReliefRingPair === 'function') {
         window.ensureReliefRingPair(well);
     }
@@ -166,3 +165,10 @@ function dropWellComponent(ev) {
         updateSummary();
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.dragWellComponent = dragWellComponent;
+window.dragEndWellComponent = dragEndWellComponent;
+window.allowDropWellComponent = allowDropWellComponent;
+window.dragLeaveWellComponent = dragLeaveWellComponent;
+window.dropWellComponent = dropWellComponent;

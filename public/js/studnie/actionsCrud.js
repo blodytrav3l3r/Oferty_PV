@@ -113,7 +113,6 @@ function addWellComponent(productId) {
         });
 
         if (plateIdx >= 0) {
-            const plate = studnieProducts.find((p) => p.id === well.config[plateIdx].productId);
             const isRedDn = prod.dn === 1000;
 
             if (isRedDn) {
@@ -339,3 +338,8 @@ function clearWellConfig() {
     refreshAll();
     showToast('Wyczyszczono konfigurację studni', 'info');
 }
+
+/* ===== Rejestracja globali ===== */
+window.addWellComponent = addWellComponent;
+window.updateWellQuantity = updateWellQuantity;
+window.clearWellConfig = clearWellConfig;

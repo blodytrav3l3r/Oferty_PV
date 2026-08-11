@@ -302,3 +302,10 @@ function enforceLoadClassRulesWizard(changedParam, value) {
         }
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.recalcGaskets = recalcGaskets;
+window.syncKineta = syncKineta;
+window.enforceGlobalKonusPehdRule = enforceGlobalKonusPehdRule;
+window.enforceLoadClassRules = enforceLoadClassRules;
+window.enforceLoadClassRulesWizard = enforceLoadClassRulesWizard;

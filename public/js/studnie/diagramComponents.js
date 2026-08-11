@@ -310,3 +310,8 @@ function drawAllComponents(visible, canvas) {
 
     return { svg: svgOut, dimLinesY };
 }
+
+/* ===== Rejestracja globali ===== */
+window.buildVisibleComponents = buildVisibleComponents;
+window.calculateCanvasParams = calculateCanvasParams;
+window.drawAllComponents = drawAllComponents;

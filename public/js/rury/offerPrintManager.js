@@ -335,3 +335,6 @@ async function exportRuryOrderAsOffer_action(orderId, format) {
 }
 
 window.exportRuryOrderAsOffer_action = exportRuryOrderAsOffer_action;
+
+/* ===== Rejestracja globali ===== */
+window.getCurrentOfferForExport = getCurrentOfferForExport;

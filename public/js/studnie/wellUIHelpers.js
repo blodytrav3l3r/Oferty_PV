@@ -15,9 +15,7 @@ function renderDiscountPanel() {
         return;
     }
 
-    let grandDennica = 0,
-        grandNadbudowa = 0,
-        grandTotal = 0,
+    let grandTotal = 0,
         grandDiscounted = 0;
 
     let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
@@ -42,8 +40,6 @@ function renderDiscountPanel() {
         const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const totalAfter = dennicaAfterSum + nadbudowaAfterSum;
 
-        grandDennica += dennicaBaseSum;
-        grandNadbudowa += nadbudowaBaseSum;
         grandTotal += totalDN;
         grandDiscounted += totalAfter;
 

@@ -71,8 +71,8 @@ function _excelRenderTable(dn) {
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
     h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    let _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
-    let _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
+    const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
+    const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
     h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
     h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
@@ -151,7 +151,7 @@ function _excelRenderTable(dn) {
         const colLabel = escapeHtml(c.shortLabel || c.label);
         /* escape przed wrapem — _excelWrapDetail dodaje <br>, które nie może być ucieczone */
         const colDetail = _excelWrapDetail(escapeHtml(c.detailLabel)) || '·';
-        let isPerProduct = c.productId ? true : false;
+        const isPerProduct = c.productId ? true : false;
         let colCodeId;
         if (isPerProduct) {
             /* Kolumna per-produkt — zawsze pokazuje swój stały kod */
@@ -173,7 +173,7 @@ function _excelRenderTable(dn) {
                         : null
                 );
             }
-            let fallbackCode = (c.products && c.products[0] && c.products[0].id) || null;
+            const fallbackCode = (c.products && c.products[0] && c.products[0].id) || null;
             colCodeId = dynProdCode || fallbackCode;
         }
         const codeDisp = colCodeId || null;
@@ -188,13 +188,13 @@ function _excelRenderTable(dn) {
                   if (isPerProduct && codeDisp) {
                       try {
                           /* Znajdź produkt w studnieProducts i pobierz cenę bez filtrowania */
-                          let prod = (
+                          const prod = (
                               typeof studnieProducts !== 'undefined' ? studnieProducts : []
                           ).find(function (pr) {
                               return pr.id === codeDisp;
                           });
                           if (prod && prod.price) {
-                              let fmt =
+                              const fmt =
                                   typeof fmtInt === 'function'
                                       ? fmtInt
                                       : function (n) {
@@ -282,13 +282,13 @@ function _excelRenderTable(dn) {
     container.scrollTop = prevScrollTop;
     /* Zastosuj zapisane szerokości kolumn */
     if (_excelColWidths) {
-        let tbl = container.querySelector('table');
+        const tbl = container.querySelector('table');
         if (tbl) {
             Object.keys(_excelColWidths).forEach(function (key) {
-                let d = key.split('-', 1)[0];
+                const d = key.split('-', 1)[0];
                 if (d === dn) {
-                    let ci = parseInt(key.split('-')[1]);
-                    let th = tbl.querySelectorAll('thead tr:first-child th')[ci];
+                    const ci = parseInt(key.split('-')[1]);
+                    const th = tbl.querySelectorAll('thead tr:first-child th')[ci];
                     if (th) {
                         th.style.minWidth = _excelColWidths[key] + 'px';
                         th.style.width = _excelColWidths[key] + 'px';
@@ -309,7 +309,7 @@ function _excelRenderTable(dn) {
     if (typeof lucide !== 'undefined' && lucide.createIcons) {
         try {
             lucide.createIcons({ root: container });
-        } catch (e) {}
+        } catch (_e) {}
     }
 
     // Przywróć fokus po re-renderze
@@ -336,7 +336,7 @@ function _excelRenderTable(dn) {
         }
     }
     /* Ponownie zastosuj filtr wyszukiwarki po re-renderze */
-    let searchInput = document.getElementById('excel-search-input');
+    const searchInput = document.getElementById('excel-search-input');
     if (searchInput && searchInput.value) excelFilterWells(searchInput.value);
 }
 
@@ -352,17 +352,17 @@ function _excelApplyStickyColumns() {
     const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
     if (stickyThs.length < 2) return;
     let leftPos = 0;
-    let offsets = [0];
+    const offsets = [0];
     for (let i = 0; i < stickyThs.length - 1; i++) {
         leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
         offsets.push(leftPos);
     }
     /* Zastosuj do wszystkich th i td w pierwszych 7 kolumnach */
-    let sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
-    let cells = table.querySelectorAll(sel);
+    const sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
+    const cells = table.querySelectorAll(sel);
     for (let i = 0; i < cells.length; i++) {
         let colIdx = 0;
-        let el = cells[i];
+        const el = cells[i];
         let prev = el.previousElementSibling;
         while (prev) {
             colIdx++;

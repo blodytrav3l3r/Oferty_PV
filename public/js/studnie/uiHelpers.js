@@ -463,7 +463,7 @@ async function loadStudnieProducts() {
     return saved;
 }
 
-function renamePłyty(p) {
+function renamePłyty(_p) {
     // Funkcja wyłączona - pozwala użytkownikowi na swobodne nazywanie Płyt
 }
 
@@ -527,3 +527,14 @@ async function savePrecoPricing(data) {
 }
 
 // DOMContentLoaded
+
+/* ===== Rejestracja globali ===== */
+window.wizardPrev = wizardPrev;
+window.skipWizardToStep3 = skipWizardToStep3;
+
+/* ===== Rejestracja globali ===== */
+window.exitWizardOrderMode = exitWizardOrderMode;
+window.loadStudnieProducts = loadStudnieProducts;
+window.loadPrecoPricing = loadPrecoPricing;
+window.savePrecoPricing = savePrecoPricing;
+window.renamePłyty = renamePłyty;

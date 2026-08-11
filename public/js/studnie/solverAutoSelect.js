@@ -47,8 +47,6 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             return;
         }
 
-        const dn = well.dn;
-        const effectiveDn = dn === 'styczna' ? (well.stycznaNadbudowa1200 ? 1200 : 1000) : dn;
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
 
         if (well.rzednaWlazu == null || well.rzednaWlazu <= rzDna) {
@@ -168,7 +166,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
                         : 'js_solver_standard'
                 });
             }
-        } catch (e) {
+        } catch (_e) {
             // Pasywny hook — nie wpływa na wynik solvera
         }
 
@@ -200,9 +198,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     const mag = well.magazyn || 'Kluczbork';
     const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
 
-    const dnProducts = availProducts.filter((p) => parseInt(p.dn) === parseInt(effectiveDn));
     const allProducts = availProducts;
-
     // KROK 1: Dennica
     const dnResult = getLowestDennicaHybrid(
         availProducts.filter((p) => filterByWellParams(p, well)),
@@ -267,7 +263,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     // --- Budowa konfiguracji zakończenia górnego ---
     const topConfigs = [];
     const buildTopConfig = (topP) => {
-        let items = [];
+        const items = [];
         let h = 0;
         let lbl = '';
         if (
@@ -344,16 +340,16 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     // KROK 3: Przejścia — oblicz minimalne wymagania
-    let holes = (well.przejscia || []).map((p) => {
-        let pel = parseFloat(p.rzednaWlaczenia);
+    const holes = (well.przejscia || []).map((p) => {
+        const pel = parseFloat(p.rzednaWlaczenia);
         let prDN = 160;
-        let prod = availProducts.find((x) => x.id === p.productId);
+        const prod = availProducts.find((x) => x.id === p.productId);
         if (prod && typeof prod.dn === 'string' && prod.dn.includes('/'))
             prDN = parseFloat(prod.dn.split('/')[1]) || 160;
         else if (prod && prod.dn != null) prDN = parseFloat(prod.dn) || 160;
 
-        let bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
-        let center = bottomEdge + prDN / 2;
+        const bottomEdge = isNaN(pel) ? 0 : Math.round((pel - (well.rzednaDna || 0)) * 1000);
+        const center = bottomEdge + prDN / 2;
 
         const parseHoleClearance = (val, fallback = 300) => {
             if (val === undefined || val === null || val === '') return fallback;
@@ -477,7 +473,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 (p.name.includes('/' + targetDn) || p.name.includes(' DN' + targetDn))
         );
     }
-    let canReduce = well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
+    const canReduce =
+        well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
 
     // KROK 5: DP Ring Optimizer
     const transitionsForDP = (well.przejscia || [])
@@ -543,7 +540,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     function fillKregiGreedy(target, kList) {
-        let kItems = [];
+        const kItems = [];
         let filled = 0;
         if (target > 0) {
             let left = target;
@@ -566,7 +563,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
      * Szuka optymalnej kombinacji pierścieni AVR (backtracking).
      * @returns {{ avrItems: Array, avrH: number }}
      */
-    let AVR_TIMEOUT_MS = 100;
+    const AVR_TIMEOUT_MS = 100;
     function findBestAvrFill(deficit, maxAvr) {
         let bestAvrCombo = [];
         let bestAvrDiff = deficit;
@@ -607,14 +604,14 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // KROK 6: Walidacja przejść
     function checkConflicts(kItems, denH, reduceH, topItems) {
-        let segs = [];
+        const segs = [];
         let y = 0;
         segs.push({ type: 'dennica', h: denH, start: 0, end: denH });
         y += denH;
 
         let lastWasDennica = !!well.psiaBuda;
 
-        for (let k of kItems) {
+        for (const k of kItems) {
             let actualH = k._h;
             const kp = studnieProducts.find((p) => p.id === k.productId);
             const kpDennicaLike =
@@ -633,7 +630,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 lastWasDennica = kpDennicaLike;
             }
         }
-        for (let t of [...topItems].reverse()) {
+        for (const t of [...topItems].reverse()) {
             const tp = studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 let actualH = tp.height;
@@ -651,7 +648,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
         let isMinimal = false;
         let valid = true;
-        let errors = [];
+        const errors = [];
 
         holes.forEach((h) => {
             const hTop = h.z + h.ruraDz;
@@ -722,11 +719,11 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
     // KROK 7: Solver — szuka najlepszej kombinacji
     function solve(tolBelow, tolAbove, maxAvr, skipHolesValid) {
-        let candidates = [];
+        const candidates = [];
 
         for (const topCfg of topConfigs) {
             for (const dennicaItem of dennicy) {
-                let denIsMin = dennicaItem.height < maxReqH;
+                const denIsMin = dennicaItem.height < maxReqH;
 
                 let effDenH = dennicaItem.height;
                 if (well.psiaBuda) effDenH -= 100;
@@ -773,7 +770,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 let score = scoreResult.score;
                 score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                let runErrors = [...conf.errors];
+                const runErrors = [...conf.errors];
                 if (isOutOfBounds)
                     runErrors.push(
                         `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
@@ -803,7 +800,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
         // --- Redukcja DN1000 / DN1200 ---
         if (canReduce) {
-            let topRedItems = [];
+            const topRedItems = [];
             let topRedH = 0;
             const redTargetProducts = availProducts.filter((p) => parseInt(p.dn) === targetDn);
             const redTopProducts = redTargetProducts.filter((p) =>
@@ -873,12 +870,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             if (well.przejscia && well.przejscia.length > 0) {
                 const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
                 for (const pr of well.przejscia) {
-                    let pel = parseFloat(pr.rzednaWlaczenia);
+                    const pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
                         const holeBottom = (pel - rzDna) * 1000;
                         const pprod = studnieProducts.find((x) => x.id === pr.productId);
                         if (pprod) {
-                            let prDN =
+                            const prDN =
                                 typeof pprod.dn === 'string' && pprod.dn.includes('/')
                                     ? parseFloat(pprod.dn.split('/')[1]) || 160
                                     : parseFloat(pprod.dn) || 160;
@@ -893,12 +890,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 }
             }
 
-            let minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
+            const minLowerTotal = Math.max(well.redukcjaMinH || 0, maxHoleTop);
             let dynamicMinBottom = minLowerTotal;
             let lift = 0;
             while (lift < 40) {
                 for (const dennicaItem of dennicy) {
-                    let bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
+                    const bottomNeed = Math.max(dynamicMinBottom - dennicaItem.height, 0);
 
                     const bKregi = fillKregiDP(
                         bottomNeed,
@@ -928,7 +925,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const diff = currentTotal + avrH - requiredMm;
                     const isOutOfBounds = diff < -90 || diff > 20;
 
-                    let redKItems = [];
+                    const redKItems = [];
                     bKregi.kItems.forEach((k) => redKItems.push(k));
                     redKItems.push({
                         productId: reductionPlate.id,
@@ -977,7 +974,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     let score = scoreResult.score;
                     score += (parseFloat(dennicaItem.height) - minDenH) * 2000;
 
-                    let runErrors = [...conf.errors];
+                    const runErrors = [...conf.errors];
                     if (isOutOfBounds)
                         runErrors.push(
                             `Uwaga: Wymuszono tolerancję wysokości (odchyłka ${diff > 0 ? '+' : ''}${diff}mm)`
@@ -1174,7 +1171,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         ? solution.kregItems
         : [...solution.kregItems].reverse();
 
-    let newConfig = [
+    const newConfig = [
         ...wlazItems,
         ...solution.avrItems,
         ...otherTopItems,

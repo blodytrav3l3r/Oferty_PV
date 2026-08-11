@@ -11,7 +11,7 @@ const WELL_LOCKED_MSG =
 function renderOfferLockBanner() {
     // Jeśli jesteśmy w trybie zamówienia, baner blokady z oferty nie powinien się wyświetlać
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
-        let lockBanner = document.getElementById('offer-lock-banner');
+        const lockBanner = document.getElementById('offer-lock-banner');
         if (lockBanner) lockBanner.style.display = 'none';
         return;
     }
@@ -139,3 +139,5 @@ function updateAutoLockUI() {
 
 window.renderOfferLockBanner = renderOfferLockBanner;
 window.updateAutoLockUI = updateAutoLockUI;
+window.OFFER_LOCKED_MSG = OFFER_LOCKED_MSG;
+window.WELL_LOCKED_MSG = WELL_LOCKED_MSG;

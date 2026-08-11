@@ -61,7 +61,7 @@ async function refreshDefaultsTimestamp() {
             btn.title =
                 'Zapisz bieżący stan cenników (rury, studnie, PRECO) jako domyślne\nOstatnia zmiana: nigdy';
         }
-    } catch (e) {
+    } catch (_e) {
         // ignoruj — tooltip zostanie z domyślnym tekstem
     }
 }

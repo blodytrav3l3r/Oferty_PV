@@ -15,10 +15,10 @@ function getPehdEffectiveArea(p) {
     if (p.area == null || p.area <= 0) return 0;
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) return p.area * (4 / Math.PI);
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-        let dn = parseInt(p.dn) || 0;
+        const dn = parseInt(p.dn) || 0;
         if (dn > 0) {
-            let bottomArea = Math.PI * Math.pow(dn / 2000, 2);
-            let wallArea = p.area - bottomArea;
+            const bottomArea = Math.PI * Math.pow(dn / 2000, 2);
+            const wallArea = p.area - bottomArea;
             if (wallArea > 0) return wallArea + bottomArea * (4 / Math.PI);
         }
     }
@@ -34,7 +34,7 @@ function getPehdTooltip(p, pricePerM2) {
     )
         return '';
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) {
-        let sqArea = (p.area * 4) / Math.PI;
+        const sqArea = (p.area * 4) / Math.PI;
         return (
             'Pow. koła: ' +
             p.area.toFixed(2) +
@@ -53,9 +53,9 @@ function getPehdTooltip(p, pricePerM2) {
         );
     }
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-        let d2 = parseInt(p.dn) || 0;
+        const d2 = parseInt(p.dn) || 0;
         if (d2 > 0) {
-            let bArea = Math.PI * Math.pow(d2 / 2000, 2);
+            const bArea = Math.PI * Math.pow(d2 / 2000, 2);
             return (
                 'Dno (koło): ' +
                 bArea.toFixed(2) +
@@ -272,3 +272,8 @@ function getPehdSurcharge(well, p, applyDiscount, item) {
 
 window.getPehdTypeForComponent = getPehdTypeForComponent;
 window.getPehdSurcharge = getPehdSurcharge;
+
+/* ===== Rejestracja globali ===== */
+window.getPehdTooltip = getPehdTooltip;
+window.isSettlingWell = isSettlingWell;
+window.calcKinetaPaintingArea = calcKinetaPaintingArea;

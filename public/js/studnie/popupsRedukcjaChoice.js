@@ -159,3 +159,9 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
 
     return true;
 }
+
+/* ===== Rejestracja globali ===== */
+window.openRedukcjaChoicePopup = openRedukcjaChoicePopup;
+
+/* ===== Rejestracja globali ===== */
+window.selectRedukcjaChoice = selectRedukcjaChoice;

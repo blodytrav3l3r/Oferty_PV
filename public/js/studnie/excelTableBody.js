@@ -27,16 +27,16 @@ function _excelGetRowStatus(well) {
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
-    let dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
+    const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const nameCounts = {};
     const nameDnMap = {};
     wells.forEach(function (w) {
-        let n = (w.name || '').trim().toLowerCase();
+        const n = (w.name || '').trim().toLowerCase();
         if (n) {
             nameCounts[n] = (nameCounts[n] || 0) + 1;
-            let dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
+            const dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
             if (!nameDnMap[n]) nameDnMap[n] = [];
-            let dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
+            const dnC = DN_COLORS[dnKey] || DN_COLORS['1000'];
             if (
                 !nameDnMap[n].find(function (x) {
                     return x.dn === dnKey;
@@ -50,25 +50,25 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             }
         }
     });
-    let dupNames = new Set(
+    const dupNames = new Set(
         Object.keys(nameCounts).filter(function (n) {
             return nameCounts[n] > 1;
         })
     );
     tabWells.forEach(function (well, idx) {
-        let wIdx = wells.indexOf(well);
-        let isLockedRow = _excelIsWellLocked(wIdx);
-        let isEven = idx % 2 === 0;
-        let isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        let nameKey = (well.name || '').trim().toLowerCase();
-        let isDup = dupNames.has(nameKey);
-        let dnKey = dn === 'styczne' ? 'styczne' : dn;
-        let nameDnList = nameDnMap[nameKey] || [];
-        let otherDns = nameDnList.filter(function (d) {
+        const wIdx = wells.indexOf(well);
+        const isLockedRow = _excelIsWellLocked(wIdx);
+        const isEven = idx % 2 === 0;
+        const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
+        const nameKey = (well.name || '').trim().toLowerCase();
+        const isDup = dupNames.has(nameKey);
+        const dnKey = dn === 'styczne' ? 'styczne' : dn;
+        const nameDnList = nameDnMap[nameKey] || [];
+        const otherDns = nameDnList.filter(function (d) {
             return d.dn !== dnKey;
         });
-        let dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
-        let dupRgb =
+        const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
+        const dupRgb =
             {
                 1000: 'var(--blue-rgb)',
                 1200: 'var(--success-rgb)',
@@ -77,11 +77,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 2500: 'var(--danger-rgb)',
                 styczne: 'var(--pink-rgb)'
             }[dupColorKey] || 'var(--blue-rgb)';
-        let baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
-        let rowDupSolid = 'rgba(' + dupRgb + ', 0.2)';
-        let rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
-        let hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
-        let hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
+        const baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
+        const rowDupSolid = 'rgba(' + dupRgb + ', 0.2)';
+        const rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
+        const hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
+        const hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
         let rowBg =
             isDup && isActive
                 ? rowActiveDupSolid
@@ -120,7 +120,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                       : '') +
                   '"'
                 : '';
-        let przejscia = well.przejscia || [];
+        const przejscia = well.przejscia || [];
         const solidBase = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
         const stickyBg = _excelStickyCellBg(rowBg, solidBase);
         html +=
@@ -144,9 +144,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
                 : '') +
             ' onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
-        let tdBaseStyle = _EXCEL_FONT;
+        const tdBaseStyle = _EXCEL_FONT;
         /* Checkbox */
-        let cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
+        const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -158,9 +158,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             cbChecked +
             ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></td>';
         /* AUTO/MANUAL */
-        let isAuto = window.isWellAuto(well);
-        let autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
-        let autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
+        const isAuto = window.isWellAuto(well);
+        const autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
+        const autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -255,7 +255,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             _excelCellInp(72) +
             '" /></td>';
         /* Wys auto */
-        let height = _excelCalcWellHeight(well);
+        const height = _excelCalcWellHeight(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -272,13 +272,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
         /* Przejscia */
         for (let _i = 0; _i < maxTr; _i++) {
-            let prz = przejscia[_i] || {};
-            let hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
-            let rzWlPlaceholder =
+            const prz = przejscia[_i] || {};
+            const hasExplicitRzWl = prz.rzednaWlaczenia != null && prz.rzednaWlaczenia !== '';
+            const rzWlPlaceholder =
                 !hasExplicitRzWl && well.rzednaDna != null
                     ? 'auto (' + well.rzednaDna.toFixed(3) + ')'
                     : '';
-            let przProducts =
+            const przProducts =
                 typeof studnieProducts !== 'undefined' && typeof getMaxPipeDn === 'function'
                     ? studnieProducts.filter(function (p) {
                           return (
@@ -288,10 +288,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                           );
                       })
                     : [];
-            let currProduct = przProducts.find(function (p) {
+            const currProduct = przProducts.find(function (p) {
                 return p.id === prz.productId;
             });
-            let categories = [
+            const categories = [
                 ...new Set(
                     przProducts.map(function (p) {
                         return p.category;
@@ -304,21 +304,21 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                     );
                 })
                 .sort();
-            let activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
+            const activeCategory = currProduct ? currProduct.category : prz.tempCategory || '';
             if (activeCategory && categories.indexOf(activeCategory) < 0) {
                 categories.push(activeCategory);
             }
-            let catOpts = [['', '\u2014']];
+            const catOpts = [['', '\u2014']];
             categories.forEach(function (c) {
                 catOpts.push([c, c]);
             });
-            let typeHtml = _excelOverlaySelectHtml(
+            const typeHtml = _excelOverlaySelectHtml(
                 catOpts,
                 activeCategory,
                 'excelOnPrzejscieTypeChange(' + wIdx + ',' + _i + ',this.value)',
                 120
             );
-            let availDns = activeCategory
+            const availDns = activeCategory
                 ? [
                       ...przProducts.filter(function (p) {
                           return p.category === activeCategory;
@@ -327,13 +327,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                       return parseFloat(a.dn) - parseFloat(b.dn);
                   })
                 : [];
-            let dnOpts = [['', '\u2014']];
+            const dnOpts = [['', '\u2014']];
             availDns.forEach(function (p) {
-                let dnLabel =
+                const dnLabel =
                     typeof p.dn === 'string' && p.dn.indexOf('/') >= 0 ? p.dn : 'DN ' + p.dn;
                 dnOpts.push([p.id, dnLabel]);
             });
-            let dnHtml = _excelOverlaySelectHtml(
+            const dnHtml = _excelOverlaySelectHtml(
                 dnOpts,
                 prz.productId,
                 'excelOnPrzejscieChange(' + wIdx + ',' + _i + ",'productId',this.value)",
@@ -374,19 +374,19 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td>';
         /* Wlaz */
-        let wlazCol = visibleCols.find(function (c) {
+        const wlazCol = visibleCols.find(function (c) {
             return c.componentType === 'wlaz';
         });
-        let wlazProducts = wlazCol
+        const wlazProducts = wlazCol
             ? wlazCol.products.filter(function (p) {
                   return typeof filterByWellParams !== 'function' || filterByWellParams(p, well);
               })
             : [];
-        let wlazVal = _excelGetWlazFromConfig(well);
-        let wlazOpts = [['', '\u2014']];
+        const wlazVal = _excelGetWlazFromConfig(well);
+        const wlazOpts = [['', '\u2014']];
         wlazProducts.forEach(function (p) {
-            let hCm = Math.round(parseInt(p.height) || 0) / 10;
-            let lbl =
+            const hCm = Math.round(parseInt(p.height) || 0) / 10;
+            const lbl =
                 hCm > 0
                     ? hCm + ' cm'
                     : (p.name || '').length > 20
@@ -406,17 +406,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Komponenty */
         visibleCols.forEach(function (col) {
             if (col.type === 'select' || col.type === 'auto') return;
-            let c = col;
-            let count = _excelCountProductInConfig(
+            const c = col;
+            const count = _excelCountProductInConfig(
                 well,
                 c.componentType,
                 c.height,
                 c.productId,
                 c.fromReduction ? c.targetDn || well.redukcjaTargetDN || 1000 : null
             );
-            let pidArg = c.productId ? "'" + c.productId + "'" : 'null';
-            let hArg = c.height != null ? c.height : 'null';
-            let redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
+            const pidArg = c.productId ? "'" + c.productId + "'" : 'null';
+            const hArg = c.height != null ? c.height : 'null';
+            const redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
             html +=
                 '<td style="' +
                 tdBaseStyle +
@@ -436,7 +436,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 'text-align:center;width:52px;" /></td>';
         });
         /* H dennica */
-        let dennH = _excelCalcDennicaHeight(well);
+        const dennH = _excelCalcDennicaHeight(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -446,7 +446,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (dennH || '\u2014') +
             '</td>';
         /* Uszczelki */
-        let uszczCount = _excelCalcUszczelkaCount(well);
+        const uszczCount = _excelCalcUszczelkaCount(well);
         html +=
             '<td style="' +
             tdBaseStyle +
@@ -457,10 +457,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
         /* Redukcja */
         if (hasReduction) {
-            let redActive = well.redukcjaDN1000;
-            let redTarget = well.redukcjaTargetDN || 1000;
-            let can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
-            let redOpts = [['', 'Brak']];
+            const redActive = well.redukcjaDN1000;
+            const redTarget = well.redukcjaTargetDN || 1000;
+            const can1200 = [1500, 2000, 2500].includes(parseInt(well.dn)) || well.dn === 'styczna';
+            const redOpts = [['', 'Brak']];
             redOpts.push(['1000', 'DN1000']);
             if (can1200 || (redActive && redTarget === 1200)) redOpts.push(['1200', 'DN1200']);
             html +=
@@ -474,7 +474,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 '</td>';
         }
         /* Kineta */
-        let kinOpts = [['', '\u2014']];
+        const kinOpts = [['', '\u2014']];
         KINETA_OPTIONS.forEach(function (ko) {
             kinOpts.push([ko[0], ko[1]]);
         });
@@ -521,9 +521,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html += '</tr>';
     });
     /* EMPTY ROW */
-    let emptyRowBg = 'var(--slate-950)';
+    const emptyRowBg = 'var(--slate-950)';
     html += '<tr id="excel-empty-row" style="background:' + emptyRowBg + ';">';
-    let tdEmptyStyle = _EXCEL_FONT + 'color:var(--slate-700);';
+    const tdEmptyStyle = _EXCEL_FONT + 'color:var(--slate-700);';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -664,10 +664,6 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
 function _excelRefreshAutoCells(wIdx, row) {
     const well = wells[wIdx];
     if (!well) return;
-
-    const dnColor = (
-        DN_COLORS[well.dn === 'styczna' ? 'styczne' : String(well.dn)] || DN_COLORS['1000']
-    ).border;
 
     const height = _excelCalcWellHeight(well);
     const hCell = row.querySelector(`[data-cell="height-${wIdx}"]`);

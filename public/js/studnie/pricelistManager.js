@@ -258,3 +258,6 @@ function renderStudniePriceList() {
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons();
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderStudniePriceList = renderStudniePriceList;

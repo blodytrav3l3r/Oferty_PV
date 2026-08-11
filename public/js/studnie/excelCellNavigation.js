@@ -12,7 +12,7 @@ function excelCellFocus(el) {
 function excelCellBlur(el) {
     /* Przywróć tło komórki z data-orig-bg na TD (nie na INPUT) */
     if (el.tagName === 'INPUT') {
-        let td = el.closest('td');
+        const td = el.closest('td');
         if (td) td.style.boxShadow = '';
     }
     _excelUserEditing = false; /* wznawia polling */
@@ -21,9 +21,9 @@ function excelCellBlur(el) {
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
     /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie */
-    let emptyInput = document.getElementById('excel-empty-name');
-    let emptyRzw = document.getElementById('excel-empty-rzw');
-    let emptyRzd = document.getElementById('excel-empty-rzd');
+    const emptyInput = document.getElementById('excel-empty-name');
+    const emptyRzw = document.getElementById('excel-empty-rzw');
+    const emptyRzd = document.getElementById('excel-empty-rzd');
     if (emptyInput && (e.target === emptyInput || e.target === emptyRzw || e.target === emptyRzd)) {
         _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd);
         return;
@@ -71,22 +71,22 @@ function _excelHandleArrow(e) {
     } else if (e.key === 'ArrowLeft') {
         next = rowEls[colIdx - 1] || null;
     } else if (e.key === 'ArrowDown') {
-        let nextRow = dataRows[currentRowIdx + 1];
+        const nextRow = dataRows[currentRowIdx + 1];
         if (!nextRow) {
             /* zapamietaj indeks td.children (nie index z rowEls) */
-            let tddx = target.closest('td');
+            const tddx = target.closest('td');
             if (tddx && tddx.parentElement === tr) {
                 _excelLastDataCol = Array.prototype.indexOf.call(tr.children, tddx);
             }
             /* ostatni rzad danych — przejdz do pustego wiersza */
-            let emptyInput = document.getElementById('excel-empty-name');
+            const emptyInput = document.getElementById('excel-empty-name');
             if (emptyInput) {
                 e.preventDefault();
                 _excelFocusNavEl(emptyInput, [], 'down');
             }
             return;
         }
-        let downWIdx = parseInt(nextRow.getAttribute('data-widx'));
+        const downWIdx = parseInt(nextRow.getAttribute('data-widx'));
         if (
             !isNaN(downWIdx) &&
             typeof currentWellIndex !== 'undefined' &&
@@ -94,14 +94,14 @@ function _excelHandleArrow(e) {
         ) {
             excelSelectRow(downWIdx);
         }
-        let nextEls = _excelGetNavElements(nextRow);
+        const nextEls = _excelGetNavElements(nextRow);
         next = nextEls[Math.min(colIdx, nextEls.length - 1)] || null;
         next = _excelSkipDisabled(next, nextEls, colIdx, 1);
         targetEls = nextEls;
     } else if (e.key === 'ArrowUp') {
         const prevRow = dataRows[currentRowIdx - 1];
         if (prevRow) {
-            let upWIdx = parseInt(prevRow.getAttribute('data-widx'));
+            const upWIdx = parseInt(prevRow.getAttribute('data-widx'));
             if (
                 !isNaN(upWIdx) &&
                 typeof currentWellIndex !== 'undefined' &&
@@ -127,17 +127,17 @@ function _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd) {
     if (e.key === 'ArrowDown') return; /* nic poniżej */
 
     if (e.key === 'ArrowUp') {
-        let drUp = Array.from(
+        const drUp = Array.from(
             document.querySelectorAll('#excel-table-container tbody tr[data-widx]')
         ).filter(function (r) {
             return r.style.display !== 'none';
         });
-        let lastRowUp = drUp[drUp.length - 1];
+        const lastRowUp = drUp[drUp.length - 1];
         if (!lastRowUp) return;
-        let lastElsUp = _excelGetNavElements(lastRowUp);
+        const lastElsUp = _excelGetNavElements(lastRowUp);
         /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
-        let savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
-        let tdAtCol = savedCol >= 0 ? lastRowUp.children[savedCol] : null;
+        const savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
+        const tdAtCol = savedCol >= 0 ? lastRowUp.children[savedCol] : null;
         let targetEl = tdAtCol ? tdAtCol.querySelector('input, select, .excel-sel-wrap') : null;
         if (!targetEl && lastElsUp.length > 0) {
             /* Fallback: ostatni focusowalny element w ostatnim wierszu */
@@ -167,14 +167,14 @@ function _excelNormalizeNavTarget(el) {
     if (el.tagName === 'INPUT') return el;
     // SELECT — szukaj wrappera, fallback na sam SELECT
     if (el.tagName === 'SELECT') {
-        let wrap = el.closest('.excel-sel-wrap');
+        const wrap = el.closest('.excel-sel-wrap');
         return wrap || el;
     }
     // DIV.excel-sel-wrap — OK
     if (el.classList && el.classList.contains('excel-sel-wrap')) return el;
     // Inny element wewnątrz wrappera
     if (el.closest) {
-        let parentWrap = el.closest('.excel-sel-wrap');
+        const parentWrap = el.closest('.excel-sel-wrap');
         if (parentWrap) return parentWrap;
     }
     return null;
@@ -183,7 +183,7 @@ function _excelNormalizeNavTarget(el) {
 /** Pomiń disabled elementy — szukaj enabled w kierunku +1/-1 */
 function _excelSkipDisabled(el, els, startIdx, dir) {
     if (!el || !_excelIsDisabledNav(el)) return el;
-    let from = Math.min(startIdx, els.length - 1);
+    const from = Math.min(startIdx, els.length - 1);
     // Szukaj dalej w kierunku dir
     for (let i = from + dir; i >= 0 && i < els.length; i += dir) {
         if (!_excelIsDisabledNav(els[i])) return els[i];
@@ -201,7 +201,7 @@ function _excelIsDisabledNav(el) {
     if (el.disabled) return true;
     // Wrapper z disabled selectem
     if (el.classList && el.classList.contains('excel-sel-wrap')) {
-        let sel = el.querySelector('select');
+        const sel = el.querySelector('select');
         return sel && sel.disabled;
     }
     return false;
@@ -223,51 +223,51 @@ function _excelGetStickyColumnsWidth() {
 /** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
 function _excelFocusNavEl(el, rowEls, dir) {
     if (!el) return;
-    let step = dir === 'right' || dir === 'down' ? 1 : -1;
+    const step = dir === 'right' || dir === 'down' ? 1 : -1;
     let limit = rowEls.length + 1; /* max iteracji = rozmiar wiersza + 1 */
     let cur = el;
     while (cur && limit-- > 0) {
         if (!_excelIsDisabledNav(cur)) {
             cur.focus();
             /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera/kolumn) */
-            let container = document.getElementById('excel-table-container');
-            let headerEl = document.querySelector('#excel-table-container thead');
-            let headerH = headerEl ? /** @type {HTMLElement} */ (headerEl).offsetHeight : 60;
-            let MARGIN = 5;
+            const container = document.getElementById('excel-table-container');
+            const headerEl = document.querySelector('#excel-table-container thead');
+            const headerH = headerEl ? /** @type {HTMLElement} */ (headerEl).offsetHeight : 60;
+            const MARGIN = 5;
             /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera
                i na prawo od sticky-left kolumn (inaczej natywny focus chowa go za nie) */
             if (container) {
-                let elRect = cur.getBoundingClientRect();
-                let containerRect = container.getBoundingClientRect();
+                const elRect = cur.getBoundingClientRect();
+                const containerRect = container.getBoundingClientRect();
                 /* Pion: jesli element jest nad widocznym obszarem (elRect.top < containerRect.top + headerH)
                    lub calkowicie poza viewport — przewin w dol */
                 if (elRect.top < containerRect.top + headerH + MARGIN) {
                     /* Element za wysoko / zakryty headerm — przewin w dol */
-                    let diffDown = containerRect.top + headerH + MARGIN - elRect.top;
+                    const diffDown = containerRect.top + headerH + MARGIN - elRect.top;
                     container.scrollTop -= diffDown;
                 } else if (elRect.top + elRect.height > containerRect.bottom) {
                     /* Element za nisko — przewin w gore (w gore kontenera) */
-                    let diffUp = elRect.bottom - containerRect.bottom + MARGIN;
+                    const diffUp = elRect.bottom - containerRect.bottom + MARGIN;
                     container.scrollTop += diffUp;
                 }
                 /* Poziom: uwzglednij sticky-left kolumny (zajmuja poczatek scrollporta) */
-                let stickyW = _excelGetStickyColumnsWidth();
+                const stickyW = _excelGetStickyColumnsWidth();
                 if (stickyW > 0) {
                     if (elRect.left < containerRect.left + stickyW + MARGIN) {
                         /* Element za sticky kolumnami — przesun w prawo (zmniejsz scrollLeft) */
-                        let diffLeft = containerRect.left + stickyW + MARGIN - elRect.left;
+                        const diffLeft = containerRect.left + stickyW + MARGIN - elRect.left;
                         container.scrollLeft -= diffLeft;
                     } else if (elRect.right > containerRect.right) {
                         /* Element poza prawa krawedzia — przesun w lewo (zwieksz scrollLeft) */
-                        let diffRight = elRect.right - containerRect.right + MARGIN;
+                        const diffRight = elRect.right - containerRect.right + MARGIN;
                         container.scrollLeft += diffRight;
                     }
                 }
             }
             if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
-            let tr = cur.closest('tr[data-widx]');
+            const tr = cur.closest('tr[data-widx]');
             if (tr) {
-                let wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+                const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
                 if (
                     !isNaN(wIdx) &&
                     (typeof currentWellIndex === 'undefined' || wIdx !== currentWellIndex)
@@ -277,7 +277,7 @@ function _excelFocusNavEl(el, rowEls, dir) {
             }
             return;
         }
-        let curIdx = rowEls.indexOf(cur);
+        const curIdx = rowEls.indexOf(cur);
         cur = rowEls[curIdx + step] || null;
     }
 }
@@ -285,10 +285,10 @@ function _excelFocusNavEl(el, rowEls, dir) {
 /* ===== KEYBOARD SHORTCUTS (Excel-like) ===== */
 function _excelHandleKeydown(e) {
     /* Tylko gdy kontener Excela jest otwarty */
-    let overlay = document.getElementById('excel-table-overlay');
+    const overlay = document.getElementById('excel-table-overlay');
     if (!overlay) return;
 
-    let isCtrl = e.ctrlKey || e.metaKey;
+    const isCtrl = e.ctrlKey || e.metaKey;
 
     /* Ctrl+F = focus wyszukiwarki */
     if (isCtrl && (e.key === 'f' || e.key === 'F')) {
@@ -331,11 +331,11 @@ function _excelHandleKeydown(e) {
         try {
             _excelSelectedCells.forEach(function (cell) {
                 if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie kasuj */
-                let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                const row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
                 if (!row) return;
                 /* Rozwiąż przez indeks TD — colIdx to indeks td, nie index z rowEls */
-                let td = row.children[cell.colIdx];
-                let target = td ? td.querySelector('input, select') : null;
+                const td = row.children[cell.colIdx];
+                const target = td ? td.querySelector('input, select') : null;
                 if (!target) return;
                 _excelSetCellValue(target, '');
             });
@@ -348,11 +348,11 @@ function _excelHandleKeydown(e) {
 
     /* Ctrl+M = przełącz AUTO/MANUAL dla aktywnego wiersza */
     if (isCtrl && (e.key === 'm' || e.key === 'M')) {
-        let activeRow = document.activeElement
+        const activeRow = document.activeElement
             ? document.activeElement.closest('tr[data-widx]')
             : null;
         if (!activeRow) return;
-        let wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+        const wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
         if (isNaN(wIdx)) return;
         e.preventDefault();
         if (typeof _excelToggleWellAutoMode === 'function') _excelToggleWellAutoMode(wIdx);
@@ -361,11 +361,11 @@ function _excelHandleKeydown(e) {
 
     /* Ctrl+Shift+A = auto-dobór elementów dla aktywnego wiersza (jak przycisk Run) */
     if (isCtrl && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
-        let activeRow = document.activeElement
+        const activeRow = document.activeElement
             ? document.activeElement.closest('tr[data-widx]')
             : null;
         if (!activeRow) return;
-        let wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+        const wIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
         if (isNaN(wIdx)) return;
         e.preventDefault();
         if (typeof _excelRunAutoSelectForWell === 'function') _excelRunAutoSelectForWell(wIdx);
@@ -377,14 +377,14 @@ function _excelHandleKeydown(e) {
         e.preventDefault();
         /* Tylko wiersze widoczne (filtr wyszukiwarki) — ukryte pomijamy,
            inaczej Delete/Ctrl+X po Ctrl+A wyczyściłby ukryte studnie. */
-        let allRows = _excelGetVisibleRows();
+        const allRows = _excelGetVisibleRows();
         _excelDeselectAllCells();
         _excelDeselectAllCols();
         allRows.forEach(function (row) {
             /* wIdx z atrybutu — DOM order może się różnić (filtrowanie, wstawianie) */
-            let wIdx = parseInt(row.getAttribute('data-widx'), 10);
+            const wIdx = parseInt(row.getAttribute('data-widx'), 10);
             if (isNaN(wIdx)) return;
-            let tds = row.querySelectorAll('td');
+            const tds = row.querySelectorAll('td');
             tds.forEach(function (td, cIdx) {
                 if (cIdx < 4) return; /* pomiń checkbox, A/M, Lp + Nr Studni (nazwa nigdy) */
                 _excelSelectedCells.push({ wIdx: wIdx, colIdx: cIdx });
@@ -411,11 +411,11 @@ function _excelHandleKeydown(e) {
     if (isCtrl && !e.shiftKey && (e.key === 'd' || e.key === 'D')) {
         if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) {
             /* Bez zaznaczenia komórek: duplikuj aktywny wiersz jako nową studnię */
-            let activeRow = document.activeElement
+            const activeRow = document.activeElement
                 ? document.activeElement.closest('tr[data-widx]')
                 : null;
             if (!activeRow) return;
-            let dupWIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
+            const dupWIdx = parseInt(activeRow.getAttribute('data-widx'), 10);
             if (isNaN(dupWIdx)) return;
             e.preventDefault();
             if (typeof excelDuplicateWell === 'function') excelDuplicateWell(dupWIdx);
@@ -435,13 +435,13 @@ function _excelHandleKeydown(e) {
             _excelSelectedCells.forEach(function (cell) {
                 if (cell.wIdx === 0) return;
                 if (cell.colIdx === 3) return; /* nazwa studni — nigdy nie nadpisuj */
-                let srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
-                let dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                const srcRow = document.querySelector('tr[data-widx="' + (cell.wIdx - 1) + '"]');
+                const dstRow = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
                 if (!srcRow || !dstRow) return;
-                let tdDst = dstRow.children[cell.colIdx];
-                let tdSrc = srcRow.children[cell.colIdx];
-                let target = tdDst ? tdDst.querySelector('input, select') : null;
-                let src = tdSrc ? tdSrc.querySelector('input, select') : null;
+                const tdDst = dstRow.children[cell.colIdx];
+                const tdSrc = srcRow.children[cell.colIdx];
+                const target = tdDst ? tdDst.querySelector('input, select') : null;
+                const src = tdSrc ? tdSrc.querySelector('input, select') : null;
                 if (!target || !src) return;
                 _excelSetCellValue(
                     target,
@@ -464,12 +464,12 @@ function _excelHandleKeydown(e) {
         try {
             _excelSelectedCells.forEach(function (cell) {
                 if (cell.colIdx <= 3) return; /* nazwa studni i kolumny strukturalne — nie kopiuj */
-                let row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
+                const row = document.querySelector('tr[data-widx="' + cell.wIdx + '"]');
                 if (!row) return;
-                let tdR = row.children[cell.colIdx];
-                let tdRSrc = row.children[cell.colIdx - 1];
-                let target = tdR ? tdR.querySelector('input, select') : null;
-                let src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
+                const tdR = row.children[cell.colIdx];
+                const tdRSrc = row.children[cell.colIdx - 1];
+                const target = tdR ? tdR.querySelector('input, select') : null;
+                const src = tdRSrc ? tdRSrc.querySelector('input, select') : null;
                 if (!target || !src) return;
                 _excelSetCellValue(
                     target,
@@ -490,3 +490,7 @@ function _excelHandleKeydown(e) {
         return;
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.excelCellFocus = excelCellFocus;
+window.excelCellBlur = excelCellBlur;

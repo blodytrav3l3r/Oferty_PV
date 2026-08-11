@@ -119,12 +119,6 @@ window.renderWellsList = function renderWellsList() {
                     '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="hand"></i></span>';
             }
 
-            let errorsHtml = '';
-            if (w.configErrors && w.configErrors.length > 0) {
-                const color = w.configStatus === 'ERROR' ? 'var(--danger)' : 'var(--warn)';
-                errorsHtml = `<div style="font-size:0.65rem; color:${color}; padding:0.2rem 0; line-height:1.2;">${w.configErrors.map((e) => escapeHtml(e)).join('<br>')}</div>`;
-            }
-
             let wellLockBadge = '';
             if (isWellLocked(i)) {
                 // Sprawdź, czy blokada pochodzi z zamówienia (pokaż numer zamówienia)

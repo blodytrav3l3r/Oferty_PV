@@ -16,7 +16,7 @@ function recalculateWellErrors(well) {
     // kasuj też pozostałe błędy solvera (nieaktualne po clearWellConfig/doSelectDN).
     // Notki luzów ("zastosowano luzy minimalne") są regenerowane poniżej — stare
     // (np. po zamianie kręgu) nie mogą zostać w configErrors.
-    let liveErrors =
+    const liveErrors =
         well.config && well.config.length > 0 && well.configErrors
             ? well.configErrors.filter(
                   (e) =>
@@ -230,4 +230,9 @@ function refreshAllWellErrors() {
     // Jedyny wspólny punkt renderu bannera — każda ścieżka (lista, oferta, Excel,
     // tryb zamówienia) kończąca się na refreshAllWellErrors odświeża też banner.
     if (typeof getCurrentWell === 'function') renderWellConfigErrors(getCurrentWell());
+}
+
+/* ===== Rejestracja globali ===== */
+if (typeof window !== 'undefined') {
+    window.refreshAllWellErrors = refreshAllWellErrors;
 }

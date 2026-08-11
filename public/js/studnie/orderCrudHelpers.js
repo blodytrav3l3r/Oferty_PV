@@ -35,7 +35,6 @@ function renderOrderModeBanner() {
     if (zleceniaSidebarBtn) zleceniaSidebarBtn.style.display = 'flex';
 
     const order = orderEditMode.order;
-    const tempOrder = { ...order, wells: wells };
     const changes = getOrderChanges({ ...order, wells: wells });
     const changeCount = Object.keys(changes).length;
     const hasChanges = changeCount > 0;

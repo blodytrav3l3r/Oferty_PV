@@ -154,3 +154,6 @@ function syncTransportSecurity(forceRemove) {
         }
     });
 }
+
+/* ===== Rejestracja globali ===== */
+window.syncGaskets = syncGaskets;

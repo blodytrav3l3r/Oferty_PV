@@ -242,3 +242,6 @@ function generateOfferNotes(onlyIfEmpty = false) {
 
     offerNotesField.value = generatedText.trim();
 }
+
+/* ===== Rejestracja globali ===== */
+window.generateOfferNotes = generateOfferNotes;

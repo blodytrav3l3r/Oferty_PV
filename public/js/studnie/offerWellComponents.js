@@ -173,7 +173,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
     return detailsHtml;
 }
 
-function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, change) {
+function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, _change) {
     let html = '';
     const assignedPrzejscia = calculateAssignedPrzejscia(well);
 
@@ -579,3 +579,7 @@ function renderComponentSubItems(
     }
     return html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderWellHeaderRow = renderWellHeaderRow;
+window.renderWellDetailsRow = renderWellDetailsRow;

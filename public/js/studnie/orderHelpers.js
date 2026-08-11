@@ -115,10 +115,10 @@ function freezeWellPrices(wellsArr) {
             const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
 
             if (!isInsitu && configMap.length > 0) {
-                let rzDna = parseFloat(well.rzednaDna) || 0;
+                const rzDna = parseFloat(well.rzednaDna) || 0;
                 let pel = parseFloat(item.rzednaWlaczenia);
                 if (isNaN(pel)) pel = rzDna;
-                let mmFromBottom = (pel - rzDna) * 1000;
+                const mmFromBottom = (pel - rzDna) * 1000;
 
                 if (typeof findAssignedElement === 'function') {
                     const assigned = findAssignedElement(mmFromBottom, configMap);
@@ -258,3 +258,7 @@ function getOrderChanges(order) {
 
 window.freezeWellPrices = freezeWellPrices;
 window.getOrderChanges = getOrderChanges;
+
+/* ===== Rejestracja globali ===== */
+window.loadOrdersStudnie = loadOrdersStudnie;
+window.saveOrdersDataStudnie = saveOrdersDataStudnie;

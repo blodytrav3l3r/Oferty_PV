@@ -57,9 +57,10 @@ function _excelToggleColumnPopup() {
         .sort();
 
     function _excelColCheckboxHtml(col, padLeft) {
-        let hidden = _excelIsColumnHidden(col.id);
-        let colName = col.shortLabel || col.label || col.id;
-        let detail = col.detailLabel && col.detailLabel !== '·' ? ' (' + col.detailLabel + ')' : '';
+        const hidden = _excelIsColumnHidden(col.id);
+        const colName = col.shortLabel || col.label || col.id;
+        const detail =
+            col.detailLabel && col.detailLabel !== '·' ? ' (' + col.detailLabel + ')' : '';
         let h =
             '<label style="display:flex;align-items:center;gap:0.4rem;padding:0.15rem 0.2rem 0.15rem ' +
             padLeft +
@@ -92,11 +93,11 @@ function _excelToggleColumnPopup() {
         html +=
             '<div style="padding:0.25rem 0.3rem;background:rgba(var(--white-rgb), 0.05);font-size:0.55rem;font-weight:500;color:var(--slate-500);border-bottom:1px solid rgba(var(--white-rgb), 0.05);"></div>';
         gridCols.forEach(function (col, cIdx) {
-            let sepStyle =
+            const sepStyle =
                 cIdx < gridCols.length - 1
                     ? 'border-right:1px solid rgba(var(--white-rgb), 0.05);'
                     : '';
-            let bg = col.isBase
+            const bg = col.isBase
                 ? 'background:rgba(var(--accent2-rgb), 0.05);'
                 : 'background:rgba(var(--white-rgb), 0.05);';
             html +=
@@ -113,20 +114,20 @@ function _excelToggleColumnPopup() {
         html +=
             '<div style="padding:0.2rem 0.3rem;background:rgba(var(--white-rgb), 0.05);font-size:0.5rem;color:var(--slate-500);border-bottom:1px solid rgba(var(--white-rgb), 0.05);"></div>';
         gridCols.forEach(function (col, cIdx) {
-            let sepStyle =
+            const sepStyle =
                 cIdx < gridCols.length - 1
                     ? 'border-right:1px solid rgba(var(--white-rgb), 0.05);'
                     : '';
-            let bg = col.isBase
+            const bg = col.isBase
                 ? 'background:rgba(var(--accent2-rgb), 0.05);'
                 : 'background:rgba(var(--white-rgb), 0.05);';
-            let allIds = [];
+            const allIds = [];
             Object.keys(col.groups).forEach(function (ct) {
                 col.groups[ct].forEach(function (c) {
                     allIds.push(c.id);
                 });
             });
-            let allVis = allIds.every(function (id) {
+            const allVis = allIds.every(function (id) {
                 return !_excelIsColumnHidden(id);
             });
             html +=
@@ -149,9 +150,9 @@ function _excelToggleColumnPopup() {
 
         /* Wiersze danych */
         allCts.forEach(function (ct, rIdx) {
-            let ctLabel = groupLabels[ct] || ct;
-            let lastRow = rIdx === allCts.length - 1;
-            let rowStyle = lastRow ? '' : 'border-bottom:1px solid rgba(var(--white-rgb), 0.05);';
+            const ctLabel = groupLabels[ct] || ct;
+            const lastRow = rIdx === allCts.length - 1;
+            const rowStyle = lastRow ? '' : 'border-bottom:1px solid rgba(var(--white-rgb), 0.05);';
 
             html +=
                 '<div style="padding:0.25rem 0.3rem;font-size:0.55rem;font-weight:500;color:var(--slate-400);background:rgba(var(--white-rgb), 0.05);' +
@@ -167,23 +168,23 @@ function _excelToggleColumnPopup() {
                 cellStyle += 'padding:0.15rem 0.2rem;';
                 if (col.isBase) cellStyle += 'background:rgba(var(--accent2-rgb), 0.05);';
 
-                let cols = col.groups[ct] || [];
+                const cols = col.groups[ct] || [];
                 html += '<div style="' + cellStyle + '">';
                 if (cols.length === 0) {
                     html += '<span style="color:var(--slate-700);font-size:0.5rem;">—</span>';
                 } else {
                     if (cols.length > 1) {
-                        let cellIds = cols.map(function (c) {
+                        const cellIds = cols.map(function (c) {
                             return c.id;
                         });
-                        let cellAllVis = cellIds.every(function (id) {
+                        const cellAllVis = cellIds.every(function (id) {
                             return !_excelIsColumnHidden(id);
                         });
-                        let cellSomeVis = cellIds.some(function (id) {
+                        const cellSomeVis = cellIds.some(function (id) {
                             return !_excelIsColumnHidden(id);
                         });
-                        let cellIndet = !cellAllVis && cellSomeVis;
-                        let escapedIds = cellIds.map(function (id) {
+                        const cellIndet = !cellAllVis && cellSomeVis;
+                        const escapedIds = cellIds.map(function (id) {
                             return id.replace(/'/g, "\\'");
                         });
                         html +=
@@ -210,11 +211,11 @@ function _excelToggleColumnPopup() {
     }
 
     /* Buduj tablicę kolumn (DN) dla gridu */
-    let baseDn = _excelActiveTab || '';
-    let gridCols = [];
+    const baseDn = _excelActiveTab || '';
+    const gridCols = [];
 
     /* 1. Kolumna podstawowa */
-    let baseGroups = {};
+    const baseGroups = {};
     staticGroupOrder.forEach(function (g) {
         if (groups[g]) baseGroups[g] = groups[g].cols;
     });
@@ -227,11 +228,11 @@ function _excelToggleColumnPopup() {
 
     /* 2. Kolumny redukcji */
     reductionKeys.forEach(function (key) {
-        let dn = key.replace('_reduction_', '');
-        let grp = groups[key];
-        let sub = {};
+        const dn = key.replace('_reduction_', '');
+        const grp = groups[key];
+        const sub = {};
         grp.cols.forEach(function (c) {
-            let ct = c.componentType;
+            const ct = c.componentType;
             if (!sub[ct]) sub[ct] = [];
             sub[ct].push(c);
         });
@@ -239,24 +240,24 @@ function _excelToggleColumnPopup() {
     });
 
     /* Wszystkie unikalne typy komponentów */
-    let allCts = [];
+    const allCts = [];
     gridCols.forEach(function (col) {
         Object.keys(col.groups).forEach(function (ct) {
             if (allCts.indexOf(ct) < 0) allCts.push(ct);
         });
     });
     allCts.sort(function (a, b) {
-        let ai = staticGroupOrder.indexOf(a);
-        let bi = staticGroupOrder.indexOf(b);
+        const ai = staticGroupOrder.indexOf(a);
+        const bi = staticGroupOrder.indexOf(b);
         return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi);
     });
 
-    let existingModal = document.getElementById('excel-col-vis-modal');
+    const existingModal = document.getElementById('excel-col-vis-modal');
     if (existingModal) {
-        let gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
-        let oldGrid = existingModal.querySelector('#excel-col-vis-grid');
+        const gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
+        const oldGrid = existingModal.querySelector('#excel-col-vis-grid');
         if (oldGrid) oldGrid.outerHTML = gridHtml;
-        let cbs = existingModal.querySelectorAll(
+        const cbs = existingModal.querySelectorAll(
             'input[type="checkbox"][data-indeterminate="true"]'
         );
         cbs.forEach(function (cb) {
@@ -265,7 +266,7 @@ function _excelToggleColumnPopup() {
         return;
     }
 
-    let gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
+    const gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
     let html = '';
     html +=
         '<div class="modal" style="max-width:min(96vw,1400px);max-height:90vh;overflow:auto;width:auto;">';
@@ -282,9 +283,9 @@ function _excelToggleColumnPopup() {
         id: 'excel-col-vis-modal',
         html: html,
         onOpen: function () {
-            let modal = document.getElementById('excel-col-vis-modal');
+            const modal = document.getElementById('excel-col-vis-modal');
             if (!modal) return;
-            let cbs = modal.querySelectorAll('input[type="checkbox"][data-indeterminate="true"]');
+            const cbs = modal.querySelectorAll('input[type="checkbox"][data-indeterminate="true"]');
             cbs.forEach(function (cb) {
                 /** @type {HTMLInputElement} */ (cb).indeterminate = true;
             });
@@ -293,13 +294,13 @@ function _excelToggleColumnPopup() {
 }
 
 function _excelOnDnSelectAll(dnKey, checked) {
-    let refWell =
+    const refWell =
         typeof _excelGetReferenceWell === 'function'
             ? _excelGetReferenceWell(_excelActiveTab)
             : null;
-    let allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
+    const allCols = _excelBuildComponentColumns(_excelActiveTab, refWell);
     if (!allCols) return;
-    let ids = [];
+    const ids = [];
     allCols.forEach(function (col) {
         const c = /** @type {any} */ (col);
         const g = c.fromReduction ? '_reduction_' + (c.targetDn || 1000) : col.componentType;
@@ -309,7 +310,7 @@ function _excelOnDnSelectAll(dnKey, checked) {
     _excelResetLayoutDependentState();
     ids.forEach(function (id) {
         if (checked) {
-            let idx = _excelHiddenColumnIds.indexOf(id);
+            const idx = _excelHiddenColumnIds.indexOf(id);
             if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
         } else {
             if (_excelHiddenColumnIds.indexOf(id) < 0) _excelHiddenColumnIds.push(id);
@@ -324,7 +325,7 @@ function _excelOnCellToggleAll(ids, checked) {
     _excelResetLayoutDependentState();
     ids.forEach(function (id) {
         if (checked) {
-            let idx = _excelHiddenColumnIds.indexOf(id);
+            const idx = _excelHiddenColumnIds.indexOf(id);
             if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
         } else {
             if (_excelHiddenColumnIds.indexOf(id) < 0) _excelHiddenColumnIds.push(id);
@@ -338,7 +339,7 @@ function _excelOnCellToggleAll(ids, checked) {
 function _excelOnColumnToggle(colId, checked) {
     _excelResetLayoutDependentState();
     if (checked) {
-        let idx = _excelHiddenColumnIds.indexOf(colId);
+        const idx = _excelHiddenColumnIds.indexOf(colId);
         if (idx >= 0) _excelHiddenColumnIds.splice(idx, 1);
     } else {
         if (_excelHiddenColumnIds.indexOf(colId) < 0) {

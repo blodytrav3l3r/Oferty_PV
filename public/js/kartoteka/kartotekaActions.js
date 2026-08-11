@@ -287,7 +287,7 @@ export default {
                 if (isKartoteka) {
                     try {
                         window.parent.SpaRouter.openOfferInModule(typeAttr, id, 'edit');
-                    } catch (err) {
+                    } catch (_err) {
                         const target = typeAttr === 'studnia_oferta' ? 'studnie.html' : 'rury.html';
                         window.location.href = `${target}?edit=${id}`;
                     }

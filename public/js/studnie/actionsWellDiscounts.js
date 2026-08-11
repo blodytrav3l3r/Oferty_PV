@@ -173,3 +173,10 @@ function getDiscountedTotal() {
     });
     return grandTotal;
 }
+
+/* ===== Rejestracja globali ===== */
+window.handleAppConfirm = handleAppConfirm;
+window.updateDiscount = updateDiscount;
+window.updateGlobalPaintingCost = updateGlobalPaintingCost;
+window.updateGlobalPehdDiscount = updateGlobalPehdDiscount;
+window.getDiscountedTotal = getDiscountedTotal;

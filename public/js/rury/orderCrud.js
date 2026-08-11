@@ -135,7 +135,7 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
             showToast('Błąd generowania numeru zamówienia: ' + (claimData.error || ''), 'error');
             return;
         }
-    } catch (e) {
+    } catch (_e) {
         showToast('Błąd połączenia przy generowaniu numeru zamówienia', 'error');
         return;
     }
@@ -144,8 +144,6 @@ async function finalizeOrderFromOffer(offer, kartaBudowyData) {
         const snapshotItems = structuredClone(
             window.pendingOrderCreationData.selectedItems || getActiveItemsArray() || []
         );
-
-        const orderedUids = new Set(snapshotItems.map((it) => it.uid).filter(Boolean));
 
         const orderItems = structuredClone(snapshotItems);
         orderItems.forEach((it) => {
@@ -260,3 +258,6 @@ window.saveOfferOrOrder = async function () {
         await saveOffer();
     }
 };
+
+/* ===== Rejestracja globali ===== */
+window.finalizeOrderFromOffer = finalizeOrderFromOffer;

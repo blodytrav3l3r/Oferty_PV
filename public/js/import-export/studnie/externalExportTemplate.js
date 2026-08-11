@@ -74,7 +74,7 @@ window.StudnieExternalExportTemplate = {
                     const json = await res.json();
                     window.studnieProducts = json.data || [];
                 }
-            } catch (e) {
+            } catch (_e) {
                 window.studnieProducts = [];
             }
         }

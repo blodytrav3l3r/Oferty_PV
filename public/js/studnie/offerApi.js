@@ -89,3 +89,7 @@ async function saveOffersDataStudnie(data) {
         throw e;
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.loadOffersStudnie = loadOffersStudnie;
+window.saveOffersDataStudnie = saveOffersDataStudnie;

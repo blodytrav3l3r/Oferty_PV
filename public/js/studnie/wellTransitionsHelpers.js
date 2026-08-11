@@ -53,3 +53,7 @@ function editChangePrzejscieType(index) {
         })
         .join('');
 }
+
+/* ===== Rejestracja globali ===== */
+window.getMaxPipeDn = getMaxPipeDn;
+window.syncEditState = syncEditState;

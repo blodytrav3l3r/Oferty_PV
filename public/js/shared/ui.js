@@ -745,7 +745,7 @@ async function fetchJson(url, options) {
         if (resp.status === 503) return { error: 'unavailable' };
         if (!resp.ok) return { error: 'server' };
         return resp.json();
-    } catch (e) {
+    } catch (_e) {
         return null;
     }
 }
@@ -763,3 +763,13 @@ document.addEventListener('focusin', (e) => {
     if (target.disabled || target.readOnly) return;
     target.select();
 });
+
+/* ===== Rejestracja globali ===== */
+window.getUserDisplayName = getUserDisplayName;
+window.showToast = showToast;
+window.toggleCard = toggleCard;
+window.showSection = showSection;
+window.showUserSelectionPopup = showUserSelectionPopup;
+
+/* ===== Rejestracja globali ===== */
+window.fetchGlobalUsers = fetchGlobalUsers;

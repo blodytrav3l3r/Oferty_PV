@@ -132,3 +132,7 @@ function handleStycznaProductChoice(productId, mode) {
         doSelectDN('styczna');
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.showStycznaPopup = showStycznaPopup;
+window.handleStycznaProductChoice = handleStycznaProductChoice;

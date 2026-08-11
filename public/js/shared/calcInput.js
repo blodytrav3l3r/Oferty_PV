@@ -19,7 +19,7 @@
         }
 
         function parseNumber() {
-            let start = pos;
+            const start = pos;
             if (peek() === '-' || peek() === '+') pos++;
             while (pos < expr.length && /\d/.test(expr[pos])) pos++;
             if (pos < expr.length && expr[pos] === '.') {

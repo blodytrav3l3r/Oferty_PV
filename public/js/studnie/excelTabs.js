@@ -52,7 +52,7 @@ function excelSwitchTab(tab) {
         }
         if (!hasWellsInTab) {
             setTimeout(function () {
-                let nameEl = document.getElementById('excel-empty-name');
+                const nameEl = document.getElementById('excel-empty-name');
                 if (nameEl) nameEl.focus();
             }, 150);
         }
@@ -131,7 +131,7 @@ function excelCreateFromEmpty() {
         _excelRenderTable(_excelActiveTab);
         _excelUpdateWellCount();
         _excelDebouncedRefresh();
-        let newWIdx = wells.length - 1;
+        const newWIdx = wells.length - 1;
         if (_excelAutoSelectEnabled && rzw !== null && rzd !== null && rzw > rzd) {
             setTimeout(function () {
                 _excelAutoSelectForWell(newWIdx);
@@ -151,3 +151,7 @@ function excelCreateFromEmpty() {
         }, 100);
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.excelSwitchTab = excelSwitchTab;
+window.excelCreateFromEmpty = excelCreateFromEmpty;

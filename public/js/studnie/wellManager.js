@@ -309,3 +309,9 @@ function toggleAutoLock() {
 
 // getWellActiveDiscounts, getItemAssessedPrice, getItemPriceBreakdown,
 // calcWellStats, calcPrecoPricing przeniesione do actionsWellPricing.js
+
+/* ===== Rejestracja globali ===== */
+window.toggleAutoLock = toggleAutoLock;
+
+/* ===== Rejestracja globali ===== */
+window.updateParamInput = updateParamInput;

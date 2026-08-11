@@ -8,7 +8,7 @@ async function _excelAutoSelectForWell(wIdx) {
     if (well.rzednaWlazu == null || well.rzednaDna == null) return;
     if (well.autoSelect === false) return; /* Manual skip */
     if (typeof autoSelectComponents !== 'function') return;
-    let savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     try {
         currentWellIndex = wIdx;
         _excelMarkDirty();
@@ -34,10 +34,10 @@ function _excelToggleWellAutoMode(wIdx) {
     if (wells[wIdx].autoSelect === false) wells[wIdx].autoLocked = true;
     else wells[wIdx].autoLocked = false;
     /* Lekki update - tylko jeden TD, bez calego _excelRenderTable (mniej migotania) */
-    let btn = document.getElementById('excel-mode-btn-' + wIdx);
-    let runBtn = document.getElementById('excel-run-auto-' + wIdx);
+    const btn = document.getElementById('excel-mode-btn-' + wIdx);
+    const runBtn = document.getElementById('excel-run-auto-' + wIdx);
     if (!btn) return;
-    let nowAuto = wells[wIdx].autoSelect !== false;
+    const nowAuto = wells[wIdx].autoSelect !== false;
     btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
     btn.style.background = nowAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
     btn.style.color = nowAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
@@ -68,7 +68,7 @@ function _excelToggleWellAutoMode(wIdx) {
    potem wywolaj autoSelectComponents (prawdziwy dobór od nowa). */
 async function _excelRunAutoSelectForWell(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
-    let well = wells[wIdx];
+    const well = wells[wIdx];
     if (!well) return;
     if (!_excelGuardWellLocked(wIdx)) return;
     if (well.autoSelect === false) {
@@ -83,8 +83,8 @@ async function _excelRunAutoSelectForWell(wIdx) {
         showToast('Auto-dobór nie dostępny (autoSelectComponents brak)', 'error');
         return;
     }
-    let runBtn = document.getElementById('excel-run-auto-' + wIdx);
-    let savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+    const runBtn = document.getElementById('excel-run-auto-' + wIdx);
+    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     if (runBtn) runBtn.textContent = '...';
     try {
         currentWellIndex = wIdx;

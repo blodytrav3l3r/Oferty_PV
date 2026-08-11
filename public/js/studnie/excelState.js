@@ -1,6 +1,7 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Stan + Stałe ===== */
 
+/* eslint-disable prefer-const -- świadomie współdzielony stan, mutowany cross-file (excelModal, excelTabs, excelPolling, excelSelection itd.) */
 let _excelMaxTransitions = {};
 let _excelActiveTab = '1000';
 let _excelCreatingLock = false;
@@ -22,7 +23,9 @@ let _excelColWidths = {};
 let _excelAddingReliefPair = false;
 let _excelUserEditing = false;
 let _excelAutoSelectEnabled = true;
+/* eslint-enable prefer-const */
 
+// eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS
 const KINETA_OPTIONS = [
     ['brak', 'Brak'],
     ['beton', 'Beton'],
@@ -35,7 +38,9 @@ const KINETA_OPTIONS = [
     ['kamionka', 'Kamionka']
 ];
 
+// eslint-disable-next-line no-unused-vars -- eksportowany przez window.DN_TABS
 const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+// eslint-disable-next-line no-unused-vars -- eksportowany przez window.DN_COLORS
 const DN_COLORS = {
     1000: {
         bg: 'rgba(var(--blue-rgb), 0.12)',
@@ -89,6 +94,7 @@ const DN_COLORS = {
 
 const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
+/* eslint-disable prefer-const -- świadomie współdzielony stan, mutowany cross-file (excelCopyPaste, excelWellActions, excelTableManager itd.) */
 let _excelPasteInProgress = false;
 /* Batch dotknął kręgu krag/krag_ot — wymaga jednego odroczonego pełnego
    re-rendera na koniec operacji (fill/paste), zamiast re-rendera per komórka. */
@@ -97,6 +103,7 @@ let _excelBatchKragTouched = false;
 let _excelUndoStack = [];
 let _excelRedoStack = [];
 const _EXCEL_UNDO_LIMIT = 20;
+/* eslint-enable prefer-const */
 
 /* ===== Column Visibility State ===== */
 let _excelHiddenColumnIds = [];
@@ -112,7 +119,7 @@ function _excelMigrateLegacyKey(newKey, legacyKey) {
             localStorage.setItem(newKey, localStorage.getItem(legacyKey));
         }
         localStorage.removeItem(legacyKey);
-    } catch (e) {}
+    } catch (_e) {}
 }
 
 function _excelLoadColumnVisibility() {
@@ -124,7 +131,7 @@ function _excelLoadColumnVisibility() {
         } else {
             _excelHiddenColumnIds = [];
         }
-    } catch (e) {
+    } catch (_e) {
         _excelHiddenColumnIds = [];
     }
 }
@@ -132,7 +139,7 @@ function _excelLoadColumnVisibility() {
 function _excelSaveColumnVisibility() {
     try {
         localStorage.setItem(_EXCEL_COL_VISIBILITY_KEY, JSON.stringify(_excelHiddenColumnIds));
-    } catch (e) {}
+    } catch (_e) {}
 }
 
 function _excelResetColumnVisibility() {
@@ -164,7 +171,7 @@ function _excelLoadColWidths() {
         } else {
             _excelColWidths = {};
         }
-    } catch (e) {
+    } catch (_e) {
         _excelColWidths = {};
     }
 }
@@ -172,7 +179,7 @@ function _excelLoadColWidths() {
 function _excelSaveColWidths() {
     try {
         localStorage.setItem(_EXCEL_COL_WIDTHS_KEY, JSON.stringify(_excelColWidths));
-    } catch (e) {}
+    } catch (_e) {}
 }
 
 /* Reset stanu selekcji zależnego od układu tabeli. Wołaj przy każdej zmianie

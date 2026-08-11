@@ -132,7 +132,7 @@ async function acceptProductionOrder() {
                 showToast('Błąd pobierania numeru zlecenia z serwera', 'error');
                 return;
             }
-        } catch (e) {
+        } catch (_e) {
             showToast('Błąd połączenia z serwerem przy numeracji', 'error');
             return;
         }
@@ -200,3 +200,9 @@ async function revokeProductionOrder() {
     }
     showToast('<i data-lucide="unlock"></i> Akceptacja cofnięta — studnia odblokowana', 'info');
 }
+
+/* ===== Rejestracja globali ===== */
+window.loadProductionOrders = loadProductionOrders;
+window.deleteProductionOrder = deleteProductionOrder;
+window.acceptProductionOrder = acceptProductionOrder;
+window.revokeProductionOrder = revokeProductionOrder;

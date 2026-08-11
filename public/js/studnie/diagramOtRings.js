@@ -228,3 +228,8 @@ function degradeFromOtRing(seg, currentProd, currentId, well) {
     }
     return false;
 }
+
+/* ===== Rejestracja globali ===== */
+if (typeof window !== 'undefined') {
+    window.enforceOtRings = enforceOtRings;
+}

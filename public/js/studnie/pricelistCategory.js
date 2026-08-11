@@ -213,3 +213,10 @@ async function deleteStudnieCategory(groupKey) {
     renderStudniePriceList();
     showToast(`Usunięto kategorię ${label}`, 'info');
 }
+
+/* ===== Rejestracja globali ===== */
+window.deletePrzejsciaCategory = deletePrzejsciaCategory;
+
+/* ===== Rejestracja globali ===== */
+window.addStudnieCategory = addStudnieCategory;
+window.addStudnieElement = addStudnieElement;

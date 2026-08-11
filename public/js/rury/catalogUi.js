@@ -2,6 +2,7 @@
 let catalogVisible = true;
 window.activeCatalogCategory = null;
 const MAX_TRANSPORT_WEIGHT = 24000;
+window.MAX_TRANSPORT_WEIGHT = MAX_TRANSPORT_WEIGHT;
 
 function toggleCatalog() {
     catalogVisible = !catalogVisible;
@@ -86,3 +87,7 @@ function renderCatalogProducts() {
     html += '</div>';
     container.innerHTML = html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.toggleCatalog = toggleCatalog;
+window.selectCatalogCategory = selectCatalogCategory;

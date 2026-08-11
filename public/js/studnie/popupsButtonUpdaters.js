@@ -121,3 +121,9 @@ function updatePsiaBudaButton() {
         window.lucide.createIcons();
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.updateZakonczenieButton = updateZakonczenieButton;
+window.updateRedukcjaButton = updateRedukcjaButton;
+window.onRedukcjaMinChange = onRedukcjaMinChange;
+window.updateRedukcjaZakButton = updateRedukcjaZakButton;

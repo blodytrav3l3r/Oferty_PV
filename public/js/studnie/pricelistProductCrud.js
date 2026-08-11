@@ -233,3 +233,11 @@ async function addStudnieProduct() {
 }
 
 /* closeModal — przeniesione do shared/ui.js */
+
+/* ===== Rejestracja globali ===== */
+window.showAddStudnieProductModal = showAddStudnieProductModal;
+
+/* ===== Rejestracja globali ===== */
+window.deleteStudnieProduct = deleteStudnieProduct;
+window.copyStudnieProduct = copyStudnieProduct;
+window.addStudnieProduct = addStudnieProduct;

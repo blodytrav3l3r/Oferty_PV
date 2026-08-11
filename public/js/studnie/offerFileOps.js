@@ -69,7 +69,7 @@ function importOfferFromFileStudnie() {
                 } else {
                     showToast('Nieprawidłowy plik studni', 'error');
                 }
-            } catch (err) {
+            } catch (_err) {
                 showToast('Błąd zapisu zaimportowanej oferty', 'error');
             }
         };
@@ -77,3 +77,10 @@ function importOfferFromFileStudnie() {
     };
     input.click();
 }
+
+/* ===== Rejestracja globali ===== */
+window.exportJSONStudnie = exportJSONStudnie;
+window.importOfferFromFileStudnie = importOfferFromFileStudnie;
+
+/* ===== Rejestracja globali ===== */
+window.deleteOfferStudnie = deleteOfferStudnie;

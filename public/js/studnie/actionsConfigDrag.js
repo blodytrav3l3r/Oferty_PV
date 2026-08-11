@@ -134,7 +134,6 @@ window.handleCfgDrop = function (e) {
     const tile = e.target.closest('.config-tile');
 
     if (tile) {
-        const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
         const well = getCurrentWell();
         if (!well) return;
 
@@ -225,3 +224,6 @@ window.handleCfgDragEnd = function (e) {
         });
     }
 };
+
+/* ===== Rejestracja globali ===== */
+window.moveWellComponent = moveWellComponent;

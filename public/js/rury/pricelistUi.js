@@ -477,3 +477,14 @@ async function importRuryFromExcel(event) {
 
 window.savePriceList = savePriceList;
 window.resetPriceList = resetPriceList;
+
+/* ===== Rejestracja globali ===== */
+window.editCell = editCell;
+window.copyProduct = copyProduct;
+window.showAddProductModal = showAddProductModal;
+window.addProduct = addProduct;
+
+/* ===== Rejestracja globali ===== */
+window.deleteProduct = deleteProduct;
+window.exportRuryToExcel = exportRuryToExcel;
+window.importRuryFromExcel = importRuryFromExcel;

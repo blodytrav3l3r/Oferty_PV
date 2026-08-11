@@ -345,3 +345,15 @@ async function deleteClientFromDb(id) {
     renderClientsDbList(searchInput ? searchInput.value : '');
     showToast('Klient usunięty z bazy', 'info');
 }
+
+/* ===== Rejestracja globali ===== */
+window.saveClientToDb = saveClientToDb;
+window.showClientsDb = showClientsDb;
+window.filterClientsDb = filterClientsDb;
+window.editClientInDb = editClientInDb;
+window.saveEditedClientInDb = saveEditedClientInDb;
+window.cancelEditClient = cancelEditClient;
+
+/* ===== Rejestracja globali ===== */
+window.loadClientsDb = loadClientsDb;
+window.deleteClientFromDb = deleteClientFromDb;

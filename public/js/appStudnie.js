@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Pobierz mapę wszystkich użytkowników dla list
         await fetchGlobalUsers();
-    } catch (e) {
+    } catch (_e) {
         window.location.href = 'index.html';
         return;
     }

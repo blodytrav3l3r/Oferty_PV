@@ -26,10 +26,10 @@ function _excelDeselectAllCells() {
 function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
     if (shift && _excelLastClickedCell) {
         _excelDeselectAllCells();
-        let minR = Math.min(_excelLastClickedCell.wIdx, wIdx);
-        let maxR = Math.max(_excelLastClickedCell.wIdx, wIdx);
-        let minC = Math.min(_excelLastClickedCell.colIdx, colIdx);
-        let maxC = Math.max(_excelLastClickedCell.colIdx, colIdx);
+        const minR = Math.min(_excelLastClickedCell.wIdx, wIdx);
+        const maxR = Math.max(_excelLastClickedCell.wIdx, wIdx);
+        const minC = Math.min(_excelLastClickedCell.colIdx, colIdx);
+        const maxC = Math.max(_excelLastClickedCell.colIdx, colIdx);
         for (let r = minR; r <= maxR; r++) {
             for (let c = minC; c <= maxC; c++) {
                 _excelSelectedCells.push({ wIdx: r, colIdx: c });
@@ -37,7 +37,7 @@ function _excelSelectCell(wIdx, colIdx, ctrl, shift) {
             }
         }
     } else if (ctrl) {
-        let idx = _excelSelectedCells.findIndex(function (cell) {
+        const idx = _excelSelectedCells.findIndex(function (cell) {
             return cell.wIdx === wIdx && cell.colIdx === colIdx;
         });
         if (idx >= 0) {
@@ -77,7 +77,7 @@ function _excelUpdateSelectionSummary() {
     if (!el) return;
     const container = document.getElementById('excel-table-container');
     if (!container) return;
-    let values = [];
+    const values = [];
     if (_excelSelectedCols.length > 0) {
         _excelGetVisibleRows().forEach(function (row) {
             _excelSelectedCols.forEach(function (ci) {
@@ -108,12 +108,12 @@ function _excelUpdateSelectionSummary() {
 /* ===== MOUSE DRAG SELECTION (Excel-like) ===== */
 function _excelOnMouseDown(e) {
     if (e.button !== 0) return; // tylko lewy przycisk
-    let td = e.target.closest('td');
+    const td = e.target.closest('td');
     if (!td) return;
-    let tr = td.closest('tr[data-widx]');
+    const tr = td.closest('tr[data-widx]');
     if (!tr || !tr.children) return;
-    let wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-    let colIdx = Array.prototype.indexOf.call(tr.children, td);
+    const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    const colIdx = Array.prototype.indexOf.call(tr.children, td);
     if (isNaN(wIdx) || colIdx < 0) return;
 
     _excelDragState = {
@@ -141,12 +141,12 @@ function _excelOnMouseDown(e) {
 function _excelOnMouseMove(e) {
     if (!_excelDragState || !_excelDragState.active) return;
     /* nie aktualizuj jeszcze dragu, czekaj na dragstart */
-    let td = e.target.closest('td');
+    const td = e.target.closest('td');
     if (!td) return;
-    let tr = td.closest('tr[data-widx]');
+    const tr = td.closest('tr[data-widx]');
     if (!tr || !tr.children) return;
-    let wIdx = parseInt(tr.getAttribute('data-widx'), 10);
-    let colIdx = Array.prototype.indexOf.call(tr.children, td);
+    const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+    const colIdx = Array.prototype.indexOf.call(tr.children, td);
     if (isNaN(wIdx) || colIdx < 0) return;
     if (wIdx === _excelDragState.end.wIdx && colIdx === _excelDragState.end.colIdx) return;
 
@@ -158,15 +158,15 @@ function _excelOnMouseMove(e) {
         _excelDragThrottle = false;
         if (!_excelDragState) return;
         _excelClearDragPreview();
-        let s = _excelDragState.anchor;
-        let e2 = _excelDragState.end;
-        let rMin = Math.min(s.wIdx, e2.wIdx);
-        let rMax = Math.max(s.wIdx, e2.wIdx);
-        let cMin = Math.min(s.colIdx, e2.colIdx);
-        let cMax = Math.max(s.colIdx, e2.colIdx);
+        const s = _excelDragState.anchor;
+        const e2 = _excelDragState.end;
+        const rMin = Math.min(s.wIdx, e2.wIdx);
+        const rMax = Math.max(s.wIdx, e2.wIdx);
+        const cMin = Math.min(s.colIdx, e2.colIdx);
+        const cMax = Math.max(s.colIdx, e2.colIdx);
         for (let r = rMin; r <= rMax; r++) {
             for (let c = cMin; c <= cMax; c++) {
-                let row = document.querySelector('tr[data-widx="' + r + '"]');
+                const row = document.querySelector('tr[data-widx="' + r + '"]');
                 if (!row || !row.children[c]) continue;
                 /* Nie nadpisuj juz-faktycznie-zaznaczonych komorek, tylko preview */
                 if (_excelDragState.mode === 'new') {
@@ -182,13 +182,13 @@ function _excelOnMouseUp() {
     if (_excelDragThrottle) {
         _excelDragThrottle = false;
     }
-    let s = _excelDragState.anchor;
-    let en = _excelDragState.end;
-    let mode = _excelDragState.mode;
-    let minR = Math.min(s.wIdx, en.wIdx);
-    let maxR = Math.max(s.wIdx, en.wIdx);
-    let minC = Math.min(s.colIdx, en.colIdx);
-    let maxC = Math.max(s.colIdx, en.colIdx);
+    const s = _excelDragState.anchor;
+    const en = _excelDragState.end;
+    const mode = _excelDragState.mode;
+    const minR = Math.min(s.wIdx, en.wIdx);
+    const maxR = Math.max(s.wIdx, en.wIdx);
+    const minC = Math.min(s.colIdx, en.colIdx);
+    const maxC = Math.max(s.colIdx, en.colIdx);
 
     /* Real selection commmit */
     if (maxR - minR > 0 || maxC - minC > 0) {
@@ -218,7 +218,7 @@ function _excelPositionFocusOverlay(td) {
         _excelFocusOverlayEl.style.display = 'none';
         return;
     }
-    let r = td.getBoundingClientRect();
+    const r = td.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) {
         _excelFocusOverlayEl.style.display = 'none';
         return;
@@ -232,9 +232,9 @@ function _excelPositionFocusOverlay(td) {
 
 function _excelOnFocusIn(e) {
     if (!_excelFocusOverlayEl) return;
-    let target = e.target;
+    const target = e.target;
     if (!target) return;
-    let td = target.closest('td');
+    const td = target.closest('td');
     if (!td) return;
     if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
     _excelFocusRaf = requestAnimationFrame(function () {
@@ -245,7 +245,7 @@ function _excelOnFocusIn(e) {
 
 function _excelSelWrapFocus(selWrap) {
     if (!_excelFocusOverlayEl) return;
-    let td = selWrap.closest('td');
+    const td = selWrap.closest('td');
     if (!td) return;
     if (_excelFocusRaf) cancelAnimationFrame(_excelFocusRaf);
     _excelFocusRaf = requestAnimationFrame(function () {
@@ -254,11 +254,11 @@ function _excelSelWrapFocus(selWrap) {
     });
 }
 
-function _excelOnFocusOut(e) {
+function _excelOnFocusOut(_e) {
     if (!_excelFocusOverlayEl) return;
     setTimeout(function () {
-        let ae = document.activeElement;
-        let stillInContainer =
+        const ae = document.activeElement;
+        const stillInContainer =
             ae &&
             document.getElementById('excel-table-container') &&
             document.getElementById('excel-table-container').contains(ae);
@@ -274,9 +274,9 @@ function _excelOnOverlayScroll() {
     if (_excelFocusRaf) return;
     _excelFocusRaf = requestAnimationFrame(function () {
         _excelFocusRaf = null;
-        let ae = document.activeElement;
+        const ae = document.activeElement;
         if (!ae) return;
-        let td = ae.closest('td');
+        const td = ae.closest('td');
         if (!td) return;
         _excelPositionFocusOverlay(td);
     });
@@ -291,15 +291,15 @@ function _excelClearDragPreview() {
 
 function _excelSelectRange(startW, startC, endW, endC, additive) {
     if (!additive) _excelDeselectAllCells();
-    let rMin = Math.min(startW, endW);
-    let rMax = Math.max(startW, endW);
-    let cMin = Math.min(startC, endC);
-    let cMax = Math.max(startC, endC);
+    const rMin = Math.min(startW, endW);
+    const rMax = Math.max(startW, endW);
+    const cMin = Math.min(startC, endC);
+    const cMax = Math.max(startC, endC);
     for (let r = rMin; r <= rMax; r++) {
         for (let c = cMin; c <= cMax; c++) {
-            let row = document.querySelector('tr[data-widx="' + r + '"]');
+            const row = document.querySelector('tr[data-widx="' + r + '"]');
             if (!row || !row.children[c]) continue;
-            let existing = _excelSelectedCells.find(function (cl) {
+            const existing = _excelSelectedCells.find(function (cl) {
                 return cl.wIdx === r && cl.colIdx === c;
             });
             if (!existing) _excelSelectCell(r, c, false, false);

@@ -51,3 +51,6 @@ function renderPartialOrderProgress() {
         </div>
     </div>`;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderOrderBanners = renderOrderBanners;

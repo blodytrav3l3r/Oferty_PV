@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Pobierz mapę wszystkich użytkowników dla list
         await fetchGlobalUsers();
-    } catch (e) {
+    } catch (_e) {
         window.location.href = 'index.html';
         return;
     }
@@ -173,3 +173,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         showSection('builder');
     }
 });
+
+/* ===== Rejestracja globali ===== */
+window.changeOfferUser = changeOfferUser;

@@ -31,14 +31,14 @@ function _excelGetReferenceWell(dn) {
 }
 
 function _excelGetMaxTransitions() {
-    let tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
-    let tabWells =
+    const tab = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    const tabWells =
         typeof wells !== 'undefined' && Array.isArray(wells)
             ? wells.filter(function (w) {
                   return _excelWellMatchesTab(w, tab);
               })
             : [];
-    let max = tabWells.reduce(function (m, w) {
+    const max = tabWells.reduce(function (m, w) {
         return w.przejscia && w.przejscia.length > m ? w.przejscia.length : m;
     }, 0);
     return Math.max(max, _excelMaxTransitions[tab] || 1);
@@ -59,10 +59,10 @@ function _excelCreatePrzejscie() {
 
 /* ===== SHORT LABEL GENERATOR ===== */
 function _excelShortLabel(name, componentType) {
-    let n = (name || '').trim();
+    const n = (name || '').trim();
     switch (componentType) {
         case 'avr': {
-            let size =
+            const size =
                 n
                     .replace(/Pierścień AVR\s*/i, '')
                     .trim()
@@ -70,14 +70,14 @@ function _excelShortLabel(name, componentType) {
             return { short: 'AVR', detail: size };
         }
         case 'konus': {
-            let isPlus = n.indexOf('Konus+') === 0;
-            let short = isPlus ? 'Konus+' : 'Konus';
-            let detail = n.replace(/^Konus\+?\s*/i, '').trim();
+            const isPlus = n.indexOf('Konus+') === 0;
+            const short = isPlus ? 'Konus+' : 'Konus';
+            const detail = n.replace(/^Konus\+?\s*/i, '').trim();
             return { short: short, detail: detail };
         }
         case 'krag': {
-            let isZelb = n.indexOf('żelbetowy') >= 0;
-            let short = isZelb ? 'Kr.żelb' : 'Krąg';
+            const isZelb = n.indexOf('żelbetowy') >= 0;
+            const short = isZelb ? 'Kr.żelb' : 'Krąg';
             let detail = n.replace(/^Krąg\s+żelbetowy\s*/i, '').trim();
             if (detail === n) detail = n.replace(/^Krąg\s*/i, '').trim();
             detail = detail.replace(/^DN\d+\//, '').trim();
@@ -86,8 +86,8 @@ function _excelShortLabel(name, componentType) {
             return { short: short, detail: detail };
         }
         case 'krag_ot': {
-            let isZelb2 = n.indexOf('żelbetowy') >= 0;
-            let short = isZelb2 ? 'Kr.OT żelb' : 'Kr. OT';
+            const isZelb2 = n.indexOf('żelbetowy') >= 0;
+            const short = isZelb2 ? 'Kr.OT żelb' : 'Kr. OT';
             let detail = n.replace(/^Krąg\s+żelbetowy\s*/i, '').trim();
             if (detail === n) detail = n.replace(/^Krąg\s*/i, '').trim();
             detail = detail.replace(/^DN\d+\//, '').trim();
@@ -95,58 +95,58 @@ function _excelShortLabel(name, componentType) {
             return { short: short, detail: detail };
         }
         case 'dennica': {
-            let short = 'Dennica';
+            const short = 'Dennica';
             let detail = name.replace(/^Dennica\s*/i, '').trim();
             detail = detail.replace(/^DN\d+\s*H=\d+\/(\d+)/, '$1');
             return { short: short, detail: detail };
         }
         case 'plyta_din': {
-            let short = 'Pł.DIN';
+            const short = 'Pł.DIN';
             let detail = name.replace(/^Płyta DIN\s*/i, '').trim();
-            let hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'plyta_najazdowa': {
-            let short = 'Pł.najazd';
+            const short = 'Pł.najazd';
             let detail = name.replace(/^Płyta najazdowa\s*/i, '').trim();
-            let hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];
             if (!detail) detail = name;
             return { short: short, detail: detail };
         }
         case 'plyta_zamykajaca': {
-            let short = 'Pł.zamyk';
+            const short = 'Pł.zamyk';
             let detail = name.replace(/^Płyta zamykająca\s*/i, '').trim();
-            let hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'pierscien_odciazajacy': {
-            let short = 'Pierśc.odc';
+            const short = 'Pierśc.odc';
             let detail = name.replace(/^Pierście[ńn] odciążający\s*/i, '').trim();
-            let hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'plyta_redukcyjna': {
-            let short = 'Pł.red.';
+            const short = 'Pł.red.';
             let detail = name.replace(/^Płyta redukcyjna\s*/i, '').trim();
-            let hMatch = detail.match(/H[=:]?\s*(\d+)/i);
+            const hMatch = detail.match(/H[=:]?\s*(\d+)/i);
             if (hMatch) detail = hMatch[1];
             return { short: short, detail: detail };
         }
         case 'osadnik': {
-            let short = 'Osadnik';
-            let detail = name.length > 14 ? name.substring(0, 12) + '…' : name;
+            const short = 'Osadnik';
+            const detail = name.length > 14 ? name.substring(0, 12) + '…' : name;
             return { short: short, detail: detail };
         }
         case 'uszczelka': {
-            let short = 'Uszcz.';
+            const short = 'Uszcz.';
             let detail = name.replace(/^Uszczelka\s*/i, '').trim() || name;
-            let uType = (detail.match(/\b(GSG|SDV)\b/i) || [])[1] || '';
-            let uDn = (detail.match(/DN(\d+)/i) || [])[0] || '';
-            let uSuf = /\bpier/i.test(detail) ? ' PO' : /\bNBR\b/i.test(detail) ? ' NBR' : '';
+            const uType = (detail.match(/\b(GSG|SDV)\b/i) || [])[1] || '';
+            const uDn = (detail.match(/DN(\d+)/i) || [])[0] || '';
+            const uSuf = /\bpier/i.test(detail) ? ' PO' : /\bNBR\b/i.test(detail) ? ' NBR' : '';
             if (uType) {
                 detail = uType.toUpperCase() + (uDn ? ' ' + uDn.toUpperCase() : '') + uSuf;
             } else if (detail.length > 14) {
@@ -155,9 +155,9 @@ function _excelShortLabel(name, componentType) {
             return { short: short, detail: detail };
         }
         case 'styczna': {
-            let hasKorek = n.indexOf('korkiem') >= 0;
-            let short = hasKorek ? 'Stycz.korek' : 'Styczna';
-            let detail = n.replace(/^Studnia styczna(\s*z korkiem)?\s*/i, '').trim();
+            const hasKorek = n.indexOf('korkiem') >= 0;
+            const short = hasKorek ? 'Stycz.korek' : 'Styczna';
+            const detail = n.replace(/^Studnia styczna(\s*z korkiem)?\s*/i, '').trim();
             return { short: short, detail: detail };
         }
         default:
@@ -169,7 +169,10 @@ function _excelShortLabel(name, componentType) {
 function _excelWrapDetail(detail) {
     if (!detail || detail === '·') return '·';
     // Łam przed "bez stopni", "drabinka nierdzewna", "z otworem"/"z otworami"
-    let br = detail.replace(/\s+(bez stopni|drabinka nierdzewna|z otwor(?:em|ami))\s*$/i, '<br>$1');
+    const br = detail.replace(
+        /\s+(bez stopni|drabinka nierdzewna|z otwor(?:em|ami))\s*$/i,
+        '<br>$1'
+    );
     return br;
 }
 
@@ -195,8 +198,8 @@ function _excelCalcDennicaHeight(well) {
 function _excelSafeHeightMatch(pHeight, h) {
     if (h === undefined || h === null || h === '' || h === 'null') return true;
     if (pHeight === undefined || pHeight === null) return false;
-    let ph = parseInt(pHeight);
-    let hh = parseInt(h);
+    const ph = parseInt(pHeight);
+    const hh = parseInt(h);
     if (isNaN(ph) || isNaN(hh)) return false;
     return ph === hh;
 }
@@ -237,9 +240,9 @@ function _excelCountProductInConfig(well, componentType, height, productId, targ
 /* Cache dla resolveEffectiveProduct — unikaj O(n²) */
 function _excelGetResolution(well, item) {
     if (!well.__resCache) well.__resCache = {};
-    let key = item.productId;
+    const key = item.productId;
     if (!well.__resCache[key]) {
-        let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
+        const sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
         well.__resCache[key] =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
@@ -258,13 +261,12 @@ function _excelClearResCache(well) {
 /* ===== Dynamiczny kod produktu w h3 — pobrany z configu zaznaczonej studni ===== */
 function _excelGetWellProdCode(well, ct, height, targetDn) {
     if (!well || !well.config || !ct) return null;
-    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
 
     /* 1. Szukaj w configu z resolveEffectiveProduct — to samo co "Wybór elementów" */
     for (let i = 0; i < well.config.length; i++) {
-        let item = well.config[i];
+        const item = well.config[i];
         if (item.quantity <= 0) continue;
-        let resolved = _excelGetResolution(well, item);
+        const resolved = _excelGetResolution(well, item);
         if (!resolved) continue;
         if (resolved.componentType !== ct) continue;
         if (
@@ -286,10 +288,10 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
 
     /* 2. FALLBACK: pierwszy dostępny produkt dla tego ct+height — zgodnie z filtrami studni */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        let avail = getAvailableProducts(well).filter(function (p) {
+        const avail = getAvailableProducts(well).filter(function (p) {
             try {
                 return filterByWellParams(p, well);
-            } catch (e) {
+            } catch (_e) {
                 return true;
             }
         });
@@ -303,22 +305,22 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
         }
         /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
         if (targetDn !== undefined && targetDn !== null) {
-            let dnMatch = fallback.filter(function (p) {
+            const dnMatch = fallback.filter(function (p) {
                 return p.dn !== null && parseInt(p.dn) === parseInt(targetDn);
             });
             if (dnMatch.length > 0) return dnMatch[0].id;
-            let univ = fallback.filter(function (p) {
+            const univ = fallback.filter(function (p) {
                 return p.dn === null;
             });
             if (univ.length > 0) return univ[0].id;
             return null;
         }
         /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
-        let mainMatch = fallback.filter(function (p) {
+        const mainMatch = fallback.filter(function (p) {
             return p.dn !== null && parseInt(p.dn) === parseInt(well.dn);
         });
         if (mainMatch.length > 0) return mainMatch[0].id;
-        let mainUniv = fallback.filter(function (p) {
+        const mainUniv = fallback.filter(function (p) {
             return p.dn === null;
         });
         return mainUniv.length > 0 ? mainUniv[0].id : null;
@@ -329,13 +331,12 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
 /* ===== Cena elementu w h3 — per sztuka, zgodnie z getItemAssessedPrice ===== */
 function _excelGetWellProdPrice(well, ct, height, targetDn) {
     if (!well || !well.config || !ct) return '';
-    let sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
 
     /* 1. Szukaj w configu — to samo co _excelGetWellProdCode */
     for (let i = 0; i < well.config.length; i++) {
-        let item = well.config[i];
+        const item = well.config[i];
         if (item.quantity <= 0) continue;
-        let resolved = _excelGetResolution(well, item);
+        const resolved = _excelGetResolution(well, item);
         if (!resolved) continue;
         if (resolved.componentType !== ct) continue;
         if (
@@ -353,11 +354,11 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
             if (resolved.dn !== null && parseInt(resolved.dn) !== parseInt(well.dn)) continue;
         }
         /* Mamy dopasowany config item — pobierz cenę */
-        let price =
+        const price =
             typeof getItemAssessedPrice === 'function'
                 ? getItemAssessedPrice(well, resolved, true, item)
                 : resolved.price || 0;
-        let fmt =
+        const fmt =
             typeof fmtInt === 'function'
                 ? fmtInt
                 : function (n) {
@@ -368,10 +369,10 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
 
     /* 2. FALLBACK: pierwszy dostępny produkt */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        let avail = getAvailableProducts(well).filter(function (p) {
+        const avail = getAvailableProducts(well).filter(function (p) {
             return filterByWellParams(p, well);
         });
-        let fallback = avail.filter(function (p) {
+        const fallback = avail.filter(function (p) {
             return (
                 p.componentType === ct &&
                 (height === undefined ||
@@ -383,35 +384,35 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
         /* Dla kolumn redukcji: preferuj produkt pasujący do targetDn */
         let matchedFallback = null;
         if (targetDn !== undefined && targetDn !== null) {
-            let dnMatch = fallback.filter(function (p) {
+            const dnMatch = fallback.filter(function (p) {
                 return p.dn !== null && parseInt(p.dn) === parseInt(targetDn);
             });
             if (dnMatch.length > 0) matchedFallback = dnMatch[0];
             else {
-                let univ = fallback.filter(function (p) {
+                const univ = fallback.filter(function (p) {
                     return p.dn === null;
                 });
                 if (univ.length > 0) matchedFallback = univ[0];
             }
         } else {
             /* Main column: preferuj produkty dla DN studni, potem uniwersalne */
-            let mainMatch = fallback.filter(function (p) {
+            const mainMatch = fallback.filter(function (p) {
                 return p.dn !== null && parseInt(p.dn) === parseInt(well.dn);
             });
             if (mainMatch.length > 0) matchedFallback = mainMatch[0];
             else {
-                let mainUniv = fallback.filter(function (p) {
+                const mainUniv = fallback.filter(function (p) {
                     return p.dn === null;
                 });
                 if (mainUniv.length > 0) matchedFallback = mainUniv[0];
             }
         }
         if (matchedFallback) {
-            let price =
+            const price =
                 typeof getItemAssessedPrice === 'function'
                     ? getItemAssessedPrice(well, matchedFallback, true, null)
                     : matchedFallback.price || 0;
-            let fmt =
+            const fmt =
                 typeof fmtInt === 'function'
                     ? fmtInt
                     : function (n) {
@@ -425,11 +426,11 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
 }
 
 function _excelUpdateHeaderProdCodes() {
-    let container = document.getElementById('excel-table-container');
+    const container = document.getElementById('excel-table-container');
     if (!container) return;
-    let codes = container.querySelectorAll('thead .h3-prodcode');
+    const codes = container.querySelectorAll('thead .h3-prodcode');
     if (!codes.length) return;
-    let prices = container.querySelectorAll('thead .h3-prodprice');
+    const prices = container.querySelectorAll('thead .h3-prodprice');
     /* Użyj pierwszej studni z AKTYWNEJ zakładki, nie globalnej currentWellIndex */
     let tabWell = null;
     if (typeof _excelActiveTab !== 'undefined' && _excelActiveTab && typeof wells !== 'undefined') {
@@ -440,28 +441,28 @@ function _excelUpdateHeaderProdCodes() {
             }
         }
     }
-    let well =
+    const well =
         (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0
             ? wells[currentWellIndex]
             : null) || tabWell;
     codes.forEach(function (span, idx) {
-        let isPerProduct = span.getAttribute('data-per-product') === '1';
-        let ct = span.getAttribute('data-ct');
-        let height = span.getAttribute('data-height');
-        let redAttr = span.getAttribute('data-reddn');
-        let redTarget = redAttr ? parseInt(redAttr) : null;
+        const isPerProduct = span.getAttribute('data-per-product') === '1';
+        const ct = span.getAttribute('data-ct');
+        const height = span.getAttribute('data-height');
+        const redAttr = span.getAttribute('data-reddn');
+        const redTarget = redAttr ? parseInt(redAttr) : null;
         if (isPerProduct) {
             /* Kolumny per-produkt: kod stały, ale cenę trzeba odświeżyć */
             if (prices && prices[idx]) {
-                let ppid = span.textContent && span.textContent.trim();
+                const ppid = span.textContent && span.textContent.trim();
                 if (ppid) {
-                    let _prod = (
+                    const _prod = (
                         typeof studnieProducts !== 'undefined' ? studnieProducts : []
                     ).find(function (pr) {
                         return pr.id === ppid;
                     });
                     if (_prod && _prod.price) {
-                        let _fmt =
+                        const _fmt =
                             typeof fmtInt === 'function'
                                 ? fmtInt
                                 : function (n) {
@@ -473,7 +474,7 @@ function _excelUpdateHeaderProdCodes() {
             }
             return;
         }
-        let pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
+        const pid = well ? _excelGetWellProdCode(well, ct, height, redTarget) : null;
         span.textContent = pid !== null && pid !== undefined ? pid : '';
         /* Aktualizuj cenę w tym samym indeksie */
         if (prices && prices[idx]) {
@@ -515,8 +516,8 @@ function _excelAutoSetWlaz(well) {
 }
 
 /* ===== CELL STYLES (Excel-like) ===== */
-/** @param {number} [w] */
-function _excelCellInp(w) {
+/** @param {number} [_w] */
+function _excelCellInp(_w) {
     return `background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);${_EXCEL_FONT}text-align:right;outline:none;transition:border-color 0.15s,background 0.15s;`;
 }
 
@@ -540,11 +541,11 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
             escapeHtml(opts[i][1]) +
             '</option>';
     }
-    let extraClass = disabled ? ' disabled' : '';
-    let wrapperEvents = disabled
+    const extraClass = disabled ? ' disabled' : '';
+    const wrapperEvents = disabled
         ? ''
         : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(!event.ctrlKey&&(event.key==='Enter'||event.key===' ')){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
-    let selectEvents = disabled
+    const selectEvents = disabled
         ? ' disabled'
         : ' tabindex="-1" onchange="' +
           (onChange || '').replace(/"/g, '&quot;') +
@@ -606,7 +607,7 @@ function excelToggleFullscreen() {
     _excelFullscreen = !_excelFullscreen;
     const overlay = document.getElementById('excel-table-overlay');
     _excelPositionOverlay(overlay);
-    let btn = document.getElementById('excel-fs-btn');
+    const btn = document.getElementById('excel-fs-btn');
     if (btn) btn.textContent = _excelFullscreen ? 'Okno' : 'Pełny';
 }
 
@@ -631,7 +632,7 @@ function excelFilterWells(value) {
             return;
         }
         /* Kolumna Nr Studni (tr.children[3]: checkbox, A/M, Lp, Nr Studni) */
-        let nameInp = row.children[3] ? row.children[3].querySelector('input') : null;
+        const nameInp = row.children[3] ? row.children[3].querySelector('input') : null;
         let name = nameInp ? nameInp.value : (row.children[3] || {}).textContent || '';
         name = (name || '').toLowerCase();
         const show = name.indexOf(q) >= 0;
@@ -745,4 +746,10 @@ function _excelRestoreLockedWells(locked) {
     for (const i in locked) {
         if (wells[i]) wells[i] = locked[i];
     }
+}
+
+/* ===== Rejestracja globali ===== */
+if (typeof window !== 'undefined') {
+    window.excelToggleFullscreen = excelToggleFullscreen;
+    window.excelClearSearch = excelClearSearch;
 }

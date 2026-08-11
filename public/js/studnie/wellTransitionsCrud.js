@@ -122,3 +122,7 @@ function cancelPrzejscieEdit() {
 window.editPrzejscie = editPrzejscie;
 window.savePrzejscieEdit = savePrzejscieEdit;
 window.cancelPrzejscieEdit = cancelPrzejscieEdit;
+
+/* ===== Rejestracja globali ===== */
+window.movePrzejscie = movePrzejscie;
+window.removePrzejscieFromWell = removePrzejscieFromWell;

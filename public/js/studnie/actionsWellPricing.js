@@ -186,24 +186,24 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     if (p.componentType === 'kineta') {
         let dennicaHeight = 0;
         const dennicaItem = well.config.find(function (c) {
-            let pr = studnieProducts.find(function (x) {
+            const pr = studnieProducts.find(function (x) {
                 return x.id === c.productId;
             });
             return pr && pr.componentType === 'dennica';
         });
         if (dennicaItem) {
-            let pPr = studnieProducts.find(function (x) {
+            const pPr = studnieProducts.find(function (x) {
                 return x.id === dennicaItem.productId;
             });
             dennicaHeight = pPr ? pPr.height || 0 : 0;
         }
 
-        let h1m = parseFloat(p.hMin1);
-        let h1x = parseFloat(p.hMax1);
-        let h2m = parseFloat(p.hMin2);
-        let h2x = parseFloat(p.hMax2);
-        let h3m = parseFloat(p.hMin3);
-        let h3x = parseFloat(p.hMax3);
+        const h1m = parseFloat(p.hMin1);
+        const h1x = parseFloat(p.hMax1);
+        const h2m = parseFloat(p.hMin2);
+        const h2x = parseFloat(p.hMax2);
+        const h3m = parseFloat(p.hMin3);
+        const h3x = parseFloat(p.hMax3);
 
         let kinetaBase = base;
         if (!isNaN(h1m) && !isNaN(h1x) && dennicaHeight >= h1m && dennicaHeight <= h1x) {
@@ -222,7 +222,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
                 well.malowanieW === 'kineta_dennica' ||
                 well.malowanieW === 'cale'
             ) {
-                let kinetaArea = calcKinetaPaintingArea(well);
+                const kinetaArea = calcKinetaPaintingArea(well);
                 malowanieW = kinetaArea * well.malowanieWewCena;
             }
         } else if (
@@ -526,3 +526,6 @@ function calcWellStats(well) {
 }
 
 window.getItemPriceBreakdown = getItemPriceBreakdown;
+
+/* ===== Rejestracja globali ===== */
+window.calcWellStats = calcWellStats;

@@ -117,7 +117,7 @@ async function saveProductionOrder() {
     }
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const { well, product, elementIndex, wellIndex } = el;
+    const { well, product, elementIndex } = el;
 
     const existingIdx = productionOrders.findIndex(
         (po) => po.wellId === well.id && po.elementIndex === elementIndex

@@ -52,7 +52,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     const usedSegIndices = new Set();
 
     for (const pr of well.przejscia) {
-        let pel = parseFloat(pr.rzednaWlaczenia);
+        const pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const mmFromBottom = (pel - rzDna) * 1000;
         const pprod = studnieProducts.find((x) => x.id === pr.productId);
@@ -73,7 +73,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
             lastWasD = isDennicaLike;
         }
 
-        let prDN =
+        const prDN =
             typeof pprod.dn === 'string' && pprod.dn.includes('/')
                 ? parseFloat(pprod.dn.split('/')[1]) || 160
                 : parseFloat(pprod.dn) || 160;
@@ -164,3 +164,7 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
     result.items = newItems;
     return result;
 }
+
+/* ===== Rejestracja globali ===== */
+window.buildConfigSegments = buildConfigSegments;
+window.applyDrilledRings = applyDrilledRings;

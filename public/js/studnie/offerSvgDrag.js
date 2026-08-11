@@ -219,5 +219,3 @@ window.cleanupWellDragListeners = function cleanupWellDragListeners() {
     document.removeEventListener('mouseup', _wellDragHandlers.mouseup);
     document.removeEventListener('touchend', _wellDragHandlers.touchend);
 };
-
-const dragOverCount = 0; // dla wizualizacji drag & drop

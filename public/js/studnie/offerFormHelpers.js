@@ -92,3 +92,7 @@ function updateOfferFormHeader(number, offerId) {
     if (typeof window.updateTransportCostSummary === 'function')
         window.updateTransportCostSummary();
 }
+
+/* ===== Rejestracja globali ===== */
+window.restoreWizardState = restoreWizardState;
+window.updateOfferFormHeader = updateOfferFormHeader;

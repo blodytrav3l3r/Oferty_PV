@@ -40,21 +40,6 @@ function renderWellConfig() {
         return;
     }
 
-    const typeOrderMap = {
-        wlaz: 0,
-        avr: 1,
-        plyta_din: 2,
-        plyta_najazdowa: 2,
-        plyta_zamykajaca: 2,
-        konus: 2,
-        pierscien_odciazajacy: 3,
-        plyta_redukcyjna: 4,
-        krag: 5,
-        krag_ot: 5,
-        dennica: 6,
-        kineta: 7
-    };
-
     const typeBadge = {
         wlaz: { bg: 'var(--slate-800)', label: 'Właz' },
         plyta_din: { bg: 'var(--cmp-plyta-din)', label: 'Płyta' },
@@ -113,8 +98,6 @@ function renderWellConfig() {
             }
         }
         const totalWeight = (p.weight || 0) * item.quantity;
-        const totalAreaInt = (p.area || 0) * item.quantity;
-        const totalAreaExt = (p.areaExt || 0) * item.quantity;
         const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
 
         const canMoveUp = index > 0;
@@ -408,3 +391,6 @@ function renderWellConfig() {
 
     tbody.innerHTML = html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderWellConfig = renderWellConfig;

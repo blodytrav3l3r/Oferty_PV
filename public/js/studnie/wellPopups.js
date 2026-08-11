@@ -304,3 +304,7 @@ function openRedukcjaZakonczeniePopup() {
 // openRedukcjaChoicePopup, selectRedukcjaChoice, trySwapReductionComponents przeniesione do popupsRedukcjaChoice.js
 
 // ===== TRANSITION MANAGER przeniesiony do popupsTransitionManager.js
+
+/* ===== Rejestracja globali ===== */
+window.openZakonczeniePopup = openZakonczeniePopup;
+window.openRedukcjaZakonczeniePopup = openRedukcjaZakonczeniePopup;

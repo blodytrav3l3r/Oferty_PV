@@ -63,3 +63,7 @@ function editStudnieCell(el, field, id) {
         if (e.key === 'Escape') renderStudniePriceList();
     });
 }
+
+/* ===== Rejestracja globali ===== */
+window.toggleMagazynField = toggleMagazynField;
+window.editStudnieCell = editStudnieCell;

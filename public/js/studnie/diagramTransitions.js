@@ -129,3 +129,6 @@ function drawTransitionGuideLine(px, prY, radiusW, isBack) {
     const dimColor = isBack ? SVG_COLORS.dnLabel : SVG_COLORS.transitionActive;
     return `<line x1="25" y1="${prY}" x2="${px - radiusW - 2}" y2="${prY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
 }
+
+/* ===== Rejestracja globali ===== */
+window.drawTransitions = drawTransitions;

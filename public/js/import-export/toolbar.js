@@ -1,4 +1,4 @@
-window.importExportToolbar = {
+﻿window.importExportToolbar = {
     hostId: null,
 
     async init(hostId) {
@@ -109,7 +109,7 @@ window.importExportToolbar = {
 
     showExportXlsxDialog() {
         const uid = 'xlsx';
-        const modal = this._createModal(
+        this._createModal(
             'Eksport XLSX (zewn. system)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
                 this._moduleTypeHtml(uid) +
@@ -176,7 +176,7 @@ window.importExportToolbar = {
 
     showExportJsonPopup() {
         const uid = 'json';
-        const modal = this._createModal(
+        this._createModal(
             'Eksport 1:1 (JSON)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
                 this._moduleTypeHtml(uid) +
@@ -242,7 +242,7 @@ window.importExportToolbar = {
     },
 
     showImportJsonDialog() {
-        const modal = this._createModal(
+        this._createModal(
             'Import 1:1 (JSON)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
                 '<p style="color:var(--text-muted);font-size:0.8rem;margin:0 0 1rem 0;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
@@ -306,7 +306,7 @@ window.importExportToolbar = {
 
     showImportXlsxDialog() {
         const uid = 'xlsx-import';
-        const modal = this._createModal(
+        this._createModal(
             'Import XLSX (zewn. system)',
             '<p style="color:var(--text-secondary);font-size:0.9rem;margin:0 0 1rem 0;">Wybierz moduł i plik XLSX wyeksportowany z innego systemu.</p>' +
                 this._moduleTypeHtml(uid) +

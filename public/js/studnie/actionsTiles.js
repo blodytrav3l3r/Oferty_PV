@@ -305,3 +305,6 @@ function renderTiles() {
 
     container.innerHTML = html;
 }
+
+/* ===== Rejestracja globali ===== */
+window.renderTiles = renderTiles;

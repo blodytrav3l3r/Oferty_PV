@@ -60,7 +60,7 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
             try {
                 const { storageService } = await import('../shared/StorageService.js');
                 offer = await storageService.getOfferById(id_or_doc);
-            } catch (e) {
+            } catch (_e) {
                 showToast('Blad: Nie znaleziono oferty w bazie.', 'error');
                 return;
             }
@@ -199,3 +199,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+/* ===== Rejestracja globali ===== */
+window.clearOfferForm = clearOfferForm;

@@ -139,3 +139,7 @@ function buildOfferXlsxMetaRows(offer) {
 
     return metaRows;
 }
+
+/* ===== Rejestracja globali ===== */
+window.buildOfferXlsxRows = buildOfferXlsxRows;
+window.buildOfferXlsxMetaRows = buildOfferXlsxMetaRows;

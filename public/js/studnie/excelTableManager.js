@@ -97,21 +97,21 @@ function _excelInitColumnResize() {
 
 /* ===== ROW SELECT CHEKBOX CHANGE HANDLER ===== */
 function _excelOnRowSelectChange(e) {
-    let target = e.target;
+    const target = e.target;
     if (!target) return;
     /* Row checkbox - per studnia */
     if (target.classList && target.classList.contains('excel-row-select')) {
-        let wIdx = parseInt(target.getAttribute('data-widx'), 10);
+        const wIdx = parseInt(target.getAttribute('data-widx'), 10);
         if (!isNaN(wIdx)) {
             _excelRowSelectStates[wIdx] = target.checked;
             /* sync select-all checkbox */
-            let allBoxes = document.querySelectorAll(
+            const allBoxes = document.querySelectorAll(
                 '#excel-table-container tbody tr[data-widx] input.excel-row-select'
             );
-            let allChecked = Array.from(allBoxes).every(function (cb) {
+            const allChecked = Array.from(allBoxes).every(function (cb) {
                 return cb.checked;
             });
-            let hdrAll = document.getElementById('excel-select-all');
+            const hdrAll = document.getElementById('excel-select-all');
             if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
         }
     }
@@ -121,7 +121,7 @@ function _excelOnRowSelectChange(e) {
 /* ===== ROW CHECKBOX + AUTO/MANUAL BATCH ===== */
 function _excelBulkSetMode(enabled) {
     if (typeof wells === 'undefined') return;
-    let sel = [];
+    const sel = [];
     for (let i = 0; i < wells.length; i++) {
         if (_excelRowSelectStates[i]) sel.push(i);
     }
@@ -168,7 +168,7 @@ function _excelBulkSetMode(enabled) {
 
 function _excelMarkAsManual(wIdx) {
     if (typeof wells === 'undefined' || !wells[wIdx]) return;
-    let w = wells[wIdx];
+    const w = wells[wIdx];
     if (w.autoSelect !== false || w.configSource !== 'MANUAL' || w.autoLocked !== true) {
         w.autoSelect = false;
         w.configSource = 'MANUAL';
@@ -189,7 +189,7 @@ function _excelSaveUndoSnapshot() {
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
     _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
-    let snap = _excelUndoStack.pop();
+    const snap = _excelUndoStack.pop();
     const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);
     _excelRestoreLockedWells(locked);
@@ -202,7 +202,7 @@ function _excelUndo() {
 function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
     _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
-    let snap = _excelRedoStack.pop();
+    const snap = _excelRedoStack.pop();
     const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);
     _excelRestoreLockedWells(locked);
@@ -214,10 +214,10 @@ function _excelRedo() {
 
 /* ===== PASTE DO PUSTEGO WIERSZA → nowe studnie ===== */
 function _excelPasteCreateWells(text) {
-    let parsed = _excelParsePasteData(text);
+    const parsed = _excelParsePasteData(text);
     /* Jesli parser nie rozpoznal danych, sprobuj prostrzy format: kazda linia = nazwa studni */
     if (parsed.length === 0) {
-        let lines = text
+        const lines = text
             .trim()
             .split(String.fromCharCode(10))
             .map(function (l) {
@@ -227,15 +227,15 @@ function _excelPasteCreateWells(text) {
                 return l;
             });
         if (lines.length > 0) {
-            let dn = _excelActiveTab || '1000';
+            const dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
             let added = 0;
             for (let fi = 0; fi < lines.length; fi++) {
-                let name = lines[fi];
+                const name = lines[fi];
                 if (!name) continue;
                 let dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                 if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-                let well =
+                const well =
                     typeof createNewWell === 'function'
                         ? createNewWell(name, dnVal)
                         : {
@@ -271,19 +271,19 @@ function _excelPasteCreateWells(text) {
         showToast('Nie rozpoznano danych', 'error');
         return;
     }
-    let dn = _excelActiveTab || '1000';
+    const dn = _excelActiveTab || '1000';
     _excelSaveUndoSnapshot();
     let added = 0;
     parsed.forEach(function (row) {
-        let name = String(row.name || '').trim();
+        const name = String(row.name || '').trim();
         if (!name) return;
         /* pozwól na duplikaty — nie sprawdzamy 'wells.some' */
         let dnVal = row.dn || String(dn);
         dnVal = dnVal === 'styczne' || dnVal === 'styczna' ? 'styczna' : parseInt(dnVal, 10);
         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
-        let rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
-        let rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
-        let well =
+        const rzw = row.rzednaWlazu ? parseFloat(String(row.rzednaWlazu).replace(',', '.')) : null;
+        const rzd = row.rzednaDna ? parseFloat(String(row.rzednaDna).replace(',', '.')) : 0;
+        const well =
             typeof createNewWell === 'function'
                 ? createNewWell(name, dnVal)
                 : {
@@ -317,8 +317,8 @@ function _excelPasteCreateWells(text) {
         for (let k = 0; k < added; k++) {
             setTimeout(
                 function () {
-                    let nwi = wells.length - added + k;
-                    let w = wells[nwi];
+                    const nwi = wells.length - added + k;
+                    const w = wells[nwi];
                     if (w && w.rzednaWlazu != null && w.rzednaDna != null) {
                         _excelAutoSelectForWell(nwi).catch(function (e) {
                             if (window.logger)
@@ -349,7 +349,7 @@ window.refreshExcelFromConfig = function () {
 const _excelSyncAutoManualUIReal = _excelSyncAutoManualUI;
 window._excelSyncAutoManualUI = function () {
     if (!document.getElementById('excel-table-overlay')) return;
-    let fn = /** @type {any} */ (window._excelSyncAutoManualUI);
+    const fn = /** @type {any} */ (window._excelSyncAutoManualUI);
     if (fn._inProgress) return;
     fn._inProgress = true;
     try {

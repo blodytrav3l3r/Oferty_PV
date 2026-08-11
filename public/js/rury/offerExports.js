@@ -19,7 +19,6 @@ function importOfferFromFile() {
     input.addEventListener('change', (e) => {
         const files = Array.from(/** @type {HTMLInputElement} */ (e.target).files);
         if (!files.length) return;
-        let imported = 0;
         files.forEach((file) => {
             const reader = new FileReader();
             reader.onload = async (ev) => {
@@ -45,11 +44,10 @@ function importOfferFromFile() {
                     } else {
                         offers.push(offer);
                     }
-                    imported++;
                     saveOffersData(offers);
                     renderSavedOffers();
                     showToast(`Zaimportowano: ${offer.number}`, 'success');
-                } catch (err) {
+                } catch (_err) {
                     showToast(`Błąd odczytu pliku ${file.name}`, 'error');
                 }
             };
@@ -532,7 +530,7 @@ function importOfferFromXlsx() {
                         if (meta[key]) {
                             try {
                                 items.push(JSON.parse(meta[key]));
-                            } catch (e) {
+                            } catch (_e) {
                                 /* skip broken items */
                             }
                         }
@@ -661,3 +659,15 @@ function importOfferFromXlsx() {
     });
     input.click();
 }
+
+/* ===== Rejestracja globali ===== */
+window.importOfferFromFile = importOfferFromFile;
+window.exportOfferPDF = exportOfferPDF;
+window.showItemDiscountModal = showItemDiscountModal;
+window.updateTempDiscount = updateTempDiscount;
+window.checkGasketDiscount = checkGasketDiscount;
+window.applyItemDiscounts = applyItemDiscounts;
+window.importOfferFromXlsx = importOfferFromXlsx;
+
+/* ===== Rejestracja globali ===== */
+window.exportOfferXlsx = exportOfferXlsx;

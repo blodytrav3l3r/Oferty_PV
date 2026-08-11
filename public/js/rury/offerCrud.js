@@ -196,7 +196,7 @@ async function loadOffer(id) {
     if (!offer) {
         try {
             if (srv) offer = await srv.getOfferById(id);
-        } catch (e) {
+        } catch (_e) {
             showToast('Błąd: Nie znaleziono oferty w bazie.', 'error');
             return;
         }
@@ -405,3 +405,13 @@ function restoreOfferVersion(offerId, historyIndex) {
     if (typeof window.showToast === 'function')
         window.showToast('Wersja z historii wczytana', 'success');
 }
+
+/* ===== Rejestracja globali ===== */
+window.clearOfferForm = clearOfferForm;
+window.duplicateOffer = duplicateOffer;
+window.downloadExistingOffer = downloadExistingOffer;
+window.restoreOfferVersion = restoreOfferVersion;
+
+/* ===== Rejestracja globali ===== */
+window.saveOffer = saveOffer;
+window.deleteOffer = deleteOffer;

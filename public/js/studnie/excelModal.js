@@ -38,8 +38,8 @@ function _excelRegisterExcelListeners() {
     const container = document.getElementById('excel-table-container');
     if (!container || /** @type {any} */ (container)._excelListenersAttached) return;
     /** @type {any} */ (container)._excelListenersAttached = true;
-    let _arrowHandler = function (e) {
-        let tgt = e.target;
+    const _arrowHandler = function (e) {
+        const tgt = e.target;
         if (!tgt || !container.contains(tgt)) return;
         if (!e.key.startsWith('Arrow')) return;
         e.stopPropagation();
@@ -60,7 +60,7 @@ function _excelRegisterExcelListeners() {
     document.addEventListener('mousemove', _excelOnMouseMove);
     document.addEventListener('mouseup', _excelOnMouseUp);
     if (!document.getElementById('excel-focus-overlay')) {
-        let ov = document.createElement('div');
+        const ov = document.createElement('div');
         ov.id = 'excel-focus-overlay';
         ov.style.cssText =
             'position:fixed;pointer-events:none;z-index:' +
@@ -84,7 +84,7 @@ function _excelUnregisterExcelListeners() {
     if (/** @type {any} */ (overlay)._resizeHandler) {
         window.removeEventListener('resize', /** @type {any} */ (overlay)._resizeHandler);
     }
-    let _container = document.getElementById('excel-table-container');
+    const _container = document.getElementById('excel-table-container');
     if (_container && /** @type {any} */ (_container)._arrowHandler) {
         document.removeEventListener(
             'keydown',
@@ -124,15 +124,15 @@ function openExcelTableModal() {
     }
 
     /* Inicjalizuj _excelMaxTransitions dla WSZYSTKICH zakładek */
-    let _allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+    const _allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
     _allTabs.forEach(function (t) {
-        let _tw =
+        const _tw =
             typeof wells !== 'undefined' && Array.isArray(wells)
                 ? wells.filter(function (w) {
                       return _excelWellMatchesTab(w, t);
                   })
                 : [];
-        let _tm = _tw.reduce(function (m, w) {
+        const _tm = _tw.reduce(function (m, w) {
             return w.przejscia && w.przejscia.length > m ? w.przejscia.length : m;
         }, 0);
         _excelMaxTransitions[t] = Math.max(1, _tm);
@@ -144,7 +144,7 @@ function openExcelTableModal() {
     const existing = document.getElementById('excel-table-overlay');
     if (existing) {
         /* Wyczyść stary capture handler przed usunięciem overlay */
-        let _oldContainer = document.getElementById('excel-table-container');
+        const _oldContainer = document.getElementById('excel-table-container');
         if (_oldContainer && /** @type {any} */ (_oldContainer)._arrowHandler) {
             document.removeEventListener(
                 'keydown',
@@ -220,7 +220,7 @@ function openExcelTableModal() {
     });
 
     /* Nasłuchuj resize — odśwież pozycjonowanie */
-    let _resizeHandler = function () {
+    const _resizeHandler = function () {
         _excelPositionOverlay(overlay);
     };
     window.addEventListener('resize', _resizeHandler);
@@ -301,17 +301,17 @@ function openExcelTableModal() {
     _excelRenderTable(_excelActiveTab);
     /* Nie zaznaczaj żadnego wiersza przy otwarciu — usuń aktywny styl z pierwszej studni */
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
-        let firstRow = document.querySelector(
+        const firstRow = document.querySelector(
             '#excel-table-container tr[data-widx="' + currentWellIndex + '"]'
         );
         if (firstRow) {
-            let baseRef = firstRow.getAttribute('data-base-bg');
+            const baseRef = firstRow.getAttribute('data-base-bg');
             if (baseRef) {
                 firstRow.style.background = baseRef;
                 firstRow.setAttribute('data-orig-bg', baseRef);
                 /* Przywróć tło sticky kolumn */
-                let stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
-                let stSolid = firstRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+                const stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
+                const stSolid = firstRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
                 stTds.forEach(function (td) {
                     td.style.background = _excelStickyCellBg(baseRef, stSolid);
                 });
@@ -399,9 +399,9 @@ function excelSelectRow(wIdx) {
                 prevRow.setAttribute('data-orig-bg', base);
             }
             /* Przywróć tło sticky kolumn do base-bg */
-            let prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
-            let baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
-            let prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+            const prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
+            const baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
+            const prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             prevStickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(baseBg, prevSolid);
             });
@@ -416,8 +416,8 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
-            let stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
-            let solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
+            const stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
+            const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             stickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(activeBg, solidBg);
             });
@@ -428,3 +428,6 @@ function excelSelectRow(wIdx) {
     /* Aktualizuj h3 — kody produktów ZALEŻĄ od zaznaczonej studni */
     _excelUpdateHeaderProdCodes();
 }
+
+/* ===== Rejestracja globali ===== */
+window.openExcelTableModal = openExcelTableModal;

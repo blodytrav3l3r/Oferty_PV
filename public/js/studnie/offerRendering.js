@@ -68,3 +68,6 @@ function renderOfferSummary() {
         if (window.lucide) window.lucide.createIcons({ root: saveBtn });
     }
 }
+
+/* ===== Rejestracja globali ===== */
+window.toggleWellExpansion = toggleWellExpansion;

@@ -2,7 +2,7 @@
 /* ===== RENDEROWANIE POZYCJI OFERTY (RURY) ===== */
 
 function renderOfferItems() {
-    let _items = getActiveItemsArray();
+    const _items = getActiveItemsArray();
     const tbody = document.getElementById('offer-items-body');
     if (_items.length === 0) {
         tbody.innerHTML = `<tr><td colspan="14" class="text-center" style="padding:2rem;color:var(--text-muted)">

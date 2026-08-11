@@ -102,3 +102,9 @@ if (typeof window !== 'undefined') {
         }
     });
 }
+
+/* ===== Rejestracja globali ===== */
+window.setAuthToken = setAuthToken;
+
+/* ===== Rejestracja globali ===== */
+window.appLogout = appLogout;

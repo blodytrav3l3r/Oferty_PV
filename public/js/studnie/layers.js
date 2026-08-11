@@ -38,3 +38,6 @@ var LAYERS_EXCEL = Object.freeze({
     STICKY_THEAD: 50,
     FOCUS_BORDER: 55
 });
+
+window.LAYERS = LAYERS;
+window.LAYERS_EXCEL = LAYERS_EXCEL;

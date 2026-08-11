@@ -148,3 +148,10 @@ window.PRINT_TOKENS_CSS = PRINT_TOKENS_CSS;
 window.applyPrintTokens = applyPrintTokens;
 window.fmt = fmt;
 window.fmtInt = fmtInt;
+
+/* ===== Rejestracja globali ===== */
+window.formatDate = formatDate;
+window.renderTemplate = renderTemplate;
+window.silentPrint = silentPrint;
+window.paramLabel = paramLabel;
+window.ensureDisplayIndices = ensureDisplayIndices;

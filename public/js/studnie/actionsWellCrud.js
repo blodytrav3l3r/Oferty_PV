@@ -263,3 +263,13 @@ function getCurrentWell() {
     if (wells.length === 0) return null;
     return wells[currentWellIndex] || wells[0];
 }
+
+/* ===== Rejestracja globali ===== */
+window.addNewWell = addNewWell;
+window.duplicateWell = duplicateWell;
+window.selectWell = selectWell;
+window.getCurrentWell = getCurrentWell;
+
+/* ===== Rejestracja globali ===== */
+window.removeWell = removeWell;
+window.renameWell = renameWell;
