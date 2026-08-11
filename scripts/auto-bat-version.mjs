@@ -26,7 +26,13 @@ if (!VERSION) {
     process.exit(1);
 }
 
-const BAT_FILES = ['start.bat', 'install.bat', 'build.bat', 'scripts/ensure-db.bat'];
+const BAT_FILES = [
+    'start.bat',
+    'install.bat',
+    'build.bat',
+    'setup-ai.bat',
+    'scripts/ensure-db.bat'
+];
 
 function processFile(filePath) {
     const absPath = resolve(ROOT, filePath);
@@ -39,7 +45,7 @@ function processFile(filePath) {
     const original = content;
 
     content = content.replace(/(set "APP_VERSION=)\d+\.\d+\.\d+(")/g, `$1${VERSION}$2`);
-    content = content.replace(/(^REM  Wersja: )\d+\.\d+\.\d+$/gm, `$1${VERSION}`);
+    content = content.replace(/(^REM {2}Wersja: )\d+\.\d+\.\d+$/gm, `$1${VERSION}`);
 
     if (content === original) {
         console.log(`  - ${filePath} (bez zmian)`);

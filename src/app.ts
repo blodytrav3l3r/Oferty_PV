@@ -371,6 +371,17 @@ export async function initApp(): Promise<void> {
             err instanceof Error ? err.message : String(err)
         );
     }
+    // Model ML — auto-heal: upewnij się, że w bazie istnieje aktywny model ML dla bieżącej wersji cech
+    try {
+        await modelRegistry.ensureStarterModelExists();
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się weryfikować/utworzyć aktywnego modelu ML:',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
+
     // Feature flag import/export — domyslnie wlaczona. Migracja
     // 20260705000000_feature_import_export dziala tylko na instalacjach z historia
     // migracji; instalacje z 'prisma db push' nie maja tej flagi w settings,

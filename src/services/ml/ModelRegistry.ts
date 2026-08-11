@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import type { AcceptanceModel } from './AcceptanceModel';
-import { ML_CONSTANTS } from '../../config/mlConstants';
+import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
 import { ML_CONFIG } from './trainingConfig';
 import { clearPredictionCache } from './predictionCache';
 
@@ -272,6 +272,58 @@ export class ModelRegistry {
 
     async getModelCount(): Promise<number> {
         return prisma.aiModel.count();
+    }
+
+    /**
+     * Zapewnia istnienie aktywnego modelu ML (samoleczenie przy starcie serwera/diagnostyce).
+     * Jeśli brak aktywnego modelu dla bieżącej wersji cech, promuje najlepszy istniejący lub
+     * automatycznie tworzy domyślny model startowy v0.1.0-starter.
+     */
+    async ensureStarterModelExists(): Promise<StoredModel> {
+        const active = await this.getActiveModel();
+        if (active) return active;
+
+        const countCurrentVersion = await prisma.aiModel.count({
+            where: { featureVersion: ML_CONSTANTS.FEATURE_VERSION }
+        });
+
+        if (countCurrentVersion > 0) {
+            const promoted = await this.promoteBestModel();
+            if (promoted) return promoted;
+        }
+
+        const zeros = FEATURE_NAMES.map(() => 0);
+        const ones = FEATURE_NAMES.map(() => 1);
+        const starter = await prisma.aiModel.create({
+            data: {
+                id: 'starter_' + Date.now(),
+                version: 'v0.1.0-starter',
+                weights: JSON.stringify(zeros),
+                bias: 0,
+                metrics: JSON.stringify({
+                    accuracy: 0.5,
+                    precision: 0.5,
+                    recall: 0.5,
+                    f1: 0.5,
+                    rocAuc: 0.5,
+                    trainSize: 0,
+                    valSize: 0
+                }),
+                features: JSON.stringify(FEATURE_NAMES),
+                featureMins: JSON.stringify(zeros),
+                featureMaxs: JSON.stringify(ones),
+                trainingRows: 0,
+                active: true,
+                featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                notes: 'Model startowy — domyślne wagi (neutralne). Inicjalizacja automatyczna.',
+                createdAt: new Date().toISOString()
+            }
+        });
+        logger.info(
+            'ModelRegistry',
+            `Utworzono i aktywowano domyślny model startowy ML (${starter.version})`
+        );
+        return this.recordToModel(starter);
     }
 
     /**
