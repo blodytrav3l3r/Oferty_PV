@@ -79,7 +79,9 @@
                 var msg =
                     d && d.error === 'forbidden'
                         ? 'Brak dostępu do stanu ML (wymagana rola admin)'
-                        : 'Błąd serwera — nie udało się pobrać stanu ML';
+                        : d && d.error === 'unauthorized'
+                          ? 'Nieautoryzowany — zaloguj się ponownie'
+                          : 'Błąd serwera — nie udało się pobrać stanu ML';
                 container.innerHTML = '<div class="ai-ml-error">' + msg + '</div>';
                 return;
             }

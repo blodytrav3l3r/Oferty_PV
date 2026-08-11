@@ -730,7 +730,9 @@ window.showModal = function (opts) {
 /**
  * Wspólny fetch JSON z normalizacją błędów (P1).
  * Zwraca:
+ * - `{error:'unauthorized'}` przy 401,
  * - `{error:'forbidden'}` przy 403,
+ * - `{error:'unavailable'}` przy 503,
  * - `{error:'server'}` przy innym statusie nie-OK,
  * - `null` przy braku `fetch` lub błędzie sieci,
  * - parsowany JSON w pozostałych przypadkach.
@@ -739,8 +741,14 @@ async function fetchJson(url, options) {
     if (!window.fetch) return null;
     try {
         const opts = Object.assign({ credentials: 'same-origin' }, options || {});
-        if (!opts.headers && typeof authHeaders === 'function') opts.headers = authHeaders();
+        const defaultHeaders = typeof authHeaders === 'function' ? authHeaders() : {};
+        opts.headers = Object.assign(
+            {},
+            defaultHeaders,
+            options && options.headers ? options.headers : {}
+        );
         const resp = await fetch(url, opts);
+        if (resp.status === 401) return { error: 'unauthorized' };
         if (resp.status === 403) return { error: 'forbidden' };
         if (resp.status === 503) return { error: 'unavailable' };
         if (!resp.ok) return { error: 'server' };

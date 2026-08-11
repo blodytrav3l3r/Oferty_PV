@@ -404,7 +404,7 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             modelVersion: activeModel?.version || null,
             activeModelAuc: activeModel?.metrics?.rocAuc ?? null,
             activeModelCreatedAt: activeModel?.createdAt || null,
-            modelFeatureCount: activeModel?.featureMins.length || ML_CONSTANTS.FEATURE_COUNT,
+            modelFeatureCount: activeModel?.featureMins?.length || ML_CONSTANTS.FEATURE_COUNT,
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
             rankingVersion: ML_CONSTANTS.RANKING_VERSION,
             modelCount,

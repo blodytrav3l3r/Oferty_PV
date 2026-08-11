@@ -33,7 +33,9 @@
         var msg =
             errorCode === 'forbidden'
                 ? 'Brak dostępu (wymagana rola admin)'
-                : 'Błąd serwera — nie udało się pobrać danych';
+                : errorCode === 'unauthorized'
+                  ? 'Nieautoryzowany — zaloguj się ponownie'
+                  : 'Błąd serwera — nie udało się pobrać danych';
         return '<div class="ai-ml-error">' + msg + '</div>';
     }
 

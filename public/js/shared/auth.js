@@ -104,7 +104,7 @@ if (typeof window !== 'undefined') {
 }
 
 /* ===== Rejestracja globali ===== */
+window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
-
-/* ===== Rejestracja globali ===== */
+window.authHeaders = authHeaders;
 window.appLogout = appLogout;

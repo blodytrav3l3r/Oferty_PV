@@ -371,15 +371,40 @@ export class ModelRegistry {
     private recordToModel(
         record: NonNullable<Awaited<ReturnType<typeof prisma.aiModel.findFirst>>>
     ): StoredModel {
+        const parseJsonArray = <T>(val: string | null | undefined): T[] => {
+            if (!val) return [];
+            try {
+                const parsed = JSON.parse(val);
+                return Array.isArray(parsed) ? (parsed as T[]) : [];
+            } catch {
+                return [];
+            }
+        };
+        const parseJsonObject = <T>(val: string | null | undefined): T | null => {
+            if (!val) return null;
+            try {
+                return JSON.parse(val) as T;
+            } catch {
+                return null;
+            }
+        };
         return {
             id: record.id,
             version: record.version,
-            weights: JSON.parse(record.weights) as number[],
+            weights: parseJsonArray<number>(record.weights),
             bias: record.bias,
-            metrics: JSON.parse(record.metrics) as ModelMetrics,
-            features: JSON.parse(record.features) as string[],
-            featureMins: JSON.parse(record.featureMins) as number[],
-            featureMaxs: JSON.parse(record.featureMaxs) as number[],
+            metrics: (parseJsonObject<ModelMetrics>(record.metrics) || {
+                accuracy: 0,
+                precision: 0,
+                recall: 0,
+                f1: 0,
+                rocAuc: 0,
+                trainSize: 0,
+                valSize: 0
+            }) as ModelMetrics,
+            features: parseJsonArray<string>(record.features),
+            featureMins: parseJsonArray<number>(record.featureMins),
+            featureMaxs: parseJsonArray<number>(record.featureMaxs),
             trainingRows: record.trainingRows,
             active: record.active,
             createdAt: record.createdAt,
