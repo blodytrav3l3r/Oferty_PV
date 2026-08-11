@@ -5,7 +5,7 @@
 > auto-heal indeksów i FTS5. Poniższy raport pozostaje historycznym zapisem stanu
 > z daty audytu.
 
-**Wersja projektu:** 1.13.2  
+**Wersja projektu:** 1.13.3  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 

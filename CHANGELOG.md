@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.13.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.2...v1.13.3) (2026-08-11)
+
+### Bug Fixes
+
+- **ci:** generowanie klienta prisma w workflow release ([ea3b504](https://github.com/blodytrav3l3r/Oferty_PV/commit/ea3b504b0d5e48e89f92dad55b8e5e0c2d3b3b31))
+
 ### [1.13.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.1...v1.13.2) (2026-08-11)
 
 ### Features
