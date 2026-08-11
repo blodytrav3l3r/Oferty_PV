@@ -56,6 +56,7 @@ log STEP "Krok 5/8 - Struktura (src/public/tests/prisma)..."
 for d in src public tests prisma; do
     [ -d "$d" ] || err "Brak katalogu $d/"
 done
+mkdir -p data
 log OK "Struktura OK"
 
 # 6. npm install

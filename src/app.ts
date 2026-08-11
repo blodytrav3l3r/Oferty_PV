@@ -287,6 +287,20 @@ if (process.env.SENTRY_DSN) {
  * Inicjalizacja aplikacji — administracja i PRAGMA user_version.
  */
 export async function initApp(): Promise<void> {
+    // Fail-fast: jeśli baza jest niedostępna (np. brak katalogu data/ na świeżej
+    // instalacji), przerywamy start czytelnym błędem zamiast serii
+    // "Error code 14: Unable to open the database file" i pozornie działającego serwera.
+    try {
+        await prisma.$queryRawUnsafe('SELECT 1');
+    } catch (err) {
+        logger.error(
+            'Server',
+            'Nie można otworzyć bazy danych. Sprawdź, czy katalog data/ istnieje i ma uprawnienia do zapisu (uruchom start.bat):',
+            err instanceof Error ? err.message : String(err)
+        );
+        throw err;
+    }
+
     // WAL + synchronous=NORMAL — przyspiesza zapisy (oferty, audit logi) i
     // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite).
     try {
@@ -337,8 +351,12 @@ export async function initApp(): Promise<void> {
     // Indeks na createdAt dla audit_logs (jeśli nie istnieje)
     try {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_logs(createdAt)`;
-    } catch {
-        // ignoruj — indeks istnieje lub baza nie ma uprawnień
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się utworzyć indeksu idx_audit_created_at:',
+            err instanceof Error ? err.message : String(err)
+        );
     }
 
     // Indeksy deduplikacji telemetrii AI (auto-heal: na instalacjach bez migracji
@@ -346,8 +364,12 @@ export async function initApp(): Promise<void> {
     try {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId")`;
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
-    } catch {
-        // ignoruj — tabela ai_telemetry_logs może nie istnieć (start przed db push)
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się utworzyć indeksów deduplikacji telemetrii AI:',
+            err instanceof Error ? err.message : String(err)
+        );
     }
     // Feature flag import/export — domyslnie wlaczona. Migracja
     // 20260705000000_feature_import_export dziala tylko na instalacjach z historia
@@ -359,8 +381,12 @@ export async function initApp(): Promise<void> {
             update: {},
             create: { key: 'feature_import_export_enabled', value: '"1"' }
         });
-    } catch {
-        // ignoruj — tabela settings moze nie istniec (start przed db push)
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się włączyć feature flagi importu/eksportu (tabela settings):',
+            err instanceof Error ? err.message : String(err)
+        );
     }
 
     // Zapewnij pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne
