@@ -4,6 +4,23 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.13.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.1...v1.13.2) (2026-08-11)
+
+### Features
+
+- **config:** helper do commitow zgodnych z commitlint i utf-8 ([fb73698](https://github.com/blodytrav3l3r/Oferty_PV/commit/fb736981693cf3d2a59b3605daace97816c7a76e))
+- **config:** nazwa aplikacji konfigurowalna i odsprzezenie od nazwy ([961db00](https://github.com/blodytrav3l3r/Oferty_PV/commit/961db00ee20afddf4f4c74dffbf8872e837cbca0))
+
+### Bug Fixes
+
+- **api:** fail-fast przy braku bazy i auto-mkdir data ([2994ecd](https://github.com/blodytrav3l3r/Oferty_PV/commit/2994ecd74d2698904f680b75fc4cac2699f7d2c8))
+- **api:** normalizacja sciezki bazy na produkcji ([4029789](https://github.com/blodytrav3l3r/Oferty_PV/commit/402978989b3003fc391a6972ab501e6ee7359ab9))
+- **ci:** generowanie klienta prisma w jobach ci i dockerfile ([bb1e3b7](https://github.com/blodytrav3l3r/Oferty_PV/commit/bb1e3b7e146be0202b073af177ac86bfb8fac89f))
+- **config:** body-max-line-length w helperze commit.mjs ([1014744](https://github.com/blodytrav3l3r/Oferty_PV/commit/10147445dbec3c8bbabb48f49e523bd40a8fab2f))
+- **config:** naprawa doklejania offsetu do wersji w auto-docs-version ([74d4e2e](https://github.com/blodytrav3l3r/Oferty_PV/commit/74d4e2ecf42cba8ff222e6a09c05342c51d0fadd))
+- **security:** escapowanie brandingu i czyszczenie hardcode nazwy ([9bfca4c](https://github.com/blodytrav3l3r/Oferty_PV/commit/9bfca4c944a48bb499386006f42908f66c2c4781))
+- **test:** flaky durationms w learningengine ([e77252d](https://github.com/blodytrav3l3r/Oferty_PV/commit/e77252da894a043e54a056394731010c9fce28ba))
+
 ### [1.13.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.0...v1.13.1) (2026-08-10)
 
 ## [1.13.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.12.0...v1.13.0) (2026-08-10)
