@@ -60,7 +60,7 @@ Poniżej każdy krok jest szczegółowo opisany.
 2. Wejdź na stronę: **https://nodejs.org**
 3. Zobaczysz duży zielony przycisk z napisem **"LTS"** (z lewej strony)
 4. **Kliknij ten przycisk** — rozpocznie się pobieranie pliku instalatora
-5. Po pobraniu otwórz plik (np. `node-v20.x.x-x64.msi`)
+5. Po pobraniu otwórz plik (np. `node-v22.x.x-x64.msi`)
 6. **Klikaj "Dalej" / "Next"** we wszystkich oknach — nie zmieniaj niczego
 7. Na końcu kliknij **"Zainstaluj" / "Install"**
 8. Jeśli system zapyta "Czy chcesz zezwolić tej aplikacji na wprowadzanie zmian?" → kliknij **"Tak"**
@@ -113,22 +113,17 @@ To taki plik z ustawieniami — trzyma hasło i inne opcje. Jest prywatny (nikt 
 ### Instrukcja:
 
 1. Otwórz folder z programem (ten który rozpakowałeś w Kroku 2)
-2. Jeśli plik `.env` nie istnieje — **uruchom `install.bat`**, który sam skopiuje `.env.example` → `.env` (lub zrób to ręcznie).
-3. Znajdź plik o nazwie **`.env`** (może być niewidoczny jeśli nie pokazujesz ukrytych plików)
-    > Jeśli nie widzisz pliku: w Eksploratorze Windows kliknij **"Widok"** → zaznacz **"Ukryte elementy"**
-4. Kliknij PRAWYM na `.env` → **"Otwórz za pomocą"** → **"Notatnik"**
-5. Znajdź linię (mniej więcej w połowie):
+2. Jeśli plik `.env` nie istnieje — **uruchom `install.bat`**, który sam utworzy `.env` na podstawie `.env.example`
+3. Instalator **wygeneruje losowe hasło administratora** — zostanie ono wypisane w oknie instalatora oraz zapisane w pliku `.env` (wiersz `DEFAULT_ADMIN_PASSWORD=...`). **Zapisz je!**
+4. (opcjonalnie) Chcesz użyć własnego hasła? Otwórz `.env` w Notatniku PRZED pierwszym uruchomieniem serwera i podmień wartość przy `DEFAULT_ADMIN_PASSWORD=` (minimum 6 znaków):
     ```
-    DEFAULT_ADMIN_PASSWORD=anim123456
+    DEFAULT_ADMIN_PASSWORD=MojeTajneHaslo123
     ```
-6. Zaznacz `anim123456` i wpisz **swoje własne hasło** (minimum 6 znaków)
-    > Np. `DEFAULT_ADMIN_PASSWORD=MojeTajneHaslo123`
-7. Kliknij **"Plik"** → **"Zapisz"** (lub naciśnij **Ctrl+S**)
-8. Zamknij Notatnik
+5. Zapisz plik (Ctrl+S) i zamknij Notatnik
 
 ### ✅ Gotowe! Hasło skonfigurowane.
 
-> **⚠️ UWAGA:** Hasło `anim123456` to hasło przykładowe. Jeśli go nie zmienisz, KAŻDY kto uruchomi aplikację będzie mógł się zalogować jako administrator. **Zawsze zmieniaj hasło!**
+> **⚠️ UWAGA:** Hasło z pliku `.env` jest używane tylko przy tworzeniu konta administratora (przy pierwszym starcie serwera). Po utworzeniu konta zmiana hasła w `.env` **nie zadziała** — hasło zmieniasz wtedy w aplikacji (panel administratora).
 
 ---
 
@@ -302,7 +297,7 @@ Wyobraź sobie plik Excel z wszystkimi danymi. Tutaj baza to jeden plik: `data/a
 
 **Co możesz sam sprawdzić:**
 
-1. Czy Node.js jest zainstalowany? Otwórz wiersz poleceń i wpisz: `node --version` — powinieneś zobaczyć `v20.x.x`
+1. Czy Node.js jest zainstalowany? Otwórz wiersz poleceń i wpisz: `node --version` — powinieneś zobaczyć `v22.x.x` lub nowszą
 2. Czy plik `.env` istnieje? Sprawdź w folderze — jeśli nie ma, wróć do [Kroku 3](#5-krok-3--skonfiguruj-hasło)
 3. Czy plik .env ma ustawione hasło? Otwórz .env w Notatniku i sprawdź linię `DEFAULT_ADMIN_PASSWORD=...`
 

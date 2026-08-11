@@ -1,7 +1,11 @@
 # Usuwa Windows Task Scheduler wpis dla backupu.
 
 $ErrorActionPreference = 'Stop'
-$taskName = 'WITROS-Oferty-DailyBackup'
+$taskName = 'SOK-Oferty-DailyBackup'
+$legacyTaskName = 'WITROS-Oferty-DailyBackup'
+
+# Migracja po rebrandingu — usuń zadanie sprzed zmiany nazwy (idempotentne, no-op na świeżych instalacjach)
+Unregister-ScheduledTask -TaskName $legacyTaskName -Confirm:$false -ErrorAction SilentlyContinue
 
 $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 if (-not $existing) {

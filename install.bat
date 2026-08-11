@@ -15,14 +15,29 @@ echo   S.O.K. - Instalator v%APP_VERSION%
 echo ===========================================================
 echo.
 
-REM 1. Node.js 20+
+REM 1. Node.js 22.13+
 where node >nul 2>nul
 if errorlevel 1 (
     echo [BLAD] Brak Node.js.
     pause
     exit /b 1
 )
-for /F "tokens=*" %%v in ('node --version') do echo [OK] Node.js %%v
+for /F "tokens=*" %%v in ('node --version') do set "NODE_VER=%%v"
+for /F "tokens=1,2 delims=.v" %%a in ("%NODE_VER%") do (
+    set "NODE_MAJOR=%%a"
+    set "NODE_MINOR=%%b"
+)
+if defined NODE_MAJOR if defined NODE_MINOR (
+    if %NODE_MAJOR% lss 22 goto :node_bad
+    if %NODE_MAJOR% equ 22 if %NODE_MINOR% lss 13 goto :node_bad
+)
+echo [OK] Node.js %NODE_VER%
+goto :node_ok
+:node_bad
+echo [BLAD] Wymagane Node.js ^>=22.13.0. Masz %NODE_VER%
+pause
+exit /b 1
+:node_ok
 
 REM 2. npm
 where npm >nul 2>nul
@@ -37,15 +52,17 @@ REM 3. Git (opcjonalny)
 where git >nul 2>nul && echo [OK] Git || echo [INFO] Brak Git - husky hooks beda nieaktywne
 
 REM 4. .env
-if not exist ".env" (
-    if exist ".env.example" (
-        echo [INFO] Brak .env - kopiuje z .env.example
-        copy ".env.example" ".env" >nul
-    ) else (
-        echo [BLAD] Brak .env i .env.example. Skopiuj .env.example na .env recznie.
-        pause
-        exit /b 1
-    )
+if not exist ".env.example" (
+    echo [BLAD] Brak .env.example. Skopiuj .env.example na .env recznie.
+    pause
+    exit /b 1
+)
+echo [INFO] Inicjalizacja .env (init-env.mjs)...
+call node scripts\init-env.mjs
+if errorlevel 1 (
+    echo [BLAD] init-env.mjs nie powiodl sie.
+    pause
+    exit /b 1
 )
 echo [OK] .env OK
 

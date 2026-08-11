@@ -34,11 +34,19 @@ log INIT "  S.O.K. - Development Mode (bash)"
 log INIT "========================================================"
 
 # 1. Walidacja Node.js
-log STEP "Krok 1/6 - Sprawdzanie Node.js 20+..."
+log STEP "Krok 1/6 - Sprawdzanie Node.js 22.13+..."
 command -v node >/dev/null 2>&1 || { log ERROR "Brak Node.js"; exit 1; }
 NODE_VER=$(node --version)
 NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1 | tr -d 'v')
-[ "$NODE_MAJOR" -ge 20 ] || { log ERROR "Wymagane Node.js >=20. Wykryto $NODE_VER"; exit 1; }
+NODE_MINOR=$(echo "$NODE_VER" | cut -d. -f2)
+if [ "$NODE_MAJOR" -lt 22 ]; then
+    log ERROR "Wymagane Node.js >=22.13. Wykryto $NODE_VER"
+    exit 1
+fi
+if [ "$NODE_MAJOR" -eq 22 ] && [ "$NODE_MINOR" -lt 13 ]; then
+    log ERROR "Wymagane Node.js >=22.13. Wykryto $NODE_VER"
+    exit 1
+fi
 log OK "Node.js $NODE_VER"
 
 # 2. node_modules
@@ -61,11 +69,20 @@ fi
 
 # 4. Schema DB
 log STEP "Krok 4/6 - Sprawdzanie schematu (7 tabel telemetry/AI)..."
-if ! node scripts/check-db.js >/dev/null 2>&1; then
+mkdir -p data
+set +e
+node scripts/check-db.js >/dev/null 2>&1
+CHECK_EXIT=$?
+set -e
+if [ "$CHECK_EXIT" -eq 0 ]; then
+    log OK "Schema OK"
+elif [ "$CHECK_EXIT" -eq 2 ]; then
+    log WARN "Baza pusta - uruchamiam seed..."
+    npx ts-node prisma/seed.ts
+    log OK "Seed zakonczony"
+else
     log WARN "Schema niezgodny - db push --accept-data-loss"
     npx prisma db push --skip-generate --accept-data-loss
-else
-    log OK "Schema OK"
 fi
 
 # 5. Port 3000 - bezpieczny check (nie netstat, a lsof jeśli dostępne)

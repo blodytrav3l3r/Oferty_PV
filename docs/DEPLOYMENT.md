@@ -19,6 +19,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 | `DATABASE_URL`           | Ścieżka do bazy SQLite                             | Nie      | `file:../data/app_database.sqlite`      |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów                 | Nie      | `https://...@o....ingest.sentry.io/...` |
 | `COOKIE_SECURE`          | Wymuszenie `Secure` flagi na ciastku sesji         | Nie*     | `true`                                  |
+| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (1 lub 2)      | Nie      | `1`                                     |
 
 > \* `COOKIE_SECURE=true` jest wymagane, gdy aplikacja jest serwowana przez HTTPS
 > w trybie innym niż `production` (w `production` flaga jest wymuszana automatycznie).
@@ -29,7 +30,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 
 ### Wymagania
 
-- Node.js >= 20.0.0
+- Node.js >= 22.13 (rekomendowane LTS 22.x / 24.x)
 - npm
 
 ### Instalacja
@@ -37,7 +38,7 @@ Przed wdrożeniem skonfiguruj plik `.env` (lub zmienne środowiskowe na platform
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
-npm install
+npm ci
 cp .env.example .env
 # edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
@@ -45,6 +46,8 @@ npx prisma migrate deploy
 # (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
+# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 ```
 
 ### Uruchomienie
@@ -53,14 +56,14 @@ npm run build
 npm start
 ```
 
-Serwer dostępny pod adresem: `http://localhost:10000`
+Serwer dostępny pod adresem: `http://localhost:3000`
 
 ### Skrypty startowe
 
 Projekt zawiera wygodne skrypty startowe:
 
 - **Windows:** `start.bat` — uruchamia serwer w oknie konsoli
-- **Instalator:** `install.bat` — automatyzuje `npm install`, `prisma generate`, seed i build
+- **Instalator:** `install.bat` — automatyzuje `npm ci`, `prisma generate`, seed i build
 
 ---
 
@@ -71,10 +74,10 @@ Projekt zawiera wygodne skrypty startowe:
 Plik `Dockerfile` buduje obraz na bazie `node:22-slim`. Wykonuje:
 
 1. Instalację OpenSSL (wymagany przez Prisma)
-2. `npm install` (wszystkie zależności)
+2. `npm ci` (wszystkie zależności — bez `npm prune --production`; devDeps są potrzebne w runtime do seedowania i `db push`)
 3. `npx prisma generate` (generacja klienta)
 4. `npm run build` (kompilacja TypeScript)
-5. `npm prune --production` (usunięcie zależności dev)
+5. Symlink `dist/generated` → `generated` (klient Prisma)
 6. Konfigurację katalogu `/var/data` dla bazy danych
 
 ### docker-compose.yml
@@ -168,7 +171,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 
 ### Wymagania
 
-- Node.js >= 20.0.0
+- Node.js >= 22.13 (rekomendowane LTS 22.x / 24.x)
 - PM2 (opcjonalnie, do zarządzania procesem)
 - Reverse proxy: Caddy (rekomendowany) lub Nginx
 
@@ -178,8 +181,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 # 1. Aktualizacja systemu
 sudo apt update && sudo apt upgrade -y
 
-# 2. Instalacja Node.js 20.x
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# 2. Instalacja Node.js 22.x (LTS, >= 22.13)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs
 
 # 3. Klonowanie repozytorium
@@ -187,7 +190,7 @@ git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
 
 # 4. Instalacja zależności
-npm install
+npm ci
 
 # 5. Konfiguracja
 cp .env.example .env
@@ -201,10 +204,12 @@ npm run prisma:seed
 
 # 7. Budowa
 npm run build
+# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 
 # 8. Uruchomienie przez PM2
 npm install -g pm2
-pm2 start dist/server.js --name witros-oferty
+pm2 start dist/server.js --name sok-oferty
 pm2 save
 pm2 startup
 ```
@@ -275,7 +280,7 @@ sudo certbot --nginx -d twoja-domena.pl
 
 ```bash
 # Dodaj do crontab (codziennie o 3:00)
-0 3 * * * cd /path/to/Oferty_PV && npm run backup >> /var/log/witros-backup.log 2>&1
+0 3 * * * cd /path/to/Oferty_PV && npm run backup >> /var/log/sok-oferty-backup.log 2>&1
 ```
 
 ### Task Scheduler (Windows)
@@ -395,6 +400,10 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
 
 1. Zainstaluj aplikację według instrukcji w README (kroki 1–3, bez seedowania)
 2. Zbuduj projekt: `npm run build`
+
+   > **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma:
+   > `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`.
+
 3. Przywróć bazę:
     ```bash
     npm run restore -- data/backups/backup_*.sqlite

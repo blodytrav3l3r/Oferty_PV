@@ -3,7 +3,12 @@ import puppeteer from 'puppeteer';
 export async function generatePDF(html: string): Promise<Buffer> {
     const browser = await puppeteer.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            // ponytail: --no-sandbox niezbędny w kontenerze Docker (proces jako root;
+            // slim obrazy nie maja user namespaces, ktorych Chromium uzywa dla sandboxa).
+            '--no-sandbox',
+            '--disable-setuid-sandbox'
+        ]
     });
 
     try {

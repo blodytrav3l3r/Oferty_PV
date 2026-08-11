@@ -22,6 +22,6 @@
             "@rury/*": ["./public/js/rury/*"]
         }
     },
-    "include": ["public/js/**/*.js", "public/js/**/*.ts", "public/data/*.js"],
+    "include": ["public/js/**/*.js", "public/js/**/*.ts"],
     "exclude": ["node_modules", "dist", "data", "*.sqlite"]
 }

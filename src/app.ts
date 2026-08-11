@@ -5,9 +5,9 @@ import 'dotenv/config';
  * Aplikacja Express — centralny plik konfiguracyjny
  * Zawiera konfigurację middleware, routingu i obsługi błędów.
  */
-import express from 'express';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import express from 'express';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -33,23 +33,11 @@ import { errorHandler } from './middleware/errorHandler';
 import { getVersion } from './version';
 import { APP_NAME } from './constants/appMeta';
 import prisma from './prismaClient';
+import { resolvePublicDir } from './utils/paths';
+import { applyBrandTokens, injectAppNameScript } from './utils/brandHtml';
 
 const app = express();
 const NODE_ENV = process.env.NODE_ENV || 'development';
-
-/**
- * Rozwiązuje ścieżkę do katalogu public niezależnie od katalogu roboczego (process.cwd()).
- * W dev (ts-node-dev) moduł działa z src/ → public jest o poziom wyżej,
- * w prod (kompilacja tsc do dist/src) → dwa poziomy wyżej.
- * Wybieramy faktycznie istniejący katalog — odporny na zmianę struktury po buildzie.
- */
-function resolvePublicDir(): string {
-    const devPublic = path.resolve(__dirname, '../public');
-    if (fs.existsSync(devPublic)) {
-        return devPublic;
-    }
-    return path.resolve(__dirname, '../../public');
-}
 
 /* ===== SENTRY (monitoring błędów) ===== */
 if (process.env.SENTRY_DSN) {
@@ -162,6 +150,27 @@ app.use(cspReportOnly);
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
+
+/* ===== NAZWA APLIKACJI (branding) — konfigurowalna przez env =====
+ * Statyczne HTML zawierają tokeny {{APP_NAME}}/{{APP_SUBTITLE}} zamiast twardej
+ * nazwy; podmieniamy je przy serwowaniu i wstrzykujemy window.APP_NAME
+ * dla frontendu. Nazwę ustawia się w .env (APP_NAME, APP_SUBTITLE). */
+app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    const clean = req.path.replace(/^\/+/, '');
+    const rel = clean === '' ? 'index.html' : clean.endsWith('.html') ? clean : clean + '.html';
+    const file = path.join(resolvePublicDir(), rel);
+    if (!fs.existsSync(file)) return next();
+    try {
+        let html = applyBrandTokens(fs.readFileSync(file, 'utf-8'));
+        html = injectAppNameScript(html);
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.send(html);
+    } catch {
+        next();
+    }
+});
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
 if (NODE_ENV === 'production') {
@@ -332,6 +341,19 @@ export async function initApp(): Promise<void> {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
     } catch {
         // ignoruj — tabela ai_telemetry_logs może nie istnieć (start przed db push)
+    }
+    // Feature flag import/export — domyslnie wlaczona. Migracja
+    // 20260705000000_feature_import_export dziala tylko na instalacjach z historia
+    // migracji; instalacje z 'prisma db push' nie maja tej flagi w settings,
+    // wiec auto-heal upsertem (bez nadpisywania wartosci zmienionej przez uzytkownika).
+    try {
+        await prisma.settings.upsert({
+            where: { key: 'feature_import_export_enabled' },
+            update: {},
+            create: { key: 'feature_import_export_enabled', value: '"1"' }
+        });
+    } catch {
+        // ignoruj — tabela settings moze nie istniec (start przed db push)
     }
 
     // Zapewnij pełny schemat FTS5 (m.in. kolumna clientNumber) — idempotentne

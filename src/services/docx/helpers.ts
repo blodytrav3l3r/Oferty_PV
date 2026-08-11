@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { FONT, COLOR_BODY, SZ_TABLE_BODY, CELL_BORDERS, type CellBorders } from './constants';
 import { logger } from '../../utils/logger';
+import { resolvePublicDir } from '../../utils/paths';
 
 // ─── Formatowanie wartości ──────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export function textCell(
 // ─── Ładowanie obrazów ──────────────────────────────────────────────
 
 export function loadImageData(filename: string): Buffer | null {
-    const filePath = path.join(process.cwd(), 'public', 'images', filename);
+    const filePath = path.join(resolvePublicDir(), 'images', filename);
     try {
         return fs.readFileSync(filePath);
     } catch {

@@ -5,12 +5,14 @@ import prisma from '../src/prismaClient';
 
 // Mock fs
 jest.mock('fs', () => ({
-    readFileSync: jest.fn()
+    readFileSync: jest.fn(),
+    existsSync: jest.fn(() => true)
 }));
 
 // Mock path to avoid actual path resolution issues in tests
 jest.mock('path', () => ({
-    join: (...args: string[]) => args.join('/')
+    join: (...args: string[]) => args.join('/'),
+    resolve: (...args: string[]) => args.join('/')
 }));
 
 // Mock puppeteer

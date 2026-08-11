@@ -39,6 +39,8 @@ Szczegółowe opisy decyzji projektowych znajdują się w `docs/adr/`:
 - **ADR-003**: Vite jako dev server (wycofany przez ADR-005).
 - **ADR-004**: Express + Prisma na backendzie.
 - **ADR-005**: Express jako jedyny serwer (dev i prod) — wycofanie Vite.
+- **ADR-006**: HTTPS przez reverse proxy.
+- **ADR-007**: Ujednolicony system cenników.
 
 ---
 

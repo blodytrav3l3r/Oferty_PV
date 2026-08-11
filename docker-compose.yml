@@ -13,7 +13,7 @@ services:
             - NODE_ENV=production
             - PORT=10000
             - HOST=0.0.0.0
-            # Wymagane przy pierwszym starcie - ensureAdminExists() rzuci wyjatek bez tej zmiennej
+            # Wymagane przy pierwszym starcie - bez tej zmiennej konto admina nie zostanie utworzone (wyjatek jest logowany, start kontynuowany)
             - "DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}"
         volumes:
             - sok_data:/var/data

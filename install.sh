@@ -16,11 +16,17 @@ log INIT "  S.O.K. - Instalator (bash)"
 log INIT "========================================================"
 
 # 1. Node.js
-log STEP "Krok 1/8 - Node.js 20+..."
+log STEP "Krok 1/8 - Node.js 22.13+..."
 command -v node >/dev/null 2>&1 || err "Brak Node.js"
 NODE_VER=$(node --version)
 NODE_MAJOR=$(echo "$NODE_VER" | cut -d. -f1 | tr -d 'v')
-[ "$NODE_MAJOR" -ge 20 ] || err "Wymagane Node.js >=20 (masz $NODE_VER)"
+NODE_MINOR=$(echo "$NODE_VER" | cut -d. -f2)
+if [ "$NODE_MAJOR" -lt 22 ]; then
+    err "Wymagane Node.js >=22.13 (masz $NODE_VER)"
+fi
+if [ "$NODE_MAJOR" -eq 22 ] && [ "$NODE_MINOR" -lt 13 ]; then
+    err "Wymagane Node.js >=22.13 (masz $NODE_VER)"
+fi
 log OK "Node.js $NODE_VER"
 
 # 2. npm
@@ -38,14 +44,11 @@ fi
 
 # 4. .env
 log STEP "Krok 4/8 - Konfiguracja (.env)..."
-if [ ! -f .env ]; then
-    if [ -f .env.example ]; then
-        log WARN "Brak .env - kopiuje z .env.example"
-        cp .env.example .env
-    else
-        err "Brak .env i .env.example. Skopiuj recznie."
-    fi
+if [ ! -f .env.example ]; then
+    err "Brak .env.example. Skopiuj recznie."
 fi
+log INFO "Inicjalizacja .env (init-env.mjs)..."
+node scripts/init-env.mjs
 log OK ".env OK"
 
 # 5. Struktura

@@ -73,7 +73,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
     try {
         // 1. Login via API
         const loginResp = await page.request.post(`${BASE}/api/auth/login`, {
-            data: { username: 'admin', password: 'anim123456' }
+            data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' }
         });
         const loginJson = await loginResp.json();
         const authToken = loginJson.token || loginJson.authToken;

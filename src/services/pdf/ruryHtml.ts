@@ -6,6 +6,7 @@ import { buildContactSectionHTML } from './offerUsers';
 import type { RuryOfferData } from './types';
 import { PRINT_TOKENS_CSS } from './printTokens';
 import { loadLetterheadBase64 } from './letterhead';
+import { resolvePublicDir } from '../../utils/paths';
 
 const CATEGORY_ORDER = [
     'Rury Betonowe',
@@ -175,10 +176,20 @@ export async function generateRuryHTML(data: RuryOfferData): Promise<string> {
         ? ''
         : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
 
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaRury.html');
-    const template = fs
-        .readFileSync(templatePath, 'utf-8')
-        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+    const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaRury.html');
+    let template: string;
+    try {
+        template = fs
+            .readFileSync(templatePath, 'utf-8')
+            .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+    } catch (e) {
+        throw new Error(
+            'Nie mozna wczytac szablonu PDF (' +
+                templatePath +
+                '): ' +
+                (e instanceof Error ? e.message : String(e))
+        );
+    }
 
     const letterhead = loadLetterheadBase64();
     const naglowekBase64 = letterhead.header;

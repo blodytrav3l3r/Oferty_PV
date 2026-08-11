@@ -5,6 +5,7 @@ import { fmtInt, escapeHtml, formatDatePL } from './helpers';
 import { buildContactSectionHTML } from './offerUsers';
 import { PRINT_TOKENS_CSS } from './printTokens';
 import { loadLetterheadBase64 } from './letterhead';
+import { resolvePublicDir } from '../../utils/paths';
 
 /**
  * Buduje sekcję treści oferty studni (tabele per DN + podsumowanie).
@@ -135,10 +136,20 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
         ? ''
         : `<div><strong>Data ważności oferty:</strong> ${validityString}</div>`;
 
-    const templatePath = path.join(process.cwd(), 'public', 'templates', 'ofertaStudnie.html');
-    const template = fs
-        .readFileSync(templatePath, 'utf-8')
-        .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+    const templatePath = path.join(resolvePublicDir(), 'templates', 'ofertaStudnie.html');
+    let template: string;
+    try {
+        template = fs
+            .readFileSync(templatePath, 'utf-8')
+            .replace(/\{\{PRINT_TOKENS\}\}/g, PRINT_TOKENS_CSS);
+    } catch (e) {
+        throw new Error(
+            'Nie mozna wczytac szablonu PDF (' +
+                templatePath +
+                '): ' +
+                (e instanceof Error ? e.message : String(e))
+        );
+    }
 
     const letterhead = loadLetterheadBase64();
     const naglowekBase64 = letterhead.header;

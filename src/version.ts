@@ -4,8 +4,8 @@
  * Importuje wersję z pliku VERSION oraz informacje z GIT.
  */
 import fs from 'fs';
-import path from 'path';
 import { execSync } from 'child_process';
+import { resolveVersionFile } from './utils/paths';
 
 export interface AppVersion {
     version: string;
@@ -16,7 +16,15 @@ export interface AppVersion {
     dbVersion: string;
 }
 
-const version = fs.readFileSync(path.resolve('VERSION'), 'utf-8').trim();
+// Odczyt przez resolver (odporny na CWD); try/catch — brak pliku VERSION
+// (np. obraz Docker bez repozytorium) nie może crashować serwera przy starcie.
+const version = (() => {
+    try {
+        return fs.readFileSync(resolveVersionFile(), 'utf-8').trim();
+    } catch {
+        return process.env.APP_VERSION || '0.0.0';
+    }
+})();
 
 function getGitInfo(): { commitHash: string; branch: string } {
     try {

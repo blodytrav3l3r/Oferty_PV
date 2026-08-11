@@ -2,7 +2,7 @@
 
 > **Last updated:** 2026-07-23
 > **Scope:** All 3 modules: Rury, Studnie, PRECO
-> **Based on:** `pricelist.html` (rury), `public/partials/studnie/pricelist.html`, `pricelistUi.js`, `pricelistManager.js`, `pricelistPreco.js`, `pricelistSaveReset.js`, `pricelistProductCrud.js`, `pricelistCategory.js`, `pricelistImportExport.js`, `dataService.js`, `uiHelpers.js`, `shared/ui.js`, backend routes (`productsV2.ts`, `productsStudnieV2.ts`, `precoPricingV2.ts`, `priceOverrides.ts`), `ADR-005-unified-pricing.md`
+> **Based on:** `pricelist.html` (rury), `public/partials/studnie/pricelist.html`, `pricelistUi.js`, `pricelistManager.js`, `pricelistPreco.js`, `pricelistSaveReset.js`, `pricelistProductCrud.js`, `pricelistCategory.js`, `pricelistImportExport.js`, `dataService.js`, `uiHelpers.js`, `shared/ui.js`, backend routes (`productsV2.ts`, `productsStudnieV2.ts`, `precoPricingV2.ts`, `priceOverrides.ts`), `ADR-007-unified-pricing.md`
 
 ---
 
@@ -292,7 +292,7 @@ STUDNIE:
 | Studnie (productsStudnieV2.ts) | **429**          | `'Zapis w toku, spróbuj ponownie za chwilę'` |
 | PRECO (precoPricingV2.ts)      | **423**          | `'Zasób zablokowany, spróbuj ponownie'`      |
 
-**Inconsistency:** PRECO uses HTTP 423 (Locked) while Rury and Studnie use 429 (Too Many Requests). ADR-005 says "writeLock on all modifiable endpoints" but doesn't specify the status code.
+**Inconsistency:** PRECO uses HTTP 423 (Locked) while Rury and Studnie use 429 (Too Many Requests). ADR-007 says "writeLock on all modifiable endpoints" but doesn't specify the status code.
 
 ### 4.5 Auth on GET /default
 

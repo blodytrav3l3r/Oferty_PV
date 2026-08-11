@@ -7,7 +7,8 @@ import type { RuryOfferData, StudnieOfferData } from '../src/services/pdf/types'
 import prisma from '../src/prismaClient';
 
 jest.mock('fs', () => ({
-    readFileSync: jest.fn()
+    readFileSync: jest.fn(),
+    existsSync: jest.fn(() => true)
 }));
 
 jest.mock('puppeteer', () => ({

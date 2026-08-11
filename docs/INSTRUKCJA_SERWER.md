@@ -20,7 +20,7 @@
 
 | Składnik              | Wersja  | Opis                                                          |
 | --------------------- | ------- | ------------------------------------------------------------- |
-| **Node.js**           | 20+     | [https://nodejs.org](https://nodejs.org) — pobierz wersję LTS |
+| **Node.js**           | >= 22.13 | [https://nodejs.org](https://nodejs.org) — pobierz wersję LTS (22.x / 24.x) |
 | **npm**               | 9+      | Instaluje się automatycznie z Node.js                         |
 | **Git** (opcjonalnie) | dowolna | Do pobierania aktualizacji                                    |
 
@@ -72,7 +72,7 @@ Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
-npm install
+npm ci
 cp .env.example .env
 # edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
@@ -80,6 +80,8 @@ npx prisma migrate deploy
 # (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
+# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 npm start
 ```
 
@@ -88,13 +90,15 @@ npm start
 ```bash
 git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
-npm install
+npm ci
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
 # (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
+# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 # Przywróć bazę z backupu (pomiń seed):
 npm run restore -- data/backups/backup_*.sqlite
 npm start
@@ -132,17 +136,17 @@ Aplikacja działa 24/7 niezależnie od Twojego komputera.
 ssh root@TWOJ_ADRES_IP
 ```
 
-**2. Zainstaluj Node.js 20:**
+**2. Zainstaluj Node.js 22 (LTS, >= 22.13):**
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs git
 ```
 
 **3. Skopiuj pliki na serwer (z lokalnego komputera):**
 
 ```powershell
-scp -r Oferty_PV root@TWOJ_ADRES_IP:/home/witros/
+scp -r Oferty_PV root@TWOJ_ADRES_IP:/home/sok-oferty/
 ```
 
 Lub użyj **WinSCP** (graficzny klient SFTP).
@@ -150,14 +154,16 @@ Lub użyj **WinSCP** (graficzny klient SFTP).
 **4. Zainstaluj i uruchom:**
 
 ```bash
-cd /home/witros
-npm install
+cd /home/sok-oferty
+npm ci
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
 # (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
+# Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
 # Opcja A: nowa instalacja
 npm run prisma:seed
 # Opcja B: jeśli przenosisz bazę z innego urządzenia — zamiast seed:
@@ -250,7 +256,7 @@ sudo ufw allow 3000/tcp
 ```bash
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-# /etc/nginx/sites-available/witros
+# /etc/nginx/sites-available/sok-oferty
 server {
     listen 80;
     server_name twojadomena.pl;
@@ -266,7 +272,7 @@ server {
     }
 }
 
-sudo ln -s /etc/nginx/sites-available/witros /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/sok-oferty /etc/nginx/sites-enabled/
 sudo certbot --nginx -d twojadomena.pl
 ```
 
@@ -299,7 +305,7 @@ HTTP → HTTPS. Konfiguracja w pliku `Caddyfile` w katalogu projektu.
 
 ```bash
 npm install -g pm2
-pm2 start dist/server.js --name "witros-oferty"
+pm2 start dist/server.js --name "sok-oferty"
 pm2 save
 pm2 startup
 ```
@@ -308,8 +314,8 @@ Przydatne komendy:
 
 ```bash
 pm2 list              # Lista procesów
-pm2 logs witros-oferty # Logi
-pm2 restart witros-oferty
+pm2 logs sok-oferty # Logi
+pm2 restart sok-oferty
 pm2 monit             # Monitor
 ```
 
@@ -319,10 +325,10 @@ pm2 monit             # Monitor
 
 | Problem                   | Rozwiązanie                                            |
 | ------------------------- | ------------------------------------------------------ |
-| `npm install` nie działa  | Sprawdź Node.js: `node --version`                      |
+| `npm install` nie działa  | Sprawdź Node.js: `node --version` (wymagane >= 22.13)    |
 | Port zajęty               | Zmień `PORT` w `.env`                                  |
 | Brak dostępu z zewnątrz   | Sprawdź firewall i przekierowanie portów               |
-| Strona się nie ładuje     | Sprawdź logi: `pm2 logs witros-oferty`                 |
+| Strona się nie ładuje     | Sprawdź logi: `pm2 logs sok-oferty`                 |
 | Błąd bazy danych          | Uruchom `npm run prisma:reset` i `npm run prisma:seed` |
 | Błąd "Cannot find module" | Uruchom `npm run build`                                |
 

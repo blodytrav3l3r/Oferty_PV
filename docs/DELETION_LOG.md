@@ -298,6 +298,11 @@ Usunięto też nieużywane importy/instancje: `RecommendationEngine`, `Authentic
 > bez niego `npm run build:frontend` (z `minify: 'esbuild'` w `vite.config.js`) konczy sie bledem.
 > Nie usuwac ponownie (patrz AGENTS.md #25 oraz ADR-003).
 
+> **Aktualizacja (2026-08-11):** Nota powyzej jest nieaktualna — Vite zostal wycofany (ADR-005,
+> 2026-08-08), a wraz z nim usuniety build frontendu. Obecnie **`esbuild` nie znajduje sie
+> w zaleznosciach** (`package.json` ani `package-lock.json` nie zawieraja wpisu `esbuild`).
+> Powyzsza rekomendacja „Nie usuwac ponownie" dotyczyla konfiguracji Vite i nie ma zastosowania.
+
 ### Bug Fix
 
 | Element                               | Opis                                                                                                                                                                    |

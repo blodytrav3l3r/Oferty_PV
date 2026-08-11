@@ -3,7 +3,7 @@
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.13.1
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
-> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.12.0) —
+> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.13.1) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy
 > (`install.bat` z `migrate deploy` + fallback `db push`), nie plany przyszłe.
 
@@ -63,7 +63,7 @@
 | Zasób        | Wymaganie                                                  |
 | ------------ | ---------------------------------------------------------- |
 | **System**   | Windows 10/11, Linux (Ubuntu 20+), macOS 12+               |
-| **Node.js**  | >= 20.0.0 LTS                                              |
+| **Node.js**  | >= 22.13 LTS (rekomendowane 22.x / 24.x)                    |
 | **npm**      | >= 9.0.0 (dołączony do Node.js)                            |
 | **RAM**      | 512 MB (1 GB zalecane)                                     |
 | **Dysk**     | ~500 MB wolnego miejsca (w tym Chromium ~300 MB)           |
@@ -84,7 +84,7 @@
 ### Szybki start (5 kroków):
 
 ```
-1. Zainstaluj Node.js 20+ LTS z https://nodejs.org
+1. Zainstaluj Node.js >= 22.13 LTS z https://nodejs.org
 2. git clone https://github.com/blodytrav3l3r/Oferty_PV.git
    (lub Download ZIP → rozpakuj)
 3. Skopiuj .env.example → .env, ustaw DEFAULT_ADMIN_PASSWORD
@@ -99,7 +99,7 @@
 # Pobierz z: https://nodejs.org (wersja LTS, lewa strona, zielony przycisk)
 # Uruchom instalator → "Next" aż do końca
 # Sprawdź:
-node --version   # → v20.x.x lub nowszy
+node --version   # → v22.13.x lub nowszy
 npm --version    # → 9.x lub nowszy
 ```
 
@@ -135,7 +135,7 @@ copy .env.example .env
 
 Co robi instalator:
 
-1. ✅ Sprawdza Node.js 20+
+1. ✅ Sprawdza Node.js >= 22.13
 2. ✅ Sprawdza npm
 3. ✅ Sprawdza Git (opcjonalny)
 4. ✅ Sprawdza strukturę katalogów (src/, prisma/)
@@ -225,7 +225,7 @@ npm run restore -- data/backups/backup_*.sqlite
 docker compose up --build -d
 
 # 4. Aplikacja na: http://localhost:3000
-# 5. Logowanie: admin / anim123456 (jeśli nie zmieniłeś .env)
+# 5. Logowanie: admin / hasło ustawione w DEFAULT_ADMIN_PASSWORD (wymagane jawnie w .env przed docker compose up)
 ```
 
 ### Co Docker robi automatycznie:
@@ -401,7 +401,7 @@ git push --follow-tags
 
 | Czynność                               | Automatyczne | Ręczne | Uwagi                                           |
 | -------------------------------------- | :----------: | :----: | ----------------------------------------------- |
-| Instalacja Node.js 20+                 |              |   ✅   | Pobrać z https://nodejs.org                     |
+| Instalacja Node.js >= 22.13          |              |   ✅   | Pobrać z https://nodejs.org                     |
 | Pobranie kodu (git clone / ZIP)        |              |   ✅   | GitHub → Code → Download ZIP                    |
 | Kopiowanie .env.example → .env         |              |   ✅   | `copy .env.example .env`                        |
 | Ustawienie DEFAULT_ADMIN_PASSWORD      |              |   ✅   | Edycja .env                                     |
@@ -477,7 +477,7 @@ DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30
 
 ### [BŁĄD] Brak Node.js
 
-**Przyczyna:** Nie zainstalowano Node.js 20+.
+**Przyczyna:** Nie zainstalowano Node.js >= 22.13.
 
 **Rozwiązanie:** Pobierz z https://nodejs.org (LTS) i zainstaluj.
 
@@ -488,7 +488,7 @@ DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30
 **Rozwiązanie:**
 
 ```powershell
-node --version          # Sprawdź wersję (musi być 20+)
+node --version          # Sprawdź wersję (musi być >= 22.13)
 npm --version           # Sprawdź npm
 # Wyłącz antywirus na czas instalacji
 # Uruchom jako Administrator

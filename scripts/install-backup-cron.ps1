@@ -3,12 +3,15 @@
 
 $ErrorActionPreference = 'Stop'
 
-$taskName = 'WITROS-Oferty-DailyBackup'
+$taskName = 'SOK-Oferty-DailyBackup'
+
+# Migracja po rebrandingu — usuń zadanie sprzed zmiany nazwy (idempotentne, no-op na świeżych instalacjach)
+Unregister-ScheduledTask -TaskName 'WITROS-Oferty-DailyBackup' -Confirm:$false -ErrorAction SilentlyContinue
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $npmCmd = (Get-Command npm.cmd -ErrorAction SilentlyContinue).Source
 if (-not $npmCmd) { $npmCmd = (Get-Command npm -ErrorAction SilentlyContinue).Source }
 if (-not $npmCmd) {
-    Write-Error "Nie znaleziono npm. Zainstaluj Node.js 20+."
+    Write-Error "Nie znaleziono npm. Zainstaluj Node.js 22.13+."
     exit 1
 }
 

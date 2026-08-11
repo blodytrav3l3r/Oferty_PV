@@ -137,7 +137,12 @@ function check() {
             try {
                 return checkWithCli();
             } catch (cliErr) {
-                console.error('[check-db] Brak node:sqlite i sqlite3 CLI.');
+                console.error(
+                    '[check-db] Wymagany Node.js >= 22.13.0 (node:sqlite) lub sqlite3 CLI.'
+                );
+                console.error(
+                    '[check-db] Zainstaluj Node.js >= 22.13.0 lub dodaj sqlite3 do PATH.'
+                );
                 process.exit(4);
             }
         }

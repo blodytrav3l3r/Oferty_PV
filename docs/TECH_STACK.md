@@ -25,7 +25,7 @@
 
 | Technologia      | Wersja   | Licencja      | Zastosowanie              | Link                                                       | Komercyjnie |
 | ---------------- | -------- | ------------- | ------------------------- | ---------------------------------------------------------- | :---------: |
-| Node.js          | ≥20.0.0  | MIT           | Środowisko uruchomieniowe | https://nodejs.org                                         |     ✅      |
+| Node.js          | ≥22.13   | MIT           | Środowisko uruchomieniowe | https://nodejs.org                                         |     ✅      |
 | TypeScript       | ^6.0.2   | Apache-2.0    | Język programowania       | https://typescriptlang.org                                 |     ✅      |
 | Express          | ^4.21.0  | MIT           | Framework backend         | https://expressjs.com                                      |     ✅      |
 | Prisma           | ^6.0.0   | Apache-2.0    | ORM / baza danych         | https://prisma.io                                          |     ✅      |
@@ -37,7 +37,7 @@
 | docx (npm)       | ^9.6.1   | MIT           | Generowanie DOCX          | https://docx.js.org                                        |     ✅      |
 | Helmet           | ^8.1.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                 |     ✅      |
 | Zod              | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                            |     ✅      |
-| ESLint           | ^9.39.4  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
+| ESLint           | ^10.6.0  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
 | Prettier         | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                        |     ✅      |
 | Husky            | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                           |     ✅      |
 | commitlint       | ^21.0.2  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |

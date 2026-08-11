@@ -35,7 +35,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
     try {
         // Login
-        const r = await page.request.post(`${BASE}/api/auth/login`, { data: { username: 'admin', password: 'anim123456' } });
+        const r = await page.request.post(`${BASE}/api/auth/login`, { data: { username: 'admin', password: process.env.TEST_ADMIN_PASSWORD || 'anim123456' } });
         const token = (await r.json()).token;
         await page.addInitScript(t => localStorage.setItem('authToken', t), token);
 

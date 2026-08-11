@@ -6,14 +6,14 @@
 
 ## 1. KROKI RĘCZNE (wymagają interwencji człowieka)
 
-### 1.1 Instalacja Node.js 20+ LTS
+### 1.1 Instalacja Node.js >= 22.13 LTS
 
 | Pole                        | Opis                                                                                                                                                                                               |
 | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Co zrobić**               | Pobrać instalator z https://nodejs.org (wersja LTS ≥20), uruchomić, przejść przez kreatora.                                                                                                        |
+| **Co zrobić**               | Pobrać instalator z https://nodejs.org (wersja LTS ≥22.13, rekomendowane 22.x / 24.x), uruchomić, przejść przez kreatora.                                                                                                        |
 | **Dlaczego ręczne**         | Node.js to zależność systemowa, a nie biblioteka projektu. Żaden skrypt nie może zainstalować środowiska uruchomieniowego na maszynie użytkownika — wymaga uprawnień admina i akceptacji licencji. |
 | **Konsekwencja pominięcia** | `install.bat` / `dev.bat` zwróci `[BŁAD] Brak Node.js` i zakończy działanie z kodem błędu 1.                                                                                                       |
-| **Weryfikacja**             | `node --version` → v20.x.x lub nowszy                                                                                                                                                              |
+| **Weryfikacja**             | `node --version` → v22.13.x lub nowszy                                                                                                                                                              |
 
 ### 1.2 Pobranie kodu źródłowego
 
@@ -101,7 +101,7 @@
 | Pole                              | Opis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Wyzwalacz**                     | Uruchomienie `.\install.bat` (Windows) lub `bash install.sh` (Linux) przez użytkownika. Flaga `--skip-seed` pomija seed danych (przydatne przy przenoszeniu bazy).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| **Co robi wewnętrznie**           | 1. Sprawdza Node.js 20+ (`node --version`)\ 2. Sprawdza npm (`npm --version`)\ 3. Sprawdza Git (opcjonalnie, nie blokuje)\ 4. Kopiuje `.env.example` → `.env` jeśli brak (auto-konfiguracja)\ 5. Weryfikuje strukturę katalogów (`src/`, `public/`, `tests/`, `prisma/`)\ 6. Uruchamia `npm ci` (jeśli `package-lock.json` istnieje) lub `npm install`\ 7. Generuje Prisma Client (`npx prisma generate`)\ 8. Synchronizuje schemat bazy — jeśli istnieje `prisma/migrations/migration_lock.toml` uruchamia `npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss`; w przeciwnym razie (baza tworzona przez `db push`, bez tabeli `_prisma_migrations` — `migrate deploy` na niej zawodzi) od razu `db push`\ 9. Seed danych początkowych (`npx ts-node prisma/seed.ts`, chyba że `--skip-seed`)\ 10. Typecheck (`npx tsc --noEmit`) |
+| **Co robi wewnętrznie**           | 1. Sprawdza Node.js >= 22.13 (`node --version`)\ 2. Sprawdza npm (`npm --version`)\ 3. Sprawdza Git (opcjonalnie, nie blokuje)\ 4. Kopiuje `.env.example` → `.env` jeśli brak (auto-konfiguracja)\ 5. Weryfikuje strukturę katalogów (`src/`, `public/`, `tests/`, `prisma/`)\ 6. Uruchamia `npm ci` (jeśli `package-lock.json` istnieje) lub `npm install`\ 7. Generuje Prisma Client (`npx prisma generate`)\ 8. Synchronizuje schemat bazy — jeśli istnieje `prisma/migrations/migration_lock.toml` uruchamia `npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss`; w przeciwnym razie (baza tworzona przez `db push`, bez tabeli `_prisma_migrations` — `migrate deploy` na niej zawodzi) od razu `db push`\ 9. Seed danych początkowych (`npx ts-node prisma/seed.ts`, chyba że `--skip-seed`)\ 10. Typecheck (`npx tsc --noEmit`) |
 | **Weryfikacja przez użytkownika** | Komunikat `Instalacja zakonczona` na końcu. Brak czerwonych `[BŁAD]`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 ### 2.2 `dev.bat` — Alias do `start.bat --dev`
@@ -176,7 +176,7 @@
 | Pole                              | Opis                                                                                                                                                                                                                                                                                                                                                                                          |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Wyzwalacz**                     | `docker compose up --build -d` (ręcznie)                                                                                                                                                                                                                                                                                                                                                      |
-| **Co robi wewnętrznie**           | 1. Buduje obraz z `Dockerfile` (node:22-slim + openssl)\ 2. `npm install` w obrazie\ 3. `npx prisma generate` w obrazie\ 4. `npm run build` (tsc) w obrazie\ 5. `npm prune --production` + cache clean\ 6. Przy starcie kontenera: `docker-entrypoint.sh` → ustawia DATABASE_URL, migruje PRECO z 3 tabel do settings, `prisma db push`, uruchamia serwer\ 7. Healthcheck co 30s na `/health` |
+| **Co robi wewnętrznie**           | 1. Buduje obraz z `Dockerfile` (node:22-slim + openssl)\ 2. `npm ci` w obrazie (bez `npm prune --production` — devDeps potrzebne w runtime do seedu i `db push`)\ 3. `npx prisma generate` w obrazie\ 4. `npm run build` (tsc) w obrazie\ 5. Symlink `dist/generated` → `generated` (klient Prisma)\ 6. Przy starcie kontenera: `docker-entrypoint.sh` → ustawia DATABASE_URL, migruje PRECO z 3 tabel do settings, `prisma db push`, uruchamia serwer\ 7. Healthcheck co 30s na `/health` |
 | **Weryfikacja przez użytkownika** | `docker ps` → kontener `sok-oferty` działa. `curl http://localhost:3000/health` → 200.                                                                                                                                                                                                                                                                                                        |
 
 ---
@@ -188,7 +188,7 @@
 ```
 Tak → Czy masz istniejącą bazę danych?
        ├── Nie → [ŚCIEŻKA A: FRESH INSTALL]
-       │        1. Zainstaluj Node.js 20+ LTS
+       │        1. Zainstaluj Node.js >= 22.13 LTS
        │        2. git clone (lub ZIP)
        │        3. Edytuj .env, ustaw DEFAULT_ADMIN_PASSWORD (auto-kopiowany z .env.example)
        │        4. Uruchom install.bat
@@ -196,7 +196,7 @@ Tak → Czy masz istniejącą bazę danych?
        │        6. Zaloguj się admin / <hasło>
        │
        └── Tak → [ŚCIEŻKA B: MIGRACJA BAZY]
-                1. Zainstaluj Node.js 20+ LTS
+                1. Zainstaluj Node.js >= 22.13 LTS
                 2. git clone (lub ZIP)
                 3. Edytuj .env, ustaw DEFAULT_ADMIN_PASSWORD (auto-kopiowany)
                 4. Uruchom install.bat --skip-seed (pomija seed)
@@ -359,7 +359,7 @@ Cel instalacji:
 ```
                             ┌──────────────────┐
                             │  UŻYTKOWNIK (RĘCZNIE) │
-                            │  - Node.js 20+       │
+                            │  - Node.js >= 22.13  │
                             │  - git clone / ZIP   │
                             │  - .env + hasło      │
                             │  - wybór ścieżki     │
@@ -369,7 +369,7 @@ Cel instalacji:
                            ┌────────────────────┐
                            │   install.bat       │ ◄── automatyzacja
                            │  ┌─ node check      │
-                           │  ├─ npm install     │
+                           │  ├─ npm ci         │
                            │  ├─ prisma generate │
                            │  ├─ migrate db      │
                            │  ├─ seed data       │
@@ -402,7 +402,7 @@ Cel instalacji:
 | Sytuacja                                                | Komenda / Akcja                                               | Automatyczne?                     |
 | ------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------- |
 | Nowa instalacja (Windows)                               | `.\install.bat` → `.\start.bat`                               | Głównie TAK (poza Node.js + .env) |
-| Nowa instalacja (Linux)                                 | `bash install.sh` → `bash start.sh`                           | Głównie TAK                       |
+| Nowa instalacja (Linux)                                 | `bash install.sh` → `bash dev.sh` / `bash prod.sh`                    | Głównie TAK                       |
 | Migracja bazy z innego PC                               | `.\install.bat --skip-seed` → `npm run restore backup.sqlite` | Częściowo                         |
 | Synchronizacja schematu (baza bez `_prisma_migrations`) | `npx prisma db push --skip-generate --accept-data-loss`       | TAK (auto przez `start.bat`)      |
 | Tylko uruchomienie (dev)                                | `.\start.bat` (lub `.\dev.bat` — alias)                       | TAK (auto-naprawia braki)         |

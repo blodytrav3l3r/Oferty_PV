@@ -30,4 +30,8 @@ npx prisma generate
 log STEP "TypeScript compile..."
 npx tsc
 
+log STEP "Kopiowanie Prisma Client do dist..."
+mkdir -p dist/generated
+cp -r generated/prisma dist/generated/
+
 log OK "Gotowe do produkcji (uruchom prod.bat / prod.sh)"

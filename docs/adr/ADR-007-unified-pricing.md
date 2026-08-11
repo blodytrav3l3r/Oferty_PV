@@ -1,4 +1,4 @@
-# ADR-005: Ujednolicony system cenników
+# ADR-007: Ujednolicony system cenników
 
 ## Status
 

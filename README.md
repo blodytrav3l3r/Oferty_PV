@@ -44,7 +44,7 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 
 | Składnik | Wersja minimalna | Pobierz                                                                                                                            |
 | -------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Node.js  | 20.0.0           | [https://nodejs.org](https://nodejs.org) (wersja LTS)                                                                              |
+| Node.js  | >= 22.13         | [https://nodejs.org](https://nodejs.org) (rekomendowane LTS 22.x / 24.x)                                                          |
 | npm      | 9+               | Instaluje się automatycznie z Node.js                                                                                              |
 | Git      | dowolna          | [https://git-scm.com](https://git-scm.com) (opcjonalnie)                                                                           |
 | Python   | 3.10+            | Opcjonalnie — tylko do walidacji Excel w pre-commit (`scripts/excel-validator.py`); instalacja i uruchomienie NIE wymagają Pythona |
@@ -82,9 +82,9 @@ cd Oferty_PV
 
 Instalator automatycznie:
 
-- Sprawdzi wersję Node.js
+- Sprawdzi i zweryfikuje wersję Node.js (>= 22.13)
 - Utworzy plik `.env` z `.env.example` (jeśli nie istnieje)
-- Zainstaluje zależności (`npm install`)
+- Zainstaluje zależności (`npm ci` — jeśli istnieje `package-lock.json`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss` dla baz bez historii migracji)
 - Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
@@ -97,7 +97,7 @@ Jeśli `install.bat` nie działa lub używasz systemu innego niż Windows:
 
 ```powershell
 # 1. Zainstaluj zależności
-npm install
+npm ci
 
 # 2. Skopiuj i skonfiguruj zmienne środowiskowe
 # Edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD (wymagane!)
@@ -145,8 +145,8 @@ Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
 ### Instalacja na Linux / VPS
 
 ```bash
-# 1. Zainstaluj Node.js 20.x
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+# 1. Zainstaluj Node.js 22.x (LTS, >= 22.13)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt install -y nodejs git
 
 # 2. Sklonuj repozytorium
@@ -154,7 +154,7 @@ git clone https://github.com/blodytrav3l3r/Oferty_PV.git
 cd Oferty_PV
 
 # 3. Instalacja
-npm install
+npm ci
 cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
@@ -169,10 +169,13 @@ npm run prisma:seed
 
 # 5. Zbuduj projekt
 npm run build
+#    Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
+mkdir -p dist/generated && cp -r generated/prisma dist/generated/
+#    (build.bat/build.sh robią to automatycznie)
 
 # 6. Uruchom (zalecane przez PM2)
 npm install -g pm2
-pm2 start dist/server.js --name witros-oferty
+pm2 start dist/server.js --name sok-oferty
 pm2 save
 pm2 startup
 ```
@@ -286,11 +289,12 @@ Plik `data/app_database.sqlite` przechowuje:
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------- |
 | `PORT`                   | Port serwera                                                                                                      | `3000`                               | Nie      |
 | `HOST`                   | Adres nasłuchiwania. W produkcji domyślnie `127.0.0.1` (tylko loopback); `0.0.0.0` tylko w Dockerze/osobnym proxy | `127.0.0.1` (prod) / `0.0.0.0` (dev) | Nie      |
-| `NODE_ENV`               | Środowisko: `development` / `production`                                                                          | `production`                         | Nie      |
+| `NODE_ENV`               | Środowisko: `development` / `production` (production ustawiają skrypty startowe)                                  | `development`                        | Nie      |
 | `DEFAULT_ADMIN_PASSWORD` | Hasło administratora (przy pierwszym uruchomieniu)                                                                | —                                    | **Tak**  |
 | `DATABASE_URL`           | Ścieżka do bazy SQLite                                                                                            | `file:../data/app_database.sqlite`   | Nie      |
 | `SENTRY_DSN`             | DSN Sentry do monitorowania błędów (opcjonalnie)                                                                  | —                                    | Nie      |
 | `COOKIE_SECURE`          | Wymusza flagę `Secure` na ciastku sesji                                                                           | `true` gdy `NODE_ENV=production`     | Nie      |
+| `TRUST_PROXY`            | Liczba reverse proxy przed aplikacją (Caddy/Nginx = 1, Cloudflare→Nginx→App = 2)                                  | `1`                                  | Nie      |
 
 > **Ważne:** `DEFAULT_ADMIN_PASSWORD` jest wymagane tylko przy **pierwszym** uruchomieniu. Po utworzeniu konta admina zmiana hasła w `.env` nie wpływa na istniejące konto.
 
@@ -322,6 +326,9 @@ npm run build
 npm start
 ```
 
+> **Uwaga (Linux):** po surowym `npm run build` (bez `build.sh`) skopiuj klienta Prisma do `dist/`:
+> `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`, które robią to automatycznie.
+
 Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja))
 
 ---
@@ -334,9 +341,9 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | ------------- | -------------------------------------------------------------------- |
 | `start.bat`   | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`  |
 | `dev.bat`     | Alias do `start.bat` (zachowany dla kompatybilności)                 |
-| `build.bat`   | Buduje projekt (TypeScript + frontend)                               |
-| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed    |
-| `prod.bat`    | Uruchamia serwer produkcyjny z przekierowaniem portów (zaawansowane) |
+| `build.bat`   | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005)                    |
+| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                                                  |
+| `prod.bat`    | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                                                    |
 
 ---
 
@@ -507,7 +514,7 @@ Oferty_PV/
 │   ├── playwright/            # Testy Playwright (regresyjne)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne (ADR-001..006)
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..007)
 │   ├── plans/                 # Plany i taski (+ archive/)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...

@@ -81,7 +81,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 
 | Technologia | Wersja | Rola                            |
 | ----------- | ------ | ------------------------------- |
-| Node.js     | >= 20  | Środowisko uruchomieniowe       |
+| Node.js     | >= 22.13 | Środowisko uruchomieniowe       |
 | TypeScript  | ~6.0   | Język programowania             |
 | Express.js  | ~4.21  | Framework webowy                |
 | Prisma      | ~6.0   | ORM (Object-Relational Mapping) |
@@ -520,8 +520,8 @@ docker compose up --build
 
 ### VPS
 
-1. Zainstaluj Node.js >= 20
-2. `npm install && npm run build`
+1. Zainstaluj Node.js >= 22.13
+2. `npm ci && npm run build`
 3. Uruchom `node dist/server.js` (lub przez PM2)
 
 Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)

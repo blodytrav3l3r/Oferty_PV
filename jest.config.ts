@@ -6,7 +6,7 @@ const config: Config.InitialOptions = {
     roots: ['<rootDir>/tests'],
     testMatch: ['**/*.test.ts'],
     moduleFileExtensions: ['ts', 'js', 'json'],
-    collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/middleware/csrf.ts'],
+    collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     coverageProvider: 'v8',
