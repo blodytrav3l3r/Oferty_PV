@@ -321,7 +321,6 @@ export class FeatureExtractor {
         const lower = raw.toLowerCase();
         if (lower.includes('psia') || lower === 'psia_buda') return 'psia_buda';
         if (lower.includes('stycz')) return 'styczna';
-        if (lower === 'styczna_1200') return 'styczna_1200';
         return 'standard';
     }
 
