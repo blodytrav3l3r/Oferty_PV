@@ -311,7 +311,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             if (w.config && w.config.length > 0) {
                 window.mlRewardHooks.onWellAccepted({
                     eventType: 'ORDER_CONFIRMED',
-                    wasAiRanked: w.configSource === 'AUTO_AI'
+                    wasAiRanked: w.configSource === 'AUTO_AI',
+                    well: w
                 });
             }
         });

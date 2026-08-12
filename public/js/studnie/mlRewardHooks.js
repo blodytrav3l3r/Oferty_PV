@@ -18,8 +18,12 @@
     const REWARD_URL = '/api/telemetry/ai/reward';
     const TIMEOUT_MS = 1000;
 
-    /** @type {boolean} flaga do unikania duplikatów */
-    let _rewardInFlight = false;
+    /**
+     * Studnie z rewardem w locie — dedup PER STUDNIA (wellId), nie globalny.
+     * Globalny single-flight gubił nagrody przy pętlach przez wiele studni
+     * (zapis oferty/zamówienia) — tylna studnia była cicho pomijana.
+     */
+    const _rewardInFlightByWell = new Set();
 
     /**
      * Wysyła sygnał nagrody do backendu
@@ -30,14 +34,20 @@
      * @param {boolean} [params.wasAiRanked]
      * @param {string} [params.eventType] - OFFER_SAVED | ORDER_CONFIRMED
      * @param {Object} [params.aiRankSnapshot] - ostatnia decyzja AI_RANK_DECISION
+     * @param {Object} [params.well] - studnia, której dotyczy sygnał (priorytet nad getCurrentWell)
      */
     function sendReward(params) {
-        if (_rewardInFlight) return;
-
-        const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+        const well =
+            params && params.well
+                ? params.well
+                : typeof getCurrentWell === 'function'
+                  ? getCurrentWell()
+                  : null;
         if (!well) return;
 
-        _rewardInFlight = true;
+        const wellKey = well.id || 'well-anon';
+        if (_rewardInFlightByWell.has(wellKey)) return;
+        _rewardInFlightByWell.add(wellKey);
 
         const snap = Object.assign({}, getConfigSnapshot(well));
         if (params.eventType) {
@@ -91,13 +101,14 @@
             })
                 .then(function () {
                     clearTimeout(timeoutId);
-                    _rewardInFlight = false;
+                    _rewardInFlightByWell.delete(wellKey);
                 })
                 .catch(function () {
-                    _rewardInFlight = false;
+                    clearTimeout(timeoutId);
+                    _rewardInFlightByWell.delete(wellKey);
                 });
         } catch (_e) {
-            _rewardInFlight = false;
+            _rewardInFlightByWell.delete(wellKey);
         }
     }
 
@@ -127,6 +138,7 @@
      * @param {boolean} [opts.wasAiRanked]
      * @param {string} [opts.eventType]
      * @param {Object} [opts.aiRankSnapshot]
+     * @param {Object} [opts.well] - studnia, której dotyczy akceptacja (pętle wielu studni)
      */
     function onWellAccepted(opts) {
         sendReward({
@@ -135,7 +147,8 @@
             scoreAfter: opts && opts.scoreAfter,
             wasAiRanked: opts && opts.wasAiRanked,
             eventType: opts && opts.eventType,
-            aiRankSnapshot: opts && opts.aiRankSnapshot
+            aiRankSnapshot: opts && opts.aiRankSnapshot,
+            well: opts && opts.well
         });
     }
 
@@ -146,6 +159,7 @@
      * @param {number} [opts.scoreAfter]
      * @param {boolean} [opts.wasAiRanked]
      * @param {Object} [opts.aiRankSnapshot]
+     * @param {Object} [opts.well] - studnia, której dotyczy odrzucenie
      */
     function onWellRejected(opts) {
         sendReward({
@@ -153,7 +167,8 @@
             scoreBefore: opts && opts.scoreBefore,
             scoreAfter: opts && opts.scoreAfter,
             wasAiRanked: opts && opts.wasAiRanked,
-            aiRankSnapshot: opts && opts.aiRankSnapshot
+            aiRankSnapshot: opts && opts.aiRankSnapshot,
+            well: opts && opts.well
         });
     }
 

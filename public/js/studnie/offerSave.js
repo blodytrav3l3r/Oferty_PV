@@ -134,7 +134,8 @@ async function saveOfferStudnie() {
             ) {
                 window.mlRewardHooks.onWellAccepted({
                     eventType: 'OFFER_SAVED',
-                    wasAiRanked: w.configSource === 'AUTO_AI'
+                    wasAiRanked: w.configSource === 'AUTO_AI',
+                    well: w
                 });
             }
             // Wyślij acceptance-full do backendu (wspólny helper z telemetryBridge.js)
