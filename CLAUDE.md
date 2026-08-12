@@ -13,15 +13,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 ## Architektura (ADR)
 
-Kluczowe decyzje — szczegóły w `docs/adr/`:
-
-| ADR     | Decyzja                             | Plik                                        |
-| ------- | ----------------------------------- | ------------------------------------------- |
-| ADR-001 | SQLite jako baza produkcyjna        | `docs/adr/ADR-001-sqlite.md`                |
-| ADR-002 | Vanilla JS SPA (bez frameworka)     | `docs/adr/ADR-002-vanilla-js.md`            |
-| ADR-003 | Vite jako dev server (wycofany)     | `docs/adr/ADR-003-vite.md`                  |
-| ADR-004 | Express + Prisma backend            | `docs/adr/ADR-004-express-prisma.md`        |
-| ADR-005 | Express jedynym serwerem (dev/prod) | `docs/adr/ADR-005-express-jedyny-serwer.md` |
+Pełna lista i szczegóły: `docs/adr/` (ADR-001..007) oraz sekcja „Decyzje Architektoniczne (ADR)" w `AGENTS.md`.
 
 ---
 
@@ -34,12 +26,7 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 
 ### 2. Wersja (SSoT)
 
-- **`VERSION`** (root) — JEDYNE źródło prawdy
-- `package.json` — mirror (musi być zgodny)
-- `CHANGELOG.md` — historia, format Keep a Changelog
-- Auto-bump z commita: `fix:` → patch, `feat:` → minor, `BREAKING:` → major
-- Po bumpie zrestartuj backend (`npx ts-node-dev ./server.ts`)
-- NIE taguj git-a ręcznie — robi to release flow
+Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single Source of Truth)" w `AGENTS.md` (wraz z BEZWZGLĘDNYMI ZASADAMI SPÓJNOŚCI WERSJI).
 
 ### 3. SPA — jedyne entry point
 
@@ -111,25 +98,9 @@ Kluczowe decyzje — szczegóły w `docs/adr/`:
 
 ---
 
-## Znane błędy (z `docs/errors-known.md`)
+## Znane błędy
 
-| #   | Problem                              | Fix                                                |
-| --- | ------------------------------------ | -------------------------------------------------- |
-| 1   | Seed timeout SQLite (824 produkty)   | chunk 25/tx, `busy_timeout=30000`, sequential init |
-| 2   | Concurrent IIFE race (SQLITE_BUSY)   | IIFE → funkcje, `await` sekwencyjnie               |
-| 3   | XSS w innerHTML                      | Zawsze `escapeHtml(str)` przy interpolacji         |
-| 4   | Kalkulator comma/dot                 | `value.replace(',', '.')` przed safeEval           |
-| 5   | PEHD button duplikacja stylów        | Tylko CSS klasa `.pehd-btn`, NIE inline style      |
-| 6   | `isLocked` TDZ                       | Hoist deklaracji przed użyciem                     |
-| 7   | colspan 13→15 tryb porównania        | Dynamiczny colspan                                 |
-| 8   | `toggleAllItemsForOrder` brak guard  | `if (checkbox)` przed toggle                       |
-| 9   | N+1 queries (Prisma)                 | batch `findMany` + Map, NIE pętla z `findUnique`   |
-| 10  | Null na DOM queries                  | `if (el) el.addEventListener(...)`                 |
-| 11  | Audit log cleanup timeout            | chunk `deleteMany` + indeks na `createdAt`         |
-| 12  | `ensureAdminExists` timeout          | Sequential init (products → admin → listen)        |
-| 13  | CSP blokuje inline onclick           | Helmet: `scriptSrc: ["'self'", "'unsafe-inline'"]` |
-| 14  | Spinner w input[type=number]         | `::-webkit-inner-spin-button { appearance: none }` |
-| 15  | `sort()` mutacja oryginalnej tablicy | `[...array].sort(...)`                             |
+Pełna baza znanych błędów: `docs/errors-known.md` oraz tabela #1..#39 w sekcji „Baza Znanych Błędów" w `AGENTS.md`.
 
 ---
 
