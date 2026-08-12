@@ -83,7 +83,9 @@ cd Oferty_PV
 Instalator automatycznie:
 
 - Sprawdzi i zweryfikuje wersję Node.js (>= 22.13)
-- Utworzy plik `.env` z `.env.example` (jeśli nie istnieje)
+- Utworzy plik `.env` z `.env.example` (jeśli nie istnieje) — przez `scripts/init-env.mjs`,
+  który przy okazji wygeneruje losowe hasło administratora, jeśli `DEFAULT_ADMIN_PASSWORD`
+  jest puste lub równe domyślnej wartości `anim123456` (zapisze je w `.env`)
 - Zainstaluje zależności (`npm ci` — jeśli istnieje `package-lock.json`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss` dla baz bez historii migracji)
@@ -102,6 +104,7 @@ npm ci
 # 2. Skopiuj i skonfiguruj zmienne środowiskowe
 # Edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD (wymagane!)
 copy .env.example .env
+# (lub: node scripts/init-env.mjs — wygeneruje losowe hasło admina i zapisze w .env)
 
 # 3. Wygeneruj klienta Prisma
 npx prisma generate
@@ -140,9 +143,38 @@ Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
 2. Zaloguj się jako:
     - **Użytkownik:** `admin`
     - **Hasło:** ustawione w `DEFAULT_ADMIN_PASSWORD` w pliku `.env`
+      (instalatory `install.bat` / `install.sh` — przez `scripts/init-env.mjs` —
+      automatycznie generują losowe hasło i zapisują je w `.env`, jeśli w pliku
+      jest puste lub równe domyślnej wartości `anim123456`)
 3. Po zalogowaniu możesz zmienić hasło w ustawieniach profilu
 
 ### Instalacja na Linux / VPS
+
+**Wariant A — instalator bash (zalecany):**
+
+```bash
+# 1. Zainstaluj Node.js 22.x (LTS, >= 22.13)
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt install -y nodejs git
+
+# 2. Sklonuj repozytorium
+git clone https://github.com/blodytrav3l3r/Oferty_PV.git
+cd Oferty_PV
+
+# 3. Instalacja (odpowiednik install.bat: .env + npm ci + prisma + seed)
+bash install.sh
+
+# 4. Uruchom — tryb deweloperski lub produkcyjny
+bash dev.sh    # Development (hot-reload)
+bash prod.sh   # Production (npm start; automatycznie buduje dist, jeśli brak)
+```
+
+Instalator `install.sh` — tak samo jak `install.bat` — wygeneruje losowe hasło
+administratora (przez `scripts/init-env.mjs`), zsynchronizuje schemat bazy
+(`migrate deploy` z fallbackiem `db push`) i zasieje dane początkowe
+(z pominięciem przy `--skip-seed`).
+
+**Wariant B — kroki ręczne:**
 
 ```bash
 # 1. Zainstaluj Node.js 22.x (LTS, >= 22.13)
@@ -280,6 +312,32 @@ Plik `data/app_database.sqlite` przechowuje:
     - Lista produktów i ceny są zgodne z poprzednią instalacją
     - Historia ofert jest dostępna
     - Klienci są na swoich miejscach
+
+### Aktualizacja istniejącej instalacji (schemat bazy)
+
+Podczas aktualizacji do nowszej wersji aplikacji (już wdrożonej, z danymi):
+
+1. Zawsze najpierw zrób backup: `npm run backup`
+2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
+3. Zsynchronizuj schemat — sposób zależy od historii bazy:
+    - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
+      `npx prisma db push --skip-generate --accept-data-loss`
+      (komenda `migrate deploy` NIE zadziała — baza nie ma historii migracji).
+    - **Baza z historią migracji** (`_prisma_migrations` istnieje):
+      `npx prisma migrate deploy`
+    - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
+      migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
+4. Uruchom serwer (`start.bat`).
+
+> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
+> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
+> Na bazie bez `db push` można je utworzyć ręcznie:
+>
+> ```sql
+> CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");
+> CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId");
+> ```
 
 ---
 
