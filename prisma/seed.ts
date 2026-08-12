@@ -51,6 +51,7 @@ async function main() {
     let konfigCount = 0;
     let kinetyCount = 0;
     let zakresyCount = 0;
+    let existingAiModel = 0;
 
     await prisma.$transaction(async (tx) => {
         // ── ProductsRury + ProductsRuryDefault ──
@@ -205,40 +206,40 @@ async function main() {
             await tx.precoZakresy.createMany({ data: zakresyRows });
             await tx.precoZakresyDefault.createMany({ data: zakresyRows });
         }
-    });
 
-    // ── AiModel (startowy model ML) ──
-    console.log('  -> AiModel (startowy model ML)...');
-    const existingAiModel = await prisma.aiModel.count();
-    if (existingAiModel === 0) {
-        const zeros = FEATURE_NAMES.map(() => 0);
-        const ones = FEATURE_NAMES.map(() => 1);
-        await prisma.aiModel.create({
-            data: {
-                id: 'seed_' + Date.now(),
-                version: 'v0.1.0-starter',
-                weights: JSON.stringify(zeros),
-                bias: 0,
-                metrics: JSON.stringify({
-                    accuracy: 0.5,
-                    precision: 0.5,
-                    recall: 0.5,
-                    f1: 0.5,
-                    rocAuc: 0.5,
-                    trainSize: 0,
-                    valSize: 0
-                }),
-                features: JSON.stringify(FEATURE_NAMES),
-                featureMins: JSON.stringify(zeros),
-                featureMaxs: JSON.stringify(ones),
-                trainingRows: 0,
-                active: true,
-                featureVersion: ML_CONSTANTS.FEATURE_VERSION,
-                notes: 'Model startowy — domyślne wagi (neutralne). Wytrenuj właściwy model przez API /ai/train.',
-                createdAt: new Date().toISOString()
-            }
-        });
-    }
+        // ── AiModel (startowy model ML) ──
+        console.log('  -> AiModel (startowy model ML)...');
+        existingAiModel = await tx.aiModel.count();
+        if (existingAiModel === 0) {
+            const zeros = FEATURE_NAMES.map(() => 0);
+            const ones = FEATURE_NAMES.map(() => 1);
+            await tx.aiModel.create({
+                data: {
+                    id: 'seed_' + Date.now(),
+                    version: 'v0.1.0-starter',
+                    weights: JSON.stringify(zeros),
+                    bias: 0,
+                    metrics: JSON.stringify({
+                        accuracy: 0.5,
+                        precision: 0.5,
+                        recall: 0.5,
+                        f1: 0.5,
+                        rocAuc: 0.5,
+                        trainSize: 0,
+                        valSize: 0
+                    }),
+                    features: JSON.stringify(FEATURE_NAMES),
+                    featureMins: JSON.stringify(zeros),
+                    featureMaxs: JSON.stringify(ones),
+                    trainingRows: 0,
+                    active: true,
+                    featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    notes: 'Model startowy — domyślne wagi (neutralne). Wytrenuj właściwy model przez API /ai/train.',
+                    createdAt: new Date().toISOString()
+                }
+            });
+        }
+    });
 
     console.log(`Seed: zakonczono. Wgrano:`);
     console.log(`  ProductsRury / ProductsRuryDefault: ${ruryData.length}`);
