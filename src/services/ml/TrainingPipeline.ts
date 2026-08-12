@@ -20,6 +20,42 @@ export function seasonToNum(s: string): number {
     return 0;
 }
 
+// Agregaty przejść szczelnych (średnica + podniesienie od dna). Używane przy
+// treningu (joiny z ai_transition_snapshots) i w mlDualRanking.buildFeatureVector
+// (serve) — muszą liczyć identycznie (test parytetu cech weryfikuje zgodność).
+export interface TransitionAggregates {
+    transitionCount: number;
+    maxTransitionDnMm: number;
+    minTransitionHeightMm: number;
+    maxTransitionHeightMm: number;
+    avgTransitionHeightMm: number;
+}
+
+export function aggregateTransitionFeatures(
+    snaps: Array<{ dn?: string | number | null; heightFromBottomMm?: number | null }>
+): TransitionAggregates | null {
+    if (!snaps || snaps.length === 0) return null;
+    const heights: number[] = [];
+    let maxDn = 0;
+    for (const s of snaps) {
+        const dn = s.dn != null ? parseInt(String(s.dn), 10) : NaN;
+        if (Number.isFinite(dn) && dn > 0) maxDn = Math.max(maxDn, dn);
+        const h = s.heightFromBottomMm ?? NaN;
+        if (Number.isFinite(h)) heights.push(h);
+    }
+    const min = heights.length > 0 ? Math.round(Math.min(...heights)) : 0;
+    const max = heights.length > 0 ? Math.round(Math.max(...heights)) : 0;
+    const avg =
+        heights.length > 0 ? Math.round(heights.reduce((a, b) => a + b, 0) / heights.length) : 0;
+    return {
+        transitionCount: snaps.length,
+        maxTransitionDnMm: maxDn,
+        minTransitionHeightMm: min,
+        maxTransitionHeightMm: max,
+        avgTransitionHeightMm: avg
+    };
+}
+
 // Eksportowany dla testu parytetu cech train/serve (tests/ml/featureParity.test.ts).
 export function oneHotEncode(raw: Record<string, unknown>): number[] {
     const warehouse = normalizeWarehouse(raw.warehouse as string);
@@ -56,6 +92,11 @@ export function oneHotEncode(raw: Record<string, unknown>): number[] {
     vec.push(kineta === 'unolith' ? 1 : 0);
     vec.push(kineta === 'beton' || kineta === '' ? 1 : 0);
     vec.push(Number(raw.dennicaHeight) || 0);
+    vec.push(Number(raw.transitionCount) || 0);
+    vec.push(Number(raw.maxTransitionDnMm) || 0);
+    vec.push(Number(raw.minTransitionHeightMm) || 0);
+    vec.push(Number(raw.maxTransitionHeightMm) || 0);
+    vec.push(Number(raw.avgTransitionHeightMm) || 0);
     return vec;
 }
 
@@ -250,6 +291,23 @@ export class TrainingPipeline {
         maxs: number[];
         dim: number;
     }> {
+        // Cechy przejść: agregaty z ai_transition_snapshots (configId == telemetryId).
+        const transIds = features.map((f) => f.telemetryId).filter(Boolean) as string[];
+        const transRows = await prisma.ai_transition_snapshots.findMany({
+            where: transIds.length > 0 ? { configId: { in: transIds } } : { configId: { in: [''] } }
+        });
+        const groups = new Map<string, Array<(typeof transRows)[number]>>();
+        for (const row of transRows) {
+            if (!row.configId) continue;
+            const group = groups.get(row.configId) || [];
+            group.push(row);
+            groups.set(row.configId, group);
+        }
+        const transAggByConfig = new Map<string, TransitionAggregates>();
+        for (const [configId, group] of groups) {
+            const agg = aggregateTransitionFeatures(group);
+            if (agg) transAggByConfig.set(configId, agg);
+        }
         const examples = features
             // NO_FEEDBACK (brak jakiegokolwiek sygnału użytkownika) nie niesie
             // informacji — wrzucenie go do klasy negatywnej zanieczyściłoby model.
@@ -275,6 +333,8 @@ export class TrainingPipeline {
                     kinetaType: f.kinetaType,
                     dennicaHeight: f.dennicaHeight
                 };
+                const agg = f.telemetryId ? transAggByConfig.get(f.telemetryId) : undefined;
+                if (agg) Object.assign(raw, agg);
                 const createdAt = new Date(f.createdAt);
                 const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
                 return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };

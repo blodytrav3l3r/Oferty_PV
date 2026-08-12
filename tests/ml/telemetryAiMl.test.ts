@@ -133,10 +133,10 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(24).fill(0.1),
+            weights: new Array(29).fill(0.1),
             bias: 0,
-            featureMins: new Array(24).fill(0),
-            featureMaxs: new Array(24).fill(1)
+            featureMins: new Array(29).fill(0),
+            featureMaxs: new Array(29).fill(1)
         });
         mockPredict.mockReturnValue(0.5);
 
@@ -148,14 +148,14 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
                         id: 1,
                         features: [
                             1000, 3000, 1, 0, 1, 0, 0, 0, 0, 3, 2, 1, 2500, 5000, 3, 1, 1, 1, 3000,
-                            1, 0, 0, 1, 0
+                            1, 0, 0, 1, 0, 2, 630, 0, 1800, 900
                         ]
                     },
                     {
                         id: 2,
                         features: [
                             1200, 3500, 0, 1, 0, 1, 0, 0, 0, 4, 3, 2, 3000, 6000, 4, 1, 0, 1, 4200,
-                            0, 1, 0, 0, 0
+                            0, 1, 0, 0, 0, 1, 400, 200, 200, 200
                         ]
                     }
                 ]
@@ -172,10 +172,10 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
         mockGetActiveModel.mockResolvedValue({
             id: 'model-v1',
             version: 'v1.0.0-test',
-            weights: new Array(24).fill(0.1),
+            weights: new Array(29).fill(0.1),
             bias: 0,
-            featureMins: new Array(24).fill(0),
-            featureMaxs: new Array(24).fill(1)
+            featureMins: new Array(29).fill(0),
+            featureMaxs: new Array(29).fill(1)
         });
         mockPredict.mockReturnValue(0.42);
 
@@ -185,7 +185,7 @@ describe('POST /api/telemetry/ai/predict/batch', () => {
                     id: 7,
                     features: [
                         1600, 3200, 1, 0, 0, 1, 0, 0, 0, 5, 3, 2, 4100, 7200, 4, 1, 1, 1, 8000, 0,
-                        0, 0, 1, 0
+                        0, 0, 1, 0, 3, 500, 0, 1500, 750
                     ]
                 }
             ]

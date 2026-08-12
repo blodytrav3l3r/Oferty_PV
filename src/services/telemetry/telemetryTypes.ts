@@ -34,7 +34,7 @@ export interface WellComponentSnapshot {
     productId: string;
     productName?: string;
     componentType?: string;
-    dn?: string | number;
+    dn?: string | number | null;
     height?: number;
     width?: number;
     position?: number;

@@ -3,11 +3,11 @@
  *
  * Weryfikuje, że frontend (public/js/studnie/mlDualRanking.js buildFeatureVector)
  * i backend (src/services/ml/TrainingPipeline.ts oneHotEncode) produkują
- * IDENTYCZNY 24-wymiarowy wektor cech (v6) dla tej samej konfiguracji studni.
+ * IDENTYCZNY 29-wymiarowy wektor cech (v7) dla tej samej konfiguracji studni.
  *
  * Jeśli jedna strona zmieni kolejność/semantykę cech, model trenowany na
  * wektorach backendu będzie dostawał na serve zupełnie inne bity — test łapie
- * to przed wdrożeniem. Tło: FEATURE_NAMES (24 cechy) + FEATURE_VERSION 'v6'
+ * to przed wdrożeniem. Tło: FEATURE_NAMES (29 cech) + FEATURE_VERSION 'v7'
  * + guard FEATURE_VERSION_MISMATCH na endpointach.
  */
 
@@ -31,8 +31,8 @@ jest.mock('../../src/utils/logger', () => ({
 
 import { oneHotEncode, seasonToNum } from '../../src/services/ml/TrainingPipeline';
 
-const FEATURE_VERSION = 'v6';
-const FEATURE_COUNT = 24;
+const FEATURE_VERSION = 'v7';
+const FEATURE_COUNT = 29;
 
 function makeProduct(
     id: string,
@@ -59,6 +59,13 @@ const PRODUCTS = [
     makeProduct('DDD-1000-500', 200, 100, 'dennica', '1000', 500),
     makeProduct('Uszczelka GSG DN1000', 10, 2, 'uszczelka', '1000', 0)
 ];
+// Przejścia szczelne (PVC-SN8 / X-Stream) — idą w cechy v7 (średnica + rzędna).
+PRODUCTS.push(
+    makeProduct('PVC-SN8-300', 80, 5, 'przejscie', '300', 0),
+    makeProduct('PVC-SN8-630', 120, 8, 'przejscie', '630', 0),
+    makeProduct('X-Stream-600', 200, 20, 'przejscie', '600', 0),
+    makeProduct('X-Stream-200', 90, 6, 'przejscie', '200', 0)
+);
 
 // Frontend szuka uszczelki po NAZWIE (gasketNameForDn), nie po ID.
 PRODUCTS[3].name = 'Uszczelka GSG DN1000';
@@ -84,6 +91,8 @@ function makeWell(overrides: any = {}): any {
         type: 'standard',
         uszczelka: 'brak',
         kineta: '',
+        rzednaDna: 0,
+        przejscia: [],
         ...overrides
     };
 }
@@ -212,6 +221,25 @@ function buildBackendRaw(layout: any, well: any, products: any[]) {
     }
     const connectionCount = sealDns.size;
 
+    // Cechy przejść (v7) — identycznie jak serve (mlDualRanking.js buildFeatureVector):
+    // średnica maksymalna przejścia + min/max/śr podniesienie ponad rzednaDna.
+    const transHeights: number[] = [];
+    let transMaxDn = 0;
+    for (const tp of well.przejscia || []) {
+        const prod = products.find((p) => p.id === tp.productId);
+        if (prod && prod.dn != null) {
+            const dn = parseInt(String(prod.dn), 10) || 0;
+            if (dn > 0) transMaxDn = Math.max(transMaxDn, dn);
+        }
+        const hRaw = (parseFloat(tp.rzednaWlaczenia) - parseFloat(well.rzednaDna)) * 1000;
+        if (Number.isFinite(hRaw)) transHeights.push(Math.round(hRaw));
+    }
+    const transMinH = transHeights.length ? Math.min.apply(null, transHeights) : 0;
+    const transMaxH = transHeights.length ? Math.max.apply(null, transHeights) : 0;
+    const transAvgH = transHeights.length
+        ? Math.round(transHeights.reduce((a, b) => a + b, 0) / transHeights.length)
+        : 0;
+
     const wellType = (well.type || 'standard').toLowerCase();
     return {
         dn,
@@ -231,7 +259,12 @@ function buildBackendRaw(layout: any, well: any, products: any[]) {
         bottomType: layout.dennica ? layout.dennica.productId : 'unknown',
         topType: 'unknown',
         kinetaType: well.kineta || '',
-        dennicaHeight: layout.dennica ? 500 : 0
+        dennicaHeight: layout.dennica ? 500 : 0,
+        transitionCount: (well.przejscia || []).length,
+        maxTransitionDnMm: transMaxDn,
+        minTransitionHeightMm: transMinH,
+        maxTransitionHeightMm: transMaxH,
+        avgTransitionHeightMm: transAvgH
     };
 }
 
@@ -246,7 +279,7 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
     });
 
     it(
-        'stały wymiar: frontend i backend produkują 24 cechy (FEATURE_VERSION ' +
+        'stały wymiar: frontend i backend produkują 29 cech (FEATURE_VERSION ' +
             FEATURE_VERSION +
             ')',
         () => {
@@ -336,5 +369,26 @@ describe('parytet cech train/serve (buildFeatureVector vs oneHotEncode)', () => 
         const expectedNum = seasonFromMonth(m);
         const seasonStr = currentSeasonString();
         expect(seasonToNum(seasonStr)).toBe(expectedNum);
+    });
+
+    it('przejścia szczelne: średnica i podniesienie od dna zgodne po obu stronach', () => {
+        const layout = makeLayout();
+        const well = makeWell({
+            rzednaDna: 1,
+            przejscia: [
+                { productId: 'X-Stream-600', rzednaWlaczenia: '1.000' },
+                { productId: 'PVC-SN8-300', rzednaWlaczenia: '2.200' },
+                { productId: 'PVC-SN8-630', rzednaWlaczenia: '1.000' },
+                { productId: 'X-Stream-200', rzednaWlaczenia: '2.200' }
+            ]
+        });
+        const front = buildFeatureVector(layout, well);
+        const back = oneHotEncode(buildBackendRaw(layout, well, PRODUCTS) as any);
+        expect(front).toEqual(back);
+        expect(front[24]).toBe(4); // transitionCount
+        expect(front[25]).toBe(630); // maxTransitionDnMm
+        expect(front[26]).toBe(0); // minTransitionHeightMm (rzedna 1.0 == dno)
+        expect(front[27]).toBe(1200); // maxTransitionHeightMm (2.2 - 1.0 = 1200mm)
+        expect(front[28]).toBe(600); // avgTransitionHeightMm ((0+1200+0+1200)/4)
     });
 });

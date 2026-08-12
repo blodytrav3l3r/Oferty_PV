@@ -11,11 +11,15 @@ const mockCreate = jest.fn<any>();
 const mockCount = jest.fn<any>();
 const mockUpdate = jest.fn<any>();
 const mockUpdateMany = jest.fn<any>();
+const mockTransitionFindMany = jest.fn<any>().mockResolvedValue([]);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
     default: {
         ai_telemetry_logs: { findMany: (...args: any[]) => mockFindMany(...args) },
+        ai_transition_snapshots: {
+            findMany: (...args: any[]) => mockTransitionFindMany(...args)
+        },
         aiFeature: {
             findFirst: (...args: any[]) => mockFindFirst(...args),
             findMany: (...args: any[]) => mockFindMany(...args),

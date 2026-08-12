@@ -250,8 +250,8 @@
                     return x.id === p.productId;
                 });
                 let dn = '';
-                if (prod && typeof prod.dn === 'string') {
-                    dn = prod.dn;
+                if (prod && prod.dn != null) {
+                    dn = String(prod.dn);
                 }
                 return {
                     transitionNo: idx + 1,

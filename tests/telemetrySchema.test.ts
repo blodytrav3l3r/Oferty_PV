@@ -85,6 +85,20 @@ describe('telemetryConfigSchema', () => {
         expect(r.success).toBe(true);
     });
 
+    it('akceptuje dn: null i dn liczbowe w snapshotach komponentów', () => {
+        const r = telemetryConfigSchema.safeParse({
+            solverSource: 'AUTO_JS',
+            appliedHatches: [{ productId: 'P3', dn: null }],
+            originalConfig: [
+                { productId: 'P1', dn: null },
+                { productId: 'P2', dn: '1200' },
+                { productId: 'P4', dn: 600 }
+            ],
+            finalConfig: [{ productId: 'P1', dn: null }]
+        });
+        expect(r.success).toBe(true);
+    });
+
     it('rzDna jako string jest konwertowane na number', () => {
         const r = telemetryConfigSchema.safeParse({
             solverSource: 'AUTO_JS',

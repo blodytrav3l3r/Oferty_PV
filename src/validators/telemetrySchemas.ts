@@ -16,7 +16,7 @@ const wellComponentSchema = z.object({
     productName: z.string().optional(),
     // Opcjonalne: buildComponentSnapshot nie zna componentType, gdy produktu nie ma w studnieProducts
     componentType: z.string().optional(),
-    dn: z.union([z.string(), z.number()]).optional(),
+    dn: z.union([z.string(), z.number()]).nullish(),
     height: z.number().optional(),
     width: z.number().optional(),
     position: z.number().optional(),

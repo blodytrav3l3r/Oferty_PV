@@ -310,6 +310,29 @@
             }
         }
         const transitionsAboveDennica = Math.max(0, connectionCount - 1);
+        // Cechy przejść szczelnych (v7): średnica (max piany) + podniesienie od dna.
+        // Identyczna semantyka co aggregateTransitionFeatures (TrainingPipeline.ts) —
+        // trening liczy z ai_transition_snapshots, serve z well.przejscia.
+        const transHeights = [];
+        const transList = Array.isArray(well.przejscia) ? well.przejscia : [];
+        let transMaxDn = 0;
+        for (const tp of transList) {
+            const prod =
+                typeof window.studnieProducts !== 'undefined'
+                    ? window.studnieProducts.find((x) => x.id === tp.productId)
+                    : undefined;
+            if (prod && prod.dn != null) {
+                const dn = parseInt(String(prod.dn), 10) || 0;
+                if (dn > 0) transMaxDn = Math.max(transMaxDn, dn);
+            }
+            const hRaw = (parseFloat(tp.rzednaWlaczenia) - parseFloat(well.rzednaDna)) * 1000;
+            if (Number.isFinite(hRaw)) transHeights.push(Math.round(hRaw));
+        }
+        const transMinH = transHeights.length ? Math.min.apply(null, transHeights) : 0;
+        const transMaxH = transHeights.length ? Math.max.apply(null, transHeights) : 0;
+        const transAvgH = transHeights.length
+            ? Math.round(transHeights.reduce((a, b) => a + b, 0) / transHeights.length)
+            : 0;
         // totalPrice/totalWeight: kandydaci z solve() nie mają layout.totalPrice/Weight —
         // licz z komponentów rozwiązania (wzór jak telemetryBridge.js), żeby model widział
         // koszty przy rankingowaniu (wcześniej zawsze 0 → cechy martwe na serve).
@@ -415,7 +438,12 @@
             isKinetaPreco ? 1 : 0,
             isKinetaUnolith ? 1 : 0,
             isKinetaStandard ? 1 : 0,
-            dennicaHeightMm
+            dennicaHeightMm,
+            transList.length,
+            transMaxDn,
+            transMinH,
+            transMaxH,
+            transAvgH
         ];
     }
 
