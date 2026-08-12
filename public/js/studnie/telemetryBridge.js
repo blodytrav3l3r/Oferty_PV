@@ -100,6 +100,45 @@
     }
 
     /**
+     * Buduje ORYGINALNY (auto-dobrany) config studni do pola originalConfig
+     * w rekordzie telemetrii. Bez snapshotu lub bez różnicy względem bieżącego
+     * configu zwraca undefined — wtedy caller używa finalnego configu.
+     *
+     * Snapshot ustawia solverAutoSelect.js (`well._lastAutoConfig`) PO pełnym
+     * przeliczeniu auto-doboru. Korekta użytkownika (configSource MANUAL*)
+     * powoduje rozjazd snapshot <> config → learning engine ma materiał na
+     * wzorce substitution/addition/removal.
+     *
+     * @param {Object} well
+     * @returns {Array<{productId:string, quantity:number}>|undefined}
+     */
+    function buildOriginalConfigFromWell(well) {
+        if (!well || !well._lastAutoConfig) return undefined;
+        try {
+            /** Kompaktuje komponenty do porównywalnej postaci + sortuje —
+             *  kolejność elementów (drag) nie jest korektą, tylko przetasowaniem. */
+            /** @param {Array} items */
+            const compact = function (items) {
+                return (items || [])
+                    .map(function (it) {
+                        return { productId: it.productId, quantity: it.quantity };
+                    })
+                    .sort(function (a, b) {
+                        if (a.productId === b.productId) return a.quantity - b.quantity;
+                        return a.productId < b.productId ? -1 : 1;
+                    });
+            };
+            const original = JSON.parse(well._lastAutoConfig);
+            const origKey = JSON.stringify(compact(original));
+            const finalKey = JSON.stringify(compact(well.config || []));
+            if (origKey === finalKey) return undefined;
+            return original;
+        } catch (_e) {
+            return undefined;
+        }
+    }
+
+    /**
      * Sprawdza, czy identyczna treść AUTO_JS dla tej studni była już wysłana
      * w bieżącej sesji. Jeśli tak — zwraca false (pomiń), wpp zapamiętuje i zwraca true.
      * @param {Object} well
@@ -461,4 +500,9 @@
             /* ignore */
         }
     };
+
+    /**
+     * Oryginalny config auto-doboru studni — testowalny eksport.
+     */
+    window.buildOriginalConfigFromWell = buildOriginalConfigFromWell;
 })();

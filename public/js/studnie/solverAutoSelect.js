@@ -144,6 +144,18 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         }
 
         // ─── Pasywny hook telemetry AI (NIE zmienia logiki solvera) ───
+        // Zapamiętaj finalny config auto-doboru — korekta użytkownika z późniejszych
+        // edycji obsługuje originalConfig (learning engine wzorce substitution/addition).
+        try {
+            well._lastAutoConfig = JSON.stringify(
+                (well.config || []).map((it) => ({
+                    productId: it.productId,
+                    quantity: it.quantity
+                }))
+            );
+        } catch (_e) {
+            /* pasywne — ignore */
+        }
         try {
             if (typeof window.telemetryRecordConfig === 'function') {
                 const jsMsEnd =

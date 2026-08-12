@@ -185,6 +185,10 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
                 solverSource: w.configSource || 'MANUAL',
                 wasAccepted: signalType === 'ORDER_CONFIRM',
                 wasModified: w.configSource && w.configSource.startsWith('MANUAL'),
+                originalConfig:
+                    typeof window.buildOriginalConfigFromWell === 'function'
+                        ? window.buildOriginalConfigFromWell(w)
+                        : undefined,
                 computationMs: 0,
                 iterationCount: 0,
                 checkedVariants: 0
