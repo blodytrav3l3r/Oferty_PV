@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.14.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.0...v1.14.1) (2026-08-12)
+
+### Bug Fixes
+
+- **telemetry:** nie oznaczaj recznego configu jako rejected ([14c5ff1](https://github.com/blodytrav3l3r/Oferty_PV/commit/14c5ff10b108faa08167ae6351573062897d06df))
+
 ## [1.14.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.4...v1.14.0) (2026-08-12)
 
 ### Features
