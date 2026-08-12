@@ -9,10 +9,10 @@ doprecyzowania seedu.
 
 ## 1. Co zostało zmienione (podsumowanie)
 
-| Plik | Rodzaj | Cel |
-| --- | --- | --- |
-| `prisma/migrations/20260812000000_ai_ml_schema_fix/migration.sql` | **NOWY** | Uzupełnia rozjazd `schema.prisma` ↔ migracje: brakujące kolumny AI/ML + porządek indeksów `AiModel`. |
-| `docs/plans/2026-08-12-raport-ai-ml-dashboard-instalacja.md` | NOWY (dokumentacja) | Raport diagnostyczny i zapobiegawczy. |
+| Plik                                                              | Rodzaj              | Cel                                                                                                  |
+| ----------------------------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `prisma/migrations/20260812000000_ai_ml_schema_fix/migration.sql` | **NOWY**            | Uzupełnia rozjazd `schema.prisma` ↔ migracje: brakujące kolumny AI/ML + porządek indeksów `AiModel`. |
+| `docs/plans/2026-08-12-raport-ai-ml-dashboard-instalacja.md`      | NOWY (dokumentacja) | Raport diagnostyczny i zapobiegawczy.                                                                |
 
 **Brak zmian w istniejącym kodzie** — naprawa jest wyłącznie migracyjna.
 
@@ -95,6 +95,7 @@ PRAGMA defer_foreign_keys=OFF;
 ```
 
 > ⚠️ **Ważne (technika SQLite):**
+>
 > - Nazwa katalogu migracji musi być **nowsza niż `20260805100000_telemetry_well_dedup`**
 >   (format `YYYYMMDDHHMMSS_opis`), aby `migrate deploy` zastosował ją po pozostałych.
 > - Nie zastępuj `CREATE UNIQUE INDEX "AiModel_version_key"` constraintem UNIQUE —
@@ -183,17 +184,17 @@ transakcyjną seedu i zapobiega dziwnym stanom przy `--force`.
 
 ## 7. Weryfikacja po wdrożeniu (checklist)
 
-| # | Sprawdzenie | Oczekiwany wynik |
-| --- | --- | --- |
-| 1 | `npx prisma migrate diff --from-url "file:./data/app_database.sqlite" --to-schema-datamodel prisma\schema.prisma --script` | `This is an empty migration.` |
-| 2 | `npx tsc --noEmit` | brak błędów |
-| 3 | `npm run version:check` | wersja 1.13.4 spójna we wszystkich źródłach |
-| 4 | `npm run ai:setup` | `Status ML: ONLINE`, `Wersja modelu ML: v0.1.0-starter` |
-| 5 | `GET /api/telemetry/ai/health` (po zalogowaniu admina) | 200, `mlOnline: true` |
-| 6 | `GET /api/telemetry/ai/ml-status` | 200, `modelVersion: v0.1.0-starter`, `featureVersion: v6` |
-| 7 | `GET /api/telemetry/ai/knowledge/stats` | 200, obiekt statystyk |
-| 8 | Przeglądarka → Pulpit admin → AI / ML Dashboard | sekcje renderują się, brak „Błąd serwera" |
-| 9 | Konsola przeglądarki (F12) | zero błędów JS |
+| #   | Sprawdzenie                                                                                                                | Oczekiwany wynik                                          |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1   | `npx prisma migrate diff --from-url "file:./data/app_database.sqlite" --to-schema-datamodel prisma\schema.prisma --script` | `This is an empty migration.`                             |
+| 2   | `npx tsc --noEmit`                                                                                                         | brak błędów                                               |
+| 3   | `npm run version:check`                                                                                                    | wersja 1.13.4 spójna we wszystkich źródłach               |
+| 4   | `npm run ai:setup`                                                                                                         | `Status ML: ONLINE`, `Wersja modelu ML: v0.1.0-starter`   |
+| 5   | `GET /api/telemetry/ai/health` (po zalogowaniu admina)                                                                     | 200, `mlOnline: true`                                     |
+| 6   | `GET /api/telemetry/ai/ml-status`                                                                                          | 200, `modelVersion: v0.1.0-starter`, `featureVersion: v6` |
+| 7   | `GET /api/telemetry/ai/knowledge/stats`                                                                                    | 200, obiekt statystyk                                     |
+| 8   | Przeglądarka → Pulpit admin → AI / ML Dashboard                                                                            | sekcje renderują się, brak „Błąd serwera"                 |
+| 9   | Konsola przeglądarki (F12)                                                                                                 | zero błędów JS                                            |
 
 ---
 

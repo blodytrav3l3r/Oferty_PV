@@ -23,9 +23,9 @@ Frontend (`public/js/admin/aiDashboard.js`) mapuje status HTTP ≠ 200/401/403/5
 ### Konkretny łańcuch przyczynowy
 
 1. `prisma/schema.prisma` definiuje kolumny, których **żadna migracja nie dodawała**:
-   - `AiModel.featureVersion` (schema.prisma:637)
-   - `AiFeature.dennicaHeight`, `AiFeature.kinetaType` (schema.prisma:605-606)
-   - `ai_telemetry_logs.kineta` (schema.prisma:44)
+    - `AiModel.featureVersion` (schema.prisma:637)
+    - `AiFeature.dennicaHeight`, `AiFeature.kinetaType` (schema.prisma:605-606)
+    - `ai_telemetry_logs.kineta` (schema.prisma:44)
 2. Kod ML ich używa na każdej operacji: `ModelRegistry.ts` (`where: { featureVersion }`,
    `prisma.aiModel.create` z `featureVersion`), `FeatureExtractor.ts`
    (`kinetaType`, `dennicaHeight`), `TrainingPipeline.ts`.
@@ -91,13 +91,13 @@ Utworzono migrację, która uzupełnia brakujące kolumny i porządkuje indeks `
   (poprawny stan: brak danych treningowych na świeżej bazie).
 - `POST /api/telemetry/ai/learning/run` → `{ processed: 0, patternsDetected: 0, ... }` (OK).
 - **Test w przeglądarce (headless Puppeteer)** na `http://localhost:3000`:
-  - logowanie admina,
-  - sekcja **AI / ML Dashboard** renderuje pełną treść: Learning Engine, statystyki,
-    ML Pipeline (**✓ Online**, model `v0.1.0-starter`, AUC 0.5000), Feature Importance,
-    Studnie dobrane przez AI,
-  - sekcja **Stan pipeline ML**: Telemetria, FeatureExtractor, Trening, Model, Predict
-    (**Online**), Nagrody, Drift danych, Jakość danych,
-  - **zero błędów w konsoli przeglądarki**.
+    - logowanie admina,
+    - sekcja **AI / ML Dashboard** renderuje pełną treść: Learning Engine, statystyki,
+      ML Pipeline (**✓ Online**, model `v0.1.0-starter`, AUC 0.5000), Feature Importance,
+      Studnie dobrane przez AI,
+    - sekcja **Stan pipeline ML**: Telemetria, FeatureExtractor, Trening, Model, Predict
+      (**Online**), Nagrody, Drift danych, Jakość danych,
+    - **zero błędów w konsoli przeglądarki**.
 
 ## 4. Co zostało zmienione w repozytorium
 
@@ -119,9 +119,9 @@ utworzy teraz kompletny model ML i działający AI/ML Dashboard.
    (linia 216 `prisma.aiModel.create` → `tx.aiModel.create`) — zapobiega to
    częściowemu wgraniu danych i konfliktowi P2002 przy ponownym seedzie.
 3. **Po każdej instalacji uruchom sanity-check AI/ML**:
-   - `npm run ai:setup` (skrypt `setupAi.ts`) — potwierdza model ONLINE,
-   - w przeglądarce: Pulpit admin → sekcja „AI / ML Dashboard" bez komunikatu
-     „Błąd serwera".
+    - `npm run ai:setup` (skrypt `setupAi.ts`) — potwierdza model ONLINE,
+    - w przeglądarce: Pulpit admin → sekcja „AI / ML Dashboard" bez komunikatu
+      „Błąd serwera".
 4. **Przed `git push`** przeglądaj migracje razem ze zmianami kodu (`git status`):
    nowa migracja musi trafić do tego samego commita co kod jej używający.
 5. Dla istniejących instalacji (już po pierwszym seedzie) wystarczy uruchomić
