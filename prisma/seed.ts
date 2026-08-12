@@ -3,14 +3,20 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { DN_SIZES, ZAKRESY_TYPES } from '../src/constants/precoSizes';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../src/config/mlConstants';
+import type { Prisma } from '../generated/prisma';
+
+type ProductsRuryCreateManyInput = Prisma.ProductsRuryCreateManyInput;
+type ProductsStudnieCreateManyInput = Prisma.ProductsStudnieCreateManyInput;
 
 const prisma = new PrismaClient();
 
-function readJson(fileName: string): any {
-    return JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8'));
+function readJson<Data = unknown>(fileName: string): Data {
+    return JSON.parse(
+        fs.readFileSync(path.join(__dirname, '..', 'data', fileName), 'utf-8')
+    ) as Data;
 }
 
-function toBool(val: any): boolean {
+function toBool(val: unknown): boolean {
     if (val === 1 || val === true) return true;
     return false;
 }
@@ -39,9 +45,10 @@ async function main() {
     }
 
     console.log('Seed: wczytywanie danych z JSON...');
-    const ruryData = readJson('seed_rury.json');
-    const studnieData = readJson('seed_studnie.json');
-    const precoData = readJson('seed_preco.json')[0];
+    const ruryData = readJson<Array<Record<string, unknown>>>('seed_rury.json');
+    const studnieData = readJson<Array<Record<string, unknown>>>('seed_studnie.json');
+    const precoData =
+        readJson<Array<Record<string, Record<string, unknown>>>>('seed_preco.json')[0] ?? {};
 
     console.log(`  Rury: ${ruryData.length}`);
     console.log(`  Studnie: ${studnieData.length}`);
@@ -54,17 +61,33 @@ async function main() {
     let existingAiModel = 0;
 
     await prisma.$transaction(async (tx) => {
+        if (force) {
+            console.log('  -> czyszczenie starych danych seed...');
+            await tx.precoZakresyDefault.deleteMany();
+            await tx.precoZakresy.deleteMany();
+            await tx.precoKinetyDefault.deleteMany();
+            await tx.precoKinety.deleteMany();
+            await tx.precoKonfigDefault.deleteMany();
+            await tx.precoKonfig.deleteMany();
+            await tx.productsStudnieDefault.deleteMany();
+            await tx.productsStudnie.deleteMany();
+            await tx.productsRuryDefault.deleteMany();
+            await tx.productsRury.deleteMany();
+        }
+
         // ── ProductsRury + ProductsRuryDefault ──
         console.log('  -> ProductsRury / ProductsRuryDefault...');
-        const ruryRows = ruryData.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            price: p.price,
-            transport: p.transport ?? null,
-            weight: p.weight ?? null,
-            area: p.area ?? null
-        }));
+        const ruryRows: ProductsRuryCreateManyInput[] = ruryData.map(
+            (p: Record<string, unknown>) => ({
+                id: p.id as string,
+                name: p.name as string,
+                category: p.category as string,
+                price: p.price as number,
+                transport: (p.transport as number | null) ?? null,
+                weight: (p.weight as number | null) ?? null,
+                area: (p.area as number | null) ?? null
+            })
+        );
 
         if (ruryRows.length > 0) {
             await tx.productsRury.createMany({ data: ruryRows });
@@ -73,43 +96,45 @@ async function main() {
 
         // ── ProductsStudnie + ProductsStudnieDefault ──
         console.log('  -> ProductsStudnie / ProductsStudnieDefault...');
-        const studnieRows = studnieData.map((p: any) => ({
-            id: p.id,
-            name: p.name,
-            category: p.category,
-            componentType: p.componentType,
-            dn: p.dn != null ? String(p.dn) : null,
-            height: p.height ?? null,
-            weight: p.weight ?? null,
-            price: p.price ?? 0,
-            area: p.area ?? null,
-            areaExt: p.areaExt ?? null,
-            transport: p.transport ?? null,
-            magazynWL: toBool(p.magazynWL),
-            magazynKLB: toBool(p.magazynKLB),
-            formaStandardowa: toBool(p.formaStandardowa),
-            formaStandardowaKLB: toBool(p.formaStandardowaKLB),
-            active: p.active !== undefined ? toBool(p.active) : true,
-            zapasDol: p.zapasDol ?? null,
-            zapasGora: p.zapasGora ?? null,
-            zapasDolMin: p.zapasDolMin ?? null,
-            zapasGoraMin: p.zapasGoraMin ?? null,
-            spocznikH: p.spocznikH != null ? String(p.spocznikH) : null,
-            hMin1: p.hMin1 ?? null,
-            hMax1: p.hMax1 ?? null,
-            cena1: p.cena1 ?? null,
-            hMin2: p.hMin2 ?? null,
-            hMax2: p.hMax2 ?? null,
-            cena2: p.cena2 ?? null,
-            hMin3: p.hMin3 ?? null,
-            hMax3: p.hMax3 ?? null,
-            cena3: p.cena3 ?? null,
-            doplataPEHD: p.doplataPEHD ?? null,
-            doplataZelbet: p.doplataZelbet ?? null,
-            doplataDrabNierdzewna: p.doplataDrabNierdzewna ?? null,
-            malowanieWewnetrzne: p.malowanieWewnetrzne ?? null,
-            malowanieZewnetrzne: p.malowanieZewnetrzne ?? null
-        }));
+        const studnieRows: ProductsStudnieCreateManyInput[] = studnieData.map(
+            (p: Record<string, unknown>) => ({
+                id: p.id as string,
+                name: p.name as string,
+                category: p.category as string,
+                componentType: p.componentType as string,
+                dn: p.dn != null ? String(p.dn) : null,
+                height: (p.height as number | null) ?? null,
+                weight: (p.weight as number | null) ?? null,
+                price: (p.price as number | null) ?? 0,
+                area: (p.area as number | null) ?? null,
+                areaExt: (p.areaExt as number | null) ?? null,
+                transport: (p.transport as number | null) ?? null,
+                magazynWL: toBool(p.magazynWL),
+                magazynKLB: toBool(p.magazynKLB),
+                formaStandardowa: toBool(p.formaStandardowa),
+                formaStandardowaKLB: toBool(p.formaStandardowaKLB),
+                active: p.active !== undefined ? toBool(p.active) : true,
+                zapasDol: (p.zapasDol as number | null) ?? null,
+                zapasGora: (p.zapasGora as number | null) ?? null,
+                zapasDolMin: (p.zapasDolMin as number | null) ?? null,
+                zapasGoraMin: (p.zapasGoraMin as number | null) ?? null,
+                spocznikH: p.spocznikH != null ? String(p.spocznikH) : null,
+                hMin1: (p.hMin1 as number | null) ?? null,
+                hMax1: (p.hMax1 as number | null) ?? null,
+                cena1: (p.cena1 as number | null) ?? null,
+                hMin2: (p.hMin2 as number | null) ?? null,
+                hMax2: (p.hMax2 as number | null) ?? null,
+                cena2: (p.cena2 as number | null) ?? null,
+                hMin3: (p.hMin3 as number | null) ?? null,
+                hMax3: (p.hMax3 as number | null) ?? null,
+                cena3: (p.cena3 as number | null) ?? null,
+                doplataPEHD: (p.doplataPEHD as number | null) ?? null,
+                doplataZelbet: (p.doplataZelbet as number | null) ?? null,
+                doplataDrabNierdzewna: (p.doplataDrabNierdzewna as number | null) ?? null,
+                malowanieWewnetrzne: (p.malowanieWewnetrzne as number | null) ?? null,
+                malowanieZewnetrzne: (p.malowanieZewnetrzne as number | null) ?? null
+            })
+        );
 
         if (studnieRows.length > 0) {
             await tx.productsStudnie.createMany({ data: studnieRows });
@@ -117,30 +142,12 @@ async function main() {
         }
 
         // ── PRECO ──
+        // Logika zgodna z flattenAndSave w src/routes/precoPricingV2.ts — seed odtwarza
+        // identyczne wiersze (ID, order, wartość value), jak zapis przez API PRECO.
         console.log('  -> PrecoKonfig / PrecoKonfigDefault...');
+        let kinetyIdx = 0;
+        let zakresIdx = 0;
         const konfigRows: Array<{ id: string; key: string; value: string }> = [];
-        for (const dnStr of DN_SIZES) {
-            const dnCfg = precoData[dnStr];
-            if (!dnCfg) continue;
-            const scalars: Record<string, number> = {
-                skrzynkaWlazowa: dnCfg.skrzynkaWlazowa,
-                cenaPelnaWysMB: dnCfg.cenaPelnaWysMB,
-                cenaDnoOsadnika: dnCfg.cenaDnoOsadnika
-            };
-            konfigRows.push({
-                id: `konfig_${dnStr}`,
-                key: dnStr,
-                value: JSON.stringify(scalars)
-            });
-        }
-        if (konfigRows.length > 0) {
-            konfigCount = konfigRows.length;
-            await tx.precoKonfig.createMany({ data: konfigRows });
-            await tx.precoKonfigDefault.createMany({ data: konfigRows });
-        }
-
-        console.log('  -> PrecoKinety / PrecoKinetyDefault...');
-        let kinetaOrder = 0;
         const kinetyRows: Array<{
             id: string;
             order: number;
@@ -149,29 +156,6 @@ async function main() {
             height: number;
             cena: number;
         }> = [];
-        for (const dnStr of DN_SIZES) {
-            const dnCfg = precoData[dnStr];
-            if (!dnCfg || !dnCfg.kinety) continue;
-            for (const k of dnCfg.kinety) {
-                kinetaOrder++;
-                kinetyRows.push({
-                    id: `kineta_${kinetaOrder}`,
-                    order: kinetaOrder,
-                    dn: k.dn,
-                    wellDn: Number(dnStr),
-                    height: k.prosta,
-                    cena: k.dodWlot
-                });
-            }
-        }
-        kinetyCount = kinetyRows.length;
-        if (kinetyRows.length > 0) {
-            await tx.precoKinety.createMany({ data: kinetyRows });
-            await tx.precoKinetyDefault.createMany({ data: kinetyRows });
-        }
-
-        console.log('  -> PrecoZakresy / PrecoZakresyDefault...');
-        let zakresOrder = 0;
         const zakresyRows: Array<{
             id: string;
             order: number;
@@ -181,26 +165,63 @@ async function main() {
             grupy: string;
             wellDn: number;
         }> = [];
+
         for (const dnStr of DN_SIZES) {
             const dnCfg = precoData[dnStr];
             if (!dnCfg) continue;
-            for (const typ of ZAKRESY_TYPES) {
-                const entries = dnCfg[typ];
-                if (!entries) continue;
-                for (const entry of entries) {
-                    zakresOrder++;
+            const obj = dnCfg as Record<string, unknown>;
+            const { kinety, ...scalarFields } = obj;
+            konfigRows.push({
+                id: `preco_konfig_${dnStr}`,
+                key: dnStr,
+                value: JSON.stringify(scalarFields)
+            });
+            if (Array.isArray(kinety)) {
+                for (const k of kinety) {
+                    const kin = k as Record<string, unknown>;
+                    kinetyRows.push({
+                        id: `preco_kinety_${dnStr}_${kinetyIdx}`,
+                        order: (kin.order as number) ?? kinetyIdx,
+                        dn: (kin.dn ?? 0) as number,
+                        wellDn: Number(dnStr),
+                        height: (kin.prosta ?? kin.height) as number,
+                        cena: (kin.dodWlot ?? kin.cena) as number
+                    });
+                    kinetyIdx++;
+                }
+            }
+            for (const label of ZAKRESY_TYPES) {
+                const arr = dnCfg[label];
+                if (!Array.isArray(arr)) continue;
+                for (const item of arr) {
+                    const it = item as Record<string, unknown>;
+                    const grupy = (it.grupy as Record<string, unknown>) ?? {};
                     zakresyRows.push({
-                        id: `zakres_${zakresOrder}`,
-                        order: zakresOrder,
-                        label: typ,
-                        min: entry.min,
-                        max: entry.max,
-                        grupy: JSON.stringify(entry.grupy || {}),
+                        id: `preco_zakres_${label}_${zakresIdx}`,
+                        order: (it.order as number) ?? zakresIdx,
+                        label,
+                        min: it.min as number,
+                        max: it.max as number,
+                        grupy: JSON.stringify(grupy),
                         wellDn: Number(dnStr)
                     });
+                    zakresIdx++;
                 }
             }
         }
+
+        konfigCount = konfigRows.length;
+        if (konfigRows.length > 0) {
+            await tx.precoKonfig.createMany({ data: konfigRows });
+            await tx.precoKonfigDefault.createMany({ data: konfigRows });
+        }
+
+        kinetyCount = kinetyRows.length;
+        if (kinetyRows.length > 0) {
+            await tx.precoKinety.createMany({ data: kinetyRows });
+            await tx.precoKinetyDefault.createMany({ data: kinetyRows });
+        }
+
         zakresyCount = zakresyRows.length;
         if (zakresyRows.length > 0) {
             await tx.precoZakresy.createMany({ data: zakresyRows });
