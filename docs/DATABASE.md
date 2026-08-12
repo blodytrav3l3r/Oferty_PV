@@ -555,6 +555,13 @@ Pliki źródłowe seed:
 - `data/seed_studnie.json` — produkty studnie
 - `data/seed_preco.json` — cenniki Preco
 
+Pliki seed można zregenerować z aktualnych danych produkcyjnych skryptem
+`scripts/export-settings-to-seed.mjs` — czyta cenniki bezpośrednio z tabel
+`ProductsRury`, `ProductsStudnie` oraz `PrecoKonfig`/`PrecoKinety` (a nie z tabeli
+`settings`) i zapisuje do `data/seed_*.json` (JSON z wcięciem 4 spacje, końcówka
+linii `\n`). Użycie: `node scripts/export-settings-to-seed.mjs [--dry-run]`
+(`--dry-run` pokazuje raport bez zapisu plików).
+
 Przy starcie serwera (`server.ts`) produkty **nie są** automatycznie seedowane.
 
 Seed zapisuje dane w **jednej transakcji** `prisma.$transaction(...)` z użyciem

@@ -471,7 +471,7 @@ Oferty_PV/
 │   ├── bump-version.mjs             # Podbicie wersji
 │   ├── version-updater.mjs          # Aktualizator wersji
 │   ├── skill-cli.mjs                # CLI dla skilli
-│   ├── export-settings-to-seed.mjs  # Eksport ustawień do seed
+│   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do seed
 │   ├── migrate-settings-to-tables.ts# Migracja ustawień do tabel
 │   ├── migrate-preco-from-tables.cjs# Migracja Preco z tabel
 │   ├── reverse-migration-to-settings.mjs # Cofnięcie migracji ustawień

@@ -590,7 +590,7 @@ Oferty_PV/
 │   ├── bump-version.mjs       # Podbijanie wersji
 │   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8
 │   ├── skill-cli.mjs          # Skill CLI (build cost, stats)
-│   ├── export-settings-to-seed.mjs # Eksport ustawień do seed
+│   ├── export-settings-to-seed.mjs # Eksport cenników z tabel DB do seed
 │   └── ...
 ├── .github/                   # CI/CD, CODE_OF_CONDUCT
 ├── .husky/                    # Git hooks (pre-push, commit-msg)
