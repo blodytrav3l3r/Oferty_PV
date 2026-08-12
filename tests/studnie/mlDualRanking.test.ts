@@ -205,6 +205,11 @@ describe('mlDualRanking.rankCandidates (min-max normalizacja aiCost)', () => {
         expect(result.ranked[0].id).toBe(0);
         expect(result.ranked[0].solution).toBe(result.technicalWinner);
     });
+
+    test('fallback FEATURE_VERSION jest zgodny z bieżącym schematem cech (29 wektorów = v7)', async () => {
+        const fallback = sandbox.window.getFeatureVersionFallback();
+        expect(fallback).toBe('v7');
+    });
 });
 
 describe('mlDualRanking.buildFeatureVector (realne cechy kandydatów)', () => {

@@ -34,7 +34,11 @@
     // min-max bez progu rozciągałby ten szum do pełnej skali i produkował fałszywe flipy.
     const AI_COST_MIN_RANGE = 0.05;
 
-    let FEATURE_VERSION = 'v6';
+    // FEATURE_VERSION musi być zgodny z wymiarami wektorów z FeatureExtractor
+    // (v7 = 29 cech). Fallback to stała, a nie stale deskryptora — przy braku
+    // backendu predict i tak failuje, ale zgodna wersja unika 400 MISMATCH.
+    let FEATURE_VERSION = 'v7';
+    const FEATURE_VERSION_FALLBACK = 'v7';
     let _featureVersionFetched = false;
     const RANKING_VERSION = 'dual_v1';
 
@@ -851,4 +855,8 @@
     window.selectWithExploration = selectWithExploration;
     window.getAiInfluencePct = getAiInfluencePct;
     window.buildFeatureVector = buildFeatureVector;
+    // Wersja cech fallback (testowalna; spójna z FEATURE_VERSION startowym)
+    window.getFeatureVersionFallback = function () {
+        return FEATURE_VERSION_FALLBACK;
+    };
 })();
