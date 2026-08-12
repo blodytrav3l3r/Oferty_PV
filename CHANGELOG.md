@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.14.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.4...v1.14.0) (2026-08-12)
+
+### Features
+
+- **seed:** aktualizacja danych i naprawa reseed --force ([de4aa65](https://github.com/blodytrav3l3r/Oferty_PV/commit/de4aa65c83a7b7a86a5a955a67c80f0b6e716369))
+- **seed:** eksport cennikow z tabel produkcyjnych zamiast settings ([f089c97](https://github.com/blodytrav3l3r/Oferty_PV/commit/f089c9776a5d3017654958a00bbb6dbd8bdf0122))
+- **telemetry:** oryginalne konfiguracje dla korekt learning engine ([fdb2574](https://github.com/blodytrav3l3r/Oferty_PV/commit/fdb257455e57cd8aa00a9297ad42c1d894a62f53))
+- **telemetry:** przejscia w cechach ml (v7) ([c8d997a](https://github.com/blodytrav3l3r/Oferty_PV/commit/c8d997a67addc396cfc95900de9b3e5257a69327))
+- **telemetry:** samoleczenie ml przy starcie i skrypt setup-ai.bat ([5a88b47](https://github.com/blodytrav3l3r/Oferty_PV/commit/5a88b47f205890ca9739d22dbb3efbc0b22a4506))
+
+### Bug Fixes
+
+- **telemetry:** acceptance-full bez duplikatu rekordu manual ([5a6fea8](https://github.com/blodytrav3l3r/Oferty_PV/commit/5a6fea8745a48a40867f64fafa5563dc214b3021))
+- **telemetry:** fallback feature version v7 przy 29 cechach ([532434a](https://github.com/blodytrav3l3r/Oferty_PV/commit/532434aac3a7bdb33658a34c0fa3fa765148bcc1))
+- **telemetry:** migracja uzupelniajaca kolumny schematu ai/ml ([919933f](https://github.com/blodytrav3l3r/Oferty_PV/commit/919933f5cf64fc0d5a83b3b2e91bb6d63892ee4f))
+- **telemetry:** naprawa autoryzacji i pobierania stanu w panelu ai/ml ([12b7a84](https://github.com/blodytrav3l3r/Oferty_PV/commit/12b7a841761c321093f31af45e5f81cc33490799))
+- **telemetry:** reward per studnia zamiast globalnego single-flight ([523408f](https://github.com/blodytrav3l3r/Oferty_PV/commit/523408f2cea92d5fceb11078d70f724c8f23324f))
+
 ### [1.13.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.13.3...v1.13.4) (2026-08-11)
 
 ### Bug Fixes
