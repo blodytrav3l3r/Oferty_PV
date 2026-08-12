@@ -396,6 +396,8 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 Wszystkie plany, taski, implementation plany i dokumenty planistyczne (`.md`) muszą znajdować się w katalogu `docs/plans/`. Dotyczy to zarówno istniejących, jak i nowo tworzonych planów. Wyjątkiem są plany narzędziowe w katalogach konfiguracyjnych (`.hermes/`, `.opencode/`).
 
+**Archiwizacja zakończonych planów:** Po zakończeniu realizacji planu (wszystkie fazy wykonane i zweryfikowane, plan nie jest już potrzebny jako aktywny dokument roboczy) przenieś go do katalogu `docs/plans/archive/` (np. `git mv docs/plans/<plan>.md docs/plans/archive/<plan>.md`). Używaj `git mv`, aby zachować historię zmian. W katalogu głównym `docs/plans/` pozostają wyłącznie plany aktywne lub w trakcie realizacji.
+
 ---
 
 ## 8. Subagenty OpenCode — Model w `task` tool
