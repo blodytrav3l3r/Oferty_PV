@@ -120,10 +120,13 @@ async function saveOfferStudnie() {
             : wells;
         _sendAcceptanceTelemetry(telemetryWells, 'OFFER_SAVE');
 
-        // Auto-acceptance — rejestruj akceptację/odrzucenie w ML pipeline.
-        // Studnia ręcznie zmodyfikowana (configSource MANUAL*) = odrzucenie sugestii
-        // auto-doboru → acceptance-full z accepted:false ustawia wasRejected na
-        // rekordzie telemetrii (zasila rejectionCount wzorców w Knowledge Base).
+        // Auto-acceptance — rejestruj akceptację w ML pipeline.
+        // Studnia ręcznie zmodyfikowana (configSource MANUAL*) dostaje NEGATYW
+        // wcześniej (reward MODIFY na sugestii AUTO + wzorce substitution/addition/
+        // removal w LearningEngine), a pozytyw dopiero przy ORDER_CONFIRM (wasAccepted).
+        // Nie wysyłamy dla niej acceptance-full z accepted:false — recordAcceptance
+        // oznaczałby NAJNOWSZY rekord studni (świeży manualny config) jako REJECTED,
+        // czyli finalny wybór użytkownika zyskiwał −1.0 zamiast NO_FEEDBACK.
         wells.forEach(function (w) {
             if (!w.config || w.config.length === 0) return;
             const accepted = !(w.configSource && w.configSource.indexOf('MANUAL') === 0);
@@ -138,12 +141,13 @@ async function saveOfferStudnie() {
                     well: w
                 });
             }
-            // Wyślij acceptance-full do backendu (wspólny helper z telemetryBridge.js)
-            if (typeof window.telemetryRecordAcceptanceFull === 'function') {
+            // Wyślij acceptance-full do backendu tylko dla studni zaakceptowanych
+            // (AUTO/AI bez modyfikacji). Dla MANUAL pomijamy — patrz komentarz wyżej.
+            if (accepted && typeof window.telemetryRecordAcceptanceFull === 'function') {
                 try {
                     window.telemetryRecordAcceptanceFull({
                         telemetryId: w.id || 'well_' + Date.now(),
-                        accepted: accepted,
+                        accepted: true,
                         offerId: editingOfferIdStudnie,
                         wellId: w.id,
                         warehouse: w.magazyn,
