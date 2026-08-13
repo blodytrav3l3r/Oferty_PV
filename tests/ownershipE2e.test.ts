@@ -50,7 +50,8 @@ jest.mock('../src/prismaClient', () => ({
         offer_items_rel: {
             findMany: jest.fn(),
             deleteMany: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            createMany: jest.fn()
         },
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
@@ -331,7 +332,7 @@ describe('Ownership E2E — offers routes', () => {
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
 
             await request(app).post('/api/offers/o-mine/duplicate');
-            expect(prisma.offer_items_rel.create).toHaveBeenCalledTimes(2);
+            expect(prisma.offer_items_rel.createMany).toHaveBeenCalledTimes(1);
         });
 
         it('regular user CANNOT duplicate another user offer (403)', async () => {

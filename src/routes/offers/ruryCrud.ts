@@ -230,19 +230,26 @@ router.post(
                     where: { offerId: docId }
                 });
                 const items = o.items || [];
-                for (const item of items) {
-                    const itemId = item.id || uuidv4();
-                    const itemPrice =
-                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                    await prisma.offer_items_rel.create({
-                        data: {
-                            id: itemId,
-                            offerId: docId,
-                            productId: item.productId,
-                            quantity: item.quantity || 0,
-                            discount: item.discount || 0,
-                            price: itemPrice
-                        }
+                if (items.length > 0) {
+                    await prisma.offer_items_rel.createMany({
+                        data: items.map(
+                            (item: {
+                                id?: string;
+                                unitPrice?: number;
+                                price?: number;
+                                productId: string;
+                                quantity: number;
+                                discount: number;
+                            }) => ({
+                                id: item.id || uuidv4(),
+                                offerId: docId,
+                                productId: item.productId,
+                                quantity: item.quantity || 0,
+                                discount: item.discount || 0,
+                                price:
+                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                            })
+                        )
                     });
                 }
                 await syncFts5('rury', {
@@ -355,19 +362,26 @@ router.put(
                     where: { offerId: docId }
                 });
                 const items = o.items || [];
-                for (const item of items) {
-                    const itemId = item.id || uuidv4();
-                    const itemPrice =
-                        item.unitPrice !== undefined ? item.unitPrice : item.price || 0;
-                    await prisma.offer_items_rel.create({
-                        data: {
-                            id: itemId,
-                            offerId: docId,
-                            productId: item.productId,
-                            quantity: item.quantity || 0,
-                            discount: item.discount || 0,
-                            price: itemPrice
-                        }
+                if (items.length > 0) {
+                    await prisma.offer_items_rel.createMany({
+                        data: items.map(
+                            (item: {
+                                id?: string;
+                                unitPrice?: number;
+                                price?: number;
+                                productId: string;
+                                quantity: number;
+                                discount: number;
+                            }) => ({
+                                id: item.id || uuidv4(),
+                                offerId: docId,
+                                productId: item.productId,
+                                quantity: item.quantity || 0,
+                                discount: item.discount || 0,
+                                price:
+                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                            })
+                        )
                     });
                 }
                 await syncFts5('rury', {
@@ -447,16 +461,16 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             clientNumber: dupClientNumber
         });
 
-        for (const item of sourceItems) {
-            await prisma.offer_items_rel.create({
-                data: {
+        if (sourceItems.length > 0) {
+            await prisma.offer_items_rel.createMany({
+                data: sourceItems.map((item) => ({
                     id: uuidv4(),
                     offerId: newId,
                     productId: item.productId,
                     quantity: item.quantity,
                     discount: item.discount,
                     price: item.price
-                }
+                }))
             });
         }
 

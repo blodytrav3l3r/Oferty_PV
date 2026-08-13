@@ -47,7 +47,8 @@ jest.mock('../src/prismaClient', () => ({
         offer_items_rel: {
             findMany: jest.fn(),
             deleteMany: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            createMany: jest.fn()
         },
         $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
@@ -57,9 +58,9 @@ jest.mock('../src/prismaClient', () => ({
     Prisma: {
         raw: (s: string): string => s,
         empty: '',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         sql: (strings: any, ...values: any[]): string => String.raw({ raw: strings }, ...values),
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
         join: (values: any[]): string => values.join(', ')
     }
 }));
@@ -189,6 +190,7 @@ describe('Offers CRUD Routes', () => {
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/offers')
@@ -300,6 +302,7 @@ describe('Offers CRUD Routes', () => {
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.create as jest.Mock).mockResolvedValue({});
+            (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .put('/api/offers')
                 .set('x-user-id', 'user-id')
