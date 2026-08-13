@@ -139,7 +139,13 @@ router.post(
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
-                    } catch (_e) {}
+                    } catch (_e) {
+                        logger.warn(
+                            'Offers',
+                            'Uszkodzony JSON history podczas zapisu oferty rur',
+                            docId
+                        );
+                    }
                     const oldItems = await prisma.offer_items_rel.findMany({
                         where: { offerId: docId }
                     });
@@ -411,7 +417,9 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
             dupClientName = srcData.clientName || null;
             dupInvestName = srcData.investName || null;
             dupClientNumber = srcData.clientNumber || null;
-        } catch {}
+        } catch {
+            logger.warn('Offers', 'Uszkodzony JSON data przy kopiowaniu oferty rur', id);
+        }
 
         await prisma.offers_rel.create({
             data: {

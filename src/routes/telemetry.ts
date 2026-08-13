@@ -66,12 +66,22 @@ router.get('/logs', requireAuth, WRITE_LIMITER, (req, res) => {
                     if (typeof final === 'string') {
                         l.final_user_config = JSON.parse(final);
                     }
-                } catch (_e) {}
+                } catch (_e) {
+                    logger.warn('Telemetry', 'Uszkodzony JSON config w logu telemetrii', {
+                        id: l.id,
+                        wellId: l.wellId
+                    });
+                }
             });
 
             return res.json(logs);
         })
-        .catch((_e) => {
+        .catch((e) => {
+            logger.error(
+                'Telemetry',
+                'Błąd odczytu logów telemetrii',
+                e instanceof Error ? e.message : e
+            );
             return res.status(500).json({ error: 'Błąd bazy' });
         });
 });

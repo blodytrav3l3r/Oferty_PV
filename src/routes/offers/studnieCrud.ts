@@ -68,13 +68,15 @@ router.get('/studnie', requireAuth, async (req, res) => {
             let parsedData: Record<string, unknown> = {};
             try {
                 if (offer.data) parsedData = JSON.parse(offer.data);
-            } catch (_e) {}
+            } catch (_e) {
+                logger.warn('Offers', 'Uszkodzony JSON data w ofercie studni', offer.id);
+            }
 
             let studnieHistory: unknown[] = [];
             try {
                 studnieHistory = JSON.parse(offer.history || '[]');
             } catch {
-                studnieHistory = [];
+                logger.warn('Offers', 'Uszkodzony JSON history w ofercie studni', offer.id);
             }
             let studnieSpread: Record<string, unknown> = {};
             if (offer.data) {
@@ -183,7 +185,13 @@ router.post(
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
-                    } catch (_e) {}
+                    } catch (_e) {
+                        logger.warn(
+                            'Offers',
+                            'Uszkodzony JSON history podczas zapisu oferty studni',
+                            docId
+                        );
+                    }
                     let snapshotData: Record<string, unknown> = {};
                     try {
                         snapshotData = JSON.parse(old.data || '{}');
@@ -403,7 +411,9 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         let oldData: Record<string, unknown> = {};
         try {
             oldData = JSON.parse(offer.data || '{}');
-        } catch (_e) {}
+        } catch (_e) {
+            logger.warn('Offers', 'Uszkodzony JSON data podczas usuwania oferty studni', id);
+        }
         logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
         await prisma.offers_studnie_rel.delete({ where: { id } });

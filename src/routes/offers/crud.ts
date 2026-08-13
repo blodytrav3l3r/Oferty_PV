@@ -33,13 +33,15 @@ router.get('/:id', requireAuth, async (req, res) => {
             let parsedData: Record<string, unknown> = {};
             try {
                 if (offer.data) parsedData = JSON.parse(offer.data);
-            } catch (_e) {}
+            } catch (_e) {
+                logger.warn('Offers', 'Uszkodzony JSON data w ofercie studni', id);
+            }
 
             let studnieHistory: unknown[] = [];
             try {
                 studnieHistory = JSON.parse(offer.history || '[]');
             } catch {
-                studnieHistory = [];
+                logger.warn('Offers', 'Uszkodzony JSON history w ofercie studni', id);
             }
 
             return res.json({
@@ -164,7 +166,9 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             let oldData: Record<string, unknown> = {};
             try {
                 oldData = JSON.parse(offer.data || '{}');
-            } catch (_e) {}
+            } catch (_e) {
+                logger.warn('Offers', 'Uszkodzony JSON data podczas usuwania oferty studni', id);
+            }
             logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
             await removeFts5('studnie', id);
