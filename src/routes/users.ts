@@ -11,62 +11,47 @@ const router = express.Router();
 
 const adminUsersLimiter = ADMIN_USERS_LIMITER;
 
-/**
- * POMOCNICZE: Pobieranie licznika zamówień
- */
-async function getNextOrderNumber(
-    user: { id: string; orderStartNumber?: number | null; symbol?: string | null },
-    year: number
-): Promise<string> {
-    const startNum = user.orderStartNumber || 1;
-    const symbol = user.symbol || '??';
-
-    try {
-        const counter = await prisma.order_counters.findUnique({
-            where: { userId_year: { userId: user.id, year } }
-        });
-
-        const lastNum = counter?.lastNumber || 0;
-        const nextNum = Math.max(lastNum + 1, startNum);
-        return `${symbol}/${String(nextNum).padStart(6, '0')}/${year}`;
-    } catch (_e) {
-        return `${symbol}/${String(startNum).padStart(6, '0')}/${year}`;
-    }
-}
-
 // GET /api/users (tylko administrator)
 router.get('/', requireAuth, requireAdmin, async (_req, res) => {
     try {
         const users = await prisma.users.findMany();
         const year = new Date().getFullYear();
 
-        const usersData = await Promise.all(
-            users.map(async (user) => {
-                let subUsers: string[] = [];
-                try {
-                    if (user.subUsers) subUsers = JSON.parse(user.subUsers);
-                } catch (_e) {
-                    subUsers = [];
-                }
+        const counters = await prisma.order_counters.findMany({
+            where: { userId: { in: users.map((u) => u.id) }, year }
+        });
+        const counterByUser = new Map(counters.map((c) => [c.userId, c.lastNumber]));
 
-                const nextOrderNumber = await getNextOrderNumber(user, year);
-                return {
-                    id: user.id,
-                    username: user.username,
-                    role: user.role,
-                    firstName: user.firstName,
-                    lastName: user.lastName,
-                    phone: user.phone,
-                    email: user.email,
-                    symbol: user.symbol,
-                    subUsers: subUsers,
-                    orderStartNumber: user.orderStartNumber,
-                    productionOrderStartNumber: user.productionOrderStartNumber || 1,
-                    createdAt: user.createdAt,
-                    nextOrderNumber
-                };
-            })
-        );
+        const usersData = users.map((user) => {
+            let subUsers: string[] = [];
+            try {
+                if (user.subUsers) subUsers = JSON.parse(user.subUsers);
+            } catch (_e) {
+                subUsers = [];
+            }
+
+            const startNum = user.orderStartNumber || 1;
+            const symbol = user.symbol || '??';
+            const lastNum = counterByUser.get(user.id) || 0;
+            const nextNum = Math.max(lastNum + 1, startNum);
+            const nextOrderNumber = `${symbol}/${String(nextNum).padStart(6, '0')}/${year}`;
+
+            return {
+                id: user.id,
+                username: user.username,
+                role: user.role,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                phone: user.phone,
+                email: user.email,
+                symbol: user.symbol,
+                subUsers: subUsers,
+                orderStartNumber: user.orderStartNumber,
+                productionOrderStartNumber: user.productionOrderStartNumber || 1,
+                createdAt: user.createdAt,
+                nextOrderNumber
+            };
+        });
 
         res.json({ data: usersData });
     } catch (e: unknown) {

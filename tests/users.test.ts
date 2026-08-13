@@ -31,7 +31,8 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         order_counters: {
-            findUnique: jest.fn()
+            findUnique: jest.fn(),
+            findMany: jest.fn()
         },
         users: {
             findMany: jest.fn(),
@@ -99,12 +100,10 @@ describe('Users Routes', () => {
     describe('GET /api/users', () => {
         it('powinien zwrócić listę użytkowników dla admina oraz wyliczyć nextOrderNumber', async () => {
             (prisma.users.findMany as jest.Mock).mockResolvedValue(mockUsers);
-            (prisma.order_counters.findUnique as jest.Mock).mockResolvedValueOnce({
-                lastNumber: 2
-            }); // Admin counter
-            (prisma.order_counters.findUnique as jest.Mock).mockRejectedValueOnce(
-                new Error('no counter')
-            ); // User counter fallback
+            (prisma.order_counters.findMany as jest.Mock).mockResolvedValue([
+                { userId: 'admin-id', lastNumber: 2 },
+                { userId: 'user-id', lastNumber: 4 }
+            ]);
 
             const res = await request(app)
                 .get('/api/users')
