@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.14.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.1...v1.14.2) (2026-08-13)
+
+### Bug Fixes
+
+- **api:** upsert zamiast update-catch-create w settings ([988183e](https://github.com/blodytrav3l3r/Oferty_PV/commit/988183eea8c014518424d0adaaae06f2cf2f59d1))
+- **docs:** deduplikacja sekcji agents.md w claude.md ([2454ed2](https://github.com/blodytrav3l3r/Oferty_PV/commit/2454ed2ab563e205905aced4942b1ba908ae7108))
+- **offers:** logowanie uszkodzonego json w historii ofert ([b136db9](https://github.com/blodytrav3l3r/Oferty_PV/commit/b136db930d19c9bbb5908b9c645aa39e51a6d969))
+- **security:** escape danych usera w kartotece ([86fb843](https://github.com/blodytrav3l3r/Oferty_PV/commit/86fb843bcfa0bd7dd9c3296442be90e5f28b3fbe))
+- **security:** fail-fast na domyslne haslo admina ([94a6712](https://github.com/blodytrav3l3r/Oferty_PV/commit/94a6712577af840f6cb051a152e8f2824f138afb))
+- **security:** generyczny komunikat 500 z logowaniem szczegolow ([fa9ffe4](https://github.com/blodytrav3l3r/Oferty_PV/commit/fa9ffe43d6668016eb847a721d53371c17090df0))
+- **security:** hash tokenow sesji sha-256 ([06eeac7](https://github.com/blodytrav3l3r/Oferty_PV/commit/06eeac7df21dd8f71895f75d5ffd6b8fadd278f2))
+- **security:** haslo min 8 znakow + test loginu limitera ([5dab076](https://github.com/blodytrav3l3r/Oferty_PV/commit/5dab076a49cdef4fff39c756903e904174f2f195))
+- **security:** limitery na endpointach ml ([8551453](https://github.com/blodytrav3l3r/Oferty_PV/commit/85514534b7d59b595efb81ad1c0492251d558e7c))
+- **security:** rate limit na eksportach pdf/docx zamowien ([e4d3b85](https://github.com/blodytrav3l3r/Oferty_PV/commit/e4d3b8570d259bbb13dbf1dc86a7f88e36e4e12c))
+
 ### [1.14.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.0...v1.14.1) (2026-08-12)
 
 ### Bug Fixes
