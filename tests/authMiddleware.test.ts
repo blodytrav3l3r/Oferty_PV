@@ -6,7 +6,8 @@ const mockPrisma = {
         delete: jest.fn()
     },
     users: {
-        findUnique: jest.fn()
+        findUnique: jest.fn(),
+        create: jest.fn()
     },
     audit_logs: {
         findFirst: jest.fn().mockResolvedValue(null),
@@ -22,7 +23,13 @@ jest.mock('../src/prismaClient', () => ({
 
 import express from 'express';
 import request from 'supertest';
-import { requireAuth, requireAdmin, getSession, SESSION_MAX_AGE_MS } from '../src/middleware/auth';
+import {
+    requireAuth,
+    requireAdmin,
+    getSession,
+    SESSION_MAX_AGE_MS,
+    ensureAdminExists
+} from '../src/middleware/auth';
 
 // ─── getSession ─────────────────────────────────────────────────────
 
@@ -198,5 +205,58 @@ describe('requireAdmin', () => {
 
         const res = await request(app).get('/admin');
         expect(res.statusCode).toBe(403);
+    });
+});
+
+// ─── ensureAdminExists ────────────────────────────────────────────────
+
+describe('ensureAdminExists', () => {
+    const originalEnv = process.env;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        process.env = { ...originalEnv };
+    });
+
+    afterAll(() => {
+        process.env = originalEnv;
+    });
+
+    it('nie tworzy admina, gdy już istnieje', async () => {
+        mockPrisma.users.findUnique.mockResolvedValue({
+            id: 'usr_admin',
+            username: 'admin',
+            password: 'hash',
+            role: 'admin'
+        });
+        await expect(ensureAdminExists()).resolves.toBeUndefined();
+        expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    });
+
+    it('tworzy admina z hasłem z env', async () => {
+        process.env.DEFAULT_ADMIN_PASSWORD = 'super-secret-pass';
+        mockPrisma.users.findUnique.mockResolvedValue(null);
+        mockPrisma.users.create.mockResolvedValue({});
+
+        await expect(ensureAdminExists()).resolves.toBeUndefined();
+        expect(mockPrisma.users.create).toHaveBeenCalledTimes(1);
+    });
+
+    it('w produkcji rzuca błąd przy hasle domyslnym', async () => {
+        process.env.NODE_ENV = 'production';
+        process.env.DEFAULT_ADMIN_PASSWORD = 'anim123456';
+        mockPrisma.users.findUnique.mockResolvedValue(null);
+
+        await expect(ensureAdminExists()).rejects.toThrow(/must not be the default/);
+        expect(mockPrisma.users.create).not.toHaveBeenCalled();
+    });
+
+    it('w produkcji rzuca błąd przy placeholderze z .env.example', async () => {
+        process.env.NODE_ENV = 'production';
+        process.env.DEFAULT_ADMIN_PASSWORD = 'CHANGE_ME_PLEASE';
+        mockPrisma.users.findUnique.mockResolvedValue(null);
+
+        await expect(ensureAdminExists()).rejects.toThrow(/must not be the default/);
+        expect(mockPrisma.users.create).not.toHaveBeenCalled();
     });
 });

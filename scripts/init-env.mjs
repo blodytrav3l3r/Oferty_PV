@@ -25,7 +25,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ENV_FILE = resolve(ROOT, '.env');
 const ENV_EXAMPLE = resolve(ROOT, '.env.example');
 
-const DEFAULT_PASSWORD = 'anim123456';
+const DEFAULT_PASSWORD = 'CHANGE_ME_PLEASE';
 
 function main() {
     if (!existsSync(ENV_EXAMPLE)) {

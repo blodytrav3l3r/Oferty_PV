@@ -10,6 +10,8 @@ export const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 dni
 // Fallback hasła admina z .env.example — instalatory (install.bat/install.sh) generują
 // losowe hasło przy świeżej instalacji; ta wartość to wyłącznie tryb dev/awaryjny.
 const DEFAULT_ADMIN_FALLBACK_PASSWORD = 'anim123456';
+// Placeholder z .env.example — równie niebezpieczny w produkcji.
+const DEFAULT_ADMIN_PLACEHOLDER_PASSWORD = 'CHANGE_ME_PLEASE';
 
 export interface Session {
     token: string;
@@ -141,10 +143,22 @@ export async function ensureAdminExists(): Promise<void> {
                     'DEFAULT_ADMIN_PASSWORD must be set - cannot create default admin account'
                 );
             }
-            if (defaultPassword === DEFAULT_ADMIN_FALLBACK_PASSWORD) {
+            if (
+                defaultPassword === DEFAULT_ADMIN_FALLBACK_PASSWORD ||
+                defaultPassword === DEFAULT_ADMIN_PLACEHOLDER_PASSWORD
+            ) {
+                if (process.env.NODE_ENV === 'production') {
+                    logger.error(
+                        'Auth',
+                        'BŁĄD KRYTYCZNY: w produkcji użyto domyślnego hasła administratora. Ustaw losowe hasło w DEFAULT_ADMIN_PASSWORD.'
+                    );
+                    throw new Error(
+                        'DEFAULT_ADMIN_PASSWORD must not be the default/placeholder value in production'
+                    );
+                }
                 logger.warn(
                     'Auth',
-                    'Użyto DOMYŚLNEGO hasła administratora (anim123456). Zaleca się natychmiastową zmianę hasła po pierwszym logowaniu.'
+                    'Użyto DOMYŚLNEGO hasła administratora. Zaleca się natychmiastową zmianę hasła po pierwszym logowaniu.'
                 );
             }
             const hash = await bcrypt.hash(defaultPassword, 10);

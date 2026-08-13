@@ -85,7 +85,7 @@ Instalator automatycznie:
 - Sprawdzi i zweryfikuje wersję Node.js (>= 22.13)
 - Utworzy plik `.env` z `.env.example` (jeśli nie istnieje) — przez `scripts/init-env.mjs`,
   który przy okazji wygeneruje losowe hasło administratora, jeśli `DEFAULT_ADMIN_PASSWORD`
-  jest puste lub równe domyślnej wartości `anim123456` (zapisze je w `.env`)
+  jest puste lub równe domyślnej wartości `CHANGE_ME_PLEASE` (zapisze je w `.env`)
 - Zainstaluje zależności (`npm ci` — jeśli istnieje `package-lock.json`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
 - Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss` dla baz bez historii migracji)
@@ -145,7 +145,7 @@ Aplikacja będzie dostępna pod adresem: **http://localhost:3000**
     - **Hasło:** ustawione w `DEFAULT_ADMIN_PASSWORD` w pliku `.env`
       (instalatory `install.bat` / `install.sh` — przez `scripts/init-env.mjs` —
       automatycznie generują losowe hasło i zapisują je w `.env`, jeśli w pliku
-      jest puste lub równe domyślnej wartości `anim123456`)
+      jest puste lub równe domyślnej wartości `CHANGE_ME_PLEASE`)
 3. Po zalogowaniu możesz zmienić hasło w ustawieniach profilu
 
 ### Instalacja na Linux / VPS
