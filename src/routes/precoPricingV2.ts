@@ -161,7 +161,7 @@ router.get('/', requireAuth, async (_req, res) => {
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('PrecoPricingV2', 'GET error', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -199,7 +199,7 @@ router.put(
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PUT error', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
             releaseLock();
         }
@@ -258,7 +258,7 @@ router.patch(
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PATCH error', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
             releaseLock();
         }
@@ -279,7 +279,7 @@ router.get('/default', requireAuth, async (_req, res) => {
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Unknown error';
         logger.error('PrecoPricingV2', 'GET /default error', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

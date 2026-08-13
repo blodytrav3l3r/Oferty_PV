@@ -62,7 +62,7 @@ router.get('/', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Clients', 'GET /api/clients błąd', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -140,7 +140,8 @@ router.put(
         } catch (e: unknown) {
             logger.error('Clients', 'PUT /api/clients błąd', e);
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('Clients', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );

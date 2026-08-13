@@ -132,7 +132,8 @@ router.get('/:id', requireAuth, async (req, res) => {
         res.json({ data: responseData });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -219,7 +220,8 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         return;
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

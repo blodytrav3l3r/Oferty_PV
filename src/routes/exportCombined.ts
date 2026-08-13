@@ -80,7 +80,7 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('ExportCombined', 'Błąd eksportu PDF łącznego', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -109,7 +109,7 @@ router.post('/docx', requireAuth, EXPORT_LIMITER, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('ExportCombined', 'Błąd eksportu DOCX łącznego', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

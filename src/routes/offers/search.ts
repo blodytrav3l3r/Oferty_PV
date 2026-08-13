@@ -161,7 +161,7 @@ router.get('/', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('SearchAPI', 'Blad wyszukiwania ofert:', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -201,7 +201,7 @@ router.get('/orders', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('SearchAPI', 'Blad pobierania zamowien:', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

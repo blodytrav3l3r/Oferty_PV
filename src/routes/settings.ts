@@ -3,6 +3,7 @@ import prisma from '../prismaClient';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { validateData } from '../validators/authSchema';
 import { yearLetterSchema } from '../validators/offerSchemas';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -18,7 +19,8 @@ router.get('/year-letter', requireAuth, async (_req, res) => {
         res.json({ letter: row ? row.value : '', year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Settings', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -43,7 +45,8 @@ router.put(
             res.json({ ok: true, letter: letter.toUpperCase(), year });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('Settings', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -59,7 +62,8 @@ router.get('/:key', requireAuth, async (req, res) => {
         res.json({ key, value: row ? row.value : null });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Settings', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

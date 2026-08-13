@@ -44,7 +44,7 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy PDF', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -73,7 +73,7 @@ router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (re
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy DOCX', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -103,7 +103,7 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd GET orders-studnie export-pdf', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -133,7 +133,7 @@ router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd GET orders-studnie export-docx', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -215,7 +215,7 @@ router.post('/:id/export-offer-pdf', requireAuth, exportOrdersLimiter, async (re
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd POST orders-studnie export-offer-pdf', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -295,7 +295,7 @@ router.post('/:id/export-offer-docx', requireAuth, exportOrdersLimiter, async (r
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd POST orders-studnie export-offer-docx', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

@@ -84,7 +84,8 @@ router.get('/', requireAuth, async (req, res) => {
         res.json({ data: mapped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -170,7 +171,8 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('Production', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -261,7 +263,7 @@ router.post(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd POST', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -317,7 +319,8 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
         res.json({ deleted: deletedResult.count, skipped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 router.get('/:id', requireAuth, async (req, res) => {
@@ -349,7 +352,8 @@ router.get('/:id', requireAuth, async (req, res) => {
         });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -390,7 +394,8 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

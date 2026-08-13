@@ -9,6 +9,7 @@ import {
     normalizedCreatedAtSql
 } from '../../utils/productionSearchUtils';
 import { searchCache } from '../../utils/searchCache';
+import { logger } from '../../utils/logger';
 
 const router = Router();
 
@@ -125,7 +126,8 @@ router.get('/', requireAuth, async (req, res) => {
         res.json(result);
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('ProductionSearch', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

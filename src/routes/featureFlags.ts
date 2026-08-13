@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { logAudit } from '../services/auditService';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -41,7 +42,8 @@ router.put('/import-export', requireAuth, requireAdmin, async (req, res) => {
         res.json({ success: true, enabled });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('FeatureFlags', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -58,7 +60,8 @@ router.post('/audit', requireAuth, async (req, res) => {
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('FeatureFlags', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

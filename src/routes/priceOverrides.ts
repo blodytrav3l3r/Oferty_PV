@@ -3,6 +3,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth';
 import { priceOverrideService } from '../services/priceOverrideService';
 import { createModuleLock } from '../middleware/writeLock';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 const { acquireLock, releaseLock } = createModuleLock();
@@ -34,7 +35,8 @@ router.post(
             });
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('PriceOverrides', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
             releaseLock();
         }

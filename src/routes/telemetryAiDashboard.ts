@@ -32,7 +32,8 @@ router.post('/ai/learning/run', requireAuth, requireAdmin, READ_LIMITER, async (
         return res.json(summary);
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
-        return res.status(500).json({ error: message });
+        logger.error('AiDashboard', 'Błąd serwera', message);
+        return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

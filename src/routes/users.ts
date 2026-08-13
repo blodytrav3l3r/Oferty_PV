@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/a
 import { validateData } from '../validators/authSchema';
 import { ADMIN_USERS_LIMITER } from '../middleware/rateLimiters';
 import { userUpdateSchema } from '../validators/offerSchemas';
+import { logger } from '../utils/logger';
 
 const router = express.Router();
 
@@ -70,7 +71,8 @@ router.get('/', requireAuth, requireAdmin, async (_req, res) => {
         res.json({ data: usersData });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Users', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -159,7 +161,8 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('Users', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -177,7 +180,8 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Users', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -217,7 +221,8 @@ router.get('/for-assignment', requireAuth, async (req, res) => {
         res.json({ data: filtered.map(mapUser) });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Users', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

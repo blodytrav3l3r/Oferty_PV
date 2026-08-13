@@ -111,7 +111,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd GET /studnie', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -158,7 +158,8 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
         });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -289,7 +290,7 @@ router.post(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers/studnie', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -378,7 +379,8 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('Offers', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -428,7 +430,7 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', `Błąd DELETE /studnie/:id (${req.params.id})`, message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

@@ -33,7 +33,7 @@ router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu PDF', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -59,7 +59,7 @@ router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, r
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu PDF', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -88,7 +88,7 @@ router.get('/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, res) => 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu DOCX', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -120,7 +120,7 @@ router.get('/studnie/:id/export-docx', requireAuth, EXPORT_LIMITER, async (req, 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu DOCX', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

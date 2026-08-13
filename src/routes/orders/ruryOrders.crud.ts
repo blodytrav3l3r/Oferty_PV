@@ -67,7 +67,8 @@ router.get('/', requireAuth, async (req, res) => {
         res.json({ data: mapped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -104,7 +105,8 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -186,7 +188,7 @@ router.put(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Orders', 'Błąd PUT orders-rury', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -280,7 +282,7 @@ router.patch(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('RuryOrders', 'Błąd zapisu zamówień rury', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -311,7 +313,8 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

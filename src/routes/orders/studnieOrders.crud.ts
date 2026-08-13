@@ -11,6 +11,7 @@ import { canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import crypto from 'crypto';
+import { logger } from '../../utils/logger';
 
 const router = express.Router();
 
@@ -70,7 +71,8 @@ router.get('/', requireAuth, async (req, res) => {
         res.json({ data: mapped });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('StudnieOrders', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -152,7 +154,8 @@ router.put(
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('StudnieOrders', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -240,7 +243,8 @@ router.patch(
             res.json({ ok: true });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
-            res.status(500).json({ error: message });
+            logger.error('StudnieOrders', 'Błąd serwera', message);
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -283,7 +287,8 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
         res.json({ ok: true });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('StudnieOrders', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

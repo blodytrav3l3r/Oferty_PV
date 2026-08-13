@@ -92,7 +92,8 @@ router.get('/:entityType/:entityId', requireAuth, async (req, res) => {
         res.json({ data: mapped, total, limit, offset });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Audit', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -190,8 +191,9 @@ router.get('/rebuild/:entityType/:entityId/:logId', requireAuth, async (req, res
         res.json({ data: currentState });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Audit', 'Błąd serwera', message);
         logger.error('AuditRebuild', 'Blad', e);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

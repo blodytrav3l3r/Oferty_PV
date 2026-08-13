@@ -94,7 +94,8 @@ router.get('/', requireAuth, async (req, res) => {
         res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Offers', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -263,7 +264,7 @@ router.post(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd POST offers', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -383,7 +384,7 @@ router.put(
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Offers', 'Błąd PUT offers', message);
-            res.status(500).json({ error: message });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         }
     }
 );
@@ -471,7 +472,7 @@ router.post('/:id/duplicate', requireAuth, writeOffersLimiter, async (req, res) 
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd POST /:id/duplicate', message);
-        res.status(500).json({ error: message });
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

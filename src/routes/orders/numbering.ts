@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { canWriteDoc } from '../../utils/ownership';
+import { logger } from '../../utils/logger';
 
 const router = express.Router();
 
@@ -27,7 +28,8 @@ router.get('/recycled', requireAuth, async (req, res) => {
         });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Numbering', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -59,7 +61,8 @@ router.get('/next-number/:userId', requireAuth, async (req, res) => {
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Numbering', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -91,7 +94,8 @@ router.post('/claim-number/:userId', requireAuth, async (req, res) => {
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Numbering', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
@@ -150,7 +154,8 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
         res.json({ number: formatted, nextSeq: nextNumber, symbol, yearLetter, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
-        res.status(500).json({ error: message });
+        logger.error('Numbering', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 
