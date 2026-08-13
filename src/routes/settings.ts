@@ -34,16 +34,11 @@ router.put(
             const year = new Date().getFullYear();
             const key = 'year_letter_' + year;
 
-            try {
-                await prisma.settings.update({
-                    where: { key },
-                    data: { value: letter.toUpperCase() }
-                });
-            } catch {
-                await prisma.settings.create({
-                    data: { key, value: letter.toUpperCase() }
-                });
-            }
+            await prisma.settings.upsert({
+                where: { key },
+                update: { value: letter.toUpperCase() },
+                create: { key, value: letter.toUpperCase() }
+            });
 
             res.json({ ok: true, letter: letter.toUpperCase(), year });
         } catch (e: unknown) {
