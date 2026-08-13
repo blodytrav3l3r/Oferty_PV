@@ -108,6 +108,7 @@
         "js-yaml": "^4.2.0",
         "jszip": "^3.10.1",
         "lint-staged": "^17.0.7",
+        "playwright": "^1.62.1",
         "prettier": "^3.9.4",
         "prisma": "^6.0.0",
         "standard-version": "^9.5.0",
