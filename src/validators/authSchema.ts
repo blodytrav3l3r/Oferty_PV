@@ -14,12 +14,12 @@ export const loginSchema = z.object({
 
 export const changePasswordSchema = z.object({
     oldPassword: z.string().min(4, 'Podaj stare hasło'),
-    newPassword: z.string().min(6, 'Nowe hasło musi mieć przynajmniej 6 znaków')
+    newPassword: z.string().min(8, 'Nowe hasło musi mieć przynajmniej 8 znaków')
 });
 
 export const registerSchema = z.object({
     username: z.string().min(3, 'Login musi mieć conajmniej 3 znaki'),
-    password: z.string().min(6, 'Hasło musi mieć przynajmniej 6 znaków'),
+    password: z.string().min(8, 'Hasło musi mieć przynajmniej 8 znaków'),
     role: z.enum(['admin', 'user', 'pro']).optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),

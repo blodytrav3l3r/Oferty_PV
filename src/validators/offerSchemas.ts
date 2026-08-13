@@ -248,7 +248,7 @@ export type TelemetryOverrideInput = z.infer<typeof telemetryOverrideSchema>;
 
 export const userUpdateSchema = z.object({
     username: z.string().min(3).optional(),
-    password: z.string().min(4).optional(),
+    password: z.string().min(8).optional(),
     role: z.enum(['admin', 'user', 'pro']).optional(),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
