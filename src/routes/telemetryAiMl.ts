@@ -512,62 +512,80 @@ router.get('/ai/health', requireAuth, READ_LIMITER, async (_req: Request, res: R
     }
 });
 
-router.get('/ai/models', requireAuth, requireAdmin, async (_req: Request, res: Response) => {
-    try {
-        const models = await modelRegistry.listModels(50);
-        res.json({ models });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+router.get(
+    '/ai/models',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const models = await modelRegistry.listModels(50);
+            res.json({ models });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
     }
-});
+);
 
-router.delete('/ai/models/:id', requireAuth, requireAdmin, async (req, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const deleted = await modelRegistry.deleteModel(req.params.id);
-        if (!deleted) {
-            res.status(404).json({ error: 'Model nie istnieje' });
-            return;
+router.delete(
+    '/ai/models/:id',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const deleted = await modelRegistry.deleteModel(req.params.id);
+            if (!deleted) {
+                res.status(404).json({ error: 'Model nie istnieje' });
+                return;
+            }
+            await logAudit('ai_model', 'delete', authReq.user?.id || '', deleted.id, {
+                version: deleted.version
+            });
+            res.json({ deleted: true, model: deleted });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (msg.includes('aktywnego modelu')) {
+                res.status(400).json({ error: msg });
+                return;
+            }
+            res.status(500).json({ error: msg });
         }
-        await logAudit('ai_model', 'delete', authReq.user?.id || '', deleted.id, {
-            version: deleted.version
-        });
-        res.json({ deleted: true, model: deleted });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('aktywnego modelu')) {
-            res.status(400).json({ error: msg });
-            return;
-        }
-        res.status(500).json({ error: msg });
     }
-});
+);
 
-router.post('/ai/models/:id/activate', requireAuth, requireAdmin, async (req, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const model = await modelRegistry.activateModel(req.params.id);
-        if (!model) {
-            res.status(404).json({ error: 'Model nie istnieje' });
-            return;
+router.post(
+    '/ai/models/:id/activate',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const model = await modelRegistry.activateModel(req.params.id);
+            if (!model) {
+                res.status(404).json({ error: 'Model nie istnieje' });
+                return;
+            }
+            clearPredictionCache();
+            await logAudit('ai_model', 'activate', authReq.user?.id || '', model.id, {
+                version: model.version
+            });
+            res.json({ activated: true, model });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            if (msg.includes('wersji cech')) {
+                res.status(400).json({ error: msg });
+                return;
+            }
+            res.status(500).json({ error: msg });
         }
-        clearPredictionCache();
-        await logAudit('ai_model', 'activate', authReq.user?.id || '', model.id, {
-            version: model.version
-        });
-        res.json({ activated: true, model });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (msg.includes('wersji cech')) {
-            res.status(400).json({ error: msg });
-            return;
-        }
-        res.status(500).json({ error: msg });
     }
-});
+);
 
-router.post('/ai/train', requireAuth, requireAdmin, async (req, res: Response) => {
+router.post('/ai/train', requireAuth, requireAdmin, WRITE_LIMITER, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const result = await trainingPipeline.run(true);
@@ -620,20 +638,26 @@ router.get(
     }
 );
 
-router.post('/ai/rollback', requireAuth, requireAdmin, async (req, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        const previous = await modelRegistry.rollbackToPrevious();
-        clearPredictionCache();
-        await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
-            rolledBack: !!previous,
-            modelId: previous?.id || null
-        });
-        res.json({ rolledBack: !!previous, model: previous });
-    } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+router.post(
+    '/ai/rollback',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const previous = await modelRegistry.rollbackToPrevious();
+            clearPredictionCache();
+            await logAudit('ai_model', 'rollback', authReq.user?.id || '', 'trigger', {
+                rolledBack: !!previous,
+                modelId: previous?.id || null
+            });
+            res.json({ rolledBack: !!previous, model: previous });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
     }
-});
+);
 
 export default router;
