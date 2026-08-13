@@ -132,6 +132,7 @@ cookies.txt
 # Konfiguracje agentów AI (autogenerowane)
 .claude/
 .codex/
+.caveman/
 
 # Graf wiedzy graphify (auto-rebuild po commicie, nie jest częścią S.O.K.)
 graphify-out/
