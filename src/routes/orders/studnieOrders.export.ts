@@ -23,7 +23,7 @@ const exportOrdersLimiter = EXPORT_LIMITER;
 /* ===== EKSPORT KARTY BUDOWY ===== */
 
 // GET /api/orders-studnie/:id/export-karta-pdf
-router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
+router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -49,7 +49,7 @@ router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/orders-studnie/:id/export-karta-docx
-router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
+router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -81,7 +81,7 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
 
 // GET /api/orders-studnie/:id/export-pdf
 // Generuje PDF Zamówienia (wariant Oferty) z bieżącego stanu zamówienia w DB.
-router.get('/:id/export-pdf', requireAuth, async (req, res) => {
+router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;
@@ -108,7 +108,7 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/orders-studnie/:id/export-docx
-router.get('/:id/export-docx', requireAuth, async (req, res) => {
+router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;

@@ -21,7 +21,7 @@ import router from './ruryOrders.crud';
 const exportOrdersLimiter = EXPORT_LIMITER;
 
 // GET /api/orders-rury/:id/export-karta-pdf
-router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
+router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -47,7 +47,7 @@ router.get('/:id/export-karta-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/orders-rury/:id/export-karta-docx
-router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
+router.get('/:id/export-karta-docx', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const { id } = req.params;
@@ -78,7 +78,7 @@ router.get('/:id/export-karta-docx', requireAuth, async (req, res) => {
 /* ===== EKSPORT ZAMÓWIENIA (PDF/DOCX) — wariant Oferty ===== */
 
 // GET /api/orders-rury/:id/export-pdf
-router.get('/:id/export-pdf', requireAuth, async (req, res) => {
+router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;
@@ -105,7 +105,7 @@ router.get('/:id/export-pdf', requireAuth, async (req, res) => {
 });
 
 // GET /api/orders-rury/:id/export-docx
-router.get('/:id/export-docx', requireAuth, async (req, res) => {
+router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const docId = req.params.id;
