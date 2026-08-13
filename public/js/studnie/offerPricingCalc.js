@@ -148,7 +148,7 @@ function calculateLinePricing(
     let totalLinePrice = itemPrice * item.quantity;
     let totalLineWeight = (p.weight || 0) * item.quantity;
 
-    if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+    if ((p.componentType === 'dennica' || p.componentType === 'styczna') && !item.isPsiaBuda) {
         totalLinePrice += wellTransportCost;
         if (well.doplata) totalLinePrice += well.doplata;
     }

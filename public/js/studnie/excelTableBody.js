@@ -484,7 +484,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 kinOpts,
                 well.kineta || '',
                 'excelOnKinetaChange(' + wIdx + ',this.value)',
-                90
+                90,
+                !!well.psiaBuda
             ) +
             '</td>';
         /* Psia buda */

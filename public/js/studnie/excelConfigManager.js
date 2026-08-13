@@ -140,7 +140,8 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         }
     }
     _excelSortConfig(well);
-    if ((componentType === 'krag' || componentType === 'krag_ot') && qty > 1) {
+    const expandTypes = ['krag', 'krag_ot', 'dennica'];
+    if (expandTypes.includes(componentType) && qty > 1) {
         const _exp = [];
         for (let _i = 0; _i < well.config.length; _i++) {
             const _pr =
@@ -149,16 +150,15 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                           return x.id === well.config[_i].productId;
                       })
                     : null;
-            if (
-                _pr &&
-                (_pr.componentType === 'krag' || _pr.componentType === 'krag_ot') &&
-                well.config[_i].quantity > 1
-            ) {
-                for (let _j = 0; _j < well.config[_i].quantity; _j++) {
+            if (_pr && expandTypes.includes(_pr.componentType) && well.config[_i].quantity > 1) {
+                const _total = well.config[_i].quantity;
+                for (let _j = 0; _j < _total; _j++) {
+                    const _isLast = _j === _total - 1;
                     _exp.push({
                         productId: well.config[_i].productId,
                         quantity: 1,
-                        autoAdded: false
+                        autoAdded: false,
+                        ...(_pr.componentType === 'dennica' && !_isLast ? { isPsiaBuda: true } : {})
                     });
                 }
             } else {

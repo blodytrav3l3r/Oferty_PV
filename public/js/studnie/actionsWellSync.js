@@ -95,6 +95,13 @@ function recalcGaskets(well) {
 function syncKineta(well) {
     if (!well || !well.config) return;
 
+    // Psia buda → dennica zawsze bez dna: kineta/spocznik/spocznikH wymuszone na brak
+    if (well.psiaBuda) {
+        well.kineta = 'brak';
+        well.spocznik = 'brak';
+        well.spocznikH = 'brak';
+    }
+
     if (well.kineta && well.kineta !== 'brak') {
         if (!well.spocznik || well.spocznik === 'brak') {
             well.spocznik = 'beton';
@@ -146,7 +153,7 @@ function syncKineta(well) {
         });
     }
 
-    if (well.kineta === 'preco' || well.kineta === 'precotop') {
+    if (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith') {
         well.spocznikH = '1/1';
     }
 

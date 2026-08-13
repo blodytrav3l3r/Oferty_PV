@@ -72,29 +72,31 @@ function renderWellConfig() {
         let totalPrice = itemPrice * item.quantity;
 
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-            const kinetaItem = well.config.find((c) => {
-                const pr = studnieProducts.find((x) => x.id === c.productId);
-                return pr && pr.componentType === 'kineta';
-            });
-            if (kinetaItem) {
-                const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
-                if (kinetaProd) {
-                    const rawKinetaPrice =
-                        kinetaItem.frozenPrice != null && window.isPreviewMode
-                            ? kinetaItem.frozenPrice
-                            : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
-                    totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
+            if (!item.isPsiaBuda) {
+                const kinetaItem = well.config.find((c) => {
+                    const pr = studnieProducts.find((x) => x.id === c.productId);
+                    return pr && pr.componentType === 'kineta';
+                });
+                if (kinetaItem) {
+                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
+                    if (kinetaProd) {
+                        const rawKinetaPrice =
+                            kinetaItem.frozenPrice != null && window.isPreviewMode
+                                ? kinetaItem.frozenPrice
+                                : getItemAssessedPrice(well, kinetaProd, true, kinetaItem);
+                        totalPrice += rawKinetaPrice * (kinetaItem.quantity || 1);
+                    }
                 }
-            }
-            if (well.kineta === 'preco' || well.kineta === 'precotop') {
-                const precoCalc = calcPrecoPricing(well);
-                const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-                const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
-                const precoMult = 1 - discPreco / 100;
-                totalPrice += precoCalc.suma * precoMult;
-            }
-            if (well.doplata) {
-                totalPrice += well.doplata;
+                if (well.kineta === 'preco' || well.kineta === 'precotop') {
+                    const precoCalc = calcPrecoPricing(well);
+                    const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
+                    const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
+                    const precoMult = 1 - discPreco / 100;
+                    totalPrice += precoCalc.suma * precoMult;
+                }
+                if (well.doplata) {
+                    totalPrice += well.doplata;
+                }
             }
         }
         const totalWeight = (p.weight || 0) * item.quantity;
@@ -122,7 +124,7 @@ function renderWellConfig() {
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
                   <div style="display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap;">
                     <span style="background:${badge.bg}; color:var(--white); font-size:0.55rem; padding:1px 5px; border-radius:4px; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; opacity:0.9;">${badge.label.split(' ')[1] || badge.label}</span>
-                    <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
+                    <div style="font-weight:700; color:var(--text-primary); font-size:0.85rem; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${p.componentType === 'uszczelka' && item.quantity > 1 ? ` (x${item.quantity} szt.)` : p.componentType === 'uszczelka' ? ` (1 szt.)` : ''}</div>
                     ${(() => {
                         let badgesHtml = '';
 

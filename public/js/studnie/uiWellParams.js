@@ -242,8 +242,11 @@ function renderWellParams() {
         if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) {
             isGreyedOut = true;
         }
-        // Gdy kineta = preco/precotop → spocznikH zablokowany na 1/1
-        if (def.key === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop')) {
+        // Gdy kineta = preco/precotop/unolith → spocznikH zablokowany na 1/1
+        if (
+            def.key === 'spocznikH' &&
+            (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
+        ) {
             isGreyedOut = true;
         }
         // Gdy wkładka osadnikowa aktywna — kineta i spocznik zablokowane na 'brak'
@@ -251,6 +254,13 @@ function renderWellParams() {
             if (def.key === 'kineta' || def.key === 'spocznik') {
                 return; // ukryj — wymuszamy 'brak'
             }
+        }
+        // Psia buda → dennica bez dna: kineta/spocznik/spocznikH zablokowane na 'brak'
+        if (
+            well.psiaBuda &&
+            (def.key === 'kineta' || def.key === 'spocznik' || def.key === 'spocznikH')
+        ) {
+            isGreyedOut = true;
         }
         const currentVal = well[def.key] || '';
 

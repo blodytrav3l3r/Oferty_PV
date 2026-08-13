@@ -167,9 +167,17 @@ function populateZleceniaForm(el) {
     const shouldForceBrak = shouldReduce || isKragOt;
     const redKinetyVal =
         existing?.redukcjaKinety ?? (shouldForceBrak ? 'nie' : (well.redukcjaKinety ?? ''));
-    const spocznikHVal = existing?.spocznikH ?? (shouldForceBrak ? 'brak' : (well.spocznikH ?? ''));
-    const usytuowanieVal = existing?.usytuowanie ?? well.usytuowanie ?? '';
     const kinetaVal = existing?.kineta ?? (shouldForceBrak ? 'brak' : (well.kineta ?? ''));
+    const forceFullSpocznik =
+        kinetaVal === 'preco' || kinetaVal === 'precotop' || kinetaVal === 'unolith';
+    const spocznikHVal =
+        existing?.spocznikH ??
+        (shouldForceBrak || forceFullSpocznik
+            ? forceFullSpocznik
+                ? '1/1'
+                : 'brak'
+            : (well.spocznikH ?? ''));
+    const usytuowanieVal = existing?.usytuowanie ?? well.usytuowanie ?? '';
     const klasaBetonuVal = existing?.klasaBetonu ?? well.klasaBetonu ?? '';
 
     const katOptions = ['90', '135', '180', '270'];
@@ -666,12 +674,20 @@ async function selectZleceniaTile(btn, targetId, val) {
                     el.well.redukcjaKinety = val;
                     if (existing) existing.redukcjaKinety = val;
                 } else if (targetId === 'zl-spocznik-h') {
+                    // Psia buda → dennica bez dna: spocznikH zawsze 'brak'
+                    if (el.well.psiaBuda) {
+                        val = 'brak';
+                    }
                     el.well.spocznikH = val;
                     if (existing) existing.spocznikH = val;
                 } else if (targetId === 'zl-usytuowanie') {
                     el.well.usytuowanie = val;
                     if (existing) existing.usytuowanie = val;
                 } else if (targetId === 'zl-kineta') {
+                    // Psia buda → dennica bez dna: kineta zawsze 'brak'
+                    if (el.well.psiaBuda) {
+                        val = 'brak';
+                    }
                     el.well.kineta = val;
                     if (existing) existing.kineta = val;
 
@@ -700,7 +716,27 @@ async function selectZleceniaTile(btn, targetId, val) {
                             }
                         }
                     }
+
+                    // PRECO / PrecoTop / UnoLith → wymuszenie spocznikH = '1/1'
+                    if (val === 'preco' || val === 'precotop' || val === 'unolith') {
+                        const spocznikHInput = document.getElementById('zl-spocznik-h');
+                        if (spocznikHInput) {
+                            const hGroup = spocznikHInput.closest('.form-group-sm');
+                            if (hGroup) {
+                                const hBtn = hGroup.querySelector(
+                                    `.param-tile[onclick*="'zl-spocznik-h', '1/1'"]`
+                                );
+                                if (hBtn && !hBtn.classList.contains('active')) {
+                                    hBtn.click();
+                                }
+                            }
+                        }
+                    }
                 } else if (targetId === 'zl-spocznik') {
+                    // Psia buda → dennica bez dna: spocznik zawsze 'brak'
+                    if (el.well.psiaBuda) {
+                        val = 'brak';
+                    }
                     el.well.spocznik = val;
                     if (existing) existing.spocznik = val;
                 } else if (targetId === 'zl-klasa-betonu') {

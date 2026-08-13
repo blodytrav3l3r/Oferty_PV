@@ -2,7 +2,7 @@
 /* ===== EXCEL WELL ACTIONS — Save, parametry, CRUD studni ===== */
 
 /* ===== SAVE ===== */
-function excelSaveAll() {
+async function excelSaveAll() {
     const btn = document.getElementById('excel-save-btn');
     if (btn) {
         btn.disabled = true;
@@ -10,16 +10,38 @@ function excelSaveAll() {
         btn.style.opacity = '0.5';
         btn.style.cursor = 'not-allowed';
     }
+    let shouldClose = true;
     try {
         if (typeof refreshAll === 'function') refreshAll();
-        showToast('Zapisano zmiany w tabeli', 'success');
-        _excelDirty = false;
+        if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+            /* Tryb edycji zamówienia — zapis przez saveCurrentOrder */
+            if (typeof saveCurrentOrder === 'function') {
+                await saveCurrentOrder();
+            }
+        } else if (typeof saveOfferStudnie === 'function') {
+            const saved = await saveOfferStudnie();
+            if (saved === false) {
+                shouldClose = false;
+                showToast('Nie zapisano oferty — popraw wymagane pola', 'warning');
+            }
+        }
+        if (shouldClose) {
+            showToast('Zapisano zmiany w tabeli', 'success');
+            _excelDirty = false;
+        }
     } catch (err) {
+        shouldClose = false;
         showToast('Błąd zapisu: ' + (err && err.message ? err.message : 'nieznany'), 'error');
     } finally {
-        /* Zawsze zamknij modal — wyjątek w refreshAll nie może zablokować
-           overlayu (guard _excelClosing pozostałby true na stałe). */
-        _excelCloseOverlay();
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Gotowe (Zapisz)';
+            btn.style.opacity = '';
+            btn.style.cursor = '';
+        }
+        /* Zamknij tylko po udanym zapisie — przy nieudanym modal zostaje,
+           by użytkownik mógł poprawić (guard _excelClosing nie jest tu ustawiany). */
+        if (shouldClose) _excelCloseOverlay();
     }
 }
 
@@ -28,6 +50,7 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
     const well = wells[wIdx];
     if (!well) return;
     if (!_excelGuardWellLocked(wIdx)) return;
+    const oldParamVal = well[paramKey];
     well[paramKey] = value;
     if (paramKey === 'malowanieWewCena' || paramKey === 'malowanieZewCena') {
         wells.forEach(function (w) {
@@ -38,6 +61,39 @@ function _excelUpdateWellParam(wIdx, paramKey, value) {
         well.kineta = 'brak';
         well.spocznik = 'brak';
         well.precoFullHeight = 'tak';
+    }
+    if (paramKey === 'kineta') {
+        const syncValues = [
+            'beton',
+            'beton_gfk',
+            'klinkier',
+            'preco',
+            'precotop',
+            'unolith',
+            'predl',
+            'kamionka',
+            'brak'
+        ];
+        if (syncValues.includes(value)) {
+            well.spocznik = value;
+        }
+        if (value === 'preco' || value === 'precotop') {
+            if (oldParamVal !== 'preco' && oldParamVal !== 'precotop') {
+                well.precoFullHeight = 'nie';
+            }
+        }
+        if (value === 'preco' || value === 'precotop' || value === 'unolith') {
+            well.spocznikH = '1/1';
+        }
+    }
+    if (
+        paramKey === 'spocznikH' &&
+        (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
+    ) {
+        well.spocznikH = '1/1';
+    }
+    if (paramKey === 'kineta' || paramKey === 'spocznik' || paramKey === 'spocznikH') {
+        if (typeof syncKineta === 'function') syncKineta(well);
     }
     _excelDebouncedRefresh();
     _excelRenderTable(_excelActiveTab);
@@ -87,13 +143,22 @@ function excelOpenWellParams(wIdx) {
 
             let isGreyedOut = false;
             if (def.key === 'wkladkaOsadnikPreco' && !isOsadnik) isGreyedOut = true;
-            if (def.key === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop'))
+            if (
+                def.key === 'spocznikH' &&
+                (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
+            )
                 isGreyedOut = true;
             if (
                 well.wkladkaOsadnikPreco === 'tak' &&
                 (def.key === 'kineta' || def.key === 'spocznik')
             )
                 return;
+            // Psia buda → dennica bez dna: kineta/spocznik/spocznikH zablokowane na 'brak'
+            if (
+                well.psiaBuda &&
+                (def.key === 'kineta' || def.key === 'spocznik' || def.key === 'spocznikH')
+            )
+                isGreyedOut = true;
 
             const currentVal = well[def.key] || '';
             bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;${isGreyedOut ? 'opacity:0.5;' : ''}">`;
@@ -132,7 +197,7 @@ function excelOpenWellParams(wIdx) {
 
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
-            <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry: ${escapeHtml(well.name)}</span>
+            <span style="font-size:0.85rem;font-weight:700;color:var(--text-primary);">Parametry tej studni Excel</span>
             <button onclick="document.getElementById('excel-params-popup').remove()" style="background:var(--slate-950);color:var(--text-muted);border:none;cursor:pointer;font-size:1.1rem;">✕</button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">

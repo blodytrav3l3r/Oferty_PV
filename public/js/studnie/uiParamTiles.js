@@ -59,8 +59,8 @@ function setupParamTiles() {
                         }
                     }
 
-                    // PRECO / PrecoTop → wymuszenie spocznikH = '1/1'
-                    if (val === 'preco' || val === 'precotop') {
+                    // PRECO / PrecoTop / UnoLith → wymuszenie spocznikH = '1/1'
+                    if (val === 'preco' || val === 'precotop' || val === 'unolith') {
                         const spocznikHGroup = wizardRoot.querySelector(
                             '.param-group[data-param="spocznikH"]'
                         );

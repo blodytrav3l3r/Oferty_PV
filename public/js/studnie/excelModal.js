@@ -116,6 +116,14 @@ function openExcelTableModal() {
         window.wells = [];
     }
 
+    /* Snapshot wells — "Zamknij bez zapisu" przywraca ten stan */
+    _excelOpenSnapshot = structuredClone(wells);
+
+    /* Każda sesja modala zaczyna czysty stack undo/redo — inaczej Ctrl+Z
+       w nowej sesji przywraca przestarzałe wells z poprzedniej. */
+    _excelUndoStack.length = 0;
+    _excelRedoStack.length = 0;
+
     /* Wyczyść puste przejścia przy otwarciu (PRZED obliczeniem maxTr) */
     if (typeof wells !== 'undefined') {
         for (let _rwo = 0; _rwo < wells.length; _rwo++) {
@@ -334,6 +342,8 @@ function openExcelTableModal() {
 
 /* ===== CLOSE ===== */
 let _excelClosing = false;
+/* Snapshot wells przy otwarciu — do "Zamknij bez zapisu" (przywrócenie stanu sprzed edycji) */
+let _excelOpenSnapshot = null;
 
 /* Fizyczne zamknięcie overlayu — wydzielone, by excelSaveAll mógł je wywołać bez rekurencji */
 function _excelCloseOverlay() {
@@ -347,6 +357,7 @@ function _excelCloseOverlay() {
     }
     _excelDirty = false;
     _excelClosing = false;
+    _excelOpenSnapshot = null;
 }
 
 async function closeExcelTableModal() {
@@ -363,8 +374,14 @@ async function closeExcelTableModal() {
             }
         );
         if (shouldSave) {
-            excelSaveAll();
+            await excelSaveAll();
+            /* Zapisz się nie powiódł — modal został otwarty, zwolnij guard zamknięcia */
+            if (document.getElementById('excel-table-overlay')) _excelClosing = false;
             return;
+        }
+        /* Zamknij bez zapisu — przywróć stan sprzed edycji */
+        if (_excelDirty && _excelOpenSnapshot) {
+            wells.splice(0, wells.length, ..._excelOpenSnapshot);
         }
     }
     _excelCloseOverlay();

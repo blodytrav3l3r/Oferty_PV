@@ -89,7 +89,12 @@ async function updateWellParam(paramKey, value) {
         if (oldParamVal !== 'preco' && oldParamVal !== 'precotop') {
             well.precoFullHeight = 'nie';
         }
-        // Wkładka PRECO → kineta zawsze 1/1
+    }
+    if (
+        paramKey === 'kineta' &&
+        (value === 'preco' || value === 'precotop' || value === 'unolith')
+    ) {
+        // Wkładka PRECO/UnoLith → spocznik zawsze 1/1
         well.spocznikH = '1/1';
     }
 
@@ -117,8 +122,11 @@ async function updateWellParam(paramKey, value) {
         }
     }
 
-    // PRECO / PrecoTop → nie pozwalaj na zmianę spocznikH (wymuszenie 1/1)
-    if (paramKey === 'spocznikH' && (well.kineta === 'preco' || well.kineta === 'precotop')) {
+    // PRECO / PrecoTop / UnoLith → nie pozwalaj na zmianę spocznikH (wymuszenie 1/1)
+    if (
+        paramKey === 'spocznikH' &&
+        (well.kineta === 'preco' || well.kineta === 'precotop' || well.kineta === 'unolith')
+    ) {
         well.spocznikH = '1/1';
         showToast('Przy wkładce PRECO kineta musi być 1/1', 'warning');
     }
@@ -221,9 +229,17 @@ async function applyGlobalParamsToAllWells() {
                 well.spocznik = kinetaVal;
             }
             if (kinetaVal === 'preco' || kinetaVal === 'precotop') {
-                well.spocznikH = '1/1';
                 well.precoFullHeight = gp.precoFullHeight || 'nie';
             }
+            if (kinetaVal === 'preco' || kinetaVal === 'precotop' || kinetaVal === 'unolith') {
+                well.spocznikH = '1/1';
+            }
+        }
+        // Psia buda → dennica zawsze bez dna: parametry globalne nie nadpisują braku
+        if (well.psiaBuda) {
+            well.kineta = 'brak';
+            well.spocznik = 'brak';
+            well.spocznikH = 'brak';
         }
         enforceLoadClassRules(well, 'klasaNosnosci_korpus');
         enforceLoadClassRules(well, 'nadbudowa');

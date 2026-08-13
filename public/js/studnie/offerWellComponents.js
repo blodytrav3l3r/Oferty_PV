@@ -240,7 +240,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         }
 
         html += `<tr style="opacity:0.8;">
-            <td style="color:var(--text-secondary);">↳ ${escapeHtml(p.name)}${badgesHtml}${discStr}</td>
+            <td style="color:var(--text-secondary);">↳ ${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
             <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
@@ -316,7 +316,7 @@ function renderComponentSubItems(
         }
     }
 
-    if (isBase && well.doplata) {
+    if (isBase && !item.isPsiaBuda && well.doplata) {
         const doplataWellColor = well.doplata > 0 ? 'var(--success)' : 'var(--danger)';
         const doplataWellSign = well.doplata > 0 ? '+' : '';
         html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplataWellColor};">
@@ -381,7 +381,7 @@ function renderComponentSubItems(
         });
     }
 
-    if (isBase) {
+    if (isBase && !item.isPsiaBuda) {
         const kineta = well.config.find(
             (c) => studnieProducts.find((x) => x.id === c.productId)?.componentType === 'kineta'
         );
