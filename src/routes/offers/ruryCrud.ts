@@ -298,7 +298,7 @@ router.put(
             const incoming = req.body.data || [];
 
             const incomingIds: string[] = incoming
-                .map((o: any) => (typeof o.id === 'string' ? o.id : ''))
+                .map((o: { id?: unknown }) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
             if (incomingIds.length > 0) {
                 const existingDocs =

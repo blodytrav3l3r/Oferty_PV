@@ -13,7 +13,11 @@ import {
 } from 'docx';
 import { logger } from '../../../utils/logger';
 import prisma from '../../../prismaClient';
-import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../../types/kartaBudowy';
+import type {
+    KartaBudowyMeta,
+    KartaBudowyOrderData,
+    PrzejscieDetail
+} from '../../../types/kartaBudowy';
 import { textCell } from '../helpers';
 import { DOCX_COLORS } from '../colors';
 import {
@@ -132,7 +136,7 @@ function transitionHeaderRow(): TableRow {
     });
 }
 
-function transitionDataRow(p: Record<string, unknown>, idx: number): TableRow {
+function transitionDataRow(p: PrzejscieDetail, idx: number): TableRow {
     const vals = [
         String(idx + 1),
         String(p.rodzaj || '—'),
@@ -299,7 +303,7 @@ export async function generateKartaBudowyDOCX(orderId: string): Promise<Buffer> 
                 rows: [
                     sectionRow('Szczegóły przejść', 6),
                     transitionHeaderRow(),
-                    ...kb.przejsciaDetails.map((p: any, idx: number) => transitionDataRow(p, idx))
+                    ...kb.przejsciaDetails.map((p, idx: number) => transitionDataRow(p, idx))
                 ]
             })
         );

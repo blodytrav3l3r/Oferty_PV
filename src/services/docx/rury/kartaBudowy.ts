@@ -29,7 +29,11 @@ import {
     CELL_BORDERS,
     type CellBorders
 } from '../constants';
-import type { KartaBudowyMeta, KartaBudowyOrderData } from '../../../types/kartaBudowy';
+import type {
+    KartaBudowyMeta,
+    KartaBudowyOrderData,
+    PrzejscieDetail
+} from '../../../types/kartaBudowy';
 
 const INFO_BOTTOM: CellBorders = {
     top: BORDER_NONE,
@@ -121,7 +125,7 @@ function transitionHeaderRow(): TableRow {
     });
 }
 
-function transitionDataRow(p: Record<string, unknown>, idx: number): TableRow {
+function transitionDataRow(p: PrzejscieDetail, idx: number): TableRow {
     const vals = [
         String(idx + 1),
         String(p.rodzaj || '—'),
@@ -286,7 +290,7 @@ export async function generateKartaBudowyRuryDOCX(orderId: string): Promise<Buff
                 rows: [
                     sectionRow('Szczegóły przejść', 6),
                     transitionHeaderRow(),
-                    ...kb.przejsciaDetails.map((p: any, idx: number) => transitionDataRow(p, idx))
+                    ...kb.przejsciaDetails.map((p, idx: number) => transitionDataRow(p, idx))
                 ]
             })
         );

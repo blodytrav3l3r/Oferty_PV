@@ -87,7 +87,7 @@ router.put(
                 const existingClients =
                     await tx.$queryRaw`SELECT id FROM clients_rel WHERE userId = ${userId}`;
                 const existingIds = (existingClients as { id: string }[]).map((c) => c.id);
-                const incomingIds = arr.map((c: any) => c.id).filter(Boolean);
+                const incomingIds = arr.map((c: { id?: string }) => c.id).filter(Boolean);
                 const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 
                 if (toDelete.length > 0) {
