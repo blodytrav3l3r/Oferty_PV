@@ -1,5 +1,4 @@
 # CI/CD Pipeline dla S.O.K.
-# - push na develop → lint + typecheck + testy + deploy na test
 # - push na main → lint + typecheck + testy + Docker build + weryfikacja + deploy na produkcję
 # - PR na main → lint + typecheck + testy
 
@@ -7,7 +6,7 @@ name: CI/CD Pipeline
 
 on:
     push:
-        branches: [main, develop]
+        branches: [main]
     pull_request:
         branches: [main]
 
@@ -153,14 +152,12 @@ jobs:
               run: npm run test:e2e-appname:spawn
 
     version-check:
-        name: Version check (standard-version dry-run)
+        name: Version check (spójność wersji)
         runs-on: ubuntu-latest
         needs: test
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         steps:
             - uses: actions/checkout@v7
-              with:
-                  fetch-depth: 0
 
             - name: Setup Node.js
               uses: actions/setup-node@v6
@@ -171,30 +168,8 @@ jobs:
             - name: Install dependencies
               run: npm ci
 
-            - name: Dry-run standard-version
-              run: npm run release:dry
-
-    deploy-test:
-        name: Deploy — test (develop)
-        runs-on: ubuntu-latest
-        needs: test
-        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        environment: test
-        env:
-            RENDER_TEST_DEPLOY_HOOK: ${{ secrets.RENDER_TEST_DEPLOY_HOOK }}
-        steps:
-            - uses: actions/checkout@v7
-
-            - name: Deploy to Render (test)
-              if: env.RENDER_TEST_DEPLOY_HOOK != ''
-              run: |
-                  set -o pipefail
-                  RESP=$(curl -sf -X POST "${{ secrets.RENDER_TEST_DEPLOY_HOOK }}")
-                  echo "  Triggered: $RESP"
-
-            - name: Skip — brak RENDER_TEST_DEPLOY_HOOK
-              if: env.RENDER_TEST_DEPLOY_HOOK == ''
-              run: echo "[INFO] Pomijam deploy testowy — ustaw RENDER_TEST_DEPLOY_HOOK w secrets"
+            - name: Sprawdź spójność wersji
+              run: npm run version:check
 
     deploy-production:
         name: Deploy — produkcja (main)
