@@ -1,6 +1,10 @@
 // @ts-check
 /* ===== Funkcje pomocnicze dla PV Sales UI ===== */
 
+function escapeHtmlAttr(str) {
+    return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function isRuryOfferFromTypeOrId(offerType, offerId) {
     if (offerType === 'rura_oferta' || offerType === 'offer') return true;
     if (offerId && /^offer_rury_/.test(offerId)) return true;
@@ -321,10 +325,10 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                 ${icon}
                             </div>
                             <div class="offer-title-section">
-                                <h3 class="offer-title">${offer.number || offer.title || offer.offerName || 'Oferta bez numeru'}</h3>
+                                <h3 class="offer-title">${escapeHtml(offer.number || offer.title || offer.offerName || 'Oferta bez numeru')}</h3>
                                 <div class="offer-subtitle">
                                     <span class="offer-client">${dd.clientNumber ? `<span class="client-nip" title="Nr klienta">${escapeHtml(dd.clientNumber)}</span> ` : ''}${escapeHtml(dd.clientInfo)}</span>
-                                    ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${dd.investInfo}</span>` : ''}
+                                    ${dd.investInfo ? `<span class="offer-separator">•</span><span class="offer-invest">${escapeHtml(dd.investInfo)}</span>` : ''}
                                 </div>
                             </div>
                             <div class="offer-price-section">
@@ -359,7 +363,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         </button>
                                         ${
                                             offer.clientPhone
-                                                ? `<a href="tel:${offer.clientPhone}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
+                                                ? `<a href="tel:${escapeHtmlAttr(offer.clientPhone)}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
                                                 : ''
                                         }
                                         <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
