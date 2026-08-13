@@ -28,7 +28,8 @@ import {
     requireAdmin,
     getSession,
     SESSION_MAX_AGE_MS,
-    ensureAdminExists
+    ensureAdminExists,
+    hashToken
 } from '../src/middleware/auth';
 
 // ─── getSession ─────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ describe('getSession', () => {
         const result = await getSession('expired-token');
         expect(result).toBeNull();
         expect(mockPrisma.sessions.delete).toHaveBeenCalledWith({
-            where: { token: 'expired-token' }
+            where: { token: hashToken('expired-token') }
         });
     });
 

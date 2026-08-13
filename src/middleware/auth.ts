@@ -33,6 +33,14 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
+ * Haszuje token sesji (SHA-256). W bazie przechowywany jest wyłącznie hash —
+ * surowy token nigdy nie jest zapisywany, co chroni sesje przed wyciekiem DB.
+ */
+export function hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+/**
  * Tworzy nową sesję dla użytkownika.
  */
 export async function createSession(userId: string): Promise<string> {
@@ -41,7 +49,7 @@ export async function createSession(userId: string): Promise<string> {
 
     await prisma.sessions.create({
         data: {
-            token,
+            token: hashToken(token),
             userId,
             createdAt: now
         }
@@ -55,9 +63,10 @@ export async function createSession(userId: string): Promise<string> {
  */
 export async function getSession(token: string | undefined): Promise<Session | null> {
     if (!token) return null;
+    const tokenHash = hashToken(token);
     try {
         const session = await prisma.sessions.findUnique({
-            where: { token }
+            where: { token: tokenHash }
         });
         if (!session) return null;
         if (Number(session.createdAt) + SESSION_MAX_AGE_MS < Date.now()) {
@@ -77,7 +86,7 @@ export async function getSession(token: string | undefined): Promise<Session | n
 export async function deleteSession(token: string): Promise<void> {
     try {
         await prisma.sessions.delete({
-            where: { token }
+            where: { token: hashToken(token) }
         });
     } catch (_e) {
         // Ignoruj jeśli sesja nie istnieje
