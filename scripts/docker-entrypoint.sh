@@ -28,9 +28,9 @@ fi
 echo "[INFO] Migracja danych PRECO (jeśli potrzebna)..."
 node /app/scripts/migrate-preco-from-tables.cjs
 
-# Stosujemy migracje (skip-generate bo klient Prisma jest już wygenerowany w obrazie)
+# Stosujemy migracje (klient Prisma jest już wygenerowany w obrazie)
 echo "[INFO] Synchronizacja schematu bazy danych Prisma (migrate deploy)..."
-npx prisma migrate deploy --skip-generate
+npx prisma migrate deploy
 
 # check-db.js szuka bazy w ./data - wskazujemy ja na baze z wolumenu (/var/data).
 # seed_*.json pozostaja w /app/data (z obrazu), wiec symlink dotyczy tylko pliku bazy.
