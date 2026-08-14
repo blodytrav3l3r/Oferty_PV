@@ -438,7 +438,9 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             featureCount,
             labeledCount,
             labelCounts: {
-                accepted: labelCounts['ACCEPTED'] ?? 0,
+                accepted:
+                    (labelCounts['ACCEPTED'] ?? 0) +
+                    (labelCounts['ACCEPTED_AFTER_MODIFICATION'] ?? 0),
                 rejected: labelCounts['REJECTED'] ?? 0,
                 modified: labelCounts['MODIFIED'] ?? 0,
                 noFeedback: labelCounts['NO_FEEDBACK'] ?? 0
