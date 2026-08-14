@@ -2,9 +2,6 @@ import crypto from 'crypto';
 import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 
-// Bezwzględny limit skumulowanej nagrody użytkownika (clamp przy zapisie).
-const MAX_TOTAL_REWARD = 1000;
-
 export interface RewardEvent {
     userId: string;
     wellId?: string;
@@ -68,24 +65,10 @@ export class RewardCalculator {
                     }
                 });
 
-                const user = await tx.users.findUnique({
+                await tx.users.updateMany({
                     where: { id: event.userId },
-                    select: { totalReward: true }
+                    data: { totalReward: { increment: reward } }
                 });
-                if (user) {
-                    // Clamp totalReward — increment nie da się ograniczyć w updateMany,
-                    // więc policz clamped wartość i zapisz przez update. Martwa kolumna,
-                    // ale nie może rosnąć w nieskończoność przy dużym wolumenie rewardów.
-                    const current = user.totalReward ?? 0;
-                    const clamped = Math.max(
-                        -MAX_TOTAL_REWARD,
-                        Math.min(MAX_TOTAL_REWARD, current + reward)
-                    );
-                    await tx.users.update({
-                        where: { id: event.userId },
-                        data: { totalReward: clamped }
-                    });
-                }
             });
 
             logger.info(
