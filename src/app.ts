@@ -361,6 +361,9 @@ export async function initApp(): Promise<void> {
 
     // Indeksy deduplikacji telemetrii AI (auto-heal: na instalacjach bez migracji
     // prisma db push nie tworzy nowych indeksów, a check-db.js sprawdza tylko tabele)
+    // UWAGA: auto-heal można wyciąć po pełnym przejściu na migracje (A8) —
+    // baseline zawiera te indeksy (20260815000000_baseline), a ścieżki startowe
+    // (ensure-db.bat, install.*, docker-entrypoint.sh) używają już migrate deploy.
     try {
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId")`;
         await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_logs_source_well" ON "ai_telemetry_logs"("solverSource", "wellId")`;
