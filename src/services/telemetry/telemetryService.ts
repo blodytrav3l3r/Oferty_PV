@@ -219,6 +219,48 @@ class TelemetryService {
                     `(well=${payload.wellId || 'brak'}, transitions=${transitionsCreated}, history=${configHistoryCreated})`
             );
 
+            // Propaguj etykietę decyzji na sugestię AUTO (parentConfigId). Decyzja
+            // nie tworzy własnego wektora aiFeature (trainingEligible=false) —
+            // etykieta (MODIFIED / ACCEPTED_AFTER_MODIFICATION) trafia na sugestię,
+            // żeby zachować jedno źródło prawdy: 1 wektor na decyzję.
+            if (payload.parentConfigId) {
+                try {
+                    const { featureExtractor, deriveLabelFromFlags } =
+                        await import('../ml/FeatureExtractor');
+                    const label = deriveLabelFromFlags({
+                        wasAccepted: payload.wasAccepted,
+                        wasRejected: payload.wasRejected,
+                        wasModified: payload.wasModified,
+                        solverSource: payload.solverSource,
+                        parentConfigId: payload.parentConfigId
+                    });
+                    // Oprócz etykiety w aiFeature zsynchronizuj flagi na rekordzie
+                    // sugestii — jeśli ekstrakcja cech jeszcze nie przebiegła,
+                    // extractAndStore policzy deriveLabel() z pełnego stanu flag
+                    // (wasModified z reward + wasAccepted z ORDER_CONFIRM) i da
+                    // poprawną etykietę zamiast cicho gubić ją na updateMany=0.
+                    await prisma.ai_telemetry_logs.updateMany({
+                        where: { id: payload.parentConfigId },
+                        data: {
+                            ...(payload.wasAccepted
+                                ? { wasAccepted: true, lastAcceptedAt: now }
+                                : {}),
+                            ...(payload.wasRejected
+                                ? { wasRejected: true, lastRejectedAt: now }
+                                : {}),
+                            ...(payload.wasModified ? { wasModified: true } : {})
+                        }
+                    });
+                    await featureExtractor.updateLabelByTelemetry(payload.parentConfigId, label);
+                } catch (labelErr) {
+                    const msg = labelErr instanceof Error ? labelErr.message : String(labelErr);
+                    logger.error(
+                        'Telemetry',
+                        `Nie udało się zsynchronizować etykiety sugestii: ${msg}`
+                    );
+                }
+            }
+
             return {
                 success: true,
                 telemetryId,
@@ -417,6 +459,10 @@ class TelemetryService {
      * (totalPrice=0 sygnalizuje martwe cechy — np. brak produktów studni).
      */
     private _isTrainingEligible(payload: TelemetryConfigPayload): boolean {
+        // Decyzje względem sugestii AUTO (parentConfigId) nie tworzą własnych
+        // wektorów treningowych — etykieta trafia na sugestię (updateLabelByTelemetry).
+        // Osobny wektor dla finalnego configu = data leakage / podwójne liczenie.
+        if (payload.parentConfigId) return false;
         const components = payload.allComponentIds || [];
         if (components.length === 0) return false;
         const snap = payload.featureSnapshot || {};

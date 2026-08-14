@@ -1527,7 +1527,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--text-primary);
 }
 
-/* ── ML Pipeline grid (2 rzędy: 3 + 4 kafelki) ── */
+/* ── ML Pipeline grid (maks. 2 rzędy: 4 + 4 kafelki) ── */
 .ai-ml-stats-grid {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
@@ -1537,11 +1537,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     --stat-val-size: 1.1rem;
 }
 
-.ai-ml-stats-grid .ai-stat-card:nth-child(-n + 3) {
-    grid-column: span 4;
-}
-
-.ai-ml-stats-grid .ai-stat-card:nth-child(n + 4) {
+.ai-ml-stats-grid .ai-stat-card {
     grid-column: span 3;
 }
 

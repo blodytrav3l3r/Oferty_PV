@@ -231,6 +231,87 @@ describe('FeatureExtractor', () => {
         expect(fv.label).toBe('ACCEPTED');
         expect(fv.reward).toBe(1.0);
     });
+
+    it('extract() daje MODIFIED gdy decyzja z parentConfigId wskazuje sugestie (G3)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-decision-modified',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: false,
+            wasRejected: false,
+            wasModified: true,
+            parentConfigId: 'suggestion-S123',
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'MANUAL'
+        } as any);
+
+        expect(fv.label).toBe('MODIFIED');
+        expect(fv.reward).toBe(-0.3);
+    });
+
+    it('extract() daje ACCEPTED_AFTER_MODIFICATION gdy ORDER_CONFIRM z parentConfigId (G3)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-decision-confirm',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: true,
+            wasRejected: false,
+            wasModified: true,
+            parentConfigId: 'suggestion-S123',
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'MANUAL'
+        } as any);
+
+        expect(fv.label).toBe('ACCEPTED_AFTER_MODIFICATION');
+        expect(fv.reward).toBe(1.0);
+    });
+
+    it('extract() daje AAM dla sugestii AUTO z flagami acc+mod bez parentConfigId (G3)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+
+        const fv = featureExtractor.extract({
+            id: 'test-suggestion-confirmed',
+            dn: '1000',
+            warehouse: 'KLB',
+            wellType: 'standard',
+            wasAccepted: true,
+            wasRejected: false,
+            wasModified: true,
+            allComponentIds: null,
+            appliedReductions: null,
+            appliedKonus: null,
+            appliedSeals: null,
+            createdAt: '2026-07-01T12:00:00Z',
+            solverSource: 'AUTO_JS'
+        } as any);
+
+        expect(fv.label).toBe('ACCEPTED_AFTER_MODIFICATION');
+        expect(fv.reward).toBe(1.0);
+    });
+
+    it('labelToTrainingWeight: ACCEPTED=1.0, AAM=0.5, MODIFIED=0.5, REJECTED=1.0, NO_FEEDBACK=0', async () => {
+        const { labelToTrainingWeight } = await import('../../src/services/ml/FeatureExtractor');
+
+        expect(labelToTrainingWeight('ACCEPTED')).toBe(1.0);
+        expect(labelToTrainingWeight('ACCEPTED_AFTER_MODIFICATION')).toBe(0.5);
+        expect(labelToTrainingWeight('MODIFIED')).toBe(0.5);
+        expect(labelToTrainingWeight('REJECTED')).toBe(1.0);
+        expect(labelToTrainingWeight('NO_FEEDBACK')).toBe(0.0);
+    });
 });
 
 describe('predictionCache', () => {

@@ -83,7 +83,14 @@
             scoreBefore: scoreBefore,
             scoreAfter: scoreAfter,
             wasAiRanked: wasAiRanked,
-            configSnapshot: snap
+            configSnapshot: snap,
+            // MODIFY/REJECT odnoszą się do sugestii AUTO — backend etykietuje
+            // wiersz sugestii (parentConfigId), nie najnowszy finalny config.
+            parentConfigId:
+                (params.action === 'MODIFY' || params.action === 'REJECT') &&
+                well._lastAutoTelemetryId
+                    ? well._lastAutoTelemetryId
+                    : undefined
         };
 
         try {

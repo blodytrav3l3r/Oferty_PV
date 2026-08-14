@@ -22,7 +22,7 @@ export interface FeatureVector {
     season: string;
     kinetaType: string;
     dennicaHeight: number;
-    label: 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
+    label: FeatureLabel;
     reward: number;
     decisionMs: number;
 }
@@ -52,6 +52,7 @@ export interface TelemetryRecordWithDetails {
     kineta?: string | null;
     dennicaHeight?: number | null;
     computationMs?: number | null;
+    parentConfigId?: string | null;
 }
 
 function shannonEntropy(items: string[]): number {
@@ -133,7 +134,16 @@ function extractProductId(item: unknown): string {
         : '';
 }
 
-export type FeatureLabel = 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
+export type FeatureLabel =
+    'ACCEPTED' | 'ACCEPTED_AFTER_MODIFICATION' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
+
+export interface LabelFlags {
+    wasAccepted?: boolean;
+    wasRejected?: boolean;
+    wasModified?: boolean;
+    solverSource?: string | null;
+    parentConfigId?: string | null;
+}
 
 /**
  * Wyprowadza etykietę treningową z flag feedbacku rekordu telemetrii.
@@ -151,23 +161,52 @@ export type FeatureLabel = 'ACCEPTED' | 'REJECTED' | 'MODIFIED' | 'NO_FEEDBACK';
  * WAS_ACCEPTED ma priorytet nad MANUAL: acceptance-full z wasAccepted=true to
  * potwierdzona finalna konfiguracja (pozytywna), nie NO_FEEDBACK.
  */
-function deriveLabel(record: {
-    wasAccepted?: boolean;
-    wasRejected?: boolean;
-    wasModified?: boolean;
-    solverSource?: string | null;
-}): FeatureLabel {
+function deriveLabel(record: LabelFlags): FeatureLabel {
     if (record.wasRejected) return 'REJECTED';
+    // Decyzja względem sugestii AUTO (łańcuch parentConfigId): etykieta
+    // odnosi się do sugestii, a nie do finalnego configu (data leakage).
+    // Kolejność: wasAccepted przed wasModified — ORDER_CONFIRM ustawia obie flagi.
+    if (record.parentConfigId && record.wasAccepted) return 'ACCEPTED_AFTER_MODIFICATION';
+    if (record.parentConfigId && record.wasModified) return 'MODIFIED';
+    // Rekord SUGESTII z pełnym stanem flag (wasModified z reward + wasAccepted
+    // z ORDER_CONFIRM propagowane na sugestię w recordConfig): zmodyfikowana,
+    // a potem zamówiona sugestia = potwierdzenie po modyfikacji.
+    if (record.wasAccepted && record.wasModified && record.solverSource !== 'MANUAL') {
+        return 'ACCEPTED_AFTER_MODIFICATION';
+    }
+    // Czysty MANUAL bez sugestii: brak feedbacku — NO_FEEDBACK, chyba że
+    // jawnie zaakceptowany (wasAccepted ma priorytet nad MANUAL, G2).
+    if (record.solverSource === 'MANUAL' && !record.wasAccepted) return 'NO_FEEDBACK';
     if (record.wasAccepted) return 'ACCEPTED';
-    if (record.solverSource === 'MANUAL') return 'NO_FEEDBACK';
     if (record.wasModified) return 'MODIFIED';
     return 'NO_FEEDBACK';
 }
 
+/**
+ * Publiczne wyprowadzenie etykiety z flag — współdzielone z telemetryService
+ * (propagacja etykiety decyzji na sugestię w recordConfig).
+ */
+export function deriveLabelFromFlags(flags: LabelFlags): FeatureLabel {
+    return deriveLabel(flags);
+}
+
 function labelToReward(label: FeatureLabel): number {
-    if (label === 'ACCEPTED') return 1.0;
+    if (label === 'ACCEPTED' || label === 'ACCEPTED_AFTER_MODIFICATION') return 1.0;
     if (label === 'REJECTED') return -1.0;
     if (label === 'MODIFIED') return -0.3;
+    return 0.0;
+}
+
+/**
+ * Training weight — waga próbki treningowej (reward ≠ weight). Potwierdzona
+ * akceptacja uczy najsilniej, modyfikacje i akceptacje po modyfikacji uczą
+ * słabiej (niepewność), NO_FEEDBACK nie trenuje w ogóle.
+ */
+export function labelToTrainingWeight(label: FeatureLabel): number {
+    if (label === 'ACCEPTED') return 1.0;
+    if (label === 'ACCEPTED_AFTER_MODIFICATION') return 0.5;
+    if (label === 'MODIFIED') return 0.5;
+    if (label === 'REJECTED') return 1.0;
     return 0.0;
 }
 
@@ -362,7 +401,8 @@ export class FeatureExtractor {
                 wasRejected: true,
                 wasModified: true,
                 modificationCount: true,
-                solverSource: true
+                solverSource: true,
+                parentConfigId: true
             }
         });
 

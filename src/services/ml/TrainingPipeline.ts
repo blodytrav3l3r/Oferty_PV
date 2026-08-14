@@ -2,7 +2,12 @@ import prisma from '../../prismaClient';
 import { logger } from '../../utils/logger';
 import { AcceptanceModel } from './AcceptanceModel';
 import { modelRegistry, type ModelMetrics } from './ModelRegistry';
-import { featureExtractor, normalizeWarehouse } from './FeatureExtractor';
+import {
+    featureExtractor,
+    normalizeWarehouse,
+    labelToTrainingWeight,
+    type FeatureLabel
+} from './FeatureExtractor';
 import { ML_CONFIG } from './trainingConfig';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
 
@@ -337,7 +342,13 @@ export class TrainingPipeline {
                 if (agg) Object.assign(raw, agg);
                 const createdAt = new Date(f.createdAt);
                 const ageDays = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-                return { vec: oneHotEncode(raw), label: f.label === 'ACCEPTED' ? 1 : 0, ageDays };
+                return {
+                    vec: oneHotEncode(raw),
+                    label:
+                        f.label === 'ACCEPTED' || f.label === 'ACCEPTED_AFTER_MODIFICATION' ? 1 : 0,
+                    ageDays,
+                    featureLabel: f.label
+                };
             });
 
         const dim = FEATURE_NAMES.length;
@@ -357,7 +368,8 @@ export class TrainingPipeline {
         const normalized = examples.map((ex) => ({
             vec: normalize(ex.vec, mins, maxs),
             label: ex.label,
-            weight: applyForgetting(ex.ageDays)
+            weight:
+                applyForgetting(ex.ageDays) * labelToTrainingWeight(ex.featureLabel as FeatureLabel)
         }));
 
         return { normalized, mins, maxs, dim };

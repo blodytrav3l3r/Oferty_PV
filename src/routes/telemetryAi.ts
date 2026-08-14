@@ -187,8 +187,7 @@ router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) 
                         labelSnapshot:
                             typeof snap.labelSnapshot === 'object' && snap.labelSnapshot
                                 ? (snap.labelSnapshot as Record<string, unknown>)
-                                : undefined,
-                        parentConfigId: data.telemetryId
+                                : undefined
                     },
                     userId
                 );

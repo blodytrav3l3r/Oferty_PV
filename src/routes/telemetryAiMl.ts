@@ -48,7 +48,10 @@ const rewardSchema = z.object({
     scoreBefore: z.number().min(0).max(1).optional(),
     scoreAfter: z.number().min(0).max(1).optional(),
     wasAiRanked: z.boolean().optional(),
-    configSnapshot: z.record(z.string(), z.unknown()).optional()
+    configSnapshot: z.record(z.string(), z.unknown()).optional(),
+    // Łańcuch sugestia→decyzja: ID rekordu sugestii AUTO (frontend przechwytuje
+    // je z odpowiedzi /ai/config). MODIFY/REJECT etykietują SUGESTIĘ, nie finalny config.
+    parentConfigId: z.string().optional()
 });
 
 // P4: Indeksy cech do detekcji driftu wyznaczane z FEATURE_NAMES zamiast sztywnych 12/13 —// zmiana kolejności cech w mlConstants nie zepsuje obliczeń. Brak cechy w FEATURE_NAMES
@@ -215,28 +218,42 @@ router.post(
             });
 
             // Feedback MODIFY/REJECT to sygnał negatywny dla treningu ML. Oznacz
-            // rekord telemetrii (wasModified/wasRejected) i zsynchronizuj etykietę
+            // rekord SUGESTII (features = sugestia) i zsynchronizuj etykietę
             // w aiFeature — inaczej klasa negatywna nigdy nie trafi do modelu.
-            // WAŻNE: tylko NAJNOWSZY rekord studni — updateMany po wellId skazywał
-            // WSZYSTKIE historyczne konfiguracje na MODIFIED (niszczyło klasę
-            // negatywną w treningu).
+            // WAŻNE: nie etykietuj "najnowszego rekordu studni" — to zwykle finalny
+            // config (OFFER_SAVE/MANUAL), co tworzyło data leakage (baza błędów ML).
+            // Cel ustalany: 1) parentConfigId z frontendu (z guardem wellId),
+            // 2) fallback: najwcześniejsza sugestia AUTO dla studni.
             if (data.action === 'MODIFY' || data.action === 'REJECT') {
                 const flags =
                     data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
-                const latest = await prisma.ai_telemetry_logs.findFirst({
-                    where: { wellId: data.wellId },
-                    orderBy: { createdAt: 'desc' },
-                    select: { id: true }
-                });
-                if (latest) {
+                const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
+
+                let targetId: string | null = null;
+                if (data.parentConfigId) {
+                    const parent = await prisma.ai_telemetry_logs.findFirst({
+                        where: { id: data.parentConfigId, wellId: data.wellId },
+                        select: { id: true }
+                    });
+                    if (parent) targetId = parent.id;
+                }
+                if (!targetId) {
+                    const suggestion = await prisma.ai_telemetry_logs.findFirst({
+                        where: {
+                            wellId: data.wellId,
+                            solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
+                        },
+                        orderBy: { createdAt: 'desc' },
+                        select: { id: true }
+                    });
+                    if (suggestion) targetId = suggestion.id;
+                }
+                if (targetId) {
                     await prisma.ai_telemetry_logs.update({
-                        where: { id: latest.id },
+                        where: { id: targetId },
                         data: flags
                     });
-                    await featureExtractor.updateLabelByTelemetry(
-                        latest.id,
-                        data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED'
-                    );
+                    await featureExtractor.updateLabelByTelemetry(targetId, label);
                 }
             }
 
@@ -394,6 +411,15 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
         const activeModel = await modelRegistry.getActiveModel();
         const modelCount = await modelRegistry.getModelCount();
         const featureCount = await featureExtractor.getFeatureCount();
+        const featureLabels = await prisma.aiFeature.groupBy({
+            by: ['label'],
+            _count: { _all: true }
+        });
+        const labelCounts: Record<string, number> = {};
+        for (const row of featureLabels) {
+            labelCounts[row.label] = row._count._all;
+        }
+        const labeledCount = featureCount - (labelCounts['NO_FEEDBACK'] ?? 0);
         const pipelineStatus = trainingPipeline.getStatus();
         const rewardLogs = await prisma.aiRewardLog.count();
         const aiInfluence = await prisma.settings.findUnique({
@@ -410,6 +436,13 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             rankingVersion: ML_CONSTANTS.RANKING_VERSION,
             modelCount,
             featureCount,
+            labeledCount,
+            labelCounts: {
+                accepted: labelCounts['ACCEPTED'] ?? 0,
+                rejected: labelCounts['REJECTED'] ?? 0,
+                modified: labelCounts['MODIFIED'] ?? 0,
+                noFeedback: labelCounts['NO_FEEDBACK'] ?? 0
+            },
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
             cacheSize: predictionCacheSize(),

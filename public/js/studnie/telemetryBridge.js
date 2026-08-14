@@ -170,8 +170,14 @@
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })
-                .then(function () {
+                .then(function (response) {
                     clearTimeout(timeoutId);
+                    if (response && typeof response.json === 'function') {
+                        return response.json().catch(function () {
+                            return undefined;
+                        });
+                    }
+                    return undefined;
                 })
                 .catch(function (err) {
                     if (
@@ -430,8 +436,24 @@
                 }
             };
 
-            // Wyślij pasywnie (bez oczekiwania na response)
-            safeFetch(TELEMETRY_URL, payload);
+            // Łańcuch sugestia→decyzja: rekord decyzji (MANUAL) wskazuje sugestię
+            // AUTO przez parentConfigId — backend etykietuje SUGESTIĘ, nie finalny config.
+            if (solverSource === 'MANUAL' && well._lastAutoTelemetryId) {
+                payload.parentConfigId = well._lastAutoTelemetryId;
+            }
+
+            // Sugestia AUTO: przechwyć telemetryId z odpowiedzi, by późniejsze
+            // decyzje (edycja/akceptacja) mogły wskazać ten właśnie rekord.
+            if (solverSource !== 'MANUAL') {
+                safeFetch(TELEMETRY_URL, payload).then(function (res) {
+                    if (res && res.telemetryId) {
+                        well._lastAutoTelemetryId = res.telemetryId;
+                    }
+                });
+            } else {
+                // Wyślij pasywnie (bez oczekiwania na response)
+                safeFetch(TELEMETRY_URL, payload);
+            }
         } catch (_e) {
             /* pasywne — ignore */
         }

@@ -357,6 +357,22 @@
                         : 'Zapisane modele ML'
                 ) +
                 statCard(
+                    'Dane treningowe (oznaczone)',
+                    status.labeledCount + ' / ' + status.featureCount,
+                    status.labeledCount >= 100 ? 'var(--success)' : 'var(--warn)',
+                    'Wektory z sygnałem użytkownika (ACCEPTED/REJECTED/MODIFIED) na tle wszystkich. ' +
+                        'NO_FEEDBACK jest odrzucane przy treningu — sam surowy licznik może mylić.',
+                    'ACCEPTED: ' +
+                        status.labelCounts.accepted +
+                        ', REJECTED: ' +
+                        status.labelCounts.rejected +
+                        ', MODIFIED: ' +
+                        status.labelCounts.modified +
+                        ', NO_FEEDBACK: ' +
+                        status.labelCounts.noFeedback +
+                        '. Próg treningu: min. 100 oznaczonych.'
+                ) +
+                statCard(
                     'Trening trwa',
                     status.trainingRunning ? 'Tak' : 'Nie',
                     status.trainingRunning ? 'var(--warn)' : 'var(--success)',

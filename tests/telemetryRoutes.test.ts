@@ -326,6 +326,40 @@ describe('telemetryService - deduplikacja AUTO_JS', () => {
         });
         expect(row?.trainingEligible).toBe(false);
     });
+
+    it('decyzja z parentConfigId → trainingEligible=false (nie tworzy wlasnego wektora)', async () => {
+        const r = await telemetryService.recordConfig(
+            qualityPayload({ parentConfigId: 'suggestion-S123' })
+        );
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r.telemetryId }
+        });
+        expect(row?.trainingEligible).toBe(false);
+    });
+
+    it('recordConfig z parentConfigId propaguje etykiete i flagi na sugestie (G3)', async () => {
+        // 1. Sugestia AUTO (rekord bazowy)
+        const sugg = await telemetryService.recordConfig(
+            qualityPayload({ solverSource: 'AUTO_JS', wellId: QUALITY_PREFIX + '-g3' })
+        );
+
+        // 2. Decyzja ORDER_CONFIRM wskazujaca sugestie
+        await telemetryService.recordConfig(
+            qualityPayload({
+                solverSource: 'MANUAL',
+                wellId: QUALITY_PREFIX + '-g3',
+                parentConfigId: sugg.telemetryId,
+                wasAccepted: true,
+                wasModified: true
+            })
+        );
+
+        const suggRow = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: sugg.telemetryId }
+        });
+        expect(suggRow?.wasAccepted).toBe(true);
+        expect(suggRow?.wasModified).toBe(true);
+    });
 });
 
 /* ===== ConfidenceCalculator - matematyka ===== */
