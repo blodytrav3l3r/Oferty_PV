@@ -36,5 +36,7 @@ export const ML_CONSTANTS = {
     FEATURE_COUNT: FEATURE_NAMES.length,
     PREDICTION_CACHE_TTL_MS: 15 * 60 * 1000,
     TRAINING_BATCH_SIZE: 2000,
-    LEARNING_MAX_RECORDS: 200
+    LEARNING_MAX_RECORDS: 200,
+    /** Dni bez aktywności (lastHitAt), po których wzorzec trafia do archiwum. */
+    LEARNING_ARCHIVE_DAYS: 90
 } as const;

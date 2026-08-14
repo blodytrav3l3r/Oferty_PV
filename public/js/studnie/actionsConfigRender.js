@@ -34,6 +34,10 @@ function renderWellConfig() {
 
     if (!tbody) return;
 
+    if (typeof window.refreshKbSuggestions === 'function') {
+        window.refreshKbSuggestions(well);
+    }
+
     if (typeof ensureElemIds === 'function' && well && Array.isArray(well.config)) {
         ensureElemIds(well.config);
     }

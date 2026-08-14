@@ -1,6 +1,24 @@
 // @ts-check
 /* ===== actionsCrud.js — add/remove/update/clear komponentów studni ===== */
 
+/**
+ * Reward za nadpisanie sugestii AI.
+ * Studnia wybrana przez AI (AUTO_AI) zmodyfikowana ręcznie = ODRZUCENIE sugestii
+ * (klasa negatywna dla treningu ML + sliding AUC). Studnia bez AI = zwykły MODIFY.
+ * @param {string} prevConfigSource - configSource PRZED nadpisaniem na MANUAL
+ * @param {Object} well
+ */
+function _signalAiOverrideOrModify(prevConfigSource, well) {
+    if (typeof window.mlRewardHooks === 'undefined') return;
+    if (prevConfigSource === 'AUTO_AI' && window.mlRewardHooks.onWellRejected) {
+        window.mlRewardHooks.onWellRejected({ wasAiRanked: true, well: well });
+        return;
+    }
+    if (window.mlRewardHooks.onWellModified) {
+        window.mlRewardHooks.onWellModified();
+    }
+}
+
 function addWellComponent(productId) {
     if (isOfferLocked()) {
         showToast(OFFER_LOCKED_MSG, 'error');
@@ -18,6 +36,8 @@ function addWellComponent(productId) {
         showToast('Najpierw dodaj studnię', 'error');
         return;
     }
+
+    const prevConfigSource = well.configSource;
 
     if (!well.autoLocked) {
         well.autoLocked = true;
@@ -181,9 +201,7 @@ function addWellComponent(productId) {
     updateHeightIndicator();
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
 
-    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellModified) {
-        window.mlRewardHooks.onWellModified();
-    }
+    _signalAiOverrideOrModify(prevConfigSource, well);
 
     if (topClosureTypes.includes(product.componentType) && well.rzednaWlazu != null) {
         const rzDna = well.rzednaDna != null ? well.rzednaDna : 0;
@@ -219,6 +237,7 @@ function removeWellComponent(index) {
         );
         return;
     }
+    const prevConfigSource = well.configSource;
     well.configSource = 'MANUAL';
 
     const removedItem = well.config.splice(index, 1)[0];
@@ -270,9 +289,7 @@ function removeWellComponent(index) {
     if (typeof window.refreshExcelFromConfig === 'function') window.refreshExcelFromConfig();
     if (typeof window._excelSyncAutoManualUI === 'function') window._excelSyncAutoManualUI();
 
-    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellModified) {
-        window.mlRewardHooks.onWellModified();
-    }
+    _signalAiOverrideOrModify(prevConfigSource, well);
 }
 
 function updateWellQuantity(index, value) {

@@ -7,7 +7,7 @@ export { PatternDetector } from './PatternDetector';
 export { KnowledgeBase } from './KnowledgeBase';
 export { PreferenceEngine } from './PreferenceEngine';
 export { RankingEngine } from './RankingEngine';
-export { RecommendationEngine } from './RecommendationEngine';
+export { RecommendationEngine, recommendationEngine } from './RecommendationEngine';
 export { ConfidenceCalculator } from './ConfidenceCalculator';
 export { LearningEngine, learningEngine } from './LearningEngine';
 

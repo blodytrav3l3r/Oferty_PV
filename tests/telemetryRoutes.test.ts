@@ -552,6 +552,12 @@ describe('KnowledgeBase - operacje na DB', () => {
         await prisma.ai_knowledge_base.deleteMany({
             where: { patternKey: { startsWith: 'test_' } }
         });
+        await prisma.ai_knowledge_base.deleteMany({
+            where: { patternKey: { startsWith: 'kb_' } }
+        });
+        await prisma.ai_recommendations.deleteMany({
+            where: { patternKey: { startsWith: 'rec_' } }
+        });
     });
 });
 
@@ -797,7 +803,7 @@ describe('Integralność danych', () => {
         const row = await prisma.ai_knowledge_base.findFirst({
             where: { patternKey: key }
         });
-        expect(row?.hitCount).toBe(7);
+        expect(row?.hitCount).toBe(8); // 1 + 7 — akumulacja hitów (nie nadpisanie)
         const history = row?.changeHistory ? JSON.parse(row.changeHistory) : [];
         // 2 upserty powinny dodać 2 wpisy do historii
         expect(history.length).toBeGreaterThanOrEqual(1);

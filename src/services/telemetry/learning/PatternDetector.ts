@@ -49,6 +49,9 @@ export class PatternDetector {
         >();
 
         for (const r of records) {
+            // Rekordy z mniej niż 2 przejściami nie mają układu do wykrycia —
+            // layout zawsze 'unknown' i tworzą szum '|unknown|n0|n1|' (baza błędów P5).
+            if (r.transitionsCount < 2) continue;
             const layout = r.layout;
             const cnt = r.transitionsCount;
             const height = Math.round(r.transitionAvgHeight / 50) * 50;
@@ -167,5 +170,12 @@ export class PatternDetector {
             logger.warn('PatternDetector', `Blad persist: ${err.reason}`);
         }
         return count;
+    }
+
+    /**
+     * Archiwizuje wzorce aktywne bez trafień przez maxAgeDays dni.
+     */
+    async archiveStale(maxAgeDays: number): Promise<number> {
+        return this.knowledge.archiveStalePatterns(maxAgeDays);
     }
 }

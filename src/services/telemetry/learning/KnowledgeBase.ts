@@ -8,6 +8,7 @@
 import crypto from 'crypto';
 import prisma from '../../../prismaClient';
 import { logger } from '../../../utils/logger';
+import { ConfidenceCalculator } from './ConfidenceCalculator';
 
 export type PatternType =
     | 'dennica_swap'
@@ -45,6 +46,29 @@ export interface RecommendationRecord {
 }
 
 export class KnowledgeBase {
+    private confidence: ConfidenceCalculator;
+
+    constructor() {
+        this.confidence = new ConfidenceCalculator();
+    }
+
+    /**
+     * Przelicza confidence z zagregowanych liczników po akumulacji hitów.
+     * Przenosi licznik z okna per-cykl do wartości skumulowanej, dzięki czemu
+     * wzorzec nie traci confidence po cyklu bez trafień (baza błędów P4).
+     */
+    private recomputeConfidence(
+        patternType: PatternType,
+        hitCount: number,
+        successCount: number,
+        rejectionCount: number
+    ): number {
+        if (patternType === 'dennica_swap' || patternType === 'ring_pattern') {
+            return this.confidence.rawConfidence(hitCount);
+        }
+        return this.confidence.weighted({ hitCount, successCount, rejectionCount });
+    }
+
     /**
      * Upsert wzorca - jeśli patternKey istnieje, aktualizuj; wpp wstaw.
      */
@@ -62,22 +86,35 @@ export class KnowledgeBase {
                 });
 
                 if (existing) {
+                    const accHitCount = existing.hitCount + pattern.hitCount;
+                    const accSuccessCount = existing.successCount + pattern.successCount;
+                    const accRejectionCount = existing.rejectionCount + pattern.rejectionCount;
                     const history = existing.changeHistory
                         ? JSON.parse(existing.changeHistory)
                         : [];
                     history.push({
                         at: now,
-                        hitCount: pattern.hitCount,
-                        confidence: pattern.confidence
+                        hitCount: accHitCount,
+                        confidence: this.recomputeConfidence(
+                            pattern.patternType,
+                            accHitCount,
+                            accSuccessCount,
+                            accRejectionCount
+                        )
                     });
 
                     await tx.ai_knowledge_base.update({
                         where: { id: existing.id },
                         data: {
-                            hitCount: pattern.hitCount,
-                            confidence: pattern.confidence,
-                            successCount: pattern.successCount,
-                            rejectionCount: pattern.rejectionCount,
+                            hitCount: accHitCount,
+                            confidence: this.recomputeConfidence(
+                                pattern.patternType,
+                                accHitCount,
+                                accSuccessCount,
+                                accRejectionCount
+                            ),
+                            successCount: accSuccessCount,
+                            rejectionCount: accRejectionCount,
                             lastHitAt: now,
                             lastUpdatedAt: now,
                             changeHistory: JSON.stringify(history.slice(-20)),
@@ -302,6 +339,30 @@ export class KnowledgeBase {
             return await prisma.ai_knowledge_base.count({ where: { status: 'active' } });
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd countPatterns: ${e}`);
+            return 0;
+        }
+    }
+
+    /**
+     * Archiwizuje wzorce aktywne bez trafień przez maxAgeDays dni.
+     * Zwraca liczbę zarchiwizowanych.
+     */
+    async archiveStalePatterns(maxAgeDays: number = 90): Promise<number> {
+        try {
+            const cutoff = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000).toISOString();
+            const result = await prisma.ai_knowledge_base.updateMany({
+                where: {
+                    status: 'active',
+                    lastHitAt: { lt: cutoff }
+                },
+                data: { status: 'archived' }
+            });
+            if (result.count > 0) {
+                logger.info('KnowledgeBase', `Zarchiwizowano ${result.count} starych wzorców`);
+            }
+            return result.count;
+        } catch (e) {
+            logger.error('KnowledgeBase', `Błąd archiveStalePatterns: ${e}`);
             return 0;
         }
     }

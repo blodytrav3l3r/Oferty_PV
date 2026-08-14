@@ -67,3 +67,5 @@ export class RecommendationEngine {
         return this.re.rank(features, patterns, topN);
     }
 }
+
+export const recommendationEngine = new RecommendationEngine();

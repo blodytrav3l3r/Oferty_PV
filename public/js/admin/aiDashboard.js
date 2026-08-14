@@ -115,22 +115,22 @@
                     'Średni poziom ufności dla wszystkich wzorców (0-100%)'
                 ) +
                 statCard(
-                    'Rekomendacje',
+                    'Konfiguracje AI',
                     stats.totalRecommendations,
                     'var(--accent2)',
-                    'Liczba rekomendacji wygenerowanych przez Learning Engine'
+                    'Liczba rekordów konfiguracji studni zapisanych przez telemetrię AI'
                 ) +
                 statCard(
                     'Zaakceptowane',
                     stats.acceptedRecommendations,
                     'var(--success-hover)',
-                    'Liczba rekomendacji zaakceptowanych przez użytkownika'
+                    'Rekordy, w których użytkownik zaakceptował automatyczny dobór'
                 ) +
                 statCard(
                     'Odrzucone',
                     stats.rejectedRecommendations,
                     'var(--danger-hover)',
-                    'Liczba rekomendacji odrzuconych przez użytkownika'
+                    'Rekordy z jawnym odrzuceniem auto-doboru (obecnie 0 — brak ścieżki odrzucenia w UI)'
                 ) +
                 statCard(
                     'Nowe (7 dni)',

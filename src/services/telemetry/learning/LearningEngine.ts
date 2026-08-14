@@ -231,6 +231,8 @@ export class LearningEngine {
         try {
             const since = await this.loadLastRun();
 
+            await this.patterns.archiveStale(ML_CONSTANTS.LEARNING_ARCHIVE_DAYS);
+
             const { records, transitionsByConfig } = await this.fetchTelemetryRecords(since);
 
             processed = records.length;

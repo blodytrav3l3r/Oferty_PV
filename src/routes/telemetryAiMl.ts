@@ -4,6 +4,7 @@ import { trainingPipeline } from '../services/ml/TrainingPipeline';
 import { selfEvaluation } from '../services/ml/SelfEvaluation';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
+import { recommendationEngine } from '../services/telemetry/learning';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
 import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
@@ -424,93 +425,135 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
     }
 });
 
-router.get('/ai/health', requireAuth, READ_LIMITER, async (_req: Request, res: Response) => {
+// Sugestie z bazy wiedzy (Learning Engine) dla danego DN studni.
+// Czysto suggestywne — użytkownik decyduje (Zastosuj/Odrzuć).
+router.get('/ai/kb-suggestions', requireAuth, READ_LIMITER, async (req: Request, res: Response) => {
     try {
-        const telemetryCount = await prisma.ai_telemetry_logs.count();
-        const featureCount = await featureExtractor.getFeatureCount();
-        const activeModel = await modelRegistry.getActiveModel();
-        const modelCount = await modelRegistry.getModelCount();
-        const pipelineStatus = trainingPipeline.getStatus();
-        const rewardLogs = await prisma.aiRewardLog.count();
-
-        const lastModel = await prisma.aiModel.findFirst({
-            orderBy: { createdAt: 'desc' }
-        });
-
-        const withSnapshot = await prisma.ai_telemetry_logs.count({
-            where: { NOT: { featureSnapshot: '{}' } }
-        });
-        const withSolverSource = await prisma.ai_telemetry_logs.count({
-            where: { NOT: { solverSource: null } }
-        });
-        const withWellType = await prisma.ai_telemetry_logs.count({
-            where: { NOT: { wellType: null } }
-        });
-        const withManualOverride = await prisma.ai_telemetry_logs.count({
-            where: { manualOverrideFlag: true }
-        });
-
-        let driftPct = null;
-        if (activeModel?.featureMins?.length && activeModel?.featureMaxs?.length) {
-            try {
-                const recentLogs = await prisma.ai_telemetry_logs.findMany({
-                    where: { NOT: { featureSnapshot: '{}' } },
-                    orderBy: { createdAt: 'desc' },
-                    take: 50
-                });
-                const mins = activeModel.featureMins;
-                const maxs = activeModel.featureMaxs;
-                let totalChecks = 0;
-                let outOfRange = 0;
-                for (const log of recentLogs) {
-                    let snap: Record<string, unknown>;
-                    if (!log.featureSnapshot) continue;
-                    try {
-                        snap = JSON.parse(log.featureSnapshot);
-                    } catch {
-                        continue;
-                    }
-                    // P4: indeksy cech z DRIFT_FEATURES (wyznaczane z FEATURE_NAMES na starcie modułu)
-                    for (const { key, idx } of DRIFT_FEATURES) {
-                        const val = Number(snap[key]);
-                        if (isNaN(val)) continue;
-                        totalChecks++;
-                        if (val < mins[idx] || val > maxs[idx]) outOfRange++;
-                    }
-                }
-                driftPct = totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : 0;
-            } catch {
-                driftPct = null;
-            }
-        }
-
+        const dn = (req.query.dn as string) || 'all_dn';
+        const suggestions = await recommendationEngine.recommendForDn(
+            {
+                wellId: 'kb-suggestions',
+                telemetryId: 'kb-suggestions',
+                dn,
+                features: [],
+                extractedAt: new Date().toISOString()
+            },
+            5
+        );
         res.json({
-            mlOnline: !!activeModel,
-            telemetryCount,
-            featureCount,
-            modelCount,
-            modelVersion: activeModel?.version || null,
-            modelAccuracy: activeModel?.metrics?.accuracy ?? null,
-            lastTrainingAt: lastModel?.createdAt || null,
-            trainingRunning: pipelineStatus.running,
-            totalRewards: rewardLogs,
-            driftPct,
-            dataQuality: {
-                totalLogs: telemetryCount,
-                withFeatureSnapshotPct:
-                    telemetryCount > 0 ? Math.round((withSnapshot / telemetryCount) * 100) : 0,
-                withSolverSourcePct:
-                    telemetryCount > 0 ? Math.round((withSolverSource / telemetryCount) * 100) : 0,
-                withWellTypePct:
-                    telemetryCount > 0 ? Math.round((withWellType / telemetryCount) * 100) : 0,
-                manualOverrideCount: withManualOverride
-            }
+            suggestions: suggestions.map(function (r) {
+                return {
+                    patternKey: r.pattern.patternKey,
+                    patternType: r.pattern.patternType,
+                    description: r.pattern.description || '',
+                    confidence: r.pattern.confidence,
+                    hitCount: r.pattern.hitCount,
+                    score: r.score,
+                    recommendation: r.pattern.recommendation || {}
+                };
+            })
         });
     } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
         res.status(500).json({ error: msg });
     }
 });
+
+router.get(
+    '/ai/health',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const telemetryCount = await prisma.ai_telemetry_logs.count();
+            const featureCount = await featureExtractor.getFeatureCount();
+            const activeModel = await modelRegistry.getActiveModel();
+            const modelCount = await modelRegistry.getModelCount();
+            const pipelineStatus = trainingPipeline.getStatus();
+            const rewardLogs = await prisma.aiRewardLog.count();
+
+            const lastModel = await prisma.aiModel.findFirst({
+                orderBy: { createdAt: 'desc' }
+            });
+
+            const withSnapshot = await prisma.ai_telemetry_logs.count({
+                where: { NOT: { featureSnapshot: '{}' } }
+            });
+            const withSolverSource = await prisma.ai_telemetry_logs.count({
+                where: { NOT: { solverSource: null } }
+            });
+            const withWellType = await prisma.ai_telemetry_logs.count({
+                where: { NOT: { wellType: null } }
+            });
+            const withManualOverride = await prisma.ai_telemetry_logs.count({
+                where: { manualOverrideFlag: true }
+            });
+
+            let driftPct = null;
+            if (activeModel?.featureMins?.length && activeModel?.featureMaxs?.length) {
+                try {
+                    const recentLogs = await prisma.ai_telemetry_logs.findMany({
+                        where: { NOT: { featureSnapshot: '{}' } },
+                        orderBy: { createdAt: 'desc' },
+                        take: 50
+                    });
+                    const mins = activeModel.featureMins;
+                    const maxs = activeModel.featureMaxs;
+                    let totalChecks = 0;
+                    let outOfRange = 0;
+                    for (const log of recentLogs) {
+                        let snap: Record<string, unknown>;
+                        if (!log.featureSnapshot) continue;
+                        try {
+                            snap = JSON.parse(log.featureSnapshot);
+                        } catch {
+                            continue;
+                        }
+                        // P4: indeksy cech z DRIFT_FEATURES (wyznaczane z FEATURE_NAMES na starcie modułu)
+                        for (const { key, idx } of DRIFT_FEATURES) {
+                            const val = Number(snap[key]);
+                            if (isNaN(val)) continue;
+                            totalChecks++;
+                            if (val < mins[idx] || val > maxs[idx]) outOfRange++;
+                        }
+                    }
+                    driftPct = totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : 0;
+                } catch {
+                    driftPct = null;
+                }
+            }
+
+            res.json({
+                mlOnline: !!activeModel,
+                telemetryCount,
+                featureCount,
+                modelCount,
+                modelVersion: activeModel?.version || null,
+                modelAccuracy: activeModel?.metrics?.accuracy ?? null,
+                lastTrainingAt: lastModel?.createdAt || null,
+                trainingRunning: pipelineStatus.running,
+                totalRewards: rewardLogs,
+                driftPct,
+                dataQuality: {
+                    totalLogs: telemetryCount,
+                    withFeatureSnapshotPct:
+                        telemetryCount > 0 ? Math.round((withSnapshot / telemetryCount) * 100) : 0,
+                    withSolverSourcePct:
+                        telemetryCount > 0
+                            ? Math.round((withSolverSource / telemetryCount) * 100)
+                            : 0,
+                    withWellTypePct:
+                        telemetryCount > 0 ? Math.round((withWellType / telemetryCount) * 100) : 0,
+                    manualOverrideCount: withManualOverride
+                }
+            });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
 
 router.get(
     '/ai/models',
