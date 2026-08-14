@@ -45,8 +45,34 @@ export function cacheKey(
 
 export function clearPredictionCache(): void {
     predictionCache.clear();
+    wellScores.clear();
 }
 
 export function predictionCacheSize(): number {
     return predictionCache.size;
+}
+
+/**
+ * Ostatni score predykcji per wellId (z /ai/predict/batch).
+ *
+ * Serwerowa weryfikacja scoreBefore w /ai/reward: sliding AUC nie może ufać
+ * klienckiemu score (poisoning przez sfałszowany payload). Frontend wysyła
+ * wellId w candidate, serwer zapamiętuje zwrócony score — reward używa
+ * serwerowego score, nie deklarowanego przez klienta.
+ */
+const wellScores = new Map<string, { score: number; timestamp: number }>();
+const WELL_SCORE_TTL_MS = 15 * 60 * 1000;
+
+export function setWellScore(wellId: string, score: number): void {
+    if (wellScores.size >= CACHE_MAX_SIZE) {
+        const oldest = wellScores.keys().next().value;
+        if (oldest !== undefined) wellScores.delete(oldest);
+    }
+    wellScores.set(wellId, { score, timestamp: Date.now() });
+}
+
+export function getWellScore(wellId: string): number | undefined {
+    const entry = wellScores.get(wellId);
+    if (entry && Date.now() - entry.timestamp < WELL_SCORE_TTL_MS) return entry.score;
+    return undefined;
 }

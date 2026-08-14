@@ -175,22 +175,34 @@ export class KnowledgeBase {
                 orderBy: { confidence: 'desc' },
                 take: 50
             });
-            return rows.map(function (r) {
-                return {
-                    id: r.id,
-                    patternType: r.patternType as PatternType,
-                    patternKey: r.patternKey,
-                    dn: r.dn ?? undefined,
-                    context: r.context ? JSON.parse(r.context) : undefined,
-                    description: r.description ?? undefined,
-                    recommendation: r.recommendation ? JSON.parse(r.recommendation) : undefined,
-                    hitCount: r.hitCount,
-                    confidence: r.confidence,
-                    successCount: r.successCount,
-                    rejectionCount: r.rejectionCount,
-                    status: r.status as 'active' | 'stale' | 'archived'
-                };
-            });
+            // N5: per-rekord try/catch — 1 uszkodzony JSON context nie może
+            // wyczyścić całej listy wzorców (wcześniej wyjątek w map wywalał
+            // całą metodę do catch → [] dla wszystkich DN).
+            const patterns: KnowledgePattern[] = [];
+            for (const r of rows) {
+                try {
+                    patterns.push({
+                        id: r.id,
+                        patternType: r.patternType as PatternType,
+                        patternKey: r.patternKey,
+                        dn: r.dn ?? undefined,
+                        context: r.context ? JSON.parse(r.context) : undefined,
+                        description: r.description ?? undefined,
+                        recommendation: r.recommendation ? JSON.parse(r.recommendation) : undefined,
+                        hitCount: r.hitCount,
+                        confidence: r.confidence,
+                        successCount: r.successCount,
+                        rejectionCount: r.rejectionCount,
+                        status: r.status as 'active' | 'stale' | 'archived'
+                    });
+                } catch (recErr) {
+                    logger.warn(
+                        'KnowledgeBase',
+                        `Pominięto uszkodzony wzorzec ${r.id}: ${recErr instanceof Error ? recErr.message : String(recErr)}`
+                    );
+                }
+            }
+            return patterns;
         } catch (e) {
             logger.error('KnowledgeBase', `Błąd getPatterns: ${e}`);
             return [];

@@ -7,9 +7,9 @@
  *
  * Reward: +1.0 ACCEPT (AI), +0.5 ACCEPT (manual)
  *         -1.0 REJECT
- *         -0.3 MODIFY (>=2 modyfikacje)
+ *         -0.3 MODIFY (bez scoreBefore/scoreAfter)
+ *         +/-0.5..0.5 MODIFY z poprawą (improvement*0.1, clamp)
  *         -0.2 SWAP
- *         +0.2 MODIFY (<2 modyfikacje)
  */
 
 (function () {

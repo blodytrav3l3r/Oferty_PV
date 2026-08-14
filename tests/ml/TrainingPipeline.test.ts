@@ -152,7 +152,9 @@ describe('FeatureExtractor', () => {
                 { id: 'log-1', wasRejected: false, wasModified: true, modificationCount: 2 }
             ])
             // 2. aiFeature.findMany — już wyekstrahowane (stara etykieta ACCEPTED)
-            .mockResolvedValueOnce([{ id: 'feat-1', telemetryId: 'log-1', label: 'ACCEPTED' }]);
+            .mockResolvedValueOnce([{ id: 'feat-1', telemetryId: 'log-1', label: 'ACCEPTED' }])
+            // 3. kolejne iteracje pętli (kursor) — pusta lista kończy pętlę
+            .mockResolvedValue([]);
         mockUpdate.mockResolvedValue({ id: 'feat-1' });
 
         const updated = await featureExtractor.resyncLabels();

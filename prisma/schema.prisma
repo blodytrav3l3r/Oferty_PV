@@ -681,6 +681,7 @@ model aiRewardLog {
   @@index([userId], map: "idx_reward_user")
   @@index([action], map: "idx_reward_action")
   @@index([createdAt], map: "idx_reward_created")
+  @@unique([wellId, action], map: "uq_reward_well_action")
 }
 
 // Użytkownicy systemu

@@ -191,8 +191,12 @@ export class ModelRegistry {
             orderBy: { createdAt: 'desc' }
         });
         if (active && previous) {
-            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
-            await prisma.aiModel.update({ where: { id: previous.id }, data: { active: true } });
+            // Transakcja: dezaktywacja+aktywacja atomowo — bez niej dwa równoległe
+            // rollbacki (SelfEvaluation flapping) mogły dać 2 aktywne modele.
+            await prisma.$transaction(async (tx) => {
+                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
+                await tx.aiModel.update({ where: { id: previous.id }, data: { active: true } });
+            });
             logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
             clearPredictionCache();
             return this.recordToModel(previous);
@@ -222,11 +226,14 @@ export class ModelRegistry {
             );
         }
 
-        const active = await prisma.aiModel.findFirst({ where: { active: true } });
-        if (active) {
-            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
-        }
-        await prisma.aiModel.update({ where: { id: target.id }, data: { active: true } });
+        // Transakcja jak w saveModel — dezaktywacja+aktywacja atomowo.
+        await prisma.$transaction(async (tx) => {
+            const active = await tx.aiModel.findFirst({ where: { active: true } });
+            if (active) {
+                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
+            }
+            await tx.aiModel.update({ where: { id: target.id }, data: { active: true } });
+        });
         logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
         clearPredictionCache();
         return this.recordToModel(target);
@@ -241,19 +248,29 @@ export class ModelRegistry {
         let bestAuc = -1;
         for (const r of records) {
             const auc = getRocAuc(r.metrics);
+            // N4: getRocAuc zwraca -1 dla braku metryk (model nie trenowany).
+            // Takie modele NIE mogą być promowane — wcześniej starter (auc=-1)
+            // mógł zostać "najlepszym" i zdegradować wytrenowany model.
             if (auc > bestAuc) {
                 bestAuc = auc;
                 best = r;
             }
         }
+        if (bestAuc < 0) {
+            logger.warn('ModelRegistry', 'Brak modelu z metrykami AUC>=0 — promocja pominięta');
+            return null;
+        }
         const active = await prisma.aiModel.findFirst({ where: { active: true } });
         if (active && active.id === best.id) {
             return this.recordToModel(active);
         }
-        if (active) {
-            await prisma.aiModel.update({ where: { id: active.id }, data: { active: false } });
-        }
-        await prisma.aiModel.update({ where: { id: best.id }, data: { active: true } });
+        // Transakcja — atomowa zamiana aktywnego modelu na najlepszy.
+        await prisma.$transaction(async (tx) => {
+            if (active) {
+                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
+            }
+            await tx.aiModel.update({ where: { id: best.id }, data: { active: true } });
+        });
         logger.info('ModelRegistry', `Promowano najlepszy model ${best.version} (auc=${bestAuc})`);
         clearPredictionCache();
         return this.recordToModel(best);
@@ -296,7 +313,9 @@ export class ModelRegistry {
         const ones = FEATURE_NAMES.map(() => 1);
         const starter = await prisma.aiModel.create({
             data: {
-                id: 'starter_' + Date.now(),
+                // N3: UUID zamiast 'starter_' + Date.now() — dwa równoległe starty
+                // serwera w tym samym ms dawały kolizję @id (P2002 → crash startu).
+                id: crypto.randomUUID(),
                 version: 'v0.1.0-starter',
                 weights: JSON.stringify(zeros),
                 bias: 0,

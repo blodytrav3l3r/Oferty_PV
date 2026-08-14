@@ -179,6 +179,8 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons({ root: container });
             }
+        }).catch(function () {
+            container.innerHTML = apiErrorHtml('server');
         });
     }
 
@@ -254,6 +256,8 @@
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>';
+        }).catch(function () {
+            container.innerHTML = apiErrorHtml('server');
         });
     }
 
@@ -823,6 +827,8 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons({ root: container });
             }
+        }).catch(function () {
+            container.innerHTML = apiErrorHtml('server');
         });
     }
 
@@ -848,9 +854,16 @@
             var shown = items.slice(0, 20);
             var rows = shown
                 .map(function (w, i) {
-                    var lastSeen = w.lastSeenAt
-                        ? new Date(w.lastSeenAt).toLocaleString('pl-PL')
-                        : '—';
+                    // N8: legacy createdAt bywa surowym epoch-ms (liczba) — new Date(liczba)
+                    // jest OK, ale string "Invalid Date" z zepsutych danych rzucał RangeError
+                    // wewnątrz .then i zostawiał "Ładowanie..." na stałe.
+                    var lastSeen = '—';
+                    if (w.lastSeenAt) {
+                        var d = new Date(w.lastSeenAt);
+                        if (!isNaN(d.getTime())) {
+                            lastSeen = d.toLocaleString('pl-PL');
+                        }
+                    }
                     return (
                         '<tr>' +
                         '<td style="color:var(--text-muted);font-size:0.72rem">' +
@@ -911,6 +924,8 @@
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons({ root: container });
             }
+        }).catch(function () {
+            container.innerHTML = apiErrorHtml('server');
         });
     }
     /* ===== ENTRY POINT ===== */
@@ -993,6 +1008,10 @@
                                 type: 'warning'
                             });
                         }
+                    }).catch(function () {
+                        runBtn.disabled = false;
+                        runBtn.innerHTML =
+                            '<i data-lucide="refresh-cw"></i> Uruchom Learning Cycle';
                     });
                 } else {
                     runBtn.disabled = false;

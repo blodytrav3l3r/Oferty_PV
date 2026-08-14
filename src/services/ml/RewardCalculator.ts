@@ -14,7 +14,12 @@ export interface RewardEvent {
 }
 
 export class RewardCalculator {
-    async processAction(event: RewardEvent): Promise<void> {
+    /**
+     * Zapisuje nagrodę atomowo. Dedup per (wellId, action) wymusza unikalny
+     * indeks uq_reward_well_action (nie findFirst→create — TOCTOU).
+     * @returns {Promise<{ applied: boolean }>} applied=false = duplikat (P2002)
+     */
+    async processAction(event: RewardEvent): Promise<{ applied: boolean }> {
         let reward = 0;
 
         switch (event.action) {
@@ -40,35 +45,53 @@ export class RewardCalculator {
                 break;
         }
 
-        await prisma.$transaction(async (tx) => {
-            await tx.aiRewardLog.create({
-                data: {
-                    id: crypto.randomUUID(),
-                    userId: event.userId,
-                    wellId: event.wellId || 'unknown',
-                    dn: event.dn ?? 0,
-                    action: event.action,
-                    reward,
-                    scoreBefore: event.scoreBefore ?? null,
-                    scoreAfter: event.scoreAfter ?? null,
-                    wasAiRanked: event.wasAiRanked ?? false,
-                    configSnapshot: event.configSnapshot
-                        ? JSON.stringify(event.configSnapshot)
-                        : null,
-                    createdAt: new Date().toISOString()
-                }
+        try {
+            await prisma.$transaction(async (tx) => {
+                await tx.aiRewardLog.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        userId: event.userId,
+                        wellId: event.wellId || 'unknown',
+                        dn: event.dn ?? 0,
+                        action: event.action,
+                        reward,
+                        scoreBefore: event.scoreBefore ?? null,
+                        scoreAfter: event.scoreAfter ?? null,
+                        wasAiRanked: event.wasAiRanked ?? false,
+                        configSnapshot: event.configSnapshot
+                            ? JSON.stringify(event.configSnapshot)
+                            : null,
+                        createdAt: new Date().toISOString()
+                    }
+                });
+
+                await tx.users.updateMany({
+                    where: { id: event.userId },
+                    data: { totalReward: { increment: reward } }
+                });
             });
 
-            await tx.users.updateMany({
-                where: { id: event.userId },
-                data: { totalReward: { increment: reward } }
-            });
-        });
-
-        logger.info(
-            'RewardCalculator',
-            `Reward ${event.action}: ${reward.toFixed(3)} dla well ${event.wellId}`
-        );
+            logger.info(
+                'RewardCalculator',
+                `Reward ${event.action}: ${reward.toFixed(3)} dla well ${event.wellId}`
+            );
+            return { applied: true };
+        } catch (e) {
+            // P2002 = duplikat (wellId, action) — unikalny indeks, nie błąd.
+            if (
+                typeof e === 'object' &&
+                e !== null &&
+                'code' in e &&
+                (e as { code?: string }).code === 'P2002'
+            ) {
+                logger.info(
+                    'RewardCalculator',
+                    `Duplikat reward ${event.action} dla well ${event.wellId} — pomijam`
+                );
+                return { applied: false };
+            }
+            throw e;
+        }
     }
 }
 

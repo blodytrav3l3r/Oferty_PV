@@ -145,6 +145,7 @@ class TelemetryService {
                         usageCount: 1,
                         lastUsedAt: now,
                         manualOverrideFlag: !!payload.overrideReason,
+                        override_reason: payload.overrideReason || null,
                         original_auto_config:
                             payload.originalConfig && payload.originalConfig.length > 0
                                 ? JSON.stringify(payload.originalConfig)
@@ -234,24 +235,35 @@ class TelemetryService {
                         solverSource: payload.solverSource,
                         parentConfigId: payload.parentConfigId
                     });
-                    // Oprócz etykiety w aiFeature zsynchronizuj flagi na rekordzie
-                    // sugestii — jeśli ekstrakcja cech jeszcze nie przebiegła,
-                    // extractAndStore policzy deriveLabel() z pełnego stanu flag
-                    // (wasModified z reward + wasAccepted z ORDER_CONFIRM) i da
-                    // poprawną etykietę zamiast cicho gubić ją na updateMany=0.
-                    await prisma.ai_telemetry_logs.updateMany({
-                        where: { id: payload.parentConfigId },
-                        data: {
-                            ...(payload.wasAccepted
-                                ? { wasAccepted: true, lastAcceptedAt: now }
-                                : {}),
-                            ...(payload.wasRejected
-                                ? { wasRejected: true, lastRejectedAt: now }
-                                : {}),
-                            ...(payload.wasModified ? { wasModified: true } : {})
-                        }
-                    });
-                    await featureExtractor.updateLabelByTelemetry(payload.parentConfigId, label);
+                    // C: guard wellId — parentConfigId z payloadu musi należeć do tej
+                    // studni (inaczej updateMany po samym id mógł oznaczyć cudzy rekord).
+                    // J: early return gdy brak wszystkich flag — updateMany z pustym
+                    // data:{} nie ma sensu (no-op) i nie synchronizuje etykiety.
+                    const hasAnyFlag =
+                        payload.wasAccepted || payload.wasRejected || payload.wasModified;
+                    if (hasAnyFlag) {
+                        // Oprócz etykiety w aiFeature zsynchronizuj flagi na rekordzie
+                        // sugestii — jeśli ekstrakcja cech jeszcze nie przebiegła,
+                        // extractAndStore policzy deriveLabel() z pełnego stanu flag
+                        // (wasModified z reward + wasAccepted z ORDER_CONFIRM) i da
+                        // poprawną etykietę zamiast cicho gubić ją na updateMany=0.
+                        await prisma.ai_telemetry_logs.updateMany({
+                            where: { id: payload.parentConfigId, wellId: payload.wellId },
+                            data: {
+                                ...(payload.wasAccepted
+                                    ? { wasAccepted: true, lastAcceptedAt: now }
+                                    : {}),
+                                ...(payload.wasRejected
+                                    ? { wasRejected: true, lastRejectedAt: now }
+                                    : {}),
+                                ...(payload.wasModified ? { wasModified: true } : {})
+                            }
+                        });
+                        await featureExtractor.updateLabelByTelemetry(
+                            payload.parentConfigId,
+                            label
+                        );
+                    }
                 } catch (labelErr) {
                     const msg = labelErr instanceof Error ? labelErr.message : String(labelErr);
                     logger.error(

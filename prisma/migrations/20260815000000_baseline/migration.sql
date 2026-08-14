@@ -762,6 +762,9 @@ CREATE INDEX "idx_reward_action" ON "aiRewardLog"("action");
 -- CreateIndex
 CREATE INDEX "idx_reward_created" ON "aiRewardLog"("createdAt");
 
+-- Unikalny indeks (wellId, action) — atomowy dedup reward (TOCTOU fix)
+CREATE UNIQUE INDEX "uq_reward_well_action" ON "aiRewardLog"("wellId", "action");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 

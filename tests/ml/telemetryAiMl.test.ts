@@ -1,6 +1,7 @@
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
 import request from 'supertest';
 import express from 'express';
+import { setWellScore, clearPredictionCache } from '../../src/services/ml/predictionCache';
 
 jest.mock('../../src/utils/logger', () => ({
     logger: {
@@ -66,7 +67,7 @@ jest.mock('../../src/services/ml/SelfEvaluation', () => ({
     }
 }));
 
-const mockProcessAction = jest.fn<any>().mockResolvedValue(undefined);
+const mockProcessAction = jest.fn<any>().mockResolvedValue({ applied: true });
 
 jest.mock('../../src/services/ml/RewardCalculator', () => ({
     rewardCalculator: {
@@ -97,7 +98,6 @@ jest.mock('../../src/services/ml/AcceptanceModel', () => {
 let mockTelemetryLogsFindMany = jest.fn<any>().mockResolvedValue([]);
 let mockTelemetryLogsCount = jest.fn<any>().mockResolvedValue(0);
 let mockTelemetryLogsFindFirst = jest.fn<any>().mockResolvedValue(null);
-let mockRewardFindFirst = jest.fn<any>().mockResolvedValue(null);
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -118,8 +118,7 @@ jest.mock('../../src/prismaClient', () => ({
             update: jest.fn<any>().mockResolvedValue({})
         },
         aiRewardLog: {
-            count: jest.fn<any>().mockResolvedValue(0),
-            findFirst: (...args: any[]) => mockRewardFindFirst(...args)
+            count: jest.fn<any>().mockResolvedValue(0)
         }
     }
 }));
@@ -424,7 +423,7 @@ describe('POST /api/telemetry/ai/reward', () => {
 
     it('ignoruje duplikat reward dla tej samej pary (wellId, action) — anti-poisoning', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        mockRewardFindFirst.mockResolvedValue({ id: 'existing-reward' });
+        mockProcessAction.mockResolvedValue({ applied: false });
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'ACCEPT',
@@ -438,9 +437,11 @@ describe('POST /api/telemetry/ai/reward', () => {
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
     });
 
-    it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, scoreBefore)', async () => {
+    it('ACCEPT z wasAiRanked zapisuje nagrode i rejestruje predykcje (1, serwerowy score)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        mockRewardFindFirst.mockResolvedValue(null);
+        mockProcessAction.mockResolvedValue({ applied: true });
+        clearPredictionCache();
+        setWellScore('well-1', 0.9);
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'ACCEPT',
@@ -462,11 +463,44 @@ describe('POST /api/telemetry/ai/reward', () => {
         expect(mockRecordPredictionResult).toHaveBeenCalledWith(1, 0.9);
     });
 
+    it('nie rejestruje predykcji gdy kliencki scoreBefore nie zgadza sie z serwerowym (anti-poisoning)', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
+        clearPredictionCache();
+        setWellScore('well-1', 0.9);
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-1',
+            scoreBefore: 0.01,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+    });
+
+    it('nie rejestruje predykcji gdy brak serwerowego score dla wellId (studnia nie przeszla przez AI)', async () => {
+        mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
+        clearPredictionCache();
+
+        const res = await request(app).post('/api/telemetry/ai/reward').send({
+            action: 'ACCEPT',
+            wellId: 'well-1',
+            scoreBefore: 0.9,
+            wasAiRanked: true
+        });
+
+        expect(res.status).toBe(200);
+        expect(mockRecordPredictionResult).not.toHaveBeenCalled();
+    });
+
     it('MODIFY synchronizuje etykiete MODIFIED na najnowszym rekordzie telemetrii', async () => {
         mockTelemetryLogsFindFirst
             .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
             .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
-        mockRewardFindFirst.mockResolvedValue(null);
+        mockProcessAction.mockResolvedValue({ applied: true });
+        clearPredictionCache();
+        setWellScore('well-1', 0.8);
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'MODIFY',
@@ -485,7 +519,9 @@ describe('POST /api/telemetry/ai/reward', () => {
         mockTelemetryLogsFindFirst
             .mockResolvedValueOnce({ id: 'log-1' }) // telemetryWell
             .mockResolvedValueOnce({ id: 'latest-log' }); // najnowszy rekord studni
-        mockRewardFindFirst.mockResolvedValue(null);
+        mockProcessAction.mockResolvedValue({ applied: true });
+        clearPredictionCache();
+        setWellScore('well-1', 0.95);
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'REJECT',
@@ -501,7 +537,7 @@ describe('POST /api/telemetry/ai/reward', () => {
 
     it('ACCEPT bez wasAiRanked nie rejestruje predykcji (sliding AUC)', async () => {
         mockTelemetryLogsFindFirst.mockResolvedValue({ id: 'log-1' });
-        mockRewardFindFirst.mockResolvedValue(null);
+        clearPredictionCache();
 
         const res = await request(app).post('/api/telemetry/ai/reward').send({
             action: 'ACCEPT',

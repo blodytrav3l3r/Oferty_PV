@@ -11,6 +11,11 @@ export class SelfEvaluation {
     private slidingWindow: Array<{ label: number; score: number }> = [];
     private readonly SLIDING_WINDOW_SIZE = 200;
     private featureVersion: string = ML_CONSTANTS.FEATURE_VERSION;
+    // Mutex + agregacja: równoległe wywołania checkAndRollbackIfNeeded
+    // (predict/batch fire-and-forget) współdzielą jedno wykonywanie — bez tego
+    // dwa jednoczesne rollbacki przesuwałyby model o 2 pozycje wstecz (flapping).
+    private rollbackPromise: Promise<{ rolledBack: boolean; slidingAuc: number | null }> | null =
+        null;
 
     recordPredictionResult(actualLabel: number, predictedScore: number): void {
         // Zmiana wersji cech (FEATURE_VERSION) unieważnia historyczne predykcje —
@@ -26,6 +31,14 @@ export class SelfEvaluation {
     }
 
     async checkAndRollbackIfNeeded(): Promise<{ rolledBack: boolean; slidingAuc: number | null }> {
+        if (this.rollbackPromise) return this.rollbackPromise;
+        this.rollbackPromise = this._runCheck().finally(() => {
+            this.rollbackPromise = null;
+        });
+        return this.rollbackPromise;
+    }
+
+    private async _runCheck(): Promise<{ rolledBack: boolean; slidingAuc: number | null }> {
         const window = this.slidingWindow;
         if (window.length < 10) {
             return { rolledBack: false, slidingAuc: null };

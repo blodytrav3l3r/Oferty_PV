@@ -17,10 +17,20 @@
 
     const SUGGESTIONS_URL = '/api/telemetry/ai/kb-suggestions';
 
+    /* Escaping do atrybutów HTML — escapeHtml nie chroni cudzysłowów (baza błędów #39) */
+    function escapeHtmlAttr(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/"/g, '&quot;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
     let _lastDn = null;
     let _suppressedDn = null;
     let _inFlight = false;
     let _lastSuggestions = [];
+    let _kbClickBound = false;
 
     function refreshWell() {
         if (typeof refreshAll === 'function') refreshAll();
@@ -69,10 +79,10 @@
             '</div>' +
             '</div>' +
             '<div style="display:flex;gap:0.3rem;flex-shrink:0;">' +
-            '<button type="button" class="pehd-btn" style="padding:0.2rem 0.55rem;font-size:0.72rem;" onclick="window.applyKbSuggestion(\'' +
-            s.patternKey +
-            '\')">Zastosuj</button>' +
-            '<button type="button" style="padding:0.2rem 0.55rem;font-size:0.72rem;background:transparent;border:1px solid var(--border-color,rgba(255,255,255,0.15));border-radius:6px;color:var(--text-muted,#9ca3af);cursor:pointer;" onclick="window.rejectKbSuggestion()">Odrzu\u0107</button>' +
+            '<button type="button" class="pehd-btn kb-suggest-apply" data-pattern-key="' +
+            escapeHtmlAttr(s.patternKey) +
+            '" style="padding:0.2rem 0.55rem;font-size:0.72rem;">Zastosuj</button>' +
+            '<button type="button" class="kb-suggest-reject" style="padding:0.2rem 0.55rem;font-size:0.72rem;background:transparent;border:1px solid var(--border-color,rgba(255,255,255,0.15));border-radius:6px;color:var(--text-muted,#9ca3af);cursor:pointer;">Odrzu\u0107</button>' +
             '</div>' +
             '</div>'
         );
@@ -93,6 +103,21 @@
             '</div>';
         if (window.lucide && window.lucide.createIcons) {
             window.lucide.createIcons({ root: box });
+        }
+        /* Delegacja zamiast inline onclick — patternKey escapowany w atrybucie (baza #39).
+           Flaga modułowa (nie custom prop HTMLElement) — @ts-check tego nie zna. */
+        if (!_kbClickBound) {
+            _kbClickBound = true;
+            box.addEventListener('click', function (ev) {
+                const applyBtn = ev.target.closest ? ev.target.closest('.kb-suggest-apply') : null;
+                if (applyBtn) {
+                    applySuggestion(applyBtn.getAttribute('data-pattern-key'));
+                    return;
+                }
+                if (ev.target.closest && ev.target.closest('.kb-suggest-reject')) {
+                    rejectSuggestion();
+                }
+            });
         }
     }
 

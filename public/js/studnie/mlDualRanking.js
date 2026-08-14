@@ -480,7 +480,10 @@
                     features: features,
                     wellType: well.type || '',
                     warehouse: well.warehouse || 'KLB',
-                    dn: parseInt(well.dn) || 0
+                    dn: parseInt(well.dn) || 0,
+                    // wellId umożliwia serwerową weryfikację scoreBefore w /ai/reward
+                    // (sliding AUC nie ufa klienckiemu score — poisoning przez API)
+                    wellId: well.id || undefined
                 });
             }
         }

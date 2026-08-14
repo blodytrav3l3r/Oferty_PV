@@ -19,7 +19,9 @@ import {
     setCache,
     getCached,
     clearPredictionCache,
-    predictionCacheSize
+    predictionCacheSize,
+    setWellScore,
+    getWellScore
 } from '../services/ml/predictionCache';
 
 const router = Router();
@@ -31,7 +33,8 @@ const batchCandidateSchema = z.object({
     features: z.array(z.number()).length(ML_CONSTANTS.FEATURE_COUNT),
     wellType: z.string().optional(),
     warehouse: z.string().optional(),
-    dn: z.number().optional()
+    dn: z.number().optional(),
+    wellId: z.string().optional()
 });
 
 const batchPredictSchema = z.object({
@@ -121,6 +124,9 @@ router.post(
                 const key = cacheKey(c.features, c.wellType, c.warehouse, c.dn);
                 const cached = getCached(key);
                 if (cached) {
+                    // Zapamiętaj serwerowy score dla wellId — reward nie ufa klienckiemu
+                    // scoreBefore (poisoning sliding AUC przez sfałszowany payload).
+                    if (c.wellId) setWellScore(c.wellId, cached.result[0].score);
                     return {
                         id: c.id,
                         score: cached.result[0].score,
@@ -132,6 +138,7 @@ router.post(
                 const score = model.predict(
                     normalizeFeatures(c.features, activeModel.featureMins, activeModel.featureMaxs)
                 );
+                if (c.wellId) setWellScore(c.wellId, parseFloat(score.toFixed(4)));
                 const result = {
                     id: c.id,
                     score: parseFloat(score.toFixed(4)),
@@ -193,20 +200,11 @@ router.post(
                 return;
             }
 
-            // P2: dedup reward per (wellId, action) — blokada poisoningu sliding AUC.
-            // Wielokrotne wysyłanie (label=1, score=0) dla tej samej studni wypychało
-            // window ku AUC<0.65 i wywoływało auto-rollback (SelfEvaluation). Pierwszy
-            // sygnał dla pary jest rejestrowany, kolejne ignorowane (idempotentnie).
-            const existingReward = await prisma.aiRewardLog.findFirst({
-                where: { wellId: data.wellId, action: data.action },
-                select: { id: true }
-            });
-            if (existingReward) {
-                res.json({ status: 'ok', duplicate: true });
-                return;
-            }
-
-            await rewardCalculator.processAction({
+            // P2: dedup reward per (wellId, action) — unikalny indeks
+            // uq_reward_well_action + P2002 w RewardCalculator.processAction
+            // (atomowo; wcześniej findFirst→create był podatny na TOCTOU —
+            // dwa równoległe requesty mogły zapisać duplikat i zawyżyć sliding AUC).
+            const applied = await rewardCalculator.processAction({
                 userId: req.user?.id || 'unknown',
                 action: data.action,
                 wellId: data.wellId,
@@ -216,6 +214,10 @@ router.post(
                 wasAiRanked: data.wasAiRanked,
                 configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
             });
+            if (!applied.applied) {
+                res.json({ status: 'ok', duplicate: true });
+                return;
+            }
 
             // Feedback MODIFY/REJECT to sygnał negatywny dla treningu ML. Oznacz
             // rekord SUGESTII (features = sugestia) i zsynchronizuj etykietę
@@ -238,12 +240,15 @@ router.post(
                     if (parent) targetId = parent.id;
                 }
                 if (!targetId) {
+                    // Fallback: najwcześniejsza sugestia AUTO dla studni (asc) —
+                    // komentarz poprzednio mówił "najwcześniejsza", a orderBy desc
+                    // wybierał najnowszą (złe etykiety przy wielu sugestiach).
                     const suggestion = await prisma.ai_telemetry_logs.findFirst({
                         where: {
                             wellId: data.wellId,
                             solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
                         },
-                        orderBy: { createdAt: 'desc' },
+                        orderBy: { createdAt: 'asc' },
                         select: { id: true }
                     });
                     if (suggestion) targetId = suggestion.id;
@@ -257,12 +262,18 @@ router.post(
                 }
             }
 
-            // Rejestruj wynik predykcji dla sliding AUC
+            // Rejestruj wynik predykcji dla sliding AUC. Nie ufamy klienckiemu
+            // scoreBefore — atak: 6×ACCEPT score≈0 + 5×REJECT score≈1 → AUC≈0 →
+            // auto-rollback. Użyj serwerowego score z predict/batch (wellId→score);
+            // brak zapisu = studnia nie przeszła przez AI (brak wpisu w oknie).
             if (data.wasAiRanked && data.scoreBefore !== undefined) {
-                selfEvaluation.recordPredictionResult(
-                    data.action === 'ACCEPT' ? 1 : 0,
-                    data.scoreBefore
-                );
+                const serverScore = getWellScore(data.wellId);
+                if (serverScore !== undefined && Math.abs(serverScore - data.scoreBefore) <= 0.01) {
+                    selfEvaluation.recordPredictionResult(
+                        data.action === 'ACCEPT' ? 1 : 0,
+                        serverScore
+                    );
+                }
             }
 
             res.json({ status: 'ok' });

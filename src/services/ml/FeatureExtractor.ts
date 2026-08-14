@@ -391,51 +391,78 @@ export class FeatureExtractor {
      * recordAcceptance. Nie tworzy nowych wierszy — tylko koryguje etykiety.
      */
     async resyncLabels(limit = 2000): Promise<number> {
-        const records = await prisma.ai_telemetry_logs.findMany({
-            where: { trainingEligible: true },
-            orderBy: { createdAt: 'desc' },
-            take: limit,
-            select: {
-                id: true,
-                wasAccepted: true,
-                wasRejected: true,
-                wasModified: true,
-                modificationCount: true,
-                solverSource: true,
-                parentConfigId: true
-            }
-        });
-
-        const labelByTelemetry = new Map<string, FeatureLabel>();
-        for (const r of records) {
-            labelByTelemetry.set(r.id, deriveLabel(r));
-        }
-
-        const existing = await prisma.aiFeature.findMany({
-            where: { telemetryId: { in: records.map((r) => r.id) } },
-            select: { id: true, telemetryId: true, label: true }
-        });
-
-        const updates: Array<{ id: string; label: FeatureLabel; reward: number }> = [];
-        for (const f of existing) {
-            const target = f.telemetryId ? labelByTelemetry.get(f.telemetryId) : undefined;
-            if (target && target !== f.label) {
-                updates.push({
-                    id: f.id,
-                    label: target,
-                    reward: labelToReward(target)
-                });
-            }
-        }
-
+        // N7: kursor zamiast jednorazowego take — przy bazie >limit rekordów
+        // starsze nigdy nie dostałyby skorygowanej etykiety (cichy stale label).
+        const BATCH = 2000;
         let updated = 0;
-        for (const u of updates) {
-            await prisma.aiFeature.update({
-                where: { id: u.id },
-                data: { label: u.label, reward: u.reward }
+        let cursor: string | undefined;
+        let fetched: Array<{
+            id: string;
+            createdAt: string | null;
+            wasAccepted: boolean;
+            wasRejected: boolean;
+            wasModified: boolean;
+            modificationCount: number | null;
+            solverSource: string | null;
+            parentConfigId: string | null;
+        }> = [];
+
+        do {
+            const records = await prisma.ai_telemetry_logs.findMany({
+                where: {
+                    trainingEligible: true,
+                    ...(cursor ? { createdAt: { lt: cursor } } : {})
+                },
+                orderBy: { createdAt: 'desc' },
+                take: Math.min(BATCH, limit),
+                select: {
+                    id: true,
+                    createdAt: true,
+                    wasAccepted: true,
+                    wasRejected: true,
+                    wasModified: true,
+                    modificationCount: true,
+                    solverSource: true,
+                    parentConfigId: true
+                }
             });
-            updated++;
-        }
+
+            const labelByTelemetry = new Map<string, FeatureLabel>();
+            for (const r of records) {
+                labelByTelemetry.set(r.id, deriveLabel(r));
+            }
+
+            const existing = await prisma.aiFeature.findMany({
+                where: { telemetryId: { in: records.map((r) => r.id) } },
+                select: { id: true, telemetryId: true, label: true }
+            });
+
+            const updates: Array<{ id: string; label: FeatureLabel; reward: number }> = [];
+            for (const f of existing) {
+                const target = f.telemetryId ? labelByTelemetry.get(f.telemetryId) : undefined;
+                if (target && target !== f.label) {
+                    updates.push({
+                        id: f.id,
+                        label: target,
+                        reward: labelToReward(target)
+                    });
+                }
+            }
+
+            for (const u of updates) {
+                await prisma.aiFeature.update({
+                    where: { id: u.id },
+                    data: { label: u.label, reward: u.reward }
+                });
+                updated++;
+            }
+
+            if (records.length === 0) break;
+            fetched = records;
+            cursor = records[records.length - 1].createdAt || undefined;
+            limit -= records.length;
+        } while (limit > 0 && fetched.length > 0);
+
         logger.info('FeatureExtractor', `ResyncLabels: zsynchronizowano ${updated} etykiet`);
         return updated;
     }
