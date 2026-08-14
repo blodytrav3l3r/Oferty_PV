@@ -91,6 +91,9 @@ jobs:
             - name: Run tests
               run: npm test
 
+            - name: Coverage summary (informacyjnie)
+              run: node scripts/coverage-check.mjs
+
             - name: Upload coverage
               uses: actions/upload-artifact@v4
               with:
