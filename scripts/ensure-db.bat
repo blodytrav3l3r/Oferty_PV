@@ -32,7 +32,7 @@ if !CHECK_EXIT! equ 2 (
 
 if !CHECK_EXIT! equ 1 (
     echo [INFO] Brak tabel w bazie - uruchamianie migracji...
-    call npx prisma db push --skip-generate --accept-data-loss
+    call npx prisma migrate deploy
     if !errorlevel! neq 0 (
         echo [BLAD] Nie udalo sie zaktualizowac schematu (exit=!errorlevel!).
         endlocal

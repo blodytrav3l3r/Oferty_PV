@@ -73,15 +73,17 @@ log STEP "Krok 7/9 - Prisma generate + migrate..."
 npx prisma generate
 log OK "Prisma client"
 
-if [ -f "prisma/migrations/migration_lock.toml" ]; then
-    log STEP "  prisma migrate deploy..."
-    npx prisma migrate deploy || {
-        warn "migrate deploy nie powiodl sie - fallback db push"
-        npx prisma db push --skip-generate --accept-data-loss
-    }
+log STEP "  prisma migrate deploy..."
+if npx prisma migrate deploy; then
+    log OK "Migracje zastosowane"
 else
-    log STEP "  brak migrations - db push"
-    npx prisma db push --skip-generate --accept-data-loss
+    # fallback db push TYLKO dla bazy legacy (db push, brak _prisma_migrations)
+    if node scripts/check-legacy-db.js; then
+        err "migrate deploy nie powiodl sie, a baza jest zarzadzana przez migracje. Przerywam."
+    else
+        warn "Baza legacy (db push) - fallback db push"
+        npx prisma db push --skip-generate --accept-data-loss
+    fi
 fi
 log OK "Schema bazy aktualny"
 

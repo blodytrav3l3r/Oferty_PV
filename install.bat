@@ -115,14 +115,18 @@ echo [OK] Prisma Client OK
 
 REM 8. Schema DB
 echo [INFO] migrate db...
-if exist "prisma\migrations\migration_lock.toml" (
-    call npx prisma migrate deploy
-    if errorlevel 1 (
-        echo [INFO] migrate deploy nie powiodl sie - fallback db push
+call npx prisma migrate deploy
+if errorlevel 1 (
+    echo [INFO] migrate deploy nie powiodl sie...
+    call node scripts\check-legacy-db.js
+    if !errorlevel! equ 1 (
+        echo [INFO] Baza legacy (db push) - fallback db push
         call npx prisma db push --skip-generate --accept-data-loss
+    ) else (
+        echo [BLAD] migrate deploy nie powiodl sie, a baza nie jest legacy (db push).
+        pause
+        exit /b 1
     )
-) else (
-    call npx prisma db push --skip-generate --accept-data-loss
 )
 if errorlevel 1 (
     echo [BLAD] Prisma schema nie powiodl sie.

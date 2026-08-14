@@ -21,16 +21,16 @@ mkdir -p /var/data
 DB_FILE="/var/data/app_database.sqlite"
 
 if [ ! -f "$DB_FILE" ]; then
-    echo "[INFO] Baza danych nie istnieje — zostanie utworzona przez prisma db push."
+    echo "[INFO] Baza danych nie istnieje — zostanie utworzona przez prisma migrate deploy."
 fi
 
 # Migracja PRECO z 3 tabel do settings (przed prisma db push usuwa stare tabele)
 echo "[INFO] Migracja danych PRECO (jeśli potrzebna)..."
 node /app/scripts/migrate-preco-from-tables.cjs
 
-# Synchronizujemy schemat bazy (skip-generate bo klient Prisma jest już wygenerowany w obrazie)
-echo "[INFO] Synchronizacja schematu bazy danych Prisma..."
-npx prisma db push --skip-generate
+# Stosujemy migracje (skip-generate bo klient Prisma jest już wygenerowany w obrazie)
+echo "[INFO] Synchronizacja schematu bazy danych Prisma (migrate deploy)..."
+npx prisma migrate deploy --skip-generate
 
 # check-db.js szuka bazy w ./data - wskazujemy ja na baze z wolumenu (/var/data).
 # seed_*.json pozostaja w /app/data (z obrazu), wiec symlink dotyczy tylko pliku bazy.

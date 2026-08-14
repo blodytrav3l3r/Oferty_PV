@@ -29,7 +29,7 @@ RUN npm run build
 RUN ln -sf /app/generated /app/dist/generated
 
 # NIE uruchamiamy npm prune --production - devDeps (ts-node, Prisma CLI)
-# sa potrzebne w runtime do seedowania (prisma/seed.ts) i db push (docker-entrypoint.sh).
+# sa potrzebne w runtime do seedowania (prisma/seed.ts) i migrate deploy (docker-entrypoint.sh).
 
 # Tworzymy katalog danych dla trwałego wolumenu Docker (/var/data)
 RUN mkdir -p /var/data && \
