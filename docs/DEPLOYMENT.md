@@ -43,7 +43,8 @@ cp .env.example .env
 # edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations:
+#  npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
 # Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
@@ -74,7 +75,7 @@ Projekt zawiera wygodne skrypty startowe:
 Plik `Dockerfile` buduje obraz na bazie `node:22-slim`. Wykonuje:
 
 1. Instalację OpenSSL (wymagany przez Prisma)
-2. `npm ci` (wszystkie zależności — bez `npm prune --production`; devDeps są potrzebne w runtime do seedowania i `db push`)
+2. `npm ci` (wszystkie zależności — bez `npm prune --production`; devDeps są potrzebne w runtime do seedowania i `migrate deploy`)
 3. `npx prisma generate` (generacja klienta)
 4. `npm run build` (kompilacja TypeScript)
 5. Symlink `dist/generated` → `generated` (klient Prisma)
@@ -199,7 +200,8 @@ nano .env  # ustaw DEFAULT_ADMIN_PASSWORD, PORT, COOKIE_SECURE=true
 # 6. Przygotowanie bazy
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations:
+#  npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 
 # 7. Budowa
@@ -415,7 +417,7 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
 4. **Zsynchronizuj schemat bazy** (wymagane — backup zawiera tylko dane, a nowsza
    wersja aplikacji może wymagać nowych tabel/indeksów):
     ```bash
-    npx prisma db push --skip-generate --accept-data-loss
+    npx prisma migrate deploy
     ```
     > `npm run restore` synchronizuje schemat automatycznie; przy ręcznym `cp` ta
     > synchronizacja **nie zachodzi** i musi być uruchomiona jawnie.
@@ -426,11 +428,11 @@ Baza SQLite to pojedynczy plik — przeniesienie jej na nowe urządzenie jest pr
 Po przeniesieniu bazy na nowe urządzenie z nowszą wersją aplikacji zsynchronizuj schemat.
 Sposób zależy od historii bazy:
 
-- **Baza z historią migracji** (istnieje tabela `_prisma_migrations`):
+- **Baza z historią migracji** (istnieje tabela `_prisma_migrations`) — ścieżka domyślna:
     ```bash
     npx prisma migrate deploy
     ```
-- **Baza tworzona przez `db push`** (brak `_prisma_migrations`): `migrate deploy` NIE zadziała
+- **Baza legacy tworzona przez `db push`** (brak `_prisma_migrations`): `migrate deploy` NIE zadziała
   (próbowałby odtworzyć historię migracji na istniejących tabelach). Użyj:
     ```bash
     npx prisma db push --skip-generate --accept-data-loss
@@ -440,9 +442,9 @@ Sposób zależy od historii bazy:
 
 Prisma automatycznie dostosuje schemat do aktualnego stanu bez utraty danych.
 
-> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> Migracja `20260815000000_baseline` dodaje 2 indeksy na `ai_telemetry_logs`
 > (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Są one
-> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
+> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
 
 ### Weryfikacja
 

@@ -64,11 +64,11 @@ Jedynym źródłem prawdy jest sekcja „Wersjonowanie i Release Flow (Single So
 
 - **Plik:** `data/app_database.sqlite` (SQLite, `DATABASE_URL` w `.env`); migracje w `prisma/migrations/`
 - **Synchronizacja schematu (instalacja/aktualizacja) zależy od typu bazy:**
-    - baza z historią migracji (tabela `_prisma_migrations`): `npm run prisma:deploy` (`npx prisma migrate deploy`)
-    - baza tworzona przez `db push` (brak `_prisma_migrations`): `npx prisma db push --skip-generate --accept-data-loss` — na niej `migrate deploy` ZAWODZI
+    - domyślnie (baza z historią migracji / świeża): `npm run prisma:deploy` (`npx prisma migrate deploy`)
+    - baza legacy tworzona przez `db push` (brak `_prisma_migrations`): `npx prisma db push --skip-generate --accept-data-loss` — na niej `migrate deploy` ZAWODZI (tylko ta ścieżka używa `db push`; automatyczny fallback w `install.*` warunkowany przez `scripts/check-legacy-db.js`)
     - sprawdzenie typu: `npx prisma migrate status` — wszystkie migracje „niezastosowane" mimo działającej aplikacji = baza typu `db push`
     - `npx prisma migrate dev` to wyłącznie narzędzie deweloperskie do tworzenia NOWYCH migracji (`npm run prisma:migrate`)
-- **`scripts/check-db.js`:** weryfikacja schematu przy starcie (`start.bat`/`dev.sh`) — sprawdza tabele, dane produktów ORAZ wymagane indeksy dedup telemetrii (`idx_logs_well`, `idx_logs_source_well`); brak → exit 1 → automatyczny `db push`
+- **`scripts/check-db.js`:** weryfikacja schematu przy starcie (`start.bat`/`dev.sh`) — sprawdza tabele, dane produktów ORAZ wymagane indeksy dedup telemetrii (`idx_logs_well`, `idx_logs_source_well`); brak → exit 1 → `migrate deploy` (ensure-db.bat)
 - **Auto-heal przy starcie serwera (`src/app.ts`):** idempotentne `CREATE INDEX IF NOT EXISTS` dla indeksów dedup i `idx_audit_created_at`; pełny schemat FTS5 (`offers_search_fts`) tworzony/backfillowany przez `src/utils/fts5Sync.ts` (gdy tabeli brak lub brakuje kolumny `clientNumber`)
 
 ---
@@ -208,15 +208,15 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ## Przydatne komendy
 
-| Komenda                                                 | Co robi                                         |
-| ------------------------------------------------------- | ----------------------------------------------- |
-| `npm run dev:backend`                                   | Uruchom backend (ts-node-dev)                   |
-| `npm run typecheck`                                     | TypeScript backend check                        |
-| `npm run typecheck:frontend`                            | TypeScript frontend check                       |
-| `npm run test:quick`                                    | Smoke tests (Jest bez coverage)                 |
-| `npm run lint`                                          | ESLint (tylko src/)                             |
-| `npm run format`                                        | Prettier                                        |
-| `npm run version:check`                                 | Sprawdź spójność VERSION/pkg/CHANGELOG          |
-| `npm run version:patch\|minor\|major`                   | Bump wersji                                     |
-| `npm run prisma:deploy`                                 | Zastosuj migracje (baza z `_prisma_migrations`) |
-| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu dla baz bez `_prisma_migrations`  |
+| Komenda                                                 | Co robi                                                     |
+| ------------------------------------------------------- | ----------------------------------------------------------- |
+| `npm run dev:backend`                                   | Uruchom backend (ts-node-dev)                               |
+| `npm run typecheck`                                     | TypeScript backend check                                    |
+| `npm run typecheck:frontend`                            | TypeScript frontend check                                   |
+| `npm run test:quick`                                    | Smoke tests (Jest bez coverage)                             |
+| `npm run lint`                                          | ESLint (tylko src/)                                         |
+| `npm run format`                                        | Prettier                                                    |
+| `npm run version:check`                                 | Sprawdź spójność VERSION/pkg/CHANGELOG                      |
+| `npm run version:patch\|minor\|major`                   | Bump wersji                                                 |
+| `npm run prisma:deploy`                                 | Zastosuj migracje (baza z `_prisma_migrations`)             |
+| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations` |

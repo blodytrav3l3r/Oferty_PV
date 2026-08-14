@@ -286,7 +286,8 @@ Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki
 
 - Zweryfikuj integralność bazy: sprawdź czy endpoint `/health` działa
 - Upewnij się, że hasło `DEFAULT_ADMIN_PASSWORD` w `.env` jest zgodne z poprzednią instalacją
-- Jeśli schemat bazy uległ zmianie, uruchom `npx prisma db push --skip-generate`
+- Jeśli schemat bazy uległ zmianie, uruchom `npx prisma migrate deploy`
+  (legacy: `npx prisma db push --skip-generate`)
 
 ### Co NIE jest przenoszone
 

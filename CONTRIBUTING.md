@@ -125,20 +125,21 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
 
 1. Zawsze najpierw backup: `npm run backup`
 2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
-3. Zsynchronizuj schemat — sposób zależy od historii bazy:
-    - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
+3. Zsynchronizuj schemat — domyślnie `npx prisma migrate deploy`; `db push` wyłącznie
+   dla baz legacy:
+    - **Baza legacy utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
       `npx prisma db push --skip-generate --accept-data-loss`
-      (komenda `migrate deploy` NIE zadziała — baza nie ma historii migracji).
+      (komenda `migrate deploy` na niej NIE zadziała — baza nie ma historii migracji).
     - **Baza z historią migracji** (`_prisma_migrations` istnieje):
       `npx prisma migrate deploy`
     - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
       migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
 4. Uruchom serwer (`start.bat`).
 
-> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> Migracja `20260815000000_baseline` zawiera indeksy na `ai_telemetry_logs`
 > (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
-> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
-> Na bazie bez `db push` można je utworzyć ręcznie:
+> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
+> Na bazie bez `migrate deploy` (legacy db push) można je utworzyć ręcznie:
 >
 > ```sql
 > CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");

@@ -5,7 +5,7 @@
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
 > **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.13.1) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy
-> (`install.bat` z `migrate deploy` + fallback `db push`), nie plany przyszłe.
+> (`install.bat` z `migrate deploy` + fallback `db push` dla baz legacy), nie plany przyszłe.
 
 ---
 
@@ -187,8 +187,8 @@ npm run backup
 # 2. Uruchom instalator z pominięciem seeda:
 .\install.bat --skip-seed
 #    Instalator zainstaluje biblioteki, wygeneruje Prisma Client i zsynchronizuje
-#    schemat bazy (migrate deploy z fallbackiem db push — dla baz bez
-#    _prisma_migrations automatycznie wykona db push).
+#    schemat bazy (migrate deploy; fallback db push tylko dla baz legacy bez
+#    _prisma_migrations).
 
 # 3. Skopiuj plik backupu do data/backups/
 
@@ -201,18 +201,19 @@ npm run restore -- data/backups/backup_*.sqlite
 ```
 
 > **Wariant ręczny (bez `install.bat`):** `npm ci`, `npx prisma generate`, następnie
-> `npx prisma db push --skip-generate --accept-data-loss` — baza z backupu zwykle nie ma
-> tabeli `_prisma_migrations`, więc `prisma migrate deploy` na niej NIE zadziała.
+> `npx prisma migrate deploy` (domyślnie). Dla bazy legacy z backupu, która nie ma
+> tabeli `_prisma_migrations`, `prisma migrate deploy` NIE zadziała — użyj wtedy
+> `npx prisma db push --skip-generate --accept-data-loss`.
 
 ### ⚠️ Uwagi przy przenoszeniu:
 
-| Kwestia            | Zalecenie                                                                                                                         |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------- |
-| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                      |
-| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                          |
-| **Typ bazy**       | Baza z backupu (tworzona przez `db push`) nie ma tabeli `_prisma_migrations` — na niej `migrate deploy` zawodzi, używaj `db push` |
-| **Migracje**       | `db push` doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                     |
-| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                          |
+| Kwestia            | Zalecenie                                                                                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Wersja systemu** | Powinna być taka sama na obu komputerach (sprawdź `VERSION`)                                                                                                                          |
+| **Różne wersje**   | Po restore uruchom `install.bat --skip-seed` — zaktualizuje schemat bazy                                                                                                              |
+| **Typ bazy**       | Baza z backupu może być legacy (utworzona przez `db push`) — nie ma tabeli `_prisma_migrations`; na niej `migrate deploy` zawodzi, użyj `db push`. Nowe/świeże bazy: `migrate deploy` |
+| **Migracje**       | `migrate deploy` (domyślnie) lub `db push` (legacy) doda brakujące tabele i indeksy (w tym `idx_logs_well` / `idx_logs_source_well`), nie usunie danych                               |
+| **Bezpieczeństwo** | Po przeniesieniu zmień hasło admina w panelu użytkownika                                                                                                                              |
 
 ---
 
@@ -234,7 +235,7 @@ docker compose up --build -d
 2. Uruchamia `docker-entrypoint.sh`, który:
     - Ustawia `DATABASE_URL` na `/var/data/app_database.sqlite`
     - Migruje dane PRECO (jeśli stare tabele istnieją)
-    - Wykonuje `prisma db push --skip-generate` (aktualizacja schematu)
+    - Wykonuje `prisma migrate deploy` (aktualizacja schematu)
     - Uruchamia `npm start` (serwer produkcyjny)
 3. Montuje wolumen `sok_data:/var/data` (baza trwała)
 4. Healthcheck co 30s na `/health`
@@ -335,9 +336,9 @@ git pull
 npm ci
 
 # 4. Zaktualizuj schemat bazy — sposób zależy od typu bazy:
-#    - baza z historią migracji (istnieje tabela _prisma_migrations):
+#    - domyślnie (baza z historią migracji / świeża):
 npx prisma migrate deploy
-#    - baza tworzona przez db push (brak _prisma_migrations):
+#    - baza legacy tworzona przez db push (brak _prisma_migrations):
 #      npx prisma db push --skip-generate --accept-data-loss
 #    Jak sprawdzić typ: npx prisma migrate status — jeśli pokazuje migracje
 #    jako niezastosowane mimo działającej aplikacji, baza jest typu db push.
@@ -351,7 +352,7 @@ npm run prisma:seed
 
 > **Indeksy i FTS5:** od wersji 1.10.0 `scripts/check-db.js` sprawdza również wymagane
 > indeksy deduplikacji telemetrii (`idx_logs_well`, `idx_logs_source_well`) — ich brak
-> kończy się kodem wyjścia 1, a `start.bat`/`dev.sh` uruchamiają `db push`. Przy starcie
+> kończy się kodem wyjścia 1, a `start.bat`/`dev.sh` uruchamiają `migrate deploy`. Przy starcie
 > serwera indeksy są też naprawiane automatycznie (auto-heal w `src/app.ts`), a brakująca
 > tabela FTS5 (`offers_search_fts`) tworzona jest przez `src/utils/fts5Sync.ts`
 > (z backfillem ofert).
@@ -373,7 +374,7 @@ npx prisma migrate status
 # Jeśli są oczekujące migracje (baza z historią _prisma_migrations):
 npx prisma migrate deploy
 
-# Dla baz tworzonych przez db push (brak _prisma_migrations) — migrate deploy NIE zadziała:
+# Dla baz legacy tworzonych przez db push (brak _prisma_migrations) — migrate deploy NIE zadziała:
 npx prisma db push --skip-generate --accept-data-loss
 ```
 
@@ -399,30 +400,30 @@ git push --follow-tags
 
 ## 8. Co jest automatyczne vs ręczne
 
-| Czynność                               | Automatyczne | Ręczne | Uwagi                                           |
-| -------------------------------------- | :----------: | :----: | ----------------------------------------------- |
-| Instalacja Node.js >= 22.13            |              |   ✅   | Pobrać z https://nodejs.org                     |
-| Pobranie kodu (git clone / ZIP)        |              |   ✅   | GitHub → Code → Download ZIP                    |
-| Kopiowanie .env.example → .env         |              |   ✅   | `copy .env.example .env`                        |
-| Ustawienie DEFAULT_ADMIN_PASSWORD      |              |   ✅   | Edycja .env                                     |
-| Instalacja npm dependencies            |      ✅      |        | `install.bat` → npm ci                          |
-| Generowanie Prisma Client              |      ✅      |        | `install.bat` → prisma generate                 |
-| Migracja bazy danych                   |      ✅      |        | `install.bat` → prisma migrate deploy / db push |
-| Seed danych początkowych               |      ✅      |        | `install.bat` → prisma/seed.ts (opcjonalnie)    |
-| Typecheck TypeScript                   |      ✅      |        | `install.bat` → tsc --noEmit                    |
-| Budowa (TS→JS)                         |      ✅      |        | `build.bat` → tsc                               |
-| Uruchomienie serwera dev               |      ✅      |        | `dev.bat` → npm run dev                         |
-| Uruchomienie serwera prod              |      ✅      |        | `prod.bat` → npm start                          |
-| Port check (3000)                      |      ✅      |        | PowerShell Get-NetTCPConnection                 |
-| Backup bazy                            |      ✅      |        | `npm run backup` (VACUUM INTO)                  |
-| Przywracanie backupu                   |              |   ✅   | `npm run restore -- <file>`                     |
-| Automatyczny backup cron               |              |   ✅   | `npm run backup:install-cron` (jako Admin)      |
-| Aktualizacja z gita                    |              |   ✅   | `git pull`                                      |
-| Release (wersja + changelog + tag)     |      ✅      |        | `npm run release:patch`                         |
-| Cache-bust assetów (?v=)               |      ✅      |        | Hook postbump w standard-version                |
-| Git hooks (Husky pre-push, pre-commit) |      ✅      |        | Automatycznie przy commit/push                  |
-| Docker deploy                          |              |   ✅   | `docker compose up --build -d`                  |
-| Zmiana hasła admina                    |              |   ✅   | W panelu użytkownika po 1. logowaniu            |
+| Czynność                               | Automatyczne | Ręczne | Uwagi                                                        |
+| -------------------------------------- | :----------: | :----: | ------------------------------------------------------------ |
+| Instalacja Node.js >= 22.13            |              |   ✅   | Pobrać z https://nodejs.org                                  |
+| Pobranie kodu (git clone / ZIP)        |              |   ✅   | GitHub → Code → Download ZIP                                 |
+| Kopiowanie .env.example → .env         |              |   ✅   | `copy .env.example .env`                                     |
+| Ustawienie DEFAULT_ADMIN_PASSWORD      |              |   ✅   | Edycja .env                                                  |
+| Instalacja npm dependencies            |      ✅      |        | `install.bat` → npm ci                                       |
+| Generowanie Prisma Client              |      ✅      |        | `install.bat` → prisma generate                              |
+| Migracja bazy danych                   |      ✅      |        | `install.bat` → prisma migrate deploy (db push tylko legacy) |
+| Seed danych początkowych               |      ✅      |        | `install.bat` → prisma/seed.ts (opcjonalnie)                 |
+| Typecheck TypeScript                   |      ✅      |        | `install.bat` → tsc --noEmit                                 |
+| Budowa (TS→JS)                         |      ✅      |        | `build.bat` → tsc                                            |
+| Uruchomienie serwera dev               |      ✅      |        | `dev.bat` → npm run dev                                      |
+| Uruchomienie serwera prod              |      ✅      |        | `prod.bat` → npm start                                       |
+| Port check (3000)                      |      ✅      |        | PowerShell Get-NetTCPConnection                              |
+| Backup bazy                            |      ✅      |        | `npm run backup` (VACUUM INTO)                               |
+| Przywracanie backupu                   |              |   ✅   | `npm run restore -- <file>`                                  |
+| Automatyczny backup cron               |              |   ✅   | `npm run backup:install-cron` (jako Admin)                   |
+| Aktualizacja z gita                    |              |   ✅   | `git pull`                                                   |
+| Release (wersja + changelog + tag)     |      ✅      |        | `npm run release:patch`                                      |
+| Cache-bust assetów (?v=)               |      ✅      |        | Hook postbump w standard-version                             |
+| Git hooks (Husky pre-push, pre-commit) |      ✅      |        | Automatycznie przy commit/push                               |
+| Docker deploy                          |              |   ✅   | `docker compose up --build -d`                               |
+| Zmiana hasła admina                    |              |   ✅   | W panelu użytkownika po 1. logowaniu                         |
 
 ### Podsumowanie:
 

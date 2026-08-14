@@ -88,7 +88,7 @@ Instalator automatycznie:
   jest puste lub równe domyślnej wartości `CHANGE_ME_PLEASE` (zapisze je w `.env`)
 - Zainstaluje zależności (`npm ci` — jeśli istnieje `package-lock.json`)
 - Wygeneruje klienta Prisma (`npx prisma generate`)
-- Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` z fallbackiem `npx prisma db push --skip-generate --accept-data-loss` dla baz bez historii migracji)
+- Zsynchronizuje schemat bazy danych (`npx prisma migrate deploy` — domyślnie; `npx prisma db push --skip-generate --accept-data-loss` wyłącznie dla baz legacy utworzonych przez `db push`, bez tabeli `_prisma_migrations`)
 - Zasieje dane początkowe (`npm run prisma:seed`) lub pominie z `--skip-seed`
 - Przy pierwszym uruchomieniu serwera automatycznie odczyta plik `data/price_defaults.json`
   (jeśli istnieje) zawierający snapshot domyślnych cenników
@@ -111,7 +111,8 @@ npx prisma generate
 
 # 4. Zsynchronizuj schemat bazy danych
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations:
+#  npx prisma db push --skip-generate --accept-data-loss)
 
 # 5. Zasiej dane początkowe (produkty, cenniki)
 npm run prisma:seed
@@ -171,7 +172,7 @@ bash prod.sh   # Production (npm start; automatycznie buduje dist, jeśli brak)
 
 Instalator `install.sh` — tak samo jak `install.bat` — wygeneruje losowe hasło
 administratora (przez `scripts/init-env.mjs`), zsynchronizuje schemat bazy
-(`migrate deploy` z fallbackiem `db push`) i zasieje dane początkowe
+(`migrate deploy`; fallback `db push` tylko dla baz legacy bez `_prisma_migrations`) i zasieje dane początkowe
 (z pominięciem przy `--skip-seed`).
 
 **Wariant B — kroki ręczne:**
@@ -191,7 +192,8 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations:
+#  npx prisma db push --skip-generate --accept-data-loss)
 
 # 4. Baza danych — opcje:
 #    a) Zasiej dane początkowe (nowa instalacja):
@@ -263,12 +265,13 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
 
     ```powershell
     copy /Y data\backups\backup_2026-07-14_*.sqlite data\app_database.sqlite
-    npx prisma db push --skip-generate --accept-data-loss
+    npx prisma migrate deploy
     ```
 
-    > **Uwaga:** `npm run restore` automatycznie synchronizuje schemat (tworzy brakujące
-    > tabele i indeksy przez `db push`). Przy ręcznym kopiowaniu pliku bazy ta synchronizacja
-    > **nie zachodzi** — po kopiowaniu uruchom `npx prisma db push --skip-generate --accept-data-loss`.
+    > **Uwaga:** `npm run restore` automatycznie synchronizuje schemat (`migrate deploy`).
+    > Przy ręcznym kopiowaniu pliku bazy ta synchronizacja **nie zachodzi** — po kopiowaniu
+    > uruchom `npx prisma migrate deploy` (dla bazy legacy utworzonej przez `db push`,
+    > bez `_prisma_migrations`: `npx prisma db push --skip-generate --accept-data-loss`).
 
 5. **Uruchom serwer**:
 
@@ -319,20 +322,21 @@ Podczas aktualizacji do nowszej wersji aplikacji (już wdrożonej, z danymi):
 
 1. Zawsze najpierw zrób backup: `npm run backup`
 2. Pobierz nowy kod i zależności: `git pull`, `npm ci`
-3. Zsynchronizuj schemat — sposób zależy od historii bazy:
-    - **Baza utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
+3. Zsynchronizuj schemat — domyślnie `npx prisma migrate deploy`; `db push` wyłącznie
+   dla baz legacy:
+    - **Baza legacy utworzona przez `prisma db push`** (brak tabeli `_prisma_migrations`):
       `npx prisma db push --skip-generate --accept-data-loss`
-      (komenda `migrate deploy` NIE zadziała — baza nie ma historii migracji).
+      (komenda `migrate deploy` na niej NIE zadziała — baza nie ma historii migracji).
     - **Baza z historią migracji** (`_prisma_migrations` istnieje):
       `npx prisma migrate deploy`
     - Jak sprawdzić: `npx prisma migrate status` — jeśli pokazuje wszystkie
       migracje jako niezastosowane mimo działającej aplikacji, baza jest typu `db push`.
 4. Uruchom serwer (`start.bat`).
 
-> Migracja `20260805100000_telemetry_well_dedup` dodaje 2 indeksy na `ai_telemetry_logs`
+> Migracja `20260815000000_baseline` zawiera indeksy na `ai_telemetry_logs`
 > (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii AI. Indeksy są
-> idempotentne i powstają automatycznie przez `db push` (definicje w `schema.prisma`).
-> Na bazie bez `db push` można je utworzyć ręcznie:
+> idempotentne i powstają automatycznie przez `migrate deploy` (definicje w `schema.prisma`).
+> Na bazie bez `migrate deploy` (legacy db push) można je utworzyć ręcznie:
 >
 > ```sql
 > CREATE INDEX IF NOT EXISTS "idx_logs_well" ON "ai_telemetry_logs"("wellId");

@@ -77,7 +77,7 @@ cp .env.example .env
 # edytuj .env — ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run prisma:seed
 npm run build
 # Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
@@ -95,7 +95,7 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
 # Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
 mkdir -p dist/generated && cp -r generated/prisma dist/generated/
@@ -160,7 +160,7 @@ cp .env.example .env
 nano .env  # ustaw DEFAULT_ADMIN_PASSWORD
 npx prisma generate
 npx prisma migrate deploy
-# (baza bez historii migracji/_prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
+# (baza legacy utworzona przez db push, bez _prisma_migrations: npx prisma db push --skip-generate --accept-data-loss)
 npm run build
 # Linux: po surowym `npm run build` (bez build.sh) skopiuj klienta Prisma:
 mkdir -p dist/generated && cp -r generated/prisma dist/generated/

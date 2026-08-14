@@ -573,7 +573,7 @@ przerywa działanie — chyba że uruchomisz go z flagą `--force`.
 Seed uruchamia łańcuch `scripts/ensure-db.bat` → `scripts/check-db.js`
 (który zwraca kod 2, gdy tabele produktów są puste) → `prisma/seed.ts`.
 Ręcznie wywołasz go przez `npm run prisma:seed`, a w Dockerze seed jest
-uruchamiany po `prisma db push` (na pustej bazie).
+uruchamiany po `prisma migrate deploy` (na pustej bazie).
 
 ---
 
@@ -631,8 +631,9 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
     ```
 4. Jeśli schemat różni się między wersjami:
     ```bash
-    npx prisma db push --skip-generate
+    npx prisma migrate deploy
     ```
+    (legacy: `npx prisma db push --skip-generate`)
 
 ---
 

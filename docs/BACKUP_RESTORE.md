@@ -30,8 +30,8 @@ npm run restore data/backups/backup_2026-06-30_*.sqlite
 Skrypt pyta o potwierdzenie przed nadpisaniem bieżącej bazy.
 
 > **Synchronizacja schematu:** po skopiowaniu pliku `npm run restore` automatycznie wykonuje
-> `npx prisma db push --skip-generate --accept-data-loss`, co synchronizuje schemat bazy
-> z aktualnym `schema.prisma` — tworzy m.in. indeksy deduplikacji telemetrii AI
+> `npx prisma migrate deploy`, co synchronizuje schemat bazy
+> z aktualnym stanem migracji — tworzy m.in. indeksy deduplikacji telemetrii AI
 > (`idx_logs_well`, `idx_logs_source_well`) oraz nowe kolumny/tabele. **Ręczne kopiowanie
 > pliku backupu NIE synchronizuje schematu.**
 
@@ -44,9 +44,10 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
 ```
 
 > **Uwaga:** ręczne skopiowanie pliku **nie tworzy nowych indeksów/kolumn** (np. indeksy
-> telemetrii AI). Po ręcznym restore uruchom `npx prisma db push --skip-generate
---accept-data-loss`. Przy starcie serwera indeksy telemetrii AI i tak są uzupełniane
-> automatycznie (auto-heal w `src/app.ts`), ale dla spójności pełnego schematu użyj `db push`.
+> telemetrii AI). Po ręcznym restore uruchom `npx prisma migrate deploy`
+> (legacy: `npx prisma db push --skip-generate --accept-data-loss`).
+> Przy starcie serwera indeksy telemetrii AI i tak są uzupełniane
+> automatycznie (auto-heal w `src/app.ts`), ale dla spójności pełnego schematu użyj `migrate deploy`.
 
 ## Przenoszenie bazy na nowe urządzenie
 
@@ -62,7 +63,7 @@ cp data/backups/backup_2026-06-30_*.sqlite data/app_database.sqlite
     npm run restore data/backups/backup_*.sqlite
     ```
 5. Schemat bazy jest synchronizowany automatycznie przez `npm run restore`
-   (`prisma db push --skip-generate --accept-data-loss`) — indeksy telemetrii AI
+   (`npx prisma migrate deploy`) — indeksy telemetrii AI
    (`idx_logs_well`, `idx_logs_source_well`) zostaną utworzone bez ręcznej interwencji.
 
 ## Wersja bazy
@@ -78,6 +79,6 @@ Stan bazy (backup, wersja, rozmiar) można sprawdzić przez `GET /health`.
 ## Uwagi
 
 - Backup wykonywany na działającej aplikacji jest bezpieczny (SQLite VACUUM INTO tworzy spójny snapshot)
-- **Nie** przywracaj backupu z innej wersji aplikacji bez sprawdzenia kompatybilności schematu — `npm run restore` synchronizuje schemat automatycznie (`prisma db push --skip-generate --accept-data-loss`), ręczne kopiowanie tego nie robi
+- **Nie** przywracaj backupu z innej wersji aplikacji bez sprawdzenia kompatybilności schematu — `npm run restore` synchronizuje schemat automatycznie (`npx prisma migrate deploy`), ręczne kopiowanie tego nie robi
 - Regularne backupy konfiguruje się przez `npm run backup:install-cron` lub cron na Linux
 - Maksymalnie 30 najnowszych backupów jest przechowywanych (automatyczne czyszczenie)
