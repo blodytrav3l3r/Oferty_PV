@@ -4,6 +4,25 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.15.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.2...v1.15.0) (2026-08-14)
+
+### Features
+
+- **studnie:** dennicy psia buda jako osobne elementy ([bed706a](https://github.com/blodytrav3l3r/Oferty_PV/commit/bed706ae3d410b63614e135ec075ff9ac0a9892c))
+- **studnie:** stabilizacja i modernizacja - fazy 2-8 ([3cf20e2](https://github.com/blodytrav3l3r/Oferty_PV/commit/3cf20e2bb31fd0b341a5ba8e8d0eb832dc09f767))
+- **telemetry:** sugestie z bazy wiedzy ai (kb-suggestions) ([fe27446](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe274469528a715e49ea1ac404b7ec027a14fb10))
+
+### Bug Fixes
+
+- **ci:** flaky ENOENT w check-appname (tests/tmp) + prettier w archiwum ([22d0f90](https://github.com/blodytrav3l3r/Oferty_PV/commit/22d0f90916e91ce02af51ed500e05b9b6da30d83))
+- **ci:** poprawki pipeline po konwersji na migracje ([b98bc39](https://github.com/blodytrav3l3r/Oferty_PV/commit/b98bc396860012e286d8142f5987e3358f102fba))
+- **ci:** poprawna flaga migrate diff (--to-schema-datamodel) ([97e399e](https://github.com/blodytrav3l3r/Oferty_PV/commit/97e399e1c461b83d686ddd2e4739c01496f0ded0))
+- **ci:** precyzyjny ignore tests/tmp w check-appname (nie globalny tmp) ([91c3167](https://github.com/blodytrav3l3r/Oferty_PV/commit/91c3167dfc76cfa4edee32f468dda5270f9b6894))
+- **telemetry:** clamp totalreward w rewardcalculator ([d715814](https://github.com/blodytrav3l3r/Oferty_PV/commit/d715814255bde3434d60053fca4922cedb7de58d))
+- **telemetry:** etykiety decyzji ml bez data leakage ([6dcb52f](https://github.com/blodytrav3l3r/Oferty_PV/commit/6dcb52fc65c85d0811662578032d338c356c326e))
+- **telemetry:** twardnienie pipeline ml - xss, poisoning, dedup, mutex ([04d4816](https://github.com/blodytrav3l3r/Oferty_PV/commit/04d48162672749457e8ed4e1c9cd74508a740cd2))
+- **ui:** poprawki bledow dashboardu ai/ml ([ecb8db4](https://github.com/blodytrav3l3r/Oferty_PV/commit/ecb8db4fcc5fba82dfc6bbeead86602419f62697))
+
 ### [1.14.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.1...v1.14.2) (2026-08-13)
 
 ### Bug Fixes
