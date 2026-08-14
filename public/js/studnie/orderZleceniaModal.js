@@ -119,9 +119,13 @@ async function saveProductionOrder() {
     const el = zleceniaElementsList[zleceniaSelectedIdx];
     const { well, product, elementIndex } = el;
 
-    const existingIdx = productionOrders.findIndex(
-        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    const existingOrder = pzGuard.findPzForElement(
+        productionOrders || [],
+        well.id,
+        (el.configItem && el.configItem._elemId) || '',
+        elementIndex
     );
+    const existingIdx = existingOrder ? productionOrders.indexOf(existingOrder) : -1;
     if (existingIdx >= 0 && productionOrders[existingIdx].status === 'accepted') {
         showToast(
             'Nie można zapisać zaakceptowanego zlecenia. Najpierw cofnij akceptację.',
@@ -186,6 +190,7 @@ async function saveProductionOrder() {
                 ? currentOrder.orderNumber
                 : '',
         elementIndex: elementIndex,
+        elementKey: (el.configItem && el.configItem._elemId) || '',
         productName: product.name,
         productId: product.id,
         dn: well.dn,

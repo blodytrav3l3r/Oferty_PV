@@ -65,6 +65,8 @@
         "encoding:check": "node scripts/encoding-integrity.js check",
         "encoding:fix": "node scripts/encoding-integrity.js fix",
         "encoding:staged": "node scripts/encoding-integrity.js staged",
+        "benchmark": "node scripts/benchmark.mjs",
+        "benchmark:quick": "node scripts/benchmark.mjs 10",
         "prepare": "husky"
     },
     "engines": {

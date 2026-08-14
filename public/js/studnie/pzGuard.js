@@ -2,6 +2,39 @@
 /* ===== pzGuard.js — blokady usuwania przy istniejących zleceniach produkcyjnych (PZ) ===== */
 
 /**
+ * Flaga funkcjonalna: stabilny identyfikator PZ (elementKey) włączony (domyślnie true).
+ * Wyłączenie przywraca dopasowanie wyłącznie po elementIndex (stary kod).
+ */
+let pzStableIdEnabled = true;
+
+/**
+ * Ustawia flagę funkcjonalną pz_stable_id.
+ * @param {boolean} enabled
+ */
+function setPzStableIdEnabled(enabled) {
+    pzStableIdEnabled = enabled === true;
+}
+
+/**
+ * Pobiera flagę pz_stable_id z backendu (raz, cache) i aktualizuje stan.
+ * W razie błędu zostaje stan domyślny (true).
+ */
+async function initPzStableIdFlag() {
+    try {
+        /** @type {RequestInit} */
+        const opts = { credentials: 'include' };
+        if (typeof authHeaders === 'function') {
+            opts.headers = authHeaders();
+        }
+        const r = await fetch('/api/feature-flags', opts);
+        const j = await r.json();
+        setPzStableIdEnabled(j.pz_stable_id !== false);
+    } catch {
+        /* pozostaje domyślne true */
+    }
+}
+
+/**
  * Zwraca listę zleceń produkcyjnych z globalnego stanu.
  * Obsługuje zarówno globalną zmienną `productionOrders` (studnie.html),
  * jak i ewentualną wersję na `window.productionOrders`.
@@ -27,6 +60,30 @@ function hasPzForWell(wellId) {
     return getProductionOrdersList().some((po) => String(po.wellId) === String(wellId));
 }
 
+/**
+ * Dopasowuje PZ do elementu studni przez elementKey (stabilny), z fallbackiem na elementIndex
+ * (legacy PZ zapisane przed wprowadzeniem elementKey). Jedyne źródło dopasowania PZ↔element
+ * (krok 3.4 planu — PZ stable ID).
+ * @param {Array} list lista PZ
+ * @param {string} wellId id studni
+ * @param {string} [elemKey] elementKey (_elemId) elementu
+ * @param {number} [elementIndex] legacy indeks elementu
+ * @returns {object|undefined}
+ */
+function findPzForElement(list, wellId, elemKey, elementIndex) {
+    return list.find((po) => {
+        if (String(po.wellId) !== String(wellId)) return false;
+        if (pzStableIdEnabled && elemKey && po.elementKey) {
+            return String(po.elementKey) === String(elemKey);
+        }
+        return (
+            typeof po.elementIndex === 'number' &&
+            typeof elementIndex === 'number' &&
+            po.elementIndex === elementIndex
+        );
+    });
+}
+
 // Ochrona reindeksacji: blokada usunięcia elementu, gdy w studni jest PZ o elementIndex >= usuwany indeks
 function hasPzForElementAtOrAfter(wellId, elementIndex) {
     return getProductionOrdersList().some(
@@ -37,4 +94,12 @@ function hasPzForElementAtOrAfter(wellId, elementIndex) {
     );
 }
 
-window.pzGuard = { hasPzForOffer, hasPzForOrder, hasPzForWell, hasPzForElementAtOrAfter };
+window.pzGuard = {
+    hasPzForOffer,
+    hasPzForOrder,
+    hasPzForWell,
+    hasPzForElementAtOrAfter,
+    findPzForElement,
+    setPzStableIdEnabled,
+    initPzStableIdFlag
+};

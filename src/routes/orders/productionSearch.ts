@@ -39,6 +39,7 @@ router.get('/', requireAuth, async (req, res) => {
                    production_orders_rel."orderId",
                    production_orders_rel."wellId",
                    production_orders_rel."elementIndex",
+                   production_orders_rel."elementKey",
                    production_orders_rel.data,
                    CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                        THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')

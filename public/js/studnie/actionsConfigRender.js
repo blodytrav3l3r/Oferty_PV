@@ -34,6 +34,10 @@ function renderWellConfig() {
 
     if (!tbody) return;
 
+    if (typeof ensureElemIds === 'function' && well && Array.isArray(well.config)) {
+        ensureElemIds(well.config);
+    }
+
     if (!well || !well.config || well.config.length === 0) {
         tbody.innerHTML =
             '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Kliknij kafelki powyżej, aby dodać elementy studni</div>';

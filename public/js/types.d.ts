@@ -57,6 +57,22 @@ interface AppConstants {
     MODULES: Record<string, string>;
 }
 
+/* ===== PzGuard (dopasowanie zleceń produkcyjnych do elementów studni) ===== */
+interface PzGuardModule {
+    hasPzForOffer(offerId: string): boolean;
+    hasPzForOrder(orderId: string, offerId: string): boolean;
+    hasPzForWell(wellId: string): boolean;
+    hasPzForElementAtOrAfter(wellId: string, elementIndex: number): boolean;
+    findPzForElement(
+        list: Array<{ wellId?: string; elementKey?: string; elementIndex?: number }>,
+        wellId: string,
+        elemKey: string,
+        elementIndex: number
+    ): any;
+    setPzStableIdEnabled(enabled: boolean): void;
+    initPzStableIdFlag(): Promise<void>;
+}
+
 /* ===== Formatters ===== */
 interface Formatters {
     formatCurrency(amount: number, currency?: string): string;
@@ -117,12 +133,16 @@ interface Window {
 
     /** Funkcja appConfirm (w razie braku ui) */
     appConfirm(msg: string): Promise<boolean>;
+
+    /** pzGuard — dopasowanie zleceń produkcyjnych do elementów studni */
+    pzGuard: PzGuardModule;
 }
 
 /* ===== Deklaracje globalne (do użytku w IIFE bez window.*) ===== */
 declare var api: ApiClient;
 declare var logger: Logger;
 declare var auth: AuthModule;
+declare var pzGuard: PzGuardModule;
 declare function showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
 declare function appConfirm(msg: string): Promise<boolean>;
 declare function escapeHtml(str: string): string;

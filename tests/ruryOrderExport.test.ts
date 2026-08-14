@@ -227,4 +227,74 @@ describe('Rury Order Export (Zamowienie) — GET /:id/export-pdf|docx', () => {
             expect(res.statusCode).toBe(200);
         });
     });
+
+    describe('POST /:id/export-offer-pdf', () => {
+        const validBody = {
+            items: [{ productId: 'p-1', name: 'Rura betonowa', unitPrice: 100, quantity: 2 }],
+            clientName: 'ACME',
+            validityDays: 30
+        };
+
+        it('owner CAN export offer from order as PDF (200)', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app)
+                .post('/api/orders-rury/1700000000000_abcde/export-offer-pdf')
+                .send(validBody);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.headers['content-type']).toMatch(/application\/pdf/);
+            expect(res.headers['content-disposition']).toMatch(/oferta_rury_zamowienie_/);
+        });
+
+        it('non-owner gets 404', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(otherUserOrder);
+
+            const res = await request(app)
+                .post('/api/orders-rury/1700000000000_other/export-offer-pdf')
+                .send(validBody);
+
+            expect(res.statusCode).toBe(404);
+        });
+
+        it('invalid body returns 400 (walidacja ruryOfferExportSchema)', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app)
+                .post('/api/orders-rury/1700000000000_abcde/export-offer-pdf')
+                .send({ items: [] });
+
+            expect(res.statusCode).toBe(400);
+            expect(res.body.error).toMatch(/Nieprawidłowe dane eksportu/);
+        });
+    });
+
+    describe('POST /:id/export-offer-docx', () => {
+        const validBody = {
+            items: [{ productId: 'p-1', name: 'Rura betonowa', unitPrice: 100, quantity: 1 }],
+            clientName: 'ACME'
+        };
+
+        it('owner CAN export offer from order as DOCX (200)', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app)
+                .post('/api/orders-rury/1700000000000_abcde/export-offer-docx')
+                .send(validBody);
+
+            expect(res.statusCode).toBe(200);
+            expect(res.headers['content-type']).toMatch(/wordprocessingml\.document/);
+            expect(res.headers['content-disposition']).toMatch(/oferta_rury_zamowienie_/);
+        });
+
+        it('invalid body returns 400', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue(mockOrder);
+
+            const res = await request(app)
+                .post('/api/orders-rury/1700000000000_abcde/export-offer-docx')
+                .send({});
+
+            expect(res.statusCode).toBe(400);
+        });
+    });
 });

@@ -89,8 +89,11 @@ function renderZleceniaList() {
 
     itemsWithStatus.forEach((item) => {
         const el = item.el;
-        const savedPO = (productionOrders || []).find(
-            (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+        const savedPO = pzGuard.findPzForElement(
+            productionOrders || [],
+            el.well.id,
+            (el.configItem && el.configItem._elemId) || '',
+            el.elementIndex
         );
         const poNum =
             savedPO && savedPO.productionOrderNumber
@@ -132,17 +135,26 @@ function renderZleceniaList() {
         group.elements.forEach((item) => {
             const el = item.el;
             const i = item.index;
-            const isSaved = (productionOrders || []).some(
-                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            const isSaved = pzGuard.findPzForElement(
+                productionOrders || [],
+                el.well.id,
+                (el.configItem && el.configItem._elemId) || '',
+                el.elementIndex
             );
-            const savedOrder = (productionOrders || []).find(
-                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            const savedOrder = pzGuard.findPzForElement(
+                productionOrders || [],
+                el.well.id,
+                (el.configItem && el.configItem._elemId) || '',
+                el.elementIndex
             );
             const isAccepted = savedOrder && savedOrder.status === 'accepted';
             const isActive = i === zleceniaSelectedIdx;
 
-            const savedProdOrder = (productionOrders || []).find(
-                (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+            const savedProdOrder = pzGuard.findPzForElement(
+                productionOrders || [],
+                el.well.id,
+                (el.configItem && el.configItem._elemId) || '',
+                el.elementIndex
             );
             const prodOrderNum =
                 savedProdOrder && savedProdOrder.productionOrderNumber

@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { PrismaClient, Prisma } from '../generated/prisma';
 import { resolveProjectRoot } from './utils/paths';
+import { countDbQuery } from './utils/dbQueryCounter';
 
 /**
  * Normalizuje względną ścieżkę w DATABASE_URL do absolutnej.
@@ -42,6 +43,15 @@ const databaseUrl = normalizeDatabaseUrl(
 );
 
 export const prisma = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+
+if (process.env.NODE_ENV !== 'production') {
+    const queryAware = prisma as unknown as {
+        $on: (event: 'query', cb: () => void) => void;
+    };
+    queryAware.$on('query', () => {
+        countDbQuery();
+    });
+}
 
 export { Prisma };
 export default prisma;

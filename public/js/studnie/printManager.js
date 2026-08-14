@@ -36,8 +36,11 @@ function collectPrintData() {
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
     const { well, product, elementIndex, wellIndex } = el;
-    const existing = productionOrders.find(
-        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    const existing = pzGuard.findPzForElement(
+        productionOrders || [],
+        well.id,
+        (el.configItem && el.configItem._elemId) || '',
+        elementIndex
     );
 
     const getValue = (id, fallback = '') => document.getElementById(id)?.value || fallback;
@@ -616,8 +619,11 @@ function buildSiblingCrossReferences(data) {
     if (siblings.length === 0) return '';
 
     const getPoNumber = (el) => {
-        const po = (productionOrders || []).find(
-            (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+        const po = pzGuard.findPzForElement(
+            productionOrders || [],
+            el.well.id,
+            (el.configItem && el.configItem._elemId) || '',
+            el.elementIndex
         );
         return po?.productionOrderNumber || '—';
     };

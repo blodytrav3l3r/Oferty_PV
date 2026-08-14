@@ -1,9 +1,17 @@
 /* ===== ZLECENIA PRODUKCYJNE — HELPERY ===== */
 
 function getElementStatus(el) {
-    const savedOrder = (productionOrders || []).find(
-        (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
-    );
+    const savedOrder =
+        typeof pzGuard !== 'undefined'
+            ? pzGuard.findPzForElement(
+                  productionOrders || [],
+                  el.well.id,
+                  (el.configItem && el.configItem._elemId) || '',
+                  el.elementIndex
+              )
+            : (productionOrders || []).find(
+                  (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+              );
     if (savedOrder && savedOrder.status === 'accepted') return 'accepted';
     if (savedOrder) return 'saved';
     return 'open';

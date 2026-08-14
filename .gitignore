@@ -49,6 +49,7 @@ build/
 
 # Database
 data/backup/
+data/backups/
 data/migration_backup/
 data/*.sqlite*
 data/*.sqlite-shm

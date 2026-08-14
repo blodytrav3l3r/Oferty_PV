@@ -8,7 +8,7 @@ const config: Config.InitialOptions = {
     moduleFileExtensions: ['ts', 'js', 'json'],
     collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts'],
     coverageDirectory: 'coverage',
-    coverageReporters: ['text', 'lcov', 'html'],
+    coverageReporters: ['text', 'lcov', 'html', 'json-summary'],
     coverageProvider: 'v8',
     verbose: true,
     testTimeout: 10000,

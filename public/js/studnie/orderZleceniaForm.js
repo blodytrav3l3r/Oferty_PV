@@ -92,8 +92,11 @@ function populateZleceniaForm(el) {
     const investAddress = document.getElementById('invest-address')?.value || '';
     const investContractor = document.getElementById('invest-contractor')?.value || '';
 
-    const existing = (productionOrders || []).find(
-        (po) => po.wellId === well.id && po.elementIndex === elementIndex
+    const existing = pzGuard.findPzForElement(
+        productionOrders || [],
+        well.id,
+        (well.config[elementIndex] && well.config[elementIndex]._elemId) || '',
+        elementIndex
     );
     const isAccepted = existing && existing.status === 'accepted';
 
@@ -137,8 +140,11 @@ function populateZleceniaForm(el) {
     });
 
     if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
-        const dennicaPo = (productionOrders || []).find(
-            (po) => po.wellId === well.id && po.elementIndex === dennicaConfigIdx
+        const dennicaPo = pzGuard.findPzForElement(
+            productionOrders || [],
+            well.id,
+            (well.config[dennicaConfigIdx] && well.config[dennicaConfigIdx]._elemId) || '',
+            dennicaConfigIdx
         );
         if (dennicaPo) {
             if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
@@ -659,8 +665,11 @@ async function selectZleceniaTile(btn, targetId, val) {
                     ? document.getElementById('zl-uwagi').value
                     : '';
 
-                const existing = productionOrders.find(
-                    (po) => po.wellId === el.well.id && po.elementIndex === el.elementIndex
+                const existing = pzGuard.findPzForElement(
+                    productionOrders || [],
+                    el.well.id,
+                    (el.configItem && el.configItem._elemId) || '',
+                    el.elementIndex
                 );
 
                 if (targetId === 'zl-rodzaj-studni') {

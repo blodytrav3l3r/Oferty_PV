@@ -89,7 +89,14 @@ jobs:
               run: npx prisma db push --skip-generate
 
             - name: Run tests
-              run: npm run test:quick
+              run: npm test
+
+            - name: Upload coverage
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage/
+                  retention-days: 30
 
     docker-build:
         name: Docker build + health check
@@ -170,6 +177,34 @@ jobs:
 
             - name: Sprawdź spójność wersji
               run: npm run version:check
+
+    drift-check:
+        name: DB schema sanity (raport, nie blokuje)
+        runs-on: ubuntu-latest
+        needs: test
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v6
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Walidacja schema.prisma (prisma validate)
+              run: npx prisma validate
+
+            - name: Generowanie SQL z pustej bazy (kontrola błędów schematu)
+              run: |
+                  npx prisma migrate diff \
+                    --from-empty \
+                    --to-schema prisma/schema.prisma \
+                    --script > /dev/null
+                  echo "Schema OK — SQL wygenerowany bez błędów."
 
     deploy-production:
         name: Deploy — produkcja (main)

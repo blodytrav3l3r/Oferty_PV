@@ -8,13 +8,18 @@ const router = express.Router();
 
 router.get('/', requireAuth, async (_req, res) => {
     try {
-        const flag = await prisma.settings.findUnique({
-            where: { key: 'feature_import_export_enabled' }
+        const [importExport, pzStableId] = await Promise.all([
+            prisma.settings.findUnique({ where: { key: 'feature_import_export_enabled' } }),
+            prisma.settings.findUnique({ where: { key: 'feature_pz_stable_id' } })
+        ]);
+        const flagOn = (v: { value: string | null } | null) =>
+            v?.value === '"1"' || v?.value === '1';
+        res.json({
+            import_export_enabled: flagOn(importExport),
+            pz_stable_id: pzStableId ? flagOn(pzStableId) : true
         });
-        const enabled = flag?.value === '"1"' || flag?.value === '1';
-        res.json({ import_export_enabled: enabled });
     } catch {
-        res.json({ import_export_enabled: false });
+        res.json({ import_export_enabled: false, pz_stable_id: true });
     }
 });
 

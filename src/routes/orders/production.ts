@@ -51,6 +51,7 @@ router.get('/', requireAuth, async (req, res) => {
                 orderId: string | null;
                 wellId: string | null;
                 elementIndex: number | null;
+                elementKey: string | null;
                 createdAt: string | null;
                 updatedAt: string | null;
                 data: string | null;
@@ -63,7 +64,7 @@ router.get('/', requireAuth, async (req, res) => {
                 orderData: string | null;
                 dbSalesOrderId: string | null;
             }>
-        >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel.data,
+        >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data,
             CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE production_orders_rel."createdAt" END as "createdAt",
@@ -112,6 +113,7 @@ router.put(
                     orderId,
                     wellId,
                     elementIndex,
+                    elementKey,
                     createdAt,
                     updatedAt,
                     ...rest
@@ -150,6 +152,7 @@ router.put(
                         orderId: orderId || '',
                         wellId: wellId || '',
                         elementIndex: elementIndex || 0,
+                        elementKey: elementKey || '',
                         createdAt: createdAt || new Date().toISOString(),
                         updatedAt: updatedAt || new Date().toISOString(),
                         data: dataStr
@@ -160,6 +163,7 @@ router.put(
                         orderId: orderId || '',
                         wellId: wellId || '',
                         elementIndex: elementIndex || 0,
+                        elementKey: elementKey || '',
                         createdAt: createdAt || new Date().toISOString(),
                         updatedAt: updatedAt || new Date().toISOString(),
                         data: dataStr
@@ -199,6 +203,7 @@ router.post(
                 orderId,
                 wellId,
                 elementIndex,
+                elementKey,
                 createdAt: createdAtRaw,
                 updatedAt: updatedAtRaw,
                 ...rest
@@ -243,6 +248,7 @@ router.post(
                     orderId: orderId || '',
                     wellId: wellId || '',
                     elementIndex: elementIndex || 0,
+                    elementKey: elementKey || '',
                     createdAt: createdAt,
                     updatedAt: updatedAt,
                     data: dataStr
@@ -253,6 +259,7 @@ router.post(
                     orderId: orderId || '',
                     wellId: wellId || '',
                     elementIndex: elementIndex || 0,
+                    elementKey: elementKey || '',
                     updatedAt: updatedAt,
                     data: dataStr
                 }
@@ -345,6 +352,7 @@ router.get('/:id', requireAuth, async (req, res) => {
                 orderId: order.orderId,
                 wellId: order.wellId,
                 elementIndex: order.elementIndex,
+                elementKey: order.elementKey,
                 createdAt: order.createdAt,
                 updatedAt: order.updatedAt,
                 ...parsedData

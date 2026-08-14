@@ -14,7 +14,8 @@ export const productionOrderItemSchema = z
         userId: z.string().optional(),
         orderId: z.string().optional(),
         wellId: z.string().optional(),
-        elementIndex: z.number().int().optional()
+        elementIndex: z.number().int().optional(),
+        elementKey: z.string().optional()
     })
     .passthrough();
 
@@ -27,7 +28,8 @@ export const productionOrderCreateSchema = z
         wellId: z.string().min(1, 'ID studni jest wymagane'),
         orderId: z.string().optional(),
         userId: z.string().optional(),
-        elementIndex: z.number().int().optional()
+        elementIndex: z.number().int().optional(),
+        elementKey: z.string().optional()
     })
     .passthrough();
 

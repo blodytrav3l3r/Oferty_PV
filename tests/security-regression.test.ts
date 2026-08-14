@@ -2,6 +2,8 @@ import express from 'express';
 import request from 'supertest';
 import { requireAdmin } from '../src/middleware/auth';
 import { EXPORT_LIMITER, WRITE_LIMITER } from '../src/middleware/rateLimiters';
+import { offersBatchSchema, offersStudnieBatchSchema } from '../src/validators/offerSchemas';
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 
@@ -142,11 +144,113 @@ describe('T5.8: Eksport window.debounce', () => {
     });
 
     it('składnia ui.js jest poprawna', () => {
-        const { execSync } = require('child_process');
         const result = execSync(
             `node -c "${path.resolve(__dirname, '..', 'public/js/shared/ui.js')}"`,
             { encoding: 'utf-8' }
         );
         expect(result).toBeDefined();
+    });
+});
+
+// ─── T6.3: Path traversal — statyczne pliki ──────────────────
+
+describe('T6.3: Path traversal — statyczne pliki', () => {
+    let app: express.Application;
+
+    beforeAll(() => {
+        app = express();
+        app.use(express.static(path.resolve(__dirname, '..', 'public')));
+        app.use((_req, res) => res.status(404).json({ error: 'not found' }));
+    });
+
+    it('zapytanie ..%2f nie wychodzi poza public/', async () => {
+        const res = await request(app).get('/..%2f..%2fpackage.json').expect(404);
+        expect(res.body.error).toBeDefined();
+    });
+
+    it('zapytanie z backslashem nie wychodzi poza public/', async () => {
+        const res = await request(app).get('/..%5c..%5cpackage.json').expect(404);
+        expect(res.body.error).toBeDefined();
+    });
+
+    it('zapytanie z podwójnym slash nie wychodzi poza public/', async () => {
+        const res = await request(app).get('/%2f%2fetc%2fpasswd').expect(404);
+        expect(res.body.error).toBeDefined();
+    });
+
+    it('istniejący plik z public/ jest serwowany (200)', async () => {
+        await request(app).get('/index.html').expect(200);
+    });
+});
+
+// ─── T6.2: Walidacja `data` (JSON ofert) przez zod na granicy API ─────
+
+describe('T6.2: Walidacja payloadu `data` ofert przez zod', () => {
+    const validOffer = {
+        id: 'test-1',
+        clientId: 'c1',
+        items: [],
+        data: { investName: 'Inwestycja', clientName: 'Klient' }
+    };
+
+    it('akceptuje poprawne data (obiekt)', () => {
+        const r = offersBatchSchema.safeParse({ data: [validOffer] });
+        expect(r.success).toBe(true);
+    });
+
+    it('odrzuca data jako string (zamiast obiektu)', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ ...validOffer, data: 'SZKODLIWY_PAYLOAD' }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca data jako tablicę (zamiast rekordu)', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ ...validOffer, data: ['a', 'b'] }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca data jako liczbę', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ ...validOffer, data: 12345 }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca data jako null (zamiast obiektu)', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ ...validOffer, data: null }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca brakujący items (wymagane pole)', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ id: 'test-2', clientId: 'c1' }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca state spoza enum (draft/final)', () => {
+        const r = offersBatchSchema.safeParse({
+            data: [{ ...validOffer, state: 'DELETED' }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('odrzuca malformed data również dla ofert studni', () => {
+        const r = offersStudnieBatchSchema.safeParse({
+            data: [{ id: 's1', clientId: 'c1', wells: [], data: 'ZŁY' }]
+        });
+        expect(r.success).toBe(false);
+    });
+
+    it('akceptuje poprawną ofertę studni z data-obiektem', () => {
+        const r = offersStudnieBatchSchema.safeParse({
+            data: [{ id: 's2', clientId: 'c1', wells: [], data: { investName: 'X' } }]
+        });
+        expect(r.success).toBe(true);
     });
 });

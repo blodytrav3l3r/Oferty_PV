@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         setupParamTiles();
         updateParamTilesUI();
+        if (typeof pzGuard.initPzStableIdFlag === 'function') {
+            pzGuard.initPzStableIdFlag();
+        }
         loadProductionOrders();
     }, 500);
 });

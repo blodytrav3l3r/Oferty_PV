@@ -95,8 +95,11 @@ function buildAutoOrderData(el, sharedData) {
         return p && p.componentType === 'dennica';
     });
     if (dennicaConfigIdx >= 0 && elementIndex !== dennicaConfigIdx) {
-        const dennicaPo = (productionOrders || []).find(
-            (po) => po.wellId === well.id && po.elementIndex === dennicaConfigIdx
+        const dennicaPo = pzGuard.findPzForElement(
+            productionOrders || [],
+            well.id,
+            (well.config[dennicaConfigIdx] && well.config[dennicaConfigIdx]._elemId) || '',
+            dennicaConfigIdx
         );
         if (dennicaPo) {
             if (dennicaPo.katStopni) baseKatStopni = dennicaPo.katStopni;
@@ -189,6 +192,7 @@ function buildAutoOrderData(el, sharedData) {
                 ? currentOrder.orderNumber
                 : '',
         elementIndex: elementIndex,
+        elementKey: (well.config[elementIndex] && well.config[elementIndex]._elemId) || '',
         productName: product.name,
         productId: product.id,
         dn: well.dn,
@@ -579,8 +583,11 @@ async function deleteSelectedProductionOrder() {
     }
 
     const el = zleceniaElementsList[zleceniaSelectedIdx];
-    const po = (productionOrders || []).find(
-        (p) => p.wellId === el.well.id && p.elementIndex === el.elementIndex
+    const po = pzGuard.findPzForElement(
+        productionOrders || [],
+        el.well.id,
+        (el.configItem && el.configItem._elemId) || '',
+        el.elementIndex
     );
     if (!po) {
         showToast('To zlecenie nie zostało jeszcze zapisane', 'info');

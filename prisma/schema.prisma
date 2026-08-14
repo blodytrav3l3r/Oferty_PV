@@ -394,6 +394,7 @@ model production_orders_rel {
   orderId      String?
   wellId       String?
   elementIndex Int?
+  elementKey   String?
   createdAt    String?
   updatedAt    String?
   data         String?

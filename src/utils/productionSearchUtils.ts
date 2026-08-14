@@ -161,6 +161,7 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
         orderId: row.orderId,
         wellId: row.wellId,
         elementIndex: row.elementIndex,
+        elementKey: row.elementKey,
         createdAt: row.createdAt,
         updatedAt: row.updatedAt,
         handlerName: handlerName || undefined,
