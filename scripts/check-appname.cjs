@@ -38,9 +38,12 @@ const IGNORE_DIRS = new Set([
     'archive',
     'graphify-out',
     'data',
-    'junit',
-    'tmp'
+    'junit'
 ]);
+
+// Katalogi pomijane po ścieżce względnej (konkretne, nie segmentowe —
+// 'tmp' jako segment łapałby os.tmpdir() np. /tmp/appname-* w CI)
+const IGNORE_REL_DIRS = new Set(['tests/tmp']);
 
 // Pliki pomijane po nazwie (basename)
 const IGNORE_FILES = new Set([
@@ -92,7 +95,9 @@ const PATTERNS = [
 ];
 
 function shouldIgnoreDir(dir) {
-    return dir.split(path.sep).some((p) => IGNORE_DIRS.has(p));
+    if (dir.split(path.sep).some((p) => IGNORE_DIRS.has(p))) return true;
+    const rel = path.relative(ROOT, dir).replace(/\\/g, '/');
+    return IGNORE_REL_DIRS.has(rel) || [...IGNORE_REL_DIRS].some((d) => rel.startsWith(d + '/'));
 }
 
 function shouldIgnoreFile(full) {

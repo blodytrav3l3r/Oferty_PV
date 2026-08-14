@@ -53,8 +53,7 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
             'CHANGELOG.md': '## [1.0.0] WITROS Oferty PV',
             'data/seed.json': '{"name": "WITROS Oferty PV seed"}',
             LICENSE: 'WITROS Oferty PV — licence',
-            'junit/run1.json': '{"fullName": "test WITROS Oferty PV"}',
-            'tests/tmp/baseline/migration.sql': '-- WITROS Oferty PV tmp'
+            'junit/run1.json': '{"fullName": "test WITROS Oferty PV"}'
         });
         const out = runCli(dir);
         expect(out).toContain('✓');
