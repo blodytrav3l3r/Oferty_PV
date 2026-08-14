@@ -38,7 +38,8 @@ const IGNORE_DIRS = new Set([
     'archive',
     'graphify-out',
     'data',
-    'junit'
+    'junit',
+    'tmp'
 ]);
 
 // Pliki pomijane po nazwie (basename)

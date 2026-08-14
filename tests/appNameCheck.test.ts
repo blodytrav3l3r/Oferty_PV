@@ -45,14 +45,16 @@ describe('check-appname — strażnik nazwy aplikacji (S.O.K.)', () => {
         expect(out).toContain('✓');
     });
 
-    it('pomija whitelistowane ścieżki (plans/archive, CHANGELOG, data/seed, LICENSE)', () => {
+    it('pomija whitelistowane ścieżki (plans/archive, CHANGELOG, data/seed, LICENSE, junit, tmp)', () => {
         const dir = makeFixture({
             'docs/plans/active.md': 'plan WITROS Oferty PV (roboczy)',
             'docs/plans/archive/stary.md': 'stary plan WITROS Oferty PV',
             'docs/adr/ADR-001.md': 'ADR WITROS Oferty PV',
             'CHANGELOG.md': '## [1.0.0] WITROS Oferty PV',
             'data/seed.json': '{"name": "WITROS Oferty PV seed"}',
-            LICENSE: 'WITROS Oferty PV — licence'
+            LICENSE: 'WITROS Oferty PV — licence',
+            'junit/run1.json': '{"fullName": "test WITROS Oferty PV"}',
+            'tests/tmp/baseline/migration.sql': '-- WITROS Oferty PV tmp'
         });
         const out = runCli(dir);
         expect(out).toContain('✓');

@@ -7,21 +7,21 @@
 
 ## Kontekst techniczny (ustalone fakty — zweryfikowane)
 
-| Fakt | Wartość |
-|---|---|
-| Baza prod `data/app_database.sqlite` | typ **`db push`**, **brak** `_prisma_migrations` |
-| Pliki `-wal` / `-shm` w `data/` | ⚠️ baza **otwarta przez aktywny proces** (backend działa) — `VACUUM INTO` bezpieczny przy aktywnym połączeniu; restart nie wymagany |
-| `data/tmp_shadow.sqlite` (606KB) | pozostałość po `migrate diff` — **ignorowana przez git** (`data/*.sqlite*`), ale zostaje śmieć na dysku; cleanup wymagany |
-| Migracje w repo | 14 katalogów (od `20260611000000_init` do `20260814000000_pz_element_key`) |
-| `install.bat` | `migrate deploy` → fallback `db push --accept-data-loss` (linie 119–125) — **tylko instalacyjny bootstrap** |
-| `ensure-db.bat` | zawsze `db push --skip-generate --accept-data-loss` (linia 35) — **start/prod path** |
-| Auto-heal w `src/app.ts` | indeksy telemetrii (363–366), feature-flag (390) — istnieją **tylko** z powodu ograniczeń `db push` |
-| Prisma | `^6.0.0` — `migrate resolve --applied` dostępne; `WITHOUT ROWID` w schemacie: **brak** |
-| Jest | 30.4.2 — **`--json --outputFile` wbudowane** (potwierdzone w help); `jest-junit` NIEPOTRZEBNY |
-| `scripts/restore-db.js` | ✅ istnieje (`npm run restore`) — testowalny |
-| Backup | `npm run backup` → `VACUUM INTO` → `data/backups/` |
-| CI actions | `checkout@v7`, `setup-node@v6` — **już użyte** w istniejącym `ci.yml` (potwierdzone, nie zmieniam) |
-| Audit | 4 fixy non-major (`body-parser`, `nanoid`, `ip-address`, `js-yaml`), `puppeteer` = major (nie w tym planie) |
+| Fakt                                 | Wartość                                                                                                                             |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Baza prod `data/app_database.sqlite` | typ **`db push`**, **brak** `_prisma_migrations`                                                                                    |
+| Pliki `-wal` / `-shm` w `data/`      | ⚠️ baza **otwarta przez aktywny proces** (backend działa) — `VACUUM INTO` bezpieczny przy aktywnym połączeniu; restart nie wymagany |
+| `data/tmp_shadow.sqlite` (606KB)     | pozostałość po `migrate diff` — **ignorowana przez git** (`data/*.sqlite*`), ale zostaje śmieć na dysku; cleanup wymagany           |
+| Migracje w repo                      | 14 katalogów (od `20260611000000_init` do `20260814000000_pz_element_key`)                                                          |
+| `install.bat`                        | `migrate deploy` → fallback `db push --accept-data-loss` (linie 119–125) — **tylko instalacyjny bootstrap**                         |
+| `ensure-db.bat`                      | zawsze `db push --skip-generate --accept-data-loss` (linia 35) — **start/prod path**                                                |
+| Auto-heal w `src/app.ts`             | indeksy telemetrii (363–366), feature-flag (390) — istnieją **tylko** z powodu ograniczeń `db push`                                 |
+| Prisma                               | `^6.0.0` — `migrate resolve --applied` dostępne; `WITHOUT ROWID` w schemacie: **brak**                                              |
+| Jest                                 | 30.4.2 — **`--json --outputFile` wbudowane** (potwierdzone w help); `jest-junit` NIEPOTRZEBNY                                       |
+| `scripts/restore-db.js`              | ✅ istnieje (`npm run restore`) — testowalny                                                                                        |
+| Backup                               | `npm run backup` → `VACUUM INTO` → `data/backups/`                                                                                  |
+| CI actions                           | `checkout@v7`, `setup-node@v6` — **już użyte** w istniejącym `ci.yml` (potwierdzone, nie zmieniam)                                  |
+| Audit                                | 4 fixy non-major (`body-parser`, `nanoid`, `ip-address`, `js-yaml`), `puppeteer` = major (nie w tym planie)                         |
 
 **Cel:** squash migracji do 1 baseline, konwersja prod przez `migrate resolve --applied` (addytywna — tylko metadane), flaky detection w CI (report, nie blokuje), zamknięcie podatności non-major.
 
@@ -115,10 +115,10 @@ baseline.sql ──→ świeża DB → migrate deploy ──diff──→ schema
 
 - Przyjmuje: ścieżkę bazy (default `data/app_database.sqlite`) + nazwę migracji baseline + opcjonalny **katalog projektu** (v4.9 — izolacja `tests/tmp/` dla testów; default = root repo)
 - **Hard guards — skrypt ODMOWIĄ działania przy:**
-  1. baza nie istnieje → `ERROR: database does not exist`
-  2. baseline nie istnieje → `ERROR: migration does not exist`
-  3. diff ≠ puste **poza FTS5** (v4.9 — ten sam filtr `nonFts5Changes` co GATE #1) → `ERROR: database schema differs from Prisma schema — REFUSING TO RESOLVE`
-  4. `_prisma_migrations` już istnieje → STOP (baza częściowo migration-managed — nie ślepe `resolve --applied`)
+    1. baza nie istnieje → `ERROR: database does not exist`
+    2. baseline nie istnieje → `ERROR: migration does not exist`
+    3. diff ≠ puste **poza FTS5** (v4.9 — ten sam filtr `nonFts5Changes` co GATE #1) → `ERROR: database schema differs from Prisma schema — REFUSING TO RESOLVE`
+    4. `_prisma_migrations` już istnieje → STOP (baza częściowo migration-managed — nie ślepe `resolve --applied`)
 - **Mechanizm env (kluczowe):** `prisma migrate resolve` czyta bazę z **env**, nie z argumentu → skrypt spawnuje CLI z `env: { ...process.env, DATABASE_URL: 'file:' + path.resolve(dbPath) }` + sanity (resolved path istnieje)
 - **Własny backup z jednoznaczną nazwą:** `backup_pre_baseline_<timestamp>.sqlite` przez `VACUUM INTO` — NIE kruche `ren` z wildcardem; trafia do `<katalog_projektu>/data/backups/`
 - **Cleanup shadow DB** po operacji (`data/tmp_shadow.sqlite`)
@@ -130,7 +130,7 @@ baseline.sql ──→ świeża DB → migrate deploy ──diff──→ schema
 ### A2b. COMMIT 3 — usunięcie 14 starych katalogów migracji
 
 - **Dopiero po zielonych testach A3/A4/A4.5/A4.6** (git zachowuje historię — to bezpieczne; squash konieczny, bo init+baseline na końcu = `CREATE TABLE` na istniejących = błąd deploy)
-- **Dokumentacja:** *„Usunięcie katalogów starych migracji jest zmianą historii Prisma, ale nie zmianą historii Git"* — Prisma będzie znała tylko `20260815000000_baseline`; to zamierzone i prawidłowe.
+- **Dokumentacja:** _„Usunięcie katalogów starych migracji jest zmianą historii Prisma, ale nie zmianą historii Git"_ — Prisma będzie znała tylko `20260815000000_baseline`; to zamierzone i prawidłowe.
 
 ### A3. Test automatyczny baseline — `tests/migrations/baseline.test.ts`
 
@@ -162,6 +162,7 @@ Scenariusz (symulacja bazy db-push, bez dotykania prod i repo — izolowany proj
 Scenariusz (legacy → baseline → KOLEJNA migracja) — **izolowany projekt Prisma:**
 
 - Test NIE modyfikuje `prisma/migrations/` w repo. Tworzy **tymczasowy katalog projektu Prisma**:
+
 ```
 tests/tmp/future-migration/
 ├── prisma/
@@ -170,13 +171,14 @@ tests/tmp/future-migration/
 │       ├── baseline/                      (kopia baseline)
 │       └── 20260816xxxxxx_test_migration/ (dodaje kolumnę testową)
 ```
+
 - Test używa workdir na temp katalog + osobny `DATABASE_URL`
 - Kroki:
-  1. Temp baza → `db push` (na schema z temp) + insert danych
-  2. `resolve --applied baseline`
-  3. `migrate deploy` → testowa migracja wykonana
-  4. `migrate status` = "up to date"
-  5. Asercje: nowa kolumna istnieje, dane legacy **nietknięte**
+    1. Temp baza → `db push` (na schema z temp) + insert danych
+    2. `resolve --applied baseline`
+    3. `migrate deploy` → testowa migracja wykonana
+    4. `migrate status` = "up to date"
+    5. Asercje: nowa kolumna istnieje, dane legacy **nietknięte**
 - Zyski: repo nietknięte, deterministyczny, bezpieczny dla równoległego wykonania, prosty cleanup
 - Testuje najważniejszy scenariusz produkcyjny: "stara baza oznaczona jako posiadająca baseline, a następna migracja normalnie się stosuje".
 
@@ -201,6 +203,7 @@ Weryfikuje model backupów v4.6 (M1): **pre-baseline = backup techniczny konwers
 **A6.0. Backup pre-baseline (v4.6 = BACKUP TECHNICZNY KONWERSJI, nie zwykły backup produkcyjny)** — tworzony **przez sam skrypt** (`db-to-migrations.mjs`) z jednoznaczną nazwą `backup_pre_baseline_<ts>.sqlite`. Wykonywany **PRZED** `resolve --applied`, więc **NIE posiada `_prisma_migrations`**. Przeznaczenie: **awaryjne cofnięcie PROCESU KONWERSJI (A6)** — nie jest celem standardowego `npm run restore` (który po R1 robi `migrate deploy`).
 
 **A6.1. Konwersja (atomowa) — z zatrzymanym backendem (R8):**
+
 ```
 1. backup pre-baseline (może przy aktywnym backendzie — VACUUM INTO live-safe)
 2. smoke pre-check (aplikacja działa, logowanie OK)
@@ -209,9 +212,11 @@ Weryfikuje model backupów v4.6 (M1): **pre-baseline = backup techniczny konwers
    → wewnątrz: backup-pre → diff sanity (pusty, hard guard) → migrate resolve --applied → migrate status raport
 5. PRAGMA integrity_check → migrate status → START backend → smoke post-check
 ```
+
 - **Dlaczego STOP przed `resolve` (R8, v4.6):** `resolve --applied` to **zapis metadanych** (`_prisma_migrations`), nie tylko odczyt. Jednorazowa operacja przejścia prod na nowy model migracji bez równoległego procesu aplikacji = prostsza sytuacja operacyjna. Koszt: kilka minut.
 
 **A6.2. Weryfikacja:**
+
 - `prisma migrate status` = "database schema is up to date", 1 migracja applied
 - **`PRAGMA integrity_check;` → oczekiwane `ok`** (tani dodatkowy gate — liczba tabel, liczba rekordów w krytycznych tabelach, `_prisma_migrations`, integralność)
 - Aplikacja startuje (`npm run dev:backend`), smoke test logowania
@@ -224,8 +229,8 @@ Weryfikuje model backupów v4.6 (M1): **pre-baseline = backup techniczny konwers
 - **R1 (restore-db.js):** po konwersji `scripts/restore-db.js` woła `migrate deploy` (nie `db push`), z flagą `--yes` (pomija readline "tak/nie"). **(Wykonane w commit 2 — PRZED A4.6, patrz sekcja R1/R1b.)**
 - **R1b (restore-db.js:40):** aktualizacja komunikatu WARN w bloku catch — `[WARN] Uruchom recznie: npx prisma db push --accept-data-loss` → `[WARN] Uruchom recznie: npx prisma migrate deploy` (spójność z R1).
 - **R3 (v4.6 — podział M1):**
-  - **R3a (rollback KONWERSJI, pre-baseline):** `backup_pre_baseline` = backup techniczny bez `_prisma_migrations`. Przywracanie: **kopia pliku** (schemat legacy już w bazie) → opcjonalnie `npx prisma db push --accept-data-loss` dla pewności. **NIE przez `npm run restore`** (od R1 używa `migrate deploy` — na legacy bazie `CREATE TABLE` na istniejących = fail).
-  - **R3b (rollback PRODUKCYJNY, post-baseline):** `npm run restore --yes data/backups/backup_<ts>.sqlite` (PO konwersji, migration-managed) → `migrate deploy` (schemat z migracji) → dane z backupu nietknięte → `prisma migrate status` = up to date.
+    - **R3a (rollback KONWERSJI, pre-baseline):** `backup_pre_baseline` = backup techniczny bez `_prisma_migrations`. Przywracanie: **kopia pliku** (schemat legacy już w bazie) → opcjonalnie `npx prisma db push --accept-data-loss` dla pewności. **NIE przez `npm run restore`** (od R1 używa `migrate deploy` — na legacy bazie `CREATE TABLE` na istniejących = fail).
+    - **R3b (rollback PRODUKCYJNY, post-baseline):** `npm run restore --yes data/backups/backup_<ts>.sqlite` (PO konwersji, migration-managed) → `migrate deploy` (schemat z migracji) → dane z backupu nietknięte → `prisma migrate status` = up to date.
 - **Ryzyko:** minimalne — `resolve` dotyka tylko metadanych; rollback konwersji przez R3a (kopia pre-baseline), rollback produkcyjny przez R3b (post-baseline) — każdy zweryfikowany testem A4.6 (scenariusze 1 i 2).
 
 ### A7. Aktualizacja skryptów startowych (DOPIERO po udanym A6)
@@ -235,6 +240,7 @@ Weryfikuje model backupów v4.6 (M1): **pre-baseline = backup techniczny konwers
 **A7b. (po udanym A6) — rozróżnienie instalacja vs start/prod:**
 
 - **`scripts/ensure-db.bat` (START/PROD):** twardy `migrate deploy` bez fallbacku:
+
 ```
 migrate deploy
      ↓
@@ -242,6 +248,7 @@ migrate deploy
      ↓
   błąd  → STOP + log + explicit errorlevel 1
 ```
+
 - **`install.bat` (INSTALACJA):** fallback `db push` **warunkowany legacy db-push** — patrz korekta v4.1 poniżej. `db push` NIGDY nie wraca do ścieżki startowej.
 - `db push` poza tym: development, testy CI, procedura awaryjna RĘCZNA (udokumentowana w `docs/DEPLOYMENT.md`).
 - **Manual smoke test `install.bat`:** czysta maszyna / czysta DB → `install.bat` → `migrate deploy` → seed → aplikacja startuje.
@@ -254,6 +261,7 @@ Obecny kod (`install.bat:116-126`) warunkuje `migrate deploy` od `if exist migra
 Fallback istniał dla bazy **legacy db-push** (tabele + dane, brak `_prisma_migrations`): `migrate deploy` widzi baseline jako pending → próbuje `CREATE TABLE` na istniejących → fail. Scenariusz: `install.bat --skip-seed` + restore starego backupu sprzed konwersji.
 
 Korekta — fallback **tylko gdy baza jest faktycznie legacy db-push** (brak `_prisma_migrations`). **Guard w OSOBNYM skrypcie `scripts/check-legacy-db.js`** (wzorzec `check-db.js`) — NIE inline `node -e` w .bat, bo podwójne cudzysłowy wewnątrz `node -e "..."` są kończone przez cmd.exe na pierwszym wewnętrznym `"` (kruchy quoting). Skrypt zwraca: exit 0 = baza migration-managed (`_prisma_migrations` istnieje), exit 1 = legacy db-push (brak `_prisma_migrations`).
+
 ```bat
 REM 8. Schema DB
 call npx prisma migrate deploy
@@ -270,6 +278,7 @@ if errorlevel 1 (
     )
 )
 ```
+
 - `db push` **tylko gdy:** `migrate deploy` fail ORAZ brak `_prisma_migrations` (baza legacy — nie ma historii do respektowania).
 - **Baza migration-managed + deploy fail → STOP** (nie maskuje problemu).
 - Po konwersji (A6) każda normalna ścieżka (start, świeża instalacja, restore nowego backupu) działa przez `migrate deploy` bez `db push`.
@@ -279,6 +288,7 @@ if errorlevel 1 (
 **Korekta v4.2 — dwuznaczny exit 1 w `check-db.js`:** `check-db.js` zwraca exit 1 **dla braku tabel LUB braku indeksów** (`idx_logs_well`/`idx_logs_source_well`). Po przejściu `ensure-db.bat` na `migrate deploy`: brak tabel → deploy tworzy z baseline ✅; brak indeksów → `migrate deploy` nic nie zrobi (wszystko applied) → pętla check_loop (3 próby) → błąd ⚠️. **Mitigacja:** A2 GATE #2 gwarantuje, że baseline **zawiera indeksy telemetrii** (`migration.sql` — jawna weryfikacja SQLite-specific); po udanym `migrate deploy` indeksy istnieją → `check-db` exit 0. Brak zmian w kodzie `check-db.js` (indeksy są w baseline, nie w check-db).
 
 **D1. (v4.4) Smoke A7b — dwa scenariusze (po A6):**
+
 - Świeża baza: `scripts/ensure-db.bat` → `migrate deploy` (baseline) → seed → exit 0.
 - Migration-managed: `scripts/ensure-db.bat` → `check-db` exit 0 → szybki exit (bez re-deploy).
 
@@ -287,6 +297,7 @@ if errorlevel 1 (
 **A7c. (v4.5) `install.sh:76-85` — korekta jak install.bat (Linux installer):**
 
 Ta sama luka co w `install.bat`: fallback `db push` uruchamiany **zawsze** przy istniejącym `migration_lock.toml`, nie sprawdza typu bazy. Korekta — reuse `scripts/check-legacy-db.js` (Node jest dostępny na Linuxie przez installer; **zero nowych plików .sh**):
+
 ```sh
 if [ -f "prisma/migrations/migration_lock.toml" ]; then
     log STEP "  prisma migrate deploy..."
@@ -303,22 +314,25 @@ else
     npx prisma db push --skip-generate --accept-data-loss
 fi
 ```
+
 - **`migration-managed + deploy fail → STOP`** (exit 1); fallback `db push` tylko dla legacy db-push.
 - **Weryfikacja:** `bash -n install.sh` + smoke na czystej bazie + smoke na legacy backup.
 
 **A7d. (v4.5) `scripts/docker-entrypoint.sh:33` — Docker PROD → `migrate deploy`:**
 
 `docker-entrypoint.sh` jest produkcyjną ścieżką startową kontenera (job `docker-build` + `deploy-production` w `ci.yml`, Render) — **obecnie `db push` bezwarunkowo co start** (linia 33). Zmiana: `npx prisma db push --skip-generate` → `npx prisma migrate deploy`, z zachowaniem kolejności:
+
 ```
 migrate-preco (linie 27-29) → migrate deploy (33) → symlink DB (37-39) → check-db + seed (43-53)
 ```
+
 - **Brak fallbacku** — kontenery efemeryczne: świeży wolumen → baseline tworzy schemat; migrowany wolumen → no-op. Legacy db-push wolumen (sprzed A6) → rollback ręczny (R3a — kopia pre-baseline).
 - **L1/L5 (v4.8 — korekta lokalizacji z v4.7):** aktualizacja komentarzy po przejściu na `migrate deploy`:
-  - `scripts/docker-entrypoint.sh:24` — `echo "...zostanie utworzona przez prisma db push."` → "migrate deploy"
-  - `scripts/docker-entrypoint.sh:27` — komentarz "przed prisma db push usuwa stare tabele" → "przed migrate deploy" (konsekwencja A7d, opcjonalne)
-  - `Dockerfile:32` — komentarz "i db push (docker-entrypoint.sh)" → "i migrate deploy (docker-entrypoint.sh)"
-  - (NOTA: to NIE Dockerfile:24 — tam jest `# Budujemy projekt`; tekst "zostanie utworzona przez prisma db push" jest w `docker-entrypoint.sh:24`. Korekta z v4.7.)
-  - Zero impaktu na build — tylko komentarze/echo.
+    - `scripts/docker-entrypoint.sh:24` — `echo "...zostanie utworzona przez prisma db push."` → "migrate deploy"
+    - `scripts/docker-entrypoint.sh:27` — komentarz "przed prisma db push usuwa stare tabele" → "przed migrate deploy" (konsekwencja A7d, opcjonalne)
+    - `Dockerfile:32` — komentarz "i db push (docker-entrypoint.sh)" → "i migrate deploy (docker-entrypoint.sh)"
+    - (NOTA: to NIE Dockerfile:24 — tam jest `# Budujemy projekt`; tekst "zostanie utworzona przez prisma db push" jest w `docker-entrypoint.sh:24`. Korekta z v4.7.)
+    - Zero impaktu na build — tylko komentarze/echo.
 - **Weryfikacja:** job `docker-build` health check + manual `docker run` ze świeżym wolumenem → `migrate status` = up to date.
 
 **A7e. (v4.5) `dev.sh:84-85` — jawne stwierdzenie (bez zmiany kodu):**
@@ -328,21 +342,21 @@ Linux dev ścieżka (`dev.sh`) **świadomie zostaje na `db push`** (dev dozwolon
 
 **D3. (v4.5) Dokumentacja — aktualizacja wzmianek o fallbacku `db push`:**
 
-Po A6 (po konwersji prod) zaktualizować sekcje "Aktualizacja istniejącej instalacji / typ bazy" — nowe sformułowanie: *"ścieżka domyślna = `migrate deploy`; `db push` tylko dla baz legacy (bez `_prisma_migrations`), ręcznie, `--accept-data-loss`"*. Zakres:
+Po A6 (po konwersji prod) zaktualizować sekcje "Aktualizacja istniejącej instalacji / typ bazy" — nowe sformułowanie: _"ścieżka domyślna = `migrate deploy`; `db push` tylko dla baz legacy (bez `_prisma_migrations`), ręcznie, `--accept-data-loss`"_. Zakres:
 
-| Plik | Zakres |
-|---|---|
-| `README.md` | linie 91, 113-114, 174, 193-194, 266, 270-271, 323-335 |
-| `CONTRIBUTING.md` | 129-141 (D2 już; uzupełnić o `install.sh`/`docker-entrypoint`) |
-| `AGENTS.md` | 347 |
-| `CLAUDE.md` | 67-71, 222 (check-db exit 1 → `migrate deploy`) |
-| `docs/DEPLOYMENT.md` | 45-46, 77, 201-202, 418, 431-445 (już w scope) |
-| `docs/INSTRUKCJA_SERWER.md` | 79-80, 97-98, 162-163 |
-| `docs/INSTALACJA_REFERENCJA.md` | 104, 136, 179, 234-238, 307-308, 407 |
-| `docs/BACKUP_RESTORE.md` | 33, 47-49, 65, 81 |
-| `docs/DATABASE.md` | 576, 634 |
-| `docs/SECURITY.md` | 289 |
-| `docs/instalacja-przenoszenie-systemu.md` | 8, 190-214, 237, 339-377, 410 |
+| Plik                                      | Zakres                                                         |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| `README.md`                               | linie 91, 113-114, 174, 193-194, 266, 270-271, 323-335         |
+| `CONTRIBUTING.md`                         | 129-141 (D2 już; uzupełnić o `install.sh`/`docker-entrypoint`) |
+| `AGENTS.md`                               | 347                                                            |
+| `CLAUDE.md`                               | 67-71, 222 (check-db exit 1 → `migrate deploy`)                |
+| `docs/DEPLOYMENT.md`                      | 45-46, 77, 201-202, 418, 431-445 (już w scope)                 |
+| `docs/INSTRUKCJA_SERWER.md`               | 79-80, 97-98, 162-163                                          |
+| `docs/INSTALACJA_REFERENCJA.md`           | 104, 136, 179, 234-238, 307-308, 407                           |
+| `docs/BACKUP_RESTORE.md`                  | 33, 47-49, 65, 81                                              |
+| `docs/DATABASE.md`                        | 576, 634                                                       |
+| `docs/SECURITY.md`                        | 289                                                            |
+| `docs/instalacja-przenoszenie-systemu.md` | 8, 190-214, 237, 339-377, 410                                  |
 
 - **Nie zmieniać markerów wersji** (tylko treść); po edycjach: `npm run version:check` EXIT=0, `npm run format`, `npm run encoding:check`.
 - **Weryfikacja:** grep `db push` w docs → tylko dozwolone legacy/awaryjne konteksty.
@@ -378,16 +392,16 @@ Po A6 (po konwersji prod) zaktualizować sekcje "Aktualizacja istniejącej insta
 - Wejście: 3 ścieżki JSON (`jest --json` output)
 - Grupuje przypadki po kluczu unikalności: `testFilePath + assertionResults[].fullName + (location?.line || '')` (pełny kontekst lokalizacji wymaga flagi `--testLocationInResults` w komendach `jest`)
 - **M2 (v4.6) — integralność raportu ≠ wynik testów:** walidacja struktury NIE zależy od `results.success` (Jest ustawia `success:false`, gdy jakikolwiek test fail — to NORMALNE; wymóg `success=true` uznałby run z flaky faiłem za INFRA FAIL i uniemożliwiłby wykrycie flaky):
-  ```
-  INTEGRALNOŚĆ (INFRA FAIL): plik istnieje + JSON parsuje + ma testResults + numTotalTests > 0
-  → po integralności: analiza assertionResults[].status (passed/failed/pending/skipped)
-  ```
+    ```
+    INTEGRALNOŚĆ (INFRA FAIL): plik istnieje + JSON parsuje + ma testResults + numTotalTests > 0
+    → po integralności: analiza assertionResults[].status (passed/failed/pending/skipped)
+    ```
 - **Kategorie (v4.6):**
-  - `INFRA FAIL` — brak pliku / nieparsowalny JSON / brak wymaganych pól / `numTotalTests == 0`
-  - `FLAKY` — test obecny we wszystkich 3 runach, statusy RÓŻNE (fail vs pass między przebiegami)
-  - `STABLE FAIL` — fail ×3 (to NIE flaky)
-  - `STABLE PASS` — pass ×3
-  - `MISSING / INCONSISTENT` (osobna kategoria, nie flaky) — test obecny tylko w 1-2 z 3 runów (test discovery, conditional test, worker crash, timeout infra — cenna informacja diagnostyczna)
+    - `INFRA FAIL` — brak pliku / nieparsowalny JSON / brak wymaganych pól / `numTotalTests == 0`
+    - `FLAKY` — test obecny we wszystkich 3 runach, statusy RÓŻNE (fail vs pass między przebiegami)
+    - `STABLE FAIL` — fail ×3 (to NIE flaky)
+    - `STABLE PASS` — pass ×3
+    - `MISSING / INCONSISTENT` (osobna kategoria, nie flaky) — test obecny tylko w 1-2 z 3 runów (test discovery, conditional test, worker crash, timeout infra — cenna informacja diagnostyczna)
 - Wyjście: lista flaky (test, przebiegi, ile razy fail) + sekcja missing/inconsistent; exit 0 zawsze (raport)
 - **Weryfikacja:** test `tests/scripts/flakyCompare.test.ts` — fixture: 3 JSON (2× pass, 1× fail) → flaky; 3× pass → brak; 3× fail → brak; warianty ze `skipped`, `pending`, `missing`, `numTotalTests == 0` (INFRA FAIL); run z `success:false` (flaky fail) → FLAKY, NIE INFRA FAIL
 
@@ -401,25 +415,25 @@ flaky-detect:
     if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     continue-on-error: true
     env:
-      DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+        DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '22'
-          cache: 'npm'
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npx prisma db push --skip-generate
-      - run: npx jest --no-coverage --json --outputFile=junit/run1.json --testLocationInResults --silent
-      - run: npx jest --no-coverage --json --outputFile=junit/run2.json --testLocationInResults --silent
-      - run: npx jest --no-coverage --json --outputFile=junit/run3.json --testLocationInResults --silent
-      - run: node scripts/flaky-compare.mjs junit/run1.json junit/run2.json junit/run3.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: flaky-report
-          path: junit/
-          retention-days: 30
+        - uses: actions/checkout@v7
+        - uses: actions/setup-node@v6
+          with:
+              node-version: '22'
+              cache: 'npm'
+        - run: npm ci
+        - run: npx prisma generate
+        - run: npx prisma db push --skip-generate
+        - run: npx jest --no-coverage --json --outputFile=junit/run1.json --testLocationInResults --silent
+        - run: npx jest --no-coverage --json --outputFile=junit/run2.json --testLocationInResults --silent
+        - run: npx jest --no-coverage --json --outputFile=junit/run3.json --testLocationInResults --silent
+        - run: node scripts/flaky-compare.mjs junit/run1.json junit/run2.json junit/run3.json
+        - uses: actions/upload-artifact@v4
+          with:
+              name: flaky-report
+              path: junit/
+              retention-days: 30
 ```
 
 - **M3 (v4.6) — niezależność od wyniku joba `test`:** `if: always() && github.event_name == 'push' && ...` — detektor uruchamia się **TAKŻE, gdy job `test` zakończy się porażką** (np. flaky test spowodował fail). W v4.5 sam warunek `github.event_name == 'push'` (bez `always()`) powodował, że przy padniętym `test` job `flaky-detect` w ogóle nie startował — dokładnie wtedy, gdy miał wykryć flaky. `continue-on-error: true` — raport nie blokuje merge (zgodnie z modelem report-only).
@@ -498,31 +512,31 @@ Po każdym commicie:
 
 ## Ryzyka i mitigacje (najważniejsze)
 
-| Ryzyko | Mitigacja |
-|---|---|
-| Dryf schema vs baza prod | **A1 GATE #1** (diff pusty, twardy STOP) + **A2 GATE #2** (baseline→fresh→schema pusty) — dwa niezależne dowody |
-| Utrata danych przy konwersji | `resolve --applied` nie dotyka danych + backup **pre-baseline w skrypcie, jednoznaczna nazwa** + testy A4/A4.5 weryfikują zachowanie danych + **A4.6 weryfikuje restore** |
-| Baseline niekompletny (auto-heal indeksy) | A2 GATE #2 + jawna weryfikacja SQLite-specific w `migration.sql` |
-| Utrata indeksów po konwersji (edge case L2) | `ensure-db.bat` z `migrate deploy` → no-op (baseline applied) → `check-db` exit 1 (brak indeksów) → pętla 3× → FAIL. **Mitigacja:** baseline zawiera indeksy (GATE #2); jeśli mimo to znikną (ręczne `DROP INDEX`, uszkodzenie): **restart serwera** uruchamia auto-heal w `app.ts:362-366` (idempotentne `CREATE INDEX IF NOT EXISTS`) → indeksy wracają → `check-db` exit 0. Ryzyko: bardzo niski edge case. |
-| Next migration po konwersji się nie stosuje | test A4.5 (legacy → baseline → future migration → deploy → status), izolowany projekt Prisma |
-| Fallback `db push` ukrywa problem migracji | **A7b (korekta v4.4)** — start/prod: `scripts/ensure-db.bat` → `migrate deploy` jedyna ścieżka; fallback w `install.bat` warunkowany legacy db-push (brak `_prisma_migrations`); `install.bat` zawsze w gałęzi migrate deploy (lockfile w repo) |
-| Docker prod zostaje na `db push` po A6 | **A7d** — `scripts/docker-entrypoint.sh` → `migrate deploy`; weryfikacja job `docker-build` health check |
-| Linux installer maskuje fail deploy | **A7c** — `install.sh` guard legacy (`check-legacy-db.js`) + STOP dla migration-managed |
-| Docs prowadzą w błąd po konwersji | **D3** — aktualizacja ~11 plików docs + `version:check`/`format`/`encoding:check` |
-| Skrypt konwersji działa na złej bazie | **A5 hard guards** (brak DB, brak baseline, non-empty diff, `_prisma_migrations` istnieje) + **env DATABASE_URL** (path.resolve) |
-| `prisma generate` EPERM (DLL w użyciu) | **C1.5b** — zatrzymać backend PRZED `npm ci`/`generate` (WAL potwierdzone otwarte); EPERM → ponowny `npm ci` po pełnym stopie |
-| `migrate diff` tworzy shadow DB | cleanup `data/tmp_shadow.sqlite` w A1/A5/A6 (plik ignorowany przez git, ale zostaje na dysku) |
-| Rollback po konwersji nie działa | **v4.6 M1/R3a/R3b:** pre-baseline (bez `_prisma_migrations`) = backup techniczny, rollback przez **kopię pliku** (nie `npm run restore`); post-baseline = normalny backup produkcyjny → `npm run restore --yes` → `migrate deploy`. Oba zweryfikowane testem A4.6 (scenariusze 1 i 2) |
-| Nowe instalacje po squash | A3 (migrate deploy na pustej bazie) + manual smoke `install.bat` (A7b) |
-| Usunięcie starych migracji za wcześnie | A2a → A5 → A2b — usunięcie dopiero po zielonych testach (A3/A4/A4.5/A4.6) |
-| Pliki JUnit/JSON nadpisane przez kolejne runy | **B3 osobny plik per run + hard verification (`test -f` ×3)** |
-| Flaky job spowalnia CI | report-mode, `continue-on-error`, test job bez zmian; 3× świadomy kompromis |
-| `npm audit fix` zmienia lockfile | C1.5: `npm ci` + `prisma generate` + `npm audit --omit=dev` PO install + `npm run validate` |
-| puppeteer vuln zostaje | świadoma decyzja — major bump osobno |
-| A4.5 modyfikuje repo | izolowany temp projekt Prisma (`tests/tmp/future-migration/`), `--schema` na temp |
-| `restore-db.js` woła `db push` po konwersji | **R1/R1b (commit 2, przed A4.6)** — `scripts/restore-db.js` → `migrate deploy` + `--yes`; rollback produkcyjny przez `npm run restore --yes` (R3b), konwersji przez R3a (kopia pre-baseline) |
-| Flaky job myli awarię infra z flaky | **F1 (v4.6)** — `flaky-compare.mjs` rozdziela `INFRA FAIL` (brak/uszkodzony JSON, `numTotalTests==0`) od `FLAKY` (fail w podzbiorze runów); integralność raportu ≠ `results.success` (run z failem ma `success:false` — normalne) |
-| Flaky job nie uruchamia się przy padniętym `test` | **M3 (v4.6)** — `if: always() && ...` — detektor startuje TAKŻE gdy job `test` failed (właśnie wtedy, gdy flaky) |
+| Ryzyko                                            | Mitigacja                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Dryf schema vs baza prod                          | **A1 GATE #1** (diff pusty, twardy STOP) + **A2 GATE #2** (baseline→fresh→schema pusty) — dwa niezależne dowody                                                                                                                                                                                                                                                                                                |
+| Utrata danych przy konwersji                      | `resolve --applied` nie dotyka danych + backup **pre-baseline w skrypcie, jednoznaczna nazwa** + testy A4/A4.5 weryfikują zachowanie danych + **A4.6 weryfikuje restore**                                                                                                                                                                                                                                      |
+| Baseline niekompletny (auto-heal indeksy)         | A2 GATE #2 + jawna weryfikacja SQLite-specific w `migration.sql`                                                                                                                                                                                                                                                                                                                                               |
+| Utrata indeksów po konwersji (edge case L2)       | `ensure-db.bat` z `migrate deploy` → no-op (baseline applied) → `check-db` exit 1 (brak indeksów) → pętla 3× → FAIL. **Mitigacja:** baseline zawiera indeksy (GATE #2); jeśli mimo to znikną (ręczne `DROP INDEX`, uszkodzenie): **restart serwera** uruchamia auto-heal w `app.ts:362-366` (idempotentne `CREATE INDEX IF NOT EXISTS`) → indeksy wracają → `check-db` exit 0. Ryzyko: bardzo niski edge case. |
+| Next migration po konwersji się nie stosuje       | test A4.5 (legacy → baseline → future migration → deploy → status), izolowany projekt Prisma                                                                                                                                                                                                                                                                                                                   |
+| Fallback `db push` ukrywa problem migracji        | **A7b (korekta v4.4)** — start/prod: `scripts/ensure-db.bat` → `migrate deploy` jedyna ścieżka; fallback w `install.bat` warunkowany legacy db-push (brak `_prisma_migrations`); `install.bat` zawsze w gałęzi migrate deploy (lockfile w repo)                                                                                                                                                                |
+| Docker prod zostaje na `db push` po A6            | **A7d** — `scripts/docker-entrypoint.sh` → `migrate deploy`; weryfikacja job `docker-build` health check                                                                                                                                                                                                                                                                                                       |
+| Linux installer maskuje fail deploy               | **A7c** — `install.sh` guard legacy (`check-legacy-db.js`) + STOP dla migration-managed                                                                                                                                                                                                                                                                                                                        |
+| Docs prowadzą w błąd po konwersji                 | **D3** — aktualizacja ~11 plików docs + `version:check`/`format`/`encoding:check`                                                                                                                                                                                                                                                                                                                              |
+| Skrypt konwersji działa na złej bazie             | **A5 hard guards** (brak DB, brak baseline, non-empty diff, `_prisma_migrations` istnieje) + **env DATABASE_URL** (path.resolve)                                                                                                                                                                                                                                                                               |
+| `prisma generate` EPERM (DLL w użyciu)            | **C1.5b** — zatrzymać backend PRZED `npm ci`/`generate` (WAL potwierdzone otwarte); EPERM → ponowny `npm ci` po pełnym stopie                                                                                                                                                                                                                                                                                  |
+| `migrate diff` tworzy shadow DB                   | cleanup `data/tmp_shadow.sqlite` w A1/A5/A6 (plik ignorowany przez git, ale zostaje na dysku)                                                                                                                                                                                                                                                                                                                  |
+| Rollback po konwersji nie działa                  | **v4.6 M1/R3a/R3b:** pre-baseline (bez `_prisma_migrations`) = backup techniczny, rollback przez **kopię pliku** (nie `npm run restore`); post-baseline = normalny backup produkcyjny → `npm run restore --yes` → `migrate deploy`. Oba zweryfikowane testem A4.6 (scenariusze 1 i 2)                                                                                                                          |
+| Nowe instalacje po squash                         | A3 (migrate deploy na pustej bazie) + manual smoke `install.bat` (A7b)                                                                                                                                                                                                                                                                                                                                         |
+| Usunięcie starych migracji za wcześnie            | A2a → A5 → A2b — usunięcie dopiero po zielonych testach (A3/A4/A4.5/A4.6)                                                                                                                                                                                                                                                                                                                                      |
+| Pliki JUnit/JSON nadpisane przez kolejne runy     | **B3 osobny plik per run + hard verification (`test -f` ×3)**                                                                                                                                                                                                                                                                                                                                                  |
+| Flaky job spowalnia CI                            | report-mode, `continue-on-error`, test job bez zmian; 3× świadomy kompromis                                                                                                                                                                                                                                                                                                                                    |
+| `npm audit fix` zmienia lockfile                  | C1.5: `npm ci` + `prisma generate` + `npm audit --omit=dev` PO install + `npm run validate`                                                                                                                                                                                                                                                                                                                    |
+| puppeteer vuln zostaje                            | świadoma decyzja — major bump osobno                                                                                                                                                                                                                                                                                                                                                                           |
+| A4.5 modyfikuje repo                              | izolowany temp projekt Prisma (`tests/tmp/future-migration/`), `--schema` na temp                                                                                                                                                                                                                                                                                                                              |
+| `restore-db.js` woła `db push` po konwersji       | **R1/R1b (commit 2, przed A4.6)** — `scripts/restore-db.js` → `migrate deploy` + `--yes`; rollback produkcyjny przez `npm run restore --yes` (R3b), konwersji przez R3a (kopia pre-baseline)                                                                                                                                                                                                                   |
+| Flaky job myli awarię infra z flaky               | **F1 (v4.6)** — `flaky-compare.mjs` rozdziela `INFRA FAIL` (brak/uszkodzony JSON, `numTotalTests==0`) od `FLAKY` (fail w podzbiorze runów); integralność raportu ≠ `results.success` (run z failem ma `success:false` — normalne)                                                                                                                                                                              |
+| Flaky job nie uruchamia się przy padniętym `test` | **M3 (v4.6)** — `if: always() && ...` — detektor startuje TAKŻE gdy job `test` failed (właśnie wtedy, gdy flaky)                                                                                                                                                                                                                                                                                               |
 
 ---
 
