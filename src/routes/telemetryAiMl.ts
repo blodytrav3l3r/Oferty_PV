@@ -26,6 +26,16 @@ import {
 
 const router = Router();
 
+/**
+ * #2 audyt MLOps: generyczny komunikat 500, pełny szczegół błędu tylko w logu —
+ * nie wycieka wewnętrzny błąd Prisma/DB do klienta (baza błędów, escape privacy).
+ */
+function sendInternalError(res: Response, scope: string, e: unknown): void {
+    const msg = e instanceof Error ? e.message : String(e);
+    logger.error(scope, `Blad wewnetrzny: ${msg}`);
+    res.status(500).json({ error: 'Wewnetrzny blad serwera' });
+}
+
 /* ===== BATCH PREDICT ===== */
 
 const batchCandidateSchema = z.object({
@@ -356,9 +366,7 @@ router.get(
                 items
             });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            logger.error('AiWellSelections', `Blad agregacji studni AI: ${msg}`);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiWellSelections', e);
         }
     }
 );
@@ -376,8 +384,7 @@ router.get('/ai/settings', requireAuth, READ_LIMITER, async (_req: Request, res:
             description: 'Poziom wplywu AI na dobor elementow studni (0-100, 0=shadow)'
         });
     } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+        sendInternalError(res, 'AiMlRoute', e);
     }
 });
 
@@ -411,8 +418,7 @@ router.post(
             });
             res.json({ key: 'wells_ai_influence', value: String(pct) });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -492,8 +498,7 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             }
         });
     } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+        sendInternalError(res, 'AiMlRoute', e);
     }
 });
 
@@ -526,8 +531,7 @@ router.get('/ai/kb-suggestions', requireAuth, READ_LIMITER, async (req: Request,
             })
         });
     } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+        sendInternalError(res, 'AiMlRoute', e);
     }
 });
 
@@ -621,8 +625,7 @@ router.get(
                 }
             });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -637,8 +640,7 @@ router.get(
             const models = await modelRegistry.listModels(50);
             res.json({ models });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -666,7 +668,7 @@ router.delete(
                 res.status(400).json({ error: msg });
                 return;
             }
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -695,7 +697,7 @@ router.post(
                 res.status(400).json({ error: msg });
                 return;
             }
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -712,8 +714,7 @@ router.get(
             const { buildDriftReport } = await import('../services/ml/driftService');
             res.json(await buildDriftReport());
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -796,8 +797,7 @@ router.post('/ai/train', requireAuth, requireAdmin, WRITE_LIMITER, async (req, r
         });
         res.json(result);
     } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        res.status(500).json({ error: msg });
+        sendInternalError(res, 'AiMlRoute', e);
     }
 });
 
@@ -820,8 +820,7 @@ router.get(
                 features: importances
             });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -855,8 +854,7 @@ router.post(
             });
             res.json({ rolledBack: !!previous, model: previous });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -875,8 +873,7 @@ router.get(
             });
             res.json({ runs });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -897,8 +894,7 @@ router.get(
             }
             res.json({ run });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -918,8 +914,7 @@ router.get(
             }
             res.json({ model: record });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );
@@ -957,8 +952,7 @@ router.get(
                 recentCount: scores.length
             });
         } catch (e) {
-            const msg = e instanceof Error ? e.message : String(e);
-            res.status(500).json({ error: msg });
+            sendInternalError(res, 'AiMlRoute', e);
         }
     }
 );

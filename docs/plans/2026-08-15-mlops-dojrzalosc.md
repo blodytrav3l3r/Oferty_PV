@@ -200,7 +200,7 @@ AUC +0.015 ✓ | PR-AUC +0.020 ✓ | LogLoss +0.001 ✓ | ECE +0.08 ✗  →  br
 
 `bestAuc` historyczny tylko jako kontekst w runie (`comparedAgainstVersion` = aktualny PRODUCTION). Antychatter: margines 0.01 — niewielkie wahania nie wywołują deploy/rollback.
 
-Niespełnienie → `FAILED_VALIDATION` + model zostaje CANDIDATE bez wdrożenia.
+Niespełnienie → `FAILED_VALIDATION` + model zostaje REJECTED bez wdrożenia (spójnie z sekcją Statusy treningu i 2.5).
 
 ### 2.4 Drift — monitoring wszystkich 29 cech, top-5 tylko prezentacja
 

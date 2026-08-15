@@ -18,7 +18,12 @@ import {
     type FeatureDistribution
 } from './featureDistributions';
 import { AcceptanceModel } from './AcceptanceModel';
-import { computeRocAuc, oneHotEncode } from './TrainingPipeline';
+import {
+    computeRocAuc,
+    oneHotEncode,
+    aggregateTransitionFeatures,
+    type TransitionAggregates
+} from './TrainingPipeline';
 import { ML_CONSTANTS } from '../../config/mlConstants';
 import type { StoredModel } from './ModelRegistry';
 
@@ -65,6 +70,26 @@ export async function computeFeatureDrift(
         take: WINDOW
     });
 
+    // Agregaty przejść (transition*) — ten sam join co trening: ai_transition_snapshots
+    // gdzie configId == aiFeature.telemetryId (TrainingPipeline.loadAndNormalizeFeatures).
+    // Brak snapshotów dla danego configId = brak przejść = cecha 0 (spójnie z treningiem).
+    const transIds = features.map((f) => f.telemetryId).filter(Boolean) as string[];
+    const transRows = await prisma.ai_transition_snapshots.findMany({
+        where: transIds.length > 0 ? { configId: { in: transIds } } : { configId: { in: [''] } }
+    });
+    const groups = new Map<string, Array<(typeof transRows)[number]>>();
+    for (const row of transRows) {
+        if (!row.configId) continue;
+        const group = groups.get(row.configId) || [];
+        group.push(row);
+        groups.set(row.configId, group);
+    }
+    const transAggByConfig = new Map<string, TransitionAggregates>();
+    for (const [configId, group] of groups) {
+        const agg = aggregateTransitionFeatures(group);
+        if (agg) transAggByConfig.set(configId, agg);
+    }
+
     const entries: FeatureDriftEntry[] = [];
     for (const name of Object.keys(baseline.features)) {
         const dist = baseline.features[name];
@@ -75,7 +100,11 @@ export async function computeFeatureDrift(
         const range = max - min || 1;
         const currentValues: number[] = [];
         for (const f of features) {
-            const raw = rawFeatureValue(f, name);
+            const raw = rawFeatureValue(
+                f,
+                name,
+                f.telemetryId ? transAggByConfig.get(f.telemetryId) : undefined
+            );
             if (raw == null) continue;
             currentValues.push((raw - min) / range);
         }
@@ -287,10 +316,15 @@ export async function buildDriftReport(): Promise<DriftReport> {
     }
 }
 
-/** Jedna cecha FEATURE_NAMES → wartość z rekordu aiFeature (ten sam wymiar co wektor). */
-function rawFeatureValue(
+/**
+ * Jedna cecha FEATURE_NAMES → wartość z rekordu aiFeature (ten sam wymiar co wektor).
+ * Agregaty przejść (transition*) pobierane z transAgg (join z ai_transition_snapshots,
+ * spójnie z treningiem) — brak przejść = 0, nigdy null.
+ */
+export function rawFeatureValue(
     f: Awaited<ReturnType<typeof prisma.aiFeature.findMany>>[number],
-    name: string
+    name: string,
+    transAgg?: TransitionAggregates | null
 ): number | null {
     const kineta = String(f.kinetaType ?? '').toLowerCase();
     switch (name) {
@@ -346,10 +380,26 @@ function rawFeatureValue(
         case 'maxTransitionDnMm':
         case 'minTransitionHeightMm':
         case 'maxTransitionHeightMm':
-        case 'avgTransitionHeightMm':
-            // Agregaty przejść żyją w ai_transition_snapshots (join po telemetryId) —
-            // aiFeature nie ma tych kolumn; PSI dla nich pomijane.
-            return null;
+        case 'avgTransitionHeightMm': {
+            // Agregaty przejść z ai_transition_snapshots (join po telemetryId==configId).
+            // Brak przejść (brak snapshotów / brak telemetryId) = 0 — identyczna semantyka
+            // jak trening (oneHotEncode default 0). Nigdy null.
+            const agg = transAgg ?? null;
+            switch (name) {
+                case 'transitionCount':
+                    return agg?.transitionCount ?? 0;
+                case 'maxTransitionDnMm':
+                    return agg?.maxTransitionDnMm ?? 0;
+                case 'minTransitionHeightMm':
+                    return agg?.minTransitionHeightMm ?? 0;
+                case 'maxTransitionHeightMm':
+                    return agg?.maxTransitionHeightMm ?? 0;
+                case 'avgTransitionHeightMm':
+                    return agg?.avgTransitionHeightMm ?? 0;
+                default:
+                    return 0;
+            }
+        }
         default:
             return null;
     }

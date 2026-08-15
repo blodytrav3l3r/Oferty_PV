@@ -15,6 +15,9 @@ jest.mock('../../src/prismaClient', () => {
         aiFeature: {
             findMany: (...args: any[]) => mockFindMany(...args)
         },
+        ai_transition_snapshots: {
+            findMany: (...args: any[]) => mockFindMany(...args)
+        },
         aiRewardLog: {
             findMany: (...args: any[]) => mockFindMany(...args)
         },
@@ -40,12 +43,15 @@ import {
     computeFeatureDrift,
     computePredictionDrift,
     computeLabelDrift,
-    computeShadowStats
+    computeShadowStats,
+    rawFeatureValue
 } from '../../src/services/ml/driftService';
 import type { StoredModel } from '../../src/services/ml/ModelRegistry';
+import type { TransitionAggregates } from '../../src/services/ml/TrainingPipeline';
 
 interface AiFeatureRow {
     id: string;
+    telemetryId: string | null;
     createdAt: string;
     label: string;
     dn: number;
@@ -54,6 +60,7 @@ interface AiFeatureRow {
     wellType: string;
     hasReduction: boolean;
     hasPsiaBuda: boolean;
+    hasStyczna: boolean;
     ringCount: number;
     connectionCount: number;
     transitionsAboveDennica: number;
@@ -65,11 +72,14 @@ interface AiFeatureRow {
     topType: string;
     kinetaType: string | null;
     dennicaHeight: number | null;
+    reward: number;
+    decisionMs: number | null;
 }
 
 function makeFeature(overrides: Partial<AiFeatureRow>): AiFeatureRow {
     return {
         id: 'f-1',
+        telemetryId: null,
         createdAt: new Date(Date.UTC(2026, 6, 1)).toISOString(),
         label: 'ACCEPTED',
         dn: 1000,
@@ -78,6 +88,7 @@ function makeFeature(overrides: Partial<AiFeatureRow>): AiFeatureRow {
         wellType: 'standard',
         hasReduction: false,
         hasPsiaBuda: false,
+        hasStyczna: false,
         ringCount: 2,
         connectionCount: 1,
         transitionsAboveDennica: 0,
@@ -89,6 +100,8 @@ function makeFeature(overrides: Partial<AiFeatureRow>): AiFeatureRow {
         topType: 'standard',
         kinetaType: 'preco',
         dennicaHeight: 100,
+        reward: 0,
+        decisionMs: null,
         ...overrides
     };
 }
@@ -128,6 +141,8 @@ function makeBaselineModel(): StoredModel {
 beforeEach(() => {
     mockFindMany.mockReset();
     mockFindFirst.mockReset();
+    // Domyślny fallback: dodatkowe zapytania (ai_transition_snapshots) zwracają [].
+    mockFindMany.mockResolvedValue([]);
 });
 
 describe('computeFeatureDrift', () => {
@@ -168,6 +183,77 @@ describe('computeFeatureDrift', () => {
         expect(report[0].feature).toBe(sorted[0].feature);
         const dn = report.find((e) => e.feature === 'dn');
         expect(dn!.psi!).toBeGreaterThan(0.5);
+    });
+
+    it('transition* nie kończą jako null — agregaty z ai_transition_snapshots (join telemetryId==configId)', async () => {
+        const model = makeBaselineModel();
+        const features = [makeFeature({ id: 'f-1', telemetryId: 't-1' })];
+        const snaps = [
+            { configId: 't-1', dn: '1200', heightFromBottomMm: 300 },
+            { configId: 't-1', dn: '800', heightFromBottomMm: 500 }
+        ];
+        mockFindMany.mockResolvedValueOnce(features); // aiFeature
+        mockFindMany.mockResolvedValueOnce(snaps); // ai_transition_snapshots
+        const report = await computeFeatureDrift(model);
+        const byName = new Map(report.map((e) => [e.feature, e.psi]));
+        const transitionFeatures = [
+            'transitionCount',
+            'maxTransitionDnMm',
+            'minTransitionHeightMm',
+            'maxTransitionHeightMm',
+            'avgTransitionHeightMm'
+        ];
+        for (const name of transitionFeatures) {
+            expect(byName.has(name)).toBe(true);
+            expect(byName.get(name)).not.toBeNull();
+        }
+    });
+
+    it('transition* zwracają 0 (nie null) gdy brak snapshotów dla telemetryId', async () => {
+        const model = makeBaselineModel();
+        const features = [makeFeature({ id: 'f-1', telemetryId: 't-1' })];
+        mockFindMany.mockResolvedValueOnce(features); // aiFeature
+        mockFindMany.mockResolvedValueOnce([]); // brak snapshotów
+        const report = await computeFeatureDrift(model);
+        const byName = new Map(report.map((e) => [e.feature, e.psi]));
+        for (const name of [
+            'transitionCount',
+            'maxTransitionDnMm',
+            'minTransitionHeightMm',
+            'maxTransitionHeightMm',
+            'avgTransitionHeightMm'
+        ]) {
+            expect(byName.has(name)).toBe(true);
+            expect(byName.get(name)).not.toBeNull();
+        }
+    });
+});
+
+describe('rawFeatureValue (transition*)', () => {
+    const agg: TransitionAggregates = {
+        transitionCount: 2,
+        maxTransitionDnMm: 1200,
+        minTransitionHeightMm: 300,
+        maxTransitionHeightMm: 500,
+        avgTransitionHeightMm: 400
+    };
+
+    it('zwraca agregat (nie null) dla wszystkich 5 cech przejść gdy transAgg podany', () => {
+        const f = makeFeature({ telemetryId: 't-1' });
+        expect(rawFeatureValue(f, 'transitionCount', agg)).toBe(2);
+        expect(rawFeatureValue(f, 'maxTransitionDnMm', agg)).toBe(1200);
+        expect(rawFeatureValue(f, 'minTransitionHeightMm', agg)).toBe(300);
+        expect(rawFeatureValue(f, 'maxTransitionHeightMm', agg)).toBe(500);
+        expect(rawFeatureValue(f, 'avgTransitionHeightMm', agg)).toBe(400);
+    });
+
+    it('zwraca 0 (nie null) gdy brak transAgg — semantyka spójna z treningiem', () => {
+        const f = makeFeature({ telemetryId: 't-1' });
+        expect(rawFeatureValue(f, 'transitionCount')).toBe(0);
+        expect(rawFeatureValue(f, 'maxTransitionDnMm')).toBe(0);
+        expect(rawFeatureValue(f, 'minTransitionHeightMm')).toBe(0);
+        expect(rawFeatureValue(f, 'maxTransitionHeightMm')).toBe(0);
+        expect(rawFeatureValue(f, 'avgTransitionHeightMm')).toBe(0);
     });
 });
 
