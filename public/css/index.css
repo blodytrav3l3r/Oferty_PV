@@ -1528,35 +1528,58 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ── ML Pipeline grid (maks. 2 rzędy: 4 + 4 kafelki) ── */
-.ai-ml-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 8px;
+/* ── ML stats groups (logiczny podział kafelków) ── */
+.ai-ml-group {
     margin-bottom: 16px;
+}
+
+.ai-ml-group-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.ai-ml-group-label i,
+.ai-ml-group-label svg {
+    color: var(--accent);
+}
+
+.ai-ml-group-grid {
+    display: grid;
+    gap: 8px;
     width: 100%;
     --stat-val-size: 1.1rem;
 }
 
-.ai-ml-stats-grid .ai-stat-card {
-    grid-column: span 3;
+.ai-ml-col-5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.ai-ml-col-3 {
+    grid-template-columns: repeat(3, 1fr);
 }
 
 @media (max-width: 768px) {
-    .ai-ml-stats-grid .ai-stat-card {
-        grid-column: span 6;
+    .ai-ml-col-5 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .ai-ml-col-3 {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 480px) {
-    .ai-ml-stats-grid .ai-stat-card {
-        grid-column: span 12;
+    .ai-ml-col-5,
+    .ai-ml-col-3 {
+        grid-template-columns: 1fr;
     }
-}
-
-.ai-ml-stats-grid .ai-stat-card > div:first-child {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 /* ── ML status header ── */

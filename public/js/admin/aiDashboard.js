@@ -360,127 +360,149 @@
                     Number.isFinite(Number(status.activeModelAuc))
                         ? Number(status.activeModelAuc) - baselineAccuracy
                         : null;
+                var mlGroup = function (label, gridClass, cards) {
+                    return (
+                        '<div class="ai-ml-group">' +
+                        '<div class="ai-ml-group-label"><i data-lucide="circle" style="width:6px;height:6px;fill:currentColor"></i>' +
+                        window.escapeHtml(label) +
+                        '</div>' +
+                        '<div class="ai-ml-group-grid ' +
+                        gridClass +
+                        '">' +
+                        cards.join('') +
+                        '</div>' +
+                        '</div>'
+                    );
+                };
                 var html =
                     '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
-                    '<div class="ai-ml-stats-grid">' +
-                    statCard(
-                        'Status',
-                        statusBadge(online),
-                        online ? 'var(--success)' : 'var(--danger)',
-                        "Status pipeline'a ML — online (działa) lub offline (wyłączony)"
-                    ) +
-                    statCard(
-                        'Wersja modelu',
-                        window.escapeHtml(activeVer) + activeAuc,
-                        'var(--accent2)',
-                        'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
-                        activeVer +
-                            (status.activeModelAuc != null ? ' AUC ' + status.activeModelAuc : '')
-                    ) +
-                    statCard(
-                        'Baseline vs Model',
-                        baselineVsModel == null
-                            ? '—'
-                            : (baselineVsModel >= 0 ? '+' : '') +
-                                  baselineVsModel.toFixed(2) +
-                                  ' pp',
-                        baselineVsModel == null
-                            ? 'var(--text-muted)'
-                            : baselineVsModel >= 0
-                              ? 'var(--success)'
-                              : 'var(--danger)',
-                        'Różnica AUC aktywnego modelu względem baseline accuracy (majority-class, max(positiveRate, 1-positiveRate) z ostatniego treningu) w punktach procentowych',
-                        baselineAccuracy != null
-                            ? 'Baseline accuracy: ' +
-                                  baselineAccuracy.toFixed(4) +
-                                  ' (majority-class). Model AUC: ' +
-                                  (status.activeModelAuc != null
-                                      ? Number(status.activeModelAuc).toFixed(4)
-                                      : '—')
-                            : 'Brak baseline accuracy — brak udanego treningu z metryką'
-                    ) +
-                    statCard(
-                        'PR-AUC',
-                        fmt(m.prAuc),
-                        'var(--accent)',
-                        'Precision-Recall AUC — jakość przy niezbalansowanych danych (im wyżej, tym lepiej)'
-                    ) +
-                    statCard(
-                        'F1',
-                        fmt(m.f1),
-                        'var(--accent-hover)',
-                        'Harmoniczna średnia precyzji i czułości'
-                    ) +
-                    statCard(
-                        'LogLoss',
-                        fmt(m.logLoss),
-                        m.logLoss != null && Number(m.logLoss) <= 1.0
-                            ? 'var(--success)'
-                            : 'var(--warn)',
-                        'Strata logarytmiczna — kalibracja prawdopodobieństw (im niżej, tym lepiej, ≤1.0 zalecane)'
-                    ) +
-                    statCard(
-                        'ECE (Calibration)',
-                        fmt(m.ece),
-                        m.ece != null && Number(m.ece) <= 0.25 ? 'var(--success)' : 'var(--warn)',
-                        'Expected Calibration Error — odchylenie predykcji od rzeczywistych proporcji (≤0.25 zalecane)'
-                    ) +
-                    statCard(
-                        'Data wdrożenia',
-                        (status.activeModelCreatedAt || '—').slice(0, 10),
-                        'var(--accent-hover)',
-                        'Kiedy aktywny model został wdrożony'
-                    ) +
-                    statCard(
-                        'Liczba modeli',
-                        status.modelCount,
-                        'var(--accent-hover)',
-                        'Zapisane modele ML',
-                        status.retention
-                            ? 'Zapisane modele ML: ' +
-                                  status.modelCount +
-                                  '. Limit retencji: ' +
-                                  status.retention.keepLast +
-                                  ' ostatnich + ' +
-                                  status.retention.keepBest +
-                                  ' najlepszych.'
-                            : 'Zapisane modele ML'
-                    ) +
-                    statCard(
-                        'Dane treningowe (oznaczone)',
-                        status.labeledCount + ' / ' + status.featureCount,
-                        status.labeledCount >= 100 ? 'var(--success)' : 'var(--warn)',
-                        'Wektory z sygnałem użytkownika (ACCEPTED/ACCEPTED_AFTER_MODIFICATION/REJECTED/MODIFIED) na tle wszystkich. ' +
-                            'NO_FEEDBACK jest odrzucane przy treningu — sam surowy licznik może mylić.',
-                        'ACCEPTED: ' +
-                            status.labelCounts.accepted +
-                            ', REJECTED: ' +
-                            status.labelCounts.rejected +
-                            ', MODIFIED: ' +
-                            status.labelCounts.modified +
-                            ', NO_FEEDBACK: ' +
-                            status.labelCounts.noFeedback +
-                            '. Próg treningu: min. 100 oznaczonych.'
-                    ) +
-                    statCard(
-                        'Trening trwa',
-                        status.trainingRunning ? 'Tak' : 'Nie',
-                        status.trainingRunning ? 'var(--warn)' : 'var(--success)',
-                        'Czy w tej chwili trwa trenowanie modelu'
-                    ) +
-                    statCard(
-                        'Nagrody (reward)',
-                        status.totalRewards || 0,
-                        'var(--cyan)',
-                        'Suma nagród (reward) zebranych przez model za trafne predykcje'
-                    ) +
-                    statCard(
-                        'Cache predykcji',
-                        status.cacheSize || 0,
-                        'var(--text-muted)',
-                        "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
-                    ) +
-                    '</div>' +
+                    mlGroup('Status i model', 'ai-ml-col-5', [
+                        statCard(
+                            'Status',
+                            statusBadge(online),
+                            online ? 'var(--success)' : 'var(--danger)',
+                            "Status pipeline'a ML — online (działa) lub offline (wyłączony)"
+                        ),
+                        statCard(
+                            'Wersja modelu',
+                            window.escapeHtml(activeVer) + activeAuc,
+                            'var(--accent2)',
+                            'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
+                            activeVer +
+                                (status.activeModelAuc != null
+                                    ? ' AUC ' + status.activeModelAuc
+                                    : '')
+                        ),
+                        statCard(
+                            'Data wdrożenia',
+                            (status.activeModelCreatedAt || '—').slice(0, 10),
+                            'var(--accent-hover)',
+                            'Kiedy aktywny model został wdrożony'
+                        ),
+                        statCard(
+                            'Liczba modeli',
+                            status.modelCount,
+                            'var(--accent-hover)',
+                            'Zapisane modele ML',
+                            status.retention
+                                ? 'Zapisane modele ML: ' +
+                                      status.modelCount +
+                                      '. Limit retencji: ' +
+                                      status.retention.keepLast +
+                                      ' ostatnich + ' +
+                                      status.retention.keepBest +
+                                      ' najlepszych.'
+                                : 'Zapisane modele ML'
+                        ),
+                        statCard(
+                            'Trening trwa',
+                            status.trainingRunning ? 'Tak' : 'Nie',
+                            status.trainingRunning ? 'var(--warn)' : 'var(--success)',
+                            'Czy w tej chwili trwa trenowanie modelu'
+                        )
+                    ]) +
+                    mlGroup('Jakość predykcji', 'ai-ml-col-5', [
+                        statCard(
+                            'Baseline vs Model',
+                            baselineVsModel == null
+                                ? '—'
+                                : (baselineVsModel >= 0 ? '+' : '') +
+                                      baselineVsModel.toFixed(2) +
+                                      ' pp',
+                            baselineVsModel == null
+                                ? 'var(--text-muted)'
+                                : baselineVsModel >= 0
+                                  ? 'var(--success)'
+                                  : 'var(--danger)',
+                            'Różnica AUC aktywnego modelu względem baseline accuracy (majority-class, max(positiveRate, 1-positiveRate) z ostatniego treningu) w punktach procentowych',
+                            baselineAccuracy != null
+                                ? 'Baseline accuracy: ' +
+                                      baselineAccuracy.toFixed(4) +
+                                      ' (majority-class). Model AUC: ' +
+                                      (status.activeModelAuc != null
+                                          ? Number(status.activeModelAuc).toFixed(4)
+                                          : '—')
+                                : 'Brak baseline accuracy — brak udanego treningu z metryką'
+                        ),
+                        statCard(
+                            'PR-AUC',
+                            fmt(m.prAuc),
+                            'var(--accent)',
+                            'Precision-Recall AUC — jakość przy niezbalansowanych danych (im wyżej, tym lepiej)'
+                        ),
+                        statCard(
+                            'F1',
+                            fmt(m.f1),
+                            'var(--accent-hover)',
+                            'Harmoniczna średnia precyzji i czułości'
+                        ),
+                        statCard(
+                            'LogLoss',
+                            fmt(m.logLoss),
+                            m.logLoss != null && Number(m.logLoss) <= 1.0
+                                ? 'var(--success)'
+                                : 'var(--warn)',
+                            'Strata logarytmiczna — kalibracja prawdopodobieństw (im niżej, tym lepiej, ≤1.0 zalecane)'
+                        ),
+                        statCard(
+                            'ECE (Calibration)',
+                            fmt(m.ece),
+                            m.ece != null && Number(m.ece) <= 0.25
+                                ? 'var(--success)'
+                                : 'var(--warn)',
+                            'Expected Calibration Error — odchylenie predykcji od rzeczywistych proporcji (≤0.25 zalecane)'
+                        )
+                    ]) +
+                    mlGroup('Dane i operacje', 'ai-ml-col-3', [
+                        statCard(
+                            'Dane treningowe (oznaczone)',
+                            status.labeledCount + ' / ' + status.featureCount,
+                            status.labeledCount >= 100 ? 'var(--success)' : 'var(--warn)',
+                            'Wektory z sygnałem użytkownika (ACCEPTED/ACCEPTED_AFTER_MODIFICATION/REJECTED/MODIFIED) na tle wszystkich. ' +
+                                'NO_FEEDBACK jest odrzucane przy treningu — sam surowy licznik może mylić.',
+                            'ACCEPTED: ' +
+                                status.labelCounts.accepted +
+                                ', REJECTED: ' +
+                                status.labelCounts.rejected +
+                                ', MODIFIED: ' +
+                                status.labelCounts.modified +
+                                ', NO_FEEDBACK: ' +
+                                status.labelCounts.noFeedback +
+                                '. Próg treningu: min. 100 oznaczonych.'
+                        ),
+                        statCard(
+                            'Nagrody (reward)',
+                            status.totalRewards || 0,
+                            'var(--cyan)',
+                            'Suma nagród (reward) zebranych przez model za trafne predykcje'
+                        ),
+                        statCard(
+                            'Cache predykcji',
+                            status.cacheSize || 0,
+                            'var(--text-muted)',
+                            "Rozmiar cache'a predykcji w pamięci (liczba zapisanych wyników)"
+                        )
+                    ]) +
                     '<div class="ai-influence-widget">' +
                     '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
                     '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +
