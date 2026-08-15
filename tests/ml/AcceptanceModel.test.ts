@@ -9,7 +9,12 @@
  */
 
 import { describe, expect, it } from '@jest/globals';
-import { AcceptanceModel } from '../../src/services/ml/AcceptanceModel';
+import {
+    AcceptanceModel,
+    TrainingDivergenceError,
+    TrainingNumericalError,
+    TrainingTimeoutError
+} from '../../src/services/ml/AcceptanceModel';
 
 describe('AcceptanceModel', () => {
     describe('sigmoid', () => {
@@ -141,6 +146,60 @@ describe('AcceptanceModel', () => {
             model.train(dataset, 0.1, 10000, 0.01);
             expect(model.predict([1, 1])).toBeGreaterThan(0.5);
             expect(model.predict([0, 0])).toBeLessThan(0.5);
+        });
+    });
+
+    describe('guardraile numeryczne (ETAP 3)', () => {
+        const dataset = [
+            { features: [0, 0], label: 0, weight: 1 },
+            { features: [0, 1], label: 0, weight: 1 },
+            { features: [1, 0], label: 0, weight: 1 },
+            { features: [1, 1], label: 1, weight: 1 }
+        ];
+
+        it('rzuca TrainingNumericalError przy NaN w wagach', () => {
+            const model = new AcceptanceModel(2);
+            // NaN przez ustawienie bias — pojedyncza epoka zepsuje model
+            (model as unknown as { bias: number }).bias = NaN;
+            expect(() =>
+                model.train(dataset, 0.1, 10000, 0.01, { divergenceEpochs: 1000 })
+            ).toThrow(TrainingNumericalError);
+        });
+
+        it('rzuca TrainingDivergenceError po N kolejnych epokach ponad próg', () => {
+            const model = new AcceptanceModel(2);
+            // Sprzeczne dane (ten sam features → obie klasy) + wysoki LR = loss
+            // nie może spaść i oscyluje w górę — divergence pewna, deterministyczna.
+            const contradictory = [
+                { features: [0, 0], label: 1, weight: 1 },
+                { features: [0, 0], label: 0, weight: 1 },
+                { features: [1, 1], label: 1, weight: 1 },
+                { features: [1, 1], label: 0, weight: 1 }
+            ];
+            expect(() =>
+                model.train(contradictory, 1.0, 5000, 0.01, {
+                    divergenceThreshold: 0.001,
+                    divergenceEpochs: 3
+                })
+            ).toThrow(TrainingDivergenceError);
+        });
+
+        it('rzuca TrainingTimeoutError gdy deadline przekroczony', () => {
+            const model = new AcceptanceModel(2);
+            const deadline = Date.now() - 1000; // już minął
+            expect(() => model.train(dataset, 0.1, 100000, 0.01, { deadline })).toThrow(
+                TrainingTimeoutError
+            );
+        });
+
+        it('onEpoch raportuje postęp per epoka', () => {
+            const model = new AcceptanceModel(2);
+            const losses: number[] = [];
+            model.train(dataset, 0.1, 500, 0.01, {
+                onEpoch: (_epoch, avgLoss) => losses.push(avgLoss)
+            });
+            expect(losses.length).toBeGreaterThan(0);
+            expect(losses.every((l) => Number.isFinite(l))).toBe(true);
         });
     });
 

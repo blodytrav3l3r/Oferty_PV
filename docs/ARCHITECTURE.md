@@ -199,6 +199,9 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
   (`orderBy createdAt desc` + `take TRAINING_BATCH_SIZE` + `reverse()`), znacznik
   `lastTrainedAt` (zamiast `lastFeatureCount`), bramka nowych danych
   `newCount = count(createdAt > lastTrainedAt)`.
+- **Paradygmat uczenia** (`src/services/ml/SelfEvaluation.ts`, `RewardCalculator.ts`):
+  feedback-based learning — model uczy się z decyzji użytkownika (accept/reject/modify)
+  i samooceny AUC; nie jest to reinforcement learning (brak state/action/policy/update rule).
 - **Retencja rejestru modeli ML** (`src/services/ml/ModelRegistry.ts` — `pruneOldModels`):
   po każdym `saveModel` oraz przy starcie serwera rejestr `AiModel` jest przycinany do
   polityki `ML_CONFIG.retention` (`src/services/ml/trainingConfig.ts`, domyślnie

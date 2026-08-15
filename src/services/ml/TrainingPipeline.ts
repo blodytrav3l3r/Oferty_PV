@@ -1,7 +1,14 @@
 import prisma from '../../prismaClient';
+import crypto from 'crypto';
 import { logger } from '../../utils/logger';
-import { AcceptanceModel } from './AcceptanceModel';
-import { modelRegistry, type ModelMetrics } from './ModelRegistry';
+import {
+    AcceptanceModel,
+    TrainingDivergenceError,
+    TrainingNumericalError,
+    TrainingTimeoutError
+} from './AcceptanceModel';
+import { modelRegistry, type ModelMetrics, type StoredModel } from './ModelRegistry';
+import { AiModelState } from './aiModelState';
 import {
     featureExtractor,
     normalizeWarehouse,
@@ -10,6 +17,44 @@ import {
 } from './FeatureExtractor';
 import { ML_CONFIG } from './trainingConfig';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
+import {
+    computeBrier,
+    computeConfusion,
+    computeEce,
+    computeLogLoss,
+    computePrAuc
+} from './metrics';
+import { buildFeatureDistributions } from './featureDistributions';
+
+// Semantyka statusów treningu (plan MLOps):
+// RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
+// - SKIPPED: normalny wynik (za mało danych/klas/testu) — to NIE jest błąd.
+// - FAILED_VALIDATION: trening się udał, model POWSTAŁ, ale nie przeszedł guardraili deploy.
+// - FAILED_TIMEOUT: cooperative cancellation (deadline sprawdzany co epokę).
+export const TRAINING_STATUS = {
+    RUNNING: 'RUNNING',
+    SUCCESS: 'SUCCESS',
+    SKIPPED: 'SKIPPED',
+    FAILED_NUMERICAL: 'FAILED_NUMERICAL',
+    FAILED_VALIDATION: 'FAILED_VALIDATION',
+    FAILED_TIMEOUT: 'FAILED_TIMEOUT',
+    FAILED_ERROR: 'FAILED_ERROR'
+} as const;
+
+export const SEED = 42;
+
+/**
+ * Fingerprint datasetu treningowego: SHA-256 nad SORTOWANYMI rekordami.
+ * Sortowanie przed hashowaniem — ten sam dataset daje ten sam fingerprint
+ * niezależnie od kolejności zwróconej przez DB.
+ */
+export function computeDatasetFingerprint(
+    records: Array<{ id: string; timestamp: string; label: string }>,
+    featureVersion: string
+): string {
+    const lines = records.map((r) => `${r.id}|${r.timestamp}|${r.label}|${featureVersion}`).sort();
+    return crypto.createHash('sha256').update(lines.join('\n'), 'utf8').digest('hex');
+}
 
 function applyForgetting(exampleAgeDays: number): number {
     const lambda = 0.01;
@@ -174,7 +219,81 @@ export class TrainingPipeline {
         }
         const release = await this.acquire();
         this.running = true;
+
+        // Run audit — jeden wiersz AiTrainingRun na każdy przebieg (też SKIPPED).
+        const runId = crypto.randomUUID();
+        const startedAt = new Date().toISOString();
+        let datasetSize = 0;
+        let trainSize = 0;
+        let valSize = 0;
+        let testSize = 0;
+        let candidateModelVersion: string | null = null;
+        let comparedAgainstVersion: string | null = null;
+        let metricsJson: string | null = null;
+        let baselineAccuracy: number | null = null;
+        let positiveRate: number | null = null;
+        let deployed = false;
+        let deploymentReason: string | null = null;
+        let errorMsg: string | null = null;
+        let fingerprint: string | null = null;
+        let datasetStartAt: string | null = null;
+        let datasetEndAt: string | null = null;
+        let status: string = TRAINING_STATUS.RUNNING;
+
+        const finish = async (
+            s: string,
+            reason?: string
+        ): Promise<{ trained: boolean; reason: string }> => {
+            status = s;
+            if (reason) errorMsg = reason;
+            try {
+                await prisma.aiTrainingRun.update({
+                    where: { id: runId },
+                    data: {
+                        status,
+                        finishedAt: new Date().toISOString(),
+                        datasetSize,
+                        trainSize,
+                        validationSize: valSize,
+                        testSize,
+                        candidateModelVersion,
+                        comparedAgainstVersion,
+                        datasetStartAt,
+                        datasetEndAt,
+                        datasetFingerprint: fingerprint,
+                        metrics: metricsJson,
+                        baselineAccuracy,
+                        positiveRate,
+                        deployed,
+                        deploymentReason,
+                        error: errorMsg
+                    }
+                });
+            } catch (e) {
+                logger.error(
+                    'TrainingPipeline',
+                    `Błąd zapisu AiTrainingRun ${runId}: ${e instanceof Error ? e.message : String(e)}`
+                );
+            }
+            return { trained: false, reason: errorMsg || s };
+        };
+
         try {
+            await prisma.aiTrainingRun.create({
+                data: {
+                    id: runId,
+                    startedAt,
+                    status,
+                    datasetSize: 0,
+                    trainSize: 0,
+                    validationSize: 0,
+                    testSize: 0,
+                    featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    seed: SEED,
+                    deployed: false
+                }
+            });
+
             await featureExtractor.extractAndStore();
             // Feedback (accept/reject/modify) często nadchodzi PO ekstrakcji cech.
             // Re-synchronizuj etykiety, żeby trening miał klasę negatywną (bez niej
@@ -198,7 +317,7 @@ export class TrainingPipeline {
                     'TrainingPipeline',
                     `Za mało danych: ${features.length} < ${ML_CONFIG.minFeatureCountForTraining}`
                 );
-                return { trained: false, reason: `insufficient_data:${features.length}` };
+                return finish(TRAINING_STATUS.SKIPPED, `insufficient_data:${features.length}`);
             }
 
             const latestAt = features.length > 0 ? features[features.length - 1].createdAt : null;
@@ -212,14 +331,56 @@ export class TrainingPipeline {
                     'TrainingPipeline',
                     `Za mało nowych danych: ${newCount} < ${ML_CONFIG.minNewRecordsForTraining}`
                 );
-                return { trained: false, reason: `insufficient_new_data:${newCount}` };
+                return finish(TRAINING_STATUS.SKIPPED, `insufficient_new_data:${newCount}`);
             }
 
-            const { normalized, mins, maxs, dim } = await this.loadAndNormalizeFeatures(features);
+            const { normalized, mins, maxs, dim, records } =
+                await this.loadAndNormalizeFeatures(features);
 
-            const splitIdx = Math.floor(normalized.length * 0.8);
-            const trainSet = normalized.slice(0, splitIdx);
-            const valSet = normalized.slice(splitIdx);
+            // ===== Split 70/15/15 chronologiczny =====
+            // TRAIN (najstarsze) → VALIDATION → TEST (najnowsze).
+            const n = normalized.length;
+            const trainIdx = Math.floor(n * 0.7);
+            const valIdx = Math.floor(n * 0.85);
+            const trainSet = normalized.slice(0, trainIdx);
+            const valSet = normalized.slice(trainIdx, valIdx);
+            const testSet = normalized.slice(valIdx);
+
+            // Guardy minimalnych rozmiarów — niespełnienie → SKIPPED (nie błąd).
+            trainSize = trainSet.length;
+            valSize = valSet.length;
+            testSize = testSet.length;
+            datasetSize = n;
+
+            const testPositive = testSet.filter((ex) => ex.label === 1).length;
+            const testNegative = testSet.length - testPositive;
+            const guardFail =
+                n < ML_CONFIG.minDatasetForSplit ||
+                trainSize < ML_CONFIG.minTrain ||
+                valSize < ML_CONFIG.minVal ||
+                testSize < ML_CONFIG.minTest ||
+                testPositive < ML_CONFIG.minTestPositive ||
+                testNegative < ML_CONFIG.minTestNegative;
+            if (guardFail) {
+                logger.info(
+                    'TrainingPipeline',
+                    `Guard rozmiaru nie przeszedł (n=${n}, train=${trainSize}, val=${valSize}, test=${testSize}, testPos=${testPositive}, testNeg=${testNegative}) — SKIPPED`
+                );
+                return finish(
+                    TRAINING_STATUS.SKIPPED,
+                    `split_guard:dataset=${n},train=${trainSize},val=${valSize},test=${testSize},testPos=${testPositive},testNeg=${testNegative}`
+                );
+            }
+
+            // Fingerprint datasetu (z rekordów po filtrze NO_FEEDBACK) + zakres czasowy.
+            if (records.length > 0) {
+                fingerprint = computeDatasetFingerprint(
+                    records.map((r) => ({ id: r.id, timestamp: r.createdAt, label: r.label })),
+                    ML_CONSTANTS.FEATURE_VERSION
+                );
+                datasetStartAt = records[0].createdAt;
+                datasetEndAt = records[records.length - 1].createdAt;
+            }
 
             // Guarda balansu klas: model trenowany na jednej klasie (np. same
             // ACCEPTED) daje zdegenerowane predykcje ~1.0 i AUC=0.5 — nie ma
@@ -232,36 +393,68 @@ export class TrainingPipeline {
                     'TrainingPipeline',
                     `Brak balansu klas (train=${trainClasses.size}, val=${valClasses.size}) — pomijam trening`
                 );
-                return {
-                    trained: false,
-                    reason: `insufficient_label_diversity:train=${trainClasses.size},val=${valClasses.size}`
-                };
+                return finish(
+                    TRAINING_STATUS.SKIPPED,
+                    `insufficient_label_diversity:train=${trainClasses.size},val=${valClasses.size}`
+                );
             }
 
             const model = new AcceptanceModel(dim);
             model.train(
                 trainSet.map((ex) => ({ features: ex.vec, label: ex.label, weight: ex.weight })),
                 0.01,
-                5000
+                5000,
+                0.01,
+                {
+                    // Timeout: cooperative cancellation — deadline sprawdzany co epokę
+                    deadline: Date.now() + ML_CONFIG.maxTrainingDurationMs,
+                    divergenceThreshold: ML_CONFIG.divergenceThreshold,
+                    divergenceEpochs: ML_CONFIG.divergenceEpochs
+                }
             );
 
-            const metrics = this.evaluateModel(model, valSet, trainSet.length);
+            // TEST — wyłącznie końcowa, niezależna ocena. NIE wpływa na tuning,
+            // thresholdy, wybór modelu ani decyzję o treningu/deploy.
+            const metrics = this.evaluateModel(model, valSet, testSet, trainSet.length);
 
-            const bestAuc = await modelRegistry.getBestAuc();
-            const isFirstModel = bestAuc < 0;
-            // Pierwszy model nie może być wdrożony z AUC=0.5 (gorzej niż losowe) —
-            // wymagamy wartości wyraźnie powyżej losowej, zanim zacznie wpływać
-            // na ranking (wells_ai_influence). Kolejne modele porównujemy z bestAuc.
-            const meetsMinAuc = !isFirstModel || metrics.rocAuc > 0.5;
-            const shouldDeploy =
-                meetsMinAuc &&
-                (bestAuc < 0 || metrics.rocAuc >= bestAuc + ML_CONFIG.deployAucImprovement);
-            if (!shouldDeploy) {
+            // Baseline: accuracy klasyfikatora majority-class (ETAP 5).
+            // positiveRate = częstotliwość klasy pozytywnej w TRAIN (osobno
+            // przydatna w label drift). Porównanie model vs baseline w dashboardzie.
+            const trainPositives = trainSet.filter((ex) => ex.label === 1).length;
+            const positiveRateValue = trainPositives / trainSet.length;
+            baselineAccuracy = Math.max(positiveRateValue, 1 - positiveRateValue);
+            positiveRate = positiveRateValue;
+
+            // Guardrail deploy (ETAP 5): porównanie z aktualnym PRODUCTION,
+            // NIE z historycznym best. Pierwszy model (brak PRODUCTION) → tylko
+            // absolutne progi; kolejne → absolutne + relatywne (brak regresji).
+            const productionModel = await modelRegistry.getProductionModel();
+            comparedAgainstVersion = productionModel?.version ?? null;
+            const isFirstModel = productionModel == null;
+
+            const gate = this.evaluateDeployGuard(metrics, productionModel, isFirstModel);
+            if (!gate.ok) {
                 logger.info(
                     'TrainingPipeline',
-                    `Nowy model AUC=${metrics.rocAuc} nie kwalifikuje się do wdrożenia (best=${bestAuc}, minAucRequired=${isFirstModel ? '>0.5' : bestAuc + '+' + ML_CONFIG.deployAucImprovement})`
+                    `Kandydat nie przeszedł guardrailu deploy (${gate.reason}) — FAILED_VALIDATION, REJECTED`
                 );
-                return { trained: false, reason: `auc_insufficient:${metrics.rocAuc.toFixed(4)}` };
+                // Model POWSTAŁ (trening się udał) — zapisujemy go jako REJECTED,
+                // żeby miał ślad w rejestrze i nie wpływał na ranking (active=false).
+                const rejectedVersion = await modelRegistry.saveModel(
+                    model,
+                    metrics,
+                    FEATURE_NAMES,
+                    mins,
+                    maxs,
+                    false,
+                    `REJECTED przez guardrail: ${gate.reason}`,
+                    AiModelState.REJECTED,
+                    this.buildFeatureDistributionsJson(trainSet)
+                );
+                candidateModelVersion = rejectedVersion;
+                deployed = false;
+                deploymentReason = gate.reason;
+                return finish(TRAINING_STATUS.FAILED_VALIDATION, `${gate.code}:${gate.reason}`);
             }
 
             const version = await modelRegistry.saveModel(
@@ -270,21 +463,108 @@ export class TrainingPipeline {
                 FEATURE_NAMES,
                 mins,
                 maxs,
-                true
+                true,
+                undefined,
+                AiModelState.PRODUCTION,
+                this.buildFeatureDistributionsJson(trainSet)
             );
+            candidateModelVersion = version;
+            deployed = true;
+            deploymentReason = gate.reason;
             this.lastTrainedAt = latestAt;
             logger.info(
                 'TrainingPipeline',
                 `Wytrenowano i wdrożono ${version} (auc=${metrics.rocAuc})`
             );
-            return { trained: true, version, metrics };
+            return finish(TRAINING_STATUS.SUCCESS, undefined).then(() => ({
+                trained: true,
+                version,
+                metrics
+            }));
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
-            logger.error('TrainingPipeline', `Błąd treningu: ${msg}`);
-            return { trained: false, reason: `error:${msg}` };
+            // Guardraile numeryczne (ETAP 3) — specyficzne statusy zamiast FAILED_ERROR.
+            let status: string = TRAINING_STATUS.FAILED_ERROR;
+            if (e instanceof TrainingNumericalError) status = TRAINING_STATUS.FAILED_NUMERICAL;
+            else if (e instanceof TrainingTimeoutError) status = TRAINING_STATUS.FAILED_TIMEOUT;
+            else if (e instanceof TrainingDivergenceError)
+                status = TRAINING_STATUS.FAILED_VALIDATION;
+            logger.error('TrainingPipeline', `${status}: ${msg}`);
+            await finish(status, `${status.toLowerCase()}:${msg}`);
+            return { trained: false, reason: `${status.toLowerCase()}:${msg}` };
         } finally {
             this.running = false;
             release();
+        }
+    }
+
+    /**
+     * Guardrail deploy (ETAP 5). Zasada braku regresji: NIE wdrażaj, jeśli
+     * dowolna krytyczna metryka istotnie się pogorszyła, nawet gdy ROC-AUC wzrósł.
+     *
+     * Pierwszy model (brak PRODUCTION): absolutne progi (minAuc/minPrAuc/maxLogLoss/maxEce).
+     * Kolejne: absolutne + relatywne vs aktualny PRODUCTION:
+     *   rocAuc >= production.rocAuc + deployAucImprovement
+     *   logLoss <= production.logLoss + maxLogLossRegression
+     *   ece     <= production.ece     + maxEceRegression
+     */
+    private evaluateDeployGuard(
+        metrics: ModelMetrics,
+        production: StoredModel | null,
+        isFirstModel: boolean
+    ): { ok: boolean; reason: string; code: string } {
+        const abs =
+            metrics.rocAuc >= ML_CONFIG.minAuc &&
+            (metrics.prAuc ?? -1) >= ML_CONFIG.minPrAuc &&
+            (metrics.logLoss ?? Infinity) <= ML_CONFIG.maxLogLoss &&
+            (metrics.ece ?? Infinity) <= ML_CONFIG.maxEce;
+        if (!abs) {
+            const reason = `auc=${metrics.rocAuc.toFixed(4)},prAuc=${metrics.prAuc ?? 'null'},logLoss=${metrics.logLoss ?? 'null'},ece=${metrics.ece ?? 'null'} (wymagane minAuc=${ML_CONFIG.minAuc},minPrAuc=${ML_CONFIG.minPrAuc},maxLogLoss=${ML_CONFIG.maxLogLoss},maxEce=${ML_CONFIG.maxEce})`;
+            return { ok: false, reason, code: 'deploy_abs_insufficient' };
+        }
+        if (isFirstModel) return { ok: true, reason: 'first_model_abs_progi', code: 'ok' };
+        if (production == null) {
+            return {
+                ok: false,
+                reason: 'brak produkcji mimo isFirstModel=false',
+                code: 'no_production'
+            };
+        }
+
+        const relAuc = metrics.rocAuc >= production.metrics.rocAuc + ML_CONFIG.deployAucImprovement;
+        const relLogLoss =
+            production.metrics.logLoss == null ||
+            (metrics.logLoss ?? Infinity) <=
+                production.metrics.logLoss + ML_CONFIG.maxLogLossRegression;
+        const relEce =
+            production.metrics.ece == null ||
+            (metrics.ece ?? Infinity) <= production.metrics.ece + ML_CONFIG.maxEceRegression;
+        if (!relAuc || !relLogLoss || !relEce) {
+            const reason = `vs PRODUCTION ${production.version}: auc=${metrics.rocAuc.toFixed(4)} (wym. >=${(production.metrics.rocAuc + ML_CONFIG.deployAucImprovement).toFixed(4)}), logLoss=${metrics.logLoss ?? 'null'} (wym. <=${production.metrics.logLoss == null ? 'n/d' : (production.metrics.logLoss + ML_CONFIG.maxLogLossRegression).toFixed(4)}), ece=${metrics.ece ?? 'null'} (wym. <=${production.metrics.ece == null ? 'n/d' : (production.metrics.ece + ML_CONFIG.maxEceRegression).toFixed(4)})`;
+            return { ok: false, reason, code: 'deploy_rel_regression' };
+        }
+        return { ok: true, reason: 'guardrail_ok_vs_production', code: 'ok' };
+    }
+
+    /**
+     * Baseline driftu cech: histogramy liczone WYŁĄCZNIE z TRAIN (nigdy
+     * validation/test) — baseline nie może być skażony danymi spoza treningu.
+     */
+    private buildFeatureDistributionsJson(
+        trainSet: Array<{ vec: number[]; label: number; weight: number }>
+    ): string | null {
+        try {
+            const dist = buildFeatureDistributions(
+                FEATURE_NAMES,
+                trainSet.map((ex) => ex.vec)
+            );
+            return JSON.stringify(dist);
+        } catch (e) {
+            logger.error(
+                'TrainingPipeline',
+                `Błąd budowy featureDistributions: ${e instanceof Error ? e.message : String(e)}`
+            );
+            return null;
         }
     }
 
@@ -295,6 +575,7 @@ export class TrainingPipeline {
         mins: number[];
         maxs: number[];
         dim: number;
+        records: Array<{ id: string; createdAt: string; label: string }>;
     }> {
         // Cechy przejść: agregaty z ai_transition_snapshots (configId == telemetryId).
         const transIds = features.map((f) => f.telemetryId).filter(Boolean) as string[];
@@ -372,12 +653,17 @@ export class TrainingPipeline {
                 applyForgetting(ex.ageDays) * labelToTrainingWeight(ex.featureLabel as FeatureLabel)
         }));
 
-        return { normalized, mins, maxs, dim };
+        const records = features
+            .filter((f) => f.label !== 'NO_FEEDBACK')
+            .map((f) => ({ id: f.id, createdAt: f.createdAt, label: f.label }));
+
+        return { normalized, mins, maxs, dim, records };
     }
 
     private evaluateModel(
         model: AcceptanceModel,
         valSet: Array<{ vec: number[]; label: number; weight: number }>,
+        testSet: Array<{ vec: number[]; label: number; weight: number }>,
         trainSize: number
     ): ModelMetrics {
         const valPredictions = valSet.map((ex) => model.predict(ex.vec));
@@ -400,12 +686,31 @@ export class TrainingPipeline {
         const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0;
         const rocAuc = computeRocAuc(valPredictions, valLabels);
 
+        // TEST: wyłącznie końcowa, niezależna ocena (testRocAuc).
+        const testPredictions = testSet.map((ex) => model.predict(ex.vec));
+        const testLabels = testSet.map((ex) => ex.label);
+        const testRocAuc = computeRocAuc(testPredictions, testLabels);
+
+        // ETAP 4: metryki uzupełniające na zbiorze walidacyjnym.
+        // Matematycznie nieokreślone → null (nigdy NaN/Inf).
+        const prAuc = computePrAuc(valPredictions, valLabels);
+        const logLoss = computeLogLoss(valPredictions, valLabels);
+        const brierScore = computeBrier(valPredictions, valLabels);
+        const ece = computeEce(valPredictions, valLabels);
+        const confusion = computeConfusion(valPredictions, valLabels);
+
         return {
             accuracy: parseFloat(accuracy.toFixed(4)),
             precision: parseFloat(precision.toFixed(4)),
             recall: parseFloat(recall.toFixed(4)),
             f1: parseFloat(f1.toFixed(4)),
             rocAuc,
+            testRocAuc,
+            prAuc,
+            logLoss,
+            brierScore,
+            ece,
+            confusion,
             trainSize,
             valSize: valSet.length
         };

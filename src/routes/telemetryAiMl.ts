@@ -437,10 +437,36 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             where: { key: 'wells_ai_influence' }
         });
 
+        const activeMetrics = (activeModel?.metrics || {}) as {
+            rocAuc?: number | null;
+            prAuc?: number | null;
+            f1?: number | null;
+            logLoss?: number | null;
+            ece?: number | null;
+        };
+
+        // Baseline accuracy (plan 2.2): max(positiveRate, 1-positiveRate) z
+        // ostatniego udanego treningu (AiTrainingRun.baselineAccuracy) — porównanie
+        // model vs baseline majority-class, nie AUC vs 0.5.
+        const lastSuccessRun = await prisma.aiTrainingRun.findFirst({
+            where: { status: 'SUCCESS', baselineAccuracy: { not: null } },
+            orderBy: { startedAt: 'desc' }
+        });
+        const baselineAccuracy = lastSuccessRun?.baselineAccuracy ?? null;
+
         res.json({
             mlOnline: !!activeModel,
             modelVersion: activeModel?.version || null,
             activeModelAuc: activeModel?.metrics?.rocAuc ?? null,
+            baselineAccuracy,
+            activeModelMetrics: {
+                rocAuc: activeMetrics.rocAuc ?? null,
+                prAuc: activeMetrics.prAuc ?? null,
+                f1: activeMetrics.f1 ?? null,
+                logLoss: activeMetrics.logLoss ?? null,
+                ece: activeMetrics.ece ?? null
+            },
+            activeModelState: activeModel?.state || null,
             activeModelCreatedAt: activeModel?.createdAt || null,
             modelFeatureCount: activeModel?.featureMins?.length || ML_CONSTANTS.FEATURE_COUNT,
             featureVersion: ML_CONSTANTS.FEATURE_VERSION,
@@ -674,9 +700,95 @@ router.post(
     }
 );
 
+// Monitoring driftu (ETAP 6): feature (PSI vs baseline z TRAIN), prediction,
+// label (positiveRate). Metryka admina — dostęp tylko dla admina.
+router.get(
+    '/ai/drift',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const { buildDriftReport } = await import('../services/ml/driftService');
+            res.json(await buildDriftReport());
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
+// ETAP 7A: promote (APPROVED/CANDIDATE → PRODUCTION, atomowa wymiana) —
+// ręczna droga dojścia do PRODUCTION dla modeli spoza auto-deploy.
+router.post(
+    '/ai/models/:id/promote',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const model = await modelRegistry.promoteModel(req.params.id);
+            if (!model) {
+                res.status(404).json({ error: 'Model nie istnieje' });
+                return;
+            }
+            clearPredictionCache();
+            await logAudit('ai_model', 'promote', authReq.user?.id || '', model.id, {
+                version: model.version
+            });
+            res.json({ promoted: true, model });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(400).json({ error: msg });
+        }
+    }
+);
+
+// ETAP 7A: ręczny override REJECTED → APPROVED (jawna operacja admina, audytowalna).
+router.post(
+    '/ai/models/:id/approve',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            const adminUser = authReq.user?.id || 'unknown';
+            const model = await modelRegistry.approveModel(req.params.id, adminUser);
+            if (!model) {
+                res.status(404).json({ error: 'Model nie istnieje' });
+                return;
+            }
+            await logAudit('ai_model', 'approve', adminUser, model.id, {
+                version: model.version
+            });
+            res.json({ approved: true, model });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(400).json({ error: msg });
+        }
+    }
+);
+
 router.post('/ai/train', requireAuth, requireAdmin, WRITE_LIMITER, async (req, res: Response) => {
     const authReq = req as AuthenticatedRequest;
     try {
+        // ETAP 8 (3.4): min-interval między treningami — admin nie może
+        // uruchomić serii treningów w kilka sekund.
+        const lastRun = await prisma.aiTrainingRun.findFirst({
+            orderBy: { startedAt: 'desc' }
+        });
+        if (lastRun) {
+            const elapsed = Date.now() - new Date(lastRun.startedAt).getTime();
+            if (elapsed < ML_CONFIG.trainMinIntervalMs) {
+                res.status(429).json({
+                    error: 'Zbyt częste treningi — odczekaj przed kolejnym uruchomieniem',
+                    retryAfterMs: ML_CONFIG.trainMinIntervalMs - elapsed
+                });
+                return;
+            }
+        }
         const result = await trainingPipeline.run(true);
         clearPredictionCache();
         await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
@@ -742,6 +854,108 @@ router.post(
                 modelId: previous?.id || null
             });
             res.json({ rolledBack: !!previous, model: previous });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
+// ETAP 8: historia treningów ML (tabela AiTrainingRun) — ostatnie 20.
+router.get(
+    '/ai/training/runs',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const runs = await prisma.aiTrainingRun.findMany({
+                orderBy: { startedAt: 'desc' },
+                take: 20
+            });
+            res.json({ runs });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
+router.get(
+    '/ai/training/runs/:id',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (req: Request, res: Response) => {
+        try {
+            const run = await prisma.aiTrainingRun.findUnique({
+                where: { id: req.params.id }
+            });
+            if (!run) {
+                res.status(404).json({ error: 'Run nie istnieje' });
+                return;
+            }
+            res.json({ run });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
+// ETAP 8: szczegóły modelu — pełny rekord z bazy (wagi, metryki, stan).
+router.get(
+    '/ai/models/:id',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (req: Request, res: Response) => {
+        try {
+            const record = await prisma.aiModel.findUnique({ where: { id: req.params.id } });
+            if (!record) {
+                res.status(404).json({ error: 'Model nie istnieje' });
+                return;
+            }
+            res.json({ model: record });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            res.status(500).json({ error: msg });
+        }
+    }
+);
+
+// ETAP 8: statystyki predykcji produkcyjnych (aiRewardLog) — liczba decyzji,
+// rozkład score i akcji; wspiera sekcję shadow w dashboardzie.
+router.get(
+    '/ai/predictions/stats',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    async (_req: Request, res: Response) => {
+        try {
+            const total = await prisma.aiRewardLog.count();
+            const byAction = await prisma.aiRewardLog.groupBy({
+                by: ['action'],
+                _count: { _all: true }
+            });
+            const actions: Record<string, number> = {};
+            for (const row of byAction) {
+                actions[row.action] = row._count._all;
+            }
+            const recent = await prisma.aiRewardLog.findMany({
+                where: { scoreBefore: { not: null } },
+                orderBy: { createdAt: 'desc' },
+                take: 100
+            });
+            const scores = recent
+                .map((r) => r.scoreBefore)
+                .filter((s): s is number => typeof s === 'number');
+            res.json({
+                total,
+                actions,
+                recentScores: scores,
+                recentCount: scores.length
+            });
         } catch (e) {
             const msg = e instanceof Error ? e.message : String(e);
             res.status(500).json({ error: msg });

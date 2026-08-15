@@ -11,8 +11,13 @@
         featureImportance: '/api/telemetry/ai/feature-importance',
         train: '/api/telemetry/ai/train',
         rollback: '/api/telemetry/ai/rollback',
+        promote: '/api/telemetry/ai/models/',
+        approve: '/api/telemetry/ai/models/',
         settings: '/api/telemetry/ai/settings',
-        wellSelections: '/api/telemetry/ai/well-selections'
+        wellSelections: '/api/telemetry/ai/well-selections',
+        trainingRuns: '/api/telemetry/ai/training/runs',
+        drift: '/api/telemetry/ai/drift',
+        predictionsStats: '/api/telemetry/ai/predictions/stats'
     };
 
     /* fetchJson — wspólny helper z shared/ui.js (window.fetchJson) */
@@ -338,6 +343,23 @@
                     status.activeModelAuc != null && Number.isFinite(Number(status.activeModelAuc))
                         ? ' AUC ' + Number(status.activeModelAuc).toFixed(4)
                         : '';
+                var m = status.activeModelMetrics || {};
+                var fmt = function (v, d) {
+                    return v != null && Number.isFinite(Number(v))
+                        ? Number(v).toFixed(d == null ? 4 : d)
+                        : '—';
+                };
+                var baselineAccuracy =
+                    status.baselineAccuracy != null &&
+                    Number.isFinite(Number(status.baselineAccuracy))
+                        ? Number(status.baselineAccuracy)
+                        : null;
+                var baselineVsModel =
+                    baselineAccuracy != null &&
+                    status.activeModelAuc != null &&
+                    Number.isFinite(Number(status.activeModelAuc))
+                        ? Number(status.activeModelAuc) - baselineAccuracy
+                        : null;
                 var html =
                     '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
                     '<div class="ai-ml-stats-grid">' +
@@ -354,6 +376,54 @@
                         'Aktualnie wykorzystywany model ML (wersja + AUC + data wdrożenia)',
                         activeVer +
                             (status.activeModelAuc != null ? ' AUC ' + status.activeModelAuc : '')
+                    ) +
+                    statCard(
+                        'Baseline vs Model',
+                        baselineVsModel == null
+                            ? '—'
+                            : (baselineVsModel >= 0 ? '+' : '') +
+                                  baselineVsModel.toFixed(2) +
+                                  ' pp',
+                        baselineVsModel == null
+                            ? 'var(--text-muted)'
+                            : baselineVsModel >= 0
+                              ? 'var(--success)'
+                              : 'var(--danger)',
+                        'Różnica AUC aktywnego modelu względem baseline accuracy (majority-class, max(positiveRate, 1-positiveRate) z ostatniego treningu) w punktach procentowych',
+                        baselineAccuracy != null
+                            ? 'Baseline accuracy: ' +
+                                  baselineAccuracy.toFixed(4) +
+                                  ' (majority-class). Model AUC: ' +
+                                  (status.activeModelAuc != null
+                                      ? Number(status.activeModelAuc).toFixed(4)
+                                      : '—')
+                            : 'Brak baseline accuracy — brak udanego treningu z metryką'
+                    ) +
+                    statCard(
+                        'PR-AUC',
+                        fmt(m.prAuc),
+                        'var(--accent)',
+                        'Precision-Recall AUC — jakość przy niezbalansowanych danych (im wyżej, tym lepiej)'
+                    ) +
+                    statCard(
+                        'F1',
+                        fmt(m.f1),
+                        'var(--accent-hover)',
+                        'Harmoniczna średnia precyzji i czułości'
+                    ) +
+                    statCard(
+                        'LogLoss',
+                        fmt(m.logLoss),
+                        m.logLoss != null && Number(m.logLoss) <= 1.0
+                            ? 'var(--success)'
+                            : 'var(--warn)',
+                        'Strata logarytmiczna — kalibracja prawdopodobieństw (im niżej, tym lepiej, ≤1.0 zalecane)'
+                    ) +
+                    statCard(
+                        'ECE (Calibration)',
+                        fmt(m.ece),
+                        m.ece != null && Number(m.ece) <= 0.25 ? 'var(--success)' : 'var(--warn)',
+                        'Expected Calibration Error — odchylenie predykcji od rzeczywistych proporcji (≤0.25 zalecane)'
                     ) +
                     statCard(
                         'Data wdrożenia',
@@ -442,6 +512,9 @@
                             var delBtn = m.active
                                 ? ''
                                 : '<div class="ai-model-actions-cell">' +
+                                  '<button class="ai-model-promote-btn" data-id="' +
+                                  escapeHtmlAttr(m.id || '') +
+                                  '" title="Promuj do produkcji (state machine: APPROVED/CANDIDATE → PRODUCTION)"><i data-lucide="rocket"></i></button>' +
                                   '<button class="ai-model-activate-btn" data-id="' +
                                   escapeHtmlAttr(m.id || '') +
                                   '" title="Ustaw ten model jako aktywny"><i data-lucide="check-circle"></i></button>' +
@@ -456,6 +529,16 @@
                                 metrics.rocAuc != null &&
                                 Number.isFinite(Number(metrics.rocAuc))
                                     ? Number(metrics.rocAuc)
+                                    : null;
+                            var prAuc =
+                                metrics &&
+                                metrics.prAuc != null &&
+                                Number.isFinite(Number(metrics.prAuc))
+                                    ? Number(metrics.prAuc)
+                                    : null;
+                            var f1 =
+                                metrics && metrics.f1 != null && Number.isFinite(Number(metrics.f1))
+                                    ? Number(metrics.f1)
                                     : null;
                             var featureCount = Array.isArray(m.features)
                                 ? m.features.length
@@ -472,6 +555,12 @@
                                 '</td>' +
                                 '<td>' +
                                 (rocAuc != null ? rocAuc.toFixed(4) : '—') +
+                                '</td>' +
+                                '<td>' +
+                                (prAuc != null ? prAuc.toFixed(4) : '—') +
+                                '</td>' +
+                                '<td>' +
+                                (f1 != null ? f1.toFixed(4) : '—') +
                                 '</td>' +
                                 '<td>' +
                                 (featureCount || 0) +
@@ -501,11 +590,13 @@
                         '<thead><tr>' +
                         '<th title="Wersja modelu">Wersja</th>' +
                         '<th title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
+                        '<th title="Precision-Recall AUC — jako\u015b\u0107 przy niezbalansowanych danych">PR-AUC</th>' +
+                        '<th title="Harmoniczna \u015brednia precyzji i czu\u0142o\u015bci">F1</th>' +
                         '<th title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
                         '<th title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
                         '<th title="Wersja schematu cech u\u017cytego do trenowania modelu">Wersja cech</th>' +
                         '<th title="Czy model jest aktualnie aktywny">Status</th>' +
-                        '<th title="Ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
+                        '<th title="Promuj do produkcji, ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
                         '</tr></thead><tbody>' +
                         modelRows +
                         '</tbody></table></div>';
@@ -514,11 +605,18 @@
                         '<div class="ai-model-empty">Brak wytrenowanych modeli. Uruchom trening ML.</div>';
                 }
 
+                html +=
+                    '<div class="ai-training-runs-host"></div>' +
+                    '<div class="ai-drift-host"></div>';
+
                 container.innerHTML = html;
 
                 if (typeof lucide !== 'undefined') {
                     lucide.createIcons({ root: container });
                 }
+
+                renderTrainingRuns(container);
+                renderDrift(container);
 
                 /* Slider AI Influence */
                 var aiSlider = document.getElementById('ai-influence-slider');
@@ -570,6 +668,57 @@
                         var activateBtn = ev.target.closest
                             ? ev.target.closest('.ai-model-activate-btn')
                             : null;
+                        var promoteBtn = ev.target.closest
+                            ? ev.target.closest('.ai-model-promote-btn')
+                            : null;
+
+                        if (promoteBtn) {
+                            ev.preventDefault();
+                            uiConfirm(
+                                'Promować ten model do produkcji? Obecnie produkcyjny model zostanie zastąpiony (rollback możliwy).',
+                                {
+                                    title: 'Promocja modelu',
+                                    okText: 'Promuj',
+                                    type: 'info'
+                                }
+                            ).then(function (confirmed) {
+                                if (!confirmed) return;
+                                var id = promoteBtn.getAttribute('data-id');
+                                var p = window.fetchJson(
+                                    ENDPOINTS.promote + encodeURIComponent(id) + '/promote',
+                                    { method: 'POST' }
+                                );
+                                if (p) {
+                                    p.then(function (result) {
+                                        if (result && result.promoted) {
+                                            if (typeof window.showToast === 'function')
+                                                window.showToast(
+                                                    'Promowano model: ' + result.model.version,
+                                                    'success'
+                                                );
+                                            renderMlStatus(mlContainer);
+                                        } else {
+                                            uiAlert(
+                                                (result && result.error
+                                                    ? result.error
+                                                    : 'Nie udało się promować modelu.') +
+                                                    ' Promować można modele APPROVED/CANDIDATE.',
+                                                {
+                                                    title: 'Błąd promocji',
+                                                    type: 'warning'
+                                                }
+                                            );
+                                        }
+                                    }).catch(function () {
+                                        uiAlert('Błąd promocji modelu ML.', {
+                                            title: 'Błąd promocji',
+                                            type: 'warning'
+                                        });
+                                    });
+                                }
+                            });
+                            return;
+                        }
 
                         if (deleteBtn) {
                             ev.preventDefault();
@@ -752,6 +901,220 @@
             .catch(function () {
                 container.innerHTML = apiErrorHtml('server');
             });
+    }
+
+    /* ===== TRAINING RUNS ===== */
+    /* GET /api/telemetry/ai/training/runs zwraca { runs } — 20 ostatnich AiTrainingRun */
+    function renderTrainingRuns(container) {
+        var host = container.querySelector('.ai-training-runs-host');
+        if (!host) return;
+        host.innerHTML = loadingHtml();
+        var p = window.fetchJson(ENDPOINTS.trainingRuns);
+        if (!p) {
+            host.innerHTML = apiErrorHtml('server');
+            return;
+        }
+        p.then(function (data) {
+            if (!data || data.error) {
+                host.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
+                return;
+            }
+            var runs = data.runs || [];
+            if (!runs.length) {
+                host.innerHTML =
+                    '<div class="ai-model-empty">Brak zapisanych przebiegów treningu.</div>';
+                return;
+            }
+            var rows = runs
+                .map(function (r) {
+                    var statusCls =
+                        r.status === 'SUCCESS'
+                            ? 'style="color:var(--success-hover);font-weight:700"'
+                            : r.status === 'RUNNING'
+                              ? 'style="color:var(--warn);font-weight:700"'
+                              : r.status === 'SKIPPED'
+                                ? 'style="color:var(--text-muted)"'
+                                : 'style="color:var(--danger-hover);font-weight:700"';
+                    var range =
+                        r.datasetStartAt && r.datasetEndAt
+                            ? r.datasetStartAt.slice(0, 10) + ' → ' + r.datasetEndAt.slice(0, 10)
+                            : '—';
+                    var fp = r.datasetFingerprint ? r.datasetFingerprint.slice(0, 8) : '—';
+                    return (
+                        '<tr>' +
+                        '<td style="white-space:nowrap;color:var(--text-muted);font-size:0.75rem">' +
+                        window.escapeHtml((r.startedAt || '').slice(0, 16)) +
+                        '</td>' +
+                        '<td ' +
+                        statusCls +
+                        '>' +
+                        window.escapeHtml(r.status || '—') +
+                        '</td>' +
+                        '<td>' +
+                        (r.datasetSize || 0) +
+                        ' (' +
+                        (r.trainSize || 0) +
+                        '/' +
+                        (r.validationSize || 0) +
+                        '/' +
+                        (r.testSize || 0) +
+                        ')</td>' +
+                        '<td>' +
+                        window.escapeHtml(r.candidateModelVersion || '—') +
+                        '</td>' +
+                        '<td>' +
+                        (r.deployed ? 'Tak' : '—') +
+                        '</td>' +
+                        '<td>' +
+                        window.escapeHtml(range) +
+                        '</td>' +
+                        '<td style="font-family:monospace;font-size:0.75rem;color:var(--text-muted)">' +
+                        window.escapeHtml(fp) +
+                        '</td>' +
+                        '</tr>'
+                    );
+                })
+                .join('');
+            host.innerHTML =
+                '<div class="ai-section-title"><i data-lucide="history"></i> Przebiegi treningu (ostatnie 20)</div>' +
+                '<div class="ai-table-wrap">' +
+                '<table class="ai-table">' +
+                '<thead><tr>' +
+                '<th title="Data rozpoczęcia przebiegu">Start</th>' +
+                '<th title="Status przebiegu (SUCCESS/SKIPPED/FAILED_*)">Status</th>' +
+                '<th title="Rozmiar zbioru: dataset (train/validation/test)">Zbiór</th>' +
+                '<th title="Wersja modelu wyprodukowanego przez przebieg">Model</th>' +
+                '<th title="Czy model został wdrożony do produkcji">Wdrożony</th>' +
+                '<th title="Zakres czasowy zbioru treningowego">Zakres datasetu</th>' +
+                '<th title="Skrót fingerprintu zbioru (SHA-256, 8 znaków)">Fingerprint</th>' +
+                '</tr></thead><tbody>' +
+                rows +
+                '</tbody></table></div>';
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: host });
+            }
+        }).catch(function () {
+            host.innerHTML = apiErrorHtml('server');
+        });
+    }
+
+    /* ===== DRIFT ===== */
+    /* GET /api/telemetry/ai/drift zwraca DriftReport:
+       feature: [{feature, psi}] (top-5 wg PSI), prediction: {psi},
+       label: {currentPositiveRate, trainingPositiveRate, delta}, shadow: {...} */
+    function renderDrift(container) {
+        var host = container.querySelector('.ai-drift-host');
+        if (!host) return;
+        host.innerHTML = loadingHtml();
+        var p = window.fetchJson(ENDPOINTS.drift);
+        if (!p) {
+            host.innerHTML = apiErrorHtml('server');
+            return;
+        }
+        p.then(function (data) {
+            if (!data || data.error) {
+                host.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
+                return;
+            }
+            var psiBadge = function (psi) {
+                if (psi == null || !Number.isFinite(Number(psi))) {
+                    return '<span style="color:var(--text-muted)">brak danych</span>';
+                }
+                var v = Number(psi);
+                var color =
+                    v < 0.1
+                        ? 'var(--success-hover)'
+                        : v < 0.25
+                          ? 'var(--warn)'
+                          : 'var(--danger-hover)';
+                return (
+                    '<span style="color:' + color + ';font-weight:700">' + v.toFixed(4) + '</span>'
+                );
+            };
+            var featureRows = (data.feature || [])
+                .slice(0, 5)
+                .map(function (f, i) {
+                    return (
+                        '<tr>' +
+                        '<td>' +
+                        (i + 1) +
+                        '</td>' +
+                        '<td style="font-family:monospace;font-size:0.78rem">' +
+                        window.escapeHtml(f.feature || '—') +
+                        '</td>' +
+                        '<td>' +
+                        psiBadge(f.psi) +
+                        '</td>' +
+                        '</tr>'
+                    );
+                })
+                .join('');
+            var labelHtml = '';
+            var lab = data.label || {};
+            if (lab.currentPositiveRate != null || lab.trainingPositiveRate != null) {
+                var delta = lab.delta;
+                var deltaCls =
+                    delta == null
+                        ? 'var(--text-muted)'
+                        : Math.abs(delta) < 0.05
+                          ? 'var(--success-hover)'
+                          : 'var(--warn)';
+                labelHtml =
+                    '<div class="ai-drift-label">' +
+                    '<span><strong>Label drift:</strong> bieżący positiveRate ' +
+                    (lab.currentPositiveRate != null
+                        ? Number(lab.currentPositiveRate).toFixed(4)
+                        : '—') +
+                    ' vs treningowy ' +
+                    (lab.trainingPositiveRate != null
+                        ? Number(lab.trainingPositiveRate).toFixed(4)
+                        : '—') +
+                    '</span>' +
+                    '<span style="color:' +
+                    deltaCls +
+                    ';font-weight:700">Δ ' +
+                    (delta != null ? (delta >= 0 ? '+' : '') + Number(delta).toFixed(4) : '—') +
+                    '</span></div>';
+            }
+            var shadowHtml = '';
+            var sh = data.shadow || {};
+            if (sh.candidateVersion) {
+                shadowHtml =
+                    '<div class="ai-drift-label">' +
+                    '<span><strong>Shadow (A/B):</strong> kandydat ' +
+                    window.escapeHtml(sh.candidateVersion || '—') +
+                    ' AUC ' +
+                    (sh.shadowAuc != null ? Number(sh.shadowAuc).toFixed(4) : '—') +
+                    ' vs produkcja ' +
+                    window.escapeHtml(sh.productionVersion || '—') +
+                    ' AUC ' +
+                    (sh.productionAuc != null ? Number(sh.productionAuc).toFixed(4) : '—') +
+                    ' (' +
+                    (sh.samples || 0) +
+                    ' wspólnych próbek)</span></div>';
+            }
+            host.innerHTML =
+                '<div class="ai-section-title"><i data-lucide="waves"></i> Drift modelu</div>' +
+                '<div class="ai-drift-grid">' +
+                '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
+                psiBadge(data.prediction ? data.prediction.psi : null) +
+                '<div style="color:var(--text-muted);font-size:0.72rem;margin-top:2px">PSI rozkładu score</div></div>' +
+                '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
+                '<div style="color:var(--text-muted);font-size:0.72rem;margin-top:2px">top-5 cech wg PSI</div></div>' +
+                '</div>' +
+                (featureRows
+                    ? '<div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>#</th><th>Cecha</th><th>PSI</th></tr></thead><tbody>' +
+                      featureRows +
+                      '</tbody></table></div>'
+                    : '') +
+                labelHtml +
+                shadowHtml;
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons({ root: host });
+            }
+        }).catch(function () {
+            host.innerHTML = apiErrorHtml('server');
+        });
     }
 
     /* ===== FEATURE IMPORTANCE ===== */

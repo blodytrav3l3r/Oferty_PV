@@ -5,6 +5,8 @@ import type { AcceptanceModel } from './AcceptanceModel';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../../config/mlConstants';
 import { ML_CONFIG } from './trainingConfig';
 import { clearPredictionCache } from './predictionCache';
+import type { ConfusionMatrix } from './metrics';
+import { AiModelState, assertValidAiModelState, type AiModelStateValue } from './aiModelState';
 
 export interface ModelMetrics {
     accuracy: number;
@@ -14,6 +16,14 @@ export interface ModelMetrics {
     rocAuc: number;
     trainSize: number;
     valSize: number;
+    testRocAuc?: number;
+    // ETAP 4: metryki uzupełniające — null gdy matematycznie nieokreślone.
+    // Opcjonalne dla backward-compat ze starymi zapisami (starsze modele nie mają ich w JSON).
+    prAuc?: number | null;
+    logLoss?: number | null;
+    brierScore?: number | null;
+    ece?: number | null;
+    confusion?: ConfusionMatrix | null;
 }
 
 export interface StoredModel {
@@ -29,6 +39,9 @@ export interface StoredModel {
     active: boolean;
     createdAt: string;
     featureVersion: string | null;
+    state?: string | null;
+    seed?: number | null;
+    featureDistributions?: string | null;
 }
 
 /**
@@ -46,6 +59,7 @@ export interface ModelListItem {
     metrics: ModelMetrics | null;
     features: string[];
     trainingRows: number;
+    state?: string | null;
 }
 
 // Wyciąga rocAUC z zapisanych metryk; uszkodzony JSON lub brak pola rocAuc traktujemy jak -1.
@@ -67,7 +81,9 @@ export class ModelRegistry {
         featureMins: number[],
         featureMaxs: number[],
         shouldActivate: boolean,
-        notes?: string
+        notes?: string,
+        state?: AiModelStateValue,
+        featureDistributions?: string | null
     ): Promise<string> {
         const now = new Date();
         // wersja musi być unikalna (kolumna @unique) — suffix zapobiega
@@ -86,7 +102,7 @@ export class ModelRegistry {
                 if (existing) {
                     await tx.aiModel.update({
                         where: { id: existing.id },
-                        data: { active: false }
+                        data: { active: false, state: AiModelState.ROLLED_BACK }
                     });
                     logger.info(
                         'ModelRegistry',
@@ -109,6 +125,9 @@ export class ModelRegistry {
                     active: shouldActivate,
                     notes: notes || null,
                     featureVersion: ML_CONSTANTS.FEATURE_VERSION,
+                    state:
+                        state || (shouldActivate ? AiModelState.APPROVED : AiModelState.CANDIDATE),
+                    featureDistributions: featureDistributions ?? null,
                     createdAt: now.toISOString()
                 }
             });
@@ -137,6 +156,15 @@ export class ModelRegistry {
         // Fallback: jeśli brak modelu w bieżącej wersji, nie zwracaj modelu
         // starszej wersji — frontend obsłuży 503 (technical fallback) zamiast 400.
         return null;
+    }
+
+    /**
+     * Aktualny model produkcyjny (ETAP 5): aktywny model bieżącej wersji cech.
+     * Legacy active=true bez state = PRODUCTION (resolveLegacyState). To punkt
+     * odniesienia guardrailu deploy — porównanie z nim, nie z historycznym best.
+     */
+    async getProductionModel(): Promise<StoredModel | null> {
+        return this.getActiveModel();
     }
 
     async getBestAuc(): Promise<number> {
@@ -177,7 +205,8 @@ export class ModelRegistry {
                 featureVersion: r.featureVersion,
                 metrics,
                 features,
-                trainingRows: r.trainingRows
+                trainingRows: r.trainingRows,
+                state: r.state
             };
         });
     }
@@ -194,8 +223,14 @@ export class ModelRegistry {
             // Transakcja: dezaktywacja+aktywacja atomowo — bez niej dwa równoległe
             // rollbacki (SelfEvaluation flapping) mogły dać 2 aktywne modele.
             await prisma.$transaction(async (tx) => {
-                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
-                await tx.aiModel.update({ where: { id: previous.id }, data: { active: true } });
+                await tx.aiModel.update({
+                    where: { id: active.id },
+                    data: { active: false, state: AiModelState.ROLLED_BACK }
+                });
+                await tx.aiModel.update({
+                    where: { id: previous.id },
+                    data: { active: true, state: AiModelState.PRODUCTION }
+                });
             });
             logger.info('ModelRegistry', `Rollback do modelu ${previous.version}`);
             clearPredictionCache();
@@ -230,13 +265,90 @@ export class ModelRegistry {
         await prisma.$transaction(async (tx) => {
             const active = await tx.aiModel.findFirst({ where: { active: true } });
             if (active) {
-                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
+                await tx.aiModel.update({
+                    where: { id: active.id },
+                    data: { active: false, state: AiModelState.ROLLED_BACK }
+                });
             }
-            await tx.aiModel.update({ where: { id: target.id }, data: { active: true } });
+            await tx.aiModel.update({
+                where: { id: target.id },
+                data: { active: true, state: AiModelState.PRODUCTION }
+            });
         });
         logger.info('ModelRegistry', `Ręcznie wybrano model ${target.version}`);
         clearPredictionCache();
         return this.recordToModel(target);
+    }
+
+    /**
+     * Promote (ETAP 7A): APPROVED → PRODUCTION z atomową wymianą. Globalny
+     * invariant — nigdy więcej niż jeden PRODUCTION / jeden active:
+     * BEGIN: stary PRODUCTION → ROLLED_BACK (active=false),
+     *        kandydat → PRODUCTION (active=true), pozostałe active → false. COMMIT.
+     * Jedyna droga dojścia do PRODUCTION dla modeli spoza auto-deploy.
+     */
+    async promoteModel(id: string): Promise<StoredModel | null> {
+        const target = await prisma.aiModel.findUnique({ where: { id } });
+        if (!target) return null;
+        const state = assertValidAiModelState(target.state) || AiModelState.CANDIDATE;
+        if (state === AiModelState.REJECTED) {
+            throw new Error(
+                'Model REJECTED nie może być promowany — najpierw ręczny approve (POST /ai/models/:id/approve)'
+            );
+        }
+        if (state === AiModelState.PRODUCTION) {
+            return this.recordToModel(target);
+        }
+        if (target.featureVersion !== ML_CONSTANTS.FEATURE_VERSION) {
+            throw new Error(
+                `Nie można promować modelu spoza bieżącej wersji cech (${target.featureVersion ?? 'stara'} != ${ML_CONSTANTS.FEATURE_VERSION})`
+            );
+        }
+
+        await prisma.$transaction(async (tx) => {
+            const active = await tx.aiModel.findFirst({ where: { active: true } });
+            if (active) {
+                await tx.aiModel.update({
+                    where: { id: active.id },
+                    data: { active: false, state: AiModelState.ROLLED_BACK }
+                });
+            }
+            await tx.aiModel.update({
+                where: { id: target.id },
+                data: { active: true, state: AiModelState.PRODUCTION }
+            });
+            // Synchronizacja: żaden inny model nie może zostać aktywny
+            // (invariant COUNT(active=true) <= 1).
+            await tx.aiModel.updateMany({
+                where: { active: true, id: { not: target.id } },
+                data: { active: false }
+            });
+        });
+        logger.info('ModelRegistry', `Promowano model ${target.version} do PRODUCTION`);
+        clearPredictionCache();
+        return this.recordToModel(target);
+    }
+
+    /**
+     * Ręczny override (ETAP 7A): REJECTED → APPROVED — jawna operacja admina.
+     * Ślad w AiModel.notes (admin action + timestamp); audit log robi route.
+     */
+    async approveModel(id: string, adminUser: string): Promise<StoredModel | null> {
+        const target = await prisma.aiModel.findUnique({ where: { id } });
+        if (!target) return null;
+        if (target.state !== AiModelState.REJECTED) {
+            throw new Error(
+                `Override tylko dla modeli REJECTED (obecny stan: ${target.state ?? 'null'})`
+            );
+        }
+        const note = `[approve by ${adminUser} @ ${new Date().toISOString()}] manual override REJECTED → APPROVED`;
+        const notes = target.notes ? `${target.notes}\n${note}` : note;
+        await prisma.aiModel.update({
+            where: { id },
+            data: { state: AiModelState.APPROVED, notes }
+        });
+        logger.info('ModelRegistry', `Ręczny approve modelu ${target.version} (${adminUser})`);
+        return this.recordToModel({ ...target, state: AiModelState.APPROVED, notes });
     }
 
     async promoteBestModel(): Promise<StoredModel | null> {
@@ -267,9 +379,15 @@ export class ModelRegistry {
         // Transakcja — atomowa zamiana aktywnego modelu na najlepszy.
         await prisma.$transaction(async (tx) => {
             if (active) {
-                await tx.aiModel.update({ where: { id: active.id }, data: { active: false } });
+                await tx.aiModel.update({
+                    where: { id: active.id },
+                    data: { active: false, state: AiModelState.ROLLED_BACK }
+                });
             }
-            await tx.aiModel.update({ where: { id: best.id }, data: { active: true } });
+            await tx.aiModel.update({
+                where: { id: best.id },
+                data: { active: true, state: AiModelState.PRODUCTION }
+            });
         });
         logger.info('ModelRegistry', `Promowano najlepszy model ${best.version} (auc=${bestAuc})`);
         clearPredictionCache();
@@ -333,6 +451,7 @@ export class ModelRegistry {
                 featureMaxs: JSON.stringify(ones),
                 trainingRows: 0,
                 active: true,
+                state: AiModelState.PRODUCTION,
                 featureVersion: ML_CONSTANTS.FEATURE_VERSION,
                 notes: 'Model startowy — domyślne wagi (neutralne). Inicjalizacja automatyczna.',
                 createdAt: new Date().toISOString()
@@ -479,7 +598,10 @@ export class ModelRegistry {
             trainingRows: record.trainingRows,
             active: record.active,
             createdAt: record.createdAt,
-            featureVersion: record.featureVersion
+            featureVersion: record.featureVersion,
+            state: record.state,
+            seed: record.seed,
+            featureDistributions: record.featureDistributions
         };
     }
 }

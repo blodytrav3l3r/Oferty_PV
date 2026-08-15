@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, it, jest, beforeEach } from '@jest/globals';
-import { AcceptanceModel } from '../../src/services/ml/AcceptanceModel';
+import { AcceptanceModel, TrainingNumericalError } from '../../src/services/ml/AcceptanceModel';
 
 const mockFindMany = jest.fn<any>();
 const mockFindFirst = jest.fn<any>();
@@ -12,6 +12,8 @@ const mockCount = jest.fn<any>();
 const mockUpdate = jest.fn<any>();
 const mockUpdateMany = jest.fn<any>();
 const mockTransitionFindMany = jest.fn<any>().mockResolvedValue([]);
+const mockRunCreate = jest.fn<any>();
+const mockRunUpdate = jest.fn<any>();
 
 jest.mock('../../src/prismaClient', () => ({
     __esModule: true,
@@ -37,6 +39,10 @@ jest.mock('../../src/prismaClient', () => ({
             update: jest.fn<any>(),
             count: jest.fn<any>(),
             deleteMany: jest.fn<any>().mockResolvedValue({ count: 0 })
+        },
+        aiTrainingRun: {
+            create: (...args: any[]) => mockRunCreate(...args),
+            update: (...args: any[]) => mockRunUpdate(...args)
         },
         aiRewardLog: { count: jest.fn<any>().mockResolvedValue(0) },
         users: { update: jest.fn<any>() }
@@ -329,6 +335,213 @@ describe('predictionCache', () => {
     });
 });
 
+describe('computeDatasetFingerprint (ETAP 1)', () => {
+    it('ten sam dataset daje ten sam fingerprint niezależnie od kolejności rekordów', async () => {
+        const { computeDatasetFingerprint } =
+            await import('../../src/services/ml/TrainingPipeline');
+        const records = [
+            { id: 'a', timestamp: '2026-01-01', label: 'ACCEPTED' },
+            { id: 'b', timestamp: '2026-01-02', label: 'REJECTED' },
+            { id: 'c', timestamp: '2026-01-03', label: 'ACCEPTED' }
+        ];
+        const shuffled = [records[2], records[0], records[1]];
+        expect(computeDatasetFingerprint(records, 'v7')).toBe(
+            computeDatasetFingerprint(shuffled, 'v7')
+        );
+    });
+
+    it('zmiana label/featureVersion zmienia fingerprint', async () => {
+        const { computeDatasetFingerprint } =
+            await import('../../src/services/ml/TrainingPipeline');
+        const records = [{ id: 'a', timestamp: '2026-01-01', label: 'ACCEPTED' }];
+        expect(computeDatasetFingerprint(records, 'v7')).not.toBe(
+            computeDatasetFingerprint(records, 'v8')
+        );
+        expect(computeDatasetFingerprint(records, 'v7')).not.toBe(
+            computeDatasetFingerprint([{ ...records[0], label: 'REJECTED' }], 'v7')
+        );
+    });
+});
+
+describe('Guardrail deploy (ETAP 5)', () => {
+    let trainingPipeline: any;
+
+    beforeAll(async () => {
+        const mod = await import('../../src/services/ml/TrainingPipeline');
+        trainingPipeline = mod.trainingPipeline;
+    });
+
+    const baseMetrics = {
+        accuracy: 0.8,
+        precision: 0.8,
+        recall: 0.8,
+        f1: 0.8,
+        rocAuc: 0.9,
+        prAuc: 0.85,
+        logLoss: 0.3,
+        ece: 0.05,
+        trainSize: 280,
+        valSize: 60
+    };
+    const production = {
+        version: 'v1.0.0-prod',
+        metrics: { ...baseMetrics, rocAuc: 0.88, logLoss: 0.25, ece: 0.03 }
+    };
+
+    it('pierwszy model (brak PRODUCTION) → APPROVED gdy absolutne progi spełnione', () => {
+        const g = trainingPipeline.evaluateDeployGuard(baseMetrics, null, true);
+        expect(g.ok).toBe(true);
+    });
+
+    it('pierwszy model → REJECTED gdy absolutne progi niespełnione (minPrAuc)', () => {
+        const g = trainingPipeline.evaluateDeployGuard({ ...baseMetrics, prAuc: 0.3 }, null, true);
+        expect(g.ok).toBe(false);
+        expect(g.code).toBe('deploy_abs_insufficient');
+    });
+
+    it('kolejny model: AUC +0.02 i brak regresji → APPROVED', () => {
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.9, logLoss: 0.26, ece: 0.04 },
+            production as any,
+            false
+        );
+        expect(g.ok).toBe(true);
+    });
+
+    it('kolejny model: AUC poniżej production+0.01 → REJECTED (relatywna regresja AUC)', () => {
+        // logLoss/ECE w normie — jedynym powodem REJECTED jest AUC < 0.88+0.01
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.885, logLoss: 0.26, ece: 0.04 },
+            production as any,
+            false
+        );
+        expect(g.ok).toBe(false);
+        expect(g.code).toBe('deploy_rel_regression');
+        expect(g.reason).toContain('auc=0.8850');
+    });
+
+    it('kolejny model: AUC dokładnie production+0.01 → przechodzi (operator >=)', () => {
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.89, logLoss: 0.26, ece: 0.04 },
+            production as any,
+            false
+        );
+        expect(g.ok).toBe(true);
+        expect(g.code).toBe('ok');
+    });
+
+    it('kolejny model: AUC wzrost, ale logLoss regresja >0.02 → REJECTED (zasada braku regresji)', () => {
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.95, logLoss: 0.3 }, // production.logLoss=0.25 → 0.30 > 0.27
+            production as any,
+            false
+        );
+        expect(g.ok).toBe(false);
+        expect(g.code).toBe('deploy_rel_regression');
+    });
+
+    it('kolejny model: AUC wzrost, ale ECE regresja >0.02 → REJECTED', () => {
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.95, ece: 0.1 }, // production.ece=0.03 → 0.10 > 0.05
+            production as any,
+            false
+        );
+        expect(g.ok).toBe(false);
+        expect(g.code).toBe('deploy_rel_regression');
+    });
+
+    it('production bez nowych metryk (logLoss/ece null) → relatywne progi pomijane', () => {
+        const legacy = {
+            version: 'v0.1.0-starter',
+            metrics: { rocAuc: 0.5, trainSize: 0, valSize: 0 }
+        };
+        const g = trainingPipeline.evaluateDeployGuard(
+            { ...baseMetrics, rocAuc: 0.6 },
+            legacy as any,
+            false
+        );
+        // relAuc: 0.6 >= 0.5+0.01 → ok; logLoss/ece relatywne pomijane (null production)
+        expect(g.ok).toBe(true);
+    });
+});
+
+describe('Determinizm treningu (ETAP 2)', () => {
+    it('ten sam dataset + hyperparametry → identyczne weights (SEED=42 jako metadata)', () => {
+        const dataset = [
+            { features: [1000, 500, 2], label: 1, weight: 1 },
+            { features: [1200, 600, 3], label: 1, weight: 1 },
+            { features: [1000, 400, 1], label: 1, weight: 1 },
+            { features: [5000, 3000, 10], label: 0, weight: 1 },
+            { features: [4000, 2500, 8], label: 0, weight: 1 },
+            { features: [6000, 3500, 12], label: 0, weight: 1 }
+        ];
+        const m1 = new AcceptanceModel(3);
+        m1.train(dataset, 0.01, 5000);
+        const m2 = new AcceptanceModel(3);
+        m2.train(dataset, 0.01, 5000);
+        expect(m1.getWeights()).toEqual(m2.getWeights());
+        expect(m1.getBias()).toBe(m2.getBias());
+    });
+
+    it('SEED=42 jest eksportowany jako stała (metadata/audyt)', async () => {
+        const { SEED } = await import('../../src/services/ml/TrainingPipeline');
+        expect(SEED).toBe(42);
+    });
+});
+
+describe('Split 70/15/15 (ETAP 2)', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    it('guard rozmiaru → SKIPPED przy zbyt małym teście (n=250)', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const { default: prisma } = await import('../../src/prismaClient');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        (prisma.aiModel as any).findMany = jest.fn<any>().mockResolvedValue([]);
+        // 250 rekordów: n < minDatasetForSplit (300) → SKIPPED przed balansem klas
+        const mixed = Array.from({ length: 250 }, (_, i) => ({
+            dn: 1000,
+            heightMm: 3000,
+            warehouse: 'KLB',
+            wellType: 'standard',
+            hasReduction: false,
+            hasPsiaBuda: false,
+            hasStyczna: false,
+            ringCount: 3,
+            connectionCount: 2,
+            transitionsAboveDennica: 1,
+            totalPrice: 2500 + i,
+            totalWeight: 5000 + i,
+            ringVariety: 1,
+            season: 'summer',
+            bottomType: 'unknown',
+            topType: 'unknown',
+            kinetaType: '',
+            dennicaHeight: 0,
+            label: i % 2 === 0 ? 'ACCEPTED' : 'REJECTED',
+            createdAt: `2026-07-${String((i % 28) + 1).padStart(2, '0')}T12:00:00Z`,
+            telemetryId: `tel-${i}`
+        }));
+        mockFindMany.mockResolvedValue(mixed);
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(mockRunUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    status: 'SKIPPED',
+                    error: expect.stringContaining('split_guard')
+                })
+            })
+        );
+    });
+});
+
 describe('AcceptanceModel trening', () => {
     it('model potrafi odróżnić dobre od złych konfiguracji', () => {
         const model = new AcceptanceModel(3);
@@ -430,7 +643,9 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             kinetaType: '',
             dennicaHeight: 0,
             label,
-            createdAt: '2026-07-01T12:00:00Z',
+            // Unikalne daty — run() sortuje desc + reverse (chronologicznie); bez tego
+            // kolejność po reverse jest odwrócona i split 70/15/15 łapie złe rekordy.
+            createdAt: new Date(Date.UTC(2026, 6, 1) + i * 86400000).toISOString(),
             telemetryId: `tel-${i}`
         };
     }
@@ -463,8 +678,15 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 
     it('jedna klasa w treningu/val (same ACCEPTED) → insufficient_label_diversity', async () => {
         const { trainingPipeline } = await setupRun();
-        const onlyAccepted = Array.from({ length: 120 }, (_, i) => makeFeature('ACCEPTED', i));
-        mockFindMany.mockResolvedValue(onlyAccepted);
+        // 400 rekordów: train/val (0..339) same ACCEPTED, test (340..399) z balansem
+        // 30/30 — guarda rozmiaru przechodzi (n=400), ale trainClasses=1 → label diversity.
+        // Uwaga: run() robi features.reverse() (po orderBy desc) — mock musi zwrócić
+        // tablicę w kolejności DESC, żeby po reverse split był chronologiczny.
+        const onlyAccepted = Array.from({ length: 340 }, (_, i) => makeFeature('ACCEPTED', i));
+        const testBalanced = Array.from({ length: 60 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', 400 + i)
+        );
+        mockFindMany.mockResolvedValue([...testBalanced, ...onlyAccepted]);
 
         const res = await trainingPipeline.run();
 
@@ -472,9 +694,9 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
         expect(res.reason).toMatch(/insufficient_label_diversity:train=1/);
     });
 
-    it('pierwszy model z AUC=0.5 (gorzej niż losowe) → auc_insufficient (gate >0.5)', async () => {
+    it('pierwszy model z AUC=0.5 (gorzej niż losowe) → deploy_abs_insufficient (gate minAuc>0.55)', async () => {
         const { trainingPipeline } = await setupRun();
-        const mixed = Array.from({ length: 200 }, (_, i) =>
+        const mixed = Array.from({ length: 400 }, (_, i) =>
             makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
         );
         mockFindMany.mockResolvedValue(mixed);
@@ -486,14 +708,170 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
             recall: 0.5,
             f1: 0.5,
             rocAuc: 0.5,
-            trainSize: 96,
-            valSize: 24
+            trainSize: 280,
+            valSize: 60
         };
         (trainingPipeline as any).evaluateModel = jest.fn<any>().mockReturnValue(metrics);
 
         const res = await trainingPipeline.run();
 
         expect(res.trained).toBe(false);
-        expect(res.reason).toMatch(/auc_insufficient:0.5/);
+        expect(res.reason).toMatch(/deploy_abs_insufficient:auc=0.5/);
+    });
+});
+
+describe('TrainingPipeline AiTrainingRun (ETAP 1)', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+        mockRunCreate.mockResolvedValue({ id: 'run-1' });
+        mockRunUpdate.mockResolvedValue({ id: 'run-1' });
+    });
+
+    function makeFeature(label: string, i = 0): any {
+        return {
+            dn: 1000,
+            heightMm: 3000,
+            warehouse: 'KLB',
+            wellType: 'standard',
+            hasReduction: false,
+            hasPsiaBuda: false,
+            hasStyczna: false,
+            ringCount: 3,
+            connectionCount: 2,
+            transitionsAboveDennica: 1,
+            totalPrice: 2500 + i,
+            totalWeight: 5000 + i,
+            ringVariety: 1,
+            season: 'summer',
+            bottomType: 'unknown',
+            topType: 'unknown',
+            kinetaType: '',
+            dennicaHeight: 0,
+            label,
+            createdAt: '2026-07-01T12:00:00Z',
+            telemetryId: `tel-${i}`
+        };
+    }
+
+    it('run() tworzy AiTrainingRun RUNNING na start i kończy SKIPPED przy za mało danych', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        mockFindMany.mockResolvedValue([]);
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        // create: RUNNING + seed 42 + featureVersion
+        expect(mockRunCreate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    status: 'RUNNING',
+                    seed: 42,
+                    featureVersion: expect.any(String),
+                    deployed: false
+                })
+            })
+        );
+        // update: SKIPPED + finishedAt + powód
+        expect(mockRunUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    status: 'SKIPPED',
+                    finishedAt: expect.any(String),
+                    error: expect.stringContaining('insufficient_data')
+                })
+            })
+        );
+    });
+
+    it('run() kończy FAILED_ERROR przy wyjątku z ekstrakcji cech', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockRejectedValue(
+            new Error('extract crash')
+        );
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/failed_error:extract crash/);
+        expect(mockRunUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    status: 'FAILED_ERROR',
+                    error: 'failed_error:extract crash'
+                })
+            })
+        );
+    });
+
+    it('run() kończy FAILED_VALIDATION gdy kandydat nie przechodzi gate AUC', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const { default: prisma } = await import('../../src/prismaClient');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        const mixed = Array.from({ length: 400 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
+        );
+        mockFindMany.mockResolvedValue(mixed);
+        (prisma.aiModel as any).findMany = jest.fn<any>().mockResolvedValue([]);
+        (trainingPipeline as any).evaluateModel = jest.fn<any>().mockReturnValue({
+            accuracy: 0.5,
+            precision: 0.5,
+            recall: 0.5,
+            f1: 0.5,
+            rocAuc: 0.5,
+            trainSize: 280,
+            valSize: 60
+        });
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(mockRunUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({
+                    status: 'FAILED_VALIDATION',
+                    error: expect.stringContaining('deploy_abs_insufficient'),
+                    deployed: false,
+                    baselineAccuracy: 0.5,
+                    positiveRate: 0.5
+                })
+            })
+        );
+    });
+
+    it('run() mapuje TrainingNumericalError na FAILED_NUMERICAL', async () => {
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        const { default: prisma } = await import('../../src/prismaClient');
+        const { AcceptanceModel } = await import('../../src/services/ml/AcceptanceModel');
+        jest.spyOn(featureExtractor, 'extractAndStore').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncLabels').mockResolvedValue(0);
+        jest.spyOn(featureExtractor, 'resyncFeatures').mockResolvedValue(0);
+        const mixed = Array.from({ length: 400 }, (_, i) =>
+            makeFeature(i % 2 === 0 ? 'ACCEPTED' : 'REJECTED', i)
+        );
+        mockFindMany.mockResolvedValue(mixed);
+        (prisma.aiModel as any).findMany = jest.fn<any>().mockResolvedValue([]);
+        // Rzuć wyjątek numeryczny podczas treningu (przez przechwycenie train)
+        jest.spyOn(AcceptanceModel.prototype, 'train').mockImplementation(() => {
+            throw new TrainingNumericalError('non-finite at epoch 5/5000');
+        });
+
+        const res = await trainingPipeline.run();
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/failed_numerical:/);
+        expect(mockRunUpdate).toHaveBeenCalledWith(
+            expect.objectContaining({
+                data: expect.objectContaining({ status: 'FAILED_NUMERICAL' })
+            })
+        );
     });
 });

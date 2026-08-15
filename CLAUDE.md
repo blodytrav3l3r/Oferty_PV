@@ -158,8 +158,8 @@ System ML jest równoległy do istniejącego LearningEngine (pattern-based). NIE
 | Acceptance Model  | `src/services/ml/AcceptanceModel.ts`  | Logistic Regression w TS (sigmoid, gradient descent)                                 |
 | Model Registry    | `src/services/ml/ModelRegistry.ts`    | CRUD dla AiModel + auto-rollback gdy AUC < 0.65                                      |
 | Training Pipeline | `src/services/ml/TrainingPipeline.ts` | Cron co 15min: extract → normalize → train → validate → deploy                       |
-| Reward Calculator | `src/services/ml/RewardCalculator.ts` | Reward signals per decyzja użytkownika                                               |
-| Self Evaluation   | `src/services/ml/SelfEvaluation.ts`   | Daily cron A/B testing + auto-rollback                                               |
+| Reward Calculator | `src/services/ml/RewardCalculator.ts` | Reward signals per decyzja użytkownika (feedback-based learning)                     |
+| Self Evaluation   | `src/services/ml/SelfEvaluation.ts`   | Daily cron A/B testing + auto-rollback (feedback-based learning)                     |
 | Prediction API    | `src/routes/telemetryAiMl.ts`         | POST /api/telemetry/ai/predict (cache 15min), /reward, /ml-status, /train, /rollback |
 | Dual-Ranking      | `public/js/studnie/mlDualRanking.js`  | Final = 0.6 × Technical + 0.4 × AI × 100; 5% exploration                             |
 | Reward Hooks      | `public/js/studnie/mlRewardHooks.js`  | Hooki do wellActions (addWell, removeWell, ACCEPT, REJECT)                           |

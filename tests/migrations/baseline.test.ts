@@ -11,10 +11,11 @@ import { DatabaseSync } from 'node:sqlite';
 import { createIsolatedProject } from './helpers';
 
 const BASELINE = '20260815000000_baseline';
+const AI_TRAINING_RUN = '20260816000000_ai_training_run';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
-        const project = createIsolatedProject('baseline', [BASELINE]);
+        const project = createIsolatedProject('baseline', [BASELINE, AI_TRAINING_RUN]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);
             expect(out).toContain('All migrations have been successfully applied');

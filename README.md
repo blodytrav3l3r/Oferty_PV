@@ -633,6 +633,7 @@ System zawiera zintegrowany pipeline uczenia maszynowego do rankowania rozwiąza
 - **Learning Engine:** Zbieranie telemetrii, Knowledge Base, Preference Engine, Pattern Detector
 - **Trenowanie:** Cron co 15 minut (`TrainingPipeline`)
 - **Samoocena:** Cron co 24h (`SelfEvaluation`)
+- **Paradygmat:** feedback-based learning (decyzje użytkownika + reward + samoocena AUC), nie reinforcement learning — brak state/action/policy/update rule
 - **Forgetting curve:** Wykładniczy zanik λ=0.01 (~69 dni półtrwania dla nieużywanych danych)
 - **Auto-rollback:** Gdy ROC-AUC < 0.65
 - **Endpointy:** `/api/ml/predict`, `/api/ml/reward`, `/api/ml/status`, `/api/ml/models`, `/api/ml/train`, `/api/ml/rollback`, `/api/telemetry-ai/*`, `/api/telemetry-ai-dashboard/*`

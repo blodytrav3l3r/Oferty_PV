@@ -636,12 +636,47 @@ model AiModel {
   featureMaxs String               // JSON: max wartości do normalizacji
   trainingRows Int                 // ile rekordów uzyto do treningu
   featureVersion String?           // wersja cech ML (np. 'v5', 'v6') — null dla starych modeli
+  state      String?               // cykl życia modelu: CANDIDATE | APPROVED | PRODUCTION | REJECTED | ROLLED_BACK (null = legacy)
+  seed       Int?                  // seed treningu (metadata/audyt; algorytm nie używa RNG)
+  featureDistributions String?     // JSON: { version: 1, features: { <cecha>: { bins: [], counts: [] } } } — baseline driftu z TRAIN
   active     Boolean  @default(false)
   notes      String?
   createdAt  String
 
   @@index([active], map: "idx_aimodel_active")
+  @@index([state], map: "idx_aimodel_state")
   @@index([createdAt], map: "idx_aimodel_created")
+}
+
+// =============================================================================
+// FAZA 2b: Training Run Audit — kręgosłup audytu "czy model faktycznie się uczy"
+// =============================================================================
+
+model AiTrainingRun {
+  id                     String   @id
+  startedAt              String
+  finishedAt             String?
+  status                 String   // RUNNING | SUCCESS | SKIPPED | FAILED_NUMERICAL | FAILED_VALIDATION | FAILED_TIMEOUT | FAILED_ERROR
+  datasetSize            Int
+  trainSize              Int
+  validationSize         Int
+  testSize               Int
+  featureVersion         String
+  seed                   Int
+  candidateModelVersion  String?  // model wyprodukowany przez ten run (jeśli powstał)
+  comparedAgainstVersion String?  // model PRODUCTION, z którym porównywano kandydata
+  datasetStartAt         String?  // pierwszy rekord datasetu (time-based split)
+  datasetEndAt           String?  // ostatni rekord datasetu
+  datasetFingerprint     String?  // SHA-256(sorted(recordId + timestamp + label + featureVersion))
+  metrics                String?  // JSON: rozszerzony ModelMetrics (val + test)
+  baselineAccuracy       Float?   // accuracy klasyfikatora majority-class = max(positiveRate, 1 - positiveRate)
+  positiveRate           Float?   // częstotliwość klasy pozytywnej w train (osobno — przydatna w label drift)
+  deployed               Boolean
+  deploymentReason       String?
+  error                  String?
+
+  @@index([startedAt], map: "idx_aitrainingrun_started")
+  @@index([status], map: "idx_aitrainingrun_status")
 }
 
 // =============================================================================
