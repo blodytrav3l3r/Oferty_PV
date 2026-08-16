@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.15.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.15.0...v1.15.1) (2026-08-16)
+
+### Features
+
+- **telemetry:** dojrzalosc mlops - drift, state machine, metryki ([50f9d59](https://github.com/blodytrav3l3r/Oferty_PV/commit/50f9d595aa3251b592f224915bb4ec13c1994d79))
+- **ui:** grupowanie kart ml dashboardu ([c04deb0](https://github.com/blodytrav3l3r/Oferty_PV/commit/c04deb08de54b67a432c7732637188f22b88ee35))
+
+### Bug Fixes
+
+- **telemetry:** audyt mlops - drift 29/29 cech, bezpieczne 500, docs ([8f85ad0](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f85ad0363cd45d1d64f6c3aea5df22ffd990691))
+
 ## [1.15.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.14.2...v1.15.0) (2026-08-14)
 
 ### Features
