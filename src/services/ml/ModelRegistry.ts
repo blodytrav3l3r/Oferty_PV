@@ -189,13 +189,19 @@ export class ModelRegistry {
             try {
                 metrics = JSON.parse(r.metrics) as ModelMetrics;
             } catch {
-                // pomijamy uszkodzone metryki
+                logger.warn(
+                    'ModelRegistry',
+                    `Uszkodzone metryki JSON w modelu ${r.id} (version ${r.version})`
+                );
             }
             let features: string[] = [];
             try {
                 features = JSON.parse(r.features) as string[];
             } catch {
-                // pomijamy uszkodzoną listę cech
+                logger.warn(
+                    'ModelRegistry',
+                    `Uszkodzona lista cech JSON w modelu ${r.id} (version ${r.version})`
+                );
             }
             return {
                 id: r.id,

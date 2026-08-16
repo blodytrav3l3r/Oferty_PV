@@ -187,8 +187,10 @@ router.get('/:id', requireAuth, async (req, res) => {
                 ...parsedData
             }
         });
-    } catch (_e: unknown) {
-        res.status(404).json({ error: 'Zamówienie nie znalezione' });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e);
+        logger.error('StudnieOrdersV2', 'GET order error', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
 

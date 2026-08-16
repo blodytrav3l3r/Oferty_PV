@@ -34,6 +34,7 @@ interface PruneRecord {
     version: string;
     active: boolean;
     metrics: string;
+    features?: string;
     featureVersion: string | null;
     createdAt: string;
 }
@@ -290,5 +291,26 @@ describe('ModelRegistry.pruneOldModels', () => {
         const deletedIds = deletedIdsFromCalls();
         expect(deletedIds).toHaveLength(1);
         expect(deletedIds).not.toContain('m-active');
+    });
+
+    it('listModels nie rzuca przy uszkodzonym JSON i loguje warn (A-16)', async () => {
+        const { logger } = await import('../../src/utils/logger');
+        const { modelRegistry } = await import('../../src/services/ml/ModelRegistry');
+        mockFindMany.mockResolvedValue([
+            makeRecord({
+                id: 'm-bad',
+                metrics: '{uszkodzony json',
+                features: 'tez nie json'
+            })
+        ]);
+        (logger.warn as jest.Mock).mockClear();
+
+        const list = await modelRegistry.listModels(1);
+
+        expect(list).toHaveLength(1);
+        expect(list[0].id).toBe('m-bad');
+        expect(list[0].metrics).toBeNull();
+        expect(list[0].features).toEqual([]);
+        expect(logger.warn).toHaveBeenCalled();
     });
 });

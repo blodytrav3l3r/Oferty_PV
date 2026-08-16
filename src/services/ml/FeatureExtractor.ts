@@ -377,10 +377,16 @@ export class FeatureExtractor {
     ): Promise<void> {
         if (!telemetryId) return;
         const reward = labelToReward(label);
-        await prisma.aiFeature.updateMany({
+        const result = await prisma.aiFeature.updateMany({
             where: { telemetryId },
             data: { label, reward }
         });
+        if (result && result.count === 0) {
+            logger.warn(
+                'FeatureExtractor',
+                `updateLabelByTelemetry: brak cech dla telemetryId=${telemetryId} (label ${label})`
+            );
+        }
     }
 
     /**
@@ -395,7 +401,7 @@ export class FeatureExtractor {
         // starsze nigdy nie dostałyby skorygowanej etykiety (cichy stale label).
         const BATCH = 2000;
         let updated = 0;
-        let cursor: string | undefined;
+        let cursor: { createdAt: string; id: string } | undefined;
         let fetched: Array<{
             id: string;
             createdAt: string | null;
@@ -411,9 +417,16 @@ export class FeatureExtractor {
             const records = await prisma.ai_telemetry_logs.findMany({
                 where: {
                     trainingEligible: true,
-                    ...(cursor ? { createdAt: { lt: cursor } } : {})
+                    ...(cursor
+                        ? {
+                              OR: [
+                                  { createdAt: { lt: cursor.createdAt } },
+                                  { createdAt: cursor.createdAt, id: { lt: cursor.id } }
+                              ]
+                          }
+                        : {})
                 },
-                orderBy: { createdAt: 'desc' },
+                orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
                 take: Math.min(BATCH, limit),
                 select: {
                     id: true,
@@ -459,7 +472,11 @@ export class FeatureExtractor {
 
             if (records.length === 0) break;
             fetched = records;
-            cursor = records[records.length - 1].createdAt || undefined;
+            const last = records[records.length - 1];
+            cursor = {
+                createdAt: last.createdAt || '',
+                id: last.id
+            };
             limit -= records.length;
         } while (limit > 0 && fetched.length > 0);
 

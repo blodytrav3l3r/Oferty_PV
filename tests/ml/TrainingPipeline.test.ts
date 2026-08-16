@@ -142,6 +142,40 @@ describe('FeatureExtractor', () => {
         });
     });
 
+    it('resyncLabels używa kursora (createdAt, id) z orderBy array (A-18)', async () => {
+        const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
+        mockFindMany
+            // 1. ai_telemetry_logs.findMany — rekordy źródłowe z feedbackiem
+            .mockResolvedValueOnce([
+                { id: 'log-1', createdAt: '2026-07-01T12:00:00Z' },
+                { id: 'log-2', createdAt: '2026-07-01T12:00:00Z' }
+            ])
+            // 2. aiFeature.findMany — bez istniejących (brak aktualizacji)
+            .mockResolvedValueOnce([])
+            // 3. kolejne iteracje pętli (kursor) — pusta lista kończy pętlę
+            .mockResolvedValue([]);
+
+        await featureExtractor.resyncLabels(2000);
+
+        type FindManyArgs = {
+            orderBy?: Array<Record<string, string>>;
+            where?: { trainingEligible?: boolean; OR?: Array<Record<string, unknown>> };
+        };
+        const firstCall = mockFindMany.mock.calls[0][0] as FindManyArgs;
+        /* Brak kursora przy pierwszym wywołaniu */
+        expect(firstCall.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
+        expect(firstCall.where?.trainingEligible).toBe(true);
+        expect(firstCall.where?.OR).toBeUndefined();
+
+        const secondCall = mockFindMany.mock.calls[2][0] as FindManyArgs;
+        /* Kursor po (createdAt, id) — nie pomija rekordów z równym createdAt */
+        expect(secondCall.where?.OR).toEqual([
+            { createdAt: { lt: '2026-07-01T12:00:00Z' } },
+            { createdAt: '2026-07-01T12:00:00Z', id: { lt: 'log-2' } }
+        ]);
+        expect(secondCall.orderBy).toEqual([{ createdAt: 'desc' }, { id: 'desc' }]);
+    });
+
     it('updateLabelByTelemetry pomija brak telemetryId', async () => {
         const { featureExtractor } = await import('../../src/services/ml/FeatureExtractor');
         mockUpdateMany.mockClear();
@@ -618,8 +652,13 @@ describe('ModelRegistry', () => {
 });
 
 describe('TrainingPipeline.run() — guardy (K6)', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         jest.clearAllMocks();
+        // Testy A-14 ustawiają lastTrainedAt/mockCount na singletonie —
+        // reset, by nie persistowały do pozostałych testów guardów.
+        const { trainingPipeline } = await import('../../src/services/ml/TrainingPipeline');
+        (trainingPipeline as any).lastTrainedAt = null;
+        mockCount.mockResolvedValue(undefined);
     });
 
     function makeFeature(label: string, i = 0): any {
@@ -674,6 +713,35 @@ describe('TrainingPipeline.run() — guardy (K6)', () => {
 
         expect(res.trained).toBe(false);
         expect(res.reason).toMatch(/insufficient_data/);
+    });
+
+    it('za mało NOWYCH danych (A-14) → insufficient_new_data przy force=false', async () => {
+        const { trainingPipeline } = await setupRun();
+        mockFindMany.mockResolvedValue(
+            Array.from({ length: 400 }, (_, i) => makeFeature('ACCEPTED', i))
+        );
+        // lastTrainedAt ustawiony wcześniej — aiFeature.count = brak nowych
+        (trainingPipeline as any).lastTrainedAt = new Date(Date.UTC(2026, 8, 1)).toISOString();
+        mockCount.mockResolvedValue(0);
+
+        const res = await trainingPipeline.run(false);
+
+        expect(res.trained).toBe(false);
+        expect(res.reason).toMatch(/insufficient_new_data:0/);
+    });
+
+    it('A-14: force=true pomija guard nowych danych', async () => {
+        const { trainingPipeline } = await setupRun();
+        mockFindMany.mockResolvedValue(
+            Array.from({ length: 400 }, (_, i) => makeFeature('ACCEPTED', i))
+        );
+        (trainingPipeline as any).lastTrainedAt = new Date(Date.UTC(2026, 8, 1)).toISOString();
+        mockCount.mockResolvedValue(0);
+
+        const res = await trainingPipeline.run(true);
+
+        /* force omija insufficient_new_data — nie może to być przyczyna odmowy */
+        expect(res.reason).not.toMatch(/insufficient_new_data/);
     });
 
     it('jedna klasa w treningu/val (same ACCEPTED) → insufficient_label_diversity', async () => {

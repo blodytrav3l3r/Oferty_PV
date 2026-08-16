@@ -2,6 +2,7 @@
 async function loadOrdersStudnie() {
     try {
         const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         return json.data || [];
     } catch (err) {
