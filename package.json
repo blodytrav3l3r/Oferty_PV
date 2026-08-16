@@ -1,6 +1,6 @@
 {
     "name": "sok-oferty",
-    "version": "1.16.0",
+    "version": "1.16.1",
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
@@ -14,7 +14,7 @@
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
-        "validate": "npm run typecheck && npm run typecheck:frontend && npm run lint && npm run lint:frontend && npm run appname:check && npm run test:quick",
+        "validate": "npm run typecheck && npm run typecheck:frontend && npm run lint && npm run lint:frontend && npm run appname:check && npm run licenses:check && npm run test:quick",
         "lint": "eslint src/**/*.{js,ts}",
         "lint:fix": "eslint src/**/*.{js,ts} --fix",
         "lint:frontend": "eslint public/js --ext .js",
@@ -68,6 +68,8 @@
         "encoding:check": "node scripts/encoding-integrity.js check",
         "encoding:fix": "node scripts/encoding-integrity.js fix",
         "encoding:staged": "node scripts/encoding-integrity.js staged",
+        "licenses:generate": "node scripts/generate-licenses.mjs",
+        "licenses:check": "node scripts/check-licenses.mjs",
         "benchmark": "node scripts/benchmark.mjs",
         "benchmark:quick": "node scripts/benchmark.mjs 10",
         "prepare": "husky"
@@ -90,6 +92,8 @@
         "express": "^4.22.2",
         "helmet": "^8.1.0",
         "puppeteer": "^24.43.1",
+        "swagger-jsdoc": "^6.3.0",
+        "swagger-ui-express": "^5.0.1",
         "zod": "^4.3.6"
     },
     "devDependencies": {
@@ -118,8 +122,6 @@
         "prisma": "^6.0.0",
         "standard-version": "^9.5.0",
         "supertest": "^7.2.2",
-        "swagger-jsdoc": "^6.3.0",
-        "swagger-ui-express": "^5.0.1",
         "ts-jest": "^29.4.9",
         "ts-node": "^10.9.2",
         "ts-node-dev": "^2.0.0",

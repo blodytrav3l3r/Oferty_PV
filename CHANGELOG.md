@@ -4,6 +4,17 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.16.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.16.0...v1.16.1) (2026-08-16)
+
+### Features
+
+- **studnie:** fokus na rzednej przy dodawaniu przecscia ([14907d3](https://github.com/blodytrav3l3r/Oferty_PV/commit/14907d3a1335d4d08a2919032de88bb82f42a74f))
+- **studnie:** zaznaczanie rzednej przy dodawaniu przecscia ([7589ca5](https://github.com/blodytrav3l3r/Oferty_PV/commit/7589ca58d6cfd1fdfe542aa183e6332f7c9e0ceb))
+
+### Bug Fixes
+
+- **deps:** powrot express 4.x i puppeteer 24.x ([30e6f91](https://github.com/blodytrav3l3r/Oferty_PV/commit/30e6f9160a96e3c06c89283c098fc7a97fad1711))
+
 ## [1.16.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.15.1...v1.16.0) (2026-08-16)
 
 ### Features
