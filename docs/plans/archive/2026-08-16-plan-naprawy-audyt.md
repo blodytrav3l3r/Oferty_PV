@@ -82,18 +82,14 @@ Snapshot: `npm run validate`, `version:check`, backup DB.
 
 Porzadki, DRY, komunikaty.
 
-### Faza 9 — Ujednolicenie CRUD rury/studnie (P2)
-
-Tylko po fazach 1-8.
-
-### Faza 10 — Koncowy audyt + regresja
+### Faza 9 — Koncowy audyt + regresja
 
 Pełne `npm run validate`, E2E, security-reviewer, P0/P1 = 0.
 
 ## 6. Zależnosci
 
 ```
-Z1.1-Z1.5 (IDOR) -> Z3.x -> Faza 9
+Z1.1-Z1.5 (IDOR) -> Z3.x
 Z2.1 (shared escape) -> Z2.2-Z2.5 -> Z2.6 (XSS regression)
 Z4.1 (migracja reward) -> Z6.1 (RewardCalculator)
 Z5.x po Fazie 1
@@ -115,7 +111,7 @@ Patrz sekcje planu w tresci rozmowy (migracje, security, concurrency, ML/AI, tes
 
 ## 14. Executive summary
 
-10 faz, 3 korekty audytu, 8 zmian P0 security, ~12 P1, bez zmian ADR.
+9 faz, 3 korekty audytu, 8 zmian P0 security, ~12 P1, bez zmian ADR.
 
 ## 15. FINAL CHECK
 
