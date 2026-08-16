@@ -46,6 +46,8 @@ function parseLastVersionFromChangelog(cl) {
 const versionFile = (read(resolve(ROOT, 'VERSION')) ?? '').trim();
 const pkgJson = read(resolve(ROOT, 'package.json'));
 const versionPkg = parseVersionFromPkg(pkgJson);
+const lockJson = read(resolve(ROOT, 'package-lock.json'));
+const versionLock = parseVersionFromPkg(lockJson);
 const changelog = read(resolve(ROOT, 'CHANGELOG.md'));
 const versionChangelog = parseLastVersionFromChangelog(changelog);
 
@@ -59,6 +61,9 @@ if (!SEMVER.test(versionFile)) {
 if (!versionPkg) {
     errors.push(`package.json — brak lub nieprawidłowa sekcja "version"`);
 }
+if (!versionLock) {
+    errors.push(`package-lock.json — brak lub nieprawidłowa sekcja "version"`);
+}
 if (!versionChangelog) {
     warnings.push(`CHANGELOG.md — brak wpisu ## [X.Y.Z] (początkowy CHANGELOG OK)`);
 }
@@ -66,11 +71,15 @@ if (!versionChangelog) {
 const allVersions = {
     VERSION: versionFile,
     'package.json': versionPkg,
+    'package-lock.json': versionLock,
     CHANGELOG: versionChangelog
 };
 
 if (versionFile && versionPkg && versionFile !== versionPkg) {
     errors.push(`VERSION (${versionFile}) ≠ package.json (${versionPkg})`);
+}
+if (versionFile && versionLock && versionFile !== versionLock) {
+    errors.push(`VERSION (${versionFile}) ≠ package-lock.json (${versionLock})`);
 }
 if (versionChangelog && versionFile && versionChangelog !== versionFile) {
     errors.push(`VERSION (${versionFile}) ≠ CHANGELOG.md [${versionChangelog}]`);

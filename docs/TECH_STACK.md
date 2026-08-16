@@ -4,20 +4,28 @@
 
 ## Licencje — podsumowanie
 
-| Licencja      | Liczba pakietów | Komercyjne użycie | Sprzedaż produktu |               Attribution                |
-| ------------- | :-------------: | :---------------: | :---------------: | :--------------------------------------: |
-| MIT           |       618       |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| Apache-2.0    |       57        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| ISC           |       51        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| BSD-3-Clause  |       21        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| BSD-2-Clause  |       12        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| BlueOak-1.0.0 |       11        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| MPL-2.0       |        2        |      ✅ tak       |      ✅ tak       | ⚠ modyfikacje pliku muszą być opensource |
-| CC-BY-4.0     |        1        |      ✅ tak       |      ✅ tak       |               ✅ wymagane                |
-| Python-2.0    |        1        |      ✅ tak       |      ✅ tak       |                    —                     |
-| 0BSD          |        1        |      ✅ tak       |      ✅ tak       |                    —                     |
+> Źródło prawdy: `THIRD-PARTY-NOTICES.md` w root projektu (generowany automatycznie przez `npm run licenses:generate` z `package-lock.json`).
 
-**Brak licencji GPL, AGPL, LGPL copyleft** — wszystkie zależności są bezpieczne komercyjnie.
+| Licencja                | Liczba pakietów | Komercyjne użycie | Sprzedaż produktu |    Attribution     |
+| ----------------------- | :-------------: | :---------------: | :---------------: | :----------------: |
+| MIT                     |       910       |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| ISC                     |       98        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| Apache-2.0              |       61        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BSD-3-Clause            |       19        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BSD-2-Clause            |       18        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BlueOak-1.0.0           |       16        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| MIT OR CC0-1.0          |       14        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| Python-2.0              |        1        |      ✅ tak       |      ✅ tak       |         —          |
+| CC-BY-4.0               |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BSD                     |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| MIT OR Apache-2.0       |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| MIT OR GPL-3.0-or-later |        1        |    ⚠ wybór MIT    |    ⚠ wybór MIT    | ⚠ zależy od wyboru |
+| MIT AND Zlib            |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| CC-BY-3.0               |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| CC0-1.0                 |        1        |      ✅ tak       |      ✅ tak       |         —          |
+| 0BSD                    |        1        |      ✅ tak       |      ✅ tak       |         —          |
+
+**Brak czystych licencji GPL, AGPL, LGPL copyleft** — wszystkie zależności są bezpieczne komercyjnie. Jedyny wyjątek to `jszip@3.10.1` z dual-license `MIT OR GPL-3.0-or-later` — wybór licencji należy do dewelopera; przy wyborze MIT nie ma obowiązków copyleft.
 
 ---
 
@@ -27,20 +35,20 @@
 | ---------------- | -------- | ------------- | ------------------------- | ---------------------------------------------------------- | :---------: |
 | Node.js          | ≥22.13   | MIT           | Środowisko uruchomieniowe | https://nodejs.org                                         |     ✅      |
 | TypeScript       | ^6.0.2   | Apache-2.0    | Język programowania       | https://typescriptlang.org                                 |     ✅      |
-| Express          | ^4.21.0  | MIT           | Framework backend         | https://expressjs.com                                      |     ✅      |
+| Express          | ^4.22.2  | MIT           | Framework backend         | https://expressjs.com                                      |     ✅      |
 | Prisma           | ^6.0.0   | Apache-2.0    | ORM / baza danych         | https://prisma.io                                          |     ✅      |
 | SQLite           | —        | Public Domain | Baza danych               | https://sqlite.org                                         |     ✅      |
 | Jest             | ^30.3.0  | MIT           | Testy                     | https://jestjs.io                                          |     ✅      |
-| Puppeteer        | ^24.40.0 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                           |     ✅      |
+| Puppeteer        | ^24.43.1 | Apache-2.0    | Generowanie PDF           | https://pptr.dev                                           |     ✅      |
 | Sentry           | ^10.59.0 | MIT           | Monitoring błędów         | https://sentry.io                                          |     ✅      |
 | Swagger          | ^6.3.0   | Apache-2.0    | Dokumentacja API          | https://swagger.io                                         |     ✅      |
 | docx (npm)       | ^9.6.1   | MIT           | Generowanie DOCX          | https://docx.js.org                                        |     ✅      |
 | Helmet           | ^8.1.0   | MIT           | Bezpieczeństwo HTTP       | https://helmetjs.github.io                                 |     ✅      |
 | Zod              | ^4.3.6   | MIT           | Walidacja danych          | https://zod.dev                                            |     ✅      |
-| ESLint           | ^10.6.0  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
+| ESLint           | ^10.8.1  | MIT           | Linter                    | https://eslint.org                                         |     ✅      |
 | Prettier         | ^3.9.4   | MIT           | Formatter kodu            | https://prettier.io                                        |     ✅      |
 | Husky            | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                           |     ✅      |
-| commitlint       | ^21.0.2  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |
+| commitlint       | ^21.1.0  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |
 | standard-version | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version |     ✅      |
 
 ## Narzędzia CI/CD

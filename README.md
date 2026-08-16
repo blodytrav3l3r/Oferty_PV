@@ -419,13 +419,15 @@ npm run deploy:check                                               # smoke check
 
 Projekt zawiera wygodne skrypty dla systemu Windows:
 
-| Skrypt        | Opis                                                                                          |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| `start.bat`   | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                           |
-| `dev.bat`     | Alias do `start.bat` (zachowany dla kompatybilności)                                          |
-| `build.bat`   | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005) |
-| `install.bat` | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                             |
-| `prod.bat`    | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                               |
+| Skrypt         | Opis                                                                                          |
+| -------------- | --------------------------------------------------------------------------------------------- |
+| `start.bat`    | Główne wejście: `start.bat` (dev, domyślnie) lub `start.bat --prod`                           |
+| `dev.bat`      | Alias do `start.bat` (zachowany dla kompatybilności)                                          |
+| `build.bat`    | Buduje TypeScript i kopiuje klienta Prisma (frontend nie jest budowany — vanilla JS, ADR-005) |
+| `install.bat`  | Instaluje zależności, konfiguruje bazę. `--skip-seed` pomija seed                             |
+| `prod.bat`     | Alias: uruchamia `start.bat --prod` (bez przekierowania portów)                               |
+| `deploy.bat`   | Deploy produkcji: `deploy.bat <windows\|linux\|docker> vX.Y.Z`                                |
+| `rollback.bat` | Powrót do poprzedniej wersji: `rollback.bat <windows\|linux\|docker> vX.Y.Z`                  |
 
 ---
 
@@ -531,16 +533,16 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.versionrc.json`). **Nie zmieniaj ręcznie** — poniższa lista służy weryfikacji spójności (`npm run version:check`) i kontroli, czy nic nie zostało pominięte:
 
-| #   | Lokalizacja                                                | Automat (release)               |
-| --- | ---------------------------------------------------------- | ------------------------------- |
-| 1   | `VERSION` (root) — źródło prawdy                           | `standard-version` (bumpFiles)  |
-| 2   | `package.json` → `version`                                 | `standard-version` (bumpFiles)  |
-| 3   | `package-lock.json` → `version` (root)                     | `standard-version` (bumpFiles)  |
-| 4   | `CHANGELOG.md` (nagłówki wersji)                           | `standard-version` (infile)     |
-| 5   | `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`   | `scripts/auto-cache-bust.mjs`   |
-| 6   | `*.bat` (start, install, build, ensure-db) → `APP_VERSION` | `scripts/auto-bat-version.mjs`  |
-| 7   | `README.md` + `docs/*.md` → `**Wersja:**` itd.             | `scripts/auto-docs-version.mjs` |
-| 8   | `docs/API.md` przykłady JSON (`"version"`/`"dbVersion"`)   | `scripts/auto-docs-version.mjs` |
+| #   | Lokalizacja                                                          | Automat (release)               |
+| --- | -------------------------------------------------------------------- | ------------------------------- |
+| 1   | `VERSION` (root) — źródło prawdy                                     | `standard-version` (bumpFiles)  |
+| 2   | `package.json` → `version`                                           | `standard-version` (bumpFiles)  |
+| 3   | `package-lock.json` → `version` (root)                               | `standard-version` (bumpFiles)  |
+| 4   | `CHANGELOG.md` (nagłówki wersji)                                     | `standard-version` (infile)     |
+| 5   | `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`             | `scripts/auto-cache-bust.mjs`   |
+| 6   | `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION` | `scripts/auto-bat-version.mjs`  |
+| 7   | `README.md` + `docs/*.md` → `**Wersja:**` itd.                       | `scripts/auto-docs-version.mjs` |
+| 8   | `docs/API.md` przykłady JSON (`"version"`/`"dbVersion"`)             | `scripts/auto-docs-version.mjs` |
 
 **Nieedytowalne ręcznie (tylko przez release):** `VERSION`, `?v=` w HTML, wersje w `.bat`, `**Wersja:**` w docs.
 
@@ -555,16 +557,33 @@ Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.v
 | `npm run release:dry`   | Podgląd changeloga bez zapisywania                 |
 | `npm run release:first` | Pierwszy release (pomija semver)                   |
 
+### Deploy i aktualizacje
+
+| Komenda                | Opis                                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------------ |
+| `npm run deploy`       | Bezpieczny deploy produkcji (`node scripts/deploy.mjs <windows\|linux\|docker> vX.Y.Z`)    |
+| `npm run rollback`     | Powrót do poprzedniej wersji (`node scripts/rollback.mjs <windows\|linux\|docker> vX.Y.Z`) |
+| `npm run deploy:check` | Smoke check /health po deploy (`node scripts/post-deploy-check.mjs`)                       |
+
+Szczegóły procesu aktualizacji produkcyjnej (backup, migracje addytywne, rollback): [docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md).
+
+### Licencje
+
+| Komenda                     | Opis                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------ |
+| `npm run licenses:generate` | Generuj `THIRD-PARTY-NOTICES.md` (zależności i licencje z `package-lock.json`) |
+| `npm run licenses:check`    | Sprawdź aktualność `THIRD-PARTY-NOTICES.md` (część `validate`)                 |
+
 ### Walidacja i kodowanie
 
-| Komenda                   | Opis                                                     |
-| ------------------------- | -------------------------------------------------------- |
-| `npm run validate`        | Pełna walidacja: typecheck + lint + testy                |
-| `npm run format`          | Formatuj kod (Prettier)                                  |
-| `npm run format:check`    | Sprawdź formatowanie                                     |
-| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat) |
-| `npm run encoding:fix`    | Napraw kodowanie plików                                  |
-| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)              |
+| Komenda                   | Opis                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `npm run validate`        | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + testy dymne |
+| `npm run format`          | Formatuj kod (Prettier)                                                                                                |
+| `npm run format:check`    | Sprawdź formatowanie                                                                                                   |
+| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat)                                                               |
+| `npm run encoding:fix`    | Napraw kodowanie plików                                                                                                |
+| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)                                                                            |
 
 ---
 

@@ -4,6 +4,8 @@
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
 **Ostatnia aktualizacja:** 2026-08-01
 
+> **Aktualizacje produkcyjne** (backup, migracje addytywne, rollback) opisuje [DEPLOY_UPDATE.md](DEPLOY_UPDATE.md).
+
 ---
 
 ## 1. Zmienne środowiskowe

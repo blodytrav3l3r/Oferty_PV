@@ -119,7 +119,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
     3. Release automatycznie wykonuje:
         - Podbicie `VERSION` i `package.json` (przez `standard-version`)
         - **Cache-bust assetów** — skrypt `scripts/auto-cache-bust.mjs` (przez hook `postbump`) podmienia wszystkie `?v=` w HTML (w tym `public/templates/*.html`) na nową wersję
-        - **Wersje w `.bat`** — `scripts/auto-bat-version.mjs` (start.bat, install.bat, build.bat, ensure-db.bat)
+        - **Wersje w `.bat`** — `scripts/auto-bat-version.mjs` (start.bat, install.bat, build.bat, setup-ai.bat, ensure-db.bat)
         - **Wersje w dokumentacji** — `scripts/auto-docs-version.mjs` (README.md + `docs/*.md`: `**Wersja:**`, `**Wersja aplikacji:**`, `> Wersja:`, oraz przykłady JSON `"version"`/`"dbVersion"` w `docs/API.md`)
         - Generowanie `CHANGELOG.md`
         - Commit `chore(release): X.Y.Z` + tag `vX.Y.Z`
@@ -130,7 +130,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
     2. `package.json` / `package-lock.json` → `version`
     3. `CHANGELOG.md` (nagłówki)
     4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
-    5. `*.bat` (start, install, build, ensure-db) → `APP_VERSION`
+    5. `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION`
     6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
     7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 - **Nie zmieniaj ręcznie parametrów `?v=` w HTML** — cache-bust jest synchronizowany z `VERSION` tylko podczas release.
@@ -225,6 +225,7 @@ Projekt stosuje **jednolite kodowanie UTF-8** dla wszystkich plików tekstowych:
 - **Tryb zamówienia**: Wykorzystuje flagę `orderEditMode` oraz obiekt `originalSnapshot`. Tabela zawiera dodatkowe kolumny porównawcze ("Cena z oferty", "Różnica").
 - **Oznaczanie błędów konfiguracji w zakładce Oferta**: studnie z `well.configStatus` = `'ERROR'`/`'WARNING'` (komunikat "Błędy w konfiguracji studni:") dostają czerwone/bursztynowe tło wiersza (klasy `.well-row-error`/`.well-row-warning` w `style.base.css` i `style.css`) oraz ikonę z tooltipem w osobnej kolumnie "Błąd" (`getWellErrorCell()` w `offerHelpers.js`, renderowana w `offerWellComponents.js`). Błędy przeliczane na każdym renderze oferty przez `refreshAllWellErrors()` (solverValidation.js), wywoływaną także z `wellUI.js`. Działa w trybie oferty i edycji zamówienia (współdzielony render). Treść `configErrors` zawsze przez `escapeHtml`.
 - **Układ strony (Layout)**: Trójkolumnowy grid (wizualizacja/diagram | konfigurator | lista studni) z responsywnym dopasowaniem za pomocą funkcji `clamp()` oraz `minmax(0, 1fr)`.
+- **Fokus po dodaniu przejścia**: `renderInlinePrzejsciaApp` w `public/js/studnie/wellTransitions.js` (~linia 172-180) — po dodaniu przejścia fokus i zaznaczenie (`focus()` + `select()`) ustawiane są na polu RZĘDNEJ (`inl-rzedna-*`), nie na kącie. Nie zmieniaj tego zachowania — użytkownik po dodaniu przejścia wpisuje rzędną (feature `14907d3`/`7589ca5`).
 - **Blokada usuwania przy zleceniach produkcyjnych (PZ)**: nie można usunąć oferty studni, zamówienia studni ani elementu (studnia / element konfiguracji), do którego przypisane jest jakiekolwiek PZ (`production_orders_rel`, status `draft` i `accepted`). Backend: `src/utils/productionOrderGuard.ts` (`hasProductionOrdersForOffer`, `countProductionOrdersForOrder`) wpięty w DELETE oferty studni (`src/routes/offers/crud.ts` gałąź `offer_studnie_*` oraz `src/routes/offers/studnieCrud.ts`) i zamówienia (`src/routes/orders/studnieOrders.crud.ts`) — zwracają `403 { error }`. Frontend pre-checki na liście `productionOrders` w pamięci: `public/js/studnie/pzGuard.js` (`window.pzGuard` — `hasPzForOffer`, `hasPzForOrder`, `hasPzForWell`, `hasPzForElementAtOrAfter`; ten ostatni chroni przed reindeksacją `elementIndex`), używane w `actionsWellCrud.js` (removeWell), `actionsCrud.js` (removeWellComponent, clearWellConfig), `actionsConfigDrag.js` (przesuwanie elementów), `orderCrud.js` (deleteOrderStudnie), `offerFileOps.js` (deleteOfferStudnie). `public/js/shared/StorageService.js` propaguje 403 (czyta `data.error`) zamiast generycznego komunikatu. Popup po polsku, `showToast` z ikoną `<i data-lucide="x-circle"></i>`. Rury: PZ nie istnieją dla zamówień rur — brak blokad.
 
 ### Moduł: Excel studni
@@ -326,15 +327,16 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Walidacja i jakość kodu
 
-| Polecenie                    | Opis działania                                                            |
-| ---------------------------- | ------------------------------------------------------------------------- |
-| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.      |
-| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych.                          |
-| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (katalog `src/`).  |
-| `npm run lint:frontend`      | Sprawdza poprawność kodu frontendowego w `public/js/`.                    |
-| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier. |
-| `npm run format:check`       | Sprawdza formatowanie bez zapisywania.                                    |
-| `npm run validate`           | Pełna walidacja: typecheck + lint + testy dymne.                          |
+| Polecenie                    | Opis działania                                                                                                          |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                                                    |
+| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych.                                                                        |
+| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (katalog `src/`).                                                |
+| `npm run lint:frontend`      | Sprawdza poprawność kodu frontendowego w `public/js/`.                                                                  |
+| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                                               |
+| `npm run format:check`       | Sprawdza formatowanie bez zapisywania.                                                                                  |
+| `npm run appname:check`      | Sprawdza spójność nazwy aplikacji (pre-push).                                                                           |
+| `npm run validate`           | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + testy dymne. |
 
 ### Testy
 
@@ -378,11 +380,12 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Backup i przenoszenie bazy
 
-| Polecenie                       | Opis działania                             |
-| ------------------------------- | ------------------------------------------ |
-| `npm run backup`                | Wykonuje backup bazy SQLite (VACUUM INTO). |
-| `npm run backup:install-cron`   | Instaluje cron backupu (Windows).          |
-| `npm run backup:uninstall-cron` | Odinstalowuje cron backupu (Windows).      |
+| Polecenie                        | Opis działania                                                          |
+| -------------------------------- | ----------------------------------------------------------------------- |
+| `npm run backup`                 | Wykonuje backup bazy SQLite (VACUUM INTO).                              |
+| `npm run restore <plik-backupu>` | Przywraca bazę z backupu (restore automatycznie synchronizuje schemat). |
+| `npm run backup:install-cron`    | Instaluje cron backupu (Windows).                                       |
+| `npm run backup:uninstall-cron`  | Odinstalowuje cron backupu (Windows).                                   |
 
 ### Wersjonowanie i release
 
@@ -398,6 +401,26 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run release:major` | Tworzy nową wersję typu major (zmiany przełamujące kompatybilność).                                                                                              |
 | `npm run release:dry`   | Podgląd changeloga bez zapisywania.                                                                                                                              |
 | `npm run release:first` | Pierwszy release (pomija semver).                                                                                                                                |
+| `npm run version:bump`  | Podbija wersję (typ z argumentu: `patch`/`minor`/`major`).                                                                                                       |
+
+### Deploy i aktualizacje
+
+| Polecenie              | Opis działania                                                                              |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run deploy`       | Bezpieczny deploy produkcji (`node scripts/deploy.mjs <windows\|linux\|docker> vX.Y.Z`).    |
+| `npm run rollback`     | Powrót do poprzedniej wersji (`node scripts/rollback.mjs <windows\|linux\|docker> vX.Y.Z`). |
+| `npm run deploy:check` | Smoke check /health po deploy (`node scripts/post-deploy-check.mjs`).                       |
+
+Szczegóły procesu aktualizacji produkcyjnej (backup, migracje addytywne, rollback): `docs/DEPLOY_UPDATE.md`.
+
+### Licencje
+
+| Polecenie                   | Opis działania                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `npm run licenses:generate` | Generuje `THIRD-PARTY-NOTICES.md` (lista zależności i licencji firm trzecich z `package-lock.json`). |
+| `npm run licenses:check`    | Waliduje aktualność `THIRD-PARTY-NOTICES.md` (część `validate`).                                     |
+
+`THIRD-PARTY-NOTICES.md` w root projektu to źródło prawdy o licencjach zależności — generowany automatycznie, nie edytuj ręcznie.
 
 ### Kodowanie
 

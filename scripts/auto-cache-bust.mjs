@@ -40,12 +40,16 @@ const MD_FILES = [
     'README.md',
     'docs/API.md',
     'docs/ARCHITECTURE.md',
+    'docs/AUDIT.md',
     'docs/DEPLOYMENT.md',
+    'docs/DEPLOY_UPDATE.md',
     'docs/INSTRUKCJA_SERWER.md',
-    'docs/README.md',
+    'docs/RELEASE_PROCESS.md',
     'docs/SECURITY.md',
-    'docs/plans/instalacja-krok-po-kroku-dla-laika.md',
-    'docs/plans/instalacja-przenoszenie-systemu.md'
+    'docs/DATABASE.md',
+    'docs/baseline-https.md',
+    'docs/instalacja-krok-po-kroku-dla-laika.md',
+    'docs/instalacja-przenoszenie-systemu.md'
 ];
 
 function isLocalPath(url) {

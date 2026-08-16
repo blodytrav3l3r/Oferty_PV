@@ -44,7 +44,7 @@ Proces release:
 3. Hook `postbump` uruchamia **trzy skrypty**:
     - `scripts/auto-cache-bust.mjs` — aktualizuje `?v=` we wszystkich HTML (w tym `public/templates/*.html`) do nowej wersji
     - `scripts/auto-docs-version.mjs` — aktualizuje wersję w dokumentacji `README.md` + `docs/*.md` (`**Wersja:**`, `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON `"version"`/`"dbVersion"` w `docs/API.md`
-    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat` (start, install, build, ensure-db)
+    - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat` (start, install, build, setup-ai, ensure-db)
 4. Tworzy commit `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`) oraz tag git
 5. Po pushu tagów GitHub automatycznie tworzy Release
 6. Po zmianie wersji zrestartuj serwer
@@ -57,7 +57,7 @@ Proces release:
 2. `package.json` / `package-lock.json` → `version`
 3. `CHANGELOG.md` (nagłówki)
 4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
-5. `*.bat` (start, install, build, ensure-db) → `APP_VERSION`
+5. `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION`
 6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
 7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 

@@ -38,7 +38,7 @@ To wykonuje:
       `**Wersja aplikacji:**`, `> Wersja:`) oraz przykłady JSON
       `"version"`/`"dbVersion"` w `docs/API.md`
     - `scripts/auto-bat-version.mjs` — aktualizuje wersję w skryptach `.bat`
-      (start, install, build, ensure-db)
+      (start, install, build, setup-ai, ensure-db)
 - Commita `chore(release): X.Y.Z` (release commituje wszystkie zmiany — flaga `--commit-all`)
 - Tag `vX.Y.Z`
 
@@ -48,7 +48,7 @@ To wykonuje:
 2. `package.json` / `package-lock.json` → `version`
 3. `CHANGELOG.md` (nagłówki)
 4. `public/*.html` + `public/templates/*.html` → `?v=X.Y.Z`
-5. `*.bat` (start, install, build, ensure-db) → `APP_VERSION`
+5. `*.bat` (start, install, build, setup-ai, ensure-db) → `APP_VERSION`
 6. `README.md` + `docs/*.md` → `**Wersja:**` / `**Wersja projektu:**` / `**Wersja aplikacji:**` / `> Wersja:`
 7. `docs/API.md` przykłady JSON → `"version"` / `"dbVersion"`
 

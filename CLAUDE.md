@@ -199,7 +199,7 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ### Po zmianach
 
-8. Jeśli zmieniłeś CSS/HTML: podbij `?v=N` w link/script tag
+8. Cache-bust `?v=` w HTML (w tym `public/templates/*.html`) jest synchronizowany z `VERSION` wyłącznie przez `npm run release` (hook postbump `scripts/auto-cache-bust.mjs`) — **nie zmieniaj `?v=` ręcznie**
 9. `npm run typecheck` / `npm run typecheck:frontend` — walidacja
 10. `npm run version:check` — spójność wersji (robi to post-commit hook)
 11. Browser: `Ctrl+Shift+R` po dużej zmianie CSS
@@ -208,15 +208,22 @@ Exponential decay λ=0.01 (~69 dni półtrwania). Auto-rollback gdy ROC-AUC < 0.
 
 ## Przydatne komendy
 
-| Komenda                                                 | Co robi                                                     |
-| ------------------------------------------------------- | ----------------------------------------------------------- |
-| `npm run dev:backend`                                   | Uruchom backend (ts-node-dev)                               |
-| `npm run typecheck`                                     | TypeScript backend check                                    |
-| `npm run typecheck:frontend`                            | TypeScript frontend check                                   |
-| `npm run test:quick`                                    | Smoke tests (Jest bez coverage)                             |
-| `npm run lint`                                          | ESLint (tylko src/)                                         |
-| `npm run format`                                        | Prettier                                                    |
-| `npm run version:check`                                 | Sprawdź spójność VERSION/pkg/CHANGELOG                      |
-| `npm run version:patch\|minor\|major`                   | Bump wersji                                                 |
-| `npm run prisma:deploy`                                 | Zastosuj migracje (baza z `_prisma_migrations`)             |
-| `npx prisma db push --skip-generate --accept-data-loss` | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations` |
+| Komenda                                                        | Co robi                                                                                                                |
+| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `npm run dev:backend`                                          | Uruchom backend (ts-node-dev)                                                                                          |
+| `npm run typecheck`                                            | TypeScript backend check                                                                                               |
+| `npm run typecheck:frontend`                                   | TypeScript frontend check                                                                                              |
+| `npm run test:quick`                                           | Smoke tests (Jest bez coverage)                                                                                        |
+| `npm run lint`                                                 | ESLint (tylko src/)                                                                                                    |
+| `npm run lint:frontend`                                        | ESLint (public/js/)                                                                                                    |
+| `npm run format`                                               | Prettier                                                                                                               |
+| `npm run validate`                                             | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + testy dymne |
+| `npm run appname:check`                                        | Sprawdź spójność nazwy aplikacji (pre-push)                                                                            |
+| `npm run licenses:check`                                       | Waliduj aktualność THIRD-PARTY-NOTICES.md                                                                              |
+| `npm run version:check`                                        | Sprawdź spójność VERSION/pkg/CHANGELOG                                                                                 |
+| `npm run version:patch\|minor\|major`                          | Bump wersji                                                                                                            |
+| `npm run version:bump`                                         | Podbij wersję (typ z argumentu: patch/minor/major)                                                                     |
+| `npm run restore <plik-backupu>`                               | Przywróć bazę z backupu (automatycznie synchronizuje schemat)                                                          |
+| `npm run deploy` / `npm run rollback` / `npm run deploy:check` | Bezpieczny deploy produkcji / rollback / smoke check (patrz `docs/DEPLOY_UPDATE.md`)                                   |
+| `npm run prisma:deploy`                                        | Zastosuj migracje (baza z `_prisma_migrations`)                                                                        |
+| `npx prisma db push --skip-generate --accept-data-loss`        | Sync schematu TYLKO dla baz legacy bez `_prisma_migrations`                                                            |
