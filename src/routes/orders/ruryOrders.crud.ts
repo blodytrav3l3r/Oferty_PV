@@ -90,16 +90,12 @@ router.post('/claim-rury-number/:userId', requireAuth, async (req, res) => {
         if (!user) return res.status(404).json({ error: 'Użytkownik nie znaleziony' });
 
         const symbol = user.symbol || '??';
-        const counter = await prisma.order_counters_rury.findUnique({
-            where: { userId_year: { userId, year } }
-        });
-        const nextNumber = (counter?.lastNumber || 0) + 1;
-
-        await prisma.order_counters_rury.upsert({
+        const counter = await prisma.order_counters_rury.upsert({
             where: { userId_year: { userId, year } },
-            create: { userId, year, lastNumber: nextNumber },
-            update: { lastNumber: nextNumber }
+            create: { userId, year, lastNumber: 1 },
+            update: { lastNumber: { increment: 1 } }
         });
+        const nextNumber = counter.lastNumber;
 
         const formatted = `${symbol}/ZR/${String(nextNumber).padStart(6, '0')}/${year}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, year });

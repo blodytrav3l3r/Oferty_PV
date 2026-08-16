@@ -1,12 +1,12 @@
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth';
 import { priceOverrideService } from '../services/priceOverrideService';
-import { createModuleLock } from '../middleware/writeLock';
+import { createModuleLock, LockHandle } from '../middleware/writeLock';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 
 const router = express.Router();
-const { acquireLock, releaseLock } = createModuleLock();
+const { acquireLock } = createModuleLock();
 
 router.post(
     '/save-defaults',
@@ -14,9 +14,10 @@ router.post(
     requireAdmin,
     PRICELIST_WRITE_LIMITER,
     async (_req, res) => {
+        let lock: LockHandle | null = null;
         try {
-            const lockAcquired = await acquireLock();
-            if (!lockAcquired) {
+            lock = await acquireLock();
+            if (!lock) {
                 res.status(429).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
                 return;
             }
@@ -38,7 +39,7 @@ router.post(
             logger.error('PriceOverrides', 'Błąd serwera', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
-            releaseLock();
+            lock?.release();
         }
     }
 );

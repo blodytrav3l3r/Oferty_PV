@@ -115,10 +115,9 @@ describe('Rury Orders CRUD', () => {
                 id: 'user-id',
                 symbol: 'AB'
             });
-            (prisma.order_counters_rury.findUnique as jest.Mock).mockResolvedValue({
-                lastNumber: 4
+            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({
+                lastNumber: 5
             });
-            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({});
 
             const res = await request(app2)
                 .post('/api/orders-rury/claim-rury-number/user-id')
@@ -128,7 +127,29 @@ describe('Rury Orders CRUD', () => {
             const year = new Date().getFullYear();
             expect(res.body.number).toBe(`AB/ZR/000005/${year}`);
             expect(res.body.nextSeq).toBe(5);
-            expect(prisma.order_counters_rury.upsert).toHaveBeenCalled();
+        });
+
+        it('używa atomowego increment zamiast read-then-write (A-04)', async () => {
+            mockUser.id = 'admin-id';
+            mockUser.role = 'admin';
+            const app2 = createApp();
+            (prisma.users.findUnique as jest.Mock).mockResolvedValue({
+                id: 'user-id',
+                symbol: 'AB'
+            });
+            (prisma.order_counters_rury.upsert as jest.Mock).mockResolvedValue({
+                lastNumber: 7
+            });
+
+            await request(app2)
+                .post('/api/orders-rury/claim-rury-number/user-id')
+                .set('x-user-id', 'admin-id');
+
+            const upsertCall = (prisma.order_counters_rury.upsert as jest.Mock).mock.calls[0][0];
+            expect(upsertCall.create.lastNumber).toBe(1);
+            expect(upsertCall.update.lastNumber).toEqual({ increment: 1 });
+            /* A-04: brak osobnym findUnique (read-then-write) przy claim numeru */
+            expect(prisma.order_counters_rury.findUnique).not.toHaveBeenCalled();
         });
     });
 

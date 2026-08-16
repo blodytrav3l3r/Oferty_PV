@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { validateData } from '../validators/authSchema';
 import { PRICELIST_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { pricelistDataSchema, productPatchSchema } from '../validators/offerSchemas';
-import { createModuleLock } from '../middleware/writeLock';
+import { createModuleLock, LockHandle } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ const writeLimiter = PRICELIST_WRITE_LIMITER;
 
 const ALLOWED_FIELDS = ['name', 'category', 'price', 'transport', 'weight', 'area'] as const;
 
-const { acquireLock, releaseLock } = createModuleLock();
+const { acquireLock } = createModuleLock();
 
 // ──────────────────────────────────────────
 // GET / — wszystkie produkty z ProductsRury
@@ -40,9 +40,10 @@ router.put(
     writeLimiter,
     validateData(pricelistDataSchema),
     async (req, res) => {
+        let lock: LockHandle | null = null;
         try {
-            const lockAcquired = await acquireLock();
-            if (!lockAcquired) {
+            lock = await acquireLock();
+            if (!lock) {
                 res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
                 return;
             }
@@ -69,7 +70,7 @@ router.put(
             logger.error('ProductsV2', 'PUT error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
-            releaseLock();
+            lock?.release();
         }
     }
 );
@@ -84,9 +85,10 @@ router.patch(
     writeLimiter,
     validateData(productPatchSchema),
     async (req, res) => {
+        let lock: LockHandle | null = null;
         try {
-            const lockAcquired = await acquireLock();
-            if (!lockAcquired) {
+            lock = await acquireLock();
+            if (!lock) {
                 res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
                 return;
             }
@@ -110,7 +112,7 @@ router.patch(
             logger.error('ProductsV2', 'PATCH error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
         } finally {
-            releaseLock();
+            lock?.release();
         }
     }
 );
@@ -119,9 +121,10 @@ router.patch(
 // DELETE /:id — usuń jeden produkt
 // ──────────────────────────────────────────
 router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) => {
+    let lock: LockHandle | null = null;
     try {
-        const lockAcquired = await acquireLock();
-        if (!lockAcquired) {
+        lock = await acquireLock();
+        if (!lock) {
             res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
             return;
         }
@@ -134,7 +137,7 @@ router.delete('/:id', requireAuth, requireAdmin, writeLimiter, async (req, res) 
         logger.error('ProductsV2', 'DELETE error', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     } finally {
-        releaseLock();
+        lock?.release();
     }
 });
 
