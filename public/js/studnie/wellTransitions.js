@@ -172,8 +172,8 @@ function renderInlinePrzejsciaApp(containerId) {
     if (inlinePrzejsciaState.dnId) {
         window.inlineUpdateAngles(containerId || 'main');
         setTimeout(() => {
-            const angleInput = document.getElementById(`inl-angle-${containerId || 'main'}`);
-            if (angleInput) angleInput.focus();
+            const rzednaInput = document.getElementById(`inl-rzedna-${containerId || 'main'}`);
+            if (rzednaInput) rzednaInput.focus();
         }, 10);
     }
 }
