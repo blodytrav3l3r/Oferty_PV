@@ -81,9 +81,11 @@ describe('canWriteDoc', () => {
         expect(canWriteDoc(regularUser, 'user2')).toBe(false);
     });
 
-    it('null docUserId is allowed (treated as "create new for me")', () => {
-        expect(canWriteDoc(regularUser, null)).toBe(true);
-        expect(canWriteDoc(pro, null)).toBe(true);
+    it('null docUserId is denied for non-admin (legacy record without owner)', () => {
+        expect(canWriteDoc(regularUser, null)).toBe(false);
+        expect(canWriteDoc(regularUser, undefined)).toBe(false);
+        expect(canWriteDoc(pro, null)).toBe(false);
+        expect(canWriteDoc(admin, null)).toBe(true);
     });
 
     it('pro can write sub-user document', () => {

@@ -19,11 +19,13 @@ export function canReadDoc(user: User | undefined, docUserId: string | null | un
  *  - owner (docUserId === user.id): tak
  *  - pro parent (docUserId in subUsers): tak
  *  - user impersonation via body (docUserId !== user.id i nie pro-parent): NIE
+ *  - legacy rekord bez userId (docUserId null/undefined): NIE dla nie-admina
+ *    (brak właściciela = brak prawa zapisu, spójnie z canReadDoc)
  */
 export function canWriteDoc(user: User | undefined, docUserId: string | null | undefined): boolean {
     if (!user) return false;
     if (user.role === 'admin') return true;
-    if (!docUserId) return true;
+    if (!docUserId) return false;
     if (docUserId === user.id) return true;
     if (user.role === 'pro' && (user.subUsers || []).includes(docUserId)) return true;
     return false;

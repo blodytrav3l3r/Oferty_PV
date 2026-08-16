@@ -140,6 +140,9 @@ router.put(
                     select: { data: true, userId: true }
                 });
 
+                if (old && !canWriteDoc(authReq.user, old.userId)) {
+                    return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
+                }
                 const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
                 if (!canWriteDoc(authReq.user, targetUserId)) {
                     return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
