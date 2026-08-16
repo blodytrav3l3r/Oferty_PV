@@ -1,9 +1,14 @@
 # Raport audytu projektu — WITROS Oferty PV
 
-> **Stan na 2026-08-05:** wdrożono dedup telemetrii AUTO_JS + indeksy
-> (migracja `20260805100000_telemetry_well_dedup`), TrainingPipeline sliding window,
-> auto-heal indeksów i FTS5. Poniższy raport pozostaje historycznym zapisem stanu
-> z daty audytu.
+> **Stan na 2026-08-16:** po audycie 2026-07-09 wdrożono kolejne fale napraw —
+> dedup telemetrii AUTO_JS + indeksy (migracja `20260805100000_telemetry_well_dedup`),
+> TrainingPipeline sliding window, auto-heal indeksów i FTS5, a następnie pełny plan
+> naprawy z audytu v1.15.1 (A-01…A-60, fazy 1–10, `docs/plans/archive/2026-08-16-plan-naprawy-audyt.md`):
+> domknięcie IDOR w ofertach/zamówieniach, ujednolicony centralny escape XSS, writeLock
+> z ownership + atomowy claim numeru rur, dedup rewardów przed unique index, walidacja
+> restore-db.js (nagłówek + integrity_check + WAL cleanup) oraz usunięcie silent fail
+> w telemetrii/ML. Poniższy raport pozostaje historycznym zapisem stanu z daty audytu,
+> zaktualizowanym o realne liczby na dzień 2026-08-16.
 
 **Wersja projektu:** 1.15.1  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
@@ -13,22 +18,22 @@
 
 ## 1. Struktura katalogów
 
-| Element                            | Status | Uwagi                                                                                              |
-| ---------------------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| `src/` — kod backendu (TypeScript) | ✔      | 58 plików .ts, dobrze zorganizowane (routes/, middleware/, services/, utils/, validators/, types/) |
-| `src/routes/` — endpointy API      | ✔      | 20 plików, logicznie podzielone na oferty, zamówienia, produkty, auth                              |
-| `src/middleware/` — middleware     | ✔      | Auth, security, rate limiter — wydzielone osobno                                                   |
-| `src/services/` — logika biznesowa | ✔      | Obsługa audytu, cenników, PDF                                                                      |
-| `src/utils/` — narzędzia           | ✔      | Logger itp.                                                                                        |
-| `src/validators/` — walidacja Zod  | ✔      | Schematy auth i ofert                                                                              |
-| `public/` — frontend (SPA)         | ✔      | Vanilla JS, 6 plików HTML, osobne js/css                                                           |
-| `tests/` — testy                   | ✔      | 32 pliki testowe, pokrycie ~60%                                                                    |
-| `prisma/` — schema + migracje      | ✔      | Schema 272 linie, migracje w podkatalogu                                                           |
-| `data/` — baza SQLite + seed       | ✔      | app_database.sqlite + pliki seed JSON                                                              |
-| `scripts/` — skrypty narzędziowe   | ✔      | Backup, restore, migracja, deploy                                                                  |
-| `docs/` — dokumentacja             | ✔      | CHANGELOG.md, AGENTS.md, ARCHITECTURE.md, README.md itp.                                           |
-| `coverage/` — raport pokrycia      | ✔      | Generowany przez Jest                                                                              |
-| `.github/workflows/` — CI/CD       | ✔      | CI, CodeQL, Dependabot                                                                             |
+| Element                            | Status | Uwagi                                                                                               |
+| ---------------------------------- | ------ | --------------------------------------------------------------------------------------------------- |
+| `src/` — kod backendu (TypeScript) | ✔      | 126 plików .ts, dobrze zorganizowane (routes/, middleware/, services/, utils/, validators/, types/) |
+| `src/routes/` — endpointy API      | ✔      | 20 plików, logicznie podzielone na oferty, zamówienia, produkty, auth                               |
+| `src/middleware/` — middleware     | ✔      | Auth, security, rate limiter, writeLock — wydzielone osobno                                         |
+| `src/services/` — logika biznesowa | ✔      | Obsługa audytu, cenników, PDF                                                                       |
+| `src/utils/` — narzędzia           | ✔      | Logger itp.                                                                                         |
+| `src/validators/` — walidacja Zod  | ✔      | Schematy auth i ofert                                                                               |
+| `public/` — frontend (SPA)         | ✔      | Vanilla JS, 6 plików HTML, osobne js/css                                                            |
+| `tests/` — testy                   | ✔      | 125 plików testowych, 1867 testów PASS (`npm run test:quick`)                                       |
+| `prisma/` — schema + migracje      | ✔      | Schema 740 linii, migracje w podkatalogu                                                            |
+| `data/` — baza SQLite + seed       | ✔      | app_database.sqlite + pliki seed JSON                                                               |
+| `scripts/` — skrypty narzędziowe   | ✔      | Backup, restore, migracja, deploy                                                                   |
+| `docs/` — dokumentacja             | ✔      | CHANGELOG.md, AGENTS.md, ARCHITECTURE.md, README.md itp.                                            |
+| `coverage/` — raport pokrycia      | ✔      | Generowany przez Jest                                                                               |
+| `.github/workflows/` — CI/CD       | ✔      | CI, CodeQL, Dependabot                                                                              |
 
 ## 2. Architektura
 
@@ -83,15 +88,15 @@
 
 ## 6. Testy
 
-| Element              | Status | Uwagi                                                  |
-| -------------------- | ------ | ------------------------------------------------------ |
-| Framework: Jest 30   | ✔      | ts-jest, coverage                                      |
-| Liczba testów        | ✔      | 32 pliki testowe                                       |
-| Testy API            | ✔      | supertest, oferty CRUD, auth                           |
-| Testy walidacji      | ✔      | Zod schemas testowane                                  |
-| Testy bezpieczeństwa | ✔      | SQL injection, rate limiter                            |
-| Testy E2E            | ⚠      | Tylko testy ownershipE2e, brak pełnego E2E             |
-| Testy frontendu      | ❌     | Brak — frontend to Vanilla JS bez frameworka testowego |
+| Element              | Status | Uwagi                                                                                       |
+| -------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| Framework: Jest 30   | ✔      | ts-jest, coverage                                                                           |
+| Liczba testów        | ✔      | 125 plików testowych / 1867 testów                                                          |
+| Testy API            | ✔      | supertest, oferty CRUD, auth                                                                |
+| Testy walidacji      | ✔      | Zod schemas testowane                                                                       |
+| Testy bezpieczeństwa | ✔      | SQL injection, rate limiter, IDOR, writeLock, featureFlags                                  |
+| Testy E2E            | ✔      | Playwright: ownership, wyrównanie Excel (test:alignment), spójność nazwy (test:e2e-appname) |
+| Testy frontendu      | ✔      | typecheck:frontend + lint:frontend + testy struktury (frontendDeps)                         |
 
 ## 7. Bezpieczeństwo
 
@@ -167,8 +172,8 @@
 ### Kluczowe zalecenia (zrealizowane)
 
 1. ✅ **README.md** — utworzony w głównym katalogu projektu
-2. ✅ **Skrypt restore bazy** — scripts/restore-db.js istnieje
-3. ⏳ **Rozszerzyć testy E2E** i dodać testy frontendu — nadal do zrobienia
+2. ✅ **Skrypt restore bazy** — scripts/restore-db.js istnieje (walidacja nagłówka + integrity_check + WAL cleanup)
+3. ✅ **Rozszerzyć testy E2E** — Playwright (ownership, wyrównanie Excel, nazwa aplikacji) + typecheck/lint frontendu
 4. ✅ **Plik VERSION** — utworzony jako jedyne źródło wersji
-5. ✅ **Tagi git** — dodane dla wydań (v1.1.0..v1.7.0)
+5. ✅ **Tagi git** — dodane dla wydań (v1.1.0..v1.15.1)
 6. ⚠ **Sprawdzić `npm audit`** — wykonywać okresowo

@@ -41,6 +41,7 @@ Szczegółowe opisy decyzji projektowych znajdują się w `docs/adr/`:
 - **ADR-005**: Express jako jedyny serwer (dev i prod) — wycofanie Vite.
 - **ADR-006**: HTTPS przez reverse proxy.
 - **ADR-007**: Ujednolicony system cenników.
+- **ADR-008**: Frontend modularyzacja — rozbicie monolitycznych plików JS na małe moduły delegujące (`wellActions.js` → `actions*.js`, `excelTableManager.js` → `excel*.js`), router SPA w `public/js/spa/` (`app.html#/<moduł>`), współdzielony nagłówek/logo.
 
 ---
 
@@ -302,6 +303,11 @@ Zawsze sprawdzaj kod pod kątem występowania poniższych znanych problemów:
 | 37  | **Sentinel infinite scroll odpala eager-load w pętli (zlecenia)**                            | Po dodaniu kontenera scrolla (`.zlecenia-table-container`, `height: min(480px, 60vh)`) sentinel bez `root: kontener` w `IntersectionObserver` jest zawsze w viewport (kontener 480px < iframe) → doładowywanie w pętli aż do `MAX_LOADED`.                                                                                                                                                | `new IntersectionObserver(cb, { root: kontener, rootMargin: '300px 0px' })` — sentinel przeniesiony do środka kontenera (za `</table>`); bez tego eager-load w pętli. Sticky `th` z nieprzezroczystym tłem `var(--bg-card)`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | 38  | **Cursor paginacji mieszał surowe/znormalizowane createdAt (zlecenia)**                      | Klauzula kursora (`productionSearchUtils.ts:64-71`) porównywała **surowe** `createdAt` z kursorem ze **znormalizowanej** wartości SELECT → przy danych mieszanych (epoch-ms legacy + ISO) pomijała/duplikowała wiersze.                                                                                                                                                                   | Używać `normalizedCreatedAtSql()` w gałęzi `cursor && cursorId` — porównanie zawsze na znormalizowanej wartości, spójnej z SELECT.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | 39  | **`escapeHtml` nie escapuje `"` w atrybutach HTML**                                          | `escapeHtml` (wzorzec z #3) nie zamienia `"`, więc interpolacja do atrybutów (`aria-label`, `title` itd.) przez `escapeHtml` jest podatna na iniekcję atrybutu — cudzysłów może zamknąć atrybut.                                                                                                                                                                                          | W atrybutach używać `escapeJsStr` (jest w `zleceniaHelpers.js`) lub istniejącego `escapeHtmlAttr` — nigdy `escapeHtml` dla kontekstu atrybutu; `escapeHtml` tylko dla treści tekstowej (innerHTML).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 40  | **Ownership legacy NULL — nie-admin nadpisywał rekordy bez właściciela**                     | `canWriteDoc` zwracał `true` także dla rekordu z `docUserId = null` (legacy rekord bez właściciela) — nie-admin mógł nadpisać legacy rekord.                                                                                                                                                                                                                                              | `canWriteDoc`/`canReadDoc` zwracają `false` dla `docUserId = null` u nie-admina (`src/utils/ownership.ts`, commit `9ff2254`); guardy w zamówieniach na surowym `old.userId` przed fallbackiem.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| 41  | **Rekurencja escapa w globalnych deklaracjach (regresja)**                                   | Guard `typeof window.x === 'function'` w globalnych deklaracjach wywoływał sam siebie — globalna funkcja tworzy `window.x`, więc warunek zawsze prawdziwy.                                                                                                                                                                                                                                | identity-check `window.x !== x` — delegacja do centralnej tylko gdy `window.x` jest **inną** funkcją (commit `78b88ee`, dotyczy `escapeHtmlAttr`/`escapeJsStr`). Regresja wykryta przez E2E alignment.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 42  | **Atomowy claim numeru rur + writeLock (TOCTOU)**                                            | Claim numeru zamówienia rur read-then-write — dwie równoczesne operacje mogły dostać ten sam numer.                                                                                                                                                                                                                                                                                       | claim przez **atomic increment** (commit `2f6f05b`); blokada zapisu przez `src/middleware/writeLock.ts` (`createModuleLock()` → `{ acquireLock, runWithLock }`, per-klucz, timeout 30 s, mutual exclusion) w 4 trasach zapisu cenników; DRY wzorzec locka wydzielony do helpera (commit `fc4d027`). Testy: atomowość claimu, writeLock ownership/timeout/serializacja.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 43  | **Feature flags POST /audit bez requireAdmin**                                               | `POST /audit` (wpisy audytu) dostępny dla każdego zalogowanego użytkownika — poisoning logów audytu (A-17).                                                                                                                                                                                                                                                                               | `requireAdmin` na trasach zapisu (commit `621dbb2`); `driftPct` catch loguje warn zamiast cichego null. Testy featureFlags (403/200/400/GET).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 44  | **Silent fail w telemetrii i ML**                                                            | Wyjątki w pipeline ML/telemetrii połykane po cichu: nieznana akcja dawała `reward=0`, GET studnie order ciche 404, uszkodzony JSON w ModelRegistry pomijany, kursor `resyncLabels` pomijał rekordy o równych timestampach.                                                                                                                                                                | nieznana akcja rzuca zamiast cichego reward=0; GET studnie order → 500 z logiem; `loadOrdersStudnie` rzuca przy `!res.ok`; `updateLabelByTelemetry` loguje warn gdy count=0; ModelRegistry loguje uszkodzony JSON; kursor `(createdAt, id)`; dedup `AUTO_JS` pod module lockiem (commity `1e3b0c9`, `05fc0ab`). Testy: studnieOrdersError, orderHelpersError, rewardDedup, restoreRoundtrip.                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -316,6 +322,7 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | `npm run dev`         | Uruchamia backend (ts-node-dev); Express serwuje też frontend.                    |
 | `npm run dev:backend` | Uruchamia serwer backendowy w trybie deweloperskim (auto-reload via ts-node-dev). |
 | `npm run build`       | Kompilacja TypeScript backendu.                                                   |
+| `npm run build:watch` | Kompilacja TypeScript backendu w trybie watch (`tsc --watch`).                    |
 
 ### Walidacja i jakość kodu
 
@@ -331,24 +338,43 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Testy
 
-| Polecenie                | Opis działania                                                                              |
-| ------------------------ | ------------------------------------------------------------------------------------------- |
-| `npm test`               | Uruchamia wszystkie testy (Jest z pokryciem).                                               |
-| `npm run test:quick`     | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
-| `npm run test:watch`     | Uruchamia testy w trybie watch.                                                             |
-| `npm run test:alignment` | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
+| Polecenie                        | Opis działania                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm test`                       | Uruchamia wszystkie testy (Jest z pokryciem).                                               |
+| `npm run test:quick`             | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
+| `npm run test:watch`             | Uruchamia testy w trybie watch.                                                             |
+| `npm run test:alignment`         | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
+| `npm run test:e2e-appname`       | Test E2E Playwright spójności nazwy aplikacji.                                              |
+| `npm run test:e2e-appname:spawn` | Test E2E nazwy aplikacji z własnym buildem serwera (`--spawn`).                             |
+
+### AI/ML
+
+| Polecenie          | Opis działania                                                  |
+| ------------------ | --------------------------------------------------------------- |
+| `npm run ai:setup` | Diagnostyka i konfiguracja modułu AI/ML (`scripts/setupAi.ts`). |
+
+### Benchmark
+
+| Polecenie                 | Opis działania                                 |
+| ------------------------- | ---------------------------------------------- |
+| `npm run benchmark`       | Uruchamia benchmark (`scripts/benchmark.mjs`). |
+| `npm run benchmark:quick` | Uruchamia benchmark skrócony (10 iteracji).    |
 
 ### Baza danych
 
-| Polecenie                 | Opis działania                                                                                                                                                                                        |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run prisma:generate` | Generuje klienta Prisma.                                                                                                                                                                              |
-| `npm run prisma:migrate`  | Tworzy nową migrację (dev).                                                                                                                                                                           |
-| `npm run prisma:deploy`   | Zastosowuje migracje w produkcji (ścieżka domyślna). Wyłącznie dla baz legacy utworzonych przez `db push` (brak `_prisma_migrations`) używaj `npx prisma db push --skip-generate --accept-data-loss`. |
-| `npm run prisma:seed`     | Zasiewa dane początkowe.                                                                                                                                                                              |
-| `npm run prisma:studio`   | Otwiera Prisma Studio (GUI bazy).                                                                                                                                                                     |
-| `npm run prisma:reset`    | Resetuje bazę danych (utrata danych!).                                                                                                                                                                |
-| `npm run prisma:status`   | Sprawdza status migracji.                                                                                                                                                                             |
+| Polecenie                    | Opis działania                                                                                                                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run prisma:generate`    | Generuje klienta Prisma.                                                                                                                                                                              |
+| `npm run prisma:migrate`     | Tworzy nową migrację (dev).                                                                                                                                                                           |
+| `npm run prisma:deploy`      | Zastosowuje migracje w produkcji (ścieżka domyślna). Wyłącznie dla baz legacy utworzonych przez `db push` (brak `_prisma_migrations`) używaj `npx prisma db push --skip-generate --accept-data-loss`. |
+| `npm run prisma:seed`        | Zasiewa dane początkowe.                                                                                                                                                                              |
+| `npm run prisma:studio`      | Otwiera Prisma Studio (GUI bazy).                                                                                                                                                                     |
+| `npm run prisma:reset`       | Resetuje bazę danych (utrata danych!).                                                                                                                                                                |
+| `npm run prisma:status`      | Sprawdza status migracji.                                                                                                                                                                             |
+| `npm run migration:run`      | Migracja ustawień do tabel (`ts-node scripts/migrate-settings-to-tables.ts`).                                                                                                                         |
+| `npm run migration:validate` | Walidacja migracji (`node scripts/migration-validate.mjs`).                                                                                                                                           |
+| `npm run migration:reverse`  | Cofnięcie migracji — ustawienia z powrotem do tabeli `settings` (`node scripts/reverse-migration-to-settings.mjs`).                                                                                   |
+| `npm run export:seed`        | Eksport cenników z tabel DB do `data/seed_*.json` (`scripts/export-settings-to-seed.mjs`).                                                                                                            |
 
 ### Backup i przenoszenie bazy
 
@@ -375,20 +401,27 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Kodowanie
 
-| Polecenie                | Opis działania                                                       |
-| ------------------------ | -------------------------------------------------------------------- |
-| `npm run encoding:check` | Sprawdza kodowanie plików (UTF-8 bez BOM, ASCII dla .bat, mojibake). |
-| `npm run encoding:fix`   | Naprawia kodowanie plików (BOM, Windows-1250, mojibake).             |
+| Polecenie                 | Opis działania                                                       |
+| ------------------------- | -------------------------------------------------------------------- |
+| `npm run encoding:check`  | Sprawdza kodowanie plików (UTF-8 bez BOM, ASCII dla .bat, mojibake). |
+| `npm run encoding:fix`    | Naprawia kodowanie plików (BOM, Windows-1250, mojibake).             |
+| `npm run encoding:staged` | Sprawdza kodowanie wyłącznie plików staged (git).                    |
 
 ### Skills (narzędzia agentów AI)
 
-| Polecenie                 | Opis działania               |
-| ------------------------- | ---------------------------- |
-| `npm run skills:build`    | Oblicza koszt budowy skilli. |
-| `npm run skills:stats`    | Statystyki skilli.           |
-| `npm run skills:validate` | Walidacja manifestów skilli. |
-| `npm run skills:cost`     | Koszt tokenów skilli.        |
-| `npm run skills:deps`     | Zależności między skillami.  |
+| Polecenie                         | Opis działania                                                 |
+| --------------------------------- | -------------------------------------------------------------- |
+| `npm run skills:build`            | Oblicza koszt budowy skilli.                                   |
+| `npm run skills:stats`            | Statystyki skilli.                                             |
+| `npm run skills:validate`         | Walidacja manifestów skilli.                                   |
+| `npm run skills:cost`             | Koszt tokenów skilli.                                          |
+| `npm run skills:deps`             | Zależności między skillami.                                    |
+| `npm run skills:capabilities`     | Lista zdolności skilli (`scripts/skill-cli.mjs capabilities`). |
+| `npm run skills:plan`             | Plan skilli (`skill-cli.mjs plan`).                            |
+| `npm run skills:feedback-record`  | Rejestrowanie feedbacku (`skill-cli.mjs feedback-record`).     |
+| `npm run skills:feedback-show`    | Prezentacja feedbacku (`skill-cli.mjs feedback-show`).         |
+| `npm run skills:provider-resolve` | Rozwiązanie providera (`skill-cli.mjs provider-resolve`).      |
+| `npm run skills:utility-recalc`   | Ponowne przeliczenie utility (`skill-cli.mjs utility-recalc`). |
 
 ---
 

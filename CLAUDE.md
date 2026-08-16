@@ -13,7 +13,7 @@ Model-agnostyczne reguły dla AI (opencode, Claude Code, Cursor, Windsurf, Cline
 
 ## Architektura (ADR)
 
-Pełna lista i szczegóły: `docs/adr/` (ADR-001..007) oraz sekcja „Decyzje Architektoniczne (ADR)" w `AGENTS.md`.
+Pełna lista i szczegóły: `docs/adr/` (ADR-001..008) oraz sekcja „Decyzje Architektoniczne (ADR)" w `AGENTS.md`.
 
 ---
 

@@ -170,6 +170,54 @@
 **Objaw**: Błędy wyszukiwania lub powolne zapytania LIKE po aktualizacji istniejącej instalacji.
 **Fix** (`fe1679f`): `ensureFts5Schema` (`src/utils/fts5Sync.ts`) uruchamiane przy starcie serwera (`src/app.ts`) — idempotentne tworzenie/uzupełnianie schematu FTS5 z backfillem danych.
 
+## 27. Rzędna przejścia jako string zamiast liczby (Excel)
+
+**Problem**: `excelOnPrzejscieChange` zapisywał `rzednaWlaczenia` jako surowy `value` z inputa (string) — `'10'` trafiało do configu jako tekst.
+**Objaw**: Zepsute porównania numeryczne (`>=`, `!== 0`), sortowanie i renderowanie.
+**Fix**: Konwersja do liczby z obsługą przecinka: `field === 'rzednaWlaczenia' ? (value !== '' && !isNaN(parseFloat(String(value).replace(',', '.'))) ? parseFloat(...) : null) : value`. Rzędna w configu studni jest zawsze **liczbą lub `null`**, nigdy stringiem (excelChangeHandlers.js).
+
+## 28. `p.kat` zamiast `p.angle` — kasowanie kolumny przejścia z ustawionym samym kątem (Excel)
+
+**Problem**: Właściwe pole kąta nazywa się `angle` (ang.), a `excelRemoveTransitionColumn()` i `_excelCleanEmptyPrzejscia()` sprawdzały nieistniejącą właściwość `p.kat`.
+**Objaw**: Kolumna z samym kątem (bez produktu/rzędnej) wyglądała na pustą i była usuwana.
+**Fix**: Sprawdzać `(p.angle && p.angle !== 0)` obok `productId` i `rzednaWlaczenia` w obu miejscach. Uwaga: w logice przejść używaj `angle`/`angleExecution`/`angleGony` — `kat` nie istnieje.
+
+## 29. Brak snapshotów undo dla części mutacji + przepełnienie stacku przy wklejaniu (Excel)
+
+**Problem**: `_excelSaveUndoSnapshot()` wołano tylko w `excelOnCompChange` i wklejaniu — zmiany rzędnej, przejść, typu przejścia, kinety i psiej budy nie były cofalne. Przy wklejaniu wielokomórkowym snapshot per komórka przepełniał stack (limit `_EXCEL_UNDO_LIMIT = 20`).
+**Objaw**: Ctrl+Z bez efektu dla części mutacji; Ctrl+Z nie cofał wklejenia.
+**Fix**: Snapshot na początku **każdego** mutującego handlera (`excelOnRzednaChange`, `excelOnWlazChange`, `excelOnPrzejscieChange`, `excelOnPrzejscieTypeChange`, `excelOnKinetaChange`, `excelOnPsiaBudaChange`, `excelOnReductionSelectChange`). Wklejanie: **jeden** snapshot w `_excelHandlePaste` + flaga `_excelPasteInProgress` — handler pomija snapshot gdy flaga ustawiona. Fill (Ctrl+Enter) i duplikacja (Ctrl+D) także robią **jeden** snapshot. Batch (>100 wierszy) resetuje flagę w `doneCallback`, nie w `finally`.
+
+## 30. Shadowing `_excelSyncAutoManualUI` — realna synchronizacja nigdy nie działała (Excel)
+
+**Problem**: Wrapper nadpisujący `window._excelSyncAutoManualUI` wołał wewnątrz globalną (już nadpisaną) funkcję o tej samej nazwie — przy `_inProgress = true` następował early-return i oryginał z `excelPolling.js` nigdy się nie wykonywał.
+**Objaw**: Synchronizacja AUTO/MANUAL z głównego panelu nie działała.
+**Fix**: Przechwycić oryginał **przed** nadpisaniem: `const _excelSyncAutoManualUIReal = _excelSyncAutoManualUI;` i wołać `_excelSyncAutoManualUIReal()` wewnątrz wrappera (excelTableManager.js). Kolejność ładowania: `excelPolling.js` PRZED `excelTableManager.js`.
+
+## 31. Tła sticky nieaktualizowane przy duplikatach nazw (Excel)
+
+**Problem**: `_excelRefreshDupColors()` ustawiał `row.style.background`, ale kolumny sticky (pierwsze 7 td: Lp, nazwa, rzędne) mają osobne tło z `_excelStickyCellBg()` — część wiersza zostawała w starej barwie.
+**Objaw**: Wiersze z duplikatami nazw miały niespójne tło.
+**Fix**: Po zmianie tła wiersza zaktualizuj komórki sticky: `row.querySelectorAll('td:nth-child(-n+7)').forEach(td => td.style.background = _excelStickyCellBg(rowBg, solidBg))`.
+
+## 32. Wyjątek w `excelSaveAll` blokował modal na stałe (Excel)
+
+**Problem**: `_excelCloseOverlay()` wołany po `refreshAll()` — jeśli `refreshAll()` rzucił wyjątek, overlay nie był zamykany, a guard `_excelClosing` zostawał `true` na stałe.
+**Objaw**: Kolejne otwarcia modala kończyły się early-return (modal nieodwracalnie zablokowany).
+**Fix**: `try { ... } catch { toast błędu } finally { _excelCloseOverlay(); }` — overlay zawsze usuwany, guard resetowany (excelWellActions.js).
+
+## 33. `select()` po re-renderze uniemożliwiał wpisanie wielocyfrowej ilości (Excel)
+
+**Problem**: Restore fokusa po `_excelRenderTable` używał `restoreEl.select()` — zaznaczenie całej wartości powodowało, że kolejny klawisz zastępował całość.
+**Objaw**: Wpisanie „12" dawało „2".
+**Fix**: Kursor na koniec zamiast zaznaczenia: `restoreEl.setSelectionRange(len, len)` (excelTableRenderer.js). Powiązane z #21 — bezwarunkowy pełny re-render potęgował objaw.
+
+## 34. Mojibake (podwójne kodowanie UTF-8) w plikach źródłowych
+
+**Problem**: Polskie znaki UTF-8 zapisane ponownie przez edytor/narzędzie interpretujące CP1250/Windows-1250 (np. `Ć` C4 86 → C3 84 E2 80 A0). Bajty są poprawnym UTF-8, więc dotychczasowa walidacja (sekwencje/BOM/ASCII) ich nie wykrywała.
+**Objaw**: Zniekształcone polskie znaki w kodzie i dokumentacji.
+**Fix**: `scripts/encoding-integrity.js` ma warstwę semantyczną `detectMojibake`/`fixMojibake` (mapa sygnatur CP1250/CP1252, wykrywanie par/tripletów). Polityka: `public/`/`src/`/`docs/`/`tests/`/`scripts/`/`prisma/` → ERROR; `npm run encoding:fix` naprawia automatycznie. Trzy warstwy guarda: lint-staged (pre-commit) → pre-push → CI. Test regresyjny: `tests/encodingMojibake.test.ts`.
+
 ## 35. `typecheck:frontend` TS2339 na `event.target.classList`/`dataset` (zlecenia)
 
 **Problem**: Przy delegacji zdarzeń `event.target` ma typ `EventTarget`, który nie posiada `classList`/`dataset` — TS2339 w `zlecenia.js:375,378`. Blokował `npm run typecheck:frontend` (pre-push/`validate`).
@@ -199,3 +247,33 @@
 **Problem**: `escapeHtml` (wzorzec z #3) nie zamienia `"`, więc interpolacja do atrybutów (`aria-label`, `title` itd.) przez `escapeHtml` jest podatna na iniekcję atrybutu — cudzysłów może zamknąć atrybut.
 **Objaw**: Potencjalna iniekcja atrybutu przy interpolacji danych do `aria-label`/`title`.
 **Fix**: W atrybutach używać `escapeJsStr` (jest w `zleceniaHelpers.js`) lub istniejącego `escapeHtmlAttr` — nigdy `escapeHtml` dla kontekstu atrybutu; `escapeHtml` tylko dla treści tekstowej (innerHTML).
+
+## 40. Ownership legacy NULL — nie-admin nadpisywał rekordy bez właściciela
+
+**Problem**: `canWriteDoc` zwracał `true` także dla rekordu z `docUserId = null` (legacy rekord bez właściciela) — nie-admin mógł nadpisać cudzy/czyj legacy rekord.
+**Objaw**: A-…: brak własności = brak prawa zapisu; IDOR na legacy danych.
+**Fix** (`9ff2254`): `canWriteDoc` (i `canReadDoc`) zwracają `false` dla `docUserId = null` u nie-admina (`src/utils/ownership.ts`); guardy w zamówieniach na surowym `old.userId` przed fallbackiem.
+
+## 41. Rekurencja escapa w globalnych deklaracjach (regresja)
+
+**Problem**: Guard `typeof window.x === 'function'` w globalnych deklaracjach wywoływał sam siebie — globalna funkcja tworzy `window.x`, więc warunek był zawsze prawdziwy.
+**Objaw**: Stack overflow (RangeError) przy każdym wywołaniu `escapeHtmlAttr`/`escapeJsStr`.
+**Fix** (`78b88ee`): identity-check `window.x !== x` — delegacja do centralnej tylko gdy `window.x` jest **inną** funkcją. Regresja wykryta przez E2E alignment.
+
+## 42. Atomowy claim numeru rur + writeLock (TOCTOU)
+
+**Problem**: Claim numeru zamówienia rur robiony read-then-write — dwie równoczesne operacje mogły dostać ten sam numer (race condition TOCTOU).
+**Objaw**: Zduplikowane numery zamówień rur przy współbieżnym zapisie.
+**Fix** (`2f6f05b`, `fc4d027`): claim przez **atomic increment** (wzorzec `numbering.ts`); blokada zapisu przez `src/middleware/writeLock.ts` (`createModuleLock()` → `{ acquireLock, runWithLock }`) — per-klucz, timeout 30 s, mutual exclusion, zastosowana w 4 trasach zapisu cenników. DRY: wzorzec locka (acquire + 429 + finally release) wydzielony do helpera.
+
+## 43. Feature flags POST /audit bez requireAdmin
+
+**Problem**: `POST /audit` (i wpisy audytu) dostępny dla każdego zalogowanego użytkownika — możliwość poisoning logów audytu.
+**Objaw**: A-17: zwykły user mógł pisać dowolny wpis audytu.
+**Fix** (`621dbb2`): `requireAdmin` na trasach zapisu; `driftPct` catch loguje warn zamiast cichego null. Testy featureFlags (403/200/400/GET).
+
+## 44. Silent fail w telemetrii i ML
+
+**Problem**: Wyjątki w pipeline ML/telemetrii były połykane po cichu: nieznana akcja dawała `reward=0`, GET studnie order ciche 404, uszkodzony JSON w ModelRegistry pomijany, kursor `resyncLabels` pomijał rekordy o równych timestampach.
+**Objaw**: Błędne metryki, brak sygnału błędu, utracone rekordy telemetrii.
+**Fix** (`1e3b0c9`, `05fc0ab`): nieznana akcja rzuca zamiast cichego reward=0; GET studnie order zwraca 500 z logiem; `loadOrdersStudnie` rzuca przy `!res.ok`; `updateLabelByTelemetry` loguje warn gdy count=0; ModelRegistry loguje uszkodzony JSON; `resyncLabels` kursor po `(createdAt, id)`; dedup `AUTO_JS` pod module lockiem (TOCTOU). Testy: studnieOrdersError, orderHelpersError, rewardDedup, restoreRoundtrip.

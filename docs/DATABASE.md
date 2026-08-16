@@ -512,21 +512,18 @@ Wydzielone od zwykłych komponentów ze względu na specyfikę danych.
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
-### Lista migracji (11)
+### Lista migracji (3)
 
-| Migracja                                        | Opis                                                                  |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| `20260611000000_init`                           | Inicjalna migracja                                                    |
-| `20260611000001_add_product_tables`             | Tabele produktów                                                      |
-| `20260611170224_add_dn_studni_to_preco_zakresy` | DN studni w Preco zakresy                                             |
-| `20260630190000_telemetry_ai_prep`              | Przygotowanie telemetrii AI                                           |
-| `20260630200000_ai_knowledge_base`              | Baza wiedzy AI                                                        |
-| `20260705000000_ai_well_cases_create`           | Przypadki studni AI                                                   |
-| `20260705000000_feature_import_export`          | Feature flag import/eksport                                           |
-| `20260705000001_ai_well_cases_unique`           | Unique key dla przypadków AI                                          |
-| `20260707000000_ai_ml_models`                   | Modele ML                                                             |
-| `20260719000000_ai_unique_pattern_key`          | Unique pattern key                                                    |
-| `20260805100000_telemetry_well_dedup`           | Indeksy dedup telemetrii AI (`idx_logs_well`, `idx_logs_source_well`) |
+Projekt przeszedł z `prisma db push` na pełne migracje — cała historia schematu została
+skonsolidowana w migracji baseline `20260815000000_baseline` (pełny schemat: oferty,
+zamówienia, produkty, cenniki, telemetria AI/ML). Migracja baseline zawiera także indeksy
+na `ai_telemetry_logs` (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii.
+
+| Migracja                               | Opis                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `20260815000000_baseline`              | Baseline pełnego schematu (konwersja z `db push` na migracje) + indeksy dedup telemetrii |
+| `20260815000001_uq_reward_well_action` | Dedup rewardów przed unique index `(wellId, action)` na `aiRewardLog`                    |
+| `20260816000000_ai_training_run`       | Tabela `AiTrainingRun` (kręgosłup audytu treningów ML)                                   |
 
 ### Komendy
 
@@ -611,7 +608,14 @@ npm run backup:uninstall-cron  # Usuwa zadanie
 npm run restore -- data/backups/backup_2026-06-30_*.sqlite
 ```
 
-Skrypt weryfikuje wersję bazy (`PRAGMA user_version`) przed nadpisaniem.
+Skrypt weryfikuje poprawność pliku backupu przed nadpisaniem bazy:
+
+1. **Nagłówek SQLite** — sprawdza magiczny nagłówek pliku bazy (`SQLite format 3`)
+2. **`PRAGMA integrity_check`** — pełna weryfikacja integralności pliku backupu
+3. **Wersja bazy** — `PRAGMA user_version` przed nadpisaniem
+4. **Cleanup WAL** — usuwa pozostałości `-wal`/`-shm` po przywróceniu
+
+Niepoprawny backup jest odrzucany (bez nadpisywania działającej bazy).
 
 ### Ręczne przywrócenie
 
@@ -661,4 +665,4 @@ await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
 
 ---
 
-_Ostatnia aktualizacja: 2026-06-30_
+_Ostatnia aktualizacja: 2026-08-16_

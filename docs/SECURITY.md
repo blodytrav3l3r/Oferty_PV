@@ -1,7 +1,7 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.15.1  
-**Ostatnia aktualizacja:** 2026-08-05
+**Ostatnia aktualizacja:** 2026-08-16
 
 ---
 
@@ -292,3 +292,22 @@ Podczas przenoszenia bazy SQLite między urządzeniami należy zachować środki
 ### Co NIE jest przenoszone
 
 Plik `.env` zawierający sekrety (SENTRY_DSN, hasła) **nie podlega backupowi** i musi być skonfigurowany ręcznie na nowym urządzeniu.
+
+---
+
+## 14. Naprawy bezpieczeństwa (2026-08-16)
+
+Fala napraw z audytu v1.15.1 (A-01…A-60) — plan i status w `docs/plans/archive/2026-08-16-plan-naprawy-audyt.md`:
+
+| Naprawa                                                       | Zakres                                                                                                                                                                                                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IDOR w ofertach i zamówieniach** (A-01/A-02/A-03/A-23/A-50) | `canWriteDoc` przed upsertem oferty studni, guard `userId` w upsercie klientów (`DO UPDATE ... WHERE userId = target`), filtr roli w `GET /orders`, `GET /:id` i eksporty zamówień na `canReadDoc`                                                    |
+| **Ujednolicone escapowanie XSS** (A-06…A-10)                  | centralne `escapeHtmlAttr`/`escapeJsStr` w `public/js/shared/ui.js`; delegacja duplikatów do `window`; `escapeJsStr` w `onclick` (offerSavedList, pricelistUi, popupsStyczna); `escapeHtml` dla nazw i numerów (offerSavedList, excelTableBody)       |
+| **writeLock z ownership** (A-05)                              | `src/middleware/writeLock.ts` — `createModuleLock()` → `{ acquireLock, runWithLock }`, per-klucz, timeout 30 s bez wycieku, mutual exclusion; zastosowany w 4 trasach zapisu cenników (productsV2, productsStudnieV2, precoPricingV2, priceOverrides) |
+| **Atomowy claim numeru rur** (A-04)                           | claim przez atomic increment zamiast read-then-write (TOCTOU)                                                                                                                                                                                         |
+| **Ownership legacy NULL**                                     | `canWriteDoc` nie zwraca już `true` dla rekordu bez właściciela (`docUserId = null`) — nie-admin nie może nadpisać legacy rekordu (`src/utils/ownership.ts`)                                                                                          |
+| **Feature flags admin-only** (A-17)                           | `POST /audit` (wpisy audytu — poisoning) tylko dla admina przez `requireAdmin`                                                                                                                                                                        |
+| **Rekurencja escapa**                                         | regresja guarda w globalnych deklaracjach (`typeof window.x === 'function'` wywoływał sam siebie → stack overflow); naprawa przez identity-check delegujący do centralnej tylko dla obcej funkcji (`escapeHtmlAttr`/`escapeJsStr`)                    |
+
+**Zasady frontendu** (baza błędów #39, #40-44 w `AGENTS.md`): interpolacja do `innerHTML`
+zawsze przez `escapeHtml(str)`; do atrybutów (`aria-label`, `title`, `onclick`) — `escapeHtmlAttr`/`escapeJsStr`, nigdy `escapeHtml` (nie escapuje `"`).

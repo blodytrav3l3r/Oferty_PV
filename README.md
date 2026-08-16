@@ -415,21 +415,24 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Podstawowe
 
-| Komenda                  | Opis                                                           |
-| ------------------------ | -------------------------------------------------------------- |
-| `npm run dev`            | Uruchom w trybie developerskim (backend + frontend równolegle) |
-| `npm run build`          | Zbuduj backend (TypeScript → JavaScript)                       |
-| `npm start`              | Uruchom w trybie produkcyjnym (`node dist/server.js`)          |
-| `npm test`               | Uruchom testy (Jest z pokryciem)                               |
-| `npm run test:quick`     | Uruchom szybkie testy (bez pokrycia)                           |
-| `npm run test:watch`     | Uruchom testy w trybie watch                                   |
-| `npm run test:alignment` | Test regresyjny Playwright (wyrównanie kolumn Excel)           |
+| Komenda                          | Opis                                                           |
+| -------------------------------- | -------------------------------------------------------------- |
+| `npm run dev`                    | Uruchom w trybie developerskim (backend + frontend równolegle) |
+| `npm run build`                  | Zbuduj backend (TypeScript → JavaScript)                       |
+| `npm start`                      | Uruchom w trybie produkcyjnym (`node dist/server.js`)          |
+| `npm test`                       | Uruchom testy (Jest z pokryciem)                               |
+| `npm run test:quick`             | Uruchom szybkie testy (bez pokrycia)                           |
+| `npm run test:watch`             | Uruchom testy w trybie watch                                   |
+| `npm run test:alignment`         | Test regresyjny Playwright (wyrównanie kolumn Excel)           |
+| `npm run test:e2e-appname`       | E2E: spójność nazwy aplikacji (Playwright)                     |
+| `npm run test:e2e-appname:spawn` | E2E: jw. z własnym buildem serwera (`--spawn`)                 |
 
 ### Backend
 
 | Komenda               | Opis                                       |
 | --------------------- | ------------------------------------------ |
 | `npm run dev:backend` | Uruchom backend z hot-reload (ts-node-dev) |
+| `npm run build:watch` | Kompiluj backend w trybie watch (`tsc -w`) |
 | `npm run typecheck`   | Sprawdź typy TypeScript (backend)          |
 | `npm run lint`        | ESLint dla backendu                        |
 | `npm run lint:fix`    | ESLint z automatyczną naprawą              |
@@ -443,15 +446,32 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Baza danych (Prisma)
 
-| Komenda                   | Opis                           |
-| ------------------------- | ------------------------------ |
-| `npm run prisma:generate` | Generuj klienta Prisma         |
-| `npm run prisma:migrate`  | Utwórz migrację dev            |
-| `npm run prisma:deploy`   | Zastosuj migracje w produkcji  |
-| `npm run prisma:seed`     | Zasiej dane początkowe         |
-| `npm run prisma:studio`   | Otwórz Prisma Studio (UI bazy) |
-| `npm run prisma:reset`    | Reset bazy danych              |
-| `npm run prisma:status`   | Status migracji                |
+| Komenda                      | Opis                                              |
+| ---------------------------- | ------------------------------------------------- |
+| `npm run prisma:generate`    | Generuj klienta Prisma                            |
+| `npm run prisma:migrate`     | Utwórz migrację dev                               |
+| `npm run prisma:deploy`      | Zastosuj migracje w produkcji                     |
+| `npm run prisma:seed`        | Zasiej dane początkowe                            |
+| `npm run prisma:studio`      | Otwórz Prisma Studio (UI bazy)                    |
+| `npm run prisma:reset`       | Reset bazy danych                                 |
+| `npm run prisma:status`      | Status migracji                                   |
+| `npm run migration:run`      | Migracja ustawień do tabel (ts-node)              |
+| `npm run migration:validate` | Walidacja migracji ustawień                       |
+| `npm run migration:reverse`  | Cofnięcie migracji (ustawienia z tabel)           |
+| `npm run export:seed`        | Eksport cenników z tabel DB do `data/seed_*.json` |
+
+### AI/ML
+
+| Komenda            | Opis                                    |
+| ------------------ | --------------------------------------- |
+| `npm run ai:setup` | Diagnostyka i konfiguracja modułu AI/ML |
+
+### Benchmark
+
+| Komenda                   | Opis                                               |
+| ------------------------- | -------------------------------------------------- |
+| `npm run benchmark`       | Uruchom benchmark (skrypt `scripts/benchmark.mjs`) |
+| `npm run benchmark:quick` | Uruchom benchmark skrócony (10 iteracji)           |
 
 ### Backup i przenoszenie bazy
 
@@ -474,14 +494,20 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Nazwa aplikacji i skill CLI
 
-| Komenda                   | Opis                                        |
-| ------------------------- | ------------------------------------------- |
-| `npm run appname:check`   | Sprawdź spójność nazwy aplikacji (pre-push) |
-| `npm run skills:build`    | Oblicz koszt budowy skilli                  |
-| `npm run skills:stats`    | Statystyki skilli                           |
-| `npm run skills:validate` | Walidacja manifestów skilli                 |
-| `npm run skills:cost`     | Koszt tokenów skilli                        |
-| `npm run skills:deps`     | Zależności między skillami                  |
+| Komenda                           | Opis                                        |
+| --------------------------------- | ------------------------------------------- |
+| `npm run appname:check`           | Sprawdź spójność nazwy aplikacji (pre-push) |
+| `npm run skills:build`            | Oblicz koszt budowy skilli                  |
+| `npm run skills:stats`            | Statystyki skilli                           |
+| `npm run skills:validate`         | Walidacja manifestów skilli                 |
+| `npm run skills:cost`             | Koszt tokenów skilli                        |
+| `npm run skills:deps`             | Zależności między skillami                  |
+| `npm run skills:capabilities`     | Lista zdolności skilli                      |
+| `npm run skills:plan`             | Plan skilli                                 |
+| `npm run skills:feedback-record`  | Rejestrowanie feedbacku                     |
+| `npm run skills:feedback-show`    | Prezentacja feedbacku                       |
+| `npm run skills:provider-resolve` | Rozwiąż providera skilli                    |
+| `npm run skills:utility-recalc`   | Ponowne przeliczenie utility                |
 
 **Gdzie żyje numer wersji (pełna lista):**
 
@@ -513,13 +539,14 @@ Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.v
 
 ### Walidacja i kodowanie
 
-| Komenda                  | Opis                                                     |
-| ------------------------ | -------------------------------------------------------- |
-| `npm run validate`       | Pełna walidacja: typecheck + lint + testy                |
-| `npm run format`         | Formatuj kod (Prettier)                                  |
-| `npm run format:check`   | Sprawdź formatowanie                                     |
-| `npm run encoding:check` | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat) |
-| `npm run encoding:fix`   | Napraw kodowanie plików                                  |
+| Komenda                   | Opis                                                     |
+| ------------------------- | -------------------------------------------------------- |
+| `npm run validate`        | Pełna walidacja: typecheck + lint + testy                |
+| `npm run format`          | Formatuj kod (Prettier)                                  |
+| `npm run format:check`    | Sprawdź formatowanie                                     |
+| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat) |
+| `npm run encoding:fix`    | Napraw kodowanie plików                                  |
+| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)              |
 
 ---
 
@@ -578,7 +605,7 @@ Oferty_PV/
 │   ├── playwright/            # Testy Playwright (regresyjne)
 │   └── ...
 ├── docs/                      # Dokumentacja
-│   ├── adr/                   # Decyzje architektoniczne (ADR-001..007)
+│   ├── adr/                   # Decyzje architektoniczne (ADR-001..008)
 │   ├── plans/                 # Plany i taski (+ archive/)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...

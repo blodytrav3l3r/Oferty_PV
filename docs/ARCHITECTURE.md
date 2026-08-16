@@ -1,7 +1,7 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.15.1  
-**Ostatnia aktualizacja:** 2026-08-10  
+**Ostatnia aktualizacja:** 2026-08-16  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -103,6 +103,7 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `rateLimiter.ts` / `rateLimiters.ts` — limitowanie żądań per IP (in-memory)
     - `errorHandler.ts` — globalna obsługa błędów
     - `requestLogger.ts` — logowanie żądań HTTP
+    - `writeLock.ts` — modułowy lock zapisu (`createModuleLock()` → `{ acquireLock, runWithLock }`, per-klucz, timeout 30 s, mutual exclusion) — DRY dla tras zapisu cenników
 
 2. **Routes** (`src/routes/`)
     - `auth.ts` — logowanie, rejestracja, wylogowanie, zmiana hasła
@@ -152,10 +153,13 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
     - `telemetrySchemas.ts` — schematy dla telemetrii AI
 
 5. **Utils** (`src/utils/`)
+    - `brandHtml.ts` — brandowanie nagłówka w generowanych dokumentach
     - `cronService.ts` — serwis cron (setInterval)
+    - `dbQueryCounter.ts` — licznik zapytań DB (diagnostyka N+1)
     - `fts5Sync.ts` — synchronizacja FTS5 dla wyszukiwarki (auto-tworzenie tabeli wirtualnej + backfill przy starcie, nie tylko przebudowa przy braku kolumn)
     - `logger.ts` — logger aplikacji
-    - `ownership.ts` — weryfikacja własności zasobów
+    - `ownership.ts` — weryfikacja własności zasobów (`canReadDoc`/`canWriteDoc`; legacy rekord bez właściciela = brak prawa zapisu dla nie-admina)
+    - `paths.ts` — ścieżki plików i katalogów
     - `productionSearchUtils.ts` — narzędzia wyszukiwania produkcji
     - `productionOrderGuard.ts` — guard PZ (blokada usuwania ofert/zamówień/elementów z przypisanymi zleceniami produkcyjnymi)
     - `roleFilter.ts` — filtrowanie po roli użytkownika
@@ -232,6 +236,12 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 ---
 
 ## Frontend — szczegóły
+
+Modularyzacja frontendu opisana jest w [ADR-008](adr/ADR-008-frontend-modularyzacja.md):
+monolityczne pliki JS rozbito na małe moduły delegujące (np. `wellActions.js` → `actions*.js`,
+`excelTableManager.js` → `excel*.js`), router SPA działa w `public/js/spa/router.js`
+(adresy `app.html#/<moduł>`), nagłówek i logo współdzielone przez `public/js/shared/headerUser.js`
+oraz `public/images/logo-sok.svg`.
 
 ### Stack
 
@@ -531,4 +541,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-10_
+_Ostatnia aktualizacja: 2026-08-16_
