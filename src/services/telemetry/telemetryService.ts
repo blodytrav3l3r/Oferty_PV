@@ -14,6 +14,7 @@
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
 import { APP_NAME } from '../../constants/appMeta';
+import { createModuleLock } from '../../middleware/writeLock';
 import prisma from '../../prismaClient';
 import {
     type TelemetryConfigPayload,
@@ -25,6 +26,8 @@ import {
 /* ===== SERWIS GŁÓWNY ===== */
 
 class TelemetryService {
+    private readonly lock = createModuleLock();
+
     /**
      * Zapisuje kompletną konfigurację z kontekstem wejściowym.
      * Tworzy równocześnie wersję historii oraz snapshot przejść szczelnych.
@@ -37,6 +40,11 @@ class TelemetryService {
         const telemetryId = crypto.randomUUID();
         const configHistoryId = crypto.randomUUID();
 
+        // A-25: dedup AUTO_JS (findFirst → create/update) był nieatomowy —
+        // dwa równoległe zapisy identycznej konfiguracji dla tej samej studni
+        // tworzyły duplikaty (TOCTOU), zawyżając metryki ML. Lock serializuje
+        // sprawdzenie z zapisem (wzorzec writeLock, patrz A-05).
+        const lock = await this.lock.acquireLock();
         try {
             // Deduplikacja AUTO_JS (Etap 2): pomiń zapis identycznej konfiguracji
             // z tego samego źródła dla tej samej studni. Duplikaty zawyżają
@@ -283,6 +291,8 @@ class TelemetryService {
             const message = e instanceof Error ? e.message : String(e);
             logger.error('Telemetry', `Błąd zapisu konfiguracji: ${message}`);
             throw e;
+        } finally {
+            lock?.release();
         }
     }
 

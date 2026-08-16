@@ -43,6 +43,8 @@ export class RewardCalculator {
             case 'SWAP':
                 reward = -0.2;
                 break;
+            default:
+                throw new Error(`Nieznana akcja reward: ${String(event.action)}`);
         }
 
         try {

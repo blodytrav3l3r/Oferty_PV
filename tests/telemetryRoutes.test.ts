@@ -237,6 +237,24 @@ describe('telemetryService - deduplikacja AUTO_JS', () => {
         expect(count).toBe(2);
     });
 
+    it('równoległe identyczne AUTO_JS → jeden rekord (bez TOCTOU duplikatu)', async () => {
+        const snap = { a: 1, b: { c: 'x' }, d: [1, 2] };
+        const [r1, r2] = await Promise.all([
+            telemetryService.recordConfig(basePayload(snap)),
+            telemetryService.recordConfig(basePayload(snap))
+        ]);
+
+        expect(r1.telemetryId).toBe(r2.telemetryId);
+        const count = await prisma.ai_telemetry_logs.count({
+            where: { wellId }
+        });
+        expect(count).toBe(1);
+        const row = await prisma.ai_telemetry_logs.findUnique({
+            where: { id: r1.telemetryId }
+        });
+        expect(row?.usageCount).toBe(2);
+    });
+
     it('różny featureSnapshot AUTO_JS → nowy rekord', async () => {
         const r1 = await telemetryService.recordConfig(basePayload({ a: 1 }));
         const r2 = await telemetryService.recordConfig(basePayload({ a: 2 }));
