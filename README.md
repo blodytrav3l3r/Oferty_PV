@@ -26,6 +26,7 @@ Aplikacja działa jako **Single Page Application (SPA)** z backendem Express.js 
 - [Instalacja na nowym urządzeniu](#instalacja-na-nowym-urządzeniu)
 - [Konfiguracja (.env)](#konfiguracja-env)
 - [Uruchomienie](#uruchomienie)
+- [Aktualizacja aplikacji (deploy)](#aktualizacja-aplikacji-deploy)
 - [Skrypty startowe (.bat)](#skrypty-startowe-bat)
 - [Komendy](#komendy)
 - [Struktura projektu](#struktura-projektu)
@@ -394,6 +395,23 @@ npm start
 > `mkdir -p dist/generated && cp -r generated/prisma dist/generated/` — albo użyj `build.bat`/`build.sh`, które robią to automatycznie.
 
 Aplikacja: `http://localhost:3000` (lokalnie; w produkcji przez HTTPS — patrz sekcja [HTTPS / Reverse proxy](#https--reverse-proxy-produkcja))
+
+---
+
+## Aktualizacja aplikacji (deploy)
+
+Aktualizacje produkcyjnej wersji (na której pracują pracownicy) wykonuje się w **oknie
+serwisowym** — bezpieczny proces z backupem, migracjami addytywnymi i rollbackiem opisuje
+**[docs/DEPLOY_UPDATE.md](docs/DEPLOY_UPDATE.md)**.
+
+Skrót:
+
+```powershell
+node scripts/deploy.mjs <windows|linux|docker> vX.Y.Z --dry-run   # podgląd
+node scripts/deploy.mjs <windows|linux|docker> vX.Y.Z              # deploy
+node scripts/rollback.mjs <windows|linux|docker> vX.Y.Z            # powrót do poprzedniej wersji
+npm run deploy:check                                               # smoke check /health
+```
 
 ---
 

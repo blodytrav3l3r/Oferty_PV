@@ -97,7 +97,7 @@ services:
             - PORT=10000
             - HOST=0.0.0.0
         volumes:
-            - sok_data:/var/data
+            - ./data:/var/data
         healthcheck:
             test:
                 [
@@ -111,13 +111,14 @@ services:
             retries: 3
             start_period: 10s
 
-volumes:
-    sok_data:
-
 networks:
     sok-network:
         driver: bridge
 ```
+
+> **Bind mount zamiast named volume:** serwis używa `./data:/var/data` — baza i backupy
+> są widoczne na hoście, więc backup/restore działają identycznie jak na bare-metal
+> (`npm run backup` / `npm run restore` wprost na hoście). Zakaz `docker compose down -v`.
 
 ### Uruchomienie
 
@@ -127,10 +128,10 @@ docker compose up --build -d
 
 Aplikacja dostępna pod: `http://localhost:3000`
 
-### Migracja wolumenu `witros_data` → `sok_data` (Wariant B)
+### Migracja wolumenu `witros_data` → katalog `data` (bind mount)
 
-> **KRYTYCZNE:** wolumen zawiera bazę SQLite. Zmiana nazwy bez migracji = nowy
-> PUSTY wolumen = seed pustej bazy (pozorowana utrata danych). Postępuj ściśle wg
+> **KRYTYCZNE:** wolumen zawiera bazę SQLite. Zmiana lokalizacji bez migracji = nowy
+> PUSTY katalog = seed pustej bazy (pozorowana utrata danych). Postępuj ściśle wg
 > poniższych kroków — NIGDY nie używaj `docker compose down -v` przy tej operacji.
 
 1. Pre-check: `docker compose ps` (aplikacja działa), `git status` czyste,
@@ -138,15 +139,15 @@ Aplikacja dostępna pod: `http://localhost:3000`
    (zewnętrzny proxy), NIE zmieniaj nazwy sieci (wróć do `witros-network`).
 2. Czysty shutdown (SQLite WAL → checkpoint do `app_database.sqlite`):
    `docker compose down` (bez `-v`).
-3. Utwórz nowy wolumen: `docker volume create sok_data`.
+3. Utwórz katalog bind mount: `mkdir data`.
 4. Skopiuj dane:
-   `docker run --rm -v witros_data:/from -v sok_data:/to alpine:3.20 sh -c "cp -a /from/. /to/"`
+   `docker run --rm -v witros_data:/from -v "<absolutna_sciezka>/data":/to alpine:3.20 sh -c "cp -a /from/. /to/"`
 5. **Weryfikacja kopii (obowiązkowo):**
     ```
     docker run --rm -v witros_data:/from alpine:3.20 sh -c "sha256sum /from/app_database.sqlite"
-    docker run --rm -v sok_data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
+    docker run --rm -v <absolutna_sciezka>/data:/to alpine:3.20 sh -c "sha256sum /to/app_database.sqlite"
     ```
-    → identyczne sumy; `ls -la /to` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
+    → identyczne sumy; `ls -la data/` zawiera `app_database.sqlite` (+ `-wal`/`-shm`).
 6. Zaktualizuj pliki (docker-compose.yml / docs) i uruchom:
    `docker compose up -d --build`.
 7. Weryfikacja: `docker ps` (kontener `sok-oferty` healthy), `curl localhost:3000/health`

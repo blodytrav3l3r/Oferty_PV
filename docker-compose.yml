@@ -14,9 +14,12 @@ services:
             - PORT=10000
             - HOST=0.0.0.0
             # Wymagane przy pierwszym starcie - bez tej zmiennej konto admina nie zostanie utworzone (wyjatek jest logowany, start kontynuowany)
-            - "DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}"
+            - 'DEFAULT_ADMIN_PASSWORD=${DEFAULT_ADMIN_PASSWORD:?Wymagane: ustaw DEFAULT_ADMIN_PASSWORD w .env}'
         volumes:
-            - sok_data:/var/data
+            # Bind mount zamiast named volume: baza i backupy widoczne na hoscie,
+            # dzieki czemu backup/restore dziala identycznie jak na bare-metal
+            # (npm run backup / npm run restore wprost na hoscie).
+            - ./data:/var/data
         networks:
             - sok-network
         healthcheck:
@@ -31,10 +34,6 @@ services:
             timeout: 10s
             retries: 3
             start_period: 30s
-
-volumes:
-    sok_data:
-        driver: local
 
 networks:
     sok-network:
