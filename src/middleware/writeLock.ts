@@ -35,5 +35,22 @@ export function createModuleLock() {
         });
     }
 
-    return { acquireLock };
+    /**
+     * DRY: opakowuje krytyczny fragment w module lock — zaciąga lock, woła fn,
+     * zwalnia w finally. Zwraca { acquired: true, value } lub { acquired: false }
+     * (lock zajęty / timeout). Uwalnia handler od try/finally i let lock.
+     */
+    async function runWithLock<T>(
+        fn: () => Promise<T>
+    ): Promise<{ acquired: true; value: T } | { acquired: false }> {
+        const lock = await acquireLock();
+        if (!lock) return { acquired: false };
+        try {
+            return { acquired: true, value: await fn() };
+        } finally {
+            lock.release();
+        }
+    }
+
+    return { acquireLock, runWithLock };
 }

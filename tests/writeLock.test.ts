@@ -71,3 +71,47 @@ describe('createModuleLock (A-05)', () => {
         expect(maxActive).toBe(1);
     });
 });
+
+// ─── T3.3: runWithLock (DRY helper) ──────────────────────────
+
+describe('runWithLock (helper DRY)', () => {
+    it('zwraca acquired:true z wartością fn i zwalnia lock', async () => {
+        const { acquireLock, runWithLock } = createModuleLock();
+        const result = await runWithLock(async () => 42);
+        expect(result).toEqual({ acquired: true, value: 42 });
+
+        // lock zwolniony po wywołaniu
+        const lock = await acquireLock();
+        expect(lock).not.toBeNull();
+        lock!.release();
+    });
+
+    it('czeka aż lock się zwolni, potem wykonuje fn', async () => {
+        const { acquireLock, runWithLock } = createModuleLock();
+        const lock1 = await acquireLock();
+        expect(lock1).not.toBeNull();
+
+        let done = false;
+        const p = runWithLock(async () => {
+            done = true;
+            return 2;
+        });
+        await new Promise((r) => setTimeout(r, 150));
+        expect(done).toBe(false);
+
+        lock1!.release();
+        const ok = await p;
+        expect(ok).toEqual({ acquired: true, value: 2 });
+    });
+
+    it('zwalnia lock nawet gdy fn rzuca', async () => {
+        const { acquireLock, runWithLock } = createModuleLock();
+        await expect(runWithLock(async () => Promise.reject(new Error('boom')))).rejects.toThrow(
+            'boom'
+        );
+
+        const lock = await acquireLock();
+        expect(lock).not.toBeNull();
+        lock!.release();
+    });
+});

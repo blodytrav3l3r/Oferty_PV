@@ -4,7 +4,7 @@ import { logger } from '../utils/logger';
 import { PRECO_PRICING_LIMITER } from '../middleware/rateLimiters';
 import { validateData } from '../validators/authSchema';
 import { precoPricingUpdateSchema, precoPricingPatchSchema } from '../validators/offerSchemas';
-import { createModuleLock, LockHandle } from '../middleware/writeLock';
+import { createModuleLock } from '../middleware/writeLock';
 import prisma from '../prismaClient';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ const writeLimiter = PRECO_PRICING_LIMITER;
 
 const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'] as const;
 
-const { acquireLock } = createModuleLock();
+const { runWithLock } = createModuleLock();
 
 // ──────────────────────────────────────────
 // formatPrecoResponse — odczyt z Preco* tables → format zagnieżdżony
@@ -175,34 +175,32 @@ router.put(
     writeLimiter,
     validateData(precoPricingUpdateSchema),
     async (req, res) => {
-        let lock: LockHandle | null = null;
+        const raw = req.body.data;
+        let input: Record<string, unknown>;
+
+        if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object') {
+            input = raw[0] as Record<string, unknown>;
+        } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+            input = raw as Record<string, unknown>;
+        } else {
+            res.status(400).json({ error: 'Nieprawidłowy format danych' });
+            return;
+        }
+
         try {
-            lock = await acquireLock();
-            if (!lock) {
-                res.status(429).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
+            const result = await runWithLock(async () => {
+                await flattenAndSave(input, false);
+                return { ok: true };
+            });
+            if (!result.acquired) {
+                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
                 return;
             }
-
-            const raw = req.body.data;
-            let input: Record<string, unknown>;
-
-            if (Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'object') {
-                input = raw[0] as Record<string, unknown>;
-            } else if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-                input = raw as Record<string, unknown>;
-            } else {
-                res.status(400).json({ error: 'Nieprawidłowy format danych' });
-                return;
-            }
-
-            await flattenAndSave(input, false);
-            res.json({ ok: true });
+            res.json(result.value);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PUT error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-        } finally {
-            lock?.release();
         }
     }
 );
@@ -218,51 +216,51 @@ router.patch(
     writeLimiter,
     validateData(precoPricingPatchSchema),
     async (req, res) => {
-        let lock: LockHandle | null = null;
+        const patch = req.body.data as Record<string, unknown>;
+        if (!patch || typeof patch !== 'object') {
+            res.status(400).json({ error: 'Nieprawidłowy format danych' });
+            return;
+        }
+
         try {
-            lock = await acquireLock();
-            if (!lock) {
-                res.status(429).json({ error: 'Zasób zablokowany, spróbuj ponownie' });
-                return;
-            }
+            const result = await runWithLock(async () => {
+                const current = await formatPrecoResponse(
+                    prisma.precoKonfig,
+                    prisma.precoKinety,
+                    prisma.precoZakresy
+                );
+                const entry: Record<string, unknown> =
+                    current.data.length > 0
+                        ? { ...(current.data[0] as Record<string, unknown>) }
+                        : {};
 
-            const patch = req.body.data as Record<string, unknown>;
-            if (!patch || typeof patch !== 'object') {
-                res.status(400).json({ error: 'Nieprawidłowy format danych' });
-                return;
-            }
-
-            const current = await formatPrecoResponse(
-                prisma.precoKonfig,
-                prisma.precoKinety,
-                prisma.precoZakresy
-            );
-            const entry: Record<string, unknown> =
-                current.data.length > 0 ? { ...(current.data[0] as Record<string, unknown>) } : {};
-
-            for (const [key, value] of Object.entries(patch)) {
-                const dn = Number(key);
-                if (
-                    !Number.isNaN(dn) &&
-                    typeof value === 'object' &&
-                    value !== null &&
-                    !Array.isArray(value)
-                ) {
-                    const existing = (entry[key] as Record<string, unknown>) || {};
-                    entry[key] = { ...existing, ...(value as Record<string, unknown>) };
-                } else if ((RANGE_TYPES as readonly string[]).includes(key)) {
-                    entry[key] = value;
+                for (const [key, value] of Object.entries(patch)) {
+                    const dn = Number(key);
+                    if (
+                        !Number.isNaN(dn) &&
+                        typeof value === 'object' &&
+                        value !== null &&
+                        !Array.isArray(value)
+                    ) {
+                        const existing = (entry[key] as Record<string, unknown>) || {};
+                        entry[key] = { ...existing, ...(value as Record<string, unknown>) };
+                    } else if ((RANGE_TYPES as readonly string[]).includes(key)) {
+                        entry[key] = value;
+                    }
                 }
-            }
 
-            await flattenAndSave(entry, false);
-            res.json({ ok: true });
+                await flattenAndSave(entry, false);
+                return { ok: true };
+            });
+            if (!result.acquired) {
+                res.status(429).json({ error: 'Zapis w toku, spróbuj ponownie za chwilę' });
+                return;
+            }
+            res.json(result.value);
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Unknown error';
             logger.error('PrecoPricingV2', 'PATCH error', message);
             res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
-        } finally {
-            lock?.release();
         }
     }
 );
