@@ -3,7 +3,7 @@ import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { EXPORT_LIMITER } from '../../middleware/rateLimiters';
 import { studnieOfferExportSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canReadDoc, canWriteDoc } from '../../utils/ownership';
+import { canReadDoc } from '../../utils/ownership';
 import {
     generateKartaBudowyPDF,
     generateStudniePDFFromContext,
@@ -89,7 +89,7 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !canWriteDoc(authReq.user, o.userId)) {
+        if (!o || !canReadDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
         const pdfBuffer = await generateStudnieOrderPDF(docId);
@@ -116,7 +116,7 @@ router.get('/:id/export-docx', requireAuth, exportOrdersLimiter, async (req, res
             where: { id: docId },
             select: { id: true, userId: true }
         });
-        if (!o || !canWriteDoc(authReq.user, o.userId)) {
+        if (!o || !canReadDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie studni nie znalezione' });
         }
         const docxBuffer = await generateStudnieOrderDOCX(docId);

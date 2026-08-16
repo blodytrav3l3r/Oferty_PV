@@ -46,7 +46,14 @@ jest.mock('../src/utils/ownership', () => ({
         }
         return false;
     }),
-    canReadDoc: jest.fn().mockReturnValue(true)
+    canReadDoc: jest.fn().mockImplementation((user: any, ownerId: string | null) => {
+        if (user?.role === 'admin') return true;
+        if (user?.id === ownerId) return true;
+        if (user?.role === 'pro' && Array.isArray(user?.subUsers) && ownerId) {
+            return user.subUsers.includes(ownerId);
+        }
+        return false;
+    })
 }));
 
 jest.mock('../src/utils/roleFilter', () => ({

@@ -8,7 +8,7 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canWriteDoc } from '../../utils/ownership';
+import { canReadDoc, canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
 
@@ -201,7 +201,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || (authReq.user?.role !== 'admin' && o.userId !== authReq.user?.id)) {
+        if (!o || !canReadDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 

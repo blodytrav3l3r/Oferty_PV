@@ -7,7 +7,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
-import { canWriteDoc } from '../../utils/ownership';
+import { canReadDoc, canWriteDoc } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import crypto from 'crypto';
@@ -170,7 +170,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_studnie_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || !canWriteDoc(authReq.user, o.userId)) {
+        if (!o || !canReadDoc(authReq.user, o.userId)) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 

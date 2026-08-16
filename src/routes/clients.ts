@@ -117,8 +117,8 @@ router.put(
                         }
                     }
 
-                    // Upsert via raw query
-                    await tx.$executeRaw`
+                    // Upsert via raw query — tylko jeśli wiersz należy do tego użytkownika
+                    const inserted = await tx.$queryRaw<{ id: string }[]>`
                     INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
                     VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
                     ON CONFLICT(id) DO UPDATE SET
@@ -131,13 +131,23 @@ router.put(
                         phone = ${c.phone || ''},
                         email = ${c.email || ''},
                         updatedAt = ${now}
+                    WHERE clients_rel.userId = ${userId}
+                    RETURNING id
                 `;
+                    if (inserted.length === 0) {
+                        throw new Error('FORBIDDEN_CLIENT');
+                    }
                     upserted.push({ id: docId });
                 }
             });
 
             res.json({ ok: true, count: upserted.length });
         } catch (e: unknown) {
+            if (e instanceof Error && e.message === 'FORBIDDEN_CLIENT') {
+                return res
+                    .status(403)
+                    .json({ error: 'Brak uprawnień do modyfikacji tego klienta' });
+            }
             logger.error('Clients', 'PUT /api/clients błąd', e);
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Clients', 'Błąd serwera', message);

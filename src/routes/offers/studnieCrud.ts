@@ -179,10 +179,27 @@ router.post(
                 if (!docId) docId = uuidv4();
 
                 let newHistory: unknown[] = [];
+                let effectiveUserId: string;
                 const old = await prisma.offers_studnie_rel.findUnique({
                     where: { id: docId },
-                    select: { history: true, data: true, state: true }
+                    select: { history: true, data: true, state: true, userId: true }
                 });
+                if (old) {
+                    if (!canWriteDoc(authReq.user, old.userId)) {
+                        return res
+                            .status(403)
+                            .json({ error: 'Brak uprawnień do modyfikacji tej oferty' });
+                    }
+                    effectiveUserId = old.userId || authReq.user?.id || '';
+                } else {
+                    const resolved = resolveWriteUserId(authReq.user, o.userId);
+                    if (!resolved.allowed) {
+                        return res.status(403).json({
+                            error: 'Brak uprawnień do utworzenia oferty dla tego użytkownika'
+                        });
+                    }
+                    effectiveUserId = resolved.effectiveUserId;
+                }
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
@@ -233,12 +250,6 @@ router.post(
                 const created = normalizeDate(o.createdAt);
                 const updated = new Date().toISOString();
                 const offerNumber = o.number || o.offer_number || '';
-                const resolved = resolveWriteUserId(authReq.user, o.userId);
-                if (!resolved.allowed) {
-                    results.push({ id: docId, ok: false, error: 'Forbidden' });
-                    continue;
-                }
-                const effectiveUserId = resolved.effectiveUserId;
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
 

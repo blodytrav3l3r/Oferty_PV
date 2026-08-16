@@ -218,6 +218,69 @@ describe('Rury Orders CRUD', () => {
         });
     });
 
+    describe('GET /:id', () => {
+        it('zwraca 404 dla cudzego zamówienia', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'other-user',
+                status: 'new',
+                data: '{}'
+            });
+
+            const res = await request(app).get('/api/orders-rury/or-1');
+
+            expect(res.statusCode).toBe(404);
+        });
+
+        it('zwraca 200 dla właściciela', async () => {
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'user-id',
+                status: 'new',
+                data: JSON.stringify({ clientName: 'X' })
+            });
+
+            const res = await request(app).get('/api/orders-rury/or-1');
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body.data.id).toBe('or-1');
+        });
+
+        it('pro może odczytać zamówienie sub-usera (200)', async () => {
+            mockUser.id = 'pro-id';
+            mockUser.role = 'pro';
+            mockUser.subUsers = ['sub-user'];
+            const app2 = createApp();
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'sub-user',
+                status: 'new',
+                data: JSON.stringify({ clientName: 'X' })
+            });
+
+            const res = await request(app2).get('/api/orders-rury/or-1');
+
+            expect(res.statusCode).toBe(200);
+        });
+
+        it('pro NIE może odczytać zamówienia niepowiązanego użytkownika (404)', async () => {
+            mockUser.id = 'pro-id';
+            mockUser.role = 'pro';
+            mockUser.subUsers = ['sub-user'];
+            const app2 = createApp();
+            (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({
+                id: 'or-1',
+                userId: 'stranger',
+                status: 'new',
+                data: '{}'
+            });
+
+            const res = await request(app2).get('/api/orders-rury/or-1');
+
+            expect(res.statusCode).toBe(404);
+        });
+    });
+
     describe('PATCH /:id', () => {
         it('aktualizuje status zamówienia', async () => {
             (prisma.orders_rury_rel.findUnique as jest.Mock).mockResolvedValue({

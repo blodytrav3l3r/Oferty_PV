@@ -4,7 +4,7 @@ import { logAudit } from '../../db';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { parseJsonField, normalizeDate } from '../../helpers';
 import { logger } from '../../utils/logger';
-import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { canReadDoc, canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
 import { buildRoleWhereCondition } from '../../utils/roleFilter';
 import crypto from 'crypto';
 import { validateData } from '../../validators/authSchema';
@@ -338,7 +338,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const order = await prisma.production_orders_rel.findUnique({
             where: { id: docId }
         });
-        if (!order || !canWriteDoc(authReq.user, order.userId)) {
+        if (!order || !canReadDoc(authReq.user, order.userId)) {
             return res.status(404).json({ error: 'Zlecenie nie znalezione' });
         }
 

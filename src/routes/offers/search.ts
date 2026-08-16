@@ -184,10 +184,16 @@ router.get('/orders', requireAuth, async (req, res) => {
 
         const table = offerType === 'studnie' ? 'orders_studnie_rel' : 'orders_rury_rel';
         const idCol = offerType === 'studnie' ? 'offerStudnieId' : 'offerId';
+        const roleSql = buildRoleWhereCondition(authReq.user);
+        const idCond = Prisma.sql`${Prisma.raw(idCol)} = ${id}`;
+        const whereSql =
+            roleSql !== Prisma.empty
+                ? Prisma.sql`${roleSql} AND ${idCond}`
+                : Prisma.sql`WHERE ${idCond}`;
 
         const rows = await prisma.$queryRaw(Prisma.sql`
             SELECT * FROM ${Prisma.raw(table)}
-            WHERE ${Prisma.raw(idCol)} = ${id}
+            ${whereSql}
             ORDER BY "createdAt" DESC
             LIMIT 50
         `);
