@@ -9,7 +9,7 @@
  *   parseTransitionGeometry()     — parsuje geometrię przejścia (wymiary, pozycja)
  *   drawTransitionShape()         — generuje kształt SVG (kółko/elipsa/prostokąt)
  *   drawTransitionLabel()         — etykieta kąta na przejściu
- *   drawTransitionGuideLine()     — linia pomocnicza od przejścia do osi wymiarowej
+ *   drawTransitionGuideLine()     — linia pomocnicza od przejścia do prawej osi wymiarowej
  *
  * Zależności globalne:
  *   SVG_COLORS (diagramTheme.js)
@@ -29,8 +29,12 @@ function drawTransitions(well, canvas, dimLinesY) {
     const mmToPx = (mm) => mm * pxMm;
     const bottomElev = parseFloat(well.rzednaDna) || 0;
 
-    let svgOut = '';
+    // Prawa oś wymiarowa przejść (DN)
+    const dX = 52;
+    const rX = canvas.svgW - canvas.mR + (canvas.mL - dX);
 
+    // Przygotuj wszystkie przejścia (potrzebne do rozwiązywania kolizji etykiet DN)
+    const items = [];
     well.przejscia.forEach((pr, idx) => {
         const parsed = parseTransitionGeometry(pr, bottomElev);
         if (!parsed) return;
@@ -53,9 +57,58 @@ function drawTransitions(well, canvas, dimLinesY) {
 
         const isBack = angle > 90 && angle < 270;
 
-        svgOut += drawTransitionShape(idx, px, prY, radiusW, radiusH, isRect, isEgg, isBack);
-        svgOut += drawTransitionLabel(px, prY, angle, isBack);
-        svgOut += drawTransitionGuideLine(px, prY, radiusW, isBack);
+        items.push({
+            idx,
+            px,
+            prY,
+            radiusW,
+            radiusH,
+            isRect,
+            isEgg,
+            isBack,
+            angle,
+            dnText: `DN ${Math.round(prH)}`,
+            labelY: prY
+        });
+    });
+
+    // Rozwiąż kolizje etykiet DN: dwie kolumny na prawej osi (naprzemiennie),
+    // a w obrębie kolumny etykiety rozsuwane pionowo (tekst obrócony -90° rośnie w górę od punktu zaczepienia)
+    items.sort((a, b) => a.labelY - b.labelY);
+    items.forEach((it, i) => {
+        it.col = i % 2;
+        it.labelX = it.col === 0 ? rX + 5 : rX + 28;
+    });
+    const maxLabelY = mT + drawH - 15;
+    for (let col = 0; col < 2; col++) {
+        let prevY = -Infinity;
+        for (const it of items) {
+            if (it.col !== col) continue;
+            if (prevY !== -Infinity) {
+                const minGap = it.dnText.length * 6.5 + 6;
+                if (it.labelY - prevY < minGap) {
+                    it.labelY = Math.min(prevY + minGap, maxLabelY);
+                }
+            }
+            prevY = it.labelY;
+        }
+    }
+
+    let svgOut = '';
+    items.forEach((it) => {
+        svgOut += drawTransitionShape(
+            it.idx,
+            it.px,
+            it.prY,
+            it.radiusW,
+            it.radiusH,
+            it.isRect,
+            it.isEgg,
+            it.isBack
+        );
+        svgOut += drawTransitionLabel(it.px, it.prY, it.angle, it.isBack);
+        svgOut += drawTransitionGuideLine(it);
+        svgOut += `<text x="${it.labelX}" y="${it.labelY}" transform="rotate(-90 ${it.labelX} ${it.labelY})" text-anchor="middle" style="fill:${SVG_COLORS.transitionActive}" font-size="11" font-family="Inter,sans-serif" font-weight="700">${it.dnText}</text>`;
     });
 
     return svgOut;
@@ -123,11 +176,11 @@ function drawTransitionLabel(px, prY, angle, isBack) {
 }
 
 /**
- * Generuje delikatną linię pomocniczą łączącą przejście z osią wymiarową.
+ * Generuje delikatną linię pomocniczą łączącą przejście z jego etykietą DN.
  */
-function drawTransitionGuideLine(px, prY, radiusW, isBack) {
-    const dimColor = isBack ? SVG_COLORS.dnLabel : SVG_COLORS.transitionActive;
-    return `<line x1="25" y1="${prY}" x2="${px - radiusW - 2}" y2="${prY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
+function drawTransitionGuideLine(it) {
+    const dimColor = it.isBack ? SVG_COLORS.dnLabel : SVG_COLORS.transitionActive;
+    return `<line x1="${it.px + it.radiusW + 2}" y1="${it.prY}" x2="${it.labelX}" y2="${it.labelY}" style="stroke:${dimColor}" stroke-width="0.8" stroke-dasharray="2,2" opacity="0.5"/>`;
 }
 
 /* ===== Rejestracja globali ===== */

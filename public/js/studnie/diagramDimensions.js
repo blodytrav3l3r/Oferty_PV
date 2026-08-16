@@ -5,23 +5,22 @@
  * Wyodrębnione z wellDiagram.js (faza 2 refaktoryzacji).
  *
  * Zawiera:
- *   drawSegmentDimensions()    — zunifikowana linia wymiarowa po lewej stronie
- *   resolveSegmentLabel()      — określa etykietę segmentu (DN rury lub mm)
+ *   drawSegmentDimensions()    — lewa linia wymiarowa (odległości mm między elementami)
  *   drawTotalHeightBar()       — pasek łącznej wysokości studni
  *   drawDnLabel()              — etykieta DN na dole diagramu
  *
  * Zależności globalne:
  *   SVG_COLORS (diagramTheme.js)
- *   studnieProducts, fmtInt
+ *   fmtInt
  */
 
 /* ===== LINIA WYMIAROWA SEGMENTÓW ===== */
 
 /**
  * Generuje zunifikowaną linię wymiarową po lewej stronie diagramu,
- * z oznaczeniem odległości między elementami i rurami (DN).
+ * z oznaczeniem odległości między elementami.
  */
-function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
+function drawSegmentDimensions(dimLinesY, pxMm) {
     if (dimLinesY.length === 0) return '';
 
     const uniqueY = [...new Set(dimLinesY.map((v) => Math.round(v * 10) / 10))].sort(
@@ -48,54 +47,10 @@ function drawSegmentDimensions(dimLinesY, pxMm, well, canvas) {
 
         svgOut += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" style="stroke:${dimColor}" stroke-width="1.2"/>`;
 
-        const { labelText, isPipe } = resolveSegmentLabel(distMm, yB, yT, well, pxMm, canvas);
-        const textColor = isPipe ? SVG_COLORS.transitionActive : SVG_COLORS.dimText;
-        const fW = isPipe ? '700' : '600';
-        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" style="fill:${textColor}" font-size="11" font-family="Inter,sans-serif" font-weight="${fW}">${labelText}</text>`;
+        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${distMm}</text>`;
     }
 
     return svgOut;
-}
-
-/**
- * Określa czy dany segment wymiarowy odpowiada rurze — jeśli tak, zwraca "DN xxx".
- */
-function resolveSegmentLabel(distMm, yB, yT, well, pxMm, canvas) {
-    const { mT, drawH } = canvas;
-    let labelText = `${distMm}`;
-    let isPipe = false;
-
-    if (!well.przejscia || well.przejscia.length === 0) {
-        return { labelText, isPipe };
-    }
-
-    well.przejscia.forEach((pr) => {
-        const pel = parseFloat(pr.rzednaWlaczenia) || 0;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
-        let prH = 160;
-
-        if (pprod && pprod.category === 'Otwór KPED') {
-            prH = 500;
-        } else if (pprod && typeof pprod.dn === 'string' && pprod.dn.includes('/')) {
-            prH = parseFloat(pprod.dn.split('/')[1]) || 160;
-        } else if (pprod) {
-            prH = parseFloat(pprod.dn) || 160;
-        }
-
-        const mmFromBottom = (pel - (parseFloat(well.rzednaDna) || 0)) * 1000;
-        const radiusH = Math.max((prH / 2) * pxMm, 3);
-        const prY = mT + drawH - mmFromBottom * pxMm - radiusH;
-
-        const pyB = Math.round((prY + radiusH) * 10) / 10;
-        const pyT = Math.round((prY - radiusH) * 10) / 10;
-
-        if (Math.abs(yB - pyB) <= 1.2 && Math.abs(yT - pyT) <= 1.2) {
-            labelText = `DN ${Math.round(prH)}`;
-            isPipe = true;
-        }
-    });
-
-    return { labelText, isPipe };
 }
 
 /* ===== ŁĄCZNA WYSOKOŚĆ I ETYKIETA DN ===== */

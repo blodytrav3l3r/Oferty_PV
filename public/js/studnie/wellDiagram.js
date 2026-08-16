@@ -11,7 +11,7 @@
  *                            drawComponentLabel(), drawComponentDimension(), drawAllComponents()
  *   diagramTransitions.js  → drawTransitions(), parseTransitionGeometry(),
  *                            drawTransitionShape(), drawTransitionLabel(), drawTransitionGuideLine()
- *   diagramDimensions.js   → drawSegmentDimensions(), resolveSegmentLabel(),
+ *   diagramDimensions.js   → drawSegmentDimensions(),
  *                            drawTotalHeightBar(), drawDnLabel()
  *   diagramPreco.js        → calculatePrecoInsertHeight(), buildTransitionRanges(),
  *                            mergeOverlappingRanges(), drawPrecoInsertLine()

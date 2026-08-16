@@ -110,9 +110,9 @@ function getElementOuterDn(comp, bodyDN) {
  * @returns {{ svgW, svgH, drawW, drawH, mL, mR, mT, mB, pxMm, cx, totalMm }}
  */
 function calculateCanvasParams(visible, bodyDN) {
-    const svgW = 340;
+    const svgW = 380;
     const mL = 75,
-        mR = 25,
+        mR = 65,
         mT = 15,
         mB = 22;
     const drawW = svgW - mL - mR;

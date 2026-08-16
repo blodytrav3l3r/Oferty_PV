@@ -118,7 +118,7 @@ function renderWellDiagram(targetSvg, targetWell) {
     const precoLineSvg = drawPrecoInsertLine(well, canvas);
 
     // Zunifikowana linia wymiarowa segmentów
-    const segmentDimSvg = drawSegmentDimensions(dimLinesY, canvas.pxMm, well, canvas);
+    const segmentDimSvg = drawSegmentDimensions(dimLinesY, canvas.pxMm);
 
     // Łączna wysokość studni (pasek po lewej)
     const totalHeightSvg = drawTotalHeightBar(canvas, canvas.totalMm);
