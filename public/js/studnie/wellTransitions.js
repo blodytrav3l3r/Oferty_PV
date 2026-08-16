@@ -173,7 +173,10 @@ function renderInlinePrzejsciaApp(containerId) {
         window.inlineUpdateAngles(containerId || 'main');
         setTimeout(() => {
             const rzednaInput = document.getElementById(`inl-rzedna-${containerId || 'main'}`);
-            if (rzednaInput) rzednaInput.focus();
+            if (rzednaInput) {
+                rzednaInput.focus();
+                rzednaInput.select();
+            }
         }, 10);
     }
 }
