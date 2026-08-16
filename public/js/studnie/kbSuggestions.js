@@ -17,8 +17,9 @@
 
     const SUGGESTIONS_URL = '/api/telemetry/ai/kb-suggestions';
 
-    /* Escaping do atrybutów HTML — escapeHtml nie chroni cudzysłowów (baza błędów #39) */
+    /* Escaping do atrybutów HTML — centralna implementacja w shared/ui.js */
     function escapeHtmlAttr(str) {
+        if (typeof window.escapeHtmlAttr === 'function') return window.escapeHtmlAttr(str);
         return String(str == null ? '' : str)
             .replace(/&/g, '&amp;')
             .replace(/"/g, '&quot;')

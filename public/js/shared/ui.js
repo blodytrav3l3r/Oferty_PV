@@ -11,6 +11,26 @@ function escapeHtml(str) {
 }
 window.escapeHtml = escapeHtml;
 
+/* Escaping do atrybutów HTML — escapeHtml nie chroni cudzysłowów (baza błędów #39) */
+function escapeHtmlAttr(str) {
+    return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+window.escapeHtmlAttr = escapeHtmlAttr;
+
+/* Escape dla stringów JS wewnątrz atrybutów onclick (baza błędów #39) */
+function escapeJsStr(str) {
+    return String(str ?? '')
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '\\"');
+}
+window.escapeJsStr = escapeJsStr;
+
 function setText(el, value) {
     if (el) el.textContent = String(value ?? '');
 }

@@ -218,7 +218,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ';background:' +
             stickyBg +
             ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" value="' +
-            escapeHtml(well.name).replace(/"/g, '&quot;') +
+            escapeHtmlAttr(well.name) +
             '" onchange="excelOnNameChange(' +
             wIdx +
             ',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +

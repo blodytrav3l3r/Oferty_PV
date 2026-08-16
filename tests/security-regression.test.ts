@@ -88,7 +88,11 @@ describe('T5.4: XSS — obecność escapeHtml w krytycznych plikach', () => {
     const xssFiles = [
         { name: 'offerCrud.js', path: 'public/js/rury/offerCrud.js' },
         { name: 'offerSummaryUI.js', path: 'public/js/studnie/offerSummaryUI.js' },
-        { name: 'orderManager.js', path: 'public/js/studnie/orderManager.js' }
+        { name: 'orderManager.js', path: 'public/js/studnie/orderManager.js' },
+        { name: 'offerSavedList.js', path: 'public/js/studnie/offerSavedList.js' },
+        { name: 'pricelistUi.js', path: 'public/js/rury/pricelistUi.js' },
+        { name: 'excelTableBody.js', path: 'public/js/studnie/excelTableBody.js' },
+        { name: 'popupsStyczna.js', path: 'public/js/studnie/popupsStyczna.js' }
     ];
 
     xssFiles.forEach(({ name, path: filePath }) => {
@@ -149,6 +153,68 @@ describe('T5.8: Eksport window.debounce', () => {
             { encoding: 'utf-8' }
         );
         expect(result).toBeDefined();
+    });
+});
+
+// ─── T5.9: Centralny moduł escapowania (shared/ui.js) ────────
+
+describe('T5.9: Centralne escapowanie w shared/ui.js', () => {
+    const uiPath = path.resolve(__dirname, '..', 'public/js/shared/ui.js');
+    let uiContent: string;
+
+    beforeAll(() => {
+        uiContent = fs.readFileSync(uiPath, 'utf-8');
+    });
+
+    it('eksportuje escapeHtmlAttr na window', () => {
+        expect(uiContent).toContain('window.escapeHtmlAttr = escapeHtmlAttr;');
+    });
+
+    it('escapeHtmlAttr chroni cudzysłowy i apostrofy', () => {
+        expect(uiContent).toContain(".replace(/\"/g, '&quot;')");
+        expect(uiContent).toContain(".replace(/'/g, '&#39;')");
+    });
+
+    it('eksportuje escapeJsStr na window', () => {
+        expect(uiContent).toContain('window.escapeJsStr = escapeJsStr;');
+    });
+
+    it('escapeJsStr escapuje apostrofy i cudzysłowy', () => {
+        expect(uiContent).toContain('.replace(/\'/g, "\\\\\'")');
+        expect(uiContent).toContain('.replace(/"/g, \'\\\\"\')');
+    });
+
+    it('duplikaty escapeHtmlAttr w plikach delegują do window', () => {
+        const dupFiles = [
+            'public/js/admin/aiDashboard.js',
+            'public/js/kartoteka/kartotekaHelpers.js',
+            'public/js/studnie/kbSuggestions.js',
+            'public/js/studnie/transitionRenderer.js'
+        ];
+        dupFiles.forEach((file) => {
+            const content = fs.readFileSync(path.resolve(__dirname, '..', file), 'utf-8');
+            expect(content).toContain("typeof window.escapeHtmlAttr === 'function'");
+        });
+    });
+
+    it('duplikat escapeJsStr w zleceniaHelpers deleguje do window', () => {
+        const content = fs.readFileSync(
+            path.resolve(__dirname, '..', 'public/js/spa/zleceniaHelpers.js'),
+            'utf-8'
+        );
+        expect(content).toContain("typeof window.escapeJsStr === 'function'");
+    });
+
+    it('konteksty onclick używają escapeJsStr zamiast escapeHtml', () => {
+        const files = [
+            'public/js/studnie/offerSavedList.js',
+            'public/js/rury/pricelistUi.js',
+            'public/js/studnie/popupsStyczna.js'
+        ];
+        files.forEach((file) => {
+            const content = fs.readFileSync(path.resolve(__dirname, '..', file), 'utf-8');
+            expect(content).toContain('escapeJsStr');
+        });
     });
 });
 

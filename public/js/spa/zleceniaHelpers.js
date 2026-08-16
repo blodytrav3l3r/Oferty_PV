@@ -45,6 +45,7 @@ function getCertData(dn) {
 
 /** Escape for JS strings inside onclick attributes */
 function escapeJsStr(str) {
+    if (typeof window.escapeJsStr === 'function') return window.escapeJsStr(str);
     return String(str ?? '')
         .replace(/\\/g, '\\\\')
         .replace(/'/g, "\\'")
