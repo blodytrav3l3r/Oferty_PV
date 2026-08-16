@@ -595,7 +595,10 @@ router.get(
                         }
                     }
                     driftPct = totalChecks > 0 ? Math.round((outOfRange / totalChecks) * 100) : 0;
-                } catch {
+                } catch (driftErr) {
+                    const driftMsg =
+                        driftErr instanceof Error ? driftErr.message : String(driftErr);
+                    logger.warn('AiMlStatus', `Błąd obliczania driftPct: ${driftMsg}`);
                     driftPct = null;
                 }
             }

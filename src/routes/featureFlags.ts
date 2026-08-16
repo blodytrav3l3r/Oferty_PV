@@ -52,7 +52,7 @@ router.put('/import-export', requireAuth, requireAdmin, async (req, res) => {
     }
 });
 
-router.post('/audit', requireAuth, async (req, res) => {
+router.post('/audit', requireAuth, requireAdmin, async (req, res) => {
     try {
         const authReq = req as AuthenticatedRequest;
         const { entityType, entityId, action, details } = req.body;
