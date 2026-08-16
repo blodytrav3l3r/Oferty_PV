@@ -26,7 +26,9 @@ function getFlowVisuals(flowType) {
 }
 
 function escapeHtmlAttr(str) {
-    if (typeof window.escapeHtmlAttr === 'function') return window.escapeHtmlAttr(str);
+    if (typeof window.escapeHtmlAttr === 'function' && window.escapeHtmlAttr !== escapeHtmlAttr) {
+        return window.escapeHtmlAttr(str);
+    }
     return escapeHtml(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
