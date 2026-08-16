@@ -128,4 +128,97 @@ describe('A4.6 rollback (pre/post baseline)', () => {
             project.cleanup();
         }
     }, 180000);
+
+    it('scenariusz 3: restore-db.js odrzuca nie-SQLite plik (A-12 nagłówek)', () => {
+        const project = createIsolatedProject('restore-badheader', [BASELINE]);
+        try {
+            project.runPrisma(['migrate', 'deploy']);
+            const garbage = path.join(project.dir, 'not_a_db.sqlite');
+            fs.writeFileSync(garbage, 'To nie jest baza SQLite - zwykly tekst.', 'utf8');
+
+            const r = spawnSync(process.execPath, [SCRIPT, garbage, '--yes'], {
+                cwd: ROOT,
+                encoding: 'utf8',
+                env: {
+                    ...project.env,
+                    RESTORE_DB_PATH: project.dbPath,
+                    RESTORE_PRISMA_DIR: project.dir
+                },
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+            const out = String(r.stdout || '') + String(r.stderr || '');
+            expect(r.status).toBe(1);
+            expect(out).toContain('nie jest poprawna baza SQLite');
+        } finally {
+            project.cleanup();
+        }
+    }, 180000);
+
+    it('scenariusz 4: restore-db.js odrzuca backup bez integrity_check (A-12)', () => {
+        const project = createIsolatedProject('restore-corrupt', [BASELINE]);
+        try {
+            project.runPrisma(['migrate', 'deploy']);
+            const backupPath = path.join(project.dir, 'corrupt_backup.sqlite');
+            vacuumInto(project.dbPath, backupPath);
+
+            /* Uszkodzenie: usunięcie 4096 bajtów z 100-bajtowej bazy — za krótki
+               plik przechodzi nagłówkiem, ale nie zdaje integrity_check */
+            const buf = fs.readFileSync(backupPath);
+            fs.writeFileSync(backupPath, buf.subarray(0, Math.min(buf.length - 4096, 4096)));
+
+            const r = spawnSync(process.execPath, [SCRIPT, backupPath, '--yes'], {
+                cwd: ROOT,
+                encoding: 'utf8',
+                env: {
+                    ...project.env,
+                    RESTORE_DB_PATH: project.dbPath,
+                    RESTORE_PRISMA_DIR: project.dir
+                },
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+            const out = String(r.stdout || '') + String(r.stderr || '');
+            expect(r.status).toBe(1);
+            expect(out).toContain('PRAGMA integrity_check');
+        } finally {
+            project.cleanup();
+        }
+    }, 180000);
+
+    it('scenariusz 5: restore-db.js czyści -wal/-shm po przywróceniu (A-12)', () => {
+        const project = createIsolatedProject('restore-wal', [BASELINE]);
+        try {
+            project.runPrisma(['migrate', 'deploy']);
+            let db = new DatabaseSync(project.dbPath);
+            insertWell(db);
+            db.close();
+
+            const backupPath = path.join(project.dir, 'wal_backup.sqlite');
+            vacuumInto(project.dbPath, backupPath);
+
+            db = new DatabaseSync(project.dbPath);
+            db.prepare('DELETE FROM ProductsRury').run();
+            db.close();
+
+            /* Stwórz boczne pliki -wal/-shm (symulacja starej sesji) */
+            fs.writeFileSync(project.dbPath + '-wal', 'STALE WAL', 'utf8');
+            fs.writeFileSync(project.dbPath + '-shm', 'STALE SHM', 'utf8');
+
+            execFileSync(process.execPath, [SCRIPT, backupPath, '--yes'], {
+                cwd: ROOT,
+                encoding: 'utf8',
+                env: {
+                    ...project.env,
+                    RESTORE_DB_PATH: project.dbPath,
+                    RESTORE_PRISMA_DIR: project.dir
+                },
+                stdio: ['ignore', 'pipe', 'pipe']
+            });
+
+            expect(fs.existsSync(project.dbPath + '-wal')).toBe(false);
+            expect(fs.existsSync(project.dbPath + '-shm')).toBe(false);
+            expect(countRury(project.dbPath)).toBe(1);
+        } finally {
+            project.cleanup();
+        }
+    }, 180000);
 });
