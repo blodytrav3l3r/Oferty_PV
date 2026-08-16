@@ -89,7 +89,7 @@
         "dotenv": "^17.4.1",
         "express": "^5.2.1",
         "helmet": "^8.1.0",
-        "puppeteer": "^24.40.0",
+        "puppeteer": "^25.7.0",
         "zod": "^4.3.6"
     },
     "devDependencies": {
