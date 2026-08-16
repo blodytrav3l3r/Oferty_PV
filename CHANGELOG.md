@@ -4,30 +4,23 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
-## [Unreleased]
+## [1.16.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.15.1...v1.16.0) (2026-08-16)
 
-### Security
+### Features
 
-- **security:** domkniecie idor w ofertach i zamowieniach ([1967482](https://github.com/blodytrav3l3r/Oferty_PV/commit/1967482bcb2653c98c8343a0741fd5a13959bd77))
-- **security:** ujednolicenie escapowania w frontendzie ([2013fca](https://github.com/blodytrav3l3r/Oferty_PV/commit/2013fca604decdcc918700e93fd74c27c3ce8806))
-- **security:** atomowy claim numeru rur i blokada zapisu ([2f6f05b](https://github.com/blodytrav3l3r/Oferty_PV/commit/2f6f05b158e3b7e8ec28170e3cc2c70e964eb45d))
-- **security:** blokada zapisu legacy rekordow bez wlasciciela ([9ff2254](https://github.com/blodytrav3l3r/Oferty_PV/commit/9ff2254d2dce6b7521d58592b3508f4465aa7798))
-- **security:** regresja rekurencji escapa z fazy 2 ([78b88ee](https://github.com/blodytrav3l3r/Oferty_PV/commit/78b88ee6eabbf98d0ecebedb4aaa57da51512af6))
+- **deploy:** bezpieczny update produkcji z rollbackiem ([e036b2a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e036b2a5517f984a6fb614f5823628ab979bc827))
 
 ### Bug Fixes
 
 - **auth:** feature flags post /audit tylko dla admina ([621dbb2](https://github.com/blodytrav3l3r/Oferty_PV/commit/621dbb2031205ccc1ee0b6ff0e19b8b2118fbbeb))
 - **prisma:** dedup rewardow przed unique index i walidacja restore ([1bf96db](https://github.com/blodytrav3l3r/Oferty_PV/commit/1bf96dbf9c0f3f2d5ae2ba95d65f9f324f390ad6))
+- **security:** atomowy claim numeru rur i blokada zapisu ([2f6f05b](https://github.com/blodytrav3l3r/Oferty_PV/commit/2f6f05b158e3b7e8ec28170e3cc2c70e964eb45d))
+- **security:** blokada zapisu legacy rekordow bez wlasciciela ([9ff2254](https://github.com/blodytrav3l3r/Oferty_PV/commit/9ff2254d2dce6b7521d58592b3508f4465aa7798))
+- **security:** domkniecie idor w ofertach i zamowieniach ([1967482](https://github.com/blodytrav3l3r/Oferty_PV/commit/1967482bcb2653c98c8343a0741fd5a13959bd77))
+- **security:** regresja rekurencji escapa z fazy 2 ([78b88ee](https://github.com/blodytrav3l3r/Oferty_PV/commit/78b88ee6eabbf98d0ecebedb4aaa57da51512af6))
+- **security:** ujednolicenie escapowania w frontendzie ([2013fca](https://github.com/blodytrav3l3r/Oferty_PV/commit/2013fca604decdcc918700e93fd74c27c3ce8806))
 - **telemetry:** integralnosc telemetrii i rewardow ([05fc0ab](https://github.com/blodytrav3l3r/Oferty_PV/commit/05fc0ab9f2d9b8a7404baf14f1d7426220258390))
 - **telemetry:** usuniecie silent fail w telemetrii i ml ([1e3b0c9](https://github.com/blodytrav3l3r/Oferty_PV/commit/1e3b0c9d14dc3f53563709327ef5c67846121d26))
-
-### Refactors
-
-- **api:** wydzielenie helpeza locka ([fc4d027](https://github.com/blodytrav3l3r/Oferty_PV/commit/fc4d027f731719b0c354ec70955422e9f9ff9f45))
-
-### Documentation
-
-- **docs:** usuniecie fazy 9 z planu naprawy audytu ([a5bdd88](https://github.com/blodytrav3l3r/Oferty_PV/commit/a5bdd88d22ba3d346b78bb8e4865cd8f68231816))
 
 ### [1.15.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.15.0...v1.15.1) (2026-08-16)
 
