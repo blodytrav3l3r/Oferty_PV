@@ -45,14 +45,6 @@
         <button
             type="button"
             class="btn btn-secondary"
-            onclick="resetPriceList()"
-            title="Przywróć domyślne wartości cennika"
-        >
-            <i data-lucide="rotate-ccw"></i> Reset
-        </button>
-        <button
-            type="button"
-            class="btn btn-secondary"
             onclick="exportRuryToExcel()"
             title="Eksportuj cennik do pliku Excel"
         >
@@ -65,6 +57,14 @@
             title="Importuj cennik z pliku Excel"
         >
             <i data-lucide="download"></i> Importuj Excel
+        </button>
+        <button
+            type="button"
+            class="btn btn-danger"
+            onclick="resetPriceList()"
+            title="Przywróć domyślne wartości cennika"
+        >
+            <i data-lucide="rotate-ccw"></i> Reset
         </button>
         <input
             type="file"

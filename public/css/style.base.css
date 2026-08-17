@@ -1012,6 +1012,12 @@ body::before {
     background: var(--success-bg);
 }
 
+#section-pricelist .toolbar .btn,
+#section-pricelist .rury-toolbar .btn {
+    min-width: 10rem;
+    justify-content: center;
+}
+
 button.btn-order-save {
     background: var(--success-bg-hover);
     color: var(--success-hover);
