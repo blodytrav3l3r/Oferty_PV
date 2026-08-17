@@ -35,18 +35,6 @@ jest.mock('../../src/services/ml/ModelRegistry', () => ({
     }
 }));
 
-jest.mock('../../src/services/telemetry/learning/KnowledgeBase', () => ({
-    KnowledgeBase: class {}
-}));
-
-const mockRecommendForDn = jest.fn<any>().mockResolvedValue([]);
-
-jest.mock('../../src/services/telemetry/learning', () => ({
-    recommendationEngine: {
-        recommendForDn: (...args: any[]) => mockRecommendForDn(...args)
-    }
-}));
-
 const mockGetStatus = jest.fn<any>().mockReturnValue({ running: false });
 const mockCheckAndRollback = jest
     .fn<any>()
@@ -546,57 +534,5 @@ describe('POST /api/telemetry/ai/reward', () => {
 
         expect(res.status).toBe(200);
         expect(mockRecordPredictionResult).not.toHaveBeenCalled();
-    });
-});
-
-describe('GET /api/telemetry/ai/kb-suggestions', () => {
-    let app: express.Application;
-
-    beforeEach(async () => {
-        jest.clearAllMocks();
-        const { default: router } = await import('../../src/routes/telemetryAiMl');
-        app = express();
-        app.use(express.json());
-        app.use('/api/telemetry', router);
-    });
-
-    it('zwraca sugestie z bazy wiedzy dla DN', async () => {
-        mockRecommendForDn.mockResolvedValue([
-            {
-                pattern: {
-                    patternKey: '1000|sub|DDD-1000-500->DDD-1000-600',
-                    patternType: 'dennica_swap',
-                    description: 'Substitution DDD-1000-500 -> DDD-1000-600 w 1000',
-                    confidence: 0.6,
-                    hitCount: 4,
-                    recommendation: {
-                        removed: 'DDD-1000-500',
-                        added: 'DDD-1000-600',
-                        type: 'substitution'
-                    }
-                },
-                score: 0.7
-            }
-        ]);
-
-        const res = await request(app).get('/api/telemetry/ai/kb-suggestions?dn=1000');
-
-        expect(res.status).toBe(200);
-        expect(res.body.suggestions).toHaveLength(1);
-        expect(res.body.suggestions[0]).toMatchObject({
-            patternType: 'dennica_swap',
-            confidence: 0.6,
-            recommendation: { removed: 'DDD-1000-500', added: 'DDD-1000-600', type: 'substitution' }
-        });
-        expect(mockRecommendForDn).toHaveBeenCalledWith(expect.objectContaining({ dn: '1000' }), 5);
-    });
-
-    it('zwraca pustą listę gdy baza wiedzy pusta', async () => {
-        mockRecommendForDn.mockResolvedValue([]);
-
-        const res = await request(app).get('/api/telemetry/ai/kb-suggestions?dn=1000');
-
-        expect(res.status).toBe(200);
-        expect(res.body.suggestions).toEqual([]);
     });
 });

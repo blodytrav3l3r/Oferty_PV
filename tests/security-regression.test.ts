@@ -188,7 +188,6 @@ describe('T5.9: Centralne escapowanie w shared/ui.js', () => {
         const dupFiles = [
             'public/js/admin/aiDashboard.js',
             'public/js/kartoteka/kartotekaHelpers.js',
-            'public/js/studnie/kbSuggestions.js',
             'public/js/studnie/transitionRenderer.js'
         ];
         dupFiles.forEach((file) => {

@@ -4,7 +4,6 @@ import { trainingPipeline } from '../services/ml/TrainingPipeline';
 import { selfEvaluation } from '../services/ml/SelfEvaluation';
 import { rewardCalculator } from '../services/ml/RewardCalculator';
 import { featureExtractor } from '../services/ml/FeatureExtractor';
-import { recommendationEngine } from '../services/telemetry/learning';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
 import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
@@ -496,39 +495,6 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
                 keepLast: ML_CONFIG.retention.keepLast,
                 keepBest: ML_CONFIG.retention.keepBest
             }
-        });
-    } catch (e) {
-        sendInternalError(res, 'AiMlRoute', e);
-    }
-});
-
-// Sugestie z bazy wiedzy (Learning Engine) dla danego DN studni.
-// Czysto suggestywne — użytkownik decyduje (Zastosuj/Odrzuć).
-router.get('/ai/kb-suggestions', requireAuth, READ_LIMITER, async (req: Request, res: Response) => {
-    try {
-        const dn = (req.query.dn as string) || 'all_dn';
-        const suggestions = await recommendationEngine.recommendForDn(
-            {
-                wellId: 'kb-suggestions',
-                telemetryId: 'kb-suggestions',
-                dn,
-                features: [],
-                extractedAt: new Date().toISOString()
-            },
-            5
-        );
-        res.json({
-            suggestions: suggestions.map(function (r) {
-                return {
-                    patternKey: r.pattern.patternKey,
-                    patternType: r.pattern.patternType,
-                    description: r.pattern.description || '',
-                    confidence: r.pattern.confidence,
-                    hitCount: r.pattern.hitCount,
-                    score: r.score,
-                    recommendation: r.pattern.recommendation || {}
-                };
-            })
         });
     } catch (e) {
         sendInternalError(res, 'AiMlRoute', e);
