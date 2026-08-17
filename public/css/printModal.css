@@ -259,25 +259,25 @@
 }
 
 .upm-btn-combined {
-    background: rgba(52, 211, 153, 0.2);
+    background: rgba(var(--success-hover-rgb), 0.2);
     color: var(--success-hover);
-    border-color: rgba(52, 211, 153, 0.8);
+    border-color: rgba(var(--success-hover-rgb), 0.8);
     flex-direction: row;
     justify-content: center;
 }
 
 .upm-btn-combined:hover {
-    background: rgba(52, 211, 153, 0.3);
-    border-color: rgba(52, 211, 153, 0.8);
+    background: rgba(var(--success-hover-rgb), 0.3);
+    border-color: rgba(var(--success-hover-rgb), 0.8);
     transform: translateY(-1px);
-    box-shadow: 0 6px 14px rgba(52, 211, 153, 0.3);
+    box-shadow: 0 6px 14px rgba(var(--success-hover-rgb), 0.3);
 }
 
 .upm-badge {
     font-size: 0.72rem;
     font-weight: 700;
     color: var(--accent-text);
-    background: rgba(165, 180, 252, 0.15);
+    background: rgba(var(--accent-text-rgb), 0.15);
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
     margin-left: 0.25rem;
@@ -422,21 +422,21 @@
 }
 
 .upm-row-orders {
-    background: rgba(251, 191, 36, 0.1);
-    border-color: rgba(251, 191, 36, 0.2);
+    background: rgba(var(--warn-hover-rgb), 0.1);
+    border-color: rgba(var(--warn-hover-rgb), 0.2);
 }
 .upm-row-orders:hover {
-    background: rgba(251, 191, 36, 0.15);
-    border-color: rgba(251, 191, 36, 0.3);
+    background: rgba(var(--warn-hover-rgb), 0.15);
+    border-color: rgba(var(--warn-hover-rgb), 0.3);
 }
 
 .upm-row-karta {
-    background: rgba(52, 211, 153, 0.1);
-    border-color: rgba(52, 211, 153, 0.2);
+    background: rgba(var(--success-hover-rgb), 0.1);
+    border-color: rgba(var(--success-hover-rgb), 0.2);
 }
 .upm-row-karta:hover {
-    background: rgba(52, 211, 153, 0.15);
-    border-color: rgba(52, 211, 153, 0.3);
+    background: rgba(var(--success-hover-rgb), 0.15);
+    border-color: rgba(var(--success-hover-rgb), 0.3);
 }
 
 .upm-row-label {
@@ -501,24 +501,24 @@
 }
 
 .upm-status-new {
-    background: rgba(96, 165, 250, 0.2);
+    background: rgba(var(--blue-hover-rgb), 0.2);
     color: var(--accent-text);
-    border: 1px solid rgba(96, 165, 250, 0.3);
+    border: 1px solid rgba(var(--blue-hover-rgb), 0.3);
 }
 .upm-status-ordered {
-    background: rgba(251, 191, 36, 0.2);
+    background: rgba(var(--warn-hover-rgb), 0.2);
     color: var(--warn-hover);
-    border: 1px solid rgba(251, 191, 36, 0.3);
+    border: 1px solid rgba(var(--warn-hover-rgb), 0.3);
 }
 .upm-status-in_production {
-    background: rgba(167, 139, 250, 0.2);
+    background: rgba(var(--accent2-hover-rgb), 0.2);
     color: var(--accent-text);
-    border: 1px solid rgba(167, 139, 250, 0.3);
+    border: 1px solid rgba(var(--accent2-hover-rgb), 0.3);
 }
 .upm-status-available {
-    background: rgba(52, 211, 153, 0.2);
+    background: rgba(var(--success-hover-rgb), 0.2);
     color: var(--success-hover);
-    border: 1px solid rgba(52, 211, 153, 0.3);
+    border: 1px solid rgba(var(--success-hover-rgb), 0.3);
 }
 .upm-status-completed {
     background: rgba(var(--slate-400-rgb), 0.2);
