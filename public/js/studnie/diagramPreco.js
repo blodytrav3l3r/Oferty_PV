@@ -84,7 +84,12 @@ function mergeOverlappingRanges(ranges) {
  * są realizowane w wkładce, powyżej — w ścianie studni.
  */
 function drawPrecoInsertLine(well, canvas) {
-    if (well.kineta !== 'preco' && well.kineta !== 'precotop' && well.wkladkaOsadnikPreco !== 'tak')
+    if (
+        well.kineta !== 'preco' &&
+        well.kineta !== 'precotop' &&
+        well.kineta !== 'unolith' &&
+        well.wkladkaOsadnikPreco !== 'tak'
+    )
         return '';
 
     let insertHeightMm = null;
@@ -95,7 +100,12 @@ function drawPrecoInsertLine(well, canvas) {
         kinetaLabel = 'Wkładka osadnika';
     } else {
         insertHeightMm = calculatePrecoInsertHeight(well);
-        kinetaLabel = well.kineta === 'precotop' ? 'PrecoTop' : 'Preco';
+        kinetaLabel =
+            well.kineta === 'precotop'
+                ? 'PrecoTop'
+                : well.kineta === 'unolith'
+                  ? 'UnoLith'
+                  : 'Preco';
     }
 
     if (!insertHeightMm || insertHeightMm <= 0) return '';

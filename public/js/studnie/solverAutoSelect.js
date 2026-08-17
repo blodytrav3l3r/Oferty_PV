@@ -203,6 +203,56 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
 };
 
 /* ===== LOKALNY SOLVER JS ===== */
+
+/**
+ * Odcisk wejść solvera — jedyny warunek eksploracji AI (Opcja B).
+ * Jeśli wejścia nie zmieniły się od ostatniego solve, eksploracja jest pomijana
+ * (wybór rankCandidates[0]), więc powtórny auto-dobór nie losuje nowych elementów.
+ * Świadomie wyłączone z odcisku: spocznikH/kineta/spocznik/uszczelka/malowanie/ceny
+ * (nie zmieniają zbioru kandydatów).
+ */
+function computeSolveInputHash(well, requiredMm) {
+    if (!well) return '';
+    const parts = [
+        String(well.dn || ''),
+        String(well.type || ''),
+        String(well.magazyn || ''),
+        String(well.nadbudowa || ''),
+        String(well.stopnie || ''),
+        String(well.dennicaMaterial || ''),
+        String(well.wkladkaDennica || ''),
+        String(well.zakonczenie || ''),
+        String(well.wkladkaZwienczenie || ''),
+        String(well.redukcjaDN1000 || ''),
+        String(well.redukcjaMinH || ''),
+        String(well.redukcjaZakonczenie || ''),
+        String(well.redukcjaTargetDN || ''),
+        String(well.stycznaNadbudowa1200 || ''),
+        String(well.stycznaDn || ''),
+        String(well.rzednaWlazu ?? ''),
+        String(well.rzednaDna ?? ''),
+        String(requiredMm || '')
+    ];
+    const transitions = (well.przejscia || []).map(function (pr) {
+        return [
+            pr.productId || '',
+            String(pr.rzednaWlaczenia ?? ''),
+            pr.flowType || '',
+            String(pr.angle ?? '')
+        ].join('|');
+    });
+    parts.push(transitions.join(';'));
+
+    // FNV-1a — deterministyczny, zwięzły (bez zależności).
+    let hash = 0x811c9dc5;
+    const str = parts.join('~');
+    for (let i = 0; i < str.length; i++) {
+        hash ^= str.charCodeAt(i);
+        hash = (hash * 0x01000193) >>> 0;
+    }
+    return hash.toString(16);
+}
+
 async function runJsAutoSelection(well, requiredMm, availProducts) {
     const dn = well.dn;
     const targetDn = well.redukcjaTargetDN || 1000;
@@ -1092,6 +1142,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 }),
                 well: well
             });
+            // Odcisk wejść solvera — eksploracja tylko przy ich realnej zmianie (Opcja B).
+            const inputHash = computeSolveInputHash(well, requiredMm);
 
             if (rankResult.ranked && rankResult.ranked.length > 0) {
                 // Eksploracja tylko gdy AI aktywne (influence>0) i model online —
@@ -1100,7 +1152,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 const anyOnline = rankResult.ranked.some(function (r) {
                     return typeof r.aiScore === 'number' && r.aiScore >= 0;
                 });
-                const canExplore = rankResult.aiInfluencePct > 0 && anyOnline;
+                const inputsChanged = well._lastSolveInputHash !== inputHash;
+                const canExplore = rankResult.aiInfluencePct > 0 && anyOnline && inputsChanged;
                 const explored = canExplore
                     ? window.selectWithExploration(rankResult.ranked)
                     : {
@@ -1164,6 +1217,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     // Eksploracja używa losowej próbki z top-puli — bez oznaczenia AI.
                     solution = winner;
                 }
+                // Zapamiętaj odcisk wejść — eksploracja tylko przy kolejnej REALNEJ zmianie.
+                well._lastSolveInputHash = inputHash;
             }
         } catch (e) {
             logger.warn('wellSolver', '[AiRank] Shadow ranking failed:', e);
