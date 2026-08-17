@@ -15,6 +15,8 @@ function getPehdEffectiveArea(p) {
     if (p.area == null || p.area <= 0) return 0;
     if (PLATE_COMPONENT_TYPES.has(p.componentType)) return p.area * (4 / Math.PI);
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+        // styczna bez korka = rura na bok bez dna — brak wykroju kwadratowego
+        if (p.componentType === 'styczna' && !p.id.includes('KOREK')) return p.area;
         const dn = parseInt(p.dn) || 0;
         if (dn > 0) {
             const bottomArea = Math.PI * Math.pow(dn / 2000, 2);
@@ -54,15 +56,37 @@ function getPehdTooltip(p, pricePerM2) {
     }
     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
         const d2 = parseInt(p.dn) || 0;
+        if (p.componentType === 'styczna' && !p.id.includes('KOREK')) {
+            return (
+                'Ściany (bez dna): ' +
+                p.area.toFixed(2) +
+                ' m² | Cena: ' +
+                pricePerM2 +
+                ' PLN/m² | Dopłata: ' +
+                Math.round(getPehdEffectiveArea(p) * pricePerM2) +
+                ' PLN'
+            );
+        }
         if (d2 > 0) {
             const bArea = Math.PI * Math.pow(d2 / 2000, 2);
+            const sqDno = (bArea * 4) / Math.PI;
+            const dnoLabel = p.componentType === 'styczna' ? 'Korek' : 'Dno';
             return (
-                'Dno (koło): ' +
+                dnoLabel +
+                ' (koło): ' +
                 bArea.toFixed(2) +
-                ' m² × ' +
-                pricePerM2 +
-                ' = ' +
-                Math.round(bArea * (4 / Math.PI) * pricePerM2) +
+                ' m²' +
+                ' | Wykrój kwadrat (' +
+                dnoLabel.toLowerCase() +
+                '): ' +
+                sqDno.toFixed(2) +
+                ' m² (×' +
+                (4 / Math.PI).toFixed(3) +
+                ')' +
+                ' | ' +
+                dnoLabel +
+                ': ' +
+                Math.round(sqDno * pricePerM2) +
                 ' PLN' +
                 ' | Ściany: ' +
                 (p.area - bArea).toFixed(2) +

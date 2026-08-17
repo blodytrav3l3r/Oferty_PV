@@ -1,4 +1,3 @@
-// @ts-nocheck
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';
@@ -54,6 +53,24 @@ describe('PeHD — cena wkładki (getItemAssessedPrice / getItemPriceBreakdown /
             price: 450,
             doplataPEHD: 200,
             name: 'Konus DN1000'
+        },
+        {
+            id: 'stycza-1000',
+            componentType: 'styczna',
+            dn: '1000',
+            area: 4.08,
+            price: 4750,
+            doplataPEHD: 1102,
+            name: 'Studnia styczna DN1000'
+        },
+        {
+            id: 'stycza-1000-KOREK',
+            componentType: 'styczna',
+            dn: '1000',
+            area: 10.21,
+            price: 6250,
+            doplataPEHD: 2815,
+            name: 'Studnia styczna z korkiem DN1000'
         }
     ];
 
@@ -188,5 +205,46 @@ describe('PeHD — cena wkładki (getItemAssessedPrice / getItemPriceBreakdown /
         const well = makeWell({ wkladkaDennica: '3mm', wkladkaZwienczenie: '3mm' });
         expect(ctx.getPehdTypeForComponent(well, 'konus')).toBeNull();
         expect(ctx.getPehdTypeForComponent(well, 'dennica')).toBe('3mm');
+    });
+
+    test('10. styczna bez korka (bez dna) → getPehdEffectiveArea = p.area, bez wykroju kwadratowego', () => {
+        const p = product('stycza-1000');
+        // styczna bez dna to rura na bok — brak dna do wyłożenia, brak ×4/π
+        expect(ctx.getPehdEffectiveArea(p)).toBeCloseTo(4.08, 3);
+    });
+
+    test('11. styczna z korkiem (z dnem) → getPehdEffectiveArea = ściany + korek×4/π', () => {
+        const p = product('stycza-1000-KOREK');
+        // korek = π×(1000/2000)² ≈ 0.7854; ściany = 10.21 - 0.7854 ≈ 9.4246
+        // eff = 9.4246 + 0.7854×4/π ≈ 10.4246
+        expect(ctx.getPehdEffectiveArea(p)).toBeCloseTo(10.4246, 3);
+    });
+
+    test('12. styczna bez korka w cenie studni → dopłata z p.area (bez ×4/π), z korkiem → z ×4/π', () => {
+        const noKorekWell = makeWell({
+            config: [{ productId: 'stycza-1000', quantity: 1 }],
+            wkladkaDennica: '3mm'
+        });
+        expect(
+            ctx.getItemAssessedPrice(
+                noKorekWell,
+                product('stycza-1000'),
+                true,
+                noKorekWell.config[0]
+            )
+        ).toBe(4750 + 1102);
+
+        const korekWell = makeWell({
+            config: [{ productId: 'stycza-1000-KOREK', quantity: 1 }],
+            wkladkaDennica: '3mm'
+        });
+        expect(
+            ctx.getItemAssessedPrice(
+                korekWell,
+                product('stycza-1000-KOREK'),
+                true,
+                korekWell.config[0]
+            )
+        ).toBe(6250 + 2815);
     });
 });
