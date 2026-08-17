@@ -82,6 +82,8 @@ function goToPhase(step) {
 
     updateWizardIndicator();
 
+    if (step === 1) updateStep1NextState();
+
     // Pokaż/ukryj fixed pasek podsumowania (zawsze nad paskiem nawigacji)
     const summaryBar = document.getElementById('rury-summary-bar');
     if (summaryBar) {
@@ -169,6 +171,16 @@ function phasePrev() {
 }
 
 window.phasePrev = phasePrev;
+
+function updateStep1NextState() {
+    const hasClient = !!document.getElementById('client-name')?.value.trim();
+    const bottomNextBtn = document.getElementById('wizard-nav-next');
+    const inlineNextBtn = document.getElementById('wizard-next-step1');
+    if (bottomNextBtn) bottomNextBtn.disabled = !hasClient;
+    if (inlineNextBtn) inlineNextBtn.disabled = !hasClient;
+}
+
+window.updateStep1NextState = updateStep1NextState;
 
 function validatePhase(step) {
     switch (step) {

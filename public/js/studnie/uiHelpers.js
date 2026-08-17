@@ -13,6 +13,7 @@ function goToWizardStep(step) {
             const layout = document.querySelector('.well-app-layout');
             if (layout) layout.classList.toggle('intro-mode', step === 1 || step === 2);
             showSection('builder');
+            if (step === 1) updateStep1NextState();
             if (step === 2) validateWizardStep2();
             return;
         }
@@ -77,6 +78,7 @@ function goToWizardStep(step) {
     const target = document.getElementById('wizard-step-' + step);
     if (target) target.classList.add('active');
 
+    if (step === 1) updateStep1NextState();
     if (step === 3) updateWizardSummaryBar();
     if (step === 2) validateWizardStep2();
 }
@@ -183,6 +185,8 @@ function wizardNavStep(targetStep) {
     }
 
     // Nawigacja w przód
+    if (currentWizardStep === 1 && !validateWizardStep1()) return;
+
     if (targetStep === 2) {
         goToWizardStep(2);
     } else if (targetStep === 3) {
@@ -211,6 +215,23 @@ function getActiveTileValue(paramName) {
     if (!group) return 'brak';
     const active = group.querySelector('.param-tile.active');
     return active ? active.getAttribute('data-val') : 'brak';
+}
+
+function validateWizardStep1() {
+    const clientName = document.getElementById('client-name')?.value.trim() || '';
+    if (!clientName) {
+        showToast('Wpisz nazwę klienta przed przejściem dalej', 'error');
+        return false;
+    }
+    return true;
+}
+
+function updateStep1NextState() {
+    const hasClient = !!document.getElementById('client-name')?.value.trim();
+    const bottomNextBtn = document.getElementById('studnie-nav-next');
+    const inlineNextBtn = document.getElementById('wizard-next-step1');
+    if (bottomNextBtn) bottomNextBtn.disabled = !hasClient;
+    if (inlineNextBtn) inlineNextBtn.disabled = !hasClient;
 }
 
 function validateWizardStep2() {
@@ -531,6 +552,7 @@ async function savePrecoPricing(data) {
 /* ===== Rejestracja globali ===== */
 window.wizardPrev = wizardPrev;
 window.skipWizardToStep3 = skipWizardToStep3;
+window.updateStep1NextState = updateStep1NextState;
 
 /* ===== Rejestracja globali ===== */
 window.exitWizardOrderMode = exitWizardOrderMode;

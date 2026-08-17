@@ -71,7 +71,12 @@
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="client-name">Firma</label>
-                    <input class="wizard-form-input" id="client-name" placeholder="Budimex S.A." />
+                    <input
+                        class="wizard-form-input"
+                        id="client-name"
+                        placeholder="Budimex S.A."
+                        oninput="updateStep1NextState()"
+                    />
                 </div>
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="client-nip">NIP</label>
@@ -240,7 +245,12 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
             </div>
             <div class="wizard-nav">
                 <div></div>
-                <button type="button" class="wizard-btn wizard-btn-next" onclick="phaseNext()">
+                <button
+                    type="button"
+                    class="wizard-btn wizard-btn-next"
+                    id="wizard-next-step1"
+                    onclick="phaseNext()"
+                >
                     Dalej →
                 </button>
             </div>

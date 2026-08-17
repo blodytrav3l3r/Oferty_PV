@@ -324,6 +324,7 @@ function selectClientFromDb(id) {
         document.getElementById('client-address').value = c.address || '';
         document.getElementById('client-contact').value = c.contact || '';
         document.getElementById('client-number').value = c.clientNumber || '';
+        if (typeof updateStep1NextState === 'function') updateStep1NextState();
         showToast('Wczytano dane klienta', 'success');
         closeModal();
     }
