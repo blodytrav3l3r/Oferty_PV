@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.17.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.16.1...v1.17.0) (2026-08-18)
+
+### Features
+
+- **seed:** sync seed json po save defaults ([a18001b](https://github.com/blodytrav3l3r/Oferty_PV/commit/a18001bf4cea7f4de52c430912a2a92b4d0a2eb2))
+- **settings:** transfer cen price_defaults.json + cli export/import ([7911333](https://github.com/blodytrav3l3r/Oferty_PV/commit/79113337f30db95445b5a5415ff3f3fbc09e85dd))
+- **studnie:** eksploracja ai tylko przy zmianie wejsc solvera ([45d01be](https://github.com/blodytrav3l3r/Oferty_PV/commit/45d01be8528378096bd101edd18850774c259089))
+- **studnie:** prawa os wymiarowa i kolizje etykiet dn ([cbbdc07](https://github.com/blodytrav3l3r/Oferty_PV/commit/cbbdc07a8667c189cbf020d2540b2f1b5246fbe9))
+- **studnie:** usuniecie kafla podpowiedzi ai ([fef04cc](https://github.com/blodytrav3l3r/Oferty_PV/commit/fef04cc4c16ebc1cf90a902a23de042633371ec6))
+
+### Bug Fixes
+
+- **studnie:** wycena pehd stycznej bez korka (bez wykroju dna) ([28f2af2](https://github.com/blodytrav3l3r/Oferty_PV/commit/28f2af2a845e0759d640e99bf693aa0129844a57))
+- **ui:** blokada kroku 2 bez klienta w studniach i rurach ([ee6f06f](https://github.com/blodytrav3l3r/Oferty_PV/commit/ee6f06fd73b0a016ae86386c7cc5b08d9da0b32e))
+- **ui:** komunikat toasta po zapisie domyslnych cennikow ([2bc056e](https://github.com/blodytrav3l3r/Oferty_PV/commit/2bc056eb9634d90f0de6f660fa4d72196e772ba2))
+- **ui:** odstęp paska kroków od nagłówka w studniach i rurach ([93b271c](https://github.com/blodytrav3l3r/Oferty_PV/commit/93b271cdcc70b74ea654b29e3af050f695f6e1ed))
+- **ui:** ujednolicenie układu i koloru przycisków cennika rur i studni ([e11050a](https://github.com/blodytrav3l3r/Oferty_PV/commit/e11050ab9785d1d090ae0873478c38faa9a5d42f))
+
 ### [1.16.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.16.0...v1.16.1) (2026-08-16)
 
 ### Features
