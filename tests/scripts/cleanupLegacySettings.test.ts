@@ -1,6 +1,6 @@
 /*
  * tests/scripts/cleanupLegacySettings.test.ts
- * Testy rdzenia czyszczenia legacy kluczy cennikowych (scripts/cleanup-legacy-settings.mjs).
+ * Testy rdzenia czyszczenia legacy kluczy cennikowych (scripts/cleanup-legacy-settings.cjs).
  *
  * Pokrycie: dry-run bez zapisu, apply z dumpem, zachowanie
  * pricelist_defaults_updated_at, guard pustych tabel.
