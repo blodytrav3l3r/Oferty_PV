@@ -37,6 +37,7 @@ const OUTPUT_MAP = {
 
 const PRICELIST_KEYS = new Set(['pricelist_rury', 'pricelist_studnie']);
 const REQUIRED_FIELDS = ['id', 'name', 'category', 'price'];
+const RANGE_TYPES = ['spadekKineta', 'spadekMufa', 'uniesienie', 'redukcja'];
 
 function parseArgs() {
     const args = process.argv.slice(2);
@@ -89,7 +90,7 @@ function processPricelist(items) {
     return { total: items.length, missCount, missDetails, dups: [...dups], sha, json };
 }
 
-function processPreco(konfigRows, kinetyRows) {
+function processPreco(konfigRows, kinetyRows, zakresyRows) {
     const byDn = {};
     for (const k of konfigRows) {
         let obj = {};
@@ -98,6 +99,7 @@ function processPreco(konfigRows, kinetyRows) {
         } catch {
             obj = {};
         }
+        for (const label of RANGE_TYPES) delete obj[label];
         byDn[k.key] = obj;
     }
 
@@ -113,9 +115,32 @@ function processPreco(konfigRows, kinetyRows) {
         });
     }
 
+    for (const z of zakresyRows) {
+        const dnKey = String(z.wellDn);
+        if (!byDn[dnKey]) byDn[dnKey] = {};
+        if (!Array.isArray(byDn[dnKey][z.label])) byDn[dnKey][z.label] = [];
+        byDn[dnKey][z.label].push({
+            order: z.order,
+            min: z.min,
+            max: z.max,
+            grupy: (() => {
+                try {
+                    return JSON.parse(z.grupy);
+                } catch {
+                    return {};
+                }
+            })()
+        });
+    }
+
     for (const entry of Object.values(byDn)) {
         if (Array.isArray(entry.kinety)) {
             entry.kinety.sort((a, b) => a.order - b.order);
+        }
+        for (const label of RANGE_TYPES) {
+            if (Array.isArray(entry[label])) {
+                entry[label].sort((a, b) => a.order - b.order);
+            }
         }
     }
 
@@ -209,6 +234,9 @@ async function main() {
             queries.push(
                 prisma.precoKinety.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
             );
+            queries.push(
+                prisma.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
+            );
         }
 
         const rows = await Promise.all(queries);
@@ -218,7 +246,7 @@ async function main() {
         if (wantRury) results.pricelist_rury = processPricelist(rows[i++]);
         if (wantStudnie) results.pricelist_studnie = processPricelist(rows[i++]);
         if (wantPreco) {
-            results.preco_pricing = processPreco(rows[i], rows[i + 1]);
+            results.preco_pricing = processPreco(rows[i], rows[i + 1], rows[i + 2]);
         }
     } finally {
         await prisma.$disconnect();

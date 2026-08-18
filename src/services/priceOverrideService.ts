@@ -10,6 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
+import { writeSeedFiles, type KonfigRow, type KinetyRow, type ZakresyRow } from './seedExporter';
 
 interface PriceDefaultsJson {
     version: 1;
@@ -87,6 +88,22 @@ class PriceOverrideService {
             update: { value: now },
             create: { key: 'pricelist_defaults_updated_at', value: now }
         });
+
+        try {
+            writeSeedFiles({
+                rury: ruryLive as unknown as Record<string, unknown>[],
+                studnie: studnieLive as unknown as Record<string, unknown>[],
+                konfig: konfigLive as unknown as KonfigRow[],
+                kinety: kinetyLive as unknown as KinetyRow[],
+                zakresy: zakresyLive as unknown as ZakresyRow[]
+            });
+        } catch (err) {
+            logger.warn(
+                'PriceOverride',
+                'Błąd synchronizacji seed_*.json z cennikami',
+                err instanceof Error ? err.message : String(err)
+            );
+        }
 
         logger.info(
             'PriceOverride',

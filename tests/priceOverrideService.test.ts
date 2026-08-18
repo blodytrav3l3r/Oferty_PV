@@ -49,7 +49,27 @@ jest.mock('../src/prismaClient', () => ({
     __esModule: true,
     default: {
         settings: {
-            findUnique: jest.fn()
+            findUnique: jest.fn(),
+            upsert: jest.fn().mockResolvedValue({})
+        },
+        productsRury: {
+            findMany: jest.fn().mockResolvedValue([{ id: 'r1', name: 'Rura', price: 100 }])
+        },
+        productsStudnie: {
+            findMany: jest.fn().mockResolvedValue([{ id: 's1', name: 'Studnia', price: 200 }])
+        },
+        precoKonfig: {
+            findMany: jest.fn().mockResolvedValue([{ id: 'k1', key: '1000', value: '{}' }])
+        },
+        precoKinety: {
+            findMany: jest
+                .fn()
+                .mockResolvedValue([
+                    { id: 'kt1', order: 1, dn: 300, wellDn: 1000, height: 1, cena: 100 }
+                ])
+        },
+        precoZakresy: {
+            findMany: jest.fn().mockResolvedValue([])
         },
         $transaction: jest.fn(async (arg: any) => {
             if (typeof arg === 'function') {
@@ -69,15 +89,23 @@ jest.mock('../src/utils/logger', () => ({
     }
 }));
 
+jest.mock('../src/services/seedExporter', () => ({
+    writeSeedFiles: jest.fn()
+}));
+
 jest.spyOn(fs, 'existsSync').mockReturnValue(true);
 jest.spyOn(fs, 'readFileSync').mockReturnValue(VALID_JSON);
 
 import prisma from '../src/prismaClient';
 import { logger } from '../src/utils/logger';
 import { priceOverrideService } from '../src/services/priceOverrideService';
+import { writeSeedFiles } from '../src/services/seedExporter';
 
 const prismaMock = prisma as unknown as {
-    settings: { findUnique: jest.Mock };
+    settings: {
+        findUnique: jest.Mock;
+        upsert: jest.Mock;
+    };
     $transaction: jest.Mock;
 };
 const loggerMock = logger as unknown as Record<'info' | 'warn' | 'error' | 'debug', jest.Mock>;
@@ -157,5 +185,49 @@ describe('priceOverrideService.restoreDefaultsFromJson', () => {
             expect.any(String)
         );
         expect(prismaMock.$transaction).not.toHaveBeenCalled();
+    });
+});
+
+describe('priceOverrideService.saveDefaults', () => {
+    const writeSeedFilesMock = writeSeedFiles as jest.Mock;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+        writeSeedFilesMock.mockReset();
+    });
+
+    it('zapisuje domyślne oraz synchronizuje seed_*.json z aktualnymi wierszami', async () => {
+        const summary = await priceOverrideService.saveDefaults();
+
+        expect(summary).toEqual({
+            rury: 1,
+            studnie: 1,
+            precoKonfig: 1,
+            precoKinety: 1,
+            precoZakresy: 0
+        });
+        expect(writeSeedFilesMock).toHaveBeenCalledTimes(1);
+        expect(writeSeedFilesMock).toHaveBeenCalledWith({
+            rury: [{ id: 'r1', name: 'Rura', price: 100 }],
+            studnie: [{ id: 's1', name: 'Studnia', price: 200 }],
+            konfig: [{ id: 'k1', key: '1000', value: '{}' }],
+            kinety: [{ id: 'kt1', order: 1, dn: 300, wellDn: 1000, height: 1, cena: 100 }],
+            zakresy: []
+        });
+    });
+
+    it('nie przerywa zapisu domyślnych gdy synchronizacja seed zawiedzie (logger.warn)', async () => {
+        writeSeedFilesMock.mockImplementation(() => {
+            throw new Error('EACCES');
+        });
+
+        const summary = await priceOverrideService.saveDefaults();
+
+        expect(summary.rury).toBe(1);
+        expect(loggerMock.warn).toHaveBeenCalledWith(
+            'PriceOverride',
+            'Błąd synchronizacji seed_*.json z cennikami',
+            'EACCES'
+        );
     });
 });

@@ -1,7 +1,7 @@
 import { PrismaClient } from '../generated/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
-import { DN_SIZES, ZAKRESY_TYPES } from '../src/constants/precoSizes';
+import { ZAKRESY_TYPES } from '../src/constants/precoSizes';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../src/config/mlConstants';
 import type { Prisma } from '../generated/prisma';
 
@@ -166,7 +166,7 @@ async function main() {
             wellDn: number;
         }> = [];
 
-        for (const dnStr of DN_SIZES) {
+        for (const dnStr of Object.keys(precoData)) {
             const dnCfg = precoData[dnStr];
             if (!dnCfg) continue;
             const obj = dnCfg as Record<string, unknown>;
