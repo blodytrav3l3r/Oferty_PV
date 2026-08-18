@@ -118,8 +118,9 @@ Podczas pracy z istniejącą bazą cenników na nowym urządzeniu:
    Zostanie automatycznie przywrócony przy starcie serwera.
 
     > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
-    > wystarczy skopiować `data/price_defaults.json` i uruchomić `start.bat` — nie jest
-    > potrzebny backup SQLite ani `--skip-seed`.
+    > wygeneruj snapshot cen na starym urządzeniu (`npm run prices:export` lub przycisk
+    > "Zapisz domyślne"), skopiuj `data/price_defaults.json`, a na nowym zaimportuj:
+    > `npm run prices:import` — nie jest potrzebny backup SQLite ani `--skip-seed`.
 
 ## Aktualizacja istniejącej instalacji (schemat bazy)
 

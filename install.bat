@@ -175,6 +175,7 @@ echo.
 echo [INFO] Jesli masz wlasne ceny domyslne z innej instalacji,
 echo [INFO] skopiuj plik price_defaults.json do katalogu data\
 echo [INFO] przed uruchomieniem start.bat.
+echo [INFO] ^(na starym urzadzeniu: npm run prices:export lub przycisk "Zapisz domyslne"^).
 echo.
 echo Uruchom start.bat aby zaczac prace.
 echo.

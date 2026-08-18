@@ -485,10 +485,9 @@ Oferty_PV/
 │   ├── version-updater.mjs          # Aktualizator wersji
 │   ├── skill-cli.mjs                # CLI dla skilli
 │   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do seed
-│   ├── migrate-settings-to-tables.ts# Migracja ustawień do tabel
-│   ├── migrate-preco-from-tables.cjs# Migracja Preco z tabel
-│   ├── reverse-migration-to-settings.mjs # Cofnięcie migracji ustawień
-│   ├── migration-validate.mjs       # Walidacja migracji
+│   ├── cleanup-legacy-settings.cjs  # Usunięcie legacy kluczy cennikowych z settings
+│   ├── prices-export.ts             # Zapis domyślnych cenników do price_defaults.json (CLI)
+│   ├── prices-import.ts             # Restore cenników z price_defaults.json (CLI)
 │   ├── docker-entrypoint.sh         # Entrypoint Docker
 │   ├── install-backup-cron.ps1      # Cron backup (Windows)
 │   ├── uninstall-backup-cron.ps1    # Odinstaluj cron backup (Windows)

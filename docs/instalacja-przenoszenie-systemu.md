@@ -205,6 +205,29 @@ npm run restore -- data/backups/backup_*.sqlite
 > tabeli `_prisma_migrations`, `prisma migrate deploy` NIE zadziała — użyj wtedy
 > `npx prisma db push --skip-generate --accept-data-loss`.
 
+### Przeniesienie samych cen (bez ofert/zamówień)
+
+Gdy chcesz przenieść **tylko niestandardowe ceny domyślne** (rury, studnie, preco), bez bazy danych:
+
+```powershell
+# 1. Stare urządzenie — wygeneruj snapshot domyślnych cenników:
+npm run prices:export
+#    → tworzy/aktualizuje data/price_defaults.json (to samo robi przycisk
+#      "Zapisz domyślne" w Ustawieniach)
+
+# 2. Skopiuj plik na nowe urządzenie:
+#    data/price_defaults.json
+
+# 3. Nowe urządzenie — po instalacji przywróć ceny (walidacja + raport różnic):
+npm run prices:import
+#    lub ze wskazanego pliku:
+npm run prices:import -- data/price_defaults.json
+```
+
+> **Automatycznie:** serwer przy starcie odczytuje `data/price_defaults.json`
+> (lub ścieżkę ze zmiennej `PRICE_DEFAULTS_PATH`) i przywraca ceny, jeśli to plik
+> migawki domyślnych cenników — nie trzeba wtedy wołać `prices:import` ręcznie.
+
 ### ⚠️ Uwagi przy przenoszeniu:
 
 | Kwestia            | Zalecenie                                                                                                                                                                             |
@@ -234,11 +257,16 @@ docker compose up --build -d
 1. Buduje obraz z node:22-slim
 2. Uruchamia `docker-entrypoint.sh`, który:
     - Ustawia `DATABASE_URL` na `/var/data/app_database.sqlite`
-    - Migruje dane PRECO (jeśli stare tabele istnieją)
     - Wykonuje `prisma migrate deploy` (aktualizacja schematu)
+    - Seeduje pustą bazę (jeśli potrzebne)
     - Uruchamia `npm start` (serwer produkcyjny)
 3. Montuje wolumen `sok_data:/var/data` (baza trwała)
 4. Healthcheck co 30s na `/health`
+
+> **Ceny domyślne w Dockerze:** snapshot `data/price_defaults.json` umieszczony w katalogu
+> `./data` na hoście jest widoczny w kontenerze jako `/var/data/price_defaults.json`
+> i automatycznie przywracany przy starcie (jeśli ustawisz `PRICE_DEFAULTS_PATH`
+> na tę ścieżkę w `docker-compose.yml` / `.env`).
 
 ### Docker — komendy:
 
@@ -460,17 +488,22 @@ SENTRY_DSN=
 
 # Ścieżka do bazy SQLite
 DATABASE_URL=file:../data/app_database.sqlite?connection_limit=1&busy_timeout=30000
+
+# Ścieżka do pliku migawki domyślnych cenników (opcjonalnie; domyślnie data/price_defaults.json)
+# Dla Docker: PRICE_DEFAULTS_PATH=/var/data/price_defaults.json (plik w wolumenie ./data)
+PRICE_DEFAULTS_PATH=
 ```
 
 ### Zmienne dla różnych środowisk:
 
-| Zmienna                  |  Lokalnie (dev)  |       Docker       |
-| ------------------------ | :--------------: | :----------------: |
-| `PORT`                   |  10000 lub 3000  |       10000        |
-| `HOST`                   |     0.0.0.0      |      0.0.0.0       |
-| `NODE_ENV`               |   development    |     production     |
-| `DEFAULT_ADMIN_PASSWORD` |   **Wymagane**   |    **Wymagane**    |
-| `DATABASE_URL`           | file:../data/... | file:/var/data/... |
+| Zmienna                  |  Lokalnie (dev)  |            Docker             |
+| ------------------------ | :--------------: | :---------------------------: |
+| `PORT`                   |  10000 lub 3000  |             10000             |
+| `HOST`                   |     0.0.0.0      |            0.0.0.0            |
+| `NODE_ENV`               |   development    |          production           |
+| `DEFAULT_ADMIN_PASSWORD` |   **Wymagane**   |         **Wymagane**          |
+| `DATABASE_URL`           | file:../data/... |      file:/var/data/...       |
+| `PRICE_DEFAULTS_PATH`    |  (opcjonalnie)   | /var/data/price_defaults.json |
 
 ---
 
@@ -593,6 +626,14 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 | 8   | `.\prod.bat`                  | Uruchom wersję produkcyjną                  |
 | 9   | `npm run test:quick`          | Szybkie testy (sprawdź czy wszystko działa) |
 | 10  | `npm run validate`            | Pełna walidacja (typecheck + lint + test)   |
+
+### Komendy cen:
+
+| Komenda                          | Co robi                                                        |
+| -------------------------------- | -------------------------------------------------------------- |
+| `npm run prices:export`          | Zapis domyślnych cenników do `data/price_defaults.json` (CLI)  |
+| `npm run prices:import`          | Restore cenników z `price_defaults.json` (walidacja + raport)  |
+| `npm run cleanup:legacy-pricing` | Usuwa legacy klucze cennikowe z `settings` (dry-run domyślnie) |
 
 ### Główne pliki i katalogi:
 

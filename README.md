@@ -285,8 +285,22 @@ Jeśli masz już działającą instalację z wypełnioną bazą cen i produktów
    Zostanie automatycznie przywrócony przy starcie serwera.
 
     > **Lżejsza alternatywa:** Jeśli potrzebujesz przenieść tylko ceny (bez ofert/zamówień),
-    > wystarczy skopiować `data/price_defaults.json` i uruchomić `start.bat` — nie jest
-    > potrzebny backup SQLite ani `--skip-seed`.
+    > wystarczy wyeksportować snapshot cen na starym urządzeniu, skopiować plik i zaimportować
+    > na nowym — nie jest potrzebny backup SQLite ani `--skip-seed`:
+    >
+    > ```powershell
+    > # Stare urządzenie — wygeneruj snapshot domyślnych cenników:
+    > npm run prices:export
+    > # → tworzy/kopuję data/price_defaults.json (też przyciskiem "Zapisz domyślne" w Ustawieniach)
+    >
+    > # Nowe urządzenie — po instalacji przywróć ceny (walidacja + raport różnic):
+    > npm run prices:import
+    > # lub ze wskazanego pliku:
+    > npm run prices:import -- data/price_defaults.json
+    > ```
+    >
+    > Przy starcie serwera plik `data/price_defaults.json` (lub ścieżka ze zmiennej
+    > `PRICE_DEFAULTS_PATH`) jest też wczytywany automatycznie na świeżej/istniejącej bazie.
 
 #### Co zawiera baza?
 
@@ -466,19 +480,19 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Baza danych (Prisma)
 
-| Komenda                      | Opis                                              |
-| ---------------------------- | ------------------------------------------------- |
-| `npm run prisma:generate`    | Generuj klienta Prisma                            |
-| `npm run prisma:migrate`     | Utwórz migrację dev                               |
-| `npm run prisma:deploy`      | Zastosuj migracje w produkcji                     |
-| `npm run prisma:seed`        | Zasiej dane początkowe                            |
-| `npm run prisma:studio`      | Otwórz Prisma Studio (UI bazy)                    |
-| `npm run prisma:reset`       | Reset bazy danych                                 |
-| `npm run prisma:status`      | Status migracji                                   |
-| `npm run migration:run`      | Migracja ustawień do tabel (ts-node)              |
-| `npm run migration:validate` | Walidacja migracji ustawień                       |
-| `npm run migration:reverse`  | Cofnięcie migracji (ustawienia z tabel)           |
-| `npm run export:seed`        | Eksport cenników z tabel DB do `data/seed_*.json` |
+| Komenda                          | Opis                                                          |
+| -------------------------------- | ------------------------------------------------------------- |
+| `npm run prisma:generate`        | Generuj klienta Prisma                                        |
+| `npm run prisma:migrate`         | Utwórz migrację dev                                           |
+| `npm run prisma:deploy`          | Zastosuj migracje w produkcji                                 |
+| `npm run prisma:seed`            | Zasiej dane początkowe                                        |
+| `npm run prisma:studio`          | Otwórz Prisma Studio (UI bazy)                                |
+| `npm run prisma:reset`           | Reset bazy danych                                             |
+| `npm run prisma:status`          | Status migracji                                               |
+| `npm run cleanup:legacy-pricing` | Usuń legacy klucze cennikowe z `settings` (dry-run domyślnie) |
+| `npm run export:seed`            | Eksport cenników z tabel DB do `data/seed_*.json`             |
+| `npm run prices:export`          | Zapis domyślnych cenników do `data/price_defaults.json` (CLI) |
+| `npm run prices:import [plik]`   | Restore cenników z `price_defaults.json` (walidacja + diff)   |
 
 ### AI/ML
 

@@ -364,28 +364,28 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Baza danych
 
-| Polecenie                    | Opis działania                                                                                                                                                                                        |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run prisma:generate`    | Generuje klienta Prisma.                                                                                                                                                                              |
-| `npm run prisma:migrate`     | Tworzy nową migrację (dev).                                                                                                                                                                           |
-| `npm run prisma:deploy`      | Zastosowuje migracje w produkcji (ścieżka domyślna). Wyłącznie dla baz legacy utworzonych przez `db push` (brak `_prisma_migrations`) używaj `npx prisma db push --skip-generate --accept-data-loss`. |
-| `npm run prisma:seed`        | Zasiewa dane początkowe.                                                                                                                                                                              |
-| `npm run prisma:studio`      | Otwiera Prisma Studio (GUI bazy).                                                                                                                                                                     |
-| `npm run prisma:reset`       | Resetuje bazę danych (utrata danych!).                                                                                                                                                                |
-| `npm run prisma:status`      | Sprawdza status migracji.                                                                                                                                                                             |
-| `npm run migration:run`      | Migracja ustawień do tabel (`ts-node scripts/migrate-settings-to-tables.ts`).                                                                                                                         |
-| `npm run migration:validate` | Walidacja migracji (`node scripts/migration-validate.mjs`).                                                                                                                                           |
-| `npm run migration:reverse`  | Cofnięcie migracji — ustawienia z powrotem do tabeli `settings` (`node scripts/reverse-migration-to-settings.mjs`).                                                                                   |
-| `npm run export:seed`        | Eksport cenników z tabel DB do `data/seed_*.json` (`scripts/export-settings-to-seed.mjs`).                                                                                                            |
+| Polecenie                        | Opis działania                                                                                                                                                                                        |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run prisma:generate`        | Generuje klienta Prisma.                                                                                                                                                                              |
+| `npm run prisma:migrate`         | Tworzy nową migrację (dev).                                                                                                                                                                           |
+| `npm run prisma:deploy`          | Zastosowuje migracje w produkcji (ścieżka domyślna). Wyłącznie dla baz legacy utworzonych przez `db push` (brak `_prisma_migrations`) używaj `npx prisma db push --skip-generate --accept-data-loss`. |
+| `npm run prisma:seed`            | Zasiewa dane początkowe.                                                                                                                                                                              |
+| `npm run prisma:studio`          | Otwiera Prisma Studio (GUI bazy).                                                                                                                                                                     |
+| `npm run prisma:reset`           | Resetuje bazę danych (utrata danych!).                                                                                                                                                                |
+| `npm run prisma:status`          | Sprawdza status migracji.                                                                                                                                                                             |
+| `npm run cleanup:legacy-pricing` | Usuwa legacy klucze cennikowe z `settings` (dry-run domyślnie, `--apply` = usunięcie; `scripts/cleanup-legacy-settings.cjs`).                                                                         |
+| `npm run export:seed`            | Eksport cenników z tabel DB do `data/seed_*.json` (`scripts/export-settings-to-seed.mjs`).                                                                                                            |
 
 ### Backup i przenoszenie bazy
 
-| Polecenie                        | Opis działania                                                          |
-| -------------------------------- | ----------------------------------------------------------------------- |
-| `npm run backup`                 | Wykonuje backup bazy SQLite (VACUUM INTO).                              |
-| `npm run restore <plik-backupu>` | Przywraca bazę z backupu (restore automatycznie synchronizuje schemat). |
-| `npm run backup:install-cron`    | Instaluje cron backupu (Windows).                                       |
-| `npm run backup:uninstall-cron`  | Odinstalowuje cron backupu (Windows).                                   |
+| Polecenie                        | Opis działania                                                                                                     |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `npm run backup`                 | Wykonuje backup bazy SQLite (VACUUM INTO).                                                                         |
+| `npm run restore <plik-backupu>` | Przywraca bazę z backupu (restore automatycznie synchronizuje schemat).                                            |
+| `npm run backup:install-cron`    | Instaluje cron backupu (Windows).                                                                                  |
+| `npm run backup:uninstall-cron`  | Odinstalowuje cron backupu (Windows).                                                                              |
+| `npm run prices:export`          | Zapisuje domyślne cenniki (live) do `data/price_defaults.json` (CLI odpowiednik przycisku „Zapisz domyślne”).      |
+| `npm run prices:import [plik]`   | Przywraca cenniki z `data/price_defaults.json` (walidacja sha256 + raport diff; `--force` pomija guard timestamp). |
 
 ### Wersjonowanie i release
 
