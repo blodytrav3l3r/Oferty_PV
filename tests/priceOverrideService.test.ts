@@ -40,7 +40,8 @@ const txMock = {
     precoZakresyDefault: {
         deleteMany: jest.fn(),
         createMany: jest.fn().mockResolvedValue({ count: 0 })
-    }
+    },
+    settings: { upsert: jest.fn().mockResolvedValue({}) }
 };
 
 const VALID_JSON = JSON.stringify({
@@ -329,5 +330,34 @@ describe('priceOverrideService.saveDefaults', () => {
         // Ceny użytkownika NIE trafiają do committed seed_*.json (repo publiczne).
         expect(seedExporter.writeSeedFiles).not.toHaveBeenCalled();
         expect(loggerMock.warn).not.toHaveBeenCalled();
+
+        // Timestamp zapisany wewnątrz transakcji (atomowość zapisu domyślnych).
+        expect(txMock.settings.upsert).toHaveBeenCalledTimes(1);
+        expect(txMock.settings.upsert.mock.calls[0][0]).toMatchObject({
+            where: { key: 'pricelist_defaults_updated_at' }
+        });
+    });
+
+    it('gdy transakcja pada, plik wraca do poprzedniej treści i błąd propaguje', async () => {
+        (prisma.$transaction as jest.Mock).mockRejectedValueOnce(new Error('tx fail'));
+
+        await expect(priceOverrideService.saveDefaults()).rejects.toThrow('tx fail');
+
+        // rollback: drugi zapis + drugi rename, treść = stary snapshot
+        expect(fs.renameSync).toHaveBeenCalledTimes(2);
+        const writes = (fs.writeFileSync as jest.Mock).mock.calls;
+        const lastWrite = writes[writes.length - 1][1] as string;
+        expect(lastWrite).toBe(fileContent);
+    });
+
+    it('gdy zapis pliku pada, transakcja DB nie jest wywoływana', async () => {
+        (fs.writeFileSync as jest.Mock).mockImplementationOnce(() => {
+            throw new Error('write fail');
+        });
+
+        await expect(priceOverrideService.saveDefaults()).rejects.toThrow('write fail');
+
+        expect(txMock.productsRuryDefault.deleteMany).not.toHaveBeenCalled();
+        expect(txMock.settings.upsert).not.toHaveBeenCalled();
     });
 });

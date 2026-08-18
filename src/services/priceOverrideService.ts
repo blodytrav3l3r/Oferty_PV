@@ -6,6 +6,10 @@
  * i przywracany przy starcie serwera do tabel LIVE + *_Default, o ile timestamp
  * w bazie (settings.pricelist_defaults_updated_at) nie jest nowszy.
  *
+ * Zapis domyślnych jest all-or-nothing: plik zapisywany przed transakcją, na błąd
+ * transakcji cofany do poprzedniej treści (kompensacja); crash po zapisie pliku
+ * pokrywa startowy restoreDefaultsFromJson().
+ *
  * Transfer cenników między urządzeniami:
  *   urządzenie A:  saveDefaults()  lub  npm run prices:export
  *   urządzenie B:  skopiuj price_defaults.json do data/ (lub PRICE_DEFAULTS_PATH)
@@ -183,37 +187,68 @@ class PriceOverrideService {
 
         const pkg = await this.buildPricePackage();
         const now = pkg.exportedAt;
-
-        // Najpierw zapis pliku, potem transakcja DB: gdyby zapis pliku rzucił błąd,
-        // baza nie jest ruszona i nic nie zostaje w niespójnym stanie.
         const tmpPath = this.defaultsPath + '.tmp';
+
+        // Kompensacja: poprzednia treść pliku (do rollbacku, gdy transakcja padnie).
+        // Brak możliwości odczytu = nie da się cofnąć -> best-effort usunięcie.
+        let oldContent: string | null = null;
+        try {
+            oldContent = fs.existsSync(this.defaultsPath)
+                ? fs.readFileSync(this.defaultsPath, 'utf-8')
+                : null;
+        } catch {
+            oldContent = null;
+            logger.debug(
+                'PriceOverride',
+                'Nie można odczytać poprzedniego snapshotu — rollback niemożliwy'
+            );
+        }
+
+        // Zapis pliku ATOMOWO (tmp -> rename). Błąd tutaj = baza nietknięta (spójne).
         fs.writeFileSync(tmpPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
         fs.renameSync(tmpPath, this.defaultsPath);
 
-        await prisma.$transaction(async (tx) => {
-            await tx.productsRuryDefault.deleteMany();
-            await tx.productsStudnieDefault.deleteMany();
-            await tx.precoKonfigDefault.deleteMany();
-            await tx.precoKinetyDefault.deleteMany();
-            await tx.precoZakresyDefault.deleteMany();
+        // Cała praca DB (w tym timestamp) w JEDNEJ transakcji.
+        // Błąd transakcji = rollback pliku do oldContent -> obie strony stare (spójne).
+        try {
+            await prisma.$transaction(async (tx) => {
+                await tx.productsRuryDefault.deleteMany();
+                await tx.productsStudnieDefault.deleteMany();
+                await tx.precoKonfigDefault.deleteMany();
+                await tx.precoKinetyDefault.deleteMany();
+                await tx.precoZakresyDefault.deleteMany();
 
-            if (pkg.rury.length > 0)
-                await tx.productsRuryDefault.createMany({ data: pkg.rury as never[] });
-            if (pkg.studnie.length > 0)
-                await tx.productsStudnieDefault.createMany({ data: pkg.studnie as never[] });
-            if (pkg.preco.konfig.length > 0)
-                await tx.precoKonfigDefault.createMany({ data: pkg.preco.konfig as never[] });
-            if (pkg.preco.kinety.length > 0)
-                await tx.precoKinetyDefault.createMany({ data: pkg.preco.kinety as never[] });
-            if (pkg.preco.zakresy.length > 0)
-                await tx.precoZakresyDefault.createMany({ data: pkg.preco.zakresy as never[] });
-        });
+                if (pkg.rury.length > 0)
+                    await tx.productsRuryDefault.createMany({ data: pkg.rury as never[] });
+                if (pkg.studnie.length > 0)
+                    await tx.productsStudnieDefault.createMany({ data: pkg.studnie as never[] });
+                if (pkg.preco.konfig.length > 0)
+                    await tx.precoKonfigDefault.createMany({ data: pkg.preco.konfig as never[] });
+                if (pkg.preco.kinety.length > 0)
+                    await tx.precoKinetyDefault.createMany({ data: pkg.preco.kinety as never[] });
+                if (pkg.preco.zakresy.length > 0)
+                    await tx.precoZakresyDefault.createMany({ data: pkg.preco.zakresy as never[] });
 
-        await prisma.settings.upsert({
-            where: { key: 'pricelist_defaults_updated_at' },
-            update: { value: now },
-            create: { key: 'pricelist_defaults_updated_at', value: now }
-        });
+                await tx.settings.upsert({
+                    where: { key: 'pricelist_defaults_updated_at' },
+                    update: { value: now },
+                    create: { key: 'pricelist_defaults_updated_at', value: now }
+                });
+            });
+        } catch (err) {
+            if (oldContent !== null) {
+                fs.writeFileSync(tmpPath, oldContent, 'utf-8');
+                fs.renameSync(tmpPath, this.defaultsPath);
+            } else {
+                fs.rmSync(this.defaultsPath, { force: true });
+            }
+            logger.warn(
+                'PriceOverride',
+                'Transakcja zapisu domyślnych nieudana — snapshot cofnięty:',
+                String(err)
+            );
+            throw err;
+        }
 
         logger.info(
             'PriceOverride',
