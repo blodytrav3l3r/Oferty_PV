@@ -924,6 +924,7 @@
         --text-primary: var(--black);
         --text-secondary: var(--slate-700);
         --text-muted: var(--slate-500);
+        --text-heading: var(--slate-950);
         --accent: var(--slate-700);
         --accent-hover: var(--black);
         --accent-text: var(--slate-700);

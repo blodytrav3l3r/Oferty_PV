@@ -16,6 +16,7 @@
     --text-primary: var(--slate-100);
     --text-secondary: var(--slate-400);
     --text-muted: var(--slate-500);
+    --text-heading: var(--slate-50);
 
     /* Borders */
     --border: var(--slate-800);
@@ -86,6 +87,7 @@
     --white-rgb: 255, 255, 255;
     --slate-950: #0f172a;
     --slate-950-rgb: 15, 23, 42;
+    --slate-900: #162033;
     --slate-800: #1e293b;
     --slate-800-rgb: 30, 41, 59;
     --slate-700: #334155;
