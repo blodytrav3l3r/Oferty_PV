@@ -295,7 +295,7 @@ function openBulkOrderSequencePopup() {
                     style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
                     background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.1)'};
                     border:1px solid ${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.3)'};
-                    border-radius:8px; cursor:${disabled ? 'default' : 'grab'};
+                    border-radius: var(--radius-sm); cursor:${disabled ? 'default' : 'grab'};
                     opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
                 <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
                     onfocus="this.dataset.old = this.value; this.value = '';"
@@ -303,12 +303,12 @@ function openBulkOrderSequencePopup() {
                     onkeydown="if(event.key === 'Enter') this.blur();"
                     style="width:72px; height:28px; text-align:center; padding:0;
                     background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.15)'};
-                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius:6px;
-                    font-size:0.75rem; font-weight:800; color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
-                <span style="font-size:1rem; color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
+                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius: var(--radius-sm);
+                    font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
+                <span style="font-size: var(--fs-2xl); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
                 <div style="flex:1;">
-                    <div style="font-weight:700; font-size:0.8rem; color:var(--text-primary);">${g.wellName}</div>
-                    <div style="font-size:0.65rem; color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
+                    <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${g.wellName}</div>
+                    <div style="font-size: var(--fs-xs); color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
                 </div>
                 ${
                     !disabled
@@ -330,18 +330,18 @@ function openBulkOrderSequencePopup() {
         LAYERS.BULK_ORDER +
         '; display:flex; align-items:center; justify-content:center; backdrop-filter:blur(4px);';
     overlay.innerHTML = `
-        <div style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb), 0.3); border-radius:14px; padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
+        <div style="background:var(--bg-secondary); border:1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-md); padding:1.5rem; width:420px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                 <div>
-                    <div style="font-size:1rem; font-weight:800; color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
-                    <div style="font-size:0.7rem; color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
+                    <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
+                    <div style="font-size: var(--fs-sm); color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
                 <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
                     <i data-lucide="x"></i>
                 </button>
             </div>
             <div id="bulk-seq-list" style="flex:1; overflow-y:auto; padding:0.3rem 0;">${itemsHtml}</div>
-            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight:800; padding:0.6rem; font-size:0.85rem; border-radius:8px;">
+            <button onclick="executeBulkFromPopup()" class="btn btn-sm" style="margin-top:1rem; width:100%; background:rgba(var(--accent2-rgb), 0.2); border:1px solid rgba(var(--accent2-rgb), 0.5); color:var(--accent2-hover); font-weight: var(--fw-extrabold); padding:0.6rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">
                 <i data-lucide="zap"></i> Generuj w tej kolejności
             </button>
         </div>

@@ -90,8 +90,8 @@ describe('Spójność tokenów kolorów (4 SSoT)', () => {
         expect(frontend).toEqual(backend);
     });
 
-    it('dokładnie 16 tokenów w PRINT_TOKENS_CSS', () => {
-        expect(Object.keys(frontend)).toHaveLength(16);
+    it('dokładnie 44 tokeny w PRINT_TOKENS_CSS', () => {
+        expect(Object.keys(frontend)).toHaveLength(44);
     });
 
     it('każdy token z PRINT_TOKENS ma identyczną wartość w style.base.css :root', () => {

@@ -3,7 +3,7 @@
     position: relative;
     background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-deep) 100%);
     border: 1px solid rgba(var(--accent-rgb), 0.15);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 0;
     margin-bottom: 0.7rem;
     overflow: hidden;
@@ -69,7 +69,6 @@
 }
 
 @keyframes dotPulse {
-
     0%,
     100% {
         transform: scale(1);
@@ -97,16 +96,18 @@
     flex-shrink: 0;
     width: 36px;
     height: 36px;
-    border-radius: 10px;
-    background: linear-gradient(135deg,
-            rgba(var(--accent-rgb), 0.15) 0%,
-            rgba(var(--accent2-rgb), 0.1) 100%);
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+        135deg,
+        rgba(var(--accent-rgb), 0.15) 0%,
+        rgba(var(--accent2-rgb), 0.1) 100%
+    );
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--accent-hover);
-    font-size: 1rem;
+    font-size: var(--fs-2xl);
     transition: box-shadow 0.2s ease;
 }
 
@@ -117,8 +118,8 @@
 
 .offer-title {
     margin: 0 0 0.25rem 0;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -130,13 +131,13 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 1.1rem;
+    font-size: var(--fs-3xl);
     color: var(--text-primary);
     flex-wrap: wrap;
 }
 
 .offer-client {
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 .client-nip {
@@ -156,15 +157,15 @@
 }
 
 .offer-price {
-    font-size: 1.1rem;
-    font-weight: 800;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-extrabold);
     color: var(--accent-hover);
     line-height: 1.2;
     letter-spacing: -0.3px;
 }
 
 .offer-meta {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     margin-top: 0.15rem;
 }
@@ -185,11 +186,11 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.2rem 0.55rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--accent-rgb), 0.1);
     border: 1px solid rgba(var(--accent-rgb), 0.15);
-    font-size: 0.72rem;
-    font-weight: 500;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
     color: var(--accent-text);
     white-space: nowrap;
 }
@@ -218,7 +219,7 @@
     margin: 0 0 0.5rem;
     padding: 0.5rem 0.65rem;
     border: 1px solid rgba(var(--success-rgb), 0.2);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--slate-950-rgb), 0.5);
 }
 
@@ -230,7 +231,7 @@
     min-height: 36px;
     padding: 0.35rem 0.5rem;
     border: 1px solid rgba(var(--slate-400-rgb), 0.1);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--slate-800-rgb), 0.8);
 }
 
@@ -259,7 +260,7 @@
     width: 24px;
     height: 24px;
     flex: 0 0 24px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--success-rgb), 0.1);
     border: 1px solid rgba(var(--success-rgb), 0.2);
     color: var(--success-hover);
@@ -285,13 +286,13 @@
 }
 
 .offer-order-text strong {
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
 
 .offer-order-text small {
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     color: var(--text-secondary);
 }
 
@@ -319,9 +320,9 @@
     align-items: center;
     gap: 0.3rem;
     padding: 0.3rem 0.7rem;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 600;
+    border-radius: var(--radius-lg);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     letter-spacing: 0.2px;
 }
 
@@ -351,7 +352,7 @@
 .action-btn {
     width: 34px;
     height: 34px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     border: none;
     background: rgba(var(--accent-rgb), 0.1);
     border: 1px solid rgba(var(--accent-rgb), 0.15);
@@ -452,8 +453,8 @@
     min-width: 0;
     padding: 0 0.85rem;
     gap: 0.4rem;
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
     font-family:
         'Inter',
         -apple-system,
@@ -475,7 +476,7 @@
 /* ===== TRYB KOMPAKTOWY ===== */
 .compact-mode .modern-offer-card {
     margin-bottom: 0.4rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
 }
 
 .compact-mode .offer-card-content {
@@ -490,17 +491,17 @@
 .compact-mode .offer-icon-wrapper {
     width: 28px;
     height: 28px;
-    border-radius: 6px;
-    font-size: 0.8rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-md);
 }
 
 .compact-mode .offer-title {
-    font-size: 0.95rem;
+    font-size: var(--fs-xl);
     margin-bottom: 0.1rem;
 }
 
 .compact-mode .offer-subtitle {
-    font-size: 0.95rem;
+    font-size: var(--fs-xl);
     gap: 0.3rem;
 }
 
@@ -509,16 +510,16 @@
 }
 
 .compact-mode .offer-author-badges .author-badge {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     padding: 0.05rem 0.35rem;
 }
 
 .compact-mode .offer-price {
-    font-size: 0.95rem;
+    font-size: var(--fs-xl);
 }
 
 .compact-mode .offer-meta {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     margin-top: 0.05rem;
 }
 
@@ -534,23 +535,23 @@
 }
 
 .compact-mode .offer-order-text strong {
-    font-size: 0.72rem;
+    font-size: var(--fs-sm);
 }
 
 .compact-mode .offer-order-text small {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
 }
 
 .compact-mode .action-btn:not(.text-btn) {
     width: 26px;
     height: 26px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 .compact-mode .action-btn.text-btn {
     height: 26px;
     padding: 0 0.55rem;
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     gap: 0.3rem;
 }
 
@@ -562,7 +563,7 @@
 
 .compact-mode .status-badge {
     padding: 0.15rem 0.5rem;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
 }
 
 .compact-mode .status-badge i {
@@ -581,7 +582,7 @@
 .compact-mode .btn-order-badge {
     height: 28px;
     padding: 0 0.55rem;
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     gap: 0.3rem;
 }
 

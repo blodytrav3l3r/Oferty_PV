@@ -13,21 +13,21 @@ function renderAuditLogEntry(log) {
     if (isDelete) {
         cardClass = 'action-delete';
         actionBadge =
-            '<span style="background:rgba(var(--danger-rgb), 0.15); color:var(--danger-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>';
+            '<span style="background:rgba(var(--danger-rgb), 0.15); color:var(--danger-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="trash-2"></i> USUNIĘTO</span>';
         const oldData = log.oldData || {};
-        contentHtml = `<div style="font-size:0.9rem; color:var(--danger-hover);">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:var(--white);">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
+        contentHtml = `<div style="font-size: var(--fs-xl); color:var(--danger-hover);">Usunięta oferta${oldData.totalBrutto ? ` — wcześniej: <strong style="color:var(--white);">${fmt(oldData.totalBrutto)} PLN</strong>` : ''}</div>`;
     } else if (log.action === 'create') {
         cardClass = 'action-create';
         actionBadge =
-            '<span style="background:rgba(var(--accent-rgb), 0.15); color:var(--accent-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>';
+            '<span style="background:rgba(var(--accent-rgb), 0.15); color:var(--accent-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>';
         const price = data.totalBrutto || 0;
-        contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+        contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         if (data.wells)
-            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
+            contentHtml += `<div style="font-size: var(--fs-md); color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     } else if (isDiff) {
         cardClass = 'action-diff';
         actionBadge =
-            '<span style="background:rgba(var(--warn-rgb), 0.15); color:var(--warn-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>';
+            '<span style="background:rgba(var(--warn-rgb), 0.15); color:var(--warn-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="edit"></i> EDYCJA (DIFF)</span>';
         const changedKeys = Object.keys(data).filter((k) => k !== '_diffMode');
         const changesHtml = changedKeys
             .map((k) => {
@@ -40,25 +40,25 @@ function renderAuditLogEntry(log) {
                     k.toLowerCase().includes('price') ||
                     k.toLowerCase().includes('cena')
                 ) {
-                    return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(fmt(Number(oldVal)))} PLN</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(fmt(Number(newVal)))} PLN</span></div>`;
+                    return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(fmt(Number(oldVal)))} PLN</span> <span style="color:var(--text-muted); font-size: var(--fs-md);"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(fmt(Number(newVal)))} PLN</span></div>`;
                 }
-                return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(JSON.stringify(oldVal))}</span> <span style="color:var(--text-muted); font-size:0.8rem;"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(JSON.stringify(newVal))}</span></div>`;
+                return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(JSON.stringify(oldVal))}</span> <span style="color:var(--text-muted); font-size: var(--fs-md);"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(JSON.stringify(newVal))}</span></div>`;
             })
             .join('');
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
     } else {
         cardClass = 'action-update';
         actionBadge =
-            '<span style="background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); padding:4px 10px; border-radius:6px; font-size:0.75rem; font-weight:800; letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>';
+            '<span style="background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="save"></i> ZAPIS / AKTUALIZACJA</span>';
         const price = data.totalBrutto || 0;
         const oldPrice = log.oldData?.totalBrutto || 0;
         if (oldPrice && Math.abs(price - oldPrice) > 0.01) {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size:0.95rem;font-weight:600;">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size:0.9rem; margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size: var(--fs-xl);font-weight: var(--fw-semibold);">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size: var(--fs-xl); margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
         } else {
-            contentHtml = `<div style="font-size:1.2rem; font-weight:800; color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         }
         if (data.wells)
-            contentHtml += `<div style="font-size:0.8rem; color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
+            contentHtml += `<div style="font-size: var(--fs-md); color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     }
 
     const restoreBtnHtml =
@@ -125,14 +125,14 @@ async function showOfferHistoryStudnie(id) {
         overlay.innerHTML = `
             <style>
                 .audit-modal-inner {
-                    max-width: 800px; width: 95%; border-radius: 20px; max-height: 90vh; 
+                    max-width: 800px; width: 95%; border-radius: var(--radius-lg); max-height: 90vh; 
                     display: flex; flex-direction: column; background: var(--slate-950); 
                     box-shadow: 0 25px 50px -12px rgba(var(--black-rgb), 0.5); border: 1px solid rgba(var(--white-rgb), 0.1);
                 }
                 .audit-card {
                     background: rgba(var(--slate-800-rgb), 0.8);
                     border: 1px solid rgba(var(--white-rgb), 0.05);
-                    border-radius: 16px;
+                    border-radius: var(--radius-md);
                     padding: 1.25rem 1.5rem;
                     margin-bottom: 1rem;
                     position: relative;
@@ -158,22 +158,22 @@ async function showOfferHistoryStudnie(id) {
                     display: flex; justify-content: space-between; align-items: center;
                     margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
                 }
-                .audit-date { font-size: 0.85rem; color: var(--text-secondary); font-weight: 500; }
-                .audit-author { font-size: 0.85rem; color: var(--border); display:flex; align-items:center; gap:4px; }
+                .audit-date { font-size: var(--fs-lg); color: var(--text-secondary); font-weight: var(--fw-medium); }
+                .audit-author { font-size: var(--fs-lg); color: var(--border); display:flex; align-items:center; gap:4px; }
                 
                 .audit-card-body {
                     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
                 }
                 
                 .diff-container { display: flex; flex-direction: column; gap: 0.4rem; }
-                .diff-line { background: rgba(var(--black-rgb), 0.2); padding: 0.4rem 0.8rem; border-radius: 6px; font-size: 0.85rem; }
-                .diff-key { color: var(--text-primary); font-weight: 600; font-family: monospace; }
+                .diff-line { background: rgba(var(--black-rgb), 0.2); padding: 0.4rem 0.8rem; border-radius: var(--radius-sm); font-size: var(--fs-lg); }
+                .diff-key { color: var(--text-primary); font-weight: var(--fw-semibold); font-family: monospace; }
                 .diff-old { color: var(--text-secondary); text-decoration: line-through; }
-                .diff-new { color: var(--success-hover); font-weight: 700; }
+                .diff-new { color: var(--success-hover); font-weight: var(--fw-bold); }
                 
                 .restore-btn, .preview-btn {
                     background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.1); 
-                    color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600;
+                    color: var(--text-primary); padding: 0.5rem 1rem; border-radius: var(--radius-sm); font-weight: var(--fw-semibold);
                     transition: all 0.2s; cursor: pointer; display: flex; align-items: center; gap: 6px;
                 }
                 .preview-btn:hover { background: rgba(var(--accent-rgb), 0.15); border-color: rgba(var(--accent-rgb), 0.3); color: var(--accent-hover); }
@@ -181,15 +181,15 @@ async function showOfferHistoryStudnie(id) {
                 
                 .load-more-btn {
                     background: rgba(var(--accent-rgb), 0.15); border: 1px solid rgba(var(--accent-rgb), 0.3); 
-                    color: var(--accent-hover); font-weight: 700; padding: 0.6rem 1.5rem; border-radius: 30px;
+                    color: var(--accent-hover); font-weight: var(--fw-bold); padding: 0.6rem 1.5rem; border-radius: 30px;
                     cursor: pointer; transition: all 0.2s;
                 }
                 .load-more-btn:hover { background: rgba(var(--accent-rgb), 0.3); transform: scale(1.05); }
             </style>
             <div class="modal audit-modal-inner">
-                <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.05); border-radius: 20px 20px 0 0;">
-                    <h3 style="font-weight:800; color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
-                        <span style="font-size:1.4rem;">⌛</span> Oś Czasu Zmian (${total} wpisów)
+                <div class="modal-header" style="border-bottom:1px solid rgba(var(--white-rgb), 0.1); padding:1.2rem 1.5rem; background: rgba(var(--white-rgb), 0.05); border-radius: var(--radius-lg) 20px 0 0;">
+                    <h3 style="font-weight: var(--fw-extrabold); color:var(--white); margin:0; display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-size: var(--fs-5xl);">⌛</span> Oś Czasu Zmian (${total} wpisów)
                     </h3>
                     <button class="btn-icon" aria-label="Zamknij" style="background:rgba(var(--white-rgb), 0.1); color:var(--white); border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center;" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>

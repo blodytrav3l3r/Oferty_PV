@@ -21,7 +21,7 @@
             ? '<i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success)"></i>'
             : '<i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--warn)"></i>';
         var sub = subtitle
-            ? '<div style="font-size:0.7rem;color:var(--text-secondary);margin-top:2px">' +
+            ? '<div style="font-size: var(--fs-sm);color:var(--text-secondary);margin-top:2px">' +
               subtitle +
               '</div>'
             : '';
@@ -31,10 +31,10 @@
             '>' +
             icon +
             '<div style="flex:1;min-width:0">' +
-            '<div style="font-size:0.78rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em">' +
+            '<div style="font-size: var(--fs-base);color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.03em">' +
             title +
             '</div>' +
-            '<div style="font-size:1.1rem;font-weight:600;color:var(--text-primary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+            '<div style="font-size: var(--fs-3xl);font-weight: var(--fw-semibold);color:var(--text-primary);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
             value +
             '</div>' +
             sub +
@@ -99,7 +99,7 @@
                 /* Naglowek */
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
                 '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
-                '<span style="font-size:0.7rem;color:var(--text-secondary)">' +
+                '<span style="font-size: var(--fs-sm);color:var(--text-secondary)">' +
                 new Date().toLocaleString('pl-PL') +
                 '</span>' +
                 '</div>' +

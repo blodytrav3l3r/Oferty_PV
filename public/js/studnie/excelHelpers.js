@@ -565,7 +565,7 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
         '>' +
         optHtml +
         '</select>' +
-        '<div style="pointer-events:none;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;padding:0.2rem 0.3rem;font-size:0.6rem;color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
+        '<div style="pointer-events:none;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;padding:0.2rem 0.3rem;font-size: var(--fs-2xs);color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;width:100%;">' +
         (label ? escapeHtml(label) : '&mdash;') +
         '</div>' +
         '</div>'

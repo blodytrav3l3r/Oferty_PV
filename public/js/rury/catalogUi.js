@@ -47,7 +47,7 @@ function renderCatalogProducts() {
     const items = products.filter((p) => p.category === window.activeCatalogCategory);
     if (items.length === 0) {
         container.innerHTML =
-            '<div style="padding:1rem;color:var(--text-muted);font-size:.85rem">Brak produktów w tej kategorii</div>';
+            '<div style="padding:1rem;color:var(--text-muted);font-size: var(--fs-lg)">Brak produktów w tej kategorii</div>';
         return;
     }
 

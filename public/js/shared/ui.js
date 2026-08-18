@@ -120,7 +120,7 @@ function showToast(msg, type = 'info') {
     closeBtn.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
     if (window.lucide) lucide.createIcons();
     closeBtn.style.cssText =
-        'background:none;border:none;color:inherit;cursor:pointer;font-size:1rem;padding:0 0 0 .5rem;opacity:.7;';
+        'background:none;border:none;color:inherit;cursor:pointer;font-size: var(--fs-2xl);padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
     toast.appendChild(closeBtn);
 
@@ -211,8 +211,8 @@ function showUserSelectionPopup(users, defaultUserId) {
             }
         };
 
-        let html = `<div id="user-selection-title" style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:var(--warn);"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
-        html += `<div style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
+        let html = `<div id="user-selection-title" style="font-size: var(--fs-3xl); font-weight: var(--fw-bold); margin-bottom:1rem; color:var(--warn);"><i data-lucide="user"></i> Przypisz do użytkownika (Opiekun)</div>`;
+        html += `<div style="font-size: var(--fs-base); color:var(--text-secondary); margin-bottom:1rem;">Wybierz pracownika, do którego ma zostać przypisany ten dokument.</div>`;
         html += `<div style="display:flex; flex-direction:column; gap:0.4rem;">`;
 
         users.forEach((u) => {
@@ -231,28 +231,28 @@ function showUserSelectionPopup(users, defaultUserId) {
                 display:flex; align-items:center; gap:0.8rem; padding:0.7rem 1rem;
                 background:${isDefault ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
                 border:1px solid ${isDefault ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
-                border-radius:10px; cursor:pointer; color:var(--text-primary); font:500 0.85rem Inter,sans-serif;
+                border-radius: var(--radius-sm); cursor:pointer; color:var(--text-primary); font:var(--fw-medium) var(--fs-lg) Inter,sans-serif;
                 transition:all 0.15s; text-align:left; width:100%;
             " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.5)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
                onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(var(--white-rgb), 0.05)';this.style.background='rgba(var(--white-rgb), 0.05)'}">
-                <span style="font-size:1.1rem;">${roleBadge}</span>
+                <span style="font-size: var(--fs-3xl);">${roleBadge}</span>
                 <div class="flex-1">
-                    <div style="font-weight:700;">${escapeHtml(displayName)}</div>
-                    <div style="font-size:0.7rem; color:var(--text-secondary);">Symbol: ${escapeHtml(symbol)}</div>
+                    <div style="font-weight: var(--fw-bold);">${escapeHtml(displayName)}</div>
+                    <div style="font-size: var(--fs-sm); color:var(--text-secondary);">Symbol: ${escapeHtml(symbol)}</div>
                 </div>
-                ${isDefault ? '<span style="font-size:0.65rem; color:var(--accent-hover); font-weight:700;">DOMYŚLNY</span>' : ''}
+                ${isDefault ? '<span style="font-size: var(--fs-xs); color:var(--accent-hover); font-weight: var(--fw-bold);">DOMYŚLNY</span>' : ''}
             </button>`;
         });
 
         html += `</div>`;
         html += `<div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-top:1.2rem;">`;
-        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(var(--white-rgb), 0.1); border-radius:8px; background:transparent; color:var(--text-secondary); cursor:pointer; font:500 0.8rem Inter,sans-serif;">Anuluj</button>`;
+        html += `<button id="user-select-cancel" style="padding:0.5rem 1rem; border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm); background:transparent; color:var(--text-secondary); cursor:pointer; font:var(--fw-medium) var(--fs-md) Inter,sans-serif;">Anuluj</button>`;
         html += `</div>`;
 
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal" style="            background: var(--bg-tile); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:16px; padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
+            html: `<div class="modal" style="            background: var(--bg-tile); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-md); padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();
@@ -552,7 +552,7 @@ function _ensureConfirmStyles() {
         .app-confirm-modal {
             background:var(--slate-950);
             border:1px solid var(--accent-border-dim);
-            border-radius:16px;
+            border-radius: var(--radius-md);
             width:100%; max-width:800px;
             padding:1.5rem 3rem;
             box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5), 0 0 40px rgba(var(--accent-rgb), 0.1);
@@ -563,21 +563,21 @@ function _ensureConfirmStyles() {
             from { opacity:0; transform:scale(0.95) translateY(10px); }
             to   { opacity:1; transform:scale(1) translateY(0); }
         }
-        .app-confirm-icon { font-size:2rem; margin-bottom:0.6rem; }
+        .app-confirm-icon { font-size: var(--fs-7xl); margin-bottom:0.6rem; }
         .app-confirm-title {
-            font-size:1.05rem; font-weight:700; color:var(--white);
+            font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--white);
             margin-bottom:0.6rem;
         }
         .app-confirm-message {
-            font-size:0.85rem; color:var(--text-secondary);
+            font-size: var(--fs-lg); color:var(--text-secondary);
             margin-bottom:1.5rem; line-height:1.55;
         }
         .app-confirm-actions {
             display:flex; gap:0.75rem; justify-content:center;
         }
         .app-confirm-btn {
-            flex:1; padding:0.6rem 1rem; border-radius:8px;
-            font:600 0.85rem 'Inter',sans-serif;
+            flex:1; padding:0.6rem 1rem; border-radius: var(--radius-sm);
+            font:var(--fw-semibold) var(--fs-lg) 'Inter',sans-serif;
             cursor:pointer; transition:all 0.15s; border:none;
         }
         .app-confirm-btn:focus { outline:2px solid var(--accent-hover); outline-offset:2px; }
@@ -590,9 +590,9 @@ function _ensureConfirmStyles() {
         #app-confirm-cancel:hover { color:var(--white); background:var(--slate-700); }
         .app-prompt-input {
             width:100%; padding:0.6rem 0.8rem; margin-bottom:1.25rem;
-            border-radius:8px; border:1px solid rgba(var(--white-rgb), 0.15);
+            border-radius: var(--radius-sm); border:1px solid rgba(var(--white-rgb), 0.15);
             background:var(--slate-900); color:var(--white);
-            font:500 0.9rem 'Inter',sans-serif; text-align:center;
+            font:var(--fw-medium) var(--fs-xl) 'Inter',sans-serif; text-align:center;
             box-sizing:border-box; outline:none;
         }
         .app-prompt-input:focus { border-color:var(--accent); box-shadow:0 0 0 2px rgba(var(--accent-rgb), 0.25); }
@@ -631,7 +631,7 @@ function createSaveIndicator(parent, opts = {}) {
     el.className = 'save-indicator';
     el.setAttribute('aria-live', 'polite');
     el.style.cssText =
-        'display:inline-flex; align-items:center; gap:0.35rem; font-size:0.72rem; font-weight:600; color:var(--text-secondary); margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
+        'display:inline-flex; align-items:center; gap:0.35rem; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color:var(--text-secondary); margin-left:0.6rem; opacity:0; transition:opacity 0.2s;';
     parent.appendChild(el);
 
     let savedTimer = null;

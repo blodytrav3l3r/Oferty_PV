@@ -109,9 +109,9 @@
                             >
                                 <span
                                     style="
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                         color: var(--text-muted);
-                                        font-weight: 600;
+                                        font-weight: var(--fw-semibold);
                                         text-transform: uppercase;
                                         letter-spacing: 0.3px;
                                     "
@@ -123,9 +123,9 @@
                                     data-type-filter="all"
                                     onclick="filterByType('all')"
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Wszystkie
@@ -136,9 +136,9 @@
                                     data-type-filter="offer"
                                     onclick="filterByType('offer')"
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
@@ -149,9 +149,9 @@
                                     data-type-filter="studnia_oferta"
                                     onclick="filterByType('studnia_oferta')"
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     <i data-lucide="cylinder"></i> Studnie
@@ -174,9 +174,9 @@
                             >
                                 <span
                                     style="
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                         color: var(--text-muted);
-                                        font-weight: 600;
+                                        font-weight: var(--fw-semibold);
                                         text-transform: uppercase;
                                         letter-spacing: 0.3px;
                                     "
@@ -191,9 +191,9 @@
                                             window.kartotekaUI.setFilterLocalOffers('all')
                                     "
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Wszystkie
@@ -207,9 +207,9 @@
                                             window.kartotekaUI.setFilterLocalOffers('with_order')
                                     "
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Z zamówieniem
@@ -223,9 +223,9 @@
                                             window.kartotekaUI.setFilterLocalOffers('without_order')
                                     "
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Bez zamówienia
@@ -312,9 +312,9 @@
                             >
                                 <span
                                     style="
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                         color: var(--text-muted);
-                                        font-weight: 600;
+                                        font-weight: var(--fw-semibold);
                                         text-transform: uppercase;
                                         letter-spacing: 0.3px;
                                     "
@@ -324,9 +324,9 @@
                                     id="ka-user-filter"
                                     class="btn btn-sm"
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                         appearance: none;
                                         -webkit-appearance: none;
                                         cursor: pointer;
@@ -348,9 +348,9 @@
                                     "
                                     title="Wyczyść wszystkie aktywne filtry"
                                     style="
-                                        border-radius: 20px;
+                                        border-radius: var(--radius-lg);
                                         padding: 0.35rem 0.9rem;
-                                        font-size: 0.75rem;
+                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Wyczyść filtry (0)
@@ -365,9 +365,9 @@
                                 onclick="toggleCompactMode()"
                                 style="
                                     margin-left: auto;
-                                    border-radius: 20px;
+                                    border-radius: var(--radius-lg);
                                     padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
+                                    font-size: var(--fs-base);
                                 "
                                 title="Przełącz tryb kompaktowy"
                             >
@@ -421,7 +421,7 @@
                                         font-weight: normal;
                                         padding-left: 2.4rem !important;
                                         width: 100%;
-                                        font-size: 0.8rem;
+                                        font-size: var(--fs-md);
                                     "
                                     oninput="
                                         window.kartotekaUI &&
@@ -437,9 +437,9 @@
                                 onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
                                 style="
-                                    border-radius: 20px;
+                                    border-radius: var(--radius-lg);
                                     padding: 0.35rem 0.9rem;
-                                    font-size: 0.75rem;
+                                    font-size: var(--fs-base);
                                     flex-shrink: 0;
                                 "
                             >
@@ -457,7 +457,7 @@
                         style="
                             padding: 1.2rem;
                             background: var(--bg-card);
-                            border-radius: 12px;
+                            border-radius: var(--radius);
                             border: 1px solid var(--border-glass);
                             margin-bottom: var(--section-gap-lg);
                         "
@@ -483,7 +483,9 @@
                                         margin-bottom: 1rem;
                                     "
                                 ></i>
-                                <div style="font-size: 0.9rem">Ładowanie ofert z serwera...</div>
+                                <div style="font-size: var(--fs-xl)">
+                                    Ładowanie ofert z serwera...
+                                </div>
                             </div>
                         </div>
                     </section>

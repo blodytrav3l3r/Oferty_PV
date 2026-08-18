@@ -51,8 +51,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-card-title {
-    font-size: 0.88rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -100,8 +100,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-form-label {
-    font-size: 0.68rem;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -112,10 +112,10 @@ body.rury-page > .main:has(#section-builder.active) {
     padding: 0.45rem 0.65rem;
     background: var(--bg-input);
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
-        500 0.82rem 'Inter',
+        var(--fw-medium) var(--fs-md) 'Inter',
         sans-serif;
     transition:
         border-color 0.2s,
@@ -136,10 +136,10 @@ body.rury-page > .main:has(#section-builder.active) {
     padding: 0.45rem 0.65rem;
     background: var(--bg-input);
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
-        500 0.82rem 'Inter',
+        var(--fw-medium) var(--fs-md) 'Inter',
         sans-serif;
     transition:
         border-color 0.2s,
@@ -163,11 +163,11 @@ body.rury-page > .main:has(#section-builder.active) {
 .rury-section-btn {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--bg-tile);
     color: var(--text-muted);
     font:
-        600 0.8rem 'Inter',
+        var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -206,14 +206,14 @@ body.rury-page > .main:has(#section-builder.active) {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
 }
 
 .rury-table thead th {
     padding: 0.3rem 0.4rem;
     text-align: left;
-    font-weight: 600;
-    font-size: 0.65rem;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -231,7 +231,7 @@ body.rury-page > .main:has(#section-builder.active) {
     border-bottom: 1px solid var(--border-table-subtle);
     border-right: 1px solid transparent;
     vertical-align: middle;
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
     color: var(--text-secondary);
     font-variant-numeric: tabular-nums;
 }
@@ -253,14 +253,14 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .order-partial-qty {
     width: 50px;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     padding: 2px 4px;
     text-align: center;
     border: 1px solid var(--border-glass);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     background: rgba(var(--warn-rgb), 0.05);
     color: var(--warn);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     vertical-align: middle;
     outline: none;
     transition:
@@ -281,7 +281,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .order-qty-max {
-    font-size: 0.6rem;
+    font-size: var(--fs-2xs);
     color: var(--text-muted);
     margin-left: 2px;
     vertical-align: middle;
@@ -289,12 +289,12 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .order-fully-badge {
     display: inline-block;
-    font-size: 0.62rem;
-    font-weight: 700;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
     color: var(--success-hover);
     background: rgba(var(--success-rgb), 0.1);
     border: 1px solid rgba(var(--success-rgb), 0.3);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     padding: 1px 6px;
     white-space: nowrap;
     text-transform: uppercase;
@@ -309,7 +309,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .order-qty-all {
     color: var(--text-muted);
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 
 .rury-table tbody td.rury-col-num,
@@ -330,20 +330,20 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-table .pehd-btn {
-    font-size: 0.72rem !important;
+    font-size: var(--fs-sm) !important;
     padding: 0.3rem 0.6rem !important;
     min-width: 88px;
     text-align: center;
     white-space: nowrap;
-    border-radius: 4px;
-    font-weight: 600;
+    border-radius: var(--radius-2xs);
+    font-weight: var(--fw-semibold);
     transition: all 0.2s ease;
 }
 .rury-table .pehd-btn-active {
     background: var(--warn);
     color: var(--slate-950);
     border: none;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     box-shadow: 0 0 12px rgba(var(--warn-rgb), 0.5);
 }
 .rury-table .pehd-btn-inactive {
@@ -359,9 +359,9 @@ body.rury-page > .main:has(#section-builder.active) {
     padding: 0.15rem 0.5rem;
     margin-top: 4px;
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--bg-input);
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     color: var(--text-primary);
     cursor: pointer;
     white-space: nowrap;
@@ -377,7 +377,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-table .length-editor .length-value {
     color: var(--accent);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .rury-table .text-right {
@@ -399,8 +399,8 @@ body.rury-page > .main:has(#section-builder.active) {
 /* Nagłówki kategorii w tabeli */
 .rury-row-category td {
     background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom));
-    font-weight: 700;
-    font-size: 0.75rem;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-base);
     padding: 0.2rem 0.5rem !important;
     border-left: 3px solid var(--accent);
     color: var(--text-primary);
@@ -414,8 +414,8 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-row-diameter td {
     background: var(--success-bg);
-    font-weight: 600;
-    font-size: 0.72rem;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-sm);
     padding: 0.15rem 0.5rem 0.15rem 0.8rem !important;
     border-left: 2px solid var(--success-bg);
     color: var(--success);
@@ -490,7 +490,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-summary-label {
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--text-muted);
@@ -498,8 +498,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-summary-value {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: var(--fs-5xl);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     margin: 0;
 }
@@ -510,7 +510,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-summary-value.success {
     color: var(--success);
-    font-weight: 800;
+    font-weight: var(--fw-extrabold);
 }
 
 .rury-summary-value.warn {
@@ -518,14 +518,14 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-summary-sub {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     margin-top: 0.2rem;
 }
 
 .rury-summary-value-lg {
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: var(--fs-6xl);
+    font-weight: var(--fw-extrabold);
     color: var(--success);
     margin: 0;
 }
@@ -549,14 +549,14 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* ── Przycisk edycji rabatu ── */
 .rury-btn-discount {
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
     padding: 0.6rem 1rem;
     border: 1px solid var(--accent-border);
     color: var(--accent-text);
     background: var(--bg-hover-deep);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     transition:
         background-color 0.2s,
         border-color 0.2s,
@@ -587,9 +587,9 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-action-btn {
     padding: 0.4rem 0.8rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font:
-        600 0.75rem 'Inter',
+        var(--fw-semibold) var(--fs-base) 'Inter',
         sans-serif;
     cursor: pointer;
     display: flex;
@@ -661,8 +661,8 @@ body.rury-page > .main:has(#section-builder.active) {
     background: rgba(var(--accent-rgb), 0.1);
     border: 1px solid rgba(var(--accent-rgb), 0.3);
     color: var(--accent-hover);
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
     padding: 0.2rem 0.5rem;
     display: none;
 }
@@ -681,8 +681,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-toolbar-title {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
     display: flex;
     align-items: center;
     gap: 0.4rem;
@@ -710,9 +710,9 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-catalog-tab {
     padding: 0.3rem 0.7rem;
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     font:
-        500 0.75rem 'Inter',
+        var(--fw-medium) var(--fs-base) 'Inter',
         sans-serif;
     border: 1px solid var(--border);
     background: var(--bg-tertiary-alt-2);
@@ -935,10 +935,10 @@ body.rury-page > .main:has(#section-builder.active) {
         min-width: 90px;
         height: 34px;
         padding: 0 0.7rem;
-        font-size: 0.75rem;
+        font-size: var(--fs-base);
     }
     .wizard-nav-fixed .wizard-step-info {
-        font-size: 0.6rem;
+        font-size: var(--fs-2xs);
         padding: 0.2rem 0.6rem;
         height: 26px;
         letter-spacing: 0.4px;
@@ -970,7 +970,7 @@ body.rury-page > .main:has(#section-builder.active) {
     }
 
     .rury-section-btn {
-        font-size: 0.72rem;
+        font-size: var(--fs-sm);
         padding: 0.35rem 0.7rem;
     }
 }
@@ -1013,8 +1013,8 @@ body.rury-page > .main:has(#section-builder.active) {
     gap: 0.2rem;
 }
 .zt-toggle-label {
-    font-size: 0.6rem;
-    font-weight: 600;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -1028,10 +1028,10 @@ body.rury-page > .main:has(#section-builder.active) {
 .zt-toggle-btn {
     padding: 0.35rem 2rem;
     font:
-        600 0.78rem 'Inter',
+        var(--fw-semibold) var(--fs-base) 'Inter',
         sans-serif;
     border: 1px solid var(--border-glass);
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
     background: rgba(var(--danger-rgb), 0.1);
     color: rgba(var(--danger-rgb), 0.8);
     cursor: pointer;

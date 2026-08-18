@@ -16,7 +16,7 @@ function renderPrecoPriceList() {
 
     if (!precoPricing || Object.keys(precoPricing).length === 0) {
         container.innerHTML =
-            '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size:0.8rem;" title="Przywróć domyślne wartości PRECO">Reset</button></div>';
+            '<div style="padding:2rem; text-align:center; color:var(--text-muted);">Brak cennika PRECO. <button class="btn btn-secondary" onclick="loadPrecoDefaults()" style="font-size: var(--fs-md);" title="Przywróć domyślne wartości PRECO">Reset</button></div>';
         return;
     }
 
@@ -44,19 +44,19 @@ function renderPrecoPriceList() {
         const displayStyle = isOpen ? 'block' : 'none';
         const iconName = isOpen ? 'chevron-down' : 'chevron-right';
 
-        html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius:8px; overflow:hidden;">`;
-        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.1); display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:0.85rem; color:var(--danger);">`;
+        html += `<div class="preco-accordion" style="margin-bottom:0.5rem; border:1px solid var(--border-glass); border-radius: var(--radius-sm); overflow:hidden;">`;
+        html += `<div onclick="togglePrecoAccordion(this, ${dn})" style="cursor:pointer; padding:0.6rem 0.8rem; background:rgba(var(--danger-rgb), 0.1); display:flex; justify-content:space-between; align-items:center; font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--danger);">`;
         html += `<span><i data-lucide="${iconName}" class="icon-xs"></i> DN${dn}</span>`;
-        html += `<span style="font-size:0.7rem; color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
+        html += `<span style="font-size: var(--fs-sm); color:var(--text-muted);">${data.kinety.length} pozycji</span>`;
         html += `</div>`;
         html += `<div class="preco-accordion-body" style="display:${displayStyle}; padding:0.5rem 0.8rem;">`;
 
         // Tabela kinet
         html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">`;
-        html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">Kinety — cena prosta / dod. wlot</div>`;
-        html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoKinetaRow(${dn})" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
+        html += `<div style="font-weight: var(--fw-semibold); font-size: var(--fs-base); color:var(--text-secondary);">Kinety — cena prosta / dod. wlot</div>`;
+        html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoKinetaRow(${dn})" style="font-size: var(--fs-sm); padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
         html += `</div>`;
-        html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>
+        html += `<table style="width:100%; font-size: var(--fs-base); margin-bottom:0.8rem;"><thead><tr>
             <th style="width:20%;">DN rury</th>
             <th class="text-right" style="width:35%;">Cena prosta (PLN)</th>
             <th class="text-right" style="width:35%;">Dod. wlot (PLN)</th>
@@ -64,7 +64,7 @@ function renderPrecoPriceList() {
         </tr></thead><tbody>`;
         data.kinety.forEach((k, i) => {
             html += `<tr>
-                <td style="font-weight:600; color:var(--accent-hover);"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
+                <td style="font-weight: var(--fw-semibold); color:var(--accent-hover);"><input type="number" class="edit-input" style="width:100px;" value="${k.dn}" data-preco-field="kinety.${i}.dn" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.prosta}" data-preco-field="kinety.${i}.prosta" data-preco-dn="${dn}"></td>
                 <td class="text-right"><input type="number" class="edit-input" style="width:110px; text-align:right;" value="${k.dodWlot}" data-preco-field="kinety.${i}.dodWlot" data-preco-dn="${dn}"></td>
                 <td class="text-center"><button class="btn-icon del" onclick="removePrecoKinetaRow(${dn}, ${i})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>
@@ -82,22 +82,22 @@ function renderPrecoPriceList() {
         html += renderPrecoRangeTable('Uniesienie kinety (mm)', data.uniesienie, dn, 'uniesienie');
         html += renderPrecoRangeTable('Redukcja kinety (mm)', data.redukcja, dn, 'redukcja');
 
-        html += `<div style="font-weight:600; font-size:0.78rem; margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Skrzynka włazowa</div>`;
-        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size:0.75rem;">`;
+        html += `<div style="font-weight: var(--fw-semibold); font-size: var(--fs-base); margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Skrzynka włazowa</div>`;
+        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size: var(--fs-base);">`;
         html += `<span>Cena/szt:</span>`;
         html += `<input type="number" class="edit-input" style="width:110px; text-align:right;" value="${data.skrzynkaWlazowa || 0}" data-preco-field="skrzynkaWlazowa" data-preco-dn="${dn}">`;
         html += `<span class="text-muted">PLN</span>`;
         html += `</div>`;
 
-        html += `<div style="font-weight:600; font-size:0.78rem; margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Wkładka na całej wysokości dennicy (uzupełnienie)</div>`;
-        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size:0.75rem;">`;
+        html += `<div style="font-weight: var(--fw-semibold); font-size: var(--fs-base); margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Wkładka na całej wysokości dennicy (uzupełnienie)</div>`;
+        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size: var(--fs-base);">`;
         html += `<span>Cena/mb:</span>`;
         html += `<input type="number" class="edit-input" style="width:110px; text-align:right;" value="${data.cenaPelnaWysMB || 0}" data-preco-field="cenaPelnaWysMB" data-preco-dn="${dn}">`;
         html += `<span class="text-muted">PLN</span>`;
         html += `</div>`;
 
-        html += `<div style="font-weight:600; font-size:0.78rem; margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Wkładka dna osadnika</div>`;
-        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size:0.75rem;">`;
+        html += `<div style="font-weight: var(--fw-semibold); font-size: var(--fs-base); margin:0.5rem 0 0.3rem; color:var(--text-secondary);">Wkładka dna osadnika</div>`;
+        html += `<div style="display:flex; gap:0.5rem; align-items:center; font-size: var(--fs-base);">`;
         html += `<span>Cena dna:</span>`;
         html += `<input type="number" class="edit-input" style="width:110px; text-align:right;" value="${data.cenaDnoOsadnika || 0}" data-preco-field="cenaDnoOsadnika" data-preco-dn="${dn}">`;
         html += `<span class="text-muted">PLN</span>`;
@@ -128,19 +128,19 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
     }
 
     let html = `<div style="display:flex; justify-content:space-between; align-items:center; margin:0.5rem 0 0.3rem;">`;
-    html += `<div style="font-weight:600; font-size:0.78rem; color:var(--text-secondary);">${title}</div>`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size:0.7rem; padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
+    html += `<div style="font-weight: var(--fw-semibold); font-size: var(--fs-base); color:var(--text-secondary);">${title}</div>`;
+    html += `<button class="btn btn-secondary btn-sm" onclick="addPrecoRangeRow(${dn}, '${fieldBase}')" style="font-size: var(--fs-sm); padding:0.2rem 0.5rem;"><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Zakres</button>`;
     html += `</div>`;
 
-    html += `<table style="width:100%; font-size:0.75rem; margin-bottom:0.8rem;"><thead><tr>`;
+    html += `<table style="width:100%; font-size: var(--fs-base); margin-bottom:0.8rem;"><thead><tr>`;
     html += `<th style="width:25%; padding-left:0.5rem;">Zakres min-max</th>`;
     grupyKeys.forEach((g) => {
         const sg = window.escapeHtml(g);
         const sgJs = encodeURIComponent(g);
         html += `<th style="padding:0.2rem 0.5rem;">
             <div style="display:flex; justify-content:flex-end; align-items:center; gap:0.3rem;">
-                <span style="color:var(--text-muted); font-size:0.7rem;">DN</span>
-                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(var(--black-rgb), 0.15); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px; padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
+                <span style="color:var(--text-muted); font-size: var(--fs-sm);">DN</span>
+                <input type="text" class="edit-input" style="width:75px; text-align:center; font-weight:bold; background:rgba(var(--black-rgb), 0.15); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); padding:0.2rem;" value="${sg}" onchange="updatePrecoGrupaKey(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'), this.value)" title="Edytuj nazwę grupy">
                 <button class="btn-icon del" onclick="removePrecoGrupaCol(${dn}, '${fieldBase}', decodeURIComponent('${sgJs}'))" title="Usuń grupę" aria-label="Usuń grupę" style="padding:0.15rem; margin:0;"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
         </th>`;
@@ -155,7 +155,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
 
     if (table && table.length > 0) {
         table.forEach((row, ri) => {
-            html += `<tr><td style="font-weight:600; color:var(--accent-hover); padding-left:0.5rem;">
+            html += `<tr><td style="font-weight: var(--fw-semibold); color:var(--accent-hover); padding-left:0.5rem;">
                 <div style="display:flex; gap:0.5rem; align-items:center; justify-content:flex-start;">
                     <input type="number" class="edit-input" style="width:70px; text-align:center; padding:0.2rem;" value="${row.min}" data-preco-field="${fieldBase}.${ri}.min" data-preco-dn="${dn}">
                     <span style="color:var(--text-muted); font-weight:normal;">–</span> 

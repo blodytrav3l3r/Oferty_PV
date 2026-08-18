@@ -122,18 +122,18 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                 const percent = totalQty > 0 ? Math.round((orderedQty / totalQty) * 100) : 0;
                 if (orderedQty > 0) {
                     const color = percent >= 100 ? 'var(--success-hover)' : 'var(--blue-hover)';
-                    progressHtml = `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb), 0.1); border:1px solid rgba(var(--blue-rgb), 0.2); border-radius:8px;">
+                    progressHtml = `<div style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0.8rem; margin-bottom:0.5rem; background:rgba(var(--blue-rgb), 0.1); border:1px solid rgba(var(--blue-rgb), 0.2); border-radius: var(--radius-sm);">
                         <div class="flex-1">
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
-                                <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary);">
+                                <span style="font-size: var(--fs-sm); font-weight: var(--fw-bold); color:var(--text-secondary);">
                                     <i data-lucide="package" aria-hidden="true"></i> Postęp zamówień
                                 </span>
-                                <span style="font-size:0.72rem; font-weight:800; color:${color};">
+                                <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color:${color};">
                                     ${orderedQty} / ${totalQty} szt. (${percent}%)
                                 </span>
                             </div>
-                            <div style="height:6px; background:rgba(var(--white-rgb), 0.1); border-radius:3px; overflow:hidden;">
-                                <div style="height:100%; width:${percent}%; background:${color}; border-radius:3px; transition:width 0.3s ease;"></div>
+                            <div style="height:6px; background:rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); overflow:hidden;">
+                                <div style="height:100%; width:${percent}%; background:${color}; border-radius: var(--radius-2xs); transition:width 0.3s ease;"></div>
                             </div>
                         </div>
                     </div>`;
@@ -210,19 +210,19 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         let pName = escapeHtml(item.name);
         if (item.pehdType === 'PEHD-3MM')
             pName +=
-                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:var(--slate-950); font-weight:700;">+ PEHD 3mm</span>';
+                ' <span style="font-size: var(--fs-xs); padding:1px 4px; border-radius: var(--radius-2xs); background:var(--warn); color:var(--slate-950); font-weight: var(--fw-bold);">+ PEHD 3mm</span>';
         if (item.pehdType === 'PEHD-4MM')
             pName +=
-                ' <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:var(--warn); color:var(--slate-950); font-weight:700;">+ PEHD 4mm</span>';
+                ' <span style="font-size: var(--fs-xs); padding:1px 4px; border-radius: var(--radius-2xs); background:var(--warn); color:var(--slate-950); font-weight: var(--fw-bold);">+ PEHD 4mm</span>';
         if (item.autoAdded)
             pName +=
-                ' <span style="font-size:.65rem;color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
+                ' <span style="font-size: var(--fs-xs);color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
         if (item.surcharge) {
             const isPos = item.surcharge > 0;
             const color = isPos ? 'var(--success-hover)' : 'var(--danger-hover)';
             const bg = isPos ? 'rgba(var(--success-rgb), 0.1)' : 'rgba(var(--danger-rgb), 0.1)';
             const border = isPos ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--danger-rgb), 0.3)';
-            pName += ` <span style="font-size:0.65rem; padding:1px 4px; border-radius:3px; background:${bg}; color:${color}; border:1px solid ${border}; font-weight:700;">Dopłata: ${fmt(item.surcharge)}</span>`;
+            pName += ` <span style="font-size: var(--fs-xs); padding:1px 4px; border-radius: var(--radius-2xs); background:${bg}; color:${color}; border:1px solid ${border}; font-weight: var(--fw-bold);">Dopłata: ${fmt(item.surcharge)}</span>`;
         }
 
         const remaining =
@@ -269,11 +269,11 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                     : diff < 0
                       ? 'var(--success-hover)'
                       : 'var(--text-muted)';
-            offerCell = `<td style="text-align:right;font-weight:600;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(snapOfferPrice)} PLN</td>`;
-            diffCell = `<td style="text-align:right;font-weight:700;color:${diffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${diffSign}${fmt(diff)} PLN</td>`;
+            offerCell = `<td style="text-align:right;font-weight: var(--fw-semibold);color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(snapOfferPrice)} PLN</td>`;
+            diffCell = `<td style="text-align:right;font-weight: var(--fw-bold);color:${diffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${diffSign}${fmt(diff)} PLN</td>`;
         } else if (showPriceComparison) {
             offerCell =
-                '<td style="text-align:right;color:var(--text-muted);font-weight:600;white-space:nowrap;padding:0.5rem 0.75rem;">—</td>';
+                '<td style="text-align:right;color:var(--text-muted);font-weight: var(--fw-semibold);white-space:nowrap;padding:0.5rem 0.75rem;">—</td>';
             diffCell =
                 '<td style="text-align:right;color:var(--text-muted);padding:0.5rem 0.75rem;">—</td>';
         }
@@ -281,16 +281,16 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
         const isFullyOrdered = remaining <= 0;
         html += `<tr style="border-bottom:1px solid var(--border-glass); ${isFullyOrdered ? 'border-left:3px solid rgba(var(--accent-rgb), 0.5); background:rgba(var(--accent-rgb), 0.05);' : ''}">
             ${summaryCheckboxCell}
-            <td style="text-align:center; color:var(--text-muted); font-weight:600; white-space:nowrap;">${i + 1}</td>
-            <td style="font-weight:600; color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
+            <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold); white-space:nowrap;">${i + 1}</td>
+            <td style="font-weight: var(--fw-semibold); color:var(--text-primary); max-width: 320px; overflow-wrap:break-word;">${pName}</td>
             <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${fmt(item.unitPrice)}</td>
             <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${item.discount}%</td>
             <td style="text-align:right; color:var(--text-secondary); white-space:nowrap;">${fmt(priceAfterDiscount)}</td>
             <td style="text-align:right; color:var(--warn); white-space:nowrap;">${tpu > 0 ? fmt(tpu) : '—'}</td>
-            <td style="text-align:right; color:var(--text-primary); font-weight:600; white-space:nowrap;">${fmt(unitTotal)}</td>
-            <td style="text-align:center; font-weight:600; white-space:nowrap;">${item.quantity} szt.</td>
+            <td style="text-align:right; color:var(--text-primary); font-weight: var(--fw-semibold); white-space:nowrap;">${fmt(unitTotal)}</td>
+            <td style="text-align:center; font-weight: var(--fw-semibold); white-space:nowrap;">${item.quantity} szt.</td>
             ${summaryOrderCell}
-            <td style="text-align:right; font-weight:700; color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
+            <td style="text-align:right; font-weight: var(--fw-bold); color:var(--success); white-space:nowrap;">${fmt(netto)} PLN</td>
             ${offerCell}${diffCell}
         </tr>`;
     });
@@ -316,10 +316,10 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                       ? 'var(--success-hover)'
                       : 'var(--text-muted)';
             html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
-                <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
-                <td class="text-right" style="font-size:0.85rem;color:var(--success);font-weight:700;white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
-                <td class="text-right" style="font-size:0.8rem;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumOffer)} PLN</td>
-                <td class="text-right" style="font-size:0.8rem;color:${catDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${catDiffSign}${fmt(catDiff)} PLN</td>
+                <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size: var(--fs-lg);color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
+                <td class="text-right" style="font-size: var(--fs-lg);color:var(--success);font-weight: var(--fw-bold);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
+                <td class="text-right" style="font-size: var(--fs-md);color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumOffer)} PLN</td>
+                <td class="text-right" style="font-size: var(--fs-md);color:${catDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${catDiffSign}${fmt(catDiff)} PLN</td>
             </tr>`;
         });
 
@@ -332,10 +332,10 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                   ? 'var(--success-hover)'
                   : 'var(--text-muted)';
         html += `<tr style="border-top:2px solid var(--border-glass);">
-            <td colspan="${COLSPAN_CAT}" style="font-weight:700;font-size:0.9rem;color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
-            <td class="text-right" style="font-weight:800;font-size:1rem;color:var(--success);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalNetto)} PLN</td>
-            <td class="text-right" style="font-weight:700;font-size:0.85rem;color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalOffer)} PLN</td>
-            <td class="text-right" style="font-weight:700;font-size:0.85rem;color:${totalDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${totalDiffSign}${fmt(totalDiff)} PLN</td>
+            <td colspan="${COLSPAN_CAT}" style="font-weight: var(--fw-bold);font-size: var(--fs-xl);color:var(--text-primary);padding:1rem 0.5rem;white-space:nowrap;">RAZEM (${items.length} pozycji)</td>
+            <td class="text-right" style="font-weight: var(--fw-extrabold);font-size: var(--fs-2xl);color:var(--success);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalNetto)} PLN</td>
+            <td class="text-right" style="font-weight: var(--fw-bold);font-size: var(--fs-lg);color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(totalOffer)} PLN</td>
+            <td class="text-right" style="font-weight: var(--fw-bold);font-size: var(--fs-lg);color:${totalDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${totalDiffSign}${fmt(totalDiff)} PLN</td>
         </tr>`;
         html += '</tfoot>';
     }

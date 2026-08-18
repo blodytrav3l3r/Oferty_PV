@@ -184,8 +184,8 @@ function renderOfferSummaryFooter(
                               ? 'var(--danger-hover)'
                               : 'var(--text-muted)';
                     const diffSign = priceDiff > 0 ? '+' : '';
-                    offerPriceCell = `<td class="text-right" style="font-size:0.8rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
-                    priceDiffCell = `<td class="text-right" style="font-size:0.8rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
+                    offerPriceCell = `<td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
+                    priceDiffCell = `<td class="text-right" style="font-size: var(--fs-md); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
                 } else {
                     offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
                     priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
@@ -193,11 +193,11 @@ function renderOfferSummaryFooter(
             }
 
             html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
-              <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
+              <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size: var(--fs-lg); color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
               ${offerPriceCell}
-              <td class="text-right" style="font-size:0.85rem; color:var(--success); font-weight:700; white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumPrice)} PLN</td>
+              <td class="text-right" style="font-size: var(--fs-lg); color:var(--success); font-weight: var(--fw-bold); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumPrice)} PLN</td>
               ${priceDiffCell}
-              <td class="text-right" style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">śr. ${fmtInt(avgHeight)} mm</td>
+              <td class="text-right" style="font-size: var(--fs-md); color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">śr. ${fmtInt(avgHeight)} mm</td>
             </tr>`;
         });
     }
@@ -218,8 +218,8 @@ function renderOfferSummaryFooter(
                       ? 'var(--danger-hover)'
                       : 'var(--text-muted)';
             const diffSign = totalDiff > 0 ? '+' : '';
-            totalOfferPriceCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(totalOfferPrice)} PLN</td>`;
-            totalPriceDiffCell = `<td class="text-right" style="font-weight:700; font-size:0.85rem; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(totalDiff)} PLN</td>`;
+            totalOfferPriceCell = `<td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(totalOfferPrice)} PLN</td>`;
+            totalPriceDiffCell = `<td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(totalDiff)} PLN</td>`;
         } else {
             totalOfferPriceCell = '<td class="text-right" class="pad-sm"></td>';
             totalPriceDiffCell = '<td class="text-right" class="pad-sm"></td>';
@@ -227,11 +227,11 @@ function renderOfferSummaryFooter(
     }
 
     html += `<tr style="border-top:2px solid var(--border-glass);">
-          <td colspan="${baseColspan}" style="font-weight:700; font-size:0.9rem; color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
+          <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
           ${totalOfferPriceCell}
-          <td class="text-right" style="font-weight:800; font-size:1rem; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
+          <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>
           ${totalPriceDiffCell}
-          <td class="text-right" style="font-weight:700; font-size:0.85rem; color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
+          <td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-muted); white-space:nowrap; padding:0.5rem 0.75rem;">${fmtInt(weight)} kg</td>
         </tr>
       </tfoot>`;
     return html;

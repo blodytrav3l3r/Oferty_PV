@@ -266,7 +266,7 @@ export default {
         el.innerHTML =
             '<div style="text-align:center; padding:2rem; color:var(--text-muted);">' +
             '<i data-lucide="loader-2" class="spin" style="width:24px;height:24px;animation:spin 1s linear infinite;"></i>' +
-            '<br/><span style="font-size:0.85rem; margin-top:0.5rem; display:inline-block;">Ładowanie ofert...</span></div>';
+            '<br/><span style="font-size: var(--fs-lg); margin-top:0.5rem; display:inline-block;">Ładowanie ofert...</span></div>';
         if (window.lucide) lucide.createIcons({ root: el });
     },
 
@@ -296,12 +296,12 @@ export default {
         let html =
             '<div style="text-align:center; padding:2rem; color:var(--text-danger);">' +
             '<strong>Błąd:</strong><br/>' +
-            '<span style="font-size:0.85rem; opacity:0.8;">' +
+            '<span style="font-size: var(--fs-lg); opacity:0.8;">' +
             window.escapeHtml(message) +
             '</span><br/>';
         if (hasCountdown) {
             html +=
-                '<span id="ka-retry-countdown" style="font-size:0.85rem; opacity:0.9; display:inline-block; margin-top:0.5rem;">' +
+                '<span id="ka-retry-countdown" style="font-size: var(--fs-lg); opacity:0.9; display:inline-block; margin-top:0.5rem;">' +
                 'Ponów próbę za <strong>' +
                 Math.ceil(retryAfter) +
                 '</strong> s</span><br/>';

@@ -58,6 +58,34 @@ const PRINT_TOKENS_CSS = `:root {
     --danger: #ef4444;
     --success: #10b981;
     --brand-navy: #2d3561;
+    --radius-2xs: 4px;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-pill: 999px;
+    --fs-3xs: 0.55rem;
+    --fs-2xs: 0.6rem;
+    --fs-xs: 0.65rem;
+    --fs-sm: 0.7rem;
+    --fs-base: 0.75rem;
+    --fs-md: 0.8rem;
+    --fs-lg: 0.85rem;
+    --fs-xl: 0.9rem;
+    --fs-2xl: 1rem;
+    --fs-3xl: 1.1rem;
+    --fs-4xl: 1.25rem;
+    --fs-5xl: 1.4rem;
+    --fs-6xl: 1.6rem;
+    --fs-7xl: 2rem;
+    --fs-8xl: 2.5rem;
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+    --fw-extrabold: 800;
+    --fw-black: 900;
 }`;
 
 /** Prosta interpolacja szablonu: zastępuje {{KEY}} wartościami z dataObj */

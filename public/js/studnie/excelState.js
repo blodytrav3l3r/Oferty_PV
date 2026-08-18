@@ -92,7 +92,8 @@ const DN_COLORS = {
     }
 };
 
-const _EXCEL_FONT = 'font-size:0.7rem;font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
+const _EXCEL_FONT =
+    'font-size: var(--fs-sm);font-family:Inter,Segoe UI,sans-serif;letter-spacing:0.1px;';
 
 /* eslint-disable prefer-const -- świadomie współdzielony stan, mutowany cross-file (excelCopyPaste, excelWellActions, excelTableManager itd.) */
 let _excelPasteInProgress = false;

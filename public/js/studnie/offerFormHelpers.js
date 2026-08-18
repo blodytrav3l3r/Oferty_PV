@@ -68,7 +68,7 @@ function updateOfferFormHeader(number, offerId) {
     var titleEl = document.getElementById('offer-form-title-studnie');
     if (titleEl)
         titleEl.innerHTML =
-            '<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight:700">' +
+            '<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight: var(--fw-bold)">' +
             escapeHtml(number || offerId) +
             '</span>';
     var btnEl2 = document.getElementById('btn-save-studnie-offer');

@@ -172,13 +172,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" onclick="_excelToggleWellAutoMode(' +
             wIdx +
-            ')" style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:pointer;background:' +
+            ')" style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:pointer;background:' +
             autoBg +
             ';color:' +
             autoColor +
             ';border:1px solid ' +
             autoBg +
-            ';font-weight:600;height:18px;">' +
+            ';font-weight: var(--fw-semibold);height:18px;">' +
             (isAuto ? 'AUTO' : 'MANUAL') +
             '</button><button type="button" id="excel-run-auto-' +
             wIdx +
@@ -188,7 +188,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             ')"' +
             (isAuto ? '' : ' disabled') +
-            ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:' +
+            ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:' +
             (isAuto ? 'pointer' : 'not-allowed') +
             ';background:' +
             (isAuto ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--slate-500-rgb), 0.15)') +
@@ -206,7 +206,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
-            ';text-align:center;color:var(--slate-500);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">' +
+            ';text-align:center;color:var(--slate-500);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">' +
             (idx + 1) +
             '</td>';
         /* Nazwa */
@@ -265,7 +265,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             stickyBg +
             ';text-align:center;color:' +
             dnColor +
-            ';font-weight:600;" data-cell="height-' +
+            ';font-weight: var(--fw-semibold);" data-cell="height-' +
             wIdx +
             '">' +
             (height || '\u2014') +
@@ -372,7 +372,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         }
         /* Gap */
         html +=
-            '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td>';
+            '<td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td>';
         /* Wlaz */
         const wlazCol = visibleCols.find(function (c) {
             return c.componentType === 'wlaz';
@@ -440,7 +440,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'text-align:center;color:var(--warn-hover);font-weight:600;" data-cell="denn-' +
+            'text-align:center;color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
             wIdx +
             '">' +
             (dennH || '\u2014') +
@@ -450,7 +450,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td style="' +
             tdBaseStyle +
-            'text-align:center;color:var(--warn);font-weight:600;" data-cell="uszcz-' +
+            'text-align:center;color:var(--warn);font-weight: var(--fw-semibold);" data-cell="uszcz-' +
             wIdx +
             '">' +
             uszczCount +
@@ -509,15 +509,15 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<button onclick="excelOpenWellParams(' +
             wIdx +
-            ')" title="Parametry" style="background:var(--slate-950);color:var(--accent-hover);border:1px solid rgba(var(--accent-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--accent-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Parametry" style="background:var(--slate-950);color:var(--accent-hover);border:1px solid rgba(var(--accent-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--accent-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDuplicateWell(' +
             wIdx +
-            ')" title="Duplikuj" style="background:var(--slate-950);color:var(--blue-hover);border:1px solid rgba(var(--blue-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--blue-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Duplikuj" style="background:var(--slate-950);color:var(--blue-hover);border:1px solid rgba(var(--blue-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--blue-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDeleteWell(' +
             wIdx +
-            ')" title="Usu\u0144" style="background:var(--slate-950);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size:0.65rem;cursor:pointer;font-weight:600;transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--danger-rgb), 0.15)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Usu\u0144" style="background:var(--slate-950);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--danger-rgb), 0.15)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
         html += '</div></td>';
         html += '</tr>';
     });
@@ -536,7 +536,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         tdEmptyStyle +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius:3px;font-size:0.55rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight:600;height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius:3px;font-size:0.75rem;cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight: var(--fw-semibold);height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -544,7 +544,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:var(--slate-700);font-size:0.65rem;border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
+        ';text-align:center;color:var(--slate-700);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -610,7 +610,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
     }
     html +=
-        '<td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size:0.67rem;font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td>';
+        '<td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td>';
     html +=
         '<td style="' +
         tdEmptyStyle +
@@ -655,7 +655,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td style="' +
         tdEmptyStyle +
-        'text-align:center;color:var(--slate-800);font-size:0.6rem;" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>';
+        'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>';
     html += '</tr>';
     html += '</tbody>';
     return html;

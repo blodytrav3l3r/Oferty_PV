@@ -50,7 +50,7 @@ function _excelColMenuActionHtml(action) {
         '<div' +
         (onclick ? ' onclick="' + onclick + '"' : '') +
         hover +
-        ' style="padding:0.35rem 0.6rem;font-size:0.62rem;color:' +
+        ' style="padding:0.35rem 0.6rem;font-size: var(--fs-xs);color:' +
         color +
         ';cursor:' +
         cursor +
@@ -86,10 +86,10 @@ function _excelOpenColContextMenu(th, x, y) {
     menu.style.cssText =
         'position:fixed;z-index:' +
         LAYERS.EXCEL_POPUP_CONTENT +
-        ';min-width:185px;background:var(--slate-800);border:1px solid rgba(var(--white-rgb),0.12);border-radius:4px;padding:2px;box-shadow:0 8px 24px rgba(var(--black-rgb),0.5);';
+        ';min-width:185px;background:var(--slate-800);border:1px solid rgba(var(--white-rgb),0.12);border-radius: var(--radius-2xs);padding:2px;box-shadow:0 8px 24px rgba(var(--black-rgb),0.5);';
     if (col) {
         menu.innerHTML =
-            '<div style="padding:0.3rem 0.6rem;font-size:0.55rem;color:var(--slate-400);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid rgba(var(--white-rgb),0.06);">' +
+            '<div style="padding:0.3rem 0.6rem;font-size: var(--fs-3xs);color:var(--slate-400);text-transform:uppercase;letter-spacing:0.4px;border-bottom:1px solid rgba(var(--white-rgb),0.06);">' +
             escapeHtml(col.shortLabel || col.label || col.id) +
             '</div>';
     }

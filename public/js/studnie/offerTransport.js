@@ -154,8 +154,8 @@ window.handleOfferTransportCancel = async function () {
     if (modalKm !== initialTransportSnapshot.km || modalRate !== initialTransportSnapshot.rate) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
-                `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
-                 <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
+                `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
+                 <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
                 { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
             );
 
@@ -191,8 +191,8 @@ window.handleOfferTransportSave = async function () {
     if (typeof window.appConfirm === 'function') {
         const inOrderMode = typeof orderEditMode !== 'undefined' && orderEditMode;
         const confirmed = await window.appConfirm(
-            `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację transportu</div>
-             <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać parametry przewozu do ${inOrderMode ? 'zamówienia' : 'oferty'}?</div>`,
+            `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację transportu</div>
+             <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">Czy na pewno chcesz zapisać parametry przewozu do ${inOrderMode ? 'zamówienia' : 'oferty'}?</div>`,
             {
                 allowHtml: true,
                 okText: inOrderMode ? 'Zapisz Zamówienie' : 'Zapisz Ofertę',

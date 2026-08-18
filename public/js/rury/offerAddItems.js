@@ -39,30 +39,30 @@ function showPipeLengthModal(productId, editIndex = null) {
         id: 'add-pipe-length-modal',
         titleId: 'pipe-length-title',
         html: `
-    <div class="modal" style="max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1);">
+    <div class="modal" style="max-width: 450px; border-radius: var(--radius); box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1);">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem;">
-        <h3 id="pipe-length-title" style="font-size: 1.25rem; font-weight: 700; color: var(--text-primary);"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
+        <h3 id="pipe-length-title" style="font-size: var(--fs-4xl); font-weight: var(--fw-bold); color: var(--text-primary);"><i data-lucide="ruler" aria-hidden="true"></i> ${editIndex !== null ? 'Zmień' : 'Dostosuj'} długość rury</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="font-size:0.95rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: 8px;">
-        Wybrany produkt:<br><strong style="color:var(--text-primary); font-size: 1.05rem;">${escapeHtml(product.name)}</strong>
+      <div style="font-size: var(--fs-xl); color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5; background: var(--bg-hover); padding: 1rem; border-radius: var(--radius-sm);">
+        Wybrany produkt:<br><strong style="color:var(--text-primary); font-size: var(--fs-2xl);">${escapeHtml(product.name)}</strong>
       </div>
       <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
-        <label class="form-label" style="font-size:1.15rem; font-weight:600; margin-bottom:1rem; color: var(--text-primary);">Wprowadź długość rury (m)</label>
+        <label class="form-label" style="font-size: var(--fs-3xl); font-weight: var(--fw-semibold); margin-bottom:1rem; color: var(--text-primary);">Wprowadź długość rury (m)</label>
         <div style="display:flex; justify-content:center; align-items:center; gap:1rem">
-          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
+          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: var(--fs-6xl); display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
           <input class="form-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" 
-            style="font-size:2.5rem; padding:1rem; width:140px; text-align:center; font-weight:800; border: 2px solid var(--accent); border-radius: 12px; color: var(--accent); background: transparent;">
-          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
+            style="font-size: var(--fs-8xl); padding:1rem; width:140px; text-align:center; font-weight: var(--fw-extrabold); border: 2px solid var(--accent); border-radius: var(--radius); color: var(--accent); background: transparent;">
+          <button class="btn btn-secondary" style="border-radius:50%; width: 44px; height: 44px; padding: 0; font-size: var(--fs-6xl); display: flex; align-items: center; justify-content: center;" onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
         </div>
-        <div style="margin-top:1rem; font-size:0.9rem; color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
-          <span style="background: var(--bg-hover); padding: 0.25rem 0.5rem; border-radius: 4px;">Min: <strong>1.0m</strong></span>
-          <span style="background: var(--bg-hover); padding: 0.25rem 0.5rem; border-radius: 4px;">Max: <strong>${maxL}m</strong></span>
+        <div style="margin-top:1rem; font-size: var(--fs-xl); color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
+          <span style="background: var(--bg-hover); padding: 0.25rem 0.5rem; border-radius: var(--radius-2xs);">Min: <strong>1.0m</strong></span>
+          <span style="background: var(--bg-hover); padding: 0.25rem 0.5rem; border-radius: var(--radius-2xs);">Max: <strong>${maxL}m</strong></span>
         </div>
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
         <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
-        <button class="btn btn-primary" onclick="confirmPipeLength('${escapeHtml(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size:1.05rem; font-weight: 600; box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
+        <button class="btn btn-primary" onclick="confirmPipeLength('${escapeHtml(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold); box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`
     });

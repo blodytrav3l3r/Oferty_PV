@@ -622,9 +622,9 @@ window.applyPreviewLockUI = function () {
         banner = document.createElement('div');
         banner.id = 'preview-lock-banner';
         banner.innerHTML = `
-            <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(var(--slate-950-rgb), 0.8); border:2px solid var(--warn-hover); color:var(--warn-hover); padding:0.8rem 2.5rem; border-radius:40px; z-index:${LAYERS.PREVIEW_BANNER}; box-shadow:0 20px 40px rgba(var(--black-rgb), 0.8); font-weight:800; display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
-                <span style="font-size:1.2rem;"><i data-lucide="eye"></i>️ HISTORIA — TYLKO DO ODCZYTU</span>
-                <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:var(--warn-hover); color:var(--black); border:none; padding:0.4rem 1rem; border-radius:20px; font-weight:700;">ZAMKNIJ PODGLĄD</button>
+            <div style="position:fixed; top:2rem; left:50%; transform:translateX(-50%); background:rgba(var(--slate-950-rgb), 0.8); border:2px solid var(--warn-hover); color:var(--warn-hover); padding:0.8rem 2.5rem; border-radius:40px; z-index:${LAYERS.PREVIEW_BANNER}; box-shadow:0 20px 40px rgba(var(--black-rgb), 0.8); font-weight: var(--fw-extrabold); display:flex; align-items:center; gap:1.5rem; backdrop-filter:blur(10px);">
+                <span style="font-size: var(--fs-4xl);"><i data-lucide="eye"></i>️ HISTORIA — TYLKO DO ODCZYTU</span>
+                <button onclick="window.exitPreviewMode()" class="btn btn-sm" style="background:var(--warn-hover); color:var(--black); border:none; padding:0.4rem 1rem; border-radius: var(--radius-lg); font-weight: var(--fw-bold);">ZAMKNIJ PODGLĄD</button>
             </div>
         `;
         document.body.appendChild(banner);

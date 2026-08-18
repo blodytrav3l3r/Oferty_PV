@@ -41,19 +41,19 @@ function renderOrderModeBanner() {
 
     banner.style.cssText = `
         display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-        padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
+        padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius: var(--radius-sm);
         background: ${hasChanges ? 'linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--danger-rgb), 0.05))' : 'linear-gradient(135deg, rgba(var(--success-rgb), 0.1), rgba(var(--success-rgb), 0.05))'};
         border: 2px solid ${hasChanges ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--success-rgb), 0.3)'};
     `;
 
     banner.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size:1.3rem;"><i data-lucide="package"></i></span>
+            <span style="font-size: var(--fs-4xl);"><i data-lucide="package"></i></span>
             <div>
-                <div style="font-size:0.82rem; font-weight:800; color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">
+                <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">
                     TRYB ZAMÓWIENIA — ${order.number || ''}
                 </div>
-                <div style="font-size:0.65rem; color:var(--text-muted);">
+                <div style="font-size: var(--fs-xs); color:var(--text-muted);">
                     ${hasChanges ? `<i data-lucide="alert-triangle"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>

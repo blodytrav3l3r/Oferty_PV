@@ -7,7 +7,7 @@ function renderTiles() {
     const well = getCurrentWell();
     if (!well) {
         container.innerHTML =
-            '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size:0.8rem;">Dodaj studnię aby wybrać elementy</div>';
+            '<div style="text-align:center; padding:2rem; color:var(--text-muted); font-size: var(--fs-md);">Dodaj studnię aby wybrać elementy</div>';
         return;
     }
     const dn = well.dn;
@@ -240,7 +240,7 @@ function renderTiles() {
 
         if (redProducts.length > 0) {
             html += `<div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed rgba(var(--white-rgb), 0.1);">`;
-            html += `<h3 class="color-warn" style="margin-bottom:1rem; font-size:1.1rem;">Redukcja (DN${tDn})</h3>`;
+            html += `<h3 class="color-warn" style="margin-bottom:1rem; font-size: var(--fs-3xl);">Redukcja (DN${tDn})</h3>`;
 
             groups.forEach((g) => {
                 if (g.types.includes('plyta_redukcyjna')) return;

@@ -13,7 +13,7 @@
 .przejscia-vis-popup {
     background: var(--bg-deep);
     border: 1px solid var(--accent-bg-hover);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1rem;
     width: 95vw;
     max-width: 1100px;
@@ -42,12 +42,12 @@
 
 .przejscia-vis-action-btn {
     padding: 0.25rem 0.6rem;
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
     border: 1px solid var(--bg-tertiary);
     background: var(--bg-tertiary);
     color: var(--text-secondary);
     font:
-        600 0.6rem 'Inter',
+        var(--fw-semibold) var(--fs-2xs) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -70,7 +70,7 @@
 
 .przejscia-vis-tile {
     padding: 0.4rem 0.5rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition:
         background-color 0.18s ease,
@@ -115,8 +115,8 @@
 }
 
 .przejscia-vis-tile-name {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     white-space: nowrap;
     line-height: 1.3;
@@ -141,7 +141,7 @@
 .app-confirm-modal {
     background: var(--bg-deep);
     border: 1px solid var(--accent-border-dim);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     width: 100%;
     max-width: 400px;
     padding: 1.5rem;
@@ -150,14 +150,14 @@
 }
 
 .app-confirm-title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
     color: var(--white);
     margin-bottom: 0.8rem;
 }
 
 .app-confirm-message {
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     color: var(--text-muted);
     margin-bottom: 1.5rem;
     line-height: 1.5;
@@ -172,9 +172,9 @@
 .app-confirm-btn {
     flex: 1;
     padding: 0.6rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-lg);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -326,8 +326,8 @@
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    font-size: 0.68rem !important;
-    font-weight: 700 !important;
+    font-size: var(--fs-xs) !important;
+    font-weight: var(--fw-bold) !important;
     padding: 0.35rem 0.7rem !important;
     white-space: nowrap;
     transition: var(--transition);
@@ -340,8 +340,8 @@
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: var(--transition);
 }
@@ -355,7 +355,7 @@
     background: rgba(var(--accent-rgb), 0.15);
     border-color: rgba(var(--accent-rgb), 0.5);
     color: var(--accent-text);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
 }
 
 @media (max-width: 1100px) {
@@ -380,7 +380,7 @@
 .pehd-card {
     background: rgba(var(--white-rgb), 0.05);
     border: 2px solid rgba(var(--white-rgb), 0.05);
-    border-radius: 12px;
+    border-radius: var(--radius);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -396,7 +396,7 @@
     padding: 0.6rem 1.2rem;
     background: transparent;
     border: 1px solid rgba(var(--white-rgb), 0.15);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--slate-300);
     cursor: pointer;
     transition:
@@ -430,7 +430,7 @@
 }
 
 .recalc-modal-desc {
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
     color: var(--text-muted);
     margin-bottom: 1rem;
     line-height: 1.4;
@@ -449,7 +449,7 @@
 .recalc-group {
     background: rgba(var(--slate-800-rgb), 0.5);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 0.8rem;
     margin-bottom: 0.8rem;
 }
@@ -464,17 +464,17 @@
 .recalc-group-title {
     margin: 0;
     color: var(--accent);
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
 }
 
 .recalc-group-count {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
 }
 
 .recalc-section-label {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     margin-bottom: 0.3rem;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -485,7 +485,7 @@
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     margin-bottom: 0.3rem;
 }
@@ -514,7 +514,7 @@
     padding: 0.4rem 0.35rem;
     text-align: center;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     /* Pełne tło w kolorze akcentu, przyciemnione 28% (var(--slate-950)) — biały tekst ≥ AA 4.5:1. */
     background: color-mix(in srgb, var(--tile-accent) 72%, var(--slate-950));
     border: 1px solid rgba(var(--white-rgb), 0.1);
@@ -563,8 +563,8 @@
 }
 
 .recalc-tile-name {
-    font-size: 0.65rem;
-    font-weight: 700;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
     color: var(--white);
     line-height: 1.25;
     overflow-wrap: anywhere;
@@ -573,8 +573,8 @@
 }
 
 .recalc-tile-height {
-    font-size: 0.6rem;
-    font-weight: 600;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-semibold);
     color: rgba(var(--white-rgb), 0.8);
     line-height: 1.15;
     white-space: nowrap;
@@ -583,12 +583,12 @@
 
 .recalc-empty {
     grid-column: 1 / -1;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     text-align: center;
     padding: 0.4rem;
     border: 1px dashed var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
 }
 
 .recalc-reduction {
@@ -599,7 +599,7 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     cursor: pointer;
 }
 
@@ -629,7 +629,7 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     cursor: pointer;
     margin-right: auto;
@@ -639,7 +639,7 @@
 .recalc-progress {
     padding: 0.5rem 1rem;
     border-top: 1px solid var(--border);
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     color: var(--accent);
     background: rgba(var(--black-rgb), 0.2);
     text-align: center;
@@ -673,8 +673,8 @@
 
 .zak-modal-badge {
     color: var(--accent);
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
     margin-left: 0.3rem;
 }
 
@@ -715,8 +715,8 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    font-size: 0.7rem;
-    font-weight: 800;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-extrabold);
     color: var(--white);
     text-shadow: 0 1px 2px rgba(var(--black-rgb), 0.3);
 }
@@ -728,8 +728,8 @@
 }
 
 .zak-tile-name {
-    font-size: 0.62rem;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
     color: rgba(var(--white-rgb), 0.8);
     line-height: 1.2;
     overflow-wrap: anywhere;
@@ -744,8 +744,8 @@
     gap: 0.3rem;
     width: 100%;
     margin-top: auto;
-    font-size: 0.6rem;
-    font-weight: 700;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-bold);
     color: rgba(var(--white-rgb), 0.8);
 }
 
@@ -768,15 +768,15 @@
 }
 
 .zak-tile-note {
-    font-size: 0.58rem;
-    font-weight: 700;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-bold);
     color: var(--warn);
     line-height: 1.2;
 }
 
 .zak-empty {
     grid-column: 1 / -1;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     text-align: center;
     padding: 1.5rem;

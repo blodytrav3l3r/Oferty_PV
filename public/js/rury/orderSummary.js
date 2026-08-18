@@ -156,7 +156,7 @@ function updateRuryOrderSummary(orderData) {
                 orderCell.innerHTML =
                     '<input type="number" class="order-partial-qty" value="' +
                     escapeHtml(String(currentQty)) +
-                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius:4px;padding:2px 4px">';
+                    '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius: var(--radius-2xs);padding:2px 4px">';
                 var newInput = /** @type {HTMLInputElement} */ (
                     orderCell.querySelector('.order-partial-qty')
                 );
@@ -211,9 +211,9 @@ function updateRuryOrderSummary(orderData) {
                 }
                 const badgeSpan = document.createElement('span');
                 badgeSpan.style.cssText =
-                    'font-size:0.6rem;color:' +
+                    'font-size: var(--fs-2xs);color:' +
                     (change.type === 'added' ? 'var(--success)' : 'var(--danger)') +
-                    ';font-weight:700;margin-left:0.3rem;white-space:nowrap;';
+                    ';font-weight: var(--fw-bold);margin-left:0.3rem;white-space:nowrap;';
                 badgeSpan.textContent = badge;
                 const nameCell = row.querySelectorAll('td')[1];
                 if (nameCell) nameCell.appendChild(badgeSpan);

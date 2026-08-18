@@ -18,9 +18,9 @@ function closeOfferDiscountsPopup() {
 
 async function handleOfferDiscountsSave() {
     const shouldSave = await window.appConfirm(
-        '<div style="font-size: 0.9rem; line-height: 1.4; padding: 0.5rem 0;">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>',
+        '<div style="font-size: var(--fs-xl); line-height: 1.4; padding: 0.5rem 0;">Czy na pewno chcesz zapisać zmienione rabaty na stałe do bazy?</div>',
         {
-            title: '<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację cenową</div>',
+            title: '<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Zapisz nową konfigurację cenową</div>',
             type: 'info',
             allowHtml: true,
             okText: '<i data-lucide="save"></i> Zapisz ofertę',
@@ -46,9 +46,9 @@ async function handleOfferDiscountsCancel() {
 
     if (currentSnapshot !== initialSnapshot) {
         const confirmExit = await window.appConfirm(
-            '<div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: 0.7rem;">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>',
+            '<div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: var(--fs-sm);">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>',
             {
-                title: '<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Niezapisane zmiany rabatów</div>',
+                title: '<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Niezapisane zmiany rabatów</div>',
                 type: 'warning',
                 allowHtml: true,
                 okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
@@ -181,7 +181,7 @@ function renderOfferDiscountsPopupContent() {
             -moz-appearance: textfield;
         }
     </style>
-    <p style="color: var(--text-muted); margin: 0 0 0.5rem 0; font-size: 0.72rem; line-height: 1.4;">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
+    <p style="color: var(--text-muted); margin: 0 0 0.5rem 0; font-size: var(--fs-sm); line-height: 1.4;">Ustaw procentowe rabaty dla poszczególnych średnic. Zmiany widoczne na żywo.</p>
     <div style="display: flex; flex-direction: column; gap: 0.35rem;">`;
 
     let totalOverallNetto = 0;
@@ -202,15 +202,15 @@ function renderOfferDiscountsPopupContent() {
 
     const buildInputBlock = (dn, label, type, value, accentColor, borderColor) => `
         <div style="display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 100px;">
-            <span style="font-size: 0.5rem; font-weight: 700; color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
-            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px; border: 1px solid ${borderColor}; background: rgba(var(--black-rgb), 0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
+            <span style="font-size: var(--fs-3xs); font-weight: var(--fw-bold); color: ${accentColor}; text-transform: uppercase; letter-spacing: 0.4px;">${label}</span>
+            <div style="display: flex; align-items: center; justify-content: center; height: 30px; border-radius: var(--radius-sm); border: 1px solid ${borderColor}; background: rgba(var(--black-rgb), 0.3); overflow: hidden; transition: border-color 0.2s, box-shadow 0.2s;" onfocusin="this.style.borderColor='${accentColor}'; this.style.boxShadow='0 0 10px ${borderColor}'" onfocusout="this.style.borderColor='${borderColor}'; this.style.boxShadow='none'">
                 <input type="number" class="text-center offer-discount-input" 
                        value="${value}" 
                        onfocus="this.dataset.oldValue=this.value; this.value='';"
                        onblur="if(this.value===''){this.value=this.dataset.oldValue;}else{handleOfferDiscountChange('${dn}', '${type}', this.value);}"
                        onkeydown="if(event.key==='Enter') this.blur();"
-                       style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: ${accentColor}; background: transparent; border: none; outline: none; box-shadow: none; text-align: center;">
-                <span style="font-size: 0.7rem; font-weight: 800; color: ${borderColor}; padding-right: 0.4rem; pointer-events: none;">%</span>
+                       style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: ${accentColor}; background: transparent; border: none; outline: none; box-shadow: none; text-align: center;">
+                <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: ${borderColor}; padding-right: 0.4rem; pointer-events: none;">%</span>
             </div>
         </div>`;
 
@@ -249,14 +249,14 @@ function renderOfferDiscountsPopupContent() {
             .some((w) => w.kineta === 'preco' || w.kineta === 'precotop');
 
         html += `
-        <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: 10px; padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
+        <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.5);"></span>
-                    <span id="offer-dn-count-${dn}" style="font-weight: 800; font-size: 0.8rem; color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
-                    <span id="offer-dn-avg-${dn}" style="font-size: 0.7rem; color: var(--text-secondary); font-weight: 700; opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
+                    <span id="offer-dn-count-${dn}" style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--text-primary);">${escapeHtml(dnCount)}× ${escapeHtml(displayDn)}</span>
+                    <span id="offer-dn-avg-${dn}" style="font-size: var(--fs-sm); color: var(--text-secondary); font-weight: var(--fw-bold); opacity: 0.85;">śr. ${typeof fmt === 'function' ? escapeHtml(fmt(Math.round(dnAvgPrice))) : escapeHtml(Math.round(dnAvgPrice))} PLN</span>
                 </div>
-                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: 800; font-size: 0.8rem;">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
+                <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: var(--fw-extrabold); font-size: var(--fs-md);">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb), 0.3)')}
@@ -294,26 +294,26 @@ function renderOfferDiscountsPopupContent() {
         const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
 
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(var(--blue-alt-rgb), 0.05); border: 1px solid rgba(var(--blue-alt-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+        <div style="margin-top: 0.5rem; background: rgba(var(--blue-alt-rgb), 0.05); border: 1px solid rgba(var(--blue-alt-rgb), 0.15); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--blue-alt); box-shadow: 0 0 6px rgba(var(--blue-alt-rgb), 0.5);"></span>
-                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--blue-alt);">Wkładka PEHD <span style="font-size:0.65rem; font-weight:600; opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
+                    <span style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--blue-alt);">Wkładka PEHD <span style="font-size: var(--fs-xs); font-weight: var(--fw-semibold); opacity:0.8; margin-left:0.3rem;">(Bazowa cena: ${currentPehdPrice} PLN/m²)</span></span>
                 </div>
-                <div style="color: var(--blue-alt); font-weight: 800; font-size: 0.8rem;"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
+                <div style="color: var(--blue-alt); font-weight: var(--fw-extrabold); font-size: var(--fs-md);"><span id="offer-pehd-price-after-discount">${currentPehdPriceAfter.toFixed(2)}</span> PLN / m²</div>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--blue-alt); margin-bottom: 0.15rem;">Globalny Rabat na Wkładkę</div>
-                    <div style="display: flex; align-items: center; background: rgba(var(--blue-alt-rgb), 0.1); border: 1px solid rgba(var(--blue-alt-rgb), 0.3); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: var(--fs-3xs); font-weight: var(--fw-extrabold); text-transform: uppercase; letter-spacing: 0.5px; color: var(--blue-alt); margin-bottom: 0.15rem;">Globalny Rabat na Wkładkę</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--blue-alt-rgb), 0.1); border: 1px solid rgba(var(--blue-alt-rgb), 0.3); border-radius: var(--radius-sm); padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                             id="offer-pehd-discount"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPehdDiscountChange(this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--blue-alt); background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--blue-alt-rgb), 0.5); padding-right: 0.4rem;">%</span>
+                            style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--blue-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--blue-alt-rgb), 0.5); padding-right: 0.4rem;">%</span>
                     </div>
                 </div>
             </div>
@@ -330,29 +330,29 @@ function renderOfferDiscountsPopupContent() {
         const malZC = refW.malowanieZewCena || '';
 
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(var(--accent2-rgb), 0.05); border: 1px solid rgba(var(--accent2-rgb), 0.15); border-radius: 10px; padding: 0.55rem 0.7rem;">
+        <div style="margin-top: 0.5rem; background: rgba(var(--accent2-rgb), 0.05); border: 1px solid rgba(var(--accent2-rgb), 0.15); border-radius: var(--radius-sm); padding: 0.55rem 0.7rem;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.35rem;">
                     <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); box-shadow: 0 0 6px rgba(var(--accent2-rgb), 0.5);"></span>
-                    <span style="font-weight: 800; font-size: 0.8rem; color: var(--purple-alt);">Koszt malowania</span>
+                    <span style="font-weight: var(--fw-extrabold); font-size: var(--fs-md); color: var(--purple-alt);">Koszt malowania</span>
                 </div>
-                <span style="font-size: 0.6rem; color: var(--text-muted);">PLN / m²</span>
+                <span style="font-size: var(--fs-2xs); color: var(--text-muted);">PLN / m²</span>
             </div>
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">`;
 
         if (anyMalW) {
             html += `
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Wewnętrzne</div>
-                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: var(--fs-3xs); font-weight: var(--fw-extrabold); text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Wewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-sm); padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
+                            style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }
@@ -360,16 +360,16 @@ function renderOfferDiscountsPopupContent() {
         if (anyMalZ) {
             html += `
                 <div style="flex:1; min-width:120px;">
-                    <div style="font-size: 0.55rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Zewnętrzne</div>
-                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: 7px; padding: 0 0; overflow:hidden;">
+                    <div style="font-size: var(--fs-3xs); font-weight: var(--fw-extrabold); text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent2); margin-bottom: 0.15rem;">Zewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-sm); padding: 0 0; overflow:hidden;">
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
                             class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            style="min-width:0; flex:1; font-size: 0.9rem; font-weight: 900; color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
-                        <span style="font-size: 0.7rem; font-weight: 800; color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
+                            style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }
@@ -380,13 +380,13 @@ function renderOfferDiscountsPopupContent() {
 
     if (totalOverallNetto > 0) {
         html += `
-        <div style="margin-top: 0.5rem; background: rgba(var(--black-rgb), 0.3); border: 1px dashed rgba(var(--white-rgb), 0.1); padding: 0.5rem 0.9rem; border-radius: 10px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.65rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Łączna Suma Netto</span>
-            <span id="offer-total-popup-price" style="font-size: 1.05rem; font-weight: 900; color: var(--success);">${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN</span>
+        <div style="margin-top: 0.5rem; background: rgba(var(--black-rgb), 0.3); border: 1px dashed rgba(var(--white-rgb), 0.1); padding: 0.5rem 0.9rem; border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;">Łączna Suma Netto</span>
+            <span id="offer-total-popup-price" style="font-size: var(--fs-2xl); font-weight: var(--fw-black); color: var(--success);">${typeof fmt === 'function' ? fmt(totalOverallNetto) : totalOverallNetto} PLN</span>
         </div>`;
     } else {
         html +=
-            '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: 0.75rem;">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>';
+            '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted); font-size: var(--fs-base);">Koszyk oferty jest pusty. Dodaj studnie na etapie konfiguracji.</div>';
     }
 
     body.innerHTML = html;

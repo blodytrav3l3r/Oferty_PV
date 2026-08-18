@@ -38,10 +38,10 @@ function openPrzejsciaVisibilityPopup(containerId) {
         <div class="przejscia-vis-popup">
             <div class="przejscia-vis-header">
                 <div>
-                    <h3 style="margin:0; font-size:0.85rem; font-weight:800; color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
-                    <div class="przejscia-vis-counter" style="font-size:0.6rem; color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
+                    <h3 style="margin:0; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
+                    <div class="przejscia-vis-counter" style="font-size: var(--fs-2xs); color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
                 </div>
-                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer; padding:0.2rem 0.4rem; border-radius:4px; transition:all 0.15s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
+                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); transition:all 0.15s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
             </div>
             <div class="przejscia-vis-actions">
                 <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(true)">Pokaż wszystkie</button>
@@ -144,17 +144,17 @@ window.openFlowTypePopup = function (index) {
         modal.id = 'flow-type-modal';
         modal.innerHTML = `
         <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
-           <div style="background:var(--slate-800); padding:1.5rem; border-radius:12px; border:1px solid var(--slate-700); width:300px; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-               <h3 style="margin-bottom:1rem; color:var(--white); font-size:1.1rem; font-weight:700;">Wybierz typ przepływu</h3>
+           <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:300px; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
+               <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz typ przepływu</h3>
                <div style="display:flex; gap:1rem; justify-content:center;">
-                  <button id="flow-wlot-btn" style="flex:1; background:rgba(var(--blue-rgb), 0.2); color:var(--blue-hover); border:2px solid rgba(var(--blue-rgb), 0.8); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--blue-rgb), 0.2)'">
-                     <span style="font-size:2.5rem;"><i data-lucide="download"></i></span>WLOT
+                  <button id="flow-wlot-btn" style="flex:1; background:rgba(var(--blue-rgb), 0.2); color:var(--blue-hover); border:2px solid rgba(var(--blue-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--blue-rgb), 0.2)'">
+                     <span style="font-size: var(--fs-8xl);"><i data-lucide="download"></i></span>WLOT
                   </button>
-                  <button id="flow-wylot-btn" style="flex:1; background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); border:2px solid rgba(var(--danger-rgb), 0.8); padding:1.2rem; border-radius:10px; cursor:pointer; font-weight:800; font-size:1.1rem; display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.2)'">
-                     <span style="font-size:2.5rem;"><i data-lucide="upload"></i></span>WYLOT
+                  <button id="flow-wylot-btn" style="flex:1; background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); border:2px solid rgba(var(--danger-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.2)'">
+                     <span style="font-size: var(--fs-8xl);"><i data-lucide="upload"></i></span>WYLOT
                   </button>
                </div>
-               <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
+               <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
            </div>
         </div>
         `;
@@ -214,15 +214,15 @@ window.openChangePrzejscieTypePopup = function (index) {
 
     modal.innerHTML = `
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
-       <div style="background:var(--slate-800); padding:1.5rem; border-radius:12px; border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:var(--white); font-size:1.1rem; font-weight:700;">Zmień rodzaj przejścia</h3>
+       <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
+           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Zmień rodzaj przejścia</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
               ${allTypes
                   .map((t) => {
                       const isActive = t === currProduct.category;
                       return `<button onclick="window.confirmChangePrzejscieType(${index}, '${t}')"
                            class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
+                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                   border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
                           onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
@@ -232,7 +232,7 @@ window.openChangePrzejscieTypePopup = function (index) {
                   })
                   .join('')}
            </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">Anuluj</button>
+           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">Anuluj</button>
        </div>
     </div>
     `;
@@ -294,8 +294,8 @@ window.openChangePrzejscieDnPopup = function (index) {
 
     modal.innerHTML = `
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
-       <div style="background:var(--slate-800); padding:1.5rem; border-radius:12px; border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:var(--white); font-size:1.1rem; font-weight:700;">Wybierz średnicę (DN): ${currProduct.category}</h3>
+       <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
+           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz średnicę (DN): ${currProduct.category}</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
               ${available
                   .map((p) => {
@@ -304,7 +304,7 @@ window.openChangePrzejscieDnPopup = function (index) {
                           typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
                       return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${p.id}')"
                            class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius:8px; cursor:pointer; font-size:14px; font-weight:700; text-align:center; transition:all 0.15s;
+                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                   border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
                           onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
@@ -314,7 +314,7 @@ window.openChangePrzejscieDnPopup = function (index) {
                   })
                   .join('')}
            </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius:6px; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">Anuluj</button>
+           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">Anuluj</button>
        </div>
     </div>
     `;

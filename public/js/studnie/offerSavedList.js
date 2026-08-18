@@ -33,9 +33,9 @@ function renderSavedOffersStudnie() {
                     ? 'rgba(var(--success-rgb), 0.5)'
                     : 'rgba(var(--blue-rgb), 0.5)';
 
-                orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius:6px; margin-top:0.3rem;">
-                <span style="font-size:0.85rem;"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
-                <span style="font-size:0.68rem; font-weight:800; color:${badgeColor}; text-transform:uppercase; letter-spacing:0.5px;">
+                orderBadge = `<div style="display:inline-flex; align-items:center; gap:0.3rem; padding:0.2rem 0.6rem; background:${badgeBg}; border:2px solid ${badgeBorder}; border-radius: var(--radius-sm); margin-top:0.3rem;">
+                <span style="font-size: var(--fs-lg);"><i data-lucide="${isFullyOrdered ? 'check-circle' : 'package'}"></i></span>
+                <span style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); color:${badgeColor}; text-transform:uppercase; letter-spacing:0.5px;">
                     ${isFullyOrdered ? 'Zrealizowana' : 'W realizacji'} (${progress.ordered}/${progress.total})
                 </span>
                </div>`;
@@ -49,7 +49,7 @@ function renderSavedOffersStudnie() {
                         <h3 style="margin-bottom:0.2rem; word-break:break-all;">${escapeHtml(o.number)}</h3>
                         ${orderBadge}
                     </div>
-                    <div style="font-weight:700; color:var(--text-primary); font-size: 0.9rem; white-space:nowrap;">
+                    <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xl); white-space:nowrap;">
                         <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto)} PLN
                     </div>
                 </div>
@@ -87,27 +87,27 @@ function renderSavedOffersStudnie() {
                         return html;
                     })()}
                     
-                    <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size:0.65rem;">
-                        <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: 4px; border: 1px solid rgba(var(--success-rgb), 0.5);"><i data-lucide="save"></i> Zapisano</span>
+                    <div style="display:inline-flex; gap:0.3rem; margin-left:0.5rem; font-size: var(--fs-xs);">
+                        <span style="background: rgba(var(--success-rgb), 0.2); color: var(--success-hover); padding: 1px 5px; border-radius: var(--radius-2xs); border: 1px solid rgba(var(--success-rgb), 0.5);"><i data-lucide="save"></i> Zapisano</span>
                     </div>
                 </div>
                 ${
                     o.clientName || o.investName || o.clientContact
                         ? `
                 <div class="offer-client-badges">
-                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span style="font-weight:500">${escapeHtml(o.clientName)}</span></div>` : ''}
-                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span style="font-weight:500">${escapeHtml(o.investName)}</span></div>` : ''}
+                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.clientName)}</span></div>` : ''}
+                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.investName)}</span></div>` : ''}
                 </div>`
                         : ''
                 }
             </div>
             <div class="offer-actions">
-                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${escapeJsStr(oId)}')" title="Wczytaj" style="font-size:0.72rem; padding:0.3rem 0.6rem;">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" style="font-size:0.72rem; padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: 700;" onclick="window.showUniversalPrintModal('${escapeJsStr(oId)}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${escapeJsStr(oId)}')" title="Pobierz plik JSON" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${escapeJsStr(oId)}')" title="Zmień opiekuna" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${escapeJsStr(oId)}')" title="Historia zmian" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${escapeJsStr(oId)}')" title="Usuń" style="font-size:0.72rem; padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${escapeJsStr(oId)}')" title="Wczytaj" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;">Wczytaj</button>
+                <button class="btn btn-sm btn-secondary" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: var(--fw-bold);" onclick="window.showUniversalPrintModal('${escapeJsStr(oId)}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${escapeJsStr(oId)}')" title="Pobierz plik JSON" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${escapeJsStr(oId)}')" title="Zmień opiekuna" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${escapeJsStr(oId)}')" title="Historia zmian" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${escapeJsStr(oId)}')" title="Usuń" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${
                     hasOrder
                         ? (() => {
@@ -115,8 +115,8 @@ function renderSavedOffersStudnie() {
                               let buttonsHtml = '';
                               offerOrders.forEach((order) => {
                                   buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size:0.68rem; font-weight:800; padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeJsStr(order.id)}'" title="Otwórz zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${escapeHtml(order.orderNumber || '')}</button>
-                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size:0.6rem; padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeJsStr(order.id)}')" title="Usuń zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-xs); font-weight: var(--fw-extrabold); padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeJsStr(order.id)}'" title="Otwórz zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${escapeHtml(order.orderNumber || '')}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size: var(--fs-2xs); padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeJsStr(order.id)}')" title="Usuń zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="trash-2"></i></button>
                                 `;
                               });
                               return buttonsHtml;

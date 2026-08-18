@@ -57,11 +57,11 @@ function _excelRenderTable(dn) {
     let h3 = ''; // rząd 1: średnica (DN)
 
     const thBase =
-        'padding:0.4rem 0.5rem;font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
+        'padding:0.4rem 0.5rem;font-size: var(--fs-xs);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;';
     const th2Base =
-        'padding:0.2rem 0.5rem;font-size:0.6rem;font-weight:400;white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
+        'padding:0.2rem 0.5rem;font-size: var(--fs-2xs);font-weight: var(--fw-normal);white-space:pre-wrap;word-break:break-word;max-width:100px;line-height:1.3;';
     const th3Base =
-        'padding:0.1rem 0.5rem;font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);';
+        'padding:0.1rem 0.5rem;font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);';
 
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
@@ -71,8 +71,8 @@ function _excelRenderTable(dn) {
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
     h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
-    const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size:0.62rem;font-weight:600;width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
+    const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
+    const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
     h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
     h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
@@ -109,10 +109,10 @@ function _excelRenderTable(dn) {
     }
 
     // Przyciski +/-
-    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:var(--slate-950);color:var(--danger);border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--danger)'">−</button></th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:var(--slate-950);color:var(--danger);border:none;cursor:pointer;font-size: var(--fs-xl);font-weight: var(--fw-bold);padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--danger)'">−</button></th>`;
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:var(--slate-950);color:var(--slate-500);border:none;cursor:pointer;font-size:0.9rem;font-weight:700;padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--slate-400)'" onmouseleave="this.style.color='var(--slate-500)'">+</button></th>`;
+    h1 += `<th style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:var(--slate-950);color:var(--slate-500);border:none;cursor:pointer;font-size: var(--fs-xl);font-weight: var(--fw-bold);padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--slate-400)'" onmouseleave="this.style.color='var(--slate-500)'">+</button></th>`;
     h2 += `<th style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
 
@@ -240,7 +240,7 @@ function _excelRenderTable(dn) {
             : dnTh3(ct);
         h1 += `<th data-col-id="${escapeHtml(c.id)}" style="${thBase}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colLabel}</th>`;
         h2 += `<th data-col-id="${escapeHtml(c.id)}" style="${th2Base}background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDetail}</th>`;
-        h3 += `<th data-col-id="${escapeHtml(c.id)}" style="padding:${h3Pad};font-size:0.55rem;font-weight:500;color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
+        h3 += `<th data-col-id="${escapeHtml(c.id)}" style="padding:${h3Pad};font-size: var(--fs-3xs);font-weight: var(--fw-medium);color:var(--slate-500);text-align:center;white-space:nowrap;background:var(--slate-950);color:${hc};min-width:95px;text-align:center;">${colDnLabel}${colCode}</th>`;
     });
 
     h1 += `<th style="${thBase}background:var(--bg-primary);color:var(--warn-hover);min-width:60px;text-align:center;">H denn</th>`;

@@ -18,12 +18,12 @@ function _excelRenderTabs() {
         const isActive = tab === _excelActiveTab;
         const tabLabel = tab === 'styczne' ? 'Styczne' : 'DN' + tab;
         html += `<button onclick="excelSwitchTab('${tab}')" style="
-            padding:0.4rem 1rem;border:none;cursor:pointer;font-size:0.67rem;font-weight:600;
+            padding:0.4rem 1rem;border:none;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);
             border-bottom:2px solid ${isActive ? c.border : c.borderDim};
             background:${isActive ? c.activeBg : c.bg};
             color:${isActive ? c.text : c.textDim};
             transition:all 0.12s;letter-spacing:0.2px;">
-            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size:0.6rem;">${count}</span>
+            ${tabLabel}<span style="opacity:0.5;margin-left:0.3rem;font-size: var(--fs-2xs);">${count}</span>
         </button>`;
     });
     container.innerHTML = html;

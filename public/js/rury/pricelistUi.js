@@ -62,7 +62,7 @@ function renderPriceList() {
 
         items.forEach((p) => {
             html += `<tr data-id="${escapeHtmlAttr(p.id)}">
-        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size:.78rem" class="editable" onclick="editCell(this,'id','${escapeJsStr(p.id)}')">${escapeHtml(p.id)}</code></td>
+        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size: var(--fs-base)" class="editable" onclick="editCell(this,'id','${escapeJsStr(p.id)}')">${escapeHtml(p.id)}</code></td>
         <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${escapeJsStr(p.id)}')">${escapeHtml(p.name)}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'price','${escapeJsStr(p.id)}')">${fmt(p.price)}</span></td>
         <td class="text-right"><span class="editable" onclick="editCell(this,'area','${escapeJsStr(p.id)}')">${p.area != null ? fmt(p.area) : '—'}</span></td>

@@ -87,8 +87,8 @@
 
     function statusBadge(ok) {
         return ok
-            ? '<span style="color:var(--success-hover);font-weight:700">✓ Online</span>'
-            : '<span style="color:var(--danger-hover);font-weight:700">✗ Offline</span>';
+            ? '<span style="color:var(--success-hover);font-weight: var(--fw-bold)">✓ Online</span>'
+            : '<span style="color:var(--danger-hover);font-weight: var(--fw-bold)">✗ Offline</span>';
     }
 
     function loadingHtml() {
@@ -178,7 +178,7 @@
                           .join('') +
                       '</div>'
                     : '') +
-                '<div style="font-size:0.72rem;color:var(--text-muted);text-align:right">Ostatnia aktualizacja: ' +
+                '<div style="font-size: var(--fs-sm);color:var(--text-muted);text-align:right">Ostatnia aktualizacja: ' +
                 new Date().toLocaleString('pl-PL') +
                 '</div>';
             container.innerHTML = html;
@@ -232,18 +232,18 @@
                         '<td><code class="ai-pattern-code">' +
                         window.escapeHtml(p.patternType || '') +
                         '</code></td>' +
-                        '<td style="font-family:monospace;font-size:0.7rem;color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                        '<td style="font-family:monospace;font-size: var(--fs-sm);color:var(--text-secondary);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
                         window.escapeHtml((p.patternKey || '').slice(0, 60)) +
                         '</td>' +
                         '<td style="text-align:right;color:' +
                         confColor +
-                        ';font-weight:700">' +
+                        ';font-weight: var(--fw-bold)">' +
                         Math.round((p.confidence || 0) * 100) +
                         '%</td>' +
                         '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
                         (p.hitCount || 0) +
                         '</td>' +
-                        '<td style="color:var(--text-muted);font-size:0.72rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+                        '<td style="color:var(--text-muted);font-size: var(--fs-sm);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
                         window.escapeHtml((p.description || '').slice(0, 80)) +
                         '</td>' +
                         '</tr>'
@@ -307,7 +307,7 @@
             '<i data-lucide="' +
             icon +
             '" style="width:18px;height:18px;flex-shrink:0;margin-top:2px"></i>' +
-            '<div style="font-size:0.82rem;line-height:1.45">' +
+            '<div style="font-size: var(--fs-md);line-height:1.45">' +
             msg +
             '</div></div>'
         );
@@ -507,7 +507,7 @@
                     '<div class="ai-influence-widget">' +
                     '<label style="display:flex;align-items:center;gap:10px;cursor:pointer" title="Procentowy wp\u0142yw AI na ranking produkt\u00f3w (0% = tylko ludzkie preferencje, 100% = w pe\u0142ni automatyczny)">' +
                     '<i data-lucide="sliders-horizontal" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"></i>' +
-                    '<span style="font-size:0.82rem;color:var(--text-primary);white-space:nowrap">Wp\u0142yw AI: <strong id="ai-influence-value">' +
+                    '<span style="font-size: var(--fs-md);color:var(--text-primary);white-space:nowrap">Wp\u0142yw AI: <strong id="ai-influence-value">' +
                     inf +
                     '%</strong></span>' +
                     '<input type="range" id="ai-influence-slider" min="0" max="100" value="' +
@@ -952,12 +952,12 @@
                 .map(function (r) {
                     var statusCls =
                         r.status === 'SUCCESS'
-                            ? 'style="color:var(--success-hover);font-weight:700"'
+                            ? 'style="color:var(--success-hover);font-weight: var(--fw-bold)"'
                             : r.status === 'RUNNING'
-                              ? 'style="color:var(--warn);font-weight:700"'
+                              ? 'style="color:var(--warn);font-weight: var(--fw-bold)"'
                               : r.status === 'SKIPPED'
                                 ? 'style="color:var(--text-muted)"'
-                                : 'style="color:var(--danger-hover);font-weight:700"';
+                                : 'style="color:var(--danger-hover);font-weight: var(--fw-bold)"';
                     var range =
                         r.datasetStartAt && r.datasetEndAt
                             ? r.datasetStartAt.slice(0, 10) + ' → ' + r.datasetEndAt.slice(0, 10)
@@ -965,7 +965,7 @@
                     var fp = r.datasetFingerprint ? r.datasetFingerprint.slice(0, 8) : '—';
                     return (
                         '<tr>' +
-                        '<td style="white-space:nowrap;color:var(--text-muted);font-size:0.75rem">' +
+                        '<td style="white-space:nowrap;color:var(--text-muted);font-size: var(--fs-base)">' +
                         window.escapeHtml((r.startedAt || '').slice(0, 16)) +
                         '</td>' +
                         '<td ' +
@@ -991,7 +991,7 @@
                         '<td>' +
                         window.escapeHtml(range) +
                         '</td>' +
-                        '<td style="font-family:monospace;font-size:0.75rem;color:var(--text-muted)">' +
+                        '<td style="font-family:monospace;font-size: var(--fs-base);color:var(--text-muted)">' +
                         window.escapeHtml(fp) +
                         '</td>' +
                         '</tr>'
@@ -1051,7 +1051,11 @@
                           ? 'var(--warn)'
                           : 'var(--danger-hover)';
                 return (
-                    '<span style="color:' + color + ';font-weight:700">' + v.toFixed(4) + '</span>'
+                    '<span style="color:' +
+                    color +
+                    ';font-weight: var(--fw-bold)">' +
+                    v.toFixed(4) +
+                    '</span>'
                 );
             };
             var featureRows = (data.feature || [])
@@ -1062,7 +1066,7 @@
                         '<td>' +
                         (i + 1) +
                         '</td>' +
-                        '<td style="font-family:monospace;font-size:0.78rem">' +
+                        '<td style="font-family:monospace;font-size: var(--fs-base)">' +
                         window.escapeHtml(f.feature || '—') +
                         '</td>' +
                         '<td>' +
@@ -1095,7 +1099,7 @@
                     '</span>' +
                     '<span style="color:' +
                     deltaCls +
-                    ';font-weight:700">Δ ' +
+                    ';font-weight: var(--fw-bold)">Δ ' +
                     (delta != null ? (delta >= 0 ? '+' : '') + Number(delta).toFixed(4) : '—') +
                     '</span></div>';
             }
@@ -1121,9 +1125,9 @@
                 '<div class="ai-drift-grid">' +
                 '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
                 psiBadge(data.prediction ? data.prediction.psi : null) +
-                '<div style="color:var(--text-muted);font-size:0.72rem;margin-top:2px">PSI rozkładu score</div></div>' +
+                '<div style="color:var(--text-muted);font-size: var(--fs-sm);margin-top:2px">PSI rozkładu score</div></div>' +
                 '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
-                '<div style="color:var(--text-muted);font-size:0.72rem;margin-top:2px">top-5 cech wg PSI</div></div>' +
+                '<div style="color:var(--text-muted);font-size: var(--fs-sm);margin-top:2px">top-5 cech wg PSI</div></div>' +
                 '</div>' +
                 (featureRows
                     ? '<div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>#</th><th>Cecha</th><th>PSI</th></tr></thead><tbody>' +
@@ -1163,7 +1167,7 @@
                 }
                 if (data.error === 'unavailable') {
                     container.innerHTML =
-                        '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                        '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
                     return;
                 }
                 container.innerHTML = apiErrorHtml(data.error);
@@ -1172,7 +1176,7 @@
             var feats = data.features || [];
             if (!Array.isArray(feats) || feats.length === 0) {
                 container.innerHTML =
-                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
                 return;
             }
             var max = feats.reduce(function (mx, f) {
@@ -1185,18 +1189,18 @@
                     var pct = Math.round((val / max) * 100);
                     return (
                         '<div style="margin-bottom:6px">' +
-                        '<div style="display:flex;justify-content:space-between;font-size:0.76rem;margin-bottom:2px">' +
+                        '<div style="display:flex;justify-content:space-between;font-size: var(--fs-base);margin-bottom:2px">' +
                         '<span style="color:var(--text-secondary)">' +
                         window.escapeHtml(f.featureName || '—') +
                         '</span>' +
-                        '<span style="color:var(--text-primary);font-weight:600">' +
+                        '<span style="color:var(--text-primary);font-weight: var(--fw-semibold)">' +
                         val.toFixed(4) +
                         '</span>' +
                         '</div>' +
-                        '<div style="background:var(--bg-tertiary);border-radius:4px;height:8px;overflow:hidden">' +
+                        '<div style="background:var(--bg-tertiary);border-radius: var(--radius-2xs);height:8px;overflow:hidden">' +
                         '<div style="width:' +
                         pct +
-                        '%;height:100%;background:var(--accent);border-radius:4px"></div>' +
+                        '%;height:100%;background:var(--accent);border-radius: var(--radius-2xs)"></div>' +
                         '</div>' +
                         '</div>'
                     );
@@ -1205,7 +1209,7 @@
             container.innerHTML =
                 '<div style="background:var(--bg-card);border:1px solid var(--border-glass);border-radius:var(--radius-md);padding:12px;margin-top:10px">' +
                 '<h4 class="ai-section-title"><i data-lucide="bar-chart-3"></i> Feature Importance</h4>' +
-                '<div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:10px">Ważność cech aktywnego modelu: <strong>' +
+                '<div style="font-size: var(--fs-sm);color:var(--text-muted);margin-bottom:10px">Ważność cech aktywnego modelu: <strong>' +
                 window.escapeHtml(data.modelVersion || '—') +
                 '</strong></div>' +
                 rows +
@@ -1234,7 +1238,7 @@
             var items = data.items || [];
             if (items.length === 0) {
                 container.innerHTML =
-                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size:0.82rem">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
+                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
                 return;
             }
             var shown = items.slice(0, 20);
@@ -1252,10 +1256,10 @@
                     }
                     return (
                         '<tr>' +
-                        '<td style="color:var(--text-muted);font-size:0.72rem">' +
+                        '<td style="color:var(--text-muted);font-size: var(--fs-sm)">' +
                         (i + 1) +
                         '</td>' +
-                        '<td style="font-family:monospace;font-size:0.78rem;color:var(--accent-text)">' +
+                        '<td style="font-family:monospace;font-size: var(--fs-base);color:var(--accent-text)">' +
                         window.escapeHtml(w.dn || '—') +
                         '</td>' +
                         '<td style="color:var(--text-primary)">' +
@@ -1264,7 +1268,7 @@
                         '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
                         (w.count || 0) +
                         '</td>' +
-                        '<td style="color:var(--text-muted);font-size:0.72rem;white-space:nowrap">' +
+                        '<td style="color:var(--text-muted);font-size: var(--fs-sm);white-space:nowrap">' +
                         window.escapeHtml(lastSeen) +
                         '</td>' +
                         '</tr>'
@@ -1300,7 +1304,7 @@
                 rows +
                 '</tbody></table></div>' +
                 (items.length > shown.length
-                    ? '<div style="font-size:0.72rem;color:var(--text-muted);text-align:right;margin-top:6px">Pokazano ' +
+                    ? '<div style="font-size: var(--fs-sm);color:var(--text-muted);text-align:right;margin-top:6px">Pokazano ' +
                       shown.length +
                       ' z ' +
                       items.length +

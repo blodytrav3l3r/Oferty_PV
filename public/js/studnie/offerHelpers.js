@@ -44,7 +44,7 @@ function getDiscountStr(p, disc) {
         p.componentType === 'styczna';
     const val = isDen ? disc.dennica : disc.nadbudowa;
     return val > 0
-        ? ` <span style="font-size:0.6rem; color:var(--success); margin-left:0.3rem;">(-${val}%)</span>`
+        ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${val}%)</span>`
         : '';
 }
 

@@ -13,8 +13,8 @@ function updateOfferSummaryUI(totals) {
         const activeTransportInfo = document.getElementById('offer-active-transport-info');
         if (activeTransportInfo) {
             activeTransportInfo.innerHTML = `
-                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: var(--slate-300); font-weight: 600;">${typeof formatTransportCount === 'function' ? formatTransportCount(totals.totalTransports, typeof orderEditMode !== 'undefined' && orderEditMode ? 'fractional' : currentTransportMode) : totals.totalTransports}</span></div>
-                <div>Cena rejsu: <span style="color: var(--slate-300); font-weight: 600;">${fmt(totals.transportCostPerTrip)} PLN</span></div>
+                <div style="margin-bottom: 2px;">Ilość aut: <span style="color: var(--slate-300); font-weight: var(--fw-semibold);">${typeof formatTransportCount === 'function' ? formatTransportCount(totals.totalTransports, typeof orderEditMode !== 'undefined' && orderEditMode ? 'fractional' : currentTransportMode) : totals.totalTransports}</span></div>
+                <div>Cena rejsu: <span style="color: var(--slate-300); font-weight: var(--fw-semibold);">${fmt(totals.transportCostPerTrip)} PLN</span></div>
             `;
         }
     } else {
@@ -58,11 +58,11 @@ function updateOfferSummaryUI(totals) {
         const wellsList = typeof wells !== 'undefined' ? wells : [];
 
         const tileBase =
-            'padding:2px 4px; border-radius:5px; text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0;';
+            'padding:2px 4px; border-radius: var(--radius-2xs); text-align:center; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0; min-width:0;';
         const labelStyle =
-            'font-size:0.72rem; font-weight:800; line-height:1.15; color:var(--text-primary);';
+            'font-size: var(--fs-sm); font-weight: var(--fw-extrabold); line-height:1.15; color:var(--text-primary);';
         const detailStyle =
-            'font-size:0.65rem; font-weight:600; line-height:1.15; color:rgba(var(--white-rgb), 0.8);';
+            'font-size: var(--fs-xs); font-weight: var(--fw-semibold); line-height:1.15; color:rgba(var(--white-rgb), 0.8);';
         const dimVal = 'opacity:0.5; color:rgba(var(--white-rgb), 0.8);';
         const disabledTile = `${tileBase} background:rgba(var(--white-rgb), 0.05); color:rgba(var(--slate-500-rgb), 0.5); border:1px solid rgba(var(--white-rgb), 0.05);`;
 

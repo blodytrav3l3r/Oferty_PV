@@ -58,11 +58,11 @@ body > .main > .section.active::-webkit-scrollbar {
 }
 body > .main > .section.active::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 body > .main > .section.active::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: var(--scrollbar-thumb-hover);
@@ -157,8 +157,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
     border-bottom: 1px solid var(--border-glass);
     box-shadow: var(--shadow-sm);
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -173,7 +173,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     flex: 1;
     height: auto;
     min-height: 200px;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--bg-deep);
     border: 1px solid var(--accent-bg);
 }
@@ -189,21 +189,21 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-summary-mini .ws-item {
     background: var(--bg-tile);
     border: 1px solid var(--border-glass);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     padding: 0.25rem;
     text-align: center;
 }
 
 .ws-item .ws-label {
-    font-size: 0.55rem;
+    font-size: var(--fs-3xs);
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 0.3px;
 }
 
 .ws-item .ws-value {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     margin-top: 0.05rem;
 }
@@ -255,13 +255,13 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-center-column::-webkit-scrollbar-track,
 #wells-list::-webkit-scrollbar-track {
     background: var(--scrollbar-track);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 
 .well-center-column::-webkit-scrollbar-thumb,
 #wells-list::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 
 .well-center-column::-webkit-scrollbar-thumb:hover,
@@ -283,8 +283,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .wells-sidebar-header h3 {
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     display: flex;
     align-items: center;
@@ -300,19 +300,19 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .wells-sidebar-header .wells-count {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 
 .wells-add-btn {
     padding: 0.25rem 0.55rem;
     border: 1px solid var(--accent-border-dim);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--accent-bg);
     color: var(--accent-text);
     font:
-        600 0.72rem 'Inter',
+        var(--fw-semibold) var(--fs-sm) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -330,7 +330,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border: 1px solid rgba(var(--white-rgb), 0.05);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 0.4rem 0.6rem;
     margin-bottom: 0.25rem;
     cursor: pointer;
@@ -390,8 +390,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .well-list-name {
-    font-size: 0.78rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
 }
 
@@ -405,9 +405,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     padding: 0.1rem 0.25rem;
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
     transition: background 0.15s;
     color: var(--text-muted);
 }
@@ -425,19 +425,19 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: rgba(var(--white-rgb), 0.5);
     margin-top: 0.2rem;
 }
 
 .well-list-price {
-    font-weight: 800;
+    font-weight: var(--fw-extrabold);
     color: var(--success-hover) !important;
-    font-size: 0.72rem;
+    font-size: var(--fs-sm);
 }
 
 .well-list-elevations {
-    font-size: 0.58rem;
+    font-size: var(--fs-2xs);
     color: rgba(var(--white-rgb), 0.3);
     margin-top: 0.1rem;
     display: flex;
@@ -448,14 +448,14 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-elevations strong {
     color: rgba(var(--white-rgb), 0.8);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 /* ── Pola informacji o studni ── */
 .well-info-card {
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 0.5rem;
     margin-bottom: 0.5rem;
 }
@@ -468,7 +468,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-info-field label {
     display: block;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 0.3px;
@@ -480,10 +480,10 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     padding: 0.35rem 0.45rem;
     background: var(--bg-input);
     border: 1px solid var(--border-glass);
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
     color: var(--text-primary);
     font:
-        600 0.8rem 'Inter',
+        var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
     text-align: center;
     transition: border-color 0.2s;
@@ -497,7 +497,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     text-align: center;
     padding: 0.35rem 0.45rem;
     font:
-        700 0.85rem 'Inter',
+        var(--fw-bold) var(--fs-lg) 'Inter',
         sans-serif;
     color: var(--accent-hover);
 }
@@ -508,8 +508,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tiles-section-title {
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--text-secondary);
@@ -528,7 +528,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .tile {
     background: var(--bg-input);
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     padding: 0.4rem 0.5rem;
     cursor: pointer;
     transition:
@@ -571,8 +571,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile-name {
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     color: var(--text-primary);
     line-height: 1.15;
 }
@@ -581,12 +581,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
 }
 
 .tile-price {
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     color: var(--tile-accent, var(--accent-hover));
 }
 
@@ -600,11 +600,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .dn-btn {
     padding: 0.3rem 0.7rem;
     border: 1px solid var(--border-glass);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--bg-tile);
     color: var(--text-secondary);
     font:
-        600 0.75rem 'Inter',
+        var(--fw-semibold) var(--fs-base) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -632,7 +632,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .well-config-table th {
     padding: 0.3rem 0.4rem;
     text-align: left;
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     text-transform: uppercase;
     color: var(--text-muted);
     border-bottom: 1px solid var(--border-glass);
@@ -640,7 +640,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-config-table td {
     padding: 0.25rem 0.4rem;
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     border-bottom: 1px solid var(--border-table-subtle);
     color: var(--text-secondary);
 }
@@ -653,9 +653,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: none;
     border: 1px solid var(--danger-border-deep);
     color: var(--danger-hover);
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     padding: 0.2rem 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -671,9 +671,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: none;
     border: 1px solid var(--bg-tertiary);
     color: var(--text-muted);
-    font-size: 0.55rem;
+    font-size: var(--fs-3xs);
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
     cursor: pointer;
     transition:
         background-color 0.15s,
@@ -723,7 +723,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-radius: 50%;
     width: 16px;
     height: 16px;
-    font-size: 10px;
+    font-size: var(--fs-xs);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -755,11 +755,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .cennik-tab {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--bg-tile);
     color: var(--text-muted);
     font:
-        600 0.8rem 'Inter',
+        var(--fw-semibold) var(--fs-md) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -801,21 +801,21 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .offer-stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1rem;
     text-align: center;
 }
 
 .offer-stat-label {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 0.5px;
 }
 
 .offer-stat-value {
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: var(--fs-6xl);
+    font-weight: var(--fw-extrabold);
     margin-top: 0.2rem;
 }
 
@@ -823,16 +823,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .b-tab-btn {
     flex: 1;
     padding: 0.45rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition:
         color 0.2s,
         background-color 0.2s;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 
 .b-tab-btn:hover {
@@ -850,16 +850,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .s-tab-btn {
     flex: 1;
     padding: 0.4rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     border: 1px solid transparent;
     background: transparent;
     color: var(--text-muted);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     cursor: pointer;
     transition:
         color 0.2s,
         background-color 0.2s;
-    font-size: 0.72rem;
+    font-size: var(--fs-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -880,12 +880,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .param-tile {
     padding: 0.35rem 0.8rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--bg-tile);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
-    font-size: 0.72rem;
-    font-weight: 500;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
     cursor: pointer;
     transition:
         border-color 0.15s ease-in-out,
@@ -919,11 +919,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     margin-bottom: 0.8rem;
     background: var(--bg-dark-alt);
     border: 1px solid var(--bg-tertiary);
-    border-radius: 12px;
+    border-radius: var(--radius);
     color: var(--text-muted);
     text-align: left;
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition:
         background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1),
@@ -966,7 +966,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .fs-dn-tile {
     background: var(--bg-tile);
     border: 1px solid var(--bg-tertiary);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     padding: 1.5rem;
     text-align: center;
     cursor: pointer;
@@ -991,22 +991,22 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .fs-dn-tile .dn-label {
-    font-size: 1.4rem;
-    font-weight: 800;
+    font-size: var(--fs-5xl);
+    font-weight: var(--fw-extrabold);
     color: var(--text-primary);
 }
 
 .fs-dn-tile .price-label {
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     color: var(--success);
     margin-top: 0.5rem;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .fs-inputs-pane {
     background: var(--bg-input);
     border: 1px solid var(--accent-bg-hover);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     animation: slideUp 0.4s ease-out;
     max-width: min(100%, 800px);
@@ -1069,9 +1069,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     padding: 0.45rem 0.75rem;
     background: var(--bg-deep);
     border: 1px solid var(--border-glass);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     margin-bottom: 0.5rem;
-    font-size: 0.72rem;
+    font-size: var(--fs-sm);
     flex-wrap: wrap;
 }
 
@@ -1084,7 +1084,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .wizard-summary-item strong {
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .wizard-summary-divider {
@@ -1096,11 +1096,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .wizard-summary-edit {
     padding: 0.2rem 0.55rem;
     border: 1px solid var(--accent-border-dim);
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
     background: var(--accent-bg);
     color: var(--accent-text);
     font:
-        600 0.65rem 'Inter',
+        var(--fw-semibold) var(--fs-xs) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -1122,7 +1122,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     flex-direction: column;
     gap: 0.2rem;
     padding: 0.6rem;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     border: 2px solid transparent;
     background: var(--bg-deep);
     transition:
@@ -1141,23 +1141,23 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .wizard-param-label {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     text-transform: uppercase;
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     display: flex;
     align-items: center;
     gap: 0.3rem;
 }
 
 .wizard-param-label .status-icon {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     transition: opacity 0.3s;
 }
 
 .wizard-validation-msg {
     text-align: center;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     color: var(--danger-hover);
     margin-top: 0.6rem;
     transition: opacity 0.3s;
@@ -1181,7 +1181,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .przejscia-vis-popup {
     background: var(--bg-deep);
     border: 1px solid var(--accent-bg-hover);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1rem;
     width: 95vw;
     max-width: 1100px;
@@ -1210,12 +1210,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .przejscia-vis-action-btn {
     padding: 0.25rem 0.6rem;
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
     border: 1px solid var(--bg-tertiary);
     background: var(--bg-tertiary);
     color: var(--text-secondary);
     font:
-        600 0.6rem 'Inter',
+        var(--fw-semibold) var(--fs-2xs) 'Inter',
         sans-serif;
     cursor: pointer;
     transition:
@@ -1238,7 +1238,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .przejscia-vis-tile {
     padding: 0.4rem 0.5rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     transition:
         background-color 0.18s ease,
@@ -1283,8 +1283,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .przejscia-vis-tile-name {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     white-space: nowrap;
     line-height: 1.3;
@@ -1310,7 +1310,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .app-confirm-modal {
     background: var(--bg-deep);
     border: 1px solid var(--accent-border-dim);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     width: 100%;
     max-width: 400px;
     padding: 1.5rem;
@@ -1319,14 +1319,14 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .app-confirm-title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
     color: var(--white);
     margin-bottom: 0.8rem;
 }
 
 .app-confirm-message {
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     color: var(--text-muted);
     margin-bottom: 1.5rem;
     line-height: 1.5;
@@ -1341,9 +1341,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .app-confirm-btn {
     flex: 1;
     padding: 0.6rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-lg);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -1496,8 +1496,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
-    font-size: 0.68rem !important;
-    font-weight: 700 !important;
+    font-size: var(--fs-xs) !important;
+    font-weight: var(--fw-bold) !important;
     padding: 0.35rem 0.7rem !important;
     white-space: nowrap;
     transition: var(--transition);
@@ -1510,8 +1510,8 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: var(--bg-glass);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: var(--transition);
 }
@@ -1525,7 +1525,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: rgba(var(--accent-rgb), 0.15);
     border-color: rgba(var(--accent-rgb), 0.5);
     color: var(--accent-text);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
 }
 
 @media (max-width: 1100px) {
@@ -1586,60 +1586,60 @@ select.form-input option {
 /* ─── Klasy narzędziowe do migracji stylów inline ─── */
 /* Font size */
 .fs-085 {
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
 }
 .fs-075 {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 .fs-065 {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
 }
 .fs-09 {
-    font-size: 0.9rem;
+    font-size: var(--fs-xl);
 }
 .fs-08 {
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
 }
 .fs-078 {
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
 }
 .fs-07 {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
 }
 .fs-072 {
-    font-size: 0.72rem;
+    font-size: var(--fs-sm);
 }
 .fs-06 {
-    font-size: 0.6rem;
+    font-size: var(--fs-2xs);
 }
 .fs-055 {
-    font-size: 0.55rem;
+    font-size: var(--fs-3xs);
 }
 .fs-058 {
-    font-size: 0.58rem;
+    font-size: var(--fs-2xs);
 }
 .fs-1 {
-    font-size: 1rem;
+    font-size: var(--fs-2xl);
 }
 .fs-115 {
-    font-size: 1.15rem;
+    font-size: var(--fs-3xl);
 }
 .fs-14 {
-    font-size: 1.4rem;
+    font-size: var(--fs-5xl);
 }
 
 /* Font weight */
 .fw-5 {
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 .fw-6 {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 .fw-7 {
-    font-weight: 700;
+    font-weight: var(--fw-bold);
 }
 .fw-8 {
-    font-weight: 800;
+    font-weight: var(--fw-extrabold);
 }
 
 /* Pomocnicze flex */
@@ -1682,7 +1682,7 @@ select.form-input option {
     gap: 5px;
     cursor: pointer;
     color: var(--slate-300);
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
 }
 
 /* Padding */
@@ -1759,10 +1759,10 @@ select.form-input option {
         min-width: 90px;
         height: 34px;
         padding: 0 0.7rem;
-        font-size: 0.75rem;
+        font-size: var(--fs-base);
     }
     .wizard-nav-fixed .wizard-step-info {
-        font-size: 0.6rem;
+        font-size: var(--fs-2xs);
         padding: 0.2rem 0.6rem;
         height: 26px;
         letter-spacing: 0.4px;
@@ -1842,7 +1842,7 @@ select.form-input option {
 
 #excel-table-container .excel-sel-wrap > div {
     padding: 0.3rem 0.45rem !important;
-    font-size: 0.7rem !important;
+    font-size: var(--fs-sm) !important;
     font-family:
         Inter,
         Segoe UI,
@@ -1956,9 +1956,9 @@ select.form-input option {
 }
 .summary-action-btn {
     padding: 0.4rem 0.6rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font:
-        600 0.72rem 'Inter',
+        var(--fw-semibold) var(--fs-sm) 'Inter',
         sans-serif;
     cursor: pointer;
     display: flex;
@@ -2044,15 +2044,15 @@ select.form-input option {
 
 /* ── Klasy kart w stopce (mirror .rury-summary-*) ── */
 .studnie-summary-label {
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--text-muted);
     margin-bottom: 0.2rem;
 }
 .studnie-summary-value {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: var(--fs-5xl);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     margin: 0;
 }
@@ -2061,14 +2061,14 @@ select.form-input option {
 }
 .studnie-summary-value.success {
     color: var(--success);
-    font-weight: 800;
-    font-size: 1.6rem;
+    font-weight: var(--fw-extrabold);
+    font-size: var(--fs-6xl);
 }
 .studnie-summary-value.warn {
     color: var(--warn);
 }
 .studnie-summary-sub {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     margin-top: 0.2rem;
 }
@@ -2083,7 +2083,7 @@ select.form-input option {
 /* ── Transition Renderer hover classes ── */
 .prz-field {
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     transition: background-color 0.2s;
     cursor: pointer;
     padding: 0.15rem 0.4rem;
@@ -2096,9 +2096,9 @@ select.form-input option {
 .prz-btn-edit {
     background: rgba(var(--blue-rgb), 0.15);
     border: 1px solid rgba(var(--blue-rgb), 0.3);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: var(--fs-xl);
     padding: 0.35rem;
     color: var(--blue-hover);
     transition:
@@ -2112,9 +2112,9 @@ select.form-input option {
 .prz-btn-delete {
     background: rgba(var(--danger-rgb), 0.15);
     border: 1px solid rgba(var(--danger-rgb), 0.3);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: var(--fs-xl);
     padding: 0.35rem;
     color: var(--danger);
     transition:
@@ -2146,7 +2146,7 @@ select.form-input option {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 .prz-field-height:hover {
     color: var(--warn-hover) !important;
@@ -2160,7 +2160,7 @@ select.form-input option {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     will-change: transform;
 }
 .prz-field-angle:hover {
@@ -2174,7 +2174,7 @@ select.form-input option {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 .prz-field-rzedna:hover {
     color: var(--blue-hover) !important;
@@ -2185,7 +2185,7 @@ select.form-input option {
     cursor: pointer;
     padding: 0.15rem 0.4rem;
     background: rgba(var(--white-rgb), 0.05);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     transition: background-color 0.2s;
 }
 .prz-field-doplata:hover {
@@ -2196,7 +2196,7 @@ select.form-input option {
 .pehd-card {
     background: rgba(var(--white-rgb), 0.05);
     border: 2px solid rgba(var(--white-rgb), 0.05);
-    border-radius: 12px;
+    border-radius: var(--radius);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -2212,7 +2212,7 @@ select.form-input option {
     padding: 0.6rem 1.2rem;
     background: transparent;
     border: 1px solid rgba(var(--white-rgb), 0.15);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--slate-300);
     cursor: pointer;
     transition:
@@ -2227,19 +2227,19 @@ select.form-input option {
 
 /* ── Excel table header aesthetic improvements ── */
 #excel-table-container .h3-prodcode {
-    font-size: 0.5rem;
-    font-weight: 600;
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-semibold);
     color: var(--slate-400);
     line-height: 1.45;
 }
 #excel-table-container .h3-prodprice {
-    font-size: 0.55rem;
+    font-size: var(--fs-3xs);
     color: var(--success-hover);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     line-height: 1.4;
     white-space: nowrap;
     background: rgba(var(--success-rgb), 0.05);
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
     padding: 1px 5px;
     margin-top: 2px;
     display: inline-block;

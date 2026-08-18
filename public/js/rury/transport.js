@@ -357,11 +357,11 @@ function renderTransportBreakdown(result, costPerTrip) {
       <td class="text-right">${fmtInt(l.weightPerPiece)} kg</td>
       <td class="text-right">${fmtInt(l.totalWeight)} kg</td>
       <td class="text-right">${l.maxPerTransport} szt.</td>
-      <td class="text-right" style="font-weight:600">${l.dedicatedTransports}</td>
+      <td class="text-right" style="font-weight: var(--fw-semibold)">${l.dedicatedTransports}</td>
       ${
           costPerTrip > 0
               ? `<td class="text-right" style="color:var(--text-secondary)">${(weightShare * 100).toFixed(1)}%</td>
-      <td class="text-right" style="color:var(--warn);font-weight:600">${fmt(perUnit)} PLN</td>`
+      <td class="text-right" style="color:var(--warn);font-weight: var(--fw-semibold)">${fmt(perUnit)} PLN</td>`
               : ''
       }
     </tr>`;
@@ -370,7 +370,7 @@ function renderTransportBreakdown(result, costPerTrip) {
     html += '</tbody></table></div>';
 
     if (result.saved > 0) {
-        html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(var(--success-rgb), 0.1);border-radius:8px;font-size:.82rem;color:var(--success)">
+        html += `<div style="margin-top:.5rem;padding:.5rem .8rem;background:rgba(var(--success-rgb), 0.1);border-radius: var(--radius-sm);font-size: var(--fs-md);color:var(--success)">
       <i data-lucide="check-circle-2"></i> Optymalizacja: połączono niepełne transporty, zaoszczędzono <strong>${result.saved}</strong> transportów
       (${totalDedicated} → ${result.totalTransports})</div>`;
     }
@@ -382,7 +382,7 @@ function renderTransportBreakdown(result, costPerTrip) {
             typeof formatTransportCount === 'function'
                 ? formatTransportCount(displayTransports, currentRuryTransportMode)
                 : displayTransports;
-        html += `<div style="margin-top:.5rem;font-size:.82rem;color:var(--text-secondary)">
+        html += `<div style="margin-top:.5rem;font-size: var(--fs-md);color:var(--text-secondary)">
       ${km} km × ${fmt(rate)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${countLabel} kursów = <strong style="color:var(--warn)">${fmt(totalTransportCost)} PLN</strong> (rozdzielone proporcjonalnie na pozycje)</div>`;
     }
 
@@ -534,8 +534,8 @@ window.handleRuryTransportCancel = async function () {
     if (modalKm !== ruryTransportSnapshot.km || modalRate !== ruryTransportSnapshot.rate) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
-                `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
-                 <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
+                `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
+                 <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
                 { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
             );
 
@@ -582,8 +582,8 @@ window.handleRuryTransportSave = async function () {
 
     if (typeof window.appConfirm === 'function') {
         const confirmed = await window.appConfirm(
-            `<div style="font-size: 1.1rem; font-weight: 800; text-transform: none; letter-spacing: normal;">${confirmTitle}</div>
-             <div style="font-size: 0.9rem; line-height: 1.4; padding: 1rem 0;">${confirmBody}</div>`,
+            `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">${confirmTitle}</div>
+             <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">${confirmBody}</div>`,
             { allowHtml: true, okText, cancelText: 'Anuluj' }
         );
 

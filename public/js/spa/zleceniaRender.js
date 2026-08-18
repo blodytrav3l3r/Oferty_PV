@@ -155,7 +155,7 @@ const ZleceniaRender = (() => {
                 ? '<span class="sales-order-badge">' +
                   escapeHtml(o.dbSalesOrderNumber || o.salesOrderNumber) +
                   '</span>'
-                : '<span style="color:var(--text-muted); font-size:0.75rem;">\u2014</span>';
+                : '<span style="color:var(--text-muted); font-size: var(--fs-base);">\u2014</span>';
 
         const wellName = o.wellName || '\u2014';
         const projectName = o.projectName || o.obiekt || '';

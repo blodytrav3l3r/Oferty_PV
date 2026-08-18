@@ -26,7 +26,7 @@ function renderWellHeaderRow(
     let featureBadges = '';
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
+            '<span style="font-size: var(--fs-3xs); color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PRECO</span>';
     }
     if (
         (well.wkladkaDennica && well.wkladkaDennica !== 'brak') ||
@@ -34,27 +34,27 @@ function renderWellHeaderRow(
         (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
     ) {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+            '<span style="font-size: var(--fs-3xs); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PEHD</span>';
     }
     if (well.malowanieW && well.malowanieW !== 'brak') {
         if (well.malowanieZ === 'zewnatrz') {
             featureBadges +=
-                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+                '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
         } else {
             featureBadges +=
-                '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+                '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
         }
     } else if (well.malowanieZ === 'zewnatrz') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">MAL.</span>';
+            '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
     }
     if (well.nadbudowa === 'zelbetowa' || well.dennicaMaterial === 'zelbetowa') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+            '<span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
     }
     if (well.stopnie === 'nierdzewna') {
         featureBadges +=
-            '<span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+            '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">NIERDZ.</span>';
     }
 
     let checkbox = '';
@@ -75,8 +75,8 @@ function renderWellHeaderRow(
                   ? 'var(--danger-hover)'
                   : 'var(--text-muted)';
         const diffSign = priceDiff > 0 ? '+' : '';
-        offerPriceCell = `<td class="text-right" style="font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
-        priceDiffCell = `<td class="text-right" style="font-weight:700; color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
+        offerPriceCell = `<td class="text-right" style="font-weight: var(--fw-semibold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
+        priceDiffCell = `<td class="text-right" style="font-weight: var(--fw-bold); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
     } else if (showPriceComparison) {
         offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
         priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
@@ -84,18 +84,18 @@ function renderWellHeaderRow(
 
     return `<tr class="well-row-header${errorClass}" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
         ${checkbox}
-        <td style="text-align:center; color:var(--text-muted); font-weight:600;">${displayLp}</td>
+        <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold);">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
-        <td style="font-weight:700; color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
+        <td style="font-weight: var(--fw-bold); color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
         <td style="text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
         <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${errorCell}</td>
-        <td style="text-align:right; font-weight:600; color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
+        <td style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
-        <td class="text-right" style="font-weight:800; color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
+        <td class="text-right" style="font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
         ${priceDiffCell}
         <td class="text-right" onclick="event.stopPropagation()" style="white-space:nowrap; padding:0.5rem 0.75rem;">
-            <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size:0.7rem; padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
+            <button class="btn btn-sm" onclick="showSection('builder'); selectWell(${i})" title="Edytuj studnię" style="font-size: var(--fs-sm); padding:0.25rem 0.6rem; display:inline-flex; align-items:center; gap:0.3rem;">
                 <i data-lucide="edit-3" style="width:12px; height:12px;"></i> Edytuj
             </button>
         </td>
@@ -107,8 +107,8 @@ function getWellBadges(change, isOrdered, well) {
     if (change) {
         html +=
             change.type === 'added'
-                ? '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb), 0.2); color:var(--success-hover); font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>'
-                : '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight:700; margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>';
+                ? '<span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--success-rgb), 0.2); color:var(--success-hover); font-weight: var(--fw-bold); margin-left:0.3rem;"><i data-lucide="circle-check"></i> NOWA</span>'
+                : '<span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-weight: var(--fw-bold); margin-left:0.3rem;"><i data-lucide="circle-x"></i> ZMIENIONO</span>';
     }
     if (isOrdered && well) {
         const wellOrder =
@@ -118,12 +118,12 @@ function getWellBadges(change, isOrdered, well) {
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
                 title="Zamówienie ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
-                style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight:800; margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
+                style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${escapeHtml(wellOrder.orderNumber)}
             </span>`;
         } else {
             html +=
-                '<span style="font-size:0.55rem; padding:1px 5px; border-radius:3px; background:rgba(var(--accent-rgb), 0.2); color:var(--accent-text); font-weight:700; margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>';
+                '<span style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--accent-rgb), 0.2); color:var(--accent-text); font-weight: var(--fw-bold); margin-left:0.3rem;"><i data-lucide="lock"></i> ZAMÓWIENIE</span>';
         }
     }
     return html;
@@ -162,8 +162,8 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
                 </div>
             </div>
             <div style="margin-top:0.8rem; border-top:1px solid rgba(var(--white-rgb), 0.05); padding-top:0.5rem;">
-                <div style="font-size:0.65rem; text-transform:uppercase; color:var(--text-muted); font-weight:600; margin-bottom:0.3rem;">Konfiguracja elementów:</div>
-                <table style="width:100%; font-size:0.75rem;">
+                <div style="font-size: var(--fs-xs); text-transform:uppercase; color:var(--text-muted); font-weight: var(--fw-semibold); margin-bottom:0.3rem;">Konfiguracja elementów:</div>
+                <table style="width:100%; font-size: var(--fs-base);">
                     ${renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, change)}
                 </table>
             </div>
@@ -205,14 +205,14 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             !item.disablePreco
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight:700;">PRECO</span>';
+                ' <span style="font-size: var(--fs-3xs); color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PRECO</span>';
         }
 
         const pehdType = getPehdTypeForComponent(well, p.componentType);
 
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight:700;">PEHD</span>';
+                ' <span style="font-size: var(--fs-3xs); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PEHD</span>';
         }
 
         if (
@@ -220,14 +220,14 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             (p.componentType === 'krag' || p.componentType === 'krag_ot')
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                ' <span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
         }
         if (
             (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
             p.componentType === 'dennica'
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight:700;">ŻELBET</span>';
+                ' <span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
         }
         if (
             well.stopnie === 'nierdzewna' &&
@@ -236,7 +236,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
                 p.componentType === 'konus')
         ) {
             badgesHtml +=
-                ' <span style="font-size:0.55rem; color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius:4px; background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight:700;">NIERDZ.</span>';
+                ' <span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">NIERDZ.</span>';
         }
 
         html += `<tr style="opacity:0.8;">
@@ -284,7 +284,7 @@ function renderComponentSubItems(
         }
         if (bd.pehd > 0 && pehdLabel) {
             html +=
-                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--blue-alt);"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
+                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--blue-alt);"><td colspan="3" class="pl-lg">w cenie: wkładka PEHD ' +
                 escapeHtml(pehdLabel) +
                 '</td><td class="text-right">' +
                 fmt(bd.pehd) +
@@ -292,25 +292,25 @@ function renderComponentSubItems(
         }
         if (bd.malowanieW > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                 fmt(bd.malowanieW) +
                 ' PLN</td></tr>';
         }
         if (bd.malowanieZ > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
                 fmt(bd.malowanieZ) +
                 ' PLN</td></tr>';
         }
         if (bd.zelbet > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
+                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
                 fmt(bd.zelbet) +
                 ' PLN</td></tr>';
         }
         if (bd.nierdzewna > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
+                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
                 fmt(bd.nierdzewna) +
                 ' PLN</td></tr>';
         }
@@ -319,14 +319,14 @@ function renderComponentSubItems(
     if (isBase && !item.isPsiaBuda && well.doplata) {
         const doplataWellColor = well.doplata > 0 ? 'var(--success)' : 'var(--danger)';
         const doplataWellSign = well.doplata > 0 ? '+' : '';
-        html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplataWellColor};">
+        html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplataWellColor};">
             <td colspan="3" class="pl-lg">↳ ${doplataWellSign} Dopłata indywidualna</td>
             <td class="text-right">${fmt(well.doplata)} PLN</td>
         </tr>`;
     }
 
     if (item._osadnikCost > 0) {
-        html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
+        html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
             <td colspan="3" class="pl-lg">↳ + Wkładka osadnika (przestarzałe)</td>
             <td class="text-right">${fmt(item._osadnikCost)} PLN</td>
         </tr>`;
@@ -338,41 +338,41 @@ function renderComponentSubItems(
             if (!prProd) return;
 
             if (pr.frozenTransitionPrice != null) {
-                html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
+                html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent-hover);">
                     <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
                     const doplPrColor = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign = pr.doplata > 0 ? '+' : '';
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor};">
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor};">
                         <td style="padding-left:2.0rem;">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
                 if (pr.frozenDrillingPrice > 0) {
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
                         <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}</td>
                         <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
                     </tr>`;
                 }
             } else {
                 const prPrice = (prProd.price || 0) * nadbudowaMult;
-                html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent-hover);">
+                html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent-hover);">
                     <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
                 if (pr.doplata) {
                     const doplPrColor2 = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign2 = pr.doplata > 0 ? '+' : '';
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:${doplPrColor2};">
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor2};">
                         <td style="padding-left:2.0rem;">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
                 if (pr._drillingBasePrice > 0 && pr._drillingProd) {
                     const drillPrice = pr._drillingBasePrice * nadbudowaMult;
-                    html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--warn);">
+                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
                         <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}</td>
                         <td class="text-right">${fmt(drillPrice)} PLN</td>
                     </tr>`;
@@ -392,7 +392,7 @@ function renderComponentSubItems(
                     ? kineta.frozenPrice
                     : getItemAssessedPrice(well, kp, true, kineta)) * (kineta.quantity || 1);
             html +=
-                '<tr style="opacity:0.6; font-size:0.7rem; color:var(--pink-hover);"><td colspan="3" class="pl-lg">↳ + ' +
+                '<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--pink-hover);"><td colspan="3" class="pl-lg">↳ + ' +
                 escapeHtml(kp ? kp.name : 'Kineta') +
                 '</td><td class="text-right">' +
                 fmt(kPrice) +
@@ -403,13 +403,13 @@ function renderComponentSubItems(
                 const kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
                     html +=
-                        '<tr style="opacity:0.5; font-size:0.65rem; color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                        '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieW * kQ) +
                         ' PLN</td></tr>';
                 }
                 if (kBd.malowanieZ > 0) {
                     html +=
-                        '<tr style="opacity:0.5; font-size:0.65rem; color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                        '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieZ * kQ) +
                         ' PLN</td></tr>';
                 }
@@ -463,8 +463,8 @@ function renderComponentSubItems(
                         ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
                 }
             }
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--danger);">
-                <td colspan="3" class="pl-lg">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size:0.6rem; color:var(--success);">(-' + discPreco + '%)</span>' : ''}</td>
+            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--danger);">
+                <td colspan="3" class="pl-lg">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size: var(--fs-2xs); color:var(--success);">(-' + discPreco + '%)</span>' : ''}</td>
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
             if (precoAlloc.isBottomMostDennica && typeof calcPrecoPricing === 'function') {
@@ -478,7 +478,7 @@ function renderComponentSubItems(
                             return '[' + e + ']';
                         });
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
                             dnParts.join(' / ') +
                             ') ' +
                             etyParts.join(' / ') +
@@ -488,7 +488,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
                             precoCalc.skrzynki.ilosc +
                             ' × ' +
                             fmt(precoCalc.skrzynki.cenaSzt) +
@@ -498,13 +498,13 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.spadekKineta > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
                             fmt(precoCalc.spadekKineta * precoMult) +
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
                             fmt(precoCalc.spadekMufa * precoMult) +
                             ' PLN</td></tr>';
                     }
@@ -515,7 +515,7 @@ function renderComponentSubItems(
                                 ? precoCalc.uniesieniaSzczegoly[0].mm
                                 : '';
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + uniesienie' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + uniesienie' +
                             (mm ? ' (' + mm + ' mm)' : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.uniesienie * precoMult) +
@@ -523,7 +523,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.redukcja > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + redukcja' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + redukcja' +
                             (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.redukcja * precoMult) +
@@ -541,7 +541,7 @@ function renderComponentSubItems(
                                         ? 'dopływ'
                                         : dw.typ || '';
                             html +=
-                                '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
+                                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
                                 dw.dn +
                                 (dwTyp ? ' (' + dwTyp + ')' : '') +
                                 ' [' +
@@ -553,7 +553,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size:0.65rem; color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
+                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
                             precoCalc.pelnaWysokosc.metry.toFixed(2) +
                             ' m)</td><td class="text-right">' +
                             fmt(precoCalc.pelnaWysokosc.cena * precoMult) +
@@ -562,7 +562,7 @@ function renderComponentSubItems(
                 }
             }
         } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--danger);">
+            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--danger);">
                 <td colspan="3" class="pl-lg">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
                 <td class="text-right">—</td>
             </tr>`;
@@ -571,7 +571,7 @@ function renderComponentSubItems(
 
     if (isBase) {
         if (wellTransportCost > 0) {
-            html += `<tr style="opacity:0.6; font-size:0.7rem; color:var(--accent2);">
+            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent2);">
                 <td colspan="3" class="pl-lg">↳ <i data-lucide="truck" aria-hidden="true"></i> Udział w transporcie</td>
                 <td class="text-right">${fmt(wellTransportCost)} PLN</td>
             </tr>`;

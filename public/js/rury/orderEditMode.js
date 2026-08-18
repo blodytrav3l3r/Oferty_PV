@@ -114,17 +114,17 @@ function renderOrderModeBanner(orderData) {
         : 'rgba(var(--success-rgb), 0.3)';
     const bgColor = hasChanges ? 'rgba(var(--danger-rgb), 0.1)' : 'rgba(var(--success-rgb), 0.1)';
     const textColor = hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)';
-    banner.style.cssText = `border-radius:10px;padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;border-width:2px;border-style:solid;border-color:${borderColor};background:${bgColor};`;
+    banner.style.cssText = `border-radius: var(--radius-sm);padding:0.6rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;border-width:2px;border-style:solid;border-color:${borderColor};background:${bgColor};`;
     banner.innerHTML =
         '<div style="display:flex;align-items:center;gap:0.75rem;">' +
-        '<span style="font-size:1.3rem;"><i data-lucide="package"></i></span>' +
+        '<span style="font-size: var(--fs-4xl);"><i data-lucide="package"></i></span>' +
         '<div>' +
-        '<span style="font-size:0.82rem;font-weight:800;color:' +
+        '<span style="font-size: var(--fs-md);font-weight: var(--fw-extrabold);color:' +
         textColor +
         ';">TRYB ZAMÓWIENIA — ' +
         escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '') +
         '</span>' +
-        '<div style="font-size:0.65rem;color:var(--text-muted);">' +
+        '<div style="font-size: var(--fs-xs);color:var(--text-muted);">' +
         (hasChanges
             ? '<i data-lucide="alert-triangle"></i> ' +
               changeCount +
@@ -155,18 +155,18 @@ function renderStep2OrderBanner(orderData) {
     banner.id = 'step2-order-banner';
     banner.classList.add('badge-ok');
     banner.style.cssText =
-        'border-radius:8px;padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
+        'border-radius: var(--radius-sm);padding:0.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;';
     banner.innerHTML =
         '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
-        '<span style="font-size:1.3rem;">📦</span>' +
+        '<span style="font-size: var(--fs-4xl);">📦</span>' +
         '<span class="color-success fw-7">Dodajesz produkty do istniejącego zamówienia</span>' +
         '<span class="text-muted">|</span>' +
-        '<span style="color:var(--text-muted);font-size:0.85rem;">Zamówienie: <strong style="color:var(--text-primary);">' +
+        '<span style="color:var(--text-muted);font-size: var(--fs-lg);">Zamówienie: <strong style="color:var(--text-primary);">' +
         escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '\u2014') +
         '</strong></span>' +
-        '<span style="color:var(--text-muted);font-size:0.82rem;">Po dodaniu produktów kliknij <strong style="color:var(--text-primary);">Dalej</strong> aby przejść do podsumowania.</span>' +
+        '<span style="color:var(--text-muted);font-size: var(--fs-md);">Po dodaniu produktów kliknij <strong style="color:var(--text-primary);">Dalej</strong> aby przejść do podsumowania.</span>' +
         '</div>' +
-        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size:0.78rem;font-weight:600;border-radius:6px;cursor:pointer;">Powrót do zamówienia</button>';
+        '<button class="btn btn-sm badge-ok" onclick="goToPhase(5)" style="padding:0.4rem 0.8rem;font-size: var(--fs-base);font-weight: var(--fw-semibold);border-radius: var(--radius-sm);cursor:pointer;">Powrót do zamówienia</button>';
     const step2 = document.getElementById('wizard-step-2');
     if (step2 && step2.firstChild) {
         step2.insertBefore(banner, step2.firstChild);

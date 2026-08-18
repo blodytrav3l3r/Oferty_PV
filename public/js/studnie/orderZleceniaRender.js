@@ -127,8 +127,8 @@ function renderZleceniaList() {
         const group = groupedElements[wIdx];
 
         html += `<div style="background:var(--bg-secondary); padding:0.6rem 0.8rem; border-bottom:1px solid var(--border-glass); border-top:1px solid var(--border-glass); position:sticky; top:0; z-index:${LAYERS.STICKY_TABLE_TH}; display:flex; justify-content:space-between; align-items:center; margin-top:-1px;">
-            <div style="font-size:0.75rem; font-weight:800; color:var(--accent-hover); text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${group.wellName}</div>
-            <div style="font-size:0.65rem; font-weight:700; color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius:12px; border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
+            <div style="font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:var(--accent-hover); text-transform:uppercase; letter-spacing:0.5px;"><i data-lucide="tag"></i> ${group.wellName}</div>
+            <div style="font-size: var(--fs-xs); font-weight: var(--fw-bold); color:var(--text-muted); background:var(--bg-primary); padding:0.2rem 0.5rem; border-radius: var(--radius); border:1px solid var(--border-glass);">${group.wellDn === 'styczna' ? 'Styczna' : 'DN' + group.wellDn}</div>
         </div>
         <div style="padding: 0.4rem;">`;
 
@@ -163,13 +163,13 @@ function renderZleceniaList() {
 
             html += `<div class="zlecenia-el-item ${isActive ? 'active' : ''} ${isSaved ? 'saved' : ''} ${isAccepted ? 'accepted' : ''}" onclick="selectZleceniaElement(${i})" style="margin-bottom:0.3rem;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
+                    <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary);">${escapeHtml(el.product.name)}</div>
                     <div style="display:flex; align-items:center; gap:0.3rem;">
-                        ${prodOrderNum ? `<div style="font-size:0.6rem; font-weight:800; color:var(--accent-hover); background:rgba(var(--accent-rgb), 0.2); padding:0.1rem 0.4rem; border-radius:4px; border:1px solid rgba(var(--accent-rgb), 0.3);">${prodOrderNum}</div>` : ''}
+                        ${prodOrderNum ? `<div style="font-size: var(--fs-2xs); font-weight: var(--fw-extrabold); color:var(--accent-hover); background:rgba(var(--accent-rgb), 0.2); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); border:1px solid rgba(var(--accent-rgb), 0.3);">${prodOrderNum}</div>` : ''}
                         ${isSaved && !isAccepted ? `<button class="btn-icon-danger btn-icon-xs" onclick="event.stopPropagation(); deleteProductionOrder('${escapeHtml(savedOrder.id)}')" title="Usuń zlecenie"><i data-lucide="trash-2"></i></button>` : ''}
                     </div>
                 </div>
-                ${isAccepted ? '<div style="font-size:0.55rem; color:var(--success-hover); margin-top:0.2rem; font-weight:700;">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size:0.55rem; color:var(--warn-hover); margin-top:0.2rem; font-weight:700;">Wersja robocza</div>' : ''}
+                ${isAccepted ? '<div style="font-size: var(--fs-3xs); color:var(--success-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Zaakceptowane — studnia zablokowana</div>' : isSaved ? '<div style="font-size: var(--fs-3xs); color:var(--warn-hover); margin-top:0.2rem; font-weight: var(--fw-bold);">Wersja robocza</div>' : ''}
             </div>`;
         });
 
@@ -186,7 +186,7 @@ function renderZleceniaList() {
         } else {
             msg = 'Brak elementów spełniających kryteria filtra.';
         }
-        html = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.75rem;">${msg}</div>`;
+        html = `<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size: var(--fs-base);">${msg}</div>`;
     }
 
     container.style.padding = '0';
@@ -202,7 +202,7 @@ function renderZleceniaWellConfig() {
 
     if (!well || !well.config || well.config.length === 0) {
         tbody.innerHTML =
-            '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.7rem;">Brak elementów</div>';
+            '<div style="text-align:center;padding:1rem;color:var(--text-muted);font-size: var(--fs-sm);">Brak elementów</div>';
         return;
     }
 
@@ -246,20 +246,20 @@ function renderZleceniaWellConfig() {
             zleceniaElementsList[zleceniaSelectedIdx].elementIndex === index;
 
         html += `<div data-zl-idx="${index}" class="config-tile" draggable="${!isLocked}" ondragstart="handleZlCfgDragStart(event)" ondragover="handleZlCfgDragOver(event)" ondrop="handleZlCfgDrop(event)" ondragend="handleZlCfgDragEnd(event)"
-                      style="background:rgba(var(--slate-800-rgb), 0.8); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius:6px; padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2); border-color:var(--accent-hover);' : ''}">
+                      style="background:rgba(var(--slate-800-rgb), 0.8); border:1px solid ${isCurrentlyEdited ? 'var(--accent)' : 'rgba(var(--white-rgb), 0.05)'}; border-left:4px solid ${badge.bg}; border-radius: var(--radius-sm); padding:0.35rem 0.5rem; margin-bottom:0.25rem; cursor:${isLocked ? 'default' : 'grab'}; transition:all 0.15s; ${isCurrentlyEdited ? 'box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.2); border-color:var(--accent-hover);' : ''}">
           <div style="display:flex; justify-content:space-between; align-items:center;">
             <div style="display:flex; align-items:center; gap:0.4rem;">
-                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(var(--black-rgb), 0.2); padding:0.1rem; border-radius:3px;">
+                <div style="display:flex; flex-direction:column; gap:1px; align-items:center; background:rgba(var(--black-rgb), 0.2); padding:0.1rem; border-radius: var(--radius-2xs);">
                   <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, -1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === 0 ? 'none' : 'block'};"><i data-lucide="chevron-up" class="text-xs"></i></button>
-                  <span style="font-size:0.55rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
+                  <span style="font-size: var(--fs-3xs); color:var(--text-primary); font-weight: var(--fw-bold);">${index + 1}</span>
                   <button onclick="event.stopPropagation(); moveZleceniaComponent(${index}, 1)" style="background:none; border:none; color:var(--text-muted); cursor:pointer; padding:0; display:${isLocked || index === well.config.length - 1 ? 'none' : 'block'};"><i data-lucide="chevron-down" class="text-xs"></i></button>
                 </div>
                 <div style="display:flex; flex-direction:column;">
-                  <div style="font-weight:700; color:var(--text-primary); font-size:0.68rem; line-height:1.1;">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
-                  <div style="font-size:0.55rem; color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
+                  <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xs); line-height:1.1;">${escapeHtml(p.name)}${item.quantity > 1 ? ` (x${item.quantity})` : ''}</div>
+                  <div style="font-size: var(--fs-3xs); color:var(--text-muted);">${p.height ? 'H=' + p.height + 'mm' : '—'}</div>
                 </div>
             </div>
-            ${isCurrentlyEdited ? '<span style="font-size:0.6rem; color:var(--accent-hover);"><i data-lucide="pencil"></i></span>' : ''}
+            ${isCurrentlyEdited ? '<span style="font-size: var(--fs-2xs); color:var(--accent-hover);"><i data-lucide="pencil"></i></span>' : ''}
           </div>
         </div>`;
     });

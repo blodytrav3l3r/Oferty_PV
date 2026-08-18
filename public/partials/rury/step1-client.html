@@ -14,11 +14,11 @@
         >
             <div
                 style="
-                    font-size: 1.4rem;
+                    font-size: var(--fs-5xl);
                     background: var(--slate-800);
                     width: 2.4rem;
                     height: 2.4rem;
-                    border-radius: 10px;
+                    border-radius: var(--radius-sm);
                     display: flex;
                     align-items: center;
                     justify-content: center;
@@ -31,13 +31,13 @@
                 <h2
                     id="offer-form-title"
                     class="wizard-card-title"
-                    style="margin: 0; font-size: 1.15rem; font-weight: 700"
+                    style="margin: 0; font-size: var(--fs-3xl); font-weight: var(--fw-bold)"
                 >
                     Dane klienta i oferty
                 </h2>
                 <p
                     class="wizard-card-subtitle"
-                    style="margin: 0; font-size: 0.75rem; color: var(--slate-500)"
+                    style="margin: 0; font-size: var(--fs-base); color: var(--slate-500)"
                 >
                     Uzupełnij dane klienta i podstawowe informacje o ofercie
                 </p>
@@ -47,7 +47,7 @@
                     type="button"
                     class="btn btn-secondary btn-sm"
                     onclick="showClientsDb()"
-                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                    style="padding: 0.4rem 0.8rem; font-size: var(--fs-base)"
                 >
                     <i data-lucide="folder-open"></i> Wczytaj klienta
                 </button>
@@ -55,7 +55,7 @@
                     type="button"
                     class="btn btn-primary btn-sm"
                     onclick="saveClientToDb()"
-                    style="padding: 0.4rem 0.8rem; font-size: 0.75rem"
+                    style="padding: 0.4rem 0.8rem; font-size: var(--fs-base)"
                 >
                     <i data-lucide="save"></i> Zapisz klienta
                 </button>
@@ -156,8 +156,8 @@
                         background: rgba(var(--accent-rgb), 0.1);
                         border: 1px solid rgba(var(--accent-rgb), 0.3);
                         color: var(--accent-hover);
-                        font-size: 0.75rem;
-                        font-weight: 700;
+                        font-size: var(--fs-base);
+                        font-weight: var(--fw-bold);
                         padding: 0.3rem 0.6rem;
                     "
                     onclick="changeOfferUser()"
@@ -223,7 +223,7 @@
                         rows="1"
                         style="
                             resize: vertical;
-                            font-size: 0.8rem;
+                            font-size: var(--fs-md);
                             width: 100%;
                             min-height: 34px;
                             height: 34px;

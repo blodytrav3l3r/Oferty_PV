@@ -31,11 +31,11 @@ function renderInlinePrzejsciaApp(containerId) {
     // Jeśli żadne typy nie są widoczne, pokaż stan pusty
     if (types.length === 0) {
         container.innerHTML = `
-            <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(var(--accent-rgb), 0.2); border-radius:10px; background:rgba(var(--slate-950-rgb), 0.3); margin:0.4rem 0;">
-                <div style="font-size:1.5rem; margin-bottom:0.5rem;"><i data-lucide="ban"></i></div>
-                <div style="font-size:0.75rem; font-weight:700; color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
-                <div style="font-size:0.65rem; color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
-                <button class="btn btn-primary btn-sm" onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="padding:0.35rem 0.8rem; font-size:0.7rem;">
+            <div style="text-align:center; padding:1.5rem; border:1px dashed rgba(var(--accent-rgb), 0.2); border-radius: var(--radius-sm); background:rgba(var(--slate-950-rgb), 0.3); margin:0.4rem 0;">
+                <div style="font-size: var(--fs-6xl); margin-bottom:0.5rem;"><i data-lucide="ban"></i></div>
+                <div style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); margin-bottom:0.3rem;">Wszystkie przejścia są ukryte</div>
+                <div style="font-size: var(--fs-xs); color:var(--text-muted); margin-bottom:0.8rem;">Włącz widoczność wybranych typów przejść, aby móc je dodawać.</div>
+                <button class="btn btn-primary btn-sm" onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="padding:0.35rem 0.8rem; font-size: var(--fs-sm);">
                     <i data-lucide="eye"></i>️ Pokaż przejścia (${allTypes.length} dostępnych)
                 </button>
             </div>
@@ -67,8 +67,8 @@ function renderInlinePrzejsciaApp(containerId) {
         <!-- Rodzaj kafelków - przewijalna siatka -->
         <div style="padding:0.4rem 0;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
-                <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight:700;">Rodzaj materiału</div>
-                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size:0.58rem; font-weight:600; padding:0.15rem 0.5rem; border-radius:5px; cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
+                <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight: var(--fw-bold);">Rodzaj materiału</div>
+                <button onclick="openPrzejsciaVisibilityPopup('${containerId || ''}')" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
                 <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
@@ -77,14 +77,14 @@ function renderInlinePrzejsciaApp(containerId) {
                             const isActive = t === inlinePrzejsciaState.type;
                             return `
                         <div onclick="window.inlineSetType('${escapeHtml(t)}', '${escapeHtml(containerId || '')}')" 
-                             style="padding:0.2rem 0.4rem; border-radius:6px; cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
+                             style="padding:0.2rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
                                     background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                     border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(var(--accent-rgb), 0.15);' : ''}"
                              onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
                              onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'"
                              title="${t}">
-                             <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight:700; text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
+                             <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight: var(--fw-bold); text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
                         </div>`;
                         })
                         .join('')}
@@ -94,7 +94,7 @@ function renderInlinePrzejsciaApp(containerId) {
 
         <!-- Wybór DN -->
         <div style="padding:0.3rem 0;">
-            <div style="font-size:0.58rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight:700;">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
+            <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight: var(--fw-bold);">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
                 ${dnList
                     .map((p) => {
@@ -103,14 +103,14 @@ function renderInlinePrzejsciaApp(containerId) {
                             typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
                         return `
                     <div class="fs-dn-tile ${isActive ? 'active' : ''}" 
-                         style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius:6px; height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
+                         style="padding:0.2rem 0.4rem; text-align:center; cursor:pointer; border-radius: var(--radius-sm); height:44px; display:flex; align-items:center; justify-content:center; transition:all 0.15s ease;
                                 background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                 border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.3);' : ''}"
                          onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
                          onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'}"
                          onclick="window.inlineSetDN('${escapeHtml(p.id)}', '${escapeHtml(containerId || '')}')">
-                         <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight:800; text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
+                         <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight: var(--fw-extrabold); text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
                     </div>
                 `;
                     })
@@ -121,10 +121,10 @@ function renderInlinePrzejsciaApp(containerId) {
         ${
             selectedProduct
                 ? `
-        <div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius:10px; margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
+        <div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius: var(--radius-sm); margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                <span style="font-size:1.0rem; font-weight:800; color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
-                <span style="font-size:0.95rem; color:var(--success); font-weight:800; font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size:0.6rem;">PLN</span></span>
+                <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
+                <span style="font-size: var(--fs-xl); color:var(--success); font-weight: var(--fw-extrabold); font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size: var(--fs-2xs);">PLN</span></span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
                 <div class="ui-center-min">
@@ -132,37 +132,37 @@ function renderInlinePrzejsciaApp(containerId) {
                     <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
                            onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
-                           placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
+                           placeholder="—" style="height:26px; padding:0 0.3rem; font-size: var(--fs-xl); font-weight: var(--fw-bold); text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs);">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:800; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
+                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; padding:0 0.3rem; font-size: var(--fs-xl); font-weight: var(--fw-extrabold); text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs);">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size: var(--fs-xl); font-weight: var(--fw-bold); text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs);">
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size:0.9rem; font-weight:700; text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius:4px;">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" style="height:26px; padding:0 0.3rem; font-size: var(--fs-xl); font-weight: var(--fw-bold); text-align:center; color:var(--text-primary); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs);">
                 </div>
 
                 <div class="text-center">
                     <div class="ui-text-muted-sm">Kąt wyk.</div>
-                    <div class="color-info" style="font-size:1.0rem; font-weight:700; padding:0.15rem 0;" id="inl-exec-${containerId || 'main'}">360°</div>
+                    <div class="color-info" style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); padding:0.15rem 0;" id="inl-exec-${containerId || 'main'}">360°</div>
                 </div>
                 <div class="text-center">
                     <div class="ui-text-muted-sm">Gony</div>
-                    <div class="color-success" style="font-size:1.0rem; font-weight:700; padding:0.15rem 0;" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
+                    <div class="color-success" style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); padding:0.15rem 0;" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
                 </div>
                 <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button class="btn btn-primary" onclick="window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; width:100%; justify-content:center; font-size:0.7rem; padding:0;"><i data-lucide="plus"></i> Dodaj</button>
+                    <button class="btn btn-primary" onclick="window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" style="height:26px; width:100%; justify-content:center; font-size: var(--fs-sm); padding:0;"><i data-lucide="plus"></i> Dodaj</button>
                 </div>
             </div>
         </div>
         `
                 : `
-        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.05); border-radius:8px; font-size:0.7rem; margin-top:0.3rem;">
+        <div style="text-align:center; padding:0.8rem; color:var(--text-muted); border:1px dashed rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); font-size: var(--fs-sm); margin-top:0.3rem;">
             Wybierz średnicę (DN) aby skonfigurować przejście
         </div>
         `
@@ -263,7 +263,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:var(--slate-950); color:var(--white); border:1px solid var(--blue); border-radius:4px; font-size:1.15rem; font-weight:800; text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(var(--blue-rgb), 0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:var(--slate-950); color:var(--white); border:1px solid var(--blue); border-radius: var(--radius-2xs); font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(var(--blue-rgb), 0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
             const inp = element.querySelector('input');
             inp.focus();
         };
@@ -385,7 +385,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
         container.innerHTML =
-            '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px;">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
+            '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size: var(--fs-base); border:1px dashed rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm);">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
         if (countEl) countEl.textContent = '';
         return;
     }
@@ -404,7 +404,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         });
         if (!hasAny) {
             container.innerHTML =
-                '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size:0.75rem; border:1px dashed rgba(var(--white-rgb), 0.1); border-radius:8px;">Brak przejść szczelnych<br>w tym elemencie.</div>';
+                '<div style="text-align:center; padding:1.2rem; color:var(--text-muted); font-size: var(--fs-base); border:1px dashed rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm);">Brak przejść szczelnych<br>w tym elemencie.</div>';
             if (countEl) countEl.textContent = '(0)';
             return;
         }
@@ -504,10 +504,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         if (filterElementIndex == null && assignedIndex !== prevAssignedIndex) {
             if (index > 0) html += '<div style="height:0.5rem;"></div>';
-            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${assignedBg}; border-radius:6px; color:var(--text-muted); font-size:0.65rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
-                <span style="font-size:0.9rem; filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
+            html += `<div style="display:flex; align-items:center; gap:0.4rem; padding:0.3rem 0.5rem; margin-top:0.4rem; margin-bottom:0.4rem; background:linear-gradient(90deg, ${assignedBg} 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border-left:3px solid ${assignedBg}; border-radius: var(--radius-sm); color:var(--text-muted); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; box-shadow:0 1px 3px rgba(var(--black-rgb), 0.3);">
+                <span style="font-size: var(--fs-xl); filter:grayscale(0.4);"><i data-lucide="map-pin"></i></span> 
                 <span>Dotyczy:</span> 
-                <span style="color:var(--slate-200); font-size:0.75rem; padding-left:0.2rem;">${assignedName}</span>
+                <span style="color:var(--slate-200); font-size: var(--fs-base); padding-left:0.2rem;">${assignedName}</span>
             </div>`;
             prevAssignedIndex = assignedIndex;
         }
@@ -556,68 +556,68 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius:8px; min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
+            html += `<div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius: var(--radius-sm); min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
                 <div style="display:flex; align-items:center; gap:0.4rem;">
-                  <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius:4px;">
-                    <span style="font-size:0.65rem; color:var(--text-primary); font-weight:700;">${index + 1}</span>
+                  <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius: var(--radius-2xs);">
+                    <span style="font-size: var(--fs-xs); color:var(--text-primary); font-weight: var(--fw-bold);">${index + 1}</span>
                   </div>
-                  <span style="font-size:0.75rem; font-weight:700; color:var(--blue-hover);">Edycja wariantu</span>
+                  <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--blue-hover);">Edycja wariantu</span>
                 </div>
-                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-muted);"><i data-lucide="x"></i></button>
+                <button onclick="cancelPrzejscieEdit()" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size: var(--fs-md); color:var(--text-muted);"><i data-lucide="x"></i></button>
               </div>
               
-              <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
+              <div style="font-size: var(--fs-3xs); color:var(--text-muted); margin-bottom:0.2rem;">Kategoria przejścia</div>
               <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem; max-height:80px; overflow-y:auto; scrollbar-width:thin;">
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:600; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-semibold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
                     })
                     .join('')}
               </div>
 
-              <div style="font-size:0.55rem; color:var(--text-muted); margin-bottom:0.2rem;">Średnica (DN)</div>
+              <div style="font-size: var(--fs-3xs); color:var(--text-muted); margin-bottom:0.2rem;">Średnica (DN)</div>
               <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.6rem;">
                 ${currentTypeDNs
                     .map((pr) => {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size:0.65rem; font-weight:700; border-radius:4px; cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
                     })
                     .join('')}
               </div>
 
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <label style="font-size: var(--fs-3xs); color:var(--text-muted); display:block; margin-bottom:0.15rem;">Rzędna [m]</label>
+                  <input type="text" inputmode="decimal" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" style="padding:0.35rem; font-size: var(--fs-base); text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Kąt [°]</label>
-                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size:0.75rem; font-weight:800; text-align:center;">
+                  <label style="font-size: var(--fs-3xs); color:var(--text-muted); display:block; margin-bottom:0.15rem;">Kąt [°]</label>
+                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size: var(--fs-base); font-weight: var(--fw-extrabold); text-align:center;">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <label style="font-size: var(--fs-3xs); color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w kinecie [%]</label>
+                  <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" style="padding:0.35rem; font-size: var(--fs-base); text-align:center;" onchange="window.syncEditState()">
                 </div>
                 <div>
-                  <label style="font-size:0.55rem; color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size:0.75rem; text-align:center;" onchange="window.syncEditState()">
+                  <label style="font-size: var(--fs-3xs); color:var(--text-muted); display:block; margin-bottom:0.15rem;">Spadek w mufie [%]</label>
+                  <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" style="padding:0.35rem; font-size: var(--fs-base); text-align:center;" onchange="window.syncEditState()">
                 </div>
               </div>
               
 
 
               <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.4rem; border-top:1px solid rgba(var(--white-rgb), 0.05);">
-                <div style="display:flex; gap:0.8rem; font-size:0.65rem;">
+                <div style="display:flex; gap:0.8rem; font-size: var(--fs-xs);">
                   <span class="ui-text-mute">Wyk: <strong id="edit-exec-${index}" class="text-primary">${execAngle}°</strong></span>
                   <span class="ui-text-mute">Gony: <strong id="edit-gony-${index}" style="color:var(--success);">${gons}<sup>g</sup></strong></span>
                 </div>
                 <div style="display:flex; gap:0.4rem;">
-                  <button onclick="cancelPrzejscieEdit()" style="padding:0.3rem 0.6rem; font-size:0.7rem; border-radius:5px; border:1px solid rgba(var(--white-rgb), 0.1); background:rgba(var(--white-rgb), 0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
-                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.7rem;"><i data-lucide="save"></i> Zapisz</button>
+                  <button onclick="cancelPrzejscieEdit()" style="padding:0.3rem 0.6rem; font-size: var(--fs-sm); border-radius: var(--radius-2xs); border:1px solid rgba(var(--white-rgb), 0.1); background:rgba(var(--white-rgb), 0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
+                  <button onclick="savePrzejscieEdit(${index})" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size: var(--fs-sm);"><i data-lucide="save"></i> Zapisz</button>
                 </div>
               </div>
             </div>`;
@@ -644,9 +644,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         filterElementIndex != null
             ? `Przejścia tego elementu (${filteredCount} szt.)`
             : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
-    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.1); border-radius:6px; border:1px solid rgba(var(--accent-rgb), 0.2);">
-      <span style="font-size:0.7rem; color:var(--text-muted); font-weight:600;">${countLabel}</span>
-      <span style="font-size:0.85rem; font-weight:800; color:var(--success);">${fmt(totalPrice)} PLN</span>
+    html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.1); border-radius: var(--radius-sm); border:1px solid rgba(var(--accent-rgb), 0.2);">
+      <span style="font-size: var(--fs-sm); color:var(--text-muted); font-weight: var(--fw-semibold);">${countLabel}</span>
+      <span style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmt(totalPrice)} PLN</span>
     </div>`;
 
     container.innerHTML = html;

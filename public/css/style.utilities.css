@@ -29,7 +29,7 @@
 }
 .form-input-wide {
     width: 100%;
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     padding: 0.6rem 0.8rem;
 }
 
@@ -148,7 +148,7 @@
 
 /* Align & layout utility classes */
 .text-xs {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 .text-center {
     text-align: center;
@@ -158,7 +158,7 @@
 }
 .text-right-600 {
     text-align: right;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 .text-center-block {
     display: block;
@@ -190,13 +190,13 @@
     align-items: center;
 }
 .fw-500 {
-    font-weight: 500;
+    font-weight: var(--fw-medium);
 }
 .fw-600 {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 .fw-700 {
-    font-weight: 700;
+    font-weight: var(--fw-bold);
 }
 .text-muted {
     color: var(--text-muted);
@@ -228,7 +228,7 @@
     padding: 0.5rem 0.75rem;
 }
 .pill-sm {
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
     padding: 0.4rem 0.8rem;
 }
 
@@ -249,14 +249,14 @@
 .btn-icon-sm {
     width: 26px;
     height: 26px;
-    border-radius: 5px;
+    border-radius: var(--radius-2xs);
 }
 .btn-icon-xs {
     width: auto;
     height: auto;
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     padding: 0.1rem 0.3rem;
-    font-size: 0.6rem;
+    font-size: var(--fs-2xs);
     line-height: 1;
 }
 

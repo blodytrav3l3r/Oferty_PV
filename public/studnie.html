@@ -61,7 +61,7 @@
                                     padding: 0.2rem;
                                     justify-content: center;
                                     align-items: center;
-                                    border-radius: 6px;
+                                    border-radius: var(--radius-sm);
                                     background: rgba(var(--danger-rgb), 0.1);
                                     border: 1px dashed rgba(var(--danger-rgb), 0.5);
                                     color: var(--danger-hover);
@@ -84,13 +84,16 @@
                                     class="ws-label"
                                     style="
                                         color: var(--danger-hover);
-                                        font-size: 0.65rem;
+                                        font-size: var(--fs-xs);
                                         white-space: nowrap;
                                     "
                                 >
                                     Usuń
                                 </div>
-                                <div class="ws-value" style="font-size: 0.85rem; margin-top: -2px">
+                                <div
+                                    class="ws-value"
+                                    style="font-size: var(--fs-lg); margin-top: -2px"
+                                >
                                     <i data-lucide="trash-2"></i>
                                 </div>
                             </div>
@@ -102,7 +105,7 @@
                                 background: rgba(var(--success-rgb), 0.05);
                                 border: 1px solid rgba(var(--success-rgb), 0.2);
                                 padding: 0.3rem;
-                                border-radius: 6px;
+                                border-radius: var(--radius-sm);
                                 display: flex;
                                 justify-content: center;
                                 align-items: center;
@@ -112,8 +115,8 @@
                                 class="ws-label"
                                 style="
                                     color: var(--success-hover);
-                                    font-size: 0.75rem;
-                                    font-weight: 600;
+                                    font-size: var(--fs-base);
+                                    font-weight: var(--fw-semibold);
                                     margin: 0;
                                     white-space: nowrap;
                                 "
@@ -125,9 +128,9 @@
                                 id="ws-price"
                                 style="
                                     color: var(--success-hover);
-                                    font-size: 0.75rem;
+                                    font-size: var(--fs-base);
                                     margin: 0;
-                                    font-weight: 700;
+                                    font-weight: var(--fw-bold);
                                     white-space: nowrap;
                                 "
                             >
@@ -188,7 +191,7 @@
                                 flex-direction: column;
                                 background: var(--bg-card);
                                 border: 1px solid var(--border-glass);
-                                border-radius: 16px;
+                                border-radius: var(--radius-md);
                                 box-shadow: 0 8px 32px var(--slate-950);
                                 max-width: 1200px;
                                 margin: 0 auto;
@@ -208,8 +211,8 @@
                             <span
                                 style="
                                     color: var(--text-muted);
-                                    font-size: 0.85rem;
-                                    font-weight: 500;
+                                    font-size: var(--fs-lg);
+                                    font-weight: var(--fw-medium);
                                     font-family: 'Inter', sans-serif;
                                     letter-spacing: 0.5px;
                                 "

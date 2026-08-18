@@ -52,29 +52,29 @@ function renderOfferLockBanner() {
 
         lockBanner.style.cssText = `
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-            padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
+            padding:0.7rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius: var(--radius-sm);
             background: linear-gradient(135deg, rgba(var(--danger-rgb), 0.1), rgba(var(--warn-rgb), 0.1));
             border: 2px solid rgba(var(--danger-rgb), 0.3);
         `;
 
         lockBanner.innerHTML = `
             <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                <span style="font-size:1.3rem;"><i data-lucide="lock"></i></span>
+                <span style="font-size: var(--fs-4xl);"><i data-lucide="lock"></i></span>
                 <div>
-                    <div style="font-size:0.82rem; font-weight:800; color:var(--danger-hover);">
+                    <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:var(--danger-hover);">
                         STUDNIA ZABLOKOWANA
                     </div>
-                    <div style="font-size:0.65rem; color:var(--text-muted);">
+                    <div style="font-size: var(--fs-xs); color:var(--text-muted);">
                         „${escapeHtml(well.name)}" jest częścią zamówienia${wellOrder ? ' ' + escapeHtml(wellOrder.orderNumber || '') : ''}.
                         Edytuj ją przez zamówienie lub wybierz inną studnię.
-                        <span style="color:var(--success-hover); font-weight:700;">${progress.ordered}/${progress.total} studni zamówionych</span>
+                        <span style="color:var(--success-hover); font-weight: var(--fw-bold);">${progress.ordered}/${progress.total} studni zamówionych</span>
                     </div>
                 </div>
             </div>
             <div style="display:flex; gap:0.4rem; align-items:center;">
                 ${
                     wellOrder
-                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(var(--success-rgb), 0.2); border:1px solid rgba(var(--success-rgb), 0.5); color:var(--success-hover); font-size:0.75rem; font-weight:700; padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
+                        ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(var(--success-rgb), 0.2); border:1px solid rgba(var(--success-rgb), 0.5); color:var(--success-hover); font-size: var(--fs-base); font-weight: var(--fw-bold); padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
                         <i data-lucide="package"></i> Edytuj zamówienie
                     </button>`
                         : ''
@@ -85,15 +85,15 @@ function renderOfferLockBanner() {
         // Oferta ma zamówienia, ale bieżąca studnia jest wolna
         lockBanner.style.cssText = `
             display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-            padding:0.5rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius:10px;
+            padding:0.5rem 1rem; margin-top:calc(0.5rem + 2px); margin-bottom:0.6rem; border-radius: var(--radius-sm);
             background: linear-gradient(135deg, rgba(var(--success-rgb), 0.1), rgba(var(--blue-rgb), 0.05));
             border: 1px solid rgba(var(--success-rgb), 0.3);
         `;
 
         lockBanner.innerHTML = `
             <div style="display:flex; align-items:center; gap:0.5rem;">
-                <span style="font-size:1rem;"><i data-lucide="info"></i></span>
-                <div style="font-size:0.7rem; color:var(--text-muted);">
+                <span style="font-size: var(--fs-2xl);"><i data-lucide="info"></i></span>
+                <div style="font-size: var(--fs-sm); color:var(--text-muted);">
                     Oferta ma <strong style="color:var(--success-hover);">${orders.length}</strong> zamówień
                     (<strong style="color:var(--success-hover);">${progress.ordered}/${progress.total}</strong> studni zamówionych).
                     Ta studnia jest <strong style="color:var(--success-hover);">dostępna do edycji</strong>.

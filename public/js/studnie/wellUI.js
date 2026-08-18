@@ -64,7 +64,7 @@ window.renderWellsList = function renderWellsList() {
         if (groupWells.length === 0) return;
 
         const groupTitle = dnGroup === 'styczna' ? 'Studnie Styczne' : `Studnie DN${dnGroup}`;
-        html += `<div style="font-size:0.68rem; color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight:800; opacity:0.7;">${groupTitle}</div>`;
+        html += `<div style="font-size: var(--fs-xs); color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight: var(--fw-extrabold); opacity:0.7;">${groupTitle}</div>`;
 
         groupWells.forEach(({ w, i }) => {
             const isActive = i === currentWellIndex;
@@ -82,12 +82,12 @@ window.renderWellsList = function renderWellsList() {
                     changeStyling =
                         'border-left: 3px solid var(--success); background: rgba(var(--success-rgb), 0.05);';
                     changeBadge =
-                        '<span style="font-size:0.6rem; color:var(--success); font-weight:700; margin-left:0.3rem;">[NOWA]</span>';
+                        '<span style="font-size: var(--fs-2xs); color:var(--success); font-weight: var(--fw-bold); margin-left:0.3rem;">[NOWA]</span>';
                 } else if (changeType === 'modified') {
                     changeStyling =
                         'border-left: 3px solid var(--danger); background: rgba(var(--danger-rgb), 0.05);';
                     changeBadge =
-                        '<span style="font-size:0.6rem; color:var(--danger); font-weight:700; margin-left:0.3rem;">[ZMIENIONA]</span>';
+                        '<span style="font-size: var(--fs-2xs); color:var(--danger); font-weight: var(--fw-bold); margin-left:0.3rem;">[ZMIENIONA]</span>';
                 }
             }
 
@@ -110,13 +110,13 @@ window.renderWellsList = function renderWellsList() {
             let sourceBadge = '';
             if (w.configSource === 'AUTO_AI') {
                 sourceBadge =
-                    '<span title="Dobór AI / ML" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(160deg) saturate(300%);"><i data-lucide="bot"></i></span>';
+                    '<span title="Dobór AI / ML" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(160deg) saturate(300%);"><i data-lucide="bot"></i></span>';
             } else if (w.configSource === 'AUTO_JS' || w.configSource === 'AUTO') {
                 sourceBadge =
-                    '<span title="Dobór Automatyczny" style="font-size:0.75rem; margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
+                    '<span title="Dobór Automatyczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
             } else {
                 sourceBadge =
-                    '<span title="Dobór Ręczny" style="font-size:0.75rem; margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="hand"></i></span>';
+                    '<span title="Dobór Ręczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="hand"></i></span>';
             }
 
             let wellLockBadge = '';
@@ -129,12 +129,12 @@ window.renderWellsList = function renderWellsList() {
                 if (wellOrder && wellOrder.orderNumber) {
                     wellLockBadge = `<span title="Studnia na zamówieniu ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
                         onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
-                        style="font-size:0.55rem; background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius:4px; font-weight:800; margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                        style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${escapeHtml(wellOrder.orderNumber)}
                     </span>`;
                 } else {
                     wellLockBadge =
-                        '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size:0.75rem; margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
+                        '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size: var(--fs-base); margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
                 }
             }
 
@@ -149,7 +149,7 @@ window.renderWellsList = function renderWellsList() {
                 const borderRgba = isNeg
                     ? 'rgba(var(--danger-rgb), 0.5)'
                     : 'rgba(var(--success-rgb), 0.5)';
-                doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size:0.6rem; background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius:3px; font-weight:800; margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
+                doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size: var(--fs-2xs); background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
             }
 
             // Automatyczne sprawdzenie w locie dla wszystkich kart
@@ -159,7 +159,7 @@ window.renderWellsList = function renderWellsList() {
                 ? ' background:rgba(var(--danger-rgb), 0.15) !important;'
                 : '';
             const errorNameStyle = hasErrors
-                ? 'color:var(--danger) !important; font-weight:700 !important;'
+                ? 'color:var(--danger) !important; font-weight: var(--fw-bold) !important;'
                 : '';
 
             const hasBadges =
@@ -201,7 +201,7 @@ window.renderWellsList = function renderWellsList() {
     });
 
     if (wells.length === 0) {
-        html = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size:0.85rem;">Brak dodanych studni.<br>Wybierz średnicę z przycisków powyżej.</div>`;
+        html = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak dodanych studni.<br>Wybierz średnicę z przycisków powyżej.</div>`;
     }
 
     container.innerHTML = html;

@@ -69,7 +69,7 @@ function openExcelShortcutsPopup() {
                 (s) =>
                     '<tr>' +
                     '<td style="padding:0.25rem 0.5rem;white-space:nowrap;vertical-align:top;">' +
-                    '<kbd style="font-family:monospace;font-size:0.7rem;background:rgba(var(--white-rgb), 0.08);color:var(--slate-200);padding:1px 5px;border-radius:3px;">' +
+                    '<kbd style="font-family:monospace;font-size: var(--fs-sm);background:rgba(var(--white-rgb), 0.08);color:var(--slate-200);padding:1px 5px;border-radius: var(--radius-2xs);">' +
                     escapeHtml(s.keys) +
                     '</kbd></td>' +
                     '<td style="padding:0.25rem 0.5rem;vertical-align:top;color:var(--slate-300);">' +
@@ -78,7 +78,7 @@ function openExcelShortcutsPopup() {
             )
             .join('');
         return (
-            '<tr><td colspan="2" style="padding:0.45rem 0.5rem 0.2rem;border-top:1px solid rgba(var(--white-rgb), 0.06);color:var(--accent-text);font-size:0.7rem;font-weight:700;letter-spacing:0.3px;">' +
+            '<tr><td colspan="2" style="padding:0.45rem 0.5rem 0.2rem;border-top:1px solid rgba(var(--white-rgb), 0.06);color:var(--accent-text);font-size: var(--fs-sm);font-weight: var(--fw-bold);letter-spacing:0.3px;">' +
             escapeHtml(group.section) +
             '</td></tr>' +
             itemRows
@@ -87,14 +87,14 @@ function openExcelShortcutsPopup() {
     const html =
         '<div class="modal" style="max-width:min(96vw,560px);max-height:80vh;overflow:auto;">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
-        '<button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:var(--slate-400);font-size:1.2rem;cursor:pointer;padding:0;line-height:1;">✕</button></div>' +
-        '<table style="width:100%;border-collapse:collapse;font-size:0.75rem;">' +
+        '<button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:var(--slate-400);font-size: var(--fs-4xl);cursor:pointer;padding:0;line-height:1;">✕</button></div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size: var(--fs-base);">' +
         '<thead><tr><th style="text-align:left;padding:0.25rem 0.5rem;border-bottom:1px solid rgba(var(--white-rgb), 0.1);">Skrót</th>' +
         '<th style="text-align:left;padding:0.25rem 0.5rem;border-bottom:1px solid rgba(var(--white-rgb), 0.1);">Opis</th></tr></thead>' +
         '<tbody>' +
         rows.join('') +
         '</tbody></table>' +
-        '<p style="margin:0;padding:0.5rem;font-size:0.65rem;color:var(--slate-500);">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
+        '<p style="margin:0;padding:0.5rem;font-size: var(--fs-xs);color:var(--slate-500);">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
         '</div>';
 
     window.showModal({

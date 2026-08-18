@@ -33,7 +33,7 @@
 .upm-modal {
     background: linear-gradient(180deg, var(--slate-800) 0%, var(--slate-950) 100%);
     border: 1px solid var(--upm-border);
-    border-radius: 16px;
+    border-radius: var(--radius-md);
     width: 560px;
     max-width: 95vw;
     max-height: 85vh;
@@ -68,9 +68,9 @@
 
 .upm-modal-title {
     margin: 0;
-    font-size: 1.4rem;
+    font-size: var(--fs-5xl);
     color: var(--upm-text);
-    font-weight: 800;
+    font-weight: var(--fw-extrabold);
     display: flex;
     align-items: center;
     gap: 0.6rem;
@@ -85,9 +85,9 @@
 
 .upm-modal-subtitle {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     color: var(--upm-text-muted);
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     line-height: 1.3;
 }
 
@@ -100,7 +100,7 @@
     align-items: center;
     justify-content: center;
     padding: 0.4rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     transition:
         background-color 0.15s,
         border-color 0.15s,
@@ -143,7 +143,7 @@
 }
 .upm-body::-webkit-scrollbar-thumb {
     background: var(--upm-border);
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
 }
 .upm-body::-webkit-scrollbar-thumb:hover {
     background: var(--upm-text-dim);
@@ -160,7 +160,7 @@
 .upm-section {
     background: var(--upm-bg-section);
     border: 1px solid var(--upm-border-subtle);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1rem 1.25rem 1.1rem;
     transition: border-color 0.15s;
 }
@@ -175,8 +175,8 @@
 
 .upm-title {
     margin: 0 0 0.4rem 0;
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
     text-align: left;
     display: flex;
     align-items: center;
@@ -222,7 +222,7 @@
     padding: 0.7rem;
     margin-bottom: 0.75rem;
     border: 1px solid var(--upm-border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--white-rgb), 0.02);
 }
 
@@ -230,19 +230,19 @@
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     color: var(--upm-text-muted);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-align: left;
 }
 
 .upm-combined-select {
     background: rgba(var(--white-rgb), 0.05);
     border: 1px solid var(--upm-border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     color: var(--upm-text);
     padding: 0.5rem 0.6rem;
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     font-family: inherit;
     width: 100%;
     color-scheme: dark;
@@ -274,19 +274,19 @@
 }
 
 .upm-badge {
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
     color: var(--accent-text);
     background: rgba(var(--accent-text-rgb), 0.15);
     padding: 0.15rem 0.5rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     margin-left: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .upm-desc {
-    font-size: 0.875rem;
+    font-size: var(--fs-lg);
     color: var(--upm-text-muted);
     text-align: left;
     margin: 0 0 0.9rem 0;
@@ -302,9 +302,9 @@
 .upm-btn {
     flex: 1;
     padding: 1rem 1.2rem;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-weight: 800;
+    font-weight: var(--fw-extrabold);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -313,7 +313,7 @@
         background-color 0.18s,
         border-color 0.18s;
     border: 2px solid;
-    font-size: 1rem;
+    font-size: var(--fs-2xl);
     font-family: inherit;
     letter-spacing: 0.01em;
 }
@@ -354,7 +354,7 @@
 }
 
 .upm-btn-icon {
-    font-size: 1.75rem;
+    font-size: var(--fs-6xl);
     line-height: 1;
     display: flex;
     align-items: center;
@@ -368,13 +368,13 @@
 
 .upm-btn-secondary {
     padding: 0.55rem 1.4rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: rgba(var(--white-rgb), 0.05);
     border: 1px solid rgba(var(--white-rgb), 0.1);
     color: var(--slate-300);
     cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 600;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-semibold);
     transition:
         background-color 0.15s,
         color 0.15s;
@@ -405,12 +405,12 @@
 }
 .upm-orders-list::-webkit-scrollbar-thumb {
     background: var(--upm-border);
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
 }
 
 .upm-row {
     padding: 0.75rem 1rem;
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -440,9 +440,9 @@
 }
 
 .upm-row-label {
-    font-size: 0.9rem;
+    font-size: var(--fs-xl);
     color: var(--upm-text);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-overflow: ellipsis;
     overflow: hidden;
     white-space: nowrap;
@@ -462,10 +462,10 @@
 
 .upm-btn-sm {
     padding: 0.5rem 0.9rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 0.8rem;
-    font-weight: 800;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-extrabold);
     transition:
         background-color 0.15s,
         border-color 0.15s,
@@ -491,10 +491,10 @@
 
 .upm-status {
     display: inline-block;
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     padding: 0.15rem 0.5rem;
-    border-radius: 6px;
-    font-weight: 700;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     flex-shrink: 0;

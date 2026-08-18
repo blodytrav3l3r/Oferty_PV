@@ -14,7 +14,11 @@
                     </select>
                     <div
                         id="step4-copy-order-help"
-                        style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem"
+                        style="
+                            font-size: var(--fs-xs);
+                            color: var(--text-muted);
+                            margin-top: 0.3rem;
+                        "
                     >
                         Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.
                     </div>
@@ -44,8 +48,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--warn);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -61,7 +65,7 @@
                         placeholder="np. faktura@firma.pl"
                         style="
                             width: 100%;
-                            font-size: 0.85rem;
+                            font-size: var(--fs-lg);
                             padding: 0.6rem 0.8rem;
                             background: rgba(var(--black-rgb), 0.2);
                             color: var(--text-muted);
@@ -74,8 +78,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--success);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -85,9 +89,9 @@
                         Email e-faktura
                         <span
                             style="
-                                font-size: 0.65rem;
+                                font-size: var(--fs-xs);
                                 color: var(--success);
-                                font-weight: 800;
+                                font-weight: var(--fw-extrabold);
                                 margin-left: 0.3rem;
                             "
                             >(TU DOPISYWAĆ)</span
@@ -98,15 +102,15 @@
                         id="step4-email-efaktura"
                         class="form-input"
                         placeholder="np. efaktura@firma.pl"
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
                 <div class="flex-1-240">
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent-hover);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -120,9 +124,15 @@
                         id="step4-offer-nr-input"
                         class="form-input"
                         placeholder="np. OF/2026/001, OF/2026/002"
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
-                    <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem">
+                    <div
+                        style="
+                            font-size: var(--fs-xs);
+                            color: var(--text-muted);
+                            margin-top: 0.3rem;
+                        "
+                    >
                         Numery ofert oddzielaj przecinkiem
                     </div>
                 </div>
@@ -134,8 +144,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--blue);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -149,15 +159,15 @@
                         id="step4-adres-wysylki"
                         class="form-input"
                         placeholder="Wpisz adres wysyłki faktury..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
                 <div style="flex: 1; min-width: 150px">
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -176,8 +186,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -192,7 +202,7 @@
                         class="form-input"
                         placeholder="np. 14"
                         min="0"
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -203,8 +213,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--success);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -218,7 +228,7 @@
                         id="step4-ubezpieczenie"
                         class="form-input"
                         placeholder="Wpisz dane ubezpieczenia..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -229,8 +239,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--pink);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -244,7 +254,7 @@
                         id="step4-osoba-kontakt"
                         class="form-input"
                         placeholder="Wpisz dane osoby do kontaktu..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -255,8 +265,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--danger);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -275,8 +285,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--warn);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -296,8 +306,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -313,7 +323,7 @@
                         placeholder="Brak danych"
                         style="
                             width: 100%;
-                            font-size: 0.85rem;
+                            font-size: var(--fs-lg);
                             padding: 0.6rem 0.8rem;
                             background: rgba(var(--slate-800-rgb), 0.8);
                             color: var(--slate-200);
@@ -328,8 +338,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--blue-alt);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -348,8 +358,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--cyan);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -380,8 +390,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--cyan);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -395,15 +405,15 @@
                         id="step4-uszczelka-studni-inne"
                         class="form-input"
                         placeholder="Wpisz uszczelkę..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
                 <div class="flex-1-180">
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--warn);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -431,8 +441,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--warn);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -446,7 +456,7 @@
                         id="step4-rodzaj-stopni-inne"
                         class="form-input"
                         placeholder="Wpisz rodzaj stopni..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -457,8 +467,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -492,8 +502,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -507,15 +517,15 @@
                         id="step4-kineta-inne"
                         class="form-input"
                         placeholder="Wpisz rodzaj kinety..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
                 <div class="flex-1-180">
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--success);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -536,8 +546,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--danger);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -560,8 +570,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--blue);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -580,8 +590,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--blue);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -595,15 +605,15 @@
                         id="step4-kaskada-uwagi"
                         class="form-input"
                         placeholder="Wpisz uwagi..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
                 <div style="flex: 1; min-width: 140px">
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -622,8 +632,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -637,7 +647,7 @@
                         id="step4-slepa-kineta-uwagi"
                         class="form-input"
                         placeholder="Wpisz uwagi..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -648,8 +658,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--success);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -668,8 +678,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--blue-alt);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -688,8 +698,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--accent2);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -708,8 +718,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--slate-300);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -732,8 +742,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--slate-300);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -756,8 +766,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--slate-300);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -779,8 +789,8 @@
                     <label
                         style="
                             display: block;
-                            font-size: 0.75rem;
-                            font-weight: 700;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
                             color: var(--slate-300);
                             margin-bottom: 0.4rem;
                             text-transform: uppercase;
@@ -794,7 +804,7 @@
                         id="step4-pozostale-wlasciwosci"
                         class="form-input"
                         placeholder="Wpisz właściwości (np. Agresja mrozowa)..."
-                        style="width: 100%; font-size: 0.85rem; padding: 0.6rem 0.8rem"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -805,7 +815,7 @@
                     style="
                         background: rgba(var(--accent2-rgb), 0.05);
                         border: 1px solid rgba(var(--accent2-rgb), 0.2);
-                        border-radius: 10px;
+                        border-radius: var(--radius-sm);
                         padding: 0.8rem;
                         position: relative;
                     "
@@ -823,8 +833,8 @@
                             style="
                                 display: flex;
                                 align-items: center;
-                                font-size: 0.75rem;
-                                font-weight: 700;
+                                font-size: var(--fs-base);
+                                font-weight: var(--fw-bold);
                                 color: var(--accent2-hover);
                                 text-transform: uppercase;
                                 letter-spacing: 0.3px;
@@ -843,10 +853,10 @@
                                 background: rgba(var(--accent2-rgb), 0.1);
                                 border: 1px solid rgba(var(--accent2-rgb), 0.3);
                                 color: var(--accent2-hover);
-                                font-size: 0.65rem;
-                                font-weight: 700;
+                                font-size: var(--fs-xs);
+                                font-weight: var(--fw-bold);
                                 padding: 0.3rem 0.6rem;
-                                border-radius: 6px;
+                                border-radius: var(--radius-sm);
                                 cursor: pointer;
                                 transition: all 0.15s;
                                 text-transform: uppercase;
@@ -874,8 +884,8 @@
                 <label
                     style="
                         display: block;
-                        font-size: 0.75rem;
-                        font-weight: 700;
+                        font-size: var(--fs-base);
+                        font-weight: var(--fw-bold);
                         color: var(--slate-300);
                         margin-bottom: 0.4rem;
                         text-transform: uppercase;
@@ -890,7 +900,7 @@
                     rows="9"
                     style="
                         width: 100%;
-                        font-size: 0.85rem;
+                        font-size: var(--fs-lg);
                         padding: 0.6rem 0.8rem;
                         resize: vertical;
                     "

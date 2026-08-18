@@ -124,9 +124,10 @@
     --cyan: #22d3ee;
     --blue-alt: #38bdf8;
     --blue-alt-hover: #7dd3fc;
-    --purple-alt: #c084fc;
     --purple: #a855f7;
     --purple-hover: #c084fc;
+    --purple-alt: var(--purple-hover);
+    --accent-glow-soft: rgba(191, 219, 254, 0.2);
     --sky-500: #0ea5e9;
     --pink: #ec4899;
     --brand-navy: #2d3561;
@@ -150,10 +151,38 @@
     --scrollbar-thumb-hover: #4f46e5;
 
     /* Promień zaokrąglenia */
+    --radius-2xs: 4px;
     --radius: 12px;
     --radius-sm: 8px;
     --radius-md: 16px;
     --radius-lg: 20px;
+    --radius-pill: 999px;
+
+    /* Typografia — skala rozmiarów */
+    --fs-3xs: 0.55rem;
+    --fs-2xs: 0.6rem;
+    --fs-xs: 0.65rem;
+    --fs-sm: 0.7rem;
+    --fs-base: 0.75rem;
+    --fs-md: 0.8rem;
+    --fs-lg: 0.85rem;
+    --fs-xl: 0.9rem;
+    --fs-2xl: 1rem;
+    --fs-3xl: 1.1rem;
+    --fs-4xl: 1.25rem;
+    --fs-5xl: 1.4rem;
+    --fs-6xl: 1.6rem;
+    --fs-7xl: 2rem;
+    --fs-8xl: 2.5rem;
+
+    /* Typografia — wagi */
+    --fw-light: 300;
+    --fw-normal: 400;
+    --fw-medium: 500;
+    --fw-semibold: 600;
+    --fw-bold: 700;
+    --fw-extrabold: 800;
+    --fw-black: 900;
 
     /* Rozmycie glass */
     --blur-glass: 10px;
@@ -363,7 +392,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: var(--scrollbar-thumb);
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -434,8 +463,8 @@ body::before {
 }
 
 .logo {
-    font-size: 1.3rem;
-    font-weight: 800;
+    font-size: var(--fs-4xl);
+    font-weight: var(--fw-extrabold);
     background: linear-gradient(
         135deg,
         var(--logo-start, var(--accent)),
@@ -475,8 +504,8 @@ body::before {
 }
 
 .logo-app-module {
-    font-size: 0.68rem;
-    font-weight: 700;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
@@ -520,10 +549,10 @@ body::before {
     height: 2.25rem;
     min-width: 9.5rem;
     font-family: inherit;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     line-height: 1;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     background: var(--border-glass);
     color: var(--text-secondary);
     text-decoration: none;
@@ -537,7 +566,7 @@ body::before {
 
 .nav-btn {
     padding: 0.35rem 0.8rem;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 
 /* ── Prawa strona nagłówka — spójna z kafelkami nawigacji ── */
@@ -545,7 +574,7 @@ body::before {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
 }
 
 .header-chip {
@@ -558,8 +587,8 @@ body::before {
     border-radius: var(--radius-sm);
     background: var(--border-glass);
     color: var(--text-secondary);
-    font-size: 0.75rem;
-    font-weight: 500;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-medium);
     white-space: nowrap;
 }
 
@@ -576,7 +605,7 @@ body::before {
     align-items: center;
     gap: 0.3rem;
     color: var(--text-secondary);
-    font-weight: 500;
+    font-weight: var(--fw-medium);
     white-space: nowrap;
 }
 
@@ -593,15 +622,15 @@ body::before {
     height: 2.25rem;
     padding: 0.15rem 0.8rem;
     border-radius: var(--radius-sm);
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
 
 .header-version {
     color: var(--text-secondary);
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     padding: 0.35rem 0.5rem;
     opacity: 0.65;
     font-feature-settings: 'tnum';
@@ -615,7 +644,7 @@ body::before {
     background: var(--border-glass);
     color: var(--text-muted);
     font:
-        500 0.75rem 'Inter',
+        var(--fw-medium) var(--fs-base) 'Inter',
         sans-serif;
     cursor: pointer;
     transition: all 0.2s;
@@ -679,13 +708,13 @@ body::before {
 }
 
 .nav-tile-icon {
-    font-size: 1rem;
+    font-size: var(--fs-2xl);
     display: block;
 }
 
 .nav-tile-text {
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
     letter-spacing: 0.2px;
     white-space: nowrap;
 }
@@ -732,10 +761,10 @@ body::before {
         display: none;
     }
     .header-right {
-        font-size: 0.7rem;
+        font-size: var(--fs-sm);
     }
     .logo {
-        font-size: 1rem;
+        font-size: var(--fs-2xl);
     }
     .logo span {
         display: none;
@@ -747,7 +776,7 @@ body::before {
         justify-content: center;
     }
     .nav-tile-icon {
-        font-size: 1.1rem;
+        font-size: var(--fs-3xl);
     }
 }
 
@@ -816,8 +845,8 @@ body::before {
 }
 
 .card-title {
-    font-size: 0.88rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -825,10 +854,10 @@ body::before {
 }
 
 .card-title .badge {
-    font-size: 0.7rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     padding: 0.15rem 0.5rem;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     background: var(--bg-hover);
     color: var(--accent-hover);
 }
@@ -847,8 +876,8 @@ body::before {
 }
 
 .card-title-sm {
-    font-size: 0.82rem;
-    font-weight: 600;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
     margin-bottom: 0.5rem;
     color: var(--text-primary);
     display: flex;
@@ -882,11 +911,11 @@ body::before {
 
 /* Tekst z nowrap (shared) */
 .fs-075-nowrap {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     white-space: nowrap;
 }
 .fs-065-nowrap {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     white-space: nowrap;
 }
 
@@ -920,8 +949,8 @@ body::before {
 
 .form-label-sm {
     display: block;
-    font-size: 0.68rem;
-    font-weight: 500;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
     color: var(--text-muted);
     margin-bottom: 0.15rem;
     text-transform: uppercase;
@@ -930,14 +959,14 @@ body::before {
 
 .form-input-sm {
     padding: 0.35rem 0.55rem !important;
-    font-size: 0.8rem !important;
+    font-size: var(--fs-md) !important;
 }
 
 /* User Roles */
 .user-role {
     padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    font-weight: 600;
+    border-radius: var(--radius-2xs);
+    font-weight: var(--fw-semibold);
     letter-spacing: 0.5px;
 }
 
@@ -950,7 +979,7 @@ body::before {
     padding: 0.55rem 1.1rem;
     border-radius: var(--radius-sm);
     font:
-        500 0.8rem 'Inter',
+        var(--fw-medium) var(--fs-md) 'Inter',
         sans-serif;
     border: none;
     cursor: pointer;
@@ -1028,7 +1057,7 @@ button.btn-order-save {
     border: 1px solid var(--success-bg);
     border-radius: var(--radius-sm);
     box-shadow: none;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-shadow: none;
     padding: 0 1rem;
     white-space: nowrap;
@@ -1044,7 +1073,7 @@ button.btn-order-save:hover {
 
 .btn-sm {
     padding: 0.35rem 0.7rem;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
 }
 
 .btn:focus-visible {
@@ -1083,8 +1112,8 @@ button.btn-order-save:hover {
 
 .form-label {
     display: block;
-    font-size: 0.78rem;
-    font-weight: 500;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-medium);
     color: var(--text-secondary);
     margin-bottom: 0.3rem;
 }
@@ -1099,7 +1128,7 @@ button.btn-order-save:hover {
     border-radius: var(--radius-sm);
     color: var(--text-primary);
     font:
-        400 0.85rem 'Inter',
+        var(--fw-normal) var(--fs-lg) 'Inter',
         sans-serif;
     transition:
         border-color 0.25s,
@@ -1192,14 +1221,14 @@ button.btn-order-save:hover {
 table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
 }
 
 thead th {
     padding: 0.25rem 0.4rem;
     text-align: left;
-    font-weight: 600;
-    font-size: 0.68rem;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -1215,7 +1244,7 @@ tbody td {
     padding: 0.2rem 0.4rem;
     border-bottom: 1px solid var(--bg-tertiary);
     vertical-align: middle;
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
 }
 
 tbody tr {
@@ -1294,15 +1323,15 @@ tbody tr:hover {
 }
 
 .well-detail-label {
-    font-size: 0.65rem;
+    font-size: var(--fs-xs);
     text-transform: uppercase;
     color: var(--text-muted);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 .well-detail-value {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
 }
 
@@ -1322,8 +1351,8 @@ tbody tr:hover {
 .cat-header {
     background: linear-gradient(90deg, var(--bg-hover), transparent);
     padding: 0.45rem 0.8rem;
-    font-weight: 700;
-    font-size: 0.78rem;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-base);
     border-left: 3px solid var(--accent);
     margin: 0.6rem 0 0.3rem;
     border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
@@ -1333,8 +1362,8 @@ tbody tr:hover {
 }
 
 .cat-header .cat-count {
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
     color: var(--text-muted);
 }
 
@@ -1342,7 +1371,7 @@ tbody tr:hover {
 .editable {
     cursor: pointer;
     padding: 0.2rem 0.4rem;
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     transition: background-color 0.25s;
 }
 
@@ -1357,7 +1386,7 @@ tbody tr:hover {
     padding: 0.35rem 0.55rem;
     color: var(--text-primary);
     font:
-        500 0.82rem 'Inter',
+        var(--fw-medium) var(--fs-md) 'Inter',
         sans-serif;
     width: 100%;
     outline: none;
@@ -1379,7 +1408,7 @@ tbody tr:hover {
 
 .edit-input::placeholder {
     color: var(--text-muted);
-    font-weight: 400;
+    font-weight: var(--fw-normal);
     opacity: 0.7;
 }
 
@@ -1425,7 +1454,7 @@ input[type='number'] {
 
 .search-box input {
     padding-left: 2rem;
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
 }
@@ -1475,7 +1504,7 @@ input[type='number'] {
     align-items: center;
     justify-content: center;
     padding: 0.2rem 0.6rem !important;
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     white-space: normal;
     text-align: center;
     line-height: 1.2;
@@ -1504,7 +1533,7 @@ input[type='number'] {
     padding: 0.5rem 0.8rem;
     cursor: pointer;
     transition: background-color 0.25s;
-    font-size: 0.82rem;
+    font-size: var(--fs-md);
     display: flex;
     justify-content: space-between;
     border-bottom: 1px solid var(--bg-tertiary);
@@ -1516,7 +1545,7 @@ input[type='number'] {
 
 .product-dropdown-item .price {
     color: var(--accent-hover);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
 }
 
 /* Katalog produktów */
@@ -1542,9 +1571,9 @@ input[type='number'] {
 
 .catalog-tab {
     padding: 0.3rem 0.7rem;
-    border-radius: 4px;
+    border-radius: var(--radius-2xs);
     font:
-        500 0.75rem 'Inter',
+        var(--fw-medium) var(--fs-base) 'Inter',
         sans-serif;
     border: 1px solid var(--border);
     background: var(--bg-tertiary);
@@ -1575,8 +1604,8 @@ input[type='number'] {
 
 .catalog-diam-header {
     background: var(--success-bg);
-    font-weight: 600;
-    font-size: 0.78rem;
+    font-weight: var(--fw-semibold);
+    font-size: var(--fs-base);
     padding: 0.45rem 1rem 0.45rem 1.2rem;
     border-left: 2px solid var(--success-bg);
     color: var(--success);
@@ -1616,8 +1645,8 @@ input[type='number'] {
 
 .catalog-item-row-name {
     flex: 1;
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-medium);
     min-width: 0;
     white-space: normal;
     word-break: break-word;
@@ -1631,20 +1660,20 @@ input[type='number'] {
 }
 
 .catalog-item-row-id {
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     color: var(--accent-hover);
     font-family: monospace;
     opacity: 0.8;
 }
 
 .catalog-item-row-weight {
-    font-size: 0.68rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
 }
 
 .catalog-item-row-price {
-    font-size: 0.85rem;
-    font-weight: 700;
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
     color: var(--accent-hover);
     white-space: nowrap;
     flex-shrink: 0;
@@ -1652,12 +1681,12 @@ input[type='number'] {
 
 .catalog-item-add {
     padding: 0.25rem 0.5rem;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: var(--bg-hover);
     border: none;
     color: var(--accent-hover);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
     cursor: pointer;
     transition: background-color 0.25s;
     white-space: nowrap;
@@ -1685,15 +1714,15 @@ input[type='number'] {
 }
 
 .summary-card .label {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
 
 .summary-card .value {
-    font-size: 1rem;
-    font-weight: 700;
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
     margin-top: 0.1rem;
 }
 
@@ -1706,7 +1735,7 @@ input[type='number'] {
 }
 
 .summary-sub {
-    font-size: 0.6rem;
+    font-size: var(--fs-2xs);
     color: var(--text-muted);
     margin-top: 0.1rem;
 }
@@ -1739,7 +1768,7 @@ input[type='number'] {
 
 .offer-card {
     padding: 0;
-    border-radius: 12px;
+    border-radius: var(--radius);
     border: 1px solid var(--border-glass);
     background: var(--bg-card);
     box-shadow: var(--shadow-sm);

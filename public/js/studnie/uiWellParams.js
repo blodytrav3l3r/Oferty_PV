@@ -223,7 +223,7 @@ function renderWellParams() {
     const well = getCurrentWell();
     if (!well) {
         container.innerHTML =
-            '<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size:0.85rem;">Dodaj studnię aby edytować parametry</div>';
+            '<div style="text-align:center; padding:1.5rem; color:var(--text-muted); font-size: var(--fs-lg);">Dodaj studnię aby edytować parametry</div>';
         return;
     }
 
@@ -265,12 +265,12 @@ function renderWellParams() {
         const currentVal = well[def.key] || '';
 
         html += `<div style="display:flex; align-items:center; gap:0.2rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
-        html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">${def.label}</span>`;
+        html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">${def.label}</span>`;
         html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.35rem; flex:1;">`;
         def.options.forEach(([val, lbl]) => {
             const isActive = val === currentVal;
             html += `<button onclick="updateWellParam('${def.key}','${val}')" style="
-                height: 34px; border-radius:8px; cursor:pointer; font-size:0.85rem; font-weight:${isActive ? '800' : '600'};
+                height: 34px; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight:${isActive ? '800' : '600'};
                 border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};
                 background:${isActive ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};
                 color:${isActive ? 'var(--accent-text)' : 'var(--text-secondary)'};
@@ -286,39 +286,39 @@ function renderWellParams() {
         // Pola dodatkowe renderowane bezpośrednio pod odpowiadającym kafelkiem
         if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
-            html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. wew.</span>`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">Koszt p. wew.</span>`;
+            html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
         if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
-            html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">Nazwa p. zew.</span>`;
+            html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; max-width:260px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem;">`;
-            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
-            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
+            html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">Koszt p. zew.</span>`;
+            html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:100px; height:36px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
         if (def.key === 'wkladkaOsadnikPreco' && well.wkladkaOsadnikPreco === 'tak') {
             html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
-            html += `<span style="font-size:0.85rem; color:var(--text-muted); font-weight:700; white-space:nowrap; min-width:185px; text-align:left;">Wys. wkładki osadnik</span>`;
+            html += `<span style="font-size: var(--fs-lg); color:var(--text-muted); font-weight: var(--fw-bold); white-space:nowrap; min-width:185px; text-align:left;">Wys. wkładki osadnik</span>`;
             html += `<div style="display:flex; align-items:center; gap:0.5rem;">`;
-            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onclick="this.select()" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size:0.85rem; border-radius:6px;">`;
-            html += `<span style="font-size:0.8rem; color:var(--text-muted);">mm</span>`;
+            html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onclick="this.select()" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
+            html += `<span style="font-size: var(--fs-md); color:var(--text-muted);">mm</span>`;
             html += `</div></div>`;
         }
     });
 
     html += `</div>`;
     html += `<div style="display:flex; gap:0.4rem; margin-top:1rem; justify-content:flex-end;">`;
-    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size:0.8rem; padding:0.4rem 0.8rem; border-radius:8px;"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne (Krok 2)</button>`;
+    html += `<button class="btn btn-secondary btn-sm" onclick="resetWellParamsToDefaults()" style="font-size: var(--fs-md); padding:0.4rem 0.8rem; border-radius: var(--radius-sm);"><i data-lucide="refresh-cw" aria-hidden="true"></i> Przywróć domyślne (Krok 2)</button>`;
     html += `</div>`;
 
     container.innerHTML = html;

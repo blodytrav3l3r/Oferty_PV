@@ -312,11 +312,11 @@ function populateZleceniaForm(el) {
     let bannerHtml = '';
     if (isAccepted) {
         bannerHtml = `
-            <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.5); border-radius:10px; padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
-                <span style="font-size:1.5rem;"><i data-lucide="lock"></i></span>
+            <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.5); border-radius: var(--radius-sm); padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
+                <span style="font-size: var(--fs-6xl);"><i data-lucide="lock"></i></span>
                 <div style="flex:1;">
-                    <div style="font-size:0.85rem; font-weight:800; color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
-                    <div style="font-size:0.7rem; color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
+                    <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
+                    <div style="font-size: var(--fs-sm); color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
                 </div>
             </div>
         `;
@@ -327,7 +327,7 @@ function populateZleceniaForm(el) {
     let errorsHtml = '';
     if (liveErrors.length > 0) {
         errorsHtml = `
-            <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.1); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: 6px; color: var(--danger); font-size: 0.75rem; font-weight: 600; line-height: 1.4;">
+            <div style="margin-bottom: 0.5rem; padding: 0.4rem 0.6rem; background: rgba(var(--danger-rgb), 0.1); border: 1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-sm); color: var(--danger); font-size: var(--fs-base); font-weight: var(--fw-semibold); line-height: 1.4;">
                 <i data-lucide="alert-triangle"></i> Błędy w konfiguracji studni:<br>
                 ${liveErrors.map((e) => `• ${escapeHtml(e)}`).join('<br>')}
             </div>
@@ -351,7 +351,7 @@ function populateZleceniaForm(el) {
     ${errorsHtml}
     <div class="card card-compact" style="margin-bottom:0.5rem;">
         <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
-            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight:800;">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
+            <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight: var(--fw-extrabold);">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
             <span class="zl-toggle" class="text-xs">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
@@ -361,7 +361,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Adres</label>
@@ -369,7 +369,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
             </div>
             <div class="form-group-sm" style="margin:0;">
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
@@ -381,7 +381,7 @@ function populateZleceniaForm(el) {
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight:700;">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
             </div>
         </div>
     </div>
@@ -394,33 +394,33 @@ function populateZleceniaForm(el) {
             </div>
             <div id="zl-dane-elementu-header-collapsed" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
                 <span class="text-xs"><i data-lucide="chevron-right"></i></span>
-                <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size:0.7rem; font-weight:700; color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
+                <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size: var(--fs-sm); font-weight: var(--fw-bold); color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
             </div>
-            <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem; font-size:0.75rem;">
+            <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem; font-size: var(--fs-base);">
                 <div style="display:flex; align-items:center; gap:0.5rem;">
-                    <span style="color:var(--text-secondary); font-size:0.75rem; text-transform:uppercase; font-weight:600;">Numer studni</span>
-                    <span style="font-weight:bold; color:var(--accent-hover); font-size:0.85rem;">${escapeHtml(well.name || '')}</span>
+                    <span style="color:var(--text-secondary); font-size: var(--fs-base); text-transform:uppercase; font-weight: var(--fw-semibold);">Numer studni</span>
+                    <span style="font-weight:bold; color:var(--accent-hover); font-size: var(--fs-lg);">${escapeHtml(well.name || '')}</span>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:var(--slate-950); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Średnica</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayDN}</span>
+                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Średnica</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayDN}</span>
                         <input type="hidden" id="zl-srednica" value="${displayDN}">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Głębokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayGlebokosc}${typeof displayGlebokosc === 'number' ? ' mm' : ''}</span>
+                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Głębokość</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayGlebokosc}${typeof displayGlebokosc === 'number' ? ' mm' : ''}</span>
                         <input type="hidden" id="zl-glebokosc" value="${displayGlebokosc}">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Wysokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayWysokosc}${typeof displayWysokosc === 'number' ? ' mm' : ''}</span>
+                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Wysokość</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayWysokosc}${typeof displayWysokosc === 'number' ? ' mm' : ''}</span>
                         <input type="hidden" id="zl-wysokosc" value="${displayWysokosc}">
                     </div>
                     <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size:0.65rem; text-transform:uppercase;">Gr. dna</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size:0.75rem;">${displayDnoKineta}</span>
+                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Gr. dna</span>
+                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayDnoKineta}</span>
                         <input type="hidden" id="zl-dno-kineta" value="${displayDnoKineta}">
                     </div>
                 </div>
@@ -431,7 +431,7 @@ function populateZleceniaForm(el) {
                         ${rodzajStudniOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size:0.85rem; font-weight:800; letter-spacing:0.5px; border-radius:8px;" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); letter-spacing:0.5px; border-radius: var(--radius-sm);" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -443,7 +443,7 @@ function populateZleceniaForm(el) {
 
         <div style="display:flex; flex-direction:column; gap:0.5rem; min-width:0;">
             <div class="card card-compact" style="padding:0.5rem 0.6rem;">
-                <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size:0.78rem; padding:0.15rem 0;" onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
+                <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size: var(--fs-base); padding:0.15rem 0;" onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                     <span id="zl-przejscia-app-icon" class="text-xs"><i data-lucide="chevron-up"></i></span>
                 </div>
@@ -455,9 +455,9 @@ function populateZleceniaForm(el) {
             <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
                 <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
                     <span><i data-lucide="link"></i> Lista przejść</span>
-                    <span id="zl-przejscia-count" style="color:var(--text-muted); font-size:0.7rem;">(${przejsciaCount})</span>
+                    <span id="zl-przejscia-count" style="color:var(--text-muted); font-size: var(--fs-sm);">(${przejsciaCount})</span>
                 </div>
-                <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size:0.72rem; color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
+                <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size: var(--fs-sm); color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
                 </div>
             </div>
         </div>
@@ -491,7 +491,7 @@ function populateZleceniaForm(el) {
                 <div class="form-group-sm">
                     <label class="form-label-sm">Studnia wd. DIN</label>
                     <div class="ui-row-gap zl-param-group">
-                        <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:var(--accent-hover); font-weight:700;">
+                        <input type="text" id="zl-din" class="form-input form-input-sm" value="${dinVal}" style="width:100%; color:var(--accent-hover); font-weight: var(--fw-bold);">
                     </div>
                 </div>
 
@@ -519,8 +519,8 @@ function populateZleceniaForm(el) {
                     <label class="form-label-sm">Ustalanie kąta stopni / Wykonanie</label>
                     <div style="display:flex; gap:0.25rem; flex-wrap:wrap; margin-top:0.2rem; align-items:center;" class="zl-param-group">
                         <input type="number" id="zl-kat-stopni" class="form-input form-input-sm" value="${katStopni}" placeholder="np. 90" min="0" max="360" onclick="this.select()" oninput="onZleceniaKatChange()" style="width:70px;">
-                        <span style="font-size:1.2rem; color:var(--text-muted); margin: 0 4px;">→</span>
-                        <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:var(--accent-hover); font-weight:700; margin-right:5px; pointer-events:none;">
+                        <span style="font-size: var(--fs-4xl); color:var(--text-muted); margin: 0 4px;">→</span>
+                        <input type="text" id="zl-wykonanie" class="form-input form-input-sm" value="${wykonanie ? wykonanie + '°' : ''}" readonly style="width:70px; color:var(--accent-hover); font-weight: var(--fw-bold); margin-right:5px; pointer-events:none;">
                         ${katOptions
                             .map(
                                 (v) =>

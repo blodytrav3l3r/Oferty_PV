@@ -10,29 +10,29 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
     if (oldOverlay) oldOverlay.remove();
 
     const html = `
-    <div style="background:var(--bg-secondary, var(--slate-800)); padding:2.2rem; border-radius:16px; max-width:600px; width:100%; border:1px solid rgba(var(--danger-rgb), 0.3); box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5);">
-        <h3 id="pehd-konus-title" style="margin-top:0; color:var(--danger-hover); display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size:1.25rem; font-weight:700;">
+    <div style="background:var(--bg-secondary, var(--slate-800)); padding:2.2rem; border-radius: var(--radius-md); max-width:600px; width:100%; border:1px solid rgba(var(--danger-rgb), 0.3); box-shadow:0 25px 50px -12px rgba(var(--black-rgb), 0.5);">
+        <h3 id="pehd-konus-title" style="margin-top:0; color:var(--danger-hover); display:flex; align-items:center; gap:0.6rem; font-family:Inter,sans-serif; font-size: var(--fs-4xl); font-weight: var(--fw-bold);">
             <i data-lucide="alert-circle" style="width:24px;height:24px;" aria-hidden="true"></i> Niezgodność technologiczna: Konus + PEHD
         </h3>
-        <p style="color:var(--slate-400); font-size:0.95rem; margin-bottom:1.8rem; line-height:1.6; font-family:Inter,sans-serif;">
+        <p style="color:var(--slate-400); font-size: var(--fs-xl); margin-bottom:1.8rem; line-height:1.6; font-family:Inter,sans-serif;">
             <b>Konus</b> nie może być zakończeniem studni, jeśli zastosowano w nim wkładkę <b>PEHD</b>.<br>
             Wybierz alternatywne zakończenie dla studni <strong class="text-primary">${escapeHtml(well.name || 'Bieżąca studnia')}</strong>:
         </p>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
             <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
-                <div style="font-weight:700; color:var(--slate-200); margin-bottom:0.4rem; font-size:1.15rem;">Płyta DIN</div>
-                <div style="font-size:0.8rem; color:var(--slate-500); line-height:1.4;">Standardowa płyta nastudzienna.</div>
+                <div style="font-weight: var(--fw-bold); color:var(--slate-200); margin-bottom:0.4rem; font-size: var(--fs-3xl);">Płyta DIN</div>
+                <div style="font-size: var(--fs-md); color:var(--slate-500); line-height:1.4;">Standardowa płyta nastudzienna.</div>
             </div>
             
             <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
-                <div style="font-weight:700; color:var(--slate-200); margin-bottom:0.4rem; font-size:1.15rem;">Płyta + Pierścień</div>
-                <div style="font-size:0.8rem; color:var(--slate-500); line-height:1.4;">Płyta zamykająca i pierścień odciążający.</div>
+                <div style="font-weight: var(--fw-bold); color:var(--slate-200); margin-bottom:0.4rem; font-size: var(--fs-3xl);">Płyta + Pierścień</div>
+                <div style="font-size: var(--fs-md); color:var(--slate-500); line-height:1.4;">Płyta zamykająca i pierścień odciążający.</div>
             </div>
         </div>
         
         <div style="margin-top:1.8rem; text-align:right;">
-            <button onclick="document.getElementById('pehd-konus-resolver').remove(); if(window.konusResolverCallback) window.konusResolverCallback();" class="pehd-btn-cancel" style="font-family:Inter,sans-serif; font-size:0.9rem;">Zostaw domyślne (Płyta DIN)</button>
+            <button onclick="document.getElementById('pehd-konus-resolver').remove(); if(window.konusResolverCallback) window.konusResolverCallback();" class="pehd-btn-cancel" style="font-family:Inter,sans-serif; font-size: var(--fs-xl);">Zostaw domyślne (Płyta DIN)</button>
         </div>
     </div>
     `;

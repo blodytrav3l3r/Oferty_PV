@@ -18,7 +18,7 @@
     min-width: 160px;
     background: linear-gradient(135deg, rgba(var(--slate-800-rgb), 0.5) 0%, var(--glass) 100%);
     border: 1px solid rgba(var(--white-rgb), 0.05);
-    border-radius: 10px;
+    border-radius: var(--radius-sm);
     padding: 0.55rem 0.9rem;
     display: flex;
     align-items: center;
@@ -50,13 +50,13 @@
         0 0 12px rgba(var(--accent-rgb), 0.1);
 }
 .zlecenia-stat-icon {
-    font-size: 1.1rem;
+    font-size: var(--fs-3xl);
     width: 34px;
     height: 34px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
     box-shadow: inset 0 0 10px rgba(var(--black-rgb), 0.2);
 }
@@ -64,16 +64,16 @@
     flex: 1;
 }
 .zlecenia-stat-value {
-    font-size: 1.2rem;
-    font-weight: 800;
+    font-size: var(--fs-4xl);
+    font-weight: var(--fw-extrabold);
     color: var(--text-primary);
     line-height: 1.2;
     letter-spacing: -0.3px;
     font-family: 'Inter', sans-serif;
 }
 .zlecenia-stat-label {
-    font-size: 0.6rem;
-    font-weight: 700;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-bold);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.6px;
@@ -99,8 +99,8 @@
     border: 1px solid var(--border-glass);
     background: var(--bg-tertiary);
     color: var(--text-secondary);
-    font-size: 0.8rem;
-    font-weight: 500;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-medium);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -151,14 +151,14 @@
 }
 .zlecenia-date-sep {
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
     white-space: nowrap;
 }
 
 /* Stylowanie tabeli */
 .zlecenia-table-container {
     overflow-x: auto;
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     border: 1px solid rgba(var(--white-rgb), 0.05);
     background: rgba(var(--slate-950-rgb), 0.5);
     -webkit-backdrop-filter: blur(8px);
@@ -169,7 +169,7 @@
 .zlecenia-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.85rem;
+    font-size: var(--fs-lg);
 }
 .zlecenia-table th {
     text-align: left;
@@ -177,8 +177,8 @@
     /* Nieprzezroczyste tło — treść nie prześwituje pod nagłówkiem */
     background: var(--bg-card);
     color: var(--text-muted);
-    font-weight: 700;
-    font-size: 0.7rem;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-sm);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid var(--border-glass);
@@ -214,14 +214,14 @@
 /* Kolumna numeru zamówienia */
 .order-num {
     font-family: 'JetBrains Mono', 'Consolas', monospace;
-    font-size: 0.9rem;
-    font-weight: 800;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
     color: var(--purple-alt);
 }
 .order-num-missing {
     color: var(--text-muted);
     font-style: italic;
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
 }
 
 /* Status badges — base .status-badge is defined in style.css */
@@ -272,19 +272,19 @@
     color: var(--accent-hover);
     border: 1px solid rgba(var(--accent-rgb), 0.2);
     padding: 0.2rem 0.5rem;
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     font-family: monospace;
-    font-weight: 800;
-    border-radius: 6px;
+    font-weight: var(--fw-extrabold);
+    border-radius: var(--radius-sm);
     display: inline-block;
 }
 
 /* Person badges */
 .person-badge {
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     padding: 0.3rem 0.6rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -320,12 +320,12 @@
 
 /* Well name + project */
 .well-cell-name {
-    font-weight: 700;
-    font-size: 0.85rem;
+    font-weight: var(--fw-bold);
+    font-size: var(--fs-lg);
     color: var(--text-primary);
 }
 .well-cell-project {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     color: var(--text-muted);
     margin-top: 1px;
     white-space: nowrap;
@@ -336,14 +336,14 @@
 
 /* Element cell */
 .element-cell {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-semibold);
     color: var(--text-secondary);
 }
 
 /* Date cell */
 .date-cell {
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     color: var(--text-secondary);
     white-space: nowrap;
 }
@@ -358,7 +358,7 @@
     bottom: 10px;
     z-index: 50;
     border: 1px solid rgba(var(--pink-rgb), 0.5);
-    border-radius: 14px;
+    border-radius: var(--radius-md);
     margin-bottom: var(--section-gap);
     background: linear-gradient(
         135deg,
@@ -383,8 +383,8 @@
     }
 }
 .batch-info {
-    font-size: 0.8rem;
-    font-weight: 700;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
     color: var(--accent-hover);
     display: flex;
     align-items: center;
@@ -393,17 +393,17 @@
 .batch-count {
     background: rgba(var(--accent-rgb), 0.2);
     padding: 0.15rem 0.5rem;
-    border-radius: 8px;
-    font-weight: 800;
-    font-size: 0.85rem;
+    border-radius: var(--radius-sm);
+    font-weight: var(--fw-extrabold);
+    font-size: var(--fs-lg);
     font-variant-numeric: tabular-nums;
     min-width: 3.2em;
     text-align: center;
 }
 /* Zakres zaznaczenia: widoczne / wszystkie załadowane */
 .batch-scope {
-    font-size: 0.72rem;
-    font-weight: 600;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-semibold);
     color: var(--text-secondary);
     margin-left: 0.15rem;
 }
@@ -414,12 +414,12 @@
 }
 .batch-btn {
     padding: 0.4rem 0.8rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border-glass);
     background: rgba(var(--white-rgb), 0.05);
     color: var(--text-primary);
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
     cursor: pointer;
     transition:
         background-color 0.2s,
@@ -536,7 +536,7 @@
     .zlecenia-table th,
     .zlecenia-table td {
         padding: 0.4rem 0.5rem;
-        font-size: 0.75rem;
+        font-size: var(--fs-base);
     }
 }
 
@@ -578,13 +578,13 @@
 /* Stopka "Wyświetlono X z Y" */
 .zlecenia-footer {
     padding: 0.6rem 1rem;
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     text-align: center;
 }
 .zlecenia-footer strong {
     color: var(--text-primary);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
 }
 .zlecenia-footer-hint {
     opacity: 0.75;
@@ -608,7 +608,7 @@
 .zlecenia-virtual-toolbar .btn-secondary.btn-sm {
     height: 34px;
     padding: 0 0.7rem;
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
@@ -645,8 +645,8 @@
 }
 .zlecenia-virtual-toolbar .toolbar-label {
     color: var(--text-muted);
-    font-size: 0.7rem;
-    font-weight: 700;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -677,7 +677,7 @@
 }
 /* Źródło wartości statystyk — cały zbiór lub załadowane okno */
 .zlecenia-stat-source {
-    font-size: 0.62rem;
+    font-size: var(--fs-xs);
     color: var(--text-muted);
     margin-top: 2px;
 }
@@ -689,7 +689,7 @@
     gap: 0.6rem;
     padding: 0.9rem;
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: var(--fs-md);
 }
 .zlecenia-sentinel-spin {
     width: 16px;

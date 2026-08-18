@@ -9,21 +9,21 @@
 .offer-stat-card {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 1rem;
     text-align: center;
 }
 
 .offer-stat-label {
-    font-size: 0.7rem;
+    font-size: var(--fs-sm);
     text-transform: uppercase;
     color: var(--text-muted);
     letter-spacing: 0.5px;
 }
 
 .offer-stat-value {
-    font-size: 1.6rem;
-    font-weight: 800;
+    font-size: var(--fs-6xl);
+    font-weight: var(--fw-extrabold);
     margin-top: 0.2rem;
 }
 
@@ -81,7 +81,7 @@
 
 #excel-table-container .excel-sel-wrap > div {
     padding: 0.3rem 0.45rem !important;
-    font-size: 0.7rem !important;
+    font-size: var(--fs-sm) !important;
     font-family:
         Inter,
         Segoe UI,
@@ -181,9 +181,9 @@
 }
 .summary-action-btn {
     padding: 0.4rem 0.6rem;
-    border-radius: 8px;
+    border-radius: var(--radius-sm);
     font:
-        600 0.72rem 'Inter',
+        var(--fw-semibold) var(--fs-sm) 'Inter',
         sans-serif;
     cursor: pointer;
     display: flex;
@@ -268,15 +268,15 @@
 
 /* —— Klasy kart w stopce (mirror .rury-summary-*) —— */
 .studnie-summary-label {
-    font-size: 0.78rem;
+    font-size: var(--fs-base);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--text-muted);
     margin-bottom: 0.2rem;
 }
 .studnie-summary-value {
-    font-size: 1.4rem;
-    font-weight: 700;
+    font-size: var(--fs-5xl);
+    font-weight: var(--fw-bold);
     color: var(--text-primary);
     margin: 0;
 }
@@ -285,14 +285,14 @@
 }
 .studnie-summary-value.success {
     color: var(--success);
-    font-weight: 800;
-    font-size: 1.6rem;
+    font-weight: var(--fw-extrabold);
+    font-size: var(--fs-6xl);
 }
 .studnie-summary-value.warn {
     color: var(--warn);
 }
 .studnie-summary-sub {
-    font-size: 0.75rem;
+    font-size: var(--fs-base);
     color: var(--text-muted);
     margin-top: 0.2rem;
 }
@@ -305,19 +305,19 @@
 }
 /* —— Excel table header aesthetic improvements —— */
 #excel-table-container .h3-prodcode {
-    font-size: 0.5rem;
-    font-weight: 600;
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-semibold);
     color: var(--slate-400);
     line-height: 1.45;
 }
 #excel-table-container .h3-prodprice {
-    font-size: 0.55rem;
+    font-size: var(--fs-3xs);
     color: var(--success-hover);
-    font-weight: 700;
+    font-weight: var(--fw-bold);
     line-height: 1.4;
     white-space: nowrap;
     background: rgba(var(--success-rgb), 0.05);
-    border-radius: 3px;
+    border-radius: var(--radius-2xs);
     padding: 1px 5px;
     margin-top: 2px;
     display: inline-block;
