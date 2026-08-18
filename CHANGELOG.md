@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.17.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.17.0...v1.17.1) (2026-08-18)
+
+### Bug Fixes
+
+- **settings:** atomiczny zapis domyslnych cen (rollback pliku) ([5db88ce](https://github.com/blodytrav3l3r/Oferty_PV/commit/5db88ce7a564ac824534e81428e5a01a2043c94c))
+- **ui:** brakujace tokeny text-heading i slate-900 ([ebebda6](https://github.com/blodytrav3l3r/Oferty_PV/commit/ebebda6ed50b5164689dfed5113be5507e601dd5))
+
 ## [1.17.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.16.1...v1.17.0) (2026-08-18)
 
 ### Features

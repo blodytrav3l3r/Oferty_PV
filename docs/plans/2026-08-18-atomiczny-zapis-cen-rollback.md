@@ -26,7 +26,7 @@ Kompensacja (rollback pliku przy błędzie transakcji) + `settings.upsert` wewn�
 - [x] 9. `npx jest tests/priceOverrideService.test.ts` → 10/10
 - [x] 10. `npm run validate` → 128 suity, exit 0
 - [x] 11. `npm run version:check` → spójne
-- [ ] 12. Commit `fix(settings): atomiczny zapis domyslnych cen (rollback pliku)`
+- [x] 12. Commit `fix(settings): atomiczny zapis domyslnych cen (rollback pliku)` — `5db88ce`
 - [ ] 13. `npm run release:patch` → 1.17.1 + tag
 - [ ] 14. `npm run version:check` po release → EXIT 0
 - [ ] 15. `git push --follow-tags`
