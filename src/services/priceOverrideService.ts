@@ -20,8 +20,23 @@
 import fs from 'fs';
 import path from 'path';
 import { createHash } from 'crypto';
+import { z } from 'zod';
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
+import {
+    productsRuryRowSchema,
+    productsStudnieRowSchema,
+    precoKonfigRowSchema,
+    precoKinetyRowSchema,
+    precoZakresyRowSchema
+} from '../validators/priceDefaultsSchemas';
+import type {
+    ProductsRuryRow,
+    ProductsStudnieRow,
+    PrecoKonfigRow,
+    PrecoKinetyRow,
+    PrecoZakresyRow
+} from '../validators/priceDefaultsSchemas';
 
 interface SectionManifest {
     count: number;
@@ -31,12 +46,12 @@ interface SectionManifest {
 interface PriceDefaultsJson {
     schemaVersion: 2;
     exportedAt: string;
-    rury: Record<string, unknown>[];
-    studnie: Record<string, unknown>[];
+    rury: ProductsRuryRow[];
+    studnie: ProductsStudnieRow[];
     preco: {
-        konfig: Record<string, unknown>[];
-        kinety: Record<string, unknown>[];
-        zakresy: Record<string, unknown>[];
+        konfig: PrecoKonfigRow[];
+        kinety: PrecoKinetyRow[];
+        zakresy: PrecoZakresyRow[];
     };
     sections: {
         rury: SectionManifest;
@@ -50,12 +65,12 @@ interface PriceDefaultsJson {
 interface LegacyPriceDefaultsJson {
     version: 1;
     exportedAt: string;
-    rury: Record<string, unknown>[];
-    studnie: Record<string, unknown>[];
+    rury: ProductsRuryRow[];
+    studnie: ProductsStudnieRow[];
     preco: {
-        konfig: Record<string, unknown>[];
-        kinety: Record<string, unknown>[];
-        zakresy: Record<string, unknown>[];
+        konfig: PrecoKonfigRow[];
+        kinety: PrecoKinetyRow[];
+        zakresy: PrecoZakresyRow[];
     };
 }
 
@@ -125,6 +140,39 @@ function diffById(
     return { added, removed, changed };
 }
 
+/** Formatuje ścieżkę błędu zod do czytelnej postaci (rury[0].category). */
+function formatPath(path: Array<string | number | symbol>): string {
+    if (path.length === 0) return '';
+    let out = typeof path[0] === 'number' ? `[${path[0]}]` : `.${String(path[0])}`;
+    for (const part of path.slice(1)) {
+        out += typeof part === 'number' ? `[${part}]` : `.${String(part)}`;
+    }
+    return out;
+}
+
+/**
+ * Waliduje sekcję snapshotu względem schematu kontraktu (1:1 z modelami Prisma).
+ * Zwraca wiersze (oczyszczone do pól modelu) lub null z pełnym raportem błędów
+ * per wiersz/pole. Nigdy nie zapisuje częściowo — walidacja przed jakimkolwiek write.
+ */
+function parseSection<T>(rows: unknown, sectionName: string, schema: z.ZodType<T>): T[] | null {
+    const parsed = schema.array().safeParse(rows);
+    if (parsed.success) return parsed.data;
+
+    const details = parsed.error.issues
+        .map((issue) => `${sectionName}${formatPath(issue.path)} — ${issue.message}`)
+        .join('; ');
+    logger.error(
+        'PriceOverride',
+        `Nieprawidłowa sekcja ${sectionName} w price_defaults.json: ${details}`
+    );
+    logger.error(
+        'PriceOverride',
+        'Napraw snapshot (npm run prices:export) lub usuń plik data/price_defaults.json'
+    );
+    return null;
+}
+
 class PriceOverrideService {
     private readonly defaultsPath: string;
 
@@ -151,7 +199,7 @@ class PriceOverrideService {
             prisma.precoZakresy.findMany({ orderBy: [{ wellDn: 'asc' }, { order: 'asc' }] })
         ]);
 
-        const section = (arr: Record<string, unknown>[]): SectionManifest => ({
+        const section = (arr: unknown[]): SectionManifest => ({
             count: arr.length,
             sha256: sha256Canonical(arr)
         });
@@ -159,19 +207,19 @@ class PriceOverrideService {
         return {
             schemaVersion: 2,
             exportedAt: new Date().toISOString(),
-            rury: ruryLive as unknown as Record<string, unknown>[],
-            studnie: studnieLive as unknown as Record<string, unknown>[],
+            rury: ruryLive,
+            studnie: studnieLive,
             preco: {
-                konfig: konfigLive as unknown as Record<string, unknown>[],
-                kinety: kinetyLive as unknown as Record<string, unknown>[],
-                zakresy: zakresyLive as unknown as Record<string, unknown>[]
+                konfig: konfigLive,
+                kinety: kinetyLive,
+                zakresy: zakresyLive
             },
             sections: {
-                rury: section(ruryLive as unknown as Record<string, unknown>[]),
-                studnie: section(studnieLive as unknown as Record<string, unknown>[]),
-                precoKonfig: section(konfigLive as unknown as Record<string, unknown>[]),
-                precoKinety: section(kinetyLive as unknown as Record<string, unknown>[]),
-                precoZakresy: section(zakresyLive as unknown as Record<string, unknown>[])
+                rury: section(ruryLive),
+                studnie: section(studnieLive),
+                precoKonfig: section(konfigLive),
+                precoKinety: section(kinetyLive),
+                precoZakresy: section(zakresyLive)
             }
         };
     }
@@ -219,15 +267,15 @@ class PriceOverrideService {
                 await tx.precoZakresyDefault.deleteMany();
 
                 if (pkg.rury.length > 0)
-                    await tx.productsRuryDefault.createMany({ data: pkg.rury as never[] });
+                    await tx.productsRuryDefault.createMany({ data: pkg.rury });
                 if (pkg.studnie.length > 0)
-                    await tx.productsStudnieDefault.createMany({ data: pkg.studnie as never[] });
+                    await tx.productsStudnieDefault.createMany({ data: pkg.studnie });
                 if (pkg.preco.konfig.length > 0)
-                    await tx.precoKonfigDefault.createMany({ data: pkg.preco.konfig as never[] });
+                    await tx.precoKonfigDefault.createMany({ data: pkg.preco.konfig });
                 if (pkg.preco.kinety.length > 0)
-                    await tx.precoKinetyDefault.createMany({ data: pkg.preco.kinety as never[] });
+                    await tx.precoKinetyDefault.createMany({ data: pkg.preco.kinety });
                 if (pkg.preco.zakresy.length > 0)
-                    await tx.precoZakresyDefault.createMany({ data: pkg.preco.zakresy as never[] });
+                    await tx.precoZakresyDefault.createMany({ data: pkg.preco.zakresy });
 
                 await tx.settings.upsert({
                     where: { key: 'pricelist_defaults_updated_at' },
@@ -312,6 +360,32 @@ class PriceOverrideService {
             return null;
         }
 
+        // Walidacja kontraktu pól (1:1 z modelami Prisma) — PRZED jakimkolwiek
+        // zapisem DB. Brakujący wymagany field (np. category) = odrzut z raportem,
+        // nigdy cichy zapis z placeholderem do tabel pieniężnych.
+        const incoming = {
+            rury: parseSection(data.rury, 'rury', productsRuryRowSchema),
+            studnie: parseSection(data.studnie, 'studnie', productsStudnieRowSchema),
+            konfig: parseSection(data.preco.konfig, 'precoKonfig', precoKonfigRowSchema),
+            kinety: parseSection(data.preco.kinety, 'precoKinety', precoKinetyRowSchema),
+            zakresy: parseSection(data.preco.zakresy, 'precoZakresy', precoZakresyRowSchema)
+        };
+        if (
+            !incoming.rury ||
+            !incoming.studnie ||
+            !incoming.konfig ||
+            !incoming.kinety ||
+            !incoming.zakresy
+        ) {
+            return null;
+        }
+
+        const rury = incoming.rury;
+        const studnie = incoming.studnie;
+        const konfig = incoming.konfig;
+        const kinety = incoming.kinety;
+        const zakresy = incoming.zakresy;
+
         const schemaVersion = data.schemaVersion ?? (data.version as number) ?? 1;
 
         if (schemaVersion === 2) {
@@ -387,14 +461,6 @@ class PriceOverrideService {
 
         logger.info('PriceOverride', 'Przywracanie domyślnych cenników z JSON...');
 
-        const incoming = {
-            rury: data.rury as unknown as Record<string, unknown>[],
-            studnie: data.studnie as unknown as Record<string, unknown>[],
-            konfig: data.preco.konfig as unknown as Record<string, unknown>[],
-            kinety: data.preco.kinety as unknown as Record<string, unknown>[],
-            zakresy: data.preco.zakresy as unknown as Record<string, unknown>[]
-        };
-
         // Diff do raportu (przed nadpisaniem).
         const [curRury, curStudnie, curKonfig, curKinety, curZakresy] = await Promise.all([
             prisma.productsRury.findMany({ orderBy: { id: 'asc' } }),
@@ -404,20 +470,11 @@ class PriceOverrideService {
             prisma.precoZakresy.findMany({ orderBy: { id: 'asc' } })
         ]);
         const diff = {
-            rury: diffById(curRury as unknown as Record<string, unknown>[], incoming.rury),
-            studnie: diffById(curStudnie as unknown as Record<string, unknown>[], incoming.studnie),
-            precoKonfig: diffById(
-                curKonfig as unknown as Record<string, unknown>[],
-                incoming.konfig
-            ),
-            precoKinety: diffById(
-                curKinety as unknown as Record<string, unknown>[],
-                incoming.kinety
-            ),
-            precoZakresy: diffById(
-                curZakresy as unknown as Record<string, unknown>[],
-                incoming.zakresy
-            )
+            rury: diffById(curRury, rury),
+            studnie: diffById(curStudnie, studnie),
+            precoKonfig: diffById(curKonfig, konfig),
+            precoKinety: diffById(curKinety, kinety),
+            precoZakresy: diffById(curZakresy, zakresy)
         };
 
         await prisma.$transaction(async (tx) => {
@@ -440,25 +497,25 @@ class PriceOverrideService {
                 await (tx as Record<string, any>)[table].deleteMany();
             }
 
-            if (incoming.rury.length > 0) {
-                await tx.productsRury.createMany({ data: incoming.rury as never[] });
-                await tx.productsRuryDefault.createMany({ data: incoming.rury as never[] });
+            if (rury.length > 0) {
+                await tx.productsRury.createMany({ data: rury });
+                await tx.productsRuryDefault.createMany({ data: rury });
             }
-            if (incoming.studnie.length > 0) {
-                await tx.productsStudnie.createMany({ data: incoming.studnie as never[] });
-                await tx.productsStudnieDefault.createMany({ data: incoming.studnie as never[] });
+            if (studnie.length > 0) {
+                await tx.productsStudnie.createMany({ data: studnie });
+                await tx.productsStudnieDefault.createMany({ data: studnie });
             }
-            if (incoming.konfig.length > 0) {
-                await tx.precoKonfig.createMany({ data: incoming.konfig as never[] });
-                await tx.precoKonfigDefault.createMany({ data: incoming.konfig as never[] });
+            if (konfig.length > 0) {
+                await tx.precoKonfig.createMany({ data: konfig });
+                await tx.precoKonfigDefault.createMany({ data: konfig });
             }
-            if (incoming.kinety.length > 0) {
-                await tx.precoKinety.createMany({ data: incoming.kinety as never[] });
-                await tx.precoKinetyDefault.createMany({ data: incoming.kinety as never[] });
+            if (kinety.length > 0) {
+                await tx.precoKinety.createMany({ data: kinety });
+                await tx.precoKinetyDefault.createMany({ data: kinety });
             }
-            if (incoming.zakresy.length > 0) {
-                await tx.precoZakresy.createMany({ data: incoming.zakresy as never[] });
-                await tx.precoZakresyDefault.createMany({ data: incoming.zakresy as never[] });
+            if (zakresy.length > 0) {
+                await tx.precoZakresy.createMany({ data: zakresy });
+                await tx.precoZakresyDefault.createMany({ data: zakresy });
             }
         });
 
@@ -472,15 +529,15 @@ class PriceOverrideService {
 
         logger.info(
             'PriceOverride',
-            `Domyślne przywrócone: rury=${incoming.rury.length}, studnie=${incoming.studnie.length}, preco=${incoming.konfig.length + incoming.kinety.length + incoming.zakresy.length}`
+            `Domyślne przywrócone: rury=${rury.length}, studnie=${studnie.length}, preco=${konfig.length + kinety.length + zakresy.length}`
         );
 
         return {
-            rury: incoming.rury.length,
-            studnie: incoming.studnie.length,
-            precoKonfig: incoming.konfig.length,
-            precoKinety: incoming.kinety.length,
-            precoZakresy: incoming.zakresy.length,
+            rury: rury.length,
+            studnie: studnie.length,
+            precoKonfig: konfig.length,
+            precoKinety: kinety.length,
+            precoZakresy: zakresy.length,
             diff,
             skippedGuard: false,
             schemaVersion

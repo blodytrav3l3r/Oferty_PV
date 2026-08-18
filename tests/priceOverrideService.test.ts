@@ -47,8 +47,10 @@ const txMock = {
 const VALID_JSON = JSON.stringify({
     version: 1,
     exportedAt: '2026-08-10T12:00:00.000Z',
-    rury: [{ id: 'r1', name: 'Rura', price: 100 }],
-    studnie: [{ id: 's1', name: 'Studnia', price: 200 }],
+    rury: [{ id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 100 }],
+    studnie: [
+        { id: 's1', name: 'Studnia', category: 'Studnie', componentType: 'dennica', price: 200 }
+    ],
     preco: {
         konfig: [{ id: 'k1', key: '1000', value: '{}' }],
         kinety: [{ id: 'kt1', order: 1, dn: 300, wellDn: 1000, height: 1, cena: 100 }],
@@ -185,14 +187,46 @@ describe('priceOverrideService.restoreDefaultsFromJson', () => {
         expect(prismaMock.$transaction).toHaveBeenCalledTimes(1);
         expect(txMock.productsRury.deleteMany).toHaveBeenCalledTimes(1);
         expect(txMock.productsRury.createMany).toHaveBeenCalledWith({
-            data: [{ id: 'r1', name: 'Rura', price: 100 }]
+            data: [{ id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 100 }]
         });
         expect(txMock.productsRuryDefault.deleteMany).toHaveBeenCalledTimes(1);
         expect(txMock.productsRuryDefault.createMany).toHaveBeenCalledWith({
-            data: [{ id: 'r1', name: 'Rura', price: 100 }]
+            data: [{ id: 'r1', name: 'Rura', category: 'Rury Betonowe', price: 100 }]
         });
         expect(summary?.rury).toBe(1);
         expect(summary?.diff.rury.added).toBe(0);
+    });
+
+    it('odrzuca snapshot z rurą bez category — brak zapisu DB', async () => {
+        const bad = JSON.parse(VALID_JSON);
+        delete bad.rury[0].category;
+        fileContent = JSON.stringify(bad);
+
+        const summary = await priceOverrideService.restoreDefaultsFromJson();
+
+        expect(summary).toBeNull();
+        expect(loggerMock.error).toHaveBeenCalledWith(
+            'PriceOverride',
+            expect.stringContaining('rury[0].category')
+        );
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
+        expect(txMock.productsRury.deleteMany).not.toHaveBeenCalled();
+        expect(txMock.productsRury.createMany).not.toHaveBeenCalled();
+    });
+
+    it('odrzuca snapshot ze studnią bez componentType', async () => {
+        const bad = JSON.parse(VALID_JSON);
+        delete bad.studnie[0].componentType;
+        fileContent = JSON.stringify(bad);
+
+        const summary = await priceOverrideService.restoreDefaultsFromJson();
+
+        expect(summary).toBeNull();
+        expect(loggerMock.error).toHaveBeenCalledWith(
+            'PriceOverride',
+            expect.stringContaining('studnie[0].componentType')
+        );
+        expect(prismaMock.$transaction).not.toHaveBeenCalled();
     });
 
     it('force=true pomija guard timestamp (CLI prices:import)', async () => {

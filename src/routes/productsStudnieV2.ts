@@ -125,7 +125,7 @@ interface StudnieProductLegacy {
     malowanieZewnetrzne: number | null;
 }
 
-function fromLegacy(p: Record<string, unknown>): Record<string, unknown> {
+function fromLegacy(p: Record<string, unknown>): StudnieProductRaw {
     return {
         id: String(p.id ?? ''),
         name: String(p.name ?? ''),
@@ -260,7 +260,7 @@ router.put(
                 await prisma.$transaction(async (tx) => {
                     await tx.productsStudnie.deleteMany();
                     const mapped = arr.map(fromLegacy);
-                    await tx.productsStudnie.createMany({ data: mapped as never[] });
+                    await tx.productsStudnie.createMany({ data: mapped });
                 });
 
                 return { ok: true, count: arr.length };
