@@ -151,54 +151,5 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
 // Globalne udostepnienie
 window.loadSavedOfferStudnie = loadSavedOfferStudnie;
 
-document.addEventListener('DOMContentLoaded', function () {
-    let _syncingValidity = false;
-    let _syncingPaymentTerms = false;
-
-    function syncValidity(src, dst) {
-        if (_syncingValidity) return;
-        _syncingValidity = true;
-        dst.value = normalizeValidityValue(src.value);
-        _syncingValidity = false;
-    }
-
-    function syncPaymentTerms(src, dst) {
-        if (_syncingPaymentTerms) return;
-        _syncingPaymentTerms = true;
-        dst.value = src.value;
-        _syncingPaymentTerms = false;
-    }
-
-    const wizardValidity = document.getElementById('offer-validity');
-    const tabValidity = document.getElementById('offer-tab-validity');
-
-    if (wizardValidity && tabValidity) {
-        wizardValidity.addEventListener('input', function () {
-            syncValidity(this, tabValidity);
-        });
-        tabValidity.addEventListener('input', function () {
-            syncValidity(this, wizardValidity);
-        });
-        wizardValidity.addEventListener('blur', function () {
-            this.value = normalizeValidityValue(this.value);
-        });
-        tabValidity.addEventListener('blur', function () {
-            this.value = normalizeValidityValue(this.value);
-        });
-    }
-
-    const wizardPayment = document.getElementById('offer-payment-terms');
-    const tabPayment = document.getElementById('offer-tab-payment-terms');
-
-    if (wizardPayment && tabPayment) {
-        wizardPayment.addEventListener('input', function () {
-            syncPaymentTerms(this, tabPayment);
-        });
-        tabPayment.addEventListener('input', function () {
-            syncPaymentTerms(this, wizardPayment);
-        });
-    }
-});
-
 /* ===== Rejestracja globali ===== */
 window.clearOfferForm = clearOfferForm;

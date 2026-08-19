@@ -67,17 +67,9 @@ function migrateWellData(wellsArr) {
     return wellsArr;
 }
 
-function normalizeValidityValue(val) {
-    if (!val) return '7 dni';
-    const trimmed = val.trim();
-    if (/^\d+$/.test(trimmed)) return trimmed + ' dni';
-    return trimmed;
-}
-
 /* ===== Rejestracja globali ===== */
 window.getWellRowStyle = getWellRowStyle;
 window.getOfferColumnsCount = getOfferColumnsCount;
 window.getWellErrorCell = getWellErrorCell;
 window.getDiscountStr = getDiscountStr;
 window.migrateWellData = migrateWellData;
-window.normalizeValidityValue = normalizeValidityValue;

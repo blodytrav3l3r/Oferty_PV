@@ -203,6 +203,8 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         investAddress: offer.investAddress,
         investContractor: offer.investContractor,
         notes: offer.notes,
+        paymentTerms: offer.paymentTerms,
+        validity: offer.validity,
         wells: selectedWellsCopy,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         originalSnapshot: {
@@ -352,6 +354,16 @@ async function saveOrderStudnie() {
     }
     order.visiblePrzejsciaTypes = Array.from(visiblePrzejsciaTypes);
     order.updatedAt = new Date().toISOString();
+    order.paymentTerms =
+        document.getElementById('offer-tab-payment-terms')?.value ||
+        document.getElementById('offer-payment-terms')?.value ||
+        order.paymentTerms ||
+        '';
+    order.validity =
+        document.getElementById('offer-tab-validity')?.value ||
+        document.getElementById('offer-validity')?.value ||
+        order.validity ||
+        '7 dni';
 
     let totalNetto = 0,
         totalWeight = 0;
@@ -577,6 +589,10 @@ async function enterOrderEditMode(orderId) {
         setVal('transport-km', order.transportKm ?? 100);
         setVal('transport-rate', order.transportRate ?? 10);
         currentTransportMode = order.transportMode || 'full';
+        setVal('offer-validity', order.validity || order.offerValidity || '');
+        setVal('offer-tab-validity', order.validity || order.offerValidity || '');
+        setVal('offer-payment-terms', order.paymentTerms || '');
+        setVal('offer-tab-payment-terms', order.paymentTerms || '');
 
         logger.info(
             'orderManager',
@@ -760,6 +776,16 @@ async function saveCurrentOrder(options = {}) {
     order.transportKm = transportKmVal;
     order.transportRate = transportRateVal;
     order.transportMode = currentTransportMode;
+    order.paymentTerms =
+        document.getElementById('offer-tab-payment-terms')?.value ||
+        document.getElementById('offer-payment-terms')?.value ||
+        order.paymentTerms ||
+        '';
+    order.validity =
+        document.getElementById('offer-tab-validity')?.value ||
+        document.getElementById('offer-validity')?.value ||
+        order.validity ||
+        '7 dni';
 
     let totalTransportCostForOffer = 0;
     if (transportKmVal > 0 && transportRateVal > 0 && totalWeight > 0) {
@@ -812,7 +838,9 @@ async function saveCurrentOrder(options = {}) {
                 totalBrutto: order.totalBrutto,
                 transportKm: order.transportKm,
                 transportRate: order.transportRate,
-                transportMode: order.transportMode
+                transportMode: order.transportMode,
+                paymentTerms: order.paymentTerms,
+                validity: order.validity
             })
         });
         showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');

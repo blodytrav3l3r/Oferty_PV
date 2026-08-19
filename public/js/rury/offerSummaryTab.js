@@ -33,15 +33,10 @@ function renderOfferSummaryTab() {
         }
     }
 
-    const tabPayment = document.getElementById('offer-tab-payment-terms');
-    if (tabPayment && !tabPayment.value) {
-        tabPayment.value = 'Do uzgodnienia lub według indywidualnych warunków handlowych.';
-    }
-
-    const tabValidity = document.getElementById('offer-tab-validity');
-    if (tabValidity && !tabValidity.value) {
-        tabValidity.value = '7 dni';
-    }
+    // Przepisz Warunki płatności i Data ważności z kroku 1 do pól zakładki
+    // Oferta (offer-tab-*) — spójnie ze studniami (syncOfferTabFields w offerCrudCommon.js).
+    // Zamiast statycznych domyślnych, które nadpisywały wpisane w kroku 1 wartości przy zapisie.
+    if (typeof syncOfferTabFields === 'function') syncOfferTabFields();
 
     // 2. Wygeneruj tabelę z produktami (podobnie jak do wydruku, ale w HTML)
     const items = getActiveItemsArray();

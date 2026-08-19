@@ -180,9 +180,99 @@ function buildBaseOfferDoc(spec) {
     };
 }
 
+/**
+ * Normalizuje wartość "Data ważności" — liczba bez jednostki dostaje " dni",
+ * pusta wraca do domyślnego "7 dni".
+ * @param {string} val
+ * @returns {string}
+ */
+function normalizeValidityValue(val) {
+    if (!val) return '7 dni';
+    const trimmed = val.trim();
+    if (/^\d+$/.test(trimmed)) return trimmed + ' dni';
+    return trimmed;
+}
+
+/**
+ * Pull-sync: kopiuje Warunki płatności i Data ważności z kroku 1
+ * do pól zakładki "Oferta" (offer-tab-*). Wołane przy otwarciu zakładki
+ * oraz po załadowaniu partiali (offer-tab-* powstają asynchronicznie).
+ * Wspólne dla rur i studni — pola mają identyczne ID.
+ */
+function syncOfferTabFields() {
+    const copy = (fromId, toId) => {
+        const src = document.getElementById(fromId);
+        const dst = document.getElementById(toId);
+        if (src && dst) dst.value = src.value;
+    };
+    copy('offer-payment-terms', 'offer-tab-payment-terms');
+    copy('offer-validity', 'offer-tab-validity');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    let _syncingValidity = false;
+    let _syncingPaymentTerms = false;
+
+    function syncValidity(src, dst) {
+        if (!dst || _syncingValidity) return;
+        _syncingValidity = true;
+        dst.value = normalizeValidityValue(src.value);
+        _syncingValidity = false;
+    }
+
+    function syncPaymentTerms(src, dst) {
+        if (!dst || _syncingPaymentTerms) return;
+        _syncingPaymentTerms = true;
+        dst.value = src.value;
+        _syncingPaymentTerms = false;
+    }
+
+    // Delegacja zdarzeń — pola zakładki "Oferta" (offer-tab-*) są wstrzykiwane
+    // przez partialLoader po DOMContentLoaded, więc bezpośrednie bindowanie nie działa.
+    document.addEventListener('input', function (e) {
+        if (!(e.target instanceof HTMLElement)) return;
+        const id = e.target.id;
+        if (id === 'offer-validity' || id === 'offer-tab-validity') {
+            syncValidity(
+                e.target,
+                document.getElementById(
+                    id === 'offer-validity' ? 'offer-tab-validity' : 'offer-validity'
+                )
+            );
+        } else if (id === 'offer-payment-terms' || id === 'offer-tab-payment-terms') {
+            syncPaymentTerms(
+                e.target,
+                document.getElementById(
+                    id === 'offer-payment-terms' ? 'offer-tab-payment-terms' : 'offer-payment-terms'
+                )
+            );
+        }
+    });
+
+    document.addEventListener(
+        'blur',
+        function (e) {
+            if (!(e.target instanceof HTMLInputElement)) return;
+            const id = e.target.id;
+            if (id === 'offer-validity' || id === 'offer-tab-validity') {
+                e.target.value = normalizeValidityValue(e.target.value);
+            }
+        },
+        true
+    );
+});
+
+// Re-pull po załadowaniu partiali — pokrywa przypadek, gdy zakładka Oferta
+// została otwarta zanim offer-tab-* powstały w DOM (partialLoader race).
+document.addEventListener('partials:loaded', function () {
+    syncOfferTabFields();
+});
+
 window.getOfferFormFields = getOfferFormFields;
 window.setOfferFormFields = setOfferFormFields;
 window.clearOfferFormFields = clearOfferFormFields;
 window.buildUserDisplayName = buildUserDisplayName;
 window.assignOfferSupervisor = assignOfferSupervisor;
 window.buildBaseOfferDoc = buildBaseOfferDoc;
+window.normalizeValidityValue = normalizeValidityValue;
+window.syncOfferTabFields = syncOfferTabFields;

@@ -119,6 +119,7 @@ function showSectionStudnie(id) {
     if (id === 'pricelist') renderStudniePriceList();
     if (id === 'offer') {
         syncOfferClientSummary();
+        if (typeof syncOfferTabFields === 'function') syncOfferTabFields();
         renderOfferSummary();
 
         // Baner kontekstu
