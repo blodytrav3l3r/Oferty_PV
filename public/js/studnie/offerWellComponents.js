@@ -79,10 +79,10 @@ function renderWellHeaderRow(
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold);">${displayLp}</td>
         <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i></td>
-        <td style="font-weight: var(--fw-bold); color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
-        <td style="text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
-        <td class="th-c-nowrap">${badges}</td>
-        <td class="th-c-nowrap">${errorCell}</td>
+        <td style="text-align:left; font-weight: var(--fw-bold); color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
+        <td style="text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
+        <td style="text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
+        <td style="text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">${errorCell}</td>
         <td style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
         <td class="text-right" style="font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>

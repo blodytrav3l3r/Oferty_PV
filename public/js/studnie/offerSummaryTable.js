@@ -14,13 +14,13 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
           ${showOrderSelection ? '<th scope="col" style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" class="cursor-icon-16"></th>' : ''}
           <th scope="col" style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
           <th scope="col" style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
-          <th scope="col" class="w-100">Nazwa studni</th>
-          <th scope="col" style="width:1%; min-width:80px; text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">Cechy</th>
-          <th scope="col" style="width:1%; min-width:70px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
-          <th scope="col" style="width:1%; min-width:30px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;" title="Błędy konfiguracji studni">Błąd</th>
+          <th scope="col" class="w-100" style="text-align:left;">Nazwa studni</th>
+          <th scope="col" style="width:1%; min-width:80px; text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">Cechy</th>
+          <th scope="col" style="width:1%; min-width:70px; text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
+          <th scope="col" style="width:1%; min-width:30px; text-align:right; white-space:nowrap; padding:0.5rem 0.5rem;" title="Błędy konfiguracji studni">Błąd</th>
           <th scope="col" style="width:1%; min-width:60px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">DN</th>
-          ${showPriceComparison ? '<th scope="col" class="th-r-110">Cena z oferty</th>' : ''}
-          <th scope="col" class="th-r-110">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
+          ${showPriceComparison ? '<th scope="col" style="width:1%; min-width:110px; text-align:right; white-space:nowrap;">Cena z oferty</th>' : ''}
+          <th scope="col" style="width:1%; min-width:110px; text-align:right; white-space:nowrap;">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
           ${showPriceComparison ? '<th scope="col" class="th-r-90">Różnica</th>' : ''}
           <th scope="col" class="th-r-90">Akcje</th>
         </tr>
