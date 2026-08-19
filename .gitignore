@@ -102,6 +102,7 @@ check_db_temp.js
 scripts/tempRules.js
 data/app_database.sqlite.backup_*
 tmp/
+*.bak
 
 # === Python well configurator (osobna usługa, NIE używana przez Node) ===
 # Zachowujemy lokalnie, ale nie pushujemy na GitHub.

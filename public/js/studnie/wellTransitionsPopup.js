@@ -12,6 +12,9 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
     overlay = document.createElement('div');
     overlay.id = 'przejscia-visibility-overlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-modal', 'true');
+    overlay.setAttribute('aria-label', 'Widoczność typów przejść');
     overlay.style.cssText =
         'position:fixed; inset:0; z-index:' +
         LAYERS.EXCEL_POPUP_BACKDROP +
@@ -27,9 +30,9 @@ function openPrzejsciaVisibilityPopup(containerId) {
             const isVisible = visiblePrzejsciaTypes.has(t);
             return `
             <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}"
-                 onclick="togglePrzejsciaTypeVisibility('${t.replace(/'/g, "\\\\'")}')"
-                 title="${t}">
-                <div class="przejscia-vis-tile-name">${t}</div>
+                 onclick="togglePrzejsciaTypeVisibility('${escapeJsStr(t)}')"
+                 title="${escapeHtmlAttr(t)}">
+                <div class="przejscia-vis-tile-name">${escapeHtml(t)}</div>
             </div>`;
         })
         .join('');
@@ -54,6 +57,10 @@ function openPrzejsciaVisibilityPopup(containerId) {
     `;
 
     document.body.appendChild(overlay);
+    if (typeof trapFocus === 'function') {
+        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+        trapFocus(overlay);
+    }
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -66,7 +73,10 @@ function openPrzejsciaVisibilityPopup(containerId) {
 
 function closePrzejsciaVisibilityPopup(containerId) {
     const overlay = document.getElementById('przejscia-visibility-overlay');
-    if (overlay) overlay.remove();
+    if (overlay) {
+        if (typeof untrapFocus === 'function') untrapFocus(overlay);
+        overlay.remove();
+    }
     if (containerId === 'excel') {
         if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
         return;
@@ -220,14 +230,14 @@ window.openChangePrzejscieTypePopup = function (index) {
               ${allTypes
                   .map((t) => {
                       const isActive = t === currProduct.category;
-                      return `<button onclick="window.confirmChangePrzejscieType(${index}, '${t}')"
+                      return `<button onclick="window.confirmChangePrzejscieType(${index}, '${escapeJsStr(t)}')"
                            class="${isActive ? 'color-accent' : ''}"
                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                   border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
                           onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
                           onmouseleave="this.style.background='${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.borderColor='${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'}'">\
-                       ${t}
+                       ${escapeHtml(t)}
                   </button>`;
                   })
                   .join('')}
@@ -295,21 +305,21 @@ window.openChangePrzejscieDnPopup = function (index) {
     modal.innerHTML = `
     <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
        <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz średnicę (DN): ${currProduct.category}</h3>
+           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
               ${available
                   .map((p) => {
                       const isActive = p.id === currId;
                       const dnLabel =
                           typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
-                      return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${p.id}')"
+                      return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${escapeJsStr(p.id)}')"
                            class="${isActive ? 'color-accent' : ''}"
                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                   border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
                           onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
                           onmouseleave="this.style.background='${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.borderColor='${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'}'">\
-                       ${dnLabel}
+                       ${escapeHtml(dnLabel)}
                   </button>`;
                   })
                   .join('')}

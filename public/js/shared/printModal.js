@@ -27,7 +27,10 @@
 
     function close() {
         const m = document.getElementById(MODAL_ID);
-        if (m) m.remove();
+        if (m) {
+            if (typeof untrapFocus === 'function') untrapFocus(m);
+            m.remove();
+        }
     }
 
     function renderOfferSection(cfg) {
@@ -454,6 +457,16 @@
 
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         if (typeof window.lucide !== 'undefined') window.lucide.createIcons();
+        const _upmOverlay = document.getElementById(MODAL_ID);
+        if (_upmOverlay && typeof trapFocus === 'function') {
+            /** @type {any} */ (_upmOverlay)._previousFocus = document.activeElement;
+            trapFocus(_upmOverlay);
+        }
+        if (_upmOverlay && typeof _upmOverlay.addEventListener === 'function') {
+            _upmOverlay.addEventListener('keydown', function (ev) {
+                if (ev.key === 'Escape') close();
+            });
+        }
         if (config.combinedSection) {
             window.__upmCombinedCfg = config.combinedSection;
             populateCombinedSection(document.getElementById(MODAL_ID), config.combinedSection);

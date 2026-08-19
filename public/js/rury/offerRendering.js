@@ -64,7 +64,7 @@ function renderOfferItems() {
         const displayEntries = entries.filter((e) => !e.item.isPehd);
         if (displayEntries.length === 0) return;
         if (cat !== lastCat) {
-            html += `<tr class="offer-cat-header"><td colspan="14">${cat}</td></tr>`;
+            html += `<tr class="offer-cat-header"><td colspan="14">${escapeHtml(cat)}</td></tr>`;
             lastCat = cat;
         }
         html += `<tr class="offer-diam-header"><td colspan="14">⌀ ${dk}</td></tr>`;

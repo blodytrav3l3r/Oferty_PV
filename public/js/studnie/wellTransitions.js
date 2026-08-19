@@ -76,15 +76,15 @@ function renderInlinePrzejsciaApp(containerId) {
                         .map((t) => {
                             const isActive = t === inlinePrzejsciaState.type;
                             return `
-                        <div onclick="window.inlineSetType('${escapeHtml(t)}', '${escapeHtml(containerId || '')}')" 
+                        <div onclick="window.inlineSetType('${escapeJsStr(t)}', '${escapeJsStr(containerId || '')}')" 
                              style="padding:0.2rem 0.4rem; border-radius: var(--radius-sm); cursor:pointer; transition:all 0.15s ease; height:44px; display:flex; align-items:center; justify-content:center;
                                     background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
                                     border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
                                     ${isActive ? 'box-shadow:0 0 8px rgba(var(--accent-rgb), 0.15);' : ''}"
                              onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
                              onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'"
-                             title="${t}">
-                             <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight: var(--fw-bold); text-align:center; line-height:1.1; word-break:break-word;">${t}</div>
+                             title="${escapeHtmlAttr(t)}">
+                             <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight: var(--fw-bold); text-align:center; line-height:1.1; word-break:break-word;">${escapeHtml(t)}</div>
                         </div>`;
                         })
                         .join('')}
@@ -94,7 +94,7 @@ function renderInlinePrzejsciaApp(containerId) {
 
         <!-- Wybór DN -->
         <div style="padding:0.3rem 0;">
-            <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight: var(--fw-bold);">Średnica (DN) — ${inlinePrzejsciaState.type || ''}</div>
+            <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight: var(--fw-bold);">Średnica (DN) — ${escapeHtml(inlinePrzejsciaState.type || '')}</div>
             <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:11px;">
                 ${dnList
                     .map((p) => {
@@ -123,7 +123,7 @@ function renderInlinePrzejsciaApp(containerId) {
                 ? `
         <div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius: var(--radius-sm); margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-                <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--white);"><i data-lucide="link"></i> ${selectedProduct.category} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
+                <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--white);"><i data-lucide="link"></i> ${escapeHtml(selectedProduct.category)} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
                 <span style="font-size: var(--fs-xl); color:var(--success); font-weight: var(--fw-extrabold); font-family:'Inter'">${fmtInt(selectedProduct.price)} <span style="font-size: var(--fs-2xs);">PLN</span></span>
             </div>
             <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
@@ -572,7 +572,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div onclick="window.editInlineSetType('${t}')" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-semibold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${t}</div>`;
+                        return `<div onclick="window.editInlineSetType('${escapeJsStr(t)}')" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-semibold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${escapeHtml(t)}</div>`;
                     })
                     .join('')}
               </div>
@@ -584,7 +584,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div onclick="window.editInlineSetDN('${pr.id}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${dnLbl}</div>`;
+                        return `<div onclick="window.editInlineSetDN('${escapeJsStr(pr.id)}')" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${escapeHtml(dnLbl)}</div>`;
                     })
                     .join('')}
               </div>

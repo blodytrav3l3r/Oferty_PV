@@ -219,7 +219,7 @@ function renderWellConfig() {
                         return badgesHtml;
                     })()}
                   </div>
-                  <div style="font-size: var(--fs-xs); color:var(--text-muted); opacity:0.6; padding-left:2px; line-height:1;">${p.id}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
+                  <div style="font-size: var(--fs-xs); color:var(--text-muted); opacity:0.6; padding-left:2px; line-height:1;">${escapeHtml(p.id)}${p.height ? ' | H=' + p.height + 'mm' : ''}</div>
                 </div>
             </div>
 

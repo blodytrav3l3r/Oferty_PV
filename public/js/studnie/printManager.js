@@ -733,7 +733,7 @@ function buildZlecenieHtml(template, data) {
                 <td class="center">${przejsciaRows[i].spadekKineta}</td>
                 <td class="center">${przejsciaRows[i].spadekMufa}</td>
                 <td class="center">${przejsciaRows[i].katStopien}</td>
-                <td>${przejsciaRows[i].uwagi}</td>
+                <td>${escapeHtml(przejsciaRows[i].uwagi || '')}</td>
                 <td class="center">${przejsciaRows[i].katGon}</td>
                 <td class="center">${przejsciaRows[i].katWykonania}</td>
             `;
@@ -755,7 +755,7 @@ function buildZlecenieHtml(template, data) {
             <td class="center">${r.spadekKineta}</td>
             <td class="center">${r.spadekMufa}</td>
             <td class="center">${r.katStopien}</td>
-            <td>${r.uwagi}</td>
+            <td>${escapeHtml(r.uwagi || '')}</td>
             <td class="center">${r.katGon}</td>
             <td class="center">${r.katWykonania}</td>
         </tr>

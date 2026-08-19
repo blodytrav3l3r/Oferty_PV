@@ -1,37 +1,4 @@
 /* studnie/offer.css — Offer/summary table styles */
-.offer-stats-bar {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.offer-stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-glass);
-    border-radius: var(--radius);
-    padding: 1rem;
-    text-align: center;
-}
-
-.offer-stat-label {
-    font-size: var(--fs-sm);
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 0.5px;
-}
-
-.offer-stat-value {
-    font-size: var(--fs-6xl);
-    font-weight: var(--fw-extrabold);
-    margin-top: 0.2rem;
-}
-
-/* ——— Modal transportu oferty: ukryj spinner ——— */
-.spinner-hidden .spinner-border {
-    display: none;
-}
-
 #offer-transport-modal input[type='number'] {
     -moz-appearance: textfield;
     appearance: textfield;
@@ -337,23 +304,6 @@
 }
 #excel-table-container table {
     border-collapse: collapse;
-}
-
-/* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
-.excel-th-h3 {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-}
-.excel-th-h1 {
-    position: sticky;
-    top: 1.4rem;
-    z-index: 20;
-}
-.excel-th-h2 {
-    position: sticky;
-    top: 3.2rem;
-    z-index: 20;
 }
 
 /* Wcięcia dla sub-elementów w tabeli oferty studni */

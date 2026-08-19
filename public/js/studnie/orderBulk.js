@@ -307,7 +307,7 @@ function openBulkOrderSequencePopup() {
                     font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
                 <span style="font-size: var(--fs-2xl); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
                 <div style="flex:1;">
-                    <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${g.wellName}</div>
+                    <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
                     <div style="font-size: var(--fs-xs); color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
                 </div>
                 ${

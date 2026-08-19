@@ -85,14 +85,6 @@ async function loadRecycledNumbers(user) {
 
 // Obsluga klawiszy
 document.addEventListener('keydown', (e) => {
-    if (
-        e.key === 'Enter' &&
-        !document.getElementById('login-section').classList.contains('hidden')
-    ) {
-        doLogin();
-        return;
-    }
-
     // Ctrl+S / Cmd+S: zapisz bieżącą ofertę (rury lub studnie)
     if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
         const active = document.activeElement;
@@ -172,7 +164,10 @@ function showLoggedIn(user) {
     loadRecycledNumbers(user);
 }
 
-async function doLogin() {
+async function doLogin(event) {
+    if (event) {
+        event.preventDefault();
+    }
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
@@ -533,6 +528,7 @@ window.startEditUser = startEditUser;
 
 /* ===== Rejestracja globali ===== */
 window.doLogout = doLogout;
+window.doLogin = doLogin;
 window.createUser = createUser;
 window.deleteUser = deleteUser;
 window.showChangePassword = showChangePassword;

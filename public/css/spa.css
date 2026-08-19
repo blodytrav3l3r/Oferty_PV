@@ -4,12 +4,12 @@
     padding: 0;
     margin: 0;
     overflow: hidden;
-    min-height: calc(100vh - 57px);
+    min-height: calc(100vh - var(--header-h));
 }
 
 .spa-module-iframe {
     width: 100%;
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--header-h));
     border: none;
     display: none;
     opacity: 1;

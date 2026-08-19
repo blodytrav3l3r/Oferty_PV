@@ -60,6 +60,7 @@
                                     id="zlecenia-search-input"
                                     class="form-input form-input-sm"
                                     placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
+                                    aria-label="Szukaj zleceń"
                                     style="
                                         font-weight: normal;
                                         padding-left: 2.4rem !important;
@@ -203,7 +204,7 @@
                             <table class="zlecenia-table" id="zlecenia-table">
                                 <thead>
                                     <tr>
-                                        <th style="width: 40px; text-align: center">
+                                        <th scope="col" style="width: 40px; text-align: center">
                                             <input
                                                 type="checkbox"
                                                 id="zlecenia-select-all"
@@ -214,15 +215,17 @@
                                                 aria-checked="false"
                                             />
                                         </th>
-                                        <th style="width: 140px">Nr zlecenia</th>
-                                        <th style="width: 130px">Data</th>
-                                        <th>Budowa / Studnia</th>
-                                        <th style="width: 150px">Nr zamówienia</th>
-                                        <th>Element</th>
-                                        <th>Opiekun</th>
-                                        <th>Wygenerował</th>
-                                        <th style="width: 105px">Status</th>
-                                        <th style="width: 150px; text-align: right">Akcje</th>
+                                        <th scope="col" style="width: 140px">Nr zlecenia</th>
+                                        <th scope="col" style="width: 130px">Data</th>
+                                        <th scope="col">Budowa / Studnia</th>
+                                        <th scope="col" style="width: 150px">Nr zamówienia</th>
+                                        <th scope="col">Element</th>
+                                        <th scope="col">Opiekun</th>
+                                        <th scope="col">Wygenerował</th>
+                                        <th scope="col" style="width: 105px">Status</th>
+                                        <th scope="col" style="width: 150px; text-align: right">
+                                            Akcje
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody id="zlecenia-table-body">
@@ -249,7 +252,7 @@
         </main>
 
         <!-- Toast container -->
-        <div id="toast-container" class="toast-container"></div>
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
         <!-- Dependencies -->
         <script src="js/shared/formatters.js?v=1.17.1"></script>

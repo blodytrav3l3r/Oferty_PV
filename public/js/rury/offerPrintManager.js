@@ -4,11 +4,11 @@
    offerPrintManager.js
    ============================ */
 
-function handlePrintClick() {
+function handlePrintClickRury() {
     showUniversalPrintModalRury();
 }
 
-window.handlePrintClick = handlePrintClick;
+window.handlePrintClickRury = handlePrintClickRury;
 
 function showUniversalPrintModalRury(offerId, orderId, relatedOrders) {
     const targetOfferId =

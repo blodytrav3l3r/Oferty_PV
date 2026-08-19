@@ -77,14 +77,14 @@ function syncElevationInputs() {
         doplataInput.value = dVal;
 
         if (dVal > 0) {
-            doplataInput.classList.add('color-success', 'fw-7');
+            doplataInput.classList.add('color-success', 'fw-700');
             doplataInput.classList.remove('color-danger', 'color-accent');
         } else if (dVal < 0) {
-            doplataInput.classList.add('color-danger', 'fw-7');
+            doplataInput.classList.add('color-danger', 'fw-700');
             doplataInput.classList.remove('color-success', 'color-accent');
         } else {
             doplataInput.classList.add('color-accent');
-            doplataInput.classList.remove('color-success', 'color-danger', 'fw-7');
+            doplataInput.classList.remove('color-success', 'color-danger', 'fw-700');
         }
     }
     if (numerInput) {
@@ -227,14 +227,14 @@ function updateDoplata() {
     well.doplata = dVal;
 
     if (dVal > 0) {
-        domEl.classList.add('color-success', 'fw-7');
+        domEl.classList.add('color-success', 'fw-700');
         domEl.classList.remove('color-danger', 'color-accent');
     } else if (dVal < 0) {
-        domEl.classList.add('color-danger', 'fw-7');
+        domEl.classList.add('color-danger', 'fw-700');
         domEl.classList.remove('color-success', 'color-accent');
     } else {
         domEl.classList.add('color-accent');
-        domEl.classList.remove('color-success', 'color-danger', 'fw-7');
+        domEl.classList.remove('color-success', 'color-danger', 'fw-700');
     }
 
     _debouncedRefreshFull();

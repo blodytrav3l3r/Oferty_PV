@@ -7,14 +7,16 @@
             <div class="zt-toggle-wrap">
                 <span class="zt-toggle-label">Zabezp. transp.</span>
                 <div class="zt-toggle-group">
-                    <button type="button"
+                    <button
+                        type="button"
                         class="zt-toggle-btn zt-toggle-tak-btn active"
                         id="zt-toggle-tak"
                         onclick="setZabezpieczenieTransportu(true)"
                     >
                         TAK
                     </button>
-                    <button type="button"
+                    <button
+                        type="button"
                         class="zt-toggle-btn zt-toggle-nie-btn"
                         id="zt-toggle-nie"
                         onclick="setZabezpieczenieTransportu(false)"
@@ -38,13 +40,15 @@
                         class="rury-form-input"
                         id="product-search"
                         placeholder="Wyszukaj produkt po nazwie lub indeksie..."
+                        aria-label="Wyszukaj produkt po nazwie lub indeksie"
                         style="padding-left: 2.4rem"
                         autocomplete="off"
                     />
                 </div>
                 <div class="product-dropdown" id="product-dropdown"></div>
             </div>
-            <button type="button"
+            <button
+                type="button"
                 class="btn btn-secondary offer-catalog-btn"
                 id="toggle-catalog-btn"
                 onclick="toggleCatalog()"

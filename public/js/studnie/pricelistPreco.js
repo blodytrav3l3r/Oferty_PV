@@ -163,7 +163,7 @@ function renderPrecoRangeTable(title, table, dn, fieldBase) {
                 </div>
             </td>`;
             grupyKeys.forEach((g) => {
-                const sg = window.escapeHtml(g);
+                const sg = window.escapeHtmlAttr(g);
                 html += `<td class="text-right" style="padding:0.2rem 0.5rem;"><input type="number" class="edit-input" style="width:100%; max-width:90px; text-align:right; float:right;" value="${row.grupy[g] || 0}" data-preco-field="${fieldBase}.${ri}.grupy.${sg}" data-preco-dn="${dn}"></td>`;
             });
             html += `<td class="text-center"><button class="btn-icon del" onclick="removePrecoRangeRow(${dn}, '${fieldBase}', ${ri})" title="Usuń" aria-label="Usuń" style="padding:0.2rem;"><i data-lucide="trash-2" class="icon-xs" aria-hidden="true"></i></button></td>`;

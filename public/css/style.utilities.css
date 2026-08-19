@@ -86,34 +86,12 @@
 .color-danger {
     color: var(--danger-hover);
 }
-.color-cyan {
-    color: var(--cyan);
-}
-.color-blue-alt {
-    color: var(--blue-alt);
-}
-.color-purple-alt {
-    color: var(--purple-alt);
-}
-
 /* Background utility classes */
-.bg-glass-subtle {
-    background: rgba(var(--white-rgb), 0.05);
-}
-.bg-glass-hover {
-    background: rgba(var(--white-rgb), 0.05);
-}
-.bg-glass-strong {
-    background: rgba(var(--white-rgb), 0.1);
-}
 .border-accent-subtle {
     border-color: rgba(var(--accent-rgb), 0.3);
 }
 .bg-accent-subtle {
     background: rgba(var(--accent-rgb), 0.15);
-}
-.bg-success-subtle {
-    background: rgba(var(--success-rgb), 0.2);
 }
 .border-success {
     border-color: rgba(var(--success-rgb), 0.8);
@@ -121,31 +99,6 @@
 .border-danger-subtle {
     border-color: rgba(var(--danger-rgb), 0.3);
 }
-.bg-danger-subtle {
-    background: rgba(var(--danger-rgb), 0.15);
-}
-.bg-warn-subtle {
-    background: rgba(var(--warn-rgb), 0.15);
-}
-.bg-black-subtle {
-    background: rgba(var(--black-rgb), 0.2);
-}
-.bg-black-dim {
-    background: rgba(var(--black-rgb), 0.8);
-}
-.bg-glass-ultra {
-    background: rgba(var(--white-rgb), 0.05);
-}
-.bg-purple-subtle {
-    background: rgba(var(--accent2-rgb), 0.1);
-}
-.border-warn-subtle {
-    border-color: rgba(var(--warn-rgb), 0.3);
-}
-.border-primary-subtle {
-    border-color: rgba(var(--white-rgb), 0.1);
-}
-
 /* Align & layout utility classes */
 .text-xs {
     font-size: var(--fs-base);
@@ -178,16 +131,6 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
-}
-.flex-col {
-    display: flex;
-    gap: 0.4rem;
-    flex-direction: column;
-}
-.flex-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 .fw-500 {
     font-weight: var(--fw-medium);

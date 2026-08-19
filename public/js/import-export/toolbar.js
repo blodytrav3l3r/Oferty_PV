@@ -363,7 +363,10 @@
 
     _createModal(title, content, confirmLabel, onConfirm, noFooter) {
         const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
+        overlay.className = 'modal-overlay js-modal-overlay';
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', title);
 
         const box = document.createElement('div');
         box.className = 'modal';
@@ -417,10 +420,12 @@
 
         overlay.appendChild(box);
         document.body.appendChild(overlay);
+        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
 
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) this._closeModal();
         });
+        if (typeof trapFocus === 'function') trapFocus(overlay);
 
         window.__ieModalOverlay = overlay;
         return overlay;
@@ -428,6 +433,7 @@
 
     _closeModal() {
         if (window.__ieModalOverlay && window.__ieModalOverlay.parentNode) {
+            if (typeof untrapFocus === 'function') untrapFocus(window.__ieModalOverlay);
             document.body.removeChild(window.__ieModalOverlay);
         }
         window.__ieModalOverlay = null;

@@ -1,4 +1,7 @@
 /* ===== WIDOK RESPONSYWNY ===== */
+/* Kanon breakpointów (TASK-023): 1400 / 1200 / 1100 / 900 / 768 / 600 / 480.
+   Odchylenia lokalne (860, 720, 700, 640) zostają bez zmian — zero regresji.
+   Migracja do osi możliwa dopiero po weryfikacji screenshotów na 5 szerokościach. */
 @media (max-width: 768px) {
     .modern-offer-card {
         margin-bottom: 0.55rem;
@@ -462,7 +465,7 @@
     position: fixed;
     inset: 0;
     background: var(--shadow-color);
-    z-index: 100000;
+    z-index: var(--z-modal-top);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -719,7 +722,7 @@
     position: fixed;
     bottom: 4.5rem;
     right: 1.5rem;
-    z-index: 1000000;
+    z-index: var(--z-toast);
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -1158,12 +1161,6 @@
     padding: 0.35rem 0.5rem;
     font-size: var(--fs-xs);
 }
-
-.ui-badge-sm {
-    padding: 0.3rem 0.4rem;
-    font-size: var(--fs-sm);
-}
-
 .ui-col-5 {
     width: 5%;
 }
@@ -1187,26 +1184,10 @@
     text-align: center;
     min-width: 60px;
 }
-
-.ui-text-lg {
-    font-size: var(--fs-base);
-}
-
-.ui-text-sm {
-    font-size: var(--fs-sm);
-}
-
 .ui-pointer-bold {
     cursor: pointer;
     font-weight: var(--fw-semibold);
 }
-
-.ui-flex-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 /* Utility classes */
 .lucide-rotate-n90 {
     transform: rotate(-90deg);
@@ -1375,12 +1356,6 @@ svg.lucide {
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-glass);
 }
-
-.wizard-card-icon {
-    font-size: var(--fs-7xl);
-    margin-bottom: 0.4rem;
-}
-
 .wizard-card-title {
     font-size: var(--fs-4xl);
     font-weight: var(--fw-extrabold);
@@ -1412,6 +1387,20 @@ svg.lucide {
     display: grid;
     gap: 0.7rem;
     margin-bottom: 0.5rem;
+}
+
+/* Kolumny wizard grid — klasy zamiast inline style (TASK-012, zero haków [style*=]) */
+.wizard-form-grid.cols-2 {
+    grid-template-columns: 1fr 1fr;
+}
+.wizard-form-grid.cols-3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.wizard-form-grid.cols-4 {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.wizard-form-grid.cols-3fr-1fr {
+    grid-template-columns: 3fr 1fr;
 }
 
 .wizard-form-group {
@@ -1642,16 +1631,6 @@ svg.lucide {
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
-
-.wizard-toolbar {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-    margin-top: 0.6rem;
-    padding-top: 0.6rem;
-    border-top: 1px solid var(--border-glass);
-}
-
 html {
     color-scheme: dark;
 }

@@ -131,7 +131,7 @@
     background: rgba(var(--black-rgb), 0.8);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
-    z-index: 2000; /* GENERIC_MODAL_BACKDROP */
+    z-index: var(--z-overlay); /* GENERIC_MODAL_BACKDROP */
     display: none;
     align-items: center;
     justify-content: center;
@@ -207,7 +207,7 @@
 .zlecenia-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000; /* GENERIC_MODAL_BACKDROP */
+    z-index: var(--z-overlay); /* GENERIC_MODAL_BACKDROP */
     background: rgba(var(--black-rgb), 0.8);
     display: none;
     align-items: stretch;
@@ -224,7 +224,7 @@
     display: grid;
     grid-template-columns: 350px 1fr 350px;
     background: var(--bg-primary);
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--header-h));
 }
 
 .zlecenia-left {
@@ -236,7 +236,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--header-h));
 }
 
 .zlecenia-center {
@@ -244,7 +244,7 @@
     flex-direction: column;
     overflow-y: auto;
     background: var(--bg-primary);
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--header-h));
 }
 
 .zlecenia-right {
@@ -253,7 +253,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: calc(100vh - 57px);
+    height: calc(100vh - var(--header-h));
 }
 
 .zlecenia-left,
@@ -269,7 +269,7 @@
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
-    min-height: 57px;
+    min-height: var(--header-h);
     background: var(--bg-secondary);
 }
 
@@ -279,7 +279,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 57px;
+    min-height: var(--header-h);
     /* dopasowanie do wysokości paska przycisków */
     box-shadow: var(--shadow-sm);
 }
@@ -772,12 +772,4 @@
     font-weight: var(--fw-bold);
     color: var(--warn);
     line-height: 1.2;
-}
-
-.zak-empty {
-    grid-column: 1 / -1;
-    font-size: var(--fs-base);
-    color: var(--text-muted);
-    text-align: center;
-    padding: 1.5rem;
 }

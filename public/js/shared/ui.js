@@ -79,6 +79,8 @@ function untrapFocus(container) {
         container.removeEventListener('keydown', /** @type {any} */ (container)._trapFocusHandler);
         /** @type {any} */ (container)._trapFocusHandler = null;
     }
+    const prev = /** @type {any} */ (container)._previousFocus;
+    if (prev && typeof prev.focus === 'function' && prev.isConnected) prev.focus();
 }
 
 /**
@@ -139,9 +141,15 @@ function showToast(msg, type = 'info') {
 function closeModal(id) {
     if (id) {
         const el = document.getElementById(id);
-        if (el) el.style.display = 'none';
+        if (el) {
+            untrapFocus(el);
+            el.style.display = 'none';
+        }
     } else {
-        document.querySelectorAll('.js-modal-overlay').forEach((m) => m.remove());
+        document.querySelectorAll('.js-modal-overlay').forEach((m) => {
+            untrapFocus(m);
+            m.remove();
+        });
     }
 }
 
@@ -267,12 +275,14 @@ function showUserSelectionPopup(users, defaultUserId) {
                             ? `${selectedUser.firstName} ${selectedUser.lastName}`
                             : selectedUser.username;
                 }
+                untrapFocus(overlay);
                 overlay.remove();
                 once(selectedUser);
             });
         });
 
         overlay.querySelector('#user-select-cancel').addEventListener('click', () => {
+            untrapFocus(overlay);
             overlay.remove();
             once(null);
         });
@@ -409,16 +419,19 @@ function appConfirm(message, opts = {}) {
             okBtn.focus();
 
             okBtn.addEventListener('click', () => {
+                untrapFocus(overlay);
                 overlay.remove();
                 once(true);
             });
             cancelBtn.addEventListener('click', () => {
+                untrapFocus(overlay);
                 overlay.remove();
                 once(false);
             });
 
             overlay.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
+                    untrapFocus(overlay);
                     overlay.remove();
                     once(true);
                 }
@@ -526,12 +539,14 @@ function appPrompt(message, defaultValue = '', opts = {}) {
             if (input.setSelectionRange) input.setSelectionRange(len, len);
 
             const submit = () => {
+                untrapFocus(overlay);
                 overlay.remove();
                 once(input.value);
             };
 
             okBtn.addEventListener('click', submit);
             cancelBtn.addEventListener('click', () => {
+                untrapFocus(overlay);
                 overlay.remove();
                 once(null);
             });
@@ -716,6 +731,7 @@ window.showModal = function (opts) {
 
     overlay.innerHTML = opts.html;
     document.body.appendChild(overlay);
+    /** @type {any} */ (overlay)._previousFocus = document.activeElement;
 
     function onOverlayClick(e) {
         if (e.target === overlay) {

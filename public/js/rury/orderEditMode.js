@@ -159,7 +159,7 @@ function renderStep2OrderBanner(orderData) {
     banner.innerHTML =
         '<div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">' +
         '<span style="font-size: var(--fs-4xl);">📦</span>' +
-        '<span class="color-success fw-7">Dodajesz produkty do istniejącego zamówienia</span>' +
+        '<span class="color-success fw-700">Dodajesz produkty do istniejącego zamówienia</span>' +
         '<span class="text-muted">|</span>' +
         '<span style="color:var(--text-muted);font-size: var(--fs-lg);">Zamówienie: <strong style="color:var(--text-primary);">' +
         escapeHtml(orderData.orderNumber || orderData.offerNumber || orderData.id || '\u2014') +

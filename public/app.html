@@ -28,7 +28,7 @@
                             alt="{{APP_NAME}}"
                             aria-label="{{APP_NAME}} — {{APP_SUBTITLE}}"
                         />
-                        <span id="spa-logo-text" class="logo-app-module"> {{APP_SUBTITLE}} </span>
+                        <h1 id="spa-logo-text" class="logo-app-module">{{APP_SUBTITLE}}</h1>
                     </div>
 
                     <!-- Kafle nawigacji na poziomie aplikacji -->
@@ -93,7 +93,7 @@
         <!-- ═══════ GŁÓWNY KONTENER WIDOKÓW (iframy wstrzykiwane tutaj) ═══════ -->
         <div id="spa-main"></div>
 
-        <div id="toast-container" class="toast-container"></div>
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
         <!-- ═══════ WSPÓLNE SKRYPTY (tylko autoryzacja wymagana przez router) ═══════ -->
         <script src="js/shared/auth.js?v=1.17.1"></script>

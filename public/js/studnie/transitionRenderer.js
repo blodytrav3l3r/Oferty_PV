@@ -166,7 +166,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const doplataHTML = showPrice
         ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
              <div class="ui-text-muted-sm" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; width:100%; text-align:right;">Dopłata</div>
-             <div data-qe-id="${item.id}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" class="prz-field-doplata" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; margin-top:2px;">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span style="font-size: var(--fs-2xs);">PLN</span></div>
+             <div data-qe-id="${escapeHtmlAttr(item.id)}" data-qe-field="doplata" onclick="window.activateQuickEdit(this, ${globalIndex}, 'doplata')" class="prz-field-doplata" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; margin-top:2px;">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span style="font-size: var(--fs-2xs);">PLN</span></div>
            </div>`
         : '';
 
@@ -192,7 +192,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
       <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
         <div style="display:flex; flex-direction:column; gap:0.1rem; flex:1; min-width:200px; white-space:normal; padding-right:0.5rem;">
            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
-             <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" class="prz-field-color" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary);">${przName}</span>
+             <span onclick="window.openChangePrzejscieTypePopup(${globalIndex})" title="Kliknij, aby zmienić typ przejścia" class="prz-field-color" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary);">${escapeHtml(przName)}</span>
              <span onclick="window.openChangePrzejscieDnPopup(${globalIndex})" title="Kliknij, aby zmienić średnicę" class="prz-field-dn" style="font-size: var(--fs-xl); color:var(--accent2-hover); font-weight: var(--fw-extrabold);">${dnLabel}</span>
            </div>
         </div>

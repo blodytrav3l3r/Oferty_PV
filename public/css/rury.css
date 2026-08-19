@@ -59,13 +59,6 @@ body.rury-page > .main:has(#section-builder.active) {
     gap: 0.4rem;
     margin-bottom: 0;
 }
-
-.rury-card-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
 .rury-card-body {
     display: block;
 }
@@ -75,12 +68,6 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* ── Formularze (wzorowane na .wizard-form-* z studnie.css) ── */
-.rury-form-grid {
-    display: grid;
-    gap: 0.7rem;
-    margin-bottom: 0.5rem;
-}
-
 .rury-form-grid-2 {
     grid-template-columns: 1fr 1fr;
 }
@@ -92,21 +79,6 @@ body.rury-page > .main:has(#section-builder.active) {
 .rury-form-grid-4 {
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
-
-.rury-form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.rury-form-label {
-    font-size: var(--fs-xs);
-    font-weight: var(--fw-semibold);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.3px;
-}
-
 .rury-form-input {
     width: 100%;
     padding: 0.45rem 0.65rem;
@@ -154,12 +126,6 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* ── Pasek nawigacji sekcji (wzorowany na .cennik-tab) ── */
-.rury-section-nav {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-}
-
 .rury-section-btn {
     padding: 0.45rem 1rem;
     border: 1px solid var(--border-glass);
@@ -656,21 +622,6 @@ body.rury-page > .main:has(#section-builder.active) {
     color: var(--warn-hover);
 }
 
-/* ── Przycisk Zmień opiekuna ── */
-.rury-btn-ghost {
-    background: rgba(var(--accent-rgb), 0.1);
-    border: 1px solid rgba(var(--accent-rgb), 0.3);
-    color: var(--accent-hover);
-    font-size: var(--fs-base);
-    font-weight: var(--fw-bold);
-    padding: 0.2rem 0.5rem;
-    display: none;
-}
-
-.rury-btn-ghost.visible {
-    display: inline-flex;
-}
-
 /* ── Pasek narzędzi cennika ── */
 .rury-toolbar {
     display: flex;
@@ -693,21 +644,6 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* ── Katalog produktów ── */
-.rury-catalog-tabs {
-    display: flex;
-    gap: 0.25rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.3rem;
-    position: sticky;
-    top: 92px;
-    z-index: 39;
-    background: var(--bg-secondary);
-    padding: 0.3rem 0.6rem;
-    margin-left: -1rem;
-    margin-right: -1rem;
-    border-bottom: 1px solid var(--border);
-}
-
 .rury-catalog-tab {
     padding: 0.3rem 0.7rem;
     border-radius: var(--radius-2xs);
@@ -734,43 +670,6 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* ── Flex/Grid helpers ── */
-.rury-flex {
-    display: flex;
-}
-
-.rury-flex-center {
-    display: flex;
-    align-items: center;
-}
-
-.rury-flex-between {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.rury-flex-gap-4 {
-    gap: 0.4rem;
-}
-
-.rury-flex-gap-5 {
-    gap: 0.5rem;
-}
-
-.rury-flex-gap-8 {
-    gap: 0.8rem;
-}
-
-.rury-flex-gap-10 {
-    gap: 1rem;
-}
-
-.rury-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
 /* ── Transport breakdown ── */
 .rury-transport-info {
     margin-top: 0.6rem;
@@ -778,12 +677,6 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 /* ── Empty state ── */
-.rury-empty-state {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-muted);
-}
-
 /* ── Search row ── */
 .rury-search-row {
     display: flex !important;
@@ -950,17 +843,11 @@ body.rury-page > .main:has(#section-builder.active) {
     .wizard-card-header {
         flex-wrap: wrap;
     }
-    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr'] {
-        grid-template-columns: 1fr !important;
-    }
-    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr'] {
-        grid-template-columns: 1fr !important;
-    }
-    .wizard-form-grid[style*='grid-template-columns: 1fr 1fr 1fr 1fr'] {
-        grid-template-columns: 1fr !important;
-    }
-    .wizard-form-grid[style*='grid-template-columns: 3fr 1fr'] {
-        grid-template-columns: 1fr !important;
+    .wizard-form-grid.cols-2,
+    .wizard-form-grid.cols-3,
+    .wizard-form-grid.cols-4,
+    .wizard-form-grid.cols-3fr-1fr {
+        grid-template-columns: 1fr;
     }
 }
 

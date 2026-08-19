@@ -316,7 +316,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
                       ? 'var(--success-hover)'
                       : 'var(--text-muted)';
             html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
-                <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size: var(--fs-lg);color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${cat} — ${g.count} szt.</td>
+                <td colspan="${COLSPAN_CAT}" style="padding:0.6rem 0.5rem;font-size: var(--fs-lg);color:var(--text-secondary);white-space:nowrap;">Podsumowanie ${escapeHtml(cat)} — ${g.count} szt.</td>
                 <td class="text-right" style="font-size: var(--fs-lg);color:var(--success);font-weight: var(--fw-bold);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumCurrent)} PLN</td>
                 <td class="text-right" style="font-size: var(--fs-md);color:var(--text-secondary);white-space:nowrap;padding:0.5rem 0.75rem;">${fmt(g.sumOffer)} PLN</td>
                 <td class="text-right" style="font-size: var(--fs-md);color:${catDiffColor};white-space:nowrap;padding:0.5rem 0.75rem;">${catDiffSign}${fmt(catDiff)} PLN</td>

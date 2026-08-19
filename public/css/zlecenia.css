@@ -586,10 +586,6 @@
     color: var(--text-primary);
     font-weight: var(--fw-bold);
 }
-.zlecenia-footer-hint {
-    opacity: 0.75;
-}
-
 /* Toolbar dodatkowych filtrów — daty, użytkownik, czyszczenie */
 .zlecenia-virtual-toolbar {
     display: flex;

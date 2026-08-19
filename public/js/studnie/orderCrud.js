@@ -834,7 +834,6 @@ window.deleteOrderStudnie = deleteOrderStudnie;
 window.getCurrentOfferOrder = getCurrentOfferOrder;
 window.enterOrderEditMode = enterOrderEditMode;
 window.finalizeOrderFromOffer = finalizeOrderFromOffer;
-window.renderOrderModeBanner = renderOrderModeBanner;
 
 async function syncSourceData(options = {}) {
     let synced = '';

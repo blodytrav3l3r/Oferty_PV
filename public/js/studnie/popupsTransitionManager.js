@@ -64,15 +64,14 @@ window.openTransitionManagerModal = function () {
                <div data-val="" onclick="tmSelectFilterMaterial('')"
                     style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
                     onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolna</div>
-               ${[...allMaterials]
-                   .sort()
-                   .map((m) => {
-                       const safe = m.replace(/'/g, "\\'");
-                       return `<div data-val="${safe}" onclick="tmSelectFilterMaterial('${safe}')"
-                      style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
-                      onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${m}</div>`;
-                   })
-                   .join('')}
+${[...allMaterials]
+    .sort()
+    .map((m) => {
+        return `<div data-val="${escapeHtmlAttr(m)}" onclick="tmSelectFilterMaterial('${escapeJsStr(m)}')"
+                       style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
+                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(m)}</div>`;
+    })
+    .join('')}
             </div>
          </div>
          <div style="min-width:90px;">
@@ -81,15 +80,15 @@ window.openTransitionManagerModal = function () {
                <div data-val="" onclick="tmSelectFilterDn('')"
                     style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
                     onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolne</div>
-               ${[...allDNs]
-                   .sort((a, b) => parseFloat(a) - parseFloat(b))
-                   .map((dn) => {
-                       const safe = String(dn).replace(/'/g, "\\'");
-                       return `<div data-val="${safe}" onclick="tmSelectFilterDn('${safe}')"
-                      style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
-                      onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${dn}</div>`;
-                   })
-                   .join('')}
+${[...allDNs]
+    .sort((a, b) => parseFloat(a) - parseFloat(b))
+    .map((dn) => {
+        const dnStr = String(dn);
+        return `<div data-val="${escapeHtmlAttr(dnStr)}" onclick="tmSelectFilterDn('${escapeJsStr(dnStr)}')"
+                       style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
+                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(dnStr)}</div>`;
+    })
+    .join('')}
             </div>
          </div>
          <div style="min-width:160px; flex:1;">
@@ -133,14 +132,13 @@ window.openTransitionManagerModal = function () {
                   <div data-val="" onclick="tmSelectTargetCat('')"
                        style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
                        onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">— Wybierz —</div>
-                  ${categories
-                      .map((cat) => {
-                          const safe = cat.replace(/'/g, "\\'");
-                          return `<div data-val="${safe}" onclick="tmSelectTargetCat('${safe}')"
-                         style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
-                         onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${cat}</div>`;
-                      })
-                      .join('')}
+${categories
+    .map((cat) => {
+        return `<div data-val="${escapeHtmlAttr(cat)}" onclick="tmSelectTargetCat('${escapeJsStr(cat)}')"
+                          style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
+                          onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(cat)}</div>`;
+    })
+    .join('')}
                </div>
             </div>
             <div style="flex-shrink:0;">
@@ -352,7 +350,7 @@ window.tmRenderTable = function () {
             .map((tr) => {
                 const key = `${w.wellIndex}:${tr.trIndex}`;
                 const isSel = tmSelectedTransitions.has(key);
-                const safeMaterial = tr.material.replace(/'/g, "\\'");
+                const safeMaterial = escapeHtmlAttr(tr.material);
                 const locked = tmIsWellBlocked(w.wellIndex);
                 return `
             <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
@@ -367,7 +365,7 @@ window.tmRenderTable = function () {
                   <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
                          onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)"
                          style="width:14px; height:14px; cursor:pointer; margin:0; flex-shrink:0;" ${locked ? 'disabled' : ''}>
-                  <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${tr.material}</span>
+                  <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${escapeHtml(tr.material)}</span>
                   <span style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:var(--success-hover); flex-shrink:0;">DN${tr.dnRaw}</span>
                 </div>
                 ${
@@ -400,7 +398,7 @@ window.tmRenderTable = function () {
             <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
                    style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
             <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-              <span style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-lg);">${w.wellName}</span>
+              <span style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-lg);">${escapeHtml(w.wellName)}</span>
               ${wellLocked ? '<span style="color:var(--danger-hover); font-size: var(--fs-xs); display:flex; align-items:center; gap:0.2rem;"><i data-lucide="lock" style="width:12px;height:12px;"></i>Zablokowana</span>' : ''}
               <span style="color:var(--text-muted); font-size: var(--fs-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.05); padding:0.1rem 0.45rem; border-radius: var(--radius-2xs); font-weight: var(--fw-semibold);">DN${w.wellDn}</span>
               <span style="color:var(--text-muted); font-size: var(--fs-sm);">Rzędna: ${w.rzednaDna}</span>
@@ -518,7 +516,9 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
         popup.style.overflowY = 'auto';
     }
 
-    const currentLabel = currentP ? `${currentP.category} DN${currentP.dn}` : 'Nieznane';
+    const currentLabel = currentP
+        ? `${escapeHtml(currentP.category)} DN${escapeHtml(currentP.dn)}`
+        : 'Nieznane';
 
     popup.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem 0.4rem;border-bottom:1px solid rgba(var(--white-rgb), 0.05);margin-bottom:0.45rem;">
@@ -532,9 +532,9 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
             ${categories
                 .map((cat) => {
                     const isCur = cat === currentCat;
-                    return `<div data-cat="${cat}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
+                    return `<div data-cat="${escapeHtmlAttr(cat)}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
                    style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}${cat}</div>`;
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}${escapeHtml(cat)}</div>`;
                 })
                 .join('')}
           </div>
@@ -545,9 +545,10 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
             ${allDNs
                 .map((dn) => {
                     const isCur = dn === currentDn;
-                    return `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
+                    const dnStr = String(dn);
+                    return `<div data-dn="${escapeHtmlAttr(dnStr)}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
                    style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-bold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}DN${dn}</div>`;
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}DN${escapeHtml(dnStr)}</div>`;
                 })
                 .join('')}
           </div>
@@ -599,10 +600,10 @@ function tmEditSelectType(el, wellIdx, trIdx) {
 
     const dnList = document.getElementById('tm-edit-dn-list');
     dnList.innerHTML = dns
-        .map(
-            (dn) =>
-                `<div data-dn="${dn}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:rgba(var(--white-rgb), 0.05);border:1.5px solid rgba(var(--white-rgb), 0.05);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'"><span style="color:transparent;font-size: var(--fs-base);">◆</span>DN${dn}</div>`
-        )
+        .map((dn) => {
+            const dnStr = String(dn);
+            return `<div data-dn="${escapeHtmlAttr(dnStr)}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:rgba(var(--white-rgb), 0.05);border:1.5px solid rgba(var(--white-rgb), 0.05);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'"><span style="color:transparent;font-size: var(--fs-base);">◆</span>DN${escapeHtml(dnStr)}</div>`;
+        })
         .join('');
 
     const resultSpan = document.querySelector('#tm-edit-result span');
@@ -648,7 +649,7 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
         );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
-            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size: var(--fs-sm);font-weight: var(--fw-semibold);">${product.category} DN${product.dn}</span><span style="color:var(--success-hover);font-weight: var(--fw-bold);margin-left:0.5rem;font-size: var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size: var(--fs-sm);font-weight: var(--fw-semibold);">${escapeHtml(product.category)} DN${product.dn}</span><span style="color:var(--success-hover);font-weight: var(--fw-bold);margin-left:0.5rem;font-size: var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
               <button style="background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>`;
         }
     }
@@ -755,7 +756,7 @@ window.tmUpdatePreview = function () {
         html += '</div>';
     }
     if (skipList.length > 0) {
-        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:var(--danger-hover); font-weight: var(--fw-extrabold);">⚠️ Brak odpowiednika w ${targetCat}: ${skipList.length}</span></div>`;
+        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:var(--danger-hover); font-weight: var(--fw-extrabold);">⚠️ Brak odpowiednika w ${escapeHtml(targetCat)}: ${skipList.length}</span></div>`;
         html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">';
         skipList.forEach((l) => {
             html += `<span style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); font-size: var(--fs-sm);">${l}</span>`;
@@ -877,10 +878,10 @@ function showSkippedPopup(skippedDetails, targetCat) {
             (s, i) => `
         <tr>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${i + 1}</td>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${s.wellName}</td>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${s.material}</td>
-            <td style="padding:0.35rem 0.6rem; text-align:center; white-space:nowrap;">${s.dn}</td>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap; color:var(--danger-hover);">Brak produktu ${s.targetCat} o średnicy ${s.dn}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${escapeHtml(s.wellName)}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${escapeHtml(s.material)}</td>
+            <td style="padding:0.35rem 0.6rem; text-align:center; white-space:nowrap;">${escapeHtml(s.dn)}</td>
+            <td style="padding:0.35rem 0.6rem; white-space:nowrap; color:var(--danger-hover);">Brak produktu ${escapeHtml(s.targetCat)} o średnicy ${escapeHtml(s.dn)}</td>
         </tr>
     `
         )
@@ -896,7 +897,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
           <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:1rem;">
-            Poniższe przejścia nie zostały zamienione — w kategorii <strong>${targetCat}</strong> nie istnieje produkt o podanej średnicy.
+            Poniższe przejścia nie zostały zamienione — w kategorii <strong>${escapeHtml(targetCat)}</strong> nie istnieje produkt o podanej średnicy.
         </div>
         <table style="width:100%; font-size: var(--fs-md); border-collapse:collapse;">
             <thead style="position:sticky; top:0; background:var(--slate-800);">

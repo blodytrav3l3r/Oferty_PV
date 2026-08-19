@@ -109,7 +109,7 @@ async function showOfferHistoryStudnie(id) {
         }
 
         const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
+        overlay.className = 'modal-overlay js-modal-overlay';
         overlay.id = 'offer-history-modal';
         overlay.setAttribute('role', 'dialog');
         overlay.setAttribute('aria-modal', 'true');
@@ -201,6 +201,10 @@ async function showOfferHistoryStudnie(id) {
         `;
         document.body.appendChild(overlay);
         overlay.classList.add('active');
+        if (typeof trapFocus === 'function') {
+            /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+            trapFocus(overlay);
+        }
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) closeModal();
         });

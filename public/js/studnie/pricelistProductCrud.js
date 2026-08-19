@@ -92,6 +92,10 @@ function showAddStudnieProductModal() {
       </div>
     </div>`;
     document.body.appendChild(overlay);
+    if (typeof trapFocus === 'function') {
+        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+        trapFocus(overlay);
+    }
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) closeModal();
     });

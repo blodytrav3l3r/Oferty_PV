@@ -297,6 +297,10 @@ function openExcelTableModal() {
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    if (typeof trapFocus === 'function') {
+        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
+        trapFocus(overlay);
+    }
 
     _excelRegisterExcelListeners();
 
@@ -353,6 +357,7 @@ function _excelCloseOverlay() {
     if (typeof _excelResetSort === 'function') _excelResetSort();
     const overlay = document.getElementById('excel-table-overlay');
     if (overlay) {
+        if (typeof untrapFocus === 'function') untrapFocus(overlay);
         overlay.remove();
     }
     _excelDirty = false;

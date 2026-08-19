@@ -466,7 +466,7 @@ function populateZleceniaForm(el) {
     <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
         <div class="card-title-sm"><i data-lucide="edit"></i> Uwagi</div>
         <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
-            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${finalUwagi}</textarea>
+            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${escapeHtml(finalUwagi)}</textarea>
         </div>
     </div>
 
@@ -505,13 +505,13 @@ function populateZleceniaForm(el) {
                             )
                             .join('')}
                     </div>
-                    <input type="hidden" id="zl-rodzaj-stopni" value="${stopnieVal}">
+                    <input type="hidden" id="zl-rodzaj-stopni" value="${escapeHtmlAttr(stopnieVal)}">
                 </div>
 
                 <div id="zl-stopnie-inne-wrap" style="display:${stopnieVal === 'inne' ? 'block' : 'none'};">
                     <div class="form-group-sm">
                         <label class="form-label-sm">Inne (opis)</label>
-                        <input type="text" id="zl-stopnie-inne" class="form-input form-input-sm" value="${existing?.stopnieInne || ''}" placeholder="Opis...">
+                        <input type="text" id="zl-stopnie-inne" class="form-input form-input-sm" value="${escapeHtmlAttr(existing?.stopnieInne || '')}" placeholder="Opis...">
                     </div>
                 </div>
 

@@ -215,12 +215,31 @@ function updateWizardIndicator() {
         const dot = document.querySelector(`.wizard-step-dot[data-step="${i}"]`);
         if (!dot) continue;
         dot.classList.remove('active', 'completed');
-        if (i === currentWizardStep) dot.classList.add('active');
-        else if (i < currentWizardStep) dot.classList.add('completed');
+        if (i === currentWizardStep) {
+            dot.classList.add('active');
+            dot.setAttribute('aria-current', 'step');
+        } else {
+            if (i < currentWizardStep) dot.classList.add('completed');
+            dot.removeAttribute('aria-current');
+        }
     }
     for (let i = 1; i <= 4; i++) {
         const line = document.getElementById('wizard-line-' + i);
         if (line) line.classList.toggle('completed', currentWizardStep > i);
+    }
+}
+
+// Obsługa klawiatury kropek wizarda (role=button: Enter/Space)
+if (typeof document !== 'undefined') {
+    const wizardIndicatorElRury = document.getElementById('wizard-indicator');
+    if (wizardIndicatorElRury) {
+        wizardIndicatorElRury.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const dot = e.target.closest('.wizard-step-dot');
+            if (!dot || dot.getAttribute('role') !== 'button') return;
+            e.preventDefault();
+            goToPhase(parseInt(dot.dataset.step));
+        });
     }
 }
 

@@ -220,6 +220,19 @@
     --section-pad-x: 0.5rem;
     --section-gap: 1.5rem;
     --section-gap-lg: 2rem;
+
+    /* Wysokość nagłówka (TASK-020) */
+    --header-h: 57px;
+
+    /* Focus ring (TASK-021) */
+    --focus-ring: 2px solid var(--accent);
+
+    /* Warstwy z-index (TASK-022) */
+    --z-header: 100;
+    --z-overlay: 2000;
+    --z-modal: 10000;
+    --z-modal-top: 100000;
+    --z-toast: 1000000;
 }
 
 /* ========================================
@@ -252,80 +265,31 @@
    Color utility classes
    ======================================== */
 /* Text */
-.text-accent {
-    color: var(--accent);
-}
-.text-accent-hover {
-    color: var(--accent-hover);
-}
-.text-accent2 {
-    color: var(--accent2);
-}
-.text-accent2-hover {
-    color: var(--accent2-hover);
-}
-.text-success {
-    color: var(--success);
-}
-.text-success-hover {
-    color: var(--success-hover);
-}
 .text-danger {
     color: var(--danger);
 }
-.text-danger-hover {
-    color: var(--danger-hover);
-}
 .text-warn {
     color: var(--warn);
-}
-.text-warn-hover {
-    color: var(--warn-hover);
 }
 .hidden {
     display: none !important;
 }
 
-.text-blue {
-    color: var(--blue);
+/* TASK-034 — klasa screen-reader-only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
-.text-blue-hover {
-    color: var(--blue-hover);
-}
-
 /* Backgrounds */
 .bg-accent {
     background: var(--accent);
-}
-.bg-accent-hover {
-    background: var(--accent-hover);
-}
-.bg-success {
-    background: var(--success);
-}
-.bg-success-hover {
-    background: var(--success-hover);
-}
-.bg-success-bg {
-    background: var(--success-bg);
-}
-.bg-danger {
-    background: var(--danger);
-}
-.bg-danger-hover {
-    background: var(--danger-hover);
-}
-.bg-danger-bg {
-    background: var(--danger-bg);
-}
-.bg-warn {
-    background: var(--warn);
-}
-.bg-warn-hover {
-    background: var(--warn-hover);
-}
-.bg-warn-bg {
-    background: var(--warn-bg);
 }
 .bg-glass {
     background: var(--bg-glass);
@@ -335,28 +299,12 @@
 .border-accent {
     border-color: var(--accent);
 }
-.border-accent-hover {
-    border-color: var(--accent-hover);
-}
 .border-success {
     border-color: var(--success);
-}
-.border-success-hover {
-    border-color: var(--success-hover);
 }
 .border-danger {
     border-color: var(--danger);
 }
-.border-danger-hover {
-    border-color: var(--danger-hover);
-}
-.border-warn {
-    border-color: var(--warn);
-}
-.border-warn-hover {
-    border-color: var(--warn-hover);
-}
-
 *,
 *::before,
 *::after {
@@ -369,7 +317,7 @@
     outline: none;
 }
 *:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: var(--focus-ring);
     outline-offset: 2px;
 }
 
@@ -428,7 +376,7 @@ body::before {
     padding: 0 1rem;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: var(--z-header);
     box-shadow: var(--shadow-sm);
 }
 
@@ -438,7 +386,7 @@ body::before {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    min-height: 57px;
+    min-height: var(--header-h);
     padding: 0.3rem 1.5rem;
     gap: 1rem;
 }
@@ -906,11 +854,6 @@ body::before {
     margin-top: 0.2rem;
     display: none;
 }
-.mb-5-p-5-6 {
-    margin-bottom: 0.5rem;
-    padding: 0.5rem 0.6rem;
-}
-
 /* Tekst z nowrap (shared) */
 .fs-075-nowrap {
     font-size: var(--fs-base);
@@ -973,7 +916,8 @@ body::before {
 }
 
 /* Utility semantic colors for JS dynamic styling */
-/* Przyciski */
+/* Przyciski — wspólna baza .sok-btn/.btn (TASK-026) */
+.sok-btn,
 .btn {
     display: inline-flex;
     align-items: center;
@@ -1189,7 +1133,6 @@ button.btn-order-save:hover {
 .dn-btn,
 .param-tile,
 .launch-card,
-.index-card,
 .zlecenia-filter-tab,
 .zlecenia-stat-card,
 .well-list-item,
@@ -1339,10 +1282,6 @@ tbody tr:hover {
 
 .text-right {
     text-align: right;
-}
-
-.text-center {
-    text-align: center;
 }
 
 .text-nowrap {

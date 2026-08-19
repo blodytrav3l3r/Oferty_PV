@@ -315,7 +315,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
         <div style="display:flex; gap:0.4rem; flex-direction:column;">
             <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
-                ${catOptions.map((c) => `<option value="${c}" ${row.rodzaj === c ? 'selected' : ''}>${c}</option>`).join('')}
+                ${catOptions.map((c) => `<option value="${escapeHtmlAttr(c)}" ${row.rodzaj === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
             </select>
             <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">

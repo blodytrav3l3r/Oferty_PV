@@ -378,8 +378,11 @@ function updateWizardIndicator() {
     dots.forEach((dot) => {
         const step = parseInt(dot.dataset.step);
         dot.classList.remove('active', 'completed', 'disabled');
-        if (step === currentWizardStep) dot.classList.add('active');
-        else if (step < currentWizardStep) dot.classList.add('completed');
+        if (step === currentWizardStep) {
+            dot.classList.add('active');
+            dot.setAttribute('aria-current', 'step');
+        } else if (step < currentWizardStep) dot.classList.add('completed');
+        else dot.removeAttribute('aria-current');
 
         // Zablokuj kropkę kroku 5 w trybie oferty, kroku 3 w trybie zamówienia
         if (step === 5 && editingOfferIdStudnie && !orderEditMode) {
@@ -397,6 +400,20 @@ function updateWizardIndicator() {
     if (line2) line2.classList.toggle('completed', currentWizardStep > 2);
     if (line3) line3.classList.toggle('completed', currentWizardStep > 3);
     if (line4) line4.classList.toggle('completed', currentWizardStep > 4);
+}
+
+// Obsługa klawiatury kropek wizarda (role=button: Enter/Space)
+if (typeof document !== 'undefined') {
+    const wizardIndicatorElStudnie = document.getElementById('wizard-indicator');
+    if (wizardIndicatorElStudnie) {
+        wizardIndicatorElStudnie.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            const dot = e.target.closest('.wizard-step-dot');
+            if (!dot || dot.getAttribute('role') !== 'button') return;
+            e.preventDefault();
+            wizardNavStep(parseInt(dot.dataset.step));
+        });
+    }
 }
 
 function updateWizardSummaryBar() {
