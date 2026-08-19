@@ -1,25 +1,19 @@
 // @ts-check
 /* ===== SELEKCJA POZYCJI DO ZAMÓWIENIA (RURY) ===== */
 
+// Wspólny wzorzec toggle+count w shared/orderSelectionController.js (TASK-046)
+const _rurySelectionController = createOrderSelectionController({
+    scopeSelector: '.section.active',
+    checkboxSelector: '.item-order-checkbox',
+    selectAllId: 'select-all-items'
+});
+
 window.toggleAllItemsForOrder = function (checked) {
-    const section = document.querySelector('.section.active');
-    if (!section) return;
-    section.querySelectorAll('.item-order-checkbox').forEach((cb) => {
-        if (!cb.disabled) cb.checked = checked;
-    });
+    _rurySelectionController.toggleAll(checked);
 };
 
 window.updateOrderSelectionCount = function () {
-    const section = document.querySelector('.section.active');
-    if (!section) return;
-    const checkboxes = section.querySelectorAll('.item-order-checkbox');
-    const total = checkboxes.length;
-    const checked = section.querySelectorAll('.item-order-checkbox:checked').length;
-    const selectAll = document.getElementById('select-all-items');
-    if (selectAll) {
-        selectAll.checked = total > 0 && checked === total;
-        selectAll.indeterminate = checked > 0 && checked < total;
-    }
+    _rurySelectionController.updateCount();
 };
 
 window.collectSelectedItemsForOrder = function () {

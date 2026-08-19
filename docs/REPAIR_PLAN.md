@@ -1,6 +1,6 @@
 # S.O.K. — FULL REPAIR PLAN
 
-Status: `IN PROGRESS — PHASE-10 (INLINE JS/CSS) complete (035..039 done) — PHASE-01..09 complete (001..013, 020..034, 040..044, 048 done) — PHASE-11 next`
+Status: `IN PROGRESS — PHASE-10 (INLINE JS/CSS) complete (035..039 done) — PHASE-01..09 complete (001..013, 020..034, 040..044, 048 done) — PHASE-11 (SHARED CORE) 045 done, 046 w trakcie`
 Version: 1.17.1
 Created: 2026-08-18
 Last verification: 2026-08-18 (TASK-001 validate PASS, TASK-005 node -c + eslint PASS)
@@ -2387,17 +2387,35 @@ Revert migracji.
 
 `refactor(ui): wspólny moduł offerNotesGenerator`
 
+**WYNIK (2026-08-19):**
+
+- **Raport różnic 8 par** (pełny w session): offerNotesGenerator (a/b ~55%), offerPrintManager (b ~45%), orderCrud (c ~10-15%), orderKartaBudowy (b ~45%), orderPrzejscia (b ~35%), orderManager (c 0% — pliki kotwiczne), offerOrderSelection (b ~50%), offerRendering (c 0% — wspólna tylko nazwa).
+- **PoC zrobione: para 1 — offerNotesGenerator.** Nowy `public/js/shared/offerNotesGenerator.js` (`window.createOfferNotesGenerator(summaryProviders)` — fabryka rdzenia ~40 linii). Rury: 2 providery (PEHD, uszczelki). Studnie: 13 providerów (materiał, klasa betonu, PEHD, agresja, malowanie, kineta, stopnie, uszczelka, nośność ×2, przyłącza dostudzienne — kolejność zachowana 1:1 z oryginału). Rdzeń (odczyt `#offer-tab-notes`, cięcie prefiksów, budowa "Parametry techniczne:", stopka) identyczny w obu modułach.
+- `public/rury.html` + `public/studnie.html`: `<script src="js/shared/offerNotesGenerator.js">` przed modułem domenowym.
+- Weryfikacja: `node -c` 3 pliki 0 błędów, `lint:frontend` czyste, `test:quick` 1907/1907 pass.
+
 ### TASK-046 — Shared core: migracja kolejnych par
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19
 
-**Priority:** P4
-**Audit:** FA-2
-**Severity:** MEDIUM
-**Category:** Architecture
-**Dependencies:** TASK-045
-**Estimated effort:** 8-12 h
-**Regression risk:** HIGH
+**WYNIK (2026-08-19):**
+
+- **Para 2 zwirtualizowana — offerOrderSelection.** Nowy `public/js/shared/orderSelectionController.js` (`window.createOrderSelectionController({ scopeSelector?, checkboxSelector, selectAllId })` — toggleAll + updateCount). Rury: `{ scopeSelector: '.section.active', checkboxSelector: '.item-order-checkbox', selectAllId: 'select-all-items' }`; studnie: `{ checkboxSelector: '.well-order-checkbox', selectAllId: 'select-all-wells-for-order' }`. `collectSelectedItemsForOrder`/`onPipeCheckboxChange` (tylko rury) zostają w module rur. Studnie `collectSelectedWellsForOrder` żyje w orderCrud.js (poza parą). Oba HTML: `<script src="js/shared/orderSelectionController.js">` przed modułem domenowym.
+- **Wyjątki udokumentowane (pozostałe 6 par)** — wspólne sygnatury, ale istotne różnice logiki (per raport TASK-045), migracja = wysokie ryzyko przy małym zysku:
+    - `orderPrzejscia` (~35%): `addCustomPrzejscieRow`/`removePrzejscieRow` różnią się — studnie mają confirm offer (`appConfirm`), focus na nowym wierszu, lokalne tablice `_customPrzejscieRows` vs rury globalne `window._customPrzejscieRows`; `handlePrzejsciaZamowioneChange` — studnie bez guarda pustego `dataInput`. Render tabeli (c) — rury inline inputy, studnie selecty z `buildOfferPrzejsciaTypes`.
+    - `orderKartaBudowy` (~45%): `collectKartaBudowyDataStep4` — studnie mają domyślne wartości selectów (`'przelew'`, `'Nie dotyczy'`, `'Brak'`, `'C40/50'`) i `offerNumbers` jako tablica (rury string), rury dodatkowo `przejsciaDetails`/`createdAt`. `initKartaBudowyStep4` (c) — rury buduje uwagi z items rur (getSortedRuryItems, ZT), studnie z wells+transport.
+    - `orderCrud` (~10-15%): tylko blok claim-number wspólny; finalize studnie ma popup userów, wellDiscounts, PZ guard, telemetrię/ML (c).
+    - `offerPrintManager` (~45%): eksporty różnią się endpointami (`/api/orders-rury` vs `/api/orders-studnie`), prefiksami plików, save-before-export (studnie `saveOfferStudnie()`), payload well-mapowanie (c+b).
+    - `orderManager` (0%) i `offerRendering` (0%): pliki kotwiczne kolejności ładowania / różne rendery — wspólna tylko nazwa.
+- **Σ: 2/8 zwirtualizowane + 6/8 udokumentowane wyjątki = 8/8 rozliczone** (acceptance: ≥6/8 "zwirtualizowanych lub udokumentowany wyjątek" — spełnione).
+- Weryfikacja: `node -c` 3 pliki 0 błędów, `lint:frontend` czyste, Prettier bez zmian, `test:quick` 1907/1907 pass.
+  **Priority:** P4
+  **Audit:** FA-2
+  **Severity:** MEDIUM
+  **Category:** Architecture
+  **Dependencies:** TASK-045
+  **Estimated effort:** 8-12 h
+  **Regression risk:** HIGH
 
 #### Problem
 
@@ -2699,8 +2717,8 @@ Zasady:
 
 ### P4
 
-- [ ] TASK-045 (shared core analiza)
-- [ ] TASK-046 (shared core migracja)
+- [x] TASK-045 (shared core analiza)
+- [x] TASK-046 (shared core migracja)
 - [ ] TASK-047 (ES modules plan)
 
 ## 12. PROGRESS
@@ -2718,7 +2736,7 @@ Zasady:
 | PHASE-08 | 2 | 2 | DONE |
 | PHASE-09 | 4 | 4 | DONE |
 | PHASE-10 | 5 | 5 | DONE |
-| PHASE-11 | 2 | 0 | NOT STARTED |
+| PHASE-11 | 2 | 2 | DONE |
 | PHASE-12 | 1 | 0 | NOT STARTED |
 
 Uwaga: TASK-023 (breakpointy) przeniesiony do PHASE-07 (responsive) jako TASK odpowiedzialny za oś breakpointów; TASK-020..022 (tokeny) w PHASE-04.

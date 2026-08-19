@@ -138,62 +138,7 @@ function getNosnoscZwienczenieSummary() {
     return `Klasa nośności Zwieńczenie: ${Array.from(values).join(', ')}`;
 }
 
-function generateOfferNotes(onlyIfEmpty = false) {
-    const offerNotesField = document.getElementById('offer-tab-notes');
-    if (!offerNotesField) return;
-
-    if (onlyIfEmpty && offerNotesField.value.trim() !== '') {
-        return;
-    }
-
-    let step1Notes = document.getElementById('offer-notes')?.value || '';
-    const paramIndex = step1Notes.indexOf('Parametry techniczne:');
-    if (paramIndex !== -1) {
-        step1Notes = step1Notes.substring(0, paramIndex).trim();
-    }
-    const transportIndex = step1Notes.indexOf('Cena franco budowa bez rozładunku');
-    if (transportIndex !== -1) {
-        step1Notes = step1Notes.substring(0, transportIndex).trim();
-    }
-
-    const summaryParts = [];
-
-    const matSum = getMaterialSummary();
-    if (matSum) summaryParts.push(matSum);
-
-    const betSum = getParamSummary('klasaBetonu', 'Klasa betonu');
-    if (betSum) summaryParts.push(betSum);
-
-    const pehdSum = getPEHDSummary();
-    if (pehdSum) summaryParts.push(pehdSum);
-
-    const chemSum = getParamSummary('agresjaChemiczna', 'Agresja chemiczna');
-    if (chemSum) summaryParts.push(chemSum);
-
-    const mrozSum = getParamSummary('agresjaMrozowa', 'Agresja mrozowa');
-    if (mrozSum) summaryParts.push(mrozSum);
-
-    const malWSum = getParamSummary('malowanieW', 'Malowanie wewnątrz');
-    if (malWSum) summaryParts.push(malWSum);
-
-    const malZSum = getParamSummary('malowanieZ', 'Malowanie zewnątrz');
-    if (malZSum) summaryParts.push(malZSum);
-
-    const kinSum = getParamSummary('kineta', 'Kineta');
-    if (kinSum) summaryParts.push(kinSum);
-
-    const stopSum = getParamSummary('stopnie', 'Rodzaj stopni');
-    if (stopSum) summaryParts.push(stopSum);
-
-    const uszczSum = getParamSummary('uszczelka', 'Uszczelka');
-    if (uszczSum) summaryParts.push(uszczSum);
-
-    const nosKSum = getNosnoscKorpusSummary();
-    if (nosKSum) summaryParts.push(nosKSum);
-
-    const nosZSum = getNosnoscZwienczenieSummary();
-    if (nosZSum) summaryParts.push(nosZSum);
-
+function getPrzejsciaSummary() {
     const przejsciaTypes = new Set();
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((well) => {
@@ -225,23 +170,24 @@ function generateOfferNotes(onlyIfEmpty = false) {
     }
 
     if (przejsciaTypes.size > 0) {
-        const przejsciaArr = Array.from(przejsciaTypes).join(', ');
-        summaryParts.push(`Przyłącza dostudzienne: ${przejsciaArr}`);
+        return `Przyłącza dostudzienne: ${Array.from(przejsciaTypes).join(', ')}`;
     }
-
-    let generatedText = step1Notes ? step1Notes + '\n\n' : '';
-
-    if (summaryParts.length > 0) {
-        generatedText += 'Parametry techniczne: ' + summaryParts.join(', ') + '.';
-    }
-
-    if (generatedText) {
-        generatedText += '\n';
-    }
-    generatedText += 'Cena franco budowa bez rozładunku przy dostawie pełnych transportów 24t.';
-
-    offerNotesField.value = generatedText.trim();
+    return null;
 }
 
-/* ===== Rejestracja globali ===== */
-window.generateOfferNotes = generateOfferNotes;
+// Rdzeń wspólny w shared/offerNotesGenerator.js (TASK-045)
+window.generateOfferNotes = createOfferNotesGenerator([
+    getMaterialSummary,
+    () => getParamSummary('klasaBetonu', 'Klasa betonu'),
+    getPEHDSummary,
+    () => getParamSummary('agresjaChemiczna', 'Agresja chemiczna'),
+    () => getParamSummary('agresjaMrozowa', 'Agresja mrozowa'),
+    () => getParamSummary('malowanieW', 'Malowanie wewnątrz'),
+    () => getParamSummary('malowanieZ', 'Malowanie zewnątrz'),
+    () => getParamSummary('kineta', 'Kineta'),
+    () => getParamSummary('stopnie', 'Rodzaj stopni'),
+    () => getParamSummary('uszczelka', 'Uszczelka'),
+    getNosnoscKorpusSummary,
+    getNosnoscZwienczenieSummary,
+    getPrzejsciaSummary
+]);

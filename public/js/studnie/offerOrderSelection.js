@@ -1,23 +1,18 @@
 // @ts-check
 /* ===== WYBÓR STUDNI DO ZAMÓWIENIA ===== */
 
+// Wspólny wzorzec toggle+count w shared/orderSelectionController.js (TASK-046)
+const _wellSelectionController = createOrderSelectionController({
+    checkboxSelector: '.well-order-checkbox',
+    selectAllId: 'select-all-wells-for-order'
+});
+
 function toggleAllWellsForOrder(checked) {
-    const checkboxes = document.querySelectorAll('.well-order-checkbox');
-    checkboxes.forEach((cb) => {
-        cb.checked = checked;
-    });
-    updateOrderSelectionCount();
+    _wellSelectionController.toggleAll(checked);
 }
 
 function updateOrderSelectionCount() {
-    const count = document.querySelectorAll('.well-order-checkbox:checked').length;
-    const total = document.querySelectorAll('.well-order-checkbox').length;
-
-    const headerCheckbox = document.getElementById('select-all-wells-for-order');
-    if (headerCheckbox) {
-        headerCheckbox.checked = count > 0 && count === total;
-        headerCheckbox.indeterminate = count > 0 && count < total;
-    }
+    _wellSelectionController.updateCount();
 }
 
 window.toggleAllWellsForOrder = toggleAllWellsForOrder;
