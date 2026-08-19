@@ -156,10 +156,10 @@ describe('T5.8: Eksport window.debounce', () => {
     });
 });
 
-// ─── T5.9: Centralny moduł escapowania (shared/ui.js) ────────
+// ─── T5.9: Centralny moduł escapowania (shared/escapeHtml.js) ────────
 
-describe('T5.9: Centralne escapowanie w shared/ui.js', () => {
-    const uiPath = path.resolve(__dirname, '..', 'public/js/shared/ui.js');
+describe('T5.9: Centralne escapowanie w shared/escapeHtml.js', () => {
+    const uiPath = path.resolve(__dirname, '..', 'public/js/shared/escapeHtml.js');
     let uiContent: string;
 
     beforeAll(() => {

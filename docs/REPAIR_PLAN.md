@@ -2455,7 +2455,17 @@ Per-pair revert.
 
 ### TASK-047 — Plan migracji do ES Modules
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19
+
+**WYNIK (2026-08-19):**
+
+- Dokument planu: `docs/plans/2026-08-19-es-modules.md` (ścieżka `window.X` → namespace → shared API → ESM → dynamic import; kolejość per-moduł; reguła liść→korzeń; wzorzec StorageService jako st. 5).
+- **2 moduły ESM wdrożone**: `public/js/shared/escapeHtml.js` (escapeHtml/escapeHtmlAttr/escapeJsStr) + `public/js/shared/modalCore.js` (showModal/closeModal/trapFocus/untrapFocus, import escapeHtml). Oba: eksport ESM + mostek `window.*` na końcu pliku dla niezmigrowanych callerów (usuwany po pełnej migracji).
+- Definicje przeniesione z `ui.js` (−133 linie); `ui.js` woła je przez mostek window. `<script type="module">` dodany w 6 wejściówkach HTML (index, app, studnie, rury, kartoteka, zlecenia) przed `ui.js`.
+- **Kolejność ładowania zweryfikowana**: moduły ESM (zawsze deferred) wykonują się przed DOMContentLoaded; wszystkie wołania escapeHtml/showModal w kodzie są w runtime (funkcje), nie w load-time — bezpieczne dla stron ze sync ui.js (index/app/zlecenia).
+- **types.d.ts**: dodane globalne deklaracje `closeModal(id?)`, `trapFocus`, `untrapFocus`, `escapeHtmlAttr`, `escapeJsStr`, `generateOfferNotes`; `escapeHtml` rozszerzona o `number|null|undefined` (odsłonięte po usunięciu luźno typowanej definicji z ui.js — baza błędów #39 zasięg).
+- **Test T5.9 zaktualizowany**: security-regression sprawdza teraz `escapeHtml.js` zamiast `ui.js` (4 asercje).
+- Weryfikacja: typecheck:frontend 0 błędów, lint:frontend czyste, `node -c` 3 pliki OK, `test:quick` **1907/1907 pass**, Prettier bez zmian poza normalizacją.
 
 **Priority:** P4
 **Audit:** FA-3
@@ -2496,8 +2506,8 @@ Dokument `docs/plans/<date>-es-modules.md` + pierwszy krok.
 
 #### Acceptance criteria
 
-- [ ] Dokument planu migracji
-- [ ] 2 moduły jako ESM
+- [x] Dokument planu migracji
+- [x] 2 moduły jako ESM
 
 #### Rollback
 
@@ -2719,7 +2729,7 @@ Zasady:
 
 - [x] TASK-045 (shared core analiza)
 - [x] TASK-046 (shared core migracja)
-- [ ] TASK-047 (ES modules plan)
+- [x] TASK-047 (ES modules plan)
 
 ## 12. PROGRESS
 
@@ -2737,7 +2747,7 @@ Zasady:
 | PHASE-09 | 4 | 4 | DONE |
 | PHASE-10 | 5 | 5 | DONE |
 | PHASE-11 | 2 | 2 | DONE |
-| PHASE-12 | 1 | 0 | NOT STARTED |
+| PHASE-12 | 1 | 1 | DONE |
 
 Uwaga: TASK-023 (breakpointy) przeniesiony do PHASE-07 (responsive) jako TASK odpowiedzialny za oś breakpointów; TASK-020..022 (tokeny) w PHASE-04.
 

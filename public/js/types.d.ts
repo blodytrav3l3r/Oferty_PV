@@ -145,7 +145,7 @@ declare var auth: AuthModule;
 declare var pzGuard: PzGuardModule;
 declare function showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
 declare function appConfirm(msg: string): Promise<boolean>;
-declare function escapeHtml(str: string): string;
+declare function escapeHtml(str: string | number | null | undefined): string;
 declare function setText(el: HTMLElement | null, value: string | number | null | undefined): void;
 declare function authHeaders(): Record<string, string>;
 /* ===== Deklaracje dla window.* ===== */
@@ -220,7 +220,12 @@ declare function showModal(options: {
     [key: string]: unknown;
 }): HTMLElement | null;
 declare var showUniversalPrintModal: (...args: any[]) => void;
-declare function closeModal(): void;
+declare function closeModal(id?: string): void;
+declare function trapFocus(container: HTMLElement | Element): void;
+declare function untrapFocus(container: HTMLElement | Element): void;
+declare function escapeHtmlAttr(str: string): string;
+declare function escapeJsStr(str: string): string;
+declare function generateOfferNotes(onlyIfEmpty?: boolean): void;
 
 /* ===== Globalne deklaracje dla studnie/ (częściowa — patrz docelowe typowanie) ===== */
 declare var XLSX: any;
