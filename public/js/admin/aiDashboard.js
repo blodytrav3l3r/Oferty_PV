@@ -87,8 +87,8 @@
 
     function statusBadge(ok) {
         return ok
-            ? '<span style="color:var(--success-hover);font-weight: var(--fw-bold)">✓ Online</span>'
-            : '<span style="color:var(--danger-hover);font-weight: var(--fw-bold)">✗ Offline</span>';
+            ? '<span class="fs-xl-success-bold">✓ Online</span>'
+            : '<span class="fs-xl-danger-bold">✗ Offline</span>';
     }
 
     function loadingHtml() {
@@ -240,7 +240,7 @@
                         ';font-weight: var(--fw-bold)">' +
                         Math.round((p.confidence || 0) * 100) +
                         '%</td>' +
-                        '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
+                        '<td class="rury-col-num-inline">' +
                         (p.hitCount || 0) +
                         '</td>' +
                         '<td style="color:var(--text-muted);font-size: var(--fs-sm);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
@@ -253,12 +253,12 @@
             container.innerHTML =
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<thead><tr>' +
-                '<th title="Typ wykrytego wzorca">Typ</th>' +
-                '<th title="Klucz wzorca">Pattern</th>' +
-                '<th style="text-align:right" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +
-                '<th style="text-align:right" title="Liczba trafie\u0144 (zastosowa\u0144 wzorca)">Hits</th>' +
-                '<th title="Opis wzorca">Opis</th>' +
+                '<th scope="col"ead><tr>' +
+                '<th scope="col" title="Typ wykrytego wzorca">Typ</th>' +
+                '<th scope="col" title="Klucz wzorca">Pattern</th>' +
+                '<th scope="col" class="text-right" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +
+                '<th scope="col" class="text-right" title="Liczba trafie\u0144 (zastosowa\u0144 wzorca)">Hits</th>' +
+                '<th scope="col" title="Opis wzorca">Opis</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>';
@@ -610,16 +610,16 @@
                     html +=
                         '<div class="ai-model-table-wrap">' +
                         '<table class="ai-model-table">' +
-                        '<thead><tr>' +
-                        '<th title="Wersja modelu">Wersja</th>' +
-                        '<th title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
-                        '<th title="Precision-Recall AUC — jako\u015b\u0107 przy niezbalansowanych danych">PR-AUC</th>' +
-                        '<th title="Harmoniczna \u015brednia precyzji i czu\u0142o\u015bci">F1</th>' +
-                        '<th title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
-                        '<th title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
-                        '<th title="Wersja schematu cech u\u017cytego do trenowania modelu">Wersja cech</th>' +
-                        '<th title="Czy model jest aktualnie aktywny">Status</th>' +
-                        '<th title="Promuj do produkcji, ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
+                        '<th scope="col"ead><tr>' +
+                        '<th scope="col" title="Wersja modelu">Wersja</th>' +
+                        '<th scope="col" title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
+                        '<th scope="col" title="Precision-Recall AUC — jako\u015b\u0107 przy niezbalansowanych danych">PR-AUC</th>' +
+                        '<th scope="col" title="Harmoniczna \u015brednia precyzji i czu\u0142o\u015bci">F1</th>' +
+                        '<th scope="col" title="Liczba cech u\u017cywanych przez model do predykcji">Cechy</th>' +
+                        '<th scope="col" title="Liczba próbek treningowych u\u017cytych do wytrenowania modelu">Próbki</th>' +
+                        '<th scope="col" title="Wersja schematu cech u\u017cytego do trenowania modelu">Wersja cech</th>' +
+                        '<th scope="col" title="Czy model jest aktualnie aktywny">Status</th>' +
+                        '<th scope="col" title="Promuj do produkcji, ustaw aktywny model lub usuń go (aktywnego nie można usunąć)">Akcja</th>' +
                         '</tr></thead><tbody>' +
                         modelRows +
                         '</tbody></table></div>';
@@ -952,12 +952,12 @@
                 .map(function (r) {
                     var statusCls =
                         r.status === 'SUCCESS'
-                            ? 'style="color:var(--success-hover);font-weight: var(--fw-bold)"'
+                            ? 'class="fs-xl-success-bold"'
                             : r.status === 'RUNNING'
                               ? 'style="color:var(--warn);font-weight: var(--fw-bold)"'
                               : r.status === 'SKIPPED'
-                                ? 'style="color:var(--text-muted)"'
-                                : 'style="color:var(--danger-hover);font-weight: var(--fw-bold)"';
+                                ? 'class="text-muted"'
+                                : 'class="fs-xl-danger-bold"';
                     var range =
                         r.datasetStartAt && r.datasetEndAt
                             ? r.datasetStartAt.slice(0, 10) + ' → ' + r.datasetEndAt.slice(0, 10)
@@ -1002,14 +1002,14 @@
                 '<div class="ai-section-title"><i data-lucide="history"></i> Przebiegi treningu (ostatnie 20)</div>' +
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<thead><tr>' +
-                '<th title="Data rozpoczęcia przebiegu">Start</th>' +
-                '<th title="Status przebiegu (SUCCESS/SKIPPED/FAILED_*)">Status</th>' +
-                '<th title="Rozmiar zbioru: dataset (train/validation/test)">Zbiór</th>' +
-                '<th title="Wersja modelu wyprodukowanego przez przebieg">Model</th>' +
-                '<th title="Czy model został wdrożony do produkcji">Wdrożony</th>' +
-                '<th title="Zakres czasowy zbioru treningowego">Zakres datasetu</th>' +
-                '<th title="Skrót fingerprintu zbioru (SHA-256, 8 znaków)">Fingerprint</th>' +
+                '<th scope="col"ead><tr>' +
+                '<th scope="col" title="Data rozpoczęcia przebiegu">Start</th>' +
+                '<th scope="col" title="Status przebiegu (SUCCESS/SKIPPED/FAILED_*)">Status</th>' +
+                '<th scope="col" title="Rozmiar zbioru: dataset (train/validation/test)">Zbiór</th>' +
+                '<th scope="col" title="Wersja modelu wyprodukowanego przez przebieg">Model</th>' +
+                '<th scope="col" title="Czy model został wdrożony do produkcji">Wdrożony</th>' +
+                '<th scope="col" title="Zakres czasowy zbioru treningowego">Zakres datasetu</th>' +
+                '<th scope="col" title="Skrót fingerprintu zbioru (SHA-256, 8 znaków)">Fingerprint</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>';
@@ -1041,7 +1041,7 @@
             }
             var psiBadge = function (psi) {
                 if (psi == null || !Number.isFinite(Number(psi))) {
-                    return '<span style="color:var(--text-muted)">brak danych</span>';
+                    return '<span class="text-muted">brak danych</span>';
                 }
                 var v = Number(psi);
                 var color =
@@ -1125,12 +1125,12 @@
                 '<div class="ai-drift-grid">' +
                 '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
                 psiBadge(data.prediction ? data.prediction.psi : null) +
-                '<div style="color:var(--text-muted);font-size: var(--fs-sm);margin-top:2px">PSI rozkładu score</div></div>' +
+                '<div class="fs-sm-muted-2px">PSI rozkładu score</div></div>' +
                 '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
-                '<div style="color:var(--text-muted);font-size: var(--fs-sm);margin-top:2px">top-5 cech wg PSI</div></div>' +
+                '<div class="fs-sm-muted-2px">top-5 cech wg PSI</div></div>' +
                 '</div>' +
                 (featureRows
-                    ? '<div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>#</th><th>Cecha</th><th>PSI</th></tr></thead><tbody>' +
+                    ? '<div class="ai-table-wrap"><table class="ai-table"><th scope="col"ead><tr><th scope="col">#</th><th scope="col">Cecha</th><th scope="col">PSI</th></tr></thead><tbody>' +
                       featureRows +
                       '</tbody></table></div>'
                     : '') +
@@ -1167,7 +1167,7 @@
                 }
                 if (data.error === 'unavailable') {
                     container.innerHTML =
-                        '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                        '<div class="card-note">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
                     return;
                 }
                 container.innerHTML = apiErrorHtml(data.error);
@@ -1176,7 +1176,7 @@
             var feats = data.features || [];
             if (!Array.isArray(feats) || feats.length === 0) {
                 container.innerHTML =
-                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
+                    '<div class="card-note">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
                 return;
             }
             var max = feats.reduce(function (mx, f) {
@@ -1190,7 +1190,7 @@
                     return (
                         '<div style="margin-bottom:6px">' +
                         '<div style="display:flex;justify-content:space-between;font-size: var(--fs-base);margin-bottom:2px">' +
-                        '<span style="color:var(--text-secondary)">' +
+                        '<span class="text-secondary">' +
                         window.escapeHtml(f.featureName || '—') +
                         '</span>' +
                         '<span style="color:var(--text-primary);font-weight: var(--fw-semibold)">' +
@@ -1238,7 +1238,7 @@
             var items = data.items || [];
             if (items.length === 0) {
                 container.innerHTML =
-                    '<div style="color:var(--text-muted);background:var(--bg-tertiary);border:1px solid var(--border-glass);border-radius:var(--radius-sm);padding:12px;font-size: var(--fs-md)">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
+                    '<div class="card-note">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
                 return;
             }
             var shown = items.slice(0, 20);
@@ -1265,7 +1265,7 @@
                         '<td style="color:var(--text-primary)">' +
                         window.escapeHtml(w.warehouse || '—') +
                         '</td>' +
-                        '<td style="text-align:right;font-feature-settings:\'tnum\';color:var(--text-primary)">' +
+                        '<td class="rury-col-num-inline">' +
                         (w.count || 0) +
                         '</td>' +
                         '<td style="color:var(--text-muted);font-size: var(--fs-sm);white-space:nowrap">' +
@@ -1294,12 +1294,12 @@
                 '</div>' +
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<thead><tr>' +
-                '<th>Lp</th>' +
-                '<th title="Średnica nominalna studni">DN</th>' +
-                '<th title="Magazyn / zakład produkcyjny">Magazyn</th>' +
-                '<th style="text-align:right" title="Liczba rekordów telemetrii z nadpisaniem przez AI">Liczba rekordów</th>' +
-                '<th title="Kiedy AI ostatnio zmieniło dobór dla tej studni">Ostatnio użyto</th>' +
+                '<th scope="col"ead><tr>' +
+                '<th scope="col">Lp</th>' +
+                '<th scope="col" title="Średnica nominalna studni">DN</th>' +
+                '<th scope="col" title="Magazyn / zakład produkcyjny">Magazyn</th>' +
+                '<th scope="col" class="text-right" title="Liczba rekordów telemetrii z nadpisaniem przez AI">Liczba rekordów</th>' +
+                '<th scope="col" title="Kiedy AI ostatnio zmieniło dobór dla tej studni">Ostatnio użyto</th>' +
                 '</tr></thead><tbody>' +
                 rows +
                 '</tbody></table></div>' +
@@ -1337,14 +1337,14 @@
             '<div id="ai-patterns"></div>' +
             '</div>' +
             /* Separator */
-            '<hr style="border:none;border-top:1px solid var(--border-glass);margin:4px 0">' +
+            '<hr class="border-top-glass-m4">' +
             /* Sekcja: ML Pipeline */
             '<div id="ai-ml-section">' +
             '<div id="ai-ml-status"></div>' +
             '<div id="ai-feature-importance"></div>' +
             '</div>' +
             /* Sekcja: Studnie dobrane przez AI */
-            '<hr style="border:none;border-top:1px solid var(--border-glass);margin:4px 0">' +
+            '<hr class="border-top-glass-m4">' +
             '<div id="ai-well-selections-section">' +
             '<div id="ai-well-selections"></div>' +
             '</div>' +

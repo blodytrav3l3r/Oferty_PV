@@ -1,5 +1,5 @@
-<!-- STEP 1: Client & Offer Data -->
-<!-- ====== WIZARD STEP 1: Client & Offer Data ====== -->
+<!-- PARTIAL: step1-client.html (shared studnie/rury) -->
+<!-- ===== FAZA 1: DANE KLIENTA I OFERTY ===== -->
 <div class="wizard-step active" id="wizard-step-1">
     <div class="wizard-card">
         <div
@@ -29,6 +29,7 @@
             </div>
             <div>
                 <h2
+                    id="offer-form-title"
                     class="wizard-card-title"
                     style="margin: 0; font-size: var(--fs-3xl); font-weight: var(--fw-bold)"
                 >
@@ -60,6 +61,7 @@
                 </button>
             </div>
         </div>
+
         <div class="wizard-card-body">
             <div class="wizard-section-title"><i data-lucide="user"></i> Dane klienta</div>
             <div class="wizard-form-grid cols-2">
@@ -180,6 +182,10 @@
                         step="1"
                         id="transport-km"
                         value="100"
+                        oninput="
+                            if (typeof onRuryTransportFormChange === 'function')
+                                onRuryTransportFormChange();
+                        "
                     />
                 </div>
                 <div class="wizard-form-group">
@@ -190,6 +196,10 @@
                         step="0.1"
                         id="transport-rate"
                         value="10"
+                        oninput="
+                            if (typeof onRuryTransportFormChange === 'function')
+                                onRuryTransportFormChange();
+                        "
                     />
                 </div>
             </div>
@@ -197,7 +207,7 @@
                 <div class="wizard-form-group">
                     <label class="wizard-form-label" for="offer-notes">Uwagi</label>
                     <textarea
-                        class="wizard-form-input"
+                        class="wizard-form-textarea"
                         id="offer-notes"
                         rows="5"
                         placeholder="np. Cena obejmuje transport do 100 km..."
@@ -211,7 +221,7 @@
                         >Warunki płatności</label
                     >
                     <textarea
-                        class="wizard-form-input"
+                        class="wizard-form-textarea"
                         id="offer-payment-terms"
                         rows="1"
                         style="
@@ -236,17 +246,17 @@ Do uzgodnienia lub według indywidualnych warunków handlowych.</textarea>
                     />
                 </div>
             </div>
-        </div>
-        <div class="wizard-nav">
-            <div></div>
-            <button
-                type="button"
-                class="wizard-btn wizard-btn-next"
-                id="wizard-next-step1"
-                onclick="wizardNext()"
-            >
-                Dalej →
-            </button>
+            <div class="wizard-nav">
+                <div></div>
+                <button
+                    type="button"
+                    class="wizard-btn wizard-btn-next"
+                    id="wizard-next-step1"
+                    onclick="typeof phaseNext === 'function' ? phaseNext() : wizardNext()"
+                >
+                    Dalej →
+                </button>
+            </div>
         </div>
     </div>
 </div>

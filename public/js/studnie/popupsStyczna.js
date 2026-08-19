@@ -21,7 +21,7 @@ function showStycznaPopup(mode = 'select') {
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--text-primary, var(--white));">DN${p.dn}</div>
                 <div style="font-size: var(--fs-xs); color:var(--text-muted, var(--slate-500)); margin-top:1px;">${escapeHtml(p.name)}</div>
             </div>
-            <div style="font-size: var(--fs-sm); color:var(--text-muted);">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
+            <div class="fs-sm-muted">${p.weight ? fmtInt(p.weight) + ' kg' : ''}</div>
             <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success, var(--success));">${fmtInt(p.price)} PLN</div>
         </button>`;
 
@@ -43,9 +43,9 @@ function showStycznaPopup(mode = 'select') {
         titleId: 'styczna-title',
         html: `
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
+        <div class="modal-head-sticky">
           <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn);"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
-          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" class="btn-close-4xl"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}

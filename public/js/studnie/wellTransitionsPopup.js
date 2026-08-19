@@ -30,7 +30,7 @@ function openPrzejsciaVisibilityPopup(containerId) {
             const isVisible = visiblePrzejsciaTypes.has(t);
             return `
             <div class="przejscia-vis-tile ${isVisible ? 'visible' : 'hidden-type'}"
-                 onclick="togglePrzejsciaTypeVisibility('${escapeJsStr(t)}')"
+                 data-action="togglePrzejsciaTypeVisibility" data-t="${escapeJsStr(t)}"
                  title="${escapeHtmlAttr(t)}">
                 <div class="przejscia-vis-tile-name">${escapeHtml(t)}</div>
             </div>`;
@@ -42,13 +42,13 @@ function openPrzejsciaVisibilityPopup(containerId) {
             <div class="przejscia-vis-header">
                 <div>
                     <h3 style="margin:0; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--text-primary);">Pokaż / Ukryj przejścia</h3>
-                    <div class="przejscia-vis-counter" style="font-size: var(--fs-2xs); color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}</div>
+                    <div class="przejscia-vis-counter" style="font-size: var(--fs-2xs); color:var(--text-muted); margin-top:0.1rem;">Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong class="color-success">${visibleCount}</strong> / ${allTypes.length}</div>
                 </div>
-                <button onclick="closePrzejsciaVisibilityPopup('${containerId || ''}')" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); transition:all 0.15s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
+                <button data-action="closePrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); transition:all 0.15s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--text-muted)'"><i data-lucide="x"></i></button>
             </div>
             <div class="przejscia-vis-actions">
-                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(true)">Pokaż wszystkie</button>
-                <button class="przejscia-vis-action-btn" onclick="setPrzejsciaVisibilityAll(false)">Ukryj wszystkie</button>
+                <button class="przejscia-vis-action-btn" data-action="setPrzejsciaVisibilityAll" data-val="1">Pokaż wszystkie</button>
+                <button class="przejscia-vis-action-btn" data-action="setPrzejsciaVisibilityAll" data-val="0">Ukryj wszystkie</button>
             </div>
             <div class="przejscia-vis-grid">
                 ${tilesHtml}
@@ -118,7 +118,7 @@ function refreshPrzejsciaVisibilityTiles() {
 
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
     if (counterEl)
-        counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong style="color:var(--success);">${visibleCount}</strong> / ${allTypes.length}`;
+        counterEl.innerHTML = `Kliknij kafelek aby przełączyć widoczność. Widoczne: <strong class="color-success">${visibleCount}</strong> / ${allTypes.length}`;
 
     const tiles = overlay.querySelectorAll('.przejscia-vis-tile');
     tiles.forEach((tile) => {
@@ -126,6 +126,37 @@ function refreshPrzejsciaVisibilityTiles() {
         const isVisible = visiblePrzejsciaTypes.has(type);
         tile.classList.toggle('visible', isVisible);
         tile.classList.toggle('hidden-type', !isVisible);
+    });
+}
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__wtpDelegated) {
+    window.__wtpDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const t = el.getAttribute('data-t');
+        const container = el.getAttribute('data-container');
+        const val = el.getAttribute('data-val');
+        const index = el.getAttribute('data-index');
+        const id = el.getAttribute('data-id');
+        const modal = el.getAttribute('data-modal');
+        if (action === 'wtStopPropagation') {
+            e.stopPropagation();
+        } else if (action === 'wtCloseModal') {
+            document.getElementById(modal).style.display = 'none';
+        } else if (action === 'togglePrzejsciaTypeVisibility') {
+            window.togglePrzejsciaTypeVisibility(t);
+        } else if (action === 'closePrzejsciaVisibilityPopup') {
+            window.closePrzejsciaVisibilityPopup(container || '');
+        } else if (action === 'setPrzejsciaVisibilityAll') {
+            window.setPrzejsciaVisibilityAll(val === '1');
+        } else if (action === 'confirmChangePrzejscieType') {
+            window.confirmChangePrzejscieType(parseInt(index, 10), t);
+        } else if (action === 'confirmChangePrzejscieDn') {
+            window.confirmChangePrzejscieDn(parseInt(index, 10), id);
+        }
     });
 }
 
@@ -153,18 +184,18 @@ window.openFlowTypePopup = function (index) {
         modal = document.createElement('div');
         modal.id = 'flow-type-modal';
         modal.innerHTML = `
-        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('flow-type-modal').style.display='none'">
-           <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:300px; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-               <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz typ przepływu</h3>
+        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="flow-type-modal">
+           <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:300px; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" data-action="wtStopPropagation">
+               <h3 class="mb-1-white-3xl">Wybierz typ przepływu</h3>
                <div style="display:flex; gap:1rem; justify-content:center;">
                   <button id="flow-wlot-btn" style="flex:1; background:rgba(var(--blue-rgb), 0.2); color:var(--blue-hover); border:2px solid rgba(var(--blue-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--blue-rgb), 0.2)'">
-                     <span style="font-size: var(--fs-8xl);"><i data-lucide="download"></i></span>WLOT
+                     <span class="fs-8xl"><i data-lucide="download"></i></span>WLOT
                   </button>
                   <button id="flow-wylot-btn" style="flex:1; background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); border:2px solid rgba(var(--danger-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.2)'">
-                     <span style="font-size: var(--fs-8xl);"><i data-lucide="upload"></i></span>WYLOT
+                     <span class="fs-8xl"><i data-lucide="upload"></i></span>WYLOT
                   </button>
                </div>
-               <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('flow-type-modal').style.display='none'">Anuluj</button>
+               <button class="mt-15-p5" data-action="wtCloseModal" data-modal="flow-type-modal">Anuluj</button>
            </div>
         </div>
         `;
@@ -223,14 +254,14 @@ window.openChangePrzejscieTypePopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">
-       <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Zmień rodzaj przejścia</h3>
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="change-prz-type-modal">
+       <div class="modal-panel-xl" data-action="wtStopPropagation">
+           <h3 class="mb-1-white-3xl">Zmień rodzaj przejścia</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
               ${allTypes
                   .map((t) => {
                       const isActive = t === currProduct.category;
-                      return `<button onclick="window.confirmChangePrzejscieType(${index}, '${escapeJsStr(t)}')"
+                      return `<button data-action="confirmChangePrzejscieType" data-index="${index}" data-t="${escapeJsStr(t)}"
                            class="${isActive ? 'color-accent' : ''}"
                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
@@ -242,7 +273,7 @@ window.openChangePrzejscieTypePopup = function (index) {
                   })
                   .join('')}
            </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-type-modal').style.display='none'">Anuluj</button>
+           <button class="mt-15-p5" data-action="wtCloseModal" data-modal="change-prz-type-modal">Anuluj</button>
        </div>
     </div>
     `;
@@ -303,16 +334,16 @@ window.openChangePrzejscieDnPopup = function (index) {
     }
 
     modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">
-       <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:1120px; max-width:95%; height:850px; max-height:95vh; display:flex; flex-direction:column; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" onclick="event.stopPropagation()">
-           <h3 style="margin-bottom:1rem; color:var(--white); font-size: var(--fs-3xl); font-weight: var(--fw-bold);">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="change-prz-dn-modal">
+       <div class="modal-panel-xl" data-action="wtStopPropagation">
+           <h3 class="mb-1-white-3xl">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
            <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
               ${available
                   .map((p) => {
                       const isActive = p.id === currId;
                       const dnLabel =
                           typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
-                      return `<button onclick="window.confirmChangePrzejscieDn(${index}, '${escapeJsStr(p.id)}')"
+                      return `<button data-action="confirmChangePrzejscieDn" data-index="${index}" data-id="${escapeJsStr(p.id)}"
                            class="${isActive ? 'color-accent' : ''}"
                            style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
                                   background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
@@ -324,7 +355,7 @@ window.openChangePrzejscieDnPopup = function (index) {
                   })
                   .join('')}
            </div>
-           <button style="margin-top:1.5rem; padding:0.5rem 1rem; border-radius: var(--radius-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-muted); cursor:pointer;" onclick="document.getElementById('change-prz-dn-modal').style.display='none'">Anuluj</button>
+           <button class="mt-15-p5" data-action="wtCloseModal" data-modal="change-prz-dn-modal">Anuluj</button>
        </div>
     </div>
     `;

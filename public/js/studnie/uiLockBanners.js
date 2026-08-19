@@ -58,20 +58,20 @@ function renderOfferLockBanner() {
         `;
 
         lockBanner.innerHTML = `
-            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                <span style="font-size: var(--fs-4xl);"><i data-lucide="lock"></i></span>
+            <div class="flex-gap-5-wrap2">
+                <span class="fs-4xl"><i data-lucide="lock"></i></span>
                 <div>
                     <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:var(--danger-hover);">
                         STUDNIA ZABLOKOWANA
                     </div>
-                    <div style="font-size: var(--fs-xs); color:var(--text-muted);">
+                    <div class="fs-xs-muted">
                         „${escapeHtml(well.name)}" jest częścią zamówienia${wellOrder ? ' ' + escapeHtml(wellOrder.orderNumber || '') : ''}.
                         Edytuj ją przez zamówienie lub wybierz inną studnię.
                         <span style="color:var(--success-hover); font-weight: var(--fw-bold);">${progress.ordered}/${progress.total} studni zamówionych</span>
                     </div>
                 </div>
             </div>
-            <div style="display:flex; gap:0.4rem; align-items:center;">
+            <div class="flex-gap-4-center">
                 ${
                     wellOrder
                         ? `<button class="btn btn-sm" onclick="window.location.href='studnie.html?order=${wellOrder.id}'" style="height:48px; background:rgba(var(--success-rgb), 0.2); border:1px solid rgba(var(--success-rgb), 0.5); color:var(--success-hover); font-size: var(--fs-base); font-weight: var(--fw-bold); padding:0 1rem; display:flex; align-items:center; gap:0.4rem;">
@@ -91,12 +91,12 @@ function renderOfferLockBanner() {
         `;
 
         lockBanner.innerHTML = `
-            <div style="display:flex; align-items:center; gap:0.5rem;">
+            <div class="flex-gap-5">
                 <span style="font-size: var(--fs-2xl);"><i data-lucide="info"></i></span>
-                <div style="font-size: var(--fs-sm); color:var(--text-muted);">
-                    Oferta ma <strong style="color:var(--success-hover);">${orders.length}</strong> zamówień
-                    (<strong style="color:var(--success-hover);">${progress.ordered}/${progress.total}</strong> studni zamówionych).
-                    Ta studnia jest <strong style="color:var(--success-hover);">dostępna do edycji</strong>.
+                <div class="fs-sm-muted">
+                    Oferta ma <strong class="color-success-hover">${orders.length}</strong> zamówień
+                    (<strong class="color-success-hover">${progress.ordered}/${progress.total}</strong> studni zamówionych).
+                    Ta studnia jest <strong class="color-success-hover">dostępna do edycji</strong>.
                 </div>
             </div>
         `;

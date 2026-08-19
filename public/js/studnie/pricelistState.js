@@ -18,7 +18,7 @@ function updateStudnieSaveBtn() {
     const btn = document.getElementById('btn-save-studnie-pricelist');
     if (!btn) return;
     btn.innerHTML = _studniePricelistDirty
-        ? '<i data-lucide="save"></i> Zapisz <span style="color:var(--warn)">(!)</span>'
+        ? '<i data-lucide="save"></i> Zapisz <span class="color-warn">(!)</span>'
         : '<i data-lucide="save"></i> Zapisz';
     if (window.lucide) lucide.createIcons({ root: btn });
 }

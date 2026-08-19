@@ -243,9 +243,9 @@ function showUserSelectionPopup(users, defaultUserId) {
                 transition:all 0.15s; text-align:left; width:100%;
             " onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.5)';this.style.background='rgba(var(--accent-rgb), 0.1)'"
                onmouseleave="if(!this.classList.contains('selected')){this.style.borderColor='rgba(var(--white-rgb), 0.05)';this.style.background='rgba(var(--white-rgb), 0.05)'}">
-                <span style="font-size: var(--fs-3xl);">${roleBadge}</span>
+                <span class="fs-3xl">${roleBadge}</span>
                 <div class="flex-1">
-                    <div style="font-weight: var(--fw-bold);">${escapeHtml(displayName)}</div>
+                    <div class="fw-bold">${escapeHtml(displayName)}</div>
                     <div style="font-size: var(--fs-sm); color:var(--text-secondary);">Symbol: ${escapeHtml(symbol)}</div>
                 </div>
                 ${isDefault ? '<span style="font-size: var(--fs-xs); color:var(--accent-hover); font-weight: var(--fw-bold);">DOMYŚLNY</span>' : ''}
@@ -372,10 +372,9 @@ function appConfirm(message, opts = {}) {
         _ensureConfirmStyles();
 
         const iconMap = {
-            info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>',
-            warning:
-                '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>',
-            danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>'
+            info: '<i data-lucide="info" class="icon-32-accent"></i>',
+            warning: '<i data-lucide="alert-triangle" class="icon-32-warn"></i>',
+            danger: '<i data-lucide="trash-2" class="icon-32-danger"></i>'
         };
         const accentMap = {
             info: 'var(--accent)',
@@ -489,10 +488,9 @@ function appPrompt(message, defaultValue = '', opts = {}) {
         _ensureConfirmStyles();
 
         const iconMap = {
-            info: '<i data-lucide="info" style="width: 32px; height: 32px; color: var(--accent);"></i>',
-            warning:
-                '<i data-lucide="alert-triangle" style="width: 32px; height: 32px; color: var(--warn);"></i>',
-            danger: '<i data-lucide="trash-2" style="width: 32px; height: 32px; color: var(--danger);"></i>'
+            info: '<i data-lucide="info" class="icon-32-accent"></i>',
+            warning: '<i data-lucide="alert-triangle" class="icon-32-warn"></i>',
+            danger: '<i data-lucide="trash-2" class="icon-32-danger"></i>'
         };
         const accentMap = {
             info: 'var(--accent)',
@@ -658,10 +656,10 @@ function createSaveIndicator(parent, opts = {}) {
             state === 'saving'
                 ? '<i data-lucide="loader" style="width:14px;height:14px;animation:saveSpin 0.8s linear infinite"></i>'
                 : state === 'saved'
-                  ? '<i data-lucide="check" style="width:14px;height:14px"></i>'
+                  ? '<i data-lucide="check" class="icon-14"></i>'
                   : state === 'error'
-                    ? '<i data-lucide="alert-circle" style="width:14px;height:14px"></i>'
-                    : '<i data-lucide="circle" style="width:14px;height:14px"></i>';
+                    ? '<i data-lucide="alert-circle" class="icon-14"></i>'
+                    : '<i data-lucide="circle" class="icon-14"></i>';
         el.innerHTML = `${icon}<span>${escapeHtml(text)}</span>`;
         if (window.lucide) window.lucide.createIcons({ root: el });
     }

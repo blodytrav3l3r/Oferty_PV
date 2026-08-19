@@ -80,15 +80,13 @@ function renderOfferItems() {
             const hasLength = item.lengthM && item.lengthM > 0;
             const metersVal = hasLength ? item.meters || 0 : '';
             const autoTag = item.autoAdded
-                ? ' <span style="font-size: var(--fs-xs);color:var(--warn);opacity:.8">(dodane automatycznie)</span>'
+                ? ' <span class="fs-xs-warn80">(dodane automatycznie)</span>'
                 : '';
             const is1m = isOneMetrePipe(item.productId);
 
             let pName = escapeHtml(item.name);
-            if (item.pehdType === 'PEHD-3MM')
-                pName += ' <span style="color:var(--warn);font-weight:bold">+ PEHD 3mm</span>';
-            if (item.pehdType === 'PEHD-4MM')
-                pName += ' <span style="color:var(--warn);font-weight:bold">+ PEHD 4mm</span>';
+            if (item.pehdType === 'PEHD-3MM') pName += ' <span class="warn-bold">+ PEHD 3mm</span>';
+            if (item.pehdType === 'PEHD-4MM') pName += ' <span class="warn-bold">+ PEHD 4mm</span>';
 
             let rowClass = '';
             let rowStyle = '';
@@ -112,7 +110,7 @@ function renderOfferItems() {
                 cat === 'Duże Żelbetowe II';
             const lengthEditor =
                 isEditableLength && hasLength && !isLocked
-                    ? `<div class="length-editor" onclick="showPipeLengthModal('${escapeHtml(item.productId)}', ${i})" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
+                    ? `<div class="length-editor" data-action="showPipeLengthModal" data-pid="${escapeHtml(item.productId)}" data-i="${i}" title="Zmień długość rury i automatycznie przelicz wagę oraz transport">
                             <i data-lucide="ruler" style="width:11px;height:11px"></i>
                             <span>Dł:</span>
                             <span class="length-value">${fmt(item.customLengthM || item.lengthM)}m</span>
@@ -140,7 +138,7 @@ function renderOfferItems() {
             } else if (isAuto) {
                 checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
             } else {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" style="cursor:pointer;width:16px;height:16px"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" class="cursor-pointer icon-sm"></td>`;
             }
 
             let orderCell = '';
@@ -152,7 +150,7 @@ function renderOfferItems() {
                     '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
             } else if (remaining > 0) {
                 const inputId = 'order-qty-' + item.uid;
-                orderCell = `<td class="text-center" onclick="event.stopPropagation()" style="white-space:nowrap">
+                orderCell = `<td class="text-center" onclick="event.stopPropagation()" class="text-nowrap">
                   <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
                   <span class="order-qty-max">/ ${item.quantity}</span>
                 </td>`;
@@ -169,33 +167,33 @@ function renderOfferItems() {
           ${checkboxCell}
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>
-          <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
-          <td style="text-align:right"><span class="text-center-block">${
+          <td class="rury-col-num" class="text-right"><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
+          <td class="text-right"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input" class="w-75-c" min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
           ${orderCell}
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
-          <td class="rury-col-num" style="text-align:right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="number" class="edit-input" style="width:75px;text-align:center" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td class="rury-col-num" class="text-right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
-          <td style="text-align:right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtml(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtml(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>
           <td style="text-align:right;white-space:nowrap;">
             <div style="display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;">
               ${
                   getPipeInnerArea(item.productId) > 0 && !item.autoAdded
                       ? `
                 <div class="pehd-btn-stack">
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" onclick="addPehdToPipe(${i}, 'PEHD-3MM')" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
-                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" onclick="addPehdToPipe(${i}, 'PEHD-4MM')" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active3mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-3MM" title="Dolicz wkładkę 3mm">+ PEHD 3mm</button>
+                  <button class="btn btn-sm btn-secondary pehd-btn ${active4mm}" data-action="addPehdToPipe" data-i="${i}" data-fmt="PEHD-4MM" title="Dolicz wkładkę 4mm">+ PEHD 4mm</button>
                 </div>
               `
                       : ''
               }
-              <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="removeOfferItem(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
+              <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="removeOfferItem" data-i="${i}"><i data-lucide="x" aria-hidden="true"></i></button>
             </div>
           </td>
         </tr>`;
@@ -207,3 +205,23 @@ function renderOfferItems() {
     updateOfferSummary();
 }
 window.renderOfferItems = renderOfferItems;
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__orrDelegated) {
+    window.__orrDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const pid = el.getAttribute('data-pid');
+        const i = el.getAttribute('data-i');
+        const fmt = el.getAttribute('data-fmt');
+        if (action === 'showPipeLengthModal') {
+            window.showPipeLengthModal(pid, parseInt(i, 10));
+        } else if (action === 'addPehdToPipe') {
+            window.addPehdToPipe(parseInt(i, 10), fmt);
+        } else if (action === 'removeOfferItem') {
+            window.removeOfferItem(parseInt(i, 10));
+        }
+    });
+}

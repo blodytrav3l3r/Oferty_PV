@@ -98,61 +98,61 @@ function renderStudniePriceList() {
 
     let html = `<div class="table-wrap">
     <div style="padding:0.5rem; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end; align-items:center;">
-        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size: var(--fs-md); font-weight: var(--fw-semibold); color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size: var(--fs-md); border:1px solid var(--border); border-radius: var(--radius-2xs); background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" onclick="recalculatePEHD()" style="padding:0.3rem 0.6rem; font-size: var(--fs-md); margin-left:0.3rem;">Przelicz</button></div>` : ''}
-        ${isPrzejscia ? `<button class="btn btn-secondary" onclick="addPrzejsciaCategory()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" onclick="addStudnieCategory()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
-        <button class="btn btn-secondary" onclick="addStudnieElement()" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
+        ${!isPrzejscia && !isKinety ? `<div style="display:flex; align-items:center; gap:0.3rem; margin-right:auto;"><label style="font-size: var(--fs-md); font-weight: var(--fw-semibold); color:var(--text-secondary);">Cena PEHD (PLN/m²):</label><input type="number" id="pehd-price-input" value="${currentPehdPrice}" style="width:70px; padding:0.3rem; font-size: var(--fs-md); border:1px solid var(--border); border-radius: var(--radius-2xs); background:var(--bg-input); color:var(--text-primary);"><button class="btn btn-secondary btn-sm" data-action="recalculatePEHD" style="padding:0.3rem 0.6rem; font-size: var(--fs-md); margin-left:0.3rem;">Przelicz</button></div>` : ''}
+        ${isPrzejscia ? `<button class="btn btn-secondary" data-action="addPrzejsciaCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię przejść</button>` : `<button class="btn btn-secondary" data-action="addStudnieCategory" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj kategorię</button>`}
+        <button class="btn btn-secondary" data-action="addStudnieElement" class="pill-sm"><i data-lucide="plus" aria-hidden="true"></i> Dodaj element</button>
         ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size: var(--fs-md); padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
-    <table style="table-layout: fixed; width: 100%;">
-      <thead>
+    <table class="table-fixed">
+      <th scope="col"ead>
         <tr>
-          <th style="width: 10%;">Indeks</th>
-          <th style="width: ${isPrzejscia ? '18' : isKinety ? '12' : '15'}%;">${isPrzejscia ? 'Rodzaj przejścia' : isKinety ? 'Nazwa kinety' : 'Nazwa elementu'}</th>
+          <th scope="col" class="w-10pct">Indeks</th>
+          <th scope="col" style="width: ${isPrzejscia ? '18' : isKinety ? '12' : '15'}%;">${isPrzejscia ? 'Rodzaj przejścia' : isKinety ? 'Nazwa kinety' : 'Nazwa elementu'}</th>
           ${
               isPrzejscia
                   ? `
-          <th class="text-center ui-col-8">Średnica (DN)</th>
-          <th class="text-right" style="width: 7%;">Waga kg</th>
-          <th class="text-right ui-col-8">Zap. dół</th>
-          <th class="text-right ui-col-8">Zap. góra</th>
-          <th class="text-right ui-col-8">Zap. dół min</th>
-          <th class="text-right ui-col-8">Zap. góra min</th>
-          <th class="text-center" style="width: 4%;" title="Czy przejście jest widoczne w konfiguratorze (1=Tak, 0=Nie)">Dost.</th>
+          <th scope="col" class="text-center ui-col-8">Średnica (DN)</th>
+          <th scope="col" class="text-right" style="width: 7%;">Waga kg</th>
+          <th scope="col" class="text-right ui-col-8">Zap. dół</th>
+          <th scope="col" class="text-right ui-col-8">Zap. góra</th>
+          <th scope="col" class="text-right ui-col-8">Zap. dół min</th>
+          <th scope="col" class="text-right ui-col-8">Zap. góra min</th>
+          <th scope="col" class="text-center" class="w-4pct" title="Czy przejście jest widoczne w konfiguratorze (1=Tak, 0=Nie)">Dost.</th>
           `
                   : isKinety
                     ? `
-          <th class="text-center" style="width: 4%;">DN</th>
-          <th class="text-center ui-col-6">Wys.Sp.</th>
-          <th class="text-center ui-col-5">Pow. m²</th>
-          <th class="text-center" style="width: 4%;">Hmin1 mm</th>
-          <th class="text-center" style="width: 4%;">Hmax1 mm</th>
-          <th class="text-right ui-col-6">Cena1</th>
-          <th class="text-center ui-col-5">Hmin2 mm</th>
-          <th class="text-center ui-col-5">Hmax2 mm</th>
-          <th class="text-right ui-col-6">Cena2</th>
-          <th class="text-center ui-col-5">Hmin3 mm</th>
-          <th class="text-center ui-col-5">Hmax3 mm</th>
-          <th class="text-right ui-col-6">Cena3</th>
+          <th scope="col" class="text-center" class="w-4pct">DN</th>
+          <th scope="col" class="text-center ui-col-6">Wys.Sp.</th>
+          <th scope="col" class="text-center ui-col-5">Pow. m²</th>
+          <th scope="col" class="text-center" class="w-4pct">Hmin1 mm</th>
+          <th scope="col" class="text-center" class="w-4pct">Hmax1 mm</th>
+          <th scope="col" class="text-right ui-col-6">Cena1</th>
+          <th scope="col" class="text-center ui-col-5">Hmin2 mm</th>
+          <th scope="col" class="text-center ui-col-5">Hmax2 mm</th>
+          <th scope="col" class="text-right ui-col-6">Cena2</th>
+          <th scope="col" class="text-center ui-col-5">Hmin3 mm</th>
+          <th scope="col" class="text-center ui-col-5">Hmax3 mm</th>
+          <th scope="col" class="text-right ui-col-6">Cena3</th>
           `
                     : `
-          <th class="text-right ui-col-5" title="Wysokość [mm]">Wys.</th>
-          <th class="text-right ui-col-5" title="Waga [kg]">Waga</th>
-          <th class="text-right ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
-          <th class="text-right ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
-          <th class="text-right" style="width: 4%;" title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
-          <th class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN] — elementy płytowe (płyty, pierścienie) doliczane z kwadratowego wykroju (×4/π ≈ +27%)">PEHD <i data-lucide="info" style="width:10px;height:10px;opacity:0.5;cursor:help;" aria-hidden="true"></i></th>
-          <th class="text-right ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
-          <th class="text-right ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
-          <th class="text-right ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
-          <th class="text-right ui-col-5" title="Dopłata za stopnie nierdzewne zamiast drabinki [PLN]">Dr.Ni.</th>
-          <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Włocławek (1=Tak, 0=Nie)">M.WL</th>
-          <th class="text-center" style="width: 3%;" title="Dostępne na magazynie Kluczbork (1=Tak, 0=Nie)">M.KLB</th>
-          <th class="text-center" style="width: 3%;" title="Forma Standardowa: Włocławek (1=Tak, 0=Nie)">FS.WL</th>
-          <th class="text-center" style="width: 4%;" title="Forma Standardowa: Kluczbork (1=Tak, 0=Nie)">FS.KLB</th>
+          <th scope="col" class="text-right ui-col-5" title="Wysokość [mm]">Wys.</th>
+          <th scope="col" class="text-right ui-col-5" title="Waga [kg]">Waga</th>
+          <th scope="col" class="text-right ui-col-5" title="Powierzchnia wewnętrzna [m2]">P.wew</th>
+          <th scope="col" class="text-right ui-col-5" title="Powierzchnia zewnętrzna [m2]">P.zew</th>
+          <th scope="col" class="text-right" class="w-4pct" title="Maksymalna ilość sztuk na naczepie 24t">Szt</th>
+          <th scope="col" class="text-right ui-col-6" title="Dopłata do wkładki PEHD [PLN] — elementy płytowe (płyty, pierścienie) doliczane z kwadratowego wykroju (×4/π ≈ +27%)">PEHD <i data-lucide="info" style="width:10px;height:10px;opacity:0.5;cursor:help;" aria-hidden="true"></i></th>
+          <th scope="col" class="text-right ui-col-5" title="Dopłata za malowanie wewnątrz [PLN]">Mal W.</th>
+          <th scope="col" class="text-right ui-col-5" title="Dopłata za malowanie zewnątrz [PLN]">Mal Z.</th>
+          <th scope="col" class="text-right ui-col-5" title="Dopłata dla dennicy za Żelbet [PLN]">Żelbet</th>
+          <th scope="col" class="text-right ui-col-5" title="Dopłata za stopnie nierdzewne zamiast drabinki [PLN]">Dr.Ni.</th>
+          <th scope="col" class="text-center" class="w-3pct" title="Dostępne na magazynie Włocławek (1=Tak, 0=Nie)">M.WL</th>
+          <th scope="col" class="text-center" class="w-3pct" title="Dostępne na magazynie Kluczbork (1=Tak, 0=Nie)">M.KLB</th>
+          <th scope="col" class="text-center" class="w-3pct" title="Forma Standardowa: Włocławek (1=Tak, 0=Nie)">FS.WL</th>
+          <th scope="col" class="text-center" class="w-4pct" title="Forma Standardowa: Kluczbork (1=Tak, 0=Nie)">FS.KLB</th>
           `
           }
-          <th class="text-right ui-col-6">Cena PLN</th>
-          <th class="text-center ui-col-6">Akcje</th>
+          <th scope="col" class="text-right ui-col-6">Cena PLN</th>
+          <th scope="col" class="text-center ui-col-6">Akcje</th>
         </tr>
       </thead>`;
 
@@ -170,10 +170,10 @@ function renderStudniePriceList() {
           <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.5rem; background:rgba(var(--accent-rgb), 0.05); font-size: var(--fs-lg);">
             <span style="font-weight: var(--fw-bold); color:var(--text-primary);">${label} <span style="opacity:.5">(${items.length})</span></span>
             <div style="display:flex;gap:0.3rem;">
-              <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" onclick="addStudnieElement('${escapeHtml(groupKey)}')"
-                style="padding:0.2rem 0.5rem; font-size: var(--fs-base);"><i data-lucide="plus" aria-hidden="true"></i></button>
-              <button class="btn-icon del" title="Usuń całą kategorię" aria-label="Usuń kategorię" onclick="deleteStudnieCategory('${escapeHtml(groupKey)}')"
-                style="padding:0.2rem 0.5rem; font-size: var(--fs-base);"><i data-lucide="trash-2" aria-hidden="true"></i></button>
+              <button class="btn-icon" title="Dodaj element do tej kategorii" aria-label="Dodaj element" data-action="addStudnieElement" data-group="${escapeHtml(groupKey)}"
+                class="fs-base-025"><i data-lucide="plus" aria-hidden="true"></i></button>
+              <button class="btn-icon del" title="Usuń całą kategorię" aria-label="Usuń kategorię" data-action="deleteStudnieCategory" data-group="${escapeHtml(groupKey)}"
+                class="fs-base-025"><i data-lucide="trash-2" aria-hidden="true"></i></button>
             </div>
           </div>
         </td>
@@ -190,58 +190,58 @@ function renderStudniePriceList() {
 
         items.forEach((p) => {
             html += `<tr>
-        <td onclick="editStudnieCell(this,'id','${escapeHtml(p.id)}')" style="cursor:pointer; font-size: var(--fs-base); color:var(--text-muted);">${p.id}</td>
-        <td onclick="editStudnieCell(this,'name','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-medium);">${escapeHtml(p.name)}</td>`;
+        <td data-action="editStudnieCell" data-field="id" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-size: var(--fs-base); color:var(--text-muted);">${p.id}</td>
+        <td data-action="editStudnieCell" data-field="name" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-medium);">${escapeHtml(p.name)}</td>`;
 
             if (isPrzejscia) {
                 html += `
-        <td class="text-center" style="font-weight: var(--fw-semibold); color:var(--accent-hover); cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'weight','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasDol','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasGora','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasDolMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--warn-hover);">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'zapasGoraMin','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--warn-hover);">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'active','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.active !== 0 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.active !== 0 ? '1' : '0'}</td>
+        <td class="text-center" class="fw600-accent-cursor" data-action="editStudnieCell" data-field="dn" data-id="${escapeHtml(p.id)}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="weight" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasDol" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.zapasDol != null ? fmtInt(p.zapasDol) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasGora" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.zapasGora != null ? fmtInt(p.zapasGora) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasDolMin" data-id="${escapeHtml(p.id)}" class="cursor-warn">${p.zapasDolMin != null ? fmtInt(p.zapasDolMin) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="zapasGoraMin" data-id="${escapeHtml(p.id)}" class="cursor-warn">${p.zapasGoraMin != null ? fmtInt(p.zapasGoraMin) : '—'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="active" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.active !== 0 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.active !== 0 ? '1' : '0'}</td>
                `;
             } else if (isKinety) {
                 html += `
-        <td class="text-center" style="font-weight: var(--fw-semibold); color:var(--accent-hover); cursor:pointer;" onclick="editStudnieCell(this,'dn','${escapeHtml(p.id)}')">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'spocznikH','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'area','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin1','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax1','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena1','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-semibold); color:var(--success);">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin2','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax2','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena2','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-semibold); color:var(--success);">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMin3','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
-        <td class="text-center" onclick="editStudnieCell(this,'hMax3','${escapeHtml(p.id)}')" class="ui-pointer-bold">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'cena3','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-semibold); color:var(--success);">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
+        <td class="text-center" class="fw600-accent-cursor" data-action="editStudnieCell" data-field="dn" data-id="${escapeHtml(p.id)}">${p.dn != null ? (typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="spocznikH" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.spocznikH || '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="area" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.area != null ? fmt(p.area) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin1" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMin1 != null ? fmtInt(p.hMin1) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax1" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMax1 != null ? fmtInt(p.hMax1) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena1" data-id="${escapeHtml(p.id)}" class="cursor-success">${p.cena1 != null ? fmtInt(p.cena1) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin2" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMin2 != null ? fmtInt(p.hMin2) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax2" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMax2 != null ? fmtInt(p.hMax2) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena2" data-id="${escapeHtml(p.id)}" class="cursor-success">${p.cena2 != null ? fmtInt(p.cena2) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMin3" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMin3 != null ? fmtInt(p.hMin3) : '—'}</td>
+        <td class="text-center" data-action="editStudnieCell" data-field="hMax3" data-id="${escapeHtml(p.id)}" class="ui-pointer-bold">${p.hMax3 != null ? fmtInt(p.hMax3) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="cena3" data-id="${escapeHtml(p.id)}" class="cursor-success">${p.cena3 != null ? fmtInt(p.cena3) : '—'}</td>
                 `;
             } else {
                 html += `
-        <td class="text-right" onclick="editStudnieCell(this,'height','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-semibold); color:var(--accent-hover);">${p.height != null ? fmtInt(p.height) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'weight','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'area','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.area != null ? fmt(p.area) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'areaExt','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'transport','${escapeHtml(p.id)}')" style="cursor:pointer;">${p.transport != null ? fmtInt(p.transport) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="height" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-semibold); color:var(--accent-hover);">${p.height != null ? fmtInt(p.height) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="weight" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.weight != null ? fmtInt(p.weight) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="area" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.area != null ? fmt(p.area) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="areaExt" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.areaExt != null ? fmt(p.areaExt) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="transport" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.transport != null ? fmtInt(p.transport) : '—'}</td>
         <td class="text-right" style="color:var(--success); cursor:help;" title="${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? getPehdTooltip(p, currentPehdPrice) : ''}">${p.area > 0 && p.componentType !== 'przejscie' && p.componentType !== 'kineta' && p.componentType !== 'konus' ? '+' + fmtInt(Math.round(getPehdEffectiveArea(p) * currentPehdPrice)) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'malowanieWewnetrzne','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);">${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'malowanieZewnetrzne','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
-        <td class="text-right" ${p.componentType === 'dennica' ? `onclick="editStudnieCell(this,'doplataZelbet','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
-        <td class="text-right" onclick="editStudnieCell(this,'doplataDrabNierdzewna','${escapeHtml(p.id)}')" style="cursor:pointer; color:var(--success);">${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynWL','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynWL === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynWL === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'magazynKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowa','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowa === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
-        <td class="text-center" onclick="toggleMagazynField(this,'formaStandardowaKLB','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowaKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="malowanieWewnetrzne" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.malowanieWewnetrzne != null ? '+' + fmtInt(p.malowanieWewnetrzne) : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="malowanieZewnetrzne" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.malowanieZewnetrzne != null ? '+' + fmtInt(p.malowanieZewnetrzne) : '—'}</td>
+        <td class="text-right" ${p.componentType === 'dennica' ? `data-action="editStudnieCell" data-field="doplataZelbet" data-id="${escapeHtml(p.id)}" class="cursor-pointer"` : `class="ui-text-mute"`}>${p.componentType === 'dennica' ? (p.doplataZelbet != null ? '+' + fmtInt(p.doplataZelbet) : '—') : '—'}</td>
+        <td class="text-right" data-action="editStudnieCell" data-field="doplataDrabNierdzewna" data-id="${escapeHtml(p.id)}" class="cursor-pointer">${p.doplataDrabNierdzewna != null ? '+' + fmtInt(p.doplataDrabNierdzewna) : '—'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="magazynWL" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynWL === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynWL === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="magazynKLB" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.magazynKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.magazynKLB === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowa" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowa === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowa === 1 ? '1' : '0'}</td>
+        <td class="text-center" data-action="toggleMagazynField" data-field="formaStandardowaKLB" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:${p.formaStandardowaKLB === 1 ? 'var(--success-hover)' : 'var(--danger-hover)'};">${p.formaStandardowaKLB === 1 ? '1' : '0'}</td>
                `;
             }
 
             html += `
-        <td class="text-right" onclick="editStudnieCell(this,'price','${escapeHtml(p.id)}')" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmtInt(p.price)}</td>
-        <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyStudnieProduct('${escapeHtml(p.id)}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteStudnieProduct('${escapeHtml(p.id)}')"><i data-lucide="x" aria-hidden="true"></i></button>
+        <td class="text-right" data-action="editStudnieCell" data-field="price" data-id="${escapeHtml(p.id)}" style="cursor:pointer; font-weight: var(--fw-bold); color:var(--success);">${fmtInt(p.price)}</td>
+        <td class="text-center" class="text-nowrap">
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyStudnieProduct" data-id="${escapeHtml(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteStudnieProduct" data-id="${escapeHtml(p.id)}"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -257,6 +257,38 @@ function renderStudniePriceList() {
 
     container.innerHTML = html;
     if (window.lucide) lucide.createIcons();
+}
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__pricelistDelegated) {
+    window.__pricelistDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const field = el.getAttribute('data-field');
+        const id = el.getAttribute('data-id');
+        const group = el.getAttribute('data-group');
+        if (action === 'editStudnieCell') {
+            window.editStudnieCell(el, field, id);
+        } else if (action === 'toggleMagazynField') {
+            window.toggleMagazynField(el, field, id);
+        } else if (action === 'addStudnieElement') {
+            window.addStudnieElement(group);
+        } else if (action === 'addStudnieCategory') {
+            window.addStudnieCategory();
+        } else if (action === 'addPrzejsciaCategory') {
+            window.addPrzejsciaCategory();
+        } else if (action === 'deleteStudnieCategory') {
+            window.deleteStudnieCategory(group);
+        } else if (action === 'copyStudnieProduct') {
+            window.copyStudnieProduct(id);
+        } else if (action === 'deleteStudnieProduct') {
+            window.deleteStudnieProduct(id);
+        } else if (action === 'recalculatePEHD') {
+            window.recalculatePEHD();
+        }
+    });
 }
 
 /* ===== Rejestracja globali ===== */

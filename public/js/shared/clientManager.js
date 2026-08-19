@@ -164,7 +164,7 @@ function renderClientsDbList(query) {
 
     if (clientsDb.length === 0) {
         container.innerHTML =
-            '<div style="text-align:center; color:var(--text-muted); padding:3rem; font-size: var(--fs-xl);">Baza klientów jest pusta.<br><span style="font-size: var(--fs-md);">Zapisz klienta przyciskiem <i data-lucide="save"></i> w formularzu oferty.</span></div>';
+            '<div style="text-align:center; color:var(--text-muted); padding:3rem; font-size: var(--fs-xl);">Baza klientów jest pusta.<br><span class="fs-md">Zapisz klienta przyciskiem <i data-lucide="save"></i> w formularzu oferty.</span></div>';
         return;
     }
 
@@ -181,12 +181,12 @@ function renderClientsDbList(query) {
 
     const thead = document.createElement('thead');
     thead.innerHTML = `<tr style="border-bottom:2px solid var(--border); color:var(--text-muted); font-size: var(--fs-base); text-transform:uppercase; letter-spacing:0.5px;">
-        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:100px;">Nr klienta</th>
-        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold);">Firma</th>
-        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:130px;">NIP</th>
-        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold);">Adres</th>
-        <th style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold);">Kontakt</th>
-        <th style="padding:0.5rem 0.8rem; text-align:center; font-weight: var(--fw-semibold); width:100px;">Akcje</th>
+        <th scope="col" style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:100px;">Nr klienta</th>
+        <th scope="col" class="th-l-fw600">Firma</th>
+        <th scope="col" style="padding:0.5rem 0.8rem; text-align:left; font-weight: var(--fw-semibold); width:130px;">NIP</th>
+        <th scope="col" class="th-l-fw600">Adres</th>
+        <th scope="col" class="th-l-fw600">Kontakt</th>
+        <th scope="col" style="padding:0.5rem 0.8rem; text-align:center; font-weight: var(--fw-semibold); width:100px;">Akcje</th>
     </tr>`;
     table.appendChild(thead);
 

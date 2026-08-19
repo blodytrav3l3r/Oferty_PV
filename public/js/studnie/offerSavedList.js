@@ -43,17 +43,17 @@ function renderSavedOffersStudnie() {
 
             return `
         <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? 'var(--success-hover)' : 'var(--blue-hover)'};"` : ''}>
-            <div class="offer-info" style="min-width:0;">
-                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
-                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-                        <h3 style="margin-bottom:0.2rem; word-break:break-all;">${escapeHtml(o.number)}</h3>
+            <div class="offer-info" class="min-w-0">
+                <div class="flex-between-wrap">
+                    <div class="flex-gap-5-wrap2">
+                        <h3 class="mb-02-wb">${escapeHtml(o.number)}</h3>
                         ${orderBadge}
                     </div>
-                    <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xl); white-space:nowrap;">
+                    <div class="fw-bold-xl-primary-nowrap">
                         <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto)} PLN
                     </div>
                 </div>
-                <div class="meta" style="margin-top:0.3rem;">
+                <div class="meta" class="mt-3">
                     <span><i data-lucide="calendar" aria-hidden="true"></i> <strong>${escapeHtml(o.date)}</strong></span>
                     <span><i data-lucide="folder-open" aria-hidden="true"></i> <strong>${o.wells.length}</strong> studnie</span>
                     ${(() => {
@@ -77,12 +77,12 @@ function renderSavedOffersStudnie() {
                             currentUser &&
                             (currentUser.role === 'admin' || currentUser.role === 'pro');
                         if (creatorName === assignedName && creatorName) {
-                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${escapeJsStr(oId)}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${escapeHtml(creatorName)}</strong></span>`;
+                            html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Autor i Opiekun: <strong>${escapeHtml(creatorName)}</strong></span>`;
                         } else {
                             if (creatorName)
                                 html += `<span style="display:inline-block; margin-right:10px; color:var(--slate-500);"><i data-lucide="pen-tool" aria-hidden="true"></i> Autor: <strong>${escapeHtml(creatorName)}</strong></span>`;
                             if (assignedName)
-                                html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `onclick="changeOfferUserFromListStudnie('${escapeJsStr(oId)}')"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${escapeHtml(assignedName)}</strong></span>`;
+                                html += `<span style="color:var(--accent-hover)${isClickable ? '; cursor:pointer' : ''}" ${isClickable ? `data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}"` : ''}><i data-lucide="user" aria-hidden="true"></i> Opiekun: <strong>${escapeHtml(assignedName)}</strong></span>`;
                         }
                         return html;
                     })()}
@@ -95,19 +95,19 @@ function renderSavedOffersStudnie() {
                     o.clientName || o.investName || o.clientContact
                         ? `
                 <div class="offer-client-badges">
-                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.clientName)}</span></div>` : ''}
-                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.investName)}</span></div>` : ''}
+                    ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2" aria-hidden="true"></i> <strong>Klient:</strong> <span class="fw-500">${escapeHtml(o.clientName)}</span></div>` : ''}
+                    ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat" aria-hidden="true"></i> <strong>Budowa:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
                 </div>`
                         : ''
                 }
             </div>
             <div class="offer-actions">
-                <button class="btn btn-sm btn-primary" onclick="loadSavedOfferStudnie('${escapeJsStr(oId)}')" title="Wczytaj" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;">Wczytaj</button>
-                <button class="btn btn-sm btn-secondary" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: var(--fw-bold);" onclick="window.showUniversalPrintModal('${escapeJsStr(oId)}')" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
-                <button class="btn btn-sm btn-secondary" onclick="exportJSONStudnie('${escapeJsStr(oId)}')" title="Pobierz plik JSON" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" onclick="changeOfferUserFromListStudnie('${escapeJsStr(oId)}')" title="Zmień opiekuna" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistoryStudnie('${escapeJsStr(oId)}')" title="Historia zmian" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" onclick="deleteOfferStudnie('${escapeJsStr(oId)}')" title="Usuń" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem;"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+                <button class="btn btn-sm btn-primary" data-action="loadSavedOfferStudnie" data-id="${escapeJsStr(oId)}" title="Wczytaj" class="fs-sm-036">Wczytaj</button>
+                <button class="btn btn-sm btn-secondary" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: var(--fw-bold);" data-action="showUniversalPrintModal" data-id="${escapeJsStr(oId)}" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
+                <button class="btn btn-sm btn-secondary" data-action="exportJSONStudnie" data-id="${escapeJsStr(oId)}" title="Pobierz plik JSON" class="fs-sm-036"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" class="fs-sm-036"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistoryStudnie" data-id="${escapeJsStr(oId)}" title="Historia zmian" class="fs-sm-036"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger" data-action="deleteOfferStudnie" data-id="${escapeJsStr(oId)}" title="Usuń" class="fs-sm-036"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${
                     hasOrder
                         ? (() => {
@@ -115,8 +115,8 @@ function renderSavedOffersStudnie() {
                               let buttonsHtml = '';
                               offerOrders.forEach((order) => {
                                   buttonsHtml += `
-                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-xs); font-weight: var(--fw-extrabold); padding:0.25rem 0.5rem;" onclick="window.location.href='studnie.html?order=${escapeJsStr(order.id)}'" title="Otwórz zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${escapeHtml(order.orderNumber || '')}</button>
-                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size: var(--fs-2xs); padding:0.25rem 0.4rem;" onclick="deleteOrderStudnie('${escapeJsStr(order.id)}')" title="Usuń zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="trash-2"></i></button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-xs); font-weight: var(--fw-extrabold); padding:0.25rem 0.5rem;" data-action="openOrderStudnie" data-id="${escapeJsStr(order.id)}" title="Otwórz zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="package" aria-hidden="true"></i> Zamówienie ${escapeHtml(order.orderNumber || '')}</button>
+                                    <button class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); font-size: var(--fs-2xs); padding:0.25rem 0.4rem;" data-action="deleteOrderStudnie" data-id="${escapeJsStr(order.id)}" title="Usuń zamówienie ${escapeHtmlAttr(order.orderNumber || '')}"><i data-lucide="trash-2"></i></button>
                                 `;
                               });
                               return buttonsHtml;
@@ -128,6 +128,34 @@ function renderSavedOffersStudnie() {
         `;
         })
         .join('');
+}
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__oslDelegated) {
+    window.__oslDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const id = el.getAttribute('data-id');
+        if (action === 'changeOfferUserFromListStudnie') {
+            window.changeOfferUserFromListStudnie(id);
+        } else if (action === 'loadSavedOfferStudnie') {
+            window.loadSavedOfferStudnie(id);
+        } else if (action === 'showUniversalPrintModal') {
+            window.showUniversalPrintModal(id);
+        } else if (action === 'exportJSONStudnie') {
+            window.exportJSONStudnie(id);
+        } else if (action === 'showOfferHistoryStudnie') {
+            window.showOfferHistoryStudnie(id);
+        } else if (action === 'deleteOfferStudnie') {
+            window.deleteOfferStudnie(id);
+        } else if (action === 'openOrderStudnie') {
+            window.location.href = 'studnie.html?order=' + id;
+        } else if (action === 'deleteOrderStudnie') {
+            window.deleteOrderStudnie(id);
+        }
+    });
 }
 
 /* ===== Rejestracja globali ===== */

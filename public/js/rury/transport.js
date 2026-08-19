@@ -331,11 +331,11 @@ function renderTransportBreakdown(result, costPerTrip) {
   </div>`;
     html += `<div id="transport-breakdown-content" style="display:${window.isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
     html += `<div class="table-wrap"><table>
-    <thead><tr>
-      <th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th>
-      <th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th>
-      <th class="text-right">Transporty</th>
-      ${costPerTrip > 0 ? '<th class="text-right">Udział wagi</th><th class="text-right">Transport/szt.</th>' : ''}
+    <th scope="col"ead><tr>
+      <th scope="col">Produkt</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Waga/szt</th>
+      <th scope="col" class="text-right">Łączna waga</th><th scope="col" class="text-right">Max/transport</th>
+      <th scope="col" class="text-right">Transporty</th>
+      ${costPerTrip > 0 ? '<th scope="col" class="text-right">Udział wagi</th><th scope="col" class="text-right">Transport/szt.</th>' : ''}
     </tr></thead><tbody>`;
     // Sort lines: by diameter (smallest to largest), egg-shaped ("jajowe") always last
     const sortedLines = [...result.lines].sort((a, b) => {
@@ -360,7 +360,7 @@ function renderTransportBreakdown(result, costPerTrip) {
       <td class="text-right" style="font-weight: var(--fw-semibold)">${l.dedicatedTransports}</td>
       ${
           costPerTrip > 0
-              ? `<td class="text-right" style="color:var(--text-secondary)">${(weightShare * 100).toFixed(1)}%</td>
+              ? `<td class="text-right" class="text-secondary">${(weightShare * 100).toFixed(1)}%</td>
       <td class="text-right" style="color:var(--warn);font-weight: var(--fw-semibold)">${fmt(perUnit)} PLN</td>`
               : ''
       }
@@ -383,7 +383,7 @@ function renderTransportBreakdown(result, costPerTrip) {
                 ? formatTransportCount(displayTransports, currentRuryTransportMode)
                 : displayTransports;
         html += `<div style="margin-top:.5rem;font-size: var(--fs-md);color:var(--text-secondary)">
-      ${km} km × ${fmt(rate)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${countLabel} kursów = <strong style="color:var(--warn)">${fmt(totalTransportCost)} PLN</strong> (rozdzielone proporcjonalnie na pozycje)</div>`;
+      ${km} km × ${fmt(rate)} PLN/km = ${fmt(costPerTrip)} PLN/kurs × ${countLabel} kursów = <strong class="color-warn">${fmt(totalTransportCost)} PLN</strong> (rozdzielone proporcjonalnie na pozycje)</div>`;
     }
 
     html += `</div>`; // Close transport-breakdown-content
@@ -534,8 +534,8 @@ window.handleRuryTransportCancel = async function () {
     if (modalKm !== ruryTransportSnapshot.km || modalRate !== ruryTransportSnapshot.rate) {
         if (typeof window.appConfirm === 'function') {
             const confirmed = await window.appConfirm(
-                `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">Wyjdź bez zapisywania</div>
-                 <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
+                `<div class="fs-3xl-eb">Wyjdź bez zapisywania</div>
+                 <div class="fs-xl">Wprowadzono nowe współrzędne transportu. Czy wyjść z okna i odrzucić zmiany w formularzu?</div>`,
                 { allowHtml: true, okText: 'Odrzuć zmiany', cancelText: 'Zostań' }
             );
 
@@ -582,8 +582,8 @@ window.handleRuryTransportSave = async function () {
 
     if (typeof window.appConfirm === 'function') {
         const confirmed = await window.appConfirm(
-            `<div style="font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-transform: none; letter-spacing: normal;">${confirmTitle}</div>
-             <div style="font-size: var(--fs-xl); line-height: 1.4; padding: 1rem 0;">${confirmBody}</div>`,
+            `<div class="fs-3xl-eb">${confirmTitle}</div>
+             <div class="fs-xl">${confirmBody}</div>`,
             { allowHtml: true, okText, cancelText: 'Anuluj' }
         );
 

@@ -8,21 +8,21 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             : new Set();
     const showPriceComparison = orderEditMode && order && order.originalSnapshot;
 
-    let html = `<div class="table-wrap"><table style="width:100%;">
-      <thead>
+    let html = `<div class="table-wrap"><table class="w-100">
+      <th scope="col"ead>
         <tr>
-          ${showOrderSelection ? '<th style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" style="cursor:pointer; width:16px; height:16px;"></th>' : ''}
-          <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
-          <th style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
-          <th style="width:100%;">Nazwa studni</th>
-          <th style="width:1%; min-width:80px; text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">Cechy</th>
-          <th style="width:1%; min-width:70px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
-          <th style="width:1%; min-width:30px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;" title="Błędy konfiguracji studni">Błąd</th>
-          <th style="width:1%; min-width:60px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">DN</th>
-          ${showPriceComparison ? '<th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Cena z oferty</th>' : ''}
-          <th style="width:1%; min-width:110px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
-          ${showPriceComparison ? '<th style="width:1%; min-width:90px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Różnica</th>' : ''}
-          <th style="width:1%; min-width:90px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">Akcje</th>
+          ${showOrderSelection ? '<th scope="col" style="width:4%; min-width:40px; text-align:center;"><input type="checkbox" id="select-all-wells-for-order" onchange="toggleAllWellsForOrder(this.checked)" class="cursor-icon-16"></th>' : ''}
+          <th scope="col" style="width:1%; min-width:30px; text-align:center; white-space:nowrap;">Lp.</th>
+          <th scope="col" style="width:1%; min-width:20px;"></th> <!-- Expand icon -->
+          <th scope="col" class="w-100">Nazwa studni</th>
+          <th scope="col" style="width:1%; min-width:80px; text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">Cechy</th>
+          <th scope="col" style="width:1%; min-width:70px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">Status</th>
+          <th scope="col" style="width:1%; min-width:30px; text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;" title="Błędy konfiguracji studni">Błąd</th>
+          <th scope="col" style="width:1%; min-width:60px; text-align:right; white-space:nowrap; padding:0.5rem 0.75rem;">DN</th>
+          ${showPriceComparison ? '<th scope="col" class="th-r-110">Cena z oferty</th>' : ''}
+          <th scope="col" class="th-r-110">${showPriceComparison ? 'Cena zamówienia' : 'Cena'}</th>
+          ${showPriceComparison ? '<th scope="col" class="th-r-90">Różnica</th>' : ''}
+          <th scope="col" class="th-r-90">Akcje</th>
         </tr>
       </thead>
       <tbody>`;
@@ -192,7 +192,7 @@ function renderOfferSummaryFooter(
                 }
             }
 
-            html += `<tr style="border-top:1px solid rgba(var(--white-rgb), 0.05);">
+            html += `<tr class="border-top-white05">
               <td colspan="${baseColspan}" style="padding:0.6rem 0.5rem; font-size: var(--fs-lg); color:var(--text-secondary); white-space:nowrap;">Podsumowanie DN${dn} — ${g.count} szt.</td>
               ${offerPriceCell}
               <td class="text-right" style="font-size: var(--fs-lg); color:var(--success); font-weight: var(--fw-bold); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumPrice)} PLN</td>
@@ -226,7 +226,7 @@ function renderOfferSummaryFooter(
         }
     }
 
-    html += `<tr style="border-top:2px solid var(--border-glass);">
+    html += `<tr class="border-top-glass2">
           <td colspan="${baseColspan}" style="font-weight: var(--fw-bold); font-size: var(--fs-xl); color:var(--text-primary); padding:1rem 0.5rem; white-space:nowrap;">RAZEM (${count} studni)</td>
           ${totalOfferPriceCell}
           <td class="text-right" style="font-weight: var(--fw-extrabold); font-size: var(--fs-2xl); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(price)} PLN</td>

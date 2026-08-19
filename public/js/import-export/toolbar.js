@@ -15,10 +15,10 @@
         host.innerHTML =
             '<div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:0.8rem 1rem;margin-bottom:0.8rem;background:var(--bg-glass);border:1px solid var(--border-glass);border-radius:var(--radius-sm);">' +
             '<span style="font-size: var(--fs-base);color:var(--text-muted);font-weight: var(--fw-semibold);text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;"><i data-lucide="file-up" style="width:14px;height:14px;margin-right:4px;"></i>Import / Eksport</span>' +
-            '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" style="width:14px;height:14px;"></i>Eksport XLSX (zewn.)</button>' +
-            '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" style="width:14px;height:14px;"></i>Eksport 1:1 (JSON)</button>' +
-            '<button class="btn btn-sm btn-secondary" id="ie-btn-import-xlsx"><i data-lucide="upload" style="width:14px;height:14px;"></i>Import XLSX (zewn.)</button>' +
-            '<button class="btn btn-sm btn-secondary" id="ie-btn-import-json"><i data-lucide="file-up" style="width:14px;height:14px;"></i>Import 1:1 (JSON)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="ie-btn-export-xlsx"><i data-lucide="download" class="icon-14"></i>Eksport XLSX (zewn.)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="ie-btn-export-json"><i data-lucide="file-down" class="icon-14"></i>Eksport 1:1 (JSON)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="ie-btn-import-xlsx"><i data-lucide="upload" class="icon-14"></i>Import XLSX (zewn.)</button>' +
+            '<button class="btn btn-sm btn-secondary" id="ie-btn-import-json"><i data-lucide="file-up" class="icon-14"></i>Import 1:1 (JSON)</button>' +
             '</div>';
 
         document.getElementById('ie-btn-export-xlsx').onclick = () => this.showExportXlsxDialog();
@@ -32,13 +32,13 @@
     _entityTypeHtml(inputId, entityParam) {
         const checked = entityParam || 'offer';
         return (
-            '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
-            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size: var(--fs-lg);"><input type="radio" name="' +
+            '<div class="flex-gap-5-mb1">' +
+            '<label class="flex-gap-3-lg"><input type="radio" name="' +
             inputId +
             '-entity" value="offer"' +
             (checked === 'offer' ? ' checked' : '') +
             '> Oferta</label>' +
-            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size: var(--fs-lg);"><input type="radio" name="' +
+            '<label class="flex-gap-3-lg"><input type="radio" name="' +
             inputId +
             '-entity" value="order"' +
             (checked === 'order' ? ' checked' : '') +
@@ -50,13 +50,13 @@
     _moduleTypeHtml(inputId, moduleParam) {
         const checked = moduleParam || 'rury';
         return (
-            '<div style="display:flex;gap:0.5rem;margin-bottom:1rem;">' +
-            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size: var(--fs-lg);"><input type="radio" name="' +
+            '<div class="flex-gap-5-mb1">' +
+            '<label class="flex-gap-3-lg"><input type="radio" name="' +
             inputId +
             '-module" value="rury"' +
             (checked === 'rury' ? ' checked' : '') +
             '> Rury</label>' +
-            '<label style="display:flex;align-items:center;gap:0.3rem;cursor:pointer;color:var(--text-secondary);font-size: var(--fs-lg);"><input type="radio" name="' +
+            '<label class="flex-gap-3-lg"><input type="radio" name="' +
             inputId +
             '-module" value="studnie"' +
             (checked === 'studnie' ? ' checked' : '') +
@@ -111,15 +111,15 @@
         const uid = 'xlsx';
         this._createModal(
             'Eksport XLSX (zewn. system)',
-            '<p style="color:var(--text-secondary);font-size: var(--fs-xl);margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
+            '<p class="fs-xl-sec-mb">Wybierz typ i podaj numer:</p>' +
                 this._moduleTypeHtml(uid) +
                 this._entityTypeHtml(uid, 'offer') +
                 '<input type="text" id="ie-' +
                 uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" class="w-100-mb-5">' +
                 '<div id="ie-' +
                 uid +
-                '-search-result" style="font-size: var(--fs-lg);color:var(--text-muted);margin-bottom:0.5rem;"></div>',
+                '-search-result" class="fs-lg-muted-mb5"></div>',
             'Eksportuj',
             async () => {
                 const module = document.querySelector(
@@ -178,15 +178,15 @@
         const uid = 'json';
         this._createModal(
             'Eksport 1:1 (JSON)',
-            '<p style="color:var(--text-secondary);font-size: var(--fs-xl);margin:0 0 1rem 0;">Wybierz typ i podaj numer:</p>' +
+            '<p class="fs-xl-sec-mb">Wybierz typ i podaj numer:</p>' +
                 this._moduleTypeHtml(uid) +
                 this._entityTypeHtml(uid, 'offer') +
                 '<input type="text" id="ie-' +
                 uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" style="width:100%;margin-bottom:0.5rem;">' +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" class="w-100-mb-5">' +
                 '<div id="ie-' +
                 uid +
-                '-search-result" style="font-size: var(--fs-lg);color:var(--text-muted);margin-bottom:0.5rem;"></div>',
+                '-search-result" class="fs-lg-muted-mb5"></div>',
             'Eksportuj',
             async () => {
                 const module = document.querySelector(
@@ -244,10 +244,10 @@
     showImportJsonDialog() {
         this._createModal(
             'Import 1:1 (JSON)',
-            '<p style="color:var(--text-secondary);font-size: var(--fs-xl);margin:0 0 1rem 0;">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
+            '<p class="fs-xl-sec-mb">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
                 '<p style="color:var(--text-muted);font-size: var(--fs-md);margin:0 0 1rem 0;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
-                '<input type="file" id="ie-json-file-input" accept=".json" class="form-input" style="display:block;margin-bottom:1rem;width:100%;">' +
-                '<div id="ie-json-progress" style="display:none;color:var(--accent);font-size: var(--fs-lg);">Importowanie...</div>',
+                '<input type="file" id="ie-json-file-input" accept=".json" class="form-input" class="block-w100-mb1">' +
+                '<div id="ie-json-progress" class="none-accent-lg">Importowanie...</div>',
             'Importuj',
             async () => {
                 const input = document.getElementById('ie-json-file-input');
@@ -308,14 +308,14 @@
         const uid = 'xlsx-import';
         this._createModal(
             'Import XLSX (zewn. system)',
-            '<p style="color:var(--text-secondary);font-size: var(--fs-xl);margin:0 0 1rem 0;">Wybierz moduł i plik XLSX wyeksportowany z innego systemu.</p>' +
+            '<p class="fs-xl-sec-mb">Wybierz moduł i plik XLSX wyeksportowany z innego systemu.</p>' +
                 this._moduleTypeHtml(uid) +
                 '<input type="file" id="ie-' +
                 uid +
-                '-file-input" accept=".xlsx" class="form-input" style="display:block;margin-bottom:1rem;width:100%;">' +
+                '-file-input" accept=".xlsx" class="form-input" class="block-w100-mb1">' +
                 '<div id="ie-' +
                 uid +
-                '-progress" style="display:none;color:var(--accent);font-size: var(--fs-lg);">Importowanie...</div>',
+                '-progress" class="none-accent-lg">Importowanie...</div>',
             'Importuj',
             async () => {
                 const module = document.querySelector(

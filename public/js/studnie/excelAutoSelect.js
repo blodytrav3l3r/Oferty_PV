@@ -39,19 +39,13 @@ function _excelToggleWellAutoMode(wIdx) {
     if (!btn) return;
     const nowAuto = wells[wIdx].autoSelect !== false;
     btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
-    btn.style.background = nowAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
-    btn.style.color = nowAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
+    btn.classList.toggle('is-auto', nowAuto);
+    btn.classList.toggle('is-manual', !nowAuto);
     btn.title = nowAuto ? 'Auto (klik = przelacz na Manual)' : 'Manual (klik = przelacz na Auto)';
     if (runBtn) {
         runBtn.disabled = !nowAuto;
-        runBtn.style.opacity = nowAuto ? '1' : '0.4';
-        runBtn.style.cursor = nowAuto ? 'pointer' : 'not-allowed';
-        runBtn.style.background = nowAuto
-            ? 'rgba(var(--accent-rgb), 0.3)'
-            : 'rgba(var(--slate-500-rgb), 0.15)';
-        runBtn.style.color = nowAuto ? 'var(--accent-text-light)' : 'var(--slate-500)';
-        runBtn.style.borderColor = nowAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)';
-        runBtn.style.pointerEvents = nowAuto ? 'auto' : 'none';
+        runBtn.classList.toggle('is-auto', nowAuto);
+        runBtn.classList.toggle('is-manual', !nowAuto);
         runBtn.title = nowAuto
             ? 'Uruchom auto-dobor elementow dla tej studni'
             : 'Przelacz na Auto aby uruchomic';
@@ -105,6 +99,6 @@ async function _excelRunAutoSelectForWell(wIdx) {
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
         if (runBtn)
             runBtn.innerHTML =
-                '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg>';
+                '<svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg>';
     }
 }

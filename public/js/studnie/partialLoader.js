@@ -21,5 +21,9 @@
         var path = els[i].getAttribute('data-partial');
         if (id && path) promises.push(loadPartial(id, path));
     }
-    Promise.all(promises).catch(function () {});
+    Promise.all(promises)
+        .then(function () {
+            document.dispatchEvent(new CustomEvent('partials:loaded'));
+        })
+        .catch(function () {});
 })();

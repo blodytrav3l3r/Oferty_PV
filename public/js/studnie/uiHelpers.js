@@ -400,20 +400,41 @@ function updateWizardIndicator() {
     if (line2) line2.classList.toggle('completed', currentWizardStep > 2);
     if (line3) line3.classList.toggle('completed', currentWizardStep > 3);
     if (line4) line4.classList.toggle('completed', currentWizardStep > 4);
+
+    // Wspólny partial wizard-nav.html ma label kroku 2 "Produkty" (wersja rury) — studnie nadpisuje na "Parametry studni"
+    const step2Label = document.querySelector('.wizard-step-dot[data-step="2"] .wizard-dot-label');
+    if (step2Label && step2Label.textContent.trim() === 'Produkty') {
+        step2Label.textContent = 'Parametry studni';
+    }
 }
 
-// Obsługa klawiatury kropek wizarda (role=button: Enter/Space)
+// Partiale ładowane asynchronicznie — nadpisz label kroku 2 także po zakończeniu ładowania
 if (typeof document !== 'undefined') {
-    const wizardIndicatorElStudnie = document.getElementById('wizard-indicator');
-    if (wizardIndicatorElStudnie) {
-        wizardIndicatorElStudnie.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            const dot = e.target.closest('.wizard-step-dot');
-            if (!dot || dot.getAttribute('role') !== 'button') return;
-            e.preventDefault();
-            wizardNavStep(parseInt(dot.dataset.step));
-        });
-    }
+    document.addEventListener('partials:loaded', () => {
+        const step2Label = document.querySelector(
+            '.wizard-step-dot[data-step="2"] .wizard-dot-label'
+        );
+        if (step2Label && step2Label.textContent.trim() === 'Produkty') {
+            step2Label.textContent = 'Parametry studni';
+        }
+    });
+}
+
+// Obsługa klawiatury i kliknięć kropek wizarda (role=button: Enter/Space)
+// Delegacja na document — #wizard-indicator jest wstrzykiwany asynchronicznie przez partialLoader
+if (typeof document !== 'undefined') {
+    document.addEventListener('click', (e) => {
+        const dot = e.target.closest('.wizard-step-dot');
+        if (!dot) return;
+        wizardNavStep(parseInt(dot.dataset.step));
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const dot = e.target.closest('.wizard-step-dot');
+        if (!dot || dot.getAttribute('role') !== 'button') return;
+        e.preventDefault();
+        wizardNavStep(parseInt(dot.dataset.step));
+    });
 }
 
 function updateWizardSummaryBar() {

@@ -240,7 +240,7 @@ const ZleceniaRender = (() => {
             ' ' +
             escapeHtml(statusConfig.label) +
             '</span></td>\n' +
-            '<td style="text-align:right">\n' +
+            '<td class="text-right">\n' +
             '<div style="display:flex; gap:0.25rem; justify-content:flex-end;">\n' +
             actions +
             '\n</div>\n</td>\n</tr>'

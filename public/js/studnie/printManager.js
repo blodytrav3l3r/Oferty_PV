@@ -396,15 +396,15 @@ function generateWellSvg(data) {
 
     // Główny okrąg studni
     svgParts.push(
-        `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" style="stroke:var(--slate-950)" stroke-width="2.5" />`
+        `<circle cx="${center}" cy="${center}" r="${radius}" fill="none" class="stroke-slate-950" stroke-width="2.5" />`
     );
 
     // Krzyż pomocniczy
     svgParts.push(
-        `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" style="stroke:var(--slate-400)" stroke-width="0.8" />`
+        `<line x1="${center}" y1="${center - 5}" x2="${center}" y2="${center + 5}" class="stroke-slate-400" stroke-width="0.8" />`
     );
     svgParts.push(
-        `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" style="stroke:var(--slate-400)" stroke-width="0.8" />`
+        `<line x1="${center - 5}" y1="${center}" x2="${center + 5}" y2="${center}" class="stroke-slate-400" stroke-width="0.8" />`
     );
 
     // Znacznik 0 stopni na dole grafiki
@@ -458,7 +458,7 @@ function generateWellSvg(data) {
         if (isBlind) {
             // Ślepa kineta — linia przerywana, szary kolor
             svgParts.push(
-                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" style="stroke:var(--slate-400)" stroke-width="1.5" stroke-dasharray="4,3" />`
+                `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" class="stroke-slate-400" stroke-width="1.5" stroke-dasharray="4,3" />`
             );
         } else {
             svgParts.push(
@@ -570,7 +570,7 @@ function generateWellSvg(data) {
         if (Math.abs(l.origY - l.ly) > 2) {
             const lineDist = l.ly > l.origY ? -8 : 8;
             svgParts.push(
-                `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" style="stroke:var(--slate-300)" stroke-dasharray="2,2" stroke-width="0.8" />`
+                `<line x1="${l.origX}" y1="${l.origY}" x2="${l.lx}" y2="${l.ly + lineDist}" class="stroke-slate-300" stroke-dasharray="2,2" stroke-width="0.8" />`
             );
         }
         const textFill = l.isBlind ? 'var(--slate-400)' : 'var(--black)';

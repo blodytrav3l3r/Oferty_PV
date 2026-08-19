@@ -306,14 +306,14 @@ function openBulkOrderSequencePopup() {
                     border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius: var(--radius-sm);
                     font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
                 <span style="font-size: var(--fs-2xl); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
-                <div style="flex:1;">
+                <div class="flex-1">
                     <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
-                    <div style="font-size: var(--fs-xs); color:var(--text-muted);">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
+                    <div class="fs-xs-muted">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
                 </div>
                 ${
                     !disabled
                         ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
-                    <i data-lucide="trash-2" style="width:16px; height:16px;"></i>
+                    <i data-lucide="trash-2" class="icon-sm"></i>
                 </button>`
                         : ''
                 }
@@ -334,7 +334,7 @@ function openBulkOrderSequencePopup() {
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem;">
                 <div>
                     <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--accent2-hover);"><i data-lucide="list-ordered"></i> Kolejność generowania</div>
-                    <div style="font-size: var(--fs-sm); color:var(--text-muted);">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
+                    <div class="fs-sm-muted">Przeciągnij studnie, aby ustalić kolejność numerów produkcyjnych</div>
                 </div>
                 <button onclick="closeBulkOrderPopup()" class="btn btn-sm" style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); padding:0.3rem 0.6rem;">
                     <i data-lucide="x"></i>
@@ -454,7 +454,7 @@ function toggleBulkSeqItem(btn) {
         input.removeAttribute('disabled');
         input.style.background = 'rgba(var(--accent2-rgb), 0.15)';
 
-        btn.innerHTML = '<i data-lucide="trash-2" style="width:16px; height:16px;"></i>';
+        btn.innerHTML = '<i data-lucide="trash-2" class="icon-sm"></i>';
         btn.style.color = 'var(--danger-hover)';
         btn.title = 'Pomiń studnię';
     } else {
@@ -468,7 +468,7 @@ function toggleBulkSeqItem(btn) {
         input.placeholder = '—';
         input.style.background = 'rgba(var(--white-rgb), 0.05)';
 
-        btn.innerHTML = '<i data-lucide="plus" style="width:16px; height:16px;"></i>';
+        btn.innerHTML = '<i data-lucide="plus" class="icon-sm"></i>';
         btn.style.color = 'var(--success-hover)';
         btn.title = 'Przywróć studnię';
     }

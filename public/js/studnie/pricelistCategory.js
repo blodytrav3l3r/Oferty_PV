@@ -216,6 +216,8 @@ async function deleteStudnieCategory(groupKey) {
 
 /* ===== Rejestracja globali ===== */
 window.deletePrzejsciaCategory = deletePrzejsciaCategory;
+window.deleteStudnieCategory = deleteStudnieCategory;
+window.addPrzejsciaCategory = addPrzejsciaCategory;
 
 /* ===== Rejestracja globali ===== */
 window.addStudnieCategory = addStudnieCategory;

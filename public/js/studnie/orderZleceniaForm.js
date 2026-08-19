@@ -314,9 +314,9 @@ function populateZleceniaForm(el) {
         bannerHtml = `
             <div style="background:rgba(var(--danger-rgb), 0.15); border:2px solid rgba(var(--danger-rgb), 0.5); border-radius: var(--radius-sm); padding:0.8rem 1rem; display:flex; align-items:center; gap:0.8rem; margin-bottom:0.5rem;">
                 <span style="font-size: var(--fs-6xl);"><i data-lucide="lock"></i></span>
-                <div style="flex:1;">
+                <div class="flex-1">
                     <div style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--danger-hover); text-transform:uppercase; letter-spacing:0.5px;">Zlecenie zaakceptowane</div>
-                    <div style="font-size: var(--fs-sm); color:var(--text-muted);">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
+                    <div class="fs-sm-muted">Edycja jest zablokowana. Aby wprowadzić zmiany, najpierw cofnij akceptację przyciskiem na górze.</div>
                 </div>
             </div>
         `;
@@ -349,89 +349,89 @@ function populateZleceniaForm(el) {
     container.innerHTML = `
     ${bannerHtml}
     ${errorsHtml}
-    <div class="card card-compact" style="margin-bottom:0.5rem;">
+    <div class="card card-compact" class="mb-5">
         <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
             <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight: var(--fw-extrabold);">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
             <span class="zl-toggle" class="text-xs">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${escapeHtml(existing?.obiekt || investName)}" placeholder="Nazwa obiektu...">
             </div>
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
+                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly class="bg-white05-accent">
             </div>
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Adres</label>
                 <input type="text" id="zl-adres" class="form-input form-input-sm" value="${escapeHtml(existing?.adres || investAddress)}" placeholder="Adres obiektu...">
             </div>
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly class="bg-white05-accent">
             </div>
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
                 <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${escapeHtml(existing?.wykonawca || investContractor)}" placeholder="Wykonawca...">
             </div>
-            <div class="form-group-sm" style="margin:0;">
+            <div class="form-group-sm" class="m-0">
                 <label class="form-label-sm ui-text-sec">Data produkcji</label>
                 <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${escapeHtml(existing?.dataProdukcji || '')}">
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly style="background:rgba(var(--white-rgb), 0.05); color:var(--accent-hover); font-weight: var(--fw-bold);">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly class="bg-white05-accent">
             </div>
         </div>
     </div>
 
     <div id="zl-dane-elementu-grid" style="display:grid; grid-template-columns:${daneElementuVisible ? '230px' : '36px'} 1fr; gap:0.5rem; margin-bottom:0.5rem; transition:grid-template-columns 0.25s ease;">
         <div class="card card-compact" style="overflow:hidden; min-width:0; transition:all 0.25s ease; position:relative;">
-            <div id="zl-dane-elementu-header-full" class="card-title-sm" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
+            <div id="zl-dane-elementu-header-full" class="card-title-sm" data-action="toggleDaneElementu" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'flex' : 'none'}; justify-content:space-between; align-items:center;">
                 <span><i data-lucide="hard-hat"></i> Dane elementu</span>
                 <span class="text-xs"><i data-lucide="chevron-left"></i></span>
             </div>
-            <div id="zl-dane-elementu-header-collapsed" onclick="window.toggleDaneElementu()" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
+            <div id="zl-dane-elementu-header-collapsed" data-action="toggleDaneElementu" style="cursor:pointer; user-select:none; display:${daneElementuVisible ? 'none' : 'flex'}; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:0.5rem; padding:0.5rem 0;">
                 <span class="text-xs"><i data-lucide="chevron-right"></i></span>
                 <span style="writing-mode:vertical-lr; text-orientation:mixed; font-size: var(--fs-sm); font-weight: var(--fw-bold); color:var(--text-secondary); letter-spacing:1px; text-transform:uppercase;">Dane elementu</span>
             </div>
             <div id="zl-dane-elementu-content" style="display:${daneElementuVisible ? 'flex' : 'none'}; flex-direction:column; gap:0.5rem; font-size: var(--fs-base);">
-                <div style="display:flex; align-items:center; gap:0.5rem;">
+                <div class="flex-gap-5">
                     <span style="color:var(--text-secondary); font-size: var(--fs-base); text-transform:uppercase; font-weight: var(--fw-semibold);">Numer studni</span>
                     <span style="font-weight:bold; color:var(--accent-hover); font-size: var(--fs-lg);">${escapeHtml(well.name || '')}</span>
                 </div>
 
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.2rem; background:var(--slate-950); padding:0.6rem; border-radius:var(--radius-sm); border:1px solid var(--border-glass);">
-                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Średnica</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayDN}</span>
+                    <div class="flex-gap-2-col">
+                        <span class="fs-xs-muted">Średnica</span>
+                        <span class="fw-700 text-primary">${displayDN}</span>
                         <input type="hidden" id="zl-srednica" value="${displayDN}">
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Głębokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayGlebokosc}${typeof displayGlebokosc === 'number' ? ' mm' : ''}</span>
+                    <div class="flex-gap-2-col">
+                        <span class="fs-xs-muted">Głębokość</span>
+                        <span class="fw-700 text-primary">${displayGlebokosc}${typeof displayGlebokosc === 'number' ? ' mm' : ''}</span>
                         <input type="hidden" id="zl-glebokosc" value="${displayGlebokosc}">
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Wysokość</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayWysokosc}${typeof displayWysokosc === 'number' ? ' mm' : ''}</span>
+                    <div class="flex-gap-2-col">
+                        <span class="fs-xs-muted">Wysokość</span>
+                        <span class="fw-700 text-primary">${displayWysokosc}${typeof displayWysokosc === 'number' ? ' mm' : ''}</span>
                         <input type="hidden" id="zl-wysokosc" value="${displayWysokosc}">
                     </div>
-                    <div style="display:flex; flex-direction:column; gap:0.2rem;">
-                        <span style="color:var(--text-muted); font-size: var(--fs-xs); text-transform:uppercase;">Gr. dna</span>
-                        <span style="font-weight:bold; color:var(--text-primary); font-size: var(--fs-base);">${displayDnoKineta}</span>
+                    <div class="flex-gap-2-col">
+                        <span class="fs-xs-muted">Gr. dna</span>
+                        <span class="fw-700 text-primary">${displayDnoKineta}</span>
                         <input type="hidden" id="zl-dno-kineta" value="${displayDnoKineta}">
                     </div>
                 </div>
 
-                <div class="form-group-sm" style="margin-top:0.3rem;">
+                <div class="form-group-sm" class="mt-3">
                     <label class="form-label-sm ui-text-sec">Rodzaj studni</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
                         ${rodzajStudniOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); letter-spacing:0.5px; border-radius: var(--radius-sm);" onclick="selectZleceniaTile(this, 'zl-rodzaj-studni', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ${v === rodzajStudniVal ? 'active' : ''}" style="padding:0.6rem; font-size: var(--fs-lg); font-weight: var(--fw-extrabold); letter-spacing:0.5px; border-radius: var(--radius-sm);" data-action="selectZleceniaTile" data-field="zl-rodzaj-studni" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -443,7 +443,7 @@ function populateZleceniaForm(el) {
 
         <div style="display:flex; flex-direction:column; gap:0.5rem; min-width:0;">
             <div class="card card-compact" style="padding:0.5rem 0.6rem;">
-                <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size: var(--fs-base); padding:0.15rem 0;" onclick="window.toggleCard('zl-inline-przejscia-app-container', 'zl-przejscia-app-icon')">
+                <div class="card-title-sm" style="display:flex; align-items:center; justify-content:space-between; cursor:pointer; margin-bottom:0; font-size: var(--fs-base); padding:0.15rem 0;" data-action="toggleCard" data-id="zl-inline-przejscia-app-container" data-icon="zl-przejscia-app-icon">
                     <span><i data-lucide="plus"></i> Dodaj Przejście Szczelne</span>
                     <span id="zl-przejscia-app-icon" class="text-xs"><i data-lucide="chevron-up"></i></span>
                 </div>
@@ -455,7 +455,7 @@ function populateZleceniaForm(el) {
             <div class="card card-compact" style="display:flex; flex-direction:column; box-sizing:border-box; overflow-x:auto; padding:0.5rem 0.6rem; flex:1;">
                 <div class="card-title-sm" style="display:flex; justify-content:space-between; margin-bottom:0.5rem;">
                     <span><i data-lucide="link"></i> Lista przejść</span>
-                    <span id="zl-przejscia-count" style="color:var(--text-muted); font-size: var(--fs-sm);">(${przejsciaCount})</span>
+                    <span id="zl-przejscia-count" class="fs-sm-muted">(${przejsciaCount})</span>
                 </div>
                 <div id="zl-przejscia-list" style="flex:1; border-radius:var(--radius-sm); font-size: var(--fs-sm); color:var(--text-secondary); display:flex; flex-direction:column; overflow-y:auto; overflow-x:auto; min-width:100%;">
                 </div>
@@ -470,18 +470,18 @@ function populateZleceniaForm(el) {
         </div>
     </div>
 
-    <div class="card card-compact" style="margin-bottom:0.5rem;">
+    <div class="card card-compact" class="mb-5">
         <div class="card-title-sm"><i data-lucide="settings"></i> Parametry studni</div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
-            <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <div class="form-group-sm" ${isAnyKrag ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+            <div class="col-gap-5">
+                <div class="form-group-sm" ${isAnyKrag ? 'class="disabled-fade"' : ''}>
                     <label class="form-label-sm">Redukcja kinety</label>
                     <div class="ui-row-gap zl-param-group">
                         ${redKinetyOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-red-kinety', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === redKinetyVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-red-kinety" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -501,7 +501,7 @@ function populateZleceniaForm(el) {
                         ${stopnieOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-rodzaj-stopni', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === stopnieVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-rodzaj-stopni" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -524,21 +524,21 @@ function populateZleceniaForm(el) {
                         ${katOptions
                             .map(
                                 (v) =>
-                                    `<button type="button" class="param-tile ui-badge" onclick="document.getElementById('zl-kat-stopni').value='${v}'; onZleceniaKatChange();">${v}°</button>`
+                                    `<button type="button" class="param-tile ui-badge" data-action="zlSetKat" data-value="${v}">${v}°</button>`
                             )
                             .join('')}
                     </div>
                 </div>
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:0.5rem;">
-                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+            <div class="col-gap-5">
+                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
                     <label class="form-label-sm">Wysokość spocznika</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik-h', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikHVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-spocznik-h" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -551,33 +551,33 @@ function populateZleceniaForm(el) {
                         ${usytOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-usytuowanie', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === usytuowanieVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-usytuowanie" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
                     <input type="hidden" id="zl-usytuowanie" value="${usytuowanieVal}">
                 </div>
 
-                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
                     <label class="form-label-sm">Kineta</label>
                     <div class="ui-row-gap zl-param-group">
                         ${kinetaOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-kineta', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === kinetaVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-kineta" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
                     <input type="hidden" id="zl-kineta" value="${kinetaVal}">
                 </div>
 
-                <div class="form-group-sm" ${isKragOt ? 'style="opacity:0.5; pointer-events:none;"' : ''}>
+                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
                     <label class="form-label-sm">Spocznik</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikMatOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-spocznik', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === spocznikMatVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-spocznik" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -590,7 +590,7 @@ function populateZleceniaForm(el) {
                         ${klasaBetonuOptions
                             .map(
                                 ([v, l]) =>
-                                    `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" onclick="selectZleceniaTile(this, 'zl-klasa-betonu', '${v}')">${l}</button>`
+                                    `<button type="button" class="param-tile ui-badge ${v === klasaBetonuVal ? 'active' : ''}" data-action="selectZleceniaTile" data-field="zl-klasa-betonu" data-value="${v}">${l}</button>`
                             )
                             .join('')}
                     </div>
@@ -877,6 +877,30 @@ window.renderZleceniaSvgPreview = renderZleceniaSvgPreview;
 window.selectZleceniaTile = selectZleceniaTile;
 window.onZleceniaStopnieChange = onZleceniaStopnieChange;
 window.onZleceniaKatChange = onZleceniaKatChange;
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__ozfDelegated) {
+    window.__ozfDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const field = el.getAttribute('data-field');
+        const value = el.getAttribute('data-value');
+        const id = el.getAttribute('data-id');
+        const icon = el.getAttribute('data-icon');
+        if (action === 'toggleDaneElementu') {
+            window.toggleDaneElementu();
+        } else if (action === 'selectZleceniaTile') {
+            window.selectZleceniaTile(el, field, value);
+        } else if (action === 'toggleCard') {
+            window.toggleCard(id, icon);
+        } else if (action === 'zlSetKat') {
+            document.getElementById('zl-kat-stopni').value = value;
+            window.onZleceniaKatChange();
+        }
+    });
+}
 
 /* ===== Rejestracja globali ===== */
 window.populateZleceniaForm = populateZleceniaForm;

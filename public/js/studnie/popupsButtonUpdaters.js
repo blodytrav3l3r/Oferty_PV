@@ -106,13 +106,12 @@ function updatePsiaBudaButton() {
 
     if (well && well.psiaBuda) {
         btn.innerHTML =
-            '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda <span style="font-size: var(--fs-base); margin-left:4px;"><i data-lucide="check"></i></span>';
+            '<i data-lucide="dog" class="icon-14-mr4"></i> Psia buda <span style="font-size: var(--fs-base); margin-left:4px;"><i data-lucide="check"></i></span>';
         btn.style.borderColor = 'rgba(var(--success-rgb), 0.5)';
         btn.style.color = 'var(--success-hover)';
         btn.style.background = 'rgba(var(--success-rgb), 0.15)';
     } else {
-        btn.innerHTML =
-            '<i data-lucide="dog" style="width:14px; height:14px; margin-right:4px;"></i> Psia buda';
+        btn.innerHTML = '<i data-lucide="dog" class="icon-14-mr4"></i> Psia buda';
         btn.style.borderColor = 'var(--border-glass)';
         btn.style.color = '';
         btn.style.background = '';

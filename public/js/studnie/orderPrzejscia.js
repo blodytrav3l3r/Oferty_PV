@@ -147,14 +147,14 @@ function renderPrzejsciaDetailsTable(existingData) {
 
     let html = `<div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size: var(--fs-base);">
-            <thead>
+            <th scope="col"ead>
                 <tr style="border-bottom:1px solid rgba(var(--accent2-rgb), 0.2);">
-                    <th style="text-align:left; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Rodzaj</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN od</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">DN do</th>
-                    <th style="text-align:left; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Uwagi</th>
-                    <th style="text-align:center; padding:0.4rem 0.5rem; color:var(--accent2-hover); font-size: var(--fs-xs); font-weight: var(--fw-bold); text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap;">Czy przejście?</th>
-                    <th style="width:36px;"></th>
+                    <th scope="col" class="th-l-nowrap">Rodzaj</th>
+                    <th scope="col" class="th-c-accent">DN od</th>
+                    <th scope="col" class="th-c-accent">DN do</th>
+                    <th scope="col" class="th-l-nowrap">Uwagi</th>
+                    <th scope="col" class="th-c-accent">Czy przejście?</th>
+                    <th scope="col" style="width:36px;"></th>
                 </tr>
             </thead>
             <tbody>`;
@@ -312,23 +312,23 @@ function buildPrzejscieRowHTML(row, idx, source) {
             : '';
 
     const rodzajCell = `
-        <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-rodzaj-select" class="form-input" style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
+        <div class="flex-gap-4-col">
+            <select id="${prefix}-rodzaj-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
                 ${catOptions.map((c) => `<option value="${escapeHtmlAttr(c)}" ${row.rodzaj === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
             </select>
-            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${(row.rodzaj || '').toString().replace(/"/g, '&quot;')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
+            <input type="text" id="${prefix}-rodzaj" class="form-input" value="${escapeHtmlAttr(row.rodzaj || '')}" placeholder="Wpisz własny rodzaj..." style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); display:${isRodzajInne ? 'block' : 'none'};" onchange="${warnScript}">
         </div>`;
 
     const dnOdCell = rowHasStringDn
         ? `
-        <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <input type="text" id="${prefix}-dnod" class="form-input" value="${(row.dnOd || '').toString().replace(/"/g, '&quot;')}" readonly style="width:100%; min-width:90px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); opacity:0.7; cursor:default;">
+        <div class="flex-gap-4-col">
+            <input type="text" id="${prefix}-dnod" class="form-input" value="${escapeHtmlAttr(row.dnOd || '')}" readonly class="form-input-bold70">
         </div>`
         : `
-        <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-dnod-select" class="form-input" style="width:100%; min-width:72px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
+        <div class="flex-gap-4-col">
+            <select id="${prefix}-dnod-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
                 <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
@@ -338,12 +338,12 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     const dnDoCell = rowHasStringDn
         ? `
-        <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <input type="text" id="${prefix}-dndo" class="form-input" value="${(row.dnDo || '').toString().replace(/"/g, '&quot;')}" readonly style="width:100%; min-width:90px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary); font-weight: var(--fw-bold); opacity:0.7; cursor:default;">
+        <div class="flex-gap-4-col">
+            <input type="text" id="${prefix}-dndo" class="form-input" value="${escapeHtmlAttr(row.dnDo || '')}" readonly class="form-input-bold70">
         </div>`
         : `
-        <div style="display:flex; gap:0.4rem; flex-direction:column;">
-            <select id="${prefix}-dndo-select" class="form-input" style="width:100%; min-width:72px; font-size: var(--fs-base); padding:0.3rem; text-align:center; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary);" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
+        <div class="flex-gap-4-col">
+            <select id="${prefix}-dndo-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
                 <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
@@ -353,12 +353,12 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     return `<tr style="border-bottom:1px solid rgba(var(--white-rgb), 0.05); background:${rowBg}; border-left:${borderLeft};" data-psz-source="${source}" data-psz-idx="${idx}">
         <td style="padding:0.4rem 0.5rem; white-space:nowrap; vertical-align:top;">${rodzajCell}</td>
-        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnOdCell}</td>
-        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">${dnDoCell}</td>
+        <td class="th-pad-c">${dnOdCell}</td>
+        <td class="th-pad-c">${dnDoCell}</td>
         <td style="padding:0.4rem 0.5rem; vertical-align:top;">
-            <input type="text" id="${prefix}-uwagi" class="form-input" value="${(row.uwagi || '').toString().replace(/"/g, '&quot;')}" placeholder="Uwagi..." style="width:100%; font-size: var(--fs-base); padding:0.3rem 0.5rem; background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-2xs); color:var(--text-primary);" onchange="${warnScript}">
+            <input type="text" id="${prefix}-uwagi" class="form-input" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." class="form-input-inline" onchange="${warnScript}">
         </td>
-        <td style="padding:0.4rem 0.3rem; text-align:center; vertical-align:top;">
+        <td class="th-pad-c">
             <select id="${prefix}-czy" class="form-input" style="width:80px; font-size: var(--fs-base); padding:0.3rem; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">
                 <option value="TAK"${row.czyPrzejscie === 'TAK' ? ' selected' : ''}>TAK</option>
                 <option value="NIE"${row.czyPrzejscie === 'NIE' ? ' selected' : ''}>NIE</option>

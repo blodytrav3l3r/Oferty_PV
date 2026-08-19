@@ -232,15 +232,15 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
 
         html += `
                 <div style="display:flex; align-items:center; justify-content:space-between; gap:0.75rem; padding:0.85rem 0.8rem; border:1px solid rgba(var(--slate-400-rgb), 0.15); border-radius: var(--radius-sm); background:rgba(var(--slate-950-rgb), 0.8); box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.15);">
-                    <div style="min-width:0;">
+                    <div class="min-w-0">
                         <div class="btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="font-weight: var(--fw-bold); color:var(--blue-alt); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:260px; cursor:pointer; transition:all 0.2s ease;" title="Kliknij, aby otworzyć zamówienie w trybie edycji" onmouseenter="this.style.color='var(--blue-alt-hover)'; this.style.textDecoration='underline';" onmouseleave="this.style.color='var(--blue-alt)'; this.style.textDecoration='none';">${orderLabel}</div>
                         <div style="font-size: var(--fs-base); color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size: var(--fs-base);">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size: var(--fs-base);">Karta</button>
-                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${window.escapeHtml(ord.id)}" style="padding:0.35rem 0.7rem; font-size: var(--fs-base);">Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" style="padding:0.35rem 0.7rem; font-size: var(--fs-base);">Usuń</button>
+                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Otwórz</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${window.escapeHtml(ord.id)}" class="fs-base-035">Historia</button>
+                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Usuń</button>
                     </div>
                 </div>
             `;
@@ -320,7 +320,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
     const isClickable = role === 'admin' || role === 'pro';
 
     return `
-                <div class="modern-offer-card" data-offer-id="${offer.id}">
+                <div class="modern-offer-card" data-offer-id="${escapeHtmlAttr(offer.id)}">
                     <div class="offer-status-indicator ${hasOrder ? 'has-order' : 'no-order'}"></div>
                     <div class="offer-card-content">
                         <div class="offer-top-row">
@@ -352,16 +352,16 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                 ${
                                     isLocalList
                                         ? `
-                                        <button class="action-btn primary text-btn" data-id="${offer.id}" data-type="${offer.type}" title="Edytuj ofertę">
+                                        <button class="action-btn primary text-btn" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Edytuj ofertę">
                                             <i data-lucide="pencil" aria-hidden="true"></i> Edytuj
                                         </button>
-                                        <button class="action-btn secondary text-btn" data-id="${offer.id}" title="Skopiuj ofertę">
+                                        <button class="action-btn secondary text-btn" data-id="${escapeHtmlAttr(offer.id)}" title="Skopiuj ofertę">
                                             <i data-lucide="copy" aria-hidden="true"></i> Skopiuj ofertę
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" title="Historia zmian" aria-label="Historia zmian">
+                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Historia zmian" aria-label="Historia zmian">
                                             <i data-lucide="clock" aria-hidden="true"></i>
                                         </button>
-                                        <button class="action-btn secondary" data-id="${offer.id}" data-type="${offer.type}" data-offer-id="${offer.id}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
+                                        <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
                                         ${
@@ -369,12 +369,12 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                                 ? `<a href="tel:${escapeHtmlAttr(offer.clientPhone)}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
                                                 : ''
                                         }
-                                        <button class="action-btn danger" data-id="${offer.id}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
+                                        <button class="action-btn danger" data-id="${escapeHtmlAttr(offer.id)}" title="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" aria-label="${hasOrder ? 'Nie można usunąć' : 'Usuń'}" ${hasOrder ? 'disabled' : ''}>
                                             <i data-lucide="trash-2" aria-hidden="true"></i>
                                         </button>
                                         `
                                         : `
-                                        <button class="action-btn primary" data-id="${offer.id}" title="Szczegóły" aria-label="Szczegóły">
+                                        <button class="action-btn primary" data-id="${escapeHtmlAttr(offer.id)}" title="Szczegóły" aria-label="Szczegóły">
                                             <i data-lucide="eye" aria-hidden="true"></i>
                                         </button>
                                         `

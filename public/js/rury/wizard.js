@@ -229,18 +229,21 @@ function updateWizardIndicator() {
     }
 }
 
-// Obsługa klawiatury kropek wizarda (role=button: Enter/Space)
+// Obsługa klawiatury i kliknięć kropek wizarda (role=button: Enter/Space)
+// Delegacja na document — #wizard-indicator jest wstrzykiwany asynchronicznie przez partialLoader
 if (typeof document !== 'undefined') {
-    const wizardIndicatorElRury = document.getElementById('wizard-indicator');
-    if (wizardIndicatorElRury) {
-        wizardIndicatorElRury.addEventListener('keydown', (e) => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            const dot = e.target.closest('.wizard-step-dot');
-            if (!dot || dot.getAttribute('role') !== 'button') return;
-            e.preventDefault();
-            goToPhase(parseInt(dot.dataset.step));
-        });
-    }
+    document.addEventListener('click', (e) => {
+        const dot = e.target.closest('.wizard-step-dot');
+        if (!dot) return;
+        goToPhase(parseInt(dot.dataset.step));
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const dot = e.target.closest('.wizard-step-dot');
+        if (!dot || dot.getAttribute('role') !== 'button') return;
+        e.preventDefault();
+        goToPhase(parseInt(dot.dataset.step));
+    });
 }
 
 function initWizard() {

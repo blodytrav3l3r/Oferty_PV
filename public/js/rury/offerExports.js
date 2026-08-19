@@ -93,7 +93,7 @@ function exportOfferPDF(id) {
     let transportHtml = '';
     if (transportResult.lines.length > 0) {
         transportHtml = `<h3 style="font-size: var(--fs-md);color:var(--brand-navy);margin-top:18px;margin-bottom:6px"><i data-lucide="truck"></i> Transport (max 24 000 kg / kurs)</h3>
-    <table><thead><tr><th>Produkt</th><th class="text-right">Ilość</th><th class="text-right">Waga/szt</th><th class="text-right">Łączna waga</th><th class="text-right">Max/transport</th><th class="text-right">Transporty</th></tr></thead><tbody>`;
+    <table><th scope="col"ead><tr><th scope="col">Produkt</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Waga/szt</th><th scope="col" class="text-right">Łączna waga</th><th scope="col" class="text-right">Max/transport</th><th scope="col" class="text-right">Transporty</th></tr></thead><tbody>`;
         transportResult.lines.forEach((l) => {
             transportHtml += `<tr><td>${escapeHtml(l.name)}</td><td class="text-right">${l.quantity}</td><td class="text-right">${fmtInt(l.weightPerPiece)} kg</td><td class="text-right">${fmtInt(l.totalWeight)} kg</td><td class="text-right">${l.maxPerTransport}</td><td class="text-right" style="font-weight:bold">${l.dedicatedTransports}</td></tr>`;
         });
@@ -152,7 +152,7 @@ function exportOfferPDF(id) {
     </div>
   </div>
   <table>
-    <thead><tr><th>Lp.</th><th>Indeks</th><th>Nazwa</th><th class="text-right">Cena jedn.</th><th class="text-right">Rabat</th><th class="text-right">Po rabacie</th><th class="text-right">Transport/szt.</th><th class="text-right">Ilość</th><th class="text-right">Netto</th><th class="text-right">Brutto</th></tr></thead>
+    <th scope="col"ead><tr><th scope="col">Lp.</th><th scope="col">Indeks</th><th scope="col">Nazwa</th><th scope="col" class="text-right">Cena jedn.</th><th scope="col" class="text-right">Rabat</th><th scope="col" class="text-right">Po rabacie</th><th scope="col" class="text-right">Transport/szt.</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Netto</th><th scope="col" class="text-right">Brutto</th></tr></thead>
     <tbody>${offer.items
         .map((item, i) => {
             const pad = item.unitPrice * (1 - item.discount / 100) + (item.pehdCostPerUnit || 0);
@@ -214,7 +214,7 @@ function showItemDiscountModal() {
         html: `
     <div class="modal" style="max-width:1200px; width:95%; border-radius: var(--radius); box-shadow: 0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 0.5rem;">
-        <h3 id="item-discount-title" style="font-size: var(--fs-4xl); font-weight: var(--fw-bold); color: var(--text-primary);">% Edytuj rabaty pozycji</h3>
+        <h3 id="item-discount-title" class="fs-4xl-bold-primary">% Edytuj rabaty pozycji</h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
@@ -225,16 +225,16 @@ function showItemDiscountModal() {
       <div class="modal-footer" style="margin-top:1rem; border-top: 1px solid var(--border); padding-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
         <div style="text-align:left; display:flex; gap:1.5rem; align-items:baseline;">
           <div>
-            <div style="font-size: var(--fs-md); color:var(--text-muted);">Suma Netto (po rabatach):</div>
+            <div class="fs-md-muted">Suma Netto (po rabatach):</div>
             <div id="discount-modal-total" style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--success);">0,00 PLN</div>
           </div>
           <div>
-            <div style="font-size: var(--fs-md); color:var(--text-muted);">Zabezpieczenie transportu:</div>
+            <div class="fs-md-muted">Zabezpieczenie transportu:</div>
             <div id="discount-modal-zabezpieczenie" style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--text-primary);">—</div>
           </div>
         </div>
         <div style="display:flex; gap: 1rem;">
-          <button class="btn btn-secondary" onclick="closeModal()" style="padding: 0.75rem 1.5rem;">Anuluj</button>
+          <button class="btn btn-secondary" onclick="closeModal()" class="p-075-15">Anuluj</button>
           <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
         </div>
       </div>
@@ -250,12 +250,12 @@ function renderDiscountModalItems() {
     if (!container) return;
 
     let html = `<table style="width:100%; text-align:left; border-collapse:collapse;">
-    <thead>
+    <th scope="col"ead>
       <tr style="border-bottom:1px solid var(--border); font-size: var(--fs-base); color:var(--text-muted);">
-        <th style="padding:0.4rem; width:50%;">Produkt</th>
-        <th style="padding:0.4rem; width:15%; text-align:center;">Rabat (%)</th>
-        <th style="padding:0.4rem; width:15%; text-align:right;">Cena jedn. po rabacie</th>
-        <th style="padding:0.4rem; width:20%; text-align:right;">Wartość Netto</th>
+        <th scope="col" style="padding:0.4rem; width:50%;">Produkt</th>
+        <th scope="col" style="padding:0.4rem; width:15%; text-align:center;">Rabat (%)</th>
+        <th scope="col" style="padding:0.4rem; width:15%; text-align:right;">Cena jedn. po rabacie</th>
+        <th scope="col" style="padding:0.4rem; width:20%; text-align:right;">Wartość Netto</th>
       </tr>
     </thead>
     <tbody>`;
@@ -309,9 +309,7 @@ function renderDiscountModalItems() {
         if (item.pehdType === 'PEHD-4MM')
             pName +=
                 ' <span style="display:inline-block; font-size: var(--fs-xs); padding:0.15rem 0.4rem; background:var(--success); color:var(--white); border-radius: var(--radius-2xs); font-weight: var(--fw-bold); box-shadow:0 0 8px rgba(var(--success-rgb), 0.3); vertical-align:middle;">+ PEHD 4mm</span>';
-        if (item.autoAdded)
-            pName +=
-                ' <span style="font-size: var(--fs-xs);color:var(--warn);opacity:.8">(dodane automatycznie)</span>';
+        if (item.autoAdded) pName += ' <span class="fs-xs-warn80">(dodane automatycznie)</span>';
 
         const isGasket =
             item.autoAdded ||
@@ -325,7 +323,7 @@ function renderDiscountModalItems() {
       <tr style="border-bottom:1px solid var(--border-glass);">
         <td style="padding:0.4rem; font-size: var(--fs-md); font-weight: var(--fw-medium);">
           ${pName} <br>
-          <span style="font-size: var(--fs-sm); color:var(--text-muted);">Ilość: ${item.quantity}</span>
+          <span class="fs-sm-muted">Ilość: ${item.quantity}</span>
         </td>
         <td style="padding:0.4rem; text-align:center; vertical-align:middle;">
           <input type="number" step="0.5" min="0" max="100" value="${d}" 

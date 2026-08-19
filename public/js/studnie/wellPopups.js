@@ -68,7 +68,7 @@ function openZakonczeniePopup() {
 
         if (isDisabled) {
             return `
-            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" onclick="window.showKonusPehdResolverModal(currentWellIndex)">
+            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" data-action="showKonusPehdResolverModal">
                 <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
                 <span class="zak-tile-name">${escapeHtml(p.name)}</span>
                 <span class="zak-tile-note"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA &middot; Brak możliwości wykonania wkładki PEHD</span>
@@ -76,7 +76,7 @@ function openZakonczeniePopup() {
         }
 
         return `
-        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" onclick="selectZakonczenie('${escapeHtml(p.id)}')">
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectZakonczenie" data-id="${escapeHtml(p.id)}">
             <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">
@@ -94,7 +94,7 @@ function openZakonczeniePopup() {
         const isAutoActive = !currentZak;
 
         tilesHtml += `
-        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:var(--accent2-hover);" aria-pressed="${isAutoActive}" onclick="selectZakonczenie(null)">
+        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" class="tile-accent-css" aria-pressed="${isAutoActive}" data-action="selectZakonczenie" data-id="">
             <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(effectiveDn)})</span>
             <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(effectiveDn)}</span>
             <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
@@ -135,14 +135,14 @@ function openZakonczeniePopup() {
     <div class="modal recalc-modal zak-modal">
       <div class="modal-header">
         <h3 id="zakonczenie-title"><i data-lucide="chevron-down" aria-hidden="true"></i> Zakończenie studni <span class="zak-modal-badge">DN${escapeHtml(dnLabel)}</span></h3>
-        <button type="button" class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button type="button" class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="recalc-modal-body">
         <p class="recalc-modal-desc">Wybierz domyślny element zakończenia górnego dla tej studni. Wybrany element będzie używany przez Auto-dobór.</p>
         <div class="recalc-tile-grid">${tilesHtml}</div>
       </div>
       <div class="recalc-modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+        <button type="button" class="btn btn-secondary" data-action="closeModal">Zamknij</button>
       </div>
     </div>`
     });
@@ -219,7 +219,7 @@ function openRedukcjaZakonczeniePopup() {
 
         if (isDisabled) {
             return `
-            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" onclick="window.showKonusPehdResolverModal(currentWellIndex)">
+            <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-disabled="true" data-action="showKonusPehdResolverModal">
                 <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
                 <span class="zak-tile-name">${escapeHtml(p.name)}</span>
                 <span class="zak-tile-note"><i data-lucide="alert-triangle" aria-hidden="true"></i> BLOKADA &middot; Brak możliwości wkładki PEHD</span>
@@ -227,7 +227,7 @@ function openRedukcjaZakonczeniePopup() {
         }
 
         return `
-        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" onclick="selectRedukcjaZakonczenie('${escapeHtml(p.id)}')">
+        <button type="button" class="${classList.join(' ')}" style="--tile-accent:${accent};" aria-pressed="${isActive}" data-action="selectRedukcjaZakonczenie" data-id="${escapeHtml(p.id)}">
             <span class="zak-tile-type"><i data-lucide="${icon}" aria-hidden="true"></i> ${escapeHtml(typeLabel)}</span>
             <span class="zak-tile-name">${escapeHtml(p.name)}</span>
             <span class="zak-tile-meta">
@@ -241,7 +241,7 @@ function openRedukcjaZakonczeniePopup() {
     let tilesHtml = '';
     const isAutoActive = !currentZak;
     tilesHtml += `
-    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" style="--tile-accent:var(--accent2-hover);" aria-pressed="${isAutoActive}" onclick="selectRedukcjaZakonczenie(null)">
+    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" class="tile-accent-css" aria-pressed="${isAutoActive}" data-action="selectRedukcjaZakonczenie" data-id="">
         <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(targetDn)})</span>
         <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(targetDn)}</span>
         <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
@@ -279,14 +279,14 @@ function openRedukcjaZakonczeniePopup() {
     <div class="modal recalc-modal zak-modal">
       <div class="modal-header">
         <h3 id="redukcja-zak-title"><i data-lucide="chevron-down" aria-hidden="true"></i> Zakończenie redukcji DN${escapeHtml(targetDn)}</h3>
-        <button type="button" class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button type="button" class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div class="recalc-modal-body">
         <p class="recalc-modal-desc">Wybierz zakończenie górne dla sekcji redukcji DN${escapeHtml(targetDn)}. Wybór elementu odciążającego automatycznie doda pierścień.</p>
         <div class="recalc-tile-grid">${tilesHtml}</div>
       </div>
       <div class="recalc-modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Zamknij</button>
+        <button type="button" class="btn btn-secondary" data-action="closeModal">Zamknij</button>
       </div>
     </div>`
     });
@@ -304,6 +304,26 @@ function openRedukcjaZakonczeniePopup() {
 // openRedukcjaChoicePopup, selectRedukcjaChoice, trySwapReductionComponents przeniesione do popupsRedukcjaChoice.js
 
 // ===== TRANSITION MANAGER przeniesiony do popupsTransitionManager.js
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__wpDelegated) {
+    window.__wpDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const id = el.getAttribute('data-id');
+        if (action === 'closeModal') {
+            window.closeModal();
+        } else if (action === 'showKonusPehdResolverModal') {
+            window.showKonusPehdResolverModal(currentWellIndex);
+        } else if (action === 'selectZakonczenie') {
+            window.selectZakonczenie(id || null);
+        } else if (action === 'selectRedukcjaZakonczenie') {
+            window.selectRedukcjaZakonczenie(id || null);
+        }
+    });
+}
 
 /* ===== Rejestracja globali ===== */
 window.openZakonczeniePopup = openZakonczeniePopup;

@@ -272,7 +272,7 @@ function _excelToggleColumnPopup() {
     html +=
         '<div class="modal" style="max-width:min(96vw,1400px);max-height:90vh;overflow:auto;width:auto;">';
     html +=
-        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:var(--slate-400);font-size: var(--fs-4xl);cursor:pointer;padding:0;line-height:1;">✕</button></div>';
+        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-close-4xl-line1">✕</button></div>';
     html += gridHtml;
     html +=
         '<div style="padding-top:0.5rem;margin-top:0.5rem;border-top:1px solid rgba(var(--white-rgb), 0.1);">';

@@ -53,46 +53,46 @@ window.openTransitionManagerModal = function () {
       <!-- Nagłówek -->
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
         <h3 id="tm-title" style="font-size: var(--fs-3xl); font-weight: var(--fw-bold); color:var(--text-primary);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="window.closeTransitionManagerModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseTransitionManager"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       
       <!-- Sekcja filtrów -->
       <div style="padding:0.6rem 0.75rem; border-bottom:1px solid var(--border); background:rgba(var(--black-rgb), 0.2); flex-shrink:0; display:flex; gap:0.6rem; align-items:flex-start; flex-wrap:wrap;">
          <div style="min-width:140px; flex:1;">
-            <div style="font-size: var(--fs-2xs); font-weight: var(--fw-semibold); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Kategoria źródłowa</div>
-            <div id="tm-filter-material-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
-               <div data-val="" onclick="tmSelectFilterMaterial('')"
-                    style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
+            <div class="label-sec">Kategoria źródłowa</div>
+            <div id="tm-filter-material-tiles" class="flex-wrap-15">
+               <div data-val="" data-action="tmSelectFilterMaterial" data-val=""
+                    class="tile-active"
                     onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolna</div>
 ${[...allMaterials]
     .sort()
     .map((m) => {
-        return `<div data-val="${escapeHtmlAttr(m)}" onclick="tmSelectFilterMaterial('${escapeJsStr(m)}')"
-                       style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
+        return `<div data-val="${escapeHtmlAttr(m)}" data-action="tmSelectFilterMaterial" data-val="${escapeJsStr(m)}"
+                       class="tile-idle"
                        onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(m)}</div>`;
     })
     .join('')}
             </div>
          </div>
          <div style="min-width:90px;">
-            <div style="font-size: var(--fs-2xs); font-weight: var(--fw-semibold); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Średnica DN</div>
-            <div id="tm-filter-dn-tiles" style="display:flex; flex-wrap:wrap; gap:0.15rem;">
-               <div data-val="" onclick="tmSelectFilterDn('')"
-                    style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
+            <div class="label-sec">Średnica DN</div>
+            <div id="tm-filter-dn-tiles" class="flex-wrap-15">
+               <div data-val="" data-action="tmSelectFilterDn" data-val=""
+                    class="tile-active"
                     onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolne</div>
 ${[...allDNs]
     .sort((a, b) => parseFloat(a) - parseFloat(b))
     .map((dn) => {
         const dnStr = String(dn);
-        return `<div data-val="${escapeHtmlAttr(dnStr)}" onclick="tmSelectFilterDn('${escapeJsStr(dnStr)}')"
-                       style="padding:0.2rem 0.4rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
+        return `<div data-val="${escapeHtmlAttr(dnStr)}" data-action="tmSelectFilterDn" data-val="${escapeJsStr(dnStr)}"
+                       class="tile-idle"
                        onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(dnStr)}</div>`;
     })
     .join('')}
             </div>
          </div>
          <div style="min-width:160px; flex:1;">
-            <div style="font-size: var(--fs-2xs); font-weight: var(--fw-semibold); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Szukaj</div>
+            <div class="label-sec">Szukaj</div>
             <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size: var(--fs-xs); background:var(--bg-tile); border:1.5px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-2xs); color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(var(--success-rgb), 0.5)'" onblur="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
          </div>
       </div>
@@ -105,9 +105,9 @@ ${[...allDNs]
          </label>
          <span style="opacity:0.2;">|</span>
          <span>Widoczne: <strong id="tm-visible-count" class="text-primary">0</strong></span>
-         <span>Zaznaczone: <strong id="tm-selected-count" style="color:var(--accent);">0</strong></span>
+         <span>Zaznaczone: <strong id="tm-selected-count" class="color-accent">0</strong></span>
          <div style="margin-left:auto; display:flex; align-items:center; gap:0.3rem;">
-            <button onclick="tmSortBy('wellName')" style="background:none; border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm); padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size: var(--fs-sm); display:flex; align-items:center; gap:0.3rem; transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(var(--success-rgb), 0.3)';this.style.color='var(--text-primary)'" onmouseout="this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.color='var(--text-muted)'">
+            <button data-action="tmSortBy" data-sort="wellName" style="background:none; border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm); padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size: var(--fs-sm); display:flex; align-items:center; gap:0.3rem; transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(var(--success-rgb), 0.3)';this.style.color='var(--text-primary)'" onmouseout="this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.color='var(--text-muted)'">
                <span>↕</span> Sortuj A–Z
             </button>
          </div>
@@ -127,14 +127,14 @@ ${[...allDNs]
       <div style="padding:0.6rem 0.75rem; border-top:1px solid var(--border); background:var(--slate-800); flex-shrink:0;">
          <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
             <div style="flex:1; min-width:200px;">
-               <div style="font-size: var(--fs-2xs); font-weight: var(--fw-semibold); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.25rem;">Docelowa kategoria (na co zamienić)</div>
+               <div class="label-sec">Docelowa kategoria (na co zamienić)</div>
                <div id="tm-target-cat-tiles" style="display:flex; flex-wrap:wrap; gap:0.2rem;">
-                  <div data-val="" onclick="tmSelectTargetCat('')"
+                  <div data-val="" data-action="tmSelectTargetCat" data-val=""
                        style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
                        onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">— Wybierz —</div>
 ${categories
     .map((cat) => {
-        return `<div data-val="${escapeHtmlAttr(cat)}" onclick="tmSelectTargetCat('${escapeJsStr(cat)}')"
+        return `<div data-val="${escapeHtmlAttr(cat)}" data-action="tmSelectTargetCat" data-val="${escapeJsStr(cat)}"
                           style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
                           onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(cat)}</div>`;
     })
@@ -142,7 +142,7 @@ ${categories
                </div>
             </div>
             <div style="flex-shrink:0;">
-               <button onclick="tmApplyChanges()" style="background:rgba(var(--success-rgb), 0.15); border:1.5px solid rgba(var(--success-rgb), 0.5); border-radius: var(--radius-2xs); padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color:var(--success-hover); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.background='rgba(var(--success-rgb), 0.15)'">
+               <button data-action="tmApplyChanges" style="background:rgba(var(--success-rgb), 0.15); border:1.5px solid rgba(var(--success-rgb), 0.5); border-radius: var(--radius-2xs); padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color:var(--success-hover); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.background='rgba(var(--success-rgb), 0.15)'">
                   <i data-lucide="zap"></i> Zastosuj
                </button>
             </div>
@@ -382,9 +382,9 @@ window.tmRenderTable = function () {
               </div>
               <div style="display:flex; gap:0.3rem; align-items:center; font-size: var(--fs-xs); color:var(--text-muted);">
                 <span>${tr.rzedna != null ? parseFloat(tr.rzedna).toFixed(2) + 'm' : '—'}</span>
-                <span style="opacity:0.3;">·</span>
+                <span class="opacity-3">·</span>
                 <span style="color:var(--warn-hover); font-weight: var(--fw-semibold);">${tr.angle}°</span>
-                <span style="opacity:0.3;">·</span>
+                <span class="opacity-3">·</span>
                 <span style="background:${tr.flowType === FLOW_TYPES.WLOT ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.2)'}; color:${tr.flowType === FLOW_TYPES.WLOT ? 'var(--success-hover)' : 'var(--warn-hover)'}; padding:0.02rem 0.3rem; border-radius: var(--radius-2xs); font-size: var(--fs-2xs); font-weight: var(--fw-bold);">${tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT'}</span>
               </div>
             </div>`;
@@ -399,16 +399,16 @@ window.tmRenderTable = function () {
                    style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
             <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
               <span style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-lg);">${escapeHtml(w.wellName)}</span>
-              ${wellLocked ? '<span style="color:var(--danger-hover); font-size: var(--fs-xs); display:flex; align-items:center; gap:0.2rem;"><i data-lucide="lock" style="width:12px;height:12px;"></i>Zablokowana</span>' : ''}
+              ${wellLocked ? '<span style="color:var(--danger-hover); font-size: var(--fs-xs); display:flex; align-items:center; gap:0.2rem;"><i data-lucide="lock" class="icon-12"></i>Zablokowana</span>' : ''}
               <span style="color:var(--text-muted); font-size: var(--fs-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.05); padding:0.1rem 0.45rem; border-radius: var(--radius-2xs); font-weight: var(--fw-semibold);">DN${w.wellDn}</span>
-              <span style="color:var(--text-muted); font-size: var(--fs-sm);">Rzędna: ${w.rzednaDna}</span>
+              <span class="fs-sm-muted">Rzędna: ${w.rzednaDna}</span>
               <span style="color:var(--success-hover); font-weight: var(--fw-bold); font-size: var(--fs-md);">${fmtInt(w.price)} PLN</span>
             </div>
             <span style="color:var(--text-muted); font-size: var(--fs-xs); background:rgba(var(--success-rgb), 0.1); padding:0.15rem 0.55rem; border-radius: var(--radius); white-space:nowrap; font-weight: var(--fw-medium); border:1px solid rgba(var(--success-rgb), 0.15);">
               ${wellSelCount}/${matchingTrs.length}
             </span>
           </div>
-          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:0.45rem; padding:0.55rem;">
+          <div class="grid-auto-230">
             ${tilesHtml}
           </div>
         </div>`;
@@ -522,33 +522,33 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
 
     popup.innerHTML = `
       <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem 0.4rem;border-bottom:1px solid rgba(var(--white-rgb), 0.05);margin-bottom:0.45rem;">
-        <div><div style="font-weight: var(--fw-bold);color:var(--text-primary);font-size: var(--fs-md);">Zmień przejście</div><div style="font-size: var(--fs-xs);color:var(--text-muted);">Aktualnie: ${currentLabel}</div></div>
-        <button onclick="this.closest('#tm-edit-popup').remove()" style="background:rgba(var(--white-rgb), 0.05);border:none;border-radius: var(--radius-2xs);color:var(--text-muted);cursor:pointer;font-size: var(--fs-lg);padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
+        <div><div style="font-weight: var(--fw-bold);color:var(--text-primary);font-size: var(--fs-md);">Zmień przejście</div><div class="fs-xs-muted">Aktualnie: ${currentLabel}</div></div>
+        <button data-action="tmCloseEditPopup" style="background:rgba(var(--white-rgb), 0.05);border:none;border-radius: var(--radius-2xs);color:var(--text-muted);cursor:pointer;font-size: var(--fs-lg);padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
       </div>
       <div style="display:flex;gap:0.5rem;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size: var(--fs-2xs);font-weight: var(--fw-semibold);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Typ</div>
-          <div id="tm-edit-type-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
+        <div class="flex-1">
+          <div class="label-sec">Typ</div>
+          <div id="tm-edit-type-list" class="flex-gap-2-col">
             ${categories
                 .map((cat) => {
                     const isCur = cat === currentCat;
-                    return `<div data-cat="${escapeHtmlAttr(cat)}" onclick="tmEditSelectType(this,${wellIdx},${trIdx})"
+                    return `<div data-cat="${escapeHtmlAttr(cat)}" data-action="tmEditSelectType" data-well="${wellIdx}" data-tr="${trIdx}"
                    style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}${escapeHtml(cat)}</div>`;
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span class="color-success-hover">◆</span>' : '<span class="fs-base-invisible">◆</span>'}${escapeHtml(cat)}</div>`;
                 })
                 .join('')}
           </div>
         </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size: var(--fs-2xs);font-weight: var(--fw-semibold);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.25rem;">Średnica</div>
-          <div id="tm-edit-dn-list" style="display:flex;flex-direction:column;gap:0.15rem;max-height:180px;overflow-y:auto;padding-right:0.15rem;">
+        <div class="flex-1">
+          <div class="label-sec">Średnica</div>
+          <div id="tm-edit-dn-list" class="flex-gap-2-col">
             ${allDNs
                 .map((dn) => {
                     const isCur = dn === currentDn;
                     const dnStr = String(dn);
-                    return `<div data-dn="${escapeHtmlAttr(dnStr)}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})"
+                    return `<div data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}"
                    style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-bold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span style="color:var(--success-hover);font-size: var(--fs-base);">◆</span>' : '<span style="color:transparent;font-size: var(--fs-base);">◆</span>'}DN${escapeHtml(dnStr)}</div>`;
+                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span class="color-success-hover">◆</span>' : '<span class="fs-base-invisible">◆</span>'}DN${escapeHtml(dnStr)}</div>`;
                 })
                 .join('')}
           </div>
@@ -556,7 +556,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
       </div>
       <div id="tm-edit-result" style="margin-top:0.45rem;padding:0.35rem 0.45rem;background:rgba(var(--black-rgb), 0.2);border-radius: var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
         <span style="color:var(--text-muted);font-size: var(--fs-sm);">Wybierz typ i średnicę</span>
-        <button id="tm-edit-apply-btn" style="display:none;background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>
+        <button id="tm-edit-apply-btn" style="display:none;background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>
       </div>`;
 
     document.body.appendChild(popup);
@@ -602,7 +602,7 @@ function tmEditSelectType(el, wellIdx, trIdx) {
     dnList.innerHTML = dns
         .map((dn) => {
             const dnStr = String(dn);
-            return `<div data-dn="${escapeHtmlAttr(dnStr)}" onclick="tmEditSelectDN(this,${wellIdx},${trIdx})" style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:rgba(var(--white-rgb), 0.05);border:1.5px solid rgba(var(--white-rgb), 0.05);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'"><span style="color:transparent;font-size: var(--fs-base);">◆</span>DN${escapeHtml(dnStr)}</div>`;
+            return `<div data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}" style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:rgba(var(--white-rgb), 0.05);border:1.5px solid rgba(var(--white-rgb), 0.05);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'"><span class="fs-base-invisible">◆</span>DN${escapeHtml(dnStr)}</div>`;
         })
         .join('');
 
@@ -650,7 +650,7 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
             resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size: var(--fs-sm);font-weight: var(--fw-semibold);">${escapeHtml(product.category)} DN${product.dn}</span><span style="color:var(--success-hover);font-weight: var(--fw-bold);margin-left:0.5rem;font-size: var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
-              <button style="background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" onclick="tmEditApply(${wellIdx},${trIdx})">Zastosuj</button>`;
+              <button style="background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>`;
         }
     }
 }
@@ -748,7 +748,7 @@ window.tmUpdatePreview = function () {
 
     let html = '';
     if (replaceList.length > 0) {
-        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:var(--success-hover); font-weight: var(--fw-extrabold);">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
+        html += `<div class="flex-gap-4-mb3"><span style="color:var(--success-hover); font-weight: var(--fw-extrabold);">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
         html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">';
         replaceList.forEach((l) => {
             html += `<span style="background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.2); color:var(--success-hover); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); font-size: var(--fs-sm);">${l}</span>`;
@@ -756,7 +756,7 @@ window.tmUpdatePreview = function () {
         html += '</div>';
     }
     if (skipList.length > 0) {
-        html += `<div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;"><span style="color:var(--danger-hover); font-weight: var(--fw-extrabold);">⚠️ Brak odpowiednika w ${escapeHtml(targetCat)}: ${skipList.length}</span></div>`;
+        html += `<div class="flex-gap-4-mb3"><span style="color:var(--danger-hover); font-weight: var(--fw-extrabold);">⚠️ Brak odpowiednika w ${escapeHtml(targetCat)}: ${skipList.length}</span></div>`;
         html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">';
         skipList.forEach((l) => {
             html += `<span style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); font-size: var(--fs-sm);">${l}</span>`;
@@ -767,6 +767,43 @@ window.tmUpdatePreview = function () {
     content.innerHTML = html;
     panel.style.display = 'block';
 };
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__tmDelegated) {
+    window.__tmDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const val = el.getAttribute('data-val');
+        const sort = el.getAttribute('data-sort');
+        const well = el.getAttribute('data-well');
+        const tr = el.getAttribute('data-tr');
+        if (action === 'tmSelectFilterMaterial') {
+            window.tmSelectFilterMaterial(val);
+        } else if (action === 'tmSelectFilterDn') {
+            window.tmSelectFilterDn(val);
+        } else if (action === 'tmSelectTargetCat') {
+            window.tmSelectTargetCat(val);
+        } else if (action === 'tmSortBy') {
+            window.tmSortBy(sort);
+        } else if (action === 'tmApplyChanges') {
+            window.tmApplyChanges();
+        } else if (action === 'tmCloseTransitionManager') {
+            window.closeTransitionManagerModal();
+        } else if (action === 'tmEditSelectType') {
+            window.tmEditSelectType(el, parseInt(well, 10), parseInt(tr, 10));
+        } else if (action === 'tmEditSelectDN') {
+            window.tmEditSelectDN(el, parseInt(well, 10), parseInt(tr, 10));
+        } else if (action === 'tmEditApply') {
+            window.tmEditApply(parseInt(well, 10), parseInt(tr, 10));
+        } else if (action === 'tmCloseModal') {
+            window.closeModal();
+        } else if (action === 'tmCloseEditPopup') {
+            el.closest('#tm-edit-popup').remove();
+        }
+    });
+}
 
 window.activatePreviewPanel = function () {
     setTimeout(tmUpdatePreview, 100);
@@ -877,9 +914,9 @@ function showSkippedPopup(skippedDetails, targetCat) {
         .map(
             (s, i) => `
         <tr>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${i + 1}</td>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${escapeHtml(s.wellName)}</td>
-            <td style="padding:0.35rem 0.6rem; white-space:nowrap;">${escapeHtml(s.material)}</td>
+            <td class="th-l-35">${i + 1}</td>
+            <td class="th-l-35">${escapeHtml(s.wellName)}</td>
+            <td class="th-l-35">${escapeHtml(s.material)}</td>
             <td style="padding:0.35rem 0.6rem; text-align:center; white-space:nowrap;">${escapeHtml(s.dn)}</td>
             <td style="padding:0.35rem 0.6rem; white-space:nowrap; color:var(--danger-hover);">Brak produktu ${escapeHtml(s.targetCat)} o średnicy ${escapeHtml(s.dn)}</td>
         </tr>
@@ -892,21 +929,21 @@ function showSkippedPopup(skippedDetails, targetCat) {
         titleId: 'skipped-title',
         html: `
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:700px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); padding-bottom:0.5rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
+        <div class="modal-head-sticky">
           <div id="skipped-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--danger-hover);"><i data-lucide="alert-triangle" aria-hidden="true"></i> Pominięte przejścia (${skippedDetails.length})</div>
-          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="background:none; border:none; color:var(--text-muted); font-size: var(--fs-4xl); cursor:pointer; padding:0.2rem;"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseModal" class="btn-close-4xl"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:1rem;">
             Poniższe przejścia nie zostały zamienione — w kategorii <strong>${escapeHtml(targetCat)}</strong> nie istnieje produkt o podanej średnicy.
         </div>
         <table style="width:100%; font-size: var(--fs-md); border-collapse:collapse;">
-            <thead style="position:sticky; top:0; background:var(--slate-800);">
+            <th scope="col"ead style="position:sticky; top:0; background:var(--slate-800);">
                 <tr style="border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
-                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Lp.</th>
-                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Studnia</th>
-                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Obecny typ</th>
-                    <th style="padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;">Średnica</th>
-                    <th style="padding:0.4rem 0.6rem; text-align:left; white-space:nowrap;">Powód pominięcia</th>
+                    <th scope="col" class="th-l-nowrap">Lp.</th>
+                    <th scope="col" class="th-l-nowrap">Studnia</th>
+                    <th scope="col" class="th-l-nowrap">Obecny typ</th>
+                    <th scope="col" style="padding:0.4rem 0.6rem; text-align:center; white-space:nowrap;">Średnica</th>
+                    <th scope="col" class="th-l-nowrap">Powód pominięcia</th>
                 </tr>
             </thead>
             <tbody>${rowsHtml}</tbody>
@@ -915,7 +952,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
             <button class="btn btn-secondary" onclick="closeModal(); window.activatePreviewPanel && window.activatePreviewPanel()" style="font-size: var(--fs-md); padding:0.4rem 1rem; background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover);">
                 <i data-lucide="arrow-left"></i> Wróć do menedżera
             </button>
-            <button class="btn btn-secondary" onclick="closeModal()" style="font-size: var(--fs-md); padding:0.4rem 1.2rem;">Zamknij</button>
+            <button class="btn btn-secondary" data-action="tmCloseModal" style="font-size: var(--fs-md); padding:0.4rem 1.2rem;">Zamknij</button>
         </div>
       </div>
     `

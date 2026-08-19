@@ -47,19 +47,19 @@ function renderOrderModeBanner() {
     `;
 
     banner.innerHTML = `
-        <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
-            <span style="font-size: var(--fs-4xl);"><i data-lucide="package"></i></span>
+        <div class="flex-gap-5-wrap2">
+            <span class="fs-4xl"><i data-lucide="package"></i></span>
             <div>
                 <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">
                     TRYB ZAMÓWIENIA — ${escapeHtml(order.number || '')}
                 </div>
-                <div style="font-size: var(--fs-xs); color:var(--text-muted);">
+                <div class="fs-xs-muted">
                     ${hasChanges ? `<i data-lucide="alert-triangle"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>
             </div>
         </div>
-        <div style="display:flex; gap:0.4rem; align-items:center;">
+        <div class="flex-gap-4-center">
         </div>
     `;
 }

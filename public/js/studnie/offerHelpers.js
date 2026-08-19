@@ -33,7 +33,7 @@ function getWellErrorCell(well) {
     const rgb = isError ? 'var(--danger-rgb)' : 'var(--warn-rgb)';
     const icon = isError ? 'x-circle' : 'alert-triangle';
     return `<span title="${title}" style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:rgba(${rgb}, 0.15); color:${color}; cursor:help;">
-        <i data-lucide="${icon}" style="width:14px; height:14px;"></i>
+        <i data-lucide="${icon}" class="icon-xs"></i>
     </span>`;
 }
 

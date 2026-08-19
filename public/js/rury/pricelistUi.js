@@ -11,7 +11,7 @@ function updateSaveBtn() {
     const btn = document.getElementById('btn-save-pricelist');
     if (!btn) return;
     btn.innerHTML = _pricelistDirty
-        ? '<i data-lucide="save"></i> Zapisz <span style="color:var(--warn)">(!)</span>'
+        ? '<i data-lucide="save"></i> Zapisz <span class="color-warn">(!)</span>'
         : '<i data-lucide="save"></i> Zapisz';
     if (window.lucide) lucide.createIcons({ root: btn });
 }
@@ -24,16 +24,16 @@ function renderPriceList() {
     const searchVal = document.getElementById('pricelist-search')?.value?.toLowerCase() || '';
 
     let html = `<div class="table-wrap">
-    <table style="table-layout: fixed; width: 100%;">
-      <thead>
+    <table class="table-fixed">
+      <th scope="col"ead>
         <tr>
-          <th style="width: 15%;">Indeks</th>
-          <th style="width: 35%;">Nazwa produktu</th>
-          <th class="text-right" style="width: 12%;">Cena PLN</th>
-          <th class="text-right" style="width: 10%;">Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
-          <th class="text-right" style="width: 10%;">Szt./transp.</th>
-          <th class="text-right" style="width: 10%;">Waga (kg)</th>
-          <th class="text-center" style="width: 8%;">Akcje</th>
+          <th scope="col" style="width: 15%;">Indeks</th>
+          <th scope="col" style="width: 35%;">Nazwa produktu</th>
+          <th scope="col" class="text-right" style="width: 12%;">Cena PLN</th>
+          <th scope="col" class="text-right" class="w-10pct">Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
+          <th scope="col" class="text-right" class="w-10pct">Szt./transp.</th>
+          <th scope="col" class="text-right" class="w-10pct">Waga (kg)</th>
+          <th scope="col" class="text-center" style="width: 8%;">Akcje</th>
         </tr>
       </thead>`;
 
@@ -62,15 +62,15 @@ function renderPriceList() {
 
         items.forEach((p) => {
             html += `<tr data-id="${escapeHtmlAttr(p.id)}">
-        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size: var(--fs-base)" class="editable" onclick="editCell(this,'id','${escapeJsStr(p.id)}')">${escapeHtml(p.id)}</code></td>
-        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" onclick="editCell(this,'name','${escapeJsStr(p.id)}')">${escapeHtml(p.name)}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'price','${escapeJsStr(p.id)}')">${fmt(p.price)}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'area','${escapeJsStr(p.id)}')">${p.area != null ? fmt(p.area) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'transport','${escapeJsStr(p.id)}')">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
-        <td class="text-right"><span class="editable" onclick="editCell(this,'weight','${escapeJsStr(p.id)}')">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
-        <td class="text-center" style="white-space:nowrap;">
-          <button class="btn-icon" title="Powiel" aria-label="Powiel" onclick="copyProduct('${escapeJsStr(p.id)}')"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-          <button class="btn-icon" title="Usuń" aria-label="Usuń" onclick="deleteProduct('${escapeJsStr(p.id)}')"><i data-lucide="x" aria-hidden="true"></i></button>
+        <td class="text-nowrap" style="overflow: hidden; text-overflow: ellipsis;"><code style="color:var(--accent-hover);font-size: var(--fs-base)" class="editable" data-action="editCell" data-field="id" data-id="${escapeJsStr(p.id)}">${escapeHtml(p.id)}</code></td>
+        <td style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"><span class="editable" data-action="editCell" data-field="name" data-id="${escapeJsStr(p.id)}">${escapeHtml(p.name)}</span></td>
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="price" data-id="${escapeJsStr(p.id)}">${fmt(p.price)}</span></td>
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="area" data-id="${escapeJsStr(p.id)}">${p.area != null ? fmt(p.area) : '—'}</span></td>
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="transport" data-id="${escapeJsStr(p.id)}">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
+        <td class="text-right"><span class="editable" data-action="editCell" data-field="weight" data-id="${escapeJsStr(p.id)}">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
+        <td class="text-center" class="text-nowrap">
+          <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>
       </tr>`;
         });
@@ -249,7 +249,7 @@ function showAddProductModal() {
         titleId: 'add-product-title',
         html: `
     <div class="modal">
-      <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+      <div class="modal-header"><h3 id="add-product-title"><i data-lucide="plus" aria-hidden="true"></i> Dodaj nowy produkt</h3><button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="form-group"><label class="form-label">Kategoria</label>
         <select class="form-select" id="np-category">${CATEGORIES.map((c) => `<option value="${c}">${c}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Indeks</label><input class="form-input" id="np-id" placeholder="np. RTB-0-10-25-K00"></div>
@@ -261,8 +261,8 @@ function showAddProductModal() {
         <div class="form-group"><label class="form-label">Waga (kg)</label><input class="form-input" id="np-weight" type="number"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
-        <button class="btn btn-primary" onclick="addProduct()">Dodaj produkt</button>
+        <button class="btn btn-secondary" data-action="closeModal">Anuluj</button>
+        <button class="btn btn-primary" data-action="addProduct">Dodaj produkt</button>
       </div>
     </div>`
     });
@@ -477,6 +477,29 @@ async function importRuryFromExcel(event) {
 
 window.savePriceList = savePriceList;
 window.resetPriceList = resetPriceList;
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__pruiDelegated) {
+    window.__pruiDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const field = el.getAttribute('data-field');
+        const id = el.getAttribute('data-id');
+        if (action === 'editCell') {
+            window.editCell(el, field, id);
+        } else if (action === 'copyProduct') {
+            window.copyProduct(id);
+        } else if (action === 'deleteProduct') {
+            window.deleteProduct(id);
+        } else if (action === 'addProduct') {
+            window.addProduct();
+        } else if (action === 'closeModal') {
+            window.closeModal();
+        }
+    });
+}
 
 /* ===== Rejestracja globali ===== */
 window.editCell = editCell;

@@ -192,7 +192,7 @@ function updateRuryOrderSummary(orderData) {
         const uid = row.dataset.uid;
         const ordered = isOrderMode || isItemInAnyOrder(uid);
         const icon = ordered
-            ? '<i data-lucide="package-check" style="width:16px;height:16px;color:var(--accent-text)"></i>'
+            ? '<i data-lucide="package-check" class="icon-16-accent"></i>'
             : '<i data-lucide="circle" style="width:12px;height:12px;color:var(--text-muted);opacity:0.4"></i>';
         firstCell.innerHTML = icon;
         firstCell.setAttribute('data-status', ordered ? 'ordered' : 'available');

@@ -61,6 +61,8 @@ function _excelInitColumnResize() {
                     rows.forEach((row) => {
                         const cell = row.children[ci];
                         if (cell) {
+                            /* TASK-038: szerokości kolumn to dane runtime (resize) —
+                               inline celowo, nie klasa (zgodnie z planem TASK-038). */
                             cell.style.minWidth = newWidth + 'px';
                             cell.style.width = newWidth + 'px';
                         }

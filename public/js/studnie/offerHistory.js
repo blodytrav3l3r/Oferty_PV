@@ -21,9 +21,9 @@ function renderAuditLogEntry(log) {
         actionBadge =
             '<span style="background:rgba(var(--accent-rgb), 0.15); color:var(--accent-hover); padding:4px 10px; border-radius: var(--radius-sm); font-size: var(--fs-base); font-weight: var(--fw-extrabold); letter-spacing:0.5px;"><i data-lucide="sparkles"></i> UTWORZONO</span>';
         const price = data.totalBrutto || 0;
-        contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+        contentHtml = `<div class="fs-4xl-eb-primary"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         if (data.wells)
-            contentHtml += `<div style="font-size: var(--fs-md); color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
+            contentHtml += `<div class="fs-md-muted"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     } else if (isDiff) {
         cardClass = 'action-diff';
         actionBadge =
@@ -40,9 +40,9 @@ function renderAuditLogEntry(log) {
                     k.toLowerCase().includes('price') ||
                     k.toLowerCase().includes('cena')
                 ) {
-                    return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(fmt(Number(oldVal)))} PLN</span> <span style="color:var(--text-muted); font-size: var(--fs-md);"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(fmt(Number(newVal)))} PLN</span></div>`;
+                    return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(fmt(Number(oldVal)))} PLN</span> <span class="fs-md-muted"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(fmt(Number(newVal)))} PLN</span></div>`;
                 }
-                return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(JSON.stringify(oldVal))}</span> <span style="color:var(--text-muted); font-size: var(--fs-md);"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(JSON.stringify(newVal))}</span></div>`;
+                return `<div class="diff-line"><strong class="diff-key">${escapeHtml(k)}</strong>: <span class="diff-old">${escapeHtml(JSON.stringify(oldVal))}</span> <span class="fs-md-muted"><i data-lucide="arrow-right"></i></span> <span class="diff-new">${escapeHtml(JSON.stringify(newVal))}</span></div>`;
             })
             .join('');
         contentHtml = `<div class="diff-container">${changesHtml}</div>`;
@@ -53,12 +53,12 @@ function renderAuditLogEntry(log) {
         const price = data.totalBrutto || 0;
         const oldPrice = log.oldData?.totalBrutto || 0;
         if (oldPrice && Math.abs(price - oldPrice) > 0.01) {
-            contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size: var(--fs-xl);font-weight: var(--fw-semibold);">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size: var(--fs-xl); margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div class="fs-4xl-eb-primary"><i data-lucide="banknote"></i> <span style="text-decoration:line-through;color:var(--text-muted);font-size: var(--fs-xl);font-weight: var(--fw-semibold);">${fmt(oldPrice)}</span> <span style="color:var(--text-muted); font-size: var(--fs-xl); margin:0 4px;"><i data-lucide="arrow-right"></i></span> ${fmt(price)} PLN</div>`;
         } else {
-            contentHtml = `<div style="font-size: var(--fs-4xl); font-weight: var(--fw-extrabold); color:var(--text-primary);"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
+            contentHtml = `<div class="fs-4xl-eb-primary"><i data-lucide="banknote"></i> ${fmt(price)} PLN</div>`;
         }
         if (data.wells)
-            contentHtml += `<div style="font-size: var(--fs-md); color:var(--text-secondary); margin-top:2px;"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
+            contentHtml += `<div class="fs-md-muted"><i data-lucide="package"></i> ${data.wells.length} studni</div>`;
     }
 
     const restoreBtnHtml =
@@ -69,7 +69,7 @@ function renderAuditLogEntry(log) {
             : '';
 
     const buttonsHtml = `
-        <div style="display:flex; gap:0.4rem;">
+        <div class="flex-gap-4">
             <button class="btn btn-sm btn-secondary preview-btn" onclick="viewHistorySnapshot('${escapeHtml(log.id)}')"><i data-lucide="eye" aria-hidden="true"></i> Podgląd</button>
             ${restoreBtnHtml}
         </div>
@@ -117,7 +117,7 @@ async function showOfferHistoryStudnie(id) {
         const historyHtml = logs.map(renderAuditLogEntry).join('');
         const loadMoreHtml =
             logs.length < total
-                ? `<div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
+                ? `<div id="audit-load-more-wrap" class="text-center">
                    <button class="load-more-btn" onclick="loadMoreAuditLogs('studnia_oferta', '${escapeHtml(id)}', 20)"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${total - logs.length} pozostało)</button>
                </div>`
                 : '';
@@ -244,7 +244,7 @@ async function loadMoreAuditLogs(entityType, entityId, limit) {
             container.insertAdjacentHTML(
                 'beforeend',
                 `
-                <div id="audit-load-more-wrap" style="text-align:center; padding:1.5rem 0 0.5rem 0;">
+                <div id="audit-load-more-wrap" class="text-center">
                     <button class="load-more-btn" onclick="loadMoreAuditLogs('${escapeHtml(entityType)}', '${escapeHtml(entityId)}', ${limit})"><i data-lucide="scroll-text"></i> Załaduj starsze zmiany (${remaining} pozostało)</button>
                 </div>
             `

@@ -265,7 +265,7 @@ async function loadOffer(id) {
     // Aktualizacja UI
     const titleEl = document.getElementById('offer-form-title');
     if (titleEl)
-        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span style="font-weight: var(--fw-bold)">${escapeHtml(normalized.number || id)}</span>`;
+        titleEl.innerHTML = `<i data-lucide="pencil"></i> Edycja Oferty: <span class="fw-bold">${escapeHtml(normalized.number || id)}</span>`;
     if (window.lucide) lucide.createIcons();
 
     const btnChangeUser = document.getElementById('btn-change-offer-user');

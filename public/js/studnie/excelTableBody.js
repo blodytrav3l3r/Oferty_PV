@@ -144,26 +144,21 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
                 : '') +
             ' onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
-        const tdBaseStyle = _EXCEL_FONT;
         /* Checkbox */
         const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'background:' +
             stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
-            ' tabindex="-1" style="cursor:pointer;accent-color:rgba(var(--accent-rgb), 0.8);" /></td>';
+            ' tabindex="-1" class="cursor-accent-check" /></td>';
         /* AUTO/MANUAL */
         const isAuto = window.isWellAuto(well);
-        const autoBg = isAuto ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.3)';
-        const autoColor = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'background:' +
             stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
@@ -172,13 +167,9 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" onclick="_excelToggleWellAutoMode(' +
             wIdx +
-            ')" style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:pointer;background:' +
-            autoBg +
-            ';color:' +
-            autoColor +
-            ';border:1px solid ' +
-            autoBg +
-            ';font-weight: var(--fw-semibold);height:18px;">' +
+            ')" class="excel-mode-btn ' +
+            (isAuto ? 'is-auto' : 'is-manual') +
+            '">' +
             (isAuto ? 'AUTO' : 'MANUAL') +
             '</button><button type="button" id="excel-run-auto-' +
             wIdx +
@@ -188,20 +179,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             ')"' +
             (isAuto ? '' : ' disabled') +
-            ' style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:' +
-            (isAuto ? 'pointer' : 'not-allowed') +
-            ';background:' +
-            (isAuto ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--slate-500-rgb), 0.15)') +
-            ';color:' +
-            (isAuto ? 'var(--accent-text-light)' : 'var(--slate-500)') +
-            ';border:1px solid ' +
-            (isAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)') +
-            (isAuto ? '' : ';opacity:0.4') +
-            ';height:18px;align-items:center;justify-content:center;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+            ' class="excel-run-btn ' +
+            (isAuto ? 'is-auto' : 'is-manual') +
+            '"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
         /* Lp */
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'position:sticky;left:0;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
@@ -211,8 +194,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
         /* Nazwa */
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'position:sticky;left:32px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
@@ -226,8 +208,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             'text-align:left;width:118px;" /></td>';
         /* Rz Wlazu */
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'position:sticky;left:162px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
@@ -241,8 +222,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" /></td>';
         /* Rz Dna */
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'position:sticky;left:240px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
@@ -257,8 +237,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Wys auto */
         const height = _excelCalcWellHeight(well);
         html +=
-            '<td style="' +
-            tdBaseStyle +
+            '<td class="excel-td" style="' +
             'position:sticky;left:318px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
@@ -340,9 +319,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 110
             );
             html +=
-                '<td style="' +
-                tdBaseStyle +
-                'text-align:right;"><input type="number" step="0.01" value="' +
+                '<td class="excel-td excel-td-right"><input type="number" step="0.01" value="' +
                 (hasExplicitRzWl ? prz.rzednaWlaczenia : '') +
                 '" placeholder="' +
                 rzWlPlaceholder +
@@ -355,9 +332,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 _excelCellInp(72) +
                 '" /></td>';
             html +=
-                '<td style="' +
-                tdBaseStyle +
-                'text-align:center;"><input type="number" step="1" value="' +
+                '<td class="excel-td excel-td-center"><input type="number" step="1" value="' +
                 (prz.angle != null ? prz.angle : '') +
                 '" onchange="excelOnPrzejscieChange(' +
                 wIdx +
@@ -367,12 +342,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 '" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
                 _excelCellInp(50) +
                 'text-align:center;" /></td>';
-            html += '<td style="' + tdBaseStyle + 'text-align:left;">' + typeHtml + '</td>';
-            html += '<td style="' + tdBaseStyle + 'text-align:left;">' + dnHtml + '</td>';
+            html += '<td class="excel-td excel-td-left">' + typeHtml + '</td>';
+            html += '<td class="excel-td excel-td-left">' + dnHtml + '</td>';
         }
         /* Gap */
-        html +=
-            '<td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;text-align:center;color:var(--slate-800);background:var(--slate-950);"></td>';
+        html += '<td class="code-cell-center"></td><td class="code-cell-center"></td>';
         /* Wlaz */
         const wlazCol = visibleCols.find(function (c) {
             return c.componentType === 'wlaz';
@@ -395,7 +369,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wlazOpts.push([p.id, lbl]);
         });
         html +=
-            '<td style="text-align:left;">' +
+            '<td class="text-left">' +
             _excelOverlaySelectHtml(
                 wlazOpts,
                 wlazVal,
@@ -418,9 +392,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             const hArg = c.height != null ? c.height : 'null';
             const redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
             html +=
-                '<td style="' +
-                tdBaseStyle +
-                'text-align:center;min-width:95px;"><input type="number" min="0" step="1" value="' +
+                '<td class="excel-td excel-td-center" style="min-width:95px;"><input type="number" min="0" step="1" value="' +
                 (count || '') +
                 '" oninput="excelOnCompChange(' +
                 wIdx +
@@ -438,9 +410,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* H dennica */
         const dennH = _excelCalcDennicaHeight(well);
         html +=
-            '<td style="' +
-            tdBaseStyle +
-            'text-align:center;color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
+            '<td class="excel-td excel-td-center" style="color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
             wIdx +
             '">' +
             (dennH || '\u2014') +
@@ -448,9 +418,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Uszczelki */
         const uszczCount = _excelCalcUszczelkaCount(well);
         html +=
-            '<td style="' +
-            tdBaseStyle +
-            'text-align:center;color:var(--warn);font-weight: var(--fw-semibold);" data-cell="uszcz-' +
+            '<td class="excel-td excel-td-center" style="color:var(--warn);font-weight: var(--fw-semibold);" data-cell="uszcz-' +
             wIdx +
             '">' +
             uszczCount +
@@ -464,7 +432,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             redOpts.push(['1000', 'DN1000']);
             if (can1200 || (redActive && redTarget === 1200)) redOpts.push(['1200', 'DN1200']);
             html +=
-                '<td style="text-align:center;">' +
+                '<td class="excel-td excel-td-center">' +
                 _excelOverlaySelectHtml(
                     redOpts,
                     redActive ? String(redTarget) : '',
@@ -479,7 +447,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             kinOpts.push([ko[0], ko[1]]);
         });
         html +=
-            '<td style="text-align:left;">' +
+            '<td class="text-left">' +
             _excelOverlaySelectHtml(
                 kinOpts,
                 well.kineta || '',
@@ -490,172 +458,124 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '</td>';
         /* Psia buda */
         html +=
-            '<td style="' +
-            tdBaseStyle +
-            'text-align:center;"><input type="checkbox"' +
+            '<td class="excel-td excel-td-center"><input type="checkbox"' +
             (well.psiaBuda ? ' checked' : '') +
             ' onchange="excelOnPsiaBudaChange(' +
             wIdx +
-            ',this.checked)" style="accent-color:var(--warn);cursor:pointer;transform:scale(1.3);" /></td>';
+            ',this.checked)" class="excel-check-pb" /></td>';
         /* Akcje */
         html +=
-            '<td style="' +
-            tdBaseStyle +
-            'text-align:center;white-space:nowrap;"><div style="display:flex;gap:2px;justify-content:center;">';
+            '<td class="excel-td excel-td-center" style="white-space:nowrap;"><div style="display:flex;gap:2px;justify-content:center;">';
         if (isLockedRow) {
             html +=
-                '<span title="Studnia zablokowana — edycja niedostępna" style="color:var(--danger-hover);display:inline-flex;align-items:center;margin-right:2px;"><i data-lucide="lock" style="width:14px;height:14px;" aria-hidden="true"></i></span>';
+                '<span title="Studnia zablokowana — edycja niedostępna" style="color:var(--danger-hover);display:inline-flex;align-items:center;margin-right:2px;"><i data-lucide="lock" class="icon-xs" aria-hidden="true"></i></span>';
         }
         html +=
             '<button onclick="excelOpenWellParams(' +
             wIdx +
-            ')" title="Parametry" style="background:var(--slate-950);color:var(--accent-hover);border:1px solid rgba(var(--accent-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--accent-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="settings" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDuplicateWell(' +
             wIdx +
-            ')" title="Duplikuj" style="background:var(--slate-950);color:var(--blue-hover);border:1px solid rgba(var(--blue-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--blue-rgb), 0.1)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="copy" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Duplikuj" class="excel-action-btn is-blue"><i data-lucide="copy" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDeleteWell(' +
             wIdx +
-            ')" title="Usu\u0144" style="background:var(--slate-950);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.25rem 0.45rem;border-radius:2px;font-size: var(--fs-xs);cursor:pointer;font-weight: var(--fw-semibold);transition:all 0.1s;display:inline-flex;align-items:center;justify-content:center;" onmouseenter="this.style.background=\'rgba(var(--danger-rgb), 0.15)\'" onmouseleave="this.style.background=\'var(--slate-950)\'"><i data-lucide="trash-2" style="width:16px;height:16px;" aria-hidden="true"></i></button>';
+            ')" title="Usu\u0144" class="excel-action-btn is-danger"><i data-lucide="trash-2" class="icon-sm" aria-hidden="true"></i></button>';
         html += '</div></td>';
         html += '</tr>';
     });
     /* EMPTY ROW */
     const emptyRowBg = 'var(--slate-950)';
     html += '<tr id="excel-empty-row" style="background:' + emptyRowBg + ';">';
-    const tdEmptyStyle = _EXCEL_FONT + 'color:var(--slate-700);';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'background:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'background:' +
         emptyRowBg +
         ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'background:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight: var(--fw-semibold);height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" style="display:block;"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'position:sticky;left:0;z-index:' +
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight: var(--fw-semibold);height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+    html += '<td class="excel-td excel-td-empty" style="';
+    'position:sticky;left:0;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;color:var(--slate-700);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'position:sticky;left:32px;z-index:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'position:sticky;left:32px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(125) +
         'text-align:left;color:var(--slate-400);" /></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'position:sticky;left:162px;z-index:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'position:sticky;left:162px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(72) +
         '" /></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'position:sticky;left:240px;z-index:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'position:sticky;left:240px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(72) +
         '" /></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'position:sticky;left:318px;z-index:' +
+    html += '<td class="excel-td excel-td-empty" style="';
+    'position:sticky;left:318px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;color:var(--slate-800);" data-cell="height-empty">\u2014</td>';
     for (let _j = 0; _j < maxTr; _j++) {
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" disabled style="' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" disabled style="' +
             _excelCellInp(72) +
             'opacity:0.3;" /></td>';
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:center;"><input type="number" step="1" placeholder="\u2014" disabled style="' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:center;"><input type="number" step="1" placeholder="\u2014" disabled style="' +
             _excelCellInp(50) +
             'opacity:0.3;" /></td>';
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:left;">' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:left;">' +
             _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, true) +
             '</td>';
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:left;">' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:left;">' +
             _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, true) +
             '</td>';
     }
-    html +=
-        '<td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td><td style="padding:0.3rem 0;font-size: var(--fs-xs);font-family:Consolas,Menlo,monospace;color:var(--slate-700);background:var(--slate-950);"></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 125, true) +
-        '</td>';
+    html += '<td class="code-cell"></td><td class="code-cell"></td>';
+    html += '<td class="excel-td excel-td-empty" style="';
+    'text-align:left;">' + _excelOverlaySelectHtml([['', '\u2014']], '', null, 125, true) + '</td>';
     visibleCols.forEach(function (col) {
         if (col.type === 'select' || col.type === 'auto') return;
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:center;"><input type="number" min="0" step="1" placeholder="\u2014" disabled style="' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:center;"><input type="number" min="0" step="1" placeholder="\u2014" disabled style="' +
             _excelCellInp(50) +
             'opacity:0.3;" /></td>';
     });
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:center;color:var(--slate-800);" data-cell="denn-empty">\u2014</td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:center;color:var(--slate-800);" data-cell="uszcz-empty">\u2014</td>';
+    html += '<td class="excel-td excel-td-empty" style="';
+    ('text-align:center;color:var(--slate-800);" data-cell="denn-empty">\u2014</td>');
+    html += '<td class="excel-td excel-td-empty" style="';
+    ('text-align:center;color:var(--slate-800);" data-cell="uszcz-empty">\u2014</td>');
     if (hasReduction) {
-        html +=
-            '<td style="' +
-            tdEmptyStyle +
-            'text-align:center;">' +
+        html += '<td class="excel-td excel-td-empty" style="';
+        'text-align:center;">' +
             _excelOverlaySelectHtml([['', '\u2014']], '', null, 105, true) +
             '</td>';
     }
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 90, true) +
-        '</td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:center;"><input type="checkbox" disabled style="opacity:0.3;" /></td>';
-    html +=
-        '<td style="' +
-        tdEmptyStyle +
-        'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>';
+    html += '<td class="excel-td excel-td-empty" style="';
+    'text-align:left;">' + _excelOverlaySelectHtml([['', '\u2014']], '', null, 90, true) + '</td>';
+    html += '<td class="excel-td excel-td-empty" style="';
+    ('text-align:center;"><input type="checkbox" disabled class="opacity-3" /></td>');
+    html += '<td class="excel-td excel-td-empty" style="';
+    ('text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>');
     html += '</tr>';
     html += '</tbody>';
     return html;

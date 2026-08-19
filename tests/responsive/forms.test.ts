@@ -18,11 +18,15 @@ describe('Formularze — responsywność', () => {
     });
 
     test('każdy formularz w rury partialach ma klasę .wizard-form-grid', () => {
-        const partialDir = 'public/partials/rury';
-        const files = fs.readdirSync(partialDir).filter((f) => f.endsWith('.html'));
+        const partialDirs = ['public/partials/rury', 'public/partials/shared'];
         let allHtml = '';
-        for (const f of files) {
-            allHtml += fs.readFileSync(`${partialDir}/${f}`, 'utf-8') + '\n';
+        for (const partialDir of partialDirs) {
+            const files = fs
+                .readdirSync(partialDir)
+                .filter((f) => f.endsWith('.html') && fs.statSync(`${partialDir}/${f}`).isFile());
+            for (const f of files) {
+                allHtml += fs.readFileSync(`${partialDir}/${f}`, 'utf-8') + '\n';
+            }
         }
         const formRows = allHtml.match(/class="[^"]*wizard-form-grid[^"]*"/g);
         expect(formRows!.length).toBeGreaterThan(0);

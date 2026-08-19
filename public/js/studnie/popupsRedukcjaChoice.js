@@ -16,7 +16,7 @@ function openRedukcjaChoicePopup() {
         html: `
     <div class="modal" style="max-width:400px; width:90%; border-radius: var(--radius); padding:1.5rem; background: var(--bg-secondary); border: 1px solid var(--border);">
       <h3 id="redukcja-choice-title" style="margin-top:0; margin-bottom:1rem; font-size: var(--fs-3xl); color:var(--text-primary); display:flex; align-items:center; gap:0.5rem;">
-        <i data-lucide="chevrons-down" style="color:var(--accent);" aria-hidden="true"></i> Wybierz rodzaj redukcji
+        <i data-lucide="chevrons-down" class="color-accent" aria-hidden="true"></i> Wybierz rodzaj redukcji
       </h3>
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
         <button onclick="selectRedukcjaChoice(1000)" style="
@@ -25,8 +25,8 @@ function openRedukcjaChoicePopup() {
             background:${isActive && currentTarget === 1000 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
             color:${isActive && currentTarget === 1000 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">
-            <div style="font-weight: var(--fw-extrabold); font-size: var(--fs-xl);">Redukcja na DN1000</div>
-            <div style="font-size: var(--fs-sm); opacity:0.7; margin-top:0.2rem;">Standardowa redukcja na kręgi DN1000.</div>
+            <div class="fs-xl-eb">Redukcja na DN1000</div>
+            <div class="fs-sm-op70">Standardowa redukcja na kręgi DN1000.</div>
         </button>
         
         ${
@@ -38,8 +38,8 @@ function openRedukcjaChoicePopup() {
             background:${isActive && currentTarget === 1200 ? 'rgba(var(--accent-rgb), 0.15)' : 'rgba(var(--white-rgb), 0.05)'};
             color:${isActive && currentTarget === 1200 ? 'var(--accent-text)' : 'var(--text-primary)'};
         ">
-            <div style="font-weight: var(--fw-extrabold); font-size: var(--fs-xl);">Redukcja na DN1200</div>
-            <div style="font-size: var(--fs-sm); opacity:0.7; margin-top:0.2rem;">Większa redukcja na kręgi DN1200.</div>
+            <div class="fs-xl-eb">Redukcja na DN1200</div>
+            <div class="fs-sm-op70">Większa redukcja na kręgi DN1200.</div>
         </button>
         `
                 : ''

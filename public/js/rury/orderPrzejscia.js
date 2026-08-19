@@ -21,15 +21,15 @@ function renderPrzejsciaDetailsTable(_existingData) {
     }
 
     let html = `<table class="rury-table" class="text-xs">
-        <thead>
+        <th scope="col"ead>
             <tr>
-                <th style="width:22%;">Rodzaj przej\u015Bcia</th>
-                <th style="width:12%;">DN OD</th>
-                <th style="width:12%;">DN DO</th>
-                <th style="width:12%;">Ilo\u015B\u0107</th>
-                <th style="width:22%;">Uwagi</th>
-                <th style="width:10%;">Czy przej\u015Bcie?</th>
-                <th style="width:10%;">Akcje</th>
+                <th scope="col" class="w-22pct">Rodzaj przej\u015Bcia</th>
+                <th scope="col" class="w-12pct">DN OD</th>
+                <th scope="col" class="w-12pct">DN DO</th>
+                <th scope="col" class="w-12pct">Ilo\u015B\u0107</th>
+                <th scope="col" class="w-22pct">Uwagi</th>
+                <th scope="col" class="w-10pct">Czy przej\u015Bcie?</th>
+                <th scope="col" class="w-10pct">Akcje</th>
             </tr>
         </thead>
         <tbody>`;
@@ -40,14 +40,14 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<input type="text" class="form-input" value="${escapeHtml(row.rodzaj || '')}" style="width:100%;font-size: var(--fs-sm);padding:0.2rem 0.4rem;" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
+                        ? `<input type="text" class="form-input" value="${escapeHtml(row.rodzaj || '')}" class="fs-sm-024" data-field="rodzaj" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" />`
                         : `<span class="fw-600">${escapeHtml(row.rodzaj || '\u2014')}</span>`
                 }
             </td>
-            <td><input type="text" class="form-input" value="${escapeHtml(row.dnOd || '')}" style="width:100%;font-size: var(--fs-sm);padding:0.2rem 0.4rem;" data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input" value="${escapeHtml(row.dnDo || '')}" style="width:100%;font-size: var(--fs-sm);padding:0.2rem 0.4rem;" data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="number" class="form-input" value="${escapeHtml(row.ilosc || '')}" style="width:100%;font-size: var(--fs-sm);padding:0.2rem 0.4rem;" data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
-            <td><input type="text" class="form-input" value="${escapeHtml(row.uwagi || '')}" style="width:100%;font-size: var(--fs-sm);padding:0.2rem 0.4rem;" data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input" value="${escapeHtml(row.dnOd || '')}" class="fs-sm-024" data-field="dnOd" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input" value="${escapeHtml(row.dnDo || '')}" class="fs-sm-024" data-field="dnDo" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="number" class="form-input" value="${escapeHtml(row.ilosc || '')}" class="fs-sm-024" data-field="ilosc" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
+            <td><input type="text" class="form-input" value="${escapeHtml(row.uwagi || '')}" class="fs-sm-024" data-field="uwagi" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)" /></td>
             <td>
                 <select class="form-input" style="width:100%;font-size: var(--fs-sm);padding:0.2rem;" data-field="czyPrzejscie" data-source="${row.source}" data-idx="${row._idx}" onchange="_syncCustomRow(this)">
                     <option value="TAK" ${row.czyPrzejscie === 'TAK' ? 'selected' : ''}>TAK</option>
@@ -57,7 +57,7 @@ function renderPrzejsciaDetailsTable(_existingData) {
             <td>
                 ${
                     isCustom
-                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size: var(--fs-xs);padding:0.15rem 0.4rem;"><i data-lucide="x" style="width:12px;height:12px;"></i></button>`
+                        ? `<button class="btn btn-sm btn-danger" onclick="removePrzejscieRow('custom', ${row._idx})" style="font-size: var(--fs-xs);padding:0.15rem 0.4rem;"><i data-lucide="x" class="icon-12"></i></button>`
                         : '<span style="color:var(--text-muted);font-size: var(--fs-xs);">z oferty</span>'
                 }
             </td>

@@ -160,7 +160,7 @@ function generateSvgFromPO(po) {
             center +
             '" r="' +
             radius +
-            '" fill="none" style="stroke:var(--slate-950)" stroke-width="2.5" />'
+            '" fill="none" class="stroke-slate-950" stroke-width="2.5" />'
     );
     svgParts.push(
         '<line x1="' +
@@ -171,7 +171,7 @@ function generateSvgFromPO(po) {
             center +
             '" y2="' +
             (center + 5) +
-            '" style="stroke:var(--slate-400)" stroke-width="0.8" />'
+            '" class="stroke-slate-400" stroke-width="0.8" />'
     );
     svgParts.push(
         '<line x1="' +
@@ -182,7 +182,7 @@ function generateSvgFromPO(po) {
             (center + 5) +
             '" y2="' +
             center +
-            '" style="stroke:var(--slate-400)" stroke-width="0.8" />'
+            '" class="stroke-slate-400" stroke-width="0.8" />'
     );
 
     const labels = [];
@@ -329,7 +329,7 @@ function generateSvgFromPO(po) {
                     l.lx +
                     '" y2="' +
                     (l.ly + lineDist) +
-                    '" style="stroke:var(--slate-300)" stroke-dasharray="2,2" stroke-width="0.8" />'
+                    '" class="stroke-slate-300" stroke-dasharray="2,2" stroke-width="0.8" />'
             );
         }
         let textSvg =
@@ -341,14 +341,14 @@ function generateSvgFromPO(po) {
             l.anchor +
             '" font-family="Arial, sans-serif" font-size="' +
             labelFontSize +
-            '" font-weight="bold" style="fill:var(--black)">';
+            '" font-weight="bold" class="fill-black">';
         l.lines.forEach((line, li) => {
             textSvg +=
                 '<tspan x="' +
                 (l.lx + l.offsetX) +
                 '" dy="' +
                 (li === 0 ? '0' : '1.1em') +
-                '" style="fill:var(--black)">' +
+                '" class="fill-black">' +
                 line +
                 '</tspan>';
         });

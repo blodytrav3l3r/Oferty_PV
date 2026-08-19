@@ -93,17 +93,17 @@ window.renderWellsList = function renderWellsList() {
 
             const statusBadge =
                 w.configStatus === 'LOADING'
-                    ? '<span title="Trwa auto-dobór..." style="margin-left:0.3rem;"><span class="loading-spinner-inline"></span></span>'
+                    ? '<span title="Trwa auto-dobór..." class="ml-3"><span class="loading-spinner-inline"></span></span>'
                     : w.configStatus === 'ERROR'
-                      ? '<span title="Błąd konfiguracji" style="margin-left:0.3rem;"><i data-lucide="x-circle"></i></span>'
+                      ? '<span title="Błąd konfiguracji" class="ml-3"><i data-lucide="x-circle"></i></span>'
                       : w.configStatus === 'WARNING'
                         ? '<span title="' +
                           (w.configErrors || [])
                               .map((e) => escapeHtml(e).replace(/"/g, '&quot;'))
                               .join('; ') +
-                          '" style="margin-left:0.3rem;"><i data-lucide="alert-triangle"></i></span>'
+                          '" class="ml-3"><i data-lucide="alert-triangle"></i></span>'
                         : w.configStatus === 'OK'
-                          ? '<span style="margin-left:0.3rem;"><i data-lucide="check-circle-2"></i></span>'
+                          ? '<span class="ml-3"><i data-lucide="check-circle-2"></i></span>'
                           : '';
 
             // Ikona źródła konfiguracji

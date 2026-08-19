@@ -50,7 +50,7 @@ export default {
             logger.error('kartotekaUi', 'Błąd inicjalizacji UI Sprzedaży:', error);
             const listDiv = document.getElementById('ka-offers-list');
             if (listDiv)
-                listDiv.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--text-danger);">Błąd ładowania ofert: ${window.escapeHtml(error.message)}</div>`;
+                listDiv.innerHTML = `<div class="empty-danger">Błąd ładowania ofert: ${window.escapeHtml(error.message)}</div>`;
         }
     },
 
@@ -264,7 +264,7 @@ export default {
         const el = document.getElementById('ka-offers-list');
         if (!el) return;
         el.innerHTML =
-            '<div style="text-align:center; padding:2rem; color:var(--text-muted);">' +
+            '<div class="empty-muted">' +
             '<i data-lucide="loader-2" class="spin" style="width:24px;height:24px;animation:spin 1s linear infinite;"></i>' +
             '<br/><span style="font-size: var(--fs-lg); margin-top:0.5rem; display:inline-block;">Ładowanie ofert...</span></div>';
         if (window.lucide) lucide.createIcons({ root: el });
@@ -294,7 +294,7 @@ export default {
         if (!listDiv) return;
         const hasCountdown = Number(retryAfter) > 0;
         let html =
-            '<div style="text-align:center; padding:2rem; color:var(--text-danger);">' +
+            '<div class="empty-danger">' +
             '<strong>Błąd:</strong><br/>' +
             '<span style="font-size: var(--fs-lg); opacity:0.8;">' +
             window.escapeHtml(message) +

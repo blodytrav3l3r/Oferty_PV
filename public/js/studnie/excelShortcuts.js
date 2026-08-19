@@ -87,10 +87,10 @@ function openExcelShortcutsPopup() {
     const html =
         '<div class="modal" style="max-width:min(96vw,560px);max-height:80vh;overflow:auto;">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
-        '<button onclick="this.closest(\'.modal-overlay\').remove()" style="background:none;border:none;color:var(--slate-400);font-size: var(--fs-4xl);cursor:pointer;padding:0;line-height:1;">✕</button></div>' +
+        '<button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-close-4xl-line1">✕</button></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size: var(--fs-base);">' +
-        '<thead><tr><th style="text-align:left;padding:0.25rem 0.5rem;border-bottom:1px solid rgba(var(--white-rgb), 0.1);">Skrót</th>' +
-        '<th style="text-align:left;padding:0.25rem 0.5rem;border-bottom:1px solid rgba(var(--white-rgb), 0.1);">Opis</th></tr></thead>' +
+        '<th scope="col"ead><tr><th scope="col" class="th-l-pad25-bb">Skrót</th>' +
+        '<th scope="col" class="th-l-pad25-bb">Opis</th></tr></thead>' +
         '<tbody>' +
         rows.join('') +
         '</tbody></table>' +

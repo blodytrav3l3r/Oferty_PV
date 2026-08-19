@@ -34,14 +34,14 @@ function renderSavedOffers() {
 
             return `
     <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid var(--success-hover);"' : ''}>
-      <div class="offer-info" style="min-width:0;">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:0.5rem;">
-          <h3 style="margin-bottom:0.2rem; word-break:break-all;">${escapeHtml(o.number)}</h3>
-          <div style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-xl); white-space:nowrap;">
+      <div class="offer-info" class="min-w-0">
+        <div class="flex-between-wrap">
+          <h3 class="mb-02-wb">${escapeHtml(o.number)}</h3>
+          <div class="fw-bold-xl-primary-nowrap">
             <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
           </div>
         </div>
-        <div class="meta" style="margin-top:0.3rem;">
+        <div class="meta" class="mt-3">
           <span><i data-lucide="calendar"></i> <strong>${escapeHtml(o.date)}</strong></span>
           <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
           ${
@@ -67,9 +67,9 @@ function renderSavedOffers() {
             o.clientName || o.investName || o.clientContact
                 ? `
         <div class="offer-client-badges">
-          ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.clientName)}</span></div>` : ''}
-          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.investName)}</span></div>` : ''}
-          ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span style="font-weight: var(--fw-medium)">${escapeHtml(o.clientContact)}</span></div>` : ''}
+          ${o.clientName ? `<div class="badge-client"><i data-lucide="building-2"></i> <strong>Klient:</strong> <span class="fw-500">${escapeHtml(o.clientName)}</span></div>` : ''}
+          ${o.investName ? `<div class="badge-invest"><i data-lucide="hard-hat"></i> <strong>Budowa:</strong> <span class="fw-500">${escapeHtml(o.investName)}</span></div>` : ''}
+          ${o.clientContact ? `<div class="badge-contact"><i data-lucide="phone"></i> <strong>Kontakt:</strong> <span class="fw-500">${escapeHtml(o.clientContact)}</span></div>` : ''}
         </div>`
                 : ''
         }
@@ -92,24 +92,24 @@ function renderSavedOffers() {
         }
       </div>
       <div class="offer-actions" style="display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end; align-content:center;">
-        <button class="btn btn-sm btn-primary" onclick="loadOffer('${escapeHtml(o.id)}')" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
-        <button class="btn btn-sm btn-secondary" onclick="duplicateOffer('${escapeHtml(o.id)}')" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
-        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="showOfferHistory('${escapeHtml(o.id)}')" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-        <button class="btn btn-sm btn-secondary" onclick="downloadExistingOffer('${escapeHtml(o.id)}')" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-        <button class="btn btn-sm btn-secondary" onclick="exportOfferXlsx('${escapeHtml(o.id)}')" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
-        <button class="btn btn-sm btn-success" onclick="exportOfferPDF('${escapeHtml(o.id)}')" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
+        <button class="btn btn-sm btn-primary" data-action="loadOffer" data-id="${escapeHtml(o.id)}" title="Edytuj" ${canEdit ? '' : 'disabled'}><i data-lucide="pencil" aria-hidden="true"></i> Edytuj</button>
+        <button class="btn btn-sm btn-secondary" data-action="duplicateOffer" data-id="${escapeHtml(o.id)}" title="Duplikuj"><i data-lucide="clipboard-list" aria-hidden="true"></i> Duplikuj</button>
+        ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistory" data-id="${escapeHtml(o.id)}" title="Historia zmian"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+        <button class="btn btn-sm btn-secondary" data-action="downloadExistingOffer" data-id="${escapeHtml(o.id)}" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+        <button class="btn btn-sm btn-secondary" data-action="exportOfferXlsx" data-id="${escapeHtml(o.id)}" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
+        <button class="btn btn-sm btn-success" data-action="exportOfferPDF" data-id="${escapeHtml(o.id)}" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
         ${
             _hasOrder
                 ? _orderList
                       .map(
                           (ord) => `
-            <button class="btn btn-sm" onclick="window.location.href='rury.html?order=${escapeHtml(ord.id)}'" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Edytuj zamówienie">
+            <button class="btn btn-sm" data-action="openOrderRury" data-id="${escapeHtml(ord.id)}" style="background:rgba(var(--success-rgb), 0.15); border:1px solid rgba(var(--success-rgb), 0.3); color:var(--success-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Edytuj zamówienie">
                 <i data-lucide="package"></i> Zam. ${escapeHtml(ord.orderNumber || ord.offerNumber || ord.id.substring(0, 8))}
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'pdf')" style="background:rgba(var(--danger-rgb), 0.15); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy PDF">
+            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtml(ord.id)}" data-fmt="pdf" style="background:rgba(var(--danger-rgb), 0.15); border:1px solid rgba(var(--danger-rgb), 0.3); color:var(--danger-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy PDF">
                 <i data-lucide="file-text"></i> Karta PDF
             </button>
-            <button class="btn btn-sm" onclick="exportKartaDirectRury_action('${escapeHtml(ord.id)}', 'docx')" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy Word">
+            <button class="btn btn-sm" data-action="exportKartaDirectRury" data-id="${escapeHtml(ord.id)}" data-fmt="docx" style="background:rgba(var(--blue-rgb), 0.15); border:1px solid rgba(var(--blue-rgb), 0.3); color:var(--blue-hover); font-size: var(--fs-sm); padding:0.3rem 0.6rem; font-weight: var(--fw-bold);" title="Karta budowy Word">
                 <i data-lucide="edit"></i> Karta Word
             </button>
         `
@@ -117,7 +117,7 @@ function renderSavedOffers() {
                       .join('')
                 : ''
         }
-        <button class="btn btn-sm btn-danger" onclick="deleteOffer('${escapeHtml(o.id)}')" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+        <button class="btn btn-sm btn-danger" data-action="deleteOffer" data-id="${escapeHtml(o.id)}" title="Usuń" ${canEdit ? '' : 'disabled'}><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
       </div>
     </div>
   `;
@@ -149,29 +149,29 @@ function showOfferHistory(id) {
                     diffHtml = `<span style="color:var(--success); font-size: var(--fs-md); font-weight: var(--fw-bold);">${fmt(priceDiff)} PLN</span>`;
                 }
             } else {
-                diffHtml = `<span style="color:var(--text-muted); font-size: var(--fs-md);">Bez zmian</span>`;
+                diffHtml = `<span class="fs-md-muted">Bez zmian</span>`;
             }
 
             return `
       <div style="background:var(--bg-glass); border:1px solid var(--border-glass); border-radius: var(--radius-sm); padding:1rem; margin-bottom:0.8rem;">
         <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; border-bottom:1px dashed var(--border-glass); padding-bottom:0.4rem;">
           <strong class="text-primary">${new Date(h.updatedAt).toLocaleString()}</strong>
-          <div style="text-align:right;">
-            <div style="font-size: var(--fs-base); color:var(--text-muted);">Zapisana przez: <strong style="color:var(--text-secondary);">${escapeHtml(h.lastEditedBy || h.userName || '—')}</strong></div>
-            <div style="font-size: var(--fs-base); color:var(--text-muted);">Nadpisana przez: <strong style="color:var(--accent);">${escapeHtml(nextState.lastEditedBy || nextState.userName || '—')}</strong></div>
+          <div class="text-right">
+            <div class="fs-base-muted">Zapisana przez: <strong class="text-secondary">${escapeHtml(h.lastEditedBy || h.userName || '—')}</strong></div>
+            <div class="fs-base-muted">Nadpisana przez: <strong class="color-accent">${escapeHtml(nextState.lastEditedBy || nextState.userName || '—')}</strong></div>
           </div>
         </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="flex-between">
           <div>
             <div style="font-size: var(--fs-lg); color:var(--text-secondary);">Wersja przed zmianą</div>
             <div style="font-size: var(--fs-3xl); font-weight: var(--fw-bold);"><i data-lucide="banknote"></i> ${fmt(h.totalBrutto)} PLN</div>
-            <div style="font-size: var(--fs-md); color:var(--text-muted);">Pozycji: ${h.items ? h.items.length : 0}</div>
+            <div class="fs-md-muted">Pozycji: ${h.items ? h.items.length : 0}</div>
           </div>
-          <div style="text-align:right;">
+          <div class="text-right">
             <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:0.2rem;">Różnica do kolejnej wersji:</div>
             ${diffHtml}
             <div style="margin-top:0.6rem;">
-              <button class="btn btn-sm btn-secondary" onclick="restoreOfferVersion('${escapeHtml(id)}', ${i})">Pobierz do edycji</button>
+              <button class="btn btn-sm btn-secondary" data-action="restoreOfferVersion" data-id="${escapeHtml(id)}" data-i="${i}">Pobierz do edycji</button>
             </div>
           </div>
         </div>
@@ -187,8 +187,8 @@ function showOfferHistory(id) {
         html: `
     <div class="modal" style="max-width:800px; width:95%; border-radius: var(--radius); max-height:90vh; display:flex; flex-direction:column;">
       <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem;">
-        <h3 id="offer-history-title" style="font-weight: var(--fw-bold);"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${escapeHtml(offer.number)}</h3>
-        <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+        <h3 id="offer-history-title" class="fw-bold"><i data-lucide="hourglass" aria-hidden="true"></i> Historia zmian oferty: ${escapeHtml(offer.number)}</h3>
+        <button class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="padding:1rem 0; overflow-y:auto; flex:1;">
         ${historyHtml}
@@ -196,6 +196,42 @@ function showOfferHistory(id) {
     </div>`
     });
     if (window.lucide) lucide.createIcons();
+}
+
+/* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */
+if (typeof document !== 'undefined' && !window.__ochDelegated) {
+    window.__ochDelegated = true;
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-action]');
+        if (!el) return;
+        const action = el.getAttribute('data-action') || '';
+        const id = el.getAttribute('data-id');
+        const i = el.getAttribute('data-i');
+        const fmt = el.getAttribute('data-fmt');
+        if (action === 'loadOffer') {
+            window.loadOffer(id);
+        } else if (action === 'duplicateOffer') {
+            window.duplicateOffer(id);
+        } else if (action === 'showOfferHistory') {
+            window.showOfferHistory(id);
+        } else if (action === 'downloadExistingOffer') {
+            window.downloadExistingOffer(id);
+        } else if (action === 'exportOfferXlsx') {
+            window.exportOfferXlsx(id);
+        } else if (action === 'exportOfferPDF') {
+            window.exportOfferPDF(id);
+        } else if (action === 'deleteOffer') {
+            window.deleteOffer(id);
+        } else if (action === 'restoreOfferVersion') {
+            window.restoreOfferVersion(id, parseInt(i, 10));
+        } else if (action === 'openOrderRury') {
+            window.location.href = 'rury.html?order=' + id;
+        } else if (action === 'exportKartaDirectRury') {
+            window.exportKartaDirectRury_action(id, fmt);
+        } else if (action === 'closeModal') {
+            window.closeModal();
+        }
+    });
 }
 
 window.renderSavedOffers = renderSavedOffers;

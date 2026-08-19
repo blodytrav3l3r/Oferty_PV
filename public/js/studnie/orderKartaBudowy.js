@@ -485,7 +485,7 @@ function renderKartaBudowyCopyOptions() {
                   ? order.id.substring(0, 8)
                   : 'Brak numeru';
             const suffix = order.kartaBudowy ? '' : ' (brak karty budowy)';
-            return `<option value="${order.id}"${order.kartaBudowy ? '' : ' disabled'}>${label}${suffix}</option>`;
+            return `<option value="${escapeHtmlAttr(order.id)}"${order.kartaBudowy ? '' : ' disabled'}>${label}${suffix}</option>`;
         })
     );
 

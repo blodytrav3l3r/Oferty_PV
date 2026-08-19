@@ -71,22 +71,15 @@ function _excelSyncAutoManualUI() {
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
         const isAuto = window.isWellAuto(w);
         btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
-        btnMode.style.background = isAuto
-            ? 'rgba(var(--accent-rgb), 0.2)'
-            : 'rgba(var(--warn-rgb), 0.3)';
-        btnMode.style.color = isAuto ? 'var(--accent-text-light)' : 'var(--warn-hover)';
+        btnMode.classList.toggle('is-auto', isAuto);
+        btnMode.classList.toggle('is-manual', !isAuto);
         btnMode.title = isAuto
             ? 'Auto (klik = przełącz na Manual)'
             : 'Manual (klik = przełącz na Auto)';
         if (btnRun) {
             btnRun.disabled = !isAuto;
-            btnRun.style.opacity = isAuto ? '1' : '0.4';
-            btnRun.style.cursor = isAuto ? 'pointer' : 'not-allowed';
-            btnRun.style.background = isAuto
-                ? 'rgba(var(--accent-rgb), 0.3)'
-                : 'rgba(var(--slate-500-rgb), 0.15)';
-            btnRun.style.color = isAuto ? 'var(--accent-text-light)' : 'var(--slate-500)';
-            btnRun.style.borderColor = isAuto ? 'var(--accent)' : 'rgba(var(--slate-500-rgb), 0.3)';
+            btnRun.classList.toggle('is-auto', isAuto);
+            btnRun.classList.toggle('is-manual', !isAuto);
             btnRun.title = isAuto
                 ? 'Uruchom auto-dobór elementów dla tej studni'
                 : 'Przełącz na Auto aby uruchomić';

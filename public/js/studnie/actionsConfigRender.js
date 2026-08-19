@@ -120,9 +120,9 @@ function renderWellConfig() {
             
             <div style="display:flex; align-items:center; gap:0.5rem; flex:1; min-width:0;">
                 <div style="display:flex; flex-direction:column; gap:0; align-items:center; background:rgba(var(--black-rgb), 0.3); padding:2px 4px; border-radius: var(--radius-2xs); min-width:24px;">
-                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" style="width:14px; height:14px;" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveUp ? 'disabled' : ''} onclick="moveWellComponent(${index}, -1)" title="W górę" aria-label="W górę" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveUp ? 'pointer' : 'default'};"><i data-lucide="chevron-up" class="icon-xs" aria-hidden="true"></i></button>
                   <span style="font-size: var(--fs-xs); line-height:1; color:var(--text-primary); font-weight: var(--fw-extrabold); margin:2px 0;">${index + 1}</span>
-                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" style="width:14px; height:14px;" aria-hidden="true"></i></button>
+                  <button class="cfg-move-btn" ${!canMoveDown ? 'disabled' : ''} onclick="moveWellComponent(${index}, 1)" title="W dół" aria-label="W dół" style="background:none; border:none; color:var(--text-muted); padding:0; margin:0; height:12px; display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; cursor:${canMoveDown ? 'pointer' : 'default'};"><i data-lucide="chevron-down" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
 
                 <div style="display:flex; flex-direction:column; gap:0.1rem; min-width:0;">
@@ -195,7 +195,7 @@ function renderWellConfig() {
                             (p.componentType === 'krag' || p.componentType === 'krag_ot')
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size: var(--fs-3xs); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
+                                ' <span class="color-warn" class="pill-tag-warn">ŻELBET</span>';
                         }
                         if (
                             (well.dennicaMaterial === 'zelbetowa' ||
@@ -203,7 +203,7 @@ function renderWellConfig() {
                             p.componentType === 'dennica'
                         ) {
                             badgesHtml +=
-                                ' <span class="color-warn" style="font-size: var(--fs-3xs); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
+                                ' <span class="color-warn" class="pill-tag-warn">ŻELBET</span>';
                         }
                         if (
                             well.stopnie === 'nierdzewna' &&
@@ -225,16 +225,16 @@ function renderWellConfig() {
 
             <div style="display:flex; align-items:center; justify-content:flex-end; gap:0.6rem; flex-shrink:0; min-width:340px;">
               <div style="display:grid; grid-template-columns:36px 65px 60px 48px 120px; gap:0 0.5rem; align-items:center;">
-                <span style="font-size: var(--fs-3xs); color:rgba(var(--white-rgb), 0.3); font-weight: var(--fw-extrabold); letter-spacing:0.6px; text-align:left;">WAGA:</span>
+                <span class="fs-xs-muted">WAGA:</span>
                 <span style="color:rgba(var(--white-rgb), 0.8); font-weight: var(--fw-bold); font-size: var(--fs-md); white-space:nowrap; text-align:right;">${p.weight || totalWeight > 0 ? fmtInt(totalWeight) + ' kg' : '—'}</span>
                 
                 <div style="width:60px;"></div>
                 
-                <span style="font-size: var(--fs-3xs); color:rgba(var(--white-rgb), 0.3); font-weight: var(--fw-extrabold); letter-spacing:0.6px; text-align:left;">CENA:</span>
+                <span class="fs-xs-muted">CENA:</span>
                 <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; letter-spacing:0.3px; text-align:right; width:100%; display:block; line-height:1;">${fmtInt(totalPrice)} PLN</span>
               </div>
               <div style="width:26px; display:flex; justify-content:center;">
-                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius: var(--radius-sm); cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.5)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" style="width:14px; height:14px;"></i></button>
+                <button onclick="removeWellComponent(${index})" title="Usuń" style="width:26px; height:26px; background:rgba(var(--danger-rgb), 0.05); border:1px solid rgba(var(--danger-rgb), 0.2); border-radius: var(--radius-sm); cursor:pointer; color:var(--danger); display:${item.autoAdded ? 'none' : 'flex'}; align-items:center; justify-content:center; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.15)'; this.style.borderColor='rgba(var(--danger-rgb), 0.5)';" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.05)'; this.style.borderColor='rgba(var(--danger-rgb), 0.2)';"><i data-lucide="x" class="icon-xs"></i></button>
               </div>
             </div>
 
@@ -286,7 +286,7 @@ function renderWellConfig() {
 
                 if (precoCalc.redukcja > 0) {
                     const redDesc = precoCalc.redukcjaOpis ? ` (${precoCalc.redukcjaOpis})` : '';
-                    html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-muted);">${fmtInt(precoCalc.redukcja)} PLN</span>`;
+                    html += `<span>&nbsp;&nbsp;&nbsp;↳ Redukcja kinety${redDesc}</span><span class="text-right-600">${fmtInt(precoCalc.redukcja)} PLN</span>`;
                 }
 
                 if (
@@ -298,7 +298,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(u._id)
                     );
                     uniesieniaBazy.forEach((u) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${u.label}]</span><span style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-muted);">${fmtInt(u.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm) [${u.label}]</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
                         u._wyrenderowane = true;
                     });
                 }
@@ -312,7 +312,7 @@ function renderWellConfig() {
                         precoCalc.bazowaIds.includes(s._id)
                     );
                     spadkiBazy.forEach((s) => {
-                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %) [${s.label}]</span><span style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-muted);">${fmtInt(s.cena)} PLN</span>`;
+                        html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %) [${s.label}]</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
                         s._wyrenderowane = true;
                     });
                 }
@@ -336,7 +336,7 @@ function renderWellConfig() {
                             (u) => u._id === d._id
                         );
                         uniesieniaDlaWlotu.forEach((u) => {
-                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm)</span><span style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-muted);">${fmtInt(u.cena)} PLN</span>`;
+                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Uniesienie kinety (${u.mm} mm)</span><span class="text-right-600">${fmtInt(u.cena)} PLN</span>`;
                             u._wyrenderowane = true;
                         });
                     }
@@ -346,7 +346,7 @@ function renderWellConfig() {
                             (s) => s._id === d._id
                         );
                         spadkiDlaWlotu.forEach((s) => {
-                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %)</span><span style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-muted);">${fmtInt(s.cena)} PLN</span>`;
+                            html += `<span>&nbsp;&nbsp;&nbsp;↳ Spadek ${s.typ} (${s.procent} %)</span><span class="text-right-600">${fmtInt(s.cena)} PLN</span>`;
                             s._wyrenderowane = true;
                         });
                     }

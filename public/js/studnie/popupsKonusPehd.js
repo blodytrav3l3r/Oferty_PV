@@ -20,14 +20,14 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
         </p>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
-                <div style="font-weight: var(--fw-bold); color:var(--slate-200); margin-bottom:0.4rem; font-size: var(--fs-3xl);">Płyta DIN</div>
-                <div style="font-size: var(--fs-md); color:var(--slate-500); line-height:1.4;">Standardowa płyta nastudzienna.</div>
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card" class="empty-pad-15">
+                <div class="fs-3xl-slate200-mb4">Płyta DIN</div>
+                <div class="fs-md-slate500-lh">Standardowa płyta nastudzienna.</div>
             </div>
             
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card" style="padding:1.5rem; text-align:center; font-family:Inter,sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:120px;">
-                <div style="font-weight: var(--fw-bold); color:var(--slate-200); margin-bottom:0.4rem; font-size: var(--fs-3xl);">Płyta + Pierścień</div>
-                <div style="font-size: var(--fs-md); color:var(--slate-500); line-height:1.4;">Płyta zamykająca i pierścień odciążający.</div>
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card" class="empty-pad-15">
+                <div class="fs-3xl-slate200-mb4">Płyta + Pierścień</div>
+                <div class="fs-md-slate500-lh">Płyta zamykająca i pierścień odciążający.</div>
             </div>
         </div>
         

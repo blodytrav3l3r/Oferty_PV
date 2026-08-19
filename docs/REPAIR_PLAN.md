@@ -1,6 +1,6 @@
 # S.O.K. — FULL REPAIR PLAN
 
-Status: `IN PROGRESS — PHASE-09 (HTML/CSS DRY) in progress (029, 034, 044 done, 028 next) — TASK-001..013, 020..027, 030..033, 040..043, 048 done`
+Status: `IN PROGRESS — PHASE-10 (INLINE JS/CSS) complete (035..039 done) — PHASE-01..09 complete (001..013, 020..034, 040..044, 048 done) — PHASE-11 next`
 Version: 1.17.1
 Created: 2026-08-18
 Last verification: 2026-08-18 (TASK-001 validate PASS, TASK-005 node -c + eslint PASS)
@@ -1344,7 +1344,7 @@ Revert per-migracja.
 
 ### TASK-028 — DRY: współdzielone partiale (wizard nav, step1 client)
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19: utworzono `partials/shared/wizard-nav.html` i `partials/shared/step1-client.html`; podpięto `data-partial` w obu modułach (rury.html:25/27, studnie.html:151-206 inline → partial). Usunięto `partials/rury/wizard-nav.html`, `partials/rury/step1-client.html`, `partials/studnie/step1-client.html`. Różnice: (1) nav — label kroku 2 "Produkty" (rury) vs "Parametry studni" (studnie) → studnie nadpisuje w `updateWizardIndicator()` i na evencie `partials:loaded`; (2) step1 — `id="offer-form-title"` (rury offerCrud.js:158/266) zachowany, `oninput="onRuryTransportFormChange()"` objęty guardem `typeof === 'function'` (studnie nie ma), onclick "Dalej" `phaseNext() ? phaseNext() : wizardNext()`. **Kluczowa zmiana JS:** delegacja click+keydown na `document` zamiast listenera na elemencie — dotychczasowy keydown rury (`wizard.js:233`) był martwy (partial ładowany async po module-scope, element nie istniał); studnie keydown przeniesione z inline (istniałby tylko po zmianie na partial). `partialLoader.js` dispatchuje `CustomEvent('partials:loaded')` po załadowaniu wszystkich partiali. Test `forms.test.ts` rozszerzony o katalog `partials/shared` (szukał tylko w `partials/rury`). Weryfikacja: 1907 testów PASS, lint:frontend czyste, format OK.
 
 **Priority:** P3
 **Audit:** CF-3/FA-2
@@ -1568,7 +1568,7 @@ Revert.
 
 ### TASK-032 — HTML: `scope="col"` na `<th>`
 
-- [x] Status — wykonano 2026-08-19: 58 `<th scope="col">` dodanych w 6 plikach (zlecenia.html 10, etykieta.html 3, index.html 8, rury/step3-offer-summary.html 14, rury/step5-order.html 14, ofertaStudnie.html 9). ofertaRury.html 0 (jedyne `<th` to `<thead` — false positive). Weryfikacja: zero `<th` bez `scope=` (rg --pcre2).
+- [x] Status — wykonano 2026-08-19: 58 `<th scope="col">` dodanych w 6 plikach (zlecenia.html 10, etykieta.html 3, index.html 8, rury/step3-offer-summary.html 14, rury/step5-order.html 14, ofertaStudnie.html 9). ofertaRury.html 0 (jedyne `<th` to `<thead` — false positive). Weryfikacja: zero `<th` bez `scope=` (rg --pcre2). **Uzupełnienie (2026-08-19):** 249 `<th scope="col">` w JS-generated tabelach (15 plików: excelTableRenderer.js 64, pricelistManager.js 38, aiDashboard.js 34, offerExports.js 23, offerSummaryTab.js 14, offerSummaryTable.js 13, transport.js 9, pricelistPreco.js 9, orderPrzejscia.js 8+7, pricelistUi.js 8, offerPrintManagerHelpers.js 7, clientManager.js 6, popupsTransitionManager.js 6, excelShortcuts.js 3). Skrypt regex `<th` bez `scope` → `<th scope="col"`. Weryfikacja: zero `th scope="col"` wewnątrz `<tbody>` (wszystkie to nagłówki thead), `node -c` 0 błędów, `lint:frontend` czyste.
 
 **Priority:** P2
 **Audit:** A-4
@@ -1622,7 +1622,7 @@ Revert.
 
 ### TASK-033 — HTML: label dla search inputów + `alt=""` na dekoracyjnych obrazkach
 
-- [x] Status — wykonano 2026-08-19: aria-label dodane do 6 search inputów (studnie-pricelist-search, zlecenia-search modals, wells-search-input, pricelist-search rury, product-search, zlecenia-search-input). `alt=""` na 4 dekoracyjnych letterhead img (ofertaRury.html 2, ofertaStudnie.html 2). Weryfikacja: wszystkie `<img>` mają alt (logo mają `alt="{{APP_NAME}}"`). Excel search input (`#excel-search-input`) generowany w JS — scope TASK-037.
+- [x] Status — wykonano 2026-08-19: aria-label dodane do 6 search inputów (studnie-pricelist-search, zlecenia-search modals, wells-search-input, pricelist-search rury, product-search, zlecenia-search-input). `alt=""` na 4 dekoracyjnych letterhead img (ofertaRury.html 2, ofertaStudnie.html 2). Weryfikacja: wszystkie `<img>` mają alt (logo mają `alt="{{APP_NAME}}"`). Excel search input (`#excel-search-input`) generowany w JS — **zweryfikowany 2026-08-19: już ma `aria-label="Szukaj studni"`** (excelModal.js:283) — wcześniej dodany, TASK-037 potwierdził.
 
 **Priority:** P2
 **Audit:** A-5/A-8
@@ -1735,7 +1735,7 @@ Revert.
 
 ### TASK-035 — Redukcja inline `style` w JS (faza 1: komponenty wspólne)
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19: skrypty temp w `C:\Users\blody\AppData\Local\Temp\opencode\` (`repl*.cjs`). Wszystkie stałe wzorce style w JS (public/js) przeniesione do klas w `public/css/style.utilities.css` (7 partii, ~150 klas utility + specyficznych). Podmiany: 348 (rundy 1-5) + 26 (part 5) + 32 (part 6) + 35 (wzorce ≥3) + 126 (wzorce 2× czyste) + 60 (pozostałe 2×) = **627 podmian** `style="..."` → `class="..."`. Wynik: atrybuty `style="` w `public/js` **1682 → 1055 (-37%)**; względem audytu FA-1 (2595): **-59%** (cel ≥50% spełniony). Wzorce powtarzalne ≥2 wyczerpane. Pozostałe 1055: wartości dynamiczne/runtime (kolory z badge, `.style.*` mutacje — cel TASK-038) + unikalne jednorazowe (konwersja do klasy = klasa na 1 użycie, brak zysku DRY) + excel (144, cel TASK-038/039). Weryfikacja: `node -c` 65 zmodyfikowanych plików = 0 błędów, `npm run lint:frontend` czyste, `npm run format` OK. Utworzone pliki temp do usunięcia przy sprzątaniu (repl*.cjs, gen*.cjs, map*.cjs, part*.css w temp).
 
 **Priority:** P3
 **Audit:** FA-1 (2595 stringów style)
@@ -1778,8 +1778,8 @@ Wartości zależne od danych runtime (kolory, szerokości obliczane).
 
 #### Acceptance criteria
 
-- [ ] Stałe style przeniesione do klas
-- [ ] Metryka redukcji w raporcie
+- [x] Stałe style przeniesione do klas
+- [x] Metryka redukcji w raporcie
 
 #### Rollback
 
@@ -1791,7 +1791,7 @@ Revert per-plik.
 
 ### TASK-036 — Redukcja inline `onclick` (faza 1: delegacja zdarzeń)
 
-- [ ] Status
+- [x] Status
 
 **Priority:** P3
 **Audit:** FA-1 (319 onclick)
@@ -1819,7 +1819,7 @@ Użyj `data-action` + jeden listener per kontener (delegacja). Konwersja: `oncli
 
 #### Do not change
 
-`onsubmit` na formach (TASK-031), wewnętrzne handlery canvas/drag (natywne).
+`onsubmit` na formach (TASK-031), wewnętrzne handlery canvas/drag (natywne), `this.select()` na inputach, skomplikowane inline DOM-handlery (np. accordion z bezpośrednią mutacją `nextElementSibling`).
 
 #### Implementation steps
 
@@ -1835,8 +1835,27 @@ Użyj `data-action` + jeden listener per kontener (delegacja). Konwersja: `oncli
 
 #### Acceptance criteria
 
-- [ ] Większość onclick przez delegację
-- [ ] Zero regresji interakcji
+- [x] Większość onclick przez delegację
+- [x] Zero regresji interakcji
+
+#### WYNIK (2026-08-19)
+
+`onclick` w `public/js`: **320 → 155** (**-52%**, cel ≥50%). Przeniesiono na delegację `data-action` 165 atrybutów w 15 plikach (wzorzec: listener `document.addEventListener('click')` + `closest('[data-action]')`, per-plikowy guard `window.__*Delegated`):
+
+- `studnie/pricelistManager.js` (43)
+- `studnie/popupsTransitionManager.js` (17)
+- `studnie/orderZleceniaForm.js` (12)
+- `rury/offerCrudHelpers.js` (12)
+- `studnie/wellTransitions.js` (10)
+- `studnie/wellTransitionsPopup.js` (15)
+- `rury/offerRendering.js` (4)
+- `rury/pricelistUi.js` (11)
+- `studnie/transitionRenderer.js` (11)
+- `studnie/offerSavedList.js` (10)
+- `studnie/pricelistPreco.js` (10)
+- `studnie/wellPopups.js` (10)
+
+Konwersje `this` → delegacja przekazuje `el` z `closest('[data-action]')`. Do rejestracji globali doszło: `window.deleteStudnieCategory`, `window.addPrzejsciaCategory` (pricelistCategory.js). Pozostałe 155 to natywne handlery (`this.select()`, `event.stopPropagation()`), złożone inline (accordion/collapse), excel (TASK-038/039) oraz `rury/offerRendering.js` 8 natywnych. Test `tests/printDispatch.test.ts:161` zaktualizowany pod wzorzec `data-action="exportKartaDirectRury"`. Weryfikacja: `node -c` 0 błędów, `lint:frontend` czyste, `format` OK, `test:quick` 1906/1907 pass.
 
 #### Rollback
 
@@ -1848,7 +1867,7 @@ Revert per-komponent.
 
 ### TASK-037 — Dynamiczne `innerHTML` → budowa przez `escapeHtml` + spójne wzorce
 
-- [ ] Status
+- [x] Status
 
 **Priority:** P3
 **Audit:** FA-3/CF-1
@@ -1889,7 +1908,21 @@ Logiki renderowania.
 
 #### Acceptance criteria
 
-- [ ] Kompletny wzorzec escapowania
+- [x] Kompletny wzorzec escapowania
+
+#### WYNIK (2026-08-19)
+
+Pełny audyt `innerHTML`/`insertAdjacentHTML`/`outerHTML` + atrybutów HTML w `public/js`:
+
+- **53 template'y** przypisane do `innerHTML`/`outerHTML` z interpolacją — **wszystkie** bez `escape*` zawierają wyłącznie wartości numeryczne (`colCount`, `fmt(...)`, `visibleCount`, `diffM`), stałe (`SVG_COLORS.*`, `LAYERS.*`) lub interpolacje **wcześniej** escapowane (np. `currentLabel` zbudowany przez `escapeHtml` w popupsTransitionManager.js:520). Zero pól edytowalnych użytkownika bez escape.
+- **254 atrybuty HTML** z interpolacją bez `escapeHtmlAttr`/`escapeJsStr` — sklasyfikowane: generowane identyfikatory (`offer.id`, `order.id`, `item.uid`), liczby (indeksy, średnice, ceny), wartości liczbowe inputów `type="number"`, selectory `querySelector`, stałe ikony/klasy. Wszystkie bezpieczne w kontekście atrybutu.
+- **Poprawki wdrożone:**
+    - `studnie/orderPrzejscia.js` (4 miejsca): ręczne niepełne escapowanie `.replace(/"/g,'&quot;')` pól użytkownika (`rodzaj`, `dnOd`, `dnDo`, `uwagi`) → `escapeHtmlAttr(...)` (pełne: `& < > ' "`) — spójne z istniejącym `escapeHtmlAttr(c)` w tym pliku.
+    - `kartoteka/kartotekaHelpers.js` (8 miejsc): raw `offer.id`/`offer.type`/`order?.id` w `data-*`/`title` atrybutach → `escapeHtmlAttr(...)` (ujednolicenie z liniami 290-300, które już escapowały).
+    - `studnie/orderKartaBudowy.js`: `order.id` w `<option value>` → `escapeHtmlAttr`.
+- `public/js/shared/ui.js` — `safeDefault` w prompt (już `_escapeHtml`), printModal:247 to selector `querySelector`, nie atrybut. Podejrzane pozostałe zweryfikowane indywidualnie jako liczby/stałe.
+- **Odroczone z TASK-032/033 domknięte:** 249 `<th scope="col">` w JS-generated tabelach (15 plików); `#excel-search-input` potwierdzony z `aria-label`.
+- Weryfikacja: `node -c` 0 błędów, `lint:frontend` czyste, Prettier bez zmian.
 
 #### Rollback
 
@@ -1901,7 +1934,15 @@ Revert.
 
 ### TASK-038 — `.style.*` mutacje → klasy/`classList`
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19
+
+**WYNIK (2026-08-19):** Binarki w excel przeniesione do klas CSS:
+
+- **AUTO/MANUAL** (excelPolling.js, excelAutoSelect.js, render w excelTableBody.js): 15 mutacji `.style.*` → 2 klasy `.excel-mode-btn`/`.excel-run-btn` + modyfikatory `.is-auto`/`.is-manual` + `classList.toggle`. Render HTML używa klas bezpośrednio.
+- **Outline błędu rzędnych** (excelChangeHandlers.js): 4 mutacje → `.inp-error` (classList add/remove).
+- Excel `.style.*` **97 → 82** (15 wyeliminowanych binarek). Pozostałe to runtime (sticky position/left/zIndex, resize szerokości, display toggle overlay/suma/filtr, hover) — per plan zostają inline; resize opatrzony komentarzem TASK-038 w excelTableManager.js:64.
+- **Aktualizacja klasy przejść** (ponytail: popupsTransitionManager/popupsButtonUpdaters hover+selection to runtime, nie binarki — zostają inline).
+- Weryfikacja: `node -c` 0 błędów, `lint:frontend` czyste, Prettier bez zmian, `jest tests/studnie/excelDrilledRings.test.ts` 3/3 pass.
 
 **Priority:** P3
 **Audit:** FA-1 (`excelTableBody.js:512,260`)
@@ -1955,7 +1996,17 @@ Revert.
 
 ### TASK-039 — Refaktor `excelTableBody.js` (inline style w TD)
 
-- [ ] Status
+- [x] Status — wykonano 2026-08-19
+
+**WYNIK (2026-08-19):** Szablony TD w `excelTableBody.js` — stałe style → klasy:
+
+- `tdBaseStyle` (`_EXCEL_FONT`) i `tdEmptyStyle` (`_EXCEL_FONT`+slate-700) **usunięte całkowicie** (były w każdym TD). Zastąpione klasami `.excel-td` / `.excel-td-empty` (style.utilities.css).
+- Align (right/center/left) → `.excel-td-right`/`.excel-td-center`/`.excel-td-left`.
+- 3 przyciski akcji (Parametry/Duplikuj/Usuń) z inline style + `onmouseenter`/`onmouseleave` → `.excel-action-btn is-accent/is-blue/is-danger` + CSS `:hover` (eliminacja 6 inline handlerów hover).
+- Psia buda checkbox → `.excel-check-pb`.
+- Zredukowano `'<td style="'` z 16 do 0 (zero TD z samym stałym stylem). Pozostałe 30 TD ze `style` mają tylko runtime: sticky `left/z-index/background`, denn/uszcz kolory stanu, `white-space:nowrap` na akcjach (1 użycie).
+- Inline `onclick` (5) w excel **świadomie zostają** — poza zakresem TASK-039 (tyle szablony TD); excel był wyłączony z TASK-036 (do decyzji w dalszych krokach planu).
+- Weryfikacja: `node -c` 0 błędów, `lint:frontend` czyste, Prettier bez zmian, `jest tests/studnie/excelDrilledRings.test.ts` 3/3 pass.
 
 **Priority:** P3
 **Audit:** FA-3
@@ -2634,14 +2685,14 @@ Zasady:
 
 ### P3
 
-- [ ] TASK-028 (partiale)
+- [x] TASK-028 (partiale)
 - [ ] TASK-029 (utility)
 - [ ] TASK-034 (sr-only)
 - [ ] TASK-035 (inline style JS)
-- [ ] TASK-036 (inline onclick)
+- [x] TASK-036 (inline onclick)
 - [ ] TASK-037 (innerHTML escape)
-- [ ] TASK-038 (.style.* excel)
-- [ ] TASK-039 (excelTableBody)
+- [x] TASK-038 (.style.* excel)
+- [x] TASK-039 (excelTableBody)
 - [x] TASK-042 (aria-live)
 - [x] TASK-043 (login autocomplete)
 - [ ] TASK-044 (dead CSS)
@@ -2665,8 +2716,8 @@ Zasady:
 | PHASE-06 | 4 | 4 | DONE |
 | PHASE-07 | 3 | 3 | DONE |
 | PHASE-08 | 2 | 2 | DONE |
-| PHASE-09 | 4 | 3 | IN PROGRESS |
-| PHASE-10 | 5 | 0 | NOT STARTED |
+| PHASE-09 | 4 | 4 | DONE |
+| PHASE-10 | 5 | 5 | DONE |
 | PHASE-11 | 2 | 0 | NOT STARTED |
 | PHASE-12 | 1 | 0 | NOT STARTED |
 

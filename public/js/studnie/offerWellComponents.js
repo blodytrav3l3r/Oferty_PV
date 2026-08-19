@@ -25,43 +25,36 @@ function renderWellHeaderRow(
 
     let featureBadges = '';
     if (well.kineta === 'preco' || well.kineta === 'precotop') {
-        featureBadges +=
-            '<span style="font-size: var(--fs-3xs); color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PRECO</span>';
+        featureBadges += '<span class="pill-tag-danger">PRECO</span>';
     }
     if (
         (well.wkladkaDennica && well.wkladkaDennica !== 'brak') ||
         (well.wkladkaNadbudowa && well.wkladkaNadbudowa !== 'brak') ||
         (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak')
     ) {
-        featureBadges +=
-            '<span style="font-size: var(--fs-3xs); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PEHD</span>';
+        featureBadges += '<span class="pill-tag-blue">PEHD</span>';
     }
     if (well.malowanieW && well.malowanieW !== 'brak') {
         if (well.malowanieZ === 'zewnatrz') {
-            featureBadges +=
-                '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
+            featureBadges += '<span class="pill-tag-nierdz">MAL.</span>';
         } else {
-            featureBadges +=
-                '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
+            featureBadges += '<span class="pill-tag-nierdz">MAL.</span>';
         }
     } else if (well.malowanieZ === 'zewnatrz') {
-        featureBadges +=
-            '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">MAL.</span>';
+        featureBadges += '<span class="pill-tag-nierdz">MAL.</span>';
     }
     if (well.nadbudowa === 'zelbetowa' || well.dennicaMaterial === 'zelbetowa') {
-        featureBadges +=
-            '<span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
+        featureBadges += '<span class="pill-tag-warn">ŻELBET</span>';
     }
     if (well.stopnie === 'nierdzewna') {
-        featureBadges +=
-            '<span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">NIERDZ.</span>';
+        featureBadges += '<span class="pill-tag-nierdz">NIERDZ.</span>';
     }
 
     let checkbox = '';
     if (showOrderSelection) {
         checkbox = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" style="width:16px; height:16px; color:var(--accent-text);"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" style="cursor:pointer; width:16px; height:16px;"></td>`;
+            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" class="cursor-icon-16"></td>`;
     }
 
     let offerPriceCell = '';
@@ -85,11 +78,11 @@ function renderWellHeaderRow(
     return `<tr class="well-row-header${errorClass}" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
         ${checkbox}
         <td style="text-align:center; color:var(--text-muted); font-weight: var(--fw-semibold);">${displayLp}</td>
-        <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" style="width:16px; height:16px;"></i></td>
+        <td style="text-align:center; color:var(--accent);"><i data-lucide="${isExpanded ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i></td>
         <td style="font-weight: var(--fw-bold); color:${well.doplata < 0 ? 'var(--danger)' : well.doplata > 0 ? 'var(--success)' : 'var(--text-primary)'};">${escapeHtml(well.name)}</td>
         <td style="text-align:left; white-space:nowrap; padding:0.5rem 0.5rem;">${featureBadges}</td>
-        <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${badges}</td>
-        <td style="text-align:center; white-space:nowrap; padding:0.5rem 0.5rem;">${errorCell}</td>
+        <td class="th-c-nowrap">${badges}</td>
+        <td class="th-c-nowrap">${errorCell}</td>
         <td style="text-align:right; font-weight: var(--fw-semibold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">DN${well.dn}</td>
         ${offerPriceCell}
         <td class="text-right" style="font-weight: var(--fw-extrabold); color:var(--success); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(stats.price)} PLN</td>
@@ -204,30 +197,26 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             (precoAlloc.isBottomMostDennica || precoAlloc.fraction > 0) &&
             !item.disablePreco
         ) {
-            badgesHtml +=
-                ' <span style="font-size: var(--fs-3xs); color:var(--danger); border:1px solid rgba(var(--danger-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--danger-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PRECO</span>';
+            badgesHtml += ' <span class="pill-tag-danger">PRECO</span>';
         }
 
         const pehdType = getPehdTypeForComponent(well, p.componentType);
 
         if (pehdType && pehdType !== 'brak' && p.doplataPEHD && !item.disablePehd) {
-            badgesHtml +=
-                ' <span style="font-size: var(--fs-3xs); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--blue-alt-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">PEHD</span>';
+            badgesHtml += ' <span class="pill-tag-blue">PEHD</span>';
         }
 
         if (
             well.nadbudowa === 'zelbetowa' &&
             (p.componentType === 'krag' || p.componentType === 'krag_ot')
         ) {
-            badgesHtml +=
-                ' <span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
+            badgesHtml += ' <span class="pill-tag-warn">ŻELBET</span>';
         }
         if (
             (well.dennicaMaterial === 'zelbetowa' || well.material === 'zelbetowa') &&
             p.componentType === 'dennica'
         ) {
-            badgesHtml +=
-                ' <span style="font-size: var(--fs-3xs); color:var(--warn); border:1px solid rgba(var(--warn-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--warn-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">ŻELBET</span>';
+            badgesHtml += ' <span class="pill-tag-warn">ŻELBET</span>';
         }
         if (
             well.stopnie === 'nierdzewna' &&
@@ -235,14 +224,13 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
                 p.componentType === 'krag_ot' ||
                 p.componentType === 'konus')
         ) {
-            badgesHtml +=
-                ' <span style="font-size: var(--fs-3xs); color:var(--accent2); border:1px solid rgba(var(--accent2-rgb), 0.5); padding:1px 4px; border-radius: var(--radius-2xs); background:rgba(var(--accent2-rgb), 0.1); margin-left:4px; font-weight: var(--fw-bold);">NIERDZ.</span>';
+            badgesHtml += ' <span class="pill-tag-nierdz">NIERDZ.</span>';
         }
 
         html += `<tr style="opacity:0.8;">
-            <td style="color:var(--text-secondary);">↳ ${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${badgesHtml}${discStr}</td>
+            <td class="text-secondary">↳ ${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
-            <td style="width:100px;" class="text-right">${fmtInt(totalLineWeight)} kg</td>
+            <td class="w-100px" class="text-right">${fmtInt(totalLineWeight)} kg</td>
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
         </tr>`;
 
@@ -292,25 +280,25 @@ function renderComponentSubItems(
         }
         if (bd.malowanieW > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                 fmt(bd.malowanieW) +
                 ' PLN</td></tr>';
         }
         if (bd.malowanieZ > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
                 fmt(bd.malowanieZ) +
                 ' PLN</td></tr>';
         }
         if (bd.zelbet > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--warn);"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
+                '<tr class="included-row-warn"><td colspan="3" class="pl-lg">w cenie: dopłata żelbet</td><td class="text-right">' +
                 fmt(bd.zelbet) +
                 ' PLN</td></tr>';
         }
         if (bd.nierdzewna > 0) {
             html +=
-                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--accent2);"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
+                '<tr class="included-row-accent"><td colspan="3" class="pl-lg">w cenie: drabinka nierdzewna</td><td class="text-right">' +
                 fmt(bd.nierdzewna) +
                 ' PLN</td></tr>';
         }
@@ -326,7 +314,7 @@ function renderComponentSubItems(
     }
 
     if (item._osadnikCost > 0) {
-        html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
+        html += `<tr class="included-row-warn">
             <td colspan="3" class="pl-lg">↳ + Wkładka osadnika (przestarzałe)</td>
             <td class="text-right">${fmt(item._osadnikCost)} PLN</td>
         </tr>`;
@@ -338,7 +326,7 @@ function renderComponentSubItems(
             if (!prProd) return;
 
             if (pr.frozenTransitionPrice != null) {
-                html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent-hover);">
+                html += `<tr class="opacity-6-sm-accent">
                     <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(pr.frozenName || prProd.category)} ${escapeHtml(prProd.dn || '')} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(pr.frozenTransitionPrice)} PLN</td>
                 </tr>`;
@@ -346,19 +334,19 @@ function renderComponentSubItems(
                     const doplPrColor = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign = pr.doplata > 0 ? '+' : '';
                     html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor};">
-                        <td style="padding-left:2.0rem;">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
+                        <td class="pl-20">↳ ${doplPrSign} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
                 if (pr.frozenDrillingPrice > 0) {
-                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
+                    html += `<tr class="included-row-warn">
                         <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr.frozenDrillingName || 'Wiercenie')} ${escapeHtml(pr.frozenDrillingDn || '')}</td>
                         <td class="text-right">${fmt(pr.frozenDrillingPrice)} PLN</td>
                     </tr>`;
                 }
             } else {
                 const prPrice = (prProd.price || 0) * nadbudowaMult;
-                html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--accent-hover);">
+                html += `<tr class="opacity-6-sm-accent">
                     <td colspan="3" class="pl-lg">↳ + Przejście: ${escapeHtml(prProd.category)} ${escapeHtml(prProd.dn)} (${pr.angle}°)</td>
                     <td class="text-right">${fmt(prPrice)} PLN</td>
                 </tr>`;
@@ -366,13 +354,13 @@ function renderComponentSubItems(
                     const doplPrColor2 = pr.doplata > 0 ? 'var(--success)' : 'var(--danger)';
                     const doplPrSign2 = pr.doplata > 0 ? '+' : '';
                     html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:${doplPrColor2};">
-                        <td style="padding-left:2.0rem;">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
+                        <td class="pl-20">↳ ${doplPrSign2} Dopłata indywidualna do przejścia</td>
                         <td class="text-right">${fmt(pr.doplata)} PLN</td>
                     </tr>`;
                 }
                 if (pr._drillingBasePrice > 0 && pr._drillingProd) {
                     const drillPrice = pr._drillingBasePrice * nadbudowaMult;
-                    html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--warn);">
+                    html += `<tr class="included-row-warn">
                         <td colspan="3" class="pl-lg">↳ + ${escapeHtml(pr._drillingProd.name)} ${pr._drillingProd.dn || ''}</td>
                         <td class="text-right">${fmt(drillPrice)} PLN</td>
                     </tr>`;
@@ -403,13 +391,13 @@ function renderComponentSubItems(
                 const kQ = kineta.quantity || 1;
                 if (kBd.malowanieW > 0) {
                     html +=
-                        '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
+                        '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie wewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieW * kQ) +
                         ' PLN</td></tr>';
                 }
                 if (kBd.malowanieZ > 0) {
                     html +=
-                        '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--pink);"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
+                        '<tr class="opacity-5-xs-pink"><td colspan="3" class="pl-lg">w cenie: malowanie zewnątrz</td><td class="text-right">' +
                         fmt(kBd.malowanieZ * kQ) +
                         ' PLN</td></tr>';
                 }
@@ -463,7 +451,7 @@ function renderComponentSubItems(
                         ` (${fracPerc ? fracPerc + '% uzupełnienia' : 'Wkładka uzupełniająca'})`;
                 }
             }
-            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--danger);">
+            html += `<tr class="opacity-6-sm-danger">
                 <td colspan="3" class="pl-lg">↳ + Wkładka ${kinetaLabel}${discPreco > 0 ? ' <span style="font-size: var(--fs-2xs); color:var(--success);">(-' + discPreco + '%)</span>' : ''}</td>
                 <td class="text-right">${fmt(precoCost)} PLN</td>
             </tr>`;
@@ -478,7 +466,7 @@ function renderComponentSubItems(
                             return '[' + e + ']';
                         });
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ Kineta bazowa (' +
                             dnParts.join(' / ') +
                             ') ' +
                             etyParts.join(' / ') +
@@ -488,7 +476,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.skrzynki && precoCalc.skrzynki.suma > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + skrzynki włazowe (' +
                             precoCalc.skrzynki.ilosc +
                             ' × ' +
                             fmt(precoCalc.skrzynki.cenaSzt) +
@@ -498,13 +486,13 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.spadekKineta > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek kinety</td><td class="text-right">' +
                             fmt(precoCalc.spadekKineta * precoMult) +
                             ' PLN</td></tr>';
                     }
                     if (precoCalc.spadekMufa > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + spadek mufy</td><td class="text-right">' +
                             fmt(precoCalc.spadekMufa * precoMult) +
                             ' PLN</td></tr>';
                     }
@@ -515,7 +503,7 @@ function renderComponentSubItems(
                                 ? precoCalc.uniesieniaSzczegoly[0].mm
                                 : '';
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + uniesienie' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + uniesienie' +
                             (mm ? ' (' + mm + ' mm)' : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.uniesienie * precoMult) +
@@ -523,7 +511,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.redukcja > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + redukcja' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + redukcja' +
                             (precoCalc.redukcjaOpis ? ' ' + precoCalc.redukcjaOpis : '') +
                             '</td><td class="text-right">' +
                             fmt(precoCalc.redukcja * precoMult) +
@@ -541,7 +529,7 @@ function renderComponentSubItems(
                                         ? 'dopływ'
                                         : dw.typ || '';
                             html +=
-                                '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
+                                '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + dod. wlot DN' +
                                 dw.dn +
                                 (dwTyp ? ' (' + dwTyp + ')' : '') +
                                 ' [' +
@@ -553,7 +541,7 @@ function renderComponentSubItems(
                     }
                     if (precoCalc.pelnaWysokosc && precoCalc.pelnaWysokosc.cena > 0) {
                         html +=
-                            '<tr style="opacity:0.5; font-size: var(--fs-xs); color:var(--danger-hover);"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
+                            '<tr class="included-row-danger"><td colspan="3" class="pl-xl">↳ + pełna wysokość (' +
                             precoCalc.pelnaWysokosc.metry.toFixed(2) +
                             ' m)</td><td class="text-right">' +
                             fmt(precoCalc.pelnaWysokosc.cena * precoMult) +
@@ -562,7 +550,7 @@ function renderComponentSubItems(
                 }
             }
         } else if (precoAlloc.error && precoAlloc.isBottomMostDennica) {
-            html += `<tr style="opacity:0.6; font-size: var(--fs-sm); color:var(--danger);">
+            html += `<tr class="opacity-6-sm-danger">
                 <td colspan="3" class="pl-lg">↳ ⚠ Wkładka PRECO — ${precoAlloc.error}</td>
                 <td class="text-right">—</td>
             </tr>`;
