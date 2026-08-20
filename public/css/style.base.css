@@ -1,6 +1,10 @@
 @import url('./inter.css');
 
 :root {
+    /* Typografia */
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: ui-monospace, 'Cascadia Mono', 'Consolas', monospace;
+
     /* Backgrounds */
     --bg-primary: #0a0e1a;
     --bg-secondary: #111827;
@@ -323,7 +327,7 @@
 
 body {
     margin: 0;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: var(--font-sans);
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
@@ -1603,7 +1607,7 @@ input[type='number'] {
 .catalog-item-row-id {
     font-size: var(--fs-xs);
     color: var(--accent-hover);
-    font-family: monospace;
+    font-family: var(--font-mono);
     opacity: 0.8;
 }
 
