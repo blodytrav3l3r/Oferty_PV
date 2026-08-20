@@ -466,7 +466,7 @@ function populateZleceniaForm(el) {
     <div class="card card-compact" style="margin-bottom:0.5rem; display:flex; flex-direction:column;">
         <div class="card-title-sm"><i data-lucide="edit"></i> Uwagi</div>
         <div class="form-group-sm" style="flex:1; display:flex; flex-direction:column; margin-bottom:0;">
-            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="flex:1; min-height:80px; resize:none;">${escapeHtml(finalUwagi)}</textarea>
+            <textarea id="zl-uwagi" class="form-textarea" placeholder="Uwagi do zlecenia..." style="min-height:80px; resize:vertical;">${escapeHtml(finalUwagi)}</textarea>
         </div>
     </div>
 
@@ -627,6 +627,16 @@ function populateZleceniaForm(el) {
 
     if (window.lucide) {
         window.lucide.createIcons();
+    }
+
+    const uwagiEl = document.getElementById('zl-uwagi');
+    if (uwagiEl) {
+        const fitUwagi = () => {
+            uwagiEl.style.height = 'auto';
+            uwagiEl.style.height = uwagiEl.scrollHeight + 'px';
+        };
+        uwagiEl.addEventListener('input', fitUwagi);
+        fitUwagi();
     }
 }
 
