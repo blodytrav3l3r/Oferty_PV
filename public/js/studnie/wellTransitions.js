@@ -121,44 +121,43 @@ function renderInlinePrzejsciaApp(containerId) {
         ${
             selectedProduct
                 ? `
-        <div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.3) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--white-rgb), 0.05); border-left:5px solid rgba(var(--blue-rgb), 0.8); padding:0.6rem; border-radius: var(--radius-sm); margin-top:0.3rem; position:relative; box-shadow:0 4px 12px rgba(var(--black-rgb), 0.15); box-sizing:border-box;">
-            <div class="flex-between-4">
-                <span style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--white);"><i data-lucide="link"></i> ${escapeHtml(selectedProduct.category)} ${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
-                <span style="font-size: var(--fs-xl); color:var(--success); font-weight: var(--fw-extrabold); font-family:'Inter'">${fmtInt(selectedProduct.price)} <span class="fs-2xs">PLN</span></span>
+        <div class="wt-add-panel">
+            <div class="wt-add-details">
+                <span class="wt-add-title">${escapeHtml(selectedProduct.category)}</span>
+                <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
             </div>
-            <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
-                <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Rzędna [m]</div>
-                    <input type="text" inputmode="decimal" class="form-input btn-h26" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
-                           onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
-                           value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
-                           placeholder="—" >
-                </div>
-                <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Kąt [°]</div>
-                     <input type="number" class="form-input color-link btn-h26" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" >
-                </div>
-                <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
-                    <input type="number" class="form-input btn-h26" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" >
-                </div>
-                <div class="ui-center-min">
-                    <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
-                    <input type="number" class="form-input btn-h26" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" >
-                </div>
-
-                <div class="text-center">
-                    <div class="ui-text-muted-sm">Kąt wyk.</div>
-                    <div class="color-info fs-2xl-bold"  id="inl-exec-${containerId || 'main'}">360°</div>
-                </div>
-                <div class="text-center">
-                    <div class="ui-text-muted-sm">Gony</div>
-                    <div class="color-success fs-2xl-bold"  id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
-                </div>
-                <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
-                    <button class="btn btn-primary" data-action="inlineFinish" data-main="${containerId || 'main'}" data-container="${containerId || ''}" style="height:26px; width:100%; justify-content:center; font-size: var(--fs-sm); padding:0;"><i data-lucide="plus"></i> Dodaj</button>
-                </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center">Rzędna [m]</div>
+                <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001"
+                       onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
+                       value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}"
+                       placeholder="—">
             </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center">Kąt [°]</div>
+                <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
+            </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center">Spadek w kinecie [%]</div>
+                <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+            </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center">Spadek w mufie [%]</div>
+                <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+            </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center" title="Kąt wykonania">Kąt wyk.</div>
+                <div class="wt-add-value wt-add-exec" id="inl-exec-${containerId || 'main'}">360°</div>
+            </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center" title="Kąt wykonania w gonach">Gony</div>
+                <div class="wt-add-value wt-add-gony" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
+            </div>
+            <div class="wt-add-cell">
+                <div class="ui-text-muted-sm ellipsis-center">Cena</div>
+                <div class="wt-add-value wt-add-price">${fmtInt(selectedProduct.price)} <span class="fs-2xs">PLN</span></div>
+            </div>
+            <button class="btn btn-primary wt-add-btn" data-action="inlineFinish" data-main="${containerId || 'main'}" data-container="${containerId || ''}"><i data-lucide="plus"></i> Dodaj</button>
         </div>
         `
                 : `
@@ -263,7 +262,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w + 10)}px; background:var(--slate-950); color:var(--white); border:1px solid var(--blue); border-radius: var(--radius-2xs); font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(var(--blue-rgb), 0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w)}px; box-sizing:border-box; background:var(--slate-950); color:var(--white); border:1px solid var(--blue); border-radius: var(--radius-2xs); font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(var(--blue-rgb), 0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
             const inp = element.querySelector('input');
             inp.focus();
         };

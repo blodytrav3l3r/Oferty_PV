@@ -895,6 +895,89 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     box-shadow: 0 0 20px var(--accent-bg-hover);
 }
 
+/* Panel "Dodaj Przejście Szczelne" — wzorowany na kafelkach "Lista przejść" */
+.wt-add-panel {
+    background: linear-gradient(
+        90deg,
+        rgba(var(--blue-rgb), 0.3) 0%,
+        rgba(var(--slate-800-rgb), 0.8) 100%
+    );
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+    border-left: 5px solid rgba(var(--blue-rgb), 0.8);
+    border-radius: var(--radius-sm);
+    min-height: 64px;
+    padding: 0.4rem 0.45rem;
+    box-sizing: border-box;
+    margin-top: 0.3rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+}
+.wt-add-details {
+    flex: 0 1 auto;
+    min-width: 180px;
+    white-space: nowrap;
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+}
+.wt-add-title {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-primary);
+}
+.wt-add-dn {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--accent2-hover);
+}
+.wt-add-cell {
+    flex: 1 1 0;
+    min-width: 76px;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+.wt-add-cell .form-input {
+    width: 100%;
+    height: 34px;
+    margin-top: 8px;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    text-align: center;
+    padding: 0.1rem 0.3rem;
+    background: rgba(var(--white-rgb), 0.05);
+    border: 1px solid rgba(var(--white-rgb), 0.1);
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+.wt-add-cell .form-input:focus {
+    background: rgba(var(--white-rgb), 0.1);
+}
+.wt-add-cell .form-input::placeholder {
+    color: var(--text-muted);
+}
+.wt-add-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-extrabold);
+    margin-top: 8px;
+    padding: 0.15rem 0.4rem;
+}
+.wt-add-exec {
+    color: var(--blue-alt);
+}
+.wt-add-gony {
+    color: var(--success-hover);
+}
+.wt-add-price {
+    color: var(--success);
+    font-family: 'Inter', sans-serif;
+}
+.wt-add-btn {
+    flex-shrink: 0;
+}
 .fs-inputs-pane {
     background: var(--bg-input);
     border: 1px solid var(--accent-bg-hover);
@@ -1276,6 +1359,36 @@ select.form-input option {
 .prz-field:hover {
     color: var(--blue-hover) !important;
     background: rgba(var(--white-rgb), 0.1) !important;
+}
+
+/* Pola edytowalne (QE) wypełniają całą szerokość kolumny — łatwiejsze kliknięcie i szersze pole wpisywania */
+.prz-field,
+.prz-field-angle,
+.prz-field-height,
+.prz-field-rzedna,
+.prz-field-doplata {
+    width: 100%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* Komórka "Spadek w kinecie / mufie" — brakujące klasy z transitionRenderer */
+.card-160-54 {
+    width: 160px;
+    flex-shrink: 0;
+    height: 54px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+}
+.fs-2xl-bold-primary-shadow {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-primary);
+    text-shadow: 0 1px 2px rgba(var(--black-rgb), 0.3);
+    display: inline-block;
+    margin-top: 8px;
 }
 
 .prz-btn-edit {

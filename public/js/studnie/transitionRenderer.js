@@ -206,7 +206,7 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
             <div class="ui-text-muted-sm ellipsis-center"  title="${spadekMLabel} [mm]">${spadekMLabel} [%]</div>
             <div data-qe-id="${item.id}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
           </div>
-          <div style="width:65px; flex-shrink:0; position:relative; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+          <div style="width:90px; flex-shrink:0; position:relative; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm ellipsis-center" >Kąt</div>
             <div data-qe-id="${item.id}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.angle}°</div>
           </div>
@@ -218,11 +218,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
             <div class="ui-text-muted-sm ellipsis-center"  title="Kąt wykonania">Kąt wykonania</div>
             <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--blue-alt); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
           </div>
-          <div style="width:70px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+          <div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm ellipsis-center"  title="Kąt gony">Kąt gony</div>
             <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--success-hover); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
           </div>
-          <div style="width:80px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
+          <div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
             <div class="ui-text-muted-sm ellipsis-center" >Rzędna</div>
             <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.rzednaWlaczenia || '—'}</div>
           </div>
