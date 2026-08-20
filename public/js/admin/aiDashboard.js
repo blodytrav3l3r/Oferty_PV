@@ -33,7 +33,7 @@
         }
     }
 
-    /* Escaping do atrybutów HTML — centralna implementacja w shared/ui.js */
+    /* Escaping do atrybutów HTML — centralna implementacja w shared/escapeHtml.js */
     function escapeHtmlAttr(str) {
         if (typeof window.escapeHtmlAttr === 'function') return window.escapeHtmlAttr(str);
         return String(str == null ? '' : str)

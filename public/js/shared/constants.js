@@ -20,14 +20,6 @@
     };
 
     /**
-     * Koszt transportu na podstawie wagi, km, stawki i trybu
-     */
-    window.calcTransportCost = function (weight, km, rate, mode) {
-        var count = window.calcTransportCount(weight, mode);
-        return count * km * rate;
-    };
-
-    /**
      * Formatowanie liczby transportów do wyświetlenia
      */
     window.formatTransportCount = function (count, mode) {
