@@ -1,6 +1,6 @@
 # Plan migracji do ES Modules (TASK-047)
 
-**Status:** W TRAKCIE — dokument planu + 4 moduły ESM (etapy 1-4).
+**Status:** W TRAKCIE — dokument planu + 5 modułów ESM (etapy 1-5).
 **Data:** 2026-08-19
 **Priorytet:** P4 (audyt FA-3, LOW)
 **Zależności:** TASK-045 (shared core), TASK-027 (modalCore), TASK-008 (kolizje globali)
@@ -36,7 +36,7 @@ Priorytet: najpierw moduły bez zależności cyklicznych i bez mutacji stanu glo
 | 2    | `modalCore` (showModal/closeModal/trapFocus/untrapFocus) | `shared/modalCore.js`      | 4       | core modalów (TASK-027), zależny od escapeHtml   |
 | 3    | `toast`                                                  | `shared/toast.js`          | 1       | showToast (showToastError nie istnieje w kodzie) |
 | 4    | `fetchJson`                                              | `shared/fetchJson.js`      | 1       | zależny od authHeaders                           |
-| 5    | `debounce`/`throttle`                                    | `shared/debounce.js`       | 2       | czyste funkcje                                   |
+| 5    | `debounce`                                               | `shared/debounce.js`       | 1       | debounce (throttle nie istnieje w kodzie)        |
 | 6    | `storageService`                                         | `shared/StorageService.js` | 1       | wzorzec PASS st. 5, zamknięcie cyklu             |
 | 7..n | moduły rury/studnie                                      | per katalog                | reszta  | deduplikacja przez shared API najpierw           |
 
@@ -49,7 +49,8 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
   Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
 - `public/js/shared/toast.js` — ESM: `export function showToast` (etap 3). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
 - `public/js/shared/fetchJson.js` — ESM: `export async function fetchJson` (etap 4). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
-- `<script type="module" src="js/shared/fetchJson.js?v=...">` w 6 wejściówkach HTML
+- `public/js/shared/debounce.js` — ESM: `export function debounce` (etap 5). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
+- `<script type="module" src="js/shared/debounce.js?v=...">` w 6 wejściówkach HTML
   (index, app, studnie, rury, kartoteka, zlecenia) PRZED `shared/ui.js`.
 
 ### Ryzyka pierwszego kroku
@@ -72,7 +73,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 ## Kryteria akceptacji (TASK-047)
 
 - [x] Dokument planu migracji (ten plik).
-- [x] 4 moduły jako ESM (`escapeHtml`, `modalCore`, `toast`, `fetchJson`).
+- [x] 5 modułów jako ESM (`escapeHtml`, `modalCore`, `toast`, `fetchJson`, `debounce`).
 
 ## Postęp etapów
 
@@ -82,7 +83,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 | 2    | modalCore           | [x] 2026-08-19                                                                                                |
 | 3    | toast               | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 4    | fetchJson           | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
-| 5    | debounce/throttle   | [ ]                                                                                                           |
+| 5    | debounce            | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 6    | storageService      | [ ]                                                                                                           |
 | 7..n | moduły rury/studnie | [ ]                                                                                                           |
 

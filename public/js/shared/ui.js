@@ -4,6 +4,7 @@
  * Eliminuje duplikat closeModal/toggleCard/showSection z app.js i app_studnie.js.
  * showToast przeniesiony do shared/toast.js (ESM, TASK-047 etap 3).
  * fetchJson przeniesiony do shared/fetchJson.js (ESM, TASK-047 etap 4).
+ * debounce przeniesiony do shared/debounce.js (ESM, TASK-047 etap 5).
  */
 
 function setText(el, value) {
@@ -17,15 +18,6 @@ function getUserDisplayName(user) {
         ? `${user.firstName} ${user.lastName}`
         : user.username || '';
 }
-
-function debounce(fn, delay) {
-    let timer;
-    return function (...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn.apply(this, args), delay);
-    };
-}
-window.debounce = debounce;
 
 /**
  * Toggle (zwijanie/rozwijanie) karty.
