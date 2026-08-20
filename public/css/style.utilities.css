@@ -68,20 +68,11 @@
 }
 
 /* Color utility classes */
-.color-success {
-    color: var(--success-hover);
-}
 .color-info {
     color: var(--blue-hover);
 }
 .color-link {
     color: var(--blue-hover);
-}
-.color-accent {
-    color: var(--accent2-hover);
-}
-.color-warn {
-    color: var(--warn-hover);
 }
 .color-danger {
     color: var(--danger-hover);
