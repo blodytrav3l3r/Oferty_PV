@@ -49,6 +49,20 @@ function renderWellHeaderRow(
     if (well.stopnie === 'nierdzewna') {
         featureBadges += '<span class="pill-tag-nierdz">NIERDZ.</span>';
     }
+    if (well.klasaNosnosci_korpus === 'E600' || well.klasaNosnosci_korpus === 'F900') {
+        featureBadges +=
+            '<span class="pill-tag-blue">NOŚN. ' + well.klasaNosnosci_korpus + '</span>';
+    }
+    if (well.klasaNosnosci_zwienczenie === 'E600' || well.klasaNosnosci_zwienczenie === 'F900') {
+        featureBadges +=
+            '<span class="pill-tag-warn">ZWIEŃ. ' + well.klasaNosnosci_zwienczenie + '</span>';
+    }
+    if (well.agresjaChemiczna === 'XA2' || well.agresjaChemiczna === 'XA3') {
+        featureBadges += '<span class="pill-tag-nierdz">CHEM. ' + well.agresjaChemiczna + '</span>';
+    }
+    if (well.agresjaMrozowa === 'XF2' || well.agresjaMrozowa === 'XF3') {
+        featureBadges += '<span class="pill-tag-warn">MROZ. ' + well.agresjaMrozowa + '</span>';
+    }
 
     let checkbox = '';
     if (showOrderSelection) {

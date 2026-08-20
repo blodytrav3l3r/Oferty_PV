@@ -378,13 +378,24 @@
     }
 }
 .pehd-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    padding: 1rem 1.2rem;
+    text-align: left;
+    font:
+        var(--fw-medium) var(--fs-md) 'Inter',
+        sans-serif;
+    color: var(--text-primary);
     background: rgba(var(--white-rgb), 0.05);
-    border: 2px solid rgba(var(--white-rgb), 0.05);
+    border: 1px solid rgba(var(--white-rgb), 0.08);
     border-radius: var(--radius);
     cursor: pointer;
     transition:
         background-color 0.2s,
-        border-color 0.2s;
+        border-color 0.2s,
+        transform 0.2s;
 }
 .pehd-card:hover {
     border-color: var(--accent) !important;
@@ -392,21 +403,16 @@
     transform: translateY(-3px);
 }
 
-.pehd-btn-cancel {
-    padding: 0.6rem 1.2rem;
-    background: transparent;
-    border: 1px solid rgba(var(--white-rgb), 0.15);
-    border-radius: var(--radius-sm);
-    color: var(--slate-300);
-    cursor: pointer;
-    transition:
-        background-color 0.2s,
-        border-color 0.2s,
-        color 0.2s;
+.pehd-card-title {
+    font-size: var(--fs-lg);
+    font-weight: var(--fw-bold);
+    color: var(--white);
 }
-.pehd-btn-cancel:hover {
-    background: rgba(var(--white-rgb), 0.1) !important;
-    color: var(--white) !important;
+
+.pehd-card-desc {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    line-height: 1.4;
 }
 
 /* ===== GLOBAL RECALC (popupsGlobalRecalc.js) ===== */
