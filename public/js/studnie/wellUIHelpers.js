@@ -40,6 +40,17 @@ function renderDiscountPanel() {
         const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const totalAfter = dennicaAfterSum + nadbudowaAfterSum;
 
+        const korpusClasses = [
+            ...new Set(
+                groupWells.map((w) => w.klasaNosnosci_korpus).filter((k) => k && k !== 'D400')
+            )
+        ];
+        const zwienczenieClasses = [
+            ...new Set(
+                groupWells.map((w) => w.klasaNosnosci_zwienczenie).filter((k) => k && k !== 'D400')
+            )
+        ];
+
         grandTotal += totalDN;
         grandDiscounted += totalAfter;
 
@@ -72,6 +83,43 @@ function renderDiscountPanel() {
                 onchange="updateDiscount('${discountDn}','nadbudowa',this.value)">
               <span class="ui-text-mute">%</span>
             </div>
+            ${korpusClasses
+                .map(
+                    (cls) => `
+            <span class="ui-text-mute text-left" style="color:var(--accent2-hover);">Korpus ${cls} Dennica/Kineta</span>
+            <div class="flex-gap-2">
+              <input type="number" min="0" max="100" step="0.5" value="${disc['dennica' + cls] || 0}"
+                id="disc-${discountDn}-dennica${cls}"
+                class="badge-90-white"
+                onclick="this.select()"
+                onchange="updateDiscount('${discountDn}','dennica${cls}',this.value)">
+              <span class="ui-text-mute">%</span>
+            </div>
+            <span class="ui-text-mute text-left" style="color:var(--accent2-hover);">Korpus ${cls} Nadbudowa</span>
+            <div class="flex-gap-2">
+              <input type="number" min="0" max="100" step="0.5" value="${disc['nadbudowa' + cls] || 0}"
+                id="disc-${discountDn}-nadbudowa${cls}"
+                class="badge-90-white"
+                onclick="this.select()"
+                onchange="updateDiscount('${discountDn}','nadbudowa${cls}',this.value)">
+              <span class="ui-text-mute">%</span>
+            </div>`
+                )
+                .join('')}
+            ${zwienczenieClasses
+                .map(
+                    (cls) => `
+            <span class="ui-text-mute text-left" style="color:var(--warn-hover);">Zakończenie ${cls}</span>
+            <div class="flex-gap-2">
+              <input type="number" min="0" max="100" step="0.5" value="${disc['zwienczenie' + cls] || 0}"
+                id="disc-${discountDn}-zwienczenie${cls}"
+                class="badge-90-white"
+                onclick="this.select()"
+                onchange="updateDiscount('${discountDn}','zwienczenie${cls}',this.value)">
+              <span class="ui-text-mute">%</span>
+            </div>`
+                )
+                .join('')}
             ${
                 hasPrecoInGroup
                     ? `<span class="ui-text-mute" style="text-align:left; color:var(--danger);">Wkładka PRECO</span>

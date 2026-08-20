@@ -1,5 +1,14 @@
 /* ===== AKTUALIZACJA UI PODSUMOWANIA ===== */
 
+function applyOfferFooterSpacing() {
+    const main = document.querySelector('.main');
+    const footer = document.getElementById('offer-summary-footer-fixed');
+    if (main && footer) {
+        main.style.paddingBottom = footer.offsetHeight + 28 + 'px';
+    }
+}
+window.applyOfferFooterSpacing = applyOfferFooterSpacing;
+
 function updateOfferSummaryUI(totals) {
     const totalEl = document.getElementById('sum-total-netto');
     const bruttoEl = document.getElementById('sum-brutto-details');
@@ -84,12 +93,33 @@ function updateOfferSummaryUI(totals) {
                 return `<div style="${disabledTile}"><span style="${labelStyle}">${label}</span></div>`;
 
             const d = activeDiscounts[dn] || {};
-            const hasDisc = d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0;
+            const classHas = ['E600', 'F900'].some(
+                (cls) =>
+                    (d['dennica' + cls] || 0) > 0 ||
+                    (d['nadbudowa' + cls] || 0) > 0 ||
+                    (d['zwienczenie' + cls] || 0) > 0
+            );
+            const hasDisc = d.dennica > 0 || d.nadbudowa > 0 || d.preco > 0 || classHas;
             const bg = hasDisc
                 ? 'background:rgba(var(--accent-rgb), 0.1); color:var(--accent-text); border:1px solid rgba(var(--accent-rgb), 0.3);'
                 : 'background:rgba(var(--accent-rgb), 0.05); color:rgba(var(--accent-rgb), 0.5); border:1px solid rgba(var(--accent-rgb), 0.1);';
             const details = `${fmtDisc('D:', d.dennica)} ${fmtDisc('N:', d.nadbudowa)} ${fmtDisc('P:', d.preco, d.preco > 0 ? 'var(--danger-hover)' : null)}`;
-            return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span></div>`;
+
+            let classRows = '';
+            const dnWells = wellsList.filter((w) =>
+                dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
+            );
+            ['E600', 'F900'].forEach((cls) => {
+                const used = dnWells.some(
+                    (w) => w.klasaNosnosci_korpus === cls || w.klasaNosnosci_zwienczenie === cls
+                );
+                if (!used) return;
+                if (!classHas) return;
+                const color = cls === 'E600' ? 'var(--accent2-hover)' : 'var(--warn-hover)';
+                classRows += `<span style="${detailStyle}; color:${color}; white-space:nowrap;">${fmtDisc(cls + ' D:', d['dennica' + cls], null)} ${fmtDisc('N:', d['nadbudowa' + cls], null)} ${fmtDisc('Z:', d['zwienczenie' + cls], null)}</span>`;
+            });
+
+            return `<div style="${tileBase} ${bg}"><span style="${labelStyle}">${label}</span><span style="${detailStyle}">${details}</span>${classRows}</div>`;
         };
 
         const buildPehdTile = () => {
@@ -124,7 +154,7 @@ function updateOfferSummaryUI(totals) {
                 pehdDisc > 0
                     ? `${afterPrice.toFixed(0)} zł/m² (-${Number(pehdDisc).toFixed(2)}%)`
                     : `${afterPrice.toFixed(0)} zł/m²`;
-            return `<div style="${tileBase} background:rgba(var(--blue-alt-rgb), 0.1); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.3);"><span style="${labelStyle}"><i data-lucide="shield" class="icon-xxs"></i>PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
+            return `<div style="${tileBase} background:rgba(var(--blue-alt-rgb), 0.1); color:var(--blue-alt); border:1px solid rgba(var(--blue-alt-rgb), 0.3);"><span style="${labelStyle}">PEHD</span><span style="${detailStyle}">${discDetail}</span></div>`;
         };
 
         const buildMalTile = () => {
@@ -154,7 +184,15 @@ function updateOfferSummaryUI(totals) {
         if (typeof lucide !== 'undefined' && lucide.createIcons)
             lucide.createIcons({ root: discountsInfoEl });
     }
+
+    applyOfferFooterSpacing();
 }
 
 /* ===== Rejestracja globali ===== */
 window.updateOfferSummaryUI = updateOfferSummaryUI;
+
+if (typeof window.addEventListener === 'function') {
+    window.addEventListener('resize', () => {
+        applyOfferFooterSpacing();
+    });
+}

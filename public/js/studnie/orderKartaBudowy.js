@@ -342,6 +342,17 @@ function _generateDefaultUwagi() {
             const parts = [];
             if (den > 0) parts.push(`Dennica: ${den.toFixed(2).replace('.', ',')}%`);
             if (nad > 0) parts.push(`Nadbudowa: ${nad.toFixed(2).replace('.', ',')}%`);
+            ['E600', 'F900'].forEach((cls) => {
+                const denCls = parseFloat(d['dennica' + cls] || 0);
+                const nadCls = parseFloat(d['nadbudowa' + cls] || 0);
+                const zwCls = parseFloat(d['zwienczenie' + cls] || 0);
+                if (denCls > 0)
+                    parts.push(`${cls} Dennica: ${denCls.toFixed(2).replace('.', ',')}%`);
+                if (nadCls > 0)
+                    parts.push(`${cls} Nadbudowa: ${nadCls.toFixed(2).replace('.', ',')}%`);
+                if (zwCls > 0)
+                    parts.push(`${cls} Zakończenie: ${zwCls.toFixed(2).replace('.', ',')}%`);
+            });
 
             if (parts.length > 0) {
                 const label = dn === 'styczna' ? 'Styczne' : `DN${dn}`;

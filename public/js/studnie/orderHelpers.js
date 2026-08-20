@@ -94,11 +94,8 @@ function freezeWellPrices(wellsArr) {
             item.frozenName = p.name;
         });
 
-        let discNadbudowa = 0;
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
-        if (discountKey && wellDiscounts[discountKey]) {
-            discNadbudowa = wellDiscounts[discountKey].nadbudowa || 0;
-        }
+        const discNadbudowa = getWellNadbudowaPct(well, wellDiscounts[discountKey] || {});
         const mult = 1 - discNadbudowa / 100;
 
         const configMap =

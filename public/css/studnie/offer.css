@@ -270,6 +270,20 @@
         padding: 0.8rem 1rem;
     }
 }
+
+/* —— Ograniczenie wysokości panelu rabatów w stopce (scroll przy dużej liczbie klas) —— */
+#offer-active-discounts-info {
+    max-height: 110px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+#offer-active-discounts-info::-webkit-scrollbar {
+    width: 5px;
+}
+#offer-active-discounts-info::-webkit-scrollbar-thumb {
+    background: rgba(var(--accent-rgb), 0.4);
+    border-radius: var(--radius-2xs);
+}
 /* —— Excel table header aesthetic improvements —— */
 #excel-table-container .h3-prodcode {
     font-size: var(--fs-3xs);

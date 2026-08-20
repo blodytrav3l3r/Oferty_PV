@@ -37,14 +37,10 @@ function getWellErrorCell(well) {
     </span>`;
 }
 
-function getDiscountStr(p, disc) {
-    const isDen =
-        p.componentType === 'dennica' ||
-        p.componentType === 'kineta' ||
-        p.componentType === 'styczna';
-    const val = isDen ? disc.dennica : disc.nadbudowa;
-    return val > 0
-        ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${val}%)</span>`
+function getDiscountStr(well, p, disc) {
+    const discountPct = getWellDiscountPct(well, p, disc);
+    return discountPct > 0
+        ? ` <span style="font-size: var(--fs-2xs); color:var(--success); margin-left:0.3rem;">(-${discountPct}%)</span>`
         : '';
 }
 

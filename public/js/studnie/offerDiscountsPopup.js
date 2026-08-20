@@ -74,6 +74,12 @@ async function handleOfferDiscountsCancel() {
                 window.applyDiscount(dn, 'nadbudowa', disc.nadbudowa);
                 window.applyDiscount(dn, 'preco', disc.preco || 0);
                 window.applyDiscount(dn, 'pehd', disc.pehd || 0);
+                window.applyDiscount(dn, 'dennicaE600', disc.dennicaE600 || 0);
+                window.applyDiscount(dn, 'nadbudowaE600', disc.nadbudowaE600 || 0);
+                window.applyDiscount(dn, 'zwienczenieE600', disc.zwienczenieE600 || 0);
+                window.applyDiscount(dn, 'dennicaF900', disc.dennicaF900 || 0);
+                window.applyDiscount(dn, 'nadbudowaF900', disc.nadbudowaF900 || 0);
+                window.applyDiscount(dn, 'zwienczenieF900', disc.zwienczenieF900 || 0);
             }
         });
 
@@ -242,11 +248,97 @@ function renderOfferDiscountsPopupContent() {
 
         const disc = wellDiscounts[dn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const displayDn = dn === 'styczne' ? 'Styczne' : `DN${dn}`;
-        const hasPrecoInGroup = wells
-            .filter((w) =>
-                dn === 'styczne' ? w.type === 'styczna' || w.dn === 'styczna' : w.dn == dn
+        const hasPrecoInGroup = dnWells.some(
+            (w) => w.kineta === 'preco' || w.kineta === 'precotop'
+        );
+        const korpusClasses = [
+            ...new Set(dnWells.map((w) => w.klasaNosnosci_korpus).filter((k) => k && k !== 'D400'))
+        ];
+        const zwienczenieClasses = [
+            ...new Set(
+                dnWells.map((w) => w.klasaNosnosci_zwienczenie).filter((k) => k && k !== 'D400')
             )
-            .some((w) => w.kineta === 'preco' || w.kineta === 'precotop');
+        ];
+
+        const buildDiscountSection = (title, dotColor, textColor, inputsHtml) => `
+            <div style="margin-top:0.45rem; padding-top:0.4rem; border-top:1px solid rgba(var(--white-rgb), 0.07);">
+                <div style="display:flex; align-items:center; gap:0.4rem; margin-bottom:0.3rem;">
+                    <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${dotColor}; box-shadow:0 0 8px rgba(var(--black-rgb), 0.5);"></span>
+                    <span style="font-size:var(--fs-2xs); font-weight:var(--fw-extrabold); text-transform:uppercase; letter-spacing:0.6px; color:${textColor};">${title}</span>
+                </div>
+                <div class="flex-gap-5-wrap">${inputsHtml}</div>
+            </div>`;
+
+        let sectionsHtml = buildDiscountSection(
+            'Klasa D400',
+            'var(--slate-400)',
+            'var(--text-secondary)',
+            buildInputBlock(
+                dn,
+                'Dennica / Kineta',
+                'dennica',
+                disc.dennica,
+                'var(--text-secondary)',
+                'rgba(var(--white-rgb), 0.18)'
+            ) +
+                buildInputBlock(
+                    dn,
+                    'Nadbudowa',
+                    'nadbudowa',
+                    disc.nadbudowa,
+                    'var(--text-secondary)',
+                    'rgba(var(--white-rgb), 0.18)'
+                ) +
+                (hasPrecoInGroup
+                    ? buildInputBlock(
+                          dn,
+                          'Wkładka PRECO',
+                          'preco',
+                          disc.preco || 0,
+                          'var(--danger-hover)',
+                          'rgba(var(--danger-rgb), 0.35)'
+                      )
+                    : '')
+        );
+
+        const allClasses = [...new Set([...korpusClasses, ...zwienczenieClasses])].sort((a, b) =>
+            a === b ? 0 : a === 'E600' ? -1 : 1
+        );
+        allClasses.forEach((cls) => {
+            const isE600 = cls === 'E600';
+            const color = isE600 ? 'var(--accent-hover)' : 'var(--warn-hover)';
+            const border = isE600 ? 'rgba(var(--accent-rgb), 0.35)' : 'rgba(var(--warn-rgb), 0.35)';
+            const dot = isE600 ? 'var(--accent)' : 'var(--warn)';
+            sectionsHtml += buildDiscountSection(
+                `Klasa ${cls}`,
+                dot,
+                color,
+                buildInputBlock(
+                    dn,
+                    'Dennica / Kineta',
+                    'dennica' + cls,
+                    disc['dennica' + cls] || 0,
+                    color,
+                    border
+                ) +
+                    buildInputBlock(
+                        dn,
+                        'Nadbudowa',
+                        'nadbudowa' + cls,
+                        disc['nadbudowa' + cls] || 0,
+                        color,
+                        border
+                    ) +
+                    buildInputBlock(
+                        dn,
+                        'Zakończenie',
+                        'zwienczenie' + cls,
+                        disc['zwienczenie' + cls] || 0,
+                        color,
+                        border
+                    )
+            );
+        });
 
         html += `
         <div style="background: rgba(var(--white-rgb), 0.05); border: 1px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); padding: 0.45rem 0.7rem; transition: border-color 0.2s;" onmouseenter="this.style.borderColor='rgba(var(--accent-rgb), 0.2)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
@@ -258,11 +350,7 @@ function renderOfferDiscountsPopupContent() {
                 </div>
                 <div id="offer-dn-price-${dn}" style="color: var(--success); font-weight: var(--fw-extrabold); font-size: var(--fs-md);">${typeof fmt === 'function' ? fmt(sumNettoDN) : sumNettoDN} PLN</div>
             </div>
-            <div class="flex-gap-5-wrap">
-                ${buildInputBlock(dn, 'Dennica / Kineta', 'dennica', disc.dennica, 'var(--accent-hover)', 'rgba(var(--accent-rgb), 0.3)')}
-                ${buildInputBlock(dn, 'Nadbudowa', 'nadbudowa', disc.nadbudowa, 'var(--accent-hover)', 'rgba(var(--accent-rgb), 0.3)')}
-                ${hasPrecoInGroup ? buildInputBlock(dn, 'Wkładka PRECO', 'preco', disc.preco || 0, 'var(--danger-hover)', 'rgba(var(--danger-rgb), 0.3)') : ''}
-            </div>
+            ${sectionsHtml}
         </div>`;
     });
 
@@ -343,16 +431,16 @@ function renderOfferDiscountsPopupContent() {
         if (anyMalW) {
             html += `
                 <div class="flex-1-120">
-                    <div class="fs-3xs-fw800-up">Wewnętrzne</div>
-                    <div class="accent2-pill">
+                    <div style="font-size: var(--fs-3xs); font-weight: var(--fw-extrabold); text-transform: uppercase; letter-spacing: 0.5px; color: var(--purple-alt); margin-bottom: 0.15rem;">Wewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-sm); overflow: hidden;">
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
-                            class="text-center offer-discount-input preco-dn-input"
+                            class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            >
-                        <span class="fs-sm-fw800-accent2-50">zł</span>
+                            style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }
@@ -360,16 +448,16 @@ function renderOfferDiscountsPopupContent() {
         if (anyMalZ) {
             html += `
                 <div class="flex-1-120">
-                    <div class="fs-3xs-fw800-up">Zewnętrzne</div>
-                    <div class="accent2-pill">
+                    <div style="font-size: var(--fs-3xs); font-weight: var(--fw-extrabold); text-transform: uppercase; letter-spacing: 0.5px; color: var(--purple-alt); margin-bottom: 0.15rem;">Zewnętrzne</div>
+                    <div style="display: flex; align-items: center; background: rgba(var(--accent2-rgb), 0.1); border: 1px solid rgba(var(--accent2-rgb), 0.3); border-radius: var(--radius-sm); overflow: hidden;">
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
-                            class="text-center offer-discount-input preco-dn-input"
+                            class="text-center offer-discount-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            >
-                        <span class="fs-sm-fw800-accent2-50">zł</span>
+                            style="min-width:0; flex:1; font-size: var(--fs-xl); font-weight: var(--fw-black); color: var(--purple-alt); background: transparent; border: none; outline: none; text-align: center;">
+                        <span style="font-size: var(--fs-sm); font-weight: var(--fw-extrabold); color: rgba(var(--accent2-rgb), 0.5); padding-right: 0.4rem;">zł</span>
                     </div>
                 </div>`;
         }

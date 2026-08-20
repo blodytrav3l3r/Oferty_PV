@@ -57,7 +57,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                   ? wellDiscounts
                   : {};
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
-        const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
+        const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
         const precoMult = 1 - (disc.preco || 0) / 100;
         const assignedPrzejscia =
             typeof calculateAssignedPrzejscia === 'function'
@@ -81,7 +81,6 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                 if (p.componentType === 'kineta') {
                     return Object.assign({}, item, { _xskip: true, _xp: 0 });
                 }
-                const isDennica = ['dennica', 'styczna'].includes(p.componentType);
                 const hasKineta =
                     p.componentType === 'dennica' &&
                     well.config.some(function (c) {
@@ -139,7 +138,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                     }
                     return Object.assign({}, item, { _xp: basePrice });
                 }
-                const discountPct = isDennica ? disc.dennica || 0 : disc.nadbudowa || 0;
+                const discountPct = getWellDiscountPct(well, p, disc);
                 return Object.assign({}, item, { _xp: p.price || 0, _xd: discountPct });
             }),
             przejscia: well.przejscia

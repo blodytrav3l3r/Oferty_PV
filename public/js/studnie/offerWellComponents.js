@@ -146,7 +146,6 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
     const activeDiscounts =
         typeof getWellActiveDiscounts === 'function' ? getWellActiveDiscounts(well) : wellDiscounts;
     const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-    const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
 
     const detailsHtml = `<tr class="well-details-row"><td colspan="${colsCount}">
         <div class="well-details-container">
@@ -171,7 +170,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
             <div style="margin-top:0.8rem; border-top:1px solid rgba(var(--white-rgb), 0.05); padding-top:0.5rem;">
                 <div style="font-size: var(--fs-xs); text-transform:uppercase; color:var(--text-muted); font-weight: var(--fw-semibold); margin-bottom:0.3rem;">Konfiguracja elementów:</div>
                 <table style="width:100%; font-size: var(--fs-base);">
-                    ${renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, change)}
+                    ${renderWellComponentsList(well, wellTransportCost, disc, change)}
                 </table>
             </div>
         </div>
@@ -180,7 +179,7 @@ function renderWellDetailsRow(well, i, change, wellTransportCost, colsCount) {
     return detailsHtml;
 }
 
-function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, _change) {
+function renderWellComponentsList(well, wellTransportCost, disc, _change) {
     let html = '';
     const assignedPrzejscia = calculateAssignedPrzejscia(well);
 
@@ -188,14 +187,13 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || p.componentType === 'kineta') return;
 
-        const discStr = getDiscountStr(p, disc);
+        const discStr = getDiscountStr(well, p, disc);
         const { totalLinePrice, totalLineWeight } = calculateLinePricing(
             well,
             p,
             item,
             wellTransportCost,
             disc,
-            nadbudowaMult,
             assignedPrzejscia[index],
             index
         );
@@ -254,7 +252,6 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
             item,
             assignedPrzejscia[index],
             disc,
-            nadbudowaMult,
             wellTransportCost,
             index
         );
@@ -262,17 +259,9 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
     return html;
 }
 
-function renderComponentSubItems(
-    well,
-    p,
-    item,
-    itemPrzejscia,
-    disc,
-    nadbudowaMult,
-    wellTransportCost,
-    itemIndex
-) {
+function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTransportCost, itemIndex) {
     let html = '';
+    const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
     const isBase = p.componentType === 'dennica' || p.componentType === 'styczna';
 
     const bd =

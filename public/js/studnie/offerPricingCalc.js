@@ -131,16 +131,8 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
     return { hasPreco, error, allocatedCost, fraction, isBottomMostDennica };
 }
 
-function calculateLinePricing(
-    well,
-    p,
-    item,
-    wellTransportCost,
-    disc,
-    nadbudowaMult,
-    itemPrzejscia,
-    itemIndex
-) {
+function calculateLinePricing(well, p, item, wellTransportCost, disc, itemPrzejscia, itemIndex) {
+    const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
     const itemPrice =
         item.frozenPrice != null && window.isPreviewMode
             ? item.frozenPrice

@@ -25,6 +25,50 @@ function getWellActiveDiscounts(well) {
     return activeDiscounts;
 }
 
+const ZWIENCZENIE_TYPES = [
+    'konus',
+    'plyta_din',
+    'plyta_zamykajaca',
+    'plyta_najazdowa',
+    'pierscien_odciazajacy'
+];
+
+/**
+ * Rabat (%) dla komponentu wg klasy nośności studni.
+ * - zakończenie (konus/płyty) -> zwienczenie<KlasaZwieńcz.> ?? nadbudowa (baza)
+ * - dennica/kineta/styczna    -> dennica<KlasaKorpus> ?? dennica (baza)
+ * - pozostałe (kregi, nadbudowa) -> nadbudowa<KlasaKorpus> ?? nadbudowa (baza)
+ */
+function getWellDiscountPct(well, p, disc) {
+    if (!disc) disc = {};
+    if (ZWIENCZENIE_TYPES.includes(p.componentType)) {
+        const key = well.klasaNosnosci_zwienczenie
+            ? 'zwienczenie' + well.klasaNosnosci_zwienczenie
+            : '';
+        return key && disc[key] != null ? disc[key] : disc.nadbudowa || 0;
+    }
+    const suffix = well.klasaNosnosci_korpus || '';
+    if (
+        p.componentType === 'dennica' ||
+        p.componentType === 'kineta' ||
+        p.componentType === 'styczna'
+    ) {
+        const key = 'dennica' + suffix;
+        return key && disc[key] != null ? disc[key] : disc.dennica || 0;
+    }
+    return getWellNadbudowaPct(well, disc);
+}
+
+/**
+ * Rabat (%) nadbudowy wg klasy nośności korpusu (kregi, przejścia, wiercenia).
+ * Fallback do bazowego nadbudowa.
+ */
+function getWellNadbudowaPct(well, disc) {
+    if (!disc) disc = {};
+    const key = 'nadbudowa' + (well.klasaNosnosci_korpus || '');
+    return key && disc[key] != null ? disc[key] : disc.nadbudowa || 0;
+}
+
 function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     let itemPrice = p.price || 0;
 
@@ -34,15 +78,7 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
 
         const activeDiscounts = getWellActiveDiscounts(well);
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-        if (
-            p.componentType === 'dennica' ||
-            p.componentType === 'kineta' ||
-            p.componentType === 'styczna'
-        ) {
-            discountPct = disc.dennica || 0;
-        } else {
-            discountPct = disc.nadbudowa || 0;
-        }
+        discountPct = getWellDiscountPct(well, p, disc);
     }
     const mult = 1 - discountPct / 100;
 
@@ -171,15 +207,7 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
         const activeDiscounts = getWellActiveDiscounts(well);
         const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0 };
-        if (
-            p.componentType === 'dennica' ||
-            p.componentType === 'kineta' ||
-            p.componentType === 'styczna'
-        ) {
-            discountPct = disc.dennica || 0;
-        } else {
-            discountPct = disc.nadbudowa || 0;
-        }
+        discountPct = getWellDiscountPct(well, p, disc);
     }
     const mult = 1 - discountPct / 100;
 
@@ -385,12 +413,9 @@ function calcWellStats(well) {
     });
 
     if (well.przejscia) {
-        let discNadbudowa = 0;
         const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn;
         const activeDiscounts = getWellActiveDiscounts(well);
-        if (discountKey && activeDiscounts[discountKey]) {
-            discNadbudowa = activeDiscounts[discountKey].nadbudowa || 0;
-        }
+        const discNadbudowa = getWellNadbudowaPct(well, activeDiscounts[discountKey] || {});
         const mult = 1 - discNadbudowa / 100;
 
         let configMap = [];
@@ -526,6 +551,8 @@ function calcWellStats(well) {
 }
 
 window.getItemPriceBreakdown = getItemPriceBreakdown;
+window.getWellDiscountPct = getWellDiscountPct;
+window.getWellNadbudowaPct = getWellNadbudowaPct;
 
 /* ===== Rejestracja globali ===== */
 window.calcWellStats = calcWellStats;
