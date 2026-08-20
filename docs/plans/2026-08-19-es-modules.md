@@ -1,6 +1,6 @@
 # Plan migracji do ES Modules (TASK-047)
 
-**Status:** W TRAKCIE — dokument planu + 5 modułów ESM (etapy 1-5); etap 6 potwierdzony (już ESM).
+**Status:** DOMKNIĘTY — etapy 1-6 wykonane (shared core ESM); etap 7..n odroczony (decyzja, patrz sekcja).
 **Data:** 2026-08-19
 **Priorytet:** P4 (audyt FA-3, LOW)
 **Zależności:** TASK-045 (shared core), TASK-027 (modalCore), TASK-008 (kolizje globali)
@@ -86,7 +86,22 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 | 4    | fetchJson           | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 5    | debounce            | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 6    | storageService      | [x] 2026-08-20 (potwierdzenie — już był ESM, zero globali window)                                             |
-| 7..n | moduły rury/studnie | [ ]                                                                                                           |
+| 7..n | moduły rury/studnie | [ ] odroczone — decyzja 2026-08-20 (patrz niżej)                                                              |
+
+## Decyzja o zamknięciu (2026-08-20)
+
+Etapy 1-6 wykonane — wspólny core (`escapeHtml`, `modalCore`, `toast`, `fetchJson`,
+`debounce`, `StorageService`) jest ESM i działa przez mostki `window.*` dla plików legacy.
+
+**Etap 7..n odroczony.** Powód: moduły rury/studnie (178 + 561 globali `window.x=`) to
+legacy `<script defer>` w współdzielonym global scope — pliki odwołują się do siebie
+**gołymi identyfikatorami** (np. `COMPONENT_THEME`, `LAYERS`, `SVG_COLORS` bez `window.`).
+Pojedyncza migracja pliku do ESM łamie te odwołania (symbol `export` trafia do module
+scope, nie global). Migracja wymaga przekształcenia **całych grup ładowania naraz** —
+ryzyko regresji i koszt nieproporcjonalny do wartości (priorytet P4/LOW).
+
+Warunki ponownego otwarcia: osobna inicjatywa (np. TASK dla modułu studnie `diagram-*`),
+zgodnie ze wzorcem PASS (shared API → ESM), po uprzednim zmapowaniu gołych odwołań globalnych.
 
 ## Rollback
 
