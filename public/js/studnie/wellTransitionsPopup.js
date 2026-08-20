@@ -141,11 +141,8 @@ if (typeof document !== 'undefined' && !window.__wtpDelegated) {
         const val = el.getAttribute('data-val');
         const index = el.getAttribute('data-index');
         const id = el.getAttribute('data-id');
-        const modal = el.getAttribute('data-modal');
-        if (action === 'wtStopPropagation') {
-            e.stopPropagation();
-        } else if (action === 'wtCloseModal') {
-            document.getElementById(modal).style.display = 'none';
+        if (action === 'wtSetFlow') {
+            window.confirmPrzejscieFlow(parseInt(index, 10), el.getAttribute('data-flow'));
         } else if (action === 'togglePrzejsciaTypeVisibility') {
             window.togglePrzejsciaTypeVisibility(t);
         } else if (action === 'closePrzejsciaVisibilityPopup') {
@@ -179,50 +176,36 @@ window.openFlowTypePopup = function (index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
-    let modal = document.getElementById('flow-type-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'flow-type-modal';
-        modal.innerHTML = `
-        <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="flow-type-modal">
-           <div style="background:var(--slate-800); padding:1.5rem; border-radius: var(--radius); border:1px solid var(--slate-700); width:300px; text-align:center; box-shadow:0 10px 25px rgba(var(--black-rgb), 0.5);" data-action="wtStopPropagation">
-               <h3 class="mb-1-white-3xl">Wybierz typ przepływu</h3>
-               <div style="display:flex; gap:1rem; justify-content:center;">
-                  <button id="flow-wlot-btn" style="flex:1; background:rgba(var(--blue-rgb), 0.2); color:var(--blue-hover); border:2px solid rgba(var(--blue-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--blue-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--blue-rgb), 0.2)'">
-                     <span class="fs-8xl"><i data-lucide="download"></i></span>WLOT
-                  </button>
-                  <button id="flow-wylot-btn" style="flex:1; background:rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); border:2px solid rgba(var(--danger-rgb), 0.8); padding:1.2rem; border-radius: var(--radius-sm); cursor:pointer; font-weight: var(--fw-extrabold); font-size: var(--fs-3xl); display:flex; flex-direction:column; align-items:center; gap:0.4rem; transition:all 0.2s;" onmouseenter="this.style.background='rgba(var(--danger-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--danger-rgb), 0.2)'">
-                     <span class="fs-8xl"><i data-lucide="upload"></i></span>WYLOT
-                  </button>
-               </div>
-               <button class="mt-15-p5" data-action="wtCloseModal" data-modal="flow-type-modal">Anuluj</button>
-           </div>
-        </div>
-        `;
-        document.body.appendChild(modal);
-    }
+    window.showModal({
+        id: 'flow-type-modal',
+        titleId: 'flow-type-title',
+        html: `
+        <div class="modal modal--prz-flow">
+            <h3 class="mb-1-white-3xl" id="flow-type-title">Wybierz typ przepływu</h3>
+            <div style="display:flex; gap:1rem; justify-content:center;">
+                <button id="flow-wlot-btn" class="prz-flow-btn prz-flow-btn--wlot"
+                    data-action="wtSetFlow" data-index="${index}" data-flow="${FLOW_TYPES.WLOT}">
+                    <span class="fs-8xl"><i data-lucide="download"></i></span>WLOT
+                </button>
+                <button id="flow-wylot-btn" class="prz-flow-btn prz-flow-btn--wylot"
+                    data-action="wtSetFlow" data-index="${index}" data-flow="${FLOW_TYPES.WYLOT}">
+                    <span class="fs-8xl"><i data-lucide="upload"></i></span>WYLOT
+                </button>
+            </div>
+            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+        </div>`
+    });
+};
 
-    const showModal = (id, display) => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = display;
-    };
-    showModal('flow-type-modal', 'flex');
-
-    document.getElementById('flow-wlot-btn').onclick = () => {
-        well.przejscia[index].flowType = FLOW_TYPES.WLOT;
-        well.przejscia[index].flowTypeManual = true;
-        showModal('flow-type-modal', 'none');
-        renderWellPrzejscia();
-        window.refreshZleceniaModalIfActive();
-    };
-
-    document.getElementById('flow-wylot-btn').onclick = () => {
-        well.przejscia[index].flowType = FLOW_TYPES.WYLOT;
-        well.przejscia[index].flowTypeManual = true;
-        showModal('flow-type-modal', 'none');
-        renderWellPrzejscia();
-        window.refreshZleceniaModalIfActive();
-    };
+window.confirmPrzejscieFlow = function (index, flow) {
+    const well = getCurrentWell();
+    if (!well || !well.przejscia || !well.przejscia[index]) return;
+    if (flow !== FLOW_TYPES.WLOT && flow !== FLOW_TYPES.WYLOT) return;
+    well.przejscia[index].flowType = flow;
+    well.przejscia[index].flowTypeManual = true;
+    closeModal();
+    renderWellPrzejscia();
+    window.refreshZleceniaModalIfActive();
 };
 
 window.openChangePrzejscieTypePopup = function (index) {
@@ -246,38 +229,26 @@ window.openChangePrzejscieTypePopup = function (index) {
     );
     const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
 
-    let modal = document.getElementById('change-prz-type-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'change-prz-type-modal';
-        document.body.appendChild(modal);
-    }
-
-    modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="change-prz-type-modal">
-       <div class="modal-panel-xl" data-action="wtStopPropagation">
-           <h3 class="mb-1-white-3xl">Zmień rodzaj przejścia</h3>
-           <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${allTypes
-                  .map((t) => {
-                      const isActive = t === currProduct.category;
-                      return `<button data-action="confirmChangePrzejscieType" data-index="${index}" data-t="${escapeJsStr(t)}"
-                           class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
-                                  background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
-                                  border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
-                          onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
-                          onmouseleave="this.style.background='${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.borderColor='${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'}'">\
-                       ${escapeHtml(t)}
-                  </button>`;
-                  })
-                  .join('')}
-           </div>
-           <button class="mt-15-p5" data-action="wtCloseModal" data-modal="change-prz-type-modal">Anuluj</button>
-       </div>
-    </div>
-    `;
-    if (modal) modal.style.display = 'flex';
+    window.showModal({
+        id: 'change-prz-type-modal',
+        titleId: 'change-prz-type-title',
+        html: `
+        <div class="modal modal--prz">
+            <h3 class="mb-1-white-3xl" id="change-prz-type-title">Zmień rodzaj przejścia</h3>
+            <div class="prz-grid">
+                ${allTypes
+                    .map((t) => {
+                        const isActive = t === currProduct.category;
+                        return `<button data-action="confirmChangePrzejscieType" data-index="${index}" data-t="${escapeJsStr(t)}"
+                             class="prz-grid-btn ${isActive ? 'prz-grid-btn--active' : ''}">
+                             ${escapeHtml(t)}
+                        </button>`;
+                    })
+                    .join('')}
+            </div>
+            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+        </div>`
+    });
 };
 
 window.confirmChangePrzejscieType = function (index, newType) {
@@ -297,8 +268,7 @@ window.confirmChangePrzejscieType = function (index, newType) {
         delete well.przejscia[index].frozenDrillingName;
         delete well.przejscia[index].frozenDrillingDn;
 
-        const m = document.getElementById('change-prz-type-modal');
-        if (m) m.style.display = 'none';
+        closeModal();
         refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
@@ -326,40 +296,28 @@ window.openChangePrzejscieDnPopup = function (index) {
         .filter((p) => p.category === currProduct.category)
         .sort((a, b) => a.dn - b.dn);
 
-    let modal = document.getElementById('change-prz-dn-modal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'change-prz-dn-modal';
-        document.body.appendChild(modal);
-    }
-
-    modal.innerHTML = `
-    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(3px); z-index:${LAYERS.GENERIC_MODAL_BACKDROP}; display:flex; align-items:center; justify-content:center;" data-action="wtCloseModal" data-modal="change-prz-dn-modal">
-       <div class="modal-panel-xl" data-action="wtStopPropagation">
-           <h3 class="mb-1-white-3xl">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
-           <div style="display:grid; grid-template-columns:repeat(auto-fill, 192px); justify-content:center; align-content:start; gap:11px; flex:1; overflow-y:auto; padding:0.2rem;">
-              ${available
-                  .map((p) => {
-                      const isActive = p.id === currId;
-                      const dnLabel =
-                          typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
-                      return `<button data-action="confirmChangePrzejscieDn" data-index="${index}" data-id="${escapeJsStr(p.id)}"
-                           class="${isActive ? 'color-accent' : ''}"
-                           style="width:192px; height:44px; display:flex; align-items:center; justify-content:center; padding:0.2rem 0.6rem; border-radius: var(--radius-sm); cursor:pointer; font-size: var(--fs-lg); font-weight: var(--fw-bold); text-align:center; transition:all 0.15s;
-                                  background:${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};
-                                  border:1px solid ${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'};"
-                          onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.15)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
-                          onmouseleave="this.style.background='${isActive ? 'rgba(var(--accent-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.borderColor='${isActive ? 'rgba(var(--accent-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.1)'}'">\
-                       ${escapeHtml(dnLabel)}
-                  </button>`;
-                  })
-                  .join('')}
-           </div>
-           <button class="mt-15-p5" data-action="wtCloseModal" data-modal="change-prz-dn-modal">Anuluj</button>
-       </div>
-    </div>
-    `;
-    if (modal) modal.style.display = 'flex';
+    window.showModal({
+        id: 'change-prz-dn-modal',
+        titleId: 'change-prz-dn-title',
+        html: `
+        <div class="modal modal--prz">
+            <h3 class="mb-1-white-3xl" id="change-prz-dn-title">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
+            <div class="prz-grid">
+                ${available
+                    .map((p) => {
+                        const isActive = p.id === currId;
+                        const dnLabel =
+                            typeof p.dn === 'string' && p.dn.includes('/') ? p.dn : 'DN ' + p.dn;
+                        return `<button data-action="confirmChangePrzejscieDn" data-index="${index}" data-id="${escapeJsStr(p.id)}"
+                             class="prz-grid-btn ${isActive ? 'prz-grid-btn--active' : ''}">
+                             ${escapeHtml(dnLabel)}
+                        </button>`;
+                    })
+                    .join('')}
+            </div>
+            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+        </div>`
+    });
 };
 
 window.confirmChangePrzejscieDn = function (index, newProductId) {
@@ -375,8 +333,7 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     delete well.przejscia[index].frozenDrillingName;
     delete well.przejscia[index].frozenDrillingDn;
 
-    const m = document.getElementById('change-prz-dn-modal');
-    if (m) m.style.display = 'none';
+    closeModal();
     refreshAll();
     autoSelectComponents(true);
     window.refreshZleceniaModalIfActive();
