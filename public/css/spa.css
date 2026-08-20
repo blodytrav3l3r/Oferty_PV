@@ -18,13 +18,11 @@
         filter 0.22s ease;
 }
 
-.spa-module-iframe[style*='display: block'],
-.spa-module-iframe[style*='display:block'] {
+.spa-module-iframe.spa-iframe-visible {
     display: block;
 }
 
-body.spa-view-loading .spa-module-iframe[style*='display: block'],
-body.spa-view-loading .spa-module-iframe[style*='display:block'] {
+body.spa-view-loading .spa-module-iframe.spa-iframe-visible {
     opacity: 0.2;
     filter: blur(2px);
 }

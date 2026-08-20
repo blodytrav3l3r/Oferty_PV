@@ -1132,10 +1132,6 @@ select.form-input option {
     font-size: var(--fs-2xl);
 }
 /* Pomocnicze flex */
-.flex-row {
-    display: flex;
-    flex-direction: row;
-}
 .flex-center {
     display: flex;
     align-items: center;

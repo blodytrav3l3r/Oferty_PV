@@ -233,7 +233,7 @@
         src += (src.includes('?') ? '&' : '?') + 'v=2.0';
 
         iframe.src = src;
-        iframe.style.display = 'none';
+        iframe.classList.remove('spa-iframe-visible');
 
         // Ukryj nagłówek modułu wewnątrz iframe (jest zbędny — nagłówek SPA obsługuje nawigację)
         iframe.addEventListener('load', () => {
@@ -310,7 +310,7 @@
 
         // Ukryj wszystkie iframe'y
         Object.values(iframes).forEach((f) => {
-            f.style.display = 'none';
+            f.classList.remove('spa-iframe-visible');
         });
 
         // Pokaż lub utwórz docelowy iframe
@@ -328,7 +328,7 @@
             iframe.src = newSrc;
         }
 
-        iframe.style.display = 'block';
+        iframe.classList.add('spa-iframe-visible');
         currentModule = module;
 
         // Auto-odświeżanie danych, jeśli moduł ma funkcję odświeżania

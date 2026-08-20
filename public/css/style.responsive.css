@@ -71,7 +71,7 @@
         gap: 0.75rem;
     }
 
-    .kartoteka-filter-bar > div[style*='flex: 1'] {
+    .kartoteka-filter-bar > .search-box-grow {
         display: none;
     }
 
@@ -234,10 +234,10 @@
     height: 34px;
 }
 /* Wiersz filtrów — kompaktowe odstępy, aby mieścił się w jednej linii */
-.kartoteka-filter-bar > div[style*='flex'] {
+.kartoteka-filter-bar > .kartoteka-filter-row {
     gap: 0.5rem !important;
 }
-.kartoteka-filter-bar > div[style*='flex'] > div {
+.kartoteka-filter-bar > .kartoteka-filter-row > div {
     gap: 0.35rem !important;
 }
 .kartoteka-filter-bar .toolbar-label {
