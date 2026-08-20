@@ -76,7 +76,7 @@ function buildEtykietaHtml(template, data) {
         <tr>
             <td class="el-qty">${e.ilosc}</td>
             <td class="el-idx">${e.indeks}</td>
-            <td class="el-name">${e.nazwa}</td>
+            <td class="el-name">${escapeHtml(e.nazwa)}</td>
         </tr>
     `
         )
@@ -86,7 +86,7 @@ function buildEtykietaHtml(template, data) {
 
     const payload = {
         SNR: data.snr || '',
-        MAIN_ELEMENT: mainElement,
+        MAIN_ELEMENT: escapeHtml(mainElement),
         NR_ZLECENIA: data.productionOrderNumber || '',
         ELEMENTY_ROWS: elementRows,
         CERT_IMG: cert.img,

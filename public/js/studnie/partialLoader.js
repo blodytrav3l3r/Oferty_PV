@@ -21,9 +21,13 @@
         var path = els[i].getAttribute('data-partial');
         if (id && path) promises.push(loadPartial(id, path));
     }
-    Promise.all(promises)
-        .then(function () {
-            document.dispatchEvent(new CustomEvent('partials:loaded'));
-        })
-        .catch(function () {});
+    Promise.allSettled(promises).then(function (results) {
+        var failed = results.filter(function (r) {
+            return r.status === 'rejected';
+        }).length;
+        if (failed > 0) {
+            console.warn('partialLoader: ' + failed + ' partiali nie załadowano');
+        }
+        document.dispatchEvent(new CustomEvent('partials:loaded'));
+    });
 })();

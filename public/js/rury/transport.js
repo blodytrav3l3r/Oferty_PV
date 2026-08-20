@@ -352,7 +352,7 @@ function renderTransportBreakdown(result, costPerTrip) {
         const itemTransportCost = weightShare * totalTransportCost;
         const perUnit = l.quantity > 0 ? itemTransportCost / l.quantity : 0;
         html += `<tr>
-      <td style="max-width:250px">${l.name}</td>
+      <td style="max-width:250px">${escapeHtml(l.name)}</td>
       <td class="text-right">${l.quantity} szt.</td>
       <td class="text-right">${fmtInt(l.weightPerPiece)} kg</td>
       <td class="text-right">${fmtInt(l.totalWeight)} kg</td>
@@ -670,7 +670,11 @@ window.updateRuryModalTransportDetails = function () {
                     return s + priceAfterDiscount * q;
                 }, 0);
             }
-        } catch (_) {}
+        } catch (err) {
+            logger.error('transport', '[transport] Błąd kalkulacji wartości netto:', err);
+            showToast('Błąd przeliczania wartości zamówienia', 'error');
+            productsNetto = 0;
+        }
         const finalNetto = productsNetto + totalTransportCost;
         totalValEl.textContent = `${fmt(finalNetto)} PLN`;
     }
