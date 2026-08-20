@@ -1,6 +1,6 @@
 # Plan migracji do ES Modules (TASK-047)
 
-**Status:** W TRAKCIE — dokument planu + 3 moduły ESM (etapy 1-3).
+**Status:** W TRAKCIE — dokument planu + 4 moduły ESM (etapy 1-4).
 **Data:** 2026-08-19
 **Priorytet:** P4 (audyt FA-3, LOW)
 **Zależności:** TASK-045 (shared core), TASK-027 (modalCore), TASK-008 (kolizje globali)
@@ -48,7 +48,8 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 - `public/js/shared/escapeHtml.js` — ESM: `export function escapeHtml/escapeHtmlAttr/escapeJsStr`.
   Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
 - `public/js/shared/toast.js` — ESM: `export function showToast` (etap 3). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
-- `<script type="module" src="js/shared/toast.js?v=...">` w 6 wejściówkach HTML
+- `public/js/shared/fetchJson.js` — ESM: `export async function fetchJson` (etap 4). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
+- `<script type="module" src="js/shared/fetchJson.js?v=...">` w 6 wejściówkach HTML
   (index, app, studnie, rury, kartoteka, zlecenia) PRZED `shared/ui.js`.
 
 ### Ryzyka pierwszego kroku
@@ -71,7 +72,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 ## Kryteria akceptacji (TASK-047)
 
 - [x] Dokument planu migracji (ten plik).
-- [x] 3 moduły jako ESM (`escapeHtml`, `modalCore`, `toast`).
+- [x] 4 moduły jako ESM (`escapeHtml`, `modalCore`, `toast`, `fetchJson`).
 
 ## Postęp etapów
 
@@ -80,7 +81,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 | 1    | escapeHtml          | [x] 2026-08-19                                                                                                |
 | 2    | modalCore           | [x] 2026-08-19                                                                                                |
 | 3    | toast               | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
-| 4    | fetchJson           | [ ]                                                                                                           |
+| 4    | fetchJson           | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 5    | debounce/throttle   | [ ]                                                                                                           |
 | 6    | storageService      | [ ]                                                                                                           |
 | 7..n | moduły rury/studnie | [ ]                                                                                                           |

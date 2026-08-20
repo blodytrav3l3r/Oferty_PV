@@ -83,7 +83,7 @@ describe('AI/ML fetch — nagłówki autoryzacji (H1)', () => {
             { file: 'studnie/mlRewardHooks.js', url: 'REWARD_URL' },
             { file: 'aiStatusIndicator.js', url: 'STATUS_URL' },
             { file: 'aiStatusIndicator.js', url: 'KNOWLEDGE_URL' },
-            { file: 'shared/ui.js', url: 'function fetchJson' }
+            { file: 'shared/fetchJson.js', url: 'export async function fetchJson' }
         ];
         for (const { file, url } of targets) {
             const src = readFile(file);
