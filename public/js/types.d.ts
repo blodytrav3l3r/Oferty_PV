@@ -41,7 +41,7 @@ interface ToastOptions {
 }
 
 interface UI {
-    showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
+    showToast(msg: string, type?: 'success' | 'error' | 'info' | 'warning'): void;
     appConfirm(msg: string): Promise<boolean>;
     escapeHtml(str: string): string;
     formatCurrency(amount: number): string;
@@ -129,7 +129,7 @@ interface Window {
     escapeHtml(str: string): string;
 
     /** Funkcja showToast (w razie braku ui) */
-    showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
+    showToast(msg: string, type?: 'success' | 'error' | 'info' | 'warning'): void;
 
     /** Funkcja appConfirm (w razie braku ui) */
     appConfirm(msg: string): Promise<boolean>;
@@ -143,7 +143,7 @@ declare var api: ApiClient;
 declare var logger: Logger;
 declare var auth: AuthModule;
 declare var pzGuard: PzGuardModule;
-declare function showToast(msg: string, type?: 'success' | 'error' | 'info'): void;
+declare function showToast(msg: string, type?: 'success' | 'error' | 'info' | 'warning'): void;
 declare function appConfirm(msg: string): Promise<boolean>;
 declare function escapeHtml(str: string | number | null | undefined): string;
 declare function setText(el: HTMLElement | null, value: string | number | null | undefined): void;

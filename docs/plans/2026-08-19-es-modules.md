@@ -1,6 +1,6 @@
 # Plan migracji do ES Modules (TASK-047)
 
-**Status:** NOWY — dokument planu + pierwszy krok (2 moduły ESM).
+**Status:** W TRAKCIE — dokument planu + 3 moduły ESM (etapy 1-3).
 **Data:** 2026-08-19
 **Priorytet:** P4 (audyt FA-3, LOW)
 **Zależności:** TASK-045 (shared core), TASK-027 (modalCore), TASK-008 (kolizje globali)
@@ -30,15 +30,15 @@ w sekcji `/* Bridge dla legacy */`, usuwany po zmigrowaniu wszystkich zależnych
 
 Priorytet: najpierw moduły bez zależności cyklicznych i bez mutacji stanu globalnego.
 
-| Etap | Moduł                                                    | Plik                       | Globali | Uwagi                                          |
-| ---- | -------------------------------------------------------- | -------------------------- | ------- | ---------------------------------------------- |
-| 1    | `escapeHtml`/`escapeHtmlAttr`/`escapeJsStr`              | `shared/escapeHtml.js`     | 3       | czyste funkcje, zero zależności, ~40 callerów  |
-| 2    | `modalCore` (showModal/closeModal/trapFocus/untrapFocus) | `shared/modalCore.js`      | 4       | core modalów (TASK-027), zależny od escapeHtml |
-| 3    | `toast`                                                  | `shared/toast.js`          | 2       | showToast/showToastError                       |
-| 4    | `fetchJson`                                              | `shared/fetchJson.js`      | 1       | zależny od authHeaders                         |
-| 5    | `debounce`/`throttle`                                    | `shared/debounce.js`       | 2       | czyste funkcje                                 |
-| 6    | `storageService`                                         | `shared/StorageService.js` | 1       | wzorzec PASS st. 5, zamknięcie cyklu           |
-| 7..n | moduły rury/studnie                                      | per katalog                | reszta  | deduplikacja przez shared API najpierw         |
+| Etap | Moduł                                                    | Plik                       | Globali | Uwagi                                            |
+| ---- | -------------------------------------------------------- | -------------------------- | ------- | ------------------------------------------------ |
+| 1    | `escapeHtml`/`escapeHtmlAttr`/`escapeJsStr`              | `shared/escapeHtml.js`     | 3       | czyste funkcje, zero zależności, ~40 callerów    |
+| 2    | `modalCore` (showModal/closeModal/trapFocus/untrapFocus) | `shared/modalCore.js`      | 4       | core modalów (TASK-027), zależny od escapeHtml   |
+| 3    | `toast`                                                  | `shared/toast.js`          | 1       | showToast (showToastError nie istnieje w kodzie) |
+| 4    | `fetchJson`                                              | `shared/fetchJson.js`      | 1       | zależny od authHeaders                           |
+| 5    | `debounce`/`throttle`                                    | `shared/debounce.js`       | 2       | czyste funkcje                                   |
+| 6    | `storageService`                                         | `shared/StorageService.js` | 1       | wzorzec PASS st. 5, zamknięcie cyklu             |
+| 7..n | moduły rury/studnie                                      | per katalog                | reszta  | deduplikacja przez shared API najpierw           |
 
 **Reguła kolejności:** nigdy nie migruj modułu, który ma zależnych niezmigrowanych i
 odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjalizacja).
@@ -47,7 +47,8 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 
 - `public/js/shared/escapeHtml.js` — ESM: `export function escapeHtml/escapeHtmlAttr/escapeJsStr`.
   Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
-- `<script type="module" src="js/shared/escapeHtml.js?v=...">` w 6 wejściówkach HTML
+- `public/js/shared/toast.js` — ESM: `export function showToast` (etap 3). Mostek legacy na końcu pliku. Usunięcie definicji z `shared/ui.js` (zostają tam inne globalne).
+- `<script type="module" src="js/shared/toast.js?v=...">` w 6 wejściówkach HTML
   (index, app, studnie, rury, kartoteka, zlecenia) PRZED `shared/ui.js`.
 
 ### Ryzyka pierwszego kroku
@@ -70,7 +71,19 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 ## Kryteria akceptacji (TASK-047)
 
 - [x] Dokument planu migracji (ten plik).
-- [x] 2 moduły jako ESM (`escapeHtml`, `modalCore`).
+- [x] 3 moduły jako ESM (`escapeHtml`, `modalCore`, `toast`).
+
+## Postęp etapów
+
+| Etap | Moduł               | Status                                                                                                        |
+| ---- | ------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 1    | escapeHtml          | [x] 2026-08-19                                                                                                |
+| 2    | modalCore           | [x] 2026-08-19                                                                                                |
+| 3    | toast               | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
+| 4    | fetchJson           | [ ]                                                                                                           |
+| 5    | debounce/throttle   | [ ]                                                                                                           |
+| 6    | storageService      | [ ]                                                                                                           |
+| 7..n | moduły rury/studnie | [ ]                                                                                                           |
 
 ## Rollback
 
