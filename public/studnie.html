@@ -57,6 +57,9 @@
                             <div
                                 id="svg-trash"
                                 class="ws-item"
+                                role="button"
+                                tabindex="0"
+                                aria-label="Usuń studnię"
                                 style="
                                     padding: 0.2rem;
                                     justify-content: center;
@@ -69,6 +72,12 @@
                                 "
                                 title="Kliknij, aby usunąć studnię"
                                 onclick="removeWell(currentWellIndex)"
+                                onkeydown="
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        removeWell(currentWellIndex);
+                                    }
+                                "
                                 onmouseenter="
                                     if (window.svgDragStartIndex >= 0) {
                                         this.style.background = 'rgba(var(--danger-rgb), 0.3)';

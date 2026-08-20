@@ -62,14 +62,6 @@
 
     // ── Pomocnicy ──
 
-    function escapeHtml(str) {
-        if (typeof window.escapeHtml === 'function') return window.escapeHtml(str);
-        const d = document.createElement('div');
-        d.textContent = str;
-        return d.innerHTML;
-    }
-    if (typeof window.escapeHtml !== 'function') window.escapeHtml = escapeHtml;
-
     function parseHash() {
         const hash = window.location.hash || '#/rury';
         const [path, queryString] = hash.replace('#/', '').split('?');
@@ -99,7 +91,7 @@
         if (!config) return;
 
         const logoText = document.getElementById('spa-logo-text');
-        if (logoText) logoText.innerHTML = config.logo;
+        if (logoText) logoText.textContent = config.logo;
 
         // Kolor nazwy modułu pod logo (zielony/niebieski/bursztynowy/różowy)
         const logoApp = document.querySelector('.logo-app');
@@ -123,13 +115,14 @@
                 (s, i) => `
             <button class="nav-btn nav-tile${i === 0 ? ' active' : ''}"
                 data-section="${s.id}" id="nav-${s.id}"
-                onclick="${s.isLink ? `window.location.hash='${s.href}'` : `SpaRouter.showSection('${s.id}')`}">
+                onclick="${s.isLink ? `window.location.hash='${escapeHtmlAttr(s.href)}'` : `SpaRouter.showSection('${escapeHtmlAttr(s.id)}')`}">
                 <span class="nav-tile-icon">${s.icon}</span>
-                <span class="nav-tile-text">${s.label}</span>
+                <span class="nav-tile-text">${escapeHtml(s.label)}</span>
             </button>
         `
             )
             .join('');
+        if (window.lucide) window.lucide.createIcons({ root: nav });
     }
 
     function getTransitionLayer() {
@@ -222,6 +215,7 @@
         const iframe = document.createElement('iframe');
         iframe.id = 'spa-iframe-' + module;
         iframe.className = 'spa-module-iframe';
+        iframe.title = config.logo;
 
         const { params } = parseHash();
         let src = config.src;

@@ -314,11 +314,11 @@
 }
 
 *:focus {
-    outline: none;
-}
-*:focus-visible {
     outline: var(--focus-ring);
     outline-offset: 2px;
+}
+*:focus:not(:focus-visible) {
+    outline: none;
 }
 
 body {

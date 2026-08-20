@@ -330,8 +330,7 @@ function renderTransportBreakdown(result, costPerTrip) {
     <span id="transport-toggle-icon">${window.isTransportBreakdownExpanded ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
   </div>`;
     html += `<div id="transport-breakdown-content" style="display:${window.isTransportBreakdownExpanded ? 'block' : 'none'}; margin-top:0.5rem;">`;
-    html += `<div class="table-wrap"><table>
-    <th scope="col"ead><tr>
+    html += `<div class="table-wrap"><table><thead><tr>
       <th scope="col">Produkt</th><th scope="col" class="text-right">Ilość</th><th scope="col" class="text-right">Waga/szt</th>
       <th scope="col" class="text-right">Łączna waga</th><th scope="col" class="text-right">Max/transport</th>
       <th scope="col" class="text-right">Transporty</th>
