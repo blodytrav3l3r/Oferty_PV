@@ -1,6 +1,6 @@
 # Plan migracji do ES Modules (TASK-047)
 
-**Status:** W TRAKCIE — dokument planu + 5 modułów ESM (etapy 1-5).
+**Status:** W TRAKCIE — dokument planu + 5 modułów ESM (etapy 1-5); etap 6 potwierdzony (już ESM).
 **Data:** 2026-08-19
 **Priorytet:** P4 (audyt FA-3, LOW)
 **Zależności:** TASK-045 (shared core), TASK-027 (modalCore), TASK-008 (kolizje globali)
@@ -37,7 +37,7 @@ Priorytet: najpierw moduły bez zależności cyklicznych i bez mutacji stanu glo
 | 3    | `toast`                                                  | `shared/toast.js`          | 1       | showToast (showToastError nie istnieje w kodzie) |
 | 4    | `fetchJson`                                              | `shared/fetchJson.js`      | 1       | zależny od authHeaders                           |
 | 5    | `debounce`                                               | `shared/debounce.js`       | 1       | debounce (throttle nie istnieje w kodzie)        |
-| 6    | `storageService`                                         | `shared/StorageService.js` | 1       | wzorzec PASS st. 5, zamknięcie cyklu             |
+| 6    | `storageService`                                         | `shared/StorageService.js` | 0       | JUŻ ESM (export/import), zero globali window     |
 | 7..n | moduły rury/studnie                                      | per katalog                | reszta  | deduplikacja przez shared API najpierw           |
 
 **Reguła kolejności:** nigdy nie migruj modułu, który ma zależnych niezmigrowanych i
@@ -74,6 +74,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 
 - [x] Dokument planu migracji (ten plik).
 - [x] 5 modułów jako ESM (`escapeHtml`, `modalCore`, `toast`, `fetchJson`, `debounce`).
+- [x] `StorageService` — potwierdzenie że już jest ESM (export/import, zero globali `window`).
 
 ## Postęp etapów
 
@@ -84,7 +85,7 @@ odwrotnie — zaczynaj od liści (funkcje czyste), kończ na korzeniach (inicjal
 | 3    | toast               | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 4    | fetchJson           | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
 | 5    | debounce            | [x] 2026-08-20 (weryfikacja: test:quick 1907/1907, lint:frontend, typecheck:frontend, E2E appname T1-T6 PASS) |
-| 6    | storageService      | [ ]                                                                                                           |
+| 6    | storageService      | [x] 2026-08-20 (potwierdzenie — już był ESM, zero globali window)                                             |
 | 7..n | moduły rury/studnie | [ ]                                                                                                           |
 
 ## Rollback
