@@ -6,7 +6,7 @@
                 return r.text();
             })
             .then(function (html) {
-                var el = document.getElementById(id);
+                const el = document.getElementById(id);
                 if (el) el.innerHTML = html;
             })
             .catch(function (e) {
@@ -14,15 +14,15 @@
             });
     }
 
-    var els = document.querySelectorAll('[data-partial]');
-    var promises = [];
-    for (var i = 0; i < els.length; i++) {
-        var id = els[i].id;
-        var path = els[i].getAttribute('data-partial');
+    const els = document.querySelectorAll('[data-partial]');
+    const promises = [];
+    for (let i = 0; i < els.length; i++) {
+        const id = els[i].id;
+        const path = els[i].getAttribute('data-partial');
         if (id && path) promises.push(loadPartial(id, path));
     }
     Promise.allSettled(promises).then(function (results) {
-        var failed = results.filter(function (r) {
+        const failed = results.filter(function (r) {
             return r.status === 'rejected';
         }).length;
         if (failed > 0) {

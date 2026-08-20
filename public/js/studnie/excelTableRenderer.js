@@ -274,8 +274,8 @@ function _excelRenderTable(dn) {
 
     html += '</table>';
     // Zapisz scroll przed re-renderem
-    var prevScrollLeft = container.scrollLeft;
-    var prevScrollTop = container.scrollTop;
+    const prevScrollLeft = container.scrollLeft;
+    const prevScrollTop = container.scrollTop;
     container.innerHTML = html;
     // Przywróć scroll po re-renderze
     container.scrollLeft = prevScrollLeft;

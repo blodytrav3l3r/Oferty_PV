@@ -1,26 +1,26 @@
 (function () {
     'use strict';
 
-    var HEALTH_URL = '/api/telemetry/ai/health';
+    const HEALTH_URL = '/api/telemetry/ai/health';
 
     /* fetchJson — wspólny helper z shared/ui.js (window.fetchJson) */
 
     function timeAgo(iso) {
         if (!iso) return '—';
-        var diff = Date.now() - new Date(iso).getTime();
-        var min = Math.floor(diff / 60000);
+        const diff = Date.now() - new Date(iso).getTime();
+        const min = Math.floor(diff / 60000);
         if (min < 1) return 'przed chwilą';
         if (min < 60) return min + ' min temu';
-        var h = Math.floor(min / 60);
+        const h = Math.floor(min / 60);
         if (h < 24) return h + 'h temu';
         return new Date(iso).toLocaleDateString('pl-PL');
     }
 
     function healthCard(title, value, ok, subtitle, tooltip) {
-        var icon = ok
+        const icon = ok
             ? '<i data-lucide="check-circle" style="width:18px;height:18px;color:var(--success)"></i>'
             : '<i data-lucide="alert-circle" style="width:18px;height:18px;color:var(--warn)"></i>';
-        var sub = subtitle
+        const sub = subtitle
             ? '<div style="font-size: var(--fs-sm);color:var(--text-secondary);margin-top:2px">' +
               subtitle +
               '</div>'
@@ -44,7 +44,7 @@
     }
 
     function qualityBar(pct, label) {
-        var color = pct >= 95 ? 'var(--success)' : pct >= 80 ? 'var(--warn)' : 'var(--danger)';
+        const color = pct >= 95 ? 'var(--success)' : pct >= 80 ? 'var(--warn)' : 'var(--danger)';
         return (
             '<div class="ai-dq-bar">' +
             '<div class="ai-dq-bar-header">' +
@@ -69,14 +69,14 @@
     }
 
     window.mlHealthRender = function (containerId) {
-        var container = document.getElementById(containerId);
+        const container = document.getElementById(containerId);
         if (!container) return;
 
         container.innerHTML = '<div class="ai-ml-loading">Ładowanie...</div>';
 
         window.fetchJson(HEALTH_URL).then(function (d) {
             if (!d || d.error) {
-                var msg =
+                const msg =
                     d && d.error === 'forbidden'
                         ? 'Brak dostępu do stanu ML (wymagana rola admin)'
                         : d && d.error === 'unauthorized'
@@ -86,16 +86,16 @@
                 return;
             }
 
-            var modelStr = d.modelVersion
+            const modelStr = d.modelVersion
                 ? window.escapeHtml(d.modelVersion) +
                   (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                 : 'Brak';
-            var modelOk = !!d.mlOnline;
-            var modelTooltip = d.modelVersion
+            const modelOk = !!d.mlOnline;
+            const modelTooltip = d.modelVersion
                 ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
                 : 'Brak';
 
-            var html =
+            const html =
                 /* Naglowek */
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
                 '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +

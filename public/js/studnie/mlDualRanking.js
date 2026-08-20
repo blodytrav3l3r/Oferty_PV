@@ -43,20 +43,20 @@
     /** @type {Map<string, {score:number, timestamp:number}>} */
     const scoreCache = new Map();
     const CACHE_TTL = 15 * 60 * 1000;
-    var CACHE_MAX_SIZE = 200;
+    const CACHE_MAX_SIZE = 200;
 
     function setScoreCache(key, value) {
         if (scoreCache.size >= CACHE_MAX_SIZE) {
-            var oldest = scoreCache.keys().next().value;
+            const oldest = scoreCache.keys().next().value;
             if (oldest !== undefined) scoreCache.delete(oldest);
         }
         scoreCache.set(key, value);
     }
 
     // Okresowe czyszczenie przedawnionych wpisów cache co 5 min
-    var _cacheCleanInterval = setInterval(
+    const _cacheCleanInterval = setInterval(
         function () {
-            var now = Date.now();
+            const now = Date.now();
             scoreCache.forEach(function (v, k) {
                 if (now - v.timestamp > CACHE_TTL) scoreCache.delete(k);
             });
@@ -170,7 +170,7 @@
     }
 
     function getSeasonNum() {
-        var m = new Date().getMonth() + 1;
+        const m = new Date().getMonth() + 1;
         if (m >= 3 && m <= 5) return 0;
         if (m >= 6 && m <= 8) return 1;
         if (m >= 9 && m <= 11) return 2;

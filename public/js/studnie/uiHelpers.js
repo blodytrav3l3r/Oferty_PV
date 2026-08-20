@@ -482,6 +482,7 @@ function skipWizardToStep3() {
 /* ===== PRZECHOWYWANIE (REST API) ===== */
 
 async function loadStudnieProducts() {
+    let saved = null;
     for (let attempt = 0; attempt < 3; attempt++) {
         try {
             const res = await fetchWithTimeout(
@@ -492,7 +493,7 @@ async function loadStudnieProducts() {
             if (res.ok) {
                 const json = await res.json();
                 if (json && Array.isArray(json.data)) {
-                    var saved = json.data;
+                    saved = json.data;
                     break;
                 }
             }

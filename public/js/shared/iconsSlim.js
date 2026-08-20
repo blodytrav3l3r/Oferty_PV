@@ -10,7 +10,7 @@
     'use strict';
 
     // Mapa ikon: nazwa -> tablica elementów SVG (innerHTML)
-    var ICONS = {
+    const ICONS = {
         'alert-circle': [
             '<circle cx="12" cy="12" r="10"/>',
             '<line x1="12" x2="12" y1="8" y2="12"/>',
@@ -396,7 +396,7 @@
     };
 
     // Domyślne atrybuty SVG (identyczne z Lucide)
-    var SVG_ATTRS = {
+    const SVG_ATTRS = {
         xmlns: 'http://www.w3.org/2000/svg',
         width: '24',
         height: '24',
@@ -413,18 +413,18 @@
      * @param {HTMLElement} el - Element do zamiany
      */
     function replaceElement(el) {
-        var name = el.getAttribute('data-lucide');
+        const name = el.getAttribute('data-lucide');
         if (!name || !ICONS[name]) return;
 
-        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 
         // Ustaw atrybuty bazowe
-        for (var attr in SVG_ATTRS) {
+        for (const attr in SVG_ATTRS) {
             svg.setAttribute(attr, SVG_ATTRS[attr]);
         }
 
         // Dodaj klasy CSS (jak Lucide: 'lucide lucide-icon-name')
-        var existingClass = el.getAttribute('class') || '';
+        const existingClass = el.getAttribute('class') || '';
         svg.setAttribute('class', ('lucide lucide-' + name + ' ' + existingClass).trim());
 
         // Zachowaj atrybuty stylowe z oryginalnego elementu
@@ -445,9 +445,9 @@
      * @param {Object} [opts] - Opcje (kompatybilność z Lucide API)
      */
     function createIcons(opts) {
-        var root = (opts && opts.root) || document;
-        var pending = root.querySelectorAll('i[data-lucide]');
-        for (var i = 0; i < pending.length; i++) {
+        const root = (opts && opts.root) || document;
+        const pending = root.querySelectorAll('i[data-lucide]');
+        for (let i = 0; i < pending.length; i++) {
             replaceElement(pending[i]);
         }
     }
@@ -471,13 +471,13 @@
     // MutationObserver — automatyczna hydracja dynamicznie dodawanych ikon
     // Zastępuje stary setInterval(hydrateLucideIcons, 800) z iconMap.js
     if (typeof MutationObserver !== 'undefined') {
-        var debounceTimer = null;
-        var observer = new MutationObserver(function (mutations) {
-            var hasPending = false;
-            for (var m = 0; m < mutations.length; m++) {
-                var added = mutations[m].addedNodes;
-                for (var n = 0; n < added.length; n++) {
-                    var node = added[n];
+        let debounceTimer = null;
+        const observer = new MutationObserver(function (mutations) {
+            let hasPending = false;
+            for (let m = 0; m < mutations.length; m++) {
+                const added = mutations[m].addedNodes;
+                for (let n = 0; n < added.length; n++) {
+                    const node = added[n];
                     if (node.nodeType !== 1) continue;
                     if (node.tagName === 'I' && node.hasAttribute('data-lucide')) {
                         hasPending = true;

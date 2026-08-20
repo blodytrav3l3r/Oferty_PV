@@ -2,7 +2,7 @@
     'use strict';
 
     /* ===== ENDPOINTY (poprawione — dodano /ai/) ===== */
-    var ENDPOINTS = {
+    const ENDPOINTS = {
         stats: '/api/telemetry/ai/knowledge/stats',
         patterns: '/api/telemetry/ai/knowledge/patterns',
         runCycle: '/api/telemetry/ai/learning/run',
@@ -45,7 +45,7 @@
 
     /* Komunikat błędu API — fetchJson rozróżnia {error:'forbidden'} (403) od {error:'server'} */
     function apiErrorHtml(errorCode) {
-        var msg =
+        const msg =
             errorCode === 'forbidden'
                 ? 'Brak dostępu (wymagana rola admin)'
                 : errorCode === 'unauthorized'
@@ -98,7 +98,7 @@
     /* ===== LEARNING ENGINE STATS ===== */
     function renderStats(container) {
         container.innerHTML = loadingHtml();
-        var p = window.fetchJson(ENDPOINTS.stats);
+        const p = window.fetchJson(ENDPOINTS.stats);
         if (!p) {
             container.innerHTML =
                 '<div class="ai-ml-error">Brak dostępu do statystyk (wymagana rola admin)</div>';
@@ -109,7 +109,7 @@
                 container.innerHTML = apiErrorHtml(stats && stats.error ? stats.error : 'server');
                 return;
             }
-            var html =
+            const html =
                 '<div class="ai-stats-grid">' +
                 statCard(
                     'Wzorce łącznie',
@@ -193,12 +193,12 @@
     /* ===== PATTERNS LIST ===== */
     function renderPatterns(container, dnFilter) {
         container.innerHTML = loadingHtml();
-        var url =
+        const url =
             ENDPOINTS.patterns +
             '?dn=' +
             encodeURIComponent(dnFilter || 'all_dn') +
             '&minConfidence=0.3';
-        var p = window.fetchJson(url);
+        const p = window.fetchJson(url);
         if (!p) {
             container.innerHTML =
                 '<div class="ai-ml-unavailable">Brak wzorców (lub brak dostępu)</div>';
@@ -219,9 +219,9 @@
                 }
                 return;
             }
-            var rows = data.items
+            const rows = data.items
                 .map(function (p) {
-                    var confColor =
+                    const confColor =
                         p.confidence >= 0.7
                             ? 'var(--success-hover)'
                             : p.confidence >= 0.4
@@ -269,12 +269,12 @@
 
     /* ===== PATTERNS EMPTY - komunikat diagnostyczny ===== */
     function patternsEmptyHtml(data, dnFilter) {
-        var tc = data.telemetryCount || 0;
-        var pt = data.patternsTotal || 0;
-        var otherDn = data.patternsOtherDn || 0;
-        var lastRun = data.lastRunAt ? new Date(data.lastRunAt).toLocaleString('pl-PL') : null;
-        var msg = '';
-        var icon = 'database';
+        const tc = data.telemetryCount || 0;
+        const pt = data.patternsTotal || 0;
+        const otherDn = data.patternsOtherDn || 0;
+        const lastRun = data.lastRunAt ? new Date(data.lastRunAt).toLocaleString('pl-PL') : null;
+        let msg = '';
+        let icon = 'database';
         if (tc === 0) {
             msg =
                 '<strong>Brak danych telemetrycznych.</strong> Zacznij budować studnie, aby system zebrał dane do nauki.';
@@ -316,16 +316,16 @@
     /* ===== ML STATUS ===== */
     function renderMlStatus(container) {
         container.innerHTML = loadingHtml();
-        var pStatus = window.fetchJson(ENDPOINTS.mlStatus);
-        var pModels = window.fetchJson(ENDPOINTS.models);
+        const pStatus = window.fetchJson(ENDPOINTS.mlStatus);
+        const pModels = window.fetchJson(ENDPOINTS.models);
         if (!pStatus) {
             container.innerHTML = '<div class="ai-ml-unavailable">Brak dostępu do ML status</div>';
             return;
         }
         Promise.all([pStatus, pModels])
             .then(function (results) {
-                var status = results[0];
-                var modelsData = results[1];
+                const status = results[0];
+                const modelsData = results[1];
                 if (!status || status.error) {
                     container.innerHTML = apiErrorHtml(
                         status && status.error ? status.error : 'server'
@@ -337,31 +337,31 @@
                     return;
                 }
 
-                var online = status.mlOnline;
-                var inf = status.aiInfluencePct || 0;
-                var activeVer = status.modelVersion || '—';
-                var activeAuc =
+                const online = status.mlOnline;
+                const inf = status.aiInfluencePct || 0;
+                const activeVer = status.modelVersion || '—';
+                const activeAuc =
                     status.activeModelAuc != null && Number.isFinite(Number(status.activeModelAuc))
                         ? ' AUC ' + Number(status.activeModelAuc).toFixed(4)
                         : '';
-                var m = status.activeModelMetrics || {};
-                var fmt = function (v, d) {
+                const m = status.activeModelMetrics || {};
+                const fmt = function (v, d) {
                     return v != null && Number.isFinite(Number(v))
                         ? Number(v).toFixed(d == null ? 4 : d)
                         : '—';
                 };
-                var baselineAccuracy =
+                const baselineAccuracy =
                     status.baselineAccuracy != null &&
                     Number.isFinite(Number(status.baselineAccuracy))
                         ? Number(status.baselineAccuracy)
                         : null;
-                var baselineVsModel =
+                const baselineVsModel =
                     baselineAccuracy != null &&
                     status.activeModelAuc != null &&
                     Number.isFinite(Number(status.activeModelAuc))
                         ? Number(status.activeModelAuc) - baselineAccuracy
                         : null;
-                var mlGroup = function (label, gridClass, cards) {
+                const mlGroup = function (label, gridClass, cards) {
                     return (
                         '<div class="ai-ml-group">' +
                         '<div class="ai-ml-group-label"><i data-lucide="circle" style="width:6px;height:6px;fill:currentColor"></i>' +
@@ -375,7 +375,7 @@
                         '</div>'
                     );
                 };
-                var html =
+                let html =
                     '<h4 class="ai-ml-header"><i data-lucide="activity"></i> ML Pipeline</h4>' +
                     mlGroup('Status i model', 'ai-ml-col-5', [
                         statCard(
@@ -524,15 +524,15 @@
                     '</div>';
 
                 /* Tabela modeli */
-                var modelRows = '';
+                let modelRows = '';
                 if (modelsData && modelsData.models && modelsData.models.length > 0) {
                     modelRows = modelsData.models
                         .map(function (m) {
-                            var statusHtml = m.active
+                            const statusHtml = m.active
                                 ? '<span class="ai-model-active">● Aktywny</span>'
                                 : (m.createdAt || '').slice(0, 10);
-                            var rowClass = m.active ? ' class="ai-model-row-active"' : '';
-                            var delBtn = m.active
+                            const rowClass = m.active ? ' class="ai-model-row-active"' : '';
+                            const delBtn = m.active
                                 ? ''
                                 : '<div class="ai-model-actions-cell">' +
                                   '<button class="ai-model-promote-btn" data-id="' +
@@ -546,24 +546,24 @@
                                   '" title="Usuń ten model"><i data-lucide="trash-2"></i></button>' +
                                   '</div>';
                             /* Backend zwraca StoredModel: metrics (JSON z rocAuc), features, trainingRows, featureVersion */
-                            var metrics = safeJson(m.metrics);
-                            var rocAuc =
+                            const metrics = safeJson(m.metrics);
+                            const rocAuc =
                                 metrics &&
                                 metrics.rocAuc != null &&
                                 Number.isFinite(Number(metrics.rocAuc))
                                     ? Number(metrics.rocAuc)
                                     : null;
-                            var prAuc =
+                            const prAuc =
                                 metrics &&
                                 metrics.prAuc != null &&
                                 Number.isFinite(Number(metrics.prAuc))
                                     ? Number(metrics.prAuc)
                                     : null;
-                            var f1 =
+                            const f1 =
                                 metrics && metrics.f1 != null && Number.isFinite(Number(metrics.f1))
                                     ? Number(metrics.f1)
                                     : null;
-                            var featureCount = Array.isArray(m.features)
+                            const featureCount = Array.isArray(m.features)
                                 ? m.features.length
                                 : (safeJson(m.features) || []).length;
                             return (
@@ -642,9 +642,9 @@
                 renderDrift(container);
 
                 /* Slider AI Influence */
-                var aiSlider = document.getElementById('ai-influence-slider');
-                var aiValueLabel = document.getElementById('ai-influence-value');
-                var aiSaveTimer = null;
+                const aiSlider = document.getElementById('ai-influence-slider');
+                const aiValueLabel = document.getElementById('ai-influence-value');
+                let aiSaveTimer = null;
                 if (aiSlider && aiValueLabel) {
                     aiSlider.addEventListener('input', function () {
                         aiValueLabel.textContent = this.value + '%';
@@ -652,8 +652,8 @@
                     aiSlider.addEventListener('change', function () {
                         if (aiSaveTimer) clearTimeout(aiSaveTimer);
                         aiSaveTimer = setTimeout(function () {
-                            var val = aiSlider ? aiSlider.value : '0';
-                            var p = window.fetchJson(ENDPOINTS.settings, {
+                            const val = aiSlider ? aiSlider.value : '0';
+                            const p = window.fetchJson(ENDPOINTS.settings, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ value: val })
@@ -677,21 +677,21 @@
                 }
 
                 /* Eventy przycisków */
-                var trainBtn = document.getElementById('ai-ml-train-btn');
-                var rollbackBtn = document.getElementById('ai-ml-rollback-btn');
-                var mlContainer = container;
+                const trainBtn = document.getElementById('ai-ml-train-btn');
+                const rollbackBtn = document.getElementById('ai-ml-rollback-btn');
+                const mlContainer = container;
                 /* Usuwanie i ręczna aktywacja modeli (delegacja zdarzeń) */
                 /* Delegacja zdarzeń: jeden handler dla delete + activate (P6) */
-                var modelTableWrap = container.querySelector('.ai-model-table-wrap');
+                const modelTableWrap = container.querySelector('.ai-model-table-wrap');
                 if (modelTableWrap) {
                     modelTableWrap.addEventListener('click', function (ev) {
-                        var deleteBtn = ev.target.closest
+                        const deleteBtn = ev.target.closest
                             ? ev.target.closest('.ai-model-delete-btn')
                             : null;
-                        var activateBtn = ev.target.closest
+                        const activateBtn = ev.target.closest
                             ? ev.target.closest('.ai-model-activate-btn')
                             : null;
-                        var promoteBtn = ev.target.closest
+                        const promoteBtn = ev.target.closest
                             ? ev.target.closest('.ai-model-promote-btn')
                             : null;
 
@@ -706,8 +706,8 @@
                                 }
                             ).then(function (confirmed) {
                                 if (!confirmed) return;
-                                var id = promoteBtn.getAttribute('data-id');
-                                var p = window.fetchJson(
+                                const id = promoteBtn.getAttribute('data-id');
+                                const p = window.fetchJson(
                                     ENDPOINTS.promote + encodeURIComponent(id) + '/promote',
                                     { method: 'POST' }
                                 );
@@ -751,8 +751,8 @@
                                 type: 'danger'
                             }).then(function (confirmed) {
                                 if (!confirmed) return;
-                                var id = deleteBtn.getAttribute('data-id');
-                                var p = window.fetchJson(
+                                const id = deleteBtn.getAttribute('data-id');
+                                const p = window.fetchJson(
                                     ENDPOINTS.models + '/' + encodeURIComponent(id),
                                     {
                                         method: 'DELETE'
@@ -797,8 +797,8 @@
                                 }
                             ).then(function (confirmed) {
                                 if (!confirmed) return;
-                                var id = activateBtn.getAttribute('data-id');
-                                var p = window.fetchJson(
+                                const id = activateBtn.getAttribute('data-id');
+                                const p = window.fetchJson(
                                     ENDPOINTS.models + '/' + encodeURIComponent(id) + '/activate',
                                     { method: 'POST' }
                                 );
@@ -838,7 +838,7 @@
                         trainBtn.disabled = true;
                         trainBtn.innerHTML =
                             '<i data-lucide="loader" class="lucide-spin"></i> Trenowanie...';
-                        var p = window.fetchJson(ENDPOINTS.train, { method: 'POST' });
+                        const p = window.fetchJson(ENDPOINTS.train, { method: 'POST' });
                         if (p) {
                             p.then(function (result) {
                                 trainBtn.disabled = false;
@@ -884,7 +884,7 @@
                             if (!confirmed) return;
                             rollbackBtn.disabled = true;
                             rollbackBtn.textContent = 'Rollback...';
-                            var p = window.fetchJson(ENDPOINTS.rollback, { method: 'POST' });
+                            const p = window.fetchJson(ENDPOINTS.rollback, { method: 'POST' });
                             if (p) {
                                 p.then(function (result) {
                                     rollbackBtn.disabled = false;
@@ -929,10 +929,10 @@
     /* ===== TRAINING RUNS ===== */
     /* GET /api/telemetry/ai/training/runs zwraca { runs } — 20 ostatnich AiTrainingRun */
     function renderTrainingRuns(container) {
-        var host = container.querySelector('.ai-training-runs-host');
+        const host = container.querySelector('.ai-training-runs-host');
         if (!host) return;
         host.innerHTML = loadingHtml();
-        var p = window.fetchJson(ENDPOINTS.trainingRuns);
+        const p = window.fetchJson(ENDPOINTS.trainingRuns);
         if (!p) {
             host.innerHTML = apiErrorHtml('server');
             return;
@@ -942,15 +942,15 @@
                 host.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
                 return;
             }
-            var runs = data.runs || [];
+            const runs = data.runs || [];
             if (!runs.length) {
                 host.innerHTML =
                     '<div class="ai-model-empty">Brak zapisanych przebiegów treningu.</div>';
                 return;
             }
-            var rows = runs
+            const rows = runs
                 .map(function (r) {
-                    var statusCls =
+                    const statusCls =
                         r.status === 'SUCCESS'
                             ? 'class="fs-xl-success-bold"'
                             : r.status === 'RUNNING'
@@ -958,11 +958,11 @@
                               : r.status === 'SKIPPED'
                                 ? 'class="text-muted"'
                                 : 'class="fs-xl-danger-bold"';
-                    var range =
+                    const range =
                         r.datasetStartAt && r.datasetEndAt
                             ? r.datasetStartAt.slice(0, 10) + ' → ' + r.datasetEndAt.slice(0, 10)
                             : '—';
-                    var fp = r.datasetFingerprint ? r.datasetFingerprint.slice(0, 8) : '—';
+                    const fp = r.datasetFingerprint ? r.datasetFingerprint.slice(0, 8) : '—';
                     return (
                         '<tr>' +
                         '<td style="white-space:nowrap;color:var(--text-muted);font-size: var(--fs-base)">' +
@@ -1026,10 +1026,10 @@
        feature: [{feature, psi}] (top-5 wg PSI), prediction: {psi},
        label: {currentPositiveRate, trainingPositiveRate, delta}, shadow: {...} */
     function renderDrift(container) {
-        var host = container.querySelector('.ai-drift-host');
+        const host = container.querySelector('.ai-drift-host');
         if (!host) return;
         host.innerHTML = loadingHtml();
-        var p = window.fetchJson(ENDPOINTS.drift);
+        const p = window.fetchJson(ENDPOINTS.drift);
         if (!p) {
             host.innerHTML = apiErrorHtml('server');
             return;
@@ -1039,12 +1039,12 @@
                 host.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
                 return;
             }
-            var psiBadge = function (psi) {
+            const psiBadge = function (psi) {
                 if (psi == null || !Number.isFinite(Number(psi))) {
                     return '<span class="text-muted">brak danych</span>';
                 }
-                var v = Number(psi);
-                var color =
+                const v = Number(psi);
+                const color =
                     v < 0.1
                         ? 'var(--success-hover)'
                         : v < 0.25
@@ -1058,7 +1058,7 @@
                     '</span>'
                 );
             };
-            var featureRows = (data.feature || [])
+            const featureRows = (data.feature || [])
                 .slice(0, 5)
                 .map(function (f, i) {
                     return (
@@ -1076,11 +1076,11 @@
                     );
                 })
                 .join('');
-            var labelHtml = '';
-            var lab = data.label || {};
+            let labelHtml = '';
+            const lab = data.label || {};
             if (lab.currentPositiveRate != null || lab.trainingPositiveRate != null) {
-                var delta = lab.delta;
-                var deltaCls =
+                const delta = lab.delta;
+                const deltaCls =
                     delta == null
                         ? 'var(--text-muted)'
                         : Math.abs(delta) < 0.05
@@ -1103,8 +1103,8 @@
                     (delta != null ? (delta >= 0 ? '+' : '') + Number(delta).toFixed(4) : '—') +
                     '</span></div>';
             }
-            var shadowHtml = '';
-            var sh = data.shadow || {};
+            let shadowHtml = '';
+            const sh = data.shadow || {};
             if (sh.candidateVersion) {
                 shadowHtml =
                     '<div class="ai-drift-label">' +
@@ -1150,7 +1150,7 @@
        na {error:'unavailable'} — dla braku modelu pokazujemy komunikat o uruchomieniu treningu ML. */
     function renderFeatureImportance(container) {
         container.innerHTML = loadingHtml();
-        var p = window.fetchJson(ENDPOINTS.featureImportance);
+        const p = window.fetchJson(ENDPOINTS.featureImportance);
         if (!p) {
             container.innerHTML = apiErrorHtml('server');
             return;
@@ -1173,20 +1173,20 @@
                 container.innerHTML = apiErrorHtml(data.error);
                 return;
             }
-            var feats = data.features || [];
+            const feats = data.features || [];
             if (!Array.isArray(feats) || feats.length === 0) {
                 container.innerHTML =
                     '<div class="card-note">Brak aktywnego modelu — uruchom trening ML, aby zobaczyć ważność cech.</div>';
                 return;
             }
-            var max = feats.reduce(function (mx, f) {
+            let max = feats.reduce(function (mx, f) {
                 return Math.max(mx, f.importance || 0);
             }, 0);
             max = max > 0 ? max : 1;
-            var rows = feats
+            const rows = feats
                 .map(function (f) {
-                    var val = f.importance || 0;
-                    var pct = Math.round((val / max) * 100);
+                    const val = f.importance || 0;
+                    const pct = Math.round((val / max) * 100);
                     return (
                         '<div style="margin-bottom:6px">' +
                         '<div style="display:flex;justify-content:space-between;font-size: var(--fs-base);margin-bottom:2px">' +
@@ -1225,7 +1225,7 @@
     /* ===== STUDNIE DOBRANE PRZEZ AI (well selections) ===== */
     function renderWellSelections(container) {
         container.innerHTML = loadingHtml();
-        var p = window.fetchJson(ENDPOINTS.wellSelections);
+        const p = window.fetchJson(ENDPOINTS.wellSelections);
         if (!p) {
             container.innerHTML = apiErrorHtml('server');
             return;
@@ -1235,21 +1235,21 @@
                 container.innerHTML = apiErrorHtml(data && data.error ? data.error : 'server');
                 return;
             }
-            var items = data.items || [];
+            const items = data.items || [];
             if (items.length === 0) {
                 container.innerHTML =
                     '<div class="card-note">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
                 return;
             }
-            var shown = items.slice(0, 20);
-            var rows = shown
+            const shown = items.slice(0, 20);
+            const rows = shown
                 .map(function (w, i) {
                     // N8: legacy createdAt bywa surowym epoch-ms (liczba) — new Date(liczba)
                     // jest OK, ale string "Invalid Date" z zepsutych danych rzucał RangeError
                     // wewnątrz .then i zostawiał "Ładowanie..." na stałe.
-                    var lastSeen = '—';
+                    let lastSeen = '—';
                     if (w.lastSeenAt) {
-                        var d = new Date(w.lastSeenAt);
+                        const d = new Date(w.lastSeenAt);
                         if (!isNaN(d.getTime())) {
                             lastSeen = d.toLocaleString('pl-PL');
                         }
@@ -1320,7 +1320,7 @@
     }
     /* ===== ENTRY POINT ===== */
     window.aiDashboardRender = function (containerId) {
-        var container = document.getElementById(containerId);
+        const container = document.getElementById(containerId);
         if (!container) return;
 
         container.innerHTML =
@@ -1356,11 +1356,11 @@
         renderWellSelections(document.getElementById('ai-well-selections'));
         renderPatterns(document.getElementById('ai-patterns'));
 
-        var filterBtn = document.getElementById('ai-filter-btn');
-        var runBtn = document.getElementById('ai-run-cycle');
-        var dnInput = document.getElementById('ai-dn-filter');
-        var patternsContainer = document.getElementById('ai-patterns');
-        var statsContainer = document.getElementById('ai-stats');
+        const filterBtn = document.getElementById('ai-filter-btn');
+        const runBtn = document.getElementById('ai-run-cycle');
+        const dnInput = document.getElementById('ai-dn-filter');
+        const patternsContainer = document.getElementById('ai-patterns');
+        const statsContainer = document.getElementById('ai-stats');
 
         if (filterBtn && dnInput) {
             filterBtn.addEventListener('click', function () {
@@ -1373,7 +1373,7 @@
                 runBtn.disabled = true;
                 runBtn.innerHTML =
                     '<i data-lucide="loader" class="lucide-spin"></i> Uruchamianie...';
-                var p = window.fetchJson(ENDPOINTS.runCycle, { method: 'POST' });
+                const p = window.fetchJson(ENDPOINTS.runCycle, { method: 'POST' });
                 if (p) {
                     p.then(function (result) {
                         runBtn.disabled = false;

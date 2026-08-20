@@ -213,13 +213,13 @@ function _sendAcceptanceTelemetry(wellsArr, signalType) {
  */
 function _filterChangedWells(wellsArr, existingDoc) {
     if (!existingDoc || !Array.isArray(existingDoc.wells)) return wellsArr;
-    var prevMap = new Map(
+    const prevMap = new Map(
         existingDoc.wells.map(function (w) {
             return [w.id, JSON.stringify(_wellSnapshot(w))];
         })
     );
     return wellsArr.filter(function (w) {
-        var prev = prevMap.get(w.id);
+        const prev = prevMap.get(w.id);
         if (prev === undefined) return true; // nowa studnia
         return prev !== JSON.stringify(_wellSnapshot(w));
     });

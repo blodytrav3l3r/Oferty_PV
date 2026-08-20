@@ -8,16 +8,16 @@
 (function () {
     'use strict';
 
-    var STATUS_URL = '/api/telemetry/ai/ml-status';
-    var KNOWLEDGE_URL = '/api/telemetry/ai/knowledge/stats';
-    var POLL_INTERVAL_MS = 30000;
-    var KNOWLEDGE_THROTTLE_MS = 60000;
+    const STATUS_URL = '/api/telemetry/ai/ml-status';
+    const KNOWLEDGE_URL = '/api/telemetry/ai/knowledge/stats';
+    const POLL_INTERVAL_MS = 30000;
+    const KNOWLEDGE_THROTTLE_MS = 60000;
 
-    var badge = null;
-    var dot = null;
-    var text = null;
-    var _lastFetch = 0;
-    var _lastKnowledgeFetch = 0;
+    let badge = null;
+    let dot = null;
+    let text = null;
+    let _lastFetch = 0;
+    let _lastKnowledgeFetch = 0;
 
     function getElements() {
         if (badge && dot && text) return true;
@@ -31,9 +31,11 @@
         if (!getElements()) return;
 
         if (status) {
-            var pct = status.aiInfluencePct || 0;
-            var model = status.modelVersion || '?';
-            var date = status.activeModelCreatedAt ? status.activeModelCreatedAt.slice(0, 10) : '?';
+            const pct = status.aiInfluencePct || 0;
+            const model = status.modelVersion || '?';
+            const date = status.activeModelCreatedAt
+                ? status.activeModelCreatedAt.slice(0, 10)
+                : '?';
 
             if (status.mlOnline) {
                 dot.style.background = pct > 0 ? 'var(--success)' : 'var(--slate-500)';
@@ -65,7 +67,7 @@
     }
 
     function fetchKnowledgeStatusAsync() {
-        var now = Date.now();
+        const now = Date.now();
         if (now - _lastKnowledgeFetch < KNOWLEDGE_THROTTLE_MS) return;
         _lastKnowledgeFetch = now;
         try {
@@ -75,7 +77,7 @@
                 })
                 .then(function (stats) {
                     if (!getElements() || !stats) return;
-                    var existing = text.title || '';
+                    const existing = text.title || '';
                     text.title =
                         existing.split('\n')[0] +
                         '\nWzorce AI: ' +
@@ -100,7 +102,7 @@
     }
 
     function poll() {
-        var now = Date.now();
+        const now = Date.now();
         if (now - _lastFetch < POLL_INTERVAL_MS) return;
         _lastFetch = now;
         try {

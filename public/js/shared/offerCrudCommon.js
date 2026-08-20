@@ -138,15 +138,15 @@ async function assignOfferSupervisor(currentUser, isNewOffer, editingId) {
  * @returns {object}
  */
 function buildBaseOfferDoc(spec) {
-    var id = spec.id;
-    var type = spec.type;
-    var fields = spec.fields;
-    var existingDoc = spec.existingDoc || null;
-    var currentUser = spec.currentUser || null;
-    var assignedUserId = spec.assignedUserId || null;
-    var assignedUserName = spec.assignedUserName || null;
-    var createdByUserId = spec.createdByUserId || null;
-    var createdByUserName = spec.createdByUserName || null;
+    const id = spec.id;
+    const type = spec.type;
+    const fields = spec.fields;
+    const existingDoc = spec.existingDoc || null;
+    const currentUser = spec.currentUser || null;
+    const assignedUserId = spec.assignedUserId || null;
+    const assignedUserName = spec.assignedUserName || null;
+    const createdByUserId = spec.createdByUserId || null;
+    const createdByUserName = spec.createdByUserName || null;
     return {
         id: id,
         type: type,

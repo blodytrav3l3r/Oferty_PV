@@ -2,30 +2,30 @@
 /* ===== POMOCNICZE FUNKCJE FORMULARZA OFERTY ===== */
 
 function restoreWizardState(wizardState, preventStepOverride) {
-    var wizardGlobalParams = wizardState && wizardState.globalParams;
+    const wizardGlobalParams = wizardState && wizardState.globalParams;
     if (wizardGlobalParams) {
         document.querySelectorAll('#wizard-step-2 .param-group').forEach(function (group) {
-            var paramName = group.getAttribute('data-param');
+            const paramName = group.getAttribute('data-param');
             if (!paramName || !Object.prototype.hasOwnProperty.call(wizardGlobalParams, paramName))
                 return;
-            var val = wizardGlobalParams[paramName];
+            const val = wizardGlobalParams[paramName];
             if (!val) return;
             group.querySelectorAll('.param-tile').forEach(function (b) {
                 b.classList.remove('active');
             });
-            var targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
+            const targetTile = group.querySelector('.param-tile[data-val="' + val + '"]');
             if (targetTile) targetTile.classList.add('active');
             if (typeof wizardConfirmedParams !== 'undefined') {
                 wizardConfirmedParams.add(paramName);
             }
         });
-        var wkladkaV = wizardGlobalParams.wkladka;
-        var subOpts = document.getElementById('wkladka-sub-options');
+        const wkladkaV = wizardGlobalParams.wkladka;
+        const subOpts = document.getElementById('wkladka-sub-options');
         if (wkladkaV && wkladkaV !== 'brak') {
             if (subOpts) subOpts.style.display = 'block';
-            var cbDennica = document.getElementById('pehd-dennica');
-            var cbNadbudowa = document.getElementById('pehd-nadbudowa');
-            var cbZwienczenie = document.getElementById('pehd-zwienczenie');
+            const cbDennica = document.getElementById('pehd-dennica');
+            const cbNadbudowa = document.getElementById('pehd-nadbudowa');
+            const cbZwienczenie = document.getElementById('pehd-zwienczenie');
             if (cbDennica) cbDennica.checked = wizardGlobalParams.wkladkaDennica === wkladkaV;
             if (cbNadbudowa) cbNadbudowa.checked = wizardGlobalParams.wkladkaNadbudowa === wkladkaV;
             if (cbZwienczenie)
@@ -44,7 +44,7 @@ function restoreWizardState(wizardState, preventStepOverride) {
             document.getElementById('malowanie-zew-cena').value =
                 wizardGlobalParams.malowanieZewCena || '';
     } else {
-        var legacyBanner = document.getElementById('wizard-legacy-banner');
+        const legacyBanner = document.getElementById('wizard-legacy-banner');
         if (legacyBanner) {
             legacyBanner.style.display = 'flex';
             if (typeof lucide !== 'undefined') lucide.createIcons({ root: legacyBanner });
@@ -65,16 +65,16 @@ function restoreWizardState(wizardState, preventStepOverride) {
 }
 
 function updateOfferFormHeader(number, offerId) {
-    var titleEl = document.getElementById('offer-form-title-studnie');
+    const titleEl = document.getElementById('offer-form-title-studnie');
     if (titleEl)
         titleEl.innerHTML =
             '<i data-lucide="pencil"></i> Edycja Oferty: <span class="fw-bold">' +
             escapeHtml(number || offerId) +
             '</span>';
-    var btnEl2 = document.getElementById('btn-save-studnie-offer');
+    const btnEl2 = document.getElementById('btn-save-studnie-offer');
     if (btnEl2) btnEl2.innerHTML = '<i data-lucide="save"></i> Zapisz ofertę';
 
-    var btnChangeUser = document.getElementById('btn-change-offer-user');
+    const btnChangeUser = document.getElementById('btn-change-offer-user');
     if (btnChangeUser) {
         btnChangeUser.style.display =
             currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro')

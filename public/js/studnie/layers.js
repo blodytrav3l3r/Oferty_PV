@@ -5,7 +5,7 @@
    Excel wewnątrz position:fixed tworzy własny stacking context.
    LAYERS_EXCEL dla warstw wewnątrz Excela.
 */
-var LAYERS = Object.freeze({
+const LAYERS = Object.freeze({
     STICKY_TABLE_TH: 5,
     STICKY_SIDEBAR: 10,
     STICKY_FILTER_TABS: 39,
@@ -29,7 +29,7 @@ var LAYERS = Object.freeze({
     BULK_ORDER: 100000,
     TRANSITION_EDIT: 100100
 });
-var LAYERS_EXCEL = Object.freeze({
+const LAYERS_EXCEL = Object.freeze({
     SELECT_OVERLAY: 2,
     STICKY_COLUMN: 5,
     STICKY_HEADER_ROW: 20,

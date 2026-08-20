@@ -17,49 +17,49 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
     let totalNetto = 0;
     let totalWeight = 0;
     wells.forEach(function (well) {
-        var stats = calcWellStats(well);
+        const stats = calcWellStats(well);
         totalNetto += stats.price;
         totalWeight += stats.weight;
     });
 
-    var globalWeightForTransport = 0;
+    let globalWeightForTransport = 0;
     wells.forEach(function (w) {
         globalWeightForTransport += calcWellStats(w).weight;
     });
-    var totalTransportCostForOffer = 0;
+    let totalTransportCostForOffer = 0;
     if (transportKm > 0 && transportRate > 0) {
-        var totalTransportsCount =
+        const totalTransportsCount =
             typeof calcTransportCount === 'function'
                 ? calcTransportCount(globalWeightForTransport, transportMode)
                 : Math.ceil(globalWeightForTransport / MAX_TRANSPORT_WEIGHT);
-        var costPerTrip = transportKm * transportRate;
+        const costPerTrip = transportKm * transportRate;
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
 
-    var productMap = new Map(
+    const productMap = new Map(
         studnieProducts.map(function (p) {
             return [p.id, p];
         })
     );
-    var wellsForExport = wells.map(function (well) {
-        var stats = calcWellStats(well);
-        var wellTransportCost =
+    const wellsForExport = wells.map(function (well) {
+        const stats = calcWellStats(well);
+        const wellTransportCost =
             globalWeightForTransport > 0
                 ? totalTransportCostForOffer * (stats.weight / globalWeightForTransport)
                 : 0;
-        var zwienczenie =
+        const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '\u2014';
-        var discountKey = well.dn === 'styczna' ? 'styczne' : well.dn || '';
-        var activeDiscounts =
+        const discountKey = well.dn === 'styczna' ? 'styczne' : well.dn || '';
+        const activeDiscounts =
             typeof getWellActiveDiscounts === 'function'
                 ? getWellActiveDiscounts(well)
                 : typeof wellDiscounts !== 'undefined'
                   ? wellDiscounts
                   : {};
-        var disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
-        var nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
-        var precoMult = 1 - (disc.preco || 0) / 100;
-        var assignedPrzejscia =
+        const disc = activeDiscounts[discountKey] || { dennica: 0, nadbudowa: 0, preco: 0 };
+        const nadbudowaMult = 1 - (disc.nadbudowa || 0) / 100;
+        const precoMult = 1 - (disc.preco || 0) / 100;
+        const assignedPrzejscia =
             typeof calculateAssignedPrzejscia === 'function'
                 ? calculateAssignedPrzejscia(well)
                 : {};
@@ -76,22 +76,22 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             rzednaDna: well.rzednaDna,
             magazyn: well.magazyn,
             config: (well.config || []).map(function (item, index) {
-                var p = productMap.get(item.productId);
+                const p = productMap.get(item.productId);
                 if (!p) return Object.assign({}, item);
                 if (p.componentType === 'kineta') {
                     return Object.assign({}, item, { _xskip: true, _xp: 0 });
                 }
-                var isDennica = ['dennica', 'styczna'].includes(p.componentType);
-                var hasKineta =
+                const isDennica = ['dennica', 'styczna'].includes(p.componentType);
+                const hasKineta =
                     p.componentType === 'dennica' &&
                     well.config.some(function (c) {
-                        var kp = productMap.get(c.productId);
+                        const kp = productMap.get(c.productId);
                         return kp && kp.componentType === 'kineta';
                     });
-                var myPrzejscia = assignedPrzejscia[index] || [];
-                var hasSurcharge = hasKineta || myPrzejscia.length > 0;
+                const myPrzejscia = assignedPrzejscia[index] || [];
+                let hasSurcharge = hasKineta || myPrzejscia.length > 0;
                 if (!hasSurcharge && typeof getItemPriceBreakdown === 'function') {
-                    var bd = getItemPriceBreakdown(well, p, false, item);
+                    const bd = getItemPriceBreakdown(well, p, false, item);
                     hasSurcharge =
                         bd.pehd > 0 ||
                         bd.malowanieW > 0 ||
@@ -100,31 +100,31 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         bd.nierdzewna > 0;
                 }
                 if (!hasSurcharge && typeof calculatePrecoAllocationForItem === 'function') {
-                    var pa = calculatePrecoAllocationForItem(well, index);
+                    const pa = calculatePrecoAllocationForItem(well, index);
                     if (pa.hasPreco && pa.allocatedCost > 0) hasSurcharge = true;
                 }
                 if (hasSurcharge) {
-                    var basePrice =
+                    let basePrice =
                         typeof getItemAssessedPrice === 'function'
                             ? getItemAssessedPrice(well, p, true, item)
                             : p.price || 0;
                     if (p.componentType === 'dennica') {
-                        var ki = well.config.find(function (c) {
-                            var kp = productMap.get(c.productId);
+                        const ki = well.config.find(function (c) {
+                            const kp = productMap.get(c.productId);
                             return kp && kp.componentType === 'kineta';
                         });
                         if (ki) {
-                            var kp = productMap.get(ki.productId);
-                            var kPrice =
+                            const kp = productMap.get(ki.productId);
+                            const kPrice =
                                 typeof getItemAssessedPrice === 'function'
                                     ? getItemAssessedPrice(well, kp, true, ki)
                                     : 0;
                             basePrice += kPrice;
                         }
                     }
-                    for (var przIdx = 0; przIdx < myPrzejscia.length; przIdx++) {
-                        var prz = myPrzejscia[przIdx];
-                        var pp = productMap.get(prz.productId);
+                    for (let przIdx = 0; przIdx < myPrzejscia.length; przIdx++) {
+                        const prz = myPrzejscia[przIdx];
+                        const pp = productMap.get(prz.productId);
                         if (!pp) continue;
                         basePrice +=
                             (pp.price || 0) * nadbudowaMult +
@@ -132,14 +132,14 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                             (parseFloat(prz.doplata) || 0);
                     }
                     if (typeof calculatePrecoAllocationForItem === 'function') {
-                        var pa2 = calculatePrecoAllocationForItem(well, index);
+                        const pa2 = calculatePrecoAllocationForItem(well, index);
                         if (pa2.hasPreco && pa2.allocatedCost > 0) {
                             basePrice += pa2.allocatedCost * precoMult;
                         }
                     }
                     return Object.assign({}, item, { _xp: basePrice });
                 }
-                var discountPct = isDennica ? disc.dennica || 0 : disc.nadbudowa || 0;
+                const discountPct = isDennica ? disc.dennica || 0 : disc.nadbudowa || 0;
                 return Object.assign({}, item, { _xp: p.price || 0, _xd: discountPct });
             }),
             przejscia: well.przejscia

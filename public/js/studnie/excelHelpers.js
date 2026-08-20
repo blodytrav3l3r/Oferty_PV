@@ -690,7 +690,7 @@ function _excelFilterVisibleColumns(compCols) {
 }
 
 function _excelGetVisibleComponentColumns(dn, well) {
-    var compCols = _excelBuildComponentColumns(dn, well);
+    const compCols = _excelBuildComponentColumns(dn, well);
     return _excelFilterVisibleColumns(compCols);
 }
 

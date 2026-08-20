@@ -128,18 +128,18 @@ function updateRuryOrderSummary(orderData) {
         };
         dst.querySelectorAll('.order-partial-qty').forEach((el) => {
             el.removeAttribute('disabled');
-            var input = /** @type {HTMLInputElement} */ (el);
+            const input = /** @type {HTMLInputElement} */ (el);
             input.onchange = function () {
-                var row = input.closest('tr[data-uid]');
+                const row = input.closest('tr[data-uid]');
                 if (!row) return;
                 applyOrderQty(row, input.value);
             };
         });
         dst.querySelectorAll('td:nth-child(6) .edit-input').forEach((el) => {
             el.removeAttribute('disabled');
-            var input = /** @type {HTMLInputElement} */ (el);
+            const input = /** @type {HTMLInputElement} */ (el);
             input.onchange = function () {
-                var row = input.closest('tr[data-uid]');
+                const row = input.closest('tr[data-uid]');
                 if (!row) return;
                 applyOrderQty(row, input.value);
             };
@@ -157,12 +157,12 @@ function updateRuryOrderSummary(orderData) {
                     '<input type="number" class="order-partial-qty" value="' +
                     escapeHtml(String(currentQty)) +
                     '" min="1" style="width:60px;text-align:center;background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);border-radius: var(--radius-2xs);padding:2px 4px">';
-                var newInput = /** @type {HTMLInputElement} */ (
+                const newInput = /** @type {HTMLInputElement} */ (
                     orderCell.querySelector('.order-partial-qty')
                 );
                 if (newInput) {
                     newInput.onchange = function () {
-                        var r = newInput.closest('tr[data-uid]');
+                        const r = newInput.closest('tr[data-uid]');
                         if (!r) return;
                         applyOrderQty(r, newInput.value);
                     };

@@ -11,7 +11,7 @@
      */
     function initVersionDisplay() {
         // Referencja do elementu, w którym wyświetlimy wersję
-        var versionEl = document.getElementById('app-version-toolbar');
+        const versionEl = document.getElementById('app-version-toolbar');
 
         // Jeśli element nie istnieje, nie ma co robić
         if (!versionEl) {

@@ -323,9 +323,9 @@
             }
 
             // Pełna lista komponentów jako WellComponentSnapshot[]
-            var configSnapshot = [];
-            for (var _i = 0; _i < configItems.length; _i++) {
-                var _snap = buildComponentSnapshot(configItems[_i], studnieProducts);
+            const configSnapshot = [];
+            for (let _i = 0; _i < configItems.length; _i++) {
+                const _snap = buildComponentSnapshot(configItems[_i], studnieProducts);
                 if (_snap) configSnapshot.push(_snap);
             }
 

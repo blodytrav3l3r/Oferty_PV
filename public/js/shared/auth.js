@@ -95,7 +95,7 @@ if (typeof window !== 'undefined') {
     }
     window.addEventListener('online', updateConnectionDot);
     window.addEventListener('offline', function () {
-        var dot = document.getElementById('connection-dot');
+        const dot = document.getElementById('connection-dot');
         if (dot) {
             dot.className = 'connection-dot is-offline';
             dot.title = 'Brak połączenia sieciowego';
