@@ -94,7 +94,7 @@ function openZakonczeniePopup() {
         const isAutoActive = !currentZak;
 
         tilesHtml += `
-        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" class="tile-accent-css" aria-pressed="${isAutoActive}" data-action="selectZakonczenie" data-id="">
+        <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''} tile-accent-css"  aria-pressed="${isAutoActive}" data-action="selectZakonczenie" data-id="">
             <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(effectiveDn)})</span>
             <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(effectiveDn)}</span>
             <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>
@@ -241,7 +241,7 @@ function openRedukcjaZakonczeniePopup() {
     let tilesHtml = '';
     const isAutoActive = !currentZak;
     tilesHtml += `
-    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''}" class="tile-accent-css" aria-pressed="${isAutoActive}" data-action="selectRedukcjaZakonczenie" data-id="">
+    <button type="button" class="recalc-tile recalc-tile-auto zak-tile${isAutoActive ? ' active' : ''} tile-accent-css"  aria-pressed="${isAutoActive}" data-action="selectRedukcjaZakonczenie" data-id="">
         <span class="zak-tile-type"><i data-lucide="refresh-cw" aria-hidden="true"></i> Auto (Zakończenie DN${escapeHtml(targetDn)})</span>
         <span class="zak-tile-name">Automatyczny dobór zakończenia dla średnicy DN${escapeHtml(targetDn)}</span>
         <span class="recalc-tile-check" aria-hidden="true"><i data-lucide="check"></i></span>

@@ -129,31 +129,31 @@ function renderInlinePrzejsciaApp(containerId) {
             <div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:0.4rem; align-items:end;">
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Rzędna [m]</div>
-                    <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
+                    <input type="text" inputmode="decimal" class="form-input btn-h26" id="inl-rzedna-${containerId || 'main'}" step="0.001" 
                            onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
                            value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}" 
-                           placeholder="—" class="btn-h26">
+                           placeholder="—" >
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Kąt [°]</div>
-                     <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" class="btn-h26">
+                     <input type="number" class="form-input color-link btn-h26" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" >
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w kinecie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" class="btn-h26">
+                    <input type="number" class="form-input btn-h26" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" >
                 </div>
                 <div class="ui-center-min">
                     <div class="ui-text-muted-sm">Spadek w mufie [%]</div>
-                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" class="btn-h26">
+                    <input type="number" class="form-input btn-h26" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—" >
                 </div>
 
                 <div class="text-center">
                     <div class="ui-text-muted-sm">Kąt wyk.</div>
-                    <div class="color-info" class="fs-2xl-bold" id="inl-exec-${containerId || 'main'}">360°</div>
+                    <div class="color-info fs-2xl-bold"  id="inl-exec-${containerId || 'main'}">360°</div>
                 </div>
                 <div class="text-center">
                     <div class="ui-text-muted-sm">Gony</div>
-                    <div class="color-success" class="fs-2xl-bold" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
+                    <div class="color-success fs-2xl-bold"  id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
                 </div>
                 <div style="display:flex; align-items:flex-end; justify-content:flex-end;">
                     <button class="btn btn-primary" data-action="inlineFinish" data-main="${containerId || 'main'}" data-container="${containerId || ''}" style="height:26px; width:100%; justify-content:center; font-size: var(--fs-sm); padding:0;"><i data-lucide="plus"></i> Dodaj</button>
@@ -592,7 +592,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
                   <label class="fs-3xs-muted-block">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" class="fs-base-rc" onchange="window.syncEditState()">
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500"  onchange="window.syncEditState()">
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Kąt [°]</label>
@@ -600,11 +600,11 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" class="fs-base-rc" onchange="window.syncEditState()">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}"  onchange="window.syncEditState()">
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" class="fs-base-rc" onchange="window.syncEditState()">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}"  onchange="window.syncEditState()">
                 </div>
               </div>
               

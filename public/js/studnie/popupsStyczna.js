@@ -45,7 +45,7 @@ function showStycznaPopup(mode = 'select') {
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
         <div class="modal-head-sticky">
           <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn);"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
-          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" class="btn-close-4xl"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon btn-close-4xl" aria-label="Zamknij" onclick="closeModal()" ><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}

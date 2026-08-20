@@ -138,7 +138,7 @@ function renderOfferItems() {
             } else if (isAuto) {
                 checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-auto" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount()" style="cursor:pointer;width:16px;height:16px;opacity:0.7" title="Dodawane automatycznie razem z rurą — odznacz aby pominąć"></td>`;
             } else {
-                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" class="cursor-pointer icon-sm"></td>`;
+                checkboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="item-order-checkbox item-order-pipe cursor-pointer icon-sm" data-uid="${item.uid}" ${itemDiamAttr} onchange="updateOrderSelectionCount();onPipeCheckboxChange(this)" ></td>`;
             }
 
             let orderCell = '';
@@ -150,7 +150,7 @@ function renderOfferItems() {
                     '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
             } else if (remaining > 0) {
                 const inputId = 'order-qty-' + item.uid;
-                orderCell = `<td class="text-center" onclick="event.stopPropagation()" class="text-nowrap">
+                orderCell = `<td class="text-center text-nowrap" onclick="event.stopPropagation()" >
                   <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
                   <span class="order-qty-max">/ ${item.quantity}</span>
                 </td>`;
@@ -167,17 +167,17 @@ function renderOfferItems() {
           ${checkboxCell}
           <td class="rury-col-num" style="text-align:left">${lp++}</td>
           <td style="max-width:400px;text-align:left">${pName}${autoTag}${lengthEditor}</td>
-          <td class="rury-col-num" class="text-right"><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
+          <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(item.unitPrice)}</span></td>
           <td class="text-right"><span class="text-center-block">${
               hasLength
-                  ? `<input type="number" class="edit-input" class="w-75-c" min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
+                  ? `<input type="number" class="edit-input w-75-c"  min="0" step="0.1" value="${metersVal}" onclick="this.select()" onchange="updateItemMeters(${i},this.value)" title="Metry bieżące"${lockAttr}> m`
                   : '—'
           }</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="1" value="${item.quantity}" onclick="this.select()" onchange="updateItem(${i},'quantity',this.value)"${lockAttr}> szt.</span></td>
           ${orderCell}
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
-          <td class="rury-col-num" class="text-right"><span class="text-center-block">${fmt(unitTotal)}</span></td>
-          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input" class="w-75-c" min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" max="100" step="0.5" value="${item.discount}" onclick="this.select()" onchange="updateItem(${i},'discount',this.value)"${lockAttr}>%</span></td>
+          <td class="rury-col-num text-right" ><span class="text-center-block">${fmt(unitTotal)}</span></td>
+          <td class="text-right"><span class="text-center-block"><input type="number" class="edit-input w-75-c"  min="0" step="0.01" value="${item.surcharge || 0}" onclick="this.select()" onchange="updateItem(${i},'surcharge',this.value)"${lockAttr}></span></td>
           <td class="rury-col-num" style="text-align:right;color:var(--warn)"><span class="text-center-block">${transportPerUnit > 0 ? fmt(transportPerUnit) : '—'}</span></td>
           <td class="rury-col-num" style="text-align:right;font-weight: var(--fw-semibold)"><span class="text-center-block">${fmt(netto)}</span></td>
           <td class="text-right"><span class="text-center-block"><input type="text" class="edit-input" style="width:200px;text-align:center" value="${escapeHtml(item.commercialVersion || '')}" onchange="updateItemText(${i},'commercialVersion',this.value)" placeholder="Notatki"${lockAttr}></span></td>

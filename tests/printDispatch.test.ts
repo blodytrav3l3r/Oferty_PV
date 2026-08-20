@@ -77,8 +77,7 @@ describe('Print dispatch — regression (kartoteka rury offers)', () => {
 
         it('.btn-print-order (modal) ma data-offer-type (dispatch Karta)', () => {
             // Template w kartotekaHelpers.js
-            const pattern =
-                /class="btn btn-sm btn-secondary btn-print-order"[\s\S]{0,250}data-offer-type/;
+            const pattern = /class="[^"]*\bbtn-print-order\b[^"]*"[\s\S]{0,250}data-offer-type/;
             expect(helpersSrc).toMatch(pattern);
         });
 

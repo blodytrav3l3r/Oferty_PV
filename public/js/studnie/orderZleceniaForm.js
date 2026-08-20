@@ -349,39 +349,39 @@ function populateZleceniaForm(el) {
     container.innerHTML = `
     ${bannerHtml}
     ${errorsHtml}
-    <div class="card card-compact" class="mb-5">
+    <div class="card card-compact mb-5" >
         <div class="card-title-sm" onclick="const b=this.nextElementSibling; b.style.display=b.style.display==='none'?'grid':'none'; this.querySelector('.zl-toggle').innerHTML=b.style.display==='none'?'<i data-lucide=\\'chevron-down\\'></i>':'<i data-lucide=\\'chevron-up\\'></i>'; if(window.lucide) window.lucide.createIcons();" style="cursor:pointer; user-select:none; display:flex; justify-content:space-between; align-items:center;">
             <span><i data-lucide="clipboard-list"></i> Dane zlecenia <span style="margin-left:8px; color:var(--accent-hover); font-weight: var(--fw-extrabold);">${escapeHtml(existing?.productionOrderNumber || '— nowy —')}</span></span>
-            <span class="zl-toggle" class="text-xs">${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
+            <span class="zl-toggle text-xs" >${daneZleceniaVisible ? '<i data-lucide="chevron-up"></i>' : '<i data-lucide="chevron-down"></i>'}</span>
         </div>
         <div id="zl-dane-zlecenia-container" style="display:${daneZleceniaVisible ? 'grid' : 'none'}; grid-template-columns:1fr 1fr; gap:0.5rem; padding:0.2rem 0;">
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Obiekt</label>
                 <input type="text" id="zl-obiekt" class="form-input form-input-sm" value="${escapeHtml(existing?.obiekt || investName)}" placeholder="Nazwa obiektu...">
             </div>
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Data</label>
-                <input type="text" id="zl-data" class="form-input form-input-sm" value="${escapeHtml(existing?.data || todayStr)}" readonly class="bg-white05-accent">
+                <input type="text" id="zl-data" class="form-input form-input-sm bg-white05-accent" value="${escapeHtml(existing?.data || todayStr)}" readonly >
             </div>
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Adres</label>
                 <input type="text" id="zl-adres" class="form-input form-input-sm" value="${escapeHtml(existing?.adres || investAddress)}" placeholder="Adres obiektu...">
             </div>
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Nazwisko (przygotował)</label>
-                <input type="text" id="zl-nazwisko" class="form-input form-input-sm" value="${escapeHtml(existing?.nazwisko || userName)}" readonly class="bg-white05-accent">
+                <input type="text" id="zl-nazwisko" class="form-input form-input-sm bg-white05-accent" value="${escapeHtml(existing?.nazwisko || userName)}" readonly >
             </div>
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Wykonawca</label>
                 <input type="text" id="zl-wykonawca" class="form-input form-input-sm" value="${escapeHtml(existing?.wykonawca || investContractor)}" placeholder="Wykonawca...">
             </div>
-            <div class="form-group-sm" class="m-0">
+            <div class="form-group-sm m-0" >
                 <label class="form-label-sm ui-text-sec">Data produkcji</label>
                 <input type="date" id="zl-data-produkcji" class="form-input form-input-sm" value="${escapeHtml(existing?.dataProdukcji || '')}">
             </div>
             <div class="form-group-sm" style="grid-column: 1 / -1; margin:0;">
                 <label class="form-label-sm ui-text-sec">Fakturowane na</label>
-                <input type="text" id="zl-fakturowane" class="form-input form-input-sm" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly class="bg-white05-accent">
+                <input type="text" id="zl-fakturowane" class="form-input form-input-sm bg-white05-accent" value="${escapeHtml(existing?.fakturowane || clientName)}" readonly >
             </div>
         </div>
     </div>
@@ -425,7 +425,7 @@ function populateZleceniaForm(el) {
                     </div>
                 </div>
 
-                <div class="form-group-sm" class="mt-3">
+                <div class="form-group-sm mt-3" >
                     <label class="form-label-sm ui-text-sec">Rodzaj studni</label>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-top:0.3rem;" class="zl-param-group">
                         ${rodzajStudniOptions
@@ -470,7 +470,7 @@ function populateZleceniaForm(el) {
         </div>
     </div>
 
-    <div class="card card-compact" class="mb-5">
+    <div class="card card-compact mb-5" >
         <div class="card-title-sm"><i data-lucide="settings"></i> Parametry studni</div>
 
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; align-items:start;">
@@ -532,7 +532,7 @@ function populateZleceniaForm(el) {
             </div>
 
             <div class="col-gap-5">
-                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
+                <div class="form-group-sm${isKragOt ? ' disabled-fade' : ''}>
                     <label class="form-label-sm">Wysokość spocznika</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikOptions
@@ -558,7 +558,7 @@ function populateZleceniaForm(el) {
                     <input type="hidden" id="zl-usytuowanie" value="${usytuowanieVal}">
                 </div>
 
-                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
+                <div class="form-group-sm${isKragOt ? ' disabled-fade' : ''}>
                     <label class="form-label-sm">Kineta</label>
                     <div class="ui-row-gap zl-param-group">
                         ${kinetaOptions
@@ -571,7 +571,7 @@ function populateZleceniaForm(el) {
                     <input type="hidden" id="zl-kineta" value="${kinetaVal}">
                 </div>
 
-                <div class="form-group-sm" ${isKragOt ? 'class="disabled-fade"' : ''}>
+                <div class="form-group-sm${isKragOt ? ' disabled-fade' : ''}>
                     <label class="form-label-sm">Spocznik</label>
                     <div class="ui-row-gap zl-param-group">
                         ${spocznikMatOptions

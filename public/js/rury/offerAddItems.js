@@ -50,10 +50,10 @@ function showPipeLengthModal(productId, editIndex = null) {
       <div class="form-group" style="text-align: center; margin-bottom: 2rem;">
         <label class="form-label" style="font-size: var(--fs-3xl); font-weight: var(--fw-semibold); margin-bottom:1rem; color: var(--text-primary);">Wprowadź długość rury (m)</label>
         <div style="display:flex; justify-content:center; align-items:center; gap:1rem">
-          <button class="btn btn-secondary" class="btn-round-44" onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
+          <button class="btn btn-secondary btn-round-44"  onclick="document.getElementById('pipe-custom-length').stepDown()">-</button>
           <input class="form-input" id="pipe-custom-length" type="number" step="0.1" min="1" max="${maxL}" value="${currentVal}" 
             style="font-size: var(--fs-8xl); padding:1rem; width:140px; text-align:center; font-weight: var(--fw-extrabold); border: 2px solid var(--accent); border-radius: var(--radius); color: var(--accent); background: transparent;">
-          <button class="btn btn-secondary" class="btn-round-44" onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
+          <button class="btn btn-secondary btn-round-44"  onclick="document.getElementById('pipe-custom-length').stepUp()">+</button>
         </div>
         <div style="margin-top:1rem; font-size: var(--fs-xl); color:var(--text-muted); display: flex; justify-content: center; gap: 1rem;">
           <span class="bg-hover-025">Min: <strong>1.0m</strong></span>
@@ -61,7 +61,7 @@ function showPipeLengthModal(productId, editIndex = null) {
         </div>
       </div>
       <div class="modal-footer" style="margin-top:1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem; display: flex; justify-content: flex-end; gap: 1rem;">
-        <button class="btn btn-secondary" onclick="closeModal()" class="p-075-15">Anuluj</button>
+        <button class="btn btn-secondary p-075-15" onclick="closeModal()" >Anuluj</button>
         <button class="btn btn-primary" onclick="confirmPipeLength('${escapeHtml(productId)}', ${editIndex})" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold); box-shadow: 0 4px 6px -1px var(--shadow-navy);">Zatwierdź <i data-lucide="arrow-right" aria-hidden="true"></i></button>
       </div>
     </div>`

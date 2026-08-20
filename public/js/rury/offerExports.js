@@ -234,7 +234,7 @@ function showItemDiscountModal() {
           </div>
         </div>
         <div style="display:flex; gap: 1rem;">
-          <button class="btn btn-secondary" onclick="closeModal()" class="p-075-15">Anuluj</button>
+          <button class="btn btn-secondary p-075-15" onclick="closeModal()" >Anuluj</button>
           <button class="btn btn-primary" onclick="applyItemDiscounts()" style="padding: 0.75rem 2rem; font-size: var(--fs-2xl); font-weight: var(--fw-semibold);">Zastosuj <i data-lucide="arrow-right" aria-hidden="true"></i></button>
         </div>
       </div>

@@ -233,18 +233,18 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
             summaryOrderCell =
                 '<td class="text-center"><span class="order-fully-badge">Zamówione</span></td>';
         } else if (item.autoAdded) {
-            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" class="cursor-pointer icon-sm"></td>`;
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
             summaryOrderCell =
                 '<td class="text-center"><span class="order-fully-badge order-fully-badge--auto">Auto</span></td>';
         } else if (remaining > 0) {
-            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" class="cursor-pointer icon-sm"></td>`;
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
             const inputId = 'offer-summary-qty-' + item.uid;
-            summaryOrderCell = `<td class="text-center" onclick="event.stopPropagation()" class="text-nowrap">
+            summaryOrderCell = `<td class="text-center text-nowrap" onclick="event.stopPropagation()" >
                 <input type="number" id="${inputId}" class="order-partial-qty" value="${remaining}" min="1" max="${remaining}" title="Ilość do zamówienia (pozostało ${remaining} z ${item.quantity})">
                 <span class="order-qty-max">/ ${item.quantity}</span>
             </td>`;
         } else {
-            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass}" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" class="cursor-pointer icon-sm"></td>`;
+            summaryCheckboxCell = `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="offer-summary-checkbox${summAutoClass} cursor-pointer icon-sm" data-uid="${item.uid}" ${summDiamAttr} onchange="updateOfferSummarySelectionCount();${summPipeHandler}" ></td>`;
             summaryOrderCell =
                 '<td class="text-center"><span class="order-qty-all">&mdash;</span></td>';
         }

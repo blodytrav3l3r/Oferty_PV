@@ -54,7 +54,7 @@ function renderWellHeaderRow(
     if (showOrderSelection) {
         checkbox = isOrdered
             ? '<td class="text-center"><i data-lucide="package-check" style="width:16px; height:16px; color:var(--accent-text);"></i></td>'
-            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox" data-well-index="${i}" onchange="updateOrderSelectionCount()" class="cursor-icon-16"></td>`;
+            : `<td class="text-center" onclick="event.stopPropagation()"><input type="checkbox" class="well-order-checkbox cursor-icon-16" data-well-index="${i}" onchange="updateOrderSelectionCount()" ></td>`;
     }
 
     let offerPriceCell = '';
@@ -71,8 +71,8 @@ function renderWellHeaderRow(
         offerPriceCell = `<td class="text-right" style="font-weight: var(--fw-semibold); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(offerPrice)} PLN</td>`;
         priceDiffCell = `<td class="text-right" style="font-weight: var(--fw-bold); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
     } else if (showPriceComparison) {
-        offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
-        priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
+        offerPriceCell = '<td class="text-right pad-sm" ></td>';
+        priceDiffCell = '<td class="text-right pad-sm" ></td>';
     }
 
     return `<tr class="well-row-header${errorClass}" style="${rowStyle}" onclick="toggleWellExpansion(${i}, event)">
@@ -230,7 +230,7 @@ function renderWellComponentsList(well, wellTransportCost, disc, nadbudowaMult, 
         html += `<tr style="opacity:0.8;">
             <td class="text-secondary">↳ ${escapeHtml(item.isPsiaBuda ? 'Psia buda' : p.name)}${badgesHtml}${discStr}</td>
             <td style="width:60px; text-align:center;">${item.quantity} szt.</td>
-            <td class="w-100px" class="text-right">${fmtInt(totalLineWeight)} kg</td>
+            <td class="w-100px text-right" >${fmtInt(totalLineWeight)} kg</td>
             <td style="width:120px;" class="text-right">${p.componentType === 'kineta' ? 'wliczone' : fmt(totalLinePrice) + ' PLN'}</td>
         </tr>`;
 

@@ -34,14 +34,14 @@ function renderSavedOffers() {
 
             return `
     <div class="offer-list-item"${_hasOrder ? ' style="border-left:3px solid var(--success-hover);"' : ''}>
-      <div class="offer-info" class="min-w-0">
+      <div class="offer-info min-w-0" >
         <div class="flex-between-wrap">
           <h3 class="mb-02-wb">${escapeHtml(o.number)}</h3>
           <div class="fw-bold-xl-primary-nowrap">
             <i data-lucide="banknote"></i> ${fmt(o.totalBrutto)} PLN
           </div>
         </div>
-        <div class="meta" class="mt-3">
+        <div class="meta mt-3" >
           <span><i data-lucide="calendar"></i> <strong>${escapeHtml(o.date)}</strong></span>
           <span><i data-lucide="package"></i> <strong>${o.items.length}</strong> poz.</span>
           ${

@@ -30,9 +30,9 @@ function renderPriceList() {
           <th scope="col" style="width: 15%;">Indeks</th>
           <th scope="col" style="width: 35%;">Nazwa produktu</th>
           <th scope="col" class="text-right" style="width: 12%;">Cena PLN</th>
-          <th scope="col" class="text-right" class="w-10pct">Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
-          <th scope="col" class="text-right" class="w-10pct">Szt./transp.</th>
-          <th scope="col" class="text-right" class="w-10pct">Waga (kg)</th>
+          <th scope="col" class="text-right w-10pct" >Pole pow.<br><span style="font-size:0.7em">(m²)</span></th>
+          <th scope="col" class="text-right w-10pct" >Szt./transp.</th>
+          <th scope="col" class="text-right w-10pct" >Waga (kg)</th>
           <th scope="col" class="text-center" style="width: 8%;">Akcje</th>
         </tr>
       </thead>`;
@@ -68,7 +68,7 @@ function renderPriceList() {
         <td class="text-right"><span class="editable" data-action="editCell" data-field="area" data-id="${escapeJsStr(p.id)}">${p.area != null ? fmt(p.area) : '—'}</span></td>
         <td class="text-right"><span class="editable" data-action="editCell" data-field="transport" data-id="${escapeJsStr(p.id)}">${p.transport != null ? fmtInt(p.transport) : '—'}</span></td>
         <td class="text-right"><span class="editable" data-action="editCell" data-field="weight" data-id="${escapeJsStr(p.id)}">${p.weight != null ? fmtInt(p.weight) : '—'}</span></td>
-        <td class="text-center" class="text-nowrap">
+        <td class="text-center text-nowrap" >
           <button class="btn-icon" title="Powiel" aria-label="Powiel" data-action="copyProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
           <button class="btn-icon" title="Usuń" aria-label="Usuń" data-action="deleteProduct" data-id="${escapeJsStr(p.id)}"><i data-lucide="x" aria-hidden="true"></i></button>
         </td>

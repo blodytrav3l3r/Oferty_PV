@@ -116,7 +116,7 @@
                 this._entityTypeHtml(uid, 'offer') +
                 '<input type="text" id="ie-' +
                 uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" class="w-100-mb-5">' +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input w-100-mb-5" >' +
                 '<div id="ie-' +
                 uid +
                 '-search-result" class="fs-lg-muted-mb5"></div>',
@@ -183,7 +183,7 @@
                 this._entityTypeHtml(uid, 'offer') +
                 '<input type="text" id="ie-' +
                 uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input" class="w-100-mb-5">' +
+                '-number" placeholder="Numer oferty lub zamówienia" class="form-input w-100-mb-5" >' +
                 '<div id="ie-' +
                 uid +
                 '-search-result" class="fs-lg-muted-mb5"></div>',
@@ -246,7 +246,7 @@
             'Import 1:1 (JSON)',
             '<p class="fs-xl-sec-mb">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
                 '<p style="color:var(--text-muted);font-size: var(--fs-md);margin:0 0 1rem 0;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
-                '<input type="file" id="ie-json-file-input" accept=".json" class="form-input" class="block-w100-mb1">' +
+                '<input type="file" id="ie-json-file-input" accept=".json" class="form-input block-w100-mb1" >' +
                 '<div id="ie-json-progress" class="none-accent-lg">Importowanie...</div>',
             'Importuj',
             async () => {
@@ -312,7 +312,7 @@
                 this._moduleTypeHtml(uid) +
                 '<input type="file" id="ie-' +
                 uid +
-                '-file-input" accept=".xlsx" class="form-input" class="block-w100-mb1">' +
+                '-file-input" accept=".xlsx" class="form-input block-w100-mb1" >' +
                 '<div id="ie-' +
                 uid +
                 '-progress" class="none-accent-lg">Importowanie...</div>',

@@ -931,7 +931,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:700px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
         <div class="modal-head-sticky">
           <div id="skipped-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--danger-hover);"><i data-lucide="alert-triangle" aria-hidden="true"></i> Pominięte przejścia (${skippedDetails.length})</div>
-          <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseModal" class="btn-close-4xl"><i data-lucide="x" aria-hidden="true"></i></button>
+          <button class="btn-icon btn-close-4xl" aria-label="Zamknij" data-action="tmCloseModal" ><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="font-size: var(--fs-md); color:var(--text-muted); margin-bottom:1rem;">
             Poniższe przejścia nie zostały zamienione — w kategorii <strong>${escapeHtml(targetCat)}</strong> nie istnieje produkt o podanej średnicy.

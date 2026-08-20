@@ -218,13 +218,13 @@ function _excelRenderTable(dn) {
                       (c.fromReduction ? c.targetDn || '1000' : '') +
                       '" style="overflow:hidden;text-overflow:ellipsis;display:block;max-width:130px;">' +
                       escapeHtml(codeDisp) +
-                      '</span><br><span class="h3-prodprice" data-ct="' +
+                      '</span><br><span class="h3-prodprice d-block" data-ct="' +
                       ct +
                       '" data-height="' +
                       (c.height != null ? c.height : '') +
                       '"' +
                       perProdAttr +
-                      ' class="d-block">' +
+                      ' >' +
                       priceHtml +
                       '</span>'
                   );

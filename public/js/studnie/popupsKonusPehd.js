@@ -20,12 +20,12 @@ window.showKonusPehdResolverModal = function (wellIndex, callback) {
         </p>
         
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem;">
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card" class="empty-pad-15">
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'plyta_din')" class="pehd-card empty-pad-15" >
                 <div class="fs-3xl-slate200-mb4">Płyta DIN</div>
                 <div class="fs-md-slate500-lh">Standardowa płyta nastudzienna.</div>
             </div>
             
-            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card" class="empty-pad-15">
+            <div onclick="window.resolveKonusPehd(${wellIndex}, 'pierscien_odciazajacy')" class="pehd-card empty-pad-15" >
                 <div class="fs-3xl-slate200-mb4">Płyta + Pierścień</div>
                 <div class="fs-md-slate500-lh">Płyta zamykająca i pierścień odciążający.</div>
             </div>

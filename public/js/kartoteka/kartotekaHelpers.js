@@ -237,10 +237,10 @@ function buildOrderModalHtml(orders, offerKey, resolvedType, offerLabel) {
                         <div style="font-size: var(--fs-base); color:var(--text-muted); margin-top:0.25rem;">Utworzono: ${createdAt}${ord.clientNumber ? ` • Nr klienta: ${window.escapeHtml(ord.clientNumber)}` : ''}</div>
                     </div>
                     <div style="display:flex; gap:0.4rem; flex-wrap:wrap; justify-content:flex-end;">
-                        <button class="btn btn-sm btn-primary btn-open-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Otwórz</button>
-                        <button class="btn btn-sm btn-secondary btn-print-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Karta</button>
-                        <button class="btn btn-sm btn-secondary btn-modal-history-order" data-order-id="${window.escapeHtml(ord.id)}" class="fs-base-035">Historia</button>
-                        <button class="btn btn-sm btn-danger btn-modal-delete-order" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" class="fs-base-035">Usuń</button>
+                        <button class="btn btn-sm btn-primary btn-open-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Otwórz</button>
+                        <button class="btn btn-sm btn-secondary btn-print-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-id="${window.escapeHtml(offerKey)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Karta</button>
+                        <button class="btn btn-sm btn-secondary btn-modal-history-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" >Historia</button>
+                        <button class="btn btn-sm btn-danger btn-modal-delete-order fs-base-035" data-order-id="${window.escapeHtml(ord.id)}" data-offer-type="${window.escapeHtml(resolvedType)}" >Usuń</button>
                     </div>
                 </div>
             `;

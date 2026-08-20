@@ -54,7 +54,7 @@ function renderDiscountPanel() {
             <span class="fs-sm-muted">${groupWells.length} szt.</span>
           </div>
           <div class="grid-1auto">
-            <span class="ui-text-mute" class="text-left">Dennica / Baza</span>
+            <span class="ui-text-mute text-left" >Dennica / Baza</span>
             <div class="flex-gap-2">
               <input type="number" min="0" max="100" step="0.5" value="${disc.dennica || 0}"
                 id="disc-${discountDn}-dennica"
@@ -63,7 +63,7 @@ function renderDiscountPanel() {
                 onchange="updateDiscount('${discountDn}','dennica',this.value)">
               <span class="ui-text-mute">%</span>
             </div>
-            <span class="ui-text-mute" class="text-left">Nadbudowa</span>
+            <span class="ui-text-mute text-left" >Nadbudowa</span>
             <div class="flex-gap-2">
               <input type="number" min="0" max="100" step="0.5" value="${disc.nadbudowa || 0}"
                 id="disc-${discountDn}-nadbudowa"
@@ -128,7 +128,7 @@ function renderDiscountPanel() {
             </div>
           </div>
           <div class="grid-1auto">
-            <span class="ui-text-mute" class="text-left">Globalny Rabat</span>
+            <span class="ui-text-mute text-left" >Globalny Rabat</span>
             <div class="flex-gap-2">
               <input type="number" min="0" step="1" value="${pehdDiscountValue}"
                 id="disc-global-pehd"
@@ -158,26 +158,26 @@ function renderDiscountPanel() {
           <div class="grid-1auto">`;
 
         if (anyMalowanieW) {
-            html += `<span class="ui-text-mute" class="text-left">Wewnętrzne</span>
+            html += `<span class="ui-text-mute text-left" >Wewnętrzne</span>
             <div class="flex-gap-2">
               <input type="number" min="0" step="0.01" value="${malWCena}"
                 id="disc-mal-wew-cena"
                 class="badge-90-accent2"
                 onclick="this.select()"
                 onchange="updateGlobalPaintingCost('malowanieWewCena', this.value)">
-              <span class="ui-text-mute" class="color-purple">zł</span>
+              <span class="ui-text-mute color-purple" >zł</span>
             </div>`;
         }
 
         if (anyMalowanieZ) {
-            html += `<span class="ui-text-mute" class="text-left">Zewnętrzne</span>
+            html += `<span class="ui-text-mute text-left" >Zewnętrzne</span>
             <div class="flex-gap-2">
               <input type="number" min="0" step="0.01" value="${malZCena}"
                 id="disc-mal-zew-cena"
                 class="badge-90-accent2"
                 onclick="this.select()"
                 onchange="updateGlobalPaintingCost('malowanieZewCena', this.value)">
-              <span class="ui-text-mute" class="color-purple">zł</span>
+              <span class="ui-text-mute color-purple" >zł</span>
             </div>`;
         }
 

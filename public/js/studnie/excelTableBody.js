@@ -150,11 +150,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<td class="excel-td" style="' +
             'background:' +
             stickyBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select" data-widx="' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select cursor-accent-check" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
-            ' tabindex="-1" class="cursor-accent-check" /></td>';
+            ' tabindex="-1"  /></td>';
         /* AUTO/MANUAL */
         const isAuto = window.isWellAuto(well);
         html +=

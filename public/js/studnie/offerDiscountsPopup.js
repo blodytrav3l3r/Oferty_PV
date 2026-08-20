@@ -347,11 +347,11 @@ function renderOfferDiscountsPopupContent() {
                     <div class="accent2-pill">
                         <input type="number" min="0" step="0.01" value="${malWC}"
                             id="offer-mal-wew-cena"
-                            class="text-center offer-discount-input"
+                            class="text-center offer-discount-input preco-dn-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieWewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            class="preco-dn-input">
+                            >
                         <span class="fs-sm-fw800-accent2-50">zł</span>
                     </div>
                 </div>`;
@@ -364,11 +364,11 @@ function renderOfferDiscountsPopupContent() {
                     <div class="accent2-pill">
                         <input type="number" min="0" step="0.01" value="${malZC}"
                             id="offer-mal-zew-cena"
-                            class="text-center offer-discount-input"
+                            class="text-center offer-discount-input preco-dn-input"
                             onclick="this.select()"
                             oninput="handleOfferPaintingCostChange('malowanieZewCena', this.value)"
                             onkeydown="if(event.key==='Enter') this.blur();"
-                            class="preco-dn-input">
+                            >
                         <span class="fs-sm-fw800-accent2-50">zł</span>
                     </div>
                 </div>`;

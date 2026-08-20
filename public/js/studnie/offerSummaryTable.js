@@ -187,8 +187,8 @@ function renderOfferSummaryFooter(
                     offerPriceCell = `<td class="text-right" style="font-size: var(--fs-md); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(g.sumOfferPrice)} PLN</td>`;
                     priceDiffCell = `<td class="text-right" style="font-size: var(--fs-md); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(priceDiff)} PLN</td>`;
                 } else {
-                    offerPriceCell = '<td class="text-right" class="pad-sm"></td>';
-                    priceDiffCell = '<td class="text-right" class="pad-sm"></td>';
+                    offerPriceCell = '<td class="text-right pad-sm" ></td>';
+                    priceDiffCell = '<td class="text-right pad-sm" ></td>';
                 }
             }
 
@@ -221,8 +221,8 @@ function renderOfferSummaryFooter(
             totalOfferPriceCell = `<td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:var(--text-secondary); white-space:nowrap; padding:0.5rem 0.75rem;">${fmt(totalOfferPrice)} PLN</td>`;
             totalPriceDiffCell = `<td class="text-right" style="font-weight: var(--fw-bold); font-size: var(--fs-lg); color:${diffColor}; white-space:nowrap; padding:0.5rem 0.75rem;">${diffSign}${fmt(totalDiff)} PLN</td>`;
         } else {
-            totalOfferPriceCell = '<td class="text-right" class="pad-sm"></td>';
-            totalPriceDiffCell = '<td class="text-right" class="pad-sm"></td>';
+            totalOfferPriceCell = '<td class="text-right pad-sm" ></td>';
+            totalPriceDiffCell = '<td class="text-right pad-sm" ></td>';
         }
     }
 

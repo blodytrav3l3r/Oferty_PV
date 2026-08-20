@@ -359,7 +359,7 @@ function renderTransportBreakdown(result, costPerTrip) {
       <td class="text-right" style="font-weight: var(--fw-semibold)">${l.dedicatedTransports}</td>
       ${
           costPerTrip > 0
-              ? `<td class="text-right" class="text-secondary">${(weightShare * 100).toFixed(1)}%</td>
+              ? `<td class="text-right text-secondary" >${(weightShare * 100).toFixed(1)}%</td>
       <td class="text-right" style="color:var(--warn);font-weight: var(--fw-semibold)">${fmt(perUnit)} PLN</td>`
               : ''
       }

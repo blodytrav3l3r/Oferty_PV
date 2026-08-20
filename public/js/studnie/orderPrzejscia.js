@@ -313,7 +313,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
 
     const rodzajCell = `
         <div class="flex-gap-4-col">
-            <select id="${prefix}-rodzaj-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
+            <select id="${prefix}-rodzaj-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-rodzaj').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-rodzaj').value = this.value; updatePrzejscieDnOptions('${prefix}', this.value);">
                 <option value="" disabled ${!row.rodzaj ? 'selected' : ''}>Wybierz rodzaj...</option>
                 ${catOptions.map((c) => `<option value="${escapeHtmlAttr(c)}" ${row.rodzaj === c ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
                 <option value="Inne" ${isRodzajInne ? 'selected' : ''}>Inne</option>
@@ -324,11 +324,11 @@ function buildPrzejscieRowHTML(row, idx, source) {
     const dnOdCell = rowHasStringDn
         ? `
         <div class="flex-gap-4-col">
-            <input type="text" id="${prefix}-dnod" class="form-input" value="${escapeHtmlAttr(row.dnOd || '')}" readonly class="form-input-bold70">
+            <input type="text" id="${prefix}-dnod" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnOd || '')}" readonly >
         </div>`
         : `
         <div class="flex-gap-4-col">
-            <select id="${prefix}-dnod-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
+            <select id="${prefix}-dnod-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-dnod').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dnod').value = this.value;">
                 <option value="" ${!row.dnOd ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnOd) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnOdInne ? 'selected' : ''}>Inne</option>
@@ -339,11 +339,11 @@ function buildPrzejscieRowHTML(row, idx, source) {
     const dnDoCell = rowHasStringDn
         ? `
         <div class="flex-gap-4-col">
-            <input type="text" id="${prefix}-dndo" class="form-input" value="${escapeHtmlAttr(row.dnDo || '')}" readonly class="form-input-bold70">
+            <input type="text" id="${prefix}-dndo" class="form-input form-input-bold70" value="${escapeHtmlAttr(row.dnDo || '')}" readonly >
         </div>`
         : `
         <div class="flex-gap-4-col">
-            <select id="${prefix}-dndo-select" class="form-input" class="form-input-inline" onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
+            <select id="${prefix}-dndo-select" class="form-input form-input-inline"  onchange="${warnScript} document.getElementById('${prefix}-dndo').style.display = this.value === 'Inne' ? 'block' : 'none'; if(this.value !== 'Inne') document.getElementById('${prefix}-dndo').value = this.value;">
                 <option value="" ${!row.dnDo ? 'selected' : ''}>—</option>
                 ${dnOptions.map((d) => `<option value="${d}" ${parseFloat(row.dnDo) === d ? 'selected' : ''}>${d}</option>`).join('')}
                 <option value="Inne" ${isDnDoInne ? 'selected' : ''}>Inne</option>
@@ -356,7 +356,7 @@ function buildPrzejscieRowHTML(row, idx, source) {
         <td class="th-pad-c">${dnOdCell}</td>
         <td class="th-pad-c">${dnDoCell}</td>
         <td style="padding:0.4rem 0.5rem; vertical-align:top;">
-            <input type="text" id="${prefix}-uwagi" class="form-input" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..." class="form-input-inline" onchange="${warnScript}">
+            <input type="text" id="${prefix}-uwagi" class="form-input form-input-inline" value="${escapeHtmlAttr(row.uwagi || '')}" placeholder="Uwagi..."  onchange="${warnScript}">
         </td>
         <td class="th-pad-c">
             <select id="${prefix}-czy" class="form-input" style="width:80px; font-size: var(--fs-base); padding:0.3rem; text-align:center; font-weight: var(--fw-bold); border-radius: var(--radius-2xs); ${row.czyPrzejscie === 'TAK' ? 'color:var(--success-hover); background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.3);' : 'color:var(--danger-hover); background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3);'}" onchange="${warnScript} updatePrzejscieSelectStyle(this)">

@@ -43,7 +43,7 @@ function renderSavedOffersStudnie() {
 
             return `
         <div class="offer-list-item" ${hasOrder ? `style="border-left:3px solid ${isFullyOrdered ? 'var(--success-hover)' : 'var(--blue-hover)'};"` : ''}>
-            <div class="offer-info" class="min-w-0">
+            <div class="offer-info min-w-0" >
                 <div class="flex-between-wrap">
                     <div class="flex-gap-5-wrap2">
                         <h3 class="mb-02-wb">${escapeHtml(o.number)}</h3>
@@ -53,7 +53,7 @@ function renderSavedOffersStudnie() {
                         <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto)} PLN
                     </div>
                 </div>
-                <div class="meta" class="mt-3">
+                <div class="meta mt-3" >
                     <span><i data-lucide="calendar" aria-hidden="true"></i> <strong>${escapeHtml(o.date)}</strong></span>
                     <span><i data-lucide="folder-open" aria-hidden="true"></i> <strong>${o.wells.length}</strong> studnie</span>
                     ${(() => {
@@ -102,12 +102,12 @@ function renderSavedOffersStudnie() {
                 }
             </div>
             <div class="offer-actions">
-                <button class="btn btn-sm btn-primary" data-action="loadSavedOfferStudnie" data-id="${escapeJsStr(oId)}" title="Wczytaj" class="fs-sm-036">Wczytaj</button>
+                <button class="btn btn-sm btn-primary fs-sm-036" data-action="loadSavedOfferStudnie" data-id="${escapeJsStr(oId)}" title="Wczytaj" >Wczytaj</button>
                 <button class="btn btn-sm btn-secondary" style="font-size: var(--fs-sm); padding:0.3rem 0.6rem; background: rgba(var(--danger-rgb), 0.15); border: 1px solid rgba(var(--danger-rgb), 0.3); color: var(--danger-hover); font-weight: var(--fw-bold);" data-action="showUniversalPrintModal" data-id="${escapeJsStr(oId)}" title="Drukuj ofertę / kartę budowy"><i data-lucide="printer" aria-hidden="true"></i> Drukuj</button>
-                <button class="btn btn-sm btn-secondary" data-action="exportJSONStudnie" data-id="${escapeJsStr(oId)}" title="Pobierz plik JSON" class="fs-sm-036"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
-                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" class="fs-sm-036"><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
-                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary" data-action="showOfferHistoryStudnie" data-id="${escapeJsStr(oId)}" title="Historia zmian" class="fs-sm-036"><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
-                <button class="btn btn-sm btn-danger" data-action="deleteOfferStudnie" data-id="${escapeJsStr(oId)}" title="Usuń" class="fs-sm-036"><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
+                <button class="btn btn-sm btn-secondary fs-sm-036" data-action="exportJSONStudnie" data-id="${escapeJsStr(oId)}" title="Pobierz plik JSON" ><i data-lucide="save" aria-hidden="true"></i> JSON</button>
+                ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" ><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
+                ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="showOfferHistoryStudnie" data-id="${escapeJsStr(oId)}" title="Historia zmian" ><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-danger fs-sm-036" data-action="deleteOfferStudnie" data-id="${escapeJsStr(oId)}" title="Usuń" ><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${
                     hasOrder
                         ? (() => {

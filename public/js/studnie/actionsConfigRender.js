@@ -194,16 +194,14 @@ function renderWellConfig() {
                             well.nadbudowa === 'zelbetowa' &&
                             (p.componentType === 'krag' || p.componentType === 'krag_ot')
                         ) {
-                            badgesHtml +=
-                                ' <span class="color-warn" class="pill-tag-warn">ŻELBET</span>';
+                            badgesHtml += ' <span class="color-warn pill-tag-warn" >ŻELBET</span>';
                         }
                         if (
                             (well.dennicaMaterial === 'zelbetowa' ||
                                 well.material === 'zelbetowa') &&
                             p.componentType === 'dennica'
                         ) {
-                            badgesHtml +=
-                                ' <span class="color-warn" class="pill-tag-warn">ŻELBET</span>';
+                            badgesHtml += ' <span class="color-warn pill-tag-warn" >ŻELBET</span>';
                         }
                         if (
                             well.stopnie === 'nierdzewna' &&
@@ -388,7 +386,7 @@ function renderWellConfig() {
                     html += `<span>↳ Wkładka uzupełniająca (${precoCalc.pelnaWysokosc.metry.toFixed(2)} m)</span><span class="text-right-600">${fmtInt(precoCalc.pelnaWysokosc.cena)} PLN</span>`;
                 }
                 if (discPreco > 0) {
-                    html += `<span class="color-success">Rabat wkładka PRECO (${discPreco}%)</span><span class="color-success" class="text-right-600">-${fmtInt(precoCalc.suma - precoFinal)} PLN</span>`;
+                    html += `<span class="color-success">Rabat wkładka PRECO (${discPreco}%)</span><span class="color-success text-right-600" >-${fmtInt(precoCalc.suma - precoFinal)} PLN</span>`;
                 }
                 html += `</div></div>`;
             }
