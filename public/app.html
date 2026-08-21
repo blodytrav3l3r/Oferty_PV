@@ -33,7 +33,7 @@
                     </div>
 
                     <!-- Kafle nawigacji na poziomie aplikacji -->
-                    <div class="nav-apps" id="spa-nav-apps">
+                    <nav class="nav-apps" id="spa-nav-apps" aria-label="Główna">
                         <a href="index.html" class="nav-tile">
                             <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                             <span class="nav-tile-text">Pulpit</span>
@@ -56,7 +56,7 @@
                             <span class="nav-tile-icon"><i data-lucide="factory"></i></span>
                             <span class="nav-tile-text">Zlecenia</span>
                         </a>
-                    </div>
+                    </nav>
                 </div>
 
                 <!-- Nawigacja poziomu sekcji (wypełniana dynamicznie przez moduły) -->
@@ -88,7 +88,7 @@
         </header>
 
         <!-- ═══════ GŁÓWNY KONTENER WIDOKÓW (iframy wstrzykiwane tutaj) ═══════ -->
-        <main id="spa-main"></main>
+        <main id="spa-main" tabindex="-1"></main>
 
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 

@@ -76,16 +76,20 @@
     }
 
     function updateAppNav(module) {
-        document.getElementById('spa-app-rury')?.classList.toggle('active', module === 'rury');
-        document
-            .getElementById('spa-app-studnie')
-            ?.classList.toggle('active', module === 'studnie');
-        document
-            .getElementById('spa-app-kartoteka')
-            ?.classList.toggle('active', module === 'kartoteka');
-        document
-            .getElementById('spa-app-zlecenia')
-            ?.classList.toggle('active', module === 'zlecenia');
+        const navIds = {
+            rury: 'spa-app-rury',
+            studnie: 'spa-app-studnie',
+            kartoteka: 'spa-app-kartoteka',
+            zlecenia: 'spa-app-zlecenia'
+        };
+        Object.entries(navIds).forEach(([key, id]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const isActive = module === key;
+            el.classList.toggle('active', isActive);
+            if (isActive) el.setAttribute('aria-current', 'page');
+            else el.removeAttribute('aria-current');
+        });
 
         const config = MODULES[module];
         if (!config) return;
@@ -309,6 +313,11 @@
 
         // Pokaż lub utwórz docelowy iframe
         const iframe = getOrCreateIframe(module);
+        // Tytuł iframe dla a11y (SR) — aktualizuj przy każdym navigate (reuse iframe)
+        if (MODULES[module]?.logo) {
+            iframe.title = MODULES[module].logo;
+            iframe.setAttribute('title', MODULES[module].logo);
+        }
         let readyPromise = waitForIframeReady(iframe);
 
         // Wymuś przeładowanie przy edycji/otwieraniu zamówienia, aby zagwarantować czysty stan
@@ -336,6 +345,7 @@
         if (params.edit || params.order) {
             await readyPromise;
             finishViewTransition(transition);
+            document.getElementById('spa-main')?.focus();
             return;
         }
 
@@ -363,6 +373,7 @@
 
         await readyPromise;
         finishViewTransition(transition);
+        document.getElementById('spa-main')?.focus();
     }
 
     async function init() {
