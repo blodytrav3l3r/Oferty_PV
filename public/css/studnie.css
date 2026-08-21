@@ -495,6 +495,34 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     margin-left: 0.3rem;
 }
 
+.karta-card-content {
+    padding: 1rem 0;
+}
+
+.karta-copy-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.6rem 1.2rem 0.4rem;
+}
+
+.karta-copy-select {
+    flex: 1;
+    min-width: 0;
+}
+
+.karta-copy-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    margin-top: 0;
+}
+
+.karta-email-row {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    padding: 0.4rem 1.2rem 0.6rem;
+}
+
 .btn-well-add {
     height: 46px;
     padding: 0;
