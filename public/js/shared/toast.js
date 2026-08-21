@@ -21,8 +21,13 @@ export function showToast(msg, type = 'info') {
     }
     const toast = document.createElement('div');
     toast.className = 'toast toast-' + type;
-    toast.setAttribute('role', 'alert');
-    toast.setAttribute('aria-live', 'polite');
+    if (type === 'error') {
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+    } else {
+        toast.setAttribute('role', 'status');
+        toast.setAttribute('aria-live', 'polite');
+    }
 
     const text = document.createElement('span');
     // Bezpieczne: wyciągnij nazwę ikony Lucide przed eskejpowaniem HTML,
@@ -43,6 +48,7 @@ export function showToast(msg, type = 'info') {
     toast.appendChild(text);
 
     const closeBtn = document.createElement('button');
+    closeBtn.setAttribute('aria-label', 'Zamknij');
     closeBtn.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
     if (window.lucide) lucide.createIcons();
     closeBtn.style.cssText =
@@ -52,10 +58,12 @@ export function showToast(msg, type = 'info') {
 
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('show'));
+    const duration = type === 'error' ? 8000 : 5000;
+    toast.setAttribute('data-duration', String(duration));
     setTimeout(() => {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    }, duration);
 }
 
 /* Bridge dla legacy — usunąć po zmigrowaniu wszystkich callerów */
