@@ -335,53 +335,33 @@
                     <button
                         type="button"
                         id="zl-btn-generate-ordered"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--accent2"
                         onclick="openBulkOrderSequencePopup()"
-                        style="
-                            background: rgba(var(--accent2-rgb), 0.15);
-                            border: 1px solid rgba(var(--accent2-rgb), 0.5);
-                            color: var(--accent2-hover);
-                        "
                     >
                         <i data-lucide="list-ordered"></i> Generuj w kolejności
                     </button>
                     <button
                         type="button"
                         id="zl-btn-accept"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--success"
                         onclick="acceptProductionOrder()"
-                        style="
-                            background: rgba(var(--success-rgb), 0.15);
-                            border: 1px solid rgba(var(--success-rgb), 0.5);
-                            color: var(--success-hover);
-                        "
                     >
                         <i data-lucide="check-circle-2"></i> Zaakceptuj
                     </button>
                     <button
                         type="button"
                         id="zl-btn-revoke"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--warn"
                         onclick="revokeProductionOrder()"
-                        style="
-                            display: none;
-                            background: rgba(var(--warn-rgb), 0.1);
-                            border: 1px solid rgba(var(--warn-rgb), 0.5);
-                            color: var(--warn-hover);
-                        "
+                        style="display: none"
                     >
                         <i data-lucide="unlock"></i> Cofnij
                     </button>
                     <button
                         type="button"
                         id="zl-btn-delete"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--danger"
                         onclick="deleteSelectedProductionOrder()"
-                        style="
-                            background: rgba(var(--danger-rgb), 0.1);
-                            border: 1px solid rgba(var(--danger-rgb), 0.5);
-                            color: var(--danger-hover);
-                        "
                     >
                         <i data-lucide="trash-2"></i> Usuń
                     </button>
@@ -396,26 +376,16 @@
                     <button
                         type="button"
                         id="zl-btn-print"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--accent"
                         onclick="printZlecenie()"
-                        style="
-                            background: rgba(var(--accent-rgb), 0.1);
-                            border: 1px solid rgba(var(--accent-rgb), 0.5);
-                            color: var(--accent-text);
-                        "
                     >
                         <i data-lucide="printer"></i> Zlecenie
                     </button>
                     <button
                         type="button"
                         id="zl-btn-label"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zlecenia-header-btn zlecenia-header-btn--blue-alt"
                         onclick="printEtykieta()"
-                        style="
-                            background: rgba(var(--blue-alt-rgb), 0.1);
-                            border: 1px solid rgba(var(--blue-alt-rgb), 0.5);
-                            color: var(--blue-alt);
-                        "
                     >
                         <i data-lucide="tag"></i> Etykieta
                     </button>

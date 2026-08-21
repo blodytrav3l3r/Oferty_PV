@@ -333,6 +333,42 @@
     transition: var(--transition);
 }
 
+.zlecenia-header-btn--accent2 {
+    background: rgba(var(--accent2-rgb), 0.15);
+    border: 1px solid rgba(var(--accent2-rgb), 0.5);
+    color: var(--accent2-hover);
+}
+
+.zlecenia-header-btn--success {
+    background: rgba(var(--success-rgb), 0.15);
+    border: 1px solid rgba(var(--success-rgb), 0.5);
+    color: var(--success-hover);
+}
+
+.zlecenia-header-btn--warn {
+    background: rgba(var(--warn-rgb), 0.1);
+    border: 1px solid rgba(var(--warn-rgb), 0.5);
+    color: var(--warn-hover);
+}
+
+.zlecenia-header-btn--danger {
+    background: rgba(var(--danger-rgb), 0.1);
+    border: 1px solid rgba(var(--danger-rgb), 0.5);
+    color: var(--danger-hover);
+}
+
+.zlecenia-header-btn--accent {
+    background: rgba(var(--accent-rgb), 0.1);
+    border: 1px solid rgba(var(--accent-rgb), 0.5);
+    color: var(--accent-text);
+}
+
+.zlecenia-header-btn--blue-alt {
+    background: rgba(var(--blue-alt-rgb), 0.1);
+    border: 1px solid rgba(var(--blue-alt-rgb), 0.5);
+    color: var(--blue-alt);
+}
+
 .zlecenia-filter-btn {
     flex: 1;
     padding: 0.3rem 0.5rem;
