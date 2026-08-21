@@ -1232,6 +1232,44 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     gap: 0.3rem;
 }
 
+.param-group {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.wizard-column {
+    display: flex;
+    flex-direction: column;
+    padding: 0.7rem;
+    border: 1px solid var(--slate-800);
+    border-radius: var(--radius-sm);
+    background: var(--bg-deep);
+}
+
+.wizard-column-header {
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--slate-800);
+}
+
+.wizard-column-header--konstrukcja {
+    color: var(--accent);
+}
+
+.wizard-column-header--powloka {
+    color: var(--success);
+}
+
+.wizard-column-header--osprzet {
+    color: var(--warn);
+    border-bottom-color: var(--warn-bg);
+}
+
 .wizard-param-label .status-icon {
     font-size: var(--fs-sm);
     transition: opacity 0.3s;

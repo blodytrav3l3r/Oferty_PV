@@ -70,31 +70,8 @@
                 style="display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start"
             >
                 <!-- KOLUMNA 1: KONSTRUKCJA -->
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        flex-direction: column;
-                        padding: 0.7rem;
-                        border: 1px solid var(--slate-800);
-                        border-radius: var(--radius-sm);
-                        background: var(--bg-deep);
-                    "
-                >
-                    <div
-                        class="gap-1"
-                        style="
-                            font-size: var(--fs-sm);
-                            font-weight: var(--fw-bold);
-                            color: var(--accent);
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            display: flex;
-                            align-items: center;
-                            padding-bottom: 0.3rem;
-                            border-bottom: 1px solid var(--slate-800);
-                        "
-                    >
+                <div class="wizard-column gap-2">
+                    <div class="wizard-column-header wizard-column-header--konstrukcja gap-1">
                         <i data-lucide="hard-hat"></i> Konstrukcja
                     </div>
 
@@ -105,11 +82,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="magazyn"
-                        >
+                        <div class="gap-1 param-group" data-param="magazyn">
                             <button type="button" class="param-tile" data-val="Kluczbork">
                                 Kluczbork
                             </button>
@@ -126,11 +99,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="nadbudowa"
-                        >
+                        <div class="gap-1 param-group" data-param="nadbudowa">
                             <button type="button" class="param-tile" data-val="betonowa">
                                 Beton
                             </button>
@@ -150,11 +119,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="dennicaMaterial"
-                        >
+                        <div class="gap-1 param-group" data-param="dennicaMaterial">
                             <button type="button" class="param-tile" data-val="betonowa">
                                 Beton
                             </button>
@@ -171,11 +136,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="klasaBetonu"
-                        >
+                        <div class="gap-1 param-group" data-param="klasaBetonu">
                             <button type="button" class="param-tile" data-val="C40/50">
                                 C40/50
                             </button>
@@ -204,11 +165,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="wkladka"
-                        >
+                        <div class="gap-1 param-group" data-param="wkladka">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="3mm">3mm</button>
                             <button type="button" class="param-tile" data-val="4mm">4mm</button>
@@ -277,11 +234,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="agresjaChemiczna"
-                        >
+                        <div class="gap-1 param-group" data-param="agresjaChemiczna">
                             <button type="button" class="param-tile" data-val="XA1">XA1</button>
                             <button type="button" class="param-tile" data-val="XA2">XA2</button>
                             <button type="button" class="param-tile" data-val="XA3">XA3</button>
@@ -298,11 +251,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="agresjaMrozowa"
-                        >
+                        <div class="gap-1 param-group" data-param="agresjaMrozowa">
                             <button type="button" class="param-tile" data-val="XF1">XF1</button>
                             <button type="button" class="param-tile" data-val="XF2">XF2</button>
                             <button type="button" class="param-tile" data-val="XF3">XF3</button>
@@ -311,31 +260,8 @@
                 </div>
 
                 <!-- KOLUMNA 2: POWŁOKA I KINETA -->
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        flex-direction: column;
-                        padding: 0.7rem;
-                        border: 1px solid var(--slate-800);
-                        border-radius: var(--radius-sm);
-                        background: var(--bg-deep);
-                    "
-                >
-                    <div
-                        class="gap-1"
-                        style="
-                            font-size: var(--fs-sm);
-                            font-weight: var(--fw-bold);
-                            color: var(--success);
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            display: flex;
-                            align-items: center;
-                            padding-bottom: 0.3rem;
-                            border-bottom: 1px solid var(--slate-800);
-                        "
-                    >
+                <div class="wizard-column gap-2">
+                    <div class="wizard-column-header wizard-column-header--powloka gap-1">
                         <i data-lucide="shield"></i> Powłoka i Kineta
                     </div>
 
@@ -346,11 +272,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="malowanieW"
-                        >
+                        <div class="gap-1 param-group" data-param="malowanieW">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="kineta">
                                 Kineta
@@ -402,11 +324,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="malowanieZ"
-                        >
+                        <div class="gap-1 param-group" data-param="malowanieZ">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="zewnatrz">
                                 Malowana
@@ -452,11 +370,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="kineta"
-                        >
+                        <div class="gap-1 param-group" data-param="kineta">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="beton">Beton</button>
                             <button type="button" class="param-tile" data-val="beton_gfk">
@@ -491,11 +405,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="precoFullHeight"
-                        >
+                        <div class="gap-1 param-group" data-param="precoFullHeight">
                             <button type="button" class="param-tile" data-val="tak">Tak</button>
                             <button type="button" class="param-tile" data-val="nie">Nie</button>
                         </div>
@@ -508,11 +418,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="spocznik"
-                        >
+                        <div class="gap-1 param-group" data-param="spocznik">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="beton">Beton</button>
                             <button type="button" class="param-tile" data-val="beton_gfk">
@@ -545,11 +451,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="redukcjaKinety"
-                        >
+                        <div class="gap-1 param-group" data-param="redukcjaKinety">
                             <button type="button" class="param-tile" data-val="tak">Tak</button>
                             <button type="button" class="param-tile" data-val="nie">Nie</button>
                         </div>
@@ -557,31 +459,8 @@
                 </div>
 
                 <!-- KOLUMNA 3: OSPRZĘT -->
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        flex-direction: column;
-                        padding: 0.7rem;
-                        border: 1px solid var(--slate-800);
-                        border-radius: var(--radius-sm);
-                        background: var(--bg-deep);
-                    "
-                >
-                    <div
-                        class="gap-1"
-                        style="
-                            font-size: var(--fs-sm);
-                            font-weight: var(--fw-bold);
-                            color: var(--warn);
-                            text-transform: uppercase;
-                            letter-spacing: 0.5px;
-                            display: flex;
-                            align-items: center;
-                            padding-bottom: 0.3rem;
-                            border-bottom: 1px solid var(--warn-bg);
-                        "
-                    >
+                <div class="wizard-column gap-2">
+                    <div class="wizard-column-header wizard-column-header--osprzet gap-1">
                         <i data-lucide="settings"></i> Osprzęt
                     </div>
 
@@ -592,11 +471,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="stopnie"
-                        >
+                        <div class="gap-1 param-group" data-param="stopnie">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="drabinka">
                                 Drabinka
@@ -614,11 +489,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="spocznikH"
-                        >
+                        <div class="gap-1 param-group" data-param="spocznikH">
                             <button type="button" class="param-tile" data-val="1/2">1/2</button>
                             <button type="button" class="param-tile" data-val="2/3">2/3</button>
                             <button type="button" class="param-tile" data-val="3/4">3/4</button>
@@ -634,11 +505,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="usytuowanie"
-                        >
+                        <div class="gap-1 param-group" data-param="usytuowanie">
                             <button type="button" class="param-tile" data-val="linia_dolna">
                                 Linia dolna
                             </button>
@@ -659,11 +526,7 @@
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
                             ></span>
                         </div>
-                        <div
-                            class="gap-1 param-group"
-                            style="display: flex; flex-wrap: wrap"
-                            data-param="uszczelka"
-                        >
+                        <div class="gap-1 param-group" data-param="uszczelka">
                             <button type="button" class="param-tile" data-val="brak">Brak</button>
                             <button type="button" class="param-tile" data-val="GSG">GSG</button>
                             <button type="button" class="param-tile" data-val="SDV">SDV</button>
