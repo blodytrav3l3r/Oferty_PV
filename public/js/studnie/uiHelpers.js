@@ -167,14 +167,14 @@ async function exitWizardOrderMode(targetStep = 3) {
     if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-let _isNavigating = false;
+let _studnieIsNavigating = false;
 function wizardNext() {
-    if (_isNavigating) return;
-    _isNavigating = true;
+    if (_studnieIsNavigating) return;
+    _studnieIsNavigating = true;
     try {
         wizardNavStep(currentWizardStep + 1);
     } finally {
-        _isNavigating = false;
+        _studnieIsNavigating = false;
     }
 }
 

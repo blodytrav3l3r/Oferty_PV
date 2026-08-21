@@ -145,10 +145,10 @@ function goToPhase(step) {
 
 window.goToPhase = goToPhase;
 
-let _isNavigating = false;
+let _ruryIsNavigating = false;
 function phaseNext() {
-    if (_isNavigating) return;
-    _isNavigating = true;
+    if (_ruryIsNavigating) return;
+    _ruryIsNavigating = true;
     try {
         const next = currentWizardStep + 1;
         if (next > 5) return;
@@ -165,7 +165,7 @@ function phaseNext() {
 
         goToPhase(next);
     } finally {
-        _isNavigating = false;
+        _ruryIsNavigating = false;
     }
 }
 
