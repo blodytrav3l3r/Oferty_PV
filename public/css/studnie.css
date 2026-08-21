@@ -615,6 +615,47 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     resize: vertical;
 }
 
+.well-config-errors {
+    display: none;
+    margin-bottom: 0.4rem;
+    padding: 0.4rem 0.6rem;
+    background: rgba(var(--danger-rgb), 0.1);
+    border: 1px solid rgba(var(--danger-rgb), 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--danger);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    line-height: 1.4;
+}
+
+.builder-sub-nav {
+    display: flex;
+    margin-bottom: 0.5rem;
+    background: var(--slate-950);
+    padding: 0.3rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-glass);
+}
+
+.well-config-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-bar {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.6rem;
+    background: var(--slate-950);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-glass);
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    text-align: center;
+}
+
 .icon-12 {
     width: 12px;
     height: 12px;

@@ -34,21 +34,7 @@
     <!-- CENTER: Config area -->
     <div>
         <!-- Błędy konfiguracji studni -->
-        <div
-            id="well-config-errors-container"
-            style="
-                display: none;
-                margin-bottom: 0.4rem;
-                padding: 0.4rem 0.6rem;
-                background: rgba(var(--danger-rgb), 0.1);
-                border: 1px solid rgba(var(--danger-rgb), 0.3);
-                border-radius: var(--radius-sm);
-                color: var(--danger);
-                font-size: var(--fs-base);
-                font-weight: var(--fw-semibold);
-                line-height: 1.4;
-            "
-        ></div>
+        <div id="well-config-errors-container" class="well-config-errors"></div>
         <!-- Toolbar: DN + Elevations + Height + Controls -->
         <div class="well-info-card" style="padding: 0.6rem 0.8rem">
             <!-- Row 1: Title -->
@@ -333,17 +319,7 @@
         </div>
 
         <!-- Builder tabs -->
-        <div
-            class="builder-sub-nav gap-1"
-            style="
-                display: flex;
-                margin-bottom: 0.5rem;
-                background: var(--slate-950);
-                padding: 0.3rem;
-                border-radius: var(--radius-sm);
-                border: 1px solid var(--border-glass);
-            "
-        >
+        <div class="builder-sub-nav gap-1">
             <button
                 type="button"
                 class="b-tab-btn active"
@@ -389,11 +365,7 @@
                     ></span>
                 </div>
                 <div id="well-config-wrap" class="table-wrap card-content">
-                    <div
-                        id="well-config-body"
-                        class="gap-2"
-                        style="display: flex; flex-direction: column"
-                    >
+                    <div id="well-config-body" class="gap-2 well-config-body">
                         <div
                             style="
                                 text-align: center;
@@ -453,19 +425,8 @@
         </div>
 
         <!-- Summary bar -->
-        <div
-            style="
-                margin-top: 0.5rem;
-                padding: 0.5rem 0.6rem;
-                background: var(--slate-950);
-                border-radius: var(--radius-sm);
-                border: 1px solid var(--border-glass);
-            "
-        >
-            <div
-                class="gap-2"
-                style="display: grid; grid-template-columns: repeat(5, 1fr); text-align: center"
-            >
+        <div class="summary-bar">
+            <div class="gap-2 summary-grid">
                 <div>
                     <div class="summary-label">Cena netto</div>
                     <div class="summary-value summary-value--success" id="sum-price">0 PLN</div>
