@@ -173,6 +173,21 @@ Zamiast inline style używaj istniejących utility. Najczęściej używane:
 - Globalne helpery JS: `window.nazwa = funkcja;`.
 - Nie twórz klas per strona dla rzeczy wspólnych (nagłówek, logo, przyciski, formularze).
 
+### Scoped variant vs modifier (Faza 3 — SSoT §6)
+
+Scoped selector `.parent .klasa` w pliku modułowym jest **akceptowalny**, gdy dotyczy
+wyłącznie danego modułu. Wspólne komponenty używają **modyfikatorów** `--<moduł>`
+(np. `.modal--clients`) zamiast scoped nadpisań.
+
+| Klasa         | Scoped w module (zostaje)                                                                                                                                                       | Goła w `style.base.css` (nie rób)               |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `.form-input` | `.wt-add-cell .form-input` (`studnie.css:943`), `.zlecenia-virtual-toolbar .form-input` (`zlecenia.css:598`), `.login-box .form-input` (`index.css:185`)                        | Nie przenoś — zmiana globalna (regresja > zysk) |
+| `.search-box` | `.zlecenia-header .search-box` (`zlecenia.css:132,488`), `.offer-product-search .search-box` (`style.base.css:1434`), `.kartoteka-filter-bar .search-box` (`responsive.css:78`) | Nie przenoś — scoped zostaje                    |
+
+Zasada: **scoped w module = OK gdy dotyczy tylko modułu**; wspólne warianty =
+modyfikator `--<moduł>`. Przy scoped wyrównuj jedynie wartości do tokenów
+(`padding`/`border-radius`/`font-size` → `var(--*)`), bez zmiany selektorów ani geometrii.
+
 ## 11. Anti-patterny (zakazane)
 
 | Anti-pattern                        | Zamiast                                    |
