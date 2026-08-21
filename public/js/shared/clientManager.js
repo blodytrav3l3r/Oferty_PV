@@ -55,6 +55,10 @@ async function saveClientsDbData(data) {
 
 /* ===== ZAPIS KLIENTA Z FORMULARZA ===== */
 function saveClientToDb() {
+    const _saveBtn = document.querySelector('button[onclick="saveClientToDb()"]');
+    if (_saveBtn) _saveBtn.disabled = true;
+    // ponytail: btn disabled guard, enable in finally via helper
+
     const name = document.getElementById('client-name').value.trim();
     const nip = document.getElementById('client-nip').value.trim();
     const address = document.getElementById('client-address').value.trim();
@@ -120,6 +124,7 @@ function saveClientToDb() {
         });
         saveClientsDbData(clientsDb);
         showToast('Zapisano nowego klienta', 'success');
+        if (_saveBtn) _saveBtn.disabled = false;
     }
 }
 

@@ -145,21 +145,28 @@ function goToPhase(step) {
 
 window.goToPhase = goToPhase;
 
+let _isNavigating = false;
 function phaseNext() {
-    const next = currentWizardStep + 1;
-    if (next > 5) return;
+    if (_isNavigating) return;
+    _isNavigating = true;
+    try {
+        const next = currentWizardStep + 1;
+        if (next > 5) return;
 
-    if (window.orderEditMode && currentWizardStep === 2) {
-        if (!validatePhase(2)) return;
-        goToPhase(5);
-        return;
+        if (window.orderEditMode && currentWizardStep === 2) {
+            if (!validatePhase(2)) return;
+            goToPhase(5);
+            return;
+        }
+
+        if (next === 5 && !validatePhase(4)) return;
+
+        if (!validatePhase(currentWizardStep)) return;
+
+        goToPhase(next);
+    } finally {
+        _isNavigating = false;
     }
-
-    if (next === 5 && !validatePhase(4)) return;
-
-    if (!validatePhase(currentWizardStep)) return;
-
-    goToPhase(next);
 }
 
 window.phaseNext = phaseNext;
