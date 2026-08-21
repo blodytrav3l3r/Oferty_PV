@@ -162,23 +162,12 @@
             </div>
 
             <!-- Tabs Switcher -->
-            <div
-                class="sidebar-tabs gap-1"
-                style="
-                    display: flex;
-                    margin-top: 0.4rem;
-                    padding: 0.2rem;
-                    background: rgba(var(--black-rgb), 0.3);
-                    border-radius: var(--radius-sm);
-                    border: 1px solid rgba(var(--white-rgb), 0.05);
-                "
-            >
+            <div class="sidebar-tabs gap-1">
                 <button
                     type="button"
                     class="s-tab-btn active"
                     onclick="switchSidebarTab('list')"
                     id="stab-list"
-                    style="flex: 1; font-size: var(--fs-xs); padding: 0.35rem 0.2rem"
                 >
                     <i data-lucide="folder-open"></i> Lista studni
                     <span id="wells-counter" style="opacity: 0.6; margin-left: 2px">(0)</span>
@@ -188,7 +177,6 @@
                     class="s-tab-btn"
                     onclick="switchSidebarTab('discounts')"
                     id="stab-discounts"
-                    style="flex: 1; font-size: var(--fs-xs); padding: 0.35rem 0.2rem"
                 >
                     <i data-lucide="banknote"></i> Rabaty
                 </button>
@@ -196,10 +184,7 @@
         </div>
 
         <!-- Content below header -->
-        <div
-            id="sidebar-list-content"
-            style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden"
-        >
+        <div id="sidebar-list-content" class="sidebar-content">
             <div
                 style="
                     padding: 0.4rem;
@@ -211,28 +196,10 @@
                     <input
                         type="text"
                         id="wells-search-input"
+                        class="wells-search-input"
                         placeholder="Szukaj po numerze..."
                         aria-label="Szukaj studni po numerze"
                         oninput="renderWellsList()"
-                        style="
-                            width: 100%;
-                            padding: 0.4rem 0.6rem;
-                            background: rgba(var(--black-rgb), 0.2);
-                            border: 1px solid rgba(var(--white-rgb), 0.1);
-                            border-radius: var(--radius-sm);
-                            color: var(--white);
-                            font-size: var(--fs-base);
-                            outline: none;
-                            transition: all 0.2s;
-                        "
-                        onfocus="
-                            this.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
-                            this.style.background = 'rgba(var(--black-rgb), 0.3)';
-                        "
-                        onblur="
-                            this.style.borderColor = 'rgba(var(--white-rgb), 0.1)';
-                            this.style.background = 'rgba(var(--black-rgb), 0.2)';
-                        "
                     />
                 </div>
             </div>

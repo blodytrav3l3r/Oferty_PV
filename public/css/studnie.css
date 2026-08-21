@@ -370,6 +370,46 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     letter-spacing: 0.2px;
 }
 
+.sidebar-tabs {
+    display: flex;
+    margin-top: 0.4rem;
+    padding: 0.2rem;
+    background: rgba(var(--black-rgb), 0.3);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(var(--white-rgb), 0.05);
+}
+
+.s-tab-btn {
+    flex: 1;
+    font-size: var(--fs-xs);
+    padding: 0.35rem 0.2rem;
+}
+
+.sidebar-content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.wells-search-input {
+    width: 100%;
+    padding: 0.4rem 0.6rem;
+    background: rgba(var(--black-rgb), 0.2);
+    border: 1px solid rgba(var(--white-rgb), 0.1);
+    border-radius: var(--radius-sm);
+    color: var(--white);
+    font-size: var(--fs-base);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.wells-search-input:focus {
+    border-color: rgba(var(--accent-rgb), 0.5);
+    background: rgba(var(--black-rgb), 0.3);
+}
+
 .btn-well-add {
     height: 46px;
     padding: 0;
