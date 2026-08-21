@@ -1297,6 +1297,38 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     font-weight: var(--fw-extrabold);
 }
 
+.well-label {
+    font-size: var(--fs-base);
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+}
+
+.well-input {
+    width: 95px;
+    padding: 0.28rem 0.4rem;
+    background: var(--slate-800);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-2xs);
+    font:
+        var(--fw-bold) var(--fs-lg) 'Inter',
+        sans-serif;
+    text-align: center;
+}
+
+.well-input--primary {
+    color: var(--text-primary);
+}
+
+.well-input--accent {
+    color: var(--accent2-hover);
+}
+
+.well-input--success {
+    color: var(--success);
+    width: 80px;
+}
+
 .wizard-param-label .status-icon {
     font-size: var(--fs-sm);
     transition: opacity 0.3s;

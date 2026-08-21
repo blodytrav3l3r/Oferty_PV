@@ -65,51 +65,25 @@
             <!-- Row 2: Nr + Rz fields + indicators -->
             <div class="gap-1" style="display: flex; align-items: center; margin-bottom: 0.4rem">
                 <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Nr</label
-                    >
+                    <label class="well-label">Nr</label>
                     <input
                         type="text"
                         id="input-well-numer"
+                        class="well-input well-input--accent"
                         placeholder="Nr studni"
                         oninput="updateWellNumer()"
                         onclick="this.select()"
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--slate-800);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--accent2-hover);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
                     />
                 </div>
                 <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
                 <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Rz. włazu</label
-                    >
+                    <label class="well-label">Rz. włazu</label>
                     <input
                         type="text"
                         inputmode="decimal"
                         step="0.001"
                         id="input-rzedna-wlazu"
+                        class="well-input well-input--primary"
                         placeholder="100.50"
                         onfocus="this.select()"
                         onblur="
@@ -122,35 +96,16 @@
                                 this.blur();
                             }
                         "
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--slate-800);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--text-primary);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
-                        "
                     />
                 </div>
                 <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Rz. dna</label
-                    >
+                    <label class="well-label">Rz. dna</label>
                     <input
                         type="text"
                         inputmode="decimal"
                         step="0.001"
                         id="input-rzedna-dna"
+                        class="well-input well-input--primary"
                         placeholder="97.20"
                         onfocus="this.select()"
                         onblur="
@@ -162,18 +117,6 @@
                             if (event.key === 'Enter') {
                                 this.blur();
                             }
-                        "
-                        style="
-                            width: 95px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--slate-800);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--text-primary);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
                         "
                     />
                 </div>
@@ -204,20 +147,13 @@
                 </div>
                 <div style="flex: 1"></div>
                 <div class="flex-center-gap-2">
-                    <label
-                        style="
-                            font-size: var(--fs-base);
-                            color: var(--text-muted);
-                            font-weight: var(--fw-semibold);
-                            white-space: nowrap;
-                        "
-                        >Dopłata</label
-                    >
+                    <label class="well-label">Dopłata</label>
                     <input
                         type="text"
                         inputmode="decimal"
                         step="1"
                         id="input-doplata"
+                        class="well-input well-input--success"
                         placeholder="0"
                         onblur="
                             resolveFieldValue(this);
@@ -228,18 +164,6 @@
                             if (event.key === 'Enter') {
                                 this.blur();
                             }
-                        "
-                        style="
-                            width: 80px;
-                            padding: 0.28rem 0.4rem;
-                            background: var(--slate-800);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-2xs);
-                            color: var(--success);
-                            font:
-                                var(--fw-bold) var(--fs-lg) 'Inter',
-                                sans-serif;
-                            text-align: center;
                         "
                     />
                 </div>
