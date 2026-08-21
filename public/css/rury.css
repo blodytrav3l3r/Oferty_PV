@@ -581,6 +581,29 @@ body.rury-page > .main:has(#section-builder.active) {
     padding: 0.6rem 0.8rem;
 }
 
+.rury-th-center {
+    text-align: center;
+}
+
+.rury-th-right {
+    text-align: right;
+}
+
+.rury-th-left {
+    text-align: left;
+}
+
+.rury-th-narrow {
+    width: 36px;
+    text-align: center;
+}
+
+.rury-th-order {
+    width: 80px;
+    text-align: center;
+    white-space: nowrap;
+}
+
 .rury-summary-label {
     font-size: var(--fs-base);
     text-transform: uppercase;
