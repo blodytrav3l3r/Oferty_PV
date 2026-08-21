@@ -14,7 +14,7 @@ body.rury-page > .main:has(#section-builder.active) {
     padding-right: 0;
 }
 
-/* Margins (uzupełnienie shared w style.css dla porządku) */
+/* Margins (uzupełnienie shared w style.base.css dla porządku) */
 .mb-0 {
     margin-bottom: 0;
 }

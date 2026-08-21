@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    index.css — S.O.K. Landing / Login / Dashboard Page
    Liquid Glass design system with premium dark theme.
-   Uses CSS variables from style.css for consistency.
+   Uses CSS variables from style.base.css for consistency.
    ══════════════════════════════════════════════════════════ */
 
 body.index-page {

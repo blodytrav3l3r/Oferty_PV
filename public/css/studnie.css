@@ -30,7 +30,7 @@ body.studnie-page > .main {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    /* nadpisuje style.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
+    /* nadpisuje style.base.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
     padding: 0 !important;
 }
 
@@ -90,7 +90,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-width: 0;
 }
 
-/* Wizard bottom nav — position: fixed; bottom: 0 z style.css */
+/* Wizard bottom nav — position: fixed; bottom: 0 z style.base.css */
 .wizard-nav-fixed {
     flex: 0 0 auto;
     width: 100%;
@@ -1250,14 +1250,14 @@ select.form-input option {
 /* Padding */
 /* Szerokie pola formularza */
 
-/* Margins - PRZENIESIONE do style.css (shared) */
+/* Margins - PRZENIESIONE do style.base.css (shared) */
 
 /* Misc padding */
 .p-2 {
     padding: 0.2rem;
 }
 
-/* Tekst z nowrap - PRZENIESIONE do style.css (shared) */
+/* Tekst z nowrap - PRZENIESIONE do style.base.css (shared) */
 
 /* Responsywność kreatora */
 

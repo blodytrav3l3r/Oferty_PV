@@ -1,12 +1,15 @@
 # Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
-> Wersja: 1.17.1 | Data: 2026-08-05 | Źródło: analiza CSS (`public/css/`)
+> Wersja: 1.17.1 | Data: 2026-08-20 | Źródło: analiza CSS (`public/css/`)
+
+> **SSoT UI/UX, HTML i CSS: `docs/UI_GUIDELINES.md`.** Ten dokument to katalog komponentów
+> (kto/co definiuje); szczegółowe reguły projektowania znajdziesz w wytycznych.
 
 ---
 
 ## 1. Design Tokens (zmienne CSS)
 
-Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.css` (oraz w plikach `style.base.css`, `style.cards.css`, `style.responsive.css`, `style.utilities.css`, które zawierają wyodrębnione, ale obecnie niepodłączone sekcje).
+**Wszystkie zmienne zdefiniowane w `:root` w `public/css/style.base.css` (linie 3–240) — jedyne źródło prawdy (SSoT) tokenów.** Pozostałe arkusze (`style.cards.css`, `style.responsive.css`, `style.utilities.css`) są ładowane we wszystkich wejściówkach i rozszerzają klasy, NIE definiują tokenów.
 
 ### Kolory
 
@@ -400,40 +403,50 @@ Nagłówek kategorii w katalogu produktów.
 
 ---
 
-## 8. Modal / Overlay (JS-driven)
+## 8. Modal / Overlay
 
-Brak dedykowanej klasy CSS `.modal` w plikach CSS — modal budowany inline w JS z:
+Klasy `.modal-overlay` (fixed, `inset: 0`, `--z-modal-top`) i `.modal` (karta, max 550px)
+zdefiniowane w `public/css/style.responsive.css:464-509`. Nagłówek/footer: `.modal-header`/`.modal-footer`.
 
-- `const overlay = document.createElement('div')` z `position: fixed; z-index: 1000;`
-- `const modal = overlay.querySelector('.modal-content')` lub inline HTML
+**Tworzenie modalów — wyłącznie przez `public/js/shared/modalCore.js`**
+(wzorzec `modalCore.js:84` tworzy `div.modal-overlay.js-modal-overlay`). Zakaz budowania
+modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js` — do migracji).
 
-**Wzorzec z kodu JS:**
-
-```javascript
-const overlay = Object.assign(document.createElement('div'), {
-    style: `position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;
-            display:flex;align-items:center;justify-content:center;`
-});
-const modal = document.createElement('div');
-modal.style = `background:var(--bg-card);padding:1.5rem;border-radius:var(--radius-md);
-               max-width:500px;width:90%;max-height:80vh;overflow-y:auto;`;
+```html
+<div class="modal-overlay js-modal-overlay">
+    <div class="modal" role="dialog" aria-modal="true" aria-label="Tytuł">
+        <div class="modal-header">
+            <h3>Tytuł</h3>
+            <button class="btn-icon" aria-label="Zamknij"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-content">...</div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary">Anuluj</button>
+            <button class="btn btn-primary">Zapisz</button>
+        </div>
+    </div>
+</div>
 ```
-
-**Sugestia refaktora:** dodać klasę `.modal-overlay` / `.modal-content` do CSS.
 
 ### 8.1 System warstw (z-index)
 
-Zdefiniowany w `public/js/studnie/layers.js` jako dwa zamrożone obiekty (`Object.freeze`):
+Kanonem warstw jest `LAYERS`/`LAYERS_EXCEL` w `public/js/studnie/layers.js`
+(dwa zamrożone obiekty, `Object.freeze`). Grupy:
 
-- **`LAYERS`** — główny system warstw dla całej aplikacji. Grupy:
+- **`LAYERS`** — system dla całej aplikacji:
     - `sticky` (1–99) — sticky header, sidebar, tabele, filtry
     - `local-overlay` (100–999) — overlay selecty, popupy kontekstowe
     - `modal-excel` (1000–1999) — modal Excel (backdrop 1000, container 1010, focus overlay 1050)
-    - `modal-generic` (2000–4999) — generyczne modale
+    - `modal-generic` (2000–4999) — generyczne modale (backdrop `--z-overlay: 2000`)
     - `toast-banner` (5000–99999) — toasty, banery, preview
     - `debug` (100000+) — bulk order, transition edit
 
-- **`LAYERS_EXCEL`** — warstwy wewnątrz modala Excel. Excel używa `position:fixed`, co tworzy własny stacking context — wymaga osobnych stałych (select overlay 2, sticky column 5, sticky header 20/30, resize handle 40, focus border 55).
+- **`LAYERS_EXCEL`** — warstwy wewnątrz modala Excel (select overlay 2, sticky column 5,
+  sticky header 20/30, resize handle 40, focus border 55).
+
+Klasy CSS używają zmiennych `--z-*` z `style.base.css:235-239`
+(`--z-header: 100`, `--z-overlay: 2000`, `--z-modal: 10000`, `--z-modal-top: 100000`, `--z-toast: 1000000`).
+**Popupy/modale w JS zawsze przez `LAYERS.*` — nigdy twarde wartości z-index.**
 
 ---
 
@@ -622,57 +635,60 @@ Oznaczenie osoby odpowiedzialnej / autora oferty.
 
 ## 16. Utility
 
+> SSoT klas utility: `style.base.css` (klasy wspólne) + `style.utilities.css` (utility).
+> Pełna lista w `style.utilities.css` — tu tylko najczęściej używane. Nie dokumentuj
+> klas, które nie istnieją: `.text-accent`, `.text-success`, `.bg-success`, `.bg-warn`,
+> `.bg-*-bg`, `.border-warn` NIE są zdefiniowane — zamiast nich użyj tokenów
+> `color: var(--accent)` itd. lub klas `.color-*` z utilities.
+
 ### Tekst
 
-| Klasa            | Właściwość            |
-| ---------------- | --------------------- |
-| `.text-accent`   | color: `--accent`     |
-| `.text-success`  | color: `--success`    |
-| `.text-danger`   | color: `--danger`     |
-| `.text-warn`     | color: `--warn`       |
-| `.text-right`    | text-align: right     |
-| `.text-center`   | text-align: center    |
-| `.text-nowrap`   | white-space: nowrap   |
-| `.fs-075-nowrap` | font 0.75rem + nowrap |
-| `.fs-065-nowrap` | font 0.65rem + nowrap |
+| Klasa                                                                                                  | Właściwość            | Gdzie                 |
+| ------------------------------------------------------------------------------------------------------ | --------------------- | --------------------- |
+| `.text-danger`                                                                                         | color: `--danger`     | `style.base.css`      |
+| `.text-warn`                                                                                           | color: `--warn`       | `style.base.css`      |
+| `.text-muted`                                                                                          | color: `--text-muted` | `style.utilities.css` |
+| `.text-right`                                                                                          | text-align: right     | `style.base.css`      |
+| `.text-center`                                                                                         | text-align: center    | `style.utilities.css` |
+| `.text-nowrap`                                                                                         | white-space: nowrap   | `style.base.css`      |
+| `.fs-075-nowrap`                                                                                       | font 0.75rem + nowrap | `style.base.css`      |
+| `.fs-065-nowrap`                                                                                       | font 0.65rem + nowrap | `style.base.css`      |
+| `.color-accent` / `.color-success` / `.color-danger` / `.color-warn` / `.color-info` / `.color-purple` | color: token          | `style.utilities.css` |
 
 ### Tło
 
-| Klasa            | Właściwość                 |
-| ---------------- | -------------------------- |
-| `.bg-accent`     | background: `--accent`     |
-| `.bg-success`    | background: `--success`    |
-| `.bg-danger`     | background: `--danger`     |
-| `.bg-warn`       | background: `--warn`       |
-| `.bg-glass`      | background: `--bg-glass`   |
-| `.bg-success-bg` | background: `--success-bg` |
-| `.bg-danger-bg`  | background: `--danger-bg`  |
+| Klasa                | Właściwość               | Gdzie                 |
+| -------------------- | ------------------------ | --------------------- |
+| `.bg-accent`         | background: `--accent`   | `style.base.css`      |
+| `.bg-glass`          | background: `--bg-glass` | `style.base.css`      |
+| `.bg-accent-subtle`  | subtelne tło akcentu     | `style.utilities.css` |
+| `.bg-white05-accent` | biały 5% + accent        | `style.utilities.css` |
 
 ### Border
 
-| Klasa             | Właściwość                |
-| ----------------- | ------------------------- |
-| `.border-accent`  | border-color: `--accent`  |
-| `.border-success` | border-color: `--success` |
-| `.border-danger`  | border-color: `--danger`  |
-| `.border-warn`    | border-color: `--warn`    |
+| Klasa                                             | Właściwość                | Gdzie                 |
+| ------------------------------------------------- | ------------------------- | --------------------- |
+| `.border-accent`                                  | border-color: `--accent`  | `style.base.css`      |
+| `.border-success`                                 | border-color: `--success` | `style.base.css`      |
+| `.border-danger`                                  | border-color: `--danger`  | `style.base.css`      |
+| `.border-accent-subtle` / `.border-danger-subtle` | subtelny border           | `style.utilities.css` |
 
 ### Gap / Margin / Padding
 
-| Klasa    | Wartość             |
-| -------- | ------------------- |
-| `.gap-1` | gap: 0.25rem        |
-| `.gap-2` | gap: 0.5rem         |
-| `.gap-3` | gap: 0.75rem        |
-| `.gap-4` | gap: 1rem           |
-| `.mb-0`  | margin-bottom: 0    |
-| `.mb-1`  | margin-bottom: 1rem |
+| Klasa    | Wartość             | Gdzie            |
+| -------- | ------------------- | ---------------- |
+| `.gap-1` | gap: 0.25rem        | `style.base.css` |
+| `.gap-2` | gap: 0.5rem         | `style.base.css` |
+| `.gap-3` | gap: 0.75rem        | `style.base.css` |
+| `.gap-4` | gap: 1rem           | `style.base.css` |
+| `.mb-0`  | margin-bottom: 0    | `style.base.css` |
+| `.mb-1`  | margin-bottom: 1rem | `style.base.css` |
 
 ---
 
 ## 17. Scrollbar
 
-Custom scrollbar dla całej aplikacji:
+Custom scrollbar dla całej aplikacji (definicja w `style.base.css`):
 
 ```css
 ::-webkit-scrollbar {
@@ -680,18 +696,18 @@ Custom scrollbar dla całej aplikacji:
     height: 8px;
 }
 ::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: var(--scrollbar-track); /* --slate-950 */
 }
 ::-webkit-scrollbar-thumb {
-    background: #3730a3;
+    background: var(--scrollbar-thumb); /* #3730a3 */
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #4f46e5;
+    background: var(--scrollbar-thumb-hover); /* #4f46e5 */
 }
 html {
     scrollbar-width: thin;
-    scrollbar-color: #3730a3 #0f172a;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
 }
 ```
 

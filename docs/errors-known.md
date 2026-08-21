@@ -90,7 +90,7 @@
 
 **Problem**: Chrome/FF pokazuje strzałki increment/decrement na polach liczbowych.
 **Objaw**: Szpeci UI, user może przypadkowo zmienić wartość.
-**Fix** (`style.css`): `::-webkit-inner-spin-button { appearance: none }` + `-moz-appearance: textfield`.
+**Fix** (`style.base.css`): `::-webkit-inner-spin-button { appearance: none }` + `-moz-appearance: textfield`.
 
 ## 15. sort() mutacja oryginalnej tablicy
 

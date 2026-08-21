@@ -288,17 +288,17 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
 ### Frontend — struktura CSS
 
-| Plik                              | Linie | Opis                                                |
-| --------------------------------- | ----- | --------------------------------------------------- |
-| `public/css/style.css`            | 3762  | Główny arkusz stylów                                |
-| `public/css/style.base.css`       | 1525  | Zmienne + base (wyodrębnione, niepodłączone)        |
-| `public/css/style.cards.css`      | 537   | Karty ofert + compact (wyodrębnione, niepodłączone) |
-| `public/css/style.responsive.css` | 1509  | Responsive + wizard (wyodrębnione, niepodłączone)   |
-| `public/css/style.utilities.css`  | 191   | Utility classes (wyodrębnione, niepodłączone)       |
-| `public/css/inter.css`            | —     | Font Inter                                          |
-| `public/css/printModal.css`       | —     | Style wydruku                                       |
+| Plik                              | Linie | Opis                                                                 |
+| --------------------------------- | ----- | -------------------------------------------------------------------- |
+| `public/css/style.base.css`       | 1730  | **Tokeny `:root` + base layout + komponenty wspólne** (SSoT tokenów) |
+| `public/css/style.cards.css`      | 586   | Karty ofert + status-badge                                           |
+| `public/css/style.responsive.css` | 1427  | Responsive + modale + toasty + wizard                                |
+| `public/css/style.utilities.css`  | 994   | Utility classes (zastępują inline style)                             |
+| `public/css/inter.css`            | 441   | Font Inter (importowany przez `style.base.css`)                      |
+| `public/css/print.css`            | 229   | Style wydruku                                                        |
+| `public/css/printModal.css`       | 532   | Style podglądu wydruku (UPM)                                         |
 
-> Wszystkie 6 plików HTML (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują 4 części zamiast jednego `style.css`. Plik `style.css` (3762 linie) jest zachowany, ale nie jest już ładowany.
+> Wszystkie wejściówki (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują wspólne arkusze: `style.base.css` → `style.cards.css` → `style.responsive.css` → `style.utilities.css` (kolejność ma znaczenie dla kaskady) + arkusz modułowy. Legacy `public/css/style.css` **nie istnieje** — został usunięty (tokenizacja, 2026-08-03). Pełne wytyczne: `docs/UI_GUIDELINES.md`.
 
 ---
 
