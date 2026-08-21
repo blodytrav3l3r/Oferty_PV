@@ -508,6 +508,37 @@
     max-width: 900px;
 }
 
+/* Baza klientów — szerszy modal (shared/clientManager.js) */
+.modal.modal--clients {
+    width: min(1200px, 95vw);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    padding: 0.5rem 0;
+}
+
+.clients-search {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.clients-search-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.clients-search-field {
+    position: relative;
+    flex: 1;
+}
+
 /* Okno historii (audit) — spójne z resztą modalów */
 .audit-modal-inner {
     width: 95%;

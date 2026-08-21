@@ -116,22 +116,19 @@ function showClientsDb() {
     showModal({
         id: 'clients-db-modal',
         html: `
-    <div class="modal" style="max-width:1200px; width:95%; border-radius: var(--radius); box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.1); max-height:90vh; display:flex; flex-direction:column;">
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding-bottom:0.8rem; margin-bottom:0;">
-        <h3 style="font-size: var(--fs-4xl); font-weight: var(--fw-bold); color:var(--text-primary);"><i data-lucide="folder-open"></i> Baza klientów <span style="font-size: var(--fs-md); font-weight: var(--fw-normal); color:var(--text-muted);">(${clientsDb.length})</span></h3>
+    <div class="modal modal--clients">
+      <div class="modal-header">
+        <h3><i data-lucide="folder-open"></i> Baza klientów <span class="text-muted">(${clientsDb.length})</span></h3>
         <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="padding:0.8rem 0; border-bottom:1px solid var(--border);">
-        <div style="display:flex; gap:0.5rem; align-items:center;">
-          <div style="position:relative; flex:1;">
-            <input type="text" id="clients-search-input" placeholder="Szukaj po nazwie lub NIP..." 
-              oninput="filterClientsDb(this.value)"
-              style="width:100%; padding:0.6rem 0.8rem; border:1px solid var(--border); border-radius: var(--radius-sm); background:var(--bg-input); color:var(--text-primary); font-size: var(--fs-lg); outline:none; transition:border-color 0.2s;"
-              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      <div class="clients-search">
+        <div class="clients-search-row">
+          <div class="clients-search-field">
+            <input type="text" id="clients-search-input" class="form-input" placeholder="Szukaj po nazwie lub NIP..." oninput="filterClientsDb(this.value)">
           </div>
         </div>
       </div>
-      <div id="clients-db-list" style="flex:1; overflow-y:auto; padding:0.5rem 0;"></div>
+      <div id="clients-db-list" class="modal-body"></div>
     </div>`
     });
 
