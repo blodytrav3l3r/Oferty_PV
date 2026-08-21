@@ -416,6 +416,21 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-color: var(--border-glass);
 }
 
+.karta-label {
+    display: block;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.karta-input {
+    width: 100%;
+    font-size: var(--fs-lg);
+    padding: 0.6rem 0.8rem;
+}
+
 .btn-well-add {
     height: 46px;
     padding: 0;
