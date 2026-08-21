@@ -97,7 +97,9 @@
                             </div>
 
                             <div class="zlecenia-date-filter" id="zlecenia-date-filter">
-                                <span class="toolbar-label">Data od</span>
+                                <label for="zlecenia-date-from" class="toolbar-label"
+                                    >Data od</label
+                                >
                                 <input
                                     type="date"
                                     id="zlecenia-date-from"
@@ -106,7 +108,7 @@
                                     aria-label="Data od"
                                 />
                                 <span class="zlecenia-date-sep" aria-hidden="true">&ndash;</span>
-                                <span class="toolbar-label">Data do</span>
+                                <label for="zlecenia-date-to" class="toolbar-label">Data do</label>
                                 <input
                                     type="date"
                                     id="zlecenia-date-to"
@@ -125,7 +127,7 @@
                                 </button>
                             </div>
 
-                            <span class="toolbar-label">Opiekun:</span>
+                            <label for="zlecenia-user-filter" class="toolbar-label">Opiekun:</label>
                             <select
                                 id="zlecenia-user-filter"
                                 class="form-select zlecenia-select-sm"
