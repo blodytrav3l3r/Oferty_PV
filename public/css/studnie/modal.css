@@ -131,7 +131,7 @@
     background: rgba(var(--black-rgb), 0.8);
     -webkit-backdrop-filter: blur(4px);
     backdrop-filter: blur(4px);
-    z-index: var(--z-overlay); /* GENERIC_MODAL_BACKDROP */
+    z-index: 2000; /* GENERIC_MODAL_BACKDROP */
     display: none;
     align-items: center;
     justify-content: center;
@@ -207,7 +207,7 @@
 .zlecenia-overlay {
     position: fixed;
     inset: 0;
-    z-index: var(--z-overlay); /* GENERIC_MODAL_BACKDROP */
+    z-index: 2000; /* GENERIC_MODAL_BACKDROP */
     background: rgba(var(--black-rgb), 0.8);
     display: none;
     align-items: stretch;
@@ -224,7 +224,7 @@
     display: grid;
     grid-template-columns: 350px 1fr 350px;
     background: var(--bg-primary);
-    height: calc(100vh - var(--header-h));
+    height: calc(100vh - 57px);
 }
 
 .zlecenia-left {
@@ -236,7 +236,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    height: calc(100vh - var(--header-h));
+    height: calc(100vh - 57px);
 }
 
 .zlecenia-center {
@@ -244,7 +244,7 @@
     flex-direction: column;
     overflow-y: auto;
     background: var(--bg-primary);
-    height: calc(100vh - var(--header-h));
+    height: calc(100vh - 57px);
 }
 
 .zlecenia-right {
@@ -253,7 +253,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    height: calc(100vh - var(--header-h));
+    height: calc(100vh - 57px);
 }
 
 .zlecenia-left,
@@ -269,7 +269,7 @@
     box-shadow: var(--shadow-sm);
     display: flex;
     align-items: center;
-    min-height: var(--header-h);
+    min-height: 57px;
     background: var(--bg-secondary);
 }
 
@@ -279,7 +279,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: var(--header-h);
+    min-height: 57px;
     /* dopasowanie do wysokości paska przycisków */
     box-shadow: var(--shadow-sm);
 }
@@ -331,42 +331,6 @@
     padding: 0.35rem 0.7rem !important;
     white-space: nowrap;
     transition: var(--transition);
-}
-
-.zlecenia-header-btn--accent2 {
-    background: rgba(var(--accent2-rgb), 0.15);
-    border: 1px solid rgba(var(--accent2-rgb), 0.5);
-    color: var(--accent2-hover);
-}
-
-.zlecenia-header-btn--success {
-    background: rgba(var(--success-rgb), 0.15);
-    border: 1px solid rgba(var(--success-rgb), 0.5);
-    color: var(--success-hover);
-}
-
-.zlecenia-header-btn--warn {
-    background: rgba(var(--warn-rgb), 0.1);
-    border: 1px solid rgba(var(--warn-rgb), 0.5);
-    color: var(--warn-hover);
-}
-
-.zlecenia-header-btn--danger {
-    background: rgba(var(--danger-rgb), 0.1);
-    border: 1px solid rgba(var(--danger-rgb), 0.5);
-    color: var(--danger-hover);
-}
-
-.zlecenia-header-btn--accent {
-    background: rgba(var(--accent-rgb), 0.1);
-    border: 1px solid rgba(var(--accent-rgb), 0.5);
-    color: var(--accent-text);
-}
-
-.zlecenia-header-btn--blue-alt {
-    background: rgba(var(--blue-alt-rgb), 0.1);
-    border: 1px solid rgba(var(--blue-alt-rgb), 0.5);
-    color: var(--blue-alt);
 }
 
 .zlecenia-filter-btn {
@@ -816,95 +780,10 @@
     line-height: 1.2;
 }
 
-/* ===== Modale przejść (wellTransitionsPopup.js) — warianty .modal ===== */
-.modal--prz {
-    width: min(760px, 94vw);
-    max-height: min(85vh, 720px);
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
+.zak-empty {
+    grid-column: 1 / -1;
+    font-size: var(--fs-base);
+    color: var(--text-muted);
+    text-align: center;
     padding: 1.5rem;
-}
-
-.modal--prz-flow {
-    width: min(340px, 92vw);
-    text-align: center;
-}
-
-.prz-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, 192px);
-    justify-content: center;
-    gap: 11px;
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-    padding: 0.2rem;
-}
-
-.prz-grid-btn {
-    width: 192px;
-    height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: var(--fs-lg);
-    font-weight: var(--fw-bold);
-    text-align: center;
-    transition: all 0.15s;
-    background: rgba(var(--white-rgb), 0.05);
-    border: 1px solid rgba(var(--white-rgb), 0.1);
-}
-
-.prz-grid-btn:hover {
-    background: rgba(var(--accent-rgb), 0.15);
-    border-color: rgba(var(--accent-rgb), 0.3);
-}
-
-.prz-grid-btn--active {
-    background: rgba(var(--accent-rgb), 0.2);
-    border-color: rgba(var(--accent-rgb), 0.5);
-    color: var(--accent);
-}
-
-.prz-grid-btn--active:hover {
-    background: rgba(var(--accent-rgb), 0.2);
-    border-color: rgba(var(--accent-rgb), 0.5);
-}
-
-.prz-flow-btn {
-    flex: 1;
-    padding: 1.2rem;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-weight: var(--fw-extrabold);
-    font-size: var(--fs-3xl);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-    transition: all 0.2s;
-}
-
-.prz-flow-btn--wlot {
-    background: rgba(var(--blue-rgb), 0.2);
-    color: var(--blue-hover);
-    border: 2px solid rgba(var(--blue-rgb), 0.8);
-}
-
-.prz-flow-btn--wlot:hover {
-    background: rgba(var(--blue-rgb), 0.5);
-}
-
-.prz-flow-btn--wylot {
-    background: rgba(var(--danger-rgb), 0.2);
-    color: var(--danger-hover);
-    border: 2px solid rgba(var(--danger-rgb), 0.8);
-}
-
-.prz-flow-btn--wylot:hover {
-    background: rgba(var(--danger-rgb), 0.5);
 }

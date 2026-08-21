@@ -34,37 +34,82 @@
     <!-- CENTER: Config area -->
     <div>
         <!-- Błędy konfiguracji studni -->
-        <div id="well-config-errors-container" class="well-config-errors"></div>
+        <div
+            id="well-config-errors-container"
+            style="
+                display: none;
+                margin-bottom: 0.4rem;
+                padding: 0.4rem 0.6rem;
+                background: rgba(var(--danger-rgb), 0.1);
+                border: 1px solid rgba(var(--danger-rgb), 0.3);
+                border-radius: var(--radius-sm);
+                color: var(--danger);
+                font-size: var(--fs-base);
+                font-weight: var(--fw-semibold);
+                line-height: 1.4;
+            "
+        ></div>
         <!-- Toolbar: DN + Elevations + Height + Controls -->
-        <div class="well-info-card p-6-8">
+        <div class="well-info-card" style="padding: 0.6rem 0.8rem">
             <!-- Row 1: Title -->
-            <div class="util-single-187">
-                <span class="util-single-188"
+            <div style="margin-bottom: 0.35rem">
+                <span
+                    style="
+                        font-size: var(--fs-base);
+                        font-weight: var(--fw-extrabold);
+                        color: var(--text-primary);
+                    "
                     ><i data-lucide="settings"></i> Konfiguracja studni</span
                 >
             </div>
             <!-- Row 2: Nr + Rz fields + indicators -->
-            <div class="gap-1 util-single-189">
+            <div class="gap-1" style="display: flex; align-items: center; margin-bottom: 0.4rem">
                 <div class="flex-center-gap-2">
-                    <label class="well-label">Nr</label>
+                    <label
+                        style="
+                            font-size: var(--fs-base);
+                            color: var(--text-muted);
+                            font-weight: var(--fw-semibold);
+                            white-space: nowrap;
+                        "
+                        >Nr</label
+                    >
                     <input
                         type="text"
                         id="input-well-numer"
-                        class="well-input well-input--accent"
                         placeholder="Nr studni"
                         oninput="updateWellNumer()"
                         onclick="this.select()"
+                        style="
+                            width: 95px;
+                            padding: 0.28rem 0.4rem;
+                            background: var(--slate-800);
+                            border: 1px solid var(--border-glass);
+                            border-radius: var(--radius-2xs);
+                            color: var(--accent2-hover);
+                            font:
+                                var(--fw-bold) var(--fs-lg) 'Inter',
+                                sans-serif;
+                            text-align: center;
+                        "
                     />
                 </div>
-                <div class="util-2x-37"></div>
+                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
                 <div class="flex-center-gap-2">
-                    <label class="well-label">Rz. włazu</label>
+                    <label
+                        style="
+                            font-size: var(--fs-base);
+                            color: var(--text-muted);
+                            font-weight: var(--fw-semibold);
+                            white-space: nowrap;
+                        "
+                        >Rz. włazu</label
+                    >
                     <input
                         type="text"
                         inputmode="decimal"
                         step="0.001"
                         id="input-rzedna-wlazu"
-                        class="well-input well-input--primary"
                         placeholder="100.50"
                         onfocus="this.select()"
                         onblur="
@@ -77,16 +122,35 @@
                                 this.blur();
                             }
                         "
+                        style="
+                            width: 95px;
+                            padding: 0.28rem 0.4rem;
+                            background: var(--slate-800);
+                            border: 1px solid var(--border-glass);
+                            border-radius: var(--radius-2xs);
+                            color: var(--text-primary);
+                            font:
+                                var(--fw-bold) var(--fs-lg) 'Inter',
+                                sans-serif;
+                            text-align: center;
+                        "
                     />
                 </div>
                 <div class="flex-center-gap-2">
-                    <label class="well-label">Rz. dna</label>
+                    <label
+                        style="
+                            font-size: var(--fs-base);
+                            color: var(--text-muted);
+                            font-weight: var(--fw-semibold);
+                            white-space: nowrap;
+                        "
+                        >Rz. dna</label
+                    >
                     <input
                         type="text"
                         inputmode="decimal"
                         step="0.001"
                         id="input-rzedna-dna"
-                        class="well-input well-input--primary"
                         placeholder="97.20"
                         onfocus="this.select()"
                         onblur="
@@ -99,31 +163,61 @@
                                 this.blur();
                             }
                         "
+                        style="
+                            width: 95px;
+                            padding: 0.28rem 0.4rem;
+                            background: var(--slate-800);
+                            border: 1px solid var(--border-glass);
+                            border-radius: var(--radius-2xs);
+                            color: var(--text-primary);
+                            font:
+                                var(--fw-bold) var(--fs-lg) 'Inter',
+                                sans-serif;
+                            text-align: center;
+                        "
                     />
                 </div>
-                <div class="util-2x-37"></div>
-                <div class="gap-2 util-single-190">
+                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
+                <div
+                    class="gap-2"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        font-size: var(--fs-base);
+                        color: var(--text-muted);
+                        white-space: nowrap;
+                    "
+                >
                     <span
                         >Wym:
-                        <strong id="well-required-height" class="util-single-191">— m</strong></span
+                        <strong id="well-required-height" style="color: var(--accent-hover)"
+                            >— m</strong
+                        ></span
                     >
                     <span
                         >Konf:
-                        <strong id="well-configured-height" class="util-single-192"
+                        <strong id="well-configured-height" style="color: var(--success)"
                             >0 m</strong
                         ></span
                     >
                     <span id="height-diff-indicator"></span>
                 </div>
-                <div class="util-2x-38"></div>
+                <div style="flex: 1"></div>
                 <div class="flex-center-gap-2">
-                    <label class="well-label">Dopłata</label>
+                    <label
+                        style="
+                            font-size: var(--fs-base);
+                            color: var(--text-muted);
+                            font-weight: var(--fw-semibold);
+                            white-space: nowrap;
+                        "
+                        >Dopłata</label
+                    >
                     <input
                         type="text"
                         inputmode="decimal"
                         step="1"
                         id="input-doplata"
-                        class="well-input well-input--success"
                         placeholder="0"
                         onblur="
                             resolveFieldValue(this);
@@ -135,14 +229,34 @@
                                 this.blur();
                             }
                         "
+                        style="
+                            width: 80px;
+                            padding: 0.28rem 0.4rem;
+                            background: var(--slate-800);
+                            border: 1px solid var(--border-glass);
+                            border-radius: var(--radius-2xs);
+                            color: var(--success);
+                            font:
+                                var(--fw-bold) var(--fs-lg) 'Inter',
+                                sans-serif;
+                            text-align: center;
+                        "
                     />
                 </div>
             </div>
 
             <!-- Row 2: DN selector + controls -->
-            <div class="gap-2 util-single-193">
-                <div class="gap-1 util-single-194">
-                    <span class="util-single-195">DN</span>
+            <div class="gap-2" style="display: flex; align-items: center; flex-wrap: wrap">
+                <div class="gap-1" style="display: flex; align-items: center">
+                    <span
+                        style="
+                            font-size: var(--fs-lg);
+                            color: var(--text-muted);
+                            text-transform: uppercase;
+                            font-weight: var(--fw-bold);
+                        "
+                        >DN</span
+                    >
                     <div class="dn-selector mb-0">
                         <button type="button" class="dn-btn active" onclick="selectDN(1000)">
                             1000
@@ -153,49 +267,86 @@
                         <button type="button" class="dn-btn" onclick="selectDN(2500)">2500</button>
                         <button
                             type="button"
-                            class="dn-btn util-single-196"
+                            class="dn-btn"
                             onclick="selectDN('styczna')"
+                            style="
+                                background: rgba(var(--warn-rgb), 0.15);
+                                border-color: rgba(var(--warn-rgb), 0.3);
+                                color: var(--warn);
+                            "
                         >
                             Styczna
                         </button>
                     </div>
                 </div>
-                <div class="util-2x-38"></div>
-                <div class="gap-1 util-2x-29">
+                <div style="flex: 1"></div>
+                <div class="gap-1" style="display: flex">
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
+                        class="btn btn-secondary btn-sm"
                         onclick="toggleAutoLock()"
                         id="btn-lock-auto"
+                        style="
+                            font-size: var(--fs-md);
+                            padding: 0.3rem 0.6rem;
+                            border-color: var(--border-glass);
+                        "
                     >
                         <i data-lucide="unlock"></i> Ręczny
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
+                        class="btn btn-secondary btn-sm"
                         onclick="toggleRedukcja()"
                         id="btn-redukcja"
+                        style="
+                            font-size: var(--fs-md);
+                            padding: 0.3rem 0.6rem;
+                            border-color: var(--border-glass);
+                        "
                     >
                         <i data-lucide="arrow-down"></i> Redukcja
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
+                        class="btn btn-secondary btn-sm"
                         onclick="togglePsiaBuda()"
                         id="btn-psia-buda"
+                        style="
+                            font-size: var(--fs-md);
+                            padding: 0.3rem 0.6rem;
+                            border-color: var(--border-glass);
+                        "
                     >
                         🐶 Psia buda
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn hidden"
+                        class="btn btn-secondary btn-sm"
                         onclick="toggleStyczna1200()"
                         id="btn-styczna-1200"
+                        style="
+                            font-size: var(--fs-md);
+                            padding: 0.3rem 0.6rem;
+                            border-color: var(--border-glass);
+                            display: none;
+                        "
                     >
                         Nadbudowa DN1200
                     </button>
-                    <div id="redukcja-min-wrap" class="gap-1 util-single-197">
-                        <label class="util-single-198">Min:</label>
+                    <div
+                        id="redukcja-min-wrap"
+                        class="gap-1"
+                        style="display: none; align-items: center"
+                    >
+                        <label
+                            style="
+                                font-size: var(--fs-xs);
+                                color: var(--text-muted);
+                                white-space: nowrap;
+                            "
+                            >Min:</label
+                        >
                         <input
                             type="number"
                             id="redukcja-min-h"
@@ -204,14 +355,28 @@
                             min="0.5"
                             max="10"
                             onchange="onRedukcjaMinChange(this.value)"
-                            class="util-single-199"
+                            style="
+                                width: 3.2rem;
+                                font-size: var(--fs-base);
+                                padding: 0.2rem 0.3rem;
+                                background: rgba(var(--white-rgb), 0.05);
+                                border: 1px solid var(--border-glass);
+                                border-radius: var(--radius-2xs);
+                                color: var(--text-primary);
+                                text-align: center;
+                            "
                         />
-                        <span class="util-2x-39">m</span>
+                        <span style="font-size: var(--fs-xs); color: var(--text-muted)">m</span>
                         <button
                             type="button"
-                            class="btn btn-secondary btn-sm util-single-200"
+                            class="btn btn-secondary btn-sm"
                             onclick="openRedukcjaZakonczeniePopup()"
                             id="btn-redukcja-zak"
+                            style="
+                                font-size: var(--fs-sm);
+                                padding: 0.2rem 0.5rem;
+                                border-color: var(--border-glass);
+                            "
                         >
                             <span class="text-xs"><i data-lucide="chevron-down"></i></span>
                             Zak. DN1000
@@ -219,25 +384,32 @@
                     </div>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
+                        class="btn btn-secondary btn-sm"
                         onclick="openZakonczeniePopup()"
                         id="btn-zakonczenie"
+                        style="
+                            font-size: var(--fs-md);
+                            padding: 0.3rem 0.6rem;
+                            border-color: var(--border-glass);
+                        "
                     >
                         <span class="text-xs"><i data-lucide="chevron-down"></i></span>
                         Zakończenie
                     </button>
                     <button
                         type="button"
-                        class="btn btn-primary btn-sm well-toolbar-btn"
+                        class="btn btn-primary btn-sm"
                         onclick="autoSelectComponents()"
                         id="btn-auto-select"
+                        style="font-size: var(--fs-md); padding: 0.3rem 0.6rem"
                     >
                         <i data-lucide="settings"></i> Auto
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
+                        class="btn btn-secondary btn-sm"
                         onclick="clearWellConfig()"
+                        style="font-size: var(--fs-md); padding: 0.3rem 0.6rem"
                     >
                         <i data-lucide="refresh-cw"></i>
                     </button>
@@ -246,21 +418,44 @@
         </div>
 
         <!-- Per-well parameters (editable, inherited from wizard step 2) -->
-        <div class="card-sm p-6-8">
+        <div class="card-sm" style="padding: 0.6rem 0.8rem">
             <div
-                class="card-title card-title--config"
+                class="card-title"
+                style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    cursor: pointer;
+                    margin-bottom: 0;
+                    font-size: var(--fs-base);
+                    padding: 0.15rem 0;
+                "
                 onclick="toggleCard('well-params-content', 'well-params-icon')"
             >
                 <span><i data-lucide="clipboard-list"></i> Parametry tej studni</span>
                 <span id="well-params-icon" class="fs-075"><i data-lucide="chevron-down"></i></span>
             </div>
-            <div id="well-params-content" class="card-content util-single-201">
+            <div
+                id="well-params-content"
+                class="card-content"
+                style="display: none; margin-top: 0.5rem"
+            >
                 <div id="well-params-container"></div>
             </div>
         </div>
 
         <!-- Builder tabs -->
-        <div class="builder-sub-nav gap-1">
+        <div
+            class="builder-sub-nav gap-1"
+            style="
+                display: flex;
+                margin-bottom: 0.5rem;
+                background: var(--slate-950);
+                padding: 0.3rem;
+                border-radius: var(--radius-sm);
+                border: 1px solid var(--border-glass);
+            "
+        >
             <button
                 type="button"
                 class="b-tab-btn active"
@@ -281,22 +476,40 @@
 
         <!-- TAB: CONCRETE CONTENT -->
         <div id="bcontent-concrete">
-            <div class="card-sm p-6-8">
+            <div class="card-sm" style="padding: 0.6rem 0.8rem">
                 <div
-                    class="card-title card-title--config"
+                    class="card-title"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        margin-bottom: 0;
+                        font-size: var(--fs-base);
+                        padding: 0.15rem 0;
+                    "
                     onclick="toggleCard('tiles-content', 'tiles-icon')"
                 >
                     <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
                     <span id="tiles-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
                 </div>
-                <div id="tiles-content" class="card-content mt-5">
+                <div id="tiles-content" class="card-content" style="margin-top: 0.5rem">
                     <div id="tiles-container"></div>
                 </div>
             </div>
 
             <div class="card card-sm">
                 <div
-                    class="card-title card-title--config util-single-202"
+                    class="card-title"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        margin-bottom: 0.3rem;
+                        font-size: var(--fs-base);
+                        padding: 0.15rem 0;
+                    "
                     onclick="toggleCard('well-config-wrap', 'well-config-icon')"
                 >
                     <span><i data-lucide="package"></i> Konfiguracja betonowa</span>
@@ -305,8 +518,19 @@
                     ></span>
                 </div>
                 <div id="well-config-wrap" class="table-wrap card-content">
-                    <div id="well-config-body" class="gap-2 well-config-body">
-                        <div class="util-single-203">
+                    <div
+                        id="well-config-body"
+                        class="gap-2"
+                        style="display: flex; flex-direction: column"
+                    >
+                        <div
+                            style="
+                                text-align: center;
+                                padding: 1.5rem;
+                                color: var(--text-muted);
+                                font-size: var(--fs-base);
+                            "
+                        >
                             Kliknij kafelki powyżej, aby dodać elementy studni
                         </div>
                     </div>
@@ -315,10 +539,19 @@
         </div>
 
         <!-- TAB: TRANSITIONS CONTENT -->
-        <div id="bcontent-transitions" class="hidden">
+        <div id="bcontent-transitions" style="display: none">
             <div class="card card-sm">
                 <div
-                    class="card-title card-title--config"
+                    class="card-title"
+                    style="
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        cursor: pointer;
+                        margin-bottom: 0;
+                        font-size: var(--fs-base);
+                        padding: 0.15rem 0;
+                    "
                     onclick="
                         window.toggleCard('inline-przejscia-app-container', 'przejscia-app-icon')
                     "
@@ -328,41 +561,153 @@
                         ><i data-lucide="chevron-down"></i
                     ></span>
                 </div>
-                <div id="inline-przejscia-app-container" class="card-content util-single-204">
+                <div
+                    id="inline-przejscia-app-container"
+                    class="card-content"
+                    style="margin-top: 0.5rem; display: none"
+                >
                     <div id="inline-przejscia-app"></div>
                 </div>
             </div>
-            <div class="card util-single-205">
-                <div class="card-title util-single-206">
+            <div class="card" style="background: var(--slate-950); padding: 0.5rem 0.6rem">
+                <div
+                    class="card-title"
+                    style="
+                        font-size: var(--fs-base);
+                        padding: 0.15rem 0;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    "
+                >
                     <span><i data-lucide="book-open"></i> Lista przejść</span>
-                    <span id="przejscia-count" class="util-2x-39"></span>
+                    <span
+                        id="przejscia-count"
+                        style="font-size: var(--fs-xs); color: var(--text-muted)"
+                    ></span>
                 </div>
                 <div id="well-przejscia-tiles"></div>
             </div>
         </div>
 
         <!-- Summary bar -->
-        <div class="summary-bar">
-            <div class="gap-2 summary-grid">
+        <div
+            style="
+                margin-top: 0.5rem;
+                padding: 0.5rem 0.6rem;
+                background: var(--slate-950);
+                border-radius: var(--radius-sm);
+                border: 1px solid var(--border-glass);
+            "
+        >
+            <div
+                class="gap-2"
+                style="display: grid; grid-template-columns: repeat(5, 1fr); text-align: center"
+            >
                 <div>
-                    <div class="summary-label">Cena netto</div>
-                    <div class="summary-value summary-value--success" id="sum-price">0 PLN</div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xs);
+                            text-transform: uppercase;
+                            color: var(--text-muted);
+                        "
+                    >
+                        Cena netto
+                    </div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xl);
+                            font-weight: var(--fw-extrabold);
+                            color: var(--success);
+                        "
+                        id="sum-price"
+                    >
+                        0 PLN
+                    </div>
                 </div>
                 <div>
-                    <div class="summary-label">Waga</div>
-                    <div class="summary-value" id="sum-weight">0 kg</div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xs);
+                            text-transform: uppercase;
+                            color: var(--text-muted);
+                        "
+                    >
+                        Waga
+                    </div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xl);
+                            font-weight: var(--fw-bold);
+                            color: var(--text-primary);
+                        "
+                        id="sum-weight"
+                    >
+                        0 kg
+                    </div>
                 </div>
                 <div>
-                    <div class="summary-label">Wysokość</div>
-                    <div class="summary-value" id="sum-height">0 mm</div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xs);
+                            text-transform: uppercase;
+                            color: var(--text-muted);
+                        "
+                    >
+                        Wysokość
+                    </div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xl);
+                            font-weight: var(--fw-bold);
+                            color: var(--text-primary);
+                        "
+                        id="sum-height"
+                    >
+                        0 mm
+                    </div>
                 </div>
                 <div>
-                    <div class="summary-label">Pow. wewn.</div>
-                    <div class="summary-value" id="sum-area-int">0 m²</div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xs);
+                            text-transform: uppercase;
+                            color: var(--text-muted);
+                        "
+                    >
+                        Pow. wewn.
+                    </div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xl);
+                            font-weight: var(--fw-bold);
+                            color: var(--text-primary);
+                        "
+                        id="sum-area-int"
+                    >
+                        0 m²
+                    </div>
                 </div>
                 <div>
-                    <div class="summary-label">Pow. zewn.</div>
-                    <div class="summary-value" id="sum-area-ext">0 m²</div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xs);
+                            text-transform: uppercase;
+                            color: var(--text-muted);
+                        "
+                    >
+                        Pow. zewn.
+                    </div>
+                    <div
+                        style="
+                            font-size: var(--fs-2xl);
+                            font-weight: var(--fw-bold);
+                            color: var(--text-primary);
+                        "
+                        id="sum-area-ext"
+                    >
+                        0 m²
+                    </div>
                 </div>
             </div>
         </div>

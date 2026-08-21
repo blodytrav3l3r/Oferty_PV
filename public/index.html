@@ -12,13 +12,11 @@
         <link rel="stylesheet" href="css/style.base.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.cards.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.responsive.css?v=1.18.0" />
-        <link rel="stylesheet" href="css/print.css?v=1.18.0" media="print" />
         <link rel="stylesheet" href="css/style.utilities.css?v=1.18.0" />
         <link rel="stylesheet" href="css/index.css?v=1.18.0" />
     </head>
 
     <body class="index-page">
-        <h1 class="sr-only">Pulpit</h1>
         <!-- Wspólny nagłówek nawigacji (widoczny po zalogowaniu) -->
         <header class="header" id="dash-header">
             <div class="header-inner">
@@ -80,7 +78,12 @@
         <script src="js/shared/auth.js?v=1.18.0"></script>
         <script src="js/shared/logger.js?v=1.18.0"></script>
         <script src="js/shared/constants.js?v=1.18.0"></script>
-        <main class="container">
+        <script type="module" src="js/shared/escapeHtml.js?v=1.18.0"></script>
+        <script type="module" src="js/shared/modalCore.js?v=1.18.0"></script>
+        <script type="module" src="js/shared/toast.js?v=1.18.0"></script>
+        <script type="module" src="js/shared/fetchJson.js?v=1.18.0"></script>
+        <script type="module" src="js/shared/debounce.js?v=1.18.0"></script>
+        <div class="container">
             <div class="index-logo">
                 <img
                     src="images/logo-sok.svg?v=1.18.0"
@@ -92,31 +95,55 @@
             <div class="subtitle">{{APP_SUBTITLE}}</div>
 
             <!-- Login Form -->
-            <form id="login-section" class="login-box" onsubmit="doLogin(event)">
+            <div id="login-section" class="login-box">
                 <h3><i data-lucide="lock"></i> Logowanie</h3>
-                <label for="login-username" class="sr-only">Login</label>
+                <label
+                    for="login-username"
+                    style="
+                        position: absolute;
+                        width: 1px;
+                        height: 1px;
+                        padding: 0;
+                        margin: -1px;
+                        overflow: hidden;
+                        clip: rect(0, 0, 0, 0);
+                        border: 0;
+                    "
+                    >Login</label
+                >
                 <input
                     type="text"
                     id="login-username"
-                    name="username"
                     placeholder="Login"
                     autocomplete="username"
                     class="form-input"
-                    required
                 />
-                <label for="login-password" class="sr-only">Hasło</label>
+                <label
+                    for="login-password"
+                    style="
+                        position: absolute;
+                        width: 1px;
+                        height: 1px;
+                        padding: 0;
+                        margin: -1px;
+                        overflow: hidden;
+                        clip: rect(0, 0, 0, 0);
+                        border: 0;
+                    "
+                    >Hasło</label
+                >
                 <input
                     type="password"
                     id="login-password"
-                    name="password"
                     placeholder="Hasło"
                     autocomplete="current-password"
                     class="form-input"
-                    required
                 />
-                <button type="submit" class="btn btn-primary login-submit">Zaloguj się</button>
+                <button type="button" class="btn btn-primary login-submit" onclick="doLogin()">
+                    Zaloguj się
+                </button>
                 <div class="login-error" id="login-error"></div>
-            </form>
+            </div>
 
             <!-- User Section (Dashboard) -->
             <div id="user-section" class="hidden user-section-dash">
@@ -267,14 +294,14 @@
                             <table class="admin-table">
                                 <thead>
                                     <tr>
-                                        <th scope="col" class="col-employee">Pracownik</th>
-                                        <th scope="col" class="col-sym">Sym.</th>
-                                        <th scope="col" class="col-login">Login</th>
-                                        <th scope="col" class="col-contact">Kontakt</th>
-                                        <th scope="col" class="col-role">Rola</th>
-                                        <th scope="col" class="col-order-num">Nr Zam.</th>
-                                        <th scope="col" class="col-prod-num">Nr Zlec.</th>
-                                        <th scope="col" class="col-actions">Akcje</th>
+                                        <th class="col-employee">Pracownik</th>
+                                        <th class="col-sym">Sym.</th>
+                                        <th class="col-login">Login</th>
+                                        <th class="col-contact">Kontakt</th>
+                                        <th class="col-role">Rola</th>
+                                        <th class="col-order-num">Nr Zam.</th>
+                                        <th class="col-prod-num">Nr Zlec.</th>
+                                        <th class="col-actions">Akcje</th>
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body"></tbody>
@@ -488,14 +515,11 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- Toast container -->
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
-        <script type="module" src="js/shared/escapeHtml.js?v=1.18.0"></script>
-        <script type="module" src="js/shared/modalCore.js?v=1.18.0"></script>
-        <script type="module" src="js/shared/toast.js?v=1.18.0"></script>
-        <script type="module" src="js/shared/fetchJson.js?v=1.18.0"></script>
-        <script type="module" src="js/shared/debounce.js?v=1.18.0"></script>
         <script src="js/shared/ui.js?v=1.18.0"></script>
         <script src="js/shared/headerUser.js?v=1.18.0"></script>
         <script src="js/shared/dashboard.js?v=1.18.0"></script>

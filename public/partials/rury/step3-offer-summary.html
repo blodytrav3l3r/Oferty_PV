@@ -1,8 +1,11 @@
 <!-- PARTIAL: step3-offer-summary.html -->
 <!-- ===== FAZA 3: OFERTA (PODSUMOWANIE) ===== -->
 <div class="wizard-step" id="wizard-step-3">
-    <div class="rury-card util-single-107">
-        <div class="rury-card-header util-single-108">
+    <div class="rury-card" style="padding-bottom: 0">
+        <div
+            class="rury-card-header"
+            style="margin-bottom: 0.8rem; border-bottom: none; padding-bottom: 0"
+        >
             <span class="rury-card-title"><i data-lucide="package"></i> Pozycje oferty</span>
             <div class="zt-toggle-wrap">
                 <span class="zt-toggle-label">Zabezp. transp.</span>
@@ -32,47 +35,47 @@
                     <colgroup id="offer-colgroup"></colgroup>
                     <thead>
                         <tr>
-                            <th scope="col" class="rury-th-narrow">
+                            <th style="width: 36px; text-align: center">
                                 <input
                                     type="checkbox"
                                     id="select-all-items"
                                     onchange="toggleAllItemsForOrder(this.checked)"
-                                    class="util-single-109"
+                                    style="cursor: pointer; width: 16px; height: 16px"
                                 />
                             </th>
-                            <th scope="col" class="rury-th-left">Lp.</th>
-                            <th scope="col" class="rury-th-left">Nazwa produktu</th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: left">Lp.</th>
+                            <th style="text-align: left">Nazwa produktu</th>
+                            <th style="text-align: right">
                                 <span class="text-center-block">Cena jedn.</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Metry</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Ilość</span>
                             </th>
-                            <th scope="col" class="rury-th-order">
+                            <th style="width: 80px; text-align: center; white-space: nowrap">
                                 <span class="text-center-block">Zamów</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Rabat</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Po rabacie</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Dopłata</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Transport</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Netto</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Wersja handlowa</span>
                             </th>
-                            <th scope="col" class="rury-th-right">
+                            <th style="text-align: right">
                                 <span class="text-center-block">Akcje</span>
                             </th>
                         </tr>

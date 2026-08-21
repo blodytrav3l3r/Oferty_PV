@@ -224,7 +224,7 @@
     font-size: var(--fs-md);
 }
 
-/* Status badges — base .status-badge is defined in style.cards.css */
+/* Status badges — base .status-badge is defined in style.css */
 .status-badge svg {
     width: 14px;
     height: 14px;
@@ -302,7 +302,7 @@
     border-color: rgba(var(--slate-400-rgb), 0.15);
 }
 
-/* Action buttons — base from style.base.css, only zlecenia variants */
+/* Action buttons — base from style.css, only zlecenia variants */
 .action-btn-edit {
     border-color: rgba(var(--blue-rgb), 0.3);
     color: var(--blue-alt);
@@ -545,8 +545,8 @@
     .status-draft,
     .zlecenia-batch-bar,
     .zlecenia-sentinel-spin {
-        animation: none;
-        transition: none;
+        animation: none !important;
+        transition: none !important;
     }
 }
 
@@ -586,6 +586,10 @@
     color: var(--text-primary);
     font-weight: var(--fw-bold);
 }
+.zlecenia-footer-hint {
+    opacity: 0.75;
+}
+
 /* Toolbar dodatkowych filtrów — daty, użytkownik, czyszczenie */
 .zlecenia-virtual-toolbar {
     display: flex;

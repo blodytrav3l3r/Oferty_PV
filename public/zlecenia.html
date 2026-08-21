@@ -8,7 +8,6 @@
         <link rel="stylesheet" href="css/style.base.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.cards.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.responsive.css?v=1.18.0" />
-        <link rel="stylesheet" href="css/print.css?v=1.18.0" media="print" />
         <link rel="stylesheet" href="css/style.utilities.css?v=1.18.0" />
         <link rel="stylesheet" href="css/zlecenia.css?v=1.18.0" />
     </head>
@@ -32,18 +31,26 @@
                     <div class="zlecenia-stats" id="zlecenia-stats"></div>
 
                     <!-- Main card -->
-                    <section class="zl-section">
+                    <section style="margin-bottom: var(--section-gap-lg)">
                         <!-- Header: search + refresh -->
                         <div class="zlecenia-header">
-                            <div class="search-box zl-search-box">
+                            <div
+                                class="search-box"
+                                style="margin: 0; position: relative; flex: 1; min-width: 300px"
+                            >
                                 <svg
-                                    class="ka-search-icon"
-                                    aria-hidden="true"
-                                    focusable="false"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
+                                    style="
+                                        position: absolute;
+                                        left: 0.7rem;
+                                        top: 50%;
+                                        transform: translateY(-50%);
+                                        width: 1rem;
+                                        color: var(--text-muted);
+                                    "
                                 >
                                     <circle cx="11" cy="11" r="7" />
                                     <path d="m21 21-4.35-4.35" />
@@ -51,17 +58,22 @@
                                 <input
                                     type="text"
                                     id="zlecenia-search-input"
-                                    class="form-input form-input-sm zl-search-input"
+                                    class="form-input form-input-sm"
                                     placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
-                                    aria-label="Szukaj zleceń"
+                                    style="
+                                        font-weight: normal;
+                                        padding-left: 2.4rem !important;
+                                        width: 100%;
+                                    "
                                 />
                             </div>
 
                             <button
                                 type="button"
-                                class="btn btn-secondary btn-sm shrink-0"
+                                class="btn btn-secondary btn-sm"
                                 onclick="AppZlecenia.loadOrders()"
                                 title="Odśwież bazę zleceń"
+                                style="flex-shrink: 0"
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
@@ -97,9 +109,7 @@
                             </div>
 
                             <div class="zlecenia-date-filter" id="zlecenia-date-filter">
-                                <label for="zlecenia-date-from" class="toolbar-label"
-                                    >Data od</label
-                                >
+                                <span class="toolbar-label">Data od</span>
                                 <input
                                     type="date"
                                     id="zlecenia-date-from"
@@ -108,7 +118,7 @@
                                     aria-label="Data od"
                                 />
                                 <span class="zlecenia-date-sep" aria-hidden="true">&ndash;</span>
-                                <label for="zlecenia-date-to" class="toolbar-label">Data do</label>
+                                <span class="toolbar-label">Data do</span>
                                 <input
                                     type="date"
                                     id="zlecenia-date-to"
@@ -127,7 +137,7 @@
                                 </button>
                             </div>
 
-                            <label for="zlecenia-user-filter" class="toolbar-label">Opiekun:</label>
+                            <span class="toolbar-label">Opiekun:</span>
                             <select
                                 id="zlecenia-user-filter"
                                 class="form-select zlecenia-select-sm"
@@ -193,7 +203,7 @@
                             <table class="zlecenia-table" id="zlecenia-table">
                                 <thead>
                                     <tr>
-                                        <th class="col-w40" scope="col" aria-sort="none">
+                                        <th style="width: 40px; text-align: center">
                                             <input
                                                 type="checkbox"
                                                 id="zlecenia-select-all"
@@ -204,40 +214,35 @@
                                                 aria-checked="false"
                                             />
                                         </th>
-                                        <th class="col-w140" scope="col" aria-sort="none">
-                                            Nr zlecenia
-                                        </th>
-                                        <th class="col-w130" scope="col" aria-sort="none">Data</th>
-                                        <th scope="col" aria-sort="none">Budowa / Studnia</th>
-                                        <th class="col-w150" scope="col" aria-sort="none">
-                                            Nr zamówienia
-                                        </th>
-                                        <th scope="col" aria-sort="none">Element</th>
-                                        <th scope="col" aria-sort="none">Opiekun</th>
-                                        <th scope="col" aria-sort="none">Wygenerował</th>
-                                        <th class="col-w105" scope="col" aria-sort="none">
-                                            Status
-                                        </th>
-                                        <th class="col-w150-right" scope="col" aria-sort="none">
-                                            Akcje
-                                        </th>
+                                        <th style="width: 140px">Nr zlecenia</th>
+                                        <th style="width: 130px">Data</th>
+                                        <th>Budowa / Studnia</th>
+                                        <th style="width: 150px">Nr zamówienia</th>
+                                        <th>Element</th>
+                                        <th>Opiekun</th>
+                                        <th>Wygenerował</th>
+                                        <th style="width: 105px">Status</th>
+                                        <th style="width: 150px; text-align: right">Akcje</th>
                                     </tr>
                                 </thead>
                                 <tbody id="zlecenia-table-body">
                                     <tr>
-                                        <td class="zl-empty-cell" colspan="10">
+                                        <td
+                                            colspan="10"
+                                            style="
+                                                text-align: center;
+                                                padding: 2rem;
+                                                color: var(--text-muted);
+                                                font-style: italic;
+                                            "
+                                        >
                                             Ładowanie danych z serwera...
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <div
-                            class="zlecenia-sentinel"
-                            id="zlecenia-sentinel"
-                            aria-live="polite"
-                            aria-busy="false"
-                        ></div>
+                        <div class="zlecenia-sentinel" id="zlecenia-sentinel"></div>
                     </section>
                 </div>
             </div>

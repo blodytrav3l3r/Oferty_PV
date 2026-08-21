@@ -4,12 +4,12 @@
     padding: 0;
     margin: 0;
     overflow: hidden;
-    min-height: calc(100vh - var(--header-h));
+    min-height: calc(100vh - 57px);
 }
 
 .spa-module-iframe {
     width: 100%;
-    height: calc(100vh - var(--header-h));
+    height: calc(100vh - 57px);
     border: none;
     display: none;
     opacity: 1;
@@ -18,11 +18,13 @@
         filter 0.22s ease;
 }
 
-.spa-module-iframe.spa-iframe-visible {
+.spa-module-iframe[style*='display: block'],
+.spa-module-iframe[style*='display:block'] {
     display: block;
 }
 
-body.spa-view-loading .spa-module-iframe.spa-iframe-visible {
+body.spa-view-loading .spa-module-iframe[style*='display: block'],
+body.spa-view-loading .spa-module-iframe[style*='display:block'] {
     opacity: 0.2;
     filter: blur(2px);
 }

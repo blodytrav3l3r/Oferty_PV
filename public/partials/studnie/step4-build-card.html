@@ -2,69 +2,144 @@
 <!-- ====== WIZARD STEP 4: KARTA BUDOWY ====== -->
 <div class="wizard-step" id="wizard-step-4">
     <div class="wizard-card">
-        <div class="wizard-card-content karta-card-content">
+        <div class="wizard-card-content" style="padding: 1rem 0">
             <!-- Wiersz 0: Kopiuj Kartę Budowy z istniejącego zamówienia -->
-            <div class="karta-copy-row gap-3">
-                <div class="karta-copy-select">
+            <div
+                class="gap-3"
+                style="display: flex; align-items: flex-start; padding: 0.6rem 1.2rem 0.4rem"
+            >
+                <div style="flex: 1; min-width: 0">
                     <select id="step4-copy-order-select" class="form-input form-input-wide">
                         <option value="">Wybierz kartę budowy do skopiowania</option>
                     </select>
-                    <div id="step4-copy-order-help" class="karta-help">
+                    <div
+                        id="step4-copy-order-help"
+                        style="
+                            font-size: var(--fs-xs);
+                            color: var(--text-muted);
+                            margin-top: 0.3rem;
+                        "
+                    >
                         Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.
                     </div>
                 </div>
                 <button
-                    class="wizard-btn wizard-btn-secondary karta-copy-btn"
                     type="button"
                     id="step4-copy-toggle-btn"
+                    class="wizard-btn wizard-btn-secondary"
                     onclick="copyKartaBudowyFromOrder()"
+                    style="flex: 0 0 auto; white-space: nowrap; margin-top: 0"
                 >
                     Kopiuj Kartę Budowy z zamówienia
                 </button>
             </div>
 
             <!-- Wiersz 1: Emaile i numer oferty -->
-            <div class="karta-email-row gap-4">
+            <div
+                class="gap-4"
+                style="
+                    display: flex;
+                    align-items: flex-start;
+                    flex-wrap: wrap;
+                    padding: 0.4rem 1.2rem 0.6rem;
+                "
+            >
                 <!-- Email do faktury (Zablokowane) -->
                 <div class="flex-1-240">
-                    <label class="karta-label karta-label--warn" for="step4-email-faktura">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--warn);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Aktualnie przypisane emaile do faktury
                     </label>
                     <input
                         type="email"
                         id="step4-email-faktura"
-                        class="form-input karta-input karta-input--readonly"
+                        class="form-input"
                         placeholder="np. faktura@firma.pl"
+                        style="
+                            width: 100%;
+                            font-size: var(--fs-lg);
+                            padding: 0.6rem 0.8rem;
+                            background: rgba(var(--black-rgb), 0.2);
+                            color: var(--text-muted);
+                            cursor: not-allowed;
+                        "
                         readonly
                     />
                 </div>
 
                 <!-- Email e-faktura (TU DOPISYWAC) -->
                 <div class="flex-1-240">
-                    <label class="karta-label karta-label--success" for="step4-email-efaktura">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--success);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Email e-faktura
-                        <span class="karta-badge--tu">(TU DOPISYWAĆ)</span>
+                        <span
+                            style="
+                                font-size: var(--fs-xs);
+                                color: var(--success);
+                                font-weight: var(--fw-extrabold);
+                                margin-left: 0.3rem;
+                            "
+                            >(TU DOPISYWAĆ)</span
+                        >
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="email"
                         id="step4-email-efaktura"
+                        class="form-input"
                         placeholder="np. efaktura@firma.pl"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
 
                 <!-- Zamówienie według oferty nr. -->
                 <div class="flex-1-240">
-                    <label class="karta-label karta-label--accent" for="step4-offer-nr-input">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent-hover);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Zamówienie według oferty nr.
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-offer-nr-input"
+                        class="form-input"
                         placeholder="np. OF/2026/001, OF/2026/002"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
-                    <div class="karta-help">Numery ofert oddzielaj przecinkiem</div>
+                    <div
+                        style="
+                            font-size: var(--fs-xs);
+                            color: var(--text-muted);
+                            margin-top: 0.3rem;
+                        "
+                    >
+                        Numery ofert oddzielaj przecinkiem
+                    </div>
                 </div>
             </div>
 
@@ -72,20 +147,41 @@
             <div class="flex-wrap-start p-6-12">
                 <!-- Adres wysyłki faktury -->
                 <div class="flex-2-240">
-                    <label class="karta-label karta-label--blue" for="step4-adres-wysylki">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--blue);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Adres wysyłki faktury
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-adres-wysylki"
+                        class="form-input"
                         placeholder="Wpisz adres wysyłki faktury..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
 
                 <!-- Warunki płatności -->
-                <div class="karta-flex-150">
-                    <label class="karta-label karta-label--accent2" for="step4-warunki-platnosci">
+                <div style="flex: 1; min-width: 150px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Warunki płatności
                     </label>
                     <select id="step4-warunki-platnosci" class="form-input form-input-wide">
@@ -96,16 +192,27 @@
                 </div>
 
                 <!-- Ilość dni -->
-                <div class="karta-flex-100-150">
-                    <label class="karta-label karta-label--accent2" for="step4-ilosc-dni">
+                <div style="flex: 1; min-width: 100px; max-width: 150px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Ilość dni
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="number"
                         id="step4-ilosc-dni"
+                        class="form-input"
                         placeholder="np. 14"
                         min="0"
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -113,14 +220,25 @@
             <!-- Wiersz 3: Ubezpieczenie -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-240">
-                    <label class="karta-label karta-label--success" for="step4-ubezpieczenie">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--success);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Ubezpieczenie
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-ubezpieczenie"
+                        class="form-input"
                         placeholder="Wpisz dane ubezpieczenia..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -128,14 +246,25 @@
             <!-- Wiersz 4: Osoba do kontaktu -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-240">
-                    <label class="karta-label karta-label--pink" for="step4-osoba-kontakt">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--pink);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Osoba do kontaktu tel. / email
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-osoba-kontakt"
+                        class="form-input"
                         placeholder="Wpisz dane osoby do kontaktu..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -144,8 +273,15 @@
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
                     <label
-                        class="karta-label karta-label--danger"
-                        for="step4-zabezpieczenie-transportu"
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--danger);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
                     >
                         Zabezpieczenie transportu
                     </label>
@@ -156,7 +292,17 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--warn" for="step4-rodzaj-transportu">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--warn);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Rodzaj transportu
                     </label>
                     <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
@@ -167,14 +313,31 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--accent2" for="step4-wyliczony-transport">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Wyliczony transport z zam.
                     </label>
                     <input
                         type="text"
                         id="step4-wyliczony-transport"
-                        class="form-input karta-input karta-input--computed"
+                        class="form-input"
                         placeholder="Brak danych"
+                        style="
+                            width: 100%;
+                            font-size: var(--fs-lg);
+                            padding: 0.6rem 0.8rem;
+                            background: rgba(var(--slate-800-rgb), 0.8);
+                            color: var(--slate-200);
+                        "
                     />
                 </div>
             </div>
@@ -183,7 +346,17 @@
             <div class="flex-wrap-start p-6-12">
                 <!-- Rodzaj studni -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--blue-alt" for="step4-rodzaj-studni">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--blue-alt);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Rodzaj studni
                     </label>
                     <select id="step4-rodzaj-studni" class="form-input form-input-wide">
@@ -195,7 +368,17 @@
 
                 <!-- Uszczelka do studni -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--cyan" for="step4-uszczelka-studni">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--cyan);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Uszczelka do studni
                     </label>
                     <select
@@ -217,20 +400,41 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-uszczelka-studni-inne-wrap">
-                    <label class="karta-label karta-label--cyan" for="step4-uszczelka-studni-inne">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--cyan);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Jakie (Inne)
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-uszczelka-studni-inne"
+                        class="form-input"
                         placeholder="Wpisz uszczelkę..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
 
                 <!-- Rodzaj stopni -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--warn" for="step4-rodzaj-stopni">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--warn);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Rodzaj stopni
                     </label>
                     <select
@@ -249,14 +453,25 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-rodzaj-stopni-inne-wrap">
-                    <label class="karta-label karta-label--warn" for="step4-rodzaj-stopni-inne">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--warn);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Jakie (Inne)
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-rodzaj-stopni-inne"
+                        class="form-input"
                         placeholder="Wpisz rodzaj stopni..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -265,7 +480,17 @@
             <div class="flex-wrap-start p-6-12">
                 <!-- Kineta -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--accent2" for="step4-kineta">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Kineta
                     </label>
                     <select
@@ -290,20 +515,41 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-kineta-inne-wrap">
-                    <label class="karta-label karta-label--accent2" for="step4-kineta-inne">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Jakie (Inne)
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-kineta-inne"
+                        class="form-input"
                         placeholder="Wpisz rodzaj kinety..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
 
                 <!-- Wysokość spocznika -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--success" for="step4-wysokosc-spocznika">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--success);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Wysokość spocznika
                     </label>
                     <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
@@ -317,7 +563,17 @@
 
                 <!-- Usytuowanie -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--danger" for="step4-usytuowanie">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--danger);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Usytuowanie
                     </label>
                     <select id="step4-usytuowanie" class="form-input form-input-wide">
@@ -331,8 +587,18 @@
             <!-- Wiersz 8: Kaskada i Ślepa kineta -->
             <div class="flex-wrap-start p-6-12">
                 <!-- Kaskada -->
-                <div class="karta-flex-140">
-                    <label class="karta-label karta-label--blue" for="step4-kaskada">
+                <div style="flex: 1; min-width: 140px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--blue);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Kaskada
                     </label>
                     <select id="step4-kaskada" class="form-input form-input-wide">
@@ -341,21 +607,42 @@
                         <option value="Nie">Nie</option>
                     </select>
                 </div>
-                <div class="karta-flex-180-2">
-                    <label class="karta-label karta-label--blue" for="step4-kaskada-uwagi">
+                <div style="flex: 2; min-width: 180px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--blue);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Uwagi (Kaskada)
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-kaskada-uwagi"
+                        class="form-input"
                         placeholder="Wpisz uwagi..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
 
                 <!-- Ślepa kineta -->
-                <div class="karta-flex-140">
-                    <label class="karta-label karta-label--accent2" for="step4-slepa-kineta">
+                <div style="flex: 1; min-width: 140px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Ślepa kineta
                     </label>
                     <select id="step4-slepa-kineta" class="form-input form-input-wide">
@@ -364,15 +651,26 @@
                         <option value="Nie">Nie</option>
                     </select>
                 </div>
-                <div class="karta-flex-180-2">
-                    <label class="karta-label karta-label--accent2" for="step4-slepa-kineta-uwagi">
+                <div style="flex: 2; min-width: 180px">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Uwagi (Ślepa kineta)
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-slepa-kineta-uwagi"
+                        class="form-input"
                         placeholder="Wpisz uwagi..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
@@ -381,7 +679,17 @@
             <div class="flex-wrap-start p-6-12">
                 <!-- Redukcja kinety -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--success" for="step4-redukcja-kinety">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--success);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Redukcja kinety
                     </label>
                     <select id="step4-redukcja-kinety" class="form-input form-input-wide">
@@ -393,7 +701,17 @@
 
                 <!-- Przejścia tulejowe -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--blue-alt" for="step4-przejscia-tulejowe">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--blue-alt);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Przejścia tulejowe
                     </label>
                     <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
@@ -405,7 +723,17 @@
 
                 <!-- Przejścia szczelne -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--accent2" for="step4-przejscia-szczelne">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--accent2);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Przejścia szczelne
                     </label>
                     <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
@@ -417,7 +745,17 @@
 
                 <!-- Przejścia zamówione -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--slate" for="step4-przejscia-zamowione">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--slate-300);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Przejścia zamówione
                     </label>
                     <select
@@ -433,7 +771,17 @@
 
                 <!-- Data zamówienia -->
                 <div class="flex-2-240">
-                    <label class="karta-label karta-label--slate" for="step4-data-zamowienia">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--slate-300);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Data zamówienia
                     </label>
                     <input
@@ -448,7 +796,17 @@
             <div class="flex-wrap-start p-6-12">
                 <!-- Właściwości betonu -->
                 <div class="flex-1-180">
-                    <label class="karta-label karta-label--slate" for="step4-wlasciwosci-betonu">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--slate-300);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Właściwości betonu
                     </label>
                     <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
@@ -463,30 +821,82 @@
 
                 <!-- Pozostałe właściwości -->
                 <div class="flex-2-240">
-                    <label class="karta-label karta-label--slate" for="step4-pozostale-wlasciwosci">
+                    <label
+                        style="
+                            display: block;
+                            font-size: var(--fs-base);
+                            font-weight: var(--fw-bold);
+                            color: var(--slate-300);
+                            margin-bottom: 0.4rem;
+                            text-transform: uppercase;
+                            letter-spacing: 0.3px;
+                        "
+                    >
                         Pozostałe właściwości
                     </label>
                     <input
-                        class="form-input karta-input"
                         type="text"
                         id="step4-pozostale-wlasciwosci"
+                        class="form-input"
                         placeholder="Wpisz właściwości (np. Agresja mrozowa)..."
+                        style="width: 100%; font-size: var(--fs-lg); padding: 0.6rem 0.8rem"
                     />
                 </div>
             </div>
 
             <!-- Wiersz 9.1: Przejścia szczelne — szczegóły z oferty -->
-            <div class="karta-pad-6-12">
-                <div class="karta-przejscia-box">
-                    <div class="karta-przejscia-header">
-                        <label class="gap-2 karta-przejscia-label" for="step4-uwagi-ogolne">
+            <div style="padding: 0.6rem 1.2rem">
+                <div
+                    style="
+                        background: rgba(var(--accent2-rgb), 0.05);
+                        border: 1px solid rgba(var(--accent2-rgb), 0.2);
+                        border-radius: var(--radius-sm);
+                        padding: 0.8rem;
+                        position: relative;
+                    "
+                >
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                            margin-bottom: 0.6rem;
+                        "
+                    >
+                        <label
+                            class="gap-2"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                font-size: var(--fs-base);
+                                font-weight: var(--fw-bold);
+                                color: var(--accent2-hover);
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                            "
+                        >
                             <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
                         </label>
                         <button
                             type="button"
                             id="step4-add-custom-przejscie-btn"
                             onclick="addCustomPrzejscieRow()"
-                            class="gap-1 karta-add-btn"
+                            class="gap-1"
+                            style="
+                                display: flex;
+                                align-items: center;
+                                background: rgba(var(--accent2-rgb), 0.1);
+                                border: 1px solid rgba(var(--accent2-rgb), 0.3);
+                                color: var(--accent2-hover);
+                                font-size: var(--fs-xs);
+                                font-weight: var(--fw-bold);
+                                padding: 0.3rem 0.6rem;
+                                border-radius: var(--radius-sm);
+                                cursor: pointer;
+                                transition: all 0.15s;
+                                text-transform: uppercase;
+                                letter-spacing: 0.3px;
+                            "
                             onmouseenter="
                                 this.style.background = 'rgba(var(--accent2-rgb), 0.3)';
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.5)';
@@ -496,7 +906,7 @@
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.3)';
                             "
                         >
-                            <i data-lucide="plus" class="icon-12"></i>
+                            <i data-lucide="plus" style="width: 12px; height: 12px"></i>
                             Dodaj niestandardowe
                         </button>
                     </div>
@@ -505,14 +915,30 @@
             </div>
 
             <!-- Wiersz 11: Uwagi ogólne -->
-            <div class="karta-pad-6-12">
-                <label class="karta-label karta-label--slate" for="step4-uwagi-ogolne">
+            <div style="padding: 0.6rem 1.2rem">
+                <label
+                    style="
+                        display: block;
+                        font-size: var(--fs-base);
+                        font-weight: var(--fw-bold);
+                        color: var(--slate-300);
+                        margin-bottom: 0.4rem;
+                        text-transform: uppercase;
+                        letter-spacing: 0.3px;
+                    "
+                >
                     Uwagi
                 </label>
                 <textarea
-                    class="form-input karta-uwagi"
                     id="step4-uwagi-ogolne"
+                    class="form-input"
                     rows="9"
+                    style="
+                        width: 100%;
+                        font-size: var(--fs-lg);
+                        padding: 0.6rem 0.8rem;
+                        resize: vertical;
+                    "
                     placeholder="Wpisz uwagi..."
                 ></textarea>
             </div>

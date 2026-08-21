@@ -1,4 +1,37 @@
 /* studnie/offer.css — Offer/summary table styles */
+.offer-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.offer-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius);
+    padding: 1rem;
+    text-align: center;
+}
+
+.offer-stat-label {
+    font-size: var(--fs-sm);
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.offer-stat-value {
+    font-size: var(--fs-6xl);
+    font-weight: var(--fw-extrabold);
+    margin-top: 0.2rem;
+}
+
+/* ——— Modal transportu oferty: ukryj spinner ——— */
+.spinner-hidden .spinner-border {
+    display: none;
+}
+
 #offer-transport-modal input[type='number'] {
     -moz-appearance: textfield;
     appearance: textfield;
@@ -270,20 +303,6 @@
         padding: 0.8rem 1rem;
     }
 }
-
-/* —— Ograniczenie wysokości panelu rabatów w stopce (scroll przy dużej liczbie klas) —— */
-#offer-active-discounts-info {
-    max-height: 110px;
-    overflow-y: auto;
-    padding-right: 2px;
-}
-#offer-active-discounts-info::-webkit-scrollbar {
-    width: 5px;
-}
-#offer-active-discounts-info::-webkit-scrollbar-thumb {
-    background: rgba(var(--accent-rgb), 0.4);
-    border-radius: var(--radius-2xs);
-}
 /* —— Excel table header aesthetic improvements —— */
 #excel-table-container .h3-prodcode {
     font-size: var(--fs-3xs);
@@ -320,6 +339,23 @@
     border-collapse: collapse;
 }
 
+/* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
+.excel-th-h3 {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+.excel-th-h1 {
+    position: sticky;
+    top: 1.4rem;
+    z-index: 20;
+}
+.excel-th-h2 {
+    position: sticky;
+    top: 3.2rem;
+    z-index: 20;
+}
+
 /* Wcięcia dla sub-elementów w tabeli oferty studni */
 .pl-lg {
     padding-left: 1.5rem !important;
@@ -336,4 +372,19 @@
     outline: 2px solid var(--blue);
     outline-offset: -1px;
     background: var(--slate-100);
+}
+
+/* === FEATY 08-20/21: port na bazę 1.17.1 (rabaty E600/F900 (a393843)) === */
+/* —— Ograniczenie wysokości panelu rabatów w stopce (scroll przy dużej liczbie klas) —— */
+#offer-active-discounts-info {
+    max-height: 110px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+#offer-active-discounts-info::-webkit-scrollbar {
+    width: 5px;
+}
+#offer-active-discounts-info::-webkit-scrollbar-thumb {
+    background: rgba(var(--accent-rgb), 0.4);
+    border-radius: var(--radius-2xs);
 }

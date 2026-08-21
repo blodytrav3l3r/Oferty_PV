@@ -12,7 +12,6 @@
         <link rel="stylesheet" href="css/style.base.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.cards.css?v=1.18.0" />
         <link rel="stylesheet" href="css/style.responsive.css?v=1.18.0" />
-        <link rel="stylesheet" href="css/print.css?v=1.18.0" media="print" />
         <link rel="stylesheet" href="css/style.utilities.css?v=1.18.0" />
         <link rel="stylesheet" href="css/studnie.css?v=1.18.0" />
         <link rel="stylesheet" href="css/studnie/offer.css?v=1.18.0" />
@@ -35,7 +34,14 @@
                         ondragleave="dragLeaveWellComponent(event)"
                         ondrop="dropWellComponent(event)"
                     >
-                        <div class="well-summary-mini gap-1 ws-grid-4">
+                        <div
+                            class="well-summary-mini gap-1"
+                            style="
+                                display: grid;
+                                grid-template-columns: repeat(4, 1fr);
+                                justify-items: stretch;
+                            "
+                        >
                             <div class="ws-item p-2">
                                 <div class="ws-label fs-065-nowrap">Wymagane</div>
                                 <div class="ws-value fs-075-nowrap" id="ws-req-height">—</div>
@@ -48,23 +54,88 @@
                                 <div class="ws-label fs-065-nowrap">Zostało</div>
                                 <div class="ws-value fs-075-nowrap" id="ws-diff-height">—</div>
                             </div>
-                            <button
-                                type="button"
+                            <div
                                 id="svg-trash"
-                                class="ws-item btn-icon-danger"
-                                aria-label="Usuń studnię"
-                                title="Usuń studnię"
+                                class="ws-item"
+                                style="
+                                    padding: 0.2rem;
+                                    justify-content: center;
+                                    align-items: center;
+                                    border-radius: var(--radius-sm);
+                                    background: rgba(var(--danger-rgb), 0.1);
+                                    border: 1px dashed rgba(var(--danger-rgb), 0.5);
+                                    color: var(--danger-hover);
+                                    cursor: pointer;
+                                "
+                                title="Kliknij, aby usunąć studnię"
                                 onclick="removeWell(currentWellIndex)"
+                                onmouseenter="
+                                    if (window.svgDragStartIndex >= 0) {
+                                        this.style.background = 'rgba(var(--danger-rgb), 0.3)';
+                                        this.style.borderColor = 'var(--danger)';
+                                    }
+                                "
+                                onmouseleave="
+                                    this.style.background = 'rgba(var(--danger-rgb), 0.1)';
+                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.5)';
+                                "
                             >
-                                <div class="ws-label ws-label-danger">Usuń</div>
-                                <div class="ws-value ws-value-icon">
-                                    <i data-lucide="trash-2" aria-hidden="true"></i>
+                                <div
+                                    class="ws-label"
+                                    style="
+                                        color: var(--danger-hover);
+                                        font-size: var(--fs-xs);
+                                        white-space: nowrap;
+                                    "
+                                >
+                                    Usuń
                                 </div>
-                            </button>
+                                <div
+                                    class="ws-value"
+                                    style="font-size: var(--fs-lg); margin-top: -2px"
+                                >
+                                    <i data-lucide="trash-2"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div class="well-summary-mini gap-1 ws-price-bar">
-                            <div class="ws-label ws-label-success">Cena:</div>
-                            <div class="ws-value ws-value-success" id="ws-price">0</div>
+                        <div
+                            class="well-summary-mini gap-1"
+                            style="
+                                margin-top: 0.4rem;
+                                background: rgba(var(--success-rgb), 0.05);
+                                border: 1px solid rgba(var(--success-rgb), 0.2);
+                                padding: 0.3rem;
+                                border-radius: var(--radius-sm);
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                            "
+                        >
+                            <div
+                                class="ws-label"
+                                style="
+                                    color: var(--success-hover);
+                                    font-size: var(--fs-base);
+                                    font-weight: var(--fw-semibold);
+                                    margin: 0;
+                                    white-space: nowrap;
+                                "
+                            >
+                                Cena:
+                            </div>
+                            <div
+                                class="ws-value"
+                                id="ws-price"
+                                style="
+                                    color: var(--success-hover);
+                                    font-size: var(--fs-base);
+                                    margin: 0;
+                                    font-weight: var(--fw-bold);
+                                    white-space: nowrap;
+                                "
+                            >
+                                0
+                            </div>
                         </div>
                         <svg
                             id="well-diagram"
@@ -77,21 +148,82 @@
                     <!-- CENTER COLUMN -->
                     <div class="well-center-column">
                         <!-- Wizard Step Indicator -->
-                        <div
-                            id="partial-wizard-nav"
-                            data-partial="partials/shared/wizard-nav.html"
-                        ></div>
+                        <div class="wizard-indicator" id="wizard-indicator">
+                            <div
+                                class="wizard-step-dot active"
+                                data-step="1"
+                                onclick="wizardNavStep(1)"
+                            >
+                                <div class="wizard-dot-number">1</div>
+                                <div class="wizard-dot-label">Dane klienta</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-1"></div>
+                            <div class="wizard-step-dot" data-step="2" onclick="wizardNavStep(2)">
+                                <div class="wizard-dot-number">2</div>
+                                <div class="wizard-dot-label">Parametry studni</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-2"></div>
+                            <div class="wizard-step-dot" data-step="3" onclick="wizardNavStep(3)">
+                                <div class="wizard-dot-number">3</div>
+                                <div class="wizard-dot-label">Oferta</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-3"></div>
+                            <div class="wizard-step-dot" data-step="4" onclick="wizardNavStep(4)">
+                                <div class="wizard-dot-number">4</div>
+                                <div class="wizard-dot-label">Karta budowy</div>
+                            </div>
+                            <div class="wizard-step-line" id="wizard-line-4"></div>
+                            <div class="wizard-step-dot" data-step="5" onclick="wizardNavStep(5)">
+                                <div class="wizard-dot-number">5</div>
+                                <div class="wizard-dot-label">Zamówienie</div>
+                            </div>
+                        </div>
 
                         <!-- Spinner ładowania widoczny podczas wczytywania danych z URL -->
-                        <div id="wizard-loading-spinner" class="wizard-loading-spinner gap-4">
-                            <div class="spinner-loader"></div>
-                            <span class="wizard-loading-text">Wczytywanie konfiguracji...</span>
+                        <div
+                            id="wizard-loading-spinner"
+                            class="wizard-loading-spinner gap-4"
+                            style="
+                                display: none;
+                                align-items: center;
+                                justify-content: center;
+                                padding: 5rem 2rem;
+                                flex-direction: column;
+                                background: var(--bg-card);
+                                border: 1px solid var(--border-glass);
+                                border-radius: var(--radius-md);
+                                box-shadow: 0 8px 32px var(--slate-950);
+                                max-width: 1200px;
+                                margin: 0 auto;
+                            "
+                        >
+                            <div
+                                class="spinner-loader"
+                                style="
+                                    width: 40px;
+                                    height: 40px;
+                                    border: 4px solid rgba(var(--accent-rgb), 0.15);
+                                    border-top-color: var(--accent);
+                                    border-radius: 50%;
+                                    animation: spin 1s linear infinite;
+                                "
+                            ></div>
+                            <span
+                                style="
+                                    color: var(--text-muted);
+                                    font-size: var(--fs-lg);
+                                    font-weight: var(--fw-medium);
+                                    font-family: 'Inter', sans-serif;
+                                    letter-spacing: 0.5px;
+                                "
+                                >Wczytywanie konfiguracji...</span
+                            >
                         </div>
 
                         <!-- ====== WIZARD STEP 1: Client & Offer Data ====== -->
                         <div
                             id="partial-step1"
-                            data-partial="partials/shared/step1-client.html"
+                            data-partial="partials/studnie/step1-client.html"
                         ></div>
                         <div
                             id="partial-step2"
@@ -122,9 +254,10 @@
                 <div class="wizard-nav-left">
                     <button
                         type="button"
-                        class="wizard-btn wizard-btn-prev hidden"
+                        class="wizard-btn wizard-btn-prev"
                         id="studnie-nav-prev"
                         onclick="wizardPrev()"
+                        style="display: none"
                     >
                         <i data-lucide="chevron-left"></i> Wstecz
                     </button>
@@ -240,7 +373,6 @@
         <!-- Zarzadzanie opiekunem oferty -->
         <script defer src="js/studnie/offerUserManager.js?v=1.18.0"></script>
         <!-- Wybor studni do zamowienia -->
-        <script defer src="js/shared/orderSelectionController.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerOrderSelection.js?v=1.18.0"></script>
         <!-- Operacje na plikach oferty -->
         <script defer src="js/studnie/offerFileOps.js?v=1.18.0"></script>
@@ -250,7 +382,6 @@
         <script defer src="js/studnie/offerTransport.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerPricingCalc.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerSummaryBanners.js?v=1.18.0"></script>
-        <script defer src="js/shared/offerNotesGenerator.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerNotesGenerator.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerWellComponentsHelpers.js?v=1.18.0"></script>
         <script defer src="js/studnie/offerWellComponents.js?v=1.18.0"></script>

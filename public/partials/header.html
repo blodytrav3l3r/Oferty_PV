@@ -1,21 +1,21 @@
 <!-- HEADER -->
-<header class="header" aria-label="Nagłówek aplikacji">
+<header class="header">
     <div class="header-inner">
         <div class="header-left">
             <div class="logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg-s-header)" stroke-width="2">
+                <svg viewBox="0 0 24 24" fill="none" stroke="url(#lg-s)" stroke-width="2">
                     <defs>
-                        <linearGradient id="lg-s-header" x1="0" y1="0" x2="1" y2="1">
-                            <stop offset="0%" class="util-single-100" />
-                            <stop offset="100%" class="util-single-101" />
+                        <linearGradient id="lg-s" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" style="stop-color: var(--success)" />
+                            <stop offset="100%" style="stop-color: var(--success-hover)" />
                         </linearGradient>
                     </defs>
                     <rect x="4" y="4" width="16" height="16" rx="2" />
                     <path d="M4 12h16M12 4v16" />
                 </svg>
-                <h1>Kalkulator Studni</h1>
+                <span>Kalkulator Studni</span>
             </div>
-            <nav class="nav-apps" aria-label="Główna">
+            <div class="nav-apps">
                 <a href="index.html" target="_parent" class="nav-tile">
                     <span class="nav-tile-icon"><i data-lucide="home"></i></span>
                     <span class="nav-tile-text">Pulpit</span>
@@ -38,7 +38,7 @@
                     <span class="nav-tile-icon"><i data-lucide="archive"></i></span>
                     <span class="nav-tile-text">Kartoteka</span>
                 </a>
-            </nav>
+            </div>
         </div>
         <div class="header-center">
             <nav class="nav">

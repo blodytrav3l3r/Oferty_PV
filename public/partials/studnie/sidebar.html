@@ -2,120 +2,372 @@
 <!-- RIGHT: Wells list sidebar -->
 <div class="wells-sidebar">
     <div class="wells-sidebar-panel">
-        <div class="wells-sidebar-header gap-1 wells-sidebar-header--stack">
+        <div
+            class="wells-sidebar-header gap-1"
+            style="flex-direction: column; align-items: stretch; padding-bottom: 0.4rem"
+        >
             <!-- Main Action Buttons at the very top -->
-            <div class="wells-sidebar-actions cols-1">
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr;
+                    padding-bottom: 0.4rem;
+                    border-bottom: 1px solid var(--slate-800);
+                "
+            >
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar btn-sidebar--excel util-single-165"
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 38px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: rgba(var(--success-rgb), 0.15);
+                        color: var(--success-hover);
+                        border-color: rgba(var(--success-rgb), 0.3);
+                        display: flex;
+                        flex-direction: row;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.4rem;
+                        line-height: 1.2;
+                    "
                     onclick="openExcelTableModal()"
                 >
                     <span><i data-lucide="table"></i></span>
-                    <span class="btn-sidebar-label">Excel</span>
+                    <span
+                        style="
+                            font-size: var(--fs-2xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Excel</span
+                    >
                 </button>
             </div>
-            <div class="wells-sidebar-actions cols-2">
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    padding-bottom: 0.4rem;
+                    border-bottom: 1px solid var(--slate-800);
+                "
+            >
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar util-single-166"
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: rgba(var(--accent-rgb), 0.15);
+                        color: var(--accent-text);
+                        border-color: rgba(var(--accent-rgb), 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="window.openGlobalRecalcModal()"
                 >
                     <span class="fs-1"><i data-lucide="settings"></i></span>
-                    <span class="btn-sidebar-label">Przelicz</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Przelicz</span
+                    >
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar util-single-167"
+                    class="btn btn-secondary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: rgba(var(--accent2-rgb), 0.15);
+                        color: var(--accent2-hover);
+                        border-color: rgba(var(--accent2-rgb), 0.3);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="openTransitionManagerModal()"
                 >
                     <span class="fs-1"><i data-lucide="droplets"></i></span>
-                    <span class="btn-sidebar-label">M. Przejść</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >M. Przejść</span
+                    >
                 </button>
                 <button
                     type="button"
-                    class="btn btn-success btn-sm btn-sidebar"
+                    class="btn btn-success btn-sm"
                     id="btn-save-studnie-sidebar"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="saveOfferStudnie()"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
-                    <span class="btn-sidebar-label">Zapisz</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zapisz</span
+                    >
                 </button>
                 <button
                     type="button"
-                    class="btn btn-success btn-sm btn-sidebar util-single-168"
+                    class="btn btn-success btn-sm"
                     id="btn-save-zamowienie-sidebar"
+                    style="
+                        display: none;
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: rgba(var(--success-rgb), 0.2);
+                        border-color: rgba(var(--success-rgb), 0.5);
+                        color: var(--success-hover);
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="saveCurrentOrder()"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
-                    <span class="btn-sidebar-label">Zapisz</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zapisz</span
+                    >
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm btn-sidebar util-single-169"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: rgba(var(--danger-rgb), 0.1);
+                        border: 1px solid rgba(var(--danger-rgb), 0.3);
+                        color: var(--danger-hover);
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="handlePrintClick()"
                 >
                     <span class="fs-1"><i data-lucide="printer"></i></span>
-                    <span class="btn-sidebar-label">Wydruk</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Wydruk</span
+                    >
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm btn-sidebar util-single-170"
+                    class="btn btn-sm"
+                    style="
+                        display: none !important;
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        flex: 1;
+                        background: var(--slate-800);
+                        border: 1px solid var(--success-bg);
+                        color: var(--success-hover);
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="createOrderFromOffer()"
                 >
                     <span class="fs-1"><i data-lucide="package"></i></span>
-                    <span class="btn-sidebar-label">Zamów</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zamów</span
+                    >
                 </button>
                 <button
                     type="button"
                     id="btn-zlecenia-sidebar"
-                    class="btn btn-sm btn-sidebar util-single-171"
+                    class="btn btn-sm"
+                    style="
+                        display: none;
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        grid-column: span 2;
+                        background: var(--warn-bg);
+                        border: 1px solid var(--warn-border);
+                        color: var(--warn);
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        line-height: 1.2;
+                    "
                     onclick="openZleceniaProdukcyjne()"
                 >
                     <span class="fs-1"><i data-lucide="factory"></i></span>
-                    <span class="btn-sidebar-label">Zlecenia</span>
+                    <span
+                        style="
+                            font-size: var(--fs-3xs);
+                            font-weight: var(--fw-extrabold);
+                            text-transform: uppercase;
+                            letter-spacing: 0.2px;
+                        "
+                        >Zlecenia</span
+                    >
                 </button>
             </div>
 
             <!-- Add Well Buttons -->
-            <div class="wells-sidebar-actions cols-6">
+            <div
+                class="gap-1"
+                style="
+                    display: grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+                    padding: 0.4rem 0;
+                    border-bottom: 1px solid var(--slate-800);
+                "
+            >
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm btn-well-add"
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell(1000)"
                 >
                     +1000
                 </button>
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm btn-well-add"
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell(1200)"
                 >
                     +1200
                 </button>
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm btn-well-add"
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell(1500)"
                 >
                     +1500
                 </button>
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm btn-well-add"
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell(2000)"
                 >
                     +2000
                 </button>
                 <button
                     type="button"
-                    class="btn btn-primary btn-sm btn-well-add"
+                    class="btn btn-primary btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-xs);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell(2500)"
                 >
                     +2500
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm btn-well-add btn-well-add--styczna"
+                    class="btn btn-sm"
+                    style="
+                        height: 46px;
+                        padding: 0;
+                        font-size: var(--fs-2xs);
+                        background: rgba(var(--warn-rgb), 0.15);
+                        border: 1px solid rgba(var(--warn-rgb), 0.3);
+                        color: var(--warn);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    "
                     onclick="addNewWell('styczna')"
                 >
                     +Styczeń
@@ -123,21 +375,33 @@
             </div>
 
             <!-- Tabs Switcher -->
-            <div class="sidebar-tabs gap-1">
+            <div
+                class="sidebar-tabs gap-1"
+                style="
+                    display: flex;
+                    margin-top: 0.4rem;
+                    padding: 0.2rem;
+                    background: rgba(var(--black-rgb), 0.3);
+                    border-radius: var(--radius-sm);
+                    border: 1px solid rgba(var(--white-rgb), 0.05);
+                "
+            >
                 <button
                     type="button"
                     class="s-tab-btn active"
                     onclick="switchSidebarTab('list')"
                     id="stab-list"
+                    style="flex: 1; font-size: var(--fs-xs); padding: 0.35rem 0.2rem"
                 >
                     <i data-lucide="folder-open"></i> Lista studni
-                    <span id="wells-counter" class="util-single-172">(0)</span>
+                    <span id="wells-counter" style="opacity: 0.6; margin-left: 2px">(0)</span>
                 </button>
                 <button
                     type="button"
                     class="s-tab-btn"
                     onclick="switchSidebarTab('discounts')"
                     id="stab-discounts"
+                    style="flex: 1; font-size: var(--fs-xs); padding: 0.35rem 0.2rem"
                 >
                     <i data-lucide="banknote"></i> Rabaty
                 </button>
@@ -145,22 +409,51 @@
         </div>
 
         <!-- Content below header -->
-        <div id="sidebar-list-content" class="sidebar-content">
-            <div class="util-single-173">
-                <div class="util-single-174">
+        <div
+            id="sidebar-list-content"
+            style="flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden"
+        >
+            <div
+                style="
+                    padding: 0.4rem;
+                    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
+                    background: rgba(var(--white-rgb), 0.05);
+                "
+            >
+                <div style="position: relative; display: flex; align-items: center">
                     <input
                         type="text"
                         id="wells-search-input"
-                        class="wells-search-input"
                         placeholder="Szukaj po numerze..."
-                        aria-label="Szukaj studni po numerze"
                         oninput="renderWellsList()"
+                        style="
+                            width: 100%;
+                            padding: 0.4rem 0.6rem;
+                            background: rgba(var(--black-rgb), 0.2);
+                            border: 1px solid rgba(var(--white-rgb), 0.1);
+                            border-radius: var(--radius-sm);
+                            color: var(--white);
+                            font-size: var(--fs-base);
+                            outline: none;
+                            transition: all 0.2s;
+                        "
+                        onfocus="
+                            this.style.borderColor = 'rgba(var(--accent-rgb), 0.5)';
+                            this.style.background = 'rgba(var(--black-rgb), 0.3)';
+                        "
+                        onblur="
+                            this.style.borderColor = 'rgba(var(--white-rgb), 0.1)';
+                            this.style.background = 'rgba(var(--black-rgb), 0.2)';
+                        "
                     />
                 </div>
             </div>
-            <div id="wells-list" class="util-single-175"></div>
+            <div id="wells-list" style="padding: 0.4rem"></div>
         </div>
-        <div id="sidebar-discounts-content" class="util-single-176">
+        <div
+            id="sidebar-discounts-content"
+            style="flex: 1; display: none; flex-direction: column; overflow: hidden"
+        >
             <div id="wells-discount-panel"></div>
         </div>
     </div>

@@ -21,6 +21,8 @@ describe('Formularze — responsywność', () => {
         const partialDirs = ['public/partials/rury', 'public/partials/shared'];
         let allHtml = '';
         for (const partialDir of partialDirs) {
+            // katalog może nie istnieć po restaucji warstwy wizualnej (architektura legacy per-moduł)
+            if (!fs.existsSync(partialDir)) continue;
             const files = fs
                 .readdirSync(partialDir)
                 .filter((f) => f.endsWith('.html') && fs.statSync(`${partialDir}/${f}`).isFile());

@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════
    index.css — S.O.K. Landing / Login / Dashboard Page
    Liquid Glass design system with premium dark theme.
-   Uses CSS variables from style.base.css for consistency.
+   Uses CSS variables from style.css for consistency.
    ══════════════════════════════════════════════════════════ */
 
 body.index-page {
@@ -1020,9 +1020,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* Subordinates enhancement */
 .subordinate-row td {
-    padding: 0;
-    background: var(--bg-tertiary);
-    border-top: none;
+    padding: 0 !important;
+    background: var(--bg-tertiary) !important;
+    border-top: none !important;
 }
 
 .subordinate-list {
@@ -1060,14 +1060,14 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-token {
-    font-size: var(--fs-xs);
-    background: var(--accent-bg);
-    border-color: var(--accent-border);
-    color: var(--accent-text);
+    font-size: var(--fs-xs) !important;
+    background: var(--accent-bg) !important;
+    border-color: var(--accent-border) !important;
+    color: var(--accent-text) !important;
 }
 
 .sub-token:hover {
-    background: rgba(var(--accent-rgb), 0.15);
+    background: rgba(var(--accent-rgb), 0.15) !important;
 }
 
 /* ── Table column widths (replace inline width) ── */
@@ -1742,12 +1742,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-model-row-active {
-    background: var(--success-bg);
+    background: var(--success-bg) !important;
     box-shadow: inset 3px 0 0 var(--success-hover);
 }
 
 .ai-model-row-active td {
-    border-bottom-color: var(--success-border);
+    border-bottom-color: var(--success-border) !important;
 }
 
 .ai-model-used-tag {
@@ -1957,7 +1957,7 @@ body.index-page .header.visible {
     body.index-page::before,
     .index-logo,
     .login-box {
-        animation: none;
-        transition: none;
+        animation: none !important;
+        transition: none !important;
     }
 }
