@@ -20,38 +20,108 @@ async function loadProductionOrders() {
  * Audyt cichej zmiany (Faza 3, krok 3.7): loguje PZ, których elementKey nie ma
  * odpowiadającego elementu (_elemId) w aktualnym configu studni. Sygnalizuje PZ,
  * który po sortowaniu/usunięciu elementu mógł stracić swoje wskazanie.
+ *
+ * Klasyfikacja:
+ *  - WARN  — elementKey nie istnieje ani w studniach załadowanych do edytora,
+ *            ani w studniach oferty źródłowej (po.offerId) → osierocone PZ.
+ *  - INFO  — elementKey nie ma w bieżącym kontekście edytora (np. snapshot
+ *            zamówienia), ale żyje w ofercie źródłowej → nie osierocone.
+ *
+ * Wynik zbierany w window.pzAuditMismatches + jednorazowy toast na sesję.
  */
-function auditPzElementKeyMismatch() {
-    if (!Array.isArray(productionOrders) || productionOrders.length === 0) return;
-    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
-    const elemIdsByWell = new Map();
-    for (const well of wells) {
-        const ids = (well.config || [])
+const _pzAuditSeen = new Set();
+let _pzAuditToastShown = false;
+
+function _collectElemIdsByWell(wellList, target /* Map<wellId, Set<elemId>> */) {
+    for (const well of wellList || []) {
+        const ids = ((well && well.config) || [])
             .map((c) => c && c._elemId)
             .filter(Boolean)
             .map(String);
-        if (ids.length > 0) elemIdsByWell.set(String(well.id), new Set(ids));
+        if (ids.length === 0) continue;
+        const key = String(well.id);
+        if (!target.has(key)) target.set(key, new Set());
+        ids.forEach((id) => target.get(key).add(id));
     }
-    let mismatchCount = 0;
+}
+
+function auditPzElementKeyMismatch() {
+    if (!Array.isArray(productionOrders) || productionOrders.length === 0) return;
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+
+    // Mapy elemId: bieżący edytor + oferty źródłowe (offersStudnie)
+    const editorIds = new Map();
+    _collectElemIdsByWell(wells, editorIds);
+    const offerIdsByOffer = new Map(); // Map<offerId, Map<wellId, Set<elemId>>>
+    if (typeof offersStudnie !== 'undefined' && Array.isArray(offersStudnie)) {
+        for (const offer of offersStudnie) {
+            if (!offer || !offer.id) continue;
+            const perWell = new Map();
+            _collectElemIdsByWell(offer.wells, perWell);
+            if (perWell.size > 0) offerIdsByOffer.set(String(offer.id), perWell);
+        }
+    }
+
+    window.pzAuditMismatches = window.pzAuditMismatches || [];
+    let warnCount = 0;
+    let infoCount = 0;
+
     for (const po of productionOrders) {
         if (!po.elementKey || !po.wellId) continue;
-        const ids = elemIdsByWell.get(String(po.wellId));
-        if (!ids || !ids.has(String(po.elementKey))) {
-            mismatchCount++;
+
+        const inEditor = (() => {
+            const ids = editorIds.get(String(po.wellId));
+            return Boolean(ids && ids.has(String(po.elementKey)));
+        })();
+        if (inEditor) continue; // dopasowane — nic nie logujemy
+
+        // Fallback: czy wskazanie żyje w ofercie źródłowej PZ?
+        const offerPerWell = offerIdsByOffer.get(String(po.offerId));
+        const inOffer = Boolean(
+            offerPerWell && offerPerWell.get(String(po.wellId))?.has(String(po.elementKey))
+        );
+
+        if (_pzAuditSeen.has(po.id)) continue; // dedupe w obrębie sesji strony
+        _pzAuditSeen.add(po.id);
+
+        const ctx = {
+            poId: po.id,
+            wellId: po.wellId,
+            elementKey: po.elementKey,
+            productionOrderNumber: po.productionOrderNumber
+        };
+        if (inOffer) {
+            infoCount++;
+            logger.info(
+                'pzAudit',
+                'PZ elementKey poza snapshotem zamówienia (żyje w ofercie źródłowej):',
+                ctx
+            );
+        } else {
+            warnCount++;
+            window.pzAuditMismatches.push(ctx);
             logger.warn(
                 'pzAudit',
                 'PZ elementKey nie pasuje do configu studni (możliwa cicha zmiana wskazania):',
-                {
-                    poId: po.id,
-                    wellId: po.wellId,
-                    elementKey: po.elementKey,
-                    productionOrderNumber: po.productionOrderNumber
-                }
+                ctx
             );
         }
     }
-    if (mismatchCount > 0) {
-        logger.warn('pzAudit', `Znaleziono ${mismatchCount} PZ z niedopasowanym elementKey`);
+
+    const total = warnCount + infoCount;
+    if (total > 0) {
+        logger.warn('pzAudit', `Audyt PZ: ${warnCount} osieroconych, ${infoCount} poza snapshotem`);
+    }
+    if (warnCount > 0 && !_pzAuditToastShown) {
+        _pzAuditToastShown = true;
+        const numbers = window.pzAuditMismatches
+            .map((m) => m.productionOrderNumber)
+            .filter(Boolean)
+            .join(', ');
+        showToast(
+            `<i data-lucide="alert-triangle"></i> ${warnCount} zlecenie(nia) wskazuje na usunięty/zmieniony element (${numbers}). Zweryfikuj w zakładce Zlecenia.`,
+            'warning'
+        );
     }
 }
 
