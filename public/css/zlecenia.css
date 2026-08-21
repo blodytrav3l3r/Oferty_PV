@@ -545,8 +545,8 @@
     .status-draft,
     .zlecenia-batch-bar,
     .zlecenia-sentinel-spin {
-        animation: none !important;
-        transition: none !important;
+        animation: none;
+        transition: none;
     }
 }
 

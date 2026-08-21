@@ -1020,9 +1020,9 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* Subordinates enhancement */
 .subordinate-row td {
-    padding: 0 !important;
-    background: var(--bg-tertiary) !important;
-    border-top: none !important;
+    padding: 0;
+    background: var(--bg-tertiary);
+    border-top: none;
 }
 
 .subordinate-list {
@@ -1060,14 +1060,14 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .sub-token {
-    font-size: var(--fs-xs) !important;
-    background: var(--accent-bg) !important;
-    border-color: var(--accent-border) !important;
-    color: var(--accent-text) !important;
+    font-size: var(--fs-xs);
+    background: var(--accent-bg);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
 }
 
 .sub-token:hover {
-    background: rgba(var(--accent-rgb), 0.15) !important;
+    background: rgba(var(--accent-rgb), 0.15);
 }
 
 /* ── Table column widths (replace inline width) ── */
@@ -1742,12 +1742,12 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-model-row-active {
-    background: var(--success-bg) !important;
+    background: var(--success-bg);
     box-shadow: inset 3px 0 0 var(--success-hover);
 }
 
 .ai-model-row-active td {
-    border-bottom-color: var(--success-border) !important;
+    border-bottom-color: var(--success-border);
 }
 
 .ai-model-used-tag {
@@ -1957,7 +1957,7 @@ body.index-page .header.visible {
     body.index-page::before,
     .index-logo,
     .login-box {
-        animation: none !important;
-        transition: none !important;
+        animation: none;
+        transition: none;
     }
 }

@@ -1819,7 +1819,7 @@
     color: var(--danger-hover);
 }
 .util-single-170 {
-    display: none !important;
+    display: none;
     background: var(--slate-800);
     border: 1px solid var(--success-bg);
     color: var(--success-hover);
@@ -2098,7 +2098,7 @@
 }
 .ka-search-input {
     font-weight: normal;
-    padding-left: 2.4rem !important;
+    padding-left: 2.4rem;
     width: 100%;
     font-size: var(--fs-md);
 }
@@ -2144,7 +2144,7 @@
 }
 .zl-search-input {
     font-weight: normal;
-    padding-left: 2.4rem !important;
+    padding-left: 2.4rem;
     width: 100%;
 }
 .shrink-0 {

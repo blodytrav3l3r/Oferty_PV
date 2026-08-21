@@ -217,9 +217,9 @@
 .kartoteka-filter-bar button,
 .kartoteka-filter-bar select {
     height: 32px;
-    border-radius: var(--radius-sm) !important;
-    padding: 0 0.5rem !important;
-    font-size: var(--fs-base) !important;
+    border-radius: var(--radius-sm);
+    padding: 0 0.5rem;
+    font-size: var(--fs-base);
     background: var(--bg-tertiary);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
@@ -235,10 +235,10 @@
 }
 /* Wiersz filtrów — kompaktowe odstępy, aby mieścił się w jednej linii */
 .kartoteka-filter-bar > .kartoteka-filter-row {
-    gap: 0.5rem !important;
+    gap: 0.5rem;
 }
 .kartoteka-filter-bar > .kartoteka-filter-row > div {
-    gap: 0.35rem !important;
+    gap: 0.35rem;
 }
 .kartoteka-filter-bar .toolbar-label {
     color: var(--text-muted);
@@ -443,15 +443,15 @@
 }
 
 .badge-client {
-    border-left: 3px solid var(--accent) !important;
+    border-left: 3px solid var(--accent);
 }
 
 .badge-invest {
-    border-left: 3px solid var(--warn) !important;
+    border-left: 3px solid var(--warn);
 }
 
 .badge-contact {
-    border-left: 3px solid var(--success) !important;
+    border-left: 3px solid var(--success);
 }
 
 .offer-actions {
@@ -833,7 +833,7 @@
     background: linear-gradient(90deg, var(--bg-hover), var(--accent-bg));
     font-weight: var(--fw-bold);
     font-size: var(--fs-base);
-    padding: 0.2rem 0.5rem !important;
+    padding: 0.2rem 0.5rem;
     border-left: 3px solid var(--accent);
     color: var(--text-primary);
     letter-spacing: 0.3px;
@@ -842,14 +842,14 @@
 }
 
 .offer-cat-header:hover {
-    background: none !important;
+    background: none;
 }
 
 .offer-diam-header td {
     background: var(--success-bg);
     font-weight: var(--fw-semibold);
     font-size: var(--fs-sm);
-    padding: 0.15rem 0.5rem 0.15rem 0.8rem !important;
+    padding: 0.15rem 0.5rem 0.15rem 0.8rem;
     border-left: 2px solid var(--success-bg);
     color: var(--success);
     letter-spacing: 0.2px;
@@ -857,7 +857,7 @@
 }
 
 .offer-diam-header:hover {
-    background: var(--success-bg) !important;
+    background: var(--success-bg);
 }
 
 /* 1m pipe rows – subtle warm tint */
@@ -866,7 +866,7 @@
 }
 
 .row-1m:hover {
-    background: var(--highlight-bg) !important;
+    background: var(--highlight-bg);
 }
 
 .row-1m td:first-child {
@@ -1461,9 +1461,9 @@ html {
     *,
     *::before,
     *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+        transition-duration: 0.01ms;
+        scroll-behavior: auto;
     }
 }

@@ -130,7 +130,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-app-layout.intro-mode .well-diagram-panel,
 .well-app-layout.intro-mode .wells-sidebar {
-    display: none !important;
+    display: none;
 }
 
 .well-app-layout.intro-mode .well-center-column {
@@ -154,7 +154,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-diagram-panel h3 {
     padding: 0.8rem 1.2rem;
-    margin: -0.8rem -1.2rem 0.5rem -1.2rem !important;
+    margin: -0.8rem -1.2rem 0.5rem -1.2rem;
     border-bottom: 1px solid var(--border-glass);
     box-shadow: var(--shadow-sm);
     font-size: var(--fs-md);
@@ -591,7 +591,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 .well-list-price {
     font-weight: var(--fw-extrabold);
-    color: var(--success-hover) !important;
+    color: var(--success-hover);
     font-size: var(--fs-sm);
 }
 
@@ -824,9 +824,9 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .tile.active-top-closure {
-    border-color: var(--accent-border) !important;
+    border-color: var(--accent-border);
     box-shadow: 0 0 0 2px var(--accent-border);
-    background: var(--bg-hover) !important;
+    background: var(--bg-hover);
 }
 
 .tile.active-top-closure::after {
@@ -1420,11 +1420,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 
 /* --- STAN ŁADOWANIA KREATORA --- */
 .wizard-loading-state .wizard-step {
-    display: none !important;
+    display: none;
 }
 
 .wizard-loading-state .wizard-loading-spinner {
-    display: flex !important;
+    display: flex;
 }
 
 .loading-spinner-inline {
@@ -1579,7 +1579,7 @@ select.form-input option {
         gap: 0.4rem;
     }
     .wizard-summary-edit {
-        margin-left: 0 !important;
+        margin-left: 0;
     }
 }
 
@@ -1592,8 +1592,8 @@ select.form-input option {
     .main.studnie-view-transitioning::after,
     .zlecenia-overlay,
     .loading-spinner-inline {
-        animation: none !important;
-        transition: none !important;
+        animation: none;
+        transition: none;
     }
 }
 
@@ -1613,8 +1613,8 @@ select.form-input option {
     padding: 0.15rem 0.4rem;
 }
 .prz-field:hover {
-    color: var(--blue-hover) !important;
-    background: rgba(var(--white-rgb), 0.1) !important;
+    color: var(--blue-hover);
+    background: rgba(var(--white-rgb), 0.1);
 }
 
 /* Pola edytowalne (QE) wypełniają całą szerokość kolumny — łatwiejsze kliknięcie i szersze pole wpisywania */
@@ -1660,7 +1660,7 @@ select.form-input option {
         border-color 0.2s;
 }
 .prz-btn-edit:hover {
-    background: rgba(var(--blue-rgb), 0.3) !important;
+    background: rgba(var(--blue-rgb), 0.3);
 }
 
 .prz-btn-delete {
@@ -1676,7 +1676,7 @@ select.form-input option {
         border-color 0.2s;
 }
 .prz-btn-delete:hover {
-    background: rgba(var(--danger-rgb), 0.3) !important;
+    background: rgba(var(--danger-rgb), 0.3);
 }
 
 .prz-field-color {
@@ -1684,7 +1684,7 @@ select.form-input option {
     cursor: pointer;
 }
 .prz-field-color:hover {
-    color: var(--blue-hover) !important;
+    color: var(--blue-hover);
 }
 
 .prz-field-dn {
@@ -1692,7 +1692,7 @@ select.form-input option {
     cursor: pointer;
 }
 .prz-field-dn:hover {
-    color: var(--purple-alt) !important;
+    color: var(--purple-alt);
 }
 
 .prz-field-height {
@@ -1703,8 +1703,8 @@ select.form-input option {
     border-radius: var(--radius-2xs);
 }
 .prz-field-height:hover {
-    color: var(--warn-hover) !important;
-    background: rgba(var(--white-rgb), 0.1) !important;
+    color: var(--warn-hover);
+    background: rgba(var(--white-rgb), 0.1);
 }
 
 .prz-field-angle {
@@ -1731,8 +1731,8 @@ select.form-input option {
     border-radius: var(--radius-2xs);
 }
 .prz-field-rzedna:hover {
-    color: var(--blue-hover) !important;
-    background: rgba(var(--white-rgb), 0.1) !important;
+    color: var(--blue-hover);
+    background: rgba(var(--white-rgb), 0.1);
 }
 
 .prz-field-doplata {
@@ -1743,7 +1743,7 @@ select.form-input option {
     transition: background-color 0.2s;
 }
 .prz-field-doplata:hover {
-    background: rgba(var(--white-rgb), 0.1) !important;
+    background: rgba(var(--white-rgb), 0.1);
 }
 
 .drag-over {

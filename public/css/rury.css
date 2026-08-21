@@ -64,7 +64,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-card-body.hidden {
-    display: none !important;
+    display: none;
 }
 
 /* ── Formularze (wzorowane na .wizard-form-* z studnie.css) ── */
@@ -296,8 +296,8 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-table .pehd-btn {
-    font-size: var(--fs-sm) !important;
-    padding: 0.3rem 0.6rem !important;
+    font-size: var(--fs-sm);
+    padding: 0.3rem 0.6rem;
     min-width: 88px;
     text-align: center;
     white-space: nowrap;
@@ -367,7 +367,7 @@ body.rury-page > .main:has(#section-builder.active) {
     background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom));
     font-weight: var(--fw-bold);
     font-size: var(--fs-base);
-    padding: 0.2rem 0.5rem !important;
+    padding: 0.2rem 0.5rem;
     border-left: 3px solid var(--accent);
     color: var(--text-primary);
     letter-spacing: 0.3px;
@@ -375,21 +375,21 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-row-category:hover {
-    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom)) !important;
+    background: linear-gradient(90deg, var(--bg-hover), var(--nav-glow-custom));
 }
 
 .rury-row-diameter td {
     background: var(--success-bg);
     font-weight: var(--fw-semibold);
     font-size: var(--fs-sm);
-    padding: 0.15rem 0.5rem 0.15rem 0.8rem !important;
+    padding: 0.15rem 0.5rem 0.15rem 0.8rem;
     border-left: 2px solid var(--success-bg);
     color: var(--success);
     letter-spacing: 0.2px;
 }
 
 .rury-row-diameter:hover {
-    background: var(--success-bg) !important;
+    background: var(--success-bg);
 }
 
 .rury-row-1m {
@@ -397,7 +397,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-row-1m:hover {
-    background: var(--highlight-bg) !important;
+    background: var(--highlight-bg);
 }
 
 .rury-row-1m td:first-child {
@@ -764,7 +764,7 @@ body.rury-page > .main:has(#section-builder.active) {
 /* ── Empty state ── */
 /* ── Search row ── */
 .rury-search-row {
-    display: flex !important;
+    display: flex;
     gap: 0.4rem;
     margin-bottom: 0.5rem;
     align-items: center;
@@ -780,7 +780,7 @@ body.rury-page > .main:has(#section-builder.active) {
 }
 
 .rury-search-row.hidden {
-    display: none !important;
+    display: none;
 }
 
 /* ── Animacje (wzorowane na studnie.css) ── */
@@ -821,8 +821,8 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* W sekcji pricelist wyłączamy animację fadeIn i wymuszamy opacity: 1 */
 #section-pricelist {
-    animation: none !important;
-    opacity: 1 !important;
+    animation: none;
+    opacity: 1;
 }
 
 /* ── Fixed pasek podsumowania oferty (krok 3, nad dolną nawigacją) ── */
@@ -971,8 +971,8 @@ body.rury-page > .main:has(#section-builder.active) {
 @media (prefers-reduced-motion: reduce) {
     .rury-fade-in,
     .rury-slide-up {
-        animation: none !important;
-        transition: none !important;
+        animation: none;
+        transition: none;
     }
 }
 
