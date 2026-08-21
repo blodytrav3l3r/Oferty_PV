@@ -97,20 +97,26 @@ export function showModal(opts) {
 
     function onOverlayClick(e) {
         if (e.target === overlay) {
+            if (opts.onClose) {
+                const r = opts.onClose();
+                if (r === false) return;
+            }
             untrapFocus(overlay);
             overlay.remove();
             document.body.style.overflow = '';
-            if (opts.onClose) opts.onClose();
         }
     }
     overlay.addEventListener('click', onOverlayClick);
 
     function onOverlayKeydown(e) {
         if (e.key === 'Escape') {
+            if (opts.onClose) {
+                const r = opts.onClose();
+                if (r === false) return;
+            }
             untrapFocus(overlay);
             overlay.remove();
             document.body.style.overflow = '';
-            if (opts.onClose) opts.onClose();
         }
     }
     overlay.addEventListener('keydown', onOverlayKeydown);

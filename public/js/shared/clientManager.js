@@ -132,6 +132,16 @@ function saveClientToDb() {
 function showClientsDb() {
     showModal({
         id: 'clients-db-modal',
+        onClose: () => {
+            if (editingClientId) {
+                // Dirty check — edycja w toku, zapobiega przypadkowemu zamknięciu
+                if (typeof appConfirm === 'function') {
+                    // Sync guard: zwróć false, użytkownik musi anulować edycję ręcznie
+                    return false;
+                }
+                return false;
+            }
+        },
         html: `
     <div class="modal modal--clients">
       <div class="modal-header">
