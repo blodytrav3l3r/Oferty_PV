@@ -5,41 +5,9 @@
     class="zlecenia-overlay"
     style="display: none; z-index: 10000; justify-content: center; align-items: center"
 >
-    <div
-        style="
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            border-radius: var(--radius-md);
-            width: 95%;
-            max-width: 940px;
-            overflow: hidden;
-            box-shadow: 0 30px 60px rgba(var(--black-rgb), 0.8);
-        "
-    >
-        <div
-            style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.7rem 1.2rem;
-                background: linear-gradient(
-                    135deg,
-                    rgba(var(--accent-rgb), 0.15) 0%,
-                    rgba(var(--accent2-rgb), 0.1) 100%
-                );
-                border-bottom: 1px solid var(--border-glass);
-            "
-        >
-            <div
-                class="gap-2"
-                style="
-                    font-weight: var(--fw-extrabold);
-                    font-size: var(--fs-xl);
-                    display: flex;
-                    align-items: center;
-                    color: var(--accent-text);
-                "
-            >
+    <div class="offer-modal offer-modal--discounts">
+        <div class="offer-modal-header">
+            <div class="offer-modal-title gap-2">
                 <i data-lucide="percent" class="icon-sm"></i> Zarządzanie Rabatami Oferty
             </div>
             <button
@@ -51,22 +19,10 @@
                 <i data-lucide="x" style="width: 14px; height: 14px"></i>
             </button>
         </div>
-        <div
-            id="offer-discounts-modal-body"
-            style="padding: 0.75rem 1.2rem; max-height: 75vh; overflow-y: auto"
-        >
+        <div id="offer-discounts-modal-body" class="offer-modal-body">
             <!-- Zawartość wstrzykiwana przez JS -->
         </div>
-        <div
-            class="gap-2"
-            style="
-                padding: 0.6rem 1.2rem;
-                border-top: 1px solid var(--border-glass);
-                background: rgba(var(--black-rgb), 0.2);
-                display: flex;
-                justify-content: flex-end;
-            "
-        >
+        <div class="offer-modal-footer gap-2">
             <button
                 type="button"
                 class="btn btn-secondary"
@@ -98,41 +54,9 @@
     class="zlecenia-overlay"
     style="display: none; z-index: 10000; justify-content: center; align-items: center"
 >
-    <div
-        style="
-            background: var(--bg-secondary);
-            border: 1px solid var(--border-glass);
-            border-radius: var(--radius-md);
-            width: 95%;
-            max-width: 820px;
-            overflow: hidden;
-            box-shadow: 0 30px 60px rgba(var(--black-rgb), 0.8);
-        "
-    >
-        <div
-            style="
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0.7rem 1.2rem;
-                background: linear-gradient(
-                    135deg,
-                    rgba(var(--accent-rgb), 0.15) 0%,
-                    rgba(var(--accent2-rgb), 0.1) 100%
-                );
-                border-bottom: 1px solid var(--border-glass);
-            "
-        >
-            <div
-                class="gap-2"
-                style="
-                    font-weight: var(--fw-extrabold);
-                    font-size: var(--fs-xl);
-                    display: flex;
-                    align-items: center;
-                    color: var(--accent-text);
-                "
-            >
+    <div class="offer-modal offer-modal--transport">
+        <div class="offer-modal-header">
+            <div class="offer-modal-title gap-2">
                 <i data-lucide="truck" class="icon-sm"></i> Koszty Transportu
             </div>
             <button
@@ -144,7 +68,7 @@
                 <i data-lucide="x" style="width: 14px; height: 14px"></i>
             </button>
         </div>
-        <div style="padding: 0.75rem 1.2rem; max-height: 75vh; overflow-y: auto">
+        <div class="offer-modal-body">
             <p
                 style="
                     color: var(--text-muted);
