@@ -420,16 +420,7 @@
         <!-- Per-well parameters (editable, inherited from wizard step 2) -->
         <div class="card-sm" style="padding: 0.6rem 0.8rem">
             <div
-                class="card-title"
-                style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    cursor: pointer;
-                    margin-bottom: 0;
-                    font-size: var(--fs-base);
-                    padding: 0.15rem 0;
-                "
+                class="card-title card-title--config"
                 onclick="toggleCard('well-params-content', 'well-params-icon')"
             >
                 <span><i data-lucide="clipboard-list"></i> Parametry tej studni</span>
@@ -478,16 +469,7 @@
         <div id="bcontent-concrete">
             <div class="card-sm" style="padding: 0.6rem 0.8rem">
                 <div
-                    class="card-title"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        margin-bottom: 0;
-                        font-size: var(--fs-base);
-                        padding: 0.15rem 0;
-                    "
+                    class="card-title card-title--config"
                     onclick="toggleCard('tiles-content', 'tiles-icon')"
                 >
                     <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
@@ -500,16 +482,8 @@
 
             <div class="card card-sm">
                 <div
-                    class="card-title"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        margin-bottom: 0.3rem;
-                        font-size: var(--fs-base);
-                        padding: 0.15rem 0;
-                    "
+                    class="card-title card-title--config"
+                    style="margin-bottom: 0.3rem"
                     onclick="toggleCard('well-config-wrap', 'well-config-icon')"
                 >
                     <span><i data-lucide="package"></i> Konfiguracja betonowa</span>
@@ -542,16 +516,7 @@
         <div id="bcontent-transitions" style="display: none">
             <div class="card card-sm">
                 <div
-                    class="card-title"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        cursor: pointer;
-                        margin-bottom: 0;
-                        font-size: var(--fs-base);
-                        padding: 0.15rem 0;
-                    "
+                    class="card-title card-title--config"
                     onclick="
                         window.toggleCard('inline-przejscia-app-container', 'przejscia-app-icon')
                     "
@@ -605,109 +570,24 @@
                 style="display: grid; grid-template-columns: repeat(5, 1fr); text-align: center"
             >
                 <div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            text-transform: uppercase;
-                            color: var(--text-muted);
-                        "
-                    >
-                        Cena netto
-                    </div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xl);
-                            font-weight: var(--fw-extrabold);
-                            color: var(--success);
-                        "
-                        id="sum-price"
-                    >
-                        0 PLN
-                    </div>
+                    <div class="summary-label">Cena netto</div>
+                    <div class="summary-value summary-value--success" id="sum-price">0 PLN</div>
                 </div>
                 <div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            text-transform: uppercase;
-                            color: var(--text-muted);
-                        "
-                    >
-                        Waga
-                    </div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xl);
-                            font-weight: var(--fw-bold);
-                            color: var(--text-primary);
-                        "
-                        id="sum-weight"
-                    >
-                        0 kg
-                    </div>
+                    <div class="summary-label">Waga</div>
+                    <div class="summary-value" id="sum-weight">0 kg</div>
                 </div>
                 <div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            text-transform: uppercase;
-                            color: var(--text-muted);
-                        "
-                    >
-                        Wysokość
-                    </div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xl);
-                            font-weight: var(--fw-bold);
-                            color: var(--text-primary);
-                        "
-                        id="sum-height"
-                    >
-                        0 mm
-                    </div>
+                    <div class="summary-label">Wysokość</div>
+                    <div class="summary-value" id="sum-height">0 mm</div>
                 </div>
                 <div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            text-transform: uppercase;
-                            color: var(--text-muted);
-                        "
-                    >
-                        Pow. wewn.
-                    </div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xl);
-                            font-weight: var(--fw-bold);
-                            color: var(--text-primary);
-                        "
-                        id="sum-area-int"
-                    >
-                        0 m²
-                    </div>
+                    <div class="summary-label">Pow. wewn.</div>
+                    <div class="summary-value" id="sum-area-int">0 m²</div>
                 </div>
                 <div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            text-transform: uppercase;
-                            color: var(--text-muted);
-                        "
-                    >
-                        Pow. zewn.
-                    </div>
-                    <div
-                        style="
-                            font-size: var(--fs-2xl);
-                            font-weight: var(--fw-bold);
-                            color: var(--text-primary);
-                        "
-                        id="sum-area-ext"
-                    >
-                        0 m²
-                    </div>
+                    <div class="summary-label">Pow. zewn.</div>
+                    <div class="summary-value" id="sum-area-ext">0 m²</div>
                 </div>
             </div>
         </div>

@@ -1270,6 +1270,33 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-bottom-color: var(--warn-bg);
 }
 
+.card-title--config {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    margin-bottom: 0;
+    font-size: var(--fs-base);
+    padding: 0.15rem 0;
+}
+
+.summary-label {
+    font-size: var(--fs-2xs);
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+}
+
+.summary-value--success {
+    color: var(--success);
+    font-weight: var(--fw-extrabold);
+}
+
 .wizard-param-label .status-icon {
     font-size: var(--fs-sm);
     transition: opacity 0.3s;
