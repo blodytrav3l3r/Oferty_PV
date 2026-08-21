@@ -1,9 +1,15 @@
 <!-- MODALS: Offer discounts, transport, production orders -->
 <!-- ===== OFFER DISCOUNTS MODAL ===== -->
-<div id="offer-discounts-modal" class="zlecenia-overlay util-2x-26">
+<div
+    id="offer-discounts-modal"
+    class="zlecenia-overlay util-2x-26"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="offer-discounts-title"
+>
     <div class="offer-modal offer-modal--discounts">
         <div class="offer-modal-header">
-            <div class="offer-modal-title gap-2">
+            <div class="offer-modal-title gap-2" id="offer-discounts-title">
                 <i data-lucide="percent" class="icon-sm"></i> Zarządzanie Rabatami Oferty
             </div>
             <button
@@ -38,10 +44,16 @@
 </div>
 
 <!-- ===== OFFER TRANSPORT MODAL (ujednolicony ze stylem discounts) ===== -->
-<div id="offer-transport-modal" class="zlecenia-overlay util-2x-26">
+<div
+    id="offer-transport-modal"
+    class="zlecenia-overlay util-2x-26"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="offer-transport-title"
+>
     <div class="offer-modal offer-modal--transport">
         <div class="offer-modal-header">
-            <div class="offer-modal-title gap-2">
+            <div class="offer-modal-title gap-2" id="offer-transport-title">
                 <i data-lucide="truck" class="icon-sm"></i> Koszty Transportu
             </div>
             <button
@@ -156,7 +168,13 @@
 </div>
 
 <!-- ===== ZLECENIA PRODUKCYJNE MODAL ===== -->
-<div id="zlecenia-modal" class="zlecenia-overlay">
+<div
+    id="zlecenia-modal"
+    class="zlecenia-overlay"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="zlecenia-modal-title"
+>
     <div class="zlecenia-container">
         <!-- LEFT: Well SVG Preview (same as Kalkulator Studni) -->
         <div class="zlecenia-left">
@@ -179,7 +197,7 @@
         <!-- CENTER: Production Order Form -->
         <div class="zlecenia-center">
             <div class="util-single-142">
-                <div class="card-title mb-0">
+                <div class="card-title mb-0" id="zlecenia-modal-title">
                     <i data-lucide="factory"></i> Zlecenie Produkcyjne
                 </div>
                 <div class="gap-2 util-2x-29">
