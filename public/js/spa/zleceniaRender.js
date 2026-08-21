@@ -129,6 +129,11 @@ const ZleceniaRender = (() => {
         const html = items.map((o) => renderOrderRow(o, selectedIds)).join('');
 
         tbody.innerHTML = html;
+        // Z-40: title dla komórek z ellipsis (a11y + tooltip)
+        tbody.querySelectorAll('td').forEach((td) => {
+            const txt = td.textContent ? td.textContent.trim() : '';
+            if (txt) td.title = txt;
+        });
         lucide.createIcons({ root: tbody });
         updateAnimationGate(items);
 

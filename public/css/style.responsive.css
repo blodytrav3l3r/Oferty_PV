@@ -1467,3 +1467,10 @@ html {
         scroll-behavior: auto;
     }
 }
+
+/* Z-40: col-hidden-mobile zamiast nth-child (fragile) */
+@media (max-width: 768px) {
+    .col-hidden-mobile {
+        display: none;
+    }
+}
