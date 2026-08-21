@@ -38,18 +38,13 @@
         <!-- Toolbar: DN + Elevations + Height + Controls -->
         <div class="well-info-card p-6-8">
             <!-- Row 1: Title -->
-            <div style="margin-bottom: 0.35rem">
-                <span
-                    style="
-                        font-size: var(--fs-base);
-                        font-weight: var(--fw-extrabold);
-                        color: var(--text-primary);
-                    "
+            <div class="util-single-187">
+                <span class="util-single-188"
                     ><i data-lucide="settings"></i> Konfiguracja studni</span
                 >
             </div>
             <!-- Row 2: Nr + Rz fields + indicators -->
-            <div class="gap-1" style="display: flex; align-items: center; margin-bottom: 0.4rem">
+            <div class="gap-1 util-single-189">
                 <div class="flex-center-gap-2">
                     <label class="well-label">Nr</label>
                     <input
@@ -107,25 +102,14 @@
                     />
                 </div>
                 <div class="util-2x-37"></div>
-                <div
-                    class="gap-2"
-                    style="
-                        display: flex;
-                        align-items: center;
-                        font-size: var(--fs-base);
-                        color: var(--text-muted);
-                        white-space: nowrap;
-                    "
-                >
+                <div class="gap-2 util-single-190">
                     <span
                         >Wym:
-                        <strong id="well-required-height" style="color: var(--accent-hover)"
-                            >— m</strong
-                        ></span
+                        <strong id="well-required-height" class="util-single-191">— m</strong></span
                     >
                     <span
                         >Konf:
-                        <strong id="well-configured-height" style="color: var(--success)"
+                        <strong id="well-configured-height" class="util-single-192"
                             >0 m</strong
                         ></span
                     >
@@ -156,17 +140,9 @@
             </div>
 
             <!-- Row 2: DN selector + controls -->
-            <div class="gap-2" style="display: flex; align-items: center; flex-wrap: wrap">
-                <div class="gap-1" style="display: flex; align-items: center">
-                    <span
-                        style="
-                            font-size: var(--fs-lg);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                        "
-                        >DN</span
-                    >
+            <div class="gap-2 util-single-193">
+                <div class="gap-1 util-single-194">
+                    <span class="util-single-195">DN</span>
                     <div class="dn-selector mb-0">
                         <button type="button" class="dn-btn active" onclick="selectDN(1000)">
                             1000
@@ -177,13 +153,8 @@
                         <button type="button" class="dn-btn" onclick="selectDN(2500)">2500</button>
                         <button
                             type="button"
-                            class="dn-btn"
+                            class="dn-btn util-single-196"
                             onclick="selectDN('styczna')"
-                            style="
-                                background: rgba(var(--warn-rgb), 0.15);
-                                border-color: rgba(var(--warn-rgb), 0.3);
-                                color: var(--warn);
-                            "
                         >
                             Styczna
                         </button>
@@ -223,19 +194,8 @@
                     >
                         Nadbudowa DN1200
                     </button>
-                    <div
-                        id="redukcja-min-wrap"
-                        class="gap-1"
-                        style="display: none; align-items: center"
-                    >
-                        <label
-                            style="
-                                font-size: var(--fs-xs);
-                                color: var(--text-muted);
-                                white-space: nowrap;
-                            "
-                            >Min:</label
-                        >
+                    <div id="redukcja-min-wrap" class="gap-1 util-single-197">
+                        <label class="util-single-198">Min:</label>
                         <input
                             type="number"
                             id="redukcja-min-h"
@@ -244,28 +204,14 @@
                             min="0.5"
                             max="10"
                             onchange="onRedukcjaMinChange(this.value)"
-                            style="
-                                width: 3.2rem;
-                                font-size: var(--fs-base);
-                                padding: 0.2rem 0.3rem;
-                                background: rgba(var(--white-rgb), 0.05);
-                                border: 1px solid var(--border-glass);
-                                border-radius: var(--radius-2xs);
-                                color: var(--text-primary);
-                                text-align: center;
-                            "
+                            class="util-single-199"
                         />
                         <span class="util-2x-39">m</span>
                         <button
                             type="button"
-                            class="btn btn-secondary btn-sm"
+                            class="btn btn-secondary btn-sm util-single-200"
                             onclick="openRedukcjaZakonczeniePopup()"
                             id="btn-redukcja-zak"
-                            style="
-                                font-size: var(--fs-sm);
-                                padding: 0.2rem 0.5rem;
-                                border-color: var(--border-glass);
-                            "
                         >
                             <span class="text-xs"><i data-lucide="chevron-down"></i></span>
                             Zak. DN1000
@@ -308,11 +254,7 @@
                 <span><i data-lucide="clipboard-list"></i> Parametry tej studni</span>
                 <span id="well-params-icon" class="fs-075"><i data-lucide="chevron-down"></i></span>
             </div>
-            <div
-                id="well-params-content"
-                class="card-content"
-                style="display: none; margin-top: 0.5rem"
-            >
+            <div id="well-params-content" class="card-content util-single-201">
                 <div id="well-params-container"></div>
             </div>
         </div>
@@ -354,8 +296,7 @@
 
             <div class="card card-sm">
                 <div
-                    class="card-title card-title--config"
-                    style="margin-bottom: 0.3rem"
+                    class="card-title card-title--config util-single-202"
                     onclick="toggleCard('well-config-wrap', 'well-config-icon')"
                 >
                     <span><i data-lucide="package"></i> Konfiguracja betonowa</span>
@@ -365,14 +306,7 @@
                 </div>
                 <div id="well-config-wrap" class="table-wrap card-content">
                     <div id="well-config-body" class="gap-2 well-config-body">
-                        <div
-                            style="
-                                text-align: center;
-                                padding: 1.5rem;
-                                color: var(--text-muted);
-                                font-size: var(--fs-base);
-                            "
-                        >
+                        <div class="util-single-203">
                             Kliknij kafelki powyżej, aby dodać elementy studni
                         </div>
                     </div>
@@ -394,25 +328,12 @@
                         ><i data-lucide="chevron-down"></i
                     ></span>
                 </div>
-                <div
-                    id="inline-przejscia-app-container"
-                    class="card-content"
-                    style="margin-top: 0.5rem; display: none"
-                >
+                <div id="inline-przejscia-app-container" class="card-content util-single-204">
                     <div id="inline-przejscia-app"></div>
                 </div>
             </div>
-            <div class="card" style="background: var(--slate-950); padding: 0.5rem 0.6rem">
-                <div
-                    class="card-title"
-                    style="
-                        font-size: var(--fs-base);
-                        padding: 0.15rem 0;
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    "
-                >
+            <div class="card util-single-205">
+                <div class="card-title util-single-206">
                     <span><i data-lucide="book-open"></i> Lista przejść</span>
                     <span id="przejscia-count" class="util-2x-39"></span>
                 </div>

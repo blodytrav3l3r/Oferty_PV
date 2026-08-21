@@ -1,29 +1,21 @@
 <!-- PARTIAL: transport-modal.html -->
 <!-- ===== OFFER TRANSPORT MODAL (Rury) ===== -->
-<div id="rury-transport-modal" class="modal-overlay" style="display: none; z-index: 10000">
+<div id="rury-transport-modal" class="modal-overlay util-single-118">
     <div class="rury-transport-modal">
         <div class="rury-transport-header">
             <div id="rury-transport-modal-title" class="rury-transport-title gap-2">
-                <i data-lucide="truck" style="width: 18px; height: 18px"></i> Koszty Transportu
+                <i data-lucide="truck" class="util-single-119"></i> Koszty Transportu
             </div>
             <button
                 type="button"
-                class="btn btn-icon"
+                class="btn btn-icon util-single-120"
                 onclick="handleRuryTransportCancel()"
-                style="color: var(--text-muted)"
             >
-                <i data-lucide="x" style="width: 16px; height: 16px"></i>
+                <i data-lucide="x" class="util-single-121"></i>
             </button>
         </div>
-        <div style="padding: 2rem 1.5rem">
-            <p
-                style="
-                    color: var(--text-muted);
-                    margin-bottom: 1.75rem;
-                    font-size: var(--fs-sm);
-                    line-height: 1.5;
-                "
-            >
+        <div class="util-single-122">
+            <p class="util-single-123">
                 Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi oferty i
                 ulegnie przedawnieniu tylko po odrzuceniu zmian.
             </p>
@@ -69,15 +61,7 @@
                     <span id="rury-transport-mode-label">Pełne</span>
                 </button>
             </div>
-            <div
-                id="rury-transport-modal-trips-info"
-                style="
-                    margin-top: 1rem;
-                    text-align: center;
-                    font-size: var(--fs-sm);
-                    color: var(--text-muted);
-                "
-            ></div>
+            <div id="rury-transport-modal-trips-info" class="util-single-124"></div>
             <div id="rury-transport-modal-cost-details" class="gap-3 util-2x-18">
                 <div class="transport-cost-card">
                     <div class="transport-cost-label">Koszt / transport</div>
@@ -107,30 +91,12 @@
                     </div>
                 </div>
             </div>
-            <div
-                style="
-                    margin-top: 1.75rem;
-                    text-align: center;
-                    background: rgba(var(--black-rgb), 0.3);
-                    border: 1px dashed var(--border-glass);
-                    padding: 1rem;
-                    border-radius: var(--radius);
-                "
-            >
+            <div class="util-single-125">
                 <div class="util-2x-19">Aktualna Łączna Suma Netto</div>
                 <div id="rury-transport-modal-total-val" class="util-2x-20">0 PLN</div>
             </div>
         </div>
-        <div
-            class="gap-3"
-            style="
-                padding: 1rem 1.5rem;
-                border-top: 1px solid var(--border-glass);
-                background: rgba(var(--black-rgb), 0.2);
-                display: flex;
-                justify-content: flex-end;
-            "
-        >
+        <div class="gap-3 util-single-126">
             <button
                 type="button"
                 class="btn btn-secondary fs-sm-04-1-bold"

@@ -53,14 +53,7 @@
             </button>
         </div>
         <div class="offer-modal-body">
-            <p
-                style="
-                    color: var(--text-muted);
-                    margin-bottom: 1rem;
-                    font-size: var(--fs-sm);
-                    line-height: 1.5;
-                "
-            >
+            <p class="util-single-133">
                 Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi klienta i
                 ulegnie przedawnieniu tylko po odrzuceniu zmian.
             </p>
@@ -106,15 +99,7 @@
                     <span id="transport-mode-label">Pełne</span>
                 </button>
             </div>
-            <div
-                id="transport-modal-trips-info"
-                style="
-                    margin-top: 1rem;
-                    text-align: center;
-                    font-size: var(--fs-xs);
-                    color: var(--text-muted);
-                "
-            >
+            <div id="transport-modal-trips-info" class="util-single-134">
                 <!-- ilość transportów -->
             </div>
             <div class="gap-3 util-2x-18" id="transport-modal-cost-details">
@@ -146,30 +131,12 @@
                     </div>
                 </div>
             </div>
-            <div
-                style="
-                    margin-top: 1rem;
-                    text-align: center;
-                    background: rgba(var(--black-rgb), 0.3);
-                    border: 1px dashed var(--border-glass);
-                    padding: 1rem;
-                    border-radius: var(--radius);
-                "
-            >
+            <div class="util-single-135">
                 <div class="util-2x-19">Aktualna Łączna Suma Netto</div>
                 <div id="transport-modal-total-val" class="util-2x-20">0 PLN</div>
             </div>
         </div>
-        <div
-            class="gap-3"
-            style="
-                padding: 0.6rem 1.2rem;
-                border-top: 1px solid var(--border-glass);
-                background: rgba(var(--black-rgb), 0.2);
-                display: flex;
-                justify-content: flex-end;
-            "
-        >
+        <div class="gap-3 util-single-136">
             <button
                 type="button"
                 class="btn btn-secondary fs-sm-04-1-bold"
@@ -196,63 +163,23 @@
         <div class="zlecenia-left">
             <svg
                 id="zlecenia-svg-preview"
-                style="
-                    width: 100%;
-                    flex: 1;
-                    background: var(--bg-primary);
-                    border: 1px solid var(--border-glass);
-                    border-radius: var(--radius-sm);
-                    min-height: 200px;
-                "
                 viewBox="0 0 340 500"
                 preserveAspectRatio="xMidYMid meet"
+                class="util-single-137"
             ></svg>
-            <div
-                id="zlecenia-well-info-mini"
-                style="
-                    margin-top: 0.4rem;
-                    font-size: var(--fs-xs);
-                    color: var(--text-muted);
-                    text-align: center;
-                "
-            ></div>
+            <div id="zlecenia-well-info-mini" class="util-single-138"></div>
 
-            <div
-                class="gap-2"
-                style="
-                    margin-top: 1rem;
-                    flex: 1;
-                    overflow-y: auto;
-                    display: flex;
-                    flex-direction: column;
-                "
-            >
-                <div class="card-title-sm" style="margin-bottom: 0.3rem; font-size: var(--fs-sm)">
+            <div class="gap-2 util-single-139">
+                <div class="card-title-sm util-single-140">
                     <i data-lucide="cylinder"></i> Konfiguracja
                 </div>
-                <div
-                    id="zlecenia-well-config-body"
-                    class="gap-1"
-                    style="display: flex; flex-direction: column"
-                ></div>
+                <div id="zlecenia-well-config-body" class="gap-1 util-single-141"></div>
             </div>
         </div>
 
         <!-- CENTER: Production Order Form -->
         <div class="zlecenia-center">
-            <div
-                style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 0.8rem 1.2rem;
-                    border-bottom: 1px solid var(--border-glass);
-                    background: var(--bg-secondary);
-                    z-index: 10;
-                    box-shadow: 0 2px 10px rgba(var(--black-rgb), 0.1);
-                    min-height: 57px;
-                "
-            >
+            <div class="util-single-142">
                 <div class="card-title mb-0">
                     <i data-lucide="factory"></i> Zlecenie Produkcyjne
                 </div>
@@ -323,20 +250,8 @@
                     </button>
                 </div>
             </div>
-            <div
-                id="zlecenia-form-content"
-                class="gap-3"
-                style="
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 0.8rem 1.2rem;
-                    display: flex;
-                    flex-direction: column;
-                "
-            >
-                <div style="text-align: center; padding: 3rem; color: var(--text-muted)">
-                    Wybierz element z listy po prawej stronie
-                </div>
+            <div id="zlecenia-form-content" class="gap-3 util-single-143">
+                <div class="util-single-144">Wybierz element z listy po prawej stronie</div>
             </div>
         </div>
 
@@ -344,9 +259,9 @@
         <div class="zlecenia-right">
             <div class="zlecenia-right-header">
                 <div class="card-title-sm mb-0"><i data-lucide="clipboard-list"></i> Elementy</div>
-                <span id="zlecenia-el-count" class="badge" style="font-size: var(--fs-2xs)"></span>
+                <span id="zlecenia-el-count" class="badge util-single-145"></span>
             </div>
-            <div style="padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border-glass)">
+            <div class="util-single-146">
                 <input
                     type="text"
                     id="zlecenia-search"
@@ -356,16 +271,7 @@
                     oninput="filterZleceniaList()"
                 />
             </div>
-            <div
-                id="zlecenia-filter-bar"
-                class="gap-1"
-                style="
-                    display: flex;
-                    padding: 0.4rem 0.5rem;
-                    border-bottom: 1px solid var(--border-glass);
-                    background: var(--bg-secondary);
-                "
-            >
+            <div id="zlecenia-filter-bar" class="gap-1 util-single-147">
                 <button
                     type="button"
                     class="zlecenia-filter-btn active"

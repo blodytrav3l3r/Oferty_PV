@@ -7,12 +7,7 @@
             <div class="wells-sidebar-actions cols-1">
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar btn-sidebar--excel"
-                    style="
-                        background: rgba(var(--success-rgb), 0.15);
-                        color: var(--success-hover);
-                        border-color: rgba(var(--success-rgb), 0.3);
-                    "
+                    class="btn btn-secondary btn-sm btn-sidebar btn-sidebar--excel util-single-165"
                     onclick="openExcelTableModal()"
                 >
                     <span><i data-lucide="table"></i></span>
@@ -22,12 +17,7 @@
             <div class="wells-sidebar-actions cols-2">
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar"
-                    style="
-                        background: rgba(var(--accent-rgb), 0.15);
-                        color: var(--accent-text);
-                        border-color: rgba(var(--accent-rgb), 0.3);
-                    "
+                    class="btn btn-secondary btn-sm btn-sidebar util-single-166"
                     onclick="window.openGlobalRecalcModal()"
                 >
                     <span class="fs-1"><i data-lucide="settings"></i></span>
@@ -35,12 +25,7 @@
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm btn-sidebar"
-                    style="
-                        background: rgba(var(--accent2-rgb), 0.15);
-                        color: var(--accent2-hover);
-                        border-color: rgba(var(--accent2-rgb), 0.3);
-                    "
+                    class="btn btn-secondary btn-sm btn-sidebar util-single-167"
                     onclick="openTransitionManagerModal()"
                 >
                     <span class="fs-1"><i data-lucide="droplets"></i></span>
@@ -57,14 +42,8 @@
                 </button>
                 <button
                     type="button"
-                    class="btn btn-success btn-sm btn-sidebar"
+                    class="btn btn-success btn-sm btn-sidebar util-single-168"
                     id="btn-save-zamowienie-sidebar"
-                    style="
-                        display: none;
-                        background: rgba(var(--success-rgb), 0.2);
-                        border-color: rgba(var(--success-rgb), 0.5);
-                        color: var(--success-hover);
-                    "
                     onclick="saveCurrentOrder()"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
@@ -72,12 +51,7 @@
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm btn-sidebar"
-                    style="
-                        background: rgba(var(--danger-rgb), 0.1);
-                        border: 1px solid rgba(var(--danger-rgb), 0.3);
-                        color: var(--danger-hover);
-                    "
+                    class="btn btn-sm btn-sidebar util-single-169"
                     onclick="handlePrintClick()"
                 >
                     <span class="fs-1"><i data-lucide="printer"></i></span>
@@ -85,13 +59,7 @@
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm btn-sidebar"
-                    style="
-                        display: none !important;
-                        background: var(--slate-800);
-                        border: 1px solid var(--success-bg);
-                        color: var(--success-hover);
-                    "
+                    class="btn btn-sm btn-sidebar util-single-170"
                     onclick="createOrderFromOffer()"
                 >
                     <span class="fs-1"><i data-lucide="package"></i></span>
@@ -100,14 +68,7 @@
                 <button
                     type="button"
                     id="btn-zlecenia-sidebar"
-                    class="btn btn-sm btn-sidebar"
-                    style="
-                        display: none;
-                        grid-column: span 2;
-                        background: var(--warn-bg);
-                        border: 1px solid var(--warn-border);
-                        color: var(--warn);
-                    "
+                    class="btn btn-sm btn-sidebar util-single-171"
                     onclick="openZleceniaProdukcyjne()"
                 >
                     <span class="fs-1"><i data-lucide="factory"></i></span>
@@ -170,7 +131,7 @@
                     id="stab-list"
                 >
                     <i data-lucide="folder-open"></i> Lista studni
-                    <span id="wells-counter" style="opacity: 0.6; margin-left: 2px">(0)</span>
+                    <span id="wells-counter" class="util-single-172">(0)</span>
                 </button>
                 <button
                     type="button"
@@ -185,14 +146,8 @@
 
         <!-- Content below header -->
         <div id="sidebar-list-content" class="sidebar-content">
-            <div
-                style="
-                    padding: 0.4rem;
-                    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
-                    background: rgba(var(--white-rgb), 0.05);
-                "
-            >
-                <div style="position: relative; display: flex; align-items: center">
+            <div class="util-single-173">
+                <div class="util-single-174">
                     <input
                         type="text"
                         id="wells-search-input"
@@ -203,12 +158,9 @@
                     />
                 </div>
             </div>
-            <div id="wells-list" style="padding: 0.4rem"></div>
+            <div id="wells-list" class="util-single-175"></div>
         </div>
-        <div
-            id="sidebar-discounts-content"
-            style="flex: 1; display: none; flex-direction: column; overflow: hidden"
-        >
+        <div id="sidebar-discounts-content" class="util-single-176">
             <div id="wells-discount-panel"></div>
         </div>
     </div>

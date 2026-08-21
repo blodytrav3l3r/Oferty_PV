@@ -15,31 +15,12 @@
         </div>
         <div class="wizard-card-body">
             <!-- Baner dla ofert legacy bez zapisanego stanu kreatora -->
-            <div
-                id="wizard-legacy-banner"
-                class="gap-2"
-                style="
-                    display: none;
-                    margin-bottom: 0.8rem;
-                    padding: 0.6rem 0.8rem;
-                    background: rgba(var(--warn-rgb), 0.1);
-                    border: 1px solid rgba(var(--warn-rgb), 0.3);
-                    border-radius: var(--radius-sm);
-                    font-size: var(--fs-md);
-                    color: var(--warn-hover);
-                "
-            >
-                <i
-                    data-lucide="info"
-                    style="width: 1rem; height: 1rem; vertical-align: middle; margin-right: 0.3rem"
-                ></i>
+            <div id="wizard-legacy-banner" class="gap-2 util-single-177">
+                <i data-lucide="info" class="util-single-178"></i>
                 Ta oferta nie zawiera zapisanych parametrów ogólnych. Wybierz wartości poniżej —
                 zostaną zapisane przy kolejnym zapisie oferty.
             </div>
-            <div
-                class="gap-3"
-                style="display: grid; grid-template-columns: 1fr 1fr 1fr; align-items: start"
-            >
+            <div class="gap-3 util-single-179">
                 <!-- KOLUMNA 1: KONSTRUKCJA -->
                 <div class="wizard-column gap-2">
                     <div class="wizard-column-header wizard-column-header--konstrukcja gap-1">
@@ -141,26 +122,11 @@
                             <button type="button" class="param-tile" data-val="3mm">3mm</button>
                             <button type="button" class="param-tile" data-val="4mm">4mm</button>
                         </div>
-                        <div
-                            id="wkladka-sub-options"
-                            style="
-                                display: none;
-                                margin-top: 10px;
-                                padding: 10px;
-                                background: rgba(var(--black-rgb), 0.2);
-                                border-radius: var(--radius-sm);
-                            "
-                        >
-                            <div
-                                style="
-                                    font-size: var(--fs-lg);
-                                    color: var(--slate-400);
-                                    margin-bottom: 8px;
-                                "
-                            >
+                        <div id="wkladka-sub-options" class="util-single-180">
+                            <div class="util-single-181">
                                 Wybierz elementy, w których ma być wkładka:
                             </div>
-                            <div style="display: flex; gap: 15px">
+                            <div class="util-single-182">
                                 <label class="checkbox-label">
                                     <input
                                         type="checkbox"
@@ -369,7 +335,7 @@
                         data-wizard-param="precoFullHeight"
                         id="preco-full-height-wizard-group"
                     >
-                        <div class="wizard-param-label" style="color: var(--danger)">
+                        <div class="wizard-param-label util-single-183">
                             Wkładka cała wys.
                             <span class="status-icon" aria-label="Brak danych"
                                 ><i data-lucide="alert-triangle" aria-hidden="true"></i
@@ -508,26 +474,8 @@
                     </div>
 
                     <!-- KLASY NOŚNOŚCI -->
-                    <div
-                        style="
-                            margin-top: 0.4rem;
-                            padding-top: 0.4rem;
-                            border-top: 1px solid var(--slate-800);
-                        "
-                    >
-                        <div
-                            class="gap-1"
-                            style="
-                                font-size: var(--fs-xs);
-                                font-weight: var(--fw-bold);
-                                color: var(--accent-hover);
-                                text-transform: uppercase;
-                                letter-spacing: 0.5px;
-                                display: flex;
-                                align-items: center;
-                                margin-bottom: 0.4rem;
-                            "
-                        >
+                    <div class="util-single-184">
+                        <div class="gap-1 util-single-185">
                             <i data-lucide="dumbbell"></i> Klasy nośności
                         </div>
 
@@ -596,14 +544,9 @@
             </button>
             <button
                 type="button"
-                class="wizard-btn wizard-btn-apply"
+                class="wizard-btn wizard-btn-apply util-single-186"
                 onclick="applyGlobalParamsToAllWells()"
                 id="btn-apply-global-params"
-                style="
-                    background: rgba(var(--warn-rgb), 0.15);
-                    border: 1px solid rgba(var(--warn-rgb), 0.3);
-                    color: var(--warn-hover);
-                "
             >
                 <i data-lucide="copy"></i> Zastosuj do wszystkich
             </button>
