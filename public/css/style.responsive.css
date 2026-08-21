@@ -1,6 +1,6 @@
 /* ===== WIDOK RESPONSYWNY ===== */
-/* Kanon breakpointów (TASK-023): 1400 / 1200 / 1100 / 900 / 768 / 600 / 480.
-   Odchylenia lokalne (860, 720, 700, 640) zostają bez zmian — zero regresji.
+/* Kanon breakpointów (TASK-023): 1400 / 1200 / 900 / 768 / 700 / 480.
+   Odchylenia lokalne (720, 640) zostają bez zmian — zero regresji.
    Migracja do osi możliwa dopiero po weryfikacji screenshotów na 5 szerokościach. */
 @media (max-width: 768px) {
     .modern-offer-card {
@@ -396,7 +396,7 @@
     box-shadow: 0 4px 12px var(--success-bg);
 }
 
-@media (max-width: 860px) {
+@media (max-width: 900px) {
     .offer-actions {
         justify-content: flex-start;
     }

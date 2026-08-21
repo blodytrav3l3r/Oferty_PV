@@ -682,9 +682,9 @@ body::before {
     outline-offset: 2px;
 }
 
-/* Węższe okna (700-1100px): zerowanie min-width kafelków, aby nagłówek
+/* Węższe okna (700-1200px): zerowanie min-width kafelków, aby nagłówek
    nie przelał się poziomo - pełny wrap i ukrycie tekstu dopiero <=700px */
-@media (max-width: 1100px) {
+@media (max-width: 1200px) {
     .nav-tile {
         min-width: 0;
     }
