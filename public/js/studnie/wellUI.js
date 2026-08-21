@@ -127,7 +127,7 @@ window.renderWellsList = function renderWellsList() {
                         ? getOrderForWellId(w.id, editingOfferIdStudnie)
                         : null;
                 if (wellOrder && wellOrder.orderNumber) {
-                    wellLockBadge = `<span title="Studnia na zamówieniu ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
+                    wellLockBadge = `<span title="Studnia na zamówieniu ${escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;')} — kliknij aby otworzyć"
                         onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
                         style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
                         <i data-lucide="package" style="width:10px; height:10px;"></i>${escapeHtml(wellOrder.orderNumber)}
@@ -173,7 +173,7 @@ window.renderWellsList = function renderWellsList() {
 
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
-                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name)}">${escapeHtml(w.name)}</div>
+                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name).replace(/"/g, '&quot;')}">${escapeHtml(w.name)}</div>
                 <div class="well-list-actions">
                   <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                   <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>

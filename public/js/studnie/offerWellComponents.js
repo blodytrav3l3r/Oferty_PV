@@ -124,7 +124,7 @@ function getWellBadges(change, isOrdered, well) {
                 : null;
         if (wellOrder && wellOrder.orderNumber) {
             html += `<span onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
-                title="Zamówienie ${escapeHtml(wellOrder.orderNumber)} — kliknij aby otworzyć"
+                title="Zamówienie ${escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;')} — kliknij aby otworzyć"
                 style="font-size: var(--fs-3xs); padding:1px 5px; border-radius: var(--radius-2xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; border:1px solid rgba(var(--success-rgb), 0.5); display:inline-flex; align-items:center; gap:3px;">
                 <i data-lucide="package" aria-hidden="true"></i> ${escapeHtml(wellOrder.orderNumber)}
             </span>`;
