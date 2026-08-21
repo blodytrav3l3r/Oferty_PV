@@ -75,161 +75,75 @@
         <main class="main">
             <!-- ===== KARTOTEKA: Full-width offers view ===== -->
             <div class="section active" id="section-kartoteka">
-                <div
-                    class="app-container"
-                    style="
-                        max-width: var(--section-max-width);
-                        margin: 0 auto;
-                        padding: 0 var(--section-pad-x);
-                    "
-                >
+                <div class="app-container ka-container">
                     <!-- Unified Filter Bar -->
-                    <div
-                        class="kartoteka-filter-bar"
-                        style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: 0.8rem;
-                            margin-bottom: 0.8rem;
-                            padding: 0.8rem 1rem;
-                            background: var(--bg-glass);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-sm);
-                        "
-                    >
+                    <div class="kartoteka-filter-bar ka-filter-bar">
                         <!-- Row 1: filtry -->
-                        <div
-                            class="kartoteka-filter-row"
-                            style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap"
-                        >
+                        <div class="kartoteka-filter-row ka-filter-row">
                             <!-- Type Filters -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Typ:</span
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label-upper">Typ:</span>
                                 <button
                                     type="button"
-                                    class="btn btn-sm ka-type-filter-btn active"
+                                    class="btn btn-sm ka-type-filter-btn active ka-pill-btn"
                                     data-type-filter="all"
                                     onclick="filterByType('all')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     Wszystkie
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill-btn"
                                     data-type-filter="offer"
                                     onclick="filterByType('offer')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill-btn"
                                     data-type-filter="studnia_oferta"
                                     onclick="filterByType('studnia_oferta')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     <i data-lucide="cylinder"></i> Studnie
                                 </button>
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="ka-divider"></div>
 
                             <!-- Status Filters -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Status:</span
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label-upper">Status:</span>
                                 <button
                                     type="button"
-                                    class="btn btn-sm ka-filter-btn active"
+                                    class="btn btn-sm ka-filter-btn active ka-pill-btn"
                                     data-filter="all"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('all')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Wszystkie
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn ka-pill-btn"
                                     data-filter="with_order"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('with_order')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Z zamówieniem
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn ka-pill-btn"
                                     data-filter="without_order"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('without_order')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Bez zamówienia
@@ -237,19 +151,10 @@
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="ka-divider"></div>
 
                             <!-- Date Filter -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
+                            <div class="ka-filter-group">
                                 <span class="toolbar-label">Data:</span>
                                 <button
                                     type="button"
@@ -301,61 +206,23 @@
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="ka-divider"></div>
 
                             <!-- User Filter -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Opiekun:</span
-                                >
-                                <select
-                                    id="ka-user-filter"
-                                    class="btn btn-sm"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                        appearance: none;
-                                        -webkit-appearance: none;
-                                        cursor: pointer;
-                                        background: var(--bg-glass);
-                                        border: 1px solid var(--border-glass);
-                                        color: var(--text-primary);
-                                        min-width: 130px;
-                                    "
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label-upper">Opiekun:</span>
+                                <select id="ka-user-filter" class="btn btn-sm ka-select">
                                     <option value="">Użytkownik: wszyscy</option>
                                 </select>
 
                                 <button
                                     type="button"
                                     id="ka-clear-filters"
-                                    class="btn btn-secondary btn-sm"
+                                    class="btn btn-secondary btn-sm ka-pill-btn"
                                     onclick="
                                         window.kartotekaUI && window.kartotekaUI.clearAllFilters()
                                     "
                                     title="Wyczyść wszystkie aktywne filtry"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     Wyczyść filtry (0)
                                 </button>
@@ -364,15 +231,9 @@
                             <!-- Compact Mode Toggle -->
                             <button
                                 type="button"
-                                class="btn btn-sm btn-secondary"
+                                class="btn btn-sm btn-secondary ka-pill-btn--ml-auto"
                                 id="btn-compact-mode"
                                 onclick="toggleCompactMode()"
-                                style="
-                                    margin-left: auto;
-                                    border-radius: var(--radius-lg);
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: var(--fs-base);
-                                "
                                 title="Przełącz tryb kompaktowy"
                             >
                                 <i data-lucide="panel-right-close"></i> Kompakt
@@ -380,29 +241,16 @@
                         </div>
 
                         <!-- Row 2: szukaj + odśwież -->
-                        <div
-                            class="kartoteka-filter-row"
-                            style="display: flex; width: 100%; gap: 0.5rem; align-items: center"
-                        >
-                            <div
-                                class="search-box search-box-grow"
-                                style="margin: 0; flex: 1; max-width: none; position: relative"
-                            >
+                        <div class="kartoteka-filter-row ka-filter-row--full">
+                            <div class="search-box search-box-grow ka-search-box-grow">
                                 <svg
+                                    class="ka-search-icon"
                                     aria-hidden="true"
                                     focusable="false"
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    style="
-                                        position: absolute;
-                                        left: 0.7rem;
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        width: 1rem;
-                                        color: var(--text-muted);
-                                    "
                                 >
                                     <circle cx="11" cy="11" r="7" />
                                     <path d="m21 21-4.35-4.35" />
@@ -413,14 +261,8 @@
                                 <input
                                     type="text"
                                     id="ka-local-search-input"
-                                    class="form-input form-input-sm"
+                                    class="form-input form-input-sm ka-search-input"
                                     placeholder="Szukaj po numerze oferty, kliencie, NIP, numerze zamówienia..."
-                                    style="
-                                        font-weight: normal;
-                                        padding-left: 2.4rem !important;
-                                        width: 100%;
-                                        font-size: var(--fs-md);
-                                    "
                                     oninput="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.onSearchInput &&
@@ -431,15 +273,9 @@
 
                             <button
                                 type="button"
-                                class="btn btn-secondary btn-sm"
+                                class="btn btn-secondary btn-sm ka-pill-btn--shrink0"
                                 onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
-                                style="
-                                    border-radius: var(--radius-lg);
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: var(--fs-base);
-                                    flex-shrink: 0;
-                                "
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
@@ -450,40 +286,11 @@
                     <div id="ie-toolbar-host"></div>
 
                     <!-- Main Offers List -->
-                    <section
-                        class="card"
-                        style="
-                            padding: 1.2rem;
-                            background: var(--bg-card);
-                            border-radius: var(--radius);
-                            border: 1px solid var(--border-glass);
-                            margin-bottom: var(--section-gap-lg);
-                        "
-                    >
+                    <section class="card ka-card">
                         <div id="ka-offers-list" class="kartoteka-offers-grid">
-                            <div
-                                style="
-                                    text-align: center;
-                                    padding: 3rem 2rem;
-                                    color: var(--text-muted);
-                                    font-style: italic;
-                                    background: var(--bg-glass);
-                                    border-radius: var(--radius-sm);
-                                    border: 1px dashed var(--border-glass);
-                                "
-                            >
-                                <i
-                                    data-lucide="archive"
-                                    style="
-                                        width: 48px;
-                                        height: 48px;
-                                        opacity: 0.3;
-                                        margin-bottom: 1rem;
-                                    "
-                                ></i>
-                                <div style="font-size: var(--fs-xl)">
-                                    Ładowanie ofert z serwera...
-                                </div>
+                            <div class="ka-empty-state">
+                                <i class="ka-empty-icon" data-lucide="archive"></i>
+                                <div class="ka-empty-text">Ładowanie ofert z serwera...</div>
                             </div>
                         </div>
                     </section>

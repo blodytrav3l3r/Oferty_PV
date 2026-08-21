@@ -35,14 +35,7 @@
                         ondragleave="dragLeaveWellComponent(event)"
                         ondrop="dropWellComponent(event)"
                     >
-                        <div
-                            class="well-summary-mini gap-1"
-                            style="
-                                display: grid;
-                                grid-template-columns: repeat(4, 1fr);
-                                justify-items: stretch;
-                            "
-                        >
+                        <div class="well-summary-mini gap-1 ws-grid-4">
                             <div class="ws-item p-2">
                                 <div class="ws-label fs-065-nowrap">Wymagane</div>
                                 <div class="ws-value fs-075-nowrap" id="ws-req-height">—</div>
@@ -63,62 +56,15 @@
                                 title="Usuń studnię"
                                 onclick="removeWell(currentWellIndex)"
                             >
-                                <div
-                                    class="ws-label"
-                                    style="
-                                        color: var(--danger-hover);
-                                        font-size: var(--fs-xs);
-                                        white-space: nowrap;
-                                    "
-                                >
-                                    Usuń
-                                </div>
-                                <div
-                                    class="ws-value"
-                                    style="font-size: var(--fs-lg); margin-top: -2px"
-                                >
+                                <div class="ws-label ws-label-danger">Usuń</div>
+                                <div class="ws-value ws-value-icon">
                                     <i data-lucide="trash-2" aria-hidden="true"></i>
                                 </div>
                             </button>
                         </div>
-                        <div
-                            class="well-summary-mini gap-1"
-                            style="
-                                margin-top: 0.4rem;
-                                background: rgba(var(--success-rgb), 0.05);
-                                border: 1px solid rgba(var(--success-rgb), 0.2);
-                                padding: 0.3rem;
-                                border-radius: var(--radius-sm);
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                            "
-                        >
-                            <div
-                                class="ws-label"
-                                style="
-                                    color: var(--success-hover);
-                                    font-size: var(--fs-base);
-                                    font-weight: var(--fw-semibold);
-                                    margin: 0;
-                                    white-space: nowrap;
-                                "
-                            >
-                                Cena:
-                            </div>
-                            <div
-                                class="ws-value"
-                                id="ws-price"
-                                style="
-                                    color: var(--success-hover);
-                                    font-size: var(--fs-base);
-                                    margin: 0;
-                                    font-weight: var(--fw-bold);
-                                    white-space: nowrap;
-                                "
-                            >
-                                0
-                            </div>
+                        <div class="well-summary-mini gap-1 ws-price-bar">
+                            <div class="ws-label ws-label-success">Cena:</div>
+                            <div class="ws-value ws-value-success" id="ws-price">0</div>
                         </div>
                         <svg
                             id="well-diagram"
@@ -137,44 +83,9 @@
                         ></div>
 
                         <!-- Spinner ładowania widoczny podczas wczytywania danych z URL -->
-                        <div
-                            id="wizard-loading-spinner"
-                            class="wizard-loading-spinner gap-4"
-                            style="
-                                display: none;
-                                align-items: center;
-                                justify-content: center;
-                                padding: 5rem 2rem;
-                                flex-direction: column;
-                                background: var(--bg-card);
-                                border: 1px solid var(--border-glass);
-                                border-radius: var(--radius-md);
-                                box-shadow: 0 8px 32px var(--slate-950);
-                                max-width: 1200px;
-                                margin: 0 auto;
-                            "
-                        >
-                            <div
-                                class="spinner-loader"
-                                style="
-                                    width: 40px;
-                                    height: 40px;
-                                    border: 4px solid rgba(var(--accent-rgb), 0.15);
-                                    border-top-color: var(--accent);
-                                    border-radius: 50%;
-                                    animation: spin 1s linear infinite;
-                                "
-                            ></div>
-                            <span
-                                style="
-                                    color: var(--text-muted);
-                                    font-size: var(--fs-lg);
-                                    font-weight: var(--fw-medium);
-                                    font-family: 'Inter', sans-serif;
-                                    letter-spacing: 0.5px;
-                                "
-                                >Wczytywanie konfiguracji...</span
-                            >
+                        <div id="wizard-loading-spinner" class="wizard-loading-spinner gap-4">
+                            <div class="spinner-loader"></div>
+                            <span class="wizard-loading-text">Wczytywanie konfiguracji...</span>
                         </div>
 
                         <!-- ====== WIZARD STEP 1: Client & Offer Data ====== -->
@@ -211,10 +122,9 @@
                 <div class="wizard-nav-left">
                     <button
                         type="button"
-                        class="wizard-btn wizard-btn-prev"
+                        class="wizard-btn wizard-btn-prev hidden"
                         id="studnie-nav-prev"
                         onclick="wizardPrev()"
-                        style="display: none"
                     >
                         <i data-lucide="chevron-left"></i> Wstecz
                     </button>
