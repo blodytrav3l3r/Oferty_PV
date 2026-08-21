@@ -455,6 +455,24 @@ body.rury-page > .main:has(#section-builder.active) {
     border-right: 1px solid var(--border-glass);
 }
 
+.rury-summary-card--clickable {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.rury-summary-card--clickable:hover {
+    background: rgba(var(--white-rgb), 0.05);
+}
+
+.rury-summary-card--border-left {
+    border-left: 1px solid var(--border-glass);
+}
+
+.rury-transport-strong {
+    color: var(--slate-300);
+    font-weight: var(--fw-semibold);
+}
+
 .rury-summary-label {
     font-size: var(--fs-base);
     text-transform: uppercase;
