@@ -391,6 +391,9 @@ function updateWizardIndicator() {
         if (step === 3 && orderEditMode) {
             dot.classList.add('disabled');
         }
+        if (dot.classList.contains('disabled') || step > currentWizardStep)
+            dot.setAttribute('aria-disabled', 'true');
+        else dot.removeAttribute('aria-disabled');
     });
     const line1 = document.getElementById('wizard-line-1');
     const line2 = document.getElementById('wizard-line-2');
@@ -402,20 +405,22 @@ function updateWizardIndicator() {
     if (line4) line4.classList.toggle('completed', currentWizardStep > 4);
 
     // Wspólny partial wizard-nav.html ma label kroku 2 "Produkty" (wersja rury) — studnie nadpisuje na "Parametry studni"
-    const step2Label = document.querySelector('.wizard-step-dot[data-step="2"] .wizard-dot-label');
+    const step2Dot = document.querySelector('.wizard-step-dot[data-step="2"]');
+    const step2Label = step2Dot?.querySelector('.wizard-dot-label');
     if (step2Label && step2Label.textContent.trim() === 'Produkty') {
         step2Label.textContent = 'Parametry studni';
+        if (step2Dot) step2Dot.setAttribute('aria-label', 'Krok 2 z 5: Parametry studni');
     }
 }
 
 // Partiale ładowane asynchronicznie — nadpisz label kroku 2 także po zakończeniu ładowania
 if (typeof document !== 'undefined') {
     document.addEventListener('partials:loaded', () => {
-        const step2Label = document.querySelector(
-            '.wizard-step-dot[data-step="2"] .wizard-dot-label'
-        );
+        const step2Dot = document.querySelector('.wizard-step-dot[data-step="2"]');
+        const step2Label = step2Dot?.querySelector('.wizard-dot-label');
         if (step2Label && step2Label.textContent.trim() === 'Produkty') {
             step2Label.textContent = 'Parametry studni';
+            if (step2Dot) step2Dot.setAttribute('aria-label', 'Krok 2 z 5: Parametry studni');
         }
     });
 }

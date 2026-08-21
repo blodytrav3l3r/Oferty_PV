@@ -222,6 +222,8 @@ function updateWizardIndicator() {
             if (i < currentWizardStep) dot.classList.add('completed');
             dot.removeAttribute('aria-current');
         }
+        if (i > currentWizardStep) dot.setAttribute('aria-disabled', 'true');
+        else dot.removeAttribute('aria-disabled');
     }
     for (let i = 1; i <= 4; i++) {
         const line = document.getElementById('wizard-line-' + i);

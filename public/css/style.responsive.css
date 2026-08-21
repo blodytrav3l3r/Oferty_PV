@@ -1112,6 +1112,17 @@ svg.lucide {
     color: var(--success-hover);
 }
 
+.wizard-step-dot[aria-current='step'] .wizard-dot-number {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-color: var(--accent-hover);
+    color: var(--white);
+    box-shadow: 0 0 8px var(--accent-border);
+}
+
+.wizard-step-dot[aria-current='step'] .wizard-dot-label {
+    color: var(--accent-text);
+}
+
 .wizard-step-line {
     width: 50px;
     height: 2px;
