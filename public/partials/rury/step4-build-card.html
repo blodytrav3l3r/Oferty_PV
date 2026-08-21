@@ -12,14 +12,7 @@
                     <select id="step4-copy-order-select" class="form-input form-input-wide">
                         <option value="">Wybierz kartę budowy do skopiowania</option>
                     </select>
-                    <div
-                        id="step4-copy-order-help"
-                        style="
-                            font-size: var(--fs-xs);
-                            color: var(--text-muted);
-                            margin-top: 0.3rem;
-                        "
-                    >
+                    <div id="step4-copy-order-help" class="karta-help">
                         Wybierz istniejące zamówienie, aby skopiować jego dane Karty Budowy.
                     </div>
                 </div>
@@ -51,31 +44,15 @@
                     <input
                         type="email"
                         id="step4-email-faktura"
-                        class="form-input"
+                        class="form-input karta-input karta-input--readonly"
                         placeholder="np. faktura@firma.pl"
-                        style="
-                            width: 100%;
-                            font-size: var(--fs-lg);
-                            padding: 0.6rem 0.8rem;
-                            background: rgba(var(--black-rgb), 0.2);
-                            color: var(--text-muted);
-                            cursor: not-allowed;
-                        "
                         readonly
                     />
                 </div>
                 <div class="flex-1-240">
                     <label class="karta-label karta-label--success">
                         Email e-faktura
-                        <span
-                            style="
-                                font-size: var(--fs-xs);
-                                color: var(--success);
-                                font-weight: var(--fw-extrabold);
-                                margin-left: 0.3rem;
-                            "
-                            >(TU DOPISYWAĆ)</span
-                        >
+                        <span class="karta-badge--tu">(TU DOPISYWAĆ)</span>
                     </label>
                     <input
                         type="email"
@@ -96,15 +73,7 @@
                         placeholder="np. OF/2026/001, OF/2026/002"
                         class="karta-input"
                     />
-                    <div
-                        style="
-                            font-size: var(--fs-xs);
-                            color: var(--text-muted);
-                            margin-top: 0.3rem;
-                        "
-                    >
-                        Numery ofert oddzielaj przecinkiem
-                    </div>
+                    <div class="karta-help">Numery ofert oddzielaj przecinkiem</div>
                 </div>
             </div>
 
@@ -199,15 +168,8 @@
                     <input
                         type="text"
                         id="step4-wyliczony-transport"
-                        class="form-input"
+                        class="form-input karta-input karta-input--computed"
                         placeholder="Brak danych"
-                        style="
-                            width: 100%;
-                            font-size: var(--fs-lg);
-                            padding: 0.6rem 0.8rem;
-                            background: rgba(var(--slate-800-rgb), 0.8);
-                            color: var(--slate-200);
-                        "
                     />
                 </div>
             </div>

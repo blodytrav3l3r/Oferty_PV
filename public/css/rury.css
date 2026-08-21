@@ -621,6 +621,30 @@ body.rury-page > .main:has(#section-builder.active) {
     padding: 0.6rem 0.8rem;
 }
 
+.karta-input--readonly {
+    background: rgba(var(--black-rgb), 0.2);
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.karta-input--computed {
+    background: rgba(var(--slate-800-rgb), 0.8);
+    color: var(--slate-200);
+}
+
+.karta-help {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+}
+
+.karta-badge--tu {
+    font-size: var(--fs-xs);
+    color: var(--success);
+    font-weight: var(--fw-extrabold);
+    margin-left: 0.3rem;
+}
+
 .rury-th-center {
     text-align: center;
 }
