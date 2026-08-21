@@ -1,7 +1,7 @@
 # Instalacja i przenoszenie systemu S.O.K. — System Ofert i Kalkulacji
 
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
-> **Wersja:** 1.17.1
+> **Wersja:** 1.18.0
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
 > **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.13.1) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy

@@ -4,6 +4,47 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.18.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.17.1...v1.18.0) (2026-08-21)
+
+### Features
+
+- **studnie:** badge nosnosci i nowy wyglad resolwera konus pehd ([90cebe8](https://github.com/blodytrav3l3r/Oferty_PV/commit/90cebe8268577ad8bc0aa452f254d366589ff50a))
+- **studnie:** rabaty klasowe e600/f900 w cenach oferty ([a393843](https://github.com/blodytrav3l3r/Oferty_PV/commit/a3938439fdf065904da02e70213d4c7b719bfbbc))
+- **studnie:** regulacja wysokosci pola uwag w zleceniu produkcyjnym ([6bc1213](https://github.com/blodytrav3l3r/Oferty_PV/commit/6bc1213b7f1b7d22a52138a34af566e797997b44))
+
+### Bug Fixes
+
+- **security:** escape quotes in title attributes for xss ([bd675e9](https://github.com/blodytrav3l3r/Oferty_PV/commit/bd675e92b6a862119473fb29cd65d1656d80ed89))
+- **security:** xss i silent fail w transport i etykietach (faza 1) ([f63714f](https://github.com/blodytrav3l3r/Oferty_PV/commit/f63714f75b73dd24957750c66911a512bb8bbcc3))
+- **settings:** walidacja cennikow przy restorze ([0b767b9](https://github.com/blodytrav3l3r/Oferty_PV/commit/0b767b94d7cb70ef75555d926c45a960e4a058a2))
+- **studnie:** sync platnosci i waznosci krok 1 -> zakladka oferta ([3aac5b0](https://github.com/blodytrav3l3r/Oferty_PV/commit/3aac5b0d19f4669a5cebf9bd31f08914aaf32de8))
+- **ui:** add aria label to remove component button ([1b1c9e4](https://github.com/blodytrav3l3r/Oferty_PV/commit/1b1c9e450822cdbe2c8f88bdd8aff7c47586f36d))
+- **ui:** dostepnosc i struktura html (faza 2) ([bf33f30](https://github.com/blodytrav3l3r/Oferty_PV/commit/bf33f3002dfe2ae0c2089a11c907fe3a9f46e9b5))
+- **ui:** scalenie podwojnych atrybutow class w html ([8f9bf88](https://github.com/blodytrav3l3r/Oferty_PV/commit/8f9bf88180d0a85ac6a96ed17720b329890576c6))
+- **ui:** usuniecie hakow style i duplikatu flex-row ([61a3b67](https://github.com/blodytrav3l3r/Oferty_PV/commit/61a3b6793f13568b8baed76f8263e145f294af8e))
+- **ui:** z-00/z-01 invalid html duplikat class/type i div button ([69549ec](https://github.com/blodytrav3l3r/Oferty_PV/commit/69549ec616d0798b969dee653aeb12cc9586e2de))
+- **ui:** z-10/z-11 z-index 9999 i !important poza ssot ([5cee277](https://github.com/blodytrav3l3r/Oferty_PV/commit/5cee27795d898cece7e63a65023a74dac0840df2))
+- **ui:** z-12 inline style w html -> utility classes ([86d247b](https://github.com/blodytrav3l3r/Oferty_PV/commit/86d247b2240ade2e58b4193b8d0e76143552cfa0))
+- **ui:** z-13 spa aria-current i focus ([491bae4](https://github.com/blodytrav3l3r/Oferty_PV/commit/491bae4ea62d2c94e2b29662e3823c781db18f16))
+- **ui:** z-14 wizard-nav aria ([aff69f5](https://github.com/blodytrav3l3r/Oferty_PV/commit/aff69f59001e11f6bded6bde7d17f07aed390619))
+- **ui:** z-15 toast aria-live i ai-status ([17af77a](https://github.com/blodytrav3l3r/Oferty_PV/commit/17af77ac086259aa906e63314310f59a821ee951))
+- **ui:** z-16 label for braki ([1141952](https://github.com/blodytrav3l3r/Oferty_PV/commit/11419525476f13faecf9e6675d10bd2344d6e92d))
+- **ui:** z-17 role dialog dla statycznych modali ([aeca3c5](https://github.com/blodytrav3l3r/Oferty_PV/commit/aeca3c5118035e759dc210875638d8208c02394c))
+- **ui:** z-20 usuniecie import i important chain ([032d978](https://github.com/blodytrav3l3r/Oferty_PV/commit/032d9781909848895f2b6020d6ad785f7e2f4616))
+- **ui:** z-21 tokeny magic numbers ([f385261](https://github.com/blodytrav3l3r/Oferty_PV/commit/f38526130ce7584fb6fcbc2666d6f18b5003268d))
+- **ui:** z-22 breakpoint kanon 1400/1200/900/768/700/480 ([86a8f0f](https://github.com/blodytrav3l3r/Oferty_PV/commit/86a8f0f48a59e69b4ea010f1e8ccd0add9b2ab0a))
+- **ui:** z-23 usuniecie duplikatu mb-0/mb-1 ([232b6a5](https://github.com/blodytrav3l3r/Oferty_PV/commit/232b6a5ae42d095f3453e4dfbfd6f257c3e88c72))
+- **ui:** z-30 beforeunload ochrona wizard ([7bf0168](https://github.com/blodytrav3l3r/Oferty_PV/commit/7bf0168684f9e3d21b9d3af321fad7bc1f66b217))
+- **ui:** z-31 required i aria-describedby w wizard ([463d212](https://github.com/blodytrav3l3r/Oferty_PV/commit/463d212d2df5d3e70a9d7fa83c3307e2304d7cc9))
+- **ui:** z-32 aria-invalid inline errors ([b318775](https://github.com/blodytrav3l3r/Oferty_PV/commit/b31877508d045a0b9cb0f1f43aaf9102c1ccd7b5))
+- **ui:** z-33 autocomplete fieldset save debounce ([8d4d2c0](https://github.com/blodytrav3l3r/Oferty_PV/commit/8d4d2c0c14600ae15807696f1a74ccb53030bae7))
+- **ui:** z-35 toast role i czas wyswietlania ([248db5e](https://github.com/blodytrav3l3r/Oferty_PV/commit/248db5e649d2386e1189eab715f3b2224710eb45))
+- **ui:** z-40 tabele aria-sort i title ([56fa837](https://github.com/blodytrav3l3r/Oferty_PV/commit/56fa837dfcec3c30cb8a24a612d0e2252289c077))
+- **ui:** z-41 sentinel aria-live i licznik ([8e3859e](https://github.com/blodytrav3l3r/Oferty_PV/commit/8e3859ef68912776dcf46c8ad2fd5bc8b8d00eaf))
+- **ui:** z-42 modal body scroll lock i focus trap ([ff87ccd](https://github.com/blodytrav3l3r/Oferty_PV/commit/ff87ccd19eb864e6bcf360bf064194503c017d3a))
+- **ui:** z-43 overlay dirty check w modalcore ([94e88ed](https://github.com/blodytrav3l3r/Oferty_PV/commit/94e88edcc4d1c442cfc1205e8bdee2c1cf79eade))
+- **ui:** z-50 nav landmark i header ([a213320](https://github.com/blodytrav3l3r/Oferty_PV/commit/a213320a9b24487fec02a4c624ff8190150c42a8))
+
 ### [1.17.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.17.0...v1.17.1) (2026-08-18)
 
 ### Bug Fixes
