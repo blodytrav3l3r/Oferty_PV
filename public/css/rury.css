@@ -473,6 +473,18 @@ body.rury-page > .main:has(#section-builder.active) {
     font-weight: var(--fw-semibold);
 }
 
+.rury-offer-label {
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+    font-weight: var(--fw-bold);
+}
+
+.rury-offer-textarea {
+    resize: vertical;
+    width: 100%;
+    font-size: var(--fs-base);
+}
+
 .rury-summary-label {
     font-size: var(--fs-base);
     text-transform: uppercase;

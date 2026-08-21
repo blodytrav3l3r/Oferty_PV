@@ -45,33 +45,27 @@
                 "
             >
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">Data:</span>
+                    <span class="fs-xs-muted">Data:</span>
                     <span id="offer-disp-date">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Nr klienta:</span
-                    >
+                    <span class="fs-xs-muted">Nr klienta:</span>
                     <span id="offer-disp-client-number">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">Firma:</span>
+                    <span class="fs-xs-muted">Firma:</span>
                     <span id="offer-disp-name">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">NIP:</span>
+                    <span class="fs-xs-muted">NIP:</span>
                     <span id="offer-disp-nip">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Nr oferty:</span
-                    >
+                    <span class="fs-xs-muted">Nr oferty:</span>
                     <span id="offer-disp-number">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Inwestycja:</span
-                    >
+                    <span class="fs-xs-muted">Inwestycja:</span>
                     <span id="offer-disp-invest">—</span>
                 </div>
             </div>
@@ -81,13 +75,7 @@
     <!-- UWAGI DO OFERTY -->
     <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem">
         <div class="card-header-row">
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-            >
+            <label class="rury-offer-label">
                 <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
             </label>
             <button
@@ -102,41 +90,26 @@
         </div>
         <textarea
             id="offer-tab-notes"
-            class="wizard-form-input"
+            class="wizard-form-input rury-offer-textarea"
             rows="4"
             placeholder="Uwagi zostaną automatycznie wygenerowane..."
-            style="resize: vertical; width: 100%; font-size: var(--fs-base)"
         ></textarea>
     </div>
 
     <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
     <div class="card" style="margin-bottom: 1rem; padding: 0.8rem">
         <div class="card-header-row">
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-            >
+            <label class="rury-offer-label">
                 <i data-lucide="credit-card"></i> Warunki płatności
             </label>
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-                >Data ważności</label
-            >
+            <label class="rury-offer-label">Data ważności</label>
         </div>
         <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
             <textarea
                 id="offer-tab-payment-terms"
-                class="wizard-form-input"
+                class="wizard-form-input rury-offer-textarea"
                 rows="2"
                 placeholder="Domyślnie przepisywane z kroku 1..."
-                style="resize: vertical; width: 100%; font-size: var(--fs-base)"
             ></textarea>
             <input
                 id="offer-tab-validity"
