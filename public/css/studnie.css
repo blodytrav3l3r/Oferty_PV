@@ -370,6 +370,28 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     letter-spacing: 0.2px;
 }
 
+.btn-well-add {
+    height: 46px;
+    padding: 0;
+    font-size: var(--fs-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-well-add--styczna {
+    font-size: var(--fs-2xs);
+    background: rgba(var(--warn-rgb), 0.15);
+    border: 1px solid rgba(var(--warn-rgb), 0.3);
+    color: var(--warn);
+}
+
+.wells-sidebar-header--stack {
+    flex-direction: column;
+    align-items: stretch;
+    padding-bottom: 0.4rem;
+}
+
 .well-list-item {
     background: rgba(var(--slate-800-rgb), 0.5);
     border: 1px solid rgba(var(--white-rgb), 0.05);
