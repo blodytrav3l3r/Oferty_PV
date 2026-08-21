@@ -924,3 +924,37 @@
     display: flex;
     justify-content: flex-end;
 }
+
+.transport-cost-card {
+    background: rgba(var(--black-rgb), 0.2);
+    border: 1px solid var(--border-glass);
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.transport-cost-label {
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.3rem;
+    letter-spacing: 1px;
+}
+
+.transport-cost-value {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+}
+
+.transport-cost-value--warn {
+    color: var(--warn-hover);
+}
+
+.transport-cost-value--blue {
+    color: var(--blue-hover);
+}
+
+.transport-cost-value--success {
+    color: var(--success-hover);
+}

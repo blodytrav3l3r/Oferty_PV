@@ -206,98 +206,29 @@
                 id="transport-modal-cost-details"
                 style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr"
             >
-                <div
-                    style="
-                        background: rgba(var(--black-rgb), 0.2);
-                        border: 1px solid var(--border-glass);
-                        padding: 0.75rem;
-                        border-radius: var(--radius-sm);
-                        text-align: center;
-                    "
-                >
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                            margin-bottom: 0.3rem;
-                            letter-spacing: 1px;
-                        "
-                    >
-                        Koszt / transport
-                    </div>
+                <div class="transport-cost-card">
+                    <div class="transport-cost-label">Koszt / transport</div>
                     <div
                         id="transport-modal-cost-per-trip"
-                        style="
-                            font-size: var(--fs-xl);
-                            font-weight: var(--fw-extrabold);
-                            color: var(--warn-hover);
-                        "
+                        class="transport-cost-value transport-cost-value--warn"
                     >
                         0 PLN
                     </div>
                 </div>
-                <div
-                    style="
-                        background: rgba(var(--black-rgb), 0.2);
-                        border: 1px solid var(--border-glass);
-                        padding: 0.75rem;
-                        border-radius: var(--radius-sm);
-                        text-align: center;
-                    "
-                >
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                            margin-bottom: 0.3rem;
-                            letter-spacing: 1px;
-                        "
-                    >
-                        Ilość transportów
-                    </div>
+                <div class="transport-cost-card">
+                    <div class="transport-cost-label">Ilość transportów</div>
                     <div
                         id="transport-modal-count"
-                        style="
-                            font-size: var(--fs-xl);
-                            font-weight: var(--fw-extrabold);
-                            color: var(--blue-hover);
-                        "
+                        class="transport-cost-value transport-cost-value--blue"
                     >
                         0
                     </div>
                 </div>
-                <div
-                    style="
-                        background: rgba(var(--black-rgb), 0.2);
-                        border: 1px solid var(--border-glass);
-                        padding: 0.75rem;
-                        border-radius: var(--radius-sm);
-                        text-align: center;
-                    "
-                >
-                    <div
-                        style="
-                            font-size: var(--fs-2xs);
-                            color: var(--text-muted);
-                            text-transform: uppercase;
-                            font-weight: var(--fw-bold);
-                            margin-bottom: 0.3rem;
-                            letter-spacing: 1px;
-                        "
-                    >
-                        Koszt transportu
-                    </div>
+                <div class="transport-cost-card">
+                    <div class="transport-cost-label">Koszt transportu</div>
                     <div
                         id="transport-modal-total-cost"
-                        style="
-                            font-size: var(--fs-xl);
-                            font-weight: var(--fw-extrabold);
-                            color: var(--success-hover);
-                        "
+                        class="transport-cost-value transport-cost-value--success"
                     >
                         0 PLN
                     </div>
