@@ -6,7 +6,15 @@
  */
 
 const ZleceniaRender = (() => {
-    const { formatDate, escapeHtml, escapeJsStr } = window;
+    const { formatDate } = window;
+    // escapeHtml/escapeJsStr pochodzą z modułu ESM (wykonanie po parsingu dokumentu),
+    // więc NIE wolno ich destrukturyzować w czasie ładowania skryptu — rozwiązuj leniwie.
+    function escHtml(v) {
+        return typeof window.escapeHtml === 'function' ? window.escapeHtml(v) : String(v ?? '');
+    }
+    function escJs(v) {
+        return typeof window.escapeJsStr === 'function' ? window.escapeJsStr(v) : String(v ?? '');
+    }
 
     const statusMap = {
         draft: {
@@ -34,7 +42,7 @@ const ZleceniaRender = (() => {
         if (tbody) {
             tbody.innerHTML =
                 '<tr class="zlecenia-empty"><td class="is-error" colspan="10">Wystąpił błąd: ' +
-                escapeHtml(message) +
+                escHtml(message) +
                 '</td></tr>';
         }
     }
@@ -153,13 +161,13 @@ const ZleceniaRender = (() => {
         };
 
         const orderNum = o.productionOrderNumber
-            ? '<span class="order-num">' + escapeHtml(o.productionOrderNumber) + '</span>'
+            ? '<span class="order-num">' + escHtml(o.productionOrderNumber) + '</span>'
             : '<span class="order-num-missing">\u2014 brak \u2014</span>';
 
         const salesOrderLabel =
             o.dbSalesOrderNumber || o.salesOrderNumber
                 ? '<span class="sales-order-badge">' +
-                  escapeHtml(o.dbSalesOrderNumber || o.salesOrderNumber) +
+                  escHtml(o.dbSalesOrderNumber || o.salesOrderNumber) +
                   '</span>'
                 : '<span style="color:var(--text-muted); font-size: var(--fs-base);">\u2014</span>';
 
@@ -178,27 +186,27 @@ const ZleceniaRender = (() => {
         if (o.offerId) {
             actions +=
                 '<button class="action-btn action-btn-edit" onclick="AppZlecenia.editOrder(\'' +
-                escapeJsStr(o.offerId) +
+                escJs(o.offerId) +
                 "', '" +
-                escapeJsStr(o.wellId || '') +
+                escJs(o.wellId || '') +
                 "', '" +
-                escapeJsStr(o.elementIndex !== undefined ? o.elementIndex : '') +
+                escJs(o.elementIndex !== undefined ? o.elementIndex : '') +
                 "', '" +
-                escapeJsStr(o.dbSalesOrderId || '') +
+                escJs(o.dbSalesOrderId || '') +
                 '\')" title="Edytuj" aria-label="Edytuj"><i data-lucide="pencil" aria-hidden="true"></i></button>';
         }
         actions +=
             '<button class="action-btn" aria-label="Drukuj zlecenie" onclick="AppZlecenia.printSingleZlecenie(\'' +
-            escapeJsStr(o.id) +
+            escJs(o.id) +
             '\')" title="Drukuj zlecenie"><i data-lucide="printer" aria-hidden="true"></i></button>';
         actions +=
             '<button class="action-btn" aria-label="Drukuj etykiet\u0119" onclick="AppZlecenia.printSingleEtykieta(\'' +
-            escapeJsStr(o.id) +
+            escJs(o.id) +
             '\')" title="Drukuj etykiet\u0119"><i data-lucide="tag" aria-hidden="true"></i></button>';
         if (isDraft) {
             actions +=
                 '<button class="action-btn action-btn-delete" aria-label="Usu\u0144 zlecenie" onclick="AppZlecenia.deleteOrder(\'' +
-                escapeJsStr(o.id) +
+                escJs(o.id) +
                 '\')" title="Usu\u0144 zlecenie"><i data-lucide="trash-2" aria-hidden="true"></i></button>';
         }
 
@@ -206,11 +214,11 @@ const ZleceniaRender = (() => {
             '<tr>\n' +
             '<td style="width:40px; text-align:center;">\n' +
             '<input type="checkbox" class="zlecenia-row-cb" data-id="' +
-            escapeJsStr(o.id) +
+            escJs(o.id) +
             '" ' +
             (isChecked ? 'checked' : '') +
             ' aria-label="Zaznacz zlecenie ' +
-            escapeJsStr(o.productionOrderNumber || o.id) +
+            escJs(o.productionOrderNumber || o.id) +
             '">\n' +
             '</td>\n' +
             '<td>' +
@@ -221,30 +229,30 @@ const ZleceniaRender = (() => {
             '</td>\n' +
             '<td>\n' +
             '<div class="well-cell-name">' +
-            escapeHtml(wellName) +
+            escHtml(wellName) +
             '</div>\n' +
             (projectName
-                ? '<div class="well-cell-project">' + escapeHtml(projectName) + '</div>\n'
+                ? '<div class="well-cell-project">' + escHtml(projectName) + '</div>\n'
                 : '') +
             '</td>\n' +
             '<td>' +
             salesOrderLabel +
             '</td>\n' +
             '<td class="element-cell">' +
-            escapeHtml(elementInfo) +
+            escHtml(elementInfo) +
             '</td>\n' +
             '<td><span class="person-badge person-handler"><i data-lucide="user" aria-hidden="true"></i> ' +
-            escapeHtml(o.handlerName || '\u2014') +
+            escHtml(o.handlerName || '\u2014') +
             '</span></td>\n' +
             '<td><span class="person-badge person-creator"><i data-lucide="settings" aria-hidden="true"></i> ' +
-            escapeHtml(o.creatorName || '\u2014') +
+            escHtml(o.creatorName || '\u2014') +
             '</span></td>\n' +
             '<td><span class="status-badge ' +
             statusConfig.class +
             '">' +
             statusConfig.icon +
             ' ' +
-            escapeHtml(statusConfig.label) +
+            escHtml(statusConfig.label) +
             '</span></td>\n' +
             '<td class="text-right">\n' +
             '<div style="display:flex; gap:0.25rem; justify-content:flex-end;">\n' +
