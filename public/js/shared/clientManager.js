@@ -63,7 +63,19 @@ function saveClientToDb() {
 
     if (!name) {
         showToast('Wprowadź nazwę firmy, aby zapisać klienta', 'error');
+        const nameEl = document.getElementById('client-name');
+        const errEl = document.getElementById('err-client-name');
+        if (nameEl) nameEl.setAttribute('aria-invalid', 'true');
+        if (errEl) {
+            errEl.textContent = 'Podaj nazwę firmy';
+            errEl.hidden = false;
+        }
+        nameEl?.focus();
         return;
+    } else {
+        document.getElementById('client-name')?.removeAttribute('aria-invalid');
+        const err = document.getElementById('err-client-name');
+        if (err) err.hidden = true;
     }
 
     if (nip) {
