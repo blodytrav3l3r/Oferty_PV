@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.18.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.0...v1.18.1) (2026-08-21)
+
+### Bug Fixes
+
+- **orders:** escapehtml esm lazy w zleceniarender ([ef3a9b9](https://github.com/blodytrav3l3r/Oferty_PV/commit/ef3a9b9051cb89b0b26aedbb956e729f4facde40))
+- **studnie:** audyt pz elementkey klasyfikacja i dedupe ([818c64d](https://github.com/blodytrav3l3r/Oferty_PV/commit/818c64d93f56dd96f99b78e2ef060b3141bbd638))
+- **ui:** poprawa typecheck frontend po z-33/z-40 ([715b2ce](https://github.com/blodytrav3l3r/Oferty_PV/commit/715b2ced6f957b8c9cbd2722242b714a767633ba))
+- **ui:** przywrocenie warstwy wizualnej 1.17.1 z portem featow ([1d9d58c](https://github.com/blodytrav3l3r/Oferty_PV/commit/1d9d58c3c5e4284879f41fe28a0109570e334f7d))
+
 ## [1.18.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.17.1...v1.18.0) (2026-08-21)
 
 ### Features
