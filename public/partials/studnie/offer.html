@@ -1,76 +1,43 @@
 <!-- ===== SECTION: OFFER ===== -->
 <div class="section" id="section-offer" style="padding-bottom: 200px">
     <!-- Baner kontekstu: oferta / zamówienie -->
-    <div id="offer-context-banner-studnie" style="display: none; margin-bottom: 0.75rem">
-        <div class="card gap-3" style="padding: 0.5rem 0.75rem; display: flex; align-items: center">
-            <span
-                id="offer-context-badge-studnie"
-                class="gap-1"
-                style="
-                    display: inline-flex;
-                    align-items: center;
-                    padding: 0.2rem 0.6rem;
-                    border-radius: var(--radius-sm);
-                    font-size: var(--fs-sm);
-                    font-weight: var(--fw-bold);
-                "
-            ></span>
-            <span
-                id="offer-context-text-studnie"
-                style="font-size: var(--fs-base); color: var(--text-secondary)"
-            ></span>
+    <div id="offer-context-banner-studnie" class="util-2x-1">
+        <div class="card gap-3 util-2x-2">
+            <span id="offer-context-badge-studnie" class="gap-1 util-2x-3"></span>
+            <span id="offer-context-text-studnie" class="util-2x-4"></span>
         </div>
     </div>
     <!-- Client & offer info summary (read from builder form) -->
     <div class="card card-compact mb-1">
-        <div
-            class="card-title-sm"
-            style="display: flex; align-items: center; justify-content: space-between; width: 100%"
-        >
+        <div class="card-title-sm util-2x-5">
             <span id="offer-form-title-studnie"
                 ><i data-lucide="clipboard-list"></i> Dane klienta i oferty</span
             >
         </div>
-        <div class="card-content" style="margin-top: 0.5rem">
-            <div
-                id="offer-client-summary"
-                class="gap-2"
-                style="
-                    display: flex;
-                    flex-wrap: nowrap;
-                    gap: 1rem;
-                    font-size: var(--fs-base);
-                    color: var(--text-secondary);
-                "
-            >
+        <div class="card-content mt-5">
+            <div id="offer-client-summary" class="gap-2 util-2x-6">
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">Data:</span>
+                    <span class="fs-xs-muted">Data:</span>
                     <span id="offer-disp-date">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Nr klienta:</span
-                    >
+                    <span class="fs-xs-muted">Nr klienta:</span>
                     <span id="offer-disp-client-number">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">Firma:</span>
+                    <span class="fs-xs-muted">Firma:</span>
                     <span id="offer-disp-name">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)">NIP:</span>
+                    <span class="fs-xs-muted">NIP:</span>
                     <span id="offer-disp-nip">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Nr oferty:</span
-                    >
+                    <span class="fs-xs-muted">Nr oferty:</span>
                     <span id="offer-disp-number">—</span>
                 </div>
                 <div>
-                    <span style="color: var(--text-muted); font-size: var(--fs-xs)"
-                        >Inwestycja:</span
-                    >
+                    <span class="fs-xs-muted">Inwestycja:</span>
                     <span id="offer-disp-invest">—</span>
                 </div>
             </div>
@@ -78,77 +45,54 @@
     </div>
 
     <!-- UWAGI DO OFERTY -->
-    <div class="card" style="margin-top: 1rem; margin-bottom: 1rem; padding: 0.8rem">
+    <div class="card util-2x-7">
         <div class="card-header-row">
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-            >
+            <label class="fs-lg-primary-bold">
                 <i data-lucide="edit-3"></i> Uwagi do oferty (widoczne na wydruku)
             </label>
             <button
                 type="button"
-                class="btn btn-secondary btn-sm"
+                class="btn btn-secondary btn-sm util-2x-8"
                 onclick="generateOfferNotes()"
-                style="font-size: var(--fs-sm); padding: 0.3rem 0.6rem"
             >
-                <i data-lucide="refresh-cw" style="width: 12px; height: 12px"></i>
+                <i data-lucide="refresh-cw" class="icon-xxs"></i>
                 Auto-generuj uwagi
             </button>
         </div>
         <textarea
             id="offer-tab-notes"
-            class="wizard-form-input"
+            class="wizard-form-input util-2x-31"
             rows="4"
             placeholder="Uwagi zostaną automatycznie wygenerowane..."
-            style="resize: vertical; width: 100%; font-size: var(--fs-base)"
         ></textarea>
     </div>
 
     <!-- WARUNKI PŁATNOŚCI + DATA WAŻNOŚCI -->
-    <div class="card" style="margin-bottom: 1rem; padding: 0.8rem">
+    <div class="card util-2x-9">
         <div class="card-header-row">
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-            >
+            <label class="fs-lg-primary-bold">
                 <i data-lucide="credit-card"></i> Warunki płatności
             </label>
-            <label
-                style="
-                    font-size: var(--fs-lg);
-                    color: var(--text-primary);
-                    font-weight: var(--fw-bold);
-                "
-                >Data ważności</label
-            >
+            <label class="fs-lg-primary-bold">Data ważności</label>
         </div>
-        <div class="gap-3" style="display: grid; grid-template-columns: 3fr 1fr">
+        <div class="gap-3 util-2x-10">
             <textarea
                 id="offer-tab-payment-terms"
-                class="wizard-form-input"
+                class="wizard-form-input util-2x-31"
                 rows="2"
                 placeholder="Domyślnie przepisywane z kroku 1..."
-                style="resize: vertical; width: 100%; font-size: var(--fs-base)"
             ></textarea>
             <input
                 id="offer-tab-validity"
-                class="wizard-form-input"
-                style="width: 100%; font-size: var(--fs-base); text-align: right"
+                class="wizard-form-input util-2x-11"
                 onclick="this.select()"
             />
         </div>
     </div>
 
     <div class="card mb-1">
-        <div class="toolbar" style="margin-top: 0; margin-bottom: 0.5rem; padding: 0">
-            <h2 style="font-size: var(--fs-2xl); font-weight: var(--fw-bold)">
+        <div class="toolbar util-2x-12">
+            <h2 class="fs-2xl-bold-plain">
                 <i data-lucide="bar-chart-2"></i> Zestawienie ofertowe (Studnie)
             </h2>
         </div>
@@ -186,7 +130,7 @@
                 onmouseover="this.style.background = 'rgba(var(--white-rgb), 0.05)'"
                 onmouseout="this.style.background = 'transparent'"
             >
-                <div class="studnie-summary-label" style="width: 100%">Koszt transportu</div>
+                <div class="studnie-summary-label util-2x-30">Koszt transportu</div>
                 <div
                     class="studnie-summary-value warn gap-2"
                     id="sum-transport-cost"
@@ -197,7 +141,7 @@
                         justify-content: center;
                     "
                 >
-                    <i data-lucide="truck" style="width: 20px; height: 20px"></i> 0 PLN
+                    <i data-lucide="truck" class="util-2x-13"></i> 0 PLN
                 </div>
                 <div
                     id="offer-active-transport-info"
@@ -231,9 +175,7 @@
                 onmouseout="this.style.background = 'transparent'"
             >
                 <div style="text-align: center; margin-bottom: 0.2rem">
-                    <span class="studnie-summary-label" style="margin: 0"
-                        >Zarządzanie Rabatami</span
-                    >
+                    <span class="studnie-summary-label util-2x-25">Zarządzanie Rabatami</span>
                 </div>
                 <div id="offer-active-discounts-info" style="width: 100%; min-height: 22px">
                     <!-- Populated by updateOfferSummaryUI -->

@@ -36,7 +36,7 @@
         <!-- Błędy konfiguracji studni -->
         <div id="well-config-errors-container" class="well-config-errors"></div>
         <!-- Toolbar: DN + Elevations + Height + Controls -->
-        <div class="well-info-card" style="padding: 0.6rem 0.8rem">
+        <div class="well-info-card p-6-8">
             <!-- Row 1: Title -->
             <div style="margin-bottom: 0.35rem">
                 <span
@@ -61,7 +61,7 @@
                         onclick="this.select()"
                     />
                 </div>
-                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
+                <div class="util-2x-37"></div>
                 <div class="flex-center-gap-2">
                     <label class="well-label">Rz. włazu</label>
                     <input
@@ -106,7 +106,7 @@
                         "
                     />
                 </div>
-                <div style="width: 1px; height: 24px; background: var(--border-glass)"></div>
+                <div class="util-2x-37"></div>
                 <div
                     class="gap-2"
                     style="
@@ -131,7 +131,7 @@
                     >
                     <span id="height-diff-indicator"></span>
                 </div>
-                <div style="flex: 1"></div>
+                <div class="util-2x-38"></div>
                 <div class="flex-center-gap-2">
                     <label class="well-label">Dopłata</label>
                     <input
@@ -189,8 +189,8 @@
                         </button>
                     </div>
                 </div>
-                <div style="flex: 1"></div>
-                <div class="gap-1" style="display: flex">
+                <div class="util-2x-38"></div>
+                <div class="gap-1 util-2x-29">
                     <button
                         type="button"
                         class="btn btn-secondary btn-sm well-toolbar-btn"
@@ -217,8 +217,7 @@
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm well-toolbar-btn"
-                        style="display: none"
+                        class="btn btn-secondary btn-sm well-toolbar-btn hidden"
                         onclick="toggleStyczna1200()"
                         id="btn-styczna-1200"
                     >
@@ -256,7 +255,7 @@
                                 text-align: center;
                             "
                         />
-                        <span style="font-size: var(--fs-xs); color: var(--text-muted)">m</span>
+                        <span class="util-2x-39">m</span>
                         <button
                             type="button"
                             class="btn btn-secondary btn-sm"
@@ -301,7 +300,7 @@
         </div>
 
         <!-- Per-well parameters (editable, inherited from wizard step 2) -->
-        <div class="card-sm" style="padding: 0.6rem 0.8rem">
+        <div class="card-sm p-6-8">
             <div
                 class="card-title card-title--config"
                 onclick="toggleCard('well-params-content', 'well-params-icon')"
@@ -340,7 +339,7 @@
 
         <!-- TAB: CONCRETE CONTENT -->
         <div id="bcontent-concrete">
-            <div class="card-sm" style="padding: 0.6rem 0.8rem">
+            <div class="card-sm p-6-8">
                 <div
                     class="card-title card-title--config"
                     onclick="toggleCard('tiles-content', 'tiles-icon')"
@@ -348,7 +347,7 @@
                     <span><i data-lucide="brick-wall"></i> Wybór elementów</span>
                     <span id="tiles-icon" class="fs-075"><i data-lucide="chevron-up"></i></span>
                 </div>
-                <div id="tiles-content" class="card-content" style="margin-top: 0.5rem">
+                <div id="tiles-content" class="card-content mt-5">
                     <div id="tiles-container"></div>
                 </div>
             </div>
@@ -382,7 +381,7 @@
         </div>
 
         <!-- TAB: TRANSITIONS CONTENT -->
-        <div id="bcontent-transitions" style="display: none">
+        <div id="bcontent-transitions" class="hidden">
             <div class="card card-sm">
                 <div
                     class="card-title card-title--config"
@@ -415,10 +414,7 @@
                     "
                 >
                     <span><i data-lucide="book-open"></i> Lista przejść</span>
-                    <span
-                        id="przejscia-count"
-                        style="font-size: var(--fs-xs); color: var(--text-muted)"
-                    ></span>
+                    <span id="przejscia-count" class="util-2x-39"></span>
                 </div>
                 <div id="well-przejscia-tiles"></div>
             </div>

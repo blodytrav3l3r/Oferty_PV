@@ -27,8 +27,8 @@
                 Wprowadź dystans oraz stawkę. Formularz jest zsynchronizowany z danymi oferty i
                 ulegnie przedawnieniu tylko po odrzuceniu zmian.
             </p>
-            <div class="gap-4" style="display: flex; align-items: flex-end">
-                <div class="form-group" style="flex: 1; margin: 0">
+            <div class="gap-4 util-2x-14">
+                <div class="form-group flex-1-m0">
                     <label class="transport-label">Odległość (km)</label>
                     <input
                         type="number"
@@ -41,7 +41,7 @@
                         "
                     />
                 </div>
-                <div class="form-group" style="flex: 1; margin: 0">
+                <div class="form-group flex-1-m0">
                     <label class="transport-label">Stawka (PLN/km)</label>
                     <input
                         type="number"
@@ -56,44 +56,16 @@
                     />
                 </div>
             </div>
-            <div
-                style="
-                    margin-top: 0.8rem;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    gap: 0.6rem;
-                "
-            >
-                <label
-                    style="
-                        font-size: var(--fs-xs);
-                        color: var(--text-muted);
-                        font-weight: var(--fw-semibold);
-                    "
-                    >Tryb transportu:</label
-                >
+            <div class="util-2x-15">
+                <label class="util-2x-16">Tryb transportu:</label>
                 <button
                     type="button"
                     id="rury-transport-mode-btn"
                     type="button"
                     onclick="toggleRuryTransportMode()"
-                    style="
-                        display: inline-flex;
-                        align-items: center;
-                        gap: 0.35rem;
-                        padding: 0.3rem 0.7rem;
-                        border-radius: var(--radius-sm);
-                        border: 1px solid var(--border-glass);
-                        background: rgba(var(--black-rgb), 0.2);
-                        color: var(--text-heading);
-                        font-size: var(--fs-sm);
-                        font-weight: var(--fw-bold);
-                        cursor: pointer;
-                        transition: all 0.15s;
-                    "
+                    class="util-2x-17"
                 >
-                    <i data-lucide="truck" style="width: 12px; height: 12px"></i>
+                    <i data-lucide="truck" class="icon-xxs"></i>
                     <span id="rury-transport-mode-label">Pełne</span>
                 </button>
             </div>
@@ -106,11 +78,7 @@
                     color: var(--text-muted);
                 "
             ></div>
-            <div
-                id="rury-transport-modal-cost-details"
-                class="gap-3"
-                style="margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr 1fr"
-            >
+            <div id="rury-transport-modal-cost-details" class="gap-3 util-2x-18">
                 <div class="transport-cost-card">
                     <div class="transport-cost-label">Koszt / transport</div>
                     <div
@@ -149,29 +117,8 @@
                     border-radius: var(--radius);
                 "
             >
-                <div
-                    style="
-                        font-size: var(--fs-xs);
-                        color: var(--text-muted);
-                        text-transform: uppercase;
-                        font-weight: var(--fw-bold);
-                        margin-bottom: 0.25rem;
-                        letter-spacing: 2px;
-                    "
-                >
-                    Aktualna Łączna Suma Netto
-                </div>
-                <div
-                    id="rury-transport-modal-total-val"
-                    style="
-                        font-size: var(--fs-2xl);
-                        font-weight: var(--fw-black);
-                        color: var(--success);
-                        letter-spacing: -1px;
-                    "
-                >
-                    0 PLN
-                </div>
+                <div class="util-2x-19">Aktualna Łączna Suma Netto</div>
+                <div id="rury-transport-modal-total-val" class="util-2x-20">0 PLN</div>
             </div>
         </div>
         <div
@@ -186,23 +133,17 @@
         >
             <button
                 type="button"
-                class="btn btn-secondary"
+                class="btn btn-secondary fs-sm-04-1-bold"
                 onclick="handleRuryTransportCancel()"
-                style="font-size: var(--fs-sm); padding: 0.4rem 1rem; font-weight: var(--fw-bold)"
             >
                 Zamknij
             </button>
             <button
                 type="button"
-                class="btn btn-primary"
+                class="btn btn-primary fs-sm-04-12-eb"
                 onclick="handleRuryTransportSave()"
-                style="
-                    font-size: var(--fs-sm);
-                    padding: 0.4rem 1.2rem;
-                    font-weight: var(--fw-extrabold);
-                "
             >
-                <i data-lucide="check" style="width: 11px; height: 11px; margin-right: 0.25rem"></i>
+                <i data-lucide="check" class="icon-11"></i>
                 Zastosuj
             </button>
         </div>

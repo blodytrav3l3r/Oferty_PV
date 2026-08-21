@@ -1225,3 +1225,240 @@
     display: flex;
     justify-content: flex-end;
 }
+
+/* ===== Generated generics for remaining inline (Etap B) ===== */
+.flex-1-m0 {
+    flex: 1;
+    margin: 0;
+}
+.mt-5 {
+    margin-top: 0.5rem;
+}
+.fs-2xl-bold-plain {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-bold);
+}
+.fs-sm-04-1-bold {
+    font-size: var(--fs-sm);
+    padding: 0.4rem 1rem;
+    font-weight: var(--fw-bold);
+}
+.fs-sm-04-12-eb {
+    font-size: var(--fs-sm);
+    padding: 0.4rem 1.2rem;
+    font-weight: var(--fw-extrabold);
+}
+.icon-11 {
+    width: 11px;
+    height: 11px;
+    margin-right: 0.25rem;
+}
+.fs-lg-primary-bold {
+    font-size: var(--fs-lg);
+    color: var(--text-primary);
+    font-weight: var(--fw-bold);
+}
+.p-6-8 {
+    padding: 0.6rem 0.8rem;
+}
+
+/* ===== Generated 2x generics (Etap B) ===== */
+.util-2x-1 {
+    display: none;
+    margin-bottom: 0.75rem;
+}
+.util-2x-2 {
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    align-items: center;
+}
+.util-2x-3 {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+}
+.util-2x-4 {
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+.util-2x-5 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+.util-2x-6 {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1rem;
+    font-size: var(--fs-base);
+    color: var(--text-secondary);
+}
+.util-2x-7 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+}
+.util-2x-8 {
+    font-size: var(--fs-sm);
+    padding: 0.3rem 0.6rem;
+}
+.util-2x-9 {
+    margin-bottom: 1rem;
+    padding: 0.8rem;
+}
+.util-2x-10 {
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+}
+.util-2x-11 {
+    width: 100%;
+    font-size: var(--fs-base);
+    text-align: right;
+}
+.util-2x-12 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    padding: 0;
+}
+.util-2x-13 {
+    width: 20px;
+    height: 20px;
+}
+.util-2x-14 {
+    display: flex;
+    align-items: flex-end;
+}
+.util-2x-15 {
+    margin-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+.util-2x-16 {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+}
+.util-2x-17 {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-glass);
+    background: rgba(var(--black-rgb), 0.2);
+    color: var(--text-heading);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.util-2x-18 {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.util-2x-19 {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.25rem;
+    letter-spacing: 2px;
+}
+.util-2x-20 {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-black);
+    color: var(--success);
+    letter-spacing: -1px;
+}
+.util-2x-21 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--slate-800);
+}
+.util-2x-22 {
+    font-size: var(--fs-5xl);
+    background: var(--slate-800);
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.util-2x-23 {
+    margin: 0;
+    font-size: var(--fs-3xl);
+    font-weight: var(--fw-bold);
+}
+.util-2x-24 {
+    margin: 0;
+    font-size: var(--fs-base);
+    color: var(--slate-500);
+}
+.util-2x-25 {
+    margin: 0;
+}
+.util-2x-26 {
+    display: none;
+    z-index: 10000;
+    justify-content: center;
+    align-items: center;
+}
+.util-2x-27 {
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+}
+.util-2x-28 {
+    width: 14px;
+    height: 14px;
+}
+.util-2x-29 {
+    display: flex;
+}
+.util-2x-30 {
+    width: 100%;
+}
+.util-2x-31 {
+    resize: vertical;
+    width: 100%;
+    font-size: var(--fs-base);
+}
+.util-2x-32 {
+    background: var(--accent2);
+}
+.util-2x-33 {
+    background: var(--warn);
+}
+.util-2x-34 {
+    background: var(--danger);
+}
+.util-2x-35 {
+    background: var(--success);
+}
+.util-2x-36 {
+    display: flex;
+    flex-wrap: wrap;
+}
+.util-2x-37 {
+    width: 1px;
+    height: 24px;
+    background: var(--border-glass);
+}
+.util-2x-38 {
+    flex: 1;
+}
+.util-2x-39 {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
