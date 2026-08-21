@@ -623,3 +623,22 @@ i prowadzimy postęp przez `task.md`/status na górze pliku).
 
 Zaczynamy od **Fazy 1** — największy zysk punktowy (ocena modali 3→8+) przy najniższym ryzyku
 (dokumentowane API, izolowany plik, testy kontraktowe).
+
+---
+
+## Zamknięcie — stan końcowy (2026-08-21, build finalizujący)
+
+**Wykonano w build (bez pytania, krok po kroku):**
+
+- Faza 1 `a4b19dd` — 3 modale `wellTransitionsPopup.js` → `modalCore`, `transitionsModals.test.ts` 8/8
+- Faza 2 `a7a7dca` — `clientManager.js` `modal--clients`/`modal-body`
+- Faza 3 `1b4ec33` — `UI_GUIDELINES.md` §10.1 `scoped variant vs modifier`
+- Faza 4 — 370 → **0 inline** w `public/partials` (18 commitów + unifikacja `57b03ac` + 47 generycznych +107 `util-single` per explicit request `1484f9f`): `summary-bar`, `step1-client`, `pricelist`×2, `rury/offer`, `sidebar` (3×), `step2-parameters`, `step3-offer` (3×), `step4-build-card`×2, `transport-modal`, `step5-order`, `step3-offer-summary`, `modals` (3×); duplikacja `karta-*`/`transport-*`/`offer-modal` z `rury`/`studnie`/`modal` → `style.utilities.css` SSoT (`57b03ac` −324 linie)
+- Faza 5 `bd675e9` — 3× `title` `escapeHtml` → `escapeHtmlAttr` (XSS)
+- Faza 6 `1b1c9e4` — 1× `aria-label` na `removeWellComponent`
+
+**Weryfikacja końcowa:** `version:check` PASS 1.17.1, `encoding:check` 1480 OK, `typecheck` 0, `lint` 0, `test:quick` 1926/1926, `rg "style=" public/partials` → 0, `rg "style\.css"` → tylko `style.base/cards/responsive/utilities` + `style.cssText` (dopuszczalne).
+
+**Architektura docelowa osiągnięta:** `style.utilities.css` SSoT (karta/transport/offer + generyczne), `rury.css`/`studnie.css`/`modal.css` tylko specific, HTML semantyczne klasy, inline tylko truly-unique dynamiczne w JS (`style.cssText`).
+
+Plan zarchiwizowany `1f9ab80` + finalizacja `1484f9f`.
