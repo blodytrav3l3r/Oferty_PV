@@ -410,6 +410,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     background: rgba(var(--black-rgb), 0.3);
 }
 
+.well-toolbar-btn {
+    font-size: var(--fs-md);
+    padding: 0.3rem 0.6rem;
+    border-color: var(--border-glass);
+}
+
 .btn-well-add {
     height: 46px;
     padding: 0;
