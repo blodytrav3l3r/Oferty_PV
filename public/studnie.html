@@ -55,40 +55,13 @@
                                 <div class="ws-label fs-065-nowrap">Zostało</div>
                                 <div class="ws-value fs-075-nowrap" id="ws-diff-height">—</div>
                             </div>
-                            <div
+                            <button
+                                type="button"
                                 id="svg-trash"
-                                class="ws-item"
-                                role="button"
-                                tabindex="0"
+                                class="ws-item btn-icon-danger"
                                 aria-label="Usuń studnię"
-                                style="
-                                    padding: 0.2rem;
-                                    justify-content: center;
-                                    align-items: center;
-                                    border-radius: var(--radius-sm);
-                                    background: rgba(var(--danger-rgb), 0.1);
-                                    border: 1px dashed rgba(var(--danger-rgb), 0.5);
-                                    color: var(--danger-hover);
-                                    cursor: pointer;
-                                "
-                                title="Kliknij, aby usunąć studnię"
+                                title="Usuń studnię"
                                 onclick="removeWell(currentWellIndex)"
-                                onkeydown="
-                                    if (event.key === 'Enter' || event.key === ' ') {
-                                        event.preventDefault();
-                                        removeWell(currentWellIndex);
-                                    }
-                                "
-                                onmouseenter="
-                                    if (window.svgDragStartIndex >= 0) {
-                                        this.style.background = 'rgba(var(--danger-rgb), 0.3)';
-                                        this.style.borderColor = 'var(--danger)';
-                                    }
-                                "
-                                onmouseleave="
-                                    this.style.background = 'rgba(var(--danger-rgb), 0.1)';
-                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.5)';
-                                "
                             >
                                 <div
                                     class="ws-label"
@@ -104,9 +77,9 @@
                                     class="ws-value"
                                     style="font-size: var(--fs-lg); margin-top: -2px"
                                 >
-                                    <i data-lucide="trash-2"></i>
+                                    <i data-lucide="trash-2" aria-hidden="true"></i>
                                 </div>
-                            </div>
+                            </button>
                         </div>
                         <div
                             class="well-summary-mini gap-1"
