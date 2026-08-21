@@ -164,7 +164,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* Scrollable wariant dla tabeli Oferty (max wysokość zostawia miejsce na bottom bars) */
 .table-wrap.table-wrap-scroll {
-    max-height: calc(100vh - 380px);
+    max-height: calc(100vh - var(--rury-table-offset));
     overflow-y: auto;
 }
 

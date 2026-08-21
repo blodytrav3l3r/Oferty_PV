@@ -71,7 +71,11 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 /* ─── 3-kolumnowy layout: DIAGRAM | KONFIG | STUDNIE ─── */
 .well-app-layout {
     display: grid;
-    grid-template-columns: clamp(260px, 18vw, 420px) minmax(0, 1fr) clamp(280px, 20vw, 460px);
+    grid-template-columns: clamp(var(--sidebar-min), 18vw, var(--sidebar-max)) minmax(0, 1fr) clamp(
+            var(--sidebar2-min),
+            20vw,
+            var(--sidebar2-max)
+        );
     gap: 0;
     flex: 1;
     min-height: 0;

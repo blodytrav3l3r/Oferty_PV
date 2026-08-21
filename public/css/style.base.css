@@ -235,6 +235,12 @@
     --z-modal: 10000;
     --z-modal-top: 100000;
     --z-toast: 1000000;
+    /* Z-21: tokeny dla magic numbers (260/280/420/460/380) */
+    --sidebar-min: 16.25rem;
+    --sidebar-max: 26.25rem;
+    --sidebar2-min: 17.5rem;
+    --sidebar2-max: 28.75rem;
+    --rury-table-offset: 23.75rem;
 }
 
 /* ========================================
@@ -389,7 +395,7 @@ body::before {
     justify-content: space-between;
     align-items: center;
     min-height: var(--header-h);
-    padding: 0.3rem 1.5rem;
+    padding: var(--header-pad-y) var(--header-pad-x);
     gap: 1rem;
 }
 
