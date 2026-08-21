@@ -566,6 +566,21 @@ body.rury-page > .main:has(#section-builder.active) {
     color: var(--text-heading);
 }
 
+.karta-label {
+    display: block;
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.karta-input {
+    width: 100%;
+    font-size: var(--fs-lg);
+    padding: 0.6rem 0.8rem;
+}
+
 .rury-summary-label {
     font-size: var(--fs-base);
     text-transform: uppercase;
