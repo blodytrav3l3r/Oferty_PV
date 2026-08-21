@@ -583,6 +583,43 @@ document.addEventListener('focusin', (e) => {
     target.select();
 });
 
+/* ===== Ochrona przed utratą danych — beforeunload/pagehide (Z-30) ===== */
+function _isWizardDirty() {
+    try {
+        if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
+        if (typeof window._excelDirty !== 'undefined' && window._excelDirty) return true;
+        if (typeof currentWizardStep !== 'undefined' && currentWizardStep !== 1) return true;
+        if (typeof window.currentWizardStep !== 'undefined' && window.currentWizardStep !== 1)
+            return true;
+        if (typeof window._wizardDirty !== 'undefined' && window._wizardDirty) return true;
+        const clientName = document.getElementById('client-name');
+        if (clientName && clientName.value && clientName.value.trim() !== '') {
+            if (
+                (typeof currentWizardStep !== 'undefined' && currentWizardStep > 1) ||
+                (typeof window.currentWizardStep !== 'undefined' && window.currentWizardStep > 1)
+            )
+                return true;
+        }
+    } catch {}
+    return false;
+}
+window._isWizardDirty = _isWizardDirty;
+window.addEventListener('beforeunload', (e) => {
+    if (_isWizardDirty()) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+window.addEventListener('pagehide', () => {
+    if (_isWizardDirty()) {
+        // Mobile Safari: pagehide zamiast beforeunload — log dla audytu
+        try {
+            if (window.logger && typeof window.logger.warn === 'function')
+                window.logger.warn('ui', 'pagehide z niezapisanymi zmianami');
+        } catch {}
+    }
+});
+
 /* ===== Rejestracja globali ===== */
 window.getUserDisplayName = getUserDisplayName;
 window.toggleCard = toggleCard;
