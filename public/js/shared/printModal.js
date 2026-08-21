@@ -461,6 +461,10 @@
         if (_upmOverlay && typeof trapFocus === 'function') {
             /** @type {any} */ (_upmOverlay)._previousFocus = document.activeElement;
             trapFocus(_upmOverlay);
+            const _first = _upmOverlay.querySelector(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (_first && !_upmOverlay.contains(document.activeElement)) _first.focus();
         }
         if (_upmOverlay && typeof _upmOverlay.addEventListener === 'function') {
             _upmOverlay.addEventListener('keydown', function (ev) {

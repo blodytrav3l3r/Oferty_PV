@@ -17,12 +17,14 @@ export function closeModal(id) {
         if (el) {
             untrapFocus(el);
             el.style.display = 'none';
+            if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
         }
     } else {
         document.querySelectorAll('.js-modal-overlay').forEach((m) => {
             untrapFocus(m);
             m.remove();
         });
+        document.body.style.overflow = '';
     }
 }
 
@@ -36,6 +38,7 @@ export function trapFocus(container) {
     );
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
+    if (!first) return;
     const handler = (e) => {
         if (e.key === 'Tab') {
             if (e.shiftKey && document.activeElement === first) {
@@ -89,12 +92,14 @@ export function showModal(opts) {
 
     overlay.innerHTML = opts.html;
     document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
     /** @type {any} */ (overlay)._previousFocus = document.activeElement;
 
     function onOverlayClick(e) {
         if (e.target === overlay) {
             untrapFocus(overlay);
             overlay.remove();
+            document.body.style.overflow = '';
             if (opts.onClose) opts.onClose();
         }
     }
@@ -104,6 +109,7 @@ export function showModal(opts) {
         if (e.key === 'Escape') {
             untrapFocus(overlay);
             overlay.remove();
+            document.body.style.overflow = '';
             if (opts.onClose) opts.onClose();
         }
     }
@@ -112,10 +118,13 @@ export function showModal(opts) {
     trapFocus(overlay);
 
     const firstBtn = overlay.querySelector('button');
-    if (firstBtn)
-        setTimeout(function () {
-            firstBtn.focus();
-        }, 50);
+    if (firstBtn) {
+        if (!overlay.contains(document.activeElement)) firstBtn.focus();
+        else
+            setTimeout(function () {
+                if (!overlay.contains(document.activeElement)) firstBtn.focus();
+            }, 50);
+    }
 
     if (opts.onOpen) opts.onOpen();
     return overlay;
