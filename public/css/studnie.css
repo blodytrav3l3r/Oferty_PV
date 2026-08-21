@@ -325,6 +325,51 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-color: var(--accent-border);
 }
 
+/* Sidebar action buttons — Faza 4: inline → klasy */
+.wells-sidebar-actions {
+    display: grid;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--slate-800);
+}
+
+.wells-sidebar-actions.cols-1 {
+    grid-template-columns: 1fr;
+}
+
+.wells-sidebar-actions.cols-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.wells-sidebar-actions.cols-6 {
+    grid-template-columns: repeat(6, 1fr);
+    padding: 0.4rem 0;
+}
+
+.btn-sidebar {
+    height: 46px;
+    padding: 0;
+    font-size: var(--fs-xs);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+}
+
+.btn-sidebar--excel {
+    height: 38px;
+    flex-direction: row;
+    gap: 0.4rem;
+}
+
+.btn-sidebar-label {
+    font-size: var(--fs-3xs);
+    font-weight: var(--fw-extrabold);
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+}
+
 .well-list-item {
     background: rgba(var(--slate-800-rgb), 0.5);
     border: 1px solid rgba(var(--white-rgb), 0.05);

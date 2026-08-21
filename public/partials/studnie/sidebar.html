@@ -7,278 +7,119 @@
             style="flex-direction: column; align-items: stretch; padding-bottom: 0.4rem"
         >
             <!-- Main Action Buttons at the very top -->
-            <div
-                class="gap-1"
-                style="
-                    display: grid;
-                    grid-template-columns: 1fr;
-                    padding-bottom: 0.4rem;
-                    border-bottom: 1px solid var(--slate-800);
-                "
-            >
+            <div class="wells-sidebar-actions cols-1">
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm"
+                    class="btn btn-secondary btn-sm btn-sidebar btn-sidebar--excel"
                     style="
-                        height: 38px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: rgba(var(--success-rgb), 0.15);
                         color: var(--success-hover);
                         border-color: rgba(var(--success-rgb), 0.3);
-                        display: flex;
-                        flex-direction: row;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 0.4rem;
-                        line-height: 1.2;
                     "
                     onclick="openExcelTableModal()"
                 >
                     <span><i data-lucide="table"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-2xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Excel</span
-                    >
+                    <span class="btn-sidebar-label">Excel</span>
                 </button>
             </div>
-            <div
-                class="gap-1"
-                style="
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    padding-bottom: 0.4rem;
-                    border-bottom: 1px solid var(--slate-800);
-                "
-            >
+            <div class="wells-sidebar-actions cols-2">
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm"
+                    class="btn btn-secondary btn-sm btn-sidebar"
                     style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: rgba(var(--accent-rgb), 0.15);
                         color: var(--accent-text);
                         border-color: rgba(var(--accent-rgb), 0.3);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="window.openGlobalRecalcModal()"
                 >
                     <span class="fs-1"><i data-lucide="settings"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Przelicz</span
-                    >
+                    <span class="btn-sidebar-label">Przelicz</span>
                 </button>
                 <button
                     type="button"
-                    class="btn btn-secondary btn-sm"
+                    class="btn btn-secondary btn-sm btn-sidebar"
                     style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: rgba(var(--accent2-rgb), 0.15);
                         color: var(--accent2-hover);
                         border-color: rgba(var(--accent2-rgb), 0.3);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="openTransitionManagerModal()"
                 >
                     <span class="fs-1"><i data-lucide="droplets"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >M. Przejść</span
-                    >
+                    <span class="btn-sidebar-label">M. Przejść</span>
                 </button>
                 <button
                     type="button"
-                    class="btn btn-success btn-sm"
+                    class="btn btn-success btn-sm btn-sidebar"
                     id="btn-save-studnie-sidebar"
-                    style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
-                    "
                     onclick="saveOfferStudnie()"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Zapisz</span
-                    >
+                    <span class="btn-sidebar-label">Zapisz</span>
                 </button>
                 <button
                     type="button"
-                    class="btn btn-success btn-sm"
+                    class="btn btn-success btn-sm btn-sidebar"
                     id="btn-save-zamowienie-sidebar"
                     style="
                         display: none;
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: rgba(var(--success-rgb), 0.2);
                         border-color: rgba(var(--success-rgb), 0.5);
                         color: var(--success-hover);
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="saveCurrentOrder()"
                 >
                     <span class="fs-1"><i data-lucide="save"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Zapisz</span
-                    >
+                    <span class="btn-sidebar-label">Zapisz</span>
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm"
+                    class="btn btn-sm btn-sidebar"
                     style="
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: rgba(var(--danger-rgb), 0.1);
                         border: 1px solid rgba(var(--danger-rgb), 0.3);
                         color: var(--danger-hover);
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="handlePrintClick()"
                 >
                     <span class="fs-1"><i data-lucide="printer"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Wydruk</span
-                    >
+                    <span class="btn-sidebar-label">Wydruk</span>
                 </button>
                 <button
                     type="button"
-                    class="btn btn-sm"
+                    class="btn btn-sm btn-sidebar"
                     style="
                         display: none !important;
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
-                        flex: 1;
                         background: var(--slate-800);
                         border: 1px solid var(--success-bg);
                         color: var(--success-hover);
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="createOrderFromOffer()"
                 >
                     <span class="fs-1"><i data-lucide="package"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Zamów</span
-                    >
+                    <span class="btn-sidebar-label">Zamów</span>
                 </button>
                 <button
                     type="button"
                     id="btn-zlecenia-sidebar"
-                    class="btn btn-sm"
+                    class="btn btn-sm btn-sidebar"
                     style="
                         display: none;
-                        height: 46px;
-                        padding: 0;
-                        font-size: var(--fs-xs);
                         grid-column: span 2;
                         background: var(--warn-bg);
                         border: 1px solid var(--warn-border);
                         color: var(--warn);
-                        flex-direction: column;
-                        align-items: center;
-                        justify-content: center;
-                        line-height: 1.2;
                     "
                     onclick="openZleceniaProdukcyjne()"
                 >
                     <span class="fs-1"><i data-lucide="factory"></i></span>
-                    <span
-                        style="
-                            font-size: var(--fs-3xs);
-                            font-weight: var(--fw-extrabold);
-                            text-transform: uppercase;
-                            letter-spacing: 0.2px;
-                        "
-                        >Zlecenia</span
-                    >
+                    <span class="btn-sidebar-label">Zlecenia</span>
                 </button>
             </div>
 
             <!-- Add Well Buttons -->
-            <div
-                class="gap-1"
-                style="
-                    display: grid;
-                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-                    padding: 0.4rem 0;
-                    border-bottom: 1px solid var(--slate-800);
-                "
-            >
+            <div class="wells-sidebar-actions cols-6">
                 <button
                     type="button"
                     class="btn btn-primary btn-sm"
