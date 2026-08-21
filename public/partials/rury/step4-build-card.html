@@ -78,7 +78,7 @@
                         class="karta-input"
                     />
                 </div>
-                <div style="flex: 1; min-width: 150px">
+                <div class="karta-flex-150">
                     <label class="karta-label karta-label--accent2"> Warunki płatności </label>
                     <select id="step4-warunki-platnosci" class="form-input form-input-wide">
                         <option value="przelew">Przelew</option>
@@ -86,7 +86,7 @@
                         <option value="przedpłata">Przedpłata</option>
                     </select>
                 </div>
-                <div style="flex: 1; min-width: 100px; max-width: 150px">
+                <div class="karta-flex-100-150">
                     <label class="karta-label karta-label--accent2"> Ilość dni </label>
                     <input
                         type="number"
@@ -289,7 +289,7 @@
 
             <!-- Wiersz 8: Kaskada i Ślepa kineta -->
             <div class="flex-wrap-start p-6-12">
-                <div style="flex: 1; min-width: 140px">
+                <div class="karta-flex-140">
                     <label class="karta-label karta-label--blue"> Kaskada </label>
                     <select id="step4-kaskada" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -297,7 +297,7 @@
                         <option value="Nie">Nie</option>
                     </select>
                 </div>
-                <div style="flex: 2; min-width: 180px">
+                <div class="karta-flex-180-2">
                     <label class="karta-label karta-label--blue"> Uwagi (Kaskada) </label>
                     <input
                         type="text"
@@ -307,7 +307,7 @@
                         class="karta-input"
                     />
                 </div>
-                <div style="flex: 1; min-width: 140px">
+                <div class="karta-flex-140">
                     <label class="karta-label karta-label--accent2"> Ślepa kineta </label>
                     <select id="step4-slepa-kineta" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
@@ -315,7 +315,7 @@
                         <option value="Nie">Nie</option>
                     </select>
                 </div>
-                <div style="flex: 2; min-width: 180px">
+                <div class="karta-flex-180-2">
                     <label class="karta-label karta-label--accent2"> Uwagi (Ślepa kineta) </label>
                     <input
                         type="text"
@@ -401,58 +401,17 @@
             </div>
 
             <!-- Wiersz 11: Przejścia szczelne — szczegóły z oferty -->
-            <div style="padding: 0.6rem 1.2rem">
-                <div
-                    style="
-                        background: rgba(var(--accent2-rgb), 0.05);
-                        border: 1px solid rgba(var(--accent2-rgb), 0.2);
-                        border-radius: var(--radius-sm);
-                        padding: 0.8rem;
-                        position: relative;
-                    "
-                >
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: space-between;
-                            align-items: center;
-                            margin-bottom: 0.6rem;
-                        "
-                    >
-                        <label
-                            class="gap-2"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                font-size: var(--fs-base);
-                                font-weight: var(--fw-bold);
-                                color: var(--accent2-hover);
-                                text-transform: uppercase;
-                                letter-spacing: 0.3px;
-                            "
-                        >
+            <div class="karta-pad-6-12">
+                <div class="karta-przejscia-box">
+                    <div class="karta-przejscia-header">
+                        <label class="gap-2 karta-przejscia-label">
                             <i data-lucide="link"></i> Przejścia szczelne — szczegóły z oferty
                         </label>
                         <button
                             type="button"
                             id="step4-add-custom-przejscie-btn"
                             onclick="addCustomPrzejscieRow()"
-                            class="gap-1"
-                            style="
-                                display: flex;
-                                align-items: center;
-                                background: rgba(var(--accent2-rgb), 0.1);
-                                border: 1px solid rgba(var(--accent2-rgb), 0.3);
-                                color: var(--accent2-hover);
-                                font-size: var(--fs-xs);
-                                font-weight: var(--fw-bold);
-                                padding: 0.3rem 0.6rem;
-                                border-radius: var(--radius-sm);
-                                cursor: pointer;
-                                transition: all 0.15s;
-                                text-transform: uppercase;
-                                letter-spacing: 0.3px;
-                            "
+                            class="gap-1 karta-add-btn"
                             onmouseenter="
                                 this.style.background = 'rgba(var(--accent2-rgb), 0.3)';
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.5)';
@@ -462,7 +421,7 @@
                                 this.style.borderColor = 'rgba(var(--accent2-rgb), 0.3)';
                             "
                         >
-                            <i data-lucide="plus" style="width: 12px; height: 12px"></i>
+                            <i data-lucide="plus" class="icon-12"></i>
                             Dodaj niestandardowe
                         </button>
                     </div>
@@ -471,18 +430,13 @@
             </div>
 
             <!-- Wiersz 12: Uwagi ogólne -->
-            <div style="padding: 0.6rem 1.2rem">
+            <div class="karta-pad-6-12">
                 <label class="karta-label karta-label--slate"> Uwagi </label>
                 <textarea
                     id="step4-uwagi-ogolne"
                     class="form-input"
                     rows="9"
-                    style="
-                        width: 100%;
-                        font-size: var(--fs-lg);
-                        padding: 0.6rem 0.8rem;
-                        resize: vertical;
-                    "
+                    class="karta-uwagi"
                     placeholder="Wpisz uwagi..."
                 ></textarea>
             </div>
