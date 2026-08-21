@@ -260,9 +260,11 @@ const ZleceniaRender = (() => {
         const loaded = state.items.length;
         if (loaded === 0) {
             sentinel.classList.add('hidden');
+            sentinel.setAttribute('aria-busy', 'false');
             return;
         }
         sentinel.classList.remove('hidden');
+        sentinel.setAttribute('aria-busy', state.hasMore ? 'true' : 'false');
         const total = state.totalCount != null ? state.totalCount : loaded;
         sentinel.innerHTML = state.hasMore
             ? '<div class="zlecenia-sentinel-spin"></div><span>Wczytuję kolejne…</span>'
