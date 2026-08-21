@@ -14,14 +14,6 @@ body.rury-page > .main:has(#section-builder.active) {
     padding-right: 0;
 }
 
-/* Margins (uzupełnienie shared w style.base.css dla porządku) */
-.mb-0 {
-    margin-bottom: 0;
-}
-.mb-1 {
-    margin-bottom: 1rem;
-}
-
 /* ── Karty ── */
 .rury-card {
     background: var(--bg-card);
