@@ -575,6 +575,46 @@ body.rury-page > .main:has(#section-builder.active) {
     letter-spacing: 0.3px;
 }
 
+.karta-label--warn {
+    color: var(--warn);
+}
+
+.karta-label--success {
+    color: var(--success);
+}
+
+.karta-label--blue {
+    color: var(--blue);
+}
+
+.karta-label--accent {
+    color: var(--accent-hover);
+}
+
+.karta-label--accent2 {
+    color: var(--accent2);
+}
+
+.karta-label--pink {
+    color: var(--pink);
+}
+
+.karta-label--danger {
+    color: var(--danger);
+}
+
+.karta-label--slate {
+    color: var(--slate-300);
+}
+
+.karta-label--cyan {
+    color: var(--cyan);
+}
+
+.karta-label--blue-alt {
+    color: var(--blue-alt);
+}
+
 .karta-input {
     width: 100%;
     font-size: var(--fs-lg);

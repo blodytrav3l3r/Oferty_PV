@@ -45,7 +45,7 @@
                 "
             >
                 <div class="flex-1-240">
-                    <label class="karta-label" style="color: var(--warn)">
+                    <label class="karta-label karta-label--warn">
                         Aktualnie przypisane emaile do faktury
                     </label>
                     <input
@@ -65,7 +65,7 @@
                     />
                 </div>
                 <div class="flex-1-240">
-                    <label class="karta-label" style="color: var(--success)">
+                    <label class="karta-label karta-label--success">
                         Email e-faktura
                         <span
                             style="
@@ -86,7 +86,7 @@
                     />
                 </div>
                 <div class="flex-1-240">
-                    <label class="karta-label" style="color: var(--accent-hover)">
+                    <label class="karta-label karta-label--accent">
                         Zamówienie według oferty nr.
                     </label>
                     <input
@@ -111,9 +111,7 @@
             <!-- Wiersz 2: Adres i Płatności -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-2-240">
-                    <label class="karta-label" style="color: var(--blue)">
-                        Adres wysyłki faktury
-                    </label>
+                    <label class="karta-label karta-label--blue"> Adres wysyłki faktury </label>
                     <input
                         type="text"
                         id="step4-adres-wysylki"
@@ -123,9 +121,7 @@
                     />
                 </div>
                 <div style="flex: 1; min-width: 150px">
-                    <label class="karta-label" style="color: var(--accent2)">
-                        Warunki płatności
-                    </label>
+                    <label class="karta-label karta-label--accent2"> Warunki płatności </label>
                     <select id="step4-warunki-platnosci" class="form-input form-input-wide">
                         <option value="przelew">Przelew</option>
                         <option value="gotówka">Gotówka</option>
@@ -133,7 +129,7 @@
                     </select>
                 </div>
                 <div style="flex: 1; min-width: 100px; max-width: 150px">
-                    <label class="karta-label" style="color: var(--accent2)"> Ilość dni </label>
+                    <label class="karta-label karta-label--accent2"> Ilość dni </label>
                     <input
                         type="number"
                         id="step4-ilosc-dni"
@@ -148,7 +144,7 @@
             <!-- Wiersz 3: Ubezpieczenie -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-240">
-                    <label class="karta-label" style="color: var(--success)"> Ubezpieczenie </label>
+                    <label class="karta-label karta-label--success"> Ubezpieczenie </label>
                     <input
                         type="text"
                         id="step4-ubezpieczenie"
@@ -162,7 +158,7 @@
             <!-- Wiersz 4: Osoba do kontaktu -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-240">
-                    <label class="karta-label" style="color: var(--pink)">
+                    <label class="karta-label karta-label--pink">
                         Osoba do kontaktu tel. / email
                     </label>
                     <input
@@ -178,7 +174,7 @@
             <!-- Wiersz 5: Transport -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--danger)">
+                    <label class="karta-label karta-label--danger">
                         Zabezpieczenie transportu
                     </label>
                     <select id="step4-zabezpieczenie-transportu" class="form-input form-input-wide">
@@ -188,9 +184,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--warn)">
-                        Rodzaj transportu
-                    </label>
+                    <label class="karta-label karta-label--warn"> Rodzaj transportu </label>
                     <select id="step4-rodzaj-transportu" class="form-input form-input-wide">
                         <option value="W kółko">W kółko</option>
                         <option value="Spedycja">Spedycja</option>
@@ -199,7 +193,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--accent2)">
+                    <label class="karta-label karta-label--accent2">
                         Wyliczony transport z zam.
                     </label>
                     <input
@@ -221,9 +215,7 @@
             <!-- Wiersz 6: Rodzaj studni, Uszczelka do studni, Rodzaj stopni -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--blue-alt)">
-                        Rodzaj studni
-                    </label>
+                    <label class="karta-label karta-label--blue-alt"> Rodzaj studni </label>
                     <select id="step4-rodzaj-studni" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Beton" selected>Beton</option>
@@ -231,9 +223,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--cyan)">
-                        Uszczelka do studni
-                    </label>
+                    <label class="karta-label karta-label--cyan"> Uszczelka do studni </label>
                     <select
                         id="step4-uszczelka-studni"
                         class="form-input form-input-wide"
@@ -253,7 +243,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-uszczelka-studni-inne-wrap">
-                    <label class="karta-label" style="color: var(--cyan)"> Jakie (Inne) </label>
+                    <label class="karta-label karta-label--cyan"> Jakie (Inne) </label>
                     <input
                         type="text"
                         id="step4-uszczelka-studni-inne"
@@ -263,7 +253,7 @@
                     />
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--warn)"> Rodzaj stopni </label>
+                    <label class="karta-label karta-label--warn"> Rodzaj stopni </label>
                     <select
                         id="step4-rodzaj-stopni"
                         class="form-input form-input-wide"
@@ -280,7 +270,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-rodzaj-stopni-inne-wrap">
-                    <label class="karta-label" style="color: var(--warn)"> Jakie (Inne) </label>
+                    <label class="karta-label karta-label--warn"> Jakie (Inne) </label>
                     <input
                         type="text"
                         id="step4-rodzaj-stopni-inne"
@@ -294,7 +284,7 @@
             <!-- Wiersz 7: Kineta i Wysokość spocznika -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--accent2)"> Kineta </label>
+                    <label class="karta-label karta-label--accent2"> Kineta </label>
                     <select
                         id="step4-kineta"
                         class="form-input form-input-wide"
@@ -317,7 +307,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180-hidden" id="step4-kineta-inne-wrap">
-                    <label class="karta-label" style="color: var(--accent2)"> Jakie (Inne) </label>
+                    <label class="karta-label karta-label--accent2"> Jakie (Inne) </label>
                     <input
                         type="text"
                         id="step4-kineta-inne"
@@ -327,9 +317,7 @@
                     />
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--success)">
-                        Wysokość spocznika
-                    </label>
+                    <label class="karta-label karta-label--success"> Wysokość spocznika </label>
                     <select id="step4-wysokosc-spocznika" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="1/2">1/2</option>
@@ -339,7 +327,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--danger)"> Usytuowanie </label>
+                    <label class="karta-label karta-label--danger"> Usytuowanie </label>
                     <select id="step4-usytuowanie" class="form-input form-input-wide">
                         <option value="Nie dotyczy">Nie dotyczy</option>
                         <option value="Linia dolna" selected>Linia dolna</option>
@@ -351,7 +339,7 @@
             <!-- Wiersz 8: Kaskada i Ślepa kineta -->
             <div class="flex-wrap-start p-6-12">
                 <div style="flex: 1; min-width: 140px">
-                    <label class="karta-label" style="color: var(--blue)"> Kaskada </label>
+                    <label class="karta-label karta-label--blue"> Kaskada </label>
                     <select id="step4-kaskada" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Tak">Tak</option>
@@ -359,7 +347,7 @@
                     </select>
                 </div>
                 <div style="flex: 2; min-width: 180px">
-                    <label class="karta-label" style="color: var(--blue)"> Uwagi (Kaskada) </label>
+                    <label class="karta-label karta-label--blue"> Uwagi (Kaskada) </label>
                     <input
                         type="text"
                         id="step4-kaskada-uwagi"
@@ -369,7 +357,7 @@
                     />
                 </div>
                 <div style="flex: 1; min-width: 140px">
-                    <label class="karta-label" style="color: var(--accent2)"> Ślepa kineta </label>
+                    <label class="karta-label karta-label--accent2"> Ślepa kineta </label>
                     <select id="step4-slepa-kineta" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Tak">Tak</option>
@@ -377,9 +365,7 @@
                     </select>
                 </div>
                 <div style="flex: 2; min-width: 180px">
-                    <label class="karta-label" style="color: var(--accent2)">
-                        Uwagi (Ślepa kineta)
-                    </label>
+                    <label class="karta-label karta-label--accent2"> Uwagi (Ślepa kineta) </label>
                     <input
                         type="text"
                         id="step4-slepa-kineta-uwagi"
@@ -393,9 +379,7 @@
             <!-- Wiersz 9: Redukcja kinety, Przejścia tulejowe, Przejścia szczelne -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--success)">
-                        Redukcja kinety
-                    </label>
+                    <label class="karta-label karta-label--success"> Redukcja kinety </label>
                     <select id="step4-redukcja-kinety" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Nie">Nie</option>
@@ -403,9 +387,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--blue-alt)">
-                        Przejścia tulejowe
-                    </label>
+                    <label class="karta-label karta-label--blue-alt"> Przejścia tulejowe </label>
                     <select id="step4-przejscia-tulejowe" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="Tak">Tak</option>
@@ -413,9 +395,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--accent2)">
-                        Przejścia szczelne
-                    </label>
+                    <label class="karta-label karta-label--accent2"> Przejścia szczelne </label>
                     <select id="step4-przejscia-szczelne" class="form-input form-input-wide">
                         <option value="Nie dotyczy" selected>Nie dotyczy</option>
                         <option value="W zakresie P.V.">W zakresie P.V.</option>
@@ -423,9 +403,7 @@
                     </select>
                 </div>
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--slate-300)">
-                        Przejścia zamówione
-                    </label>
+                    <label class="karta-label karta-label--slate"> Przejścia zamówione </label>
                     <select
                         id="step4-przejscia-zamowione"
                         class="form-input form-input-wide"
@@ -437,9 +415,7 @@
                     </select>
                 </div>
                 <div class="flex-2-240">
-                    <label class="karta-label" style="color: var(--slate-300)">
-                        Data zamówienia
-                    </label>
+                    <label class="karta-label karta-label--slate"> Data zamówienia </label>
                     <input
                         type="date"
                         id="step4-data-zamowienia"
@@ -451,9 +427,7 @@
             <!-- Wiersz 10: Właściwości betonu, Pozostałe właściwości -->
             <div class="flex-wrap-start p-6-12">
                 <div class="flex-1-180">
-                    <label class="karta-label" style="color: var(--slate-300)">
-                        Właściwości betonu
-                    </label>
+                    <label class="karta-label karta-label--slate"> Właściwości betonu </label>
                     <select id="step4-wlasciwosci-betonu" class="form-input form-input-wide">
                         <option value="C40/50" selected>C40/50</option>
                         <option value="C40/50 HSR">C40/50 HSR</option>
@@ -464,9 +438,7 @@
                     </select>
                 </div>
                 <div class="flex-2-240">
-                    <label class="karta-label" style="color: var(--slate-300)">
-                        Pozostałe właściwości
-                    </label>
+                    <label class="karta-label karta-label--slate"> Pozostałe właściwości </label>
                     <input
                         type="text"
                         id="step4-pozostale-wlasciwosci"
@@ -549,7 +521,7 @@
 
             <!-- Wiersz 12: Uwagi ogólne -->
             <div style="padding: 0.6rem 1.2rem">
-                <label class="karta-label" style="color: var(--slate-300)"> Uwagi </label>
+                <label class="karta-label karta-label--slate"> Uwagi </label>
                 <textarea
                     id="step4-uwagi-ogolne"
                     class="form-input"
