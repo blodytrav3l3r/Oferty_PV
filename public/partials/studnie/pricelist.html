@@ -5,7 +5,7 @@
             <i data-lucide="clipboard-list"></i> Cennik elementów studni
         </h2>
         <div class="toolbar-spacer"></div>
-        <div class="search-box" style="margin: 0; width: 100%; max-width: 350px">
+        <div class="search-box search-box--pricelist">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m21 21-4.35-4.35" />
@@ -15,7 +15,6 @@
                 id="studnie-pricelist-search"
                 placeholder="Szukaj..."
                 aria-label="Szukaj produktu w cenniku"
-                style="padding-left: 2.2rem !important"
                 title="Szukaj produktu w cenniku"
             />
         </div>
@@ -65,7 +64,7 @@
             <input
                 type="file"
                 id="import-studnie-excel"
-                style="display: none"
+                class="hidden"
                 accept=".xlsx,.xls"
                 onchange="importStudnieFromExcel(event)"
             />

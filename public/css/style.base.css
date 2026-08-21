@@ -1404,6 +1404,16 @@ input[type='number'] {
     padding-bottom: 0.35rem;
 }
 
+.search-box--pricelist {
+    margin: 0;
+    width: 100%;
+    max-width: 350px;
+}
+
+.search-box--pricelist input {
+    padding-left: 2.2rem !important;
+}
+
 /* Pozycje oferty */
 .offer-search-row {
     display: flex !important;
