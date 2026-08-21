@@ -9,7 +9,7 @@
 
 /* Pasek kroków kreatora równo z górą, pełna szerokość (jak w studniach) */
 body.rury-page > .main:has(#section-builder.active) {
-    padding-top: 0 !important;
+    padding-top: 0;
     padding-left: 0;
     padding-right: 0;
 }
@@ -590,7 +590,7 @@ body.rury-page > .main:has(#section-builder.active) {
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 2rem;
-    z-index: 9999;
+    z-index: var(--z-overlay);
     box-shadow: 0 -8px 30px var(--shadow-color);
 }
 

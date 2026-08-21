@@ -27,11 +27,11 @@ body.studnie-page > .main {
     min-height: 0;
     display: flex;
     flex-direction: column;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
+    width: 100%;
+    max-width: none;
+    margin: 0;
     /* nadpisuje style.base.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
-    padding: 0 !important;
+    padding: 0;
 }
 
 /* header full-width w widoku Studnie */
