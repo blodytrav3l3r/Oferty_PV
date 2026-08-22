@@ -48,13 +48,12 @@ function renderOrderModeBanner() {
 
     banner.innerHTML = `
         <div class="flex-gap-5-wrap2">
-            <span class="fs-4xl"><i data-lucide="package"></i></span>
             <div>
-                <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'};">
-                    TRYB ZAMÓWIENIA — ${escapeHtml(order.number || '')}
+                <div style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:${hasChanges ? 'var(--danger-hover)' : 'var(--success-hover)'}; display:flex; align-items:center; gap:0.4rem;">
+                    <i data-lucide="package" style="width:18px; height:18px;"></i> TRYB ZAMÓWIENIA — ${escapeHtml(order.number || '')}
                 </div>
                 <div class="fs-xs-muted">
-                    ${hasChanges ? `<i data-lucide="alert-triangle"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2"></i> Bez zmian od oryginału'}
+                    ${hasChanges ? `<i data-lucide="alert-triangle" style="width:14px; height:14px;"></i> ${changeCount} studni zmienionych od oryginału` : '<i data-lucide="check-circle-2" style="width:14px; height:14px;"></i> Bez zmian od oryginału'}
                     • Utworzono: ${new Date(order.createdAt).toLocaleString('pl-PL')}
                 </div>
             </div>
