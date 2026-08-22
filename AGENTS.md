@@ -156,7 +156,7 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 - **Klasy wspólne**: nie twórz nowych klas per moduł dla rzeczy wspólnych (nagłówek, logo, przyciski, formularze, tabele) — używaj klas z `style.base.css`/`style.utilities.css`. Nie nadpisuj klas bazowych w plikach modułowych — warianty przez modyfikatory `--<moduł>` (np. `.nav-tile--studnie`).
 - **Zakaz inline style**, gdy istnieje klasa/utility (`style.utilities.css`).
 - **A11y**: focus ringi widoczne (`:focus-visible`), `aria-label` na przyciskach ikonowych, kolor nie jest jedynym wskaźnikiem statusu (ikona + tooltip), `prefers-reduced-motion`, kontrast ≥ 4.5:1.
-- **Responsywność**: breakpointy 1400/1200/900/768/700/480; brak poziomego scrolla w 375/768/1024/1440.
+- **Responsywność**: breakpointy bazowe 1400/1200/1100/900/768/600/480 z lokalnymi odchyleniami modułowymi (860, 720, 700, 640) — nie ujednolicaj bez porównania screenshotów przed/po (regresja UI 1.18.0); brak poziomego scrolla w 375/768/1024/1440.
 
 ### Punkty Wejścia i SPA (Single Page Application)
 
