@@ -605,19 +605,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
               <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
                 <div>
                   <label class="fs-3xs-muted-block">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500"  onchange="window.syncEditState()">
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Kąt [°]</label>
-                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" style="padding:0.35rem; font-size: var(--fs-base); font-weight: var(--fw-extrabold); text-align:center;">
+                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();" style="padding:0.35rem; font-size: var(--fs-base); font-weight: var(--fw-extrabold); text-align:center;">
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}"  onchange="window.syncEditState()">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
                 <div>
                   <label class="fs-3xs-muted-block">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}"  onchange="window.syncEditState()">
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
               </div>
               
