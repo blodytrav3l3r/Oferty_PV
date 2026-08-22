@@ -2323,10 +2323,12 @@ select.form-input option {
     align-items: center;
     gap: 0.5rem;
     position: relative;
+    flex-wrap: wrap;
+    overflow-x: auto;
 }
 .wt-add-details {
     flex: 0 1 auto;
-    min-width: 180px;
+    min-width: 160px;
     white-space: nowrap;
     margin-left: 0.25rem;
     margin-right: 0.25rem;
@@ -2343,28 +2345,56 @@ select.form-input option {
 }
 .wt-add-cell {
     flex: 1 1 0;
-    min-width: 76px;
-    height: 54px;
+    min-width: 110px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
     align-items: center;
+    justify-content: flex-start;
+}
+.wt-add-cell .wt-add-header {
+    height: 18px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+.wt-add-cell .wt-add-body {
+    height: 36px;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 2px;
+    box-sizing: border-box;
 }
 .wt-add-cell .form-input {
     width: 100%;
     height: 34px;
-    margin-top: 8px;
     font-size: var(--fs-xl);
     font-weight: var(--fw-extrabold);
     text-align: center;
-    padding: 0.1rem 0.3rem;
-    background: rgba(var(--white-rgb), 0.05);
-    border: 1px solid rgba(var(--white-rgb), 0.1);
+    padding: 0.25rem 0.5rem;
+    background: rgba(var(--white-rgb), 0.07);
+    border: 1px solid rgba(var(--white-rgb), 0.15);
+    border-radius: var(--radius-xs);
     color: var(--text-primary);
     box-sizing: border-box;
+    transition: all 0.2s ease;
 }
 .wt-add-cell .form-input:focus {
-    background: rgba(var(--white-rgb), 0.1);
+    background: rgba(var(--slate-950-rgb), 0.9);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);
 }
 .wt-add-cell .form-input::placeholder {
     color: var(--text-muted);
@@ -2372,8 +2402,11 @@ select.form-input option {
 .wt-add-value {
     font-size: var(--fs-2xl);
     font-weight: var(--fw-extrabold);
-    margin-top: 8px;
     padding: 0.15rem 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 34px;
 }
 .wt-add-exec {
     color: var(--blue-alt);
@@ -2388,27 +2421,76 @@ select.form-input option {
 .wt-add-btn {
     flex-shrink: 0;
 }
-/* Pola edytowalne (QE) wypełniają całą szerokość kolumny — łatwiejsze kliknięcie i szersze pole wpisywania */
+/* Pola edytowalne (QE) */
 .prz-field,
 .prz-field-angle,
 .prz-field-height,
 .prz-field-rzedna,
+.prz-field-doplata {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 85px;
+    height: 32px;
+    padding: 0 0.4rem;
+    border-radius: var(--radius-xs);
+    text-align: center;
+    box-sizing: border-box;
+}
 
-/* Komórka "Spadek w kinecie / mufie" — brakujące klasy z transitionRenderer */
-.card-160-54 {
-    width: 160px;
-    flex-shrink: 0;
-    height: 54px;
+/* Informacja o wierceniu pod ceną */
+.prz-drill-info {
+    font-size: var(--fs-3xs);
+    color: var(--warn);
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 2px;
+    font-weight: var(--fw-bold);
+    letter-spacing: 0.2px;
+}
+
+/* Kolumny kafelków przejść — 100% spójne wypoziomowanie */
+.card-160-54,
+.prz-col {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
     align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    min-height: 54px;
+}
+.prz-col-header {
+    height: 18px;
+    min-height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
+.prz-col-body {
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 2px;
+    box-sizing: border-box;
 }
 .fs-2xl-bold-primary-shadow {
     font-size: var(--fs-2xl);
     font-weight: var(--fw-extrabold);
     color: var(--text-primary);
     text-shadow: 0 1px 2px rgba(var(--black-rgb), 0.3);
-    display: inline-block;
-    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }

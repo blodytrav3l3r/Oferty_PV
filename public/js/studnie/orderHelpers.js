@@ -4,7 +4,15 @@ async function loadOrdersStudnie() {
         const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        return json.data || [];
+        const orders = json.data || [];
+        if (typeof ensureElemIds === 'function') {
+            orders.forEach((order) => {
+                (order.wells || []).forEach((w) => {
+                    if (w && Array.isArray(w.config)) ensureElemIds(w.config);
+                });
+            });
+        }
+        return orders;
     } catch (err) {
         logger.error('orderManager', 'Błąd ładowania zamówień studni:', err);
         return [];
@@ -13,6 +21,13 @@ async function loadOrdersStudnie() {
 
 async function saveOrdersDataStudnie(data) {
     try {
+        if (typeof ensureElemIds === 'function' && Array.isArray(data)) {
+            data.forEach((order) => {
+                (order.wells || []).forEach((w) => {
+                    if (w && Array.isArray(w.config)) ensureElemIds(w.config);
+                });
+            });
+        }
         const res = await fetch('/api/orders-studnie', {
             method: 'PUT',
             headers: authHeaders(),

@@ -52,6 +52,13 @@ function normalizeOfferData(doc) {
         if (!doc.totalBrutto && doc.data.summary && doc.data.summary.totalBrutto)
             doc.totalBrutto = doc.data.summary.totalBrutto;
     }
+    if (typeof ensureElemIds === 'function' && Array.isArray(doc.wells)) {
+        for (const well of doc.wells) {
+            if (well && Array.isArray(well.config)) {
+                ensureElemIds(well.config);
+            }
+        }
+    }
     return doc;
 }
 

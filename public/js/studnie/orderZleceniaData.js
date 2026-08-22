@@ -8,7 +8,7 @@ async function loadProductionOrders() {
         if (resp.ok) {
             const json = await resp.json();
             productionOrders = json.data || [];
-            auditPzElementKeyMismatch();
+            // Audyt uruchamia appStudnie.js po załadowaniu wszystkich danych w tle (orders, offers, products)
         }
     } catch (e) {
         logger.error('orderManager', 'loadProductionOrders error:', e);
@@ -45,13 +45,63 @@ function _collectElemIdsByWell(wellList, target /* Map<wellId, Set<elemId>> */) 
     }
 }
 
+/**
+ * Samonaprawa (Auto-heal): wstrzykuje po.elementKey z PZ do well.config[po.elementIndex]._elemId,
+ * jeśli w edytorze/ofercie element pod tym samym indeksował miał przelosowany lub pusty _elemId.
+ */
+function _autoHealPzElementKeys(wellList, prodOrders) {
+    if (!Array.isArray(wellList) || !Array.isArray(prodOrders)) return;
+    const wellMap = new Map();
+    for (const w of wellList) {
+        if (w && w.id) wellMap.set(String(w.id), w);
+    }
+    for (const po of prodOrders) {
+        if (!po || !po.wellId || !po.elementKey || typeof po.elementIndex !== 'number') continue;
+        const well = wellMap.get(String(po.wellId));
+        if (well && Array.isArray(well.config) && well.config[po.elementIndex]) {
+            const item = well.config[po.elementIndex];
+            if (item && item._elemId !== po.elementKey) {
+                item._elemId = String(po.elementKey);
+            }
+        }
+    }
+}
+
 function auditPzElementKeyMismatch() {
     if (!Array.isArray(productionOrders) || productionOrders.length === 0) return;
     if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
 
-    // Mapy elemId: bieżący edytor + oferty źródłowe (offersStudnie)
+    // Najpierw wykonujemy auto-heal w RAM dla studni w edytorze, zamówieniach i ofertach źródłowych
+    _autoHealPzElementKeys(wells, productionOrders);
+    if (typeof ordersStudnie !== 'undefined' && Array.isArray(ordersStudnie)) {
+        for (const order of ordersStudnie) {
+            if (order && Array.isArray(order.wells)) {
+                _autoHealPzElementKeys(order.wells, productionOrders);
+            }
+        }
+    }
+    if (typeof offersStudnie !== 'undefined' && Array.isArray(offersStudnie)) {
+        for (const offer of offersStudnie) {
+            if (offer && Array.isArray(offer.wells)) {
+                _autoHealPzElementKeys(offer.wells, productionOrders);
+            }
+        }
+    }
+
+    // Mapy elemId: bieżący edytor + zamówienia źródłowe (ordersStudnie) + oferty źródłowe (offersStudnie)
     const editorIds = new Map();
     _collectElemIdsByWell(wells, editorIds);
+
+    const orderIdsByOrder = new Map(); // Map<orderId, Map<wellId, Set<elemId>>>
+    if (typeof ordersStudnie !== 'undefined' && Array.isArray(ordersStudnie)) {
+        for (const order of ordersStudnie) {
+            if (!order || !order.id) continue;
+            const perWell = new Map();
+            _collectElemIdsByWell(order.wells, perWell);
+            if (perWell.size > 0) orderIdsByOrder.set(String(order.id), perWell);
+        }
+    }
+
     const offerIdsByOffer = new Map(); // Map<offerId, Map<wellId, Set<elemId>>>
     if (typeof offersStudnie !== 'undefined' && Array.isArray(offersStudnie)) {
         for (const offer of offersStudnie) {
@@ -73,13 +123,24 @@ function auditPzElementKeyMismatch() {
             const ids = editorIds.get(String(po.wellId));
             return Boolean(ids && ids.has(String(po.elementKey)));
         })();
-        if (inEditor) continue; // dopasowane — nic nie logujemy
+        if (inEditor) continue; // dopasowane w edytorze — nic nie logujemy
+
+        // Czy wskazanie żyje w zamówieniu źródłowym PZ?
+        const orderPerWell = po.orderId ? orderIdsByOrder.get(String(po.orderId)) : null;
+        const inOrder = Boolean(
+            orderPerWell && orderPerWell.get(String(po.wellId))?.has(String(po.elementKey))
+        );
 
         // Fallback: czy wskazanie żyje w ofercie źródłowej PZ?
-        const offerPerWell = offerIdsByOffer.get(String(po.offerId));
+        const offerPerWell = po.offerId ? offerIdsByOffer.get(String(po.offerId)) : null;
         const inOffer = Boolean(
             offerPerWell && offerPerWell.get(String(po.wellId))?.has(String(po.elementKey))
         );
+
+        if (inOrder) {
+            // PZ jest prawidłowy w snapshotze zamówienia źródłowego
+            continue;
+        }
 
         if (_pzAuditSeen.has(po.id)) continue; // dedupe w obrębie sesji strony
         _pzAuditSeen.add(po.id);
@@ -90,6 +151,7 @@ function auditPzElementKeyMismatch() {
             elementKey: po.elementKey,
             productionOrderNumber: po.productionOrderNumber
         };
+
         if (inOffer) {
             infoCount++;
             logger.info(

@@ -127,35 +127,49 @@ function renderInlinePrzejsciaApp(containerId) {
                 <span class="wt-add-dn">&nbsp;${typeof selectedProduct.dn === 'string' && selectedProduct.dn.includes('/') ? selectedProduct.dn : 'DN' + selectedProduct.dn}</span>
             </div>
             <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center">Rzędna [m]</div>
-                <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001"
-                       onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
-                       value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}"
-                       placeholder="—">
+                <div class="wt-add-header">Rzędna [m]</div>
+                <div class="wt-add-body">
+                    <input type="text" inputmode="decimal" class="form-input" id="inl-rzedna-${containerId || 'main'}" step="0.001"
+                           onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')"
+                           value="${well && well.rzednaDna !== null && well.rzednaDna !== undefined ? parseFloat(well.rzednaDna).toFixed(3) : ''}"
+                           placeholder="—">
+                </div>
             </div>
             <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center">Kąt [°]</div>
-                <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
+                <div class="wt-add-header">Kąt [°]</div>
+                <div class="wt-add-body">
+                    <input type="number" class="form-input color-link" id="inl-angle-${containerId || 'main'}" value="0" min="0" max="360" onclick="this.select()" oninput="window.inlineUpdateAngles('${containerId || 'main'}')" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')">
+                </div>
+            </div>
+            <div class="wt-add-cell" title="Spadek w kinecie [%]">
+                <div class="wt-add-header">Spadek kin. [%]</div>
+                <div class="wt-add-body">
+                    <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                </div>
+            </div>
+            <div class="wt-add-cell" title="Spadek w mufie [%]">
+                <div class="wt-add-header">Spadek mufy [%]</div>
+                <div class="wt-add-body">
+                    <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
+                </div>
+            </div>
+            <div class="wt-add-cell" title="Kąt wykonania">
+                <div class="wt-add-header">Kąt wyk.</div>
+                <div class="wt-add-body">
+                    <div class="wt-add-value wt-add-exec" id="inl-exec-${containerId || 'main'}">360°</div>
+                </div>
+            </div>
+            <div class="wt-add-cell" title="Kąt wykonania w gonach">
+                <div class="wt-add-header">Gony</div>
+                <div class="wt-add-body">
+                    <div class="wt-add-value wt-add-gony" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
+                </div>
             </div>
             <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center">Spadek w kinecie [%]</div>
-                <input type="number" class="form-input" id="inl-spadek-kineta-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
-            </div>
-            <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center">Spadek w mufie [%]</div>
-                <input type="number" class="form-input" id="inl-spadek-mufa-${containerId || 'main'}" step="1" onclick="this.select()" onkeydown="if(event.key==='Enter') window.inlineFinish('${containerId || 'main'}', '${containerId || ''}')" placeholder="—">
-            </div>
-            <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center" title="Kąt wykonania">Kąt wyk.</div>
-                <div class="wt-add-value wt-add-exec" id="inl-exec-${containerId || 'main'}">360°</div>
-            </div>
-            <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center" title="Kąt wykonania w gonach">Gony</div>
-                <div class="wt-add-value wt-add-gony" id="inl-gony-${containerId || 'main'}">0.00<sup>g</sup></div>
-            </div>
-            <div class="wt-add-cell">
-                <div class="ui-text-muted-sm ellipsis-center">Cena</div>
-                <div class="wt-add-value wt-add-price">${fmtInt(selectedProduct.price)} <span class="fs-2xs">PLN</span></div>
+                <div class="wt-add-header">Cena</div>
+                <div class="wt-add-body">
+                    <div class="wt-add-value wt-add-price">${fmtInt(selectedProduct.price)} <span class="fs-2xs">PLN</span></div>
+                </div>
             </div>
             <button class="btn btn-primary wt-add-btn" data-action="inlineFinish" data-main="${containerId || 'main'}" data-container="${containerId || ''}"><i data-lucide="plus"></i> Dodaj</button>
         </div>
@@ -262,7 +276,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${val}" style="width:${Math.max(70, w)}px; box-sizing:border-box; background:var(--slate-950); color:var(--white); border:1px solid var(--blue); border-radius: var(--radius-2xs); font-size: var(--fs-3xl); font-weight: var(--fw-extrabold); text-align:center; padding:0; outline:none; box-shadow:0 0 5px rgba(var(--blue-rgb), 0.5);" value="" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:90px; height: 32px; margin-top: 2px; box-sizing: border-box; background: rgba(var(--slate-950-rgb), 0.95); color: var(--accent-text); border: 1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-xl); font-weight: var(--fw-extrabold); text-align: center; padding: 0 0.4rem; outline: none; box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
             const inp = element.querySelector('input');
             inp.focus();
         };

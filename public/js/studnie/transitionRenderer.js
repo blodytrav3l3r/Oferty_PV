@@ -148,14 +148,16 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
     let priceSubInfo = '';
     if (opts.drillingBasePrice > 0 && opts.drillingProd) {
-        priceSubInfo = `<div style="font-size: var(--fs-3xs); color:var(--warn); text-align:right; white-space:nowrap; line-height:1; position:absolute; bottom:-8px; right:6px;" title="${escapeHtmlAttr(opts.drillingProd.name)}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
+        priceSubInfo = `<div class="prz-drill-info" title="${escapeHtmlAttr(opts.drillingProd.name)}">+ Wiercenie: ${typeof fmt === 'function' ? fmt(opts.drillingBasePrice) : opts.drillingBasePrice} PLN</div>`;
     }
 
     const priceHTML = showPrice
-        ? `<div style="width:95px; flex-shrink:0; height:54px; position:relative; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end;">
-             <div class="ui-text-muted-sm th-r-nowrap" >Cena</div>
-             <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--success); font-family:'Inter'; margin-top:2px; padding:0.15rem 0.4rem;">${typeof fmt === 'function' ? fmt(price) : price} <span class="fs-2xs">PLN</span></div>
-             ${priceSubInfo}
+        ? `<div class="prz-col" style="width:115px;">
+             <div class="prz-col-header ellipsis-center">Cena</div>
+             <div class="prz-col-body" style="flex-direction:column; justify-content:center; align-items:center;">
+               <div style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--success); font-family:'Inter'; padding:0 0.4rem; line-height:1.1; text-align:center;">${typeof fmt === 'function' ? fmt(price) : price} <span class="fs-2xs">PLN</span></div>
+               ${priceSubInfo}
+             </div>
            </div>`
         : '';
 
@@ -164,9 +166,11 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
     const doplataColor =
         doplataVal > 0 ? 'var(--success)' : doplataVal < 0 ? 'var(--danger)' : 'var(--warn-hover)';
     const doplataHTML = showPrice
-        ? `<div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:flex-end; position:relative;" title="Pole nie rabatowane">
-             <div class="ui-text-muted-sm th-r-nowrap" >Dopłata</div>
-             <div data-qe-id="${escapeHtmlAttr(item.id)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="doplata" class="prz-field-doplata" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; margin-top:2px;">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span class="fs-2xs">PLN</span></div>
+        ? `<div class="prz-col" style="width:105px;" title="Pole nie rabatowane">
+             <div class="prz-col-header ellipsis-center">Dopłata</div>
+             <div class="prz-col-body" style="justify-content:center; align-items:center;">
+               <div data-qe-id="${escapeHtmlAttr(item.id)}" data-qe-field="doplata" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="doplata" class="prz-field-doplata" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${doplataColor}; font-family:'Inter'; text-align:center;">${typeof fmt === 'function' ? fmt(doplataVal) : doplataVal} <span class="fs-2xs">PLN</span></div>
+             </div>
            </div>`
         : '';
 
@@ -190,41 +194,55 @@ function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
 
       <!-- SZCZEGÓŁY -->
       <div style="flex:1; display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
-        <div style="display:flex; flex-direction:column; gap:0.1rem; flex:1; min-width:200px; white-space:normal; padding-right:0.5rem;">
-           <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
-             <span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" title="Kliknij, aby zmienić typ przejścia" class="prz-field-color" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary);">${escapeHtml(przName)}</span>
-             <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" title="Kliknij, aby zmienić średnicę" class="prz-field-dn" style="font-size: var(--fs-xl); color:var(--accent2-hover); font-weight: var(--fw-extrabold);">${dnLabel}</span>
+        <div style="display:flex; flex-direction:column; gap:0.1rem; flex:1; min-width:180px; white-space:nowrap; padding-right:0.5rem;">
+           <div style="display:flex; align-items:center; gap:0.5rem; white-space:nowrap;">
+             <span data-action="openChangePrzejscieTypePopup" data-i="${globalIndex}" title="Kliknij, aby zmienić typ przejścia" class="prz-field-color" style="font-size: var(--fs-xl); font-weight: var(--fw-extrabold); color:var(--text-primary); white-space:nowrap;">${escapeHtml(przName)}</span>
+             <span data-action="openChangePrzejscieDnPopup" data-i="${globalIndex}" title="Kliknij, aby zmienić średnicę" class="prz-field-dn" style="font-size: var(--fs-xl); color:var(--accent2-hover); font-weight: var(--fw-extrabold); white-space:nowrap;">${dnLabel}</span>
            </div>
         </div>
 
         <div style="display:flex; align-items:center; gap:0.5rem; margin-right: 0.2rem; white-space:nowrap; flex-shrink:0;">
-          <div class="card-160-54">
-            <div class="ui-text-muted-sm ellipsis-center"  title="${spadekKLabel} [mm]">${spadekKLabel} [%]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
+          <div class="prz-col" style="width:130px;">
+            <div class="prz-col-header" title="${spadekKLabel} [mm]">Spadek kin. [%]</div>
+            <div class="prz-col-body">
+              <div data-qe-id="${item.id}" data-qe-field="spadekKineta" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekKineta" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekKineta != null && item.spadekKineta !== '' && parseFloat(item.spadekKineta) !== 0 ? Math.round(parseFloat(item.spadekKineta)) + ' %' : '—'}</div>
+            </div>
           </div>
-          <div class="card-160-54">
-            <div class="ui-text-muted-sm ellipsis-center"  title="${spadekMLabel} [mm]">${spadekMLabel} [%]</div>
-            <div data-qe-id="${item.id}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
+          <div class="prz-col" style="width:130px;">
+            <div class="prz-col-header" title="${spadekMLabel} [mm]">Spadek mufy [%]</div>
+            <div class="prz-col-body">
+              <div data-qe-id="${item.id}" data-qe-field="spadekMufa" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="spadekMufa" title="Kliknij aby edytować" class="prz-field fs-2xl-bold-primary-shadow" >${item.spadekMufa != null && item.spadekMufa !== '' && parseFloat(item.spadekMufa) !== 0 ? Math.round(parseFloat(item.spadekMufa)) + ' %' : '—'}</div>
+            </div>
           </div>
-          <div style="width:90px; flex-shrink:0; position:relative; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-            <div class="ui-text-muted-sm ellipsis-center" >Kąt</div>
-            <div data-qe-id="${item.id}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.angle}°</div>
+          <div class="prz-col" style="width:105px;">
+            <div class="prz-col-header">Kąt</div>
+            <div class="prz-col-body">
+              <div data-qe-id="${item.id}" data-qe-field="angle" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="angle" title="Kliknij aby edytować wpisując liczbę" class="prz-field-angle" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:${angleColor}; text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.angle}°</div>
+            </div>
           </div>
-          <div style="width:95px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-            <div class="ui-text-muted-sm ellipsis-center"  title="Wysokość [mm]">Wysokość [mm]</div>
-            <div data-qe-id="${item.id}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${heightMm} mm</div>
+          <div class="prz-col" style="width:110px;">
+            <div class="prz-col-header" title="Wysokość [mm]">Wysokość [mm]</div>
+            <div class="prz-col-body">
+              <div data-qe-id="${item.id}" data-qe-field="heightMm" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="heightMm" title="Wysokość od dolnej krawędzi elementu" class="prz-field-height" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${heightMm} mm</div>
+            </div>
           </div>
-          <div style="width:105px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-            <div class="ui-text-muted-sm ellipsis-center"  title="Kąt wykonania">Kąt wykonania</div>
-            <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--blue-alt); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
+          <div class="prz-col" style="width:115px;">
+            <div class="prz-col-header" title="Kąt wykonania (360° - kąt)">Kąt wyk.</div>
+            <div class="prz-col-body">
+              <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--blue-alt); padding:0.15rem 0.4rem;" title="360° - kąt">${calcExecutionAngle(item.angle)}°</div>
+            </div>
           </div>
-          <div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-            <div class="ui-text-muted-sm ellipsis-center"  title="Kąt gony">Kąt gony</div>
-            <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--success-hover); display:inline-block; padding:0.15rem 0.4rem; margin-top:8px;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
+          <div class="prz-col" style="width:105px;">
+            <div class="prz-col-header" title="Kąt wykonania w gonach">Gony</div>
+            <div class="prz-col-body">
+              <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--success-hover); padding:0.15rem 0.4rem;" title="Kąt wykonania w gonach">${calcGonyAngle(item.angle)}g</div>
+            </div>
           </div>
-          <div style="width:90px; flex-shrink:0; height:54px; display:flex; flex-direction:column; justify-content:flex-start; align-items:center;">
-            <div class="ui-text-muted-sm ellipsis-center" >Rzędna</div>
-            <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3); display:inline-block; margin-top:8px;">${item.rzednaWlaczenia || '—'}</div>
+          <div class="prz-col" style="width:105px;">
+            <div class="prz-col-header">Rzędna</div>
+            <div class="prz-col-body">
+              <div data-qe-id="${item.id}" data-qe-field="rzednaWlaczenia" data-action="activateQuickEdit" data-i="${globalIndex}" data-field="rzednaWlaczenia" title="Kliknij aby edytować wpisując liczbę" class="prz-field-rzedna" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--text-primary); text-shadow:0 1px 2px rgba(var(--black-rgb), 0.3);">${item.rzednaWlaczenia || '—'}</div>
+            </div>
           </div>
           ${priceHTML}
           ${doplataHTML}

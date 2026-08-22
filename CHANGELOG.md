@@ -4,6 +4,16 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.18.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.1...v1.18.2) (2026-08-22)
+
+### Bug Fixes
+
+- **studnie:** brakujace tagi fabryk shared na studnie i rury ([323eac7](https://github.com/blodytrav3l3r/Oferty_PV/commit/323eac775aa83364d7874344a33d39b13e183b0f))
+- **studnie:** naprawa polamanych thead, z-index popupow i audytu pz ([ac83e7d](https://github.com/blodytrav3l3r/Oferty_PV/commit/ac83e7d70da059e0ffc5dcb1585754e05c065844))
+- **ui:** brakujace klasy th-r-90, th-r-120 i w-100 ([e563850](https://github.com/blodytrav3l3r/Oferty_PV/commit/e563850d317fdaec69659133704d66a64c9f234a))
+- **ui:** przeniesienie ikon obok napisow w banerach blokady i zamowienia ([7b3bc33](https://github.com/blodytrav3l3r/Oferty_PV/commit/7b3bc33456054178d18be8a10db378e701c167af))
+- **ui:** regula spa-iframe-visible dla routera klasowego ([8babdc6](https://github.com/blodytrav3l3r/Oferty_PV/commit/8babdc6e11f3e0dff0f22b2f7521c9f431c4f0e9))
+
 ### [1.18.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.0...v1.18.1) (2026-08-21)
 
 ### Bug Fixes

@@ -505,6 +505,33 @@
     max-width: 900px;
 }
 
+/* Baza klientów — tabela 6-kolumnowa: szeroki modal + przewijana lista */
+.modal--clients {
+    width: 95%;
+    max-width: 1200px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal--clients .clients-search {
+    margin-bottom: 0.8rem;
+}
+
+.modal--clients .modal-body {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.modal--clients table {
+    table-layout: fixed;
+}
+
+.modal--clients td,
+.modal--clients th {
+    overflow-wrap: anywhere;
+}
+
 /* Okno historii (audit) — spójne z resztą modalów */
 .audit-modal-inner {
     width: 95%;

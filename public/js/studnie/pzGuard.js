@@ -71,17 +71,27 @@ function hasPzForWell(wellId) {
  * @returns {object|undefined}
  */
 function findPzForElement(list, wellId, elemKey, elementIndex) {
-    return list.find((po) => {
-        if (String(po.wellId) !== String(wellId)) return false;
-        if (pzStableIdEnabled && elemKey && po.elementKey) {
-            return String(po.elementKey) === String(elemKey);
-        }
-        return (
-            typeof po.elementIndex === 'number' &&
-            typeof elementIndex === 'number' &&
-            po.elementIndex === elementIndex
+    if (!Array.isArray(list)) return undefined;
+    // 1. Ścisłe dopasowanie po elementKey
+    if (pzStableIdEnabled && elemKey) {
+        const matchedByKey = list.find(
+            (po) =>
+                String(po.wellId) === String(wellId) &&
+                po.elementKey &&
+                String(po.elementKey) === String(elemKey)
         );
-    });
+        if (matchedByKey) return matchedByKey;
+    }
+    // 2. Fallback po elementIndex dla legacy PZ lub w przypadku przelosowania _elemId w edytorze
+    if (typeof elementIndex === 'number') {
+        return list.find(
+            (po) =>
+                String(po.wellId) === String(wellId) &&
+                typeof po.elementIndex === 'number' &&
+                po.elementIndex === elementIndex
+        );
+    }
+    return undefined;
 }
 
 // Ochrona reindeksacji: blokada usunięcia elementu, gdy w studni jest PZ o elementIndex >= usuwany indeks

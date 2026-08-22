@@ -20,6 +20,37 @@
     let transitionToken = 0;
     let transitionTimer = null;
 
+    // ── Ochrona niezapisanych zmian przy zmianie modułu (popup aplikacji) ──
+    // Natywny beforeunload (shared/ui.js) chroni tylko F5/zamknięcie karty —
+    // nawigacja wewnętrzna SPA (hash) go nie wywołuje, stąd ten guard.
+    let _navForceOnce = false; // nawigacja potwierdzona przez użytkownika
+    let _navReverting = false; // cofanie hasha po anulowaniu — przepuść echo hashchange
+    let _lastCleanHash = null; // ostatni hash bez niezapisanych zmian
+
+    function _isDirtyNow() {
+        try {
+            return typeof window._isWizardDirty === 'function' && window._isWizardDirty() === true;
+        } catch (_e) {
+            return false;
+        }
+    }
+
+    async function _confirmLeaveModule(targetHash) {
+        const ok = await window.appConfirm(
+            'Masz niezapisane zmiany w kreatorze.\nOpuścić moduł bez zapisywania?',
+            {
+                title: 'Niezapisane zmiany',
+                type: 'warning',
+                okText: 'Opuść',
+                cancelText: 'Zostań'
+            }
+        );
+        if (!ok) return;
+        _navForceOnce = true;
+        if (window.location.hash === targetHash) navigate();
+        else window.location.hash = targetHash;
+    }
+
     // ── Konfiguracja ──
     const MODULES = {
         rury: {
@@ -292,6 +323,26 @@
             window.location.hash = '#/rury';
             return;
         }
+
+        // Guard: zmiana modułu przy niezapisanych zmianach → popup aplikacji (Z-30 SPA)
+        if (_navForceOnce) {
+            _navForceOnce = false; // nawigacja potwierdzona — przepuść
+        } else if (
+            !_navReverting &&
+            currentModule !== null &&
+            module !== currentModule &&
+            _isDirtyNow()
+        ) {
+            const targetHash = window.location.hash;
+            _navReverting = true;
+            window.location.hash = _lastCleanHash || '#/' + currentModule; // echo hashchange przepuści
+            await _confirmLeaveModule(targetHash);
+            return;
+        }
+        _navReverting = false;
+
+        // Zapamiętaj hash jako punkt powrotu dla przyszłego anulowania guarda
+        _lastCleanHash = window.location.hash;
 
         const transition = startViewTransition();
 
