@@ -56,7 +56,7 @@ function renderPrecoPriceList() {
         html += `<div class="fs-base-sec">Kinety — cena prosta / dod. wlot</div>`;
         html += `<button class="btn btn-secondary btn-sm fs-sm-025" data-action="addPrecoKinetaRow" data-dn="${dn}" ><i data-lucide="plus" class="icon-xxs" aria-hidden="true"></i> Dodaj Kinetę</button>`;
         html += `</div>`;
-        html += `<table class="w-100p-base-mb8"><th scope="col"ead><tr>
+        html += `<table class="w-100p-base-mb8"><thead><tr>
             <th scope="col" style="width:20%;">DN rury</th>
             <th scope="col" class="text-right w-35pct" >Cena prosta (PLN)</th>
             <th scope="col" class="text-right w-35pct" >Dod. wlot (PLN)</th>

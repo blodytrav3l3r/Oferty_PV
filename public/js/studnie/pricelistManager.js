@@ -104,7 +104,7 @@ function renderStudniePriceList() {
         ${isKinety ? `<button class="btn btn-secondary" disabled title="Generuje szablon 20 kinet (5 średnic × 4 wys.) z ceną domyślną 100 zł. Nie nadpisuje istniejących. Przycisk nieaktywny — kinety są dodawane automatycznie przy starcie. Użyj Resetu cennika by przywrócić domyślne." style="font-size: var(--fs-md); padding:0.4rem 0.8rem; opacity:0.5; cursor:not-allowed;"><i data-lucide="plug" aria-hidden="true"></i> Generuj puste Kinety</button>` : ''}
     </div>
     <table class="table-fixed">
-      <th scope="col"ead>
+      <thead>
         <tr>
           <th scope="col" class="w-10pct">Indeks</th>
           <th scope="col" style="width: ${isPrzejscia ? '18' : isKinety ? '12' : '15'}%;">${isPrzejscia ? 'Rodzaj przejścia' : isKinety ? 'Nazwa kinety' : 'Nazwa elementu'}</th>

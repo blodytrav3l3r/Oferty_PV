@@ -51,7 +51,7 @@ function _excelRenderTable(dn) {
         '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
 
     /* THEAD — sticky, trzy wiersze */
-    html += '<th scope="col"ead>';
+    html += '<thead>';
     let h1 = ''; // rząd 2: skrócone etykiety
     let h2 = ''; // rząd 3: szczegóły
     let h3 = ''; // rząd 1: średnica (DN)

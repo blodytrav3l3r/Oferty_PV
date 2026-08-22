@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof pzGuard.initPzStableIdFlag === 'function') {
             pzGuard.initPzStableIdFlag();
         }
-        loadProductionOrders();
+        // loadProductionOrders() woła appStudnie.js (loadDataInBackground, oba tryby) —
+        // tu duplikowało audyt pzAudit zanim wells[] zdążyły się wczytać (fałszywe mismatch).
     }, 500);
 });

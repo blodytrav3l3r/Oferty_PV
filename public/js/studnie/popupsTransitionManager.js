@@ -937,7 +937,7 @@ function showSkippedPopup(skippedDetails, targetCat) {
             Poniższe przejścia nie zostały zamienione — w kategorii <strong>${escapeHtml(targetCat)}</strong> nie istnieje produkt o podanej średnicy.
         </div>
         <table style="width:100%; font-size: var(--fs-md); border-collapse:collapse;">
-            <th scope="col"ead style="position:sticky; top:0; background:var(--slate-800);">
+            <thead style="position:sticky; top:0; background:var(--slate-800);">
                 <tr style="border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
                     <th scope="col" class="th-l-nowrap">Lp.</th>
                     <th scope="col" class="th-l-nowrap">Studnia</th>

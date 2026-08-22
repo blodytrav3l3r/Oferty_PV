@@ -57,7 +57,7 @@ function buildDiameterTableHtml(dn, wellsGroup, globalLpOffset, transportCostMap
     let html = `<div class="dn-section">
         <div class="dn-header">${dnLabel}</div>
         <table class="offer-table">
-            <th scope="col"ead>
+            <thead>
                 <tr>
                     <th scope="col" style="width:5%;">Lp.</th>
                     <th scope="col" style="width:30%;">Nr studni</th>

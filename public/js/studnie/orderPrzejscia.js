@@ -147,7 +147,7 @@ function renderPrzejsciaDetailsTable(existingData) {
 
     let html = `<div style="overflow-x:auto;">
         <table style="width:100%; border-collapse:collapse; font-size: var(--fs-base);">
-            <th scope="col"ead>
+            <thead>
                 <tr style="border-bottom:1px solid rgba(var(--accent2-rgb), 0.2);">
                     <th scope="col" class="th-l-nowrap">Rodzaj</th>
                     <th scope="col" class="th-c-accent">DN od</th>
