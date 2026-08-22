@@ -47,6 +47,9 @@ dłuższa przerwa jest akceptowalna.
 - Wykonane: `npm run test:quick` (1889 testów, w tym 22 nowe), `tsc --noEmit`,
   `npm run version:check` (EXIT=0), eslint, prettier --check, podglądy `--dry-run`
   dla windows/linux/docker oraz `npm run deploy:check` (health 200 na działającym serwerze).
+- Wykonane (2026-08-22, po restaucji UI w 1.18.1): ponowne `--dry-run` deploy + rollback
+  dla **windows/linux/docker × v1.18.1** — 6/6 PASS (plan kroków poprawny po restauracji
+  warstwy wizualnej; tag `v1.18.1` widoczny jako cel fetch/checkout).
 - Do zrobienia: pierwszy deploy + rollback na docelowym środowisku wg `docs/DEPLOY_UPDATE.md`.
 
 ## Kryteria zakończenia
