@@ -366,6 +366,19 @@
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: 11px;
 }
+.w-100 {
+    width: 100%;
+}
+.th-r-90 {
+    min-width: 90px;
+    text-align: right;
+    white-space: nowrap;
+}
+.th-r-120 {
+    min-width: 120px;
+    text-align: right;
+    white-space: nowrap;
+}
 .th-r-nowrap {
     overflow: hidden;
     text-overflow: ellipsis;
