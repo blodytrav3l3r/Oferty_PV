@@ -9,7 +9,7 @@
         "bundle:scripts": "node scripts/bundle-scripts.mjs",
         "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
-        "build": "tsc",
+        "build": "tsc && node scripts/copy-prisma-client.mjs",
         "build:watch": "tsc --watch",
         "test": "jest --coverage",
         "test:watch": "jest --watch",

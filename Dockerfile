@@ -26,7 +26,8 @@ RUN npm run build
 
 # Symlink: compiled code in dist/src/ imports '../generated/prisma' → dist/generated/prisma
 # Actual Prisma client is at /app/generated/prisma — symlink bridges the path
-RUN ln -sf /app/generated /app/dist/generated
+# rm -rf przed ln: build już kopiuje generated do dist/generated (copy-prisma-client.mjs), więc zwykły ln -sf stworzyłby /app/dist/generated/generated
+RUN rm -rf /app/dist/generated && ln -sf /app/generated /app/dist/generated
 
 # NIE uruchamiamy npm prune --production - devDeps (ts-node, Prisma CLI)
 # sa potrzebne w runtime do seedowania (prisma/seed.ts) i migrate deploy (docker-entrypoint.sh).
