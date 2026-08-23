@@ -178,37 +178,13 @@
         <div class="zlecenia-left">
             <svg
                 id="zlecenia-svg-preview"
-                style="
-                    width: 100%;
-                    flex: 1;
-                    background: var(--bg-primary);
-                    border: 1px solid var(--border-glass);
-                    border-radius: var(--radius-sm);
-                    min-height: 200px;
-                "
+                class="zl-svg-preview"
                 viewBox="0 0 340 500"
                 preserveAspectRatio="xMidYMid meet"
             ></svg>
-            <div
-                id="zlecenia-well-info-mini"
-                style="
-                    margin-top: 0.4rem;
-                    font-size: var(--fs-xs);
-                    color: var(--text-muted);
-                    text-align: center;
-                "
-            ></div>
+            <div id="zlecenia-well-info-mini" class="zl-well-info-mini"></div>
 
-            <div
-                class="gap-2"
-                style="
-                    margin-top: 1rem;
-                    flex: 1;
-                    overflow-y: auto;
-                    display: flex;
-                    flex-direction: column;
-                "
-            >
+            <div class="gap-2 zl-left-config">
                 <div class="card-title-sm" style="margin-bottom: 0.3rem; font-size: var(--fs-sm)">
                     <i data-lucide="cylinder"></i> Konfiguracja
                 </div>
@@ -222,73 +198,41 @@
 
         <!-- CENTER: Production Order Form -->
         <div class="zlecenia-center">
-            <div
-                style="
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    padding: 0.8rem 1.2rem;
-                    border-bottom: 1px solid var(--border-glass);
-                    background: var(--bg-secondary);
-                    z-index: 10;
-                    box-shadow: 0 2px 10px rgba(var(--black-rgb), 0.1);
-                    min-height: 57px;
-                "
-            >
+            <div class="zl-center-header">
                 <div class="card-title mb-0">
                     <i data-lucide="factory"></i> Zlecenie Produkcyjne
                 </div>
-                <div class="gap-2" style="display: flex">
+                <div class="gap-2 zl-header-actions">
                     <button
                         type="button"
                         id="zl-btn-generate-ordered"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--generate zlecenia-header-btn"
                         onclick="openBulkOrderSequencePopup()"
-                        style="
-                            background: rgba(var(--accent2-rgb), 0.15);
-                            border: 1px solid rgba(var(--accent2-rgb), 0.5);
-                            color: var(--accent2-hover);
-                        "
                     >
                         <i data-lucide="list-ordered"></i> Generuj w kolejności
                     </button>
                     <button
                         type="button"
                         id="zl-btn-accept"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--accept zlecenia-header-btn"
                         onclick="acceptProductionOrder()"
-                        style="
-                            background: rgba(var(--success-rgb), 0.15);
-                            border: 1px solid rgba(var(--success-rgb), 0.5);
-                            color: var(--success-hover);
-                        "
                     >
                         <i data-lucide="check-circle-2"></i> Zaakceptuj
                     </button>
                     <button
                         type="button"
                         id="zl-btn-revoke"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--revoke zlecenia-header-btn"
                         onclick="revokeProductionOrder()"
-                        style="
-                            display: none;
-                            background: rgba(var(--warn-rgb), 0.1);
-                            border: 1px solid rgba(var(--warn-rgb), 0.5);
-                            color: var(--warn-hover);
-                        "
+                        style="display: none"
                     >
                         <i data-lucide="unlock"></i> Cofnij
                     </button>
                     <button
                         type="button"
                         id="zl-btn-delete"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--delete zlecenia-header-btn"
                         onclick="deleteSelectedProductionOrder()"
-                        style="
-                            background: rgba(var(--danger-rgb), 0.1);
-                            border: 1px solid rgba(var(--danger-rgb), 0.5);
-                            color: var(--danger-hover);
-                        "
                     >
                         <i data-lucide="trash-2"></i> Usuń
                     </button>
@@ -303,26 +247,16 @@
                     <button
                         type="button"
                         id="zl-btn-print"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--print zlecenia-header-btn"
                         onclick="printZlecenie()"
-                        style="
-                            background: rgba(var(--accent-rgb), 0.1);
-                            border: 1px solid rgba(var(--accent-rgb), 0.5);
-                            color: var(--accent-text);
-                        "
                     >
                         <i data-lucide="printer"></i> Zlecenie
                     </button>
                     <button
                         type="button"
                         id="zl-btn-label"
-                        class="btn btn-sm zlecenia-header-btn"
+                        class="btn btn-sm zl-btn--label zlecenia-header-btn"
                         onclick="printEtykieta()"
-                        style="
-                            background: rgba(var(--blue-alt-rgb), 0.1);
-                            border: 1px solid rgba(var(--blue-alt-rgb), 0.5);
-                            color: var(--blue-alt);
-                        "
                     >
                         <i data-lucide="tag"></i> Etykieta
                     </button>
@@ -336,17 +270,7 @@
                     </button>
                 </div>
             </div>
-            <div
-                id="zlecenia-form-content"
-                class="gap-3"
-                style="
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 0.8rem 1.2rem;
-                    display: flex;
-                    flex-direction: column;
-                "
-            >
+            <div id="zlecenia-form-content" class="gap-3 zl-form-content">
                 <div style="text-align: center; padding: 3rem; color: var(--text-muted)">
                     Wybierz element z listy po prawej stronie
                 </div>
@@ -359,7 +283,7 @@
                 <div class="card-title-sm mb-0"><i data-lucide="clipboard-list"></i> Elementy</div>
                 <span id="zlecenia-el-count" class="badge" style="font-size: var(--fs-2xs)"></span>
             </div>
-            <div style="padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--border-glass)">
+            <div class="zl-search-wrap">
                 <input
                     type="text"
                     id="zlecenia-search"
@@ -369,16 +293,7 @@
                     style="width: 100%"
                 />
             </div>
-            <div
-                id="zlecenia-filter-bar"
-                class="gap-1"
-                style="
-                    display: flex;
-                    padding: 0.4rem 0.5rem;
-                    border-bottom: 1px solid var(--border-glass);
-                    background: var(--bg-secondary);
-                "
-            >
+            <div id="zlecenia-filter-bar" class="gap-1 zl-filter-bar">
                 <button
                     type="button"
                     class="zlecenia-filter-btn active"
