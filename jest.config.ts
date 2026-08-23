@@ -29,6 +29,11 @@ const config: Config.InitialOptions = {
             roots: ['<rootDir>/tests/frontend'],
             testMatch: ['**/*.test.ts'],
             moduleFileExtensions: ['ts', 'js', 'json']
+            // UWAGA: testy frontend ładują public/js przez vm.runInContext —
+            // kod evalmachine NIE jest instrumentowany (v8/istanbul), więc
+            // coverage % dla public/js jest niemierzalny. Testy działają jako
+            // guard behawioralny (18 tests). Realny % wymagałby babel-plugin-istanbul
+            // na public/js lub migracji ESM (osobny temat).
         }
     ]
 };
