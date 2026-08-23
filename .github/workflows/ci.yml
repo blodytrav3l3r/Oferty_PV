@@ -235,6 +235,9 @@ jobs:
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
 
+            - name: Seed bazy (produkty + preco)
+              run: npm run prisma:seed
+
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium
 
@@ -266,6 +269,9 @@ jobs:
 
             - name: Przygotuj testową bazę SQLite
               run: npx prisma db push --skip-generate
+
+            - name: Seed bazy (produkty + preco)
+              run: npm run prisma:seed
 
             - name: Setup Chromium (Playwright)
               run: npx playwright install --with-deps chromium

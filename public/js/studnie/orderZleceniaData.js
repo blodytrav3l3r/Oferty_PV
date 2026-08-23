@@ -381,6 +381,7 @@ async function revokeProductionOrder() {
 
 /* ===== Rejestracja globali ===== */
 window.loadProductionOrders = loadProductionOrders;
+window.auditPzElementKeyMismatch = auditPzElementKeyMismatch;
 window.deleteProductionOrder = deleteProductionOrder;
 window.acceptProductionOrder = acceptProductionOrder;
 window.revokeProductionOrder = revokeProductionOrder;

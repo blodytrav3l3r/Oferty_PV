@@ -270,7 +270,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                         : '';
                 step = '0.001';
             }
-            const w = element.offsetWidth;
+            void element.offsetWidth;
             const useCalc =
                 field === 'rzednaWlaczenia' || field === 'heightMm' || field === 'doplata';
             const inpType = useCalc ? 'text' : 'number';
