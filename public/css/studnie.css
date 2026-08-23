@@ -1961,6 +1961,12 @@ select.form-input option {
     padding: 0.3rem 0.45rem !important;
 }
 
+#excel-table-container input:focus-visible,
+#excel-table-container .excel-sel-wrap:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+}
+
 /* prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
     .fs-inputs-pane,

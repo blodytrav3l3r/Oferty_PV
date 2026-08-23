@@ -103,7 +103,7 @@ let _excelBatchKragTouched = false;
 
 let _excelUndoStack = [];
 let _excelRedoStack = [];
-const _EXCEL_UNDO_LIMIT = 20;
+const _EXCEL_UNDO_LIMIT = 50;
 /* eslint-enable prefer-const */
 
 /* ===== Column Visibility State ===== */

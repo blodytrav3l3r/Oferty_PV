@@ -232,8 +232,7 @@ function _excelMarkManual(well) {
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-            _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot();
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;

@@ -543,9 +543,13 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
     }
     let optHtml = '';
     for (let i = 0; i < opts.length; i++) {
+        const escVal =
+            typeof escapeHtmlAttr === 'function'
+                ? escapeHtmlAttr(opts[i][0] || '')
+                : String(opts[i][0] || '').replace(/"/g, '&quot;');
         optHtml +=
             '<option value="' +
-            (opts[i][0] || '').replace(/"/g, '&quot;') +
+            escVal +
             '"' +
             (opts[i][0] === curVal ? ' selected' : '') +
             '>' +
@@ -556,10 +560,14 @@ function _excelOverlaySelectHtml(opts, curVal, onChange, width, disabled) {
     const wrapperEvents = disabled
         ? ''
         : " onfocus=\"excelCellFocus(this);_excelSelWrapFocus(this)\" onblur=\"excelCellBlur(this)\" onkeydown=\"if(!event.ctrlKey&&(event.key==='Enter'||event.key===' ')){event.preventDefault();var s=this.querySelector('select');if(typeof s.showPicker==='function'){s.showPicker()}else{s.focus();s.click()}}\"";
+    const escOnChange =
+        typeof escapeHtmlAttr === 'function' && onChange
+            ? escapeHtmlAttr(onChange)
+            : (onChange || '').replace(/"/g, '&quot;');
     const selectEvents = disabled
         ? ' disabled'
         : ' tabindex="-1" onchange="' +
-          (onChange || '').replace(/"/g, '&quot;') +
+          escOnChange +
           ';this.nextElementSibling.textContent=this.options[this.selectedIndex].text"';
     return (
         '<div class="excel-sel-wrap' +

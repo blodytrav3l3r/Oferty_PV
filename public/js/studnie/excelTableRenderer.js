@@ -349,6 +349,17 @@ function _excelApplyStickyColumns() {
     if (!firstRow) return;
     const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
     if (stickyThs.length < 2) return;
+    // rAF retry gdy layout jeszcze 0 (fonty/webview nie przeliczone)
+    let zeroCount = 0;
+    for (let _z = 0; _z < stickyThs.length; _z++) {
+        if (/** @type {HTMLElement} */ (stickyThs[_z]).offsetWidth === 0) zeroCount++;
+    }
+    if (zeroCount > 0) {
+        requestAnimationFrame(function () {
+            _excelApplyStickyColumns();
+        });
+        return;
+    }
     let leftPos = 0;
     const offsets = [0];
     for (let i = 0; i < stickyThs.length - 1; i++) {

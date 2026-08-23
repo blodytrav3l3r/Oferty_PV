@@ -84,6 +84,9 @@ function _excelUnregisterExcelListeners() {
     if (/** @type {any} */ (overlay)._resizeHandler) {
         window.removeEventListener('resize', /** @type {any} */ (overlay)._resizeHandler);
     }
+    if (/** @type {any} */ (overlay)._excelKeyHandler) {
+        overlay.removeEventListener('keydown', /** @type {any} */ (overlay)._excelKeyHandler);
+    }
     const _container = document.getElementById('excel-table-container');
     if (_container && /** @type {any} */ (_container)._arrowHandler) {
         document.removeEventListener(
@@ -167,93 +170,20 @@ function openExcelTableModal() {
         existing.remove();
     }
 
-    const overlay = document.createElement('div');
-    overlay.id = 'excel-table-overlay';
-    overlay.setAttribute('role', 'dialog');
-    overlay.setAttribute('aria-modal', 'true');
-    overlay.setAttribute('aria-label', 'Tabela konfiguracyjna studni');
-
-    // Pozycjonuj overlay między górnym banerem a dolnym paskiem, przylegający do lewego panelu
-    _excelPositionOverlay(overlay);
-
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeExcelTableModal();
-    });
-    overlay.addEventListener('keydown', (e) => {
-        /* Ctrl+S = zapisz i zamknij (jak przycisk "Gotowe") — blokuje też
-           przeglądarkowe "Zapisz stronę" (dashboard.js:97 nie robi preventDefault
-           przy focusie w inpucie). */
-        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof excelSaveAll === 'function') excelSaveAll();
-            return;
-        }
-        /* Ctrl+R: w kontenerze robi to _excelHandleKeydown (fill right);
-           poza kontenerem (wyszukiwarka) blokujemy refresh przeglądarki. */
-        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
-            if (!e.defaultPrevented) e.preventDefault();
-            return;
-        }
-        if (e.key !== 'Escape') return;
-        const t = /** @type {EventTarget | null} */ (e.target);
-        /* Esc 1×: wyjście z edycji komórki (anuluj, nie zamykaj modala) */
-        if (
-            t instanceof HTMLElement &&
-            t.closest('#excel-table-container') &&
-            (t.tagName === 'INPUT' || t.tagName === 'SELECT')
-        ) {
-            e.preventDefault();
-            e.stopPropagation();
-            /** @type {HTMLElement} */ (t).blur();
-            _excelResetLayoutDependentState();
-            return;
-        }
-        /* Esc 1×: wyczyść wyszukiwarkę gdy aktywny filtr */
-        const si = document.getElementById('excel-search-input');
-        if (t === si && si && si.value) {
-            e.preventDefault();
-            e.stopPropagation();
-            if (typeof excelClearSearch === 'function') excelClearSearch();
-            return;
-        }
-        /* Esc 1×: usuń zaznaczenie komórek/kolumn */
-        if (_excelSelectedCells.length > 0 || _excelSelectedCols.length > 0) {
-            e.preventDefault();
-            e.stopPropagation();
-            _excelResetLayoutDependentState();
-            return;
-        }
-        closeExcelTableModal();
-    });
-
-    /* Nasłuchuj resize — odśwież pozycjonowanie */
-    const _resizeHandler = function () {
-        _excelPositionOverlay(overlay);
-    };
-    window.addEventListener('resize', _resizeHandler);
-    /* Zapisz handler do usunięcia przy close */
-    /** @type {any} */ (overlay)._resizeHandler = _resizeHandler;
-
     const diagramPanel = document.querySelector('.well-diagram-panel');
     const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
-    const modal = document.createElement('div');
-    if (isDiagramVisible) {
-        modal.style.cssText =
-            'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
-    } else {
-        modal.style.cssText =
-            'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
-    }
-
-    modal.innerHTML = `
+    const modalStyle = isDiagramVisible
+        ? 'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);'
+        : 'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
+    const excelInnerHtml = `
+        <div id="excel-modal-inner" style="${modalStyle}">
         <style>
             #excel-table-overlay .excel-toolbar-btn { flex:0 1 auto; min-width:8.5rem; justify-content:center; white-space:nowrap; text-align:center; }
             #excel-table-overlay .excel-toolbar-btn--danger { min-width:0; }
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
-            #excel-table-overlay ::-webkit-scrollbar-track { background:rgba(var(--white-rgb), 0.05); }
-            #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(var(--white-rgb), 0.3); border-radius: var(--radius-2xs); }
-            #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:rgba(var(--white-rgb), 0.3); }
+            #excel-table-overlay ::-webkit-scrollbar-track { background:var(--scrollbar-track); }
+            #excel-table-overlay ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius: var(--radius-2xs); }
+            #excel-table-overlay ::-webkit-scrollbar-thumb:hover { background:var(--scrollbar-thumb-hover); }
             #excel-table-overlay ::-webkit-scrollbar-corner { background:transparent; }
             #excel-table-container td:focus-within { box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.3) !important; }
             #excel-table-container td.excel-col-selected { outline:2px solid rgba(var(--accent-rgb), 0.3); outline-offset:-2px; }
@@ -271,14 +201,14 @@ function openExcelTableModal() {
             #excel-table-container .excel-sel-wrap.disabled { opacity:.35;pointer-events:none; }
             #excel-table-container thead { position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_THEAD};background:var(--slate-950);isolation:isolate; }
         </style>
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
-            <div style="display:flex;align-items:center;gap:0.6rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;padding:0.45rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
+            <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
                 <i data-lucide="table" class="icon-sm" style="color:var(--success);"></i>
                 <span style="font-size: var(--fs-base);font-weight: var(--fw-bold);color:var(--slate-200);letter-spacing:0.3px;">Tabela konfiguracyjna</span>
                 <span id="excel-well-count" style="font-size: var(--fs-2xs);color:var(--slate-500);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
-                <span id="excel-selection-summary" style="display:none;font-size: var(--fs-2xs);color:var(--accent-text);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
+                <span id="excel-selection-summary" style="display:none;font-size: var(--fs-2xs);color:var(--accent-text);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
             </div>
-            <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:65%;">
+            <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;flex:1 1 320px;min-width:280px;">
 
                 <div style="position:relative;display:flex;align-items:center;flex:0 0 auto;">
                     <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius: var(--radius-2xs);padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size: var(--fs-2xs);color:var(--slate-200);outline:none;width:220px;" />
@@ -295,14 +225,61 @@ function openExcelTableModal() {
         </div>
         <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;"></div>
         <div id="excel-table-container" style="flex:1;overflow:auto;background:var(--slate-950);"></div>
+        </div>
     `;
-
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-    if (typeof trapFocus === 'function') {
-        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
-        trapFocus(overlay);
-    }
+    // SSoT: Excel używa modalCore.js — overlay tworzony przez showModal, pozycjonowanie dalej via LAYERS
+    const overlay = window.showModal({
+        id: 'excel-table-overlay',
+        html: excelInnerHtml,
+        title: 'Tabela konfiguracyjna studni',
+        titleId: 'excel-modal-title',
+        onClose: function () {
+            // Staged Esc: sprawdź aktywny element przed zamknięciem
+            const ae = document.activeElement;
+            if (
+                ae instanceof HTMLElement &&
+                ae.closest('#excel-table-container') &&
+                (ae.tagName === 'INPUT' || ae.tagName === 'SELECT')
+            ) {
+                ae.blur();
+                _excelResetLayoutDependentState();
+                return false;
+            }
+            const si = document.getElementById('excel-search-input');
+            if (ae === si && si && si.value) {
+                if (typeof excelClearSearch === 'function') excelClearSearch();
+                return false;
+            }
+            if (_excelSelectedCells.length > 0 || _excelSelectedCols.length > 0) {
+                _excelResetLayoutDependentState();
+                return false;
+            }
+            closeExcelTableModal();
+            return false;
+        }
+    });
+    overlay.setAttribute('aria-label', 'Tabela konfiguracyjna studni');
+    _excelPositionOverlay(overlay);
+    // Ctrl+S / Ctrl+R — showModal obsługuje tylko Escape; te skróty dokładamy
+    const _excelOverlayKeyHandler = function (e) {
+        if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof excelSaveAll === 'function') excelSaveAll();
+            return;
+        }
+        if ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R')) {
+            if (!e.defaultPrevented) e.preventDefault();
+        }
+    };
+    overlay.addEventListener('keydown', _excelOverlayKeyHandler);
+    /** @type {any} */ (overlay)._excelKeyHandler = _excelOverlayKeyHandler;
+    /* Nasłuchuj resize — odśwież pozycjonowanie */
+    const _resizeHandler = function () {
+        _excelPositionOverlay(overlay);
+    };
+    window.addEventListener('resize', _resizeHandler);
+    /** @type {any} */ (overlay)._resizeHandler = _resizeHandler;
 
     _excelRegisterExcelListeners();
 
@@ -353,6 +330,7 @@ let _excelOpenSnapshot = null;
 
 /* Fizyczne zamknięcie overlayu — wydzielone, by excelSaveAll mógł je wywołać bez rekurencji */
 function _excelCloseOverlay() {
+    if (typeof _excelCancelPasteBatch === 'function') _excelCancelPasteBatch();
     _excelStopPolling();
     _excelUnregisterExcelListeners();
     _excelResetLayoutDependentState();
@@ -361,6 +339,8 @@ function _excelCloseOverlay() {
     if (overlay) {
         if (typeof untrapFocus === 'function') untrapFocus(overlay);
         overlay.remove();
+        // modalCore showModal ustawia body overflow hidden — przywróć gdy brak innych overlayów
+        if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
     }
     _excelDirty = false;
     _excelClosing = false;

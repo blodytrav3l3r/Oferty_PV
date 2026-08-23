@@ -273,14 +273,14 @@ function _excelMarkAsManual(wIdx) {
 /* ===== UNDO / REDO (simple snapshot stack) ===== */
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
-    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    _excelUndoStack.push(structuredClone(wells));
     if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
     _excelRedoStack = [];
 }
 
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
-    _excelRedoStack.push(JSON.parse(JSON.stringify(wells)));
+    _excelRedoStack.push(structuredClone(wells));
     const snap = _excelUndoStack.pop();
     const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);
@@ -293,7 +293,7 @@ function _excelUndo() {
 
 function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
-    _excelUndoStack.push(JSON.parse(JSON.stringify(wells)));
+    _excelUndoStack.push(structuredClone(wells));
     const snap = _excelRedoStack.pop();
     const locked = _excelSnapshotLockedWells();
     wells.splice(0, wells.length, ...snap);

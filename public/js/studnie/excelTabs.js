@@ -124,6 +124,8 @@ function excelCreateFromEmpty() {
         if (rzw !== null) well.rzednaWlazu = rzw;
         if (rzd !== null) well.rzednaDna = rzd;
 
+        _excelSaveUndoSnapshot();
+        _excelMarkDirty();
         wells.push(well);
         _excelAutoSetWlaz(well);
         _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();

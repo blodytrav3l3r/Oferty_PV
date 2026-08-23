@@ -1,5 +1,6 @@
 // @ts-check
 /* ===== EXCEL COPY / PASTE (Excel-like) ===== */
+let _excelPasteRafId = null;
 
 function _excelGetPasteColIdx(row) {
     if (!row) return 2;
@@ -328,6 +329,16 @@ function _excelHidePasteProgress() {
     if (el) el.remove();
 }
 
+function _excelCancelPasteBatch() {
+    if (_excelPasteRafId !== null) {
+        cancelAnimationFrame(_excelPasteRafId);
+        _excelPasteRafId = null;
+    }
+    _excelHidePasteProgress();
+    _excelPasteInProgress = false;
+    _excelBatchKragTouched = false;
+}
+
 /**
  * Wkleja dane wsadowo w chunkach przez requestAnimationFrame.
  * Nie blokuje UI.
@@ -347,6 +358,10 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
     }
     _excelShowPasteProgress(0, total);
     function tick() {
+        if (!document.getElementById('excel-table-overlay')) {
+            _excelCancelPasteBatch();
+            return;
+        }
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
             const line = lines[idx];
@@ -362,13 +377,14 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
         }
         _excelShowPasteProgress(idx, total);
         if (idx < total) {
-            requestAnimationFrame(tick);
+            _excelPasteRafId = requestAnimationFrame(tick);
         } else {
+            _excelPasteRafId = null;
             _excelHidePasteProgress();
             if (doneCallback) doneCallback();
         }
     }
-    requestAnimationFrame(tick);
+    _excelPasteRafId = requestAnimationFrame(tick);
 }
 
 /** Synchroniczne wklejenie (do 99 wierszy).
