@@ -25,7 +25,7 @@ const config: Config.InitialOptions = {
         {
             displayName: 'frontend',
             preset: 'ts-jest',
-            testEnvironment: 'node',
+            testEnvironment: 'jsdom',
             roots: ['<rootDir>/tests/frontend'],
             testMatch: ['**/*.test.ts'],
             moduleFileExtensions: ['ts', 'js', 'json']
