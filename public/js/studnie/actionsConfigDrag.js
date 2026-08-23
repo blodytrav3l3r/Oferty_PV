@@ -37,6 +37,8 @@ function moveWellComponent(index, direction) {
     updateSummary();
     updateHeightIndicator();
 }
+// Alias dla modalu Zlecenia Produkcyjne (data-zl-idx) — ta sama logika, odświeża też listę zleceń
+window.moveZleceniaComponent = moveWellComponent;
 
 let draggedCfgIndex = null;
 
@@ -49,7 +51,9 @@ window.handleCfgDragStart = function (e) {
         );
         return;
     }
-    draggedCfgIndex = parseInt(e.currentTarget.getAttribute('data-cfg-idx'));
+    const attr =
+        e.currentTarget.getAttribute('data-cfg-idx') || e.currentTarget.getAttribute('data-zl-idx');
+    draggedCfgIndex = parseInt(attr);
     e.dataTransfer.effectAllowed = 'move';
     e.currentTarget.style.opacity = '0.4';
 
@@ -58,6 +62,7 @@ window.handleCfgDragStart = function (e) {
         window.requestAnimationFrame(() => renderWellDiagram());
     }
 };
+window.handleZlCfgDragStart = window.handleCfgDragStart;
 
 window.handleCfgDragOver = function (e) {
     if (draggedCfgIndex === null && !window.currentDraggedPlaceholderId) return;
@@ -68,9 +73,11 @@ window.handleCfgDragOver = function (e) {
     if (draggedCfgIndex !== null) {
         if (tile) {
             tile.style.borderTop = '2px solid var(--accent)';
-            const dropIndex = parseInt(tile.getAttribute('data-cfg-idx'));
+            const dropIndex = parseInt(
+                tile.getAttribute('data-cfg-idx') || tile.getAttribute('data-zl-idx')
+            );
             const well = getCurrentWell();
-            if (well && draggedCfgIndex !== dropIndex) {
+            if (well && !isNaN(dropIndex) && draggedCfgIndex !== dropIndex) {
                 const draggedItem = well.config.splice(draggedCfgIndex, 1)[0];
                 well.config.splice(dropIndex, 0, draggedItem);
                 draggedCfgIndex = dropIndex;
@@ -224,6 +231,10 @@ window.handleCfgDragEnd = function (e) {
         });
     }
 };
+
+window.handleZlCfgDragOver = window.handleCfgDragOver;
+window.handleZlCfgDrop = window.handleCfgDrop;
+window.handleZlCfgDragEnd = window.handleCfgDragEnd;
 
 /* ===== Rejestracja globali ===== */
 window.moveWellComponent = moveWellComponent;

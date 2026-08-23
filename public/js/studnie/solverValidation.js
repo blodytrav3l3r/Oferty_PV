@@ -209,6 +209,10 @@ function recalculateWellErrors(well) {
 /* ===== RENDER BANNERA BŁĘDÓW BIECĄCEJ STUDNI ===== */
 function renderWellConfigErrors(well) {
     if (well) recalculateWellErrors(well);
+    // Zlecenie Produkcyjne ma własny banner w populateZleceniaForm — odśwież go live
+    // przed early return (errContainer może nie istnieć w niektórych widokach)
+    if (typeof window.refreshZleceniaModalIfActive === 'function')
+        window.refreshZleceniaModalIfActive();
     const errContainer = document.getElementById('well-config-errors-container');
     if (!errContainer) return;
     const liveErrors = (well && well.configErrors) || [];
