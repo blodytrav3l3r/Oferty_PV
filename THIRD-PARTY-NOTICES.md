@@ -16,7 +16,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 | ----------------------- | --------------: |
 | MIT                     |             965 |
 | ISC                     |             100 |
-| Apache-2.0              |              62 |
+| Apache-2.0              |              63 |
 | BSD-3-Clause            |              20 |
 | BSD-2-Clause            |              20 |
 | BlueOak-1.0.0           |              16 |
@@ -1106,7 +1106,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - yargs-parser@21.1.1
 - yargs-parser@22.0.0
 
-### Apache-2.0 (62)
+### Apache-2.0 (63)
 
 - @apm-js-collab/code-transformer@0.15.0
 - @apm-js-collab/tracing-hooks@0.10.0
@@ -1128,6 +1128,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @opentelemetry/resources@2.8.0
 - @opentelemetry/sdk-trace-base@2.8.0
 - @opentelemetry/semantic-conventions@1.41.1
+- @playwright/test@1.62.1
 - @prisma/client@6.19.3
 - @prisma/config@6.19.3
 - @prisma/debug@6.19.3

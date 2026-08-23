@@ -241,6 +241,38 @@ jobs:
             - name: Run axe a11y tests
               run: npm run test:axe
 
+    e2e-smoke:
+        name: E2E — smoke flow oferty (blokujący)
+        runs-on: ubuntu-latest
+        needs: test
+        env:
+            DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
+            TEST_ADMIN_PASSWORD: test-admin-pass
+            DEFAULT_ADMIN_PASSWORD: test-admin-pass
+        steps:
+            - uses: actions/checkout@v7
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v7
+              with:
+                  node-version: '22'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Generate Prisma client
+              run: npx prisma generate
+
+            - name: Przygotuj testową bazę SQLite
+              run: npx prisma db push --skip-generate
+
+            - name: Setup Chromium (Playwright)
+              run: npx playwright install --with-deps chromium
+
+            - name: Run smoke E2E (playwright.config webServer)
+              run: npx playwright test tests/playwright/smokeOfferFlow.spec.ts --project=chromium
+
     version-check:
         name: Version check (spójność wersji)
         runs-on: ubuntu-latest
