@@ -167,6 +167,95 @@ function _excelBulkSetMode(enabled) {
     if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
+/* ===== BULK AUTO-DOBÓR ZAZNACZONYCH ===== */
+async function _excelBulkRunAutoSelect() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+    const sel = [];
+    for (let i = 0; i < wells.length; i++) {
+        if (_excelRowSelectStates[i]) sel.push(i);
+    }
+    if (sel.length === 0) {
+        showToast('Zaznacz co najmniej jedną studnię (checkbox)', 'warning');
+        return;
+    }
+    if (typeof autoSelectComponents !== 'function') {
+        showToast('Auto-dobór nie dostępny', 'error');
+        return;
+    }
+    const locked = sel.filter(function (i) {
+        return _excelIsWellLocked(i);
+    });
+    const manual = sel.filter(function (i) {
+        return wells[i] && wells[i].autoSelect === false;
+    });
+    const missing = sel.filter(function (i) {
+        const w = wells[i];
+        return !w || w.rzednaWlazu == null || w.rzednaDna == null;
+    });
+    const editable = sel.filter(function (i) {
+        const w = wells[i];
+        return (
+            w &&
+            !_excelIsWellLocked(i) &&
+            w.autoSelect !== false &&
+            w.rzednaWlazu != null &&
+            w.rzednaDna != null
+        );
+    });
+    if (locked.length > 0) showToast('Pominięto ' + locked.length + ' zablokowanych', 'warning');
+    if (manual.length > 0) showToast('Pominięto ' + manual.length + ' w trybie Manual', 'warning');
+    if (missing.length > 0) showToast('Pominięto ' + missing.length + ' bez rzędnych', 'warning');
+    if (editable.length === 0) {
+        showToast('Brak studni do przeliczenia', 'info');
+        return;
+    }
+    const btn = document.getElementById('excel-bulk-recalc');
+    if (btn) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+    }
+    const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+    let ok = 0;
+    let fail = 0;
+    try {
+        _excelSaveUndoSnapshot();
+        _excelMarkDirty();
+        // ponytail: sekwencyjny via currentWellIndex, per-well lock gdy throughput
+        for (let k = 0; k < editable.length; k++) {
+            const wIdx = editable[k];
+            const well = wells[wIdx];
+            try {
+                currentWellIndex = wIdx;
+                well.configSource = 'AUTO';
+                well.config = [];
+                await autoSelectComponents(true);
+                _excelClearResCache(well);
+                ok++;
+            } catch (e) {
+                fail++;
+                if (typeof window.logger !== 'undefined')
+                    window.logger.warn('bulk auto fail wIdx=' + wIdx, e);
+            }
+        }
+    } finally {
+        currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
+        _excelRenderTable(_excelActiveTab);
+        _excelUpdateHeaderProdCodes();
+        _excelDebouncedRefresh();
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+        if (typeof window.renderWellsList === 'function') window.renderWellsList();
+        if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = '';
+        }
+        let msg = 'Auto-dobór: ' + ok + ' przeliczono';
+        if (fail > 0) msg += ', ' + fail + ' błędów';
+        const skipped = sel.length - editable.length;
+        if (skipped > 0) msg += ' (pominięto ' + skipped + ')';
+        showToast(msg, fail > 0 ? 'warning' : 'success');
+    }
+}
+
 /* ===== COPY / PASTE (Excel-like) ===== */
 
 function _excelMarkAsManual(wIdx) {

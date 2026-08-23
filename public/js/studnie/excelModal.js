@@ -286,6 +286,7 @@ function openExcelTableModal() {
                 </div>
                 <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
                 <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
+                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
                 <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
                 <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
                 <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn excel-toolbar-btn--success" title="Zapisz wszystkie zmiany i zamknij"><i data-lucide="check" class="icon-xs" aria-hidden="true"></i>Gotowe (Zapisz)</button>
