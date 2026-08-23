@@ -198,18 +198,23 @@ function excelOpenWellParams(wIdx) {
     modal.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
             <span style="font-size: var(--fs-lg);font-weight: var(--fw-bold);color:var(--text-primary);">Parametry tej studni Excel</span>
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:var(--slate-950);color:var(--text-muted);border:none;cursor:pointer;font-size: var(--fs-3xl);">✕</button>
+            <button type="button" onclick="document.getElementById('excel-params-popup').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         <div style="flex:1;overflow-y:auto;padding:0.8rem;">
             ${bodyHtml}
         </div>
         <div style="display:flex;gap:0.5rem;justify-content:flex-end;padding:0.5rem 0.8rem;background:var(--slate-950);border-top:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
-            <button onclick="document.getElementById('excel-params-popup').remove()" style="background:rgba(var(--white-rgb), 0.05);color:var(--text-secondary);border:1px solid rgba(var(--white-rgb), 0.1);padding:0.4rem 1.2rem;border-radius: var(--radius-sm);font-size: var(--fs-md);cursor:pointer;font-weight: var(--fw-semibold);">Zamknij</button>
+            <button type="button" onclick="document.getElementById('excel-params-popup').remove()" class="excel-neutral-btn">Zamknij</button>
         </div>
     `;
 
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        try {
+            lucide.createIcons({ root: overlay });
+        } catch (_e) {}
+    }
 }
 
 function excelRefreshParamsPopup(wIdx) {

@@ -2529,3 +2529,323 @@ select.form-input option {
     align-items: center;
     justify-content: center;
 }
+
+/* ═══ Excel: przyciski i ikony (toolbar, wiersze, nagłówki, popupy) ═══ */
+
+/* Toolbar modala — baza + warianty kolorystyczne (zamiast inline styles) */
+#excel-table-overlay .excel-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    background: rgba(var(--accent-rgb), 0.1);
+    color: var(--accent-text);
+    border: 1px solid rgba(var(--accent-rgb), 0.15);
+    border-radius: var(--radius-2xs);
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-semibold);
+    cursor: pointer;
+    transition:
+        background-color 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+}
+#excel-table-overlay .excel-toolbar-btn:hover {
+    background: rgba(var(--accent-rgb), 0.2);
+    border-color: rgba(var(--accent-rgb), 0.4);
+}
+#excel-table-overlay .excel-toolbar-btn--success {
+    background: rgba(var(--success-rgb), 0.15);
+    color: var(--success-hover);
+    border-color: rgba(var(--success-rgb), 0.3);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    padding: 0.3rem 0.9rem;
+}
+#excel-table-overlay .excel-toolbar-btn--success:hover {
+    background: rgba(var(--success-rgb), 0.25);
+    border-color: rgba(var(--success-rgb), 0.5);
+}
+#excel-table-overlay .excel-toolbar-btn--danger {
+    background: rgba(var(--danger-rgb), 0.1);
+    color: var(--danger-hover);
+    border-color: rgba(var(--danger-rgb), 0.2);
+    padding: 0.3rem 0.5rem;
+}
+#excel-table-overlay .excel-toolbar-btn--danger:hover {
+    background: rgba(var(--danger-rgb), 0.2);
+    border-color: rgba(var(--danger-rgb), 0.45);
+}
+
+/* Fokus — wspólny focus ring dla przycisków Excela */
+#excel-table-overlay button:focus-visible,
+.excel-action-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Przyciski ikonowe (✕ → Lucide "x", +/- kolumn przejść) */
+.excel-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    min-height: 24px;
+    padding: 2px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-2xs);
+    color: var(--slate-400);
+    cursor: pointer;
+    line-height: 1;
+    transition:
+        color 0.12s,
+        background-color 0.12s;
+}
+.excel-icon-btn:hover {
+    color: var(--slate-200);
+    background: rgba(var(--white-rgb), 0.08);
+}
+.excel-icon-btn.is-plus {
+    color: var(--slate-300);
+}
+.excel-icon-btn.is-plus:hover {
+    color: var(--slate-100);
+}
+.excel-icon-btn.is-danger,
+.excel-icon-btn.is-danger:hover {
+    color: var(--danger-hover);
+}
+.excel-icon-btn.is-danger:hover {
+    background: rgba(var(--danger-rgb), 0.12);
+}
+/* Przyciski +/- kolumn przejścia w nagłówku — pełna szerokość th, wyraźna ikona */
+#excel-table-container .excel-col-toggle {
+    width: 100%;
+    min-height: 24px;
+    padding: 0.15rem 0;
+}
+#excel-table-container .excel-col-toggle .icon-sm {
+    width: 14px;
+    height: 14px;
+}
+#excel-table-container .excel-col-toggle.is-danger:hover {
+    background: rgba(var(--danger-rgb), 0.18);
+}
+
+/* Akcje wiersza (Parametry / Duplikuj / Usuń) — definicja dla istniejących klas */
+#excel-table-container .excel-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid rgba(var(--white-rgb), 0.08);
+    border-radius: var(--radius-2xs);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition:
+        color 0.12s,
+        background-color 0.12s,
+        border-color 0.12s;
+}
+#excel-table-container .excel-action-btn:hover {
+    background: rgba(var(--white-rgb), 0.06);
+    border-color: rgba(var(--white-rgb), 0.18);
+    color: var(--text-primary);
+}
+#excel-table-container .excel-action-btn.is-accent {
+    color: var(--accent-hover);
+}
+#excel-table-container .excel-action-btn.is-accent:hover {
+    background: rgba(var(--accent-rgb), 0.12);
+    border-color: rgba(var(--accent-rgb), 0.35);
+}
+#excel-table-container .excel-action-btn.is-blue {
+    color: var(--blue-hover);
+}
+#excel-table-container .excel-action-btn.is-blue:hover {
+    background: rgba(var(--blue-rgb), 0.12);
+    border-color: rgba(var(--blue-rgb), 0.35);
+}
+#excel-table-container .excel-action-btn.is-danger {
+    color: var(--danger-hover);
+}
+#excel-table-container .excel-action-btn.is-danger:hover {
+    background: rgba(var(--danger-rgb), 0.12);
+    border-color: rgba(var(--danger-rgb), 0.35);
+}
+
+/* Bulk Auto/Manual w nagłówku H3 */
+#excel-table-container .excel-bulk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 20px;
+    padding: 0;
+    box-sizing: border-box;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-semibold);
+    line-height: 1.1;
+    text-align: center;
+    border-radius: var(--radius-2xs);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition:
+        background-color 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+}
+#excel-table-container .excel-bulk-btn--auto {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--accent-text-light);
+}
+#excel-table-container .excel-bulk-btn--auto:hover {
+    background: rgba(var(--accent-rgb), 0.28);
+}
+#excel-table-container .excel-bulk-btn--manual {
+    background: rgba(var(--warn-rgb), 0.15);
+    border-color: rgba(var(--warn-rgb), 0.3);
+    color: var(--warn-hover);
+}
+#excel-table-container .excel-bulk-btn--manual:hover {
+    background: rgba(var(--warn-rgb), 0.25);
+}
+
+/* Tryb Auto/Manual w wierszu (napis + play) */
+#excel-table-container .excel-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    padding: 0 7px;
+    font-size: var(--fs-2xs);
+    font-weight: var(--fw-bold);
+    line-height: 1;
+    border-radius: var(--radius-2xs);
+    cursor: pointer;
+    border: 1px solid transparent;
+    vertical-align: middle;
+    transition:
+        background-color 0.12s,
+        border-color 0.12s,
+        color 0.12s;
+}
+#excel-table-container .excel-mode-btn.is-auto {
+    background: rgba(var(--accent-rgb), 0.15);
+    border-color: rgba(var(--accent-rgb), 0.35);
+    color: var(--accent-text-light);
+}
+#excel-table-container .excel-mode-btn.is-auto:hover {
+    background: rgba(var(--accent-rgb), 0.28);
+}
+#excel-table-container .excel-mode-btn.is-manual {
+    background: rgba(var(--warn-rgb), 0.12);
+    border-color: rgba(var(--warn-rgb), 0.3);
+    color: var(--warn-hover);
+}
+#excel-table-container .excel-mode-btn.is-manual:hover {
+    background: rgba(var(--warn-rgb), 0.22);
+}
+#excel-table-container .excel-run-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    margin-left: 2px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-2xs);
+    cursor: pointer;
+    vertical-align: middle;
+    transition:
+        background-color 0.12s,
+        opacity 0.12s;
+}
+#excel-table-container .excel-run-btn.is-auto {
+    color: var(--success-hover);
+}
+#excel-table-container .excel-run-btn.is-auto:hover {
+    background: rgba(var(--success-rgb), 0.12);
+}
+#excel-table-container .excel-run-btn.is-manual {
+    display: none;
+}
+#excel-table-container .excel-run-btn:disabled {
+    opacity: 0.45;
+}
+
+/* Popup "Wybór kolumn": przywróć domyślne (pełna szerokość, danger) */
+.excel-reset-btn {
+    width: 100%;
+    background: rgba(var(--danger-rgb), 0.1);
+    color: var(--danger-hover);
+    border: 1px solid rgba(var(--danger-rgb), 0.2);
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-2xs);
+    font-size: var(--fs-2xs);
+    cursor: pointer;
+    font-weight: var(--fw-medium);
+    transition:
+        background-color 0.12s,
+        border-color 0.12s;
+}
+.excel-reset-btn:hover {
+    background: rgba(var(--danger-rgb), 0.2);
+    border-color: rgba(var(--danger-rgb), 0.4);
+}
+
+/* Neutralny przycisk tekstowy popupów Excela (stopka "Zamknij") */
+.excel-neutral-btn {
+    background: rgba(var(--white-rgb), 0.05);
+    color: var(--text-secondary);
+    border: 1px solid rgba(var(--white-rgb), 0.1);
+    padding: 0.4rem 1.2rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--fs-md);
+    cursor: pointer;
+    font-weight: var(--fw-semibold);
+    transition:
+        background-color 0.12s,
+        color 0.12s;
+}
+.excel-neutral-btn:hover {
+    background: rgba(var(--white-rgb), 0.1);
+    color: var(--text-primary);
+}
+
+/* Popup "Wybór kolumn": wiersz-checkbox kolumny */
+.excel-colcheck {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.15rem 0.2rem;
+    font-size: var(--fs-2xs);
+    color: var(--slate-400);
+    cursor: pointer;
+    white-space: nowrap;
+    border-radius: var(--radius-2xs);
+    transition: background-color 0.12s;
+}
+.excel-colcheck:hover {
+    background: rgba(var(--white-rgb), 0.05);
+}
+
+/* Menu kontekstowe kolumny (prawy klik na nagłówku) */
+.excel-ctx-item {
+    padding: 0.35rem 0.6rem;
+    font-size: var(--fs-xs);
+    white-space: nowrap;
+    border-radius: var(--radius-2xs);
+    background: transparent;
+    transition: background-color 0.12s;
+}
+.excel-ctx-item:not(.is-disabled):hover {
+    background: rgba(var(--white-rgb), 0.08);
+}

@@ -442,10 +442,20 @@ function _excelUpdateHeaderProdCodes() {
             }
         }
     }
-    const well =
-        (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0
+    /* currentWellIndex tylko gdy studnia należy do aktywnej zakładki DN —
+       po przełączeniu zakładki indeks bywa nieaktualny (stare DN → złe kody/ceny) */
+    const curWell =
+        typeof currentWellIndex !== 'undefined' &&
+        currentWellIndex >= 0 &&
+        typeof wells !== 'undefined' &&
+        wells[currentWellIndex] &&
+        typeof _excelActiveTab !== 'undefined' &&
+        _excelActiveTab &&
+        typeof _excelWellMatchesTab === 'function' &&
+        _excelWellMatchesTab(wells[currentWellIndex], _excelActiveTab)
             ? wells[currentWellIndex]
-            : null) || tabWell;
+            : null;
+    const well = curWell || tabWell;
     codes.forEach(function (span, idx) {
         const isPerProduct = span.getAttribute('data-per-product') === '1';
         const ct = span.getAttribute('data-ct');
@@ -608,8 +618,9 @@ function excelToggleFullscreen() {
     _excelFullscreen = !_excelFullscreen;
     const overlay = document.getElementById('excel-table-overlay');
     _excelPositionOverlay(overlay);
-    const btn = document.getElementById('excel-fs-btn');
-    if (btn) btn.textContent = _excelFullscreen ? 'Okno' : 'Pełny';
+    /* Zmieniaj tylko labelkę — btn.textContent skasowałby ikonę Lucide */
+    const lbl = document.getElementById('excel-fs-btn-label');
+    if (lbl) lbl.textContent = _excelFullscreen ? 'Okno' : 'Pełny';
 }
 
 /* ===== DIRTY FLAG ===== */

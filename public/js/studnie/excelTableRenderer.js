@@ -29,13 +29,7 @@ function _excelRenderTable(dn) {
         }
     }
 
-    /* Wyczyść puste przejścia we wszystkich studniach */
-    if (typeof wells !== 'undefined') {
-        for (let _rwi = 0; _rwi < wells.length; _rwi++) {
-            _excelCleanEmptyPrzejscia(wells[_rwi]);
-        }
-    }
-
+    // ponytail: nie czyść przejść w renderze — kasowało placeholdery po "+" i psuło minus (pop na wypełnionym)
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     const maxTr = _excelMaxTransitions[dn] || 1;
     let refWell = tabWells[0];
@@ -71,11 +65,11 @@ function _excelRenderTable(dn) {
     h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
     h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" class="cursor-accent-check" /></th>`;
     /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
-    const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" onclick="_excelBulkSetMode(true)" style="background:rgba(var(--accent-rgb), 0.15);border:1px solid rgba(var(--accent-rgb), 0.3);color:var(--accent-text-light);padding:2px 0px;border-radius:2px;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Auto</button>`;
-    const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" onclick="_excelBulkSetMode(false)" style="background:rgba(var(--warn-rgb), 0.15);border:1px solid rgba(var(--warn-rgb), 0.3);color:var(--warn-hover);padding:2px 0px;border-radius:2px;cursor:pointer;font-size: var(--fs-xs);font-weight: var(--fw-semibold);width:46px;box-sizing:border-box;text-align:center;line-height:1.1;height:18px;">Manual</button>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:54px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" class="excel-bulk-btn excel-bulk-btn--auto" onclick="_excelBulkSetMode(true)" title="Ustaw wszystkie widoczne studnie na AUTO">Auto</button>`;
+    const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" class="excel-bulk-btn excel-bulk-btn--manual" onclick="_excelBulkSetMode(false)" title="Ustaw wszystkie widoczne studnie na MANUAL">Manual</button>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
     /* === KOLUMNA 2: Lp. — sticky left:0 === */
     h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">Lp.</th>`;
     h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">·</th>`;
@@ -109,10 +103,10 @@ function _excelRenderTable(dn) {
     }
 
     // Przyciski +/-
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelRemoveTransitionColumn()" title="Usuń ostatnią kolumnę przejścia" style="background:var(--slate-950);color:var(--danger);border:none;cursor:pointer;font-size: var(--fs-xl);font-weight: var(--fw-bold);padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--danger-hover)'" onmouseleave="this.style.color='var(--danger)'">−</button></th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button type="button" onclick="excelRemoveTransitionColumn()" class="excel-icon-btn is-danger excel-col-toggle" title="Usuń ostatnią kolumnę przejścia" aria-label="Usuń ostatnią kolumnę przejścia"><i data-lucide="minus" class="icon-sm" aria-hidden="true"></i></button></th>`;
     h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button onclick="excelAddTransitionColumn()" title="Dodaj kolumnę przejścia" style="background:var(--slate-950);color:var(--slate-500);border:none;cursor:pointer;font-size: var(--fs-xl);font-weight: var(--fw-bold);padding:0.15rem 0;width:100%;transition:color 0.1s;" onmouseenter="this.style.color='var(--slate-400)'" onmouseleave="this.style.color='var(--slate-500)'">+</button></th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;"><button type="button" onclick="excelAddTransitionColumn()" class="excel-icon-btn excel-col-toggle is-plus" title="Dodaj kolumnę przejścia" aria-label="Dodaj kolumnę przejścia"><i data-lucide="plus" class="icon-sm" aria-hidden="true"></i></button></th>`;
     h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
     h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-500);min-width:24px;text-align:center;padding:0;">·</th>`;
 
@@ -157,12 +151,14 @@ function _excelRenderTable(dn) {
             /* Kolumna per-produkt — zawsze pokazuje swój stały kod */
             colCodeId = c.productId;
         } else {
-            /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni */
+            /* Kolumna grupowana — dynamicznie z configu zaznaczonej studni.
+               currentWellIndex tylko gdy studnia z aktywnej zakładki (dn). */
             let dynProdCode = null;
             if (
                 typeof currentWellIndex !== 'undefined' &&
                 currentWellIndex >= 0 &&
-                wells[currentWellIndex]
+                wells[currentWellIndex] &&
+                _excelWellMatchesTab(wells[currentWellIndex], dn)
             ) {
                 dynProdCode = _excelGetWellProdCode(
                     wells[currentWellIndex],
@@ -299,7 +295,6 @@ function _excelRenderTable(dn) {
     }
     _excelInitColumnResize();
     _excelInitColumnSelect();
-    _excelUpdateHeaderProdCodes();
     _excelApplyStickyColumns();
     /* Wylacz pola edycyjne w wierszach zablokowanych (PZ / zamówienie) */
     _excelApplyLockedRows();
@@ -335,6 +330,9 @@ function _excelRenderTable(dn) {
             }
         }
     }
+    /* Po restore fokusa — currentWellIndex jest już ustawiony, kody h3 muszą
+       być liczone z właściwej studni (bug: update przed restore = złe kody) */
+    _excelUpdateHeaderProdCodes();
     /* Ponownie zastosuj filtr wyszukiwarki po re-renderze */
     const searchInput = document.getElementById('excel-search-input');
     if (searchInput && searchInput.value) excelFilterWells(searchInput.value);

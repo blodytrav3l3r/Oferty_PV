@@ -384,6 +384,61 @@
             '<path d="M22 21v-2a4 4 0 0 0-3-3.87"/>',
             '<path d="M16 3.13a4 4 0 0 1 0 7.75"/>'
         ],
+        'arrow-right-left': [
+            '<path d="m16 3 4 4-4 4"/>',
+            '<path d="M20 7H4"/>',
+            '<path d="m8 21-4-4 4-4"/>',
+            '<path d="M4 17h16"/>'
+        ],
+        'circle-plus': [
+            '<circle cx="12" cy="12" r="10"/>',
+            '<path d="M8 12h8"/>',
+            '<path d="M12 8v8"/>'
+        ],
+        'plus-circle': [
+            '<circle cx="12" cy="12" r="10"/>',
+            '<path d="M8 12h8"/>',
+            '<path d="M12 8v8"/>'
+        ],
+        keyboard: [
+            '<path d="M10 8h.01"/>',
+            '<path d="M12 12h.01"/>',
+            '<path d="M14 8h.01"/>',
+            '<path d="M16 12h.01"/>',
+            '<path d="M18 8h.01"/>',
+            '<path d="M6 8h.01"/>',
+            '<path d="M7 16h10"/>',
+            '<path d="M8 12h.01"/>',
+            '<rect width="20" height="16" x="2" y="4" rx="2"/>'
+        ],
+        'maximize-2': [
+            '<path d="M15 3h6v6"/>',
+            '<path d="m21 3-7 7"/>',
+            '<path d="m3 21 7-7"/>',
+            '<path d="M9 21H3v-6"/>'
+        ],
+        'minimize-2': [
+            '<path d="m14 10 7-7"/>',
+            '<path d="M20 10h-6V4"/>',
+            '<path d="m3 21 7-7"/>',
+            '<path d="M4 14h6v6"/>'
+        ],
+        minus: ['<path d="M5 12h14"/>'],
+        play: [
+            '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>'
+        ],
+        table: [
+            '<path d="M12 3v18"/>',
+            '<rect width="18" height="18" x="3" y="3" rx="2"/>',
+            '<path d="M3 9h18"/>',
+            '<path d="M3 15h18"/>'
+        ],
+        'table-properties': [
+            '<path d="M15 3v18"/>',
+            '<rect width="18" height="18" x="3" y="3" rx="2"/>',
+            '<path d="M21 9H3"/>',
+            '<path d="M21 15H3"/>'
+        ],
         x: ['<path d="M18 6 6 18"/>', '<path d="m6 6 12 12"/>'],
         'x-circle': [
             '<circle cx="12" cy="12" r="10"/>',

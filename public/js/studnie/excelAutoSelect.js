@@ -38,7 +38,7 @@ function _excelToggleWellAutoMode(wIdx) {
     const runBtn = document.getElementById('excel-run-auto-' + wIdx);
     if (!btn) return;
     const nowAuto = wells[wIdx].autoSelect !== false;
-    btn.textContent = nowAuto ? 'AUTO' : 'MANUAL';
+    btn.textContent = nowAuto ? 'Auto' : 'Manual';
     btn.classList.toggle('is-auto', nowAuto);
     btn.classList.toggle('is-manual', !nowAuto);
     btn.title = nowAuto ? 'Auto (klik = przelacz na Manual)' : 'Manual (klik = przelacz na Auto)';

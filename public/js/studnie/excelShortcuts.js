@@ -87,7 +87,7 @@ function openExcelShortcutsPopup() {
     const html =
         '<div class="modal" style="max-width:min(96vw,560px);max-height:80vh;overflow:auto;">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
-        '<button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-close-4xl-line1">✕</button></div>' +
+        '<button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size: var(--fs-base);">' +
         '<thead><tr><th scope="col" class="th-l-pad25-bb">Skrót</th>' +
         '<th scope="col" class="th-l-pad25-bb">Opis</th></tr></thead>' +
@@ -97,10 +97,16 @@ function openExcelShortcutsPopup() {
         '<p style="margin:0;padding:0.5rem;font-size: var(--fs-xs);color:var(--slate-500);">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
         '</div>';
 
-    window.showModal({
+    const overlay = window.showModal({
         id: 'excel-shortcuts-modal',
         html: html
     });
+    /* Ikony Lucide w treści modala (showModal nie wywołuje createIcons) */
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        try {
+            lucide.createIcons({ root: overlay });
+        } catch (_e) {}
+    }
 }
 
 window.openExcelShortcutsPopup = openExcelShortcutsPopup;

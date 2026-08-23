@@ -249,6 +249,7 @@ function openExcelTableModal() {
     modal.innerHTML = `
         <style>
             #excel-table-overlay .excel-toolbar-btn { flex:0 1 auto; min-width:8.5rem; justify-content:center; white-space:nowrap; text-align:center; }
+            #excel-table-overlay .excel-toolbar-btn--danger { min-width:0; }
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
             #excel-table-overlay ::-webkit-scrollbar-track { background:rgba(var(--white-rgb), 0.05); }
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:rgba(var(--white-rgb), 0.3); border-radius: var(--radius-2xs); }
@@ -272,7 +273,7 @@ function openExcelTableModal() {
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;padding:0.45rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;">
-                <i data-lucide="table" style="width:16px;height:16px;color:var(--success);"></i>
+                <i data-lucide="table" class="icon-sm" style="color:var(--success);"></i>
                 <span style="font-size: var(--fs-base);font-weight: var(--fw-bold);color:var(--slate-200);letter-spacing:0.3px;">Tabela konfiguracyjna</span>
                 <span id="excel-well-count" style="font-size: var(--fs-2xs);color:var(--slate-500);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
                 <span id="excel-selection-summary" style="display:none;font-size: var(--fs-2xs);color:var(--accent-text);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
@@ -281,14 +282,14 @@ function openExcelTableModal() {
 
                 <div style="position:relative;display:flex;align-items:center;">
                     <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius: var(--radius-2xs);padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size: var(--fs-2xs);color:var(--slate-200);outline:none;width:220px;" />
-                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" style="display:none;position:absolute;right:4px;background:none;border:none;color:var(--slate-400);cursor:pointer;font-size: var(--fs-sm);padding:2px;line-height:1;">✕</button>
+                    <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn" style="display:none;position:absolute;right:2px;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
-                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny" style="background:rgba(var(--accent2-rgb), 0.1);color:var(--accent2-hover);border:1px solid rgba(var(--accent2-rgb), 0.15);padding:0.25rem 0.5rem;border-radius: var(--radius-2xs);font-size: var(--fs-2xs);font-weight: var(--fw-semibold);cursor:pointer;display:flex;align-items:center;">Kolumny</button>
-                <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius: var(--radius-2xs);font-size: var(--fs-2xs);font-weight: var(--fw-semibold);cursor:pointer;display:flex;align-items:center;">Przejścia</button>
-                <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius: var(--radius-2xs);font-size: var(--fs-2xs);font-weight: var(--fw-semibold);cursor:pointer;display:flex;align-items:center;">Skróty</button>
-                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno" style="background:rgba(var(--accent-rgb), 0.1);color:var(--accent-text);border:1px solid rgba(var(--accent-rgb), 0.15);padding:0.25rem 0.5rem;border-radius: var(--radius-2xs);font-size: var(--fs-2xs);font-weight: var(--fw-semibold);cursor:pointer;">Pełny</button>
-                <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn" title="Zapisz wszystkie zmiany i zamknij" style="background:rgba(var(--success-rgb), 0.15);color:var(--success-hover);border:1px solid rgba(var(--success-rgb), 0.3);padding:0.3rem 0.9rem;border-radius: var(--radius-2xs);font-size: var(--fs-xs);font-weight: var(--fw-bold);cursor:pointer;">Gotowe (Zapisz)</button>
-                <button onclick="closeExcelTableModal()" title="Zamknij bez zapisywania" style="background:rgba(var(--danger-rgb), 0.1);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.3rem 0.7rem;border-radius: var(--radius-2xs);font-size: var(--fs-xs);font-weight: var(--fw-semibold);cursor:pointer;">✕</button>
+                <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
+                <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
+                <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
+                <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
+                <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn excel-toolbar-btn--success" title="Zapisz wszystkie zmiany i zamknij"><i data-lucide="check" class="icon-xs" aria-hidden="true"></i>Gotowe (Zapisz)</button>
+                <button onclick="closeExcelTableModal()" class="excel-toolbar-btn excel-toolbar-btn--danger" title="Zamknij bez zapisywania" aria-label="Zamknij bez zapisywania"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
             </div>
         </div>
         <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;"></div>

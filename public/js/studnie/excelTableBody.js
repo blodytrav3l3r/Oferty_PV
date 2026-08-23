@@ -155,13 +155,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '"' +
             cbChecked +
             ' tabindex="-1"  /></td>';
-        /* AUTO/MANUAL */
+        /* AUTO/MANUAL — pill z napisem + przycisk uruchomienia auto-doboru */
         const isAuto = window.isWellAuto(well);
         html +=
             '<td class="excel-td" style="' +
             'background:' +
             stickyBg +
-            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" id="excel-mode-btn-' +
+            ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
             '" data-widx="' +
             wIdx +
@@ -169,8 +169,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             ')" class="excel-mode-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
+            '" title="' +
+            (isAuto ? 'Auto (klik = przełącz na Manual)' : 'Manual (klik = przełącz na Auto)') +
             '">' +
-            (isAuto ? 'AUTO' : 'MANUAL') +
+            (isAuto ? 'Auto' : 'Manual') +
             '</button><button type="button" id="excel-run-auto-' +
             wIdx +
             '" data-widx="' +
@@ -181,7 +183,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             (isAuto ? '' : ' disabled') +
             ' class="excel-run-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
-            '"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+            '" title="Uruchom auto-dobór elementów dla tej studni" aria-label="Uruchom auto-dobór elementów"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td>';
         /* Lp */
         html +=
             '<td class="excel-td" style="' +
@@ -598,7 +600,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         'text-align:center;"><input type="checkbox" disabled class="opacity-3" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" style="width:16px;height:16px;color:var(--slate-700);" aria-hidden="true"></i></td>';
+        'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" class="icon-sm" style="color:var(--slate-700);" aria-hidden="true"></i></td>';
     html += '</tr>';
     html += '</tbody>';
     return html;

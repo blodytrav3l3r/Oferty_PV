@@ -43,18 +43,16 @@ function _excelColMenuActionHtml(action) {
     else if (action.id === 'manage') onclick = '_excelManageColumnsFromMenu()';
     const cursor = action.disabled ? 'default' : 'pointer';
     const color = action.disabled ? 'var(--slate-600)' : 'var(--slate-200)';
-    const hover = action.disabled
-        ? ''
-        : ' onmouseenter="this.style.background=\'rgba(var(--white-rgb),0.08)\'" onmouseleave="this.style.background=\'transparent\'"';
     return (
-        '<div' +
+        '<div class="excel-ctx-item' +
+        (action.disabled ? ' is-disabled' : '') +
+        '"' +
         (onclick ? ' onclick="' + onclick + '"' : '') +
-        hover +
-        ' style="padding:0.35rem 0.6rem;font-size: var(--fs-xs);color:' +
+        ' style="color:' +
         color +
         ';cursor:' +
         cursor +
-        ';white-space:nowrap;border-radius:2px;background:transparent;">' +
+        ';">' +
         escapeHtml(action.label) +
         '</div>'
     );

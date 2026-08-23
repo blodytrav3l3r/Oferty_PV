@@ -73,6 +73,7 @@ function excelRemoveTransitionColumn() {
                 if (
                     (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '') ||
                     (p.productId !== null && p.productId !== '') ||
+                    (p.tempCategory && p.tempCategory !== '') ||
                     (p.angle && p.angle !== 0)
                 ) {
                     hasData = true;
@@ -88,8 +89,8 @@ function excelRemoveTransitionColumn() {
     if (typeof wells !== 'undefined' && Array.isArray(wells)) {
         wells.forEach((w) => {
             if (!_excelWellMatchesTab(w, tab)) return;
-            if (w.przejscia && w.przejscia.length > 0) {
-                w.przejscia.pop();
+            if (w.przejscia && w.przejscia.length > lastIdx) {
+                w.przejscia.splice(lastIdx, 1);
             }
         });
     }

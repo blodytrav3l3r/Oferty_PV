@@ -70,7 +70,7 @@ function _excelSyncAutoManualUI() {
             w.autoSelect = true;
         if (w.configSource === 'MANUAL' && w.autoSelect !== false) w.autoSelect = false;
         const isAuto = window.isWellAuto(w);
-        btnMode.textContent = isAuto ? 'AUTO' : 'MANUAL';
+        btnMode.textContent = isAuto ? 'Auto' : 'Manual';
         btnMode.classList.toggle('is-auto', isAuto);
         btnMode.classList.toggle('is-manual', !isAuto);
         btnMode.title = isAuto

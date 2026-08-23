@@ -61,10 +61,7 @@ function _excelToggleColumnPopup() {
         const colName = col.shortLabel || col.label || col.id;
         const detail =
             col.detailLabel && col.detailLabel !== '·' ? ' (' + col.detailLabel + ')' : '';
-        let h =
-            '<label style="display:flex;align-items:center;gap:0.4rem;padding:0.15rem 0.2rem 0.15rem ' +
-            padLeft +
-            ';font-size: var(--fs-2xs);color:var(--slate-400);cursor:pointer;white-space:nowrap;border-radius:2px;transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(var(--white-rgb), 0.05)\'" onmouseleave="this.style.background=\'transparent\'">';
+        let h = '<label class="excel-colcheck" style="padding-left:' + padLeft + '">';
         h += '<input type="checkbox"';
         if (!hidden) h += ' checked';
         h +=
@@ -272,15 +269,15 @@ function _excelToggleColumnPopup() {
     html +=
         '<div class="modal" style="max-width:min(96vw,1400px);max-height:90vh;overflow:auto;width:auto;">';
     html +=
-        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-close-4xl-line1">✕</button></div>';
+        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
     html += gridHtml;
     html +=
         '<div style="padding-top:0.5rem;margin-top:0.5rem;border-top:1px solid rgba(var(--white-rgb), 0.1);">';
     html +=
-        '<button onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" style="width:100%;background:rgba(var(--danger-rgb), 0.1);color:var(--danger-hover);border:1px solid rgba(var(--danger-rgb), 0.2);padding:0.3rem 0.5rem;border-radius: var(--radius-2xs);font-size: var(--fs-2xs);cursor:pointer;font-weight: var(--fw-medium);transition:background 0.1s;" onmouseenter="this.style.background=\'rgba(var(--danger-rgb), 0.2)\'" onmouseleave="this.style.background=\'rgba(var(--danger-rgb), 0.1)\'">Przywróć domyślne</button>';
+        '<button type="button" onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" class="excel-reset-btn">Przywróć domyślne</button>';
     html += '</div></div>';
 
-    window.showModal({
+    const overlay = window.showModal({
         id: 'excel-col-vis-modal',
         html: html,
         onOpen: function () {
@@ -292,6 +289,12 @@ function _excelToggleColumnPopup() {
             });
         }
     });
+    /* Ikony Lucide w treści modala (showModal nie wywołuje createIcons) */
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+        try {
+            lucide.createIcons({ root: overlay });
+        } catch (_e) {}
+    }
 }
 
 function _excelOnDnSelectAll(dnKey, checked) {
