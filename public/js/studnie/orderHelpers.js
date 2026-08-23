@@ -99,9 +99,10 @@ window.getOrderForWellId = getOrderForWellId;
  * aktualną cenę z cennika do pól frozenPrice/frozenPriceBase/frozenName.
  * Przejściom przypisuje także koszt wiercenia.
  */
-function freezeWellPrices(wellsArr) {
+function freezeWellPrices(wellsArr, preserveExisting = false) {
     (wellsArr || []).forEach((well) => {
         (well.config || []).forEach((item) => {
+            if (preserveExisting && item.frozenPrice != null) return;
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
             item.frozenPrice = getItemAssessedPrice(well, p, true, item);
@@ -119,6 +120,7 @@ function freezeWellPrices(wellsArr) {
                 : [];
 
         (well.przejscia || []).forEach((item) => {
+            if (preserveExisting && item.frozenPrice != null) return;
             const p = studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
 
@@ -209,7 +211,7 @@ function getOrderChanges(order) {
     if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
         window.wellDiscounts = originalDiscounts;
     }
-    freezeWellPrices(orig);
+    freezeWellPrices(orig, true);
     if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
         window.wellDiscounts = savedDiscounts;
     }
