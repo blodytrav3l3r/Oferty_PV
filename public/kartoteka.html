@@ -90,26 +90,10 @@
                         "
                     >
                         <!-- Row 1: filtry -->
-                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap">
+                        <div class="ka-filter-row">
                             <!-- Type Filters -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Typ:</span
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label">Typ:</span>
                                 <button
                                     type="button"
                                     class="btn btn-sm ka-type-filter-btn active ka-pill"
@@ -140,24 +124,8 @@
                             <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- Status Filters -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Status:</span
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label">Status:</span>
                                 <button
                                     type="button"
                                     class="btn btn-sm ka-filter-btn active ka-pill"
@@ -197,14 +165,7 @@
                             <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- Date Filter -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
+                            <div class="ka-filter-group">
                                 <span class="toolbar-label">Data:</span>
                                 <button
                                     type="button"
@@ -259,40 +220,9 @@
                             <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- User Filter -->
-                            <div
-                                style="
-                                    display: flex;
-                                    gap: 0.5rem;
-                                    align-items: center;
-                                    flex-wrap: wrap;
-                                "
-                            >
-                                <span
-                                    style="
-                                        font-size: var(--fs-base);
-                                        color: var(--text-muted);
-                                        font-weight: var(--fw-semibold);
-                                        text-transform: uppercase;
-                                        letter-spacing: 0.3px;
-                                    "
-                                    >Opiekun:</span
-                                >
-                                <select
-                                    id="ka-user-filter"
-                                    class="btn btn-sm"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                        appearance: none;
-                                        -webkit-appearance: none;
-                                        cursor: pointer;
-                                        background: var(--bg-glass);
-                                        border: 1px solid var(--border-glass);
-                                        color: var(--text-primary);
-                                        min-width: 130px;
-                                    "
-                                >
+                            <div class="ka-filter-group">
+                                <span class="ka-label">Opiekun:</span>
+                                <select id="ka-user-filter" class="btn btn-sm ka-select">
                                     <option value="">Użytkownik: wszyscy</option>
                                 </select>
 

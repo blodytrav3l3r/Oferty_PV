@@ -516,3 +516,34 @@
     padding: 0.35rem 0.9rem;
     font-size: var(--fs-base);
 }
+.ka-filter-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.ka-filter-group {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.ka-label {
+    font-size: var(--fs-base);
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.ka-select {
+    border-radius: var(--radius-lg);
+    padding: 0.35rem 0.9rem;
+    font-size: var(--fs-base);
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    min-width: 130px;
+}
