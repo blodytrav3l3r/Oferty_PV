@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.18.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.2...v1.18.3) (2026-08-23)
+
+### Bug Fixes
+
+- **studnie:** enter w edycji przejsc svg na wydruku zlecenia ([53f57cc](https://github.com/blodytrav3l3r/Oferty_PV/commit/53f57cc630f9eaec14d198a6719edfaf4406a3f8))
+
 ### [1.18.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.1...v1.18.2) (2026-08-22)
 
 ### Bug Fixes

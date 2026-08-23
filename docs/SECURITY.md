@@ -1,6 +1,6 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
-**Wersja:** 1.18.2  
+**Wersja:** 1.18.3  
 **Ostatnia aktualizacja:** 2026-08-16
 
 ---
