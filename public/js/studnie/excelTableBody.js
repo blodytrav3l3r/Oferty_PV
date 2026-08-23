@@ -499,7 +499,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         '<td class="excel-td excel-td-empty" style="' +
         'background:' +
         emptyRowBg +
-        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:54px;min-width:54px;"><button type="button" disabled style="display:block;width:100%;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-3xs);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);font-weight: var(--fw-semibold);height:18px;opacity:0.3;">\u2014</button><button type="button" disabled style="display:flex;width:100%;margin-top:2px;padding:2px 0;border-radius: var(--radius-2xs);font-size: var(--fs-base);cursor:default;background:rgba(var(--slate-500-rgb), 0.15);color:var(--slate-500);border:1px solid rgba(var(--slate-500-rgb), 0.3);height:18px;align-items:center;justify-content:center;opacity:0.3;"><svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor" class="d-block"><polygon points="3,2 15,8 3,14"/></svg></button></td>';
+        ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" disabled class="excel-mode-btn is-manual" style="opacity:0.3;cursor:default;">\u2014</button><button type="button" disabled class="excel-run-btn is-manual" style="opacity:0.3;"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'position:sticky;left:0;z-index:' +
@@ -514,7 +514,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         ';background:' +
         emptyRowBg +
         ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(125) +
+        _excelCellInp(120) +
         'text-align:left;color:var(--slate-400);" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
@@ -567,7 +567,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 125, true) +
+        _excelOverlaySelectHtml([['', '\u2014']], '', null, 62, true) +
         '</td>';
     visibleCols.forEach(function (col) {
         if (col.type === 'select' || col.type === 'auto') return;

@@ -18,18 +18,22 @@ const BASE = 'http://localhost:3000';
 /* ── Playwright resolution ── */
 function resolvePlaywright() {
     // 1) node_modules (future-proof if playwright becomes dep)
-    try { return require('playwright'); } catch (_) {}
+    try {
+        return require('playwright');
+    } catch (_) {}
     // 2) npx cache (local dev)
     const cacheRoot = process.env.LOCALAPPDATA + '\\npm-cache\\_npx';
     const { readdirSync } = require('fs');
     const { join } = require('path');
     try {
         const hashes = readdirSync(cacheRoot, { withFileTypes: true })
-            .filter(d => d.isDirectory())
-            .map(d => d.name);
+            .filter((d) => d.isDirectory())
+            .map((d) => d.name);
         for (const h of hashes) {
             const p = join(cacheRoot, h, 'node_modules', 'playwright');
-            try { return require(p); } catch (_) {}
+            try {
+                return require(p);
+            } catch (_) {}
         }
     } catch (_) {}
     console.error('Cannot find playwright. Install it: npm install playwright');
@@ -40,22 +44,196 @@ function resolvePlaywright() {
 const { chromium } = resolvePlaywright();
 
 /* ── Chromium executable ── */
-const CHROME_PATH = process.env.CHROME_PATH ||
+const CHROME_PATH =
+    process.env.CHROME_PATH ||
     'C:\\Users\\blody\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1228\\chrome-headless-shell-win64\\chrome-headless-shell.exe';
 
 /* ── Mock wells (identical to diagnosed scenario) ── */
 const MOCK_WELLS = [
-    { id: 'w1', name: 'ST-001', dn: '1000', rzednaWlazu: 1.5, rzednaDna: 0.0, przejscia: [{ id: 'p1', productId: '', rzednaWlaczenia: 0.5, angle: 90, flowType: 'WYLOT', category: '' }, { id: 'p2', productId: '', rzednaWlaczenia: 0.8, angle: 45, flowType: 'WYLOT', category: '' }], autoSelect: true, configSource: 'AUTO', redukcjaDN1000: false, kineta: '', psiaBuda: false, magazyn: 'Kluczbork' },
-    { id: 'w2', name: 'ST-002', dn: '1000', rzednaWlazu: 1.2, rzednaDna: 0.1, przejscia: [{ id: 'p3', productId: '', rzednaWlaczenia: 0.3, angle: 90, flowType: 'WYLOT', category: '' }], autoSelect: false, configSource: 'MANUAL', redukcjaDN1000: false, kineta: '', psiaBuda: true, magazyn: 'Kluczbork' },
-    { id: 'w3', name: 'ST-003', dn: '1500', rzednaWlazu: 1.8, rzednaDna: 0.2, przejscia: [{ id: 'p4', productId: '', rzednaWlaczenia: 0.6, angle: 90, flowType: 'WYLOT', category: '' }], autoSelect: true, configSource: 'AUTO', redukcjaDN1000: true, redukcjaTargetDN: 1000, kineta: '', psiaBuda: false, magazyn: 'Kluczbork' },
-    // Add a DN1500 with reduction — triggers hasReduction=true, more columns
+    {
+        id: 'w1',
+        name: 'ST-001',
+        dn: '1000',
+        rzednaWlazu: 1.5,
+        rzednaDna: 0.0,
+        przejscia: [
+            {
+                id: 'p1',
+                productId: '',
+                rzednaWlaczenia: 0.5,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            },
+            {
+                id: 'p2',
+                productId: '',
+                rzednaWlaczenia: 0.8,
+                angle: 45,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: false,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w2',
+        name: 'ST-002',
+        dn: '1000',
+        rzednaWlazu: 1.2,
+        rzednaDna: 0.1,
+        przejscia: [
+            {
+                id: 'p3',
+                productId: '',
+                rzednaWlaczenia: 0.3,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: false,
+        configSource: 'MANUAL',
+        redukcjaDN1000: false,
+        kineta: '',
+        psiaBuda: true,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w3',
+        name: 'ST-003',
+        dn: '1500',
+        rzednaWlazu: 1.8,
+        rzednaDna: 0.2,
+        przejscia: [
+            {
+                id: 'p4',
+                productId: '',
+                rzednaWlaczenia: 0.6,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: true,
+        redukcjaTargetDN: 1000,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w4',
+        name: 'ST-004',
+        dn: '1200',
+        rzednaWlazu: 1.6,
+        rzednaDna: 0.1,
+        przejscia: [
+            {
+                id: 'p5',
+                productId: '',
+                rzednaWlaczenia: 0.4,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: true,
+        redukcjaTargetDN: 1000,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w5',
+        name: 'ST-005',
+        dn: '2000',
+        rzednaWlazu: 2.0,
+        rzednaDna: 0.2,
+        przejscia: [
+            {
+                id: 'p6',
+                productId: '',
+                rzednaWlaczenia: 0.7,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: true,
+        redukcjaTargetDN: 1200,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w6',
+        name: 'ST-006',
+        dn: '2500',
+        rzednaWlazu: 2.2,
+        rzednaDna: 0.3,
+        przejscia: [
+            {
+                id: 'p7',
+                productId: '',
+                rzednaWlaczenia: 0.9,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: true,
+        redukcjaTargetDN: 1200,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork'
+    },
+    {
+        id: 'w7',
+        name: 'ST-007',
+        dn: 'styczna',
+        rzednaWlazu: 1.4,
+        rzednaDna: 0.1,
+        przejscia: [
+            {
+                id: 'p8',
+                productId: '',
+                rzednaWlaczenia: 0.5,
+                angle: 90,
+                flowType: 'WYLOT',
+                category: ''
+            }
+        ],
+        autoSelect: true,
+        configSource: 'AUTO',
+        redukcjaDN1000: true,
+        redukcjaTargetDN: 1000,
+        kineta: '',
+        psiaBuda: false,
+        magazyn: 'Kluczbork',
+        stycznaNadbudowa1200: false
+    }
 ];
 
-/* ── Tabs to verify ── */
-const TABS = ['1000', '1500'];
+/* ── Tabs to verify — wszystkie średnice ── */
+const TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
 
 /* ── Helpers ── */
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+}
 
 /* ── Main ── */
 (async () => {
@@ -77,10 +255,12 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
         });
         const loginJson = await loginResp.json();
         const authToken = loginJson.token || loginJson.authToken;
-        if (!authToken) { throw new Error('Login failed — no token'); }
+        if (!authToken) {
+            throw new Error('Login failed — no token');
+        }
 
         // 2. Set auth token before page scripts
-        await page.addInitScript(t => localStorage.setItem('authToken', t), authToken);
+        await page.addInitScript((t) => localStorage.setItem('authToken', t), authToken);
 
         // 3. Navigate to studnie module
         await page.goto(`${BASE}/app.html#/studnie`, { waitUntil: 'networkidle', timeout: 30000 });
@@ -90,13 +270,19 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
         const iframeEl = await page.waitForSelector('#spa-iframe-studnie', { timeout: 15000 });
         await page.waitForTimeout(2000);
         let frame = await iframeEl.contentFrame();
-        if (!frame) frame = page.frames().find(f => f.url().includes('studnie'));
+        if (!frame) frame = page.frames().find((f) => f.url().includes('studnie'));
         if (!frame) throw new Error('Cannot find studnie iframe');
 
         // 5. Wait for studnieProducts to load
         let spLen = -1;
         for (let i = 0; i < 15; i++) {
-            spLen = await frame.evaluate(() => { try { return studnieProducts.length; } catch (_) { return -1; } });
+            spLen = await frame.evaluate(() => {
+                try {
+                    return studnieProducts.length;
+                } catch (_) {
+                    return -1;
+                }
+            });
             if (spLen > 0) break;
             await page.waitForTimeout(2000);
         }
@@ -133,14 +319,22 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
                 if (!empty) return { tab: t, error: 'no empty row', rows: allRows.length };
 
                 // Data rows: tbody rows except empty row
-                const dataRows = allRows.filter(r => r.parentNode.tagName === 'TBODY' && r !== empty);
-                if (dataRows.length === 0) return { tab: t, error: 'no data rows in tbody', rows: allRows.length };
+                const dataRows = allRows.filter(
+                    (r) => r.parentNode.tagName === 'TBODY' && r !== empty
+                );
+                if (dataRows.length === 0)
+                    return { tab: t, error: 'no data rows in tbody', rows: allRows.length };
 
                 const dataRow = dataRows[0]; // compare against first data row
 
                 // Guard: column count must match
                 if (dataRow.children.length !== empty.children.length) {
-                    return { tab: t, error: 'column count mismatch', dataCols: dataRow.children.length, emptyCols: empty.children.length };
+                    return {
+                        tab: t,
+                        error: 'column count mismatch',
+                        dataCols: dataRow.children.length,
+                        emptyCols: empty.children.length
+                    };
                 }
 
                 // Compare left + width for every column
@@ -152,7 +346,15 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
                     const diffL = +(dr.left - er.left).toFixed(1);
                     const diffW = +(dr.width - er.width).toFixed(1);
                     if (Math.abs(diffL) > 1 || Math.abs(diffW) > 1) {
-                        diffs.push({ col: i, dataLeft: +dr.left.toFixed(1), emptyLeft: +er.left.toFixed(1), diffL, dataW: +dr.width.toFixed(1), emptyW: +er.width.toFixed(1), diffW });
+                        diffs.push({
+                            col: i,
+                            dataLeft: +dr.left.toFixed(1),
+                            emptyLeft: +er.left.toFixed(1),
+                            diffL,
+                            dataW: +dr.width.toFixed(1),
+                            emptyW: +er.width.toFixed(1),
+                            diffW
+                        });
                     }
                 }
 
@@ -171,11 +373,13 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
             } else if (!result.ok) {
                 failed = true;
                 errors.push(`[${tab}] ${result.diffs.length}/${result.cols} columns misaligned`);
-                result.diffs.forEach(d => {
+                result.diffs.forEach((d) => {
                     errors.push(`  col ${d.col}: left diff=${d.diffL}px, width diff=${d.diffW}px`);
                 });
             } else {
-                console.log(`  ✅ ${tab}: ${result.dataRows} data rows, ${result.cols} cols, all aligned`);
+                console.log(
+                    `  ✅ ${tab}: ${result.dataRows} data rows, ${result.cols} cols, all aligned`
+                );
             }
 
             await page.waitForTimeout(500);
@@ -187,7 +391,7 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
         await browser.close();
         if (failed) {
             console.error('\n❌ FAILED:');
-            errors.forEach(e => console.error('  ' + e));
+            errors.forEach((e) => console.error('  ' + e));
             process.exitCode = 1;
         } else {
             console.log('\n✅ PASS: empty row aligned in all tabs');
