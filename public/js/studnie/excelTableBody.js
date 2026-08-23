@@ -544,38 +544,38 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     for (let _j = 0; _j < maxTr; _j++) {
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" disabled style="' +
+            'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(72) +
-            'opacity:0.3;" /></td>';
+            '" /></td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:center;"><input type="number" step="1" placeholder="\u2014" disabled style="' +
+            'text-align:center;"><input type="number" step="1" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(50) +
-            'opacity:0.3;" /></td>';
+            '" /></td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
             'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, true) +
+            _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, false) +
             '</td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
             'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, true) +
+            _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, false) +
             '</td>';
     }
     html += '<td class="code-cell"></td><td class="code-cell"></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 62, true) +
+        _excelOverlaySelectHtml([['', '\u2014']], '', null, 62, false) +
         '</td>';
     visibleCols.forEach(function (col) {
         if (col.type === 'select' || col.type === 'auto') return;
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:center;"><input type="number" min="0" step="1" placeholder="\u2014" disabled style="' +
+            'text-align:center;"><input type="number" min="0" step="1" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(50) +
-            'opacity:0.3;" /></td>';
+            '" /></td>';
     });
     html +=
         '<td class="excel-td excel-td-empty" style="' +
@@ -587,17 +587,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         html +=
             '<td class="excel-td excel-td-empty" style="' +
             'text-align:center;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 105, true) +
+            _excelOverlaySelectHtml([['', '\u2014']], '', null, 105, false) +
             '</td>';
     }
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 90, true) +
+        _excelOverlaySelectHtml([['', '\u2014']], '', null, 90, false) +
         '</td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'text-align:center;"><input type="checkbox" disabled class="opacity-3" /></td>';
+        'text-align:center;"><input type="checkbox" class="excel-check-pb" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" class="icon-sm" style="color:var(--slate-700);" aria-hidden="true"></i></td>';

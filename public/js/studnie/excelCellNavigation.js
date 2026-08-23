@@ -20,12 +20,10 @@ function excelCellBlur(el) {
 
 /* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
 function _excelHandleArrow(e) {
-    /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie */
-    const emptyInput = document.getElementById('excel-empty-name');
-    const emptyRzw = document.getElementById('excel-empty-rzw');
-    const emptyRzd = document.getElementById('excel-empty-rzd');
-    if (emptyInput && (e.target === emptyInput || e.target === emptyRzw || e.target === emptyRzd)) {
-        _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd);
+    /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie (wszystkie komórki) */
+    const emptyRow = document.getElementById('excel-empty-row');
+    if (emptyRow && emptyRow.contains(e.target)) {
+        _excelHandleEmptyRowArrow(e);
         return;
     }
 
@@ -78,11 +76,22 @@ function _excelHandleArrow(e) {
             if (tddx && tddx.parentElement === tr) {
                 _excelLastDataCol = Array.prototype.indexOf.call(tr.children, tddx);
             }
-            /* ostatni rzad danych — przejdz do pustego wiersza */
-            const emptyInput = document.getElementById('excel-empty-name');
-            if (emptyInput) {
+            /* ostatni rzad danych — przejdz do pustego wiersza na tej samej kolumnie */
+            const emptyRow = document.getElementById('excel-empty-row');
+            if (emptyRow) {
                 e.preventDefault();
-                _excelFocusNavEl(emptyInput, [], 'down');
+                const emptyEls = _excelGetNavElements(emptyRow);
+                const tdIdx = _excelLastDataCol;
+                const tdAtCol = tdIdx >= 0 ? emptyRow.children[tdIdx] : null;
+                let targetEl = tdAtCol
+                    ? tdAtCol.querySelector('input, select, .excel-sel-wrap')
+                    : null;
+                if (!targetEl || _excelIsDisabledNav(targetEl)) {
+                    targetEl =
+                        emptyEls[Math.min(colIdx, emptyEls.length - 1)] || emptyEls[0] || null;
+                    targetEl = _excelSkipDisabled(targetEl, emptyEls, colIdx, 1) || targetEl;
+                }
+                if (targetEl) _excelFocusNavEl(targetEl, emptyEls, 'down');
             }
             return;
         }
@@ -121,11 +130,17 @@ function _excelHandleArrow(e) {
     }
 }
 
-/** Obsługa strzałek gdy focus jest w pustym wierszu (max 3 poziomy zagnieżdżenia) */
-function _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd) {
+/** Obsługa strzałek gdy focus jest w pustym wierszu — pełna nawigacja po wszystkich komórkach */
+function _excelHandleEmptyRowArrow(e) {
+    const emptyRow = document.getElementById('excel-empty-row');
+    if (!emptyRow) return;
+    const rowEls = _excelGetNavElements(emptyRow);
+    const target = _excelNormalizeNavTarget(e.target);
+    if (!target) return;
+    const colIdx = rowEls.indexOf(target);
+    if (colIdx === -1) return;
     e.preventDefault();
     if (e.key === 'ArrowDown') return; /* nic poniżej */
-
     if (e.key === 'ArrowUp') {
         const drUp = Array.from(
             document.querySelectorAll('#excel-table-container tbody tr[data-widx]')
@@ -135,27 +150,32 @@ function _excelHandleEmptyRowArrow(e, emptyInput, emptyRzw, emptyRzd) {
         const lastRowUp = drUp[drUp.length - 1];
         if (!lastRowUp) return;
         const lastElsUp = _excelGetNavElements(lastRowUp);
-        /* Wybor kolumny z zapisanej wartosci _excelLastDataCol */
-        const savedCol = typeof _excelLastDataCol === 'number' ? _excelLastDataCol : -1;
-        const tdAtCol = savedCol >= 0 ? lastRowUp.children[savedCol] : null;
+        // Mapuj po indeksie TD (nie rowEls) by zachować kolumnę przy różnej liczbie disabled w data row
+        const tdIdx = Array.prototype.indexOf.call(emptyRow.children, target.closest('td'));
+        const tdAtCol = lastRowUp.children[tdIdx] || null;
         let targetEl = tdAtCol ? tdAtCol.querySelector('input, select, .excel-sel-wrap') : null;
-        if (!targetEl && lastElsUp.length > 0) {
-            /* Fallback: ostatni focusowalny element w ostatnim wierszu */
-            targetEl = lastElsUp[lastElsUp.length - 1];
+        // fallback: najbliższy enabled w pozycji colIdx
+        if (!targetEl || _excelIsDisabledNav(targetEl)) {
+            targetEl = lastElsUp[Math.min(colIdx, lastElsUp.length - 1)] || null;
+            targetEl = _excelSkipDisabled(targetEl, lastElsUp, colIdx, -1) || targetEl;
         }
-        if (targetEl) _excelFocusNavEl(targetEl, lastElsUp, 'up');
+        if (targetEl) {
+            // zapamiętaj kolumnę dla ArrowUp z pustego
+            _excelLastDataCol = tdIdx;
+            _excelFocusNavEl(targetEl, lastElsUp, 'up');
+        }
         return;
     }
-
     if (e.key === 'ArrowRight') {
-        if (e.target === emptyInput && emptyRzw) emptyRzw.focus();
-        else if (e.target === emptyRzw && emptyRzd) emptyRzd.focus();
+        let next = rowEls[colIdx + 1] || null;
+        next = _excelSkipDisabled(next, rowEls, colIdx, 1);
+        if (next) _excelFocusNavEl(next, rowEls, 'right');
         return;
     }
-
     if (e.key === 'ArrowLeft') {
-        if (e.target === emptyRzd && emptyRzw) emptyRzw.focus();
-        else if (e.target === emptyRzw && emptyInput) emptyInput.focus();
+        let prev = rowEls[colIdx - 1] || null;
+        prev = _excelSkipDisabled(prev, rowEls, colIdx, -1);
+        if (prev) _excelFocusNavEl(prev, rowEls, 'left');
         return;
     }
 }
