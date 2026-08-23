@@ -15,6 +15,7 @@
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
         "test:e2e": "playwright test",
+        "test:axe": "playwright test tests/playwright/a11yAxe.spec.ts",
         "test:frontend": "jest --testPathPattern=tests/frontend --no-coverage",
         "validate": "npm run typecheck && npm run typecheck:frontend && npm run lint && npm run lint:frontend && npm run appname:check && npm run licenses:check && npm run test:quick && npm run collisions:check",
         "lint": "eslint src/**/*.{js,ts}",
@@ -100,6 +101,7 @@
         "zod": "^4.3.6"
     },
     "devDependencies": {
+        "@axe-core/playwright": "^4.13.0",
         "@commitlint/cli": "^21.1.0",
         "@commitlint/config-conventional": "^21.0.2",
         "@eslint/js": "^9.39.4",
