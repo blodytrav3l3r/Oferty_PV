@@ -37,7 +37,7 @@ export interface IsolatedProject {
  */
 export function createIsolatedProject(name: string, migrations: string[]): IsolatedProject {
     const dir = path.join(TMP_ROOT, name);
-    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
     fs.mkdirSync(path.join(dir, 'prisma', 'migrations'), { recursive: true });
 
     const schemaPath = path.join(dir, 'prisma', 'schema.prisma');
@@ -72,15 +72,16 @@ export function createIsolatedProject(name: string, migrations: string[]): Isola
     }
 
     function cleanup() {
-        // Windows trzyma lock na -shm/-wal — retry
-        for (let attempt = 0; attempt < 5; attempt++) {
-            try {
-                fs.rmSync(dir, { recursive: true, force: true });
-                return;
-            } catch {
-                if (attempt === 4) throw new Error(`cleanup failed for ${dir}`);
-                Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200);
-            }
+        // Best-effort: na Windows silnik Prisma (proces wnuk CLI) potrafi
+        // trzymac uchwyt katalogu dlugo po wyjsciu execFileSync — flaky
+        // EPERM nie moze wyrzucac poprawnego testu. Pozostaly katalog
+        // usuwa createIsolatedProject przy nastepnym runie.
+        try {
+            fs.rmSync(dir, { recursive: true, force: true, maxRetries: 30, retryDelay: 250 });
+        } catch (err) {
+            console.warn(
+                `[migrations-helpers] cleanup failed for ${dir}: ${(err as Error)?.message ?? String(err)}`
+            );
         }
     }
 
