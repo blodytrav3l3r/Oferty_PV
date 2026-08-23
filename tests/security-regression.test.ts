@@ -186,7 +186,7 @@ describe('T5.9: Centralne escapowanie w shared/escapeHtml.js', () => {
 
     it('duplikaty escapeHtmlAttr w plikach delegują do window', () => {
         const dupFiles = [
-            'public/js/admin/aiDashboard.js',
+            'public/js/admin/aiDashboardCore.js',
             'public/js/kartoteka/kartotekaHelpers.js',
             'public/js/studnie/transitionRenderer.js'
         ];
