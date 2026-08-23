@@ -1,5 +1,5 @@
-// @ts-check
-/* ===== PANEL RABATÓW ===== */
+﻿// @ts-check
+/* ===== PANEL RABATĂ“W ===== */
 
 let appConfirmCallback = null;
 
@@ -78,11 +78,11 @@ function updateGlobalPaintingCost(field, value) {
     });
 
     const offerModal = document.getElementById('offer-discounts-modal');
-    const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
+    const isOfferModalOpen = offerModal && offerModal.classList.contains('active');
 
     if (!isOfferModalOpen) {
         showToast(
-            `Zaktualizowano cenę malowania (${numVal} PLN/m²) we wszystkich studniach`,
+            `Zaktualizowano cenę malowania (${numVal} PLN/mÂ˛) we wszystkich studniach`,
             'info'
         );
     }
@@ -121,7 +121,7 @@ function updateGlobalPehdDiscount(value) {
     });
 
     const offerModal = document.getElementById('offer-discounts-modal');
-    const isOfferModalOpen = offerModal && offerModal.style.display === 'flex';
+    const isOfferModalOpen = offerModal && offerModal.classList.contains('active');
 
     if (!isOfferModalOpen) {
         showToast(`Zaktualizowano rabat PEHD (${numVal}%) we wszystkich studniach`, 'info');

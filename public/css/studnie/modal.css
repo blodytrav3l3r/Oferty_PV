@@ -787,3 +787,169 @@
     text-align: center;
     padding: 1.5rem;
 }
+
+/* ===== OFFER MODALS (rabaty / transport) — wspólny szkielet =====
+   Overlay: .zlecenia-overlay + .active (studnie.css:1377) + wycentrowanie wariantu */
+.om-overlay {
+    align-items: center;
+    justify-content: center;
+}
+
+.om-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    width: 95%;
+    max-width: 820px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(var(--black-rgb), 0.8);
+}
+
+.om-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 1.2rem;
+    background: linear-gradient(
+        135deg,
+        rgba(var(--accent-rgb), 0.15) 0%,
+        rgba(var(--accent2-rgb), 0.1) 100%
+    );
+    border-bottom: 1px solid var(--border-glass);
+}
+
+.om-title {
+    font-weight: var(--fw-extrabold);
+    font-size: var(--fs-xl);
+    display: flex;
+    align-items: center;
+    color: var(--accent-text);
+}
+
+.om-close {
+    color: var(--text-muted);
+    width: 28px;
+    height: 28px;
+}
+
+.om-body {
+    padding: 0.75rem 1.2rem;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.om-footer {
+    padding: 0.6rem 1.2rem;
+    border-top: 1px solid var(--border-glass);
+    background: rgba(var(--black-rgb), 0.2);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.om-footer .btn {
+    font-size: var(--fs-sm);
+    padding: 0.4rem 1rem;
+    font-weight: var(--fw-bold);
+}
+
+.om-footer .btn-primary {
+    padding: 0.4rem 1.2rem;
+    font-weight: var(--fw-extrabold);
+}
+
+/* Transport modal — pola i karty kosztów */
+.tp-field-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-bottom: 0.6rem;
+    display: block;
+    font-weight: var(--fw-semibold);
+}
+
+.tp-input {
+    width: 100%;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-bold);
+    padding: 0.75rem;
+    text-align: center;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-glass);
+    background: rgba(var(--black-rgb), 0.2);
+    color: var(--text-heading);
+}
+
+.tp-mode-row {
+    margin-top: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.tp-mode-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-glass);
+    background: rgba(var(--black-rgb), 0.2);
+    color: var(--text-heading);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.tp-cost-grid {
+    margin-top: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.tp-cost-card {
+    background: rgba(var(--black-rgb), 0.2);
+    border: 1px solid var(--border-glass);
+    padding: 0.75rem;
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+
+.tp-cost-label {
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.3rem;
+    letter-spacing: 1px;
+}
+
+.tp-cost-value {
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+}
+
+.tp-total-box {
+    margin-top: 1rem;
+    text-align: center;
+    background: rgba(var(--black-rgb), 0.3);
+    border: 1px dashed var(--border-glass);
+    padding: 1rem;
+    border-radius: var(--radius);
+}
+
+.tp-total-label {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: var(--fw-bold);
+    margin-bottom: 0.25rem;
+    letter-spacing: 2px;
+}
+
+.tp-total-value {
+    font-size: var(--fs-2xl);
+    font-weight: var(--fw-black);
+    color: var(--success);
+    letter-spacing: -1px;
+}

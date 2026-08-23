@@ -8,12 +8,12 @@ function openOfferDiscountsPopup() {
     const modal = document.getElementById('offer-discounts-modal');
     if (!modal) return;
     renderOfferDiscountsPopupContent();
-    modal.style.display = 'flex';
+    modal.classList.add('active');
 }
 
 function closeOfferDiscountsPopup() {
     const modal = document.getElementById('offer-discounts-modal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.classList.remove('active');
 }
 
 async function handleOfferDiscountsSave() {

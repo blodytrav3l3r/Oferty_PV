@@ -139,14 +139,14 @@ window.openTransportPopup = function () {
         window.updateModalTransportDetails();
 
     const modal = document.getElementById('offer-transport-modal');
-    if (modal) modal.style.display = 'flex';
+    if (modal) modal.classList.add('active');
     if (typeof lucide !== 'undefined') lucide.createIcons();
 };
 
 window.handleOfferTransportCancel = async function () {
     const hideModal = () => {
         const m = document.getElementById('offer-transport-modal');
-        if (m) m.style.display = 'none';
+        if (m) m.classList.remove('active');
     };
     const modalKm = parseFloat(document.getElementById('transport-modal-km')?.value) || 0;
     const modalRate = parseFloat(document.getElementById('transport-modal-rate')?.value) || 0;
@@ -186,7 +186,7 @@ window.handleOfferTransportCancel = async function () {
 window.handleOfferTransportSave = async function () {
     const hideModal = () => {
         const m = document.getElementById('offer-transport-modal');
-        if (m) m.style.display = 'none';
+        if (m) m.classList.remove('active');
     };
     if (typeof window.appConfirm === 'function') {
         const inOrderMode = typeof orderEditMode !== 'undefined' && orderEditMode;
