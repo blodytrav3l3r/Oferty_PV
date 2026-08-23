@@ -6,6 +6,7 @@
         "start": "node dist/server.js",
         "prestart": "node scripts/minify-css.mjs",
         "minify:css": "node scripts/minify-css.mjs",
+        "bundle:scripts": "node scripts/bundle-scripts.mjs",
         "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
         "build": "tsc",

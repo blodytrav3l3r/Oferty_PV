@@ -150,3 +150,4 @@ tests/playwright/screenshots/debug/
 
 # Minifikowane CSS (generowane prestart — scripts/minify-css.mjs)
 public/css/min/
+public/dist/
