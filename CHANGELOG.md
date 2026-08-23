@@ -4,6 +4,22 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.0...v1.19.1) (2026-08-23)
+
+### Features
+
+- **studnie:** auto-dobor zaznaczonych studni w excel ([02d392b](https://github.com/blodytrav3l3r/Oferty_PV/commit/02d392bd64cffd8d7df5ecbfed8311197e1516d7))
+
+### Bug Fixes
+
+- **ci:** kopiowanie klienta prisma do dist dla test:axe ([109b13a](https://github.com/blodytrav3l3r/Oferty_PV/commit/109b13a3151b1273848c1e6ca5bf783654edcf34))
+- **studnie:** excel modal przez modalcore, poprawki wklejania i a11y ([497730e](https://github.com/blodytrav3l3r/Oferty_PV/commit/497730ebdf0d1dc0486c0ccf845bcf3ef29847a8))
+- **studnie:** minus w excel nie usuwa wypelnionych kolumn przejsc ([e391faa](https://github.com/blodytrav3l3r/Oferty_PV/commit/e391faa43820fb2ceefc2dc0df8336222982e3ae))
+- **studnie:** popup przejść nad overlayem zlecenia (z-index 2100) ([822c5d3](https://github.com/blodytrav3l3r/Oferty_PV/commit/822c5d349978ebf67ee0dc3fcea2eb9545fd87f3))
+- **studnie:** przycisk auto-dobor zaznaczonych widoczny ([506b2ca](https://github.com/blodytrav3l3r/Oferty_PV/commit/506b2ca87b76941a049ccae1d62ca8bf1041696e))
+- **studnie:** pusty wiersz excel wszystkie komorki dostepne ([652ccbb](https://github.com/blodytrav3l3r/Oferty_PV/commit/652ccbbf658de149eb8385401d7f00aa7c07ea02))
+- **studnie:** pusty wiersz excel wyrownany dla kazdej srednicy ([31c73e1](https://github.com/blodytrav3l3r/Oferty_PV/commit/31c73e132fb26e036f83417037080c06fc14b264))
+
 ## [1.19.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.4...v1.19.0) (2026-08-23)
 
 ### [1.18.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.18.3...v1.18.4) (2026-08-23)
