@@ -1,6 +1,6 @@
 # Katalog Komponentów — S.O.K. — System Ofert i Kalkulacji
 
-> Wersja: 1.19.0 | Data: 2026-08-20 | Źródło: analiza CSS (`public/css/`)
+> Wersja: 1.19.0 | Data: 2026-08-23 | Źródło: analiza CSS (`public/css/` — 11 arkuszy)
 
 > **SSoT UI/UX, HTML i CSS: `docs/UI_GUIDELINES.md`.** Ten dokument to katalog komponentów
 > (kto/co definiuje); szczegółowe reguły projektowania znajdziesz w wytycznych.
@@ -748,4 +748,4 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-09_
+_Ostatnia aktualizacja: 2026-08-23_

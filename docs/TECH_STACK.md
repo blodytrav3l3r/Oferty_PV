@@ -1,6 +1,7 @@
 # Tech Stack — stos technologiczny
 
-**Ostatnia aktualizacja:** 2026-08-06
+**Wersja:** 1.19.0  
+**Ostatnia aktualizacja:** 2026-08-23
 
 ## Licencje — podsumowanie
 
@@ -50,6 +51,8 @@
 | Husky            | ^9.1.7   | MIT           | Git hooks                 | https://typicode.github.io/husky                           |     ✅      |
 | commitlint       | ^21.1.0  | MIT           | Walidacja commitów        | https://commitlint.js.org                                  |     ✅      |
 | standard-version | ^9.5.0   | ISC           | Auto-wersjonowanie        | https://github.com/conventional-changelog/standard-version |     ✅      |
+| esbuild          | ^0.28.2  | MIT           | Bundling JS               | https://esbuild.github.io                                  |     ✅      |
+| Playwright       | ^1.62.1  | Apache-2.0    | E2E / a11y                | https://playwright.dev                                     |     ✅      |
 
 ## Narzędzia CI/CD
 

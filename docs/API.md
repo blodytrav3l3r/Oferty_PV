@@ -1,7 +1,7 @@
 # API — dokumentacja endpointów
 
 **Wersja:** 1.19.0  
-**Ostatnia aktualizacja:** 2026-08-10  
+**Ostatnia aktualizacja:** 2026-08-23  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
 > **Uwaga:** Pełna, zawsze aktualna dokumentacja API dostępna jest przez Swagger pod `/api/docs`.
@@ -23,7 +23,7 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
   "timestamp": "2026-06-30T12:00:00.000Z",
   "uptime": 123.45,
   "memory": { ... },
-  "version": "v24.14.1"
+  "version": "1.19.0"
 }
 ```
 
@@ -403,12 +403,14 @@ Wymaga autoryzacji (administrator).
 
 ## Rate Limiting
 
-| Limiter                 | Okno   | Max prób | Endpointy                      |
-| ----------------------- | ------ | -------- | ------------------------------ |
-| LOGIN_LIMITER           | 15 min | 15       | `/api/auth/login`              |
-| API_LIMITER             | 15 min | 300      | Wszystkie endpointy `/api/*`   |
-| WRITE_LIMITER           | 15 min | 60       | Zapis danych (POST/PUT/DELETE) |
-| PRICELIST_WRITE_LIMITER | 1 godz | 30       | Aktualizacja cenników          |
+| Limiter                  | Okno   | Max prób | Endpointy                                                                              |
+| ------------------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
+| LOGIN_LIMITER            | 15 min | 15       | `/api/auth/login`                                                                      |
+| API_LIMITER              | 15 min | 300      | Wszystkie endpointy `/api/*`                                                           |
+| WRITE_LIMITER            | 15 min | 60       | Zapis danych (POST/PUT/DELETE)                                                         |
+| PRICELIST_WRITE_LIMITER  | 1 godz | 30       | Aktualizacja cenników (`/api/products*`, `/api/preco-pricing`, `/api/price-overrides`) |
+| EXPORT_LIMITER           | 15 min | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                           |
+| WRITE_PRODUCTION_LIMITER | 1 min  | 30       | Zlecenia produkcyjne (`DELETE /api/orders-studnie/production/:id`)                     |
 
 ---
 

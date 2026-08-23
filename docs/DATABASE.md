@@ -3,7 +3,7 @@
 **Silnik:** SQLite  
 **ORM:** Prisma 6.0  
 **Plik bazy:** `data/app_database.sqlite`  
-**Liczba modeli:** 37
+**Liczba modeli:** 38
 
 ---
 
@@ -506,6 +506,22 @@ Wydzielone od zwykłych komponentów ze względu na specyfikę danych.
 | configSnapshot | String?    | Snapshot konfiguracji            |
 | createdAt      | String?    | Data utworzenia                  |
 
+Unique index `@@unique([wellId, action])` — dedup rewardów (migracja `20260815000001_uq_reward_well_action`).
+
+#### `AiTrainingRun` — Audyt uruchomień treningu ML
+
+| Kolumna      | Typ        | Opis                             |
+| ------------ | ---------- | -------------------------------- |
+| id           | String @id | Identyfikator                    |
+| trigger      | String     | `cron` / `manual` / `auto`       |
+| status       | String     | `success` / `failed` / `skipped` |
+| modelVersion | String?    | Wersja utworzonego modelu        |
+| metrics      | String?    | JSON metryk treningu             |
+| error        | String?    | Komunikat błędu (gdy `failed`)   |
+| createdAt    | String     | Data uruchomienia                |
+
+Tabela wprowadzona w migracji `20260816000000_ai_training_run` — kręgosłup audytu pipeline ML.
+
 ---
 
 ## 3. Migracje
@@ -527,16 +543,16 @@ na `ai_telemetry_logs` (`idx_logs_well`, `idx_logs_source_well`) pod deduplikacj
 
 ### Komendy
 
-| Komenda                   | Opis                          |
-| ------------------------- | ----------------------------- |
-| `npm run prisma:generate` | Generuj klienta Prisma        |
-| `npm run prisma:migrate`  | Utwórz nową migrację (dev)    |
-| `npm run prisma:deploy`   | Zastosuj migracje w produkcji |
-| `npm run prisma:status`   | Status migracji               |
-| `npm run prisma:seed`     | Zasiej dane początkowe        |
-| `npm run prisma:reset`    | Reset bazy (utrata danych!)   |
-| `npm run backup`          | Backup bazy (VACUUM INTO)     |
-| `npm run restore`         | Przywróć bazę z backupu       |
+| Komenda                   | Opis                                                          |
+| ------------------------- | ------------------------------------------------------------- |
+| `npm run prisma:generate` | Generuj klienta Prisma                                        |
+| `npm run prisma:migrate`  | Utwórz nową migrację (dev)                                    |
+| `npm run prisma:deploy`   | Zastosuj migracje w produkcji                                 |
+| `npm run prisma:status`   | Status migracji                                               |
+| `npm run prisma:seed`     | Zasiej dane początkowe                                        |
+| `npm run prisma:reset`    | Reset bazy (utrata danych!)                                   |
+| `npm run backup`          | Backup bazy (VACUUM INTO)                                     |
+| `npm run restore <plik>`  | Przywróć bazę z backupu (`node scripts/restore-db.js <plik>`) |
 
 ### Seed
 
@@ -665,4 +681,4 @@ await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-16_
+_Ostatnia aktualizacja: 2026-08-23_

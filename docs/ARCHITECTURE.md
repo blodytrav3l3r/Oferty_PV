@@ -1,7 +1,7 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.19.0  
-**Ostatnia aktualizacja:** 2026-08-16  
+**Ostatnia aktualizacja:** 2026-08-23  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -83,14 +83,14 @@ Aplikacja S.O.K. — System Ofert i Kalkulacji to pojedyncza aplikacja webowa (m
 | ----------- | -------- | ------------------------------- |
 | Node.js     | >= 22.13 | Środowisko uruchomieniowe       |
 | TypeScript  | ~6.0     | Język programowania             |
-| Express.js  | ~4.21    | Framework webowy                |
+| Express.js  | ~4.22    | Framework webowy                |
 | Prisma      | ~6.0     | ORM (Object-Relational Mapping) |
 | Zod         | ~4.3     | Walidacja danych wejściowych    |
 | bcryptjs    | ~3.0     | Haszowanie haseł                |
 | Helmet      | ~8.1     | Nagłówki bezpieczeństwa HTTP    |
 | Sentry      | ~10.59   | Monitoring błędów               |
 | docx        | ~9.6     | Generowanie dokumentów DOCX     |
-| Puppeteer   | ~24.40   | Generowanie PDF                 |
+| Puppeteer   | ~24.43   | Generowanie PDF                 |
 | ts-node-dev | ~2.0     | Hot-reload w dev                |
 | Jest        | ~30.0    | Framework testowy               |
 | Swagger     | 6.x      | Dokumentacja API                |
@@ -265,15 +265,15 @@ oraz `public/images/logo-sok.svg`.
 
 ### Frontend — struktura JS
 
-| Katalog                    | Liczba plików | Opis                                                                    |
-| -------------------------- | ------------- | ----------------------------------------------------------------------- |
-| `public/js/rury/`          | 31            | Logika modułu rur (oferty, cenniki, zamówienia)                         |
-| `public/js/studnie/`       | 136           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia) |
-| `public/js/shared/`        | 16            | Wspólne helpery (auth, ui, headerUser, clientManager)                   |
-| `public/js/kartoteka/`     | 8             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)         |
-| `public/js/import-export/` | 11            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)       |
-| `public/js/spa/`           | 3             | Router SPA (router.js)                                                  |
-| `public/js/admin/`         | 2             | Panel admina (AI dashboard)                                             |
+| Katalog                    | Liczba plików | Opis                                                                     |
+| -------------------------- | ------------- | ------------------------------------------------------------------------ |
+| `public/js/rury/`          | 31            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
+| `public/js/studnie/`       | 137           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
+| `public/js/shared/`        | 22            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
+| `public/js/kartoteka/`     | 8             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
+| `public/js/import-export/` | 11            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
+| `public/js/spa/`           | 4             | Router SPA (router.js, navGuard)                                         |
+| `public/js/admin/`         | 4             | Panel admina (AI dashboard)                                              |
 
 Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
@@ -288,17 +288,22 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 
 ### Frontend — struktura CSS
 
-| Plik                              | Linie | Opis                                                                 |
-| --------------------------------- | ----- | -------------------------------------------------------------------- |
-| `public/css/style.base.css`       | 1730  | **Tokeny `:root` + base layout + komponenty wspólne** (SSoT tokenów) |
-| `public/css/style.cards.css`      | 586   | Karty ofert + status-badge                                           |
-| `public/css/style.responsive.css` | 1427  | Responsive + modale + toasty + wizard                                |
-| `public/css/style.utilities.css`  | 994   | Utility classes (zastępują inline style)                             |
-| `public/css/inter.css`            | 441   | Font Inter (importowany przez `style.base.css`)                      |
-| `public/css/print.css`            | 229   | Style wydruku                                                        |
-| `public/css/printModal.css`       | 532   | Style podglądu wydruku (UPM)                                         |
+| Plik                              | Rola                                                                 |
+| --------------------------------- | -------------------------------------------------------------------- |
+| `public/css/style.base.css`       | **Tokeny `:root` + base layout + komponenty wspólne** (SSoT tokenów) |
+| `public/css/style.cards.css`      | Karty ofert + status-badge                                           |
+| `public/css/style.responsive.css` | Responsive + modale + toasty + wizard                                |
+| `public/css/style.utilities.css`  | Utility classes (zastępują inline style)                             |
+| `public/css/inter.css`            | Font Inter (importowany przez `style.base.css`)                      |
+| `public/css/print.css`            | Style wydruku                                                        |
+| `public/css/printModal.css`       | Style podglądu wydruku (UPM)                                         |
+| `public/css/index.css`            | Style Pulpitu (dashboard)                                            |
+| `public/css/rury.css`             | Style modułu rur                                                     |
+| `public/css/studnie.css`          | Style modułu studni (kreator, diagram, Excel)                        |
+| `public/css/zlecenia.css`         | Style zleceń produkcyjnych                                           |
+| `public/css/spa.css`              | Style shella SPA (`app.html`)                                        |
 
-> Wszystkie wejściówki (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują wspólne arkusze: `style.base.css` → `style.cards.css` → `style.responsive.css` → `style.utilities.css` (kolejność ma znaczenie dla kaskady) + arkusz modułowy. Legacy `public/css/style.css` **nie istnieje** — został usunięty (tokenizacja, 2026-08-03). Pełne wytyczne: `docs/UI_GUIDELINES.md`.
+> Wszystkie wejściówki (`app.html`, `index.html`, `rury.html`, `studnie.html`, `kartoteka.html`, `zlecenia.html`) ładują wspólne arkusze: `style.base.css` → `style.cards.css` → `style.responsive.css` → `style.utilities.css` (kolejność ma znaczenie dla kaskady) + arkusz modułowy (`index.css`/`rury.css`/`studnie.css`/`zlecenia.css`/`spa.css`). Legacy `public/css/style.css` **nie istnieje** — został usunięty (tokenizacja, 2026-08-03). Pełne wytyczne: `docs/UI_GUIDELINES.md`.
 
 ---
 
@@ -310,7 +315,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (37)
+### Modele (38)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)
@@ -337,8 +342,9 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **ai_transition_snapshots** — przejścia szczelne (cechy geometryczne)
 - **AiFeature** — feature store ML (wektory cech)
 - **AiModel** — model registry ML (wagi modeli)
+- **AiTrainingRun** — audyt uruchomień treningu ML (kręgosłup audytu, od `20260816000000_ai_training_run`)
 - **AiEvaluation** — dzienne metryki ewaluacji ML
-- **aiRewardLog** — logi nagród ML
+- **aiRewardLog** — logi nagród ML (unique `(wellId, action)` — dedup rewardów)
 
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
   `ai_telemetry_logs` — migracja `20260805100000_telemetry_well_dedup`, idempotentnie odtwarzane
@@ -385,7 +391,8 @@ Oferty_PV/
 │   │   ├── auth.ts                 # Autoryzacja + sesje
 │   │   ├── security.ts             # Nagłówki bezpieczeństwa
 │   │   ├── rateLimiter.ts          # Rate limiting
-│   │   ├── rateLimiters.ts         # Konfiguracja limiterów
+│   │   ├── rateLimiters.ts         # Konfiguracja limiterów (API/LOGIN/WRITE/PRICELIST/EXPORT)
+│   │   ├── writeLock.ts            # Modułowy lock zapisu (createModuleLock, per-klucz, 30 s)
 │   │   ├── errorHandler.ts         # Globalna obsługa błędów
 │   │   └── requestLogger.ts        # Logowanie żądań HTTP
 │   ├── routes/
@@ -424,20 +431,24 @@ Oferty_PV/
 │   │   └── priceOverrides.ts       # Nadpisania cen
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
-│   │   ├── pdfGenerator.ts         # Generowanie PDF
-│   │   ├── docx/                   # Generowanie DOCX
-│   │   ├── pdf/                    # Karty budowy PDF
-│   │   ├── telemetry/              # Telemetria AI
-│   │   └── ml/                     # Pipeline ML
+│   │   ├── combinedExport.ts       # Łączny eksport (PDF/DOCX)
+│   │   ├── pdfGenerator.ts         # Generowanie PDF (legacy wrapper)
+│   │   ├── priceOverrideService.ts # Nadpisania cen + saveDefaults
+│   │   ├── seedExporter.ts         # Eksport cenników do seed JSON
+│   │   ├── docx/                   # Generowanie DOCX (rury/studnie + helpers)
+│   │   ├── pdf/                    # Karty budowy PDF (pdfEngine, kartaBudowy, ruryHtml, studnieHtml)
+│   │   ├── telemetry/              # Telemetria AI (telemetryService + learning/*)
+│   │   └── ml/                     # Pipeline ML (TrainingPipeline, FeatureExtractor, AcceptanceModel, ModelRegistry)
 │   ├── utils/
 │   │   ├── cronService.ts          # Serwis cron
 │   │   ├── fts5Sync.ts             # Synchronizacja FTS5
 │   │   ├── logger.ts               # Logger
-│   │   ├── ownership.ts            # Weryfikacja własności
-│   │   ├── productionSearchUtils.ts# Narzędzia wyszukiwania
+│   │   ├── ownership.ts            # Weryfikacja własności (canReadDoc/canWriteDoc)
+│   │   ├── productionOrderGuard.ts # Guard PZ (blokada usuwania z przypisanymi zleceniami)
+│   │   ├── productionSearchUtils.ts# Narzędzia wyszukiwania produkcji
 │   │   ├── roleFilter.ts           # Filtr roli
 │   │   ├── searchCache.ts          # Cache wyszukiwania
-│   │   └── searchUtils.ts          # Narzędzia wyszukiwania
+│   │   └── searchUtils.ts          # Narzędzia wyszukiwania (FTS5 + cache)
 │   ├── validators/
 │   │   ├── authSchema.ts           # Walidacja auth
 │   │   ├── offerSchemas.ts         # Walidacja ofert
@@ -446,53 +457,57 @@ Oferty_PV/
 │   │   └── telemetrySchemas.ts     # Walidacja telemetrii
 │   └── types/                      # Typy TypeScript
 │
-├── public/                          # Frontend
-│   ├── index.html                   # Dashboard
-│   ├── app.html                     # Główna aplikacja
-│   ├── rury.html                    # Oferty rur
-│   ├── studnie.html                 # Oferty studni
-│   ├── kartoteka.html               # Kartoteka klientów
-│   ├── zlecenia.html                # Zamówienia
+├── public/                          # Frontend (Vanilla JS, 221 plików)
+│   ├── index.html                   # Dashboard (Pulpit)
+│   ├── app.html                     # Shell SPA (router hash #/moduł, osadza iframe)
+│   ├── rury.html                    # Moduł rur (iframe)
+│   ├── studnie.html                 # Moduł studni (iframe, Excel modal)
+│   ├── kartoteka.html               # Kartoteka ofert i zamówień
+│   ├── zlecenia.html                # Zlecenia produkcyjne (PZ)
 │   ├── favicon.ico                  # Ikona
-│   ├── js/                          # Skrypty JS
-│   ├── css/                         # Style CSS
-│   ├── images/                      # Obrazy
-│   ├── partials/                    # Partial HTML (partialLoader)
-│   └── templates/                   # Szablony do druku
+│   ├── js/                          # Skrypty JS (221 plików)
+│   ├── css/                         # 11 arkuszy (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal)
+│   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
+│   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
+│   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma
-│   ├── schema.prisma                # Definicja schematu
-│   ├── seed.ts                      # Seed danych
-│   └── migrations/                  # Migracje
+├── prisma/                          # Prisma (38 modeli, 3 migracje)
+│   ├── schema.prisma                # Definicja schematu (651 linii)
+│   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
+│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward + 20260816000000_ai_training_run
 │
 ├── data/                            # Baza danych
-│   ├── app_database.sqlite          # Główna baza
-│   ├── backups/                     # Kopie zapasowe
+│   ├── app_database.sqlite          # Główna baza (SQLite)
+│   ├── price_defaults.json          # Snapshot domyślnych cenników (transfer między instalacjami)
+│   ├── backups/                     # Kopie zapasowe (VACUUM INTO)
 │   ├── seed_rury.json               # Seed produktów (rury)
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
-├── scripts/                         # Skrypty narzędziowe
-│   ├── backup.ts                    # Backup bazy (VACUUM INTO)
-│   ├── restore-db.js                # Restore bazy z backupu
-│   ├── check-db.js                  # Weryfikacja schematu przy starcie
-│   ├── check-version.mjs            # Sprawdzenie spójności wersji
-│   ├── check-appname.cjs            # Sprawdzenie nazwy aplikacji (pre-push)
-│   ├── auto-cache-bust.mjs          # Cache-bust assetów przy release
-│   ├── auto-docs-version.mjs        # Wersje w dokumentacji przy release
-│   ├── auto-bat-version.mjs         # Wersje w .bat przy release
-│   ├── bump-version.mjs             # Podbicie wersji
-│   ├── version-updater.mjs          # Aktualizator wersji
-│   ├── skill-cli.mjs                # CLI dla skilli
-│   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do seed
+├── scripts/                         # Skrypty narzędziowe (43 pliki)
+│   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 30 kopii)
+│   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
+│   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
+│   ├── check-version.mjs            # Spójność wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
+│   ├── check-appname.cjs            # Nazwa aplikacji (pre-push, APP_NAME SSoT)
+│   ├── check-global-collisions.mjs  # Kolizje globali window.*
+│   ├── auto-cache-bust.mjs          # Cache-bust ?v= w HTML przy release
+│   ├── auto-docs-version.mjs        # Wersje w README/docs przy release
+│   ├── auto-bat-version.mjs         # Wersje w *.bat przy release
+│   ├── bump-version.mjs             # Podbicie wersji (patch/minor/major)
+│   ├── bundle-scripts.mjs           # Bundling JS studnie/rury (esbuild)
+│   ├── minify-css.mjs               # Minifikacja CSS (prestart)
+│   ├── copy-prisma-client.mjs       # Kopiowanie generated/prisma → dist/generated
+│   ├── encoding-integrity.js        # Kodowanie UTF-8 + mojibake (staged/pre-push/CI)
+│   ├── skill-cli.mjs                # CLI skilli (build-cost, stats, capabilities)
+│   ├── export-settings-to-seed.mjs  # Eksport cenników z tabel DB do data/seed_*.json
 │   ├── cleanup-legacy-settings.cjs  # Usunięcie legacy kluczy cennikowych z settings
 │   ├── prices-export.ts             # Zapis domyślnych cenników do price_defaults.json (CLI)
-│   ├── prices-import.ts             # Restore cenników z price_defaults.json (CLI)
-│   ├── docker-entrypoint.sh         # Entrypoint Docker
-│   ├── install-backup-cron.ps1      # Cron backup (Windows)
-│   ├── uninstall-backup-cron.ps1    # Odinstaluj cron backup (Windows)
-│   ├── encoding-integrity.js        # Spójność kodowania
-│   └── excel-validator.py           # Walidacja Excel (pre-commit)
+│   ├── prices-import.ts             # Restore cenników z price_defaults.json (CLI, walidacja + diff)
+│   ├── deploy.mjs / rollback.mjs    # Deploy/rollback produkcji (backup + migracje + smoke check)
+│   ├── generate-licenses.mjs        # Generowanie THIRD-PARTY-NOTICES.md
+│   ├── benchmark.mjs                # Benchmark
+│   └── excel-validator.py           # Walidacja Excel (pre-commit, wymaga Python 3.10+)
 │
 ├── tests/                           # Testy (Jest + Playwright)
 │   ├── auth.test.ts
@@ -540,4 +555,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-16_
+_Ostatnia aktualizacja: 2026-08-23_

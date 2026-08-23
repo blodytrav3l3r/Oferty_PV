@@ -509,22 +509,22 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Backup i przenoszenie bazy
 
-| Komenda                         | Opis                              |
-| ------------------------------- | --------------------------------- |
-| `npm run backup`                | Wykonaj backup bazy SQLite        |
-| `npm run restore`               | Przywróć bazę z pliku backupu     |
-| `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows) |
-| `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows) |
+| Komenda                         | Opis                                                                |
+| ------------------------------- | ------------------------------------------------------------------- |
+| `npm run backup`                | Wykonaj backup bazy SQLite (`VACUUM INTO`, max 30 kopii)            |
+| `npm run restore <plik>`        | Przywróć bazę z pliku backupu (`node scripts/restore-db.js <plik>`) |
+| `npm run backup:install-cron`   | Zainstaluj cron backupu (Windows)                                   |
+| `npm run backup:uninstall-cron` | Odinstaluj cron backupu (Windows)                                   |
 
 ### Wersjonowanie
 
-| Komenda                 | Opis                                                       |
-| ----------------------- | ---------------------------------------------------------- |
-| `npm run version:check` | Sprawdź spójność wersji (VERSION, package.json, CHANGELOG) |
-| `npm run version:patch` | Podbij wersję patch                                        |
-| `npm run version:minor` | Podbij wersję minor                                        |
-| `npm run version:major` | Podbij wersję major                                        |
-| `npm run version:bump`  | Podbij wersję (typ z argumentu)                            |
+| Komenda                 | Opis                                                                                                                               |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run version:check` | Sprawdź spójność wersji we wszystkich źródłach (VERSION, package.json, CHANGELOG, *.bat, HTML `?v=`, markery `**Wersja:**` w docs) |
+| `npm run version:patch` | Podbij wersję patch                                                                                                                |
+| `npm run version:minor` | Podbij wersję minor                                                                                                                |
+| `npm run version:major` | Podbij wersję major                                                                                                                |
+| `npm run version:bump`  | Podbij wersję (typ z argumentu)                                                                                                    |
 
 ### Nazwa aplikacji i skill CLI
 
@@ -632,48 +632,61 @@ Oferty_PV/
 │   ├── validators/            # Schematy walidacji Zod
 │   ├── utils/                 # Narzędzia (logger, helpers, productionOrderGuard)
 │   └── types/                 # Typy TypeScript
-├── public/                    # Frontend (Vanilla JS SPA)
-│   ├── app.html               # Shell SPA (jedyny entry point)
-│   ├── studnie.html           # Moduł studnie (iframe)
-│   ├── rury.html              # Moduł rury (iframe)
-│   ├── js/                    # Skrypty JS
-│   │   ├── shared/            # auth, ui, icons, headerUser, clientManager, dashboard
-│   │   ├── studnie/           # WellManager, solver, ruleEngine, ML hooks, Excel
-│   │   ├── rury/              # OfferItems, offerSummary, PEHD
-│   │   ├── kartoteka/         # Kartoteka ofert i zamówień (kartoteka*)
-│   │   ├── import-export/     # Import/eksport XLSX + JSON 1:1 (toolbar.js)
-│   │   ├── admin/             # Panel admina (AI dashboard)
-│   │   └── spa/               # Router SPA (router.js)
-│   ├── css/                   # Style CSS
-│   └── templates/             # Szablony do druku
-├── prisma/                    # Schema + migracje Prisma
-│   └── schema.prisma
+├── public/                    # Frontend (Vanilla JS SPA, 221 plików JS)
+│   ├── app.html               # Shell SPA (jedyny entry point, router hash)
+│   ├── index.html             # Pulpit / Dashboard
+│   ├── studnie.html           # Moduł studnie (iframe w app.html)
+│   ├── rury.html              # Moduł rury (iframe w app.html)
+│   ├── kartoteka.html         # Kartoteka ofert i zamówień
+│   ├── zlecenia.html          # Zlecenia produkcyjne (PZ)
+│   ├── js/                    # Skrypty JS (221 plików)
+│   │   ├── shared/            # 22 pliki: auth, ui, icons, headerUser, toast, modalCore, StorageService
+│   │   ├── studnie/           # 137 plików: WellManager, solver, ruleEngine, ML hooks, Excel (19 modułów excel*.js)
+│   │   ├── rury/              # 31 plików: OfferItems, offerSummary, PEHD
+│   │   ├── kartoteka/         # 8 plików: kartotekaActions, kartotekaUi, kartotekaInit
+│   │   ├── import-export/     # 11 plików: toolbar.js + rury/studnie/shared (XLSX + JSON 1:1)
+│   │   ├── admin/             # 4 pliki: AI dashboard, aiDashboard
+│   │   └── spa/               # 4 pliki: router.js, navGuard
+│   ├── css/                   # 11 arkuszy: style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal
+│   ├── images/                # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
+│   ├── partials/              # Partiale HTML (header, rury/*, studnie/*) ładowane przez partialLoader
+│   └── templates/             # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
+├── prisma/                    # Schema + migracje Prisma (38 modeli, 651 linii)
+│   ├── schema.prisma          # Definicja schematu (SQLite, 38 modeli)
+│   └── migrations/            # 3 migracje: 20260815000000_baseline + 20260815000001_uq_reward + 20260816000000_ai_training_run
 ├── data/                      # Baza SQLite + pliki seed
-├── tests/                     # Testy (Jest, Playwright)
+│   ├── app_database.sqlite    # Główna baza (SQLite)
+│   ├── price_defaults.json    # Snapshot domyślnych cenników (transfer między instalacjami)
+│   └── seed_*.json            # seed_rury/studnie/preco.json (źródło dla prisma/seed.ts)
+├── tests/                     # Testy (Jest + Playwright, ~125 plików)
 │   ├── ml/                    # Testy pipeline'u ML
-│   ├── studnie/               # Testy modułu studnie
+│   ├── studnie/               # Testy modułu studnie (Excel, solver, pzGuard)
 │   ├── sales/                 # Testy kartoteki (filtry, batch, search)
-│   ├── playwright/            # Testy Playwright (regresyjne)
+│   ├── playwright/            # Testy Playwright (alignment, appName, a11y, smoke)
 │   └── ...
 ├── docs/                      # Dokumentacja
 │   ├── adr/                   # Decyzje architektoniczne (ADR-001..008)
-│   ├── plans/                 # Plany i taski (+ archive/)
+│   ├── plans/                 # Plany i taski (+ archive/ — 60+ archiwalnych)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
-│   └── ...
-├── scripts/                   # Skrypty narzędziowe
-│   ├── backup.ts              # Backup bazy danych
-│   ├── restore-db.js          # Przywracanie bazy z backupu
-│   ├── check-db.js            # Weryfikacja schematu przy starcie
-│   ├── check-version.mjs      # Weryfikacja spójności wersji
-│   ├── check-appname.cjs      # Sprawdzanie nazwy aplikacji (pre-push)
-│   ├── auto-cache-bust.mjs    # Cache-bust assetów przy release
-│   ├── auto-docs-version.mjs  # Wersje w dokumentacji przy release
-│   ├── auto-bat-version.mjs   # Wersje w .bat przy release
-│   ├── bump-version.mjs       # Podbijanie wersji
-│   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8
-│   ├── skill-cli.mjs          # Skill CLI (build cost, stats)
-│   ├── export-settings-to-seed.mjs # Eksport cenników z tabel DB do seed
-│   └── ...
+│   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
+├── scripts/                   # Skrypty narzędziowe (43 pliki)
+│   ├── backup.ts              # Backup bazy (VACUUM INTO, max 30 kopii)
+│   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
+│   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)
+│   ├── check-version.mjs      # Weryfikacja spójności wersji (VERSION ↔ package.json ↔ CHANGELOG ↔ *.bat ↔ HTML ?v= ↔ docs)
+│   ├── check-appname.cjs      # Sprawdzanie nazwy aplikacji (pre-push, APP_NAME SSoT)
+│   ├── check-global-collisions.mjs # Kolizje globali window.* (shared vs studnie)
+│   ├── auto-cache-bust.mjs    # Cache-bust ?v= w HTML przy release
+│   ├── auto-docs-version.mjs  # Wersje w README/docs przy release
+│   ├── auto-bat-version.mjs   # Wersje w *.bat przy release
+│   ├── bump-version.mjs       # Podbijanie wersji (patch/minor/major)
+│   ├── bundle-scripts.mjs     # Bundling JS studnie/rury (esbuild)
+│   ├── minify-css.mjs         # Minifikacja CSS (prestart)
+│   ├── copy-prisma-client.mjs # Kopiowanie generated/prisma → dist/generated
+│   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8 + mojibake
+│   ├── skill-cli.mjs          # Skill CLI (build cost, stats, capabilities)
+│   ├── export-settings-to-seed.mjs # Eksport cenników z tabel DB do data/seed_*.json
+│   └── ...                    # deploy.mjs, rollback.mjs, benchmark.mjs, generate-licenses.mjs
 ├── .github/                   # CI/CD, CODE_OF_CONDUCT
 ├── .husky/                    # Git hooks (pre-push, commit-msg)
 ├── *.bat / *.sh               # Skrypty startowe (start, dev, install, build)
