@@ -4,6 +4,14 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.1...v1.19.2) (2026-08-23)
+
+### Bug Fixes
+
+- **orders:** delegacja badge zmian kartoteki do ssot helperow ([c7616c7](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7616c77fa0529d2b895d5d00159333ebc32c69d))
+- **studnie:** live odswiezanie banneru bledow w zleceniu ([d3ad572](https://github.com/blodytrav3l3r/Oferty_PV/commit/d3ad5720782f9cdac127c2042bf524c4b24fd62c))
+- **studnie:** zachowanie frozenprice snapshotu przy diff zamowienia ([fe89858](https://github.com/blodytrav3l3r/Oferty_PV/commit/fe8985846592547beb1115308a135bfeab5e7a07))
+
 ### [1.19.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.0...v1.19.1) (2026-08-23)
 
 ### Features
