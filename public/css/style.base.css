@@ -788,6 +788,12 @@ body::before {
     }
 }
 
+.app-container {
+    max-width: var(--section-max-width);
+    margin: 0 auto;
+    padding: 0 var(--section-pad-x);
+}
+
 /* Główna */
 .main {
     max-width: 100%;
