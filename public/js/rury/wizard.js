@@ -39,12 +39,11 @@ function goToPhase(step) {
     const stepInfo = document.getElementById('wizard-nav-step-info');
     const bottomNav = document.getElementById('wizard-bottom-nav');
 
-    if (prevBtn) prevBtn.style.display = step === 1 || step === 5 ? 'none' : 'flex';
+    if (prevBtn) prevBtn.classList.toggle('hidden', step === 1 || step === 5);
     if (stepInfo) stepInfo.textContent = 'Krok ' + step + ' z 5';
 
     // Pasek nawigacji widoczny zawsze (w kroku 5 bez przycisków — sama etykieta "Zamówienie")
     if (bottomNav) {
-        bottomNav.style.display = 'flex';
         bottomNav.classList.toggle('no-buttons', step === 5);
     }
 
@@ -87,8 +86,7 @@ function goToPhase(step) {
     // Pokaż/ukryj fixed pasek podsumowania (zawsze nad paskiem nawigacji)
     const summaryBar = document.getElementById('rury-summary-bar');
     if (summaryBar) {
-        summaryBar.style.display = step === 3 || step === 5 ? 'block' : 'none';
-        summaryBar.style.bottom = '60px';
+        summaryBar.classList.toggle('hidden', !(step === 3 || step === 5));
     }
 
     // Aktualizuj etykietę przycisku zapisu w pasku podsumowania

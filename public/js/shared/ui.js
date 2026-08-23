@@ -126,7 +126,7 @@ function showUserSelectionPopup(users, defaultUserId) {
         const overlay = showModal({
             id: 'user-selection-overlay',
             titleId: 'user-selection-title',
-            html: `<div class="modal" style="            background: var(--bg-tile); border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-md); padding:1.5rem; min-width:350px; max-width:500px; max-height:80vh; overflow-y:auto; color:var(--text-primary); font-family:Inter,sans-serif;">${html}</div>`,
+            html: `<div class="modal">${html}</div>`,
             onClose: () => once(null)
         });
         if (window.lucide) lucide.createIcons();

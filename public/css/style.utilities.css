@@ -505,3 +505,14 @@
 .mt-3 {
     margin-top: 0.3rem;
 }
+.divider-v {
+    width: 1px;
+    height: 24px;
+    background: var(--border-glass);
+    flex-shrink: 0;
+}
+.ka-pill {
+    border-radius: var(--radius-lg);
+    padding: 0.35rem 0.9rem;
+    font-size: var(--fs-base);
+}

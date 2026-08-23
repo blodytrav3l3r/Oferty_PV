@@ -48,11 +48,10 @@ export function showToast(msg, type = 'info') {
     toast.appendChild(text);
 
     const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
     closeBtn.setAttribute('aria-label', 'Zamknij');
     closeBtn.innerHTML = '<i data-lucide="x" aria-hidden="true"></i>';
     if (window.lucide) lucide.createIcons();
-    closeBtn.style.cssText =
-        'background:none;border:none;color:inherit;cursor:pointer;font-size: var(--fs-2xl);padding:0 0 0 .5rem;opacity:.7;';
     closeBtn.addEventListener('click', () => toast.remove());
     toast.appendChild(closeBtn);
 

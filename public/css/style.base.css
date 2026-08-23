@@ -214,6 +214,13 @@
         background-color 0.25s, border-color 0.25s, box-shadow 0.25s,
         transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
+    /* Z-index SSoT — kanon z public/js/studnie/layers.js (docs/UI_GUIDELINES.md:71) */
+    --z-header: 100;
+    --z-sticky-th: 5;
+    --z-sticky-dropdown: 50;
+    --z-overlay: 2000;
+    --z-toast: 5000;
+
     /* Szerokość sekcji i rytm pionowy — --section-gap (1.5rem): rytm wewnętrzny;
        --section-gap-lg (2rem): główny odstęp między sekcjami (pulpit, kartoteka, zlecenia) */
     --section-max-width: 1900px;
@@ -365,7 +372,7 @@
     padding: 0;
 }
 
-*:focus {
+*:focus:not(:focus-visible) {
     outline: none;
 }
 *:focus-visible {
@@ -428,7 +435,7 @@ body::before {
     padding: 0 1rem;
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: var(--z-header);
     box-shadow: var(--shadow-sm);
 }
 
@@ -726,8 +733,7 @@ body::before {
     outline-offset: 2px;
 }
 
-/* Węższe okna (700-1100px): zerowanie min-width kafelków, aby nagłówek
-   nie przelał się poziomo - pełny wrap i ukrycie tekstu dopiero <=700px */
+/* Węższe okna (700-1100px): lokalne odchylenie od kanonu 1200 — dopuszczalne per UI_GUIDELINES.md:94 */
 @media (max-width: 1100px) {
     .nav-tile {
         min-width: 0;

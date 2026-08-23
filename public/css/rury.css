@@ -14,14 +14,6 @@ body.rury-page > .main:has(#section-builder.active) {
     padding-right: 0;
 }
 
-/* Margins (uzupełnienie shared w style.css dla porządku) */
-.mb-0 {
-    margin-bottom: 0;
-}
-.mb-1 {
-    margin-bottom: 1rem;
-}
-
 /* ── Karty ── */
 .rury-card {
     background: var(--bg-card);
@@ -222,7 +214,7 @@ body.rury-page > .main:has(#section-builder.active) {
     border-right: 1px solid var(--border-glass);
     position: sticky;
     top: 60px;
-    z-index: 50;
+    z-index: var(--z-sticky-dropdown);
     white-space: nowrap;
 }
 
@@ -461,7 +453,7 @@ body.rury-page > .main:has(#section-builder.active) {
     border-top: 1px solid var(--border-glass);
     margin: 0 -1.5rem -1.2rem -1.5rem;
     padding: 1.2rem 1.5rem;
-    z-index: 100;
+    z-index: var(--z-header);
     box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
@@ -539,7 +531,7 @@ body.rury-page > .main:has(#section-builder.active) {
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 2rem;
-    z-index: 9999;
+    z-index: var(--z-header);
     box-shadow: 0 -8px 30px var(--shadow-color);
 }
 
@@ -700,7 +692,7 @@ body.rury-page > .main:has(#section-builder.active) {
     margin-bottom: 0.3rem;
     position: sticky;
     top: 92px;
-    z-index: 39;
+    z-index: var(--z-sticky-dropdown);
     background: var(--bg-secondary);
     padding: 0.3rem 0.6rem;
     margin-left: -1rem;
@@ -792,7 +784,7 @@ body.rury-page > .main:has(#section-builder.active) {
     align-items: center;
     position: sticky;
     top: 49px;
-    z-index: 40;
+    z-index: var(--z-sticky-dropdown);
     background: var(--bg-secondary);
     padding: 0.3rem 0.6rem;
     margin-left: -1rem;
@@ -853,7 +845,7 @@ body.rury-page > .main:has(#section-builder.active) {
     bottom: 60px;
     left: 0;
     right: 0;
-    z-index: 99;
+    z-index: var(--z-header);
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     border-bottom: 1px solid transparent;

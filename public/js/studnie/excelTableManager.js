@@ -1,5 +1,6 @@
 // @ts-check
 /* ===== EXCEL TABLE MANAGER — Tabela konfiguracyjna studni (Excel-style) ===== */
+// ponytail: _excelInitColumnResize 98 linii — przenieś do excelColumnVisibility.js gdy excelTableManager >400 linii; teraz 380 OK, nie dziel na siłę (SRP > limit)
 
 /* ===== RESIZE COLUMNS (Excel-like drag handles) ===== */
 function _excelInitColumnResize() {

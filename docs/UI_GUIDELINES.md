@@ -72,7 +72,7 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 
 **Kanonem warstw jest `LAYERS` / `LAYERS_EXCEL` w `public/js/studnie/layers.js`.**
 Popupy, modale i nakładki tworzone w JS MUSZĄ używać stałych `LAYERS.*` — zakaz twardych
-liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:235-239`.
+liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:212-220` (`--z-header`, `--z-sticky-*`, `--z-overlay`, `--z-toast`).
 
 | Warstwa                                     | Źródło (JS)                  | CSS var                                          |
 | ------------------------------------------- | ---------------------------- | ------------------------------------------------ |

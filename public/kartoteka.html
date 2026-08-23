@@ -119,49 +119,32 @@
                                 >
                                 <button
                                     type="button"
-                                    class="btn btn-sm ka-type-filter-btn active"
+                                    class="btn btn-sm ka-type-filter-btn active ka-pill"
                                     data-type-filter="all"
                                     onclick="filterByType('all')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     Wszystkie
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill"
                                     data-type-filter="offer"
                                     onclick="filterByType('offer')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     <i data-lucide="cylinder" class="lucide-rotate-n90"></i> Rury
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-type-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-type-filter-btn ka-pill"
                                     data-type-filter="studnia_oferta"
                                     onclick="filterByType('studnia_oferta')"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     <i data-lucide="cylinder"></i> Studnie
                                 </button>
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- Status Filters -->
                             <div
@@ -184,48 +167,33 @@
                                 >
                                 <button
                                     type="button"
-                                    class="btn btn-sm ka-filter-btn active"
+                                    class="btn btn-sm ka-filter-btn active ka-pill"
                                     data-filter="all"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('all')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Wszystkie
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn ka-pill"
                                     data-filter="with_order"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('with_order')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Z zamówieniem
                                 </button>
                                 <button
                                     type="button"
-                                    class="btn btn-sm btn-secondary ka-filter-btn"
+                                    class="btn btn-sm btn-secondary ka-filter-btn ka-pill"
                                     data-filter="without_order"
                                     onclick="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.setFilterLocalOffers('without_order')
-                                    "
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
                                     "
                                 >
                                     Bez zamówienia
@@ -233,9 +201,7 @@
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- Date Filter -->
                             <div
@@ -297,9 +263,7 @@
                             </div>
 
                             <!-- Divider -->
-                            <div
-                                style="width: 1px; height: 24px; background: var(--border-glass)"
-                            ></div>
+                            <div class="divider-v" aria-hidden="true"></div>
 
                             <!-- User Filter -->
                             <div
@@ -342,16 +306,11 @@
                                 <button
                                     type="button"
                                     id="ka-clear-filters"
-                                    class="btn btn-secondary btn-sm"
+                                    class="btn btn-secondary btn-sm ka-pill"
                                     onclick="
                                         window.kartotekaUI && window.kartotekaUI.clearAllFilters()
                                     "
                                     title="Wyczyść wszystkie aktywne filtry"
-                                    style="
-                                        border-radius: var(--radius-lg);
-                                        padding: 0.35rem 0.9rem;
-                                        font-size: var(--fs-base);
-                                    "
                                 >
                                     Wyczyść filtry (0)
                                 </button>
@@ -360,15 +319,10 @@
                             <!-- Compact Mode Toggle -->
                             <button
                                 type="button"
-                                class="btn btn-sm btn-secondary"
+                                class="btn btn-sm btn-secondary ka-pill"
                                 id="btn-compact-mode"
                                 onclick="toggleCompactMode()"
-                                style="
-                                    margin-left: auto;
-                                    border-radius: var(--radius-lg);
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: var(--fs-base);
-                                "
+                                style="margin-left: auto"
                                 title="Przełącz tryb kompaktowy"
                             >
                                 <i data-lucide="panel-right-close"></i> Kompakt
@@ -433,15 +387,10 @@
 
                             <button
                                 type="button"
-                                class="btn btn-secondary btn-sm"
+                                class="btn btn-secondary btn-sm ka-pill"
                                 onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
-                                style="
-                                    border-radius: var(--radius-lg);
-                                    padding: 0.35rem 0.9rem;
-                                    font-size: var(--fs-base);
-                                    flex-shrink: 0;
-                                "
+                                style="flex-shrink: 0"
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
