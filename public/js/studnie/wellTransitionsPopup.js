@@ -15,9 +15,11 @@ function openPrzejsciaVisibilityPopup(containerId) {
     overlay.setAttribute('role', 'dialog');
     overlay.setAttribute('aria-modal', 'true');
     overlay.setAttribute('aria-label', 'Widoczność typów przejść');
+    // ponytail: 1100 (EXCEL) < 2000 (zlecenia-overlay) -> popup niewidoczny w Zleceniu Produkcyjnym. Uzycie PRZEJSCIA_VIS_POPUP (2100) > GENERIC_MODAL
+    const popupZ = (typeof LAYERS !== 'undefined' && LAYERS.PRZEJSCIA_VIS_POPUP) || 2100;
     overlay.style.cssText =
         'position:fixed; inset:0; z-index:' +
-        LAYERS.EXCEL_POPUP_BACKDROP +
+        popupZ +
         ';background:rgba(var(--black-rgb), 0.8); backdrop-filter:blur(6px); display:flex; align-items:center; justify-content:center; animation:fadeInOverlay 0.2s ease;';
     overlay.onclick = (e) => {
         if (e.target === overlay) closePrzejsciaVisibilityPopup(containerId);
