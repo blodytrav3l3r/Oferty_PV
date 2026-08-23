@@ -14,13 +14,15 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 | Licencja                | Liczba pakietów |
 | ----------------------- | --------------: |
-| MIT                     |             910 |
-| ISC                     |              98 |
-| Apache-2.0              |              61 |
-| BSD-3-Clause            |              19 |
-| BSD-2-Clause            |              18 |
+| MIT                     |             938 |
+| ISC                     |             100 |
+| Apache-2.0              |              62 |
+| BSD-3-Clause            |              20 |
+| BSD-2-Clause            |              20 |
 | BlueOak-1.0.0           |              16 |
 | MIT OR CC0-1.0          |              14 |
+| MPL-2.0                 |               2 |
+| MIT-0                   |               1 |
 | Python-2.0              |               1 |
 | CC-BY-4.0               |               1 |
 | BSD                     |               1 |
@@ -33,13 +35,14 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Oprogramowanie firm trzecich
 
-### MIT (910)
+### MIT (938)
 
 - @apidevtools/json-schema-ref-parser@14.0.1
 - @apidevtools/openapi-schemas@2.1.0
 - @apidevtools/swagger-methods@3.0.2
 - @apidevtools/swagger-parser@12.1.0
 - @apm-js-collab/code-transformer-bundler-plugins@0.5.0
+- @asamuzakjp/css-color@3.2.0
 - @babel/code-frame@7.29.7
 - @babel/compat-data@7.29.7
 - @babel/core@7.29.7
@@ -108,6 +111,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @commitlint/types@21.1.0
 - @conventional-changelog/git-client@2.7.0
 - @cspotcode/source-map-support@0.8.1
+- @csstools/css-calc@2.1.4
+- @csstools/css-color-parser@3.1.0
+- @csstools/css-parser-algorithms@3.0.5
+- @csstools/css-tokenizer@3.0.4
 - @emnapi/core@1.10.0
 - @emnapi/runtime@1.10.0
 - @emnapi/wasi-threads@1.2.1
@@ -118,6 +125,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @jest/console@30.4.1
 - @jest/core@30.4.2
 - @jest/diff-sequences@30.4.0
+- @jest/environment-jsdom-abstract@30.4.1
 - @jest/environment@30.4.1
 - @jest/expect-utils@30.4.1
 - @jest/expect@30.4.1
@@ -186,6 +194,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @types/istanbul-lib-report@3.0.3
 - @types/istanbul-reports@3.0.4
 - @types/jest@30.0.0
+- @types/jsdom@21.1.7
 - @types/json-schema@7.0.15
 - @types/methods@1.1.4
 - @types/mime@1.3.5
@@ -206,6 +215,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @types/supertest@7.2.1
 - @types/swagger-jsdoc@6.0.4
 - @types/swagger-ui-express@4.1.8
+- @types/tough-cookie@4.0.5
 - @types/yargs-parser@21.0.3
 - @types/yargs@17.0.35
 - @types/yauzl@2.10.3
@@ -406,8 +416,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - cosmiconfig@9.0.2
 - create-require@1.1.1
 - cross-spawn@7.0.6
+- cssstyle@4.6.0
 - dargs@7.0.0
 - data-uri-to-buffer@6.0.2
+- data-urls@5.0.0
 - dateformat@3.0.3
 - debug@2.6.9
 - debug@4.4.3
@@ -434,6 +446,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - debug@4.4.3
 - decamelize-keys@1.1.1
 - decamelize@1.2.0
+- decimal.js@10.6.0
 - dedent@1.7.2
 - deep-is@0.1.4
 - deepmerge@4.3.1
@@ -544,12 +557,14 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - hash.js@1.1.7
 - hasown@2.0.4
 - helmet@8.2.0
+- html-encoding-sniffer@4.0.0
 - html-escaper@2.0.2
 - http-errors@2.0.1
 - http-proxy-agent@7.0.2
 - https-proxy-agent@7.0.6
 - husky@9.1.7
 - iconv-lite@0.4.24
+- iconv-lite@0.6.3
 - ignore@5.3.2
 - ignore@7.0.6
 - immediate@3.0.6
@@ -575,6 +590,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - is-obj@2.0.0
 - is-plain-obj@1.1.0
 - is-plain-obj@4.1.0
+- is-potential-custom-element-name@1.0.1
 - is-stream@2.0.1
 - is-text-path@1.0.1
 - isarray@1.0.0
@@ -585,6 +601,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - jest-diff@30.4.1
 - jest-docblock@30.4.0
 - jest-each@30.4.1
+- jest-environment-jsdom@30.4.1
 - jest-environment-node@30.4.1
 - jest-haste-map@30.4.1
 - jest-leak-detector@30.4.1
@@ -607,6 +624,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - js-tokens@4.0.0
 - js-yaml@3.15.1
 - js-yaml@4.3.1
+- jsdom@26.1.0
 - jsesc@3.1.0
 - json-buffer@3.0.1
 - json-parse-better-errors@1.0.2
@@ -704,6 +722,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - node-releases@2.0.48
 - normalize-path@3.0.0
 - npm-run-path@4.0.1
+- nwsapi@2.2.24
 - nypm@0.6.7
 - object-inspect@1.13.4
 - ohash@2.0.11
@@ -738,6 +757,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - parent-module@1.0.1
 - parse-json@4.0.0
 - parse-json@5.2.0
+- parse5@7.3.0
 - parseurl@1.3.3
 - path-exists@3.0.0
 - path-exists@3.0.0
@@ -805,6 +825,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - resolve@1.22.12
 - restore-cursor@5.1.0
 - rfdc@1.4.1
+- rrweb-cssom@0.8.0
 - safe-buffer@5.1.2
 - safe-buffer@5.1.2
 - safe-buffer@5.1.2
@@ -888,6 +909,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - supports-preserve-symlinks-flag@1.0.0
 - swagger-jsdoc@6.3.0
 - swagger-ui-express@5.0.1
+- symbol-tree@3.2.4
 - synckit@0.11.13
 - tar-fs@3.1.3
 - tar-stream@3.2.0
@@ -898,8 +920,11 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - through2@4.0.2
 - tinyexec@1.2.4
 - tinyglobby@0.2.17
+- tldts-core@6.1.86
+- tldts@6.1.86
 - to-regex-range@5.0.1
 - toidentifier@1.0.1
+- tr46@5.1.1
 - tree-kill@1.2.2
 - trim-newlines@3.0.1
 - ts-api-utils@2.5.0
@@ -922,6 +947,10 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - utils-merge@1.0.1
 - v8-compile-cache-lib@3.0.1
 - vary@1.1.2
+- w3c-xmlserializer@5.0.0
+- whatwg-encoding@3.1.1
+- whatwg-mimetype@4.0.0
+- whatwg-url@14.2.0
 - word-wrap@1.2.5
 - wordwrap@1.0.0
 - wrap-ansi-cjs@7.0.0
@@ -935,6 +964,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - ws@8.21.3
 - xml-js@1.6.11
 - xml@1.0.1
+- xmlchars@2.2.0
 - xtend@4.0.2
 - yargs@16.2.2
 - yargs@17.7.3
@@ -946,7 +976,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - zod@3.25.76
 - zod@4.4.3
 
-### ISC (98)
+### ISC (100)
 
 - @isaacs/cliui@8.0.2
 - @istanbuljs/load-nyc-config@1.1.0
@@ -999,6 +1029,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - lru-cache@10.4.3
 - lru-cache@10.4.3
 - lru-cache@10.4.3
+- lru-cache@10.4.3
 - lru-cache@5.1.1
 - lru-cache@6.0.0
 - lru-cache@7.18.3
@@ -1012,6 +1043,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - once@1.11.0
 - picocolors@1.1.1
 - rimraf@2.7.1
+- saxes@6.0.0
 - semver@5.7.2
 - semver@5.7.2
 - semver@5.7.2
@@ -1047,7 +1079,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - yargs-parser@21.1.1
 - yargs-parser@22.0.0
 
-### Apache-2.0 (61)
+### Apache-2.0 (62)
 
 - @apm-js-collab/code-transformer@0.15.0
 - @apm-js-collab/tracing-hooks@0.10.0
@@ -1110,8 +1142,9 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - validate-npm-package-license@3.0.4
 - walker@1.0.8
 - webdriver-bidi-protocol@0.4.1
+- xml-name-validator@5.0.0
 
-### BSD-3-Clause (19)
+### BSD-3-Clause (20)
 
 - @sinonjs/commons@3.0.1
 - @sinonjs/fake-timers@15.4.0
@@ -1132,11 +1165,13 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - source-map@0.6.1
 - sprintf-js@1.0.3
 - tmpl@1.0.5
+- tough-cookie@5.1.2
 
-### BSD-2-Clause (18)
+### BSD-2-Clause (20)
 
 - dotenv@16.6.1
 - dotenv@17.4.2
+- entities@6.0.1
 - escodegen@2.1.0
 - eslint-scope@9.1.2
 - espree@11.2.0
@@ -1153,6 +1188,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - normalize-package-data@3.0.3
 - uglify-js@3.19.3
 - uri-js@4.4.1
+- webidl-conversions@7.0.0
 
 ### BlueOak-1.0.0 (16)
 
@@ -1189,6 +1225,15 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - type-fest@0.8.1
 - type-fest@0.8.1
 - type-fest@4.41.0
+
+### MPL-2.0 (2)
+
+- @axe-core/playwright@4.13.0
+- axe-core@4.13.0
+
+### MIT-0 (1)
+
+- @csstools/color-helpers@5.1.0
 
 ### Python-2.0 (1)
 
