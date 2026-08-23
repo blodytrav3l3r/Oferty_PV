@@ -14,7 +14,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 | Licencja                | Liczba pakietów |
 | ----------------------- | --------------: |
-| MIT                     |             938 |
+| MIT                     |             965 |
 | ISC                     |             100 |
 | Apache-2.0              |              62 |
 | BSD-3-Clause            |              20 |
@@ -35,7 +35,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Oprogramowanie firm trzecich
 
-### MIT (938)
+### MIT (965)
 
 - @apidevtools/json-schema-ref-parser@14.0.1
 - @apidevtools/openapi-schemas@2.1.0
@@ -118,6 +118,32 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - @emnapi/core@1.10.0
 - @emnapi/runtime@1.10.0
 - @emnapi/wasi-threads@1.2.1
+- @esbuild/aix-ppc64@0.28.2
+- @esbuild/android-arm@0.28.2
+- @esbuild/android-arm64@0.28.2
+- @esbuild/android-x64@0.28.2
+- @esbuild/darwin-arm64@0.28.2
+- @esbuild/darwin-x64@0.28.2
+- @esbuild/freebsd-arm64@0.28.2
+- @esbuild/freebsd-x64@0.28.2
+- @esbuild/linux-arm@0.28.2
+- @esbuild/linux-arm64@0.28.2
+- @esbuild/linux-ia32@0.28.2
+- @esbuild/linux-loong64@0.28.2
+- @esbuild/linux-mips64el@0.28.2
+- @esbuild/linux-ppc64@0.28.2
+- @esbuild/linux-riscv64@0.28.2
+- @esbuild/linux-s390x@0.28.2
+- @esbuild/linux-x64@0.28.2
+- @esbuild/netbsd-arm64@0.28.2
+- @esbuild/netbsd-x64@0.28.2
+- @esbuild/openbsd-arm64@0.28.2
+- @esbuild/openbsd-x64@0.28.2
+- @esbuild/openharmony-arm64@0.28.2
+- @esbuild/sunos-x64@0.28.2
+- @esbuild/win32-arm64@0.28.2
+- @esbuild/win32-ia32@0.28.2
+- @esbuild/win32-x64@0.28.2
 - @eslint-community/eslint-utils@4.9.1
 - @eslint-community/regexpp@4.12.2
 - @eslint/js@9.39.4
@@ -486,6 +512,7 @@ w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 - es-object-atoms@1.1.2
 - es-set-tostringtag@2.1.0
 - es-toolkit@1.49.0
+- esbuild@0.28.2
 - escalade@3.2.0
 - escape-html@1.0.3
 - escape-string-regexp@1.0.5

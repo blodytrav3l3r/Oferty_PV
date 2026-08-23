@@ -181,6 +181,24 @@ app.use((req, res, next) => {
 
 // Cachowanie: wyłączone w dev, włączone w produkcji
 if (NODE_ENV === 'production') {
+    // Minifikacja CSS (Faza P0-2): /css/X.css → public/css/min/X.css gdy istnieje.
+    // Pliki generuje scripts/minify-css.mjs (hook prestart); dev serwuje źródła.
+    const cssMinDir = path.join(resolvePublicDir(), 'css', 'min');
+    const CSS_CACHE = 'public, max-age=604800'; // 7d, spójnie z express.static poniżej
+    app.use((req, res, next) => {
+        if (req.method === 'GET' && req.path.startsWith('/css/') && req.path.endsWith('.css')) {
+            const rel = req.path.slice('/css/'.length);
+            // Blokada ścieżek wychodzących poza katalog min (.., absolutne)
+            if (!rel.includes('..') && !path.isAbsolute(rel)) {
+                const minFile = path.join(cssMinDir, rel);
+                if (fs.existsSync(minFile) && fs.statSync(minFile).isFile()) {
+                    res.setHeader('Cache-Control', CSS_CACHE);
+                    return res.sendFile(minFile);
+                }
+            }
+        }
+        next();
+    });
     app.use(
         express.static(resolvePublicDir(), {
             index: 'index.html',

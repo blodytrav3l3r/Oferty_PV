@@ -147,3 +147,6 @@ data/price_defaults.json
 
 
 tests/playwright/screenshots/debug/
+
+# Minifikowane CSS (generowane prestart — scripts/minify-css.mjs)
+public/css/min/

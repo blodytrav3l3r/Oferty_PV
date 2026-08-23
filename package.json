@@ -4,6 +4,8 @@
     "main": "dist/server.js",
     "scripts": {
         "start": "node dist/server.js",
+        "prestart": "node scripts/minify-css.mjs",
+        "minify:css": "node scripts/minify-css.mjs",
         "dev": "npm run dev:backend",
         "dev:backend": "ts-node-dev --respawn --transpile-only ./server.ts",
         "build": "tsc",
@@ -114,6 +116,7 @@
         "@types/supertest": "^7.2.1",
         "@types/swagger-jsdoc": "^6.0.4",
         "@types/swagger-ui-express": "^4.1.8",
+        "esbuild": "^0.28.2",
         "eslint": "^10.8.1",
         "eslint-config-prettier": "^10.1.8",
         "globals": "^17.9.0",
