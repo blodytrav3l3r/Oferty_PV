@@ -278,15 +278,15 @@ function openExcelTableModal() {
                 <span id="excel-well-count" style="font-size: var(--fs-2xs);color:var(--slate-500);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
                 <span id="excel-selection-summary" style="display:none;font-size: var(--fs-2xs);color:var(--accent-text);padding:0.1rem 0.5rem;background:rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);"></span>
             </div>
-            <div style="display:flex;gap:0.4rem;align-items:center;">
+            <div style="display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end;max-width:65%;">
 
-                <div style="position:relative;display:flex;align-items:center;">
+                <div style="position:relative;display:flex;align-items:center;flex:0 0 auto;">
                     <input type="text" id="excel-search-input" placeholder="Szukaj studni..." oninput="excelFilterWells(this.value)" aria-label="Szukaj studni" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius: var(--radius-2xs);padding:0.25rem 1.4rem 0.25rem 0.4rem;font-size: var(--fs-2xs);color:var(--slate-200);outline:none;width:220px;" />
                     <button type="button" id="excel-search-clear" onclick="excelClearSearch()" title="Wyczyść filtr" aria-label="Wyczyść filtr" class="excel-icon-btn" style="display:none;position:absolute;right:2px;"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
                 </div>
                 <button onclick="_excelToggleColumnPopup()" id="excel-col-vis-btn" class="excel-toolbar-btn" title="Pokaż/ukryj kolumny"><i data-lucide="table-properties" class="icon-xs" aria-hidden="true"></i>Kolumny</button>
                 <button onclick="openPrzejsciaVisibilityPopup('excel')" class="excel-toolbar-btn" title="Pokaż/ukryj typy przejść"><i data-lucide="arrow-right-left" class="icon-xs" aria-hidden="true"></i>Przejścia</button>
-                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
+                <button onclick="_excelBulkRunAutoSelect()" id="excel-bulk-recalc" class="excel-toolbar-btn" style="background:rgba(var(--success-rgb),0.15);border-color:rgba(var(--success-rgb),0.3);color:var(--success-hover);" title="Auto-dobór dla zaznaczonych (checkbox)"><i data-lucide="refresh-cw" class="icon-xs" aria-hidden="true"></i>Auto-dobór zaznaczonych</button>
                 <button onclick="openExcelShortcutsPopup()" class="excel-toolbar-btn" title="Skróty klawiszowe"><i data-lucide="keyboard" class="icon-xs" aria-hidden="true"></i>Skróty</button>
                 <button onclick="excelToggleFullscreen()" id="excel-fs-btn" class="excel-toolbar-btn" title="Pełny ekran / okno"><i data-lucide="maximize-2" class="icon-xs" aria-hidden="true"></i><span id="excel-fs-btn-label">Pełny</span></button>
                 <button onclick="excelSaveAll()" id="excel-save-btn" class="excel-toolbar-btn excel-toolbar-btn--success" title="Zapisz wszystkie zmiany i zamknij"><i data-lucide="check" class="icon-xs" aria-hidden="true"></i>Gotowe (Zapisz)</button>
