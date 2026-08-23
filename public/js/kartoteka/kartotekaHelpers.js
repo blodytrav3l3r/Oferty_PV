@@ -427,6 +427,79 @@ function getOfferDisplayData(offer) {
 }
 
 function getOrderChangeInfo(order) {
+    // SSoT: delegacja do istniejących helperów diffu, nie duplikacja logiki
+    if (order) {
+        const snap = order.originalSnapshot;
+        const hasWellsSnapshot = !!(
+            snap &&
+            (Array.isArray(snap) || snap.wells || snap.wellDiscounts)
+        );
+        const hasWellsLive = !!(order.wells || order.wellsExport);
+        const hasItemsSnapshot = !!(snap && snap.items);
+        const hasItemsLive = !!order.items;
+        const isStudnie = hasWellsSnapshot || hasWellsLive;
+        const isRury = hasItemsSnapshot || hasItemsLive;
+        if (isStudnie && typeof window.getOrderChanges === 'function') {
+            try {
+                const changes = window.getOrderChanges(order);
+                const changed = Object.keys(changes || {}).length > 0;
+                const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
+                const originalPrice = Number(
+                    order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
+                );
+                return { changed, currentPrice, originalPrice };
+            } catch {}
+        }
+        if (isRury && typeof window.getRuryOrderChanges === 'function') {
+            try {
+                const res = window.getRuryOrderChanges(order);
+                const changed =
+                    Object.keys((res && res.items) || {}).length > 0 ||
+                    !!(res && res.transportChanged);
+                const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
+                const originalPrice = Number(
+                    order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
+                );
+                return { changed, currentPrice, originalPrice };
+            } catch {}
+        }
+        // Fallback gdy kształt niejednoznaczny a helper dostępny — spróbuj oba
+        if (!isStudnie && !isRury) {
+            if (typeof window.getOrderChanges === 'function') {
+                try {
+                    const c = window.getOrderChanges(order);
+                    if (c && Object.keys(c).length > 0) {
+                        const currentPrice = Number(
+                            order?.totalNetto || order?.totalTotalNetto || 0
+                        );
+                        const originalPrice = Number(
+                            order?.originalTotalTotalNetto ||
+                                order?.originalTotalNetto ||
+                                currentPrice
+                        );
+                        return { changed: true, currentPrice, originalPrice };
+                    }
+                } catch {}
+            }
+            if (typeof window.getRuryOrderChanges === 'function') {
+                try {
+                    const r = window.getRuryOrderChanges(order);
+                    if (r && (Object.keys(r.items || {}).length > 0 || r.transportChanged)) {
+                        const currentPrice = Number(
+                            order?.totalNetto || order?.totalTotalNetto || 0
+                        );
+                        const originalPrice = Number(
+                            order?.originalTotalTotalNetto ||
+                                order?.originalTotalNetto ||
+                                currentPrice
+                        );
+                        return { changed: true, currentPrice, originalPrice };
+                    }
+                } catch {}
+            }
+        }
+    }
+    // Legacy fallback (safety-net) — rury-only, gdy helpery niedostępne
     const currentPrice = Number(order?.totalNetto || order?.totalTotalNetto || 0);
     const originalPrice = Number(
         order?.originalTotalTotalNetto || order?.originalTotalNetto || currentPrice
@@ -434,23 +507,38 @@ function getOrderChangeInfo(order) {
     let changed = Math.abs(currentPrice - originalPrice) > 0.01;
     if (!changed && order?.originalSnapshot) {
         const snap = order.originalSnapshot;
-        const snapItems = snap.items || [];
-        const snapProductTotal = snapItems.reduce((sum, item) => {
-            const unitBase =
-                (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
-            return (
-                sum +
-                (unitBase + Number(item.surcharge || 0) + Number(item.pehdCostPerUnit || 0)) *
-                    (Number(item.quantity) || 0)
-            );
-        }, 0);
-        const snapTransport = window.recalculateRuryTransportCost(
-            snapItems,
-            snap.transportKm,
-            snap.transportRate
+        const isStudnieFallback = !!(
+            snap.wells ||
+            Array.isArray(snap) ||
+            snap.wellDiscounts ||
+            order?.wells ||
+            order?.wellsExport
         );
-        const totalCurrent = window.computeOrderValueWithTransport(order);
-        changed = Math.abs(totalCurrent - (snapProductTotal + snapTransport)) > 0.01;
+        if (!isStudnieFallback) {
+            const snapItems = snap.items || [];
+            const snapProductTotal = snapItems.reduce((sum, item) => {
+                const unitBase =
+                    (Number(item.unitPrice) || 0) * (1 - (Number(item.discount) || 0) / 100);
+                return (
+                    sum +
+                    (unitBase + Number(item.surcharge || 0) + Number(item.pehdCostPerUnit || 0)) *
+                        (Number(item.quantity) || 0)
+                );
+            }, 0);
+            const snapTransport =
+                typeof window.recalculateRuryTransportCost === 'function'
+                    ? window.recalculateRuryTransportCost(
+                          snapItems,
+                          snap.transportKm,
+                          snap.transportRate
+                      )
+                    : 0;
+            const totalCurrent =
+                typeof window.computeOrderValueWithTransport === 'function'
+                    ? window.computeOrderValueWithTransport(order)
+                    : currentPrice;
+            changed = Math.abs(totalCurrent - (snapProductTotal + snapTransport)) > 0.01;
+        }
     }
     return { changed, currentPrice, originalPrice };
 }
