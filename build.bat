@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.19.2
+REM  Wersja: 1.19.3
 REM ===========================================================
 REM  build.bat - Budowanie production bundle (final)
 REM ===========================================================
@@ -7,7 +7,7 @@ REM ===========================================================
 setlocal
 cd /d "%~dp0"
 
-set "APP_VERSION=1.19.2"
+set "APP_VERSION=1.19.3"
 
 echo ===========================================================
 echo   S.O.K. - Budowanie produkcyjne v%APP_VERSION%

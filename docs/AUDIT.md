@@ -12,7 +12,7 @@
 > Poniższy raport pozostaje historycznym zapisem stanu z daty audytu,
 > zaktualizowanym o realne liczby na dzień 2026-08-23.
 
-**Wersja projektu:** 1.19.2  
+**Wersja projektu:** 1.19.3  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  
 **Audytor:** Hermes Agent / Nous Research
 

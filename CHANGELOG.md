@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.2...v1.19.3) (2026-08-23)
+
+### Bug Fixes
+
+- **ci:** naprawa pipeline e2e i a11y oraz lint ([06c297b](https://github.com/blodytrav3l3r/Oferty_PV/commit/06c297b4a34066ad96af95201e8d3c7e9ca94778))
+
 ### [1.19.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.1...v1.19.2) (2026-08-23)
 
 ### Bug Fixes

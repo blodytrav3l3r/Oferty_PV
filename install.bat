@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.19.2
+REM  Wersja: 1.19.3
 REM ===========================================================
 REM  install.bat - Setup srodowiska developer-skiego (final)
 REM  Strategia: proste kroki, zero kolorow i delikatnych ANSI.
@@ -8,7 +8,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.19.2"
+set "APP_VERSION=1.19.3"
 
 echo ===========================================================
 echo   S.O.K. - Instalator v%APP_VERSION%
