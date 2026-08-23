@@ -1,5 +1,6 @@
 // @ts-check
-/* ===== EXCEL HELPERS — Funkcje pomocnicze dla tabeli konfiguracyjnej studni ===== */
+/* ===== EXCEL HELPERS — Funkcje pomocnicze dla tabeli konfiguracyjnej studni — 755 linii, 59 funkcji ===== */
+// ponytail: god helper — dziel tylko gdy konkretna funkcja przekracza 150 linii, nie cały plik (SRP: helpers dla excelTableManager)
 
 function _excelWellMatchesTab(well, tab) {
     if (tab === 'styczne') return well.dn === 'styczna';

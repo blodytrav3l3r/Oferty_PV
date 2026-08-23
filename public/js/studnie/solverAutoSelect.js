@@ -1,6 +1,8 @@
 // @ts-check
 /**
- * solverAutoSelect.js — Automatyczny dobór elementów studni (główny solver JS)
+ * solverAutoSelect.js — Automatyczny dobór elementów studni (główny solver JS) — 1231 linii
+ * ponytail: spójny proces auto-doboru (autoSelectComponents → runJsAutoSelection → helpers),
+ * nie dziel na siłę — podział zwiększyłby liczbę window.* i trudność testowania (SRP > limit 800)
  *
  * Wyodrębnione z wellSolver.js (linie 185-1393):
  * - autoSelectComponents() — główne wejście (rejestrowane na window)
