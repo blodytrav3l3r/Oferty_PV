@@ -164,12 +164,18 @@
 
 /* Ujednolicony pasek filtrów */
 .kartoteka-filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 0.8rem;
+    padding: 0.8rem 1rem;
     background: linear-gradient(
         135deg,
         rgba(var(--slate-800-rgb), 0.8),
         rgba(var(--accent-rgb), 0.1)
     );
     border: 1px solid rgba(var(--accent-rgb), 0.2);
+    border-radius: var(--radius-sm);
     box-shadow:
         0 4px 12px rgba(var(--black-rgb), 0.15),
         0 1px 3px rgba(var(--black-rgb), 0.1);
@@ -177,6 +183,75 @@
     transition:
         border-color 0.3s,
         box-shadow 0.3s;
+}
+
+/* Row 2: szukaj + odśwież */
+.ka-search-row {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.ka-search-box {
+    margin: 0;
+    flex: 1;
+    max-width: none;
+    position: relative;
+}
+
+.ka-search-icon {
+    position: absolute;
+    left: 0.7rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1rem;
+    color: var(--text-muted);
+}
+
+.ka-search-input {
+    font-weight: normal;
+    padding-left: 2.4rem !important;
+    width: 100%;
+    font-size: var(--fs-md);
+}
+
+.ka-push-right {
+    margin-left: auto;
+}
+
+.ka-noshrink {
+    flex-shrink: 0;
+}
+
+/* Lista ofert — karta + stan ładowania */
+.ka-list-card {
+    padding: 1.2rem;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-glass);
+    margin-bottom: var(--section-gap-lg);
+}
+
+.ka-loading {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+    font-style: italic;
+    background: var(--bg-glass);
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border-glass);
+}
+
+.ka-loading > svg {
+    width: 48px;
+    height: 48px;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+.ka-loading > div {
+    font-size: var(--fs-xl);
 }
 
 .kartoteka-filter-bar:hover {

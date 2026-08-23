@@ -76,19 +76,7 @@
             <div class="section active" id="section-kartoteka">
                 <div class="app-container">
                     <!-- Unified Filter Bar -->
-                    <div
-                        class="kartoteka-filter-bar"
-                        style="
-                            display: flex;
-                            flex-direction: column;
-                            gap: 0.8rem;
-                            margin-bottom: 0.8rem;
-                            padding: 0.8rem 1rem;
-                            background: var(--bg-glass);
-                            border: 1px solid var(--border-glass);
-                            border-radius: var(--radius-sm);
-                        "
-                    >
+                    <div class="kartoteka-filter-bar">
                         <!-- Row 1: filtry -->
                         <div class="ka-filter-row">
                             <!-- Type Filters -->
@@ -242,10 +230,9 @@
                             <!-- Compact Mode Toggle -->
                             <button
                                 type="button"
-                                class="btn btn-sm btn-secondary ka-pill"
+                                class="btn btn-sm btn-secondary ka-pill ka-push-right"
                                 id="btn-compact-mode"
                                 onclick="toggleCompactMode()"
-                                style="margin-left: auto"
                                 title="Przełącz tryb kompaktowy"
                             >
                                 <i data-lucide="panel-right-close"></i> Kompakt
@@ -253,53 +240,27 @@
                         </div>
 
                         <!-- Row 2: szukaj + odśwież -->
-                        <div style="display: flex; width: 100%; gap: 0.5rem; align-items: center">
-                            <div
-                                class="search-box"
-                                style="margin: 0; flex: 1; max-width: none; position: relative"
-                            >
+                        <div class="ka-search-row">
+                            <div class="search-box ka-search-box">
                                 <svg
                                     viewBox="0 0 24 24"
                                     fill="none"
                                     stroke="currentColor"
                                     stroke-width="2"
-                                    style="
-                                        position: absolute;
-                                        left: 0.7rem;
-                                        top: 50%;
-                                        transform: translateY(-50%);
-                                        width: 1rem;
-                                        color: var(--text-muted);
-                                    "
+                                    class="ka-search-icon"
+                                    aria-hidden="true"
                                 >
                                     <circle cx="11" cy="11" r="7" />
                                     <path d="m21 21-4.35-4.35" />
                                 </svg>
-                                <label
-                                    for="ka-local-search-input"
-                                    style="
-                                        position: absolute;
-                                        width: 1px;
-                                        height: 1px;
-                                        padding: 0;
-                                        margin: -1px;
-                                        overflow: hidden;
-                                        clip: rect(0, 0, 0, 0);
-                                        border: 0;
-                                    "
+                                <label for="ka-local-search-input" class="sr-only"
                                     >Szukaj oferty</label
                                 >
                                 <input
                                     type="text"
                                     id="ka-local-search-input"
-                                    class="form-input form-input-sm"
+                                    class="form-input form-input-sm ka-search-input"
                                     placeholder="Szukaj po numerze oferty, kliencie, NIP, numerze zamówienia..."
-                                    style="
-                                        font-weight: normal;
-                                        padding-left: 2.4rem !important;
-                                        width: 100%;
-                                        font-size: var(--fs-md);
-                                    "
                                     oninput="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.onSearchInput &&
@@ -310,10 +271,9 @@
 
                             <button
                                 type="button"
-                                class="btn btn-secondary btn-sm ka-pill"
+                                class="btn btn-secondary btn-sm ka-pill ka-noshrink"
                                 onclick="window.kartotekaUI && window.kartotekaUI.loadLocalOffers()"
                                 title="Odśwież bazę ofert"
-                                style="flex-shrink: 0"
                             >
                                 <i data-lucide="refresh-cw"></i> Odśwież
                             </button>
@@ -324,40 +284,11 @@
                     <div id="ie-toolbar-host"></div>
 
                     <!-- Main Offers List -->
-                    <section
-                        class="card"
-                        style="
-                            padding: 1.2rem;
-                            background: var(--bg-card);
-                            border-radius: var(--radius);
-                            border: 1px solid var(--border-glass);
-                            margin-bottom: var(--section-gap-lg);
-                        "
-                    >
+                    <section class="card ka-list-card">
                         <div id="ka-offers-list" class="kartoteka-offers-grid">
-                            <div
-                                style="
-                                    text-align: center;
-                                    padding: 3rem 2rem;
-                                    color: var(--text-muted);
-                                    font-style: italic;
-                                    background: var(--bg-glass);
-                                    border-radius: var(--radius-sm);
-                                    border: 1px dashed var(--border-glass);
-                                "
-                            >
-                                <i
-                                    data-lucide="archive"
-                                    style="
-                                        width: 48px;
-                                        height: 48px;
-                                        opacity: 0.3;
-                                        margin-bottom: 1rem;
-                                    "
-                                ></i>
-                                <div style="font-size: var(--fs-xl)">
-                                    Ładowanie ofert z serwera...
-                                </div>
+                            <div class="ka-loading">
+                                <i data-lucide="archive" aria-hidden="true"></i>
+                                <div>Ładowanie ofert z serwera...</div>
                             </div>
                         </div>
                     </section>
