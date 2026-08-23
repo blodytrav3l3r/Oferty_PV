@@ -1584,62 +1584,12 @@ select.form-input option {
 }
 
 /* ─── Klasy narzędziowe do migracji stylów inline ─── */
-/* Font size */
-.fs-085 {
-    font-size: var(--fs-lg);
-}
+/* Font size — żywe: .fs-075 (4×), .fs-1 (7×); reszta usunięta jako martwa (audyt 1.18.3) */
 .fs-075 {
     font-size: var(--fs-base);
 }
-.fs-065 {
-    font-size: var(--fs-xs);
-}
-.fs-09 {
-    font-size: var(--fs-xl);
-}
-.fs-08 {
-    font-size: var(--fs-md);
-}
-.fs-078 {
-    font-size: var(--fs-base);
-}
-.fs-07 {
-    font-size: var(--fs-sm);
-}
-.fs-072 {
-    font-size: var(--fs-sm);
-}
-.fs-06 {
-    font-size: var(--fs-2xs);
-}
-.fs-055 {
-    font-size: var(--fs-3xs);
-}
-.fs-058 {
-    font-size: var(--fs-2xs);
-}
 .fs-1 {
     font-size: var(--fs-2xl);
-}
-.fs-115 {
-    font-size: var(--fs-3xl);
-}
-.fs-14 {
-    font-size: var(--fs-5xl);
-}
-
-/* Font weight */
-.fw-5 {
-    font-weight: var(--fw-medium);
-}
-.fw-6 {
-    font-weight: var(--fw-semibold);
-}
-.fw-7 {
-    font-weight: var(--fw-bold);
-}
-.fw-8 {
-    font-weight: var(--fw-extrabold);
 }
 
 /* Pomocnicze flex — .flex-row w style.utilities.css */

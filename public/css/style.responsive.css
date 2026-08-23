@@ -1176,15 +1176,9 @@
     display: none;
 }
 
-/* --- Pomocnicze UI (wyodrębnione ze stylów inline) --- */
-.ui-text-muted-sm {
-    font-size: var(--fs-2xs);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    margin-bottom: 0.1rem;
-    letter-spacing: 0.5px;
-}
-
+/* --- Pomocnicze UI (wyodrębnione ze stylów inline) ---
+   Martwe usunięte (audyt 1.18.3): ui-text-muted-sm, ui-badge-sm, ui-center-min,
+   ui-text-lg, ui-text-sm, ui-flex-between — 0 użyć w HTML/JS */
 .ui-text-mute {
     color: var(--text-muted);
 }
@@ -1196,11 +1190,6 @@
 .ui-badge {
     padding: 0.35rem 0.5rem;
     font-size: var(--fs-xs);
-}
-
-.ui-badge-sm {
-    padding: 0.3rem 0.4rem;
-    font-size: var(--fs-sm);
 }
 
 .ui-col-5 {
@@ -1222,28 +1211,9 @@
     margin-top: 0.2rem;
 }
 
-.ui-center-min {
-    text-align: center;
-    min-width: 60px;
-}
-
-.ui-text-lg {
-    font-size: var(--fs-base);
-}
-
-.ui-text-sm {
-    font-size: var(--fs-sm);
-}
-
 .ui-pointer-bold {
     cursor: pointer;
     font-weight: var(--fw-semibold);
-}
-
-.ui-flex-between {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 /* Utility classes */
