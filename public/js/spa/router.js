@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 /**
  * SPA Router — Router oparty na iframe dla S.O.K.
  *

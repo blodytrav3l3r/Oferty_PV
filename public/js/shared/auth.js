@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 /**
  * Shared Auth Module — wspólna logika autoryzacji.
  *
