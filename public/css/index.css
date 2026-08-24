@@ -1151,7 +1151,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-md);
-    padding: 10px 12px;
+    padding: 12px;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -1170,7 +1170,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: grid;
     grid-template-columns: repeat(12, 1fr);
     gap: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .ai-health-grid .ai-health-card:nth-child(-n + 3) {
@@ -1202,7 +1202,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-md);
-    padding: 10px 8px;
+    padding: 12px;
     text-align: center;
     transition:
         border-color 0.2s,
@@ -1212,13 +1212,14 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .ai-stat-card > div:first-child {
     font-size: var(--stat-val-size, 1.5rem);
     font-weight: var(--fw-semibold);
-    line-height: 1.2;
+    line-height: 1.25;
 }
 
 .ai-stat-card > div:last-child {
     font-size: var(--fs-sm);
     color: var(--text-secondary);
-    margin-top: 2px;
+    margin-top: 4px;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1257,7 +1258,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* ── Sekcje AI ── */
 .ai-section-title {
-    margin: 0 0 10px;
+    margin: 0 0 8px;
     font-size: var(--fs-md);
     color: var(--text-primary);
     display: flex;
@@ -1277,7 +1278,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     gap: 8px;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 16px;
     flex-wrap: wrap;
 }
 
@@ -1411,7 +1412,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 .ai-dq-bars {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: 8px;
     width: 100%;
 }
 
@@ -1426,7 +1427,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-sm);
-    padding: 10px 12px;
+    padding: 12px;
     transition: border-color 0.2s;
 }
 
@@ -1480,6 +1481,11 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     overflow-x: auto;
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-glass);
+    margin-bottom: 16px;
+}
+
+.ai-table-wrap:last-child {
+    margin-bottom: 0;
 }
 
 .ai-table {
@@ -1490,7 +1496,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-table thead th {
-    padding: 6px;
+    padding: 8px;
     text-align: left;
     font-weight: var(--fw-bold);
     background: var(--bg-tertiary);
@@ -1501,7 +1507,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 }
 
 .ai-table tbody td {
-    padding: 6px;
+    padding: 8px;
     border-bottom: 1px solid var(--border-glass);
     vertical-align: middle;
 }
@@ -1519,7 +1525,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     display: flex;
     justify-content: space-between;
     border-bottom: 1px solid var(--border-glass);
-    padding: 5px 0;
+    padding: 8px 0;
     font-size: var(--fs-md);
 }
 
@@ -1592,7 +1598,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
 
 /* ── ML status header ── */
 .ai-ml-header {
-    margin: 0 0 12px;
+    margin: 0 0 8px;
     font-size: var(--fs-xl);
     font-weight: var(--fw-semibold);
     color: var(--text-primary);
@@ -1608,6 +1614,107 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     color: var(--accent);
 }
 
+/* ── Drift model — brak w poprzedniej wersji (białe linie, niezdefiniowane klasy) ── */
+.ai-drift-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.ai-drift-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+.ai-drift-card:hover {
+    border-color: var(--accent-border-dim);
+    box-shadow: var(--shadow-sm);
+}
+
+.ai-drift-card strong {
+    color: var(--text-primary);
+    font-size: var(--fs-md);
+}
+
+.fs-sm-muted-2px {
+    font-size: var(--fs-sm);
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.3;
+}
+
+.fs-sm-muted-2px--compact {
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.3;
+}
+
+.ai-drift-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: var(--bg-card);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    margin-top: 8px;
+    font-size: var(--fs-md);
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .ai-drift-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Placeholder gdy brak danych (zamiast białej linii) */
+.card-note {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    color: var(--text-muted);
+    font-size: var(--fs-md);
+    line-height: 1.45;
+    text-align: center;
+}
+
+.card-note--with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.card-note--with-icon i,
+.card-note--with-icon svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+/* Separator sekcji AI — zastępuje <hr> z domyślnym białym borderem */
+hr.border-top-glass-m4,
+.ai-divider {
+    border: none;
+    border-top: 1px solid var(--border-glass);
+    margin: 24px 0;
+    height: 0;
+    background: transparent;
+    opacity: 1;
+}
+
 /* ── ML action buttons ── */
 .ai-ml-actions {
     display: flex;
@@ -1616,12 +1723,16 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     margin-bottom: 16px;
 }
 
+.ai-drift-host .ai-table-wrap {
+    margin-top: 8px;
+}
+
 .ai-influence-widget {
     background: var(--bg-card);
     border: 1px solid var(--border-glass);
     border-radius: var(--radius-md);
     padding: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
 }
 
 .ai-ml-train-btn {

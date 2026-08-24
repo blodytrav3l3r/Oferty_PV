@@ -295,7 +295,7 @@
                     html +=
                         '<div class="ai-model-table-wrap">' +
                         '<table class="ai-model-table">' +
-                        '<th scope="col"ead><tr>' +
+                        '<thead><tr>' +
                         '<th scope="col" title="Wersja modelu">Wersja</th>' +
                         '<th scope="col" title="Area Under Curve — miara jako\u015bci modelu (im wy\u017cej, tym lepiej)">AUC</th>' +
                         '<th scope="col" title="Precision-Recall AUC — jako\u015b\u0107 przy niezbalansowanych danych">PR-AUC</th>' +
@@ -677,7 +677,7 @@
                 '<div class="ai-section-title"><i data-lucide="history"></i> Przebiegi treningu (ostatnie 20)</div>' +
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<th scope="col"ead><tr>' +
+                '<thead><tr>' +
                 '<th scope="col" title="Data rozpoczęcia przebiegu">Start</th>' +
                 '<th scope="col" title="Status przebiegu (SUCCESS/SKIPPED/FAILED_*)">Status</th>' +
                 '<th scope="col" title="Rozmiar zbioru: dataset (train/validation/test)">Zbiór</th>' +
@@ -758,22 +758,27 @@
                         : Math.abs(delta) < 0.05
                           ? 'var(--success-hover)'
                           : 'var(--warn)';
+                const trainingTxt =
+                    lab.trainingPositiveRate != null
+                        ? Number(lab.trainingPositiveRate).toFixed(4)
+                        : 'brak baseline (uruchom trening)';
                 labelHtml =
                     '<div class="ai-drift-label">' +
-                    '<span><strong>Label drift:</strong> bieżący positiveRate ' +
+                    '<span><strong>Label drift:</strong> bieżący ' +
                     (lab.currentPositiveRate != null
                         ? Number(lab.currentPositiveRate).toFixed(4)
                         : '—') +
                     ' vs treningowy ' +
-                    (lab.trainingPositiveRate != null
-                        ? Number(lab.trainingPositiveRate).toFixed(4)
-                        : '—') +
+                    window.escapeHtml(trainingTxt) +
                     '</span>' +
                     '<span style="color:' +
                     deltaCls +
                     ';font-weight: var(--fw-bold)">Δ ' +
                     (delta != null ? (delta >= 0 ? '+' : '') + Number(delta).toFixed(4) : '—') +
                     '</span></div>';
+            } else {
+                labelHtml =
+                    '<div class="ai-drift-label"><span><strong>Label drift:</strong> brak danych do oceny — uruchom trening ML</span><span class="text-muted">Δ —</span></div>';
             }
             let shadowHtml = '';
             const sh = data.shadow || {};
@@ -792,20 +797,44 @@
                     (sh.samples || 0) +
                     ' wspólnych próbek)</span></div>';
             }
+            const pred = data.prediction || {};
+            const predSamplesTxt =
+                pred.currentSamples != null && pred.baselineSamples != null
+                    ? pred.currentSamples + ' / ' + pred.baselineSamples + ' próbek'
+                    : pred.currentSamples || pred.baselineSamples
+                      ? (pred.currentSamples || 0) +
+                        ' próbek (baseline ' +
+                        (pred.baselineSamples || 0) +
+                        ')'
+                      : 'brak próbek — min. 20 score';
+            const predCard =
+                '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
+                psiBadge(pred.psi != null ? pred.psi : null) +
+                '<div class="fs-sm-muted-2px">PSI rozkładu score</div>' +
+                '<div class="fs-sm-muted-2px--compact">' +
+                window.escapeHtml(predSamplesTxt) +
+                '</div></div>';
+            const featureCount = Array.isArray(data.feature) ? data.feature.length : 0;
+            const featureCard =
+                '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
+                '<span style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:' +
+                (featureCount ? 'var(--accent)' : 'var(--text-muted)') +
+                '">' +
+                (featureCount ? featureCount + ' cech' : 'brak danych') +
+                '</span>' +
+                '<div class="fs-sm-muted-2px">top-5 cech wg PSI</div></div>';
+            const featureBlock = featureRows
+                ? '<div class="ai-table-wrap"><table class="ai-table"><thead><tr><th scope="col">#</th><th scope="col">Cecha</th><th scope="col">PSI</th></tr></thead><tbody>' +
+                  featureRows +
+                  '</tbody></table></div>'
+                : '<div class="card-note">Brak danych do oceny driftu cech — baseline zapisywany jest przy treningu ML. Uruchom trening aby ustalić rozkłady referencyjne.</div>';
             host.innerHTML =
                 '<div class="ai-section-title"><i data-lucide="waves"></i> Drift modelu</div>' +
                 '<div class="ai-drift-grid">' +
-                '<div class="ai-drift-card"><strong>Prediction drift</strong><br>' +
-                psiBadge(data.prediction ? data.prediction.psi : null) +
-                '<div class="fs-sm-muted-2px">PSI rozkładu score</div></div>' +
-                '<div class="ai-drift-card"><strong>Feature drift</strong><br>' +
-                '<div class="fs-sm-muted-2px">top-5 cech wg PSI</div></div>' +
+                predCard +
+                featureCard +
                 '</div>' +
-                (featureRows
-                    ? '<div class="ai-table-wrap"><table class="ai-table"><th scope="col"ead><tr><th scope="col">#</th><th scope="col">Cecha</th><th scope="col">PSI</th></tr></thead><tbody>' +
-                      featureRows +
-                      '</tbody></table></div>'
-                    : '') +
+                featureBlock +
                 labelHtml +
                 shadowHtml;
             if (typeof lucide !== 'undefined') {

@@ -310,7 +310,7 @@
             container.innerHTML =
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<th scope="col"ead><tr>' +
+                '<thead><tr>' +
                 '<th scope="col" title="Typ wykrytego wzorca">Typ</th>' +
                 '<th scope="col" title="Klucz wzorca">Pattern</th>' +
                 '<th scope="col" class="text-right" title="Poziom ufno\u015bci dla wzorca (0-100%)">Confidence</th>' +

@@ -35,7 +35,8 @@
             const items = data.items || [];
             if (items.length === 0) {
                 container.innerHTML =
-                    '<div class="card-note">Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</div>';
+                    '<div class="card-note card-note--with-icon"><i data-lucide="wand-2"></i><span>Brak studni dobranych przez AI. Gdy AI zmieni wynik doboru, studnia pojawi się tutaj.</span></div>';
+                if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
                 return;
             }
             const shown = items.slice(0, 20);
@@ -91,7 +92,7 @@
                 '</div>' +
                 '<div class="ai-table-wrap">' +
                 '<table class="ai-table">' +
-                '<th scope="col"ead><tr>' +
+                '<thead><tr>' +
                 '<th scope="col">Lp</th>' +
                 '<th scope="col" title="Średnica nominalna studni">DN</th>' +
                 '<th scope="col" title="Magazyn / zakład produkcyjny">Magazyn</th>' +
@@ -118,7 +119,7 @@
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML =
-            '<div style="display:grid;grid-template-columns:1fr;gap:20px">' +
+            '<div style="display:grid;grid-template-columns:1fr;gap:16px">' +
             '<div id="ai-learning-section">' +
             '<h4 class="ai-section-title"><i data-lucide="brain"></i> Learning Engine (baza wiedzy)</h4>' +
             '<div id="ai-stats"></div>' +
@@ -129,9 +130,9 @@
             '</div>' +
             '<div id="ai-patterns"></div>' +
             '</div>' +
-            '<hr class="border-top-glass-m4">' +
+            '<div class="ai-divider" role="separator"></div>' +
             '<div id="ai-ml-section"><div id="ai-ml-status"></div><div id="ai-feature-importance"></div></div>' +
-            '<hr class="border-top-glass-m4">' +
+            '<div class="ai-divider" role="separator"></div>' +
             '<div id="ai-well-selections-section"><div id="ai-well-selections"></div></div>' +
             '</div>';
 

@@ -495,7 +495,7 @@ body::before {
 
 .logo .logo-sok {
     display: block;
-    height: 40px;
+    height: 30px;
     width: auto;
     max-width: 100%;
 }
@@ -510,6 +510,13 @@ body::before {
 
 .logo-app .logo-sok {
     height: 30px;
+}
+
+/* Ujednolicenie szerokości bloku logo w nagłówku — Pulpit i SPA muszą mieć tę samą
+   szerokość, inaczej nav-apps przesuwa się między zakładkami (bug: Pulpit 40px vs SPA 30px) */
+.header-left .logo {
+    min-width: 14rem;
+    justify-content: center;
 }
 
 .logo-app-module {
@@ -751,6 +758,9 @@ body::before {
         flex-wrap: wrap;
         gap: 0.3rem;
         width: 100%;
+    }
+    .header-left .logo {
+        min-width: 0;
     }
     .nav-apps {
         padding-left: 0;
