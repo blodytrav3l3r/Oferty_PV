@@ -4,6 +4,12 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.3...v1.19.4) (2026-08-24)
+
+### Bug Fixes
+
+- **offers:** poprawa pop-upów import/eksport XLSX i JSON 1:1 — modalCore, pill radio, font tokens Inter, PL diacritics
+
 ### [1.19.3](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.2...v1.19.3) (2026-08-23)
 
 ### Bug Fixes
