@@ -1,33 +1,45 @@
 window.ConflictModal = {
     show(offerNumber) {
         return new Promise((resolve) => {
-            showModal({
+            let settled = false;
+            const done = (result) => {
+                if (settled) return;
+                settled = true;
+                resolve(result);
+            };
+            const html =
+                '<div class="modal" role="document">' +
+                '<div class="modal-header"><h3 id="ie-conflict-title" style="display:flex;align-items:center;gap:0.5rem;font:var(--fw-bold) var(--fs-2xl) \'Inter\',sans-serif;color:var(--text-primary);"><i data-lucide="alert-triangle" class="icon-sm" style="color:var(--warn);"></i>Konflikt numeru oferty</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-cm-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+                '<p style="margin:0 0 1.2rem 0;color:var(--text-secondary);font:var(--fw-normal) var(--fs-lg) \'Inter\',sans-serif;line-height:1.55;">Oferta o numerze <strong style="color:var(--text-primary);font-weight:var(--fw-semibold);">' +
+                window.escapeHtml(offerNumber) +
+                '</strong> już istnieje w systemie. Wybierz akcję:</p>' +
+                '<div class="modal-footer" style="justify-content:stretch;flex-wrap:wrap;gap:0.5rem;">' +
+                '<button type="button" class="btn btn-sm btn-secondary" data-cm-skip style="flex:1;justify-content:center;"><i data-lucide="skip-forward" class="icon-14"></i>Pomiń</button>' +
+                '<button type="button" class="btn btn-sm btn-secondary" data-cm-overwrite style="flex:1;justify-content:center;border-color:var(--warn);"><i data-lucide="refresh-cw" class="icon-14"></i>Nadpisz</button>' +
+                '<button type="button" class="btn btn-sm btn-primary" data-cm-clone style="flex:1;justify-content:center;"><i data-lucide="copy" class="icon-14"></i>Utwórz kopię (-2)</button>' +
+                '</div></div>';
+            window.showModal({
                 id: 'ie-conflict-modal',
-                title: 'Konflikt numeru oferty',
                 titleId: 'ie-conflict-title',
-                html:
-                    '<div style="background:var(--white);border-radius: var(--radius);padding:2rem;max-width:480px;width:90%;box-shadow:0 8px 32px rgba(var(--black-rgb), 0.3);">' +
-                    '<h3 id="ie-conflict-title" style="margin:0 0 0.75rem 0;font-size: var(--fs-3xl);">Konflikt numeru oferty</h3>' +
-                    '<p style="margin:0 0 1.5rem 0;color:var(--slate-500);font-size: var(--fs-xl);">Oferta o numerze <strong>' +
-                    window.escapeHtml(offerNumber) +
-                    '</strong> już istnieje w systemie. Co robimy?</p>' +
-                    '<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">' +
-                    '<button class="ie-btn ie-btn-skip" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--slate-300);border-radius: var(--radius-sm);background:var(--slate-100);cursor:pointer;">Pomiń</button>' +
-                    '<button class="ie-btn ie-btn-overwrite" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--warn);border-radius: var(--radius-sm);background:var(--warn-bg-soft);cursor:pointer;font-weight: var(--fw-semibold);">Nadpisz</button>' +
-                    '<button class="ie-btn ie-btn-clone" style="flex:1;padding:0.6rem 1rem;border:1px solid var(--blue);border-radius: var(--radius-sm);background:var(--slate-100);cursor:pointer;font-weight: var(--fw-semibold);">Utwórz kopię (sufiks -2)</button>' +
-                    '</div>',
-                onClose: () => resolve('skip')
+                html: html,
+                onClose: () => done('skip')
             });
             const overlay = document.getElementById('ie-conflict-modal');
+            if (!overlay) return;
+            if (window.lucide) lucide.createIcons({ root: overlay });
             const close = (result) => {
-                resolve(result);
-                overlay.remove();
+                done(result);
+                window.closeModal('ie-conflict-modal');
             };
-            overlay.querySelector('.ie-btn-skip').addEventListener('click', () => close('skip'));
+            overlay.querySelector('[data-cm-skip]').addEventListener('click', () => close('skip'));
             overlay
-                .querySelector('.ie-btn-overwrite')
+                .querySelector('[data-cm-overwrite]')
                 .addEventListener('click', () => close('overwrite'));
-            overlay.querySelector('.ie-btn-clone').addEventListener('click', () => close('clone'));
+            overlay
+                .querySelector('[data-cm-clone]')
+                .addEventListener('click', () => close('clone'));
+            const xBtn = overlay.querySelector('[data-cm-close]');
+            if (xBtn) xBtn.addEventListener('click', () => close('skip'));
         });
     }
 };

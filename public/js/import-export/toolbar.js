@@ -1,4 +1,5 @@
-﻿window.importExportToolbar = {
+﻿// @ts-check
+window.importExportToolbar = {
     hostId: null,
 
     async init(hostId) {
@@ -32,15 +33,15 @@
     _entityTypeHtml(inputId, entityParam) {
         const checked = entityParam || 'offer';
         return (
-            '<div class="flex-gap-5-mb1">' +
-            '<label class="flex-gap-3-lg"><input type="radio" name="' +
+            '<div class="form-group" style="display:flex;gap:0.6rem;margin-bottom:0.9rem;flex-wrap:wrap;">' +
+            '<label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font:var(--fw-medium) var(--fs-md) \'Inter\',sans-serif;color:var(--text-secondary);padding:0.32rem 0.7rem;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:var(--bg-tertiary);transition:border-color .15s,background .15s;"><input type="radio" name="' +
             inputId +
-            '-entity" value="offer"' +
+            '-entity" value="offer" style="accent-color:var(--accent);"' +
             (checked === 'offer' ? ' checked' : '') +
             '> Oferta</label>' +
-            '<label class="flex-gap-3-lg"><input type="radio" name="' +
+            '<label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font:var(--fw-medium) var(--fs-md) \'Inter\',sans-serif;color:var(--text-secondary);padding:0.32rem 0.7rem;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:var(--bg-tertiary);transition:border-color .15s,background .15s;"><input type="radio" name="' +
             inputId +
-            '-entity" value="order"' +
+            '-entity" value="order" style="accent-color:var(--accent);"' +
             (checked === 'order' ? ' checked' : '') +
             '> Zamówienie</label>' +
             '</div>'
@@ -50,15 +51,15 @@
     _moduleTypeHtml(inputId, moduleParam) {
         const checked = moduleParam || 'rury';
         return (
-            '<div class="flex-gap-5-mb1">' +
-            '<label class="flex-gap-3-lg"><input type="radio" name="' +
+            '<div class="form-group" style="display:flex;gap:0.6rem;margin-bottom:0.9rem;flex-wrap:wrap;">' +
+            '<label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font:var(--fw-medium) var(--fs-md) \'Inter\',sans-serif;color:var(--text-secondary);padding:0.32rem 0.7rem;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:var(--bg-tertiary);transition:border-color .15s,background .15s;"><input type="radio" name="' +
             inputId +
-            '-module" value="rury"' +
+            '-module" value="rury" style="accent-color:var(--accent);"' +
             (checked === 'rury' ? ' checked' : '') +
             '> Rury</label>' +
-            '<label class="flex-gap-3-lg"><input type="radio" name="' +
+            '<label style="display:inline-flex;align-items:center;gap:0.4rem;cursor:pointer;font:var(--fw-medium) var(--fs-md) \'Inter\',sans-serif;color:var(--text-secondary);padding:0.32rem 0.7rem;border:1px solid var(--border-glass);border-radius:var(--radius-pill);background:var(--bg-tertiary);transition:border-color .15s,background .15s;"><input type="radio" name="' +
             inputId +
-            '-module" value="studnie"' +
+            '-module" value="studnie" style="accent-color:var(--accent);"' +
             (checked === 'studnie' ? ' checked' : '') +
             '> Studnie</label>' +
             '</div>'
@@ -107,335 +108,350 @@
         }
     },
 
+    _ieModalHtml(modalId, titleId, title, bodyHtml, footerHtml) {
+        const iconMap = {
+            'ie-export-xlsx-modal': 'download',
+            'ie-export-json-modal': 'file-down',
+            'ie-import-xlsx-modal': 'upload',
+            'ie-import-json-modal': 'file-up'
+        };
+        const icon = iconMap[modalId] || 'file-up';
+        return (
+            '<div class="modal" role="document">' +
+            '<div class="modal-header"><h3 id="' +
+            titleId +
+            '" style="display:flex;align-items:center;gap:0.5rem;font:var(--fw-bold) var(--fs-2xl) \'Inter\',sans-serif;color:var(--text-primary);"><i data-lucide="' +
+            icon +
+            '" class="icon-sm" style="color:var(--accent);"></i>' +
+            window.escapeHtml(title) +
+            '</h3><button type="button" class="btn-icon" aria-label="Zamknij" data-ie-close><i data-lucide="x" class="icon-14"></i></button></div>' +
+            '<div class="modal-body" style="font:var(--fw-normal) var(--fs-md) \'Inter\',sans-serif;">' +
+            bodyHtml +
+            '</div>' +
+            (footerHtml ? '<div class="modal-footer">' + footerHtml + '</div>' : '') +
+            '</div>'
+        );
+    },
+
+    _bindIeModal(modalId, onConfirm) {
+        const overlay = document.getElementById(modalId);
+        if (!overlay) return;
+        const closeBtn = overlay.querySelector('[data-ie-close]');
+        if (closeBtn) closeBtn.addEventListener('click', () => window.closeModal(modalId));
+        const cancelBtn = overlay.querySelector('[data-ie-cancel]');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => window.closeModal(modalId));
+        const confirmBtn = overlay.querySelector('[data-ie-confirm]');
+        if (confirmBtn && onConfirm) {
+            confirmBtn.addEventListener('click', async () => {
+                confirmBtn.disabled = true;
+                try {
+                    await onConfirm();
+                } finally {
+                    confirmBtn.disabled = false;
+                }
+            });
+        }
+        if (window.lucide) lucide.createIcons({ root: overlay });
+        const numInput = overlay.querySelector('input[id^="ie-"]');
+        if (numInput) {
+            numInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && confirmBtn) confirmBtn.click();
+            });
+            setTimeout(() => numInput.focus(), 50);
+        }
+    },
+
     showExportXlsxDialog() {
         const uid = 'xlsx';
-        this._createModal(
-            'Eksport XLSX (zewn. system)',
-            '<p class="fs-xl-sec-mb">Wybierz typ i podaj numer:</p>' +
-                this._moduleTypeHtml(uid) +
-                this._entityTypeHtml(uid, 'offer') +
-                '<input type="text" id="ie-' +
-                uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input w-100-mb-5" >' +
-                '<div id="ie-' +
-                uid +
-                '-search-result" class="fs-lg-muted-mb5"></div>',
-            'Eksportuj',
-            async () => {
-                const module = document.querySelector(
-                    'input[name="' + uid + '-module"]:checked'
-                ).value;
-                const entity = document.querySelector(
-                    'input[name="' + uid + '-entity"]:checked'
-                ).value;
-                const number = document.getElementById('ie-' + uid + '-number').value.trim();
-                if (!number) {
-                    await appAlert('Podaj numer', { type: 'warning' });
+        const modalId = 'ie-export-xlsx-modal';
+        const titleId = 'ie-export-xlsx-title';
+        const title = 'Eksport XLSX (zewn. system)';
+        const body =
+            '<p style="color:var(--text-secondary);margin:0 0 0.9rem 0;font:var(--fw-normal) var(--fs-lg) \'Inter\',sans-serif;line-height:1.5;">Wybierz typ i podaj numer dokumentu:</p>' +
+            this._moduleTypeHtml(uid) +
+            this._entityTypeHtml(uid, 'offer') +
+            '<div class="form-group"><label class="form-label-sm" for="ie-' +
+            uid +
+            '-number">Numer oferty lub zamówienia</label><input type="text" id="ie-' +
+            uid +
+            '-number" placeholder="np. OF-2026/001" class="form-input" style="width:100%"></div>' +
+            '<div id="ie-' +
+            uid +
+            '-search-result" style="min-height:1.3rem;color:var(--text-muted);font:var(--fw-medium) var(--fs-sm) \'Inter\',sans-serif;margin-top:0.45rem;line-height:1.4;"></div>';
+        const footer =
+            '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
+            '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="download" class="icon-14"></i>Eksportuj</button>';
+        const html = this._ieModalHtml(modalId, titleId, title, body, footer);
+        window.showModal({ id: modalId, titleId: titleId, html: html });
+        this._bindIeModal(modalId, async () => {
+            const module = document.querySelector('input[name="' + uid + '-module"]:checked').value;
+            const entity = document.querySelector('input[name="' + uid + '-entity"]:checked').value;
+            const input = document.getElementById('ie-' + uid + '-number');
+            const number = input ? input.value.trim() : '';
+            if (!number) {
+                await appAlert('Podaj numer oferty lub zamówienia.', {
+                    type: 'warning',
+                    title: 'Brak danych'
+                });
+                return;
+            }
+            const resultEl = document.getElementById('ie-' + uid + '-search-result');
+            if (entity === 'order') {
+                const order = await this._findOrderByNumber(number, module);
+                if (!order) {
+                    resultEl.textContent = 'Nie znaleziono zamówienia.';
                     return;
                 }
-
-                const resultEl = document.getElementById('ie-' + uid + '-search-result');
-
-                if (entity === 'order') {
-                    const order = await this._findOrderByNumber(number, module);
-                    if (!order) {
-                        resultEl.textContent = 'Nie znaleziono zamówienia.';
-                        return;
-                    }
-                    resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
-                    this._closeModal();
-
-                    if (module === 'studnie') {
-                        await StudnieExternalExportTemplate.generateAndDownloadOrder(order);
-                    } else {
-                        await RuryExternalExportTemplate.generateAndDownloadOrder(order);
-                    }
+                resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
+                window.closeModal(modalId);
+                if (module === 'studnie') {
+                    await StudnieExternalExportTemplate.generateAndDownloadOrder(order);
                 } else {
-                    const offer = this._findOfferByNumber(number, module);
-                    if (!offer) {
-                        this._offerNotFoundHint(number, module, resultEl);
-                        return;
-                    }
-                    resultEl.textContent =
-                        'Znaleziono: ' +
-                        (offer.offer_number || offer.number) +
-                        ' (' +
-                        (offer.clientName || 'brak klienta') +
-                        ')';
-                    this._closeModal();
-
-                    if (module === 'studnie') {
-                        await StudnieExternalExportTemplate.generateAndDownload(offer.id);
-                    } else {
-                        await RuryExternalExportTemplate.generateAndDownload(offer.id);
-                    }
+                    await RuryExternalExportTemplate.generateAndDownloadOrder(order);
+                }
+            } else {
+                const offer = this._findOfferByNumber(number, module);
+                if (!offer) {
+                    this._offerNotFoundHint(number, module, resultEl);
+                    return;
+                }
+                resultEl.textContent =
+                    'Znaleziono: ' +
+                    (offer.offer_number || offer.number) +
+                    ' (' +
+                    (offer.clientName || 'brak klienta') +
+                    ')';
+                window.closeModal(modalId);
+                if (module === 'studnie') {
+                    await StudnieExternalExportTemplate.generateAndDownload(offer.id);
+                } else {
+                    await RuryExternalExportTemplate.generateAndDownload(offer.id);
                 }
             }
-        );
+        });
     },
 
     showExportJsonPopup() {
         const uid = 'json';
-        this._createModal(
-            'Eksport 1:1 (JSON)',
-            '<p class="fs-xl-sec-mb">Wybierz typ i podaj numer:</p>' +
-                this._moduleTypeHtml(uid) +
-                this._entityTypeHtml(uid, 'offer') +
-                '<input type="text" id="ie-' +
-                uid +
-                '-number" placeholder="Numer oferty lub zamówienia" class="form-input w-100-mb-5" >' +
-                '<div id="ie-' +
-                uid +
-                '-search-result" class="fs-lg-muted-mb5"></div>',
-            'Eksportuj',
-            async () => {
-                const module = document.querySelector(
-                    'input[name="' + uid + '-module"]:checked'
-                ).value;
-                const entity = document.querySelector(
-                    'input[name="' + uid + '-entity"]:checked'
-                ).value;
-                const number = document.getElementById('ie-' + uid + '-number').value.trim();
-                if (!number) {
-                    await appAlert('Podaj numer', { type: 'warning' });
+        const modalId = 'ie-export-json-modal';
+        const titleId = 'ie-export-json-title';
+        const title = 'Eksport 1:1 (JSON)';
+        const body =
+            '<p style="color:var(--text-secondary);margin:0 0 0.9rem 0;font:var(--fw-normal) var(--fs-lg) \'Inter\',sans-serif;line-height:1.5;">Wybierz typ i podaj numer dokumentu:</p>' +
+            this._moduleTypeHtml(uid) +
+            this._entityTypeHtml(uid, 'offer') +
+            '<div class="form-group"><label class="form-label-sm" for="ie-' +
+            uid +
+            '-number">Numer oferty lub zamówienia</label><input type="text" id="ie-' +
+            uid +
+            '-number" placeholder="np. OF-2026/001" class="form-input" style="width:100%"></div>' +
+            '<div id="ie-' +
+            uid +
+            '-search-result" style="min-height:1.3rem;color:var(--text-muted);font:var(--fw-medium) var(--fs-sm) \'Inter\',sans-serif;margin-top:0.45rem;line-height:1.4;"></div>' +
+            '<p style="color:var(--text-muted);font:var(--fw-normal) var(--fs-xs) \'Inter\',sans-serif;margin:0.7rem 0 0 0;display:flex;align-items:center;gap:0.35rem;line-height:1.4;"><i data-lucide="info" class="icon-14" style="color:var(--accent);flex-shrink:0;"></i> Plik JSON zawiera ofertę wraz z zamówieniami (transfer 1:1).</p>';
+        const footer =
+            '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
+            '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="file-down" class="icon-14"></i>Eksportuj</button>';
+        const html = this._ieModalHtml(modalId, titleId, title, body, footer);
+        window.showModal({ id: modalId, titleId: titleId, html: html });
+        this._bindIeModal(modalId, async () => {
+            const module = document.querySelector('input[name="' + uid + '-module"]:checked').value;
+            const entity = document.querySelector('input[name="' + uid + '-entity"]:checked').value;
+            const input = document.getElementById('ie-' + uid + '-number');
+            const number = input ? input.value.trim() : '';
+            if (!number) {
+                await appAlert('Podaj numer oferty lub zamówienia.', {
+                    type: 'warning',
+                    title: 'Brak danych'
+                });
+                return;
+            }
+            const resultEl = document.getElementById('ie-' + uid + '-search-result');
+            if (entity === 'order') {
+                const order = await this._findOrderByNumber(number, module);
+                if (!order) {
+                    resultEl.textContent = 'Nie znaleziono zamówienia.';
                     return;
                 }
-
-                const resultEl = document.getElementById('ie-' + uid + '-search-result');
-
-                if (entity === 'order') {
-                    const order = await this._findOrderByNumber(number, module);
-                    if (!order) {
-                        resultEl.textContent = 'Nie znaleziono zamówienia.';
-                        return;
-                    }
-                    resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
-                    this._closeModal();
-
-                    if (module === 'studnie') {
-                        await StudnieTransferJson.exportOrder(order.id);
-                    } else {
-                        await RuryTransferJson.exportOrder(order.id);
-                    }
+                resultEl.textContent = 'Znaleziono: ' + order.orderNumber;
+                window.closeModal(modalId);
+                if (module === 'studnie') {
+                    await StudnieTransferJson.exportOrder(order.id);
                 } else {
-                    const offer = this._findOfferByNumber(number, module);
-                    if (!offer) {
-                        this._offerNotFoundHint(number, module, resultEl);
-                        return;
-                    }
-                    resultEl.textContent =
-                        'Znaleziono: ' +
-                        (offer.offer_number || offer.number) +
-                        ' (' +
-                        (offer.clientName || 'brak klienta') +
-                        ')';
-                    this._closeModal();
-
-                    if (module === 'studnie') {
-                        await StudnieTransferJson.exportOffer(offer.id);
-                    } else {
-                        await RuryTransferJson.exportOffer(offer.id);
-                    }
+                    await RuryTransferJson.exportOrder(order.id);
+                }
+            } else {
+                const offer = this._findOfferByNumber(number, module);
+                if (!offer) {
+                    this._offerNotFoundHint(number, module, resultEl);
+                    return;
+                }
+                resultEl.textContent =
+                    'Znaleziono: ' +
+                    (offer.offer_number || offer.number) +
+                    ' (' +
+                    (offer.clientName || 'brak klienta') +
+                    ')';
+                window.closeModal(modalId);
+                if (module === 'studnie') {
+                    await StudnieTransferJson.exportOffer(offer.id);
+                } else {
+                    await RuryTransferJson.exportOffer(offer.id);
                 }
             }
-        );
+        });
     },
 
     showImportJsonDialog() {
-        this._createModal(
-            'Import 1:1 (JSON)',
-            '<p class="fs-xl-sec-mb">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
-                '<p style="color:var(--text-muted);font-size: var(--fs-md);margin:0 0 1rem 0;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
-                '<input type="file" id="ie-json-file-input" accept=".json" class="form-input block-w100-mb1" >' +
-                '<div id="ie-json-progress" class="none-accent-lg">Importowanie...</div>',
-            'Importuj',
-            async () => {
-                const input = document.getElementById('ie-json-file-input');
-                if (!input.files || !input.files[0]) {
-                    await appAlert('Wybierz plik JSON', { type: 'warning' });
-                    return;
-                }
-                const progress = document.getElementById('ie-json-progress');
-                progress.style.display = 'block';
-                try {
-                    let result;
-                    const file = input.files[0];
-                    const preview = await JsonOfferTransfer.readFile(file);
-
-                    if (preview.kind === 'witros-order-transfer') {
-                        if (preview.module === 'studnie') {
-                            result = await StudnieTransferJson.importOrder(file);
-                        } else {
-                            result = await RuryTransferJson.importOrder(file);
-                        }
-                    } else {
-                        if (preview.module === 'studnie') {
-                            result = await StudnieTransferJson.importOffer(file);
-                        } else {
-                            result = await RuryTransferJson.importOffer(file);
-                        }
-                    }
-
-                    this._closeModal();
-                    if (result.skipped) {
-                        await appAlert('Import pominiety.', { type: 'warning' });
-                    } else if (result.success) {
-                        await appAlert(
-                            (preview.kind === 'witros-order-transfer'
-                                ? 'Zamówienie'
-                                : 'Oferta ' +
-                                  (result.action === 'clone' ? 'sklonowana' : 'zaimportowana')) +
-                                ' pomyslnie.',
-                            { type: 'info' }
-                        );
-                    } else {
-                        await appAlert('Blad: ' + (result.message || 'Nieznany blad'), {
-                            type: 'warning'
-                        });
-                    }
-                    if (window.kartotekaUI) {
-                        window.kartotekaUI.loadLocalOffers();
-                    }
-                } catch (err) {
-                    await appAlert('Blad: ' + err.message, { type: 'warning' });
-                    progress.style.display = 'none';
-                }
+        const modalId = 'ie-import-json-modal';
+        const titleId = 'ie-import-json-title';
+        const title = 'Import 1:1 (JSON)';
+        const body =
+            '<p style="color:var(--text-primary);margin:0 0 0.5rem 0;font:var(--fw-medium) var(--fs-lg) \'Inter\',sans-serif;line-height:1.5;">Wybierz plik JSON wyeksportowany z innego urządzenia.</p>' +
+            '<p style="color:var(--text-muted);font:var(--fw-normal) var(--fs-sm) \'Inter\',sans-serif;margin:0 0 0.9rem 0;line-height:1.45;">Obsługiwane formaty: transfer oferty + zamówień oraz transfer zamówienia.</p>' +
+            '<div class="form-group"><label class="form-label-sm" for="ie-json-file-input">Plik JSON</label><input type="file" id="ie-json-file-input" accept=".json" class="form-input" style="width:100%"></div>' +
+            '<div id="ie-json-progress" style="display:none;color:var(--accent);font:var(--fw-medium) var(--fs-sm) \'Inter\',sans-serif;margin-top:0.55rem;align-items:center;gap:0.4rem;"><i data-lucide="loader" class="icon-14" style="animation:spin 0.8s linear infinite;"></i> Importowanie...</div>';
+        const footer =
+            '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
+            '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="upload" class="icon-14"></i>Importuj</button>';
+        const html = this._ieModalHtml(modalId, titleId, title, body, footer);
+        window.showModal({ id: modalId, titleId: titleId, html: html });
+        this._bindIeModal(modalId, async () => {
+            const input = document.getElementById('ie-json-file-input');
+            if (!input || !input.files || !input.files[0]) {
+                await appAlert('Wybierz plik JSON do importu.', {
+                    type: 'warning',
+                    title: 'Brak pliku'
+                });
+                return;
             }
-        );
+            const progress = document.getElementById('ie-json-progress');
+            progress.style.display = 'block';
+            const confirmBtn = document.querySelector('#' + modalId + ' [data-ie-confirm]');
+            if (confirmBtn) confirmBtn.disabled = true;
+            try {
+                let result;
+                const file = input.files[0];
+                const preview = await JsonOfferTransfer.readFile(file);
+                if (preview.kind === 'witros-order-transfer') {
+                    if (preview.module === 'studnie') {
+                        result = await StudnieTransferJson.importOrder(file);
+                    } else {
+                        result = await RuryTransferJson.importOrder(file);
+                    }
+                } else {
+                    if (preview.module === 'studnie') {
+                        result = await StudnieTransferJson.importOffer(file);
+                    } else {
+                        result = await RuryTransferJson.importOffer(file);
+                    }
+                }
+                window.closeModal(modalId);
+                if (result.skipped) {
+                    await appAlert('Import pominięty — oferta już istnieje.', {
+                        type: 'warning',
+                        title: 'Pominięto'
+                    });
+                } else if (result.success) {
+                    await appAlert(
+                        (preview.kind === 'witros-order-transfer'
+                            ? 'Zamówienie'
+                            : 'Oferta ' +
+                              (result.action === 'clone' ? 'sklonowana' : 'zaimportowana')) +
+                            ' pomyślnie.',
+                        { type: 'info', title: 'Import zakończony' }
+                    );
+                } else {
+                    await appAlert('Błąd: ' + (result.message || 'Nieznany błąd'), {
+                        type: 'warning',
+                        title: 'Błąd importu'
+                    });
+                }
+                if (window.kartotekaUI) {
+                    window.kartotekaUI.loadLocalOffers();
+                }
+            } catch (err) {
+                await appAlert('Błąd: ' + (err.message || String(err)), {
+                    type: 'warning',
+                    title: 'Błąd importu'
+                });
+                progress.style.display = 'none';
+                if (confirmBtn) confirmBtn.disabled = false;
+            }
+        });
     },
 
     showImportXlsxDialog() {
         const uid = 'xlsx-import';
-        this._createModal(
-            'Import XLSX (zewn. system)',
-            '<p class="fs-xl-sec-mb">Wybierz moduł i plik XLSX wyeksportowany z innego systemu.</p>' +
-                this._moduleTypeHtml(uid) +
-                '<input type="file" id="ie-' +
-                uid +
-                '-file-input" accept=".xlsx" class="form-input block-w100-mb1" >' +
-                '<div id="ie-' +
-                uid +
-                '-progress" class="none-accent-lg">Importowanie...</div>',
-            'Importuj',
-            async () => {
-                const module = document.querySelector(
-                    'input[name="' + uid + '-module"]:checked'
-                ).value;
-                const input = document.getElementById('ie-' + uid + '-file-input');
-                if (!input.files || !input.files[0]) {
-                    await appAlert('Wybierz plik XLSX', { type: 'warning' });
-                    return;
-                }
-                const progress = document.getElementById('ie-' + uid + '-progress');
-                progress.style.display = 'block';
-                try {
-                    const parsed = await XlsxImportShared.parseExternalXlsx(input.files[0]);
-                    const importer =
-                        module === 'studnie'
-                            ? window.StudnieExternalImport
-                            : window.RuryExternalImport;
-
-                    let imported = 0;
-                    let skipped = 0;
-                    const errors = [];
-                    for (const offer of parsed.offers) {
-                        const result = await importer.import(offer);
-                        if (result.success) imported++;
-                        else if (result.skipped) skipped++;
-                        else errors.push((result.number || '?') + ': ' + result.message);
-                    }
-
-                    this._closeModal();
-                    let message = 'Zaimportowano ofert: ' + imported + '.';
-                    if (skipped) message += ' Pominieto: ' + skipped + '.';
-                    if (errors.length) message += '\nBledy:\n' + errors.join('\n');
-                    await appAlert(message, { type: errors.length ? 'warning' : 'info' });
-                    if (window.kartotekaUI) {
-                        window.kartotekaUI.loadLocalOffers();
-                    }
-                } catch (err) {
-                    await appAlert('Blad: ' + err.message, { type: 'warning' });
-                    progress.style.display = 'none';
-                }
+        const modalId = 'ie-import-xlsx-modal';
+        const titleId = 'ie-import-xlsx-title';
+        const title = 'Import XLSX (zewn. system)';
+        const body =
+            '<p style="color:var(--text-primary);margin:0 0 0.9rem 0;font:var(--fw-medium) var(--fs-lg) \'Inter\',sans-serif;line-height:1.5;">Wybierz moduł i plik XLSX wyeksportowany z zewnętrznego systemu.</p>' +
+            this._moduleTypeHtml(uid) +
+            '<div class="form-group"><label class="form-label-sm" for="ie-' +
+            uid +
+            '-file-input">Plik XLSX</label><input type="file" id="ie-' +
+            uid +
+            '-file-input" accept=".xlsx,.xls" class="form-input" style="width:100%"></div>' +
+            '<div id="ie-' +
+            uid +
+            '-progress" style="display:none;color:var(--accent);font:var(--fw-medium) var(--fs-sm) \'Inter\',sans-serif;margin-top:0.55rem;align-items:center;gap:0.4rem;"><i data-lucide="loader" class="icon-14" style="animation:spin 0.8s linear infinite;"></i> Importowanie...</div>';
+        const footer =
+            '<button type="button" class="btn btn-sm btn-secondary" data-ie-cancel>Anuluj</button>' +
+            '<button type="button" class="btn btn-sm btn-primary" data-ie-confirm><i data-lucide="upload" class="icon-14"></i>Importuj</button>';
+        const html = this._ieModalHtml(modalId, titleId, title, body, footer);
+        window.showModal({ id: modalId, titleId: titleId, html: html });
+        this._bindIeModal(modalId, async () => {
+            const moduleEl = document.querySelector('input[name="' + uid + '-module"]:checked');
+            const module = moduleEl ? moduleEl.value : 'rury';
+            const input = document.getElementById('ie-' + uid + '-file-input');
+            if (!input || !input.files || !input.files[0]) {
+                await appAlert('Wybierz plik XLSX do importu.', {
+                    type: 'warning',
+                    title: 'Brak pliku'
+                });
+                return;
             }
-        );
-    },
-
-    _createModal(title, content, confirmLabel, onConfirm, noFooter) {
-        const overlay = document.createElement('div');
-        overlay.className = 'modal-overlay js-modal-overlay';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-        overlay.setAttribute('aria-label', title);
-
-        const box = document.createElement('div');
-        box.className = 'modal';
-        box.style.maxWidth = '520px';
-
-        const header = document.createElement('div');
-        header.className = 'modal-header';
-
-        const h3 = document.createElement('h3');
-        h3.textContent = title;
-        header.appendChild(h3);
-
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '&times;';
-        closeBtn.className = 'btn-icon';
-        closeBtn.style.fontSize = 'var(--fs-4xl)';
-        closeBtn.style.lineHeight = '1';
-        closeBtn.onclick = () => this._closeModal();
-        header.appendChild(closeBtn);
-
-        box.appendChild(header);
-
-        if (noFooter) {
-            const body = document.createElement('div');
-            body.innerHTML = content;
-            box.appendChild(body);
-        } else {
-            const body = document.createElement('div');
-            body.className = 'ie-modal-body';
-            body.innerHTML = content;
-            box.appendChild(body);
-
-            const footer = document.createElement('div');
-            footer.className = 'modal-footer';
-            const cancelBtn = document.createElement('button');
-            cancelBtn.className = 'btn btn-sm btn-secondary ie-btn-cancel';
-            cancelBtn.textContent = 'Anuluj';
-            cancelBtn.onclick = () => this._closeModal();
-            footer.appendChild(cancelBtn);
-
-            if (confirmLabel) {
-                const confirmBtn = document.createElement('button');
-                confirmBtn.className = 'btn btn-sm btn-primary ie-btn-confirm';
-                confirmBtn.textContent = confirmLabel;
-                confirmBtn.onclick = () => onConfirm && onConfirm();
-                footer.appendChild(confirmBtn);
+            const progress = document.getElementById('ie-' + uid + '-progress');
+            progress.style.display = 'block';
+            const confirmBtn = document.querySelector('#' + modalId + ' [data-ie-confirm]');
+            if (confirmBtn) confirmBtn.disabled = true;
+            try {
+                const parsed = await XlsxImportShared.parseExternalXlsx(input.files[0]);
+                const importer =
+                    module === 'studnie' ? window.StudnieExternalImport : window.RuryExternalImport;
+                if (!importer || typeof importer.import !== 'function') {
+                    throw new Error('Importer dla modułu ' + module + ' jest niedostępny.');
+                }
+                let imported = 0;
+                let skipped = 0;
+                const errors = [];
+                for (const offer of parsed.offers) {
+                    const result = await importer.import(offer);
+                    if (result.success) imported++;
+                    else if (result.skipped) skipped++;
+                    else errors.push((result.number || '?') + ': ' + result.message);
+                }
+                window.closeModal(modalId);
+                let message = 'Zaimportowano ofert: ' + imported + '.';
+                if (skipped) message += ' Pominięto: ' + skipped + '.';
+                if (errors.length) message += '\nBłędy:\n' + errors.join('\n');
+                await appAlert(message, {
+                    type: errors.length ? 'warning' : 'info',
+                    title: errors.length ? 'Import z błędami' : 'Import zakończony'
+                });
+                if (window.kartotekaUI) {
+                    window.kartotekaUI.loadLocalOffers();
+                }
+            } catch (err) {
+                await appAlert('Błąd: ' + (err.message || String(err)), {
+                    type: 'warning',
+                    title: 'Błąd importu'
+                });
+                progress.style.display = 'none';
+                if (confirmBtn) confirmBtn.disabled = false;
             }
-
-            box.appendChild(footer);
-        }
-
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
-        /** @type {any} */ (overlay)._previousFocus = document.activeElement;
-
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) this._closeModal();
         });
-        if (typeof trapFocus === 'function') trapFocus(overlay);
-
-        window.__ieModalOverlay = overlay;
-        return overlay;
-    },
-
-    _closeModal() {
-        if (window.__ieModalOverlay && window.__ieModalOverlay.parentNode) {
-            if (typeof untrapFocus === 'function') untrapFocus(window.__ieModalOverlay);
-            document.body.removeChild(window.__ieModalOverlay);
-        }
-        window.__ieModalOverlay = null;
     }
 };

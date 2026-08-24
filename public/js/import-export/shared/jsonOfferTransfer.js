@@ -36,14 +36,14 @@ window.JsonOfferTransfer = {
     },
 
     validatePayload(json) {
-        if (!json || typeof json !== 'object') throw new Error('Nieprawidlowy format pliku');
+        if (!json || typeof json !== 'object') throw new Error('Nieprawidłowy format pliku');
         if (json.kind !== 'witros-offer-transfer')
-            throw new Error('Plik nie jest plikiem transferu ofert (brak naglowka kind)');
+            throw new Error('Plik nie jest plikiem transferu ofert (brak nagłówka kind)');
         if (typeof json.schemaVersion !== 'number' || json.schemaVersion > this.SCHEMA_VERSION) {
-            throw new Error('Nieobslugiwana wersja schematu (' + json.schemaVersion + ')');
+            throw new Error('Nieobsługiwana wersja schematu (' + json.schemaVersion + ')');
         }
         if (!json.module || !json.offer) {
-            throw new Error('Plik nie zawiera wymaganych pol: module, offer');
+            throw new Error('Plik nie zawiera wymaganych pól: module, offer');
         }
         return true;
     },
@@ -84,14 +84,14 @@ window.JsonOfferTransfer = {
     },
 
     validateOrderPayload(json) {
-        if (!json || typeof json !== 'object') throw new Error('Nieprawidlowy format pliku');
+        if (!json || typeof json !== 'object') throw new Error('Nieprawidłowy format pliku');
         if (json.kind !== 'witros-order-transfer')
-            throw new Error('Plik nie jest plikiem transferu zamowienia (brak naglowka kind)');
+            throw new Error('Plik nie jest plikiem transferu zamówienia (brak nagłówka kind)');
         if (typeof json.schemaVersion !== 'number' || json.schemaVersion > this.SCHEMA_VERSION) {
-            throw new Error('Nieobslugiwana wersja schematu (' + json.schemaVersion + ')');
+            throw new Error('Nieobsługiwana wersja schematu (' + json.schemaVersion + ')');
         }
         if (!json.module || !json.order) {
-            throw new Error('Plik nie zawiera wymaganych pol: module, order');
+            throw new Error('Plik nie zawiera wymaganych pól: module, order');
         }
         return true;
     },
@@ -124,7 +124,7 @@ window.JsonOfferTransfer = {
                     reject(new Error(err.message));
                 }
             };
-            reader.onerror = () => reject(new Error('Nie udalo sie odczytac pliku'));
+            reader.onerror = () => reject(new Error('Nie udało się odczytać pliku'));
             reader.readAsText(file);
         });
     }
