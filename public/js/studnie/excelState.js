@@ -43,52 +43,52 @@ const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.DN_COLORS
 const DN_COLORS = {
     1000: {
-        bg: 'rgba(var(--blue-rgb), 0.12)',
+        bg: 'rgba(var(--blue-rgb), 0.18)',
         border: 'var(--blue)',
         text: 'var(--blue-hover)',
         activeBg: 'rgba(var(--blue-rgb), 0.25)',
-        borderDim: 'rgba(var(--blue-rgb), 0.4)',
-        textDim: 'rgba(var(--blue-rgb), 0.6)'
+        borderDim: 'rgba(var(--blue-rgb), 0.45)',
+        textDim: 'rgba(var(--blue-rgb), 0.75)'
     },
     1200: {
-        bg: 'rgba(var(--success-rgb), 0.12)',
+        bg: 'rgba(var(--success-rgb), 0.18)',
         border: 'var(--success)',
         text: 'var(--success-hover)',
         activeBg: 'rgba(var(--success-rgb), 0.25)',
-        borderDim: 'rgba(var(--success-rgb), 0.4)',
-        textDim: 'rgba(var(--success-rgb), 0.6)'
+        borderDim: 'rgba(var(--success-rgb), 0.45)',
+        textDim: 'rgba(var(--success-rgb), 0.75)'
     },
     1500: {
-        bg: 'rgba(var(--warn-rgb), 0.12)',
+        bg: 'rgba(var(--warn-rgb), 0.18)',
         border: 'var(--warn)',
         text: 'var(--warn-hover)',
         activeBg: 'rgba(var(--warn-rgb), 0.25)',
-        borderDim: 'rgba(var(--warn-rgb), 0.4)',
-        textDim: 'rgba(var(--warn-rgb), 0.6)'
+        borderDim: 'rgba(var(--warn-rgb), 0.45)',
+        textDim: 'rgba(var(--warn-rgb), 0.75)'
     },
     2000: {
-        bg: 'rgba(var(--purple-rgb), 0.12)',
+        bg: 'rgba(var(--purple-rgb), 0.18)',
         border: 'var(--purple)',
         text: 'var(--purple-hover)',
         activeBg: 'rgba(var(--purple-rgb), 0.25)',
-        borderDim: 'rgba(var(--purple-rgb), 0.4)',
-        textDim: 'rgba(var(--purple-rgb), 0.6)'
+        borderDim: 'rgba(var(--purple-rgb), 0.45)',
+        textDim: 'rgba(var(--purple-rgb), 0.75)'
     },
     2500: {
-        bg: 'rgba(var(--danger-rgb), 0.12)',
+        bg: 'rgba(var(--danger-rgb), 0.18)',
         border: 'var(--danger)',
         text: 'var(--danger-hover)',
         activeBg: 'rgba(var(--danger-rgb), 0.25)',
-        borderDim: 'rgba(var(--danger-rgb), 0.4)',
-        textDim: 'rgba(var(--danger-rgb), 0.6)'
+        borderDim: 'rgba(var(--danger-rgb), 0.45)',
+        textDim: 'rgba(var(--danger-rgb), 0.75)'
     },
     styczne: {
-        bg: 'rgba(var(--pink-rgb), 0.12)',
+        bg: 'rgba(var(--pink-rgb), 0.18)',
         border: 'var(--pink)',
         text: 'var(--pink-hover)',
         activeBg: 'rgba(var(--pink-rgb), 0.25)',
-        borderDim: 'rgba(var(--pink-rgb), 0.4)',
-        textDim: 'rgba(var(--pink-rgb), 0.6)'
+        borderDim: 'rgba(var(--pink-rgb), 0.45)',
+        textDim: 'rgba(var(--pink-rgb), 0.75)'
     }
 };
 

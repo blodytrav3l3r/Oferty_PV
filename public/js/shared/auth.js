@@ -36,8 +36,46 @@ function authHeaders() {
 
 /**
  * Wylogowuje użytkownika — kasuje sesje i localStorage, przeładowuje stronę.
+ * Gdy są niezapisane zmiany, pyta custom popupem (appConfirm) — kopia SSoT z ui.js.
  */
 async function appLogout() {
+    try {
+        if (window._confirmLock) return;
+    } catch {}
+    try {
+        const isDirty =
+            (typeof window._isWizardDirty === 'function' && window._isWizardDirty()) ||
+            (typeof window._isDirtyNow === 'function' && window._isDirtyNow());
+        if (isDirty) {
+            const confirmFn = window.appConfirm || window.parent?.appConfirm;
+            if (typeof confirmFn === 'function') {
+                try {
+                    window._confirmLock = true;
+                    if (window.parent) window.parent._confirmLock = true;
+                    const ok = await confirmFn('Wprowadzone zmiany mogą nie zostać zapisane.', {
+                        title: 'Niezapisane zmiany',
+                        type: 'warning',
+                        okText: 'Opuść bez zapisu',
+                        cancelText: 'Zostań'
+                    });
+                    if (!ok) return;
+                } finally {
+                    try {
+                        window._confirmLock = false;
+                        if (window.parent) window.parent._confirmLock = false;
+                    } catch {}
+                }
+            }
+        }
+    } catch {}
+    try {
+        window._bypassBeforeUnload = true;
+        window._navForceOnce = true;
+        if (window.parent) {
+            window.parent._bypassBeforeUnload = true;
+            window.parent._navForceOnce = true;
+        }
+    } catch {}
     try {
         await fetch('/api/auth/logout', {
             method: 'POST',

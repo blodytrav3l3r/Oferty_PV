@@ -584,27 +584,57 @@ document.addEventListener('focusin', (e) => {
 });
 
 /* ===== Ochrona przed utratą danych — beforeunload/pagehide (Z-30) ===== */
+let _bypassBeforeUnload = false;
+let _confirmLock = false;
+window._bypassBeforeUnload = false;
+try {
+    Object.defineProperty(window, '_bypassBeforeUnload', {
+        get() {
+            return _bypassBeforeUnload;
+        },
+        set(v) {
+            _bypassBeforeUnload = !!v;
+        },
+        configurable: true
+    });
+} catch {}
 function _isWizardDirty() {
     try {
         if (typeof _excelDirty !== 'undefined' && _excelDirty) return true;
         if (typeof window._excelDirty !== 'undefined' && window._excelDirty) return true;
-        if (typeof currentWizardStep !== 'undefined' && currentWizardStep !== 1) return true;
-        if (typeof window.currentWizardStep !== 'undefined' && window.currentWizardStep !== 1)
-            return true;
         if (typeof window._wizardDirty !== 'undefined' && window._wizardDirty) return true;
-        const clientName = document.getElementById('client-name');
-        if (clientName && clientName.value && clientName.value.trim() !== '') {
-            if (
-                (typeof currentWizardStep !== 'undefined' && currentWizardStep > 1) ||
-                (typeof window.currentWizardStep !== 'undefined' && window.currentWizardStep > 1)
-            )
-                return true;
+        const spaIframes = document.querySelectorAll('iframe.spa-module-iframe');
+        for (const iframe of spaIframes) {
+            try {
+                const w = iframe.contentWindow;
+                if (!w) continue;
+                if (w._excelDirty) return true;
+                if (w.window && w.window._excelDirty) return true;
+                if (w._wizardDirty) return true;
+                if (w.window && w.window._wizardDirty) return true;
+                if (typeof w._isWizardDirty === 'function' && w._isWizardDirty !== _isWizardDirty) {
+                    if (w._isWizardDirty()) return true;
+                }
+            } catch {}
         }
     } catch {}
     return false;
 }
 window._isWizardDirty = _isWizardDirty;
+window._confirmLock = false;
+try {
+    Object.defineProperty(window, '_confirmLock', {
+        get() {
+            return _confirmLock;
+        },
+        set(v) {
+            _confirmLock = !!v;
+        },
+        configurable: true
+    });
+} catch {}
 window.addEventListener('beforeunload', (e) => {
+    if (_bypassBeforeUnload) return;
     if (_isWizardDirty()) {
         e.preventDefault();
         e.returnValue = '';
@@ -617,6 +647,76 @@ window.addEventListener('pagehide', () => {
             if (window.logger && typeof window.logger.warn === 'function')
                 window.logger.warn('ui', 'pagehide z niezapisanymi zmianami');
         } catch {}
+    }
+});
+
+/* ===== Custom popup przy opuszczeniu strony — styl projektu (modalCore) =====
+   Custom appConfirm dla linków i reload; native beforeunload zostaje safety-net
+   dla X / Reload z UI przeglądarki. Jedno źródło _isWizardDirty(), jeden lock. */
+document.addEventListener('click', async (e) => {
+    const anchor = e.target instanceof Element ? e.target.closest('a[href]') : null;
+    if (!anchor) return;
+    const href = anchor.getAttribute('href') || '';
+    if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+    if (/^(tel:|mailto:|#)/.test(href)) return;
+    if (anchor.hasAttribute('download')) return;
+    if (anchor.target === '_blank') return;
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+    if (!_isWizardDirty()) return;
+    if (href.startsWith('#/')) return;
+    if (_confirmLock) return;
+    e.preventDefault();
+    _confirmLock = true;
+    window._confirmLock = true;
+    try {
+        const ok = await window.appConfirm('Wprowadzone zmiany mogą nie zostać zapisane.', {
+            title: 'Niezapisane zmiany',
+            type: 'warning',
+            okText: 'Opuść bez zapisu',
+            cancelText: 'Zostań'
+        });
+        if (!ok) return;
+        _bypassBeforeUnload = true;
+        window._bypassBeforeUnload = true;
+        window.location.href = anchor.href;
+    } finally {
+        _confirmLock = false;
+        window._confirmLock = false;
+    }
+});
+
+// F5 / Ctrl+R / Cmd+R — przechwyć odświeżenie i pokaż custom popup
+document.addEventListener('keydown', async (e) => {
+    const key = e.key || '';
+    const code = e.code || '';
+    const keyCode = e.keyCode || e.which || 0;
+    const isF5 = key === 'F5' || code === 'F5' || keyCode === 116;
+    const isR = key.toLowerCase() === 'r' || code.toLowerCase() === 'keyr';
+    const isCtrlR = (e.ctrlKey || e.metaKey) && isR;
+    if (!isF5 && !isCtrlR) return;
+    if (!_isWizardDirty()) return;
+    if (_confirmLock) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    _confirmLock = true;
+    window._confirmLock = true;
+    try {
+        const ok = await window.appConfirm(
+            'Wprowadzone zmiany mogą nie zostać zapisane. Czy chcesz odświeżyć stronę?',
+            {
+                title: 'Niezapisane zmiany',
+                type: 'warning',
+                okText: 'Odśwież',
+                cancelText: 'Anuluj'
+            }
+        );
+        if (!ok) return;
+        _bypassBeforeUnload = true;
+        window._bypassBeforeUnload = true;
+        window.location.reload();
+    } finally {
+        _confirmLock = false;
+        window._confirmLock = false;
     }
 });
 

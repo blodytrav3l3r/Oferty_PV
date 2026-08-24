@@ -265,7 +265,7 @@ function renderWellParams() {
         const currentVal = well[def.key] || '';
 
         html += `<div style="display:flex; align-items:center; gap:0.2rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
-        html += `<span class="fs-lg-hdr">${def.label}</span>`;
+        html += `<span class="well-param-label" title="${escapeHtml(def.label)}">${escapeHtml(def.label)}</span>`;
         html += `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(100px, 1fr)); gap:0.35rem; flex:1;">`;
         def.options.forEach(([val, lbl]) => {
             const isActive = val === currentVal;
@@ -279,39 +279,39 @@ function renderWellParams() {
                 ${isActive ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}
             " onmouseenter="if(!${isActive}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}"
                onmouseleave="if(!${isActive}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}"
-            >${lbl}</button>`;
+            >${escapeHtml(lbl)}</button>`;
         });
         html += `</div></div>`;
 
         // Pola dodatkowe renderowane bezpośrednio pod odpowiadającym kafelkiem
         if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
-            html += `<div class="flex-gap-2-32">`;
-            html += `<span class="fs-lg-hdr">Nazwa p. wew.</span>`;
+            html += `<div class="well-param-row">`;
+            html += `<span class="well-param-label">Nazwa p. wew.</span>`;
             html += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameW', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
-            html += `<div class="flex-gap-2-32">`;
-            html += `<span class="fs-lg-hdr">Koszt p. wew.</span>`;
+            html += `<div class="well-param-row">`;
+            html += `<span class="well-param-label">Koszt p. wew.</span>`;
             html += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieWewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
         if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
-            html += `<div class="flex-gap-2-32">`;
-            html += `<span class="fs-lg-hdr">Nazwa p. zew.</span>`;
+            html += `<div class="well-param-row">`;
+            html += `<span class="well-param-label">Nazwa p. zew.</span>`;
             html += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="updateWellParam('powlokaNameZ', this.value)" placeholder="Nazwa powłoki..." style="flex:1; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
-            html += `<div class="flex-gap-2-32">`;
-            html += `<span class="fs-lg-hdr">Koszt p. zew.</span>`;
+            html += `<div class="well-param-row">`;
+            html += `<span class="well-param-label">Koszt p. zew.</span>`;
             html += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="updateWellParam('malowanieZewCena', parseFloat(this.value)||0)" placeholder="PLN / m²" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
             html += `</div>`;
         }
 
         if (def.key === 'wkladkaOsadnikPreco' && well.wkladkaOsadnikPreco === 'tak') {
-            html += `<div style="display:flex; align-items:center; gap:0.2rem; min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
-            html += `<span class="fs-lg-hdr">Wys. wkładki osadnik</span>`;
+            html += `<div class="well-param-row" style="min-height:32px; margin-top:0.3rem; ${isGreyedOut ? 'opacity: 0.5;' : ''}">`;
+            html += `<span class="well-param-label">Wys. wkładki osadnik</span>`;
             html += `<div class="flex-gap-5">`;
             html += `<input type="number" value="${well.wkladkaOsadnikH || ''}" onclick="this.select()" onchange="updateWellParam('wkladkaOsadnikH', parseFloat(this.value)||0)" placeholder="Wys. w mm" style="width:120px; height:34px; background:rgba(var(--black-rgb), 0.2); border:1px solid rgba(var(--white-rgb), 0.1); color:var(--text-primary); padding:0 0.7rem; font-size: var(--fs-lg); border-radius: var(--radius-sm);">`;
-            html += `<span class="fs-md-muted">mm</span>`;
+            html += `<span style="font-size:var(--fs-sm); color:var(--text-muted);">mm</span>`;
             html += `</div></div>`;
         }
     });

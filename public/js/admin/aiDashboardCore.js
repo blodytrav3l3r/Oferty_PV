@@ -53,14 +53,25 @@
     window.aiApiErrorHtml = apiErrorHtml;
 
     function uiConfirm(msg, opts) {
-        if (typeof window.appConfirm === 'function') return window.appConfirm(msg, opts);
-        return Promise.resolve(window.confirm(msg));
+        const fn = window.appConfirm || window.parent?.appConfirm;
+        if (typeof fn === 'function') return fn(msg, opts);
+        return Promise.resolve(false);
     }
     window.aiUiConfirm = uiConfirm;
 
     function uiAlert(msg, opts) {
-        if (typeof window.appAlert === 'function') return window.appAlert(msg, opts);
-        return Promise.resolve(window.alert(msg));
+        const fn =
+            window.appAlert ||
+            window.parent?.appAlert ||
+            window.appConfirm ||
+            window.parent?.appConfirm;
+        if (typeof fn === 'function') {
+            if (fn === window.appConfirm || fn === window.parent?.appConfirm) {
+                return fn(msg, { ...(opts || {}), hideCancel: true });
+            }
+            return fn(msg, opts);
+        }
+        return Promise.resolve();
     }
     window.aiUiAlert = uiAlert;
 

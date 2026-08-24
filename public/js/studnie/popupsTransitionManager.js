@@ -48,112 +48,95 @@ window.openTransitionManagerModal = function () {
         id: 'transition-manager-modal',
         titleId: 'tm-title',
         html: `
-    <div class="modal" style="width:90vw; max-width:95vw; height:90vh; display:flex; flex-direction:column; background: var(--bg-secondary); border-radius: var(--radius); box-shadow:0 20px 25px -5px rgba(var(--black-rgb), 0.3);">
-      
-      <!-- Nagłówek -->
-      <div class="modal-header" style="border-bottom:1px solid var(--border); padding:1rem; flex-shrink:0;">
-        <h3 id="tm-title" style="font-size: var(--fs-3xl); font-weight: var(--fw-bold); color:var(--text-primary);"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
+    <div class="modal modal--tm">
+      <div class="modal-header">
+        <h3 id="tm-title"><i data-lucide="list" aria-hidden="true"></i> Menedżer Przejść</h3>
         <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseTransitionManager"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      
-      <!-- Sekcja filtrów -->
-      <div style="padding:0.6rem 0.75rem; border-bottom:1px solid var(--border); background:rgba(var(--black-rgb), 0.2); flex-shrink:0; display:flex; gap:0.6rem; align-items:flex-start; flex-wrap:wrap;">
-         <div style="min-width:140px; flex:1;">
-            <div class="label-sec">Kategoria źródłowa</div>
-            <div id="tm-filter-material-tiles" class="flex-wrap-15">
-               <div data-val="" data-action="tmSelectFilterMaterial" data-val=""
-                    class="tile-active"
-                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolna</div>
+      <div class="tm-filters">
+         <div class="tm-filter-group">
+            <div class="tm-filter-label"><i data-lucide="layers" aria-hidden="true"></i> Kategoria źródłowa <span class="tm-filter-label-count">${allMaterials.size}</span></div>
+            <div id="tm-filter-material-tiles" class="tm-filter-tiles">
+               <button type="button" data-val="" data-action="tmSelectFilterMaterial" class="tm-tile active" aria-pressed="true"><i data-lucide="check" class="icon-xxs" aria-hidden="true"></i> Dowolna</button>
 ${[...allMaterials]
     .sort()
     .map((m) => {
-        return `<div data-val="${escapeHtmlAttr(m)}" data-action="tmSelectFilterMaterial" data-val="${escapeJsStr(m)}"
-                       class="tile-idle"
-                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(m)}</div>`;
+        return `<button type="button" data-val="${escapeHtmlAttr(m)}" data-action="tmSelectFilterMaterial" class="tm-tile" aria-pressed="false">${escapeHtml(m)}</button>`;
     })
     .join('')}
             </div>
          </div>
-         <div style="min-width:90px;">
-            <div class="label-sec">Średnica DN</div>
-            <div id="tm-filter-dn-tiles" class="flex-wrap-15">
-               <div data-val="" data-action="tmSelectFilterDn" data-val=""
-                    class="tile-active"
-                    onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">Dowolne</div>
+         <div class="tm-filter-group">
+            <label class="tm-filter-label" for="tm-filter-search"><i data-lucide="search" aria-hidden="true"></i> Szukaj</label>
+            <div class="tm-search-wrap">
+               <i data-lucide="search" aria-hidden="true"></i>
+               <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters(); window.tmToggleSearchClear && window.tmToggleSearchClear()" autocomplete="off">
+               <button type="button" id="tm-search-clear" class="tm-search-clear" aria-label="Wyczyść wyszukiwanie" onclick="document.getElementById('tm-filter-search').value=''; tmApplyFilters(); tmToggleSearchClear(); document.getElementById('tm-filter-search').focus()"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
+            </div>
+         </div>
+         <div class="tm-filter-group tm-filter-group--full">
+            <div class="tm-filter-label"><i data-lucide="ruler" aria-hidden="true"></i> Średnica DN <span class="tm-filter-label-count">${allDNs.size}</span></div>
+            <div id="tm-filter-dn-tiles" class="tm-filter-tiles">
+               <button type="button" data-val="" data-action="tmSelectFilterDn" class="tm-tile tm-tile--dn active" aria-pressed="true">Dowolne</button>
 ${[...allDNs]
     .sort((a, b) => parseFloat(a) - parseFloat(b))
     .map((dn) => {
         const dnStr = String(dn);
-        return `<div data-val="${escapeHtmlAttr(dnStr)}" data-action="tmSelectFilterDn" data-val="${escapeJsStr(dnStr)}"
-                       class="tile-idle"
-                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(dnStr)}</div>`;
+        return `<button type="button" data-val="${escapeHtmlAttr(dnStr)}" data-action="tmSelectFilterDn" class="tm-tile tm-tile--dn" aria-pressed="false">DN${escapeHtml(dnStr)}</button>`;
     })
     .join('')}
             </div>
          </div>
-         <div style="min-width:160px; flex:1;">
-            <div class="label-sec">Szukaj</div>
-            <input type="text" id="tm-filter-search" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters()" style="width:100%; padding:0.25rem 0.4rem; font-size: var(--fs-xs); background:var(--bg-tile); border:1.5px solid rgba(var(--white-rgb), 0.05); border-radius: var(--radius-2xs); color:var(--text-primary); outline:none; transition:all 0.12s;" onfocus="this.style.borderColor='rgba(var(--success-rgb), 0.5)'" onblur="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">
-         </div>
       </div>
-
-      <!-- Pasek narzędzi -->
-      <div style="flex-shrink:0; display:flex; align-items:center; gap:0.75rem; padding:0.45rem 0.75rem; border-bottom:1px solid rgba(var(--white-rgb), 0.05); background:rgba(var(--black-rgb), 0.1); font-size: var(--fs-base); color:var(--text-muted);">
-         <label style="display:flex; align-items:center; gap:0.35rem; cursor:pointer; padding:0.2rem 0.5rem; background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.15); border-radius: var(--radius-sm); color:var(--text-primary);">
-            <input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()" style="width:15px; height:15px; cursor:pointer;">
-            <span class="fw-500">Zaznacz wszystko</span>
+      <div class="tm-toolbar">
+         <label class="tm-toolbar-check">
+            <input type="checkbox" id="tm-select-all" onchange="tmToggleSelectAll()">
+            <span>Zaznacz wszystko</span>
          </label>
-         <span style="opacity:0.2;">|</span>
-         <span>Widoczne: <strong id="tm-visible-count" class="text-primary">0</strong></span>
-         <span>Zaznaczone: <strong id="tm-selected-count" class="color-accent">0</strong></span>
+         <span class="tm-toolbar-sep">|</span>
+         <span class="tm-toolbar-count">Widoczne: <strong id="tm-visible-count" class="text-primary">0</strong></span>
+         <span class="tm-toolbar-count tm-toolbar-count--accent">Zaznaczone: <strong id="tm-selected-count" class="color-accent">0</strong></span>
          <div style="margin-left:auto; display:flex; align-items:center; gap:0.3rem;">
-            <button data-action="tmSortBy" data-sort="wellName" style="background:none; border:1px solid rgba(var(--white-rgb), 0.1); border-radius: var(--radius-sm); padding:0.25rem 0.5rem; color:var(--text-muted); cursor:pointer; font-size: var(--fs-sm); display:flex; align-items:center; gap:0.3rem; transition:all 0.15s;" onmouseover="this.style.borderColor='rgba(var(--success-rgb), 0.3)';this.style.color='var(--text-primary)'" onmouseout="this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.color='var(--text-muted)'">
-               <span>↕</span> Sortuj A–Z
+            <button type="button" class="btn btn-secondary btn-sm" data-action="tmSortBy" data-sort="wellName">
+               <i data-lucide="arrow-up-down" class="icon-xs" aria-hidden="true"></i> Sortuj A–Z
             </button>
          </div>
       </div>
-
-      <!-- Karty studni -->
-      <div style="flex-grow:1; overflow-y:auto; overflow-x:hidden; padding:0.5rem 0.75rem; background:rgba(var(--black-rgb), 0.1);">
+      <div class="tm-cards">
          <div id="tm-table-body"></div>
       </div>
-
-      <!-- Panel podglądu przed apply -->
-      <div id="tm-preview-panel" style="display:none; padding:0.6rem 1rem; border-top:1px solid var(--border); background:rgba(var(--success-rgb), 0.05); flex-shrink:0;">
+      <div id="tm-preview-panel" class="tm-preview">
          <div id="tm-preview-content"></div>
       </div>
-
-      <!-- Panel Akcji -->
-      <div style="padding:0.6rem 0.75rem; border-top:1px solid var(--border); background:var(--slate-800); flex-shrink:0;">
-         <div style="display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
-            <div style="flex:1; min-width:200px;">
-               <div class="label-sec">Docelowa kategoria (na co zamienić)</div>
-               <div id="tm-target-cat-tiles" style="display:flex; flex-wrap:wrap; gap:0.2rem;">
-                  <div data-val="" data-action="tmSelectTargetCat" data-val=""
-                       style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-semibold); background:rgba(var(--success-rgb), 0.2); border:1.5px solid rgba(var(--success-rgb), 0.8); color:var(--success-hover); transition:all 0.12s;"
-                       onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.8)'" onmouseleave="this.style.borderColor='rgba(var(--success-rgb), 0.8)'">— Wybierz —</div>
+      <div class="tm-actions">
+         <div class="tm-actions-row">
+            <div class="tm-actions-main">
+               <div class="tm-filter-label"><i data-lucide="arrow-right-left" aria-hidden="true"></i> Docelowa kategoria <span style="color:var(--danger-hover);">*</span></div>
+               <div id="tm-target-cat-tiles" class="tm-filter-tiles">
+                  <button type="button" data-val="" data-action="tmSelectTargetCat" class="tm-tile tm-tile--target active" aria-pressed="true">— Wybierz —</button>
 ${categories
     .map((cat) => {
-        return `<div data-val="${escapeHtmlAttr(cat)}" data-action="tmSelectTargetCat" data-val="${escapeJsStr(cat)}"
-                          style="padding:0.25rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; font-size: var(--fs-xs); font-weight: var(--fw-medium); background:rgba(var(--white-rgb), 0.05); border:1.5px solid rgba(var(--white-rgb), 0.05); color:var(--text-primary); transition:all 0.12s;"
-                          onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'">${escapeHtml(cat)}</div>`;
+        return `<button type="button" data-val="${escapeHtmlAttr(cat)}" data-action="tmSelectTargetCat" class="tm-tile tm-tile--target" aria-pressed="false">${escapeHtml(cat)}</button>`;
     })
     .join('')}
                </div>
+               <div id="tm-target-hint" class="tm-apply-hint"><i data-lucide="info" aria-hidden="true"></i> Wybierz kategorię, na którą zamienić zaznaczone przejścia</div>
             </div>
-            <div style="flex-shrink:0;">
-               <button data-action="tmApplyChanges" style="background:rgba(var(--success-rgb), 0.15); border:1.5px solid rgba(var(--success-rgb), 0.5); border-radius: var(--radius-2xs); padding:0.35rem 0.8rem; display:flex; align-items:center; gap:0.35rem; font-size: var(--fs-sm); font-weight: var(--fw-semibold); color:var(--success-hover); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.background='rgba(var(--success-rgb), 0.15)'">
-                  <i data-lucide="zap"></i> Zastosuj
+            <div style="flex-shrink:0; display:flex; flex-direction:column; align-items:stretch; gap:0.3rem;">
+               <button type="button" id="tm-apply-btn" class="tm-apply-btn" data-action="tmApplyChanges" disabled>
+                  <i data-lucide="zap" aria-hidden="true"></i> Zastosuj <span id="tm-apply-count" style="opacity:0.85; font-weight:var(--fw-medium);"></span>
                </button>
+               <span style="font-size:var(--fs-2xs); color:var(--text-muted); text-align:center;">Modyfikuje tylko zaznaczone</span>
             </div>
          </div>
       </div>
-
     </div>`
     });
     if (window.lucide) window.lucide.createIcons({ root: overlay });
 
     tmRenderTable();
+    window.tmToggleSearchClear && window.tmToggleSearchClear();
+    window.tmUpdateApplyState && window.tmUpdateApplyState();
 };
 
 window.closeTransitionManagerModal = function () {
@@ -237,13 +220,8 @@ function tmHighlightTiles(containerId, selectedVal) {
     if (!c) return;
     c.querySelectorAll('[data-val]').forEach((d) => {
         const isSel = d.dataset.val === selectedVal;
-        d.style.background = isSel
-            ? 'rgba(var(--success-rgb), 0.2)'
-            : 'rgba(var(--white-rgb), 0.05)';
-        d.style.borderColor = isSel
-            ? 'rgba(var(--success-rgb), 0.8)'
-            : 'rgba(var(--white-rgb), 0.05)';
-        d.style.color = isSel ? 'var(--success-hover)' : 'var(--text-primary)';
+        d.classList.toggle('active', isSel);
+        d.setAttribute('aria-pressed', String(isSel));
     });
 }
 
@@ -255,13 +233,8 @@ function tmHighlightTilesMulti(containerId, selectedVals) {
             selectedVals.length === 0
                 ? d.dataset.val === ''
                 : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
-        d.style.background = isSel
-            ? 'rgba(var(--success-rgb), 0.2)'
-            : 'rgba(var(--white-rgb), 0.05)';
-        d.style.borderColor = isSel
-            ? 'rgba(var(--success-rgb), 0.8)'
-            : 'rgba(var(--white-rgb), 0.05)';
-        d.style.color = isSel ? 'var(--success-hover)' : 'var(--text-primary)';
+        d.classList.toggle('active', isSel);
+        d.setAttribute('aria-pressed', String(isSel));
     });
 }
 
@@ -293,6 +266,7 @@ window.tmSelectTargetCat = function (val) {
     tmTargetCat = val;
     tmHighlightTiles('tm-target-cat-tiles', val);
     tmUpdatePreview();
+    window.tmUpdateApplyState && window.tmUpdateApplyState();
 };
 
 window.tmRenderTable = function () {
@@ -352,76 +326,70 @@ window.tmRenderTable = function () {
                 const isSel = tmSelectedTransitions.has(key);
                 const safeMaterial = escapeHtmlAttr(tr.material);
                 const locked = tmIsWellBlocked(w.wellIndex);
+                const flowClass =
+                    tr.flowType === FLOW_TYPES.WLOT ? 'tm-tr-flow--in' : 'tm-tr-flow--out';
+                const flowLabel = tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT';
                 return `
-            <div ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}
-                  style="background:${isSel ? 'rgba(var(--success-rgb), 0.15)' : 'var(--bg-tile)'};
-                         border:1px solid ${isSel ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'};
-                         border-radius: var(--radius-sm); padding:0.4rem 0.45rem; ${locked ? 'cursor:default;' : 'cursor:pointer;'}
-                         transition:all 0.2s; display:flex; flex-direction:column; gap:0.1rem;"
-                  ${locked ? '' : "onmouseenter=\"this.style.borderColor='rgba(var(--success-rgb), 0.3)';this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(var(--black-rgb), 0.3)'\""}
-                  ${locked ? '' : `onmouseleave="this.style.borderColor='${isSel ? 'rgba(var(--success-rgb), 0.5)' : 'rgba(var(--white-rgb), 0.05)'}';this.style.transform='none';this.style.boxShadow='none'"`}>
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:0.3rem;">
-                <div style="display:flex; align-items:center; gap:0.3rem; min-width:0; flex:1;">
+            <div class="tm-tr-tile ${isSel ? 'is-selected' : ''} ${locked ? 'is-locked' : ''}" ${locked ? '' : `onclick="tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"`}>
+              <div class="tm-tr-row">
+                <div class="tm-tr-main">
                   <input type="checkbox" class="tm-row-cb" value="${key}" ${isSel ? 'checked' : ''}
-                         onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)"
-                         style="width:14px; height:14px; cursor:pointer; margin:0; flex-shrink:0;" ${locked ? 'disabled' : ''}>
-                  <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${safeMaterial}">${escapeHtml(tr.material)}</span>
-                  <span style="font-size: var(--fs-md); font-weight: var(--fw-extrabold); color:var(--success-hover); flex-shrink:0;">DN${tr.dnRaw}</span>
+                         onclick="event.stopPropagation(); tmToggleTransition('${key}', this.checked)" ${locked ? 'disabled' : ''}>
+                  <span class="tm-tr-material" title="${safeMaterial}">${escapeHtml(tr.material)}</span>
+                  <span class="tm-tr-dn">DN${tr.dnRaw}</span>
                 </div>
                 ${
                     locked
                         ? ''
                         : `
-                <button onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)"
-                        style="background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.2); border-radius: var(--radius-2xs); cursor:pointer; padding:0.05rem 0.3rem; color:var(--success-hover); font-size: var(--fs-2xs); line-height:1.3; flex-shrink:0; transition:all 0.15s;"
-                        onmouseenter="this.style.background='rgba(var(--success-rgb), 0.3)'"
-                        onmouseleave="this.style.background='rgba(var(--success-rgb), 0.1)'">
-                  ✎
+                <button type="button" class="btn-icon btn-icon-xs tm-tr-edit" aria-label="Edytuj przejście" onclick="event.stopPropagation(); tmOpenEditTransitionPopup(${w.wellIndex}, ${tr.trIndex}, event)">
+                  <i data-lucide="pencil" class="icon-xxs" aria-hidden="true"></i>
                 </button>`
                 }
               </div>
-              <div style="display:flex; gap:0.3rem; align-items:center; font-size: var(--fs-xs); color:var(--text-muted);">
+              <div class="tm-tr-meta">
                 <span>${tr.rzedna != null ? parseFloat(tr.rzedna).toFixed(2) + 'm' : '—'}</span>
-                <span class="opacity-3">·</span>
-                <span style="color:var(--warn-hover); font-weight: var(--fw-semibold);">${tr.angle}°</span>
-                <span class="opacity-3">·</span>
-                <span style="background:${tr.flowType === FLOW_TYPES.WLOT ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--warn-rgb), 0.2)'}; color:${tr.flowType === FLOW_TYPES.WLOT ? 'var(--success-hover)' : 'var(--warn-hover)'}; padding:0.02rem 0.3rem; border-radius: var(--radius-2xs); font-size: var(--fs-2xs); font-weight: var(--fw-bold);">${tr.flowType === FLOW_TYPES.WLOT ? 'WLOT' : 'WYLOT'}</span>
+                <span class="tm-tr-dot">·</span>
+                <span class="tm-tr-angle">${tr.angle}°</span>
+                <span class="tm-tr-dot">·</span>
+                <span class="tm-tr-flow ${flowClass}">${flowLabel}</span>
               </div>
             </div>`;
             })
             .join('');
 
         const wellLocked = tmIsWellBlocked(w.wellIndex);
+        const wellCardClass = `tm-well-card ${wellLocked ? 'is-locked' : wellSomeSel ? 'is-selected' : ''}`;
         html += `
-        <div style="background: var(--bg-secondary); border:1px solid ${wellLocked ? 'rgba(var(--danger-rgb), 0.2)' : wellSomeSel ? 'rgba(var(--success-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'}; border-radius: var(--radius-sm); margin-bottom:0.6rem; overflow:hidden; transition:all 0.2s;${wellLocked ? ' opacity:0.7;' : ''}">
-          <div style="display:flex; align-items:center; padding:0.55rem 0.75rem; background:rgba(var(--white-rgb), 0.05); border-bottom:1px solid rgba(var(--white-rgb), 0.05);">
-            <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)"
-                   style="width:16px; height:16px; margin-right:0.75rem; cursor:pointer;" ${wellLocked ? 'disabled' : ''}>
+        <div class="${wellCardClass}">
+          <div class="tm-well-head">
+            <input type="checkbox" ${wellAllSel ? 'checked' : ''} onchange="tmToggleWell(${w.wellIndex}, this.checked)" ${wellLocked ? 'disabled' : ''} aria-label="Zaznacz wszystkie przejścia studni ${escapeHtmlAttr(w.wellName)}">
             <div style="flex:1; display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
-              <span style="font-weight: var(--fw-bold); color:var(--text-primary); font-size: var(--fs-lg);">${escapeHtml(w.wellName)}</span>
-              ${wellLocked ? '<span style="color:var(--danger-hover); font-size: var(--fs-xs); display:flex; align-items:center; gap:0.2rem;"><i data-lucide="lock" class="icon-12"></i>Zablokowana</span>' : ''}
-              <span style="color:var(--text-muted); font-size: var(--fs-sm); background:rgba(var(--white-rgb), 0.05); border:1px solid rgba(var(--white-rgb), 0.05); padding:0.1rem 0.45rem; border-radius: var(--radius-2xs); font-weight: var(--fw-semibold);">DN${w.wellDn}</span>
+              <span class="tm-well-name">${escapeHtml(w.wellName)}</span>
+              ${wellLocked ? '<span class="tm-well-lock"><i data-lucide="lock" aria-hidden="true"></i>Zablokowana</span>' : ''}
+              <span class="tm-well-badge">DN${w.wellDn}</span>
               <span class="fs-sm-muted">Rzędna: ${w.rzednaDna}</span>
-              <span style="color:var(--success-hover); font-weight: var(--fw-bold); font-size: var(--fs-md);">${fmtInt(w.price)} PLN</span>
+              <span class="tm-well-price">${fmtInt(w.price)} PLN</span>
             </div>
-            <span style="color:var(--text-muted); font-size: var(--fs-xs); background:rgba(var(--success-rgb), 0.1); padding:0.15rem 0.55rem; border-radius: var(--radius); white-space:nowrap; font-weight: var(--fw-medium); border:1px solid rgba(var(--success-rgb), 0.15);">
+            <span class="tm-well-counter">
               ${wellSelCount}/${matchingTrs.length}
             </span>
           </div>
-          <div class="grid-auto-230">
+          <div class="tm-grid">
             ${tilesHtml}
           </div>
         </div>`;
     });
 
     if (visibleCount === 0) {
-        html = `<div style="text-align:center; padding:3rem 1rem; color:var(--text-muted); font-size: var(--fs-xl);">
-                  <div style="font-size: var(--fs-8xl); margin-bottom:0.5rem; opacity:0.2;">⊘</div>
+        html = `<div class="tm-empty">
+                  <div class="tm-empty-icon"><i data-lucide="ban" aria-hidden="true"></i></div>
                   Brak przejść spełniających kryteria.
                 </div>`;
     }
 
     container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons({ root: container });
 
     const visEl = document.getElementById('tm-visible-count');
     if (visEl) visEl.textContent = String(visibleCount);
@@ -510,7 +478,8 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
 
     const popup = document.createElement('div');
     popup.id = 'tm-edit-popup';
-    popup.style.cssText = `position:fixed;z-index:${LAYERS.TRANSITION_EDIT};background:var(--slate-800);border:1px solid rgba(var(--success-rgb), 0.3);border-radius: var(--radius-sm);padding:0.6rem;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);width:${popupW}px;top:${top}px;left:${left}px;animation:fadeIn 0.1s ease;`;
+    popup.className = 'tm-edit-popup';
+    popup.style.cssText = `top:${top}px;left:${left}px;width:${popupW}px;`;
     if (maxH > 120) {
         popup.style.maxHeight = maxH + 'px';
         popup.style.overflowY = 'auto';
@@ -521,45 +490,42 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
         : 'Nieznane';
 
     popup.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 0.1rem 0.4rem;border-bottom:1px solid rgba(var(--white-rgb), 0.05);margin-bottom:0.45rem;">
-        <div><div style="font-weight: var(--fw-bold);color:var(--text-primary);font-size: var(--fs-md);">Zmień przejście</div><div class="fs-xs-muted">Aktualnie: ${currentLabel}</div></div>
-        <button data-action="tmCloseEditPopup" style="background:rgba(var(--white-rgb), 0.05);border:none;border-radius: var(--radius-2xs);color:var(--text-muted);cursor:pointer;font-size: var(--fs-lg);padding:0.1rem 0.35rem;line-height:1.3;">✕</button>
+      <div class="tm-edit-head">
+        <div><div class="tm-edit-title">Zmień przejście</div><div class="fs-xs-muted">Aktualnie: ${currentLabel}</div></div>
+        <button class="btn-icon" aria-label="Zamknij" data-action="tmCloseEditPopup"><i data-lucide="x" class="icon-xs" aria-hidden="true"></i></button>
       </div>
-      <div style="display:flex;gap:0.5rem;">
-        <div class="flex-1">
-          <div class="label-sec">Typ</div>
-          <div id="tm-edit-type-list" class="flex-gap-2-col">
+      <div class="tm-edit-cols">
+        <div class="tm-edit-col">
+          <div class="tm-filter-label">Typ</div>
+          <div id="tm-edit-type-list" class="tm-edit-list">
             ${categories
                 .map((cat) => {
                     const isCur = cat === currentCat;
-                    return `<div data-cat="${escapeHtmlAttr(cat)}" data-action="tmEditSelectType" data-well="${wellIdx}" data-tr="${trIdx}"
-                   style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span class="color-success-hover">◆</span>' : '<span class="fs-base-invisible">◆</span>'}${escapeHtml(cat)}</div>`;
+                    return `<button type="button" data-cat="${escapeHtmlAttr(cat)}" data-action="tmEditSelectType" data-well="${wellIdx}" data-tr="${trIdx}" class="tm-edit-opt ${isCur ? 'active' : ''}" aria-pressed="${isCur ? 'true' : 'false'}"><span class="tm-edit-dot ${isCur ? 'tm-edit-dot--visible' : 'tm-edit-dot--hidden'}"><i data-lucide="check" class="icon-xxs" aria-hidden="true"></i></span>${escapeHtml(cat)}</button>`;
                 })
                 .join('')}
           </div>
         </div>
-        <div class="flex-1">
-          <div class="label-sec">Średnica</div>
-          <div id="tm-edit-dn-list" class="flex-gap-2-col">
+        <div class="tm-edit-col">
+          <div class="tm-filter-label">Średnica</div>
+          <div id="tm-edit-dn-list" class="tm-edit-list">
             ${allDNs
                 .map((dn) => {
                     const isCur = dn === currentDn;
                     const dnStr = String(dn);
-                    return `<div data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}"
-                   style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-bold);background:${isCur ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'};border:1.5px solid ${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'};color:${isCur ? 'var(--success-hover)' : 'var(--text-primary)'};transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;${isCur ? 'box-shadow:0 0 8px rgba(var(--success-rgb), 0.15);' : ''}"
-                   onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='${isCur ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.05)'}'">${isCur ? '<span class="color-success-hover">◆</span>' : '<span class="fs-base-invisible">◆</span>'}DN${escapeHtml(dnStr)}</div>`;
+                    return `<button type="button" data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}" class="tm-edit-opt ${isCur ? 'active' : ''}" aria-pressed="${isCur ? 'true' : 'false'}"><span class="tm-edit-dot ${isCur ? 'tm-edit-dot--visible' : 'tm-edit-dot--hidden'}"><i data-lucide="check" class="icon-xxs" aria-hidden="true"></i></span>DN${escapeHtml(dnStr)}</button>`;
                 })
                 .join('')}
           </div>
         </div>
       </div>
-      <div id="tm-edit-result" style="margin-top:0.45rem;padding:0.35rem 0.45rem;background:rgba(var(--black-rgb), 0.2);border-radius: var(--radius-sm);display:flex;justify-content:space-between;align-items:center;">
-        <span style="color:var(--text-muted);font-size: var(--fs-sm);">Wybierz typ i średnicę</span>
-        <button id="tm-edit-apply-btn" style="display:none;background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>
+      <div id="tm-edit-result" class="tm-edit-result">
+        <span class="fs-xs-muted">Wybierz typ i średnicę</span>
+        <button id="tm-edit-apply-btn" class="btn btn-primary btn-sm" style="display:none;" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>
       </div>`;
 
     document.body.appendChild(popup);
+    if (window.lucide) window.lucide.createIcons({ root: popup });
 
     const closeHandler = function (e) {
         if (!popup.contains(e.target)) {
@@ -573,20 +539,21 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
 function tmEditSelectType(el, wellIdx, trIdx) {
     const list = document.getElementById('tm-edit-type-list');
     list.querySelectorAll('[data-cat]').forEach((div) => {
-        div.style.background = 'rgba(var(--white-rgb), 0.05)';
-        div.style.borderColor = 'rgba(var(--white-rgb), 0.05)';
-        div.style.color = 'var(--text-primary)';
-        div.style.boxShadow = 'none';
-        const dot = div.querySelector('span');
-        if (dot) dot.innerHTML = '◆';
-        dot.style.color = 'transparent';
+        div.classList.remove('active');
+        div.setAttribute('aria-pressed', 'false');
+        const dot = div.querySelector('.tm-edit-dot');
+        if (dot) {
+            dot.classList.remove('tm-edit-dot--visible');
+            dot.classList.add('tm-edit-dot--hidden');
+        }
     });
-    el.style.background = 'rgba(var(--success-rgb), 0.2)';
-    el.style.borderColor = 'rgba(var(--success-rgb), 0.8)';
-    el.style.color = 'var(--success-hover)';
-    el.style.boxShadow = '0 0 8px rgba(var(--success-rgb), 0.15)';
-    const dot = el.querySelector('span');
-    if (dot) dot.style.color = 'var(--success-hover)';
+    el.classList.add('active');
+    el.setAttribute('aria-pressed', 'true');
+    const dot = el.querySelector('.tm-edit-dot');
+    if (dot) {
+        dot.classList.remove('tm-edit-dot--hidden');
+        dot.classList.add('tm-edit-dot--visible');
+    }
 
     tmEditSelectedCat = el.dataset.cat;
     tmEditSelectedDn = null;
@@ -602,9 +569,10 @@ function tmEditSelectType(el, wellIdx, trIdx) {
     dnList.innerHTML = dns
         .map((dn) => {
             const dnStr = String(dn);
-            return `<div data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}" style="padding:0.3rem 0.45rem;border-radius: var(--radius-2xs);cursor:pointer;font-size: var(--fs-sm);font-weight: var(--fw-semibold);background:rgba(var(--white-rgb), 0.05);border:1.5px solid rgba(var(--white-rgb), 0.05);color:var(--text-primary);transition:all 0.12s;display:flex;align-items:center;gap:0.35rem;" onmouseenter="this.style.borderColor='rgba(var(--success-rgb), 0.3)'" onmouseleave="this.style.borderColor='rgba(var(--white-rgb), 0.05)'"><span class="fs-base-invisible">◆</span>DN${escapeHtml(dnStr)}</div>`;
+            return `<button type="button" data-dn="${escapeHtmlAttr(dnStr)}" data-action="tmEditSelectDN" data-well="${wellIdx}" data-tr="${trIdx}" class="tm-edit-opt" aria-pressed="false"><span class="tm-edit-dot tm-edit-dot--hidden"><i data-lucide="check" class="icon-xxs" aria-hidden="true"></i></span>DN${escapeHtml(dnStr)}</button>`;
         })
         .join('');
+    if (window.lucide) window.lucide.createIcons({ root: dnList });
 
     const resultSpan = document.querySelector('#tm-edit-result span');
     if (resultSpan) resultSpan.textContent = 'Wybierz średnicę';
@@ -624,19 +592,21 @@ function tmEditSelectType(el, wellIdx, trIdx) {
 function tmEditSelectDN(el, wellIdx, trIdx) {
     const list = document.getElementById('tm-edit-dn-list');
     list.querySelectorAll('[data-dn]').forEach((div) => {
-        div.style.background = 'rgba(var(--white-rgb), 0.05)';
-        div.style.borderColor = 'rgba(var(--white-rgb), 0.05)';
-        div.style.color = 'var(--text-primary)';
-        div.style.boxShadow = 'none';
-        const dot = div.querySelector('span');
-        if (dot) dot.style.color = 'transparent';
+        div.classList.remove('active');
+        div.setAttribute('aria-pressed', 'false');
+        const dot = div.querySelector('.tm-edit-dot');
+        if (dot) {
+            dot.classList.remove('tm-edit-dot--visible');
+            dot.classList.add('tm-edit-dot--hidden');
+        }
     });
-    el.style.background = 'rgba(var(--success-rgb), 0.2)';
-    el.style.borderColor = 'rgba(var(--success-rgb), 0.8)';
-    el.style.color = 'var(--success-hover)';
-    el.style.boxShadow = '0 0 8px rgba(var(--success-rgb), 0.15)';
-    const dot = el.querySelector('span');
-    if (dot) dot.style.color = 'var(--success-hover)';
+    el.classList.add('active');
+    el.setAttribute('aria-pressed', 'true');
+    const dot = el.querySelector('.tm-edit-dot');
+    if (dot) {
+        dot.classList.remove('tm-edit-dot--hidden');
+        dot.classList.add('tm-edit-dot--visible');
+    }
 
     tmEditSelectedDn = el.dataset.dn;
 
@@ -649,8 +619,8 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
         );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
-            resultDiv.innerHTML = `<div><span style="color:var(--text-primary);font-size: var(--fs-sm);font-weight: var(--fw-semibold);">${escapeHtml(product.category)} DN${product.dn}</span><span style="color:var(--success-hover);font-weight: var(--fw-bold);margin-left:0.5rem;font-size: var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
-              <button style="background:var(--accent);border:none;border-radius: var(--radius-2xs);padding:0.28rem 0.55rem;color:var(--white);font-size: var(--fs-sm);font-weight: var(--fw-semibold);cursor:pointer;" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>`;
+            resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${product.dn}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
+              <button class="btn btn-primary btn-sm" data-action="tmEditApply" data-well="${wellIdx}" data-tr="${trIdx}">Zastosuj</button>`;
         }
     }
 }
@@ -699,6 +669,44 @@ async function tmEditApply(wellIdx, trIdx) {
 window.tmUpdateSelectedCount = function () {
     const countEl = document.getElementById('tm-selected-count');
     if (countEl) countEl.textContent = String(tmSelectedTransitions.size);
+    window.tmUpdateApplyState && window.tmUpdateApplyState();
+};
+
+window.tmToggleSearchClear = function () {
+    const input = document.getElementById('tm-filter-search');
+    const btn = document.getElementById('tm-search-clear');
+    if (!input || !btn) return;
+    const hasVal = (input.value || '').length > 0;
+    btn.classList.toggle('is-visible', hasVal);
+};
+
+window.tmUpdateApplyState = function () {
+    const btn = document.getElementById('tm-apply-btn');
+    const hint = document.getElementById('tm-target-hint');
+    const countEl = document.getElementById('tm-apply-count');
+    if (!btn) return;
+    const hasCat = !!tmTargetCat;
+    const hasSel = tmSelectedTransitions.size > 0;
+    const canApply = hasCat && hasSel;
+    btn.disabled = !canApply;
+    btn.setAttribute('aria-disabled', String(!canApply));
+    if (countEl) {
+        countEl.textContent = hasSel ? `(${tmSelectedTransitions.size})` : '';
+    }
+    if (hint) {
+        if (!hasCat && !hasSel)
+            hint.innerHTML =
+                '<i data-lucide="info" aria-hidden="true"></i> Wybierz kategorię i zaznacz przejścia';
+        else if (!hasCat)
+            hint.innerHTML =
+                '<i data-lucide="alert-circle" aria-hidden="true"></i> Wybierz kategorię docelową';
+        else if (!hasSel)
+            hint.innerHTML =
+                '<i data-lucide="check-square" aria-hidden="true"></i> Zaznacz co najmniej jedno przejście';
+        else
+            hint.innerHTML = `<i data-lucide="zap" aria-hidden="true"></i> Gotowe do zamiany: ${tmSelectedTransitions.size} × → ${escapeHtml(tmTargetCat)}`;
+        if (window.lucide) window.lucide.createIcons({ root: hint });
+    }
 };
 
 window.tmUpdatePreview = function () {
@@ -708,7 +716,7 @@ window.tmUpdatePreview = function () {
 
     const targetCat = tmTargetCat;
     if (!targetCat || tmSelectedTransitions.size === 0) {
-        panel.style.display = 'none';
+        panel.classList.remove('is-visible');
         return;
     }
 
@@ -742,30 +750,31 @@ window.tmUpdatePreview = function () {
     });
 
     if (replaceList.length === 0 && skipList.length === 0) {
-        panel.style.display = 'none';
+        panel.classList.remove('is-visible');
         return;
     }
 
     let html = '';
     if (replaceList.length > 0) {
-        html += `<div class="flex-gap-4-mb3"><span style="color:var(--success-hover); font-weight: var(--fw-extrabold);">✅ Zostanie zamienione: ${replaceList.length}</span></div>`;
-        html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem; margin-bottom:0.5rem;">';
+        html += `<div class="tm-preview-section"><span class="tm-preview-title--ok"><i data-lucide="check-circle" class="icon-xs" aria-hidden="true"></i> Zostanie zamienione: ${replaceList.length}</span></div>`;
+        html += '<div class="tm-preview-section" style="margin-bottom:0.5rem;">';
         replaceList.forEach((l) => {
-            html += `<span style="background:rgba(var(--success-rgb), 0.1); border:1px solid rgba(var(--success-rgb), 0.2); color:var(--success-hover); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); font-size: var(--fs-sm);">${l}</span>`;
+            html += `<span class="tm-preview-chip tm-preview-chip--ok">${l}</span>`;
         });
         html += '</div>';
     }
     if (skipList.length > 0) {
-        html += `<div class="flex-gap-4-mb3"><span style="color:var(--danger-hover); font-weight: var(--fw-extrabold);">⚠️ Brak odpowiednika w ${escapeHtml(targetCat)}: ${skipList.length}</span></div>`;
-        html += '<div style="display:flex; flex-wrap:wrap; gap:0.3rem;">';
+        html += `<div class="tm-preview-section"><span class="tm-preview-title--warn"><i data-lucide="alert-triangle" class="icon-xs" aria-hidden="true"></i> Brak odpowiednika w ${escapeHtml(targetCat)}: ${skipList.length}</span></div>`;
+        html += '<div class="tm-preview-section">';
         skipList.forEach((l) => {
-            html += `<span style="background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.2); color:var(--danger-hover); padding:0.1rem 0.4rem; border-radius: var(--radius-2xs); font-size: var(--fs-sm);">${l}</span>`;
+            html += `<span class="tm-preview-chip tm-preview-chip--warn">${l}</span>`;
         });
         html += '</div>';
     }
 
     content.innerHTML = html;
-    panel.style.display = 'block';
+    panel.classList.add('is-visible');
+    if (window.lucide) window.lucide.createIcons({ root: panel });
 };
 
 /* ===== Delegacja kliknięć (data-action) — TASK-036 ===== */

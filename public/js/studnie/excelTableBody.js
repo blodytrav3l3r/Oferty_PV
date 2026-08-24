@@ -27,6 +27,7 @@ function _excelGetRowStatus(well) {
 /* ===== TBODY RENDER ===== */
 function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     let html = '</thead><tbody>';
+    const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
     const nameCounts = {};
     const nameDnMap = {};
@@ -412,7 +413,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* H dennica */
         const dennH = _excelCalcDennicaHeight(well);
         html +=
-            '<td class="excel-td excel-td-center" style="color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
+            '<td class="excel-td excel-td-center" style="text-align:center;color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
             wIdx +
             '">' +
             (dennH || '\u2014') +
@@ -420,7 +421,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Uszczelki */
         const uszczCount = _excelCalcUszczelkaCount(well);
         html +=
-            '<td class="excel-td excel-td-center" style="color:var(--warn);font-weight: var(--fw-semibold);" data-cell="uszcz-' +
+            '<td class="excel-td excel-td-center" style="text-align:center;color:var(--warn);font-weight: var(--fw-semibold);" data-cell="uszcz-' +
             wIdx +
             '">' +
             uszczCount +
@@ -602,6 +603,17 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         '<td class="excel-td excel-td-empty" style="' +
         'text-align:center;color:var(--slate-800);font-size: var(--fs-2xs);" data-cell="empty-actions"><i data-lucide="plus-circle" class="icon-sm" style="color:var(--slate-700);" aria-hidden="true"></i></td>';
     html += '</tr>';
+    if (tabWells.length === 0) {
+        html +=
+            '<tr id="excel-empty-state"><td colspan="99" style="padding:0;border:none;"><div class="empty-state" style="padding:1.2rem 1rem;">' +
+            '<i data-lucide="table" style="width:28px;height:28px;opacity:0.4;margin-bottom:0.6rem;"></i>' +
+            '<h3 style="font-size:var(--fs-lg);color:var(--text-secondary);margin:0 0 0.2rem;">Brak studni w zakładce ' +
+            escapeHtml(dnLabel) +
+            '</h3>' +
+            '<p style="font-size:var(--fs-sm);color:var(--text-muted);margin:0 0 0.6rem;">Dodaj pierwszą studnię poniżej lub wklej dane.</p>' +
+            '<button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById(\'excel-empty-name\').focus()">Dodaj pierwszą studnię</button>' +
+            '</div></td></tr>';
+    }
     html += '</tbody>';
     return html;
 }

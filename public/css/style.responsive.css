@@ -162,11 +162,13 @@
     }
 }
 
-/* Ujednolicony pasek filtrów */
+/* Ujednolicony pasek filtrów — pełna szerokość pola */
 .kartoteka-filter-bar {
     display: flex;
     flex-direction: column;
     gap: 0.8rem;
+    width: 100%;
+    box-sizing: border-box;
     margin-bottom: 0.8rem;
     padding: 0.8rem 1rem;
     background: linear-gradient(
@@ -185,12 +187,19 @@
         box-shadow 0.3s;
 }
 
-/* Row 2: szukaj + odśwież */
+/* Rząd 1: filtry — flat, wrap na całą szerokość */
+.kartoteka-filter-bar .ka-filter-row {
+    width: 100%;
+}
+
+/* Row 2: szukaj + kompakt + odśwież — wyraźny drugi wiersz */
 .ka-search-row {
     display: flex;
     width: 100%;
     gap: 0.5rem;
     align-items: center;
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border-glass);
 }
 
 .ka-search-box {

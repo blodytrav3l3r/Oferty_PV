@@ -21,34 +21,77 @@
     let transitionTimer = null;
 
     // ── Ochrona niezapisanych zmian przy zmianie modułu (popup aplikacji) ──
-    // Natywny beforeunload (shared/ui.js) chroni tylko F5/zamknięcie karty —
-    // nawigacja wewnętrzna SPA (hash) go nie wywołuje, stąd ten guard.
+    // Hash SPA nie wywołuje beforeunload — guard appConfirm. Native beforeunload w ui.js to safety-net dla X/mouse Reload.
     let _navForceOnce = false; // nawigacja potwierdzona przez użytkownika
     let _navReverting = false; // cofanie hasha po anulowaniu — przepuść echo hashchange
     let _lastCleanHash = null; // ostatni hash bez niezapisanych zmian
 
     function _isDirtyNow() {
         try {
-            return typeof window._isWizardDirty === 'function' && window._isWizardDirty() === true;
-        } catch (_e) {
+            if (typeof window._isWizardDirty === 'function' && window._isWizardDirty() === true)
+                return true;
+            for (const key of Object.keys(iframes)) {
+                try {
+                    const w = iframes[key]?.contentWindow;
+                    if (!w) continue;
+                    if (w._excelDirty) return true;
+                    if (typeof w._isWizardDirty === 'function' && w._isWizardDirty()) return true;
+                } catch {}
+            }
+            for (const iframe of document.querySelectorAll('iframe.spa-module-iframe')) {
+                try {
+                    const w = iframe.contentWindow;
+                    if (!w || iframes[w]) continue;
+                    if (w._excelDirty) return true;
+                    if (typeof w._isWizardDirty === 'function' && w._isWizardDirty()) return true;
+                } catch {}
+            }
+        } catch (_e) {}
+        return false;
+    }
+    try {
+        Object.defineProperty(window, '_navForceOnce', {
+            get() {
+                return _navForceOnce;
+            },
+            set(v) {
+                _navForceOnce = !!v;
+                window._bypassBeforeUnload = !!v;
+            },
+            configurable: true
+        });
+    } catch {}
+    function _getConfirmLock() {
+        try {
+            return !!window._confirmLock;
+        } catch {
             return false;
         }
     }
+    function _setConfirmLock(v) {
+        try {
+            window._confirmLock = !!v;
+        } catch {}
+    }
 
     async function _confirmLeaveModule(targetHash) {
-        const ok = await window.appConfirm(
-            'Masz niezapisane zmiany w kreatorze.\nOpuścić moduł bez zapisywania?',
-            {
+        if (_getConfirmLock()) return;
+        _setConfirmLock(true);
+        try {
+            const ok = await window.appConfirm('Wprowadzone zmiany mogą nie zostać zapisane.', {
                 title: 'Niezapisane zmiany',
                 type: 'warning',
-                okText: 'Opuść',
+                okText: 'Opuść bez zapisu',
                 cancelText: 'Zostań'
-            }
-        );
-        if (!ok) return;
-        _navForceOnce = true;
-        if (window.location.hash === targetHash) navigate();
-        else window.location.hash = targetHash;
+            });
+            if (!ok) return;
+            _navForceOnce = true;
+            window._bypassBeforeUnload = true;
+            if (window.location.hash === targetHash) navigate();
+            else window.location.hash = targetHash;
+        } finally {
+            _setConfirmLock(false);
+        }
     }
 
     // ── Konfiguracja ──

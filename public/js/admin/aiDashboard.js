@@ -169,8 +169,15 @@
                             '<i data-lucide="refresh-cw"></i> Uruchom Learning Cycle';
                         const alertFn =
                             window.aiUiAlert ||
-                            function (m) {
-                                return Promise.resolve(window.alert(m));
+                            window.appAlert ||
+                            window.parent?.appAlert ||
+                            function (m, o) {
+                                const fn = window.appConfirm || window.parent?.appConfirm;
+                                if (typeof fn === 'function')
+                                    return fn(m, { ...(o || {}), hideCancel: true }).then(
+                                        function () {}
+                                    );
+                                return Promise.resolve();
                             };
                         if (result && !result.error) {
                             alertFn(

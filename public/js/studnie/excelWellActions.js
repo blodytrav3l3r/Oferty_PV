@@ -162,32 +162,32 @@ function excelOpenWellParams(wIdx) {
 
             const currentVal = well[def.key] || '';
             bodyHtml += `<div style="display:flex;align-items:center;gap:0.2rem;${isGreyedOut ? 'opacity:0.5;' : ''}">`;
-            bodyHtml += `<span class="fs-lg-hdr">${def.label}</span>`;
+            bodyHtml += `<span class="well-param-label" title="${escapeHtml(def.label)}">${escapeHtml(def.label)}</span>`;
             const cols = def.options.length;
             bodyHtml += `<div style="display:grid;grid-template-columns:repeat(${cols}, ${TILE_W}px);gap:0.35rem;flex:1;">`;
             def.options.forEach(([val, lbl]) => {
                 const active = val === currentVal;
-                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius: var(--radius-sm);cursor:pointer;font-size: var(--fs-lg);font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};background:${active ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};color:${active ? 'var(--accent-text)' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}">${lbl}</button>`;
+                bodyHtml += `<button onclick="_excelUpdateWellParam(${wIdx},'${def.key}','${val}')" style="height:34px;border-radius: var(--radius-sm);cursor:pointer;font-size: var(--fs-lg);font-weight:${active ? '800' : '600'};border:1px solid ${active ? 'rgba(var(--accent-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'};background:${active ? 'rgba(var(--accent-rgb), 0.3)' : 'rgba(var(--white-rgb), 0.05)'};color:${active ? 'var(--accent-text)' : 'var(--text-secondary)'};transition:all 0.15s ease;display:flex;align-items:center;justify-content:center;${active ? 'box-shadow:0 0 10px rgba(var(--accent-rgb), 0.2);' : ''}" onmouseenter="if(!${active}){this.style.borderColor='rgba(var(--accent-rgb), 0.3)';this.style.background='rgba(var(--white-rgb), 0.1)'}" onmouseleave="if(!${active}){this.style.borderColor='rgba(var(--white-rgb), 0.1)';this.style.background='rgba(var(--white-rgb), 0.05)'}">${escapeHtml(lbl)}</button>`;
             });
             bodyHtml += `</div></div>`;
 
             if (def.key === 'malowanieW' && well.malowanieW && well.malowanieW !== 'brak') {
-                bodyHtml += `<div class="flex-gap-2">`;
-                bodyHtml += `<span class="fs-lg-hdr">Nazwa p. wew.</span>`;
+                bodyHtml += `<div class="well-param-row">`;
+                bodyHtml += `<span class="well-param-label">Nazwa p. wew.</span>`;
                 bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameW || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameW',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
-                bodyHtml += `<div class="flex-gap-2">`;
-                bodyHtml += `<span class="fs-lg-hdr">Koszt p. wew.</span>`;
+                bodyHtml += `<div class="well-param-row">`;
+                bodyHtml += `<span class="well-param-label">Koszt p. wew.</span>`;
                 bodyHtml += `<input type="number" step="0.01" value="${well.malowanieWewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'malowanieWewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
             if (def.key === 'malowanieZ' && well.malowanieZ && well.malowanieZ !== 'brak') {
-                bodyHtml += `<div class="flex-gap-2">`;
-                bodyHtml += `<span class="fs-lg-hdr">Nazwa p. zew.</span>`;
+                bodyHtml += `<div class="well-param-row">`;
+                bodyHtml += `<span class="well-param-label">Nazwa p. zew.</span>`;
                 bodyHtml += `<input type="text" value="${escapeHtml(well.powlokaNameZ || '')}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'powlokaNameZ',this.value);excelRefreshParamsPopup(${wIdx})" placeholder="Nazwa powłoki..." style="flex:1;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
-                bodyHtml += `<div class="flex-gap-2">`;
-                bodyHtml += `<span class="fs-lg-hdr">Koszt p. zew.</span>`;
+                bodyHtml += `<div class="well-param-row">`;
+                bodyHtml += `<span class="well-param-label">Koszt p. zew.</span>`;
                 bodyHtml += `<input type="number" step="0.01" value="${well.malowanieZewCena || ''}" onclick="this.select()" onchange="_excelUpdateWellParam(${wIdx},'malowanieZewCena',parseFloat(this.value)||0);excelRefreshParamsPopup(${wIdx})" placeholder="PLN / m²" style="width:120px;height:34px;background:rgba(var(--black-rgb), 0.2);border:1px solid rgba(var(--white-rgb), 0.1);color:var(--text-primary);padding:0 0.7rem;font-size: var(--fs-lg);border-radius: var(--radius-sm);">`;
                 bodyHtml += `</div>`;
             }
