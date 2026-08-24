@@ -32,6 +32,7 @@ function excelOnRzednaChange(wIdx) {
     _excelMarkDirty();
     _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
 
     if (
         _excelAutoSelectEnabled &&
@@ -166,6 +167,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
         p.displayIndex = i;
     });
     _excelUpdateLeftPreview(wIdx);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 
@@ -197,6 +199,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
         currentWellIndex = savedIdx;
         if (typeof _excelUpdateHeaderProdCodes === 'function') _excelUpdateHeaderProdCodes();
     }
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 
@@ -229,6 +232,13 @@ function _excelMarkManual(well) {
     if (typeof window.renderWellsList === 'function') window.renderWellsList();
 }
 
+function _excelWellHasHoles(well) {
+    if (!well || !well.przejscia || well.przejscia.length === 0) return false;
+    const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
+    if (rzDna === null || isNaN(rzDna)) return false;
+    return well.przejscia.some((pr) => !isNaN(parseFloat(pr.rzednaWlaczenia)));
+}
+
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
@@ -246,6 +256,9 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
               : 1000
           : parseInt(well.dn);
 
+    const isRingType = componentType === 'krag' || componentType === 'krag_ot';
+    const hasHoles = isRingType && _excelWellHasHoles(well);
+
     const existingItems = [];
     if (!productId) {
         for (const item of well.config || []) {
@@ -261,6 +274,11 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         const p = studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return true;
         if (productId) return item.productId !== productId;
+        if (isRingType && !hasHoles) {
+            if (p.componentType !== 'krag' && p.componentType !== 'krag_ot') return true;
+            if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
+            return false;
+        }
         if (p.componentType !== componentType) return true;
         if (height !== undefined && parseInt(p.height) !== parseInt(height)) return true;
         return false;
@@ -301,36 +319,32 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         }
     }
 
+    let otMutated = false;
     if (componentType === 'krag' || componentType === 'krag_ot') {
         _excelCleanEmptyPrzejscia(well);
+        _excelClearResCache(well);
         if (typeof enforceOtRings === 'function') {
-            const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
             try {
-                currentWellIndex = wIdx;
-                enforceOtRings();
-            } finally {
-                if (savedIdx >= 0) currentWellIndex = savedIdx;
-            }
+                otMutated = enforceOtRings(well);
+            } catch (_e) {}
         }
+        if (otMutated && typeof _excelClearResCache === 'function') _excelClearResCache(well);
     }
-    /* Pełny re-render tylko dla kręgów — konwersja krag/krag_ot musi pokazać
-       finalny config (poprawka błędu #21 z AGENTS.md). Dla pozostałych komponentów
-       wystarczy _excelMarkAsManual (linia 209) + odświeżenie komórek — pełny
-       re-render przy każdym znaku blokowałby wpisywanie wielocyfrowych ilości.
-       Podczas batch (fill/paste) re-render jest odkładany do jednego przebiegu
-       na koniec operacji — inaczej wypełnianie kolumny kręgów renderuje tabelę
-       po każdej komórce (H1). */
+    /* Pełny re-render wywołaj TYLKO wtedy gdy nastąpiła realna zamiana krag <-> krag_ot
+       (otMutated = true). W przeciwnym razie bezwarunkowy re-render niszczy aktywny element
+       <input> podczas wpisywania z klawiatury (oninput). */
     if (componentType === 'krag' || componentType === 'krag_ot') {
         if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) {
             if (typeof _excelBatchKragTouched !== 'undefined') _excelBatchKragTouched = true;
-        } else {
+        } else if (otMutated) {
             _excelMarkManual(well);
         }
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
-    _excelUpdateLeftPreview(wIdx);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    else _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
     _excelDebouncedRefresh();
 
@@ -380,9 +394,12 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
             }
         }
     }
-    if (typeof window.updateSummary === 'function') window.updateSummary();
-    if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
-    if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
+    else {
+        if (typeof window.updateSummary === 'function') window.updateSummary();
+        if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+        if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    }
 }
 
 function excelOnKinetaChange(wIdx, value) {
@@ -393,6 +410,7 @@ function excelOnKinetaChange(wIdx, value) {
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
     _excelUpdateLeftPreview(wIdx);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 
@@ -423,6 +441,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);
     if (row) _excelRefreshAutoCells(wIdx, row);
     _excelUpdateLeftPreview(wIdx);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 
@@ -448,6 +467,7 @@ async function excelOnReductionSelectChange(wIdx, value) {
         await autoSelectComponents(true);
     }
     _excelRenderTable(_excelActiveTab);
+    if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
     _excelDebouncedRefresh();
 }
 

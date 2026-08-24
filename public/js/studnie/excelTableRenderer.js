@@ -322,10 +322,17 @@ function _excelRenderTable(dn) {
                 restoreEl.focus();
                 /* Kursor na koniec zamiast select() — zaznaczenie całej wartości
                    sprawia, że kolejny klawisz ją zastępuje (niemożliwe było
-                   wpisanie wielocyfrowej ilości). */
-                if (restoreEl.tagName === 'INPUT' && restoreEl.setSelectionRange) {
-                    const _len = restoreEl.value ? restoreEl.value.length : 0;
-                    restoreEl.setSelectionRange(_len, _len);
+                   wpisanie wielocyfrowej ilości). number/range nie wspiera selection (InvalidStateError). */
+                if (
+                    restoreEl.tagName === 'INPUT' &&
+                    restoreEl.type !== 'number' &&
+                    restoreEl.type !== 'range' &&
+                    typeof restoreEl.setSelectionRange === 'function'
+                ) {
+                    try {
+                        const _len = restoreEl.value ? restoreEl.value.length : 0;
+                        restoreEl.setSelectionRange(_len, _len);
+                    } catch (_e) {}
                 }
             }
         }

@@ -3,8 +3,10 @@
 
 /* ===== CELL FOCUS (Excel highlight) ===== */
 function excelCellFocus(el) {
-    if (el.tagName === 'INPUT') {
-        el.select();
+    if (el.tagName === 'INPUT' && el.type !== 'number' && el.type !== 'range') {
+        try {
+            el.select();
+        } catch (_e) {}
     }
     _excelUserEditing = true; /* blokuje polling */
     /* Wybór wiersza obsługuje delegowany focusin na container — nie dubluj logiki */
@@ -284,7 +286,16 @@ function _excelFocusNavEl(el, rowEls, dir) {
                     }
                 }
             }
-            if (cur.tagName === 'INPUT' && !cur.disabled && cur.select) cur.select();
+            if (
+                cur.tagName === 'INPUT' &&
+                !cur.disabled &&
+                cur.type !== 'number' &&
+                cur.type !== 'range' &&
+                cur.select
+            )
+                try {
+                    cur.select();
+                } catch (_e) {}
             const tr = cur.closest('tr[data-widx]');
             if (tr) {
                 const wIdx = parseInt(tr.getAttribute('data-widx'), 10);

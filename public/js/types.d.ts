@@ -227,6 +227,11 @@ declare function escapeHtmlAttr(str: string): string;
 declare function escapeJsStr(str: string): string;
 declare function generateOfferNotes(onlyIfEmpty?: boolean): void;
 
+/* ===== Excel — realtime preview ===== */
+declare function _excelImmediatePreview(wIdx?: number): void;
+declare function _excelUpdateLeftPreview(wIdx: number): void;
+declare function _excelClearResCache(well: any): void;
+
 /* ===== Globalne deklaracje dla studnie/ (częściowa — patrz docelowe typowanie) ===== */
 declare var XLSX: any;
 declare var CATEGORIES_STUDNIE: Record<string, any>;

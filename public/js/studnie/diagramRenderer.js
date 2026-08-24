@@ -73,15 +73,37 @@ window.svgPrzPointerLeave = function (ev, idx) {
 /* ===== GŁÓWNA FUNKCJA RENDEROWANIA SCHEMATU ===== */
 
 function renderWellDiagram(targetSvg, targetWell) {
+    const well = targetWell || (typeof getCurrentWell === 'function' ? getCurrentWell() : null);
+
     // BEZWZGLĘDNA REGUŁA: zamień zwykłe kręgi na wiercone i na odwrót w zależności od przejść
-    if (!targetWell) {
-        if (enforceOtRings()) {
-            if (typeof renderWellConfig === 'function') renderWellConfig();
-        }
+    if (well && typeof enforceOtRings === 'function') {
+        try {
+            /* Wyczyść cache produktów PRZED enforceOtRings — inaczej stare ID
+               w cache maskują zamianę krag↔krag_ot i diagram rysuje stary typ. */
+            if (typeof _excelClearResCache === 'function') _excelClearResCache(well);
+            let _didMutate = false;
+            try {
+                _didMutate = enforceOtRings(well);
+            } catch (_e2) {}
+            if (_didMutate) {
+                /* Drugi clear PO mutacji — nowy productId (krag_ot) nie był w cache,
+                   stary cache dla krag maskowałby nowy typ w buildVisibleComponents. */
+                if (typeof _excelClearResCache === 'function') _excelClearResCache(well);
+                /* Config zmutowany (krag↔krag_ot) — odśwież listę kafelków i Excel */
+                if (typeof renderWellConfig === 'function') renderWellConfig();
+                if (
+                    typeof document !== 'undefined' &&
+                    document.getElementById('excel-table-overlay') &&
+                    typeof _excelRenderTable === 'function' &&
+                    typeof _excelActiveTab !== 'undefined'
+                ) {
+                    _excelRenderTable(_excelActiveTab);
+                }
+            }
+        } catch (_e) {}
     }
 
     const svg = targetSvg || document.getElementById('well-diagram');
-    const well = targetWell || getCurrentWell();
 
     if (!svg) return;
 

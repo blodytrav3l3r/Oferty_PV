@@ -23,8 +23,13 @@
  * Wywoływane PRZY KAŻDYM renderowaniu — dotyczy trybu auto I ręcznego.
  * NIE DO ZMIANY!
  */
-function enforceOtRings() {
-    const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+function enforceOtRings(targetWell) {
+    const well =
+        targetWell && typeof targetWell === 'object' && targetWell.config
+            ? targetWell
+            : typeof getCurrentWell === 'function'
+              ? getCurrentWell()
+              : null;
     if (!well || !well.config) return false;
 
     const rzDna = well.rzednaDna != null ? parseFloat(well.rzednaDna) : null;
@@ -160,8 +165,8 @@ function upgradeToOtRing(seg, currentProd, currentId, well) {
     const otProd = studnieProducts.find(
         (p) =>
             p.componentType === 'krag_ot' &&
-            p.dn === currentProd.dn &&
-            p.height === currentProd.height
+            String(p.dn) === String(currentProd.dn) &&
+            parseInt(p.height) === parseInt(currentProd.height)
     );
 
     let targetId = null;
@@ -199,10 +204,12 @@ function upgradeToOtRing(seg, currentProd, currentId, well) {
  * Degradacja kręgu wierconego (OT) na zwykły — gdy nie ma przejścia.
  */
 function degradeFromOtRing(seg, currentProd, currentId, well) {
-    // Najbezpieczniejsza degradacja: znajdź zwykły krąg o tym samym wymiarze
+    // Najbezpieczniejsza degradacja: znajdź zwykły krąg o tym samym wymiarze ( String/parseInt dla każdej średnicy/wysokości )
     const stdProd = studnieProducts.find(
         (p) =>
-            p.componentType === 'krag' && p.dn === currentProd.dn && p.height === currentProd.height
+            p.componentType === 'krag' &&
+            String(p.dn) === String(currentProd.dn) &&
+            parseInt(p.height) === parseInt(currentProd.height)
     );
 
     let targetId = null;
