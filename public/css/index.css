@@ -1677,7 +1677,7 @@ body.index-page ::-webkit-scrollbar-thumb:hover {
     }
 }
 
-/* Placeholder gdy brak danych (zamiast białej linii) */
+/* Pusty stan gdy brak danych (zamiast białej linii) */
 .card-note {
     background: var(--bg-tertiary);
     border: 1px solid var(--border-glass);
