@@ -464,7 +464,7 @@ window.importExportToolbar = /** @type {any} */ ({
                     window.kartotekaUI.loadLocalOffers();
                 }
             } catch (err) {
-                await appAlert('Błąd: ' + /** @type {any} */ ((err).message || String(err)), {
+                await appAlert('Błąd: ' + /** @type {any} */ (err.message || String(err)), {
                     type: 'warning',
                     title: 'Błąd importu'
                 });
