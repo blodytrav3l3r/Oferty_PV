@@ -1,5 +1,22 @@
-﻿// @ts-nocheck
-window.importExportToolbar = {
+﻿// @ts-check
+/**
+ * @typedef {object} ImportExportToolbar
+ * @property {string|null} hostId
+ * @property {(hostId:string)=>Promise<void>} init
+ * @property {(inputId:string, entityParam?:string)=>string} _entityTypeHtml
+ * @property {(inputId:string, moduleParam?:string)=>string} _moduleTypeHtml
+ * @property {(number:string, module:string)=>Promise<any>} _findOrderByNumber
+ * @property {(number:string, module:string)=>any} _findOfferByNumber
+ * @property {(number:string, module:string, resultEl:HTMLElement)=>void} _offerNotFoundHint
+ * @property {(modalId:string, titleId:string, title:string, bodyHtml:string, footerHtml:string)=>string} _ieModalHtml
+ * @property {(modalId:string, onConfirm?:()=>Promise<void>)=>void} _bindIeModal
+ * @property {()=>void} showExportXlsxDialog
+ * @property {()=>void} showExportJsonPopup
+ * @property {()=>void} showImportJsonDialog
+ * @property {()=>void} showImportXlsxDialog
+ */
+/** @type {ImportExportToolbar} */
+window.importExportToolbar = /** @type {any} */ ({
     hostId: null,
 
     async init(hostId) {
@@ -152,9 +169,11 @@ window.importExportToolbar = {
             });
         }
         if (window.lucide) lucide.createIcons({ root: overlay });
-        const numInput = overlay.querySelector('input[id^="ie-"]');
+        const numInput = /** @type {HTMLInputElement|null} */ (
+            overlay.querySelector('input[id^="ie-"]')
+        );
         if (numInput) {
-            numInput.addEventListener('keydown', (e) => {
+            numInput.addEventListener('keydown', (/** @type {KeyboardEvent} */ e) => {
                 if (e.key === 'Enter' && confirmBtn) confirmBtn.click();
             });
             setTimeout(() => numInput.focus(), 50);
@@ -445,7 +464,7 @@ window.importExportToolbar = {
                     window.kartotekaUI.loadLocalOffers();
                 }
             } catch (err) {
-                await appAlert('Błąd: ' + (err.message || String(err)), {
+                await appAlert('Błąd: ' + /** @type {any} */ ((err).message || String(err)), {
                     type: 'warning',
                     title: 'Błąd importu'
                 });
@@ -454,4 +473,4 @@ window.importExportToolbar = {
             }
         });
     }
-};
+});

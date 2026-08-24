@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 /**
  * SPA Router — Router oparty na iframe dla S.O.K.
  *
@@ -16,6 +16,7 @@
 (() => {
     // ── Stan ──
     let currentModule = null;
+    /** @type {Record<string, HTMLIFrameElement>} */
     const iframes = {};
     let transitionToken = 0;
     let transitionTimer = null;
@@ -40,8 +41,10 @@
             }
             for (const iframe of document.querySelectorAll('iframe.spa-module-iframe')) {
                 try {
+                    if (!(iframe instanceof HTMLIFrameElement)) continue;
                     const w = iframe.contentWindow;
-                    if (!w || iframes[w]) continue;
+                    // @ts-ignore — legacy check, iframe already tracked via contentWindow
+                    if (!w || /** @type {any} */ (iframes)[w]) continue;
                     if (w._excelDirty) return true;
                     if (typeof w._isWizardDirty === 'function' && w._isWizardDirty()) return true;
                 } catch {}

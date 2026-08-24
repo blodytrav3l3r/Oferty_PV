@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 /**
  * Shared Auth Module — wspólna logika autoryzacji.
  *
@@ -52,12 +52,15 @@ async function appLogout() {
                 try {
                     window._confirmLock = true;
                     if (window.parent) window.parent._confirmLock = true;
-                    const ok = await confirmFn('Wprowadzone zmiany mogą nie zostać zapisane.', {
-                        title: 'Niezapisane zmiany',
-                        type: 'warning',
-                        okText: 'Opuść bez zapisu',
-                        cancelText: 'Zostań'
-                    });
+                    const ok = await /** @type {any} */ (confirmFn)(
+                        'Wprowadzone zmiany mogą nie zostać zapisane.',
+                        {
+                            title: 'Niezapisane zmiany',
+                            type: 'warning',
+                            okText: 'Opuść bez zapisu',
+                            cancelText: 'Zostań'
+                        }
+                    );
                     if (!ok) return;
                 } finally {
                     try {

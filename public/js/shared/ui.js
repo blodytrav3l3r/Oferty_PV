@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-check
 /**
  * Shared UI Module — wspólne komponenty interfejsu.
  * Eliminuje duplikat closeModal/toggleCard/showSection z app.js i app_studnie.js.
@@ -313,6 +313,7 @@ function appConfirm(message, opts = {}) {
  * @param {object} [opts] - Opcje (title, okText, type)
  * @returns {Promise<void>}
  */
+// @ts-ignore — duplicate identifier po merge (appAlert już zadeklarowany w innym module legacy)
 function appAlert(message, opts = {}) {
     return appConfirm(message, Object.assign({}, opts, { okText: 'OK', hideCancel: true })).then(
         () => {}
@@ -584,10 +585,14 @@ document.addEventListener('focusin', (e) => {
 });
 
 /* ===== Ochrona przed utratą danych — beforeunload/pagehide (Z-30) ===== */
+// @ts-ignore — legacy global, duplikat w innym skrypcie
 let _bypassBeforeUnload = false;
+// @ts-ignore — legacy global, duplikat w innym skrypcie
 let _confirmLock = false;
+// @ts-ignore
 window._bypassBeforeUnload = false;
 try {
+    // @ts-ignore — legacy global defineProperty
     Object.defineProperty(window, '_bypassBeforeUnload', {
         get() {
             return _bypassBeforeUnload;
@@ -606,7 +611,7 @@ function _isWizardDirty() {
         const spaIframes = document.querySelectorAll('iframe.spa-module-iframe');
         for (const iframe of spaIframes) {
             try {
-                const w = iframe.contentWindow;
+                const w = /** @type {HTMLIFrameElement} */ (iframe).contentWindow;
                 if (!w) continue;
                 if (w._excelDirty) return true;
                 if (w.window && w.window._excelDirty) return true;
@@ -621,8 +626,10 @@ function _isWizardDirty() {
     return false;
 }
 window._isWizardDirty = _isWizardDirty;
+// @ts-ignore — legacy global, duplikat
 window._confirmLock = false;
 try {
+    // @ts-ignore — legacy global defineProperty
     Object.defineProperty(window, '_confirmLock', {
         get() {
             return _confirmLock;
@@ -653,8 +660,12 @@ window.addEventListener('pagehide', () => {
 /* ===== Custom popup przy opuszczeniu strony — styl projektu (modalCore) =====
    Custom appConfirm dla linków i reload; native beforeunload zostaje safety-net
    dla X / Reload z UI przeglądarki. Jedno źródło _isWizardDirty(), jeden lock. */
+// @ts-ignore — e typed as any in legacy JS
 document.addEventListener('click', async (e) => {
-    const anchor = e.target instanceof Element ? e.target.closest('a[href]') : null;
+    const _t = /** @type {any} */ (e).target;
+    const anchor = /** @type {HTMLAnchorElement|null} */ (
+        _t instanceof Element ? _t.closest('a[href]') : null
+    );
     if (!anchor) return;
     const href = anchor.getAttribute('href') || '';
     if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
@@ -678,7 +689,7 @@ document.addEventListener('click', async (e) => {
         if (!ok) return;
         _bypassBeforeUnload = true;
         window._bypassBeforeUnload = true;
-        window.location.href = anchor.href;
+        window.location.href = /** @type {HTMLAnchorElement} */ (anchor).href;
     } finally {
         _confirmLock = false;
         window._confirmLock = false;
