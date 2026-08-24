@@ -3,7 +3,7 @@
 > **Plik:** docs/instalacja-przenoszenie-systemu.md
 > **Wersja:** 1.19.4
 > **Cel:** Kompleksowa instrukcja instalacji, przenoszenia i backupu systemu
-> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.13.1) —
+> **Status:** dokument odzwierciedla **aktualny, wdrożony stan** systemu (1.19.4) —
 > sekcje instalacji/aktualizacji opisują działające mechanizmy
 > (`install.bat` z `migrate deploy` + fallback `db push` dla baz legacy), nie plany przyszłe.
 
@@ -660,5 +660,5 @@ git -c core.hooksPath=/dev/null commit -m "opis"
 ---
 
 > **Dokumentacja wygenerowana na podstawie analizy kodu źródłowego i skryptów instalacyjnych**
-> Ostatnia aktualizacja: 2026-07-21
+> Ostatnia aktualizacja: 2026-08-24
 > Projekt: https://github.com/blodytrav3l3r/Oferty_PV

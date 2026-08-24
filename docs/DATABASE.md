@@ -681,4 +681,4 @@ await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-23_
+_Ostatnia aktualizacja: 2026-08-24_

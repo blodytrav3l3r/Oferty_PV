@@ -277,3 +277,9 @@
 **Problem**: Wyjątki w pipeline ML/telemetrii były połykane po cichu: nieznana akcja dawała `reward=0`, GET studnie order ciche 404, uszkodzony JSON w ModelRegistry pomijany, kursor `resyncLabels` pomijał rekordy o równych timestampach.
 **Objaw**: Błędne metryki, brak sygnału błędu, utracone rekordy telemetrii.
 **Fix** (`1e3b0c9`, `05fc0ab`): nieznana akcja rzuca zamiast cichego reward=0; GET studnie order zwraca 500 z logiem; `loadOrdersStudnie` rzuca przy `!res.ok`; `updateLabelByTelemetry` loguje warn gdy count=0; ModelRegistry loguje uszkodzony JSON; `resyncLabels` kursor po `(createdAt, id)`; dedup `AUTO_JS` pod module lockiem (TOCTOU). Testy: studnieOrdersError, orderHelpersError, rewardDedup, restoreRoundtrip.
+
+## 45. Okno niespójności dual-write w `saveDefaults()`
+
+**Problem**: Zapis domyślnych cenników dwufazowy (plik JSON `data/price_defaults.json` → transakcja DB `*_Default`): upadek transakcji = plik nowszy niż baza (niespójność do restartu); dodatkowo `settings.upsert` (timestamp) poza transakcją.
+**Objaw**: Crash/ błąd walidacji między zapisem pliku a commitem DB — plik i baza rozjechane; timestamp poza all-or-nothing.
+**Fix** (`commit kompensacji`): `saveDefaults()` przechwytuje poprzednią treść pliku, na błąd transakcji rollback pliku (lub `rmSync` gdy brak oldContent); `settings.upsert` przeniesiony DO `$transaction` (plik+`*_Default`+timestamp all-or-nothing). Crash po zapisie pliku pokrywa startowy `restoreDefaultsFromJson()`.

@@ -2,7 +2,7 @@
 
 **Wersja:** 1.19.4
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA
-**Ostatnia aktualizacja:** 2026-08-16
+**Ostatnia aktualizacja:** 2026-08-24
 
 ---
 

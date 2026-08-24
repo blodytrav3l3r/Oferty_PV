@@ -1,7 +1,7 @@
 # Bezpieczeństwo — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.19.4  
-**Ostatnia aktualizacja:** 2026-08-16
+**Ostatnia aktualizacja:** 2026-08-24
 
 ---
 
@@ -105,12 +105,14 @@ if (process.env.NODE_ENV === 'production') {
 
 Prosty, in-memory rate limiter ogranicza liczbę żądań z jednego adresu IP.
 
-| Limiter                 | Okno   | Max prób | Endpointy                      |
-| ----------------------- | ------ | -------- | ------------------------------ |
-| LOGIN_LIMITER           | 15 min | 15       | `/api/auth/login`              |
-| API_LIMITER             | 15 min | 300      | Wszystkie `/api/*`             |
-| WRITE_LIMITER           | 15 min | 60       | Zapis danych (POST/PUT/DELETE) |
-| PRICELIST_WRITE_LIMITER | 1 godz | 30       | Aktualizacja cenników          |
+| Limiter                  | Okno   | Max prób | Endpointy                                                                              |
+| ------------------------ | ------ | -------- | -------------------------------------------------------------------------------------- |
+| LOGIN_LIMITER            | 15 min | 15       | `/api/auth/login`                                                                      |
+| API_LIMITER              | 15 min | 300      | Wszystkie `/api/*`                                                                     |
+| WRITE_LIMITER            | 15 min | 60       | Zapis danych (POST/PUT/DELETE)                                                         |
+| PRICELIST_WRITE_LIMITER  | 1 godz | 30       | Aktualizacja cenników (`/api/products*`, `/api/preco-pricing`, `/api/price-overrides`) |
+| EXPORT_LIMITER           | 15 min | 20       | Eksport PDF/DOCX (`/api/export-combined/*`, `/:id/export-*`)                           |
+| WRITE_PRODUCTION_LIMITER | 1 min  | 30       | Zlecenia produkcyjne (`DELETE /api/orders-studnie/production/:id`)                     |
 
 Rate limiter dodaje nagłówki odpowiedzi:
 

@@ -669,7 +669,7 @@ Oferty_PV/
 │   ├── plans/                 # Plany i taski (+ archive/ — 60+ archiwalnych)
 │   ├── import-export/         # Dokumentacja modułu import/eksport
 │   └── ...                    # ARCHITECTURE, DATABASE, API, SECURITY, COMPONENTS, UI_GUIDELINES
-├── scripts/                   # Skrypty narzędziowe (43 pliki)
+├── scripts/                   # Skrypty narzędziowe (46 plików)
 │   ├── backup.ts              # Backup bazy (VACUUM INTO, max 30 kopii)
 │   ├── restore-db.js          # Przywracanie bazy z backupu (header + integrity_check + WAL cleanup)
 │   ├── check-db.js            # Weryfikacja schematu przy starcie (ensure-db.bat)
@@ -686,7 +686,9 @@ Oferty_PV/
 │   ├── encoding-integrity.js  # Sprawdzanie kodowania UTF-8 + mojibake
 │   ├── skill-cli.mjs          # Skill CLI (build cost, stats, capabilities)
 │   ├── export-settings-to-seed.mjs # Eksport cenników z tabel DB do data/seed_*.json
-│   └── ...                    # deploy.mjs, rollback.mjs, benchmark.mjs, generate-licenses.mjs
+│   ├── deploy-core.cjs        # Rdzeń deploy/rollback (testowalny, kroki per target)
+│   ├── deploy.mjs / rollback.mjs / post-deploy-check.mjs # Deploy produkcyjny
+│   └── ...                    # benchmark.mjs, generate-licenses.mjs, init-env.mjs
 ├── .github/                   # CI/CD, CODE_OF_CONDUCT
 ├── .husky/                    # Git hooks (pre-push, commit-msg)
 ├── *.bat / *.sh               # Skrypty startowe (start, dev, install, build)

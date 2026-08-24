@@ -748,4 +748,4 @@ Stosowane przez `.section.active`, `.well-details-container`, `.product-catalog`
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-23_
+_Ostatnia aktualizacja: 2026-08-24_

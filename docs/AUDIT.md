@@ -1,16 +1,17 @@
 # Raport audytu projektu — S.O.K. — System Ofert i Kalkulacji
 
-> **Stan na 2026-08-23:** po audycie 2026-07-09 wdrożono kolejne fale napraw —
+> **Stan na 2026-08-24:** po audycie 2026-07-09 wdrożono kolejne fale napraw —
 > dedup telemetrii AUTO_JS + indeksy (migracja `20260805100000_telemetry_well_dedup`),
 > TrainingPipeline sliding window, auto-heal indeksów i FTS5, a następnie pełny plan
 > naprawy z audytu v1.15.1 (A-01…A-60, fazy 1–10, `docs/plans/archive/2026-08-16-plan-naprawy-audyt.md`):
 > domknięcie IDOR w ofertach/zamówieniach, ujednolicony centralny escape XSS, writeLock
 > z ownership + atomowy claim numeru rur, dedup rewardów przed unique index, walidacja
 > restore-db.js (nagłówek + integrity_check + WAL cleanup) oraz usunięcie silent fail
-> w telemetrii/ML. Od `1.16.0` do `1.19.0`: retencja modeli ML, auto-dobór zaznaczonych studni w Excel,
-> bundling JS (esbuild), migracja Excel modal przez `modalCore`, poprawki a11y/kolumny Excel.
+> w telemetrii/ML. Od `1.16.0` do `1.19.4`: retencja modeli ML, auto-dobór zaznaczonych studni w Excel,
+> bundling JS (esbuild), migracja Excel modal przez `modalCore`, poprawki a11y/kolumny Excel,
+> kompensacja dual-write `saveDefaults()` (#45) oraz pełna aktualizacja dokumentacji.
 > Poniższy raport pozostaje historycznym zapisem stanu z daty audytu,
-> zaktualizowanym o realne liczby na dzień 2026-08-23.
+> zaktualizowanym o realne liczby na dzień 2026-08-24.
 
 **Wersja projektu:** 1.19.4  
 **Data audytu:** 2026-07-09 (aktualizacja dokumentacji)  

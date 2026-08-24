@@ -1,7 +1,7 @@
 # Architektura — S.O.K. — System Ofert i Kalkulacji
 
 **Wersja:** 1.19.4  
-**Ostatnia aktualizacja:** 2026-08-23  
+**Ostatnia aktualizacja:** 2026-08-24  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline
 
 ---
@@ -484,7 +484,7 @@ Oferty_PV/
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
-├── scripts/                         # Skrypty narzędziowe (43 pliki)
+├── scripts/                         # Skrypty narzędziowe (46 plików)
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 30 kopii)
 │   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
 │   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)
@@ -504,7 +504,9 @@ Oferty_PV/
 │   ├── cleanup-legacy-settings.cjs  # Usunięcie legacy kluczy cennikowych z settings
 │   ├── prices-export.ts             # Zapis domyślnych cenników do price_defaults.json (CLI)
 │   ├── prices-import.ts             # Restore cenników z price_defaults.json (CLI, walidacja + diff)
+│   ├── deploy-core.cjs              # Rdzeń deploy (testowalny, kroki per target)
 │   ├── deploy.mjs / rollback.mjs    # Deploy/rollback produkcji (backup + migracje + smoke check)
+│   ├── post-deploy-check.mjs        # Smoke check /health po deploy
 │   ├── generate-licenses.mjs        # Generowanie THIRD-PARTY-NOTICES.md
 │   ├── benchmark.mjs                # Benchmark
 │   └── excel-validator.py           # Walidacja Excel (pre-commit, wymaga Python 3.10+)
@@ -555,4 +557,4 @@ Szczegóły: [DEPLOYMENT.md](DEPLOYMENT.md)
 
 ---
 
-_Ostatnia aktualizacja: 2026-08-23_
+_Ostatnia aktualizacja: 2026-08-24_

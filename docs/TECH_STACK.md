@@ -1,7 +1,7 @@
 # Tech Stack — stos technologiczny
 
 **Wersja:** 1.19.4  
-**Ostatnia aktualizacja:** 2026-08-23
+**Ostatnia aktualizacja:** 2026-08-24
 
 ## Licencje — podsumowanie
 
@@ -9,13 +9,15 @@
 
 | Licencja                | Liczba pakietów | Komercyjne użycie | Sprzedaż produktu |    Attribution     |
 | ----------------------- | :-------------: | :---------------: | :---------------: | :----------------: |
-| MIT                     |       910       |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| ISC                     |       98        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| Apache-2.0              |       61        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BSD-3-Clause            |       19        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
-| BSD-2-Clause            |       18        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| MIT                     |       965       |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| ISC                     |       100       |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| Apache-2.0              |       63        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BSD-3-Clause            |       20        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| BSD-2-Clause            |       20        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
 | BlueOak-1.0.0           |       16        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
 | MIT OR CC0-1.0          |       14        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
+| MPL-2.0                 |        2        |   ⚠ file-level    |      ✅ tak       |    ✅ wymagane     |
+| MIT-0                   |        1        |      ✅ tak       |      ✅ tak       |         —          |
 | Python-2.0              |        1        |      ✅ tak       |      ✅ tak       |         —          |
 | CC-BY-4.0               |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |
 | BSD                     |        1        |      ✅ tak       |      ✅ tak       |    ✅ wymagane     |

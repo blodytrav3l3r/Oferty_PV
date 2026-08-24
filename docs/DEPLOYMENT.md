@@ -2,7 +2,7 @@
 
 **Wersja:** 1.19.4  
 **Stack:** Express + Prisma + SQLite + VanillaJS SPA + ML Pipeline  
-**Ostatnia aktualizacja:** 2026-08-01
+**Ostatnia aktualizacja:** 2026-08-24
 
 > **Aktualizacje produkcyjne** (backup, migracje addytywne, rollback) opisuje [DEPLOY_UPDATE.md](DEPLOY_UPDATE.md).
 
