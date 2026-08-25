@@ -77,6 +77,10 @@ function _excelBuildSemanticMap(headerParts, dn) {
     wew.push({ norm: 'nr', col: 3 });
     wew.push({ norm: 'nazwa', col: 3 });
     wew.push({ norm: 'nr studni', col: 3 });
+    wew.push({ norm: 'nazwa studni', col: 3 });
+    wew.push({ norm: 'numer', col: 3 });
+    wew.push({ norm: 'numer studni', col: 3 });
+    wew.push({ norm: 'studnia', col: 3 });
     wew.push({ norm: 'rz wlazu', col: 4 });
     wew.push({ norm: 'rz dna', col: 5 });
     const maxTr = (typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[dn]) || 1;
@@ -93,6 +97,7 @@ function _excelBuildSemanticMap(headerParts, dn) {
         const e = norms[extIdx];
         if (!e) continue;
         let f = wew.find((x) => x.norm === e);
+        if (!f) f = wew.find((x) => e.includes(x.norm) || x.norm.includes(e));
         if (!f) {
             const mS = e.match(/srednica\s*(\d+)/);
             if (mS) f = wew.find((x) => x.col === 10 + parseInt(mS[1], 10) * 4);
