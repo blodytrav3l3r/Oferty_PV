@@ -1,4 +1,5 @@
-// @ts-nocheck
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-nocheck -- vm sandbox, celowy brak typow
 import fs from 'fs';
 import path from 'path';
 import vm from 'vm';

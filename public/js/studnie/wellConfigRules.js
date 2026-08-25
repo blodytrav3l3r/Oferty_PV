@@ -494,7 +494,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
 
                 // Znajdź OT w cenniku — bez auto-tworzenia (min H=500)
                 if (ringProd.height != null && parseInt(ringProd.height) < MIN_OT_HEIGHT) break;
-                let otProd = availProducts.find(
+                const otProd = availProducts.find(
                     (p) =>
                         (p.componentType === 'krag_ot' ||
                             String(p.id).toLowerCase().endsWith('ot') ||
