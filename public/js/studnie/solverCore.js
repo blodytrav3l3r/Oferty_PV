@@ -9,6 +9,8 @@
  * Zależności globalne: studnieProducts
  */
 
+// MIN_OT_HEIGHT z globals.js
+
 /* ===== KRĘGI WIERCONE (OT) ===== */
 
 /**
@@ -104,6 +106,14 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                     for (let q = 0; q < newItems[ki].quantity; q++) {
                         segCount++;
                         if (segCount === si) {
+                            if (
+                                kp.height != null &&
+                                parseInt(kp.height) <
+                                    (typeof MIN_OT_HEIGHT !== 'undefined' ? MIN_OT_HEIGHT : 500)
+                            ) {
+                                // Min OT H=500 — brak auto-tworzenia, plain krag zostaje + warning handled elsewhere
+                                break;
+                            }
                             const otProd = availProducts.find((p) => {
                                 const isOt =
                                     p.componentType === 'krag_ot' ||
@@ -117,40 +127,15 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
                                     (p.componentType === 'krag' || p.componentType === 'krag_ot')
                                 );
                             });
-                            if (otProd) {
-                                if (newItems[ki].quantity === 1) {
-                                    newItems[ki].productId = otProd.id;
-                                } else {
-                                    newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, {
-                                        productId: otProd.id,
-                                        quantity: 1
-                                    });
-                                }
+                            if (!otProd) break;
+                            if (newItems[ki].quantity === 1) {
+                                newItems[ki].productId = otProd.id;
                             } else {
-                                const dynamicOtId = kp.id + '_OT';
-                                if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-                                    const dynamicProd = structuredClone(kp);
-                                    dynamicProd.id = dynamicOtId;
-                                    dynamicProd.componentType = 'krag_ot';
-                                    if (!dynamicProd.name.includes(' wiercony')) {
-                                        dynamicProd.name = dynamicProd.name.replace(
-                                            'Krąg',
-                                            'Krąg wiercony'
-                                        );
-                                    }
-                                    studnieProducts.push(dynamicProd);
-                                }
-
-                                if (newItems[ki].quantity === 1) {
-                                    newItems[ki].productId = dynamicOtId;
-                                } else {
-                                    newItems[ki].quantity--;
-                                    newItems.splice(ki + 1, 0, {
-                                        productId: dynamicOtId,
-                                        quantity: 1
-                                    });
-                                }
+                                newItems[ki].quantity--;
+                                newItems.splice(ki + 1, 0, {
+                                    productId: otProd.id,
+                                    quantity: 1
+                                });
                             }
                             break;
                         }

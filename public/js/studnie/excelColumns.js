@@ -224,14 +224,14 @@ function _excelBuildComponentColumns(dn, well) {
         }
     });
 
-    /* 7. Kręgi OT — per wysokość */
-    const kragOtProducts = [...(groups['krag_ot'] || [])].sort(
-        (a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0)
-    );
+    /* 7. Kręgi OT — per wysokość (min H=500 — OT tworzy tylko użytkownik) */
+    const kragOtProducts = [...(groups['krag_ot'] || [])]
+        .filter((p) => parseInt(p.height) >= 500)
+        .sort((a, b) => (parseFloat(a.height) || 0) - (parseFloat(b.height) || 0));
     const seenOtH = new Set();
     kragOtProducts.forEach((p) => {
         const h = parseInt(p.height) || 0;
-        if (h > 0 && !seenOtH.has(h)) {
+        if (h >= 500 && !seenOtH.has(h)) {
             seenOtH.add(h);
             const matching = kragOtProducts.filter((k) => parseInt(k.height) === h);
             const lbl = _excelShortLabel(p.name || '', 'krag_ot');

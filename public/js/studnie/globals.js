@@ -9,13 +9,33 @@ let currentCennikTab = 'dn1000';
 // czytają przez window, a lista jest wymieniana w miejscu (appStudnie.js, pricelist*).
 // Getter gwarantuje aktualną referencję niezależnie od tego, kiedy odczyt następuje;
 // setter (np. externalExportTemplate) zapisuje do tej samej zmiennej.
+var MIN_OT_HEIGHT = 500;
+function _purgeOrphanOtProducts(list) {
+    if (!Array.isArray(list)) return list;
+    return list.filter((p) => {
+        if (
+            p.componentType === 'krag_ot' &&
+            parseInt(p.height) > 0 &&
+            parseInt(p.height) < MIN_OT_HEIGHT
+        )
+            return false;
+        if (
+            String(p.id || '').endsWith('_OT') &&
+            parseInt(p.height) > 0 &&
+            parseInt(p.height) < MIN_OT_HEIGHT
+        )
+            return false;
+        return true;
+    });
+}
 Object.defineProperty(window, 'studnieProducts', {
     configurable: true,
     get: () => studnieProducts,
     set: (v) => {
-        studnieProducts = v;
+        studnieProducts = _purgeOrphanOtProducts(v);
     }
 });
+window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
 
 // System wielu studni
 let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }

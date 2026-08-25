@@ -1,4 +1,5 @@
 // @ts-check
+// MIN_OT_HEIGHT z globals.js
 /* ============================
    Well Config Rules — Reguły walidacji i filtrowania studni
    ============================
@@ -243,27 +244,21 @@ window.updateConfigToMatchParams = function (well) {
                 item.productId = substitute.id;
                 anyChanged = true;
             } else if (isDrilled) {
-                // Dla dynamicznych kręgów wierconych znajdujemy zamiennik dla kręgu bazowego, a następnie dodajemy _OT
+                // Brak auto-tworzenia OT — szukaj tylko OT w cenniku (min H=500)
                 const baseId = p.id.replace('_OT', '');
                 const baseProd = studnieProducts.find((pr) => pr.id === baseId);
-                if (baseProd) {
+                const baseH = baseProd ? parseInt(baseProd.height) || 0 : parseInt(p.height) || 0;
+                if (baseH > 0 && baseH < MIN_OT_HEIGHT) {
+                    // OT <500 nie wspierane — zostaw oryginał
+                } else if (baseProd) {
                     const baseSub = availProducts.find(
                         (cand) =>
-                            cand.componentType === 'krag' &&
+                            cand.componentType === 'krag_ot' &&
                             String(cand.dn) === String(baseProd.dn) &&
-                            parseFloat(cand.height) === parseFloat(baseProd.height)
+                            parseInt(cand.height) === parseInt(baseProd.height)
                     );
                     if (baseSub) {
-                        const dynamicOtId = baseSub.id + '_OT';
-                        if (!studnieProducts.find((pr) => pr.id === dynamicOtId)) {
-                            const dynamicProd = structuredClone(baseSub);
-                            dynamicProd.id = dynamicOtId;
-                            dynamicProd.componentType = 'krag_ot';
-                            if (!dynamicProd.name.endsWith(' z otworem'))
-                                dynamicProd.name += ' z otworem';
-                            studnieProducts.push(dynamicProd);
-                        }
-                        item.productId = dynamicOtId;
+                        item.productId = baseSub.id;
                         anyChanged = true;
                     }
                 }
@@ -365,29 +360,24 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
         return substitute;
     }
 
-    // Dla kręgów wierconych (_OT) — szukaj zamiennika bazowego kręgu i dodaj _OT
+    // Dla kręgów wierconych (_OT) — szukaj zamiennika OT w cenniku (bez auto-tworzenia, min H=500)
     if (isDrilled) {
+        const curH = parseInt(p.height) || 0;
+        if (curH > 0 && curH < MIN_OT_HEIGHT) return p;
         const baseId = p.id.replace('_OT', '');
         const baseProd = studnieProducts.find((pr) => pr.id === baseId);
+        const baseH = baseProd ? parseInt(baseProd.height) || 0 : curH;
+        if (baseH > 0 && baseH < MIN_OT_HEIGHT) return p;
         if (baseProd) {
             const baseSub = availProducts.find(
                 (cand) =>
-                    cand.componentType === 'krag' &&
+                    cand.componentType === 'krag_ot' &&
                     String(cand.dn) === String(baseProd.dn) &&
-                    parseFloat(cand.height) === parseFloat(baseProd.height)
+                    parseInt(cand.height) === parseInt(baseProd.height)
             );
             if (baseSub) {
-                const dynamicOtId = baseSub.id + '_OT';
-                let dynamicProd = studnieProducts.find((pr) => pr.id === dynamicOtId);
-                if (!dynamicProd) {
-                    dynamicProd = structuredClone(baseSub);
-                    dynamicProd.id = dynamicOtId;
-                    dynamicProd.componentType = 'krag_ot';
-                    if (!dynamicProd.name.endsWith(' z otworem')) dynamicProd.name += ' z otworem';
-                    studnieProducts.push(dynamicProd);
-                }
-                if (configItem) configItem.productId = dynamicOtId;
-                return dynamicProd;
+                if (configItem) configItem.productId = baseSub.id;
+                return baseSub;
             }
         }
     }
@@ -502,7 +492,8 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
                 // Tylko kręgi mogą być zastąpione OT variantem
                 if (ringProd.componentType !== 'krag') break;
 
-                // Znajdź lub utwórz OT variant
+                // Znajdź OT w cenniku — bez auto-tworzenia (min H=500)
+                if (ringProd.height != null && parseInt(ringProd.height) < MIN_OT_HEIGHT) break;
                 let otProd = availProducts.find(
                     (p) =>
                         (p.componentType === 'krag_ot' ||
@@ -511,18 +502,7 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
                         p.dn === ringProd.dn &&
                         p.height === ringProd.height
                 );
-
-                if (!otProd) {
-                    const dynamicId = ringProd.id + '_OT';
-                    otProd = studnieProducts.find((p) => p.id === dynamicId);
-                    if (!otProd) {
-                        otProd = structuredClone(ringProd);
-                        otProd.id = dynamicId;
-                        otProd.componentType = 'krag_ot';
-                        if (!otProd.name.includes('wiercony')) otProd.name += ' wiercony';
-                        studnieProducts.push(otProd);
-                    }
-                }
+                if (!otProd) break;
 
                 // Zastąp productId w flatItems
                 fi.productId = otProd.id;

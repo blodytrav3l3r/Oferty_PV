@@ -211,7 +211,18 @@ async function addStudnieProduct() {
         newProduct.doplataDrabNierdzewna = drabNierdzewna;
 
         const n = name.toUpperCase();
-        if (n.includes('REDUKCYJNA')) newProduct.componentType = 'plyta_redukcyjna';
+        const isOtByName =
+            n.includes('WIERCONY') ||
+            n.includes('Z OTWOREM') ||
+            n.includes(' OT') ||
+            id.toUpperCase().endsWith('-OT') ||
+            id.endsWith('_OT');
+        if (isOtByName && height > 0 && height < 500) {
+            showToast('Minimalna wysokość kręgu OT to 500mm', 'error');
+            return;
+        }
+        if (isOtByName) newProduct.componentType = 'krag_ot';
+        else if (n.includes('REDUKCYJNA')) newProduct.componentType = 'plyta_redukcyjna';
         else if (n.includes('DENNICA')) newProduct.componentType = 'dennica';
         else if (n.includes('KONUS') || n.includes('STOŻEK')) newProduct.componentType = 'konus';
         else if (n.includes('PŁYTA DIN') || n.includes('NAKR'))

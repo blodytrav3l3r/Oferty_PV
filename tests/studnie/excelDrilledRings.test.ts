@@ -33,6 +33,7 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         ];
 
         (global as any).studnieProducts = studnieProducts;
+        (global as any).MIN_OT_HEIGHT = 500;
         (global as any).logger = { info: () => {}, warn: () => {}, error: () => {} };
     });
 
@@ -40,6 +41,7 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
         const context = {
             getCurrentWell: () => well,
             studnieProducts,
+            MIN_OT_HEIGHT: 500,
             logger: (global as any).logger,
             structuredClone: (obj: any) => JSON.parse(JSON.stringify(obj)),
             enforceOtRings: null
@@ -88,6 +90,7 @@ describe('enforceOtRings and excelOnCompChange ring selection', () => {
             wells,
             currentWellIndex: 0,
             studnieProducts,
+            MIN_OT_HEIGHT: 500,
             logger: (global as any).logger,
             getCurrentWell: () => well,
             isWellLocked: () => false,

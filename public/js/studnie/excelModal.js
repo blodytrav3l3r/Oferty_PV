@@ -272,6 +272,11 @@ function openExcelTableModal() {
             #excel-table-container .excel-resize-handle:hover { background:rgba(var(--accent-rgb), 0.5) !important; }
             #excel-table-container .excel-sel-wrap.disabled { opacity:.35;pointer-events:none; }
             #excel-table-container thead { position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_THEAD};background:var(--slate-950);isolation:isolate; }
+            #excel-table-container tr.excel-row-error { color:var(--danger-hover) !important; }
+            #excel-table-container tr.excel-row-warning { color:var(--warn-hover) !important; }
+            #excel-table-container tr.excel-row-error input, #excel-table-container tr.excel-row-error select, #excel-table-container tr.excel-row-error .excel-sel-wrap div { color:var(--danger-hover) !important; font-weight:var(--fw-semibold); }
+            #excel-table-container tr.excel-row-warning input, #excel-table-container tr.excel-row-warning select, #excel-table-container tr.excel-row-warning .excel-sel-wrap div { color:var(--warn-hover) !important; font-weight:var(--fw-semibold); }
+            #excel-table-container tr.excel-row-error td[data-cell^="height"], #excel-table-container tr.excel-row-error td[data-cell^="denn"], #excel-table-container tr.excel-row-error td[data-cell^="uszcz"] { color:var(--danger-hover) !important; }
         </style>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.4rem;padding:0.45rem 0.8rem;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;">
             <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
@@ -373,7 +378,7 @@ function openExcelTableModal() {
                 firstRow.style.background = baseRef;
                 firstRow.setAttribute('data-orig-bg', baseRef);
                 /* Przywróć tło sticky kolumn */
-                const stTds = firstRow.querySelectorAll('td:nth-child(-n+5)');
+                const stTds = firstRow.querySelectorAll('td:nth-child(-n+7)');
                 const stSolid = firstRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
                 stTds.forEach(function (td) {
                     td.style.background = _excelStickyCellBg(baseRef, stSolid);
@@ -475,7 +480,7 @@ function excelSelectRow(wIdx) {
                 prevRow.setAttribute('data-orig-bg', base);
             }
             /* Przywróć tło sticky kolumn do base-bg */
-            const prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+5)');
+            const prevStickyTds = prevRow.querySelectorAll('td:nth-child(-n+7)');
             const baseBg = prevRow.getAttribute('data-base-bg') || 'var(--bg-primary)';
             const prevSolid = prevRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             prevStickyTds.forEach(function (td) {
@@ -492,7 +497,7 @@ function excelSelectRow(wIdx) {
             newRow.style.background = activeBg;
             newRow.setAttribute('data-orig-bg', activeBg);
             /* Zaktualizuj tło sticky kolumn (Lp, NrStudni, RzWlazu, RzDna, Wys) */
-            const stickyTds = newRow.querySelectorAll('td:nth-child(-n+5)');
+            const stickyTds = newRow.querySelectorAll('td:nth-child(-n+7)');
             const solidBg = newRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
             stickyTds.forEach(function (td) {
                 td.style.background = _excelStickyCellBg(activeBg, solidBg);

@@ -16,12 +16,12 @@
  *   getCurrentWell, studnieProducts, logger
  */
 
+// MIN_OT_HEIGHT z globals.js (500mm)
+
 /**
- * ZASADA BEZWZGLĘDNA: Krąg z przejściem = ZAWSZE krąg wiercony.
- * Automatycznie zamienia zwykły krag na krag_ot w konfiguracji studni
- * jeśli w pozycji kręgu mieści się otwór przejścia.
- * Wywoływane PRZY KAŻDYM renderowaniu — dotyczy trybu auto I ręcznego.
- * NIE DO ZMIANY!
+ * ZASADA: Krąg z przejściem = krąg wiercony TYLKO gdy OT H>=500 i istnieje w cenniku.
+ * Produkty OT tworzy wyłącznie użytkownik w Cenniku — brak auto-tworzenia.
+ * Jeśli brak OT w katalogu, config zostaje plain + WARNING.
  */
 function enforceOtRings(targetWell) {
     const well =
@@ -159,45 +159,37 @@ function _applyProductIdToSeg(seg, targetProductId, well) {
 }
 
 /**
- * Zamienia zwykły krąg na wiercony (OT) — szuka w katalogu lub tworzy dynamiczny.
+ * Zamienia zwykły krąg na wiercony (OT) — szuka w katalogu, NIE tworzy dynamicznie.
+ * OT może utworzyć tylko użytkownik w Cenniku; min H = 500.
  */
 function upgradeToOtRing(seg, currentProd, currentId, well) {
+    const minH = typeof MIN_OT_HEIGHT !== 'undefined' ? MIN_OT_HEIGHT : 500;
+    const h = parseInt(currentProd.height) || 0;
+    if (h > 0 && h < minH) return false;
     const otProd = studnieProducts.find(
         (p) =>
             p.componentType === 'krag_ot' &&
             String(p.dn) === String(currentProd.dn) &&
             parseInt(p.height) === parseInt(currentProd.height)
     );
-
-    let targetId = null;
-    if (otProd) {
-        targetId = otProd.id;
-    } else {
-        // Dynamiczny OT
-        const dynamicOtId = currentId + '_OT';
-        if (!studnieProducts.find((p) => p.id === dynamicOtId)) {
-            const dynamicProd = structuredClone(currentProd);
-            dynamicProd.id = dynamicOtId;
-            dynamicProd.componentType = 'krag_ot';
-            if (!dynamicProd.name.includes('wiercony')) {
-                dynamicProd.name = dynamicProd.name.replace('Krąg', 'Krąg wiercony');
-            }
-            studnieProducts.push(dynamicProd);
+    if (!otProd) {
+        if (well) {
+            well.configStatus = well.configStatus === 'ERROR' ? 'ERROR' : 'WARNING';
+            const msg = `Brak kręgu wierconego DN${currentProd.dn} H=${h} w cenniku — dodaj go ręcznie w Cenniku studni`;
+            if (!well.configErrors) well.configErrors = [];
+            if (!well.configErrors.includes(msg)) well.configErrors.push(msg);
         }
-        targetId = dynamicOtId;
+        return false;
     }
-
-    if (targetId) {
-        const changed = _applyProductIdToSeg(seg, targetId, well);
-        if (changed) {
-            logger.info(
-                'wellDiagram',
-                `[enforceOT] Zamiana ${currentId} → ${targetId} (krąg wiercony)`
-            );
-        }
-        return changed;
+    const targetId = otProd.id;
+    const changed = _applyProductIdToSeg(seg, targetId, well);
+    if (changed) {
+        logger.info(
+            'wellDiagram',
+            `[enforceOT] Zamiana ${currentId} → ${targetId} (krąg wiercony)`
+        );
     }
-    return false;
+    return changed;
 }
 
 /**
