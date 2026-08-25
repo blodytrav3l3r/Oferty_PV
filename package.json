@@ -14,6 +14,7 @@
         "test": "jest --coverage",
         "test:watch": "jest --watch",
         "test:quick": "jest --no-coverage",
+        "test:quick:lite": "jest --no-coverage --testPathIgnorePatterns=tests/migrations",
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
