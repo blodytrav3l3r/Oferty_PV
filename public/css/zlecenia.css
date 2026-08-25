@@ -353,10 +353,12 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    flex-wrap: wrap;
     padding: 0.8rem 1.2rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     position: sticky;
-    bottom: 10px;
-    z-index: 50;
+    bottom: 0;
+    z-index: var(--z-sticky-dropdown);
     border: 1px solid rgba(var(--pink-rgb), 0.5);
     border-radius: var(--radius-md);
     margin-bottom: var(--section-gap);
@@ -653,6 +655,16 @@
 .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
     width: 145px;
     color-scheme: dark;
+}
+@media (max-width: 480px) {
+    .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
+        width: 120px;
+    }
+}
+@media (max-width: 375px) {
+    .zlecenia-virtual-toolbar .zlecenia-date-filter input[type='date'] {
+        width: 105px;
+    }
 }
 /* Warianty kolorystyczne ikon statystyk — bez stylów wbudowanych */
 .zlecenia-stat-icon--accent {

@@ -451,10 +451,13 @@ body.rury-page > .main:has(#section-builder.active) {
     bottom: 0;
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
-    margin: 0 -1.5rem -1.2rem -1.5rem;
+    margin: 0;
+    width: 100%;
     padding: 1.2rem 1.5rem;
+    padding-bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-header);
     box-shadow: 0 -8px 30px var(--shadow-color);
+    box-sizing: border-box;
 }
 
 .rury-summary-grid {
@@ -531,12 +534,21 @@ body.rury-page > .main:has(#section-builder.active) {
     background: var(--bg-card, var(--bg-secondary));
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 2rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     z-index: var(--z-header);
     box-shadow: 0 -8px 30px var(--shadow-color);
+    box-sizing: border-box;
 }
 
 #wizard-step-5 {
-    padding-bottom: 220px;
+    padding-bottom: calc(var(--bottom-bar-h) * 2 + 100px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 768px) {
+    #wizard-step-5 {
+        padding-bottom: calc(
+            var(--bottom-bar-h-mobile) * 2 + 100px + env(safe-area-inset-bottom, 0px)
+        );
+    }
 }
 
 /* ── Przycisk edycji rabatu ── */
@@ -691,7 +703,7 @@ body.rury-page > .main:has(#section-builder.active) {
     flex-wrap: wrap;
     margin-bottom: 0.3rem;
     position: sticky;
-    top: 92px;
+    top: calc(var(--header-h) + 44px);
     z-index: var(--z-sticky-dropdown);
     background: var(--bg-secondary);
     padding: 0.3rem 0.6rem;
@@ -783,7 +795,7 @@ body.rury-page > .main:has(#section-builder.active) {
     margin-bottom: 0.5rem;
     align-items: center;
     position: sticky;
-    top: 49px;
+    top: var(--header-h);
     z-index: var(--z-sticky-dropdown);
     background: var(--bg-secondary);
     padding: 0.3rem 0.6rem;
@@ -842,7 +854,7 @@ body.rury-page > .main:has(#section-builder.active) {
 /* ── Fixed pasek podsumowania oferty (krok 3, nad dolną nawigacją) ── */
 .rury-summary-bar {
     position: fixed;
-    bottom: 60px;
+    bottom: var(--bottom-bar-h);
     left: 0;
     right: 0;
     z-index: var(--z-header);
@@ -850,12 +862,27 @@ body.rury-page > .main:has(#section-builder.active) {
     border-top: 1px solid var(--border-glass);
     border-bottom: 1px solid transparent;
     padding: 0.8rem 1.5rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -8px 30px var(--shadow-color);
+    box-sizing: border-box;
+    flex-wrap: wrap;
+}
+@media (max-width: 768px) {
+    .rury-summary-bar {
+        bottom: var(--bottom-bar-h-mobile);
+    }
 }
 
 /* Większy padding-bottom dla kroku 3, by treść nie chowała się za fixed paskiem i nawigacją */
 .wizard-step#wizard-step-3.active {
-    padding-bottom: 220px;
+    padding-bottom: calc(var(--bottom-bar-h) * 2 + 100px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 768px) {
+    .wizard-step#wizard-step-3.active {
+        padding-bottom: calc(
+            var(--bottom-bar-h-mobile) * 2 + 100px + env(safe-area-inset-bottom, 0px)
+        );
+    }
 }
 
 /* ── Responsywność ── */
@@ -886,12 +913,15 @@ body.rury-page > .main:has(#section-builder.active) {
     }
 
     .rury-sticky-footer {
-        margin: 0 -1rem -0.8rem -1rem;
+        margin: 0;
+        width: 100%;
         padding: 1rem;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     }
 
     .rury-summary-bar {
         padding: 0.6rem 0.8rem;
+        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
     }
 
     .wizard-dot-label {
@@ -913,8 +943,10 @@ body.rury-page > .main:has(#section-builder.active) {
     }
     .wizard-nav-fixed {
         padding: 0 0.6rem;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         column-gap: 0.5rem;
-        height: 56px;
+        height: var(--bottom-bar-h-mobile);
+        min-height: var(--bottom-bar-h-mobile);
         box-sizing: border-box;
     }
     .wizard-nav-fixed .wizard-nav-left {

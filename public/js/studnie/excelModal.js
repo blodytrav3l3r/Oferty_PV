@@ -132,6 +132,78 @@ function openExcelTableModal() {
         for (let _rwo = 0; _rwo < wells.length; _rwo++) {
             _excelCleanEmptyPrzejscia(wells[_rwo]);
         }
+        // Normalizacja: uszczelki AUTO (jak w konfiguratorze) + rozbicie legacy qty>1 na N x qty1
+        for (let _rwo = 0; _rwo < wells.length; _rwo++) {
+            const _w = wells[_rwo];
+            if (!_w || !_w.config) continue;
+            // 1) Uszczelki auto
+            if (typeof recalcGaskets === 'function') {
+                try {
+                    recalcGaskets(_w);
+                } catch (_e) {}
+            }
+            // 2) Legacy expand qty>1 (np. AVR 5 jako jeden wpis) -> 5 x qty1
+            //    Singular clamp pozostaje w _excelInsertConfigItem, tu tylko stackowalne.
+            const singular = new Set([
+                'wlaz',
+                'konus',
+                'plyta_din',
+                'plyta_najazdowa',
+                'plyta_zamykajaca',
+                'pierscien_odciazajacy',
+                'plyta_redukcyjna',
+                'uszczelka'
+            ]);
+            let needs = false;
+            for (let _ci = 0; _ci < _w.config.length; _ci++) {
+                if (_w.config[_ci].quantity > 1) {
+                    const pr =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find(function (x) {
+                                  return x.id === _w.config[_ci].productId;
+                              })
+                            : null;
+                    if (pr && !singular.has(pr.componentType) && pr.componentType !== 'uszczelka') {
+                        needs = true;
+                        break;
+                    }
+                }
+            }
+            if (needs) {
+                const _exp = [];
+                for (let _ci = 0; _ci < _w.config.length; _ci++) {
+                    const it = _w.config[_ci];
+                    const pr =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find(function (x) {
+                                  return x.id === it.productId;
+                              })
+                            : null;
+                    if (
+                        pr &&
+                        !singular.has(pr.componentType) &&
+                        pr.componentType !== 'uszczelka' &&
+                        it.quantity > 1
+                    ) {
+                        for (let _k = 0; _k < it.quantity; _k++) {
+                            const isLast = _k === it.quantity - 1;
+                            _exp.push({
+                                productId: it.productId,
+                                quantity: 1,
+                                autoAdded: false,
+                                ...(pr.componentType === 'dennica' && !isLast
+                                    ? { isPsiaBuda: true }
+                                    : {})
+                            });
+                        }
+                    } else {
+                        _exp.push(it);
+                    }
+                }
+                _w.config = _exp;
+            }
+            if (typeof _excelClearResCache === 'function') _excelClearResCache(_w);
+        }
     }
 
     /* Inicjalizuj _excelMaxTransitions dla WSZYSTKICH zakładek */

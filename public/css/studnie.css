@@ -30,14 +30,15 @@ body.studnie-page > .main {
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
-    /* nadpisuje style.css padding:0.8rem 1.5rem 2rem; bottom padding dla fixed nav + summary footer */
-    padding: 0 !important;
+    /* padding boczny 0 dla full-width grid; bottom padding zachowany dla fixed bars */
+    padding: 0 0 0 0 !important;
 }
 
 /* header full-width w widoku Studnie */
 body.studnie-page .header-inner {
     max-width: 100%;
-    padding: 0.3rem 0;
+    padding: 0.3rem 1rem;
+    box-sizing: border-box;
 }
 
 /* .section.active — aktwynazakładka */
@@ -76,7 +77,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     flex: 1;
     min-height: 0;
     margin: 0;
-    padding-bottom: 60px;
+    padding-bottom: calc(var(--bottom-bar-h) + env(safe-area-inset-bottom, 0px));
     width: 100%;
     max-width: none;
     background: var(--bg-primary);
@@ -90,11 +91,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     min-width: 0;
 }
 
-/* Wizard bottom nav — position: fixed; bottom: 0 z style.css */
-.wizard-nav-fixed {
-    flex: 0 0 auto;
-    width: 100%;
-}
+/* Wizard bottom nav — SSoT w style.responsive.css: .wizard-nav-fixed (fixed bottom + safe-area) */
 
 @media (max-width: 1400px) {
     .well-app-layout {
@@ -125,7 +122,7 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     margin: 0 auto;
     height: auto;
     overflow: visible;
-    padding-bottom: 90px;
+    padding-bottom: calc(var(--bottom-bar-h) + 30px + env(safe-area-inset-bottom, 0px));
 }
 
 .well-app-layout.intro-mode .well-diagram-panel,
@@ -1780,9 +1777,14 @@ select.form-input option {
     }
     .wizard-nav-fixed {
         padding: 0 0.6rem;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         column-gap: 0.5rem;
-        height: 56px;
+        height: var(--bottom-bar-h-mobile);
+        min-height: var(--bottom-bar-h-mobile);
         box-sizing: border-box;
+    }
+    .well-app-layout {
+        padding-bottom: calc(var(--bottom-bar-h-mobile) + env(safe-area-inset-bottom, 0px));
     }
     .wizard-nav-left {
         gap: 0.4rem;
@@ -2097,17 +2099,26 @@ select.form-input option {
     padding: 0.5rem 0.8rem;
 }
 
-/* ── Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) ── */
+/* ── Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji ── */
 .offer-summary-footer-fixed {
     position: fixed;
-    bottom: 60px;
+    bottom: var(--bottom-bar-h);
     left: 0;
     right: 0;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 1.5rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     z-index: 99;
     box-shadow: 0 -8px 30px var(--shadow-color);
+    box-sizing: border-box;
+}
+@media (max-width: 768px) {
+    .offer-summary-footer-fixed {
+        bottom: var(--bottom-bar-h-mobile);
+        padding: 0.6rem 0.8rem;
+        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 /* ── Klasy kart w stopce (mirror .rury-summary-*) ── */

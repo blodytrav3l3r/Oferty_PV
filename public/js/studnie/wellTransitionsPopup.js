@@ -183,20 +183,26 @@ window.openFlowTypePopup = function (index) {
         titleId: 'flow-type-title',
         html: `
         <div class="modal modal--prz-flow">
-            <h3 class="mb-1-white-3xl" id="flow-type-title">Wybierz typ przepływu</h3>
-            <div style="display:flex; gap:1rem; justify-content:center;">
+            <div class="modal-header">
+                <h3 id="flow-type-title">Wybierz typ przepływu</h3>
+                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
+            <div style="display:flex; gap:0.8rem; justify-content:center; padding:0.4rem 0;">
                 <button id="flow-wlot-btn" class="prz-flow-btn prz-flow-btn--wlot"
                     data-action="wtSetFlow" data-index="${index}" data-flow="${FLOW_TYPES.WLOT}">
-                    <span class="fs-8xl"><i data-lucide="download"></i></span>WLOT
+                    <i data-lucide="download" aria-hidden="true"></i>WLOT
                 </button>
                 <button id="flow-wylot-btn" class="prz-flow-btn prz-flow-btn--wylot"
                     data-action="wtSetFlow" data-index="${index}" data-flow="${FLOW_TYPES.WYLOT}">
-                    <span class="fs-8xl"><i data-lucide="upload"></i></span>WYLOT
+                    <i data-lucide="upload" aria-hidden="true"></i>WYLOT
                 </button>
             </div>
-            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+            </div>
         </div>`
     });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
 };
 
 window.confirmPrzejscieFlow = function (index, flow) {
@@ -236,7 +242,10 @@ window.openChangePrzejscieTypePopup = function (index) {
         titleId: 'change-prz-type-title',
         html: `
         <div class="modal modal--prz">
-            <h3 class="mb-1-white-3xl" id="change-prz-type-title">Zmień rodzaj przejścia</h3>
+            <div class="modal-header">
+                <h3 id="change-prz-type-title">Zmień rodzaj przejścia</h3>
+                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
             <div class="prz-grid">
                 ${allTypes
                     .map((t) => {
@@ -248,9 +257,12 @@ window.openChangePrzejscieTypePopup = function (index) {
                     })
                     .join('')}
             </div>
-            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+            </div>
         </div>`
     });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
 };
 
 window.confirmChangePrzejscieType = function (index, newType) {
@@ -303,7 +315,10 @@ window.openChangePrzejscieDnPopup = function (index) {
         titleId: 'change-prz-dn-title',
         html: `
         <div class="modal modal--prz">
-            <h3 class="mb-1-white-3xl" id="change-prz-dn-title">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
+            <div class="modal-header">
+                <h3 id="change-prz-dn-title">Wybierz średnicę (DN): ${escapeHtml(currProduct.category)}</h3>
+                <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()"><i data-lucide="x" aria-hidden="true"></i></button>
+            </div>
             <div class="prz-grid">
                 ${available
                     .map((p) => {
@@ -317,9 +332,12 @@ window.openChangePrzejscieDnPopup = function (index) {
                     })
                     .join('')}
             </div>
-            <button class="mt-15-p5" onclick="closeModal()">Anuluj</button>
+            <div class="modal-footer" style="justify-content:center;">
+                <button class="btn btn-secondary" onclick="closeModal()">Anuluj</button>
+            </div>
         </div>`
     });
+    if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
 };
 
 window.confirmChangePrzejscieDn = function (index, newProductId) {

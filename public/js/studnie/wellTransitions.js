@@ -398,8 +398,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     if (!well || !well.przejscia || well.przejscia.length === 0) {
         container.innerHTML =
-            '<div class="empty-dashed">Brak zdefiniowanych przejść.<br>Dodaj przejście z formularza powyżej.</div>';
+            '<div class="empty-state"><i data-lucide="droplets"></i><h3>Brak przejść</h3><p>Dodaj przejście z formularza powyżej</p></div>';
         if (countEl) countEl.textContent = '';
+        if (window.lucide && window.lucide.createIcons)
+            window.lucide.createIcons({ root: container });
         return;
     }
 
@@ -417,8 +419,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         });
         if (!hasAny) {
             container.innerHTML =
-                '<div class="empty-dashed">Brak przejść szczelnych<br>w tym elemencie.</div>';
+                '<div class="empty-state"><i data-lucide="droplets"></i><h3>Brak przejść w tym elemencie</h3><p>Przejścia tej studni należą do innych elementów</p></div>';
             if (countEl) countEl.textContent = '(0)';
+            if (window.lucide && window.lucide.createIcons)
+                window.lucide.createIcons({ root: container });
             return;
         }
     }

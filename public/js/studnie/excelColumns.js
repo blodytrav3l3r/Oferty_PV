@@ -329,86 +329,11 @@ function _excelBuildComponentColumns(dn, well) {
         });
     }
 
-    /* ===== NOWE: Uszczelki ===== */
-    /* R.Uszczelki — dla każdego targetDn (tylko gdy redukcja aktywna) */
-    const hasRedTabU = ['1200', '1500', '2000', '2500', 'styczne'].includes(String(dn));
-    if (hasRedTabU) {
-        let anyRedU = false;
-        const tabWellsListU =
-            typeof wells !== 'undefined'
-                ? wells.filter(function (w) {
-                      return (
-                          String(w.dn) === String(dn) || (dn === 'styczne' && w.dn === 'styczna')
-                      );
-                  })
-                : [];
-        for (let riU = 0; riU < tabWellsListU.length; riU++) {
-            if (tabWellsListU[riU].redukcjaDN1000) {
-                anyRedU = true;
-                break;
-            }
-        }
-        if (anyRedU) {
-            let refWellU = null;
-            for (let rwiU = 0; rwiU < tabWellsListU.length; rwiU++) {
-                if (tabWellsListU[rwiU].redukcjaDN1000) {
-                    refWellU = tabWellsListU[rwiU];
-                    break;
-                }
-            }
-            if (!refWellU)
-                refWellU =
-                    well || (typeof wells !== 'undefined' && wells.length > 0 ? wells[0] : null);
-            const targetDnsU = [1000];
-            if ([1500, 2000, 2500].includes(parseInt(String(dn))) || dn === 'styczne') {
-                targetDnsU.push(1200);
-            }
-            targetDnsU.forEach(function (tDn) {
-                const redGroupsU = _excelGetComponentsForDn(String(tDn), refWellU);
-                let uszczProductsU = redGroupsU['uszczelka'] || [];
-                if (typeof filterSealsByWellType === 'function') {
-                    uszczProductsU = filterSealsByWellType(uszczProductsU, refWellU);
-                }
-                const dnPfxU = targetDnsU.length > 1 ? tDn + '_' : '';
-                const dnLblU = targetDnsU.length > 1 ? '(' + tDn + ') ' : '';
-                uszczProductsU.forEach(function (p) {
-                    const lbl = _excelShortLabel(p.name || '', 'uszczelka');
-                    cols.push({
-                        id: 'red_uszczelka_' + dnPfxU + p.id,
-                        key: 'red_uszczelka_' + dnPfxU + p.id,
-                        label: 'R.' + dnLblU + p.name,
-                        shortLabel: 'R.' + lbl.short,
-                        detailLabel: lbl.detail,
-                        type: 'number',
-                        componentType: 'uszczelka',
-                        productId: p.id,
-                        height: p.height,
-                        fromReduction: true,
-                        targetDn: tDn
-                    });
-                });
-            });
-        }
-    }
-    /* Main Uszczelki — per-product (jak R.Uszczelki, dla głównego DN) */
-    let mainUszczProducts = groups['uszczelka'] || [];
-    if (typeof filterSealsByWellType === 'function') {
-        mainUszczProducts = filterSealsByWellType(mainUszczProducts, well);
-    }
-    mainUszczProducts.forEach(function (p) {
-        const lbl = _excelShortLabel(p.name || '', 'uszczelka');
-        cols.push({
-            id: 'uszczelka_' + p.id,
-            key: 'uszczelka_' + p.id,
-            label: p.name,
-            shortLabel: lbl.short,
-            detailLabel: lbl.detail,
-            type: 'number',
-            componentType: 'uszczelka',
-            productId: p.id,
-            height: p.height
-        });
-    });
+    /* Uszczelki — AUTO jak w głównym konfiguratorze (recalcGaskets).
+       Nie generujemy edytowalnych kolumn uszczelka_* / red_uszczelka_* w excelu;
+       liczba uszczelek wyświetlana jest w kolumnie display "Uszczelki" (excelTableBody.js)
+       i przeliczana automatycznie przez recalcGaskets po każdej zmianie configu. */
+    void groups;
 
     /* Styczne: nadbudowa zawsze przez redukcję DN1000/DN1200 — ukryj kolumny główne (duplikaty effDn) */
     if (dn === 'styczne' || dn === 'styczna') {

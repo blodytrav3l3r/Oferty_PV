@@ -213,6 +213,12 @@ function excelOnWlazChange(wIdx, productId) {
         return !(p && p.componentType === 'wlaz');
     });
     if (productId) _excelInsertConfigItem(well, 'wlaz', productId, 1);
+    if (typeof recalcGaskets === 'function') {
+        try {
+            recalcGaskets(well);
+            _excelClearResCache(well);
+        } catch (_e) {}
+    }
     _excelMarkManual(well);
     _excelUpdateLeftPreview(wIdx);
     _excelUpdateHeaderProdCodes();
@@ -240,6 +246,14 @@ function _excelWellHasHoles(well) {
 }
 
 function excelOnCompChange(wIdx, componentType, height, value, productId, redDn) {
+    if (componentType === 'uszczelka') {
+        if (typeof showToast === 'function')
+            showToast(
+                'Uszczelki liczone automatycznie (jak w konfiguratorze) — zmień typ uszczelki w parametrach studni.',
+                'info'
+            );
+        return;
+    }
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot();
@@ -339,6 +353,14 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
         } else if (otMutated) {
             _excelMarkManual(well);
         }
+    }
+
+    // Uszczelki jak w głównym konfiguratorze — auto przeliczenie po każdej zmianie nośników
+    if (typeof recalcGaskets === 'function') {
+        try {
+            recalcGaskets(well);
+            _excelClearResCache(well);
+        } catch (_e) {}
     }
 
     const row = document.querySelector(`tr[data-widx="${wIdx}"]`);

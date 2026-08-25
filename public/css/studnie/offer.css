@@ -253,17 +253,19 @@
 #offer-summary-footer-fixed .summary-card-actions {
     padding: 0.5rem 0.8rem;
 }
-/* —— Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji (60px desktop / 56px mobile) —— */
+/* —— Pozycja fixed stopki oferty: siedzi NAD paskiem nawigacji — SSoT var(--bottom-bar-h) —— */
 .offer-summary-footer-fixed {
     position: fixed;
-    bottom: 60px;
+    bottom: var(--bottom-bar-h);
     left: 0;
     right: 0;
     background: var(--bg-secondary);
     border-top: 1px solid var(--border-glass);
     padding: 0.8rem 1.5rem;
+    padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     z-index: 99;
     box-shadow: 0 -8px 30px var(--shadow-color);
+    box-sizing: border-box;
 }
 
 /* —— Klasy kart w stopce (mirror .rury-summary-*) —— */
@@ -299,8 +301,9 @@
 
 @media (max-width: 768px) {
     .offer-summary-footer-fixed {
-        bottom: 56px;
+        bottom: var(--bottom-bar-h-mobile);
         padding: 0.8rem 1rem;
+        padding-bottom: calc(0.8rem + env(safe-area-inset-bottom, 0px));
     }
 }
 /* —— Excel table header aesthetic improvements —— */

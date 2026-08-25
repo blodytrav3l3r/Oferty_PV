@@ -140,8 +140,43 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         }
     }
     _excelSortConfig(well);
-    const expandTypes = ['krag', 'krag_ot', 'dennica'];
-    if (expandTypes.includes(componentType) && qty > 1) {
+    // Wszystkie elementy jako pojedyncze pozycje qty=1 (jak w gł. konfiguratorze).
+    // Singular types (top closure / wlaz / redukcyjna) clamp do 1, reszta expand N x qty1.
+    // Uszczelki są auto (recalcGaskets) — nie expandujemy ich z excel.
+    const singularTypes = new Set([
+        'wlaz',
+        'konus',
+        'plyta_din',
+        'plyta_najazdowa',
+        'plyta_zamykajaca',
+        'pierscien_odciazajacy',
+        'plyta_redukcyjna',
+        'uszczelka'
+    ]);
+    if (singularTypes.has(componentType) && qty > 1) {
+        // Nadpisz ostatnio wstawiony element na qty=1 (singular jak w addWellComponent)
+        for (let _i = well.config.length - 1; _i >= 0; _i--) {
+            if (well.config[_i].productId === productId && well.config[_i].quantity > 1) {
+                well.config[_i].quantity = 1;
+                break;
+            }
+        }
+        qty = 1;
+    }
+    // Expand wszystkie stackowalne z qty>1 na N x qty1 (jak kręgi dotąd). Dzięki temu
+    // 5x AVR wpisane w excelu = 5 pojedynczych pozycji w configu (jak 5 klików w konfiguratorze).
+    // Uszczelki pomijamy — są auto.
+    const needsExpand = well.config.some(function (it) {
+        if (it.quantity <= 1) return false;
+        const pr =
+            typeof studnieProducts !== 'undefined'
+                ? studnieProducts.find(function (x) {
+                      return x.id === it.productId;
+                  })
+                : null;
+        return pr && !singularTypes.has(pr.componentType) && pr.componentType !== 'uszczelka';
+    });
+    if (needsExpand) {
         const _exp = [];
         for (let _i = 0; _i < well.config.length; _i++) {
             const _pr =
@@ -150,7 +185,12 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                           return x.id === well.config[_i].productId;
                       })
                     : null;
-            if (_pr && expandTypes.includes(_pr.componentType) && well.config[_i].quantity > 1) {
+            const _shouldExpand =
+                _pr &&
+                !singularTypes.has(_pr.componentType) &&
+                _pr.componentType !== 'uszczelka' &&
+                well.config[_i].quantity > 1;
+            if (_shouldExpand) {
                 const _total = well.config[_i].quantity;
                 for (let _j = 0; _j < _total; _j++) {
                     const _isLast = _j === _total - 1;
