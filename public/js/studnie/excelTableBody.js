@@ -83,35 +83,34 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const rowActiveDupSolid = 'rgba(' + dupRgb + ', 0.3)';
         const hoverDupSolid = 'rgba(' + dupRgb + ', 0.25)';
         const hoverActiveDupSolid = 'rgba(' + dupRgb + ', 0.35)';
-        let rowBg =
-            isDup && isActive
-                ? rowActiveDupSolid
-                : isDup
-                  ? rowDupSolid
-                  : isActive
-                    ? 'rgba(var(--blue-rgb), 0.18)'
-                    : baseBg;
-        let hoverBg =
-            isDup && isActive
-                ? hoverActiveDupSolid
-                : isDup
-                  ? hoverDupSolid
-                  : isActive
-                    ? 'rgba(var(--blue-rgb), 0.28)'
-                    : 'var(--bg-tertiary)';
-        let activeBg =
-            isDup && isActive
-                ? rowActiveDupSolid
-                : isDup
-                  ? hoverDupSolid
-                  : 'rgba(var(--blue-rgb), 0.18)';
-        /* Status konfiguracji dominuje nad duplikatem/aktywnym (ERROR > WARNING) */
+        /* Kolejność: base/active → status (ERROR/WARNING) → duplikat na wierzchu */
         const wellStatus = _excelGetRowStatus(well);
+        let rowBg = isActive ? 'rgba(var(--blue-rgb), 0.18)' : baseBg;
+        let hoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--bg-tertiary)';
+        let activeBg = 'rgba(var(--blue-rgb), 0.18)';
         if (wellStatus) {
             rowBg = isActive ? wellStatus.active : wellStatus.base;
             hoverBg = wellStatus.hover;
             activeBg = wellStatus.active;
         }
+        if (isDup) {
+            rowBg = isActive ? rowActiveDupSolid : rowDupSolid;
+            hoverBg = isActive ? hoverActiveDupSolid : hoverDupSolid;
+            activeBg = isDup && isActive ? rowActiveDupSolid : hoverDupSolid;
+        }
+        const statusKey = wellStatus ? well.configStatus : null;
+        const rowTextColor =
+            statusKey === 'ERROR'
+                ? 'var(--danger-hover)'
+                : statusKey === 'WARNING'
+                  ? 'var(--warn-hover)'
+                  : '';
+        const rowClass =
+            statusKey === 'ERROR'
+                ? ' excel-row-error'
+                : statusKey === 'WARNING'
+                  ? ' excel-row-warning'
+                  : '';
         const statusTitle =
             well && well.configErrors && well.configErrors.length > 0
                 ? ' title="' +
@@ -124,9 +123,14 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const przejscia = well.przejscia || [];
         const solidBase = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
         const stickyBg = _excelStickyCellBg(rowBg, solidBase);
+        const rowStyleExtra = rowTextColor
+            ? ';color:' + rowTextColor + ';font-weight:var(--fw-semibold)'
+            : '';
         html +=
             '<tr data-widx="' +
             wIdx +
+            '" class="' +
+            rowClass.trim() +
             '" data-base-bg="' +
             rowBg +
             '" data-orig-bg="' +
@@ -139,7 +143,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             solidBase +
             '" style="background:' +
             rowBg +
-            ';transition:background 0.15s;"' +
+            rowStyleExtra +
+            ';transition:background 0.15s,color 0.15s;"' +
             statusTitle +
             (isLockedRow
                 ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
@@ -706,44 +711,52 @@ function _excelRefreshDupColors() {
         const dupColorKey = isDup && otherDns.length > 0 ? otherDns[0].dn : dnKey;
         const baseBg = isEven ? 'var(--bg-primary)' : 'var(--bg-secondary)';
 
-        const rowBg =
-            isDup && isActive
-                ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
-                : isDup
-                  ? rowDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.2)'
-                  : isActive
-                    ? 'rgba(var(--blue-rgb), 0.18)'
-                    : baseBg;
-        const hoverBg =
-            isDup && isActive
-                ? hoverActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.35)'
-                : isDup
-                  ? hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)'
-                  : isActive
-                    ? 'rgba(var(--blue-rgb), 0.28)'
-                    : 'var(--bg-tertiary)';
-        const activeBg =
-            isDup && isActive
-                ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
-                : isDup
-                  ? hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)'
-                  : 'rgba(var(--blue-rgb), 0.18)';
-        let effRowBg = rowBg;
-        let effHoverBg = hoverBg;
-        let effActiveBg = activeBg;
-        /* Status konfiguracji dominuje nad duplikatem/aktywnym (ERROR > WARNING) */
         const wellStatus = _excelGetRowStatus(well);
+        let effRowBg = isActive ? 'rgba(var(--blue-rgb), 0.18)' : baseBg;
+        let effHoverBg = isActive ? 'rgba(var(--blue-rgb), 0.28)' : 'var(--bg-tertiary)';
+        let effActiveBg = 'rgba(var(--blue-rgb), 0.18)';
         if (wellStatus) {
             effRowBg = isActive ? wellStatus.active : wellStatus.base;
             effHoverBg = wellStatus.hover;
             effActiveBg = wellStatus.active;
         }
+        if (isDup) {
+            effRowBg =
+                isDup && isActive
+                    ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
+                    : rowDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.2)';
+            effHoverBg =
+                isDup && isActive
+                    ? hoverActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.35)'
+                    : hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)';
+            effActiveBg =
+                isDup && isActive
+                    ? rowActiveDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.3)'
+                    : hoverDupSolid[dupColorKey] || 'rgba(var(--blue-rgb), 0.25)';
+        }
+        const effStatusKey = wellStatus ? well.configStatus : null;
+        const effTextColor =
+            effStatusKey === 'ERROR'
+                ? 'var(--danger-hover)'
+                : effStatusKey === 'WARNING'
+                  ? 'var(--warn-hover)'
+                  : '';
 
         row.setAttribute('data-base-bg', effRowBg);
         row.setAttribute('data-orig-bg', effRowBg);
         row.setAttribute('data-hover-bg', effHoverBg);
         row.setAttribute('data-active-bg', effActiveBg);
         row.style.background = effRowBg;
+        if (effTextColor) {
+            row.style.color = effTextColor;
+            row.classList.add(effStatusKey === 'ERROR' ? 'excel-row-error' : 'excel-row-warning');
+            row.classList.remove(
+                effStatusKey === 'ERROR' ? 'excel-row-warning' : 'excel-row-error'
+            );
+        } else {
+            row.style.color = '';
+            row.classList.remove('excel-row-error', 'excel-row-warning');
+        }
         /* Zaktualizuj tła kolumn sticky — inaczej część wiersza (Lp, nazwa,
            rzędne) ma inną barwę niż reszta (bug S4). */
         const solidBg = row.getAttribute('data-solid-bg') || 'var(--bg-primary)';
