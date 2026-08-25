@@ -540,6 +540,15 @@ body.rury-page > .main:has(#section-builder.active) {
     box-sizing: border-box;
 }
 
+#wizard-step-4 {
+    padding-bottom: calc(var(--bottom-bar-h) + 32px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 768px) {
+    #wizard-step-4 {
+        padding-bottom: calc(var(--bottom-bar-h-mobile) + 32px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 #wizard-step-5 {
     padding-bottom: calc(var(--bottom-bar-h) * 2 + 100px + env(safe-area-inset-bottom, 0px));
 }
