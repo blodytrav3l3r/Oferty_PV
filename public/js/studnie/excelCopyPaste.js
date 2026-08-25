@@ -366,6 +366,60 @@ function _excelHandlePaste(e) {
                 }
             }
         }
+        // Fallback: dane bez nagłówka ale cała tabela (np. 7/15 kol) — zbuduj mapę pseudonagłówka
+        if (!_hasHeader && lines.length > 0) {
+            const _firstParts = lines[0].split('\t');
+            if (_firstParts.length >= 7) {
+                const _firstCell = _firstParts[0].replace(/\r/g, '').trim();
+                const _isName =
+                    _firstCell &&
+                    /[a-zA-Z]/.test(_firstCell) &&
+                    isNaN(parseFloat(_firstCell.replace(',', '.')));
+                if (_isName) {
+                    const _colCount = _firstParts.length;
+                    let _N = 1;
+                    if ((_colCount - 3) % 4 === 0) _N = (_colCount - 3) / 4;
+                    else if ((_colCount - 3) % 3 === 0) _N = (_colCount - 3) / 3;
+                    else _N = Math.floor((_colCount - 3) / 4) || 1;
+                    const _pseudo = ['Nr Studni', 'Rz. Wlazu', 'Rz. Dna'];
+                    for (let _pi = 0; _pi < _N; _pi++) {
+                        if ((_colCount - 3) % 4 === 0)
+                            _pseudo.push(
+                                `Średnica ${_pi}`,
+                                `Rz.wlot ${_pi}`,
+                                `Kąt ${_pi}`,
+                                `Rodzaj ${_pi}`
+                            );
+                        else _pseudo.push(`Średnica ${_pi}`, `Rz.wlot ${_pi}`, `Kąt ${_pi}`);
+                    }
+                    if (_pseudo.length === _colCount) {
+                        _semanticMap = _excelBuildSemanticMap(_pseudo, _excelActiveTab || '1000');
+                        _hasHeader = true;
+                        const _maxNeeded2 = Math.max(
+                            ...Object.values(_semanticMap).map((c) => Math.floor((c - 7) / 4)),
+                            -1
+                        );
+                        if (_maxNeeded2 >= 0) {
+                            const _needTr2 = _maxNeeded2 + 1;
+                            const _curTr2 =
+                                (_excelMaxTransitions && _excelMaxTransitions[_excelActiveTab]) ||
+                                1;
+                            if (_needTr2 > _curTr2) {
+                                _excelMaxTransitions[_excelActiveTab] = _needTr2;
+                                if (typeof wells !== 'undefined')
+                                    wells.forEach((w) => {
+                                        if (!_excelWellMatchesTab(w, _excelActiveTab)) return;
+                                        if (!w.przejscia) w.przejscia = [];
+                                        while (w.przejscia.length < _needTr2)
+                                            w.przejscia.push(_excelCreatePrzejscie());
+                                    });
+                                _excelRenderTable(_excelActiveTab);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         if (_excelSelectedCells.length > 0) {
             const cellList = [..._excelSelectedCells].sort(function (a, b) {
                 return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
