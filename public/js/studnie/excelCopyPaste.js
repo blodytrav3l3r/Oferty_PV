@@ -236,11 +236,10 @@ function _excelHandlePaste(e) {
                 const parts = line.split('	');
                 cols.forEach(function (colIdx, ci) {
                     if (ci >= parts.length) return;
-                    if (colIdx === 3) return; /* nazwa studni — nigdy nie nadpisuj */
                     const tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
                     const target = tdInner ? tdInner.querySelector('input, select') : null;
                     if (!target) return;
-                    _excelSetCellValue(target, parts[ci].trim());
+                    _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
                 });
             });
         } else {
@@ -268,20 +267,83 @@ function _excelHandlePaste(e) {
             const colIdx = _excelGetPasteColIdx(
                 document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
             );
-            /* Wkleja tylko w istniejące — obcina nadmiar (bez auto-add nowych pustych wierszy).
-               Pomija wiersze ukryte filtrem wyszukiwarki. */
-            const visibleRows = _excelGetVisibleRows().filter(function (r) {
+            /* Pomija wiersze ukryte filtrem wyszukiwarki. */
+            let visibleRows = _excelGetVisibleRows().filter(function (r) {
                 const rWIdx = parseInt(r.getAttribute('data-widx'), 10);
                 return !isNaN(rWIdx) && rWIdx >= startWIdx;
             });
-            const availableRows = visibleRows.length;
+            let availableRows = visibleRows.length;
+            /* Jeśli wklejamy więcej wierszy niż mamy — auto-utwórz brakujące studnie (paste z zewn. Excela).
+               Dotyczy głównie paste w kolumnę nazw (colIdx 3), ale działa dla dowolnej kolumny startowej. */
             if (lines.length > availableRows) {
-                lines = lines.slice(0, availableRows);
-                if (lines.length === 0) {
-                    showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
-                    return;
+                if (colIdx === 3) {
+                    const surplus = lines.slice(availableRows);
+                    let created = 0;
+                    for (let si = 0; si < surplus.length; si++) {
+                        const parts = surplus[si].split('	');
+                        const rawName = (parts[0] || '').replace(/\r/g, '').trim();
+                        if (!rawName) continue;
+                        const dn = _excelActiveTab || '1000';
+                        let dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
+                        if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
+                        const well =
+                            typeof createNewWell === 'function'
+                                ? createNewWell(rawName, dnVal)
+                                : {
+                                      id: 'well_' + Date.now() + '_' + created + '_' + si,
+                                      name: rawName,
+                                      dn: dnVal,
+                                      config: [],
+                                      przejscia: [],
+                                      rzednaWlazu: null,
+                                      rzednaDna: null,
+                                      kineta: 'brak',
+                                      psiaBuda: false,
+                                      redukcjaDN1000: false,
+                                      redukcjaMinH: 2500
+                                  };
+                        well.name = rawName;
+                        well.numer = rawName.replace(/ (PRE|UTH)$/, '');
+                        if (typeof autoUpdateWellName === 'function') {
+                            try {
+                                autoUpdateWellName(well, wells.length);
+                            } catch (_e) {}
+                        }
+                        wells.push(well);
+                        if (typeof _excelAutoSetWlaz === 'function') {
+                            try {
+                                _excelAutoSetWlaz(well);
+                            } catch (_e) {}
+                        }
+                        created++;
+                    }
+                    if (created > 0) {
+                        if (typeof _excelGetMaxTransitions === 'function')
+                            _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+                        // Re-render by dopisać wiersze do DOM przed dalszym paste reszty kolumn
+                        if (typeof _excelRenderTable === 'function')
+                            _excelRenderTable(_excelActiveTab);
+                        // Odśwież listę widocznych po dodaniu
+                        visibleRows = _excelGetVisibleRows().filter(function (r) {
+                            const rWIdx = parseInt(r.getAttribute('data-widx'), 10);
+                            return !isNaN(rWIdx) && rWIdx >= startWIdx;
+                        });
+                        availableRows = visibleRows.length;
+                        // Jeśli wciąż nadmiar (np. puste nazwy), obetnij
+                        if (lines.length > availableRows) {
+                            lines = lines.slice(0, availableRows);
+                        }
+                    } else {
+                        lines = lines.slice(0, availableRows);
+                    }
+                } else {
+                    lines = lines.slice(0, availableRows);
+                    if (lines.length === 0) {
+                        showToast('Kliknij w istniejący wiersz — tu nie ma miejsca', 'warning');
+                        return;
+                    }
+                    showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
                 }
-                showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
             }
             /* Użyj batch/sync paste — obsłuż duże zestawy */
             _batched = lines.length > 100;
@@ -372,7 +434,7 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
                 const colIdx = startColIdx + ci;
                 const tdEl = row.children[colIdx];
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, v.trim());
+                if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
             });
         }
         _excelShowPasteProgress(idx, total);
@@ -401,7 +463,7 @@ function _excelPasteSync(lines, visibleRows, startColIdx) {
             const colIdx = startColIdx + ci;
             const tdEl = row.children[colIdx];
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            if (target) _excelSetCellValue(target, v.trim());
+            if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
         });
     }
 }
@@ -417,12 +479,31 @@ function _excelSetCellValue(target, val) {
     const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
     const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
     if (!isNaN(wIdx) && _excelIsWellLocked(wIdx)) return;
-    /* Nazwa studni (colIdx 3) — nigdy przez mutacje zbiorcze (paste/cut/delete/fill).
-       Bezpieczne, bo edycja nazwy idzie przez excelOnNameChange, nie tutaj. */
     const td = target && target.closest ? target.closest('td') : null;
     const colIdx =
         td && td.parentElement ? Array.prototype.indexOf.call(td.parentElement.children, td) : -1;
-    if (colIdx === 3) return;
+    /* Nazwa studni (colIdx 3) — przez paste/fill dozwolona (excelOnNameChange logic), blokuj tylko delete/cut (pusty val). */
+    if (colIdx === 3) {
+        const clean = String(val || '')
+            .replace(/\r/g, '')
+            .trim();
+        if (!clean) return;
+        if (isNaN(wIdx) || !wells[wIdx]) return;
+        const well = wells[wIdx];
+        well.name = clean;
+        well.numer = clean.replace(/ (PRE|UTH)$/, '');
+        if (typeof autoUpdateWellName === 'function') {
+            try {
+                autoUpdateWellName(well, wIdx);
+            } catch (_e) {}
+        }
+        if (typeof _excelMarkDirty === 'function') {
+            try {
+                _excelMarkDirty();
+            } catch (_e) {}
+        }
+        return;
+    }
     if (target.tagName === 'SELECT') {
         const _sel = /** @type {HTMLSelectElement} */ (target);
         const opt = Array.from(_sel.options).find(function (o) {
