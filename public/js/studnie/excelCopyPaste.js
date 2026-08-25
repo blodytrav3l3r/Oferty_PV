@@ -24,6 +24,197 @@ function _excelGetVisibleRows() {
     }
     return out;
 }
+
+if (typeof window !== 'undefined') {
+    window._excelPasteMismatches = [];
+}
+function _excelRecordMismatch(item) {
+    if (typeof window === 'undefined') return;
+    if (!window._excelPasteMismatches) window._excelPasteMismatches = [];
+    const key = item.wIdx + '_' + item.colIdx;
+    const existingIdx = window._excelPasteMismatches.findIndex(
+        (m) => m.wIdx + '_' + m.colIdx === key
+    );
+    if (existingIdx >= 0) window._excelPasteMismatches[existingIdx] = item;
+    else window._excelPasteMismatches.push(item);
+}
+function _excelLevenshteinDistance(a, b) {
+    const s1 = String(a).toLowerCase();
+    const s2 = String(b).toLowerCase();
+    if (s1 === s2) return 0;
+    if (s1.length === 0) return s2.length;
+    if (s2.length === 0) return s1.length;
+    const matrix = [];
+    for (let i = 0; i <= s2.length; i++) matrix[i] = [i];
+    for (let j = 0; j <= s1.length; j++) matrix[0][j] = j;
+    for (let i = 1; i <= s2.length; i++) {
+        for (let j = 1; j <= s1.length; j++) {
+            if (s2.charAt(i - 1) === s1.charAt(j - 1)) matrix[i][j] = matrix[i - 1][j - 1];
+            else
+                matrix[i][j] = Math.min(
+                    matrix[i - 1][j - 1] + 1,
+                    matrix[i][j - 1] + 1,
+                    matrix[i - 1][j] + 1
+                );
+        }
+    }
+    return matrix[s2.length][s1.length];
+}
+function _excelFindClosestCategory(val, categories) {
+    if (!categories || categories.length === 0) return '';
+    const norm = String(val).trim().toLowerCase();
+    if (!norm) return categories[0];
+    const exact = categories.find((c) => String(c).trim().toLowerCase() === norm);
+    if (exact) return exact;
+    let bestCat = '';
+    let bestScore = -1;
+    categories.forEach((c) => {
+        const cNorm = String(c).trim().toLowerCase();
+        if (cNorm.includes(norm) || norm.includes(cNorm)) {
+            const score = 100 - Math.abs(cNorm.length - norm.length);
+            if (score > bestScore) {
+                bestScore = score;
+                bestCat = c;
+            }
+        }
+    });
+    if (bestCat) return bestCat;
+    let minDist = Infinity;
+    categories.forEach((c) => {
+        const dist = _excelLevenshteinDistance(norm, String(c).trim().toLowerCase());
+        if (dist < minDist) {
+            minDist = dist;
+            bestCat = c;
+        }
+    });
+    return bestCat || categories[0];
+}
+function _excelFindClosestProduct(val, products) {
+    if (!products || products.length === 0) return null;
+    const valStr = String(val).trim();
+    const numVal = parseFloat(valStr.replace(',', '.').replace(/[^\d.]/g, ''));
+    if (!isNaN(numVal)) {
+        let bestProd = products[0];
+        let minDist = Infinity;
+        products.forEach((p) => {
+            const pDn = parseFloat(String(p.dn).replace(/[^\d.]/g, ''));
+            if (!isNaN(pDn)) {
+                const dist = Math.abs(pDn - numVal);
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestProd = p;
+                }
+            }
+        });
+        return bestProd;
+    }
+    const names = products.map((p) => p.name || p.id);
+    const closestName = _excelFindClosestCategory(valStr, names);
+    return products.find((p) => (p.name || p.id) === closestName) || products[0];
+}
+function _excelFindClosestOption(options, val) {
+    const optsArr = Array.from(options).filter(
+        (o) => o.value !== '' && o.value !== '-- wybierz --'
+    );
+    if (optsArr.length === 0) return null;
+    const valStr = String(val).trim();
+    const numVal = parseFloat(valStr.replace(',', '.').replace(/[^\d.]/g, ''));
+    if (!isNaN(numVal)) {
+        let bestOpt = optsArr[0];
+        let minDist = Infinity;
+        optsArr.forEach((o) => {
+            const oNum = parseFloat((o.text || o.value).replace(/[^\d.]/g, ''));
+            if (!isNaN(oNum)) {
+                const dist = Math.abs(oNum - numVal);
+                if (dist < minDist) {
+                    minDist = dist;
+                    bestOpt = o;
+                }
+            }
+        });
+        return bestOpt;
+    }
+    const catList = optsArr.map((o) => o.text);
+    const closestText = _excelFindClosestCategory(valStr, catList);
+    return optsArr.find((o) => o.text === closestText) || optsArr[0];
+}
+function _excelShowMismatchModal(mismatches) {
+    if (typeof window === 'undefined' || !mismatches || mismatches.length === 0) return;
+    let rowsHtml = '';
+    mismatches.forEach((m, idx) => {
+        const trIdx = Math.floor((m.colIdx - 7) / 4);
+        const subType = (m.colIdx - 7) % 4;
+        let colName = 'Przejście ' + (trIdx + 1);
+        if (subType === 2) colName += ' (Rodzaj)';
+        else if (subType === 3) colName += ' (Średnica)';
+        else if (m.colIdx === 3) colName = 'Nazwa studni';
+        let selectHtml = `<select class="excel-mismatch-select" data-m-idx="${idx}" style="padding:0.4rem 0.6rem; border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-glass); font-size:var(--fs-sm); width:100%;">`;
+        m.options.forEach((opt) => {
+            const isSel = opt.value === m.matchedVal ? 'selected' : '';
+            const safeVal =
+                typeof escapeHtmlAttr === 'function' ? escapeHtmlAttr(opt.value) : opt.value;
+            const safeText = typeof escapeHtml === 'function' ? escapeHtml(opt.text) : opt.text;
+            selectHtml += `<option value="${safeVal}" ${isSel}>${safeText}</option>`;
+        });
+        selectHtml += `</select>`;
+        const safeWellName = typeof escapeHtml === 'function' ? escapeHtml(m.wellName) : m.wellName;
+        const safeColName = typeof escapeHtml === 'function' ? escapeHtml(colName) : colName;
+        const safeOrigVal =
+            typeof escapeHtml === 'function' ? escapeHtml(m.originalVal) : m.originalVal;
+        rowsHtml += `<tr style="border-bottom:1px solid var(--border-glass);"><td style="padding:0.6rem; font-weight:var(--fw-bold);">${safeWellName}</td><td style="padding:0.6rem; color:var(--accent-text);">${safeColName}</td><td style="padding:0.6rem; color:var(--warn-hover);"><code style="background:rgba(var(--warn-rgb),0.15); padding:0.15rem 0.4rem; border-radius:4px;">${safeOrigVal}</code></td><td style="padding:0.6rem;">${selectHtml}</td></tr>`;
+    });
+    const html = `<div class="modal modal--lg" style="max-width:750px; width:92vw; background:var(--bg-secondary); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:1.5rem; color:var(--text-primary);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-glass); padding-bottom:0.8rem;"><h3 style="margin:0; font-size:var(--fs-xl); font-weight:var(--fw-bold); display:flex; align-items:center; gap:0.5rem; color:var(--text-heading);"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Weryfikacja wklejonych przejść i średnic</h3><button onclick="closeModal('excel-paste-mismatch-modal')" class="btn-icon" aria-label="Zamknij" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button></div><p style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:1rem; line-height:1.4;">Poniższe wartości z wklejonych danych nie miały dokładnego odpowiednika w systemie. Automatycznie wybrano najbardziej zbliżone opcje. Możesz je zweryfikować i zmienić przed zatwierdzeniem:</p><div style="max-height:360px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:var(--radius-sm); margin-bottom:1.2rem;"><table style="width:100%; border-collapse:collapse; font-size:var(--fs-sm); text-align:left;"><thead style="background:var(--bg-tertiary); position:sticky; top:0; z-index:2;"><tr><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Studnia</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Pole</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Wklejona wartość</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Wybierz zbliżoną opcję</th></tr></thead><tbody>${rowsHtml}</tbody></table></div><div style="display:flex; justify-content:flex-end; gap:0.8rem;"><button type="button" class="btn btn-secondary" onclick="closeModal('excel-paste-mismatch-modal')" style="padding:0.5rem 1rem;">Anuluj</button><button type="button" class="btn btn-primary" onclick="excelConfirmPasteMismatches()" style="padding:0.5rem 1.2rem; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); font-weight:var(--fw-bold); cursor:pointer;">Zatwierdź zmiany</button></div></div>`;
+    if (typeof window.showModal === 'function') {
+        window.showModal({
+            id: 'excel-paste-mismatch-modal',
+            title: 'Weryfikacja wklejonych przejść i średnic',
+            html: html
+        });
+        if (typeof lucide !== 'undefined' && lucide.createIcons)
+            lucide.createIcons({ root: document.getElementById('excel-paste-mismatch-modal') });
+    }
+}
+function excelConfirmPasteMismatches() {
+    const modal = document.getElementById('excel-paste-mismatch-modal');
+    if (!modal) return;
+    const selects = modal.querySelectorAll('.excel-mismatch-select');
+    selects.forEach((sel) => {
+        const idx = parseInt(sel.getAttribute('data-m-idx') || '-1', 10);
+        if (idx >= 0 && window._excelPasteMismatches && window._excelPasteMismatches[idx]) {
+            const m = window._excelPasteMismatches[idx];
+            const newVal = sel.value;
+            const wIdx = m.wIdx;
+            const colIdx = m.colIdx;
+            if (!isNaN(wIdx) && wells[wIdx]) {
+                const trIdx = Math.floor((colIdx - 7) / 4);
+                const subType = (colIdx - 7) % 4;
+                if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+                while (wells[wIdx].przejscia.length <= trIdx)
+                    if (typeof _excelCreatePrzejscie === 'function')
+                        wells[wIdx].przejscia.push(_excelCreatePrzejscie());
+                const prz = wells[wIdx].przejscia[trIdx];
+                if (subType === 2) prz.tempCategory = newVal;
+                else if (subType === 3) {
+                    prz.productId = newVal;
+                    const prod =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find((p) => p.id === newVal)
+                            : null;
+                    if (prod) prz.tempCategory = prod.category;
+                }
+            }
+        }
+    });
+    if (typeof closeModal === 'function') closeModal('excel-paste-mismatch-modal');
+    window._excelPasteMismatches = [];
+    if (typeof _excelMarkDirty === 'function') _excelMarkDirty();
+    if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
+    if (typeof showToast === 'function') showToast('Zatwierdzono dopasowania przejść', 'success');
+}
+if (typeof window !== 'undefined') {
+    window.excelConfirmPasteMismatches = excelConfirmPasteMismatches;
+    window._excelShowMismatchModal = _excelShowMismatchModal;
+}
 function _excelNormalizeHeader(s) {
     return String(s || '')
         .toLowerCase()
@@ -318,6 +509,7 @@ function _excelHandlePaste(e) {
        przepełnia się po 20 komórkach i Ctrl+Z nie cofa wklejenia. */
     _excelSaveUndoSnapshot();
     _excelPasteInProgress = true;
+    window._excelPasteMismatches = [];
     let _batched = false;
     const _finishPaste = function () {
         _excelPasteInProgress = false;
@@ -325,6 +517,12 @@ function _excelHandlePaste(e) {
         if (typeof _excelResetLayoutDependentState === 'function')
             _excelResetLayoutDependentState();
         _excelRenderTable(_excelActiveTab);
+        if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0) {
+            setTimeout(() => {
+                if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0)
+                    _excelShowMismatchModal(window._excelPasteMismatches);
+            }, 120);
+        }
     };
     try {
         const rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
@@ -786,7 +984,34 @@ function _excelSetCellValue(target, val) {
                 });
             }
         }
+        // Najbliższa opcja gdy brak dokładnego dopasowania — wybierz closest i pokaż popup do weryfikacji
+        let isClosest = false;
+        if (!opt) {
+            const closest = _excelFindClosestOption(_sel.options, val);
+            if (closest) {
+                opt = closest;
+                isClosest = true;
+            }
+        }
         if (opt) {
+            const isExact =
+                String(val).trim().toLowerCase() === opt.text.trim().toLowerCase() ||
+                String(val).trim() === opt.value;
+            if (isClosest || !isExact) {
+                const wellForName =
+                    !isNaN(wIdx) && wells[wIdx]
+                        ? wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '')
+                        : '';
+                _excelRecordMismatch({
+                    wIdx: wIdx,
+                    colIdx: colIdx,
+                    wellName: wellForName,
+                    originalVal: String(val),
+                    matchedVal: opt.value,
+                    matchedText: opt.text,
+                    options: Array.from(_sel.options).map((o) => ({ value: o.value, text: o.text }))
+                });
+            }
             _sel.value = opt.value;
             _sel.dispatchEvent(new Event('change', { bubbles: true }));
         } else if (!isNaN(wIdx) && wells[wIdx] && colIdx >= 7) {
@@ -801,23 +1026,84 @@ function _excelSetCellValue(target, val) {
             }
             const prz = wells[wIdx].przejscia[trIdx];
             if (subType === 2) {
-                // Rodzaj przejścia (category)
-                prz.tempCategory = String(val).trim();
+                // Rodzaj przejścia (category) — najbliższy
+                const valStr = String(val).trim();
+                let catToSet = valStr;
+                let isClosest = false;
+                if (typeof studnieProducts !== 'undefined') {
+                    const cats = [
+                        ...new Set(
+                            studnieProducts
+                                .filter((p) => p.componentType === 'przejscie')
+                                .map((p) => p.category)
+                        )
+                    ];
+                    const closest = _excelFindClosestCategory(valStr, cats);
+                    if (closest && closest.toLowerCase() !== valStr.toLowerCase()) {
+                        catToSet = closest;
+                        isClosest = true;
+                    }
+                }
+                prz.tempCategory = catToSet;
+                if (isClosest) {
+                    const catOpts =
+                        typeof studnieProducts !== 'undefined'
+                            ? [
+                                  ...new Set(
+                                      studnieProducts
+                                          .filter((p) => p.componentType === 'przejscie')
+                                          .map((p) => ({ value: p.category, text: p.category }))
+                                  )
+                              ]
+                            : [];
+                    const wellForName2 = wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
+                    _excelRecordMismatch({
+                        wIdx: wIdx,
+                        colIdx: colIdx,
+                        wellName: wellForName2,
+                        originalVal: valStr,
+                        matchedVal: catToSet,
+                        matchedText: catToSet,
+                        options: catOpts
+                    });
+                }
             } else if (subType === 3) {
-                // Średnica (productId/DN)
+                // Średnica (productId/DN) — najbliższa
                 const valStr = String(val).trim();
                 const numVal = valStr.replace(/\D/g, '');
+                let matched = null;
                 if (typeof studnieProducts !== 'undefined') {
-                    const matchProd = studnieProducts.find((p) => {
-                        if (p.componentType !== 'przejscie') return false;
-                        if (p.id === valStr || p.name === valStr) return true;
-                        if (numVal && (String(p.dn) === numVal || p.name.indexOf(numVal) >= 0))
-                            return true;
-                        return false;
-                    });
-                    if (matchProd) {
-                        prz.productId = matchProd.id;
-                        prz.tempCategory = matchProd.category;
+                    const pool = studnieProducts.filter((p) => p.componentType === 'przejscie');
+                    let exact = pool.find((p) => p.id === valStr || p.name === valStr);
+                    if (!exact && numVal)
+                        exact = pool.find(
+                            (p) => String(p.dn) === numVal || p.name.indexOf(numVal) >= 0
+                        );
+                    matched = exact || _excelFindClosestProduct(valStr, pool);
+                    if (matched) {
+                        prz.productId = matched.id;
+                        prz.tempCategory = matched.category;
+                        const isExact =
+                            matched.id === valStr ||
+                            matched.name === valStr ||
+                            String(matched.dn) === numVal;
+                        if (!isExact) {
+                            const opts = pool.map((p) => ({
+                                value: p.id,
+                                text: p.name || 'DN ' + p.dn
+                            }));
+                            const wellForName3 =
+                                wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
+                            _excelRecordMismatch({
+                                wIdx: wIdx,
+                                colIdx: colIdx,
+                                wellName: wellForName3,
+                                originalVal: valStr,
+                                matchedVal: matched.id,
+                                matchedText: matched.name || 'DN ' + matched.dn,
+                                options: opts
+                            });
+                        }
                     }
                 }
             }
