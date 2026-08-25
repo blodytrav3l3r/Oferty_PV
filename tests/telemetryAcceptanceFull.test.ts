@@ -27,7 +27,8 @@ jest.mock('../src/middleware/auth', () => ({
 
 jest.mock('../src/middleware/rateLimiters', () => ({
     WRITE_LIMITER: (_req: any, _res: any, next: any) => next(),
-    READ_LIMITER: (_req: any, _res: any, next: any) => next()
+    READ_LIMITER: (_req: any, _res: any, next: any) => next(),
+    TELEMETRY_WRITE_LIMITER: (_req: any, _res: any, next: any) => next()
 }));
 
 const mockRecordAcceptance = jest.fn<any>().mockResolvedValue(undefined);
