@@ -102,7 +102,7 @@ function classifyFlowType(item, globalIndex) {
  * @returns {string} Ciąg HTML.
  */
 function renderTransitionTileHTML(item, globalIndex, product, opts = {}) {
-    const przName = product ? product.category : 'Nieznane';
+    const przName = product ? product.category : '—';
     const dn = product ? product.dn : '—';
     const price = product ? product.price : 0;
 

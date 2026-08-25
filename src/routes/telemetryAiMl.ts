@@ -7,7 +7,7 @@ import { featureExtractor } from '../services/ml/FeatureExtractor';
 import { AcceptanceModel } from '../services/ml/AcceptanceModel';
 import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
-import { READ_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
+import { READ_LIMITER, TELEMETRY_WRITE_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
 import { logAudit } from '../services/auditService';
 import { z } from 'zod';
@@ -86,7 +86,7 @@ function normalizeFeatures(features: number[], mins: number[], maxs: number[]): 
 router.post(
     '/ai/predict/batch',
     requireAuth,
-    WRITE_LIMITER,
+    TELEMETRY_WRITE_LIMITER,
     async (req: Request, res: Response) => {
         try {
             const parsed = batchPredictSchema.safeParse(req.body);
@@ -182,7 +182,7 @@ router.post(
 router.post(
     '/ai/reward',
     requireAuth,
-    WRITE_LIMITER,
+    TELEMETRY_WRITE_LIMITER,
     async (req: AuthenticatedRequest, res: Response) => {
         try {
             const parsed = rewardSchema.safeParse(req.body);

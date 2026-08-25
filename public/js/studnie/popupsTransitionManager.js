@@ -487,7 +487,7 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
 
     const currentLabel = currentP
         ? `${escapeHtml(currentP.category)} DN${escapeHtml(currentP.dn)}`
-        : 'Nieznane';
+        : '—';
 
     popup.innerHTML = `
       <div class="tm-edit-head">

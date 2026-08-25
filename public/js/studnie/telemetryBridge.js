@@ -172,7 +172,10 @@
             })
                 .then(function (response) {
                     clearTimeout(timeoutId);
-                    if (response && typeof response.json === 'function') {
+                    if (!response) return undefined;
+                    // 429 / 5xx to pasywne — ignoruj cicho, nie spamuj konsoli
+                    if (response.status === 429 || response.status >= 500) return undefined;
+                    if (typeof response.json === 'function') {
                         return response.json().catch(function () {
                             return undefined;
                         });

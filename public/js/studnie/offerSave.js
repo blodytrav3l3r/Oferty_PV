@@ -97,6 +97,15 @@ async function saveOfferStudnie() {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
             return false;
         }
+        if (typeof validatePrzejsciaForSave === 'function') {
+            const v = validatePrzejsciaForSave(offerDoc.wells);
+            if (!v.valid) {
+                if (typeof showPrzejsciaValidationPopup === 'function')
+                    showPrzejsciaValidationPopup(v.errors);
+                else showToast(v.errors[0], 'error');
+                return false;
+            }
+        }
         const result = await storageService.saveOffer(offerDoc);
         showToast('Oferta zapisana <i data-lucide="check"></i>', 'success');
         const savedId = result.id || offerDoc.id;

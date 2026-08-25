@@ -227,6 +227,66 @@ function renderWellConfigErrors(well) {
     }
 }
 
+/* ===== WALIDACJA PRZEJŚĆ DLA ZAPISU ===== */
+function validatePrzejsciaForSave(wellsArr) {
+    const list = Array.isArray(wellsArr) ? wellsArr : typeof wells !== 'undefined' ? wells : [];
+    const errors = [];
+    list.forEach((well) => {
+        const wellName = well.name || well.numer || 'Studnia';
+        if (!well.przejscia || well.przejscia.length === 0) return;
+        well.przejscia.forEach((p, idx) => {
+            const hasRzedna = p.rzednaWlaczenia != null && String(p.rzednaWlaczenia).trim() !== '';
+            const hasAngle =
+                p.angle != null && String(p.angle).trim() !== '' && parseFloat(p.angle) !== 0;
+            const hasCategory = !!p.tempCategory && String(p.tempCategory).trim() !== '';
+            const hasProduct = !!p.productId;
+            const allEmpty = !hasCategory && !hasProduct && !hasRzedna && !hasAngle;
+            if (allEmpty) return;
+            if (hasCategory && !hasProduct) {
+                errors.push(
+                    `Studnia "${wellName}" przejście #${idx + 1}: wybrano rodzaj "${p.tempCategory}" bez średnicy — uzupełnij średnicę (DN)`
+                );
+            } else if (!hasCategory && hasProduct) {
+                errors.push(
+                    `Studnia "${wellName}" przejście #${idx + 1}: wybrano średnicę bez rodzaju — uzupełnij rodzaj`
+                );
+            } else if (!hasCategory && !hasProduct && (hasRzedna || hasAngle)) {
+                errors.push(
+                    `Studnia "${wellName}" przejście #${idx + 1}: podano rzędną/kąt bez rodzaju i średnicy — uzupełnij rodzaj i średnicę`
+                );
+            }
+        });
+    });
+    return { valid: errors.length === 0, errors };
+}
+
+/* ===== POPUP WALIDACJI PRZEJŚĆ ===== */
+function showPrzejsciaValidationPopup(errors) {
+    if (!errors || errors.length === 0) return;
+    const listHtml = errors
+        .map(
+            (e) => `<li style="margin:0.35rem 0; color:var(--text-primary);">${escapeHtml(e)}</li>`
+        )
+        .join('');
+    const html = `<div class="modal" style="max-width:560px; width:92vw; max-height:85vh; overflow-y:auto;">
+        <div class="modal-header"><h3 style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Brak danych przejścia</h3><button class="btn-icon" aria-label="Zamknij" onclick="closeModal('przejscia-validation-popup')"><i data-lucide="x"></i></button></div>
+        <div style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:0.8rem;">Uzupełnij brakujące dane przed zapisem — fizycznie musi być wybrany rodzaj i średnica:</div>
+        <ul style="margin:0 0 1rem 1.2rem; padding:0; font-size:var(--fs-sm);">${listHtml}</ul>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('przejscia-validation-popup')">Rozumiem</button></div>
+    </div>`;
+    if (typeof window.showModal === 'function') {
+        window.showModal({
+            id: 'przejscia-validation-popup',
+            title: 'Brak danych przejścia',
+            html: html
+        });
+        if (typeof lucide !== 'undefined' && lucide.createIcons)
+            lucide.createIcons({ root: document.getElementById('przejscia-validation-popup') });
+    } else if (typeof showToast === 'function') {
+        showToast(errors[0], 'error');
+    }
+}
+
 /* ===== ODŚWIEŻENIE BŁĘDÓW WSZYSTKICH STUDNI ===== */
 function refreshAllWellErrors() {
     if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
@@ -239,4 +299,6 @@ function refreshAllWellErrors() {
 /* ===== Rejestracja globali ===== */
 if (typeof window !== 'undefined') {
     window.refreshAllWellErrors = refreshAllWellErrors;
+    window.validatePrzejsciaForSave = validatePrzejsciaForSave;
+    window.showPrzejsciaValidationPopup = showPrzejsciaValidationPopup;
 }

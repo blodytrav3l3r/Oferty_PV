@@ -9,7 +9,7 @@
 
 import express from 'express';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
-import { WRITE_LIMITER } from '../middleware/rateLimiters';
+import { TELEMETRY_WRITE_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import prisma from '../prismaClient';
 import { telemetryService } from '../services/telemetry';
@@ -31,7 +31,7 @@ const router = express.Router();
  * Zapisuje pełną konfigurację studni wraz z kontekstem, historią
  * wersji i snapshota przejść szczelnych.
  */
-router.post('/ai/config', requireAuth, WRITE_LIMITER, async (req, res) => {
+router.post('/ai/config', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;
 
@@ -61,7 +61,7 @@ router.post('/ai/config', requireAuth, WRITE_LIMITER, async (req, res) => {
  * POST /api/telemetry/ai/event
  * Zapisuje pojedyncze zdarzenie telemetryczne (user_change, accept, etc.).
  */
-router.post('/ai/event', requireAuth, WRITE_LIMITER, async (req, res) => {
+router.post('/ai/event', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;
 
@@ -90,7 +90,7 @@ router.post('/ai/event', requireAuth, WRITE_LIMITER, async (req, res) => {
  * POST /api/telemetry/ai/version
  * Rejestruje nową wersję solvera/reguł/AI.
  */
-router.post('/ai/version', requireAuth, WRITE_LIMITER, async (req, res) => {
+router.post('/ai/version', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
     const parse = telemetryVersionSchema.safeParse(req.body);
     if (!parse.success) {
         return res.status(400).json({
@@ -112,7 +112,7 @@ router.post('/ai/version', requireAuth, WRITE_LIMITER, async (req, res) => {
  * POST /api/telemetry/ai/acceptance-full
  * Rozszerzony acceptance z pełnym kontekstem (oferta + akceptacja).
  */
-router.post('/ai/acceptance-full', requireAuth, WRITE_LIMITER, async (req, res) => {
+router.post('/ai/acceptance-full', requireAuth, TELEMETRY_WRITE_LIMITER, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     const userId = authReq.user?.id;
 

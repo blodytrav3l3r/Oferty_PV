@@ -23,6 +23,17 @@ export const WRITE_LIMITER = createRateLimiter({
 });
 
 /**
+ * Rate limiter dla zapisów telemetry — wyższy limit, bo paste/bulk
+ * 15 studni × 4 endpointy (config/acceptance-full/event/reward) = ~60
+ * w jednej operacji, a współdzielenie WRITE_LIMITER głodziło /offers.
+ */
+export const TELEMETRY_WRITE_LIMITER = createRateLimiter({
+    windowMs: 60 * 1000,
+    maxHits: 300,
+    message: 'Zbyt wiele zdarzeń telemetrycznych. Odczekaj chwilę.'
+});
+
+/**
  * Rate limiter dla odczytów telemetry (dashboard, historia).
  * Wyższe limity bo używany intensywnie przy pollingu.
  */

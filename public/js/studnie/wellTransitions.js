@@ -536,7 +536,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
         // Tryb edycji dla tego kafelka
         if (editPrzejscieIdx === index) {
-            const typeName = p ? p.category : 'Nieznane';
+            const typeName = p ? p.category : '—';
             const przejsciaProducts = studnieProducts.filter(
                 (pr) => pr.componentType === 'przejscie' && pr.active !== 0
             );

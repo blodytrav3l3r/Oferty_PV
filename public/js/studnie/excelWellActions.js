@@ -12,6 +12,16 @@ async function excelSaveAll() {
     }
     let shouldClose = true;
     try {
+        if (typeof validatePrzejsciaForSave === 'function') {
+            const v = validatePrzejsciaForSave(typeof wells !== 'undefined' ? wells : []);
+            if (!v.valid) {
+                if (typeof showPrzejsciaValidationPopup === 'function')
+                    showPrzejsciaValidationPopup(v.errors);
+                else showToast(v.errors[0], 'error');
+                shouldClose = false;
+                return;
+            }
+        }
         if (typeof refreshAll === 'function') refreshAll();
         if (typeof orderEditMode !== 'undefined' && orderEditMode) {
             /* Tryb edycji zamówienia — zapis przez saveCurrentOrder */

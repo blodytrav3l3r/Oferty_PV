@@ -517,11 +517,54 @@ function _excelHandlePaste(e) {
         if (typeof _excelResetLayoutDependentState === 'function')
             _excelResetLayoutDependentState();
         _excelRenderTable(_excelActiveTab);
+        if (typeof _excelMarkDirty === 'function')
+            try {
+                _excelMarkDirty();
+            } catch (_e) {}
+        if (typeof window.refreshAll === 'function') {
+            try {
+                window.refreshAll();
+            } catch (_e) {}
+        } else {
+            if (typeof window.updateSummary === 'function')
+                try {
+                    window.updateSummary();
+                } catch (_e) {}
+            if (typeof window.renderWellsList === 'function')
+                try {
+                    window.renderWellsList();
+                } catch (_e) {}
+            if (typeof window.renderWellDiagram === 'function')
+                try {
+                    window.renderWellDiagram();
+                } catch (_e) {}
+        }
         if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0) {
             setTimeout(() => {
                 if (window._excelPasteMismatches && window._excelPasteMismatches.length > 0)
                     _excelShowMismatchModal(window._excelPasteMismatches);
             }, 120);
+        }
+        if (typeof _excelAutoSelectEnabled !== 'undefined' && _excelAutoSelectEnabled) {
+            const toAuto = [];
+            for (let i = 0; i < wells.length; i++) {
+                const w = wells[i];
+                if (!w || w.autoSelect === false) continue;
+                if (_excelIsWellLocked(i)) continue;
+                if (w.rzednaWlazu == null || w.rzednaDna == null) continue;
+                if (parseFloat(w.rzednaWlazu) <= parseFloat(w.rzednaDna)) continue;
+                toAuto.push(i);
+            }
+            const recent = toAuto.slice(-5);
+            recent.forEach((wIdx, k) => {
+                setTimeout(
+                    () => {
+                        if (typeof _excelAutoSelectForWell === 'function')
+                            _excelAutoSelectForWell(wIdx).catch(() => {});
+                    },
+                    200 + k * 300
+                );
+            });
         }
     };
     try {
@@ -1015,6 +1058,8 @@ function _excelSetCellValue(target, val) {
             _sel.value = opt.value;
             _sel.dispatchEvent(new Event('change', { bubbles: true }));
         } else if (!isNaN(wIdx) && wells[wIdx] && colIdx >= 7) {
+            const valStr = String(val).trim();
+            if (!valStr) return;
             /* Fallback dla selectów wklejanych w trakcie batch/paste: jeśli opcji nie ma w obecnym stanie,
                znajdź produkt w studnieProducts i ustaw w modelu przejście. */
             const trIdx = Math.floor((colIdx - 7) / 4);
@@ -1027,7 +1072,6 @@ function _excelSetCellValue(target, val) {
             const prz = wells[wIdx].przejscia[trIdx];
             if (subType === 2) {
                 // Rodzaj przejścia (category) — najbliższy
-                const valStr = String(val).trim();
                 let catToSet = valStr;
                 let isClosest = false;
                 if (typeof studnieProducts !== 'undefined') {
