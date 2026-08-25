@@ -85,8 +85,15 @@ export default tseslint.config(
             'no-global-assign': 'off',
             semi: ['error', 'always'],
             quotes: ['error', 'single', { avoidEscape: true }],
-            'prefer-const': 'warn',
+            'prefer-const': 'error',
             'no-console': 'off'
+        }
+    },
+    {
+        files: ['tests/**/*.{js,ts}'],
+        rules: {
+            '@typescript-eslint/ban-ts-comment': 'off',
+            'prefer-const': 'off'
         }
     },
     eslintConfigPrettier
