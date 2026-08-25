@@ -24,6 +24,151 @@ function _excelGetVisibleRows() {
     }
     return out;
 }
+function _excelNormalizeHeader(s) {
+    return String(s || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+function _excelDetectHeader(firstParts) {
+    if (!firstParts || firstParts.length === 0) return false;
+    const norms = firstParts.map(_excelNormalizeHeader);
+    const kws = [
+        'stu',
+        'nr',
+        'nazwa',
+        'rz wlazu',
+        'rz dna',
+        'srednica',
+        'rz wlot',
+        'rzedna wlot',
+        'kat',
+        'rodzaj',
+        'wlaz',
+        'krag',
+        'plyta',
+        'kineta',
+        'psia buda'
+    ];
+    let hits = 0;
+    for (const n of norms) {
+        if (!n) continue;
+        for (const kw of kws)
+            if (n.includes(kw) || kw.includes(n)) {
+                hits++;
+                break;
+            }
+    }
+    if (hits >= 2) return true;
+    if (firstParts.length === 1 && hits >= 1) return true;
+    if (hits >= 1 && firstParts.length >= 3) {
+        const nonNum = norms.filter((v) => v && isNaN(parseFloat(v.replace(',', '.')))).length;
+        if (nonNum >= 2) return true;
+    }
+    return false;
+}
+function _excelBuildSemanticMap(headerParts, dn) {
+    const norms = headerParts.map(_excelNormalizeHeader);
+    const wew = [];
+    wew.push({ norm: 'stu', col: 3 });
+    wew.push({ norm: 'nr', col: 3 });
+    wew.push({ norm: 'nazwa', col: 3 });
+    wew.push({ norm: 'nr studni', col: 3 });
+    wew.push({ norm: 'rz wlazu', col: 4 });
+    wew.push({ norm: 'rz dna', col: 5 });
+    const maxTr = (typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[dn]) || 1;
+    const headerN = norms.filter((n) => n.includes('srednica')).length || maxTr;
+    const N = Math.max(maxTr, headerN, 1);
+    for (let i = 0; i < N; i++) {
+        wew.push({ norm: `rz wlot ${i}`, col: 7 + i * 4 });
+        wew.push({ norm: `kat ${i}`, col: 8 + i * 4 });
+        wew.push({ norm: `rodzaj ${i}`, col: 9 + i * 4 });
+        wew.push({ norm: `srednica ${i}`, col: 10 + i * 4 });
+    }
+    const map = {};
+    for (let extIdx = 0; extIdx < norms.length; extIdx++) {
+        const e = norms[extIdx];
+        if (!e) continue;
+        let f = wew.find((x) => x.norm === e);
+        if (!f) {
+            const mS = e.match(/srednica\s*(\d+)/);
+            if (mS) f = wew.find((x) => x.col === 10 + parseInt(mS[1], 10) * 4);
+            else {
+                const mR = e.match(/rz\s*wlot\s*(\d+)/);
+                if (mR) f = wew.find((x) => x.col === 7 + parseInt(mR[1], 10) * 4);
+                else {
+                    const mK = e.match(/kat\s*(\d+)/);
+                    if (mK) f = wew.find((x) => x.col === 8 + parseInt(mK[1], 10) * 4);
+                    else {
+                        const mRo = e.match(/rodzaj\s*(\d+)/);
+                        if (mRo) f = wew.find((x) => x.col === 9 + parseInt(mRo[1], 10) * 4);
+                    }
+                }
+            }
+        }
+        if (!f && e === 'srednica') f = wew.find((x) => x.norm === 'srednica 0');
+        if (!f && e === 'rz wlot') f = wew.find((x) => x.norm === 'rz wlot 0');
+        if (!f && e === 'kat') f = wew.find((x) => x.norm === 'kat 0');
+        if (!f && e === 'rodzaj') f = wew.find((x) => x.norm === 'rodzaj 0');
+        if (f) map[extIdx] = f.col;
+    }
+    return map;
+}
+function _excelPasteSemantic(lines, visibleRows, map) {
+    for (let si = 0; si < lines.length; si++) {
+        const parts = lines[si].split('\t');
+        const row = visibleRows[si];
+        if (!row) continue;
+        for (let ci = 0; ci < parts.length; ci++) {
+            const targetCol = map[ci];
+            if (targetCol == null) continue;
+            const tdEl = row.children[targetCol];
+            const target = tdEl ? tdEl.querySelector('input, select') : null;
+            if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+        }
+    }
+}
+function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback) {
+    const CHUNK = 50;
+    let idx = 0;
+    const total = lines.length;
+    if (total < 100) {
+        _excelPasteSemantic(lines, visibleRows, map);
+        if (doneCallback) doneCallback();
+        return;
+    }
+    _excelShowPasteProgress(0, total);
+    function tick() {
+        if (!document.getElementById('excel-table-overlay')) {
+            _excelCancelPasteBatch();
+            return;
+        }
+        const end = Math.min(idx + CHUNK, total);
+        for (; idx < end; idx++) {
+            const parts = lines[idx].split('\t');
+            const row = visibleRows[idx];
+            if (!row) continue;
+            for (let ci = 0; ci < parts.length; ci++) {
+                const targetCol = map[ci];
+                if (targetCol == null) continue;
+                const tdEl = row.children[targetCol];
+                const target = tdEl ? tdEl.querySelector('input, select') : null;
+                if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+            }
+        }
+        _excelShowPasteProgress(idx, total);
+        if (idx < total) _excelPasteRafId = requestAnimationFrame(tick);
+        else {
+            _excelPasteRafId = null;
+            _excelHidePasteProgress();
+            if (doneCallback) doneCallback();
+        }
+    }
+    _excelPasteRafId = requestAnimationFrame(tick);
+}
 function _excelHandleCopy(e) {
     /* Tylko gdy Excel otwarty */
     if (!document.getElementById('excel-table-overlay')) return;
@@ -183,6 +328,39 @@ function _excelHandlePaste(e) {
         for (let _pi = 0; _pi < lines.length; _pi++) {
             lines[_pi] = lines[_pi].replace(/\r$/, '');
         }
+        // Wklejanie z nagłówkiem (zewnętrzny Excel): wykryj i zbuduj mapę semantyczną
+        let _hasHeader = false;
+        let _semanticMap = null;
+        if (lines.length > 1) {
+            const _firstParts = lines[0].split('\t');
+            if (_excelDetectHeader(_firstParts)) {
+                _hasHeader = true;
+                _semanticMap = _excelBuildSemanticMap(_firstParts, _excelActiveTab || '1000');
+                lines = lines.slice(1);
+                // Rozszerz liczbę kolumn przejść jeśli nagłówek ma więcej niż tabela
+                const _maxNeeded = Math.max(
+                    ...Object.values(_semanticMap).map((c) => Math.floor((c - 7) / 4)),
+                    -1
+                );
+                if (_maxNeeded >= 0) {
+                    const _needTr = _maxNeeded + 1;
+                    const _curTr =
+                        (_excelMaxTransitions && _excelMaxTransitions[_excelActiveTab]) || 1;
+                    if (_needTr > _curTr) {
+                        _excelMaxTransitions[_excelActiveTab] = _needTr;
+                        // Upewnij się że wells mają przejścia dla nowych kolumn
+                        if (typeof wells !== 'undefined')
+                            wells.forEach((w) => {
+                                if (!_excelWellMatchesTab(w, _excelActiveTab)) return;
+                                if (!w.przejscia) w.przejscia = [];
+                                while (w.przejscia.length < _needTr)
+                                    w.przejscia.push(_excelCreatePrzejscie());
+                            });
+                        _excelRenderTable(_excelActiveTab);
+                    }
+                }
+            }
+        }
         if (_excelSelectedCells.length > 0) {
             const cellList = [..._excelSelectedCells].sort(function (a, b) {
                 return a.wIdx - b.wIdx || a.colIdx - b.colIdx;
@@ -232,16 +410,31 @@ function _excelHandlePaste(e) {
                 lines = lines.slice(0, visibleRows.length);
                 showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
             }
-            lines.forEach(function (line, i) {
-                const parts = line.split('	');
-                cols.forEach(function (colIdx, ci) {
-                    if (ci >= parts.length) return;
-                    const tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
-                    const target = tdInner ? tdInner.querySelector('input, select') : null;
-                    if (!target) return;
-                    _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+            if (_hasHeader && _semanticMap) {
+                lines.forEach(function (line, i) {
+                    const parts = line.split('\t');
+                    for (let ci = 0; ci < parts.length; ci++) {
+                        const targetCol = _semanticMap[ci];
+                        if (targetCol == null) continue;
+                        if (cols.indexOf(targetCol) < 0) continue;
+                        const tdInner = visibleRows[i] ? visibleRows[i].children[targetCol] : null;
+                        const target = tdInner ? tdInner.querySelector('input, select') : null;
+                        if (!target) continue;
+                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+                    }
                 });
-            });
+            } else {
+                lines.forEach(function (line, i) {
+                    const parts = line.split('	');
+                    cols.forEach(function (colIdx, ci) {
+                        if (ci >= parts.length) return;
+                        const tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
+                        const target = tdInner ? tdInner.querySelector('input, select') : null;
+                        if (!target) return;
+                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+                    });
+                });
+            }
         } else {
             /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
             let startWIdx = -1; // -1 = nie wykryto aktywnego wiersza
@@ -345,14 +538,22 @@ function _excelHandlePaste(e) {
                     showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
                 }
             }
-            /* Użyj batch/sync paste — obsłuż duże zestawy */
+            /* Użyj batch/sync paste — obsłuż duże zestawy; header-aware via semantic map */
             _batched = lines.length > 100;
-            (_batched ? _excelPasteBatch : _excelPasteSync)(
-                lines,
-                visibleRows,
-                colIdx,
-                _batched ? _finishPaste : null
-            );
+            if (_hasHeader && _semanticMap && Object.keys(_semanticMap).length > 0) {
+                if (_batched)
+                    _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
+                else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                if (!_batched) _finishPaste();
+                _batched = true; // suppress duplicate _finishPaste in finally
+            } else {
+                (_batched ? _excelPasteBatch : _excelPasteSync)(
+                    lines,
+                    visibleRows,
+                    colIdx,
+                    _batched ? _finishPaste : null
+                );
+            }
         }
     } finally {
         /* Batch (async, >100 wierszy) finalizuje flagę + re-render w doneCallback
@@ -506,9 +707,26 @@ function _excelSetCellValue(target, val) {
     }
     if (target.tagName === 'SELECT') {
         const _sel = /** @type {HTMLSelectElement} */ (target);
-        const opt = Array.from(_sel.options).find(function (o) {
+        let opt = Array.from(_sel.options).find(function (o) {
             return o.value === val || o.text === val;
         });
+        if (!opt) {
+            const normVal = String(val).trim().toLowerCase();
+            opt = Array.from(_sel.options).find(function (o) {
+                return o.text.trim().toLowerCase() === normVal;
+            });
+        }
+        if (!opt) {
+            const numVal = String(val).replace(/\D/g, '');
+            if (numVal) {
+                opt = Array.from(_sel.options).find(function (o) {
+                    return (
+                        o.text.replace(/\D/g, '') === numVal ||
+                        o.value.replace(/\D/g, '') === numVal
+                    );
+                });
+            }
+        }
         if (opt) {
             _sel.value = opt.value;
             _sel.dispatchEvent(new Event('change', { bubbles: true }));
