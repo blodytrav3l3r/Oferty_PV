@@ -12,6 +12,14 @@ function setText(el, value) {
 }
 window.setText = setText;
 
+function _restoreBodyScroll() {
+    if (window.restoreBodyScroll) {
+        window.restoreBodyScroll();
+        return;
+    }
+    if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
+}
+
 function getUserDisplayName(user) {
     if (!user) return '';
     return user.firstName && user.lastName
@@ -143,6 +151,7 @@ function showUserSelectionPopup(users, defaultUserId) {
                 }
                 untrapFocus(overlay);
                 overlay.remove();
+                _restoreBodyScroll();
                 once(selectedUser);
             });
         });
@@ -150,6 +159,7 @@ function showUserSelectionPopup(users, defaultUserId) {
         overlay.querySelector('#user-select-cancel').addEventListener('click', () => {
             untrapFocus(overlay);
             overlay.remove();
+            _restoreBodyScroll();
             once(null);
         });
     });
@@ -286,11 +296,13 @@ function appConfirm(message, opts = {}) {
             okBtn.addEventListener('click', () => {
                 untrapFocus(overlay);
                 overlay.remove();
+                _restoreBodyScroll();
                 once(true);
             });
             cancelBtn.addEventListener('click', () => {
                 untrapFocus(overlay);
                 overlay.remove();
+                _restoreBodyScroll();
                 once(false);
             });
 
@@ -298,6 +310,7 @@ function appConfirm(message, opts = {}) {
                 if (e.key === 'Enter') {
                     untrapFocus(overlay);
                     overlay.remove();
+                    _restoreBodyScroll();
                     once(true);
                 }
             });
@@ -406,6 +419,7 @@ function appPrompt(message, defaultValue = '', opts = {}) {
             const submit = () => {
                 untrapFocus(overlay);
                 overlay.remove();
+                _restoreBodyScroll();
                 once(input.value);
             };
 
@@ -413,6 +427,7 @@ function appPrompt(message, defaultValue = '', opts = {}) {
             cancelBtn.addEventListener('click', () => {
                 untrapFocus(overlay);
                 overlay.remove();
+                _restoreBodyScroll();
                 once(null);
             });
             input.addEventListener('keydown', (e) => {

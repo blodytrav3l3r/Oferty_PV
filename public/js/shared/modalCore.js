@@ -7,6 +7,12 @@
 
 import { escapeHtml } from './escapeHtml.js';
 
+export function restoreBodyScroll() {
+    if (!document.querySelector('.js-modal-overlay')) {
+        document.body.style.overflow = '';
+    }
+}
+
 /**
  * Zamyka modal (popup) po ID.
  * @param {string} [id] - ID elementu modala
@@ -17,14 +23,14 @@ export function closeModal(id) {
         if (el) {
             untrapFocus(el);
             el.style.display = 'none';
-            if (!document.querySelector('.js-modal-overlay')) document.body.style.overflow = '';
+            restoreBodyScroll();
         }
     } else {
         document.querySelectorAll('.js-modal-overlay').forEach((m) => {
             untrapFocus(m);
             m.remove();
         });
-        document.body.style.overflow = '';
+        restoreBodyScroll();
     }
 }
 
@@ -103,7 +109,7 @@ export function showModal(opts) {
             }
             untrapFocus(overlay);
             overlay.remove();
-            document.body.style.overflow = '';
+            restoreBodyScroll();
         }
     }
     overlay.addEventListener('click', onOverlayClick);
@@ -116,7 +122,7 @@ export function showModal(opts) {
             }
             untrapFocus(overlay);
             overlay.remove();
-            document.body.style.overflow = '';
+            restoreBodyScroll();
         }
     }
     overlay.addEventListener('keydown', onOverlayKeydown);
@@ -139,6 +145,7 @@ export function showModal(opts) {
 /* Bridge dla legacy — usunąć po zmigrowaniu wszystkich callerów */
 window.showModal = showModal;
 window.closeModal = closeModal;
+window.restoreBodyScroll = restoreBodyScroll;
 window.trapFocus = trapFocus;
 window.untrapFocus = untrapFocus;
 window.escapeHtml = escapeHtml;
