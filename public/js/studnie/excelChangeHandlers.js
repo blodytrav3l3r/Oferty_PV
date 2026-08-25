@@ -192,7 +192,9 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     }
     const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
     currentWellIndex = -1;
-    _excelRenderTable(_excelActiveTab);
+    if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress) {
+        _excelRenderTable(_excelActiveTab);
+    }
     /* Przywróć zaznaczenie — inaczej kody produktów w h3 zostają w fallbacku
        i aktywny wiersz traci podświetlenie (bug S7). */
     if (savedIdx >= 0) {

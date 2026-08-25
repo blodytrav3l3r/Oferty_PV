@@ -789,6 +789,38 @@ function _excelSetCellValue(target, val) {
         if (opt) {
             _sel.value = opt.value;
             _sel.dispatchEvent(new Event('change', { bubbles: true }));
+        } else if (!isNaN(wIdx) && wells[wIdx] && colIdx >= 7) {
+            /* Fallback dla selectów wklejanych w trakcie batch/paste: jeśli opcji nie ma w obecnym stanie,
+               znajdź produkt w studnieProducts i ustaw w modelu przejście. */
+            const trIdx = Math.floor((colIdx - 7) / 4);
+            const subType = (colIdx - 7) % 4; // 0: rzedna, 1: angle, 2: category, 3: productId
+            if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+            while (wells[wIdx].przejscia.length <= trIdx) {
+                if (typeof _excelCreatePrzejscie === 'function')
+                    wells[wIdx].przejscia.push(_excelCreatePrzejscie());
+            }
+            const prz = wells[wIdx].przejscia[trIdx];
+            if (subType === 2) {
+                // Rodzaj przejścia (category)
+                prz.tempCategory = String(val).trim();
+            } else if (subType === 3) {
+                // Średnica (productId/DN)
+                const valStr = String(val).trim();
+                const numVal = valStr.replace(/\D/g, '');
+                if (typeof studnieProducts !== 'undefined') {
+                    const matchProd = studnieProducts.find((p) => {
+                        if (p.componentType !== 'przejscie') return false;
+                        if (p.id === valStr || p.name === valStr) return true;
+                        if (numVal && (String(p.dn) === numVal || p.name.indexOf(numVal) >= 0))
+                            return true;
+                        return false;
+                    });
+                    if (matchProd) {
+                        prz.productId = matchProd.id;
+                        prz.tempCategory = matchProd.category;
+                    }
+                }
+            }
         }
     } else if (target.tagName === 'INPUT') {
         /* Normalizuj separator dziesietny — MS Excel z PL wysyla przecinek, input type=number wymaga kropki */

@@ -80,7 +80,7 @@ function createNewWell(name, dn = 1000) {
         doplata: 0,
         rzednaWlazu: null,
         rzednaDna: null,
-        numer: '',
+        numer: name ? String(name).replace(/ (PRE|UTH)$/, '') : '',
         autoLocked: false,
         autoSelect: true,
         zakonczenie: offerDefaultZakonczenie,
