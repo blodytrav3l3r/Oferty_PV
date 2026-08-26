@@ -106,9 +106,10 @@ function openExcelShortcutsPopup() {
         '<p style="margin:0.45rem 0 0;font-size:var(--fs-3xs);color:var(--slate-500);line-height:1.4;">Kolory liczone w <code>excelTableBody.js:_excelRenderTbody</code> i odświeżane bez re-renderu w <code>_excelRefreshDupColors</code>; statusy z <code>solverValidation.js:recalculateWellErrors()</code> przez polling. Priorytet tła: <b>duplikat &gt; ERROR (0.12) &gt; WARNING (0.1) &gt; aktywny (0.18) &gt; naprzemienny</b>.</p>' +
         '</div>';
     const html =
-        '<div class="modal" style="max-width:min(96vw,580px);max-height:80vh;overflow:auto;">' +
+        '<div class="modal modal--excel-shortcuts">' +
         '<div class="modal-header"><h3>Skróty klawiszowe Excel</h3>' +
-        '<button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
+        '<button type="button" onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>' +
+        '<div class="excel-shortcuts-body">' +
         '<table style="width:100%;border-collapse:collapse;font-size: var(--fs-base);">' +
         '<thead><tr><th scope="col" class="th-l-pad25-bb">Skrót</th>' +
         '<th scope="col" class="th-l-pad25-bb">Opis</th></tr></thead>' +
@@ -117,7 +118,7 @@ function openExcelShortcutsPopup() {
         '</tbody></table>' +
         legend +
         '<p style="margin:0;padding:0.5rem;font-size: var(--fs-xs);color:var(--slate-500);">Skróty działają, gdy fokus znajduje się w tabeli konfiguracyjnej. Escape najpierw anuluje edycję komórki lub zaznaczenie, a dopiero ponownie zamyka tabelę.</p>' +
-        '</div>';
+        '</div></div>';
 
     const overlay = window.showModal({
         id: 'excel-shortcuts-modal',

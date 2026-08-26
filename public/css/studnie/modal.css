@@ -417,6 +417,82 @@
 
 /* ===== GLOBAL RECALC (popupsGlobalRecalc.js) ===== */
 
+/* ===== WYBÓR KOLUMN EXCEL (excelColumnVisibility.js) ===== */
+.modal--excel-col-vis {
+    width: min(96vw, 1400px);
+    max-width: 96vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    box-sizing: border-box;
+}
+
+.modal--excel-col-vis .modal-header {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-glass);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal--excel-col-vis .excel-col-vis-body {
+    padding: 1rem 1.25rem;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent;
+}
+
+.modal--excel-col-vis .modal-footer {
+    padding: 0.85rem 1.25rem;
+    border-top: 1px solid var(--border-glass);
+    background: var(--bg-glass);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-top: 0;
+}
+
+/* ===== SKRÓTY KLAWISZOWE EXCEL (excelShortcuts.js) ===== */
+.modal--excel-shortcuts {
+    width: min(90vw, 680px);
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    box-sizing: border-box;
+}
+
+.modal--excel-shortcuts .modal-header {
+    padding: 1rem 1.25rem;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-glass);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal--excel-shortcuts .excel-shortcuts-body {
+    padding: 1rem 1.25rem;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(var(--accent-rgb), 0.5) transparent;
+}
+
 .recalc-modal {
     width: min(980px, 96vw);
     max-width: 96vw;

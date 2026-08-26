@@ -114,7 +114,7 @@
         },
         studnie: {
             src: 'studnie.html',
-            logo: 'Kalkulator Studni',
+            logo: 'Oferty studnie',
             sections: [
                 {
                     id: 'builder',

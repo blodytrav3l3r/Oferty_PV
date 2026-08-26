@@ -204,7 +204,7 @@ async function startServer() {
             return { logoAlt, text: textVal };
         });
         check('T3 SPA logo', t3.logoAlt === APP_NAME, `alt="${t3.logoAlt}"`);
-        check('T3 module name', t3.text === 'Kalkulator Studni', `#spa-logo-text="${t3.text}"`);
+        check('T3 module name', t3.text === 'Oferty studnie', `#spa-logo-text="${t3.text}"`);
         check('T3 no WITROS', !/WITROS/i.test(t3.text), `text="${t3.text}"`);
 
         // T5 — REGRESJA #92: document.title po wejściu/wyjściu trybu edycji zamówienia

@@ -266,15 +266,13 @@ function _excelToggleColumnPopup() {
 
     const gridHtml = _excelBuildColumnGridHtml(gridCols, allCts, groupLabels);
     let html = '';
+    html += '<div class="modal modal--excel-col-vis">';
     html +=
-        '<div class="modal" style="max-width:min(96vw,1400px);max-height:90vh;overflow:auto;width:auto;">';
+        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button type="button" onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
+    html += '<div class="excel-col-vis-body">' + gridHtml + '</div>';
+    html += '<div class="modal-footer">';
     html +=
-        '<div class="modal-header"><h3>Wybór kolumn Excel</h3><button onclick="this.closest(\'.modal-overlay\').remove()" class="btn-icon" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>';
-    html += gridHtml;
-    html +=
-        '<div style="padding-top:0.5rem;margin-top:0.5rem;border-top:1px solid rgba(var(--white-rgb), 0.1);">';
-    html +=
-        '<button type="button" onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" class="excel-reset-btn">Przywróć domyślne</button>';
+        '<button type="button" onclick="let o=this.closest(\'.modal-overlay\');_excelResetColumnVisibility();if(o)o.remove()" class="btn btn-secondary excel-reset-btn">Przywróć domyślne</button>';
     html += '</div></div>';
 
     const overlay = window.showModal({

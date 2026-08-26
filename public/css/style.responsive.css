@@ -321,6 +321,7 @@
 .kartoteka-filter-bar > div[style*='flex'] > div {
     gap: 0.35rem !important;
 }
+.kartoteka-filter-bar .ka-label,
 .kartoteka-filter-bar .toolbar-label {
     color: var(--text-muted);
     font-size: var(--fs-sm);

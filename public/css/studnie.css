@@ -122,7 +122,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     margin: 0 auto;
     height: auto;
     overflow: visible;
-    padding-bottom: calc(var(--bottom-bar-h) + 30px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(var(--bottom-bar-h) + 80px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 768px) {
+    .well-app-layout.intro-mode {
+        padding-bottom: calc(var(--bottom-bar-h-mobile) + 80px + env(safe-area-inset-bottom, 0px));
+    }
 }
 
 .well-app-layout.intro-mode .well-diagram-panel,
@@ -244,10 +249,18 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     scrollbar-width: thin;
 }
 
+#wizard-step-1,
+#wizard-step-2 {
+    padding-bottom: calc(var(--bottom-bar-h) + 80px + env(safe-area-inset-bottom, 0px));
+}
 #wizard-step-4 {
     padding-bottom: calc(var(--bottom-bar-h) + 32px + env(safe-area-inset-bottom, 0px));
 }
 @media (max-width: 768px) {
+    #wizard-step-1,
+    #wizard-step-2 {
+        padding-bottom: calc(var(--bottom-bar-h-mobile) + 80px + env(safe-area-inset-bottom, 0px));
+    }
     #wizard-step-4 {
         padding-bottom: calc(var(--bottom-bar-h-mobile) + 32px + env(safe-area-inset-bottom, 0px));
     }

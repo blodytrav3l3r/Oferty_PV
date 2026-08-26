@@ -154,7 +154,7 @@
 
                             <!-- Date Filter -->
                             <div class="ka-filter-group">
-                                <span class="toolbar-label">Data:</span>
+                                <span class="ka-label">Data:</span>
                                 <button
                                     type="button"
                                     class="btn btn-sm btn-secondary ka-date-preset-btn"
@@ -176,7 +176,6 @@
                                 >
                                     Ten miesiąc
                                 </button>
-                                <span class="toolbar-label">Data od</span>
                                 <input
                                     type="date"
                                     id="ka-date-from"
@@ -185,7 +184,6 @@
                                     aria-label="Data od"
                                 />
                                 <span class="kartoteka-date-sep" aria-hidden="true">&ndash;</span>
-                                <span class="toolbar-label">Data do</span>
                                 <input
                                     type="date"
                                     id="ka-date-to"
@@ -249,7 +247,7 @@
                                     type="text"
                                     id="ka-local-search-input"
                                     class="form-input form-input-sm ka-search-input"
-                                    placeholder="Szukaj po numerze oferty, kliencie, NIP, numerze zamówienia..."
+                                    placeholder="Szukaj po numerze oferty/zamówienia, kliencie, NIP, opiekunie, inwestycji, uwagach..."
                                     oninput="
                                         window.kartotekaUI &&
                                             window.kartotekaUI.onSearchInput &&

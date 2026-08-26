@@ -548,6 +548,17 @@ body.rury-page > .main:has(#section-builder.active) {
     box-sizing: border-box;
 }
 
+#wizard-step-1,
+#wizard-step-2 {
+    padding-bottom: calc(var(--bottom-bar-h) + 80px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-width: 768px) {
+    #wizard-step-1,
+    #wizard-step-2 {
+        padding-bottom: calc(var(--bottom-bar-h-mobile) + 80px + env(safe-area-inset-bottom, 0px));
+    }
+}
+
 #wizard-step-4 {
     padding-bottom: calc(var(--bottom-bar-h) + 32px + env(safe-area-inset-bottom, 0px));
 }
@@ -859,7 +870,7 @@ body.rury-page > .main:has(#section-builder.active) {
 
 /* ── Rury-specific wizard overrides ── */
 .rury-app-layout .wizard-step.active {
-    padding-bottom: 4rem;
+    padding-bottom: calc(var(--bottom-bar-h) + 80px + env(safe-area-inset-bottom, 0px));
 }
 
 /* W sekcji pricelist wyłączamy animację fadeIn i wymuszamy opacity: 1 */

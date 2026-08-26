@@ -71,11 +71,53 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
 
     if (input.q) {
         const ftsQuery = buildFts5Query(input.q);
+        const qLike = `%${input.q}%`;
+
+        const searchSubquery = Prisma.sql`
+            "userId" IN (
+                SELECT id FROM users
+                WHERE username LIKE ${qLike}
+                   OR "firstName" LIKE ${qLike}
+                   OR "lastName" LIKE ${qLike}
+                   OR ("firstName" || ' ' || "lastName") LIKE ${qLike}
+                   OR symbol LIKE ${qLike}
+            )
+            OR json_extract(data, '$.offerUser') LIKE ${qLike}
+            OR json_extract(data, '$.preparedBy') LIKE ${qLike}
+            OR json_extract(data, '$.author') LIKE ${qLike}
+            OR json_extract(data, '$.investAddress') LIKE ${qLike}
+            OR json_extract(data, '$.investContractor') LIKE ${qLike}
+            OR "clientNip" LIKE ${qLike}
+            OR json_extract(data, '$.clientNip') LIKE ${qLike}
+            OR json_extract(data, '$.clientContact') LIKE ${qLike}
+            OR json_extract(data, '$.clientAddress') LIKE ${qLike}
+            OR json_extract(data, '$.offerNotes') LIKE ${qLike}
+            OR json_extract(data, '$.notes') LIKE ${qLike}
+            OR json_extract(data, '$.orderNumber') LIKE ${qLike}
+            OR json_extract(data, '$.order_number') LIKE ${qLike}
+            OR id IN (
+                SELECT "offerId" FROM orders_rury_rel
+                WHERE id LIKE ${qLike}
+                   OR json_extract(data, '$.orderNumber') LIKE ${qLike}
+                   OR json_extract(data, '$.order_number') LIKE ${qLike}
+                UNION
+                SELECT "offerStudnieId" FROM orders_studnie_rel
+                WHERE id LIKE ${qLike}
+                   OR json_extract(data, '$.orderNumber') LIKE ${qLike}
+                   OR json_extract(data, '$.order_number') LIKE ${qLike}
+            )
+        `;
+
         if (ftsQuery) {
-            parts.push(Prisma.sql`id IN (
-                SELECT id FROM offers_search_fts
-                WHERE offers_search_fts MATCH ${ftsQuery}
+            parts.push(Prisma.sql`(
+                id IN (
+                    SELECT id FROM offers_search_fts
+                    WHERE offers_search_fts MATCH ${ftsQuery}
+                )
+                OR ${searchSubquery}
             )`);
+        } else {
+            parts.push(Prisma.sql`(${searchSubquery})`);
         }
     }
 

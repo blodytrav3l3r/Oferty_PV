@@ -678,7 +678,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     const countLabel =
         filterElementIndex != null
             ? `Przejścia tego elementu (${filteredCount} szt.)`
-            : `Suma wszystkich przejść (${well.przejscia.length} szt.)`;
+            : `Suma wszystkich przejść bez dopłat (${well.przejscia.length} szt.)`;
     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.1); border-radius: var(--radius-sm); border:1px solid rgba(var(--accent-rgb), 0.2);">
       <span style="font-size: var(--fs-sm); color:var(--text-muted); font-weight: var(--fw-semibold);">${countLabel}</span>
       <span style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmt(totalPrice)} PLN</span>

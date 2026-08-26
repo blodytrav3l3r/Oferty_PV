@@ -128,7 +128,7 @@ Palety kolorów tekstu: `.logo-rury`, `.logo-studnie`, `.logo-kartoteka`, `.logo
 <!-- SPA: logo + nazwa modułu pod spodem -->
 <div class="logo logo-app logo-studnie">
     <img class="logo-sok" src="images/logo-sok.svg?v=..." alt="S.O.K." />
-    <span id="spa-logo-text" class="logo-app-module">Kalkulator Studni</span>
+    <span id="spa-logo-text" class="logo-app-module">Oferty studnie</span>
 </div>
 ```
 

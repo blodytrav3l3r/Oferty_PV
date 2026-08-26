@@ -96,4 +96,16 @@ describe('buildWhereParts — klauzule createdAt', () => {
         const sql = renderParts(parts);
         expect(sql).not.toContain('createdAt');
     });
+
+    it('q z zapytaniem: szuka w zamowieniach rur/studni, opiekunie (users/offerUser), inwestycji, uwagach i NIP', () => {
+        const parts = buildWhereParts({ ...base, q: 'Kowalski' });
+        const sql = renderParts(parts);
+        expect(sql).toContain('orders_rury_rel');
+        expect(sql).toContain('orders_studnie_rel');
+        expect(sql).toContain('orderNumber');
+        expect(sql).toContain('users');
+        expect(sql).toContain('offerUser');
+        expect(sql).toContain('investAddress');
+        expect(sql).toContain('offerNotes');
+    });
 });
