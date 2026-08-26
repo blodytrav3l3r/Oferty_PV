@@ -80,6 +80,11 @@
         "licenses:check": "node scripts/check-licenses.mjs",
         "benchmark": "node scripts/benchmark.mjs",
         "benchmark:quick": "node scripts/benchmark.mjs 10",
+        "git:safety": "node scripts/git-safety/cli.mjs",
+        "git:safety:list": "node scripts/git-safety/cli.mjs list",
+        "git:safety:inspect": "node scripts/git-safety/cli.mjs inspect",
+        "git:safety:verify": "node scripts/git-safety/cli.mjs verify",
+        "git:safety:restore": "node scripts/git-safety/cli.mjs restore",
         "prepare": "husky"
     },
     "engines": {
