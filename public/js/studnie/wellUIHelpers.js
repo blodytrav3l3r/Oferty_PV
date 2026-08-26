@@ -11,23 +11,26 @@ function renderDiscountPanel() {
     const activeDNs = dktCap.filter((dn) => wells.some((w) => w.dn === dn));
 
     if (activeDNs.length === 0) {
-        panel.innerHTML = '';
+        panel.innerHTML =
+            '<div class="discount-empty"><i data-lucide="banknote" style="width:20px;height:20px;opacity:0.5;display:block;margin:0 auto 0.4rem;"></i>Brak studni.<br>Dodaj studnię aby ustawić rabaty.</div>';
+        if (typeof lucide !== 'undefined' && lucide.createIcons)
+            lucide.createIcons({ root: panel });
         return;
     }
 
-    let grandTotal = 0,
-        grandDiscounted = 0;
+    let grandTotal = 0;
+    let grandDiscounted = 0;
 
-    let html = `<div style="padding:0.4rem; border-bottom:1px solid rgba(var(--white-rgb), 0.1);">
-        <div style="font-size: var(--fs-xs); text-transform:uppercase; color:var(--text-muted); font-weight: var(--fw-bold); letter-spacing:0.5px; margin-bottom:0.3rem;"><i data-lucide="banknote" aria-hidden="true"></i> Rabaty i podsumowanie</div>`;
+    let html =
+        '<div class="discount-header"><i data-lucide="banknote" style="width:14px;height:14px;"></i> Rabaty i podsumowanie</div>';
 
     activeDNs.forEach((dn) => {
         const groupWells = wells.filter((w) => w.dn === dn);
         const discountDn = dn === 'styczna' ? 'styczne' : dn;
-        let dennicaBaseSum = 0,
-            nadbudowaBaseSum = 0;
-        let dennicaAfterSum = 0,
-            nadbudowaAfterSum = 0;
+        let dennicaBaseSum = 0;
+        let nadbudowaBaseSum = 0;
+        let dennicaAfterSum = 0;
+        let nadbudowaAfterSum = 0;
         groupWells.forEach((w) => {
             const s = calcWellStats(w);
             dennicaBaseSum += s.priceDennicaBase;
@@ -36,7 +39,6 @@ function renderDiscountPanel() {
             nadbudowaAfterSum += s.priceNadbudowa;
         });
         const totalDN = dennicaBaseSum + nadbudowaBaseSum;
-
         const disc = wellDiscounts[discountDn] || { dennica: 0, nadbudowa: 0, preco: 0, pehd: 0 };
         const totalAfter = dennicaAfterSum + nadbudowaAfterSum;
 
@@ -54,94 +56,153 @@ function renderDiscountPanel() {
         grandTotal += totalDN;
         grandDiscounted += totalAfter;
 
-        const dnLabel = dn === 'styczna' ? 'Studnia Styczna' : `DN${dn}`;
+        const dnLabel = dn === 'styczna' ? 'Studnia Styczna' : 'DN' + dn;
         const hasPrecoInGroup = groupWells.some(
             (w) => w.kineta === 'preco' || w.kineta === 'precotop'
         );
 
-        html += `<div style="background:rgba(var(--white-rgb), 0.05); border-radius: var(--radius-sm); padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--white-rgb), 0.05);">
-          <div class="flex-between-35">
-            <span style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--accent2-hover);">${dnLabel}</span>
-            <span class="fs-sm-muted">${groupWells.length} szt.</span>
-          </div>
-          <div class="grid-1auto">
-            <span class="ui-text-mute text-left" >Dennica / Baza</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc.dennica || 0}"
-                id="disc-${discountDn}-dennica"
-                class="badge-90-white"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','dennica',this.value)">
-              <span class="ui-text-mute">%</span>
-            </div>
-            <span class="ui-text-mute text-left" >Nadbudowa</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc.nadbudowa || 0}"
-                id="disc-${discountDn}-nadbudowa"
-                class="badge-90-white"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','nadbudowa',this.value)">
-              <span class="ui-text-mute">%</span>
-            </div>
-            ${korpusClasses
-                .map(
-                    (cls) => `
-            <span class="ui-text-mute text-left" style="color:var(--accent2-hover);">Korpus ${cls} Dennica/Kineta</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc['dennica' + cls] || 0}"
-                id="disc-${discountDn}-dennica${cls}"
-                class="badge-90-white"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','dennica${cls}',this.value)">
-              <span class="ui-text-mute">%</span>
-            </div>
-            <span class="ui-text-mute text-left" style="color:var(--accent2-hover);">Korpus ${cls} Nadbudowa</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc['nadbudowa' + cls] || 0}"
-                id="disc-${discountDn}-nadbudowa${cls}"
-                class="badge-90-white"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','nadbudowa${cls}',this.value)">
-              <span class="ui-text-mute">%</span>
-            </div>`
-                )
-                .join('')}
-            ${zwienczenieClasses
-                .map(
-                    (cls) => `
-            <span class="ui-text-mute text-left" style="color:var(--warn-hover);">Zakończenie ${cls}</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc['zwienczenie' + cls] || 0}"
-                id="disc-${discountDn}-zwienczenie${cls}"
-                class="badge-90-white"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','zwienczenie${cls}',this.value)">
-              <span class="ui-text-mute">%</span>
-            </div>`
-                )
-                .join('')}
-            ${
-                hasPrecoInGroup
-                    ? `<span class="ui-text-mute" style="text-align:left; color:var(--danger);">Wkładka PRECO</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" max="100" step="0.5" value="${disc.preco || 0}"
-                id="disc-${discountDn}-preco"
-                style="width:90px; padding:3px 6px; font-size: var(--fs-base); text-align:center; background:rgba(var(--danger-rgb), 0.1); border:1px solid rgba(var(--danger-rgb), 0.3); border-radius: var(--radius-2xs); color:var(--danger);"
-                onclick="this.select()"
-                onchange="updateDiscount('${discountDn}','preco',this.value)">
-              <span class="ui-text-mute" style="color:var(--danger);">%</span>
-            </div>`
-                    : ''
+        html += '<div class="discount-card">';
+        html +=
+            '<div class="discount-card-head"><span class="discount-card-title">' +
+            dnLabel +
+            '</span><span class="discount-card-count">' +
+            groupWells.length +
+            ' szt.</span></div>';
+        html += '<div class="discount-grid">';
+        html +=
+            '<span class="discount-label">Dennica / Baza</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+            (disc.dennica || 0) +
+            '" id="disc-' +
+            discountDn +
+            '-dennica" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+            discountDn +
+            "','dennica',this.value)\" aria-label=\"Rabat dennica " +
+            dnLabel +
+            '"><span class="discount-suffix">%</span></div>';
+        html +=
+            '<span class="discount-label">Nadbudowa</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+            (disc.nadbudowa || 0) +
+            '" id="disc-' +
+            discountDn +
+            '-nadbudowa" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+            discountDn +
+            "','nadbudowa',this.value)\" aria-label=\"Rabat nadbudowa " +
+            dnLabel +
+            '"><span class="discount-suffix">%</span></div>';
+
+        korpusClasses.forEach((cls) => {
+            const isAccent = true;
+            html += '<div class="discount-section" style="grid-column:1/-1"></div>';
+            html +=
+                '<div style="grid-column:1/-1" class="discount-section-title ' +
+                (isAccent ? 'discount-section-title--accent' : 'discount-section-title--warn') +
+                '"><span class="discount-dot ' +
+                (isAccent ? 'discount-dot--accent' : 'discount-dot--warn') +
+                '"></span>Korpus ' +
+                cls +
+                '</div>';
+            html +=
+                '<span class="discount-label discount-label--accent">Korpus ' +
+                cls +
+                ' Dennica/Kineta</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+                (disc['dennica' + cls] || 0) +
+                '" id="disc-' +
+                discountDn +
+                '-dennica' +
+                cls +
+                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                discountDn +
+                "','dennica" +
+                cls +
+                '\',this.value)" aria-label="Rabat dennica ' +
+                cls +
+                ' ' +
+                dnLabel +
+                '"><span class="discount-suffix">%</span></div>';
+            html +=
+                '<span class="discount-label discount-label--accent">Korpus ' +
+                cls +
+                ' Nadbudowa</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+                (disc['nadbudowa' + cls] || 0) +
+                '" id="disc-' +
+                discountDn +
+                '-nadbudowa' +
+                cls +
+                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                discountDn +
+                "','nadbudowa" +
+                cls +
+                '\',this.value)" aria-label="Rabat nadbudowa ' +
+                cls +
+                ' ' +
+                dnLabel +
+                '"><span class="discount-suffix">%</span></div>';
+        });
+
+        zwienczenieClasses.forEach((cls) => {
+            const dotCls = cls === 'E600' ? 'discount-dot--accent' : 'discount-dot--warn';
+            const titleCls =
+                cls === 'E600' ? 'discount-section-title--accent' : 'discount-section-title--warn';
+            // jeśli korpus już dodał sekcję dla tego cls, nie duplikuj nagłówka — ale zwienczenie to osobna linia
+            const alreadyHasHeader = korpusClasses.includes(cls);
+            if (!alreadyHasHeader) {
+                html += '<div class="discount-section" style="grid-column:1/-1"></div>';
+                html +=
+                    '<div style="grid-column:1/-1" class="discount-section-title ' +
+                    titleCls +
+                    '"><span class="discount-dot ' +
+                    dotCls +
+                    '"></span>Klasa ' +
+                    cls +
+                    '</div>';
             }
-          </div>
-          <div style="display:flex; justify-content:space-between; margin-top:0.4rem; padding-top:0.35rem; border-top:1px solid rgba(var(--white-rgb), 0.05);">
-            <span style="font-size: var(--fs-base); color:var(--text-muted); text-align:left;">Po rabacie:</span>
-            <span style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:${totalAfter < totalDN ? 'var(--success-hover)' : 'var(--text-secondary)'};">${fmtInt(totalAfter)} PLN</span>
-          </div>
-        </div>`;
+            html +=
+                '<span class="discount-label ' +
+                (cls === 'E600' ? 'discount-label--accent' : 'discount-label--warn') +
+                '">Zako\u0144czenie ' +
+                cls +
+                '</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+                (disc['zwienczenie' + cls] || 0) +
+                '" id="disc-' +
+                discountDn +
+                '-zwienczenie' +
+                cls +
+                '" class="discount-input" onclick="this.select()" onchange="updateDiscount(\'' +
+                discountDn +
+                "','zwienczenie" +
+                cls +
+                '\',this.value)" aria-label="Rabat zako\u0144czenie ' +
+                cls +
+                ' ' +
+                dnLabel +
+                '"><span class="discount-suffix">%</span></div>';
+        });
+
+        if (hasPrecoInGroup) {
+            html +=
+                '<span class="discount-label discount-label--danger">Wk\u0142adka PRECO</span><div class="discount-input-wrap"><input type="number" min="0" max="100" step="0.5" value="' +
+                (disc.preco || 0) +
+                '" id="disc-' +
+                discountDn +
+                '-preco" class="discount-input discount-input--danger" onclick="this.select()" onchange="updateDiscount(\'' +
+                discountDn +
+                "','preco',this.value)\" aria-label=\"Rabat PRECO " +
+                dnLabel +
+                '"><span class="discount-suffix discount-suffix--danger">%</span></div>';
+        }
+
+        html += '</div>';
+        const isDiscounted = totalAfter < totalDN;
+        html +=
+            '<div class="discount-card-foot"><span class="discount-foot-label">Po rabacie:</span><span class="discount-foot-value ' +
+            (isDiscounted ? 'discount-foot-value--discounted' : 'discount-foot-value--plain') +
+            '">' +
+            fmtInt(totalAfter) +
+            ' PLN</span></div>';
+        html += '</div>';
     });
 
-    // Sekcja wkładki PEHD (globalna dla wszystkich studni)
+    // Sekcja wkładki PEHD (globalna)
     const anyPehd = wells.some(
         (w) =>
             (w.wkladkaDennica && w.wkladkaDennica !== 'brak') ||
@@ -165,31 +226,23 @@ function renderDiscountPanel() {
         }
         const currentPehdPriceAfter = currentPehdPrice * (1 - pehdDiscountValue / 100);
 
-        html += `<div style="background:rgba(var(--blue-alt-rgb), 0.05); border-radius: var(--radius-sm); padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--blue-alt-rgb), 0.15);">
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem;">
-            <div style="display:flex; flex-direction:column; gap:0.1rem;">
-                <span style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--blue-alt); display:flex; align-items:center; gap:0.3rem;"><i data-lucide="shield" class="icon-xs"></i> Wkładka PEHD</span>
-                <span class="fs-xs-muted">(Bazowo: ${currentPehdPrice} PLN/m²)</span>
-            </div>
-            <div class="text-right">
-                <span style="font-size: var(--fs-lg); color:var(--blue-alt); font-weight: var(--fw-extrabold); white-space:nowrap;" id="sidebar-pehd-price-after">${currentPehdPriceAfter.toFixed(2)} PLN/m²</span>
-            </div>
-          </div>
-          <div class="grid-1auto">
-            <span class="ui-text-mute text-left" >Globalny Rabat</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" step="1" value="${pehdDiscountValue}"
-                id="disc-global-pehd"
-                style="width:90px; padding:3px 6px; font-size: var(--fs-base); text-align:center; background:rgba(var(--blue-alt-rgb), 0.1); border:1px solid rgba(var(--blue-alt-rgb), 0.3); border-radius: var(--radius-2xs); color:var(--blue-alt);"
-                onclick="this.select()"
-                onchange="updateGlobalPehdDiscount(this.value)">
-              <span class="ui-text-mute" style="color:var(--blue-alt);">%</span>
-            </div>
-          </div>
-        </div>`;
+        html += '<div class="discount-card discount-card--pehd">';
+        html +=
+            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--pehd"><i data-lucide="shield" style="width:14px;height:14px;"></i> Wk\u0142adka PEHD</span><span class="discount-pehd-price">Bazowo: ' +
+            currentPehdPrice +
+            ' PLN/m²</span></div>';
+        html +=
+            '<div style="text-align:right; margin-bottom:0.35rem;"><span class="discount-pehd-after" id="sidebar-pehd-price-after">' +
+            currentPehdPriceAfter.toFixed(2) +
+            ' PLN/m²</span></div>';
+        html +=
+            '<div class="discount-grid"><span class="discount-label discount-label--blue">Globalny Rabat</span><div class="discount-input-wrap"><input type="number" min="0" step="1" value="' +
+            pehdDiscountValue +
+            '" id="disc-global-pehd" class="discount-input discount-input--blue" onclick="this.select()" onchange="updateGlobalPehdDiscount(this.value)" aria-label="Globalny rabat PEHD"><span class="discount-suffix discount-suffix--blue">%</span></div></div>';
+        html += '</div>';
     }
 
-    // Sekcja kosztów malowania (globalna dla wszystkich studni)
+    // Sekcja kosztów malowania (globalna)
     const anyMalowanieW = wells.some((w) => w.malowanieW && w.malowanieW !== 'brak');
     const anyMalowanieZ = wells.some((w) => w.malowanieZ && w.malowanieZ !== 'brak');
 
@@ -198,53 +251,39 @@ function renderDiscountPanel() {
         const malWCena = refWell.malowanieWewCena || '';
         const malZCena = refWell.malowanieZewCena || '';
 
-        html += `<div style="background:rgba(var(--accent2-rgb), 0.05); border-radius: var(--radius-sm); padding:0.6rem 0.65rem; margin-bottom:0.4rem; border:1px solid rgba(var(--accent2-rgb), 0.15);">
-          <div class="flex-between-35">
-            <span style="font-size: var(--fs-md); font-weight: var(--fw-bold); color:var(--purple-alt);"><i data-lucide="paintbrush" aria-hidden="true"></i> Koszt malowania</span>
-            <span style="font-size: var(--fs-2xs); color:var(--text-muted);">PLN / m²</span>
-          </div>
-          <div class="grid-1auto">`;
+        html += '<div class="discount-card discount-card--paint">';
+        html +=
+            '<div class="discount-card-head"><span class="discount-card-title discount-card-title--paint"><i data-lucide="paintbrush" style="width:14px;height:14px;"></i> Koszt malowania</span><span class="discount-pehd-price">PLN / m²</span></div>';
+        html += '<div class="discount-grid">';
 
         if (anyMalowanieW) {
-            html += `<span class="ui-text-mute text-left" >Wewnętrzne</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" step="0.01" value="${malWCena}"
-                id="disc-mal-wew-cena"
-                class="badge-90-accent2"
-                onclick="this.select()"
-                onchange="updateGlobalPaintingCost('malowanieWewCena', this.value)">
-              <span class="ui-text-mute color-purple" >zł</span>
-            </div>`;
+            html +=
+                '<span class="discount-label discount-label--purple">Wewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
+                malWCena +
+                '" id="disc-mal-wew-cena" class="discount-input discount-input--purple" onclick="this.select()" onchange="updateGlobalPaintingCost(\'malowanieWewCena\', this.value)" aria-label="Koszt malowania wewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
         if (anyMalowanieZ) {
-            html += `<span class="ui-text-mute text-left" >Zewnętrzne</span>
-            <div class="flex-gap-2">
-              <input type="number" min="0" step="0.01" value="${malZCena}"
-                id="disc-mal-zew-cena"
-                class="badge-90-accent2"
-                onclick="this.select()"
-                onchange="updateGlobalPaintingCost('malowanieZewCena', this.value)">
-              <span class="ui-text-mute color-purple" >zł</span>
-            </div>`;
+            html +=
+                '<span class="discount-label discount-label--purple">Zewn\u0119trzne</span><div class="discount-input-wrap"><input type="number" min="0" step="0.01" value="' +
+                malZCena +
+                '" id="disc-mal-zew-cena" class="discount-input discount-input--purple" onclick="this.select()" onchange="updateGlobalPaintingCost(\'malowanieZewCena\', this.value)" aria-label="Koszt malowania zewn\u0119trznego"><span class="discount-suffix discount-suffix--purple">z\u0142</span></div>';
         }
 
-        html += `</div>
-        </div>`;
+        html += '</div></div>';
     }
 
     // Suma całkowita
     const hasDiscount = grandDiscounted < grandTotal;
-    html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.2rem 0.1rem; border-top:1px solid rgba(var(--white-rgb), 0.1); margin-top:0.4rem;">
-      <span style="font-size: var(--fs-lg); font-weight: var(--fw-bold); color:var(--text-primary);">Suma całkowita</span>
-      <div class="text-right">
-        ${hasDiscount ? `<div style="font-size: var(--fs-xs); color:var(--text-muted); text-decoration:line-through;">${fmtInt(grandTotal)} PLN</div>` : ''}
-        <div style="font-size: var(--fs-2xl); font-weight: var(--fw-bold); color:var(--accent);">${fmtInt(grandDiscounted)} PLN</div>
-      </div>
-    </div>`;
+    html +=
+        '<div class="discount-total"><span class="discount-total-label">Suma ca\u0142kowita</span><div class="discount-total-values">';
+    if (hasDiscount)
+        html += '<span class="discount-total-crossed">' + fmtInt(grandTotal) + ' PLN</span>';
+    html +=
+        '<span class="discount-total-main">' + fmtInt(grandDiscounted) + ' PLN</span></div></div>';
 
-    html += `</div>`;
     panel.innerHTML = html;
+    if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: panel });
 }
 
 window.renderDiscountPanel = renderDiscountPanel;
