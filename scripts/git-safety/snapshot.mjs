@@ -24,11 +24,16 @@ export function getWorktreeState() {
     try {
         statusText = execSync('git status --porcelain --ignored -uall', {
             cwd: ROOT,
-            encoding: 'utf8'
+            encoding: 'utf8',
+            maxBuffer: 10 * 1024 * 1024
         });
     } catch {
         try {
-            statusText = execSync('git status --porcelain -uall', { cwd: ROOT, encoding: 'utf8' });
+            statusText = execSync('git status --porcelain -uall', {
+                cwd: ROOT,
+                encoding: 'utf8',
+                maxBuffer: 10 * 1024 * 1024
+            });
         } catch {}
     }
     const staged = [];
