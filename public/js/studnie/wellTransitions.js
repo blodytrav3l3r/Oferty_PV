@@ -213,6 +213,19 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 return;
             }
 
+            // Jeśli inne pole jest w edycji, wymuś blur by zapisać — inaczej potrzebne 2 kliknięcia
+            const _active = document.activeElement;
+            if (
+                _active instanceof HTMLElement &&
+                _active.tagName === 'INPUT' &&
+                _active.closest('[data-qe-id]')
+            ) {
+                const _parent = _active.closest('[data-qe-id]');
+                if (_parent && _parent !== element) {
+                    _active.blur();
+                }
+            }
+
             // Anuluj wszelkie oczekujące odświeżania po utracie fokusu (blur) przez inne pole
             if (window.__pendingPrzejsciaRefresh) {
                 clearTimeout(window.__pendingPrzejsciaRefresh);
@@ -276,9 +289,18 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             const inpType = useCalc ? 'text' : 'number';
             const inpMode = useCalc ? ' inputmode="decimal"' : '';
 
-            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:90px; height: 32px; margin-top: 2px; box-sizing: border-box; background: rgba(var(--slate-950-rgb), 0.95); color: var(--accent-text); border: 1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-xl); font-weight: var(--fw-extrabold); text-align: center; padding: 0 0.4rem; outline: none; box-shadow: 0 0 8px rgba(var(--accent-rgb), 0.4);" onclick="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
+            element.innerHTML = `<input type="${inpType}"${inpMode} step="${step}" placeholder="${escapeHtmlAttr(String(val))}" value="${escapeHtmlAttr(String(val))}" style="width:100%; min-width:0; max-width:100%; height:30px; margin:0; box-sizing:border-box; background: var(--bg-tertiary); color: var(--text-primary); border:1px solid var(--accent); border-radius: var(--radius-xs); font-size: var(--fs-base); font-weight: var(--fw-bold); text-align:center; padding:0 0.25rem; outline:none;" onclick="this.select()" onfocus="this.select()" onblur="window.saveQuickEdit(${index}, '${field}', this.value)" onkeydown="if(event.key==='Enter') this.blur();">`;
             const inp = element.querySelector('input');
             inp.focus();
+            try {
+                inp.select();
+            } catch {}
+            // dla type=number select() bywa blokowany — fallback: timeout
+            setTimeout(() => {
+                try {
+                    if (document.activeElement === inp) inp.select();
+                } catch {}
+            }, 0);
         };
 
         window.__pendingPrzejsciaRefresh = null;
@@ -452,7 +474,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     let totalPrice = 0;
     let html =
-        '<div style="display:grid; grid-template-columns:1fr; gap:0.5rem; overflow-x:auto; padding-bottom:0.5rem;">';
+        '<div style="display:flex; flex-direction:column; gap:0.4rem; overflow:visible; max-width:100%;">';
 
     let prevAssignedIndex = -999;
     let filteredCount = 0;
@@ -573,68 +595,64 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                     : 360 - editPrzejscieState.angle;
             const gons = ((editPrzejscieState.angle * 400) / 360).toFixed(2);
 
-            html += `<div style="background:linear-gradient(90deg, rgba(var(--blue-rgb), 0.8) 0%, rgba(var(--slate-800-rgb), 0.8) 100%); border:1px solid rgba(var(--blue-rgb), 0.5); border-left:4px solid var(--blue); border-radius: var(--radius-sm); min-width:max-content; padding:0.6rem; position:relative; box-shadow:0 4px 12px rgba(var(--blue-rgb), 0.15); margin-bottom:0.3rem;">
-              <div class="flex-between-4">
+            html += `<div class="wt-edit-panel">
+              <div class="wt-edit-head">
                 <div class="flex-gap-4">
-                  <div style="display:flex; align-items:center; justify-content:center; background:rgba(var(--black-rgb), 0.2); padding:0.2rem 0.4rem; border-radius: var(--radius-2xs);">
-                    <span style="font-size: var(--fs-xs); color:var(--text-primary); font-weight: var(--fw-bold);">${index + 1}</span>
-                  </div>
-                  <span style="font-size: var(--fs-base); font-weight: var(--fw-bold); color:var(--blue-hover);">Edycja wariantu</span>
+                  <span class="wt-edit-index">${index + 1}</span>
+                  <span class="wt-edit-title">Edycja wariantu</span>
                 </div>
-                <button data-action="cancelPrzejscieEdit" title="Krzyżyk" style="background:none; border:none; cursor:pointer; font-size: var(--fs-md); color:var(--text-muted);"><i data-lucide="x"></i></button>
+                <button type="button" class="btn-icon" data-action="cancelPrzejscieEdit" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button>
               </div>
-              
-              <div class="fs-3xs-muted-02">Kategoria przejścia</div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.5rem; max-height:80px; overflow-y:auto; scrollbar-width:thin;">
+
+              <div class="wt-edit-section-label">Kategoria przejścia</div>
+              <div class="wt-edit-grid">
                 ${allTypes
                     .map((t) => {
                         const isActive = t === editPrzejscieState.type;
-                        return `<div data-action="editInlineSetType" data-t="${escapeJsStr(t)}" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-semibold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--blue-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--blue-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; color:${isActive ? 'var(--blue-hover)' : 'var(--text-primary)'}; transition:all 0.15s;">${escapeHtml(t)}</div>`;
+                        return `<button type="button" data-action="editInlineSetType" data-t="${escapeJsStr(t)}" class="wt-edit-tile ${isActive ? 'is-active' : ''}" aria-pressed="${isActive ? 'true' : 'false'}" title="${escapeHtmlAttr(t)}">${escapeHtml(t)}</button>`;
                     })
                     .join('')}
               </div>
 
-              <div class="fs-3xs-muted-02">Średnica (DN)</div>
-              <div style="display:flex; flex-wrap:wrap; gap:0.25rem; margin-bottom:0.6rem;">
+              <div class="wt-edit-section-label">Średnica (DN)</div>
+              <div class="wt-edit-grid">
                 ${currentTypeDNs
                     .map((pr) => {
                         const isActive = pr.id === editPrzejscieState.dnId;
                         const dnLbl =
                             typeof pr.dn === 'string' && pr.dn.includes('/') ? pr.dn : 'DN' + pr.dn;
-                        return `<div data-action="editInlineSetDN" data-id="${escapeJsStr(pr.id)}" class="${isActive ? 'color-success' : ''}" style="padding:0.25rem 0.45rem; font-size: var(--fs-xs); font-weight: var(--fw-bold); border-radius: var(--radius-2xs); cursor:pointer; background:${isActive ? 'rgba(var(--success-rgb), 0.2)' : 'rgba(var(--white-rgb), 0.05)'}; border:1px solid ${isActive ? 'rgba(var(--success-rgb), 0.8)' : 'rgba(var(--white-rgb), 0.1)'}; transition:all 0.15s;">${escapeHtml(dnLbl)}</div>`;
+                        return `<button type="button" data-action="editInlineSetDN" data-id="${escapeJsStr(pr.id)}" class="wt-edit-tile wt-edit-tile--dn ${isActive ? 'is-active' : ''}" aria-pressed="${isActive ? 'true' : 'false'}">${escapeHtml(dnLbl)}</button>`;
                     })
                     .join('')}
               </div>
 
-              <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
-                <div>
-                  <label class="fs-3xs-muted-block">Rzędna [m]</label>
-                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+              <div class="wt-edit-form">
+                <div class="form-group m-0">
+                  <label class="fs-3xs-muted-block" for="edit-rzedna-${index}">Rzędna [m]</label>
+                  <input type="text" inputmode="decimal" class="form-input fs-base-rc" id="edit-rzedna-${index}" step="0.001" value="${editPrzejscieState.rzedna}" placeholder="142.500" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
-                <div>
-                  <label class="fs-3xs-muted-block">Kąt [°]</label>
-                   <input type="number" class="form-input color-link" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();" style="padding:0.35rem; font-size: var(--fs-base); font-weight: var(--fw-extrabold); text-align:center;">
+                <div class="form-group m-0">
+                  <label class="fs-3xs-muted-block" for="edit-angle-${index}">Kąt [°]</label>
+                  <input type="number" class="form-input color-link fs-base-rc" id="edit-angle-${index}" value="${editPrzejscieState.angle}" min="0" max="360" oninput="editUpdateAngles(${index}); window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
-                <div>
-                  <label class="fs-3xs-muted-block">Spadek w kinecie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                <div class="form-group m-0">
+                  <label class="fs-3xs-muted-block" for="edit-spadek-kineta-${index}">Spadek w kinecie [%]</label>
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-kineta-${index}" step="1" value="${editPrzejscieState.spadekKineta}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
-                <div>
-                  <label class="fs-3xs-muted-block">Spadek w mufie [%]</label>
-                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}"  onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
+                <div class="form-group m-0">
+                  <label class="fs-3xs-muted-block" for="edit-spadek-mufa-${index}">Spadek w mufie [%]</label>
+                  <input type="number" class="form-input fs-base-rc" id="edit-spadek-mufa-${index}" step="1" value="${editPrzejscieState.spadekMufa}" onchange="window.syncEditState()" onkeydown="if(event.key==='Enter') this.blur();">
                 </div>
               </div>
-              
 
-
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding-top:0.4rem; border-top:1px solid rgba(var(--white-rgb), 0.05);">
-                <div style="display:flex; gap:0.8rem; font-size: var(--fs-xs);">
-                  <span class="ui-text-mute">Wyk: <strong id="edit-exec-${index}" class="text-primary">${execAngle}°</strong></span>
-                  <span class="ui-text-mute">Gony: <strong id="edit-gony-${index}" class="color-success">${gons}<sup>g</sup></strong></span>
+              <div class="wt-edit-footer">
+                <div class="wt-edit-meta">
+                  <span>Wyk: <strong id="edit-exec-${index}" class="text-primary">${execAngle}°</strong></span>
+                  <span>Gony: <strong id="edit-gony-${index}" class="color-success">${gons}<sup>g</sup></strong></span>
                 </div>
-                <div class="flex-gap-4">
-                  <button data-action="cancelPrzejscieEdit" style="padding:0.3rem 0.6rem; font-size: var(--fs-sm); border-radius: var(--radius-2xs); border:1px solid rgba(var(--white-rgb), 0.1); background:rgba(var(--white-rgb), 0.05); color:var(--text-primary); cursor:pointer;">Anuluj</button>
-                  <button data-action="savePrzejscieEdit" data-index="${index}" class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size: var(--fs-sm);"><i data-lucide="save"></i> Zapisz</button>
+                <div class="wt-edit-actions">
+                  <button type="button" class="btn btn-secondary btn-sm" data-action="cancelPrzejscieEdit">Anuluj</button>
+                  <button type="button" data-action="savePrzejscieEdit" data-index="${index}" class="btn btn-primary btn-sm"><i data-lucide="save" aria-hidden="true"></i> Zapisz</button>
                 </div>
               </div>
             </div>`;

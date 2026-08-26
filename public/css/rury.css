@@ -213,9 +213,13 @@ body.rury-page > .main:has(#section-builder.active) {
     border-bottom: 1px solid var(--border-glass);
     border-right: 1px solid var(--border-glass);
     position: sticky;
-    top: 60px;
+    top: var(--header-h);
     z-index: var(--z-sticky-dropdown);
     white-space: nowrap;
+}
+
+.table-wrap.table-wrap-scroll .rury-table thead th {
+    top: 0;
 }
 
 .rury-table tbody td {
@@ -234,6 +238,10 @@ body.rury-page > .main:has(#section-builder.active) {
 
 .rury-table tbody tr:hover {
     background: rgba(var(--accent-rgb), 0.05);
+}
+
+.rury-table .edit-input {
+    text-align: center;
 }
 
 .rury-table tbody td input.edit-input:disabled,

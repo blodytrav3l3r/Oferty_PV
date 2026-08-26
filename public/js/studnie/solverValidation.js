@@ -238,13 +238,25 @@ function validatePrzejsciaForSave(wellsArr) {
             const hasRzedna = p.rzednaWlaczenia != null && String(p.rzednaWlaczenia).trim() !== '';
             const hasAngle =
                 p.angle != null && String(p.angle).trim() !== '' && parseFloat(p.angle) !== 0;
-            const hasCategory = !!p.tempCategory && String(p.tempCategory).trim() !== '';
+            const prod =
+                p.productId && typeof studnieProducts !== 'undefined'
+                    ? studnieProducts.find(function (x) {
+                          return x.id === p.productId;
+                      })
+                    : null;
+            const effCategory =
+                p.tempCategory && String(p.tempCategory).trim() !== ''
+                    ? String(p.tempCategory).trim()
+                    : prod && prod.category
+                      ? String(prod.category).trim()
+                      : '';
+            const hasCategory = effCategory !== '';
             const hasProduct = !!p.productId;
             const allEmpty = !hasCategory && !hasProduct && !hasRzedna && !hasAngle;
             if (allEmpty) return;
             if (hasCategory && !hasProduct) {
                 errors.push(
-                    `Studnia "${wellName}" przejście #${idx + 1}: wybrano rodzaj "${p.tempCategory}" bez średnicy — uzupełnij średnicę (DN)`
+                    `Studnia "${wellName}" przejście #${idx + 1}: wybrano rodzaj "${effCategory}" bez średnicy — uzupełnij średnicę (DN)`
                 );
             } else if (!hasCategory && hasProduct) {
                 errors.push(

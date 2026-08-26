@@ -1,4 +1,7 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+/**
+ * @jest-environment jsdom
+ */
+
 // @ts-nocheck
 /**
  * Real DOM test dla modalCore — weryfikuje strukturę, a11y i trapFocus

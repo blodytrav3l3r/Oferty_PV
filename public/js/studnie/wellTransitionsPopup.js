@@ -269,9 +269,24 @@ window.confirmChangePrzejscieType = function (index, newType) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
-    const available = studnieProducts
-        .filter((p) => p.category === newType)
+    const maxPipeDnType = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
+    const allForType = studnieProducts.filter((p) => p.category === newType);
+    let available = allForType
+        .filter((p) => {
+            if (p.category === 'Otwór KPED') return true;
+            let pDn = 160;
+            if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                pDn = parseFloat(p.dn.split('/')[0]) || 160;
+            } else {
+                pDn = parseFloat(p.dn) || 160;
+            }
+            return pDn <= maxPipeDnType;
+        })
         .sort((a, b) => a.dn - b.dn);
+    // fallback: brak produktu w limicie — użyj pełnej listy (legacy)
+    if (available.length === 0) {
+        available = [...allForType].sort((a, b) => a.dn - b.dn);
+    }
     if (available.length > 0) {
         well.przejscia[index].productId = available[0].id;
         delete well.przejscia[index].frozenPrice;
@@ -306,8 +321,19 @@ window.openChangePrzejscieDnPopup = function (index) {
     const currProduct = studnieProducts.find((p) => p.id === currId);
     if (!currProduct) return;
 
+    const maxPipeDn = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
     const available = studnieProducts
         .filter((p) => p.category === currProduct.category)
+        .filter((p) => {
+            if (p.category === 'Otwór KPED') return true;
+            let pDn = 160;
+            if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                pDn = parseFloat(p.dn.split('/')[0]) || 160;
+            } else {
+                pDn = parseFloat(p.dn) || 160;
+            }
+            return pDn <= maxPipeDn || p.id === currId;
+        })
         .sort((a, b) => a.dn - b.dn);
 
     window.showModal({

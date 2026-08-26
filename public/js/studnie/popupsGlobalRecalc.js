@@ -301,6 +301,7 @@ window.openGlobalRecalcModal = function () {
       <div class="recalc-modal-footer">
         <label class="recalc-confirm-row" title="Ochrona przed nadpisaniem ręcznie dobranych konfiguracji">
             <input type="checkbox" id="recalc-confirm-override" onchange="window.recalcToggleConfirm()" />
+            <i data-lucide="alert-triangle" aria-hidden="true"></i>
             <span>Rozumiem, że konfiguracje studni zostaną nadpisane</span>
         </label>
         <button type="button" class="btn btn-secondary" onclick="window.closeGlobalRecalcModal()">Anuluj</button>

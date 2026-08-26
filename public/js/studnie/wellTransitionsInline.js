@@ -18,9 +18,22 @@ window.editInlineSetType = function (type) {
     const przejsciaProducts = studnieProducts.filter(
         (pr) => pr.componentType === 'przejscie' && pr.active !== 0
     );
-    const dns = [...przejsciaProducts.filter((p) => p.category === type)].sort(
-        (a, b) => a.dn - b.dn
-    );
+    const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+    const maxPipeDn = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
+    const allForType = przejsciaProducts.filter((p) => p.category === type);
+    let dns = allForType
+        .filter((p) => {
+            if (p.category === 'Otwór KPED') return true;
+            let pDn = 160;
+            if (typeof p.dn === 'string' && p.dn.includes('/')) {
+                pDn = parseFloat(p.dn.split('/')[0]) || 160;
+            } else {
+                pDn = parseFloat(p.dn) || 160;
+            }
+            return pDn <= maxPipeDn;
+        })
+        .sort((a, b) => a.dn - b.dn);
+    if (dns.length === 0) dns = [...allForType].sort((a, b) => a.dn - b.dn);
     if (dns.length > 0) editPrzejscieState.dnId = dns[0].id;
     else editPrzejscieState.dnId = null;
     renderWellPrzejscia();

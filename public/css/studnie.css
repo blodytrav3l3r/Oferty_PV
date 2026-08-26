@@ -2495,39 +2495,69 @@ select.form-input option {
     background: rgba(var(--white-rgb), 0.1) !important;
 }
 
-.prz-btn-edit {
-    background: rgba(var(--blue-rgb), 0.15);
-    border: 1px solid rgba(var(--blue-rgb), 0.3);
-    border-radius: var(--radius-sm);
+.prz-actions-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    padding-left: 0.4rem;
+    border-left: 1px dashed rgba(var(--white-rgb), 0.1);
+    flex-shrink: 0;
+}
+
+.prz-btn-edit,
+.prz-btn-delete {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border-radius: var(--radius-2xs);
     cursor: pointer;
-    font-size: var(--fs-xl);
-    padding: 0.35rem;
-    color: var(--blue-hover);
     transition:
-        background-color 0.2s,
-        border-color 0.2s;
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+}
+
+.prz-btn-edit {
+    background: rgba(var(--blue-rgb), 0.12);
+    border: 1px solid rgba(var(--blue-rgb), 0.25);
+    color: var(--blue-hover);
 }
 .prz-btn-edit:hover {
-    background: rgba(var(--blue-rgb), 0.3) !important;
+    background: rgba(var(--blue-rgb), 0.28) !important;
+    border-color: rgba(var(--blue-rgb), 0.4);
 }
 
 .prz-btn-delete {
-    background: rgba(var(--danger-rgb), 0.15);
-    border: 1px solid rgba(var(--danger-rgb), 0.3);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: var(--fs-xl);
-    padding: 0.35rem;
+    background: rgba(var(--danger-rgb), 0.1);
+    border: 1px solid rgba(var(--danger-rgb), 0.22);
     color: var(--danger);
-    transition:
-        background-color 0.2s,
-        border-color 0.2s;
 }
 .prz-btn-delete:hover {
-    background: rgba(var(--danger-rgb), 0.3) !important;
+    background: rgba(var(--danger-rgb), 0.24) !important;
+    border-color: rgba(var(--danger-rgb), 0.35);
+}
+
+.prz-btn-edit svg,
+.prz-btn-delete svg {
+    width: 12px;
+    height: 12px;
 }
 
 .prz-field-color {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    flex: 1 1 auto;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--text-primary);
     transition: color 0.2s;
     cursor: pointer;
 }
@@ -2536,6 +2566,12 @@ select.form-input option {
 }
 
 .prz-field-dn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    overflow: visible;
+    font-size: var(--fs-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--accent2-hover);
     transition: color 0.2s;
     cursor: pointer;
 }
@@ -2823,7 +2859,292 @@ select.form-input option {
 .wt-add-btn {
     flex-shrink: 0;
 }
-/* Pola edytowalne (QE) */
+
+/* ===== Edycja wariantu — modifier panelu + layout (UI_GUIDELINES §6) ===== */
+.wt-edit-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-glass);
+    border-left: 4px solid var(--blue);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 0.8rem;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 0.3rem;
+    box-sizing: border-box;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+.wt-edit-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid rgba(var(--white-rgb), 0.05);
+}
+
+.wt-edit-index {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 24px;
+    padding: 0 0.4rem;
+    border-radius: var(--radius-2xs);
+    background: rgba(var(--black-rgb), 0.25);
+    border: 1px solid var(--border-glass);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+}
+
+.wt-edit-title {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    color: var(--blue-hover);
+}
+
+.wt-edit-section-label {
+    font-size: var(--fs-3xs);
+    color: var(--text-muted);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.wt-edit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 0.3rem;
+}
+
+.wt-edit-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-2xs);
+    cursor: pointer;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    transition:
+        background-color 0.15s,
+        border-color 0.15s,
+        color 0.15s;
+    user-select: none;
+}
+
+.wt-edit-tile:hover {
+    background: var(--bg-glass);
+    border-color: rgba(var(--accent-rgb), 0.3);
+    color: var(--text-primary);
+}
+
+.wt-edit-tile.is-active {
+    background: rgba(var(--blue-rgb), 0.15);
+    border-color: var(--blue);
+    color: var(--blue-hover);
+    box-shadow: 0 0 8px rgba(var(--blue-rgb), 0.18);
+}
+
+.wt-edit-tile--dn.is-active {
+    background: rgba(var(--success-rgb), 0.15);
+    border-color: var(--success);
+    color: var(--success-hover);
+    box-shadow: 0 0 8px rgba(var(--success-rgb), 0.18);
+}
+
+.wt-edit-tile:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.wt-edit-form {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+}
+
+.wt-edit-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-top: 0.45rem;
+    border-top: 1px solid rgba(var(--white-rgb), 0.05);
+}
+
+.wt-edit-meta {
+    display: flex;
+    gap: 0.8rem;
+    font-size: var(--fs-xs);
+    color: var(--text-muted);
+}
+
+.wt-edit-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+@media (min-width: 1400px) {
+    .wt-edit-grid {
+        grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+        gap: 0.35rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .wt-edit-form {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+    .wt-edit-form {
+        grid-template-columns: 1fr;
+    }
+
+    .wt-edit-footer {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .wt-edit-actions {
+        justify-content: flex-end;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wt-edit-tile {
+        transition: none;
+    }
+}
+
+/* ===== Lista przejść — estetyczna, optymalna (nie zawija, bez scrolla) ===== */
+.prz-tile {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 62px;
+    padding: 0.45rem 0.5rem 0.35rem 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-glass);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 3px rgba(var(--black-rgb), 0.18);
+    box-sizing: border-box;
+    margin-bottom: 0.45rem;
+    transition:
+        border-color 0.18s,
+        box-shadow 0.18s,
+        transform 0.18s;
+}
+
+.prz-tile:hover {
+    border-color: rgba(var(--accent-rgb), 0.22);
+    box-shadow: 0 4px 14px rgba(var(--black-rgb), 0.28);
+    transform: translateY(-1px);
+}
+
+.prz-tile > div:nth-child(2) {
+    min-width: 0;
+    flex: 1;
+}
+
+.prz-main {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.prz-name-wrap {
+    flex: 0 1 220px;
+    min-width: 0;
+    max-width: min(240px, 32%);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-right: 0.4rem;
+    white-space: nowrap;
+}
+
+.prz-cols {
+    display: flex;
+    align-items: stretch;
+    gap: 0.25rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.prz-col {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0.15rem 0.1rem;
+    border-radius: var(--radius-2xs);
+    transition: background-color 0.15s;
+}
+
+.prz-col:hover {
+    background: rgba(var(--white-rgb), 0.03);
+}
+
+.prz-col--price {
+    flex: 1.35 1 0;
+    min-width: 92px;
+    background: transparent;
+    border: none;
+}
+
+.prz-col--price:hover {
+    background: rgba(var(--white-rgb), 0.03);
+}
+
+@media (max-width: 1100px) {
+    .prz-tile {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .prz-cols {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    .prz-col {
+        min-width: 78px;
+    }
+}
+
+/* Pola edytowalne (QE) — elastyczne by nie nachodziły */
 .prz-field,
 .prz-field-angle,
 .prz-field-height,
@@ -2833,23 +3154,31 @@ select.form-input option {
     align-items: center;
     justify-content: center;
     width: 100%;
-    min-width: 85px;
-    height: 32px;
-    padding: 0 0.4rem;
+    min-width: 0;
+    max-width: 100%;
+    height: 30px;
+    padding: 0 0.25rem;
     border-radius: var(--radius-xs);
     text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     box-sizing: border-box;
+    font-variant-numeric: tabular-nums;
 }
 
 /* Informacja o wierceniu pod ceną */
 .prz-drill-info {
-    font-size: var(--fs-3xs);
+    font-size: 0.48rem;
     color: var(--warn);
     text-align: center;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.1;
     margin-top: 2px;
     font-weight: var(--fw-bold);
-    letter-spacing: 0.2px;
+    letter-spacing: 0.15px;
+    max-width: 100%;
 }
 
 /* Kolumny kafelków przejść — 100% spójne wypoziomowanie */
@@ -2863,20 +3192,25 @@ select.form-input option {
     min-height: 54px;
 }
 .prz-col-header {
-    height: 18px;
-    min-height: 18px;
+    min-height: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
-    font-size: var(--fs-2xs);
+    font-size: 0.52rem;
+    font-weight: var(--fw-semibold);
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.35px;
+    line-height: 1;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    text-overflow: clip;
+    padding: 0 0.15rem;
     box-sizing: border-box;
+    opacity: 0.9;
 }
 .prz-col-body {
     min-height: 34px;
