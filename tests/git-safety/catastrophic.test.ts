@@ -64,7 +64,7 @@ describe('Etap 7 — katastroficzny recovery', () => {
                     } catch {}
                 }
             }
-            execSync('git reset --hard HEAD', { cwd: ROOT, stdio: 'ignore' });
+            // no global reset
             for (const e of fs.readdirSync(ROOT)) {
                 if (e.startsWith(tmpPrefix)) {
                     try {
@@ -120,7 +120,7 @@ describe('Etap 7 — katastroficzny recovery', () => {
         });
         expect(verify.status).toBe(0);
 
-        execSync('git reset --hard HEAD', { cwd: ROOT, stdio: 'ignore' });
+        // no global reset
         for (const f of files) {
             try {
                 fs.unlinkSync(path.join(ROOT, f));
