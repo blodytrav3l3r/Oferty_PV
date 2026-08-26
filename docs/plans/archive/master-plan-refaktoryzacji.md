@@ -1,5 +1,7 @@
 # Master Plan Refaktoryzacji — WITROS Oferty PV
 
+> **DEPRECATED — archiwalny.** Procedury `git checkout --` sprzeczne z `docs/development/GIT_SAFETY.md` (SSoT). Wymagany 5-krok: `status` → `snapshot` → `verify` → `--force` → dopiero `checkout --`.
+
 ## Cel architektoniczny
 
 Poprawa modularności, czytelności i możliwości utrzymania kodu we wszystkich warstwach aplikacji: HTML, CSS, frontend JS i backend TS. Po refaktoryzacji aplikacja działa identycznie jak przed zmianami — **zero zmian funkcjonalnych**.
@@ -768,9 +770,9 @@ services/telemetry/ ──→ routes/telemetry*
 
 **Zagrożenie**: partial ładowany przez `innerHTML` traci inline `<script>`. Przed każdą ekstrakcją sprawdź sekcję źródłową — jeśli zawiera `<script>`, nie przenoś go do partiala. Patrz sekcja "⚠️ Ryzyko inline `<script>`".
 
-**Contingency (gdy partial nie ładuje się poprawnie):**
+**Contingency (gdy partial nie ładuje się poprawnie) — DEPRECATED (GIT_SAFETY):**
 
-1. Wycofaj zmiany w danym partialu: `git checkout -- public/partials/studnie/<partial>.html`
+1. Wycofaj zmiany w danym partialu — **nie** `git checkout --` bez snapshotu: `git status --short` → dirty → snapshot → verify → `--force` → dopiero `git checkout -- public/partials/studnie/<partial>.html` (SSoT `docs/development/GIT_SAFETY.md`)
 2. Przywróć oryginalną sekcję w `studnie.html`
 3. Spróbuj ponownie z mniejszym partialem (podziel na 2 mniejsze)
 4. Jeśli problemem jest inicjalizacja JS — dodaj `data-partial-loaded` atrybut i sprawdź w init
@@ -883,13 +885,17 @@ Po każdym kroku:
 2. `git commit -m "refactor(scope): opis zmiany"`
 3. Uruchomić checklistę powyżej
 
-W razie problemów:
+W razie problemów — DEPRECATED (GIT_SAFETY):
 
 ```bash
-git checkout -- public/studnie.html   # przywraca HTML
-git checkout -- public/js/studnie/    # przywraca JS
-git checkout -- public/css/           # przywraca CSS
-git checkout -- src/validators/       # przywraca backend
+# DEPRECATED: git checkout -- public/studnie.html — wymaga snapshot→verify→--force
+git status --short
+# dirty → snapshot (.git/safety/snapshots/<id> + verify) → --force → dopiero:
+# git checkout -- public/studnie.html
+# git checkout -- public/js/studnie/
+# git checkout -- public/css/
+# git checkout -- src/validators/
+# SSoT: docs/development/GIT_SAFETY.md — nigdy nie naprawiaj typecheck czyszczeniem
 ```
 
 ### Kryteria rollbacku (kiedy cofamy zmianę)

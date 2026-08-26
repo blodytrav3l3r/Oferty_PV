@@ -1,5 +1,7 @@
 # Plan podziału `studnie.html` (5350 linii)
 
+> **DEPRECATED — archiwalny.** Procedury `git checkout --` sprzeczne z `docs/development/GIT_SAFETY.md` (SSoT). Wymagany 5-krok: `status` → `snapshot` → `verify` → `--force` → dopiero `checkout --`.
+
 ## Cel architektoniczny
 
 Podział ma poprawić czytelność i możliwość utrzymania kodu. Nie zmieniamy logiki biznesowej, identyfikatorów (`id`), klas CSS, nazw funkcji ani kolejności inicjalizacji JavaScript. Po refaktoryzacji aplikacja ma działać identycznie jak przed zmianami.
@@ -297,9 +299,9 @@ Po wydzieleniu każdego partiala:
 □ działa eksport (XLSX)
 ```
 
-W razie problemów:
+W razie problemów — DEPRECATED (GIT_SAFETY):
 
-1. `git checkout -- public/studnie.html` — przywraca oryginał
+1. `git status --short` → dirty → snapshot → verify → `--force` → dopiero `git checkout -- public/studnie.html` (SSoT `docs/development/GIT_SAFETY.md`)
 2. Sprawdzić czy partial został poprawnie wycięty
 3. Sprawdzić czy `id` i klasy w partialu są identyczne z oryginałem
 4. Przejrzeć zależności JS dla danego partiala
@@ -315,10 +317,12 @@ Po każdym etapie:
 3. `git tag refactor/studnie/[nazwa-partiala]-done`
 4. Uruchomić checklistę
 
-W razie problemów w 5 sekund:
+W razie problemów w 5 sekund — DEPRECATED (GIT_SAFETY):
 
 ```bash
-git checkout -- public/studnie.html
+# DEPRECATED: git checkout -- public/studnie.html — wymaga snapshot→verify→--force
+git status --short
+# dirty → snapshot → verify → --force → dopiero checkout --
 ```
 
 ---

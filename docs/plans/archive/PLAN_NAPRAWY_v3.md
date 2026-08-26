@@ -1,5 +1,7 @@
 # PLAN NAPRAWY v3 — WITROS Oferty PV (zaktualizowany do v1.7.0)
 
+> **DEPRECATED — archiwalny.** Procedury rollback `git restore .` / `git reset --hard HEAD` sprzeczne z `docs/development/GIT_SAFETY.md` (SSoT). Wymagany 5-krok: `git status --short` → dirty → `snapshot` → `verify` → `authorization (--force)` → dopiero `restore`/`reset`/`clean`. Nigdy nie używaj destrukcyjnych Git do naprawy `typecheck`/`lint`/`test` (`FAIL → diagnose → fix code → rerun`).
+
 ## Status weryfikacji założeń (przed rozpoczęciem prac)
 
 | Założenie                                                   | Zweryfikowane?                                                                                                                                                                                               | Wynik                                   |
@@ -25,17 +27,18 @@
 [FORMAT]    npm run format          ← dopiero po zakończeniu całego etapu, nie po każdym micro-kroku
 ```
 
-### Rollback
+### Rollback — DEPRECATED (GIT_SAFETY)
 
-Jeśli krok powoduje regresję (typów, testów, składni):
+Jeśli krok powoduje regresję (typów, testów, składni) — **nie używaj `git restore .` / `git reset --hard HEAD` bez snapshotu**:
 
 ```bash
-git restore .           # nowoczesny zamiennik git checkout --
-# lub jeśli potrzebujesz twardszego resetu:
-git reset --hard HEAD
+git status --short
+# jeśli dirty → snapshot → verify → authorization (--force) → dopiero:
+# git restore . / git reset --hard HEAD / git clean -f* --force
+# Nigdy nie naprawiaj typecheck/lint/test czyszczeniem plików (false-green)
 ```
 
-Następnie: podziel krok na mniejsze części i powtórz.
+Następnie: podziel krok na mniejsze części i powtórz. SSoT: `docs/development/GIT_SAFETY.md`.
 
 ### Kiedy formatować
 
@@ -413,10 +416,12 @@ function fn() {
 }
 ```
 
-### Rollback batcha
+### Rollback batcha — DEPRECATED (GIT_SAFETY)
 
 ```bash
-git restore . && git reset --hard HEAD
+# DEPRECATED: git restore . && git reset --hard HEAD  — wymaga snapshot→verify→--force
+git status --short
+# dirty → snapshot → verify → --force → dopiero restore/reset
 # Podziel pliki na mniejsze grupy i powtórz
 ```
 
@@ -548,16 +553,16 @@ npm run format
 
 ## Porównanie v1 → v2 → v3
 
-| Aspekt              | v1                | v2                       | v3                                                                    |
-| ------------------- | ----------------- | ------------------------ | --------------------------------------------------------------------- |
-| Krok 1 (escapeHtml) | komentarz (hack)  | `void window.escapeHtml` | + udokumentowany łańcuch zależności, + opcja poprawy testu            |
-| no-var              | wyłączenie reguły | batch po 5 plików        | + tabela ryzyka per plik, + uwaga o hoistingu                         |
-| window.x = x        | ogólna lista      | lista plików             | + dowód że wzorzec istnieje w projekcie (8 przykładów z shared/ui.js) |
-| declare var         | —                 | const wszędzie           | + podział na const/let, + uzasadnienie każdego                        |
-| Szacunki            | 140 min           | 350 min                  | 350 min + rozbicie na priorytety                                      |
-| Git checkout        | —                 | `git checkout -- .`      | `git restore .` / `git reset --hard HEAD`                             |
-| Formatowanie        | na końcu          | po każdym kroku          | po każdym LOGICZNYM etapie                                            |
-| Lista sukcesu       | —                 | —                        | 10-punktowa checklista                                                |
-| Priorytety          | —                 | —                        | Critical/High/Medium/Low                                              |
-| Rollback            | —                 | —                        | procedura na 2 scenariusze                                            |
-| Weryfikacja założeń | —                 | —                        | tabela z 5 zweryfikowanymi założeniami                                |
+| Aspekt              | v1                | v2                                                                                 | v3                                                                                 |
+| ------------------- | ----------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Krok 1 (escapeHtml) | komentarz (hack)  | `void window.escapeHtml`                                                           | + udokumentowany łańcuch zależności, + opcja poprawy testu                         |
+| no-var              | wyłączenie reguły | batch po 5 plików                                                                  | + tabela ryzyka per plik, + uwaga o hoistingu                                      |
+| window.x = x        | ogólna lista      | lista plików                                                                       | + dowód że wzorzec istnieje w projekcie (8 przykładów z shared/ui.js)              |
+| declare var         | —                 | const wszędzie                                                                     | + podział na const/let, + uzasadnienie każdego                                     |
+| Szacunki            | 140 min           | 350 min                                                                            | 350 min + rozbicie na priorytety                                                   |
+| Git checkout        | —                 | `git checkout -- .` (DEPRECATED — wymaga snapshot→verify→--force, SSoT GIT_SAFETY) | `git status --short` → dirty → snapshot → verify → --force → dopiero restore/reset |
+| Formatowanie        | na końcu          | po każdym kroku                                                                    | po każdym LOGICZNYM etapie                                                         |
+| Lista sukcesu       | —                 | —                                                                                  | 10-punktowa checklista                                                             |
+| Priorytety          | —                 | —                                                                                  | Critical/High/Medium/Low                                                           |
+| Rollback            | —                 | —                                                                                  | procedura na 2 scenariusze                                                         |
+| Weryfikacja założeń | —                 | —                                                                                  | tabela z 5 zweryfikowanymi założeniami                                             |
