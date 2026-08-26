@@ -1,0 +1,4 @@
+#!/bin/sh
+# Git Safety wrapper — Git Bash / Node
+# Etap 4: dirty → snapshot → verify → authorize → exec
+exec node "$(dirname "$0")/../../../scripts/git-safety/guard.mjs" "$@"
