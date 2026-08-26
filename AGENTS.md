@@ -82,6 +82,18 @@ Poniższe reguły określają, jak agent powinien wchodzić w interakcję z kode
 
 ---
 
+### Bezpieczeństwo Git — Git Safety (obowiązkowe, SSoT `docs/development/GIT_SAFETY.md`)
+
+- **Nigdy nie używaj destrukcyjnego Git do naprawy build/test/lint/typecheck.** `FAIL → diagnose → fix code → rerun`, nigdy `FAIL → restore/clean → PASS` (fałszywie zielone, utrata pracy).
+- **Nigdy nie odrzucaj zmian worktree bez wyraźnego żądania użytkownika** tej konkretnej operacji destrukcyjnej.
+- **Przed każdą destrukcją Tier A** (`checkout --`, `restore`, `reset --hard`, `clean -f/-fd/-fdx`) → `dirty → snapshot → verify → authorization (--force) → exec`. Jeśli `verify FAIL` → `STOP`, destrukcja `MUST NOT EXECUTE`.
+- **Agent MUST use Git Safety workflow i MUST NOT bypass safety layer.** Bezpośrednie `spawnSync('git')` bez `shell:true` na Windows omija wrapper `.git/safety/bin/git.cmd` — udokumentowany bypass, nie gwarantowana ochrona.
+- **Tier A (HIGH/CRITICAL):** `restore`/`checkout --` = HIGH, `reset --hard`/`clean -f*` = CRITICAL. `clean -fdx` usuwa też `ignored`. Harmless (`status/diff/add/commit/fetch`) zawsze dozwolone.
+- **Protected:** PowerShell → wrapper, Git Bash → wrapper, Node `shell:true` → wrapper. **Known bypass:** direct `git.exe` / `spawnSync` bez shella.
+- **Snapshot L1:** `.git/safety/snapshots/<ISO>-<id>/` + `npm run git:safety:list|inspect|verify|restore --force` — odzyskiwanie bez `fsck`.
+
+---
+
 ## 3. Konwencje Deweloperskie
 
 ### Commity (commitlint + encoding)
