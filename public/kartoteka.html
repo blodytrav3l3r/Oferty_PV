@@ -8,10 +8,10 @@
             content="{{APP_NAME}} — Kartoteka Ofert. Przeglądaj, filtruj i zarządzaj ofertami na rury i studnie."
         />
         <title>{{APP_NAME}} — Kartoteka Ofert</title>
-        <link rel="stylesheet" href="css/style.base.css?v=1.19.4" />
-        <link rel="stylesheet" href="css/style.cards.css?v=1.19.4" />
-        <link rel="stylesheet" href="css/style.responsive.css?v=1.19.4" />
-        <link rel="stylesheet" href="css/style.utilities.css?v=1.19.4" />
+        <link rel="stylesheet" href="css/style.base.css?v=1.19.5" />
+        <link rel="stylesheet" href="css/style.cards.css?v=1.19.5" />
+        <link rel="stylesheet" href="css/style.responsive.css?v=1.19.5" />
+        <link rel="stylesheet" href="css/style.utilities.css?v=1.19.5" />
     </head>
 
     <body>
@@ -297,47 +297,47 @@
         <div id="toast-container" class="toast-container" aria-live="polite"></div>
 
         <!-- Dependencies -->
-        <script defer src="js/shared/formatters.js?v=1.19.4"></script>
-        <script defer src="js/shared/auth.js?v=1.19.4"></script>
-        <script defer src="js/shared/logger.js?v=1.19.4"></script>
-        <script defer src="js/shared/constants.js?v=1.19.4"></script>
-        <script type="module" src="js/shared/escapeHtml.js?v=1.19.4"></script>
-        <script type="module" src="js/shared/modalCore.js?v=1.19.4"></script>
-        <script type="module" src="js/shared/toast.js?v=1.19.4"></script>
-        <script type="module" src="js/shared/fetchJson.js?v=1.19.4"></script>
-        <script type="module" src="js/shared/debounce.js?v=1.19.4"></script>
-        <script defer src="js/shared/ui.js?v=1.19.4"></script>
-        <script defer src="js/shared/headerUser.js?v=1.19.4"></script>
+        <script defer src="js/shared/formatters.js?v=1.19.5"></script>
+        <script defer src="js/shared/auth.js?v=1.19.5"></script>
+        <script defer src="js/shared/logger.js?v=1.19.5"></script>
+        <script defer src="js/shared/constants.js?v=1.19.5"></script>
+        <script type="module" src="js/shared/escapeHtml.js?v=1.19.5"></script>
+        <script type="module" src="js/shared/modalCore.js?v=1.19.5"></script>
+        <script type="module" src="js/shared/toast.js?v=1.19.5"></script>
+        <script type="module" src="js/shared/fetchJson.js?v=1.19.5"></script>
+        <script type="module" src="js/shared/debounce.js?v=1.19.5"></script>
+        <script defer src="js/shared/ui.js?v=1.19.5"></script>
+        <script defer src="js/shared/headerUser.js?v=1.19.5"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 if (typeof fetchGlobalUsers === 'function') fetchGlobalUsers();
             });
         </script>
-        <script defer src="js/shared/printModal.js?v=1.19.4"></script>
-        <link rel="stylesheet" href="css/printModal.css?v=1.19.4" />
-        <script defer src="js/studnie/offerPrintManager.js?v=1.19.4"></script>
-        <script defer src="js/rury/offerPrintManager.js?v=1.19.4"></script>
-        <script defer src="js/kartoteka/kartotekaHelpers.js?v=1.19.4"></script>
-        <script type="module" src="js/kartoteka/kartotekaUi.js?v=1.19.4"></script>
+        <script defer src="js/shared/printModal.js?v=1.19.5"></script>
+        <link rel="stylesheet" href="css/printModal.css?v=1.19.5" />
+        <script defer src="js/studnie/offerPrintManager.js?v=1.19.5"></script>
+        <script defer src="js/rury/offerPrintManager.js?v=1.19.5"></script>
+        <script defer src="js/kartoteka/kartotekaHelpers.js?v=1.19.5"></script>
+        <script type="module" src="js/kartoteka/kartotekaUi.js?v=1.19.5"></script>
 
-        <script defer src="js/kartoteka/kartotekaInit.js?v=1.19.4"></script>
-        <script defer src="js/shared/iconsSlim.js?v=1.19.4"></script>
+        <script defer src="js/kartoteka/kartotekaInit.js?v=1.19.5"></script>
+        <script defer src="js/shared/iconsSlim.js?v=1.19.5"></script>
 
         <!-- SheetJS do XLSX — ładowany leniwie przy pierwszej operacji importu/eksportu -->
-        <script defer src="js/shared/xlsxLoader.js?v=1.19.4"></script>
+        <script defer src="js/shared/xlsxLoader.js?v=1.19.5"></script>
 
         <!-- Import/Eksport ofert (feature flag) -->
-        <script defer src="js/import-export/shared/featureFlag.js?v=1.19.4"></script>
-        <script defer src="js/import-export/shared/xlsxImportShared.js?v=1.19.4"></script>
-        <script defer src="js/import-export/shared/conflictModal.js?v=1.19.4"></script>
-        <script defer src="js/import-export/shared/jsonOfferTransfer.js?v=1.19.4"></script>
-        <script defer src="js/import-export/rury/externalImport.js?v=1.19.4"></script>
-        <script defer src="js/import-export/rury/externalExportTemplate.js?v=1.19.4"></script>
-        <script defer src="js/import-export/rury/transferJson.js?v=1.19.4"></script>
-        <script defer src="js/import-export/studnie/externalImport.js?v=1.19.4"></script>
-        <script defer src="js/import-export/studnie/externalExportTemplate.js?v=1.19.4"></script>
-        <script defer src="js/import-export/studnie/transferJson.js?v=1.19.4"></script>
-        <script defer src="js/import-export/toolbar.js?v=1.19.4"></script>
+        <script defer src="js/import-export/shared/featureFlag.js?v=1.19.5"></script>
+        <script defer src="js/import-export/shared/xlsxImportShared.js?v=1.19.5"></script>
+        <script defer src="js/import-export/shared/conflictModal.js?v=1.19.5"></script>
+        <script defer src="js/import-export/shared/jsonOfferTransfer.js?v=1.19.5"></script>
+        <script defer src="js/import-export/rury/externalImport.js?v=1.19.5"></script>
+        <script defer src="js/import-export/rury/externalExportTemplate.js?v=1.19.5"></script>
+        <script defer src="js/import-export/rury/transferJson.js?v=1.19.5"></script>
+        <script defer src="js/import-export/studnie/externalImport.js?v=1.19.5"></script>
+        <script defer src="js/import-export/studnie/externalExportTemplate.js?v=1.19.5"></script>
+        <script defer src="js/import-export/studnie/transferJson.js?v=1.19.5"></script>
+        <script defer src="js/import-export/toolbar.js?v=1.19.5"></script>
 
         <!-- Wymuszenie jedynego punktu wejścia: app.html#/<module> -->
         <script>

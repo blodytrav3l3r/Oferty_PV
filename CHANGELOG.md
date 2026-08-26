@@ -4,6 +4,43 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.3...v1.19.5) (2026-08-26)
+
+### Features
+
+- **security:** cli git safety etap 3 ([d0681d7](https://github.com/blodytrav3l3r/Oferty_PV/commit/d0681d73a451dcdeee53a75303383f7d646930d0))
+- **security:** enforcement git safety etap 4 ([e402150](https://github.com/blodytrav3l3r/Oferty_PV/commit/e402150792521fa2af221a3e3014c07c2ec27b18))
+- **ui:** poprawa przewijania i wyszukiwania kartoteki ([a3638a8](https://github.com/blodytrav3l3r/Oferty_PV/commit/a3638a851920c73a0f1021d702e8c43671f93a35))
+
+### Bug Fixes
+
+- **chore:** naprawa pre-push i lint ([502bbd5](https://github.com/blodytrav3l3r/Oferty_PV/commit/502bbd528e5974a8b474e95b661738bc311b9f3d))
+- **chore:** speed up pre-push validation ([6788098](https://github.com/blodytrav3l3r/Oferty_PV/commit/67880986a57af590972e7155df189b096668363f))
+- **chore:** stabilize lint workflow ([2011109](https://github.com/blodytrav3l3r/Oferty_PV/commit/20111090f749953cc02b1453b67c9b2ee6552149))
+- **ci:** disable ts checking for legacy frontend js ([8fada0a](https://github.com/blodytrav3l3r/Oferty_PV/commit/8fada0ab1fd4f37294f5a7adbd5e88a056e49e93))
+- **ci:** restore type checking for legacy js ([cc592d7](https://github.com/blodytrav3l3r/Oferty_PV/commit/cc592d7516f7fd3f6b15fd7d4e16097618e2e00d))
+- **offers:** poprawa pop-upow import/eksport xlsx i json 1:1 ([078deb7](https://github.com/blodytrav3l3r/Oferty_PV/commit/078deb79a4f1c75493b883eeae784bc7f8de7786))
+- **studnie:** alias nr studni i includes dla naglowkow ([63731b4](https://github.com/blodytrav3l3r/Oferty_PV/commit/63731b471ace075d03dc2a5480a77d8efb73171d))
+- **studnie:** autodobor najblizszej srednicy i rodzaju przy wklejaniu ([69de9e5](https://github.com/blodytrav3l3r/Oferty_PV/commit/69de9e597adfdb78cd81d625c357a7f4c9f76c43))
+- **studnie:** excel i ui poprawki ([9fc28ba](https://github.com/blodytrav3l3r/Oferty_PV/commit/9fc28ba590ccaf3684d97d6f61061714aba5c01c))
+- **studnie:** filtr max dn przejscia w liscie i przywrocenie wygladu ([93bc147](https://github.com/blodytrav3l3r/Oferty_PV/commit/93bc14763064c9e43d46b88ac2962222047fea5f))
+- **studnie:** kolejnosc tla bledow i duplikatow w excel ([0cbd4f6](https://github.com/blodytrav3l3r/Oferty_PV/commit/0cbd4f61508370eaa45346f4c23c7e9cf86783d8))
+- **studnie:** kopiowanie nazw excel i paste wielokolumnowy ([c19b67c](https://github.com/blodytrav3l3r/Oferty_PV/commit/c19b67c372288a8ce9e77a393fbd96e2d0ea6b59))
+- **studnie:** legenda kolorow excel i duplikat nad bledem ([ee1ca1d](https://github.com/blodytrav3l3r/Oferty_PV/commit/ee1ca1d568c79f171b6517e3e4ebb9af02ec7eea))
+- **studnie:** podglad ot i crash setselectionrange dla kregow ([33502f2](https://github.com/blodytrav3l3r/Oferty_PV/commit/33502f2c3d798c922a35ce49949ec6df7d9e8074))
+- **studnie:** walidacja przejsc popup i brak nieznanych ([6c5f013](https://github.com/blodytrav3l3r/Oferty_PV/commit/6c5f0133e5beb1ffa6d6b949d800e5e6ed68d91e))
+- **studnie:** wklejanie bez naglowka i pelna tabela ([19d6f82](https://github.com/blodytrav3l3r/Oferty_PV/commit/19d6f82580ce8eec1c72e46b28e197a9436c82ea))
+- **studnie:** wklejanie kolumna-po-kolumnie i calosc na raz z naglowkami ([c895ef5](https://github.com/blodytrav3l3r/Oferty_PV/commit/c895ef53176f31bd289b78be4a1290c7a06be1ce))
+- **studnie:** zachowanie numerow i srednic przejsc przy wklejaniu ([d37c71e](https://github.com/blodytrav3l3r/Oferty_PV/commit/d37c71e7b7493218936a8fa3f9affdc678438c5f))
+- **test:** dodaj telemetry limiter do mockow rate limiters ([80f464e](https://github.com/blodytrav3l3r/Oferty_PV/commit/80f464e8633c51ff2c184dbd85871b8a9bc0f99c)), closes [#848](https://github.com/blodytrav3l3r/Oferty_PV/issues/848)
+- **test:** prune stale tmp before run ([81f316b](https://github.com/blodytrav3l3r/Oferty_PV/commit/81f316b0e9591422ada5444f169e72d7d6077230))
+- **ui:** naprawa przewijania karty budowy krok 4 w rurach i studniach ([26078f2](https://github.com/blodytrav3l3r/Oferty_PV/commit/26078f23c67ee81bf5ee690a04d911d0a64b2efd)), closes [#wizard-step-4](https://github.com/blodytrav3l3r/Oferty_PV/issues/wizard-step-4)
+- **ui:** poprawa naglowka nawigacji i popupa przeliczania ([1a0d706](https://github.com/blodytrav3l3r/Oferty_PV/commit/1a0d706ced202b320e02ecb4749795ca8066862b))
+- **ui:** poprawka komentarza i18n dla testu ([d432305](https://github.com/blodytrav3l3r/Oferty_PV/commit/d4323056573c5df170e8c4bd4ff89266a91bfefa))
+- **ui:** responsywność górnego i dolnego paska w całym projekcie ([40444ef](https://github.com/blodytrav3l3r/Oferty_PV/commit/40444ef1b057a53a5a0238b7d2a4b88514933c22))
+- **ui:** restore body scroll after modal close ([1de5298](https://github.com/blodytrav3l3r/Oferty_PV/commit/1de52981918c7649f5fda3a572cd2538e79d4073))
+- **ui:** ujednolicenie nagłówka i odstępów ai/ml dashboard ([4ab99b9](https://github.com/blodytrav3l3r/Oferty_PV/commit/4ab99b9c78f02e8a98b252107328ccc222afb85e))
+
 ### [1.19.4](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.3...v1.19.4) (2026-08-24)
 
 ### Bug Fixes
