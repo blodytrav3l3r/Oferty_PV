@@ -67,7 +67,7 @@ function renderInlinePrzejsciaApp(containerId) {
         <!-- Rodzaj kafelków - przewijalna siatka -->
         <div style="padding:0.4rem 0;">
             <div class="flex-space-between">
-                <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px; font-weight: var(--fw-bold);">Rodzaj materiału</div>
+                <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Rodzaj materiału</div>
                 <button data-action="openPrzejsciaVisibilityPopup" data-container="${containerId || ''}" style="background:rgba(var(--accent-rgb), 0.1); border:1px solid rgba(var(--accent-rgb), 0.3); color:var(--accent-text); font-size: var(--fs-2xs); font-weight: var(--fw-semibold); padding:0.15rem 0.5rem; border-radius: var(--radius-2xs); cursor:pointer; transition:all 0.15s;" onmouseenter="this.style.background='rgba(var(--accent-rgb), 0.2)';this.style.borderColor='rgba(var(--accent-rgb), 0.5)'" onmouseleave="this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'">${visibilityBtnLabel}</button>
             </div>
             <div id="przejscia-type-scroll" style="max-height:140px; overflow-y:auto; padding-right:0.2rem; scrollbar-width:thin; scrollbar-color:rgba(var(--accent-rgb), 0.5) transparent;">
@@ -84,7 +84,7 @@ function renderInlinePrzejsciaApp(containerId) {
                              onmouseenter="if(!${isActive})this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'"
                              onmouseleave="if(!${isActive})this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'"
                              title="${escapeHtmlAttr(t)}">
-                             <div class="${isActive ? 'color-accent' : ''}" style="font-size:${t.length > 20 ? '9px' : t.length > 14 ? '11px' : '14px'}; font-weight: var(--fw-bold); text-align:center; line-height:1.1; word-break:break-word;">${escapeHtml(t)}</div>
+                              <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-bold); text-align:center; line-height:1.25; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(t)}</div>
                         </div>`;
                         })
                         .join('')}
@@ -94,7 +94,7 @@ function renderInlinePrzejsciaApp(containerId) {
 
         <!-- Wybór DN -->
         <div style="padding:0.3rem 0;">
-            <div style="font-size: var(--fs-2xs); color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px; font-weight: var(--fw-bold);">Średnica (DN) — ${escapeHtml(inlinePrzejsciaState.type || '')}</div>
+            <div style="font-size: 0.52rem; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.35px; font-weight: var(--fw-semibold); opacity:0.9;">Średnica (DN) — ${escapeHtml(inlinePrzejsciaState.type || '')}</div>
             <div class="grid-auto-120">
                 ${dnList
                     .map((p) => {
@@ -110,7 +110,7 @@ function renderInlinePrzejsciaApp(containerId) {
                          onmouseenter="if(!${isActive}){this.style.background='rgba(var(--accent-rgb), 0.1)';this.style.borderColor='rgba(var(--accent-rgb), 0.3)'}"
                          onmouseleave="if(!${isActive}){this.style.background='rgba(var(--white-rgb), 0.05)';this.style.borderColor='rgba(var(--white-rgb), 0.05)'}"
                          data-action="inlineSetDN" data-id="${escapeHtml(p.id)}" data-container="${escapeHtml(containerId || '')}">
-                         <div class="${isActive ? 'color-accent' : ''}" style="font-size:${dnLabel.length > 18 ? '9px' : dnLabel.length > 13 ? '11px' : '15px'}; font-weight: var(--fw-extrabold); text-align:center; letter-spacing:0.5px;">${dnLabel}</div>
+                          <div class="${isActive ? 'color-accent' : ''}" style="font-size: var(--fs-xs); font-weight: var(--fw-extrabold); text-align:center; line-height:1.25; letter-spacing:0.3px; overflow-wrap:anywhere;">${dnLabel}</div>
                     </div>
                 `;
                     })

@@ -16,6 +16,9 @@ const RECALC_RELIEF_TYPES = ['pierscien_odciazajacy', 'plyta_najazdowa', 'plyta_
 
 const RECALC_AUTO_ACCENT = 'var(--accent2-hover)';
 
+const RECALC_DEFAULT_RED_MIN_H_MM = 2500;
+const RECALC_DEFAULT_RED_TARGET_DN = 1000;
+
 // Kolejność kafelków zakończeń: konus → płyta DIN → pierścień odciążający → płyty odciążające.
 // Nieznane typy lądują na końcu (?? 99).
 const RECALC_CLOSURE_ORDER = {
@@ -51,9 +54,9 @@ function _recalcSafeDn(dn) {
 
 function _recalcBuildClosureTile({ dn, id, name, componentType, height, isAuto, isActive, kind }) {
     const prefix = kind === 'red' ? 'recalc-redtop' : 'recalc-top';
-    const handler = kind === 'red' ? 'recalcSelectRedTop' : 'recalcSelectTop';
     const safeDn = _recalcSafeDn(dn);
-    const safeId = escapeHtml(id);
+    // id do atrybutu id musi być HTML-escaped; do dataset używamy oryginału
+    const safeIdAttr = escapeHtml(id);
     const isKonus = componentType === 'konus';
     let label = isAuto ? (kind === 'red' ? 'Auto (Konus)' : 'Auto (Domyślny)') : name;
     let heightLabel = '';
@@ -66,11 +69,12 @@ function _recalcBuildClosureTile({ dn, id, name, componentType, height, isAuto, 
     const classList = ['recalc-tile'];
     if (isActive) classList.push('active');
     if (isAuto) classList.push('recalc-tile-auto');
+    const action = kind === 'red' ? 'recalc-select-redtop' : 'recalc-select-top';
 
     return `
-    <button type="button" class="${classList.join(' ')}" id="${prefix}-${safeDn}-${safeId}"
+    <button type="button" class="${classList.join(' ')}" id="${prefix}-${safeDn}-${safeIdAttr}"
             style="--tile-accent:${accent};"
-            onclick="window.${handler}('${safeDn}', '${safeId}')"
+            data-action="${action}" data-dn="${safeDn}" data-choice-id="${safeIdAttr}"
             aria-pressed="${isActive}">
         ${iconHtml}<span class="recalc-tile-name">${escapeHtml(label)}</span>
         ${heightLabel ? `<span class="recalc-tile-height">${escapeHtml(heightLabel)}</span>` : ''}
@@ -162,7 +166,7 @@ function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
         targetOpts.length > 1
             ? `<div class="recalc-red-field">
                 <label class="form-label" for="recalc-red-target-${safeDn}">Cel redukcji</label>
-                <select id="recalc-red-target-${safeDn}" class="form-input" onchange="window.recalcRedTargetChanged(${safeDn})">
+                <select id="recalc-red-target-${safeDn}" class="form-input" data-action="recalc-red-target-changed" data-dn="${safeDn}">
                     <option value="1000">Redukcja na DN1000</option>
                     <option value="1200">Redukcja na DN1200</option>
                 </select>
@@ -172,7 +176,7 @@ function _recalcBuildReductionSection(dn, exampleMag, groupWells) {
     return `
     <div class="recalc-reduction">
         <label class="recalc-checkbox-row">
-            <input type="checkbox" id="recalc-use-red-${safeDn}" onchange="window.recalcToggleRed(${safeDn})" />
+            <input type="checkbox" id="recalc-use-red-${safeDn}" data-action="recalc-toggle-red" data-dn="${safeDn}" />
             <span>Wykonaj redukcję</span>
         </label>
         <div class="recalc-red-box" id="recalc-red-box-${safeDn}" hidden>
@@ -203,7 +207,7 @@ function _recalcBuildStycznaSection(dn, groupWells) {
         <div class="recalc-red-box">
             <div class="recalc-red-field">
                 <label class="form-label" for="recalc-styczna-dn-${safeDn}">Średnica nadbudowy</label>
-                <select id="recalc-styczna-dn-${safeDn}" class="form-input" onchange="window.recalcStycznaDnChanged('${safeDn}')">
+                <select id="recalc-styczna-dn-${safeDn}" class="form-input" data-action="recalc-styczna-dn-changed" data-dn="${safeDn}">
                     <option value="1000"${defaultDn === 1000 ? ' selected' : ''}>DN1000</option>
                     <option value="1200"${defaultDn === 1200 ? ' selected' : ''}>DN1200</option>
                 </select>
@@ -292,32 +296,74 @@ window.openGlobalRecalcModal = function () {
         id: 'global-recalc-modal',
         titleId: 'global-recalc-title',
         html: `
-    <div class="modal recalc-modal">
-      <div class="modal-header"><h3 id="global-recalc-title"><i data-lucide="settings" aria-hidden="true"></i> Automatycznie przelicz ofertę</h3><button type="button" class="btn-icon" aria-label="Zamknij" onclick="window.closeGlobalRecalcModal()"><i data-lucide="x" aria-hidden="true"></i></button></div>
+    <div class="modal recalc-modal modal--recalc">
+      <div class="modal-header"><h3 id="global-recalc-title"><i data-lucide="settings" aria-hidden="true"></i> Automatycznie przelicz ofertę</h3><button type="button" class="btn-icon" data-action="recalc-close" aria-label="Zamknij"><i data-lucide="x" aria-hidden="true"></i></button></div>
       <div class="recalc-modal-body">
         <p class="recalc-modal-desc">Ustaw preferencje zakończeń dla poszczególnych średnic. Program zaktualizuje ustawienia zakończeń i ponownie wygeneruje układ elementów dla <strong>wszystkich ${wells.length} studni w ofercie</strong> według reguł automatycznych. Studnie należące do zamówień lub zleceń produkcyjnych zostaną pominięte.</p>
         ${groupsHtml}
       </div>
       <div class="recalc-modal-footer">
         <label class="recalc-confirm-row" title="Ochrona przed nadpisaniem ręcznie dobranych konfiguracji">
-            <input type="checkbox" id="recalc-confirm-override" onchange="window.recalcToggleConfirm()" />
+            <input type="checkbox" id="recalc-confirm-override" data-action="recalc-toggle-confirm" />
             <i data-lucide="alert-triangle" aria-hidden="true"></i>
             <span>Rozumiem, że konfiguracje studni zostaną nadpisane</span>
         </label>
-        <button type="button" class="btn btn-secondary" onclick="window.closeGlobalRecalcModal()">Anuluj</button>
-        <button type="button" class="btn btn-primary" id="recalc-apply-btn" onclick="window.applyGlobalRecalc()" disabled><i data-lucide="refresh-cw" aria-hidden="true"></i> Przelicz wszystkie</button>
+        <button type="button" class="btn btn-secondary" data-action="recalc-close">Anuluj</button>
+        <button type="button" class="btn btn-primary" id="recalc-apply-btn" data-action="recalc-apply" disabled><i data-lucide="refresh-cw" aria-hidden="true"></i> Przelicz wszystkie</button>
       </div>
-      <div id="recalc-progress" class="recalc-progress" aria-live="polite" hidden></div>
+      <div id="recalc-progress" class="recalc-progress" role="status" aria-live="polite" hidden></div>
     </div>`
     });
 
     const root = document.getElementById('global-recalc-modal');
-    if (root && window.lucide) window.lucide.createIcons({ root });
+    if (root) {
+        // Delegacja zdarzeń — zamiast inline onclick/onchange (UI_GUIDELINES §10, CSP baza #13)
+        root.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn || !root.contains(btn)) return;
+            const action = btn.getAttribute('data-action');
+            if (action === 'recalc-close') window.closeGlobalRecalcModal();
+            else if (action === 'recalc-apply') window.applyGlobalRecalc();
+            else if (action === 'recalc-select-top')
+                window.recalcSelectTop(
+                    btn.getAttribute('data-dn'),
+                    btn.getAttribute('data-choice-id')
+                );
+            else if (action === 'recalc-select-redtop')
+                window.recalcSelectRedTop(
+                    btn.getAttribute('data-dn'),
+                    btn.getAttribute('data-choice-id')
+                );
+        });
+        root.addEventListener('change', (e) => {
+            const el = e.target.closest('[data-action]');
+            if (!el || !root.contains(el)) return;
+            const action = el.getAttribute('data-action');
+            const dn = el.getAttribute('data-dn');
+            if (action === 'recalc-toggle-red') window.recalcToggleRed(dn);
+            else if (action === 'recalc-red-target-changed') window.recalcRedTargetChanged(dn);
+            else if (action === 'recalc-styczna-dn-changed') window.recalcStycznaDnChanged(dn);
+            else if (action === 'recalc-toggle-confirm') window.recalcToggleConfirm();
+        });
+        if (window.lucide) window.lucide.createIcons({ root });
+        // tile groups dla a11y — role group + aria-label per DN
+        root.querySelectorAll('.recalc-tile-grid').forEach((g) => {
+            if (!g.getAttribute('role')) g.setAttribute('role', 'group');
+            if (!g.getAttribute('aria-label')) {
+                const dn = g.id.replace('recalc-top-tiles-', '').replace('recalc-red-tiles-', '');
+                g.setAttribute('aria-label', 'Zakończenia DN ' + dn);
+            }
+        });
+    }
 };
 
 window.closeGlobalRecalcModal = function () {
-    const el = document.getElementById('global-recalc-modal');
-    if (el) el.remove();
+    if (typeof window.closeModal === 'function') window.closeModal('global-recalc-modal');
+    else {
+        const el = document.getElementById('global-recalc-modal');
+        if (el) el.remove();
+        if (typeof window.restoreBodyScroll === 'function') window.restoreBodyScroll();
+    }
 };
 
 function _recalcSetActive(containerId, tileId) {
@@ -355,10 +401,12 @@ window.recalcRedTargetChanged = function (dn) {
     if (!select || !tilesBox) return;
     const targetDn = [1000, 1200].includes(parseInt(select.value, 10))
         ? parseInt(select.value, 10)
-        : 1000;
+        : RECALC_DEFAULT_RED_TARGET_DN;
     const exampleMag = wells[0]?.magazyn || 'Kluczbork';
     const groupWells = wells.filter((w) => String(w.dn) === String(dn));
     tilesBox.innerHTML = _recalcRedTilesHtml(dn, targetDn, exampleMag, groupWells);
+    tilesBox.setAttribute('role', 'group');
+    tilesBox.setAttribute('aria-label', 'Zakończenia redukcji DN ' + targetDn);
     if (label) label.textContent = 'Zakończenie komina DN' + targetDn;
     const input = document.getElementById('recalc-choice-redtop-' + dn);
     if (input) input.value = 'auto';
@@ -372,7 +420,7 @@ window.recalcStycznaDnChanged = function (dn) {
     if (!select || !tilesBox) return;
     const effDn = [1000, 1200].includes(parseInt(select.value, 10))
         ? parseInt(select.value, 10)
-        : 1000;
+        : RECALC_DEFAULT_RED_TARGET_DN;
     const exampleMag = wells[0]?.magazyn || 'Kluczbork';
     const groupWells = wells.filter((w) => String(w.dn) === String(dn));
     const availForDn = _recalcClosureCandidates(studnieProducts, effDn, exampleMag, groupWells);
@@ -383,6 +431,8 @@ window.recalcStycznaDnChanged = function (dn) {
               } dla DN ${effDn}.</div>`
             : '';
     tilesBox.innerHTML = _recalcTopTilesHtml(dn, availForDn) + emptyState;
+    tilesBox.setAttribute('role', 'group');
+    tilesBox.setAttribute('aria-label', 'Zakończenia DN ' + effDn);
     if (choice) choice.value = 'auto';
     if (window.lucide) window.lucide.createIcons({ root: tilesBox });
 };
@@ -413,17 +463,19 @@ window.applyGlobalRecalc = async function () {
             const topId = document.getElementById(`recalc-choice-top-${dn}`)?.value || 'auto';
             const useRed = document.getElementById(`recalc-use-red-${dn}`)?.checked || false;
             let redTopId = 'auto';
-            let redMinH = 2500;
-            let redTargetDN = 1000;
+            let redMinH = RECALC_DEFAULT_RED_MIN_H_MM;
+            let redTargetDN = RECALC_DEFAULT_RED_TARGET_DN;
 
             if (useRed) {
                 redTopId = document.getElementById(`recalc-choice-redtop-${dn}`)?.value || 'auto';
                 const rawT = document.getElementById('recalc-red-target-' + dn)?.value;
                 const parsedT = parseInt(rawT || '1000', 10);
-                redTargetDN = [1000, 1200].includes(parsedT) ? parsedT : 1000;
+                redTargetDN = [1000, 1200].includes(parsedT)
+                    ? parsedT
+                    : RECALC_DEFAULT_RED_TARGET_DN;
                 const raw = document.getElementById(`recalc-red-minh-${dn}`)?.value;
                 const parsed = parseFloat(String(raw || '').replace(',', '.'));
-                redMinH = isNaN(parsed) ? 2500 : Math.round(parsed * 1000);
+                redMinH = isNaN(parsed) ? RECALC_DEFAULT_RED_MIN_H_MM : Math.round(parsed * 1000);
             }
 
             const rawStycznaDn = document.getElementById('recalc-styczna-dn-' + dn)?.value;
