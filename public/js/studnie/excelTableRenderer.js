@@ -259,9 +259,9 @@ function _excelRenderTable(dn) {
     h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">P.Buda</th>`;
     h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">·</th>`;
     h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);min-width:55px;text-align:center;">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">Akcje</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);min-width:90px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);min-width:120px;text-align:center;">Akcje</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);min-width:120px;text-align:center;">·</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);min-width:120px;text-align:center;">·</th>`;
 
     html += `<tr style="position:sticky;top:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:var(--slate-950);">${h3}</tr>`;
     html += `<tr style="position:sticky;top:1.4rem;z-index:${LAYERS_EXCEL.STICKY_HEADER_ROW};background:var(--slate-950);">${h1}</tr>`;

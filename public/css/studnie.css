@@ -3432,6 +3432,15 @@ select.form-input option {
     background: rgba(var(--danger-rgb), 0.12);
     border-color: rgba(var(--danger-rgb), 0.35);
 }
+#excel-table-container .excel-action-btn.has-uwagi {
+    color: var(--warn-hover);
+    background: rgba(var(--warn-rgb), 0.15);
+    border-color: rgba(var(--warn-rgb), 0.35);
+}
+#excel-table-container .excel-action-btn.has-uwagi:hover {
+    background: rgba(var(--warn-rgb), 0.22);
+    border-color: rgba(var(--warn-rgb), 0.5);
+}
 
 /* Bulk Auto/Manual w nagłówku H3 */
 #excel-table-container .excel-bulk-btn {

@@ -482,6 +482,23 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<button onclick="excelOpenWellParams(' +
             wIdx +
             ')" title="Parametry" class="excel-action-btn is-accent"><i data-lucide="settings" class="icon-sm" aria-hidden="true"></i></button>';
+        const _hasUwagi = !!(well.uwagi && String(well.uwagi).trim());
+        const _uwagiPrev = _hasUwagi
+            ? (typeof escapeHtmlAttr === 'function'
+                  ? escapeHtmlAttr(String(well.uwagi).slice(0, 40))
+                  : String(well.uwagi).slice(0, 40)) + (String(well.uwagi).length > 40 ? '…' : '')
+            : '';
+        const _uwagiTitle = _hasUwagi
+            ? 'Uwagi: ' + _uwagiPrev + ' \u2014 kliknij aby edytowa\u0107'
+            : 'Dodaj uwagi';
+        html +=
+            '<button onclick="openWellNotesModal(' +
+            wIdx +
+            ')" title="' +
+            _uwagiTitle +
+            '" class="excel-action-btn' +
+            (_hasUwagi ? ' has-uwagi' : '') +
+            '"><i data-lucide="message-square" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDuplicateWell(' +
             wIdx +
