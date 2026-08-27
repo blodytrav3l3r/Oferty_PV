@@ -4,7 +4,7 @@
 
 /* ===== BLOKADA OFERTY - BANER ===== */
 const OFFER_LOCKED_MSG =
-    '<i data-lucide="lock" aria-hidden="true"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Edytuj ją przez zamówienie.';
+    '<i data-lucide="lock" aria-hidden="true"></i> Ta studnia jest zablokowana — jest częścią zamówienia. Konfiguracja i Parametry zablokowane. Edytuj przez zamówienie.';
 const WELL_LOCKED_MSG =
     '<i data-lucide="lock" aria-hidden="true"></i> Studnia zablokowana — posiada zaakceptowane zlecenie produkcyjne.';
 
@@ -65,7 +65,7 @@ function renderOfferLockBanner() {
                     </div>
                     <div class="fs-xs-muted">
                         „${escapeHtml(well.name)}" jest częścią zamówienia${wellOrder ? ' ' + escapeHtml(wellOrder.orderNumber || '') : ''}.
-                        Edytuj ją przez zamówienie lub wybierz inną studnię.
+                        Konfiguracja i Parametry zablokowane — edytuj przez zamówienie lub wybierz inną studnię.
                         <span style="color:var(--success-hover); font-weight: var(--fw-bold);">${progress.ordered}/${progress.total} studni zamówionych</span>
                     </div>
                 </div>

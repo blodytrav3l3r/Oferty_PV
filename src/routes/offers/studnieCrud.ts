@@ -17,6 +17,233 @@ import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 const router = express.Router();
 const uuidv4 = crypto.randomUUID.bind(crypto);
 
+const ORDERED_WELL_WHITELIST = new Set<string>([]);
+
+// Pola lotne / techniczne — nie wyzwalają 403 (header oferty edytowalny, auto-recalc nie blokuje)
+const IGNORED_WELL_FIELDS = new Set<string>([
+    'name',
+    'configSource',
+    'autoSelect',
+    'autoLocked',
+    'configStatus',
+    'configErrors',
+    'price',
+    'weight',
+    'height',
+    'totalPrice',
+    'updatedAt'
+]);
+
+// Well-level lock: Konfiguracja + Parametry + config/przejscia. Header oferty (clientName itp.) poza guardem.
+const LOCKED_WELL_FIELDS = new Set<string>([
+    // Konfiguracja studni
+    'numer',
+    'dn',
+    'rzednaWlazu',
+    'rzednaDna',
+    'doplata',
+    'redukcjaDN1000',
+    'redukcjaTargetDN',
+    'redukcjaMinH',
+    'redukcjaZakonczenie',
+    'redukcjaZakonczenieByDn',
+    'zakonczenie',
+    'zakonczenieByDn',
+    'stycznaNadbudowa1200',
+    'psiaBuda',
+    '_psiaBudaBackup',
+    'uwagi',
+    'config',
+    'przejscia',
+    // Parametry tej studni (WELL_PARAM_DEFS)
+    'nadbudowa',
+    'dennicaMaterial',
+    'wkladkaDennica',
+    'wkladkaNadbudowa',
+    'wkladkaZwienczenie',
+    'klasaBetonu',
+    'agresjaChemiczna',
+    'agresjaMrozowa',
+    'klasaNosnosci_korpus',
+    'klasaNosnosci_zwienczenie',
+    'malowanieW',
+    'malowanieZ',
+    'powlokaNameW',
+    'powlokaNameZ',
+    'malowanieWewCena',
+    'malowanieZewCena',
+    'kineta',
+    'precoFullHeight',
+    'spocznik',
+    'redukcjaKinety',
+    'stopnie',
+    'spocznikH',
+    'usytuowanie',
+    'uszczelka',
+    'magazyn',
+    'wkladkaOsadnikPreco',
+    'wkladkaOsadnikH'
+]);
+
+function normalizeValue(v: unknown): unknown {
+    if (v === undefined) return null;
+    if (v === '') return null;
+    return v;
+}
+
+function stableStringify(v: unknown): string {
+    if (v === null || v === undefined) return 'null';
+    if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+    if (typeof v === 'object') {
+        const obj = v as Record<string, unknown>;
+        const keys = Object.keys(obj).sort();
+        return (
+            '{' + keys.map((k) => JSON.stringify(k) + ':' + stableStringify(obj[k])).join(',') + '}'
+        );
+    }
+    return JSON.stringify(v);
+}
+
+function stripAutoConfig(config: unknown): unknown {
+    if (!Array.isArray(config)) return config;
+    return (config as Array<Record<string, unknown>>)
+        .filter((item) => !item.autoAdded)
+        .map((item) => {
+            const copy: Record<string, unknown> = {};
+            for (const k of Object.keys(item)) {
+                if (['frozenPrice', 'frozenPriceBase', 'frozenName', '_osadnikCost'].includes(k))
+                    continue;
+                copy[k] = normalizeValue(item[k]);
+            }
+            return copy;
+        })
+        .sort((a, b) => stableStringify(a).localeCompare(stableStringify(b)));
+}
+
+function stripAutoPrzejscia(przejscia: unknown): unknown {
+    if (!Array.isArray(przejscia)) return przejscia;
+    return (przejscia as Array<Record<string, unknown>>).map((p) => {
+        const copy: Record<string, unknown> = {};
+        for (const k of Object.keys(p)) {
+            if (
+                [
+                    'frozenPrice',
+                    'frozenPriceBase',
+                    'frozenName',
+                    'frozenTransitionPrice',
+                    'frozenDrillingPrice',
+                    'frozenDrillingName',
+                    'frozenDrillingDn'
+                ].includes(k)
+            )
+                continue;
+            copy[k] = normalizeValue(p[k]);
+        }
+        return copy;
+    });
+}
+
+function canonicalWell(well: Record<string, unknown>): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(well)) {
+        if (IGNORED_WELL_FIELDS.has(k)) continue;
+        if (!LOCKED_WELL_FIELDS.has(k)) continue;
+        let v = normalizeValue(well[k]);
+        if (k === 'config') v = stripAutoConfig(v);
+        else if (k === 'przejscia') v = stripAutoPrzejscia(v);
+        out[k] = v;
+    }
+    // also normalize arrays order for determinism
+    if (Array.isArray(out.config))
+        out.config = (out.config as unknown[])
+            .slice()
+            .sort((a, b) => stableStringify(a).localeCompare(stableStringify(b)));
+    if (Array.isArray(out.przejscia))
+        out.przejscia = (out.przejscia as unknown[])
+            .slice()
+            .sort((a, b) => stableStringify(a).localeCompare(stableStringify(b)));
+    return out;
+}
+
+function extractWellsFromOfferData(dataStr: string | null): Array<Record<string, unknown>> {
+    if (!dataStr) return [];
+    try {
+        const parsed = JSON.parse(dataStr);
+        const wells =
+            (parsed.wells as Array<Record<string, unknown>>) ||
+            ((parsed.data as Record<string, unknown>)?.wells as Array<Record<string, unknown>>) ||
+            (((parsed.data as Record<string, unknown>)?.data as Record<string, unknown>)
+                ?.wells as Array<Record<string, unknown>>) ||
+            [];
+        return Array.isArray(wells) ? wells : [];
+    } catch {
+        return [];
+    }
+}
+
+function extractWellsFromIncoming(o: Record<string, unknown>): Array<Record<string, unknown>> {
+    const fromTop = o.wells as Array<Record<string, unknown>> | undefined;
+    if (Array.isArray(fromTop)) return fromTop;
+    const d = o.data as Record<string, unknown> | undefined;
+    if (d) {
+        if (Array.isArray(d.wells)) return d.wells as Array<Record<string, unknown>>;
+        const nested = (d.data as Record<string, unknown>)?.wells;
+        if (Array.isArray(nested)) return nested as Array<Record<string, unknown>>;
+    }
+    return [];
+}
+
+async function getOrderedWellIdsForOffer(offerId: string): Promise<Set<string>> {
+    if (!offerId) return new Set();
+    const rows = await prisma.$queryRaw<Array<{ data: string | null }>>`
+        SELECT data FROM orders_studnie_rel
+        WHERE "offerStudnieId" = ${offerId}
+           OR json_extract(data, '$.offerId') = ${offerId}
+           OR json_extract(data, '$.offerStudnieId') = ${offerId}
+    `;
+    const ids = new Set<string>();
+    for (const r of rows) {
+        if (!r.data) continue;
+        try {
+            const d = JSON.parse(r.data);
+            const wells =
+                (d.wells as Array<{ id?: string }>) ||
+                ((d.data as Record<string, unknown>)?.wells as Array<{ id?: string }>) ||
+                (((d.data as Record<string, unknown>)?.data as Record<string, unknown>)
+                    ?.wells as Array<{
+                    id?: string;
+                }>) ||
+                [];
+            for (const w of wells) if (w?.id) ids.add(w.id);
+            if (Array.isArray(d))
+                for (const w of d)
+                    if ((w as Record<string, unknown>)?.id)
+                        ids.add((w as Record<string, unknown>).id as string);
+            // also check top-level wells inside data string if nested
+            const altWells = extractWellsFromOfferData(r.data);
+            for (const w of altWells)
+                if ((w as Record<string, unknown>).id)
+                    ids.add((w as Record<string, unknown>).id as string);
+        } catch {}
+    }
+    return ids;
+}
+
+function isWellDiffWhitelisted(
+    oldWell: Record<string, unknown>,
+    newWell: Record<string, unknown>
+): boolean {
+    // ORDERED_WELL_WHITELIST empty → pełny lock, ale ignoruj lotne pola i znormalizuj
+    const a = canonicalWell(oldWell);
+    const b = canonicalWell(newWell);
+    const allKeys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const k of allKeys) {
+        if (ORDERED_WELL_WHITELIST.has(k)) continue;
+        if (stableStringify(a[k]) !== stableStringify(b[k])) return false;
+    }
+    return true;
+}
+
 const writeOffersLimiter = WRITE_LIMITER;
 
 router.get('/studnie', requireAuth, async (req, res) => {
@@ -200,6 +427,45 @@ router.post(
                     }
                     effectiveUserId = resolved.effectiveUserId;
                 }
+                // Guard: pełna blokada studni na zamówieniu (tylko ordered, ignoruj lotne)
+                if (old) {
+                    try {
+                        const orderedIds = await getOrderedWellIdsForOffer(docId);
+                        if (orderedIds.size > 0) {
+                            const oldWells = extractWellsFromOfferData(old.data);
+                            const newWells = extractWellsFromIncoming(o as Record<string, unknown>);
+                            for (const oid of orderedIds) {
+                                const oldWell = oldWells.find((w) => w.id === oid) as
+                                    Record<string, unknown> | undefined;
+                                const newWell = newWells.find((w) => w.id === oid) as
+                                    Record<string, unknown> | undefined;
+                                if (oldWell && !newWell) {
+                                    return res.status(403).json({
+                                        error: 'Nie można usunąć studni na zamówieniu — usuń najpierw zamówienie.'
+                                    });
+                                }
+                                if (
+                                    oldWell &&
+                                    newWell &&
+                                    !isWellDiffWhitelisted(oldWell, newWell)
+                                ) {
+                                    return res.status(403).json({
+                                        error: 'Studnia na zamówieniu — Konfiguracja i Parametry zablokowane. Edytuj przez zamówienie.'
+                                    });
+                                }
+                            }
+                        }
+                    } catch (guardErr) {
+                        if (
+                            guardErr &&
+                            typeof guardErr === 'object' &&
+                            'status' in (guardErr as Record<string, unknown>)
+                        )
+                            throw guardErr;
+                        logger.warn('Offers', 'Guard ordered well failed', String(guardErr));
+                    }
+                }
+
                 if (old) {
                     try {
                         newHistory = JSON.parse(old.history || '[]');
@@ -339,6 +605,41 @@ router.put(
                 let docId = typeof o.id === 'string' ? o.id : '';
                 if (!docId) {
                     docId = Date.now().toString() + '_' + Math.random().toString(36).substr(2, 5);
+                }
+
+                // Guard PUT: pełna blokada studni na zamówieniu (tylko ordered)
+                if (docId) {
+                    const oldDoc = await prisma.offers_studnie_rel.findUnique({
+                        where: { id: docId },
+                        select: { data: true }
+                    });
+                    if (oldDoc?.data) {
+                        const orderedIds = await getOrderedWellIdsForOffer(docId);
+                        if (orderedIds.size > 0) {
+                            const oldWells = extractWellsFromOfferData(oldDoc.data);
+                            const newWells = extractWellsFromIncoming(o as Record<string, unknown>);
+                            for (const oid of orderedIds) {
+                                const oldWell = oldWells.find((w) => w.id === oid) as
+                                    Record<string, unknown> | undefined;
+                                const newWell = newWells.find((w) => w.id === oid) as
+                                    Record<string, unknown> | undefined;
+                                if (oldWell && !newWell) {
+                                    return res.status(403).json({
+                                        error: 'Nie można usunąć studni na zamówieniu — usuń najpierw zamówienie.'
+                                    });
+                                }
+                                if (
+                                    oldWell &&
+                                    newWell &&
+                                    !isWellDiffWhitelisted(oldWell, newWell)
+                                ) {
+                                    return res.status(403).json({
+                                        error: 'Studnia na zamówieniu — Konfiguracja i Parametry zablokowane. Edytuj przez zamówienie.'
+                                    });
+                                }
+                            }
+                        }
+                    }
                 }
 
                 const state = o.status === 'active' ? 'final' : 'draft';

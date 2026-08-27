@@ -67,6 +67,30 @@ function isWellOrdered(well) {
     return getOrderedWellIds(editingOfferIdStudnie).has(well.id);
 }
 
+/* ===== FULL-LOCK: studnia na zamówieniu — wszystko zablokowane ===== */
+const ORDERED_WELL_WHITELIST = new Set();
+
+function isOrderedWellSoftLocked(well) {
+    const w = well || (typeof getCurrentWell === 'function' ? getCurrentWell() : null);
+    if (!w) return false;
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) return false;
+    const hasAcceptedPO =
+        typeof productionOrders !== 'undefined' &&
+        Array.isArray(productionOrders) &&
+        productionOrders.some((po) => po.wellId === w.id && po.status === 'accepted');
+    if (hasAcceptedPO) return false;
+    return isWellOrdered(w);
+}
+
+function isOrderedWellFieldAllowed(field) {
+    return ORDERED_WELL_WHITELIST.has(field);
+}
+
+function canEditOrderedWellField(well, field) {
+    if (!isOrderedWellSoftLocked(well)) return true;
+    return isOrderedWellFieldAllowed(field);
+}
+
 /** Oblicza progres zamówień dla danej oferty: { ordered, total, percent } */
 function getOfferOrderProgress(offerId, offerWells) {
     const orderedIds = getOrderedWellIds(offerId);
@@ -91,6 +115,10 @@ function getOrderForWellId(wellId, offerId) {
 window.getOrdersForOffer = getOrdersForOffer;
 window.getOrderedWellIds = getOrderedWellIds;
 window.isWellOrdered = isWellOrdered;
+window.isOrderedWellSoftLocked = isOrderedWellSoftLocked;
+window.isOrderedWellFieldAllowed = isOrderedWellFieldAllowed;
+window.canEditOrderedWellField = canEditOrderedWellField;
+window.ORDERED_WELL_WHITELIST = ORDERED_WELL_WHITELIST;
 window.getOfferOrderProgress = getOfferOrderProgress;
 window.getOrderForWellId = getOrderForWellId;
 

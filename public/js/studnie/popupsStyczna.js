@@ -43,9 +43,9 @@ function showStycznaPopup(mode = 'select') {
         titleId: 'styczna-title',
         html: `
       <div style="background:var(--bg-secondary, var(--slate-800)); border:1px solid rgba(var(--warn-rgb), 0.3); border-radius: var(--radius-md); padding:1.2rem 1.5rem; width:520px; max-width:92vw; max-height:85vh; overflow-y:auto; box-shadow:0 20px 60px rgba(var(--black-rgb), 0.5);">
-        <div class="modal-head-sticky">
-          <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn);"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
-          <button class="btn-icon btn-close-4xl" aria-label="Zamknij" onclick="closeModal()" ><i data-lucide="x" aria-hidden="true"></i></button>
+        <div class="modal-header" style="position:sticky; top:0; background:var(--bg-secondary, var(--slate-800)); z-index:1; padding-bottom:0.6rem; margin-bottom:0.8rem; border-bottom:1px solid var(--border-glass);">
+          <div id="styczna-title" style="font-size: var(--fs-2xl); font-weight: var(--fw-extrabold); color:var(--warn); display:flex; align-items:center; gap:0.4rem;"><i data-lucide="cylinder" aria-hidden="true"></i> Wybierz studnię styczną</div>
+          <button class="btn-icon" aria-label="Zamknij" onclick="closeModal()" style="flex-shrink:0;"><i data-lucide="x" aria-hidden="true"></i></button>
         </div>
         ${renderSection('Studnie Styczne', '<i data-lucide="cylinder"></i>', standardProducts)}
         ${renderSection('Studnie Styczne z korkiem', '<i data-lucide="plug"></i>', korekProducts)}

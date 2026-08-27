@@ -35,7 +35,7 @@ function refreshAll(skipSummary = false) {
     updateAutoLockUI();
     try {
         const b = document.getElementById('btab-uwagi');
-        if (b) {
+        if (b instanceof HTMLElement) {
             const w = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
             const hu = !!(w && w.uwagi && String(w.uwagi).trim());
             b.classList.toggle('has-uwagi', hu);
@@ -49,6 +49,7 @@ function refreshAll(skipSummary = false) {
     if (typeof updateStyczna1200Button === 'function') updateStyczna1200Button();
     updateParamTilesUI();
     renderWellParams();
+    applyOrderedWellSoftLockUI();
 
     if (!skipSummary) {
         renderOfferSummary();
@@ -67,6 +68,10 @@ function refreshAll(skipSummary = false) {
 async function updateWellParam(paramKey, value) {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
     if (isWellLocked()) {
         const hasAcceptedPO = (
             typeof productionOrders !== 'undefined' && productionOrders ? productionOrders : []
@@ -174,6 +179,14 @@ async function updateWellParam(paramKey, value) {
 function resetWellParamsToDefaults() {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const gp = getWizardGlobalParams();
     WELL_PARAM_DEFS.forEach((def) => {
         if (gp[def.key] !== undefined) well[def.key] = gp[def.key];
@@ -289,6 +302,14 @@ window.applyGlobalParamsToAllWells = applyGlobalParamsToAllWells;
 async function updateParamInput(paramName, value) {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     well[paramName] = value;
 
     // Zastosuj cenę malowania dla wszystkich studni w ofercie
@@ -308,6 +329,14 @@ function toggleAutoLock() {
     const well = getCurrentWell();
     if (!well) {
         showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
     well.autoLocked = !well.autoLocked;
@@ -334,6 +363,64 @@ function toggleAutoLock() {
 
 // getWellActiveDiscounts, getItemAssessedPrice, getItemPriceBreakdown,
 // calcWellStats, calcPrecoPricing przeniesione do actionsWellPricing.js
+
+/* ===== FULL-LOCK UI: Konfiguracja studni — wszystko zablokowane dla studni na zamówieniu ===== */
+function applyOrderedWellSoftLockUI() {
+    const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+    const softLocked =
+        typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well);
+    const idsToLock = [
+        'input-well-numer',
+        'input-rzedna-wlazu',
+        'input-rzedna-dna',
+        'input-doplata',
+        'redukcja-min-h'
+    ];
+    idsToLock.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLElement)) return;
+        el.disabled = !!softLocked;
+        el.style.opacity = softLocked ? '0.5' : '';
+        el.style.cursor = softLocked ? 'not-allowed' : '';
+        el.title = softLocked ? 'Studnia na zamówieniu — pole zablokowane' : '';
+    });
+    const btnIdsToLock = [
+        'btn-redukcja',
+        'btn-styczna-1200',
+        'btn-redukcja-zak',
+        'btn-lock-auto',
+        'btn-auto-select',
+        'btn-psia-buda',
+        'btn-zakonczenie'
+    ];
+    btnIdsToLock.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!(el instanceof HTMLElement)) return;
+        el.disabled = !!softLocked;
+        el.style.opacity = softLocked ? '0.5' : '';
+        el.style.cursor = softLocked ? 'not-allowed' : '';
+        el.style.pointerEvents = softLocked ? 'none' : '';
+        if (softLocked) el.title = 'Studnia na zamówieniu — edycja zablokowana';
+        else el.removeAttribute('title');
+    });
+    const clearBtn = document.querySelector('button[onclick="clearWellConfig()"]');
+    if (clearBtn) {
+        clearBtn.disabled = !!softLocked;
+        clearBtn.style.opacity = softLocked ? '0.5' : '';
+        clearBtn.style.cursor = softLocked ? 'not-allowed' : '';
+        clearBtn.style.pointerEvents = softLocked ? 'none' : '';
+    }
+    document.querySelectorAll('.dn-btn').forEach((b) => {
+        if (!(b instanceof HTMLElement)) return;
+        b.disabled = !!softLocked;
+        b.style.opacity = softLocked ? '0.5' : '';
+        b.style.cursor = softLocked ? 'not-allowed' : '';
+        b.style.pointerEvents = softLocked ? 'none' : '';
+        if (softLocked) b.title = 'Studnia na zamówieniu — edycja zablokowana';
+        else b.removeAttribute('title');
+    });
+}
+window.applyOrderedWellSoftLockUI = applyOrderedWellSoftLockUI;
 
 /* ===== Rejestracja globali ===== */
 window.toggleAutoLock = toggleAutoLock;

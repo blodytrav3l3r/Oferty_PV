@@ -63,6 +63,14 @@ function updateRedukcjaButton() {
 function onRedukcjaMinChange(valueMeters) {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (typeof isWellLocked === 'function' && isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
     const val = parseFloat(valueMeters);
     if (isNaN(val)) return;
     well.redukcjaMinH = Math.round(val * 1000);

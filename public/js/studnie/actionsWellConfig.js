@@ -4,6 +4,18 @@
 async function selectZakonczenie(productId) {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    const hasAcceptedPO =
+        typeof productionOrders !== 'undefined' &&
+        Array.isArray(productionOrders) &&
+        productionOrders.some((po) => po.wellId === well.id && po.status === 'accepted');
+    if (hasAcceptedPO) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
 
     well.zakonczenie = productId;
 
@@ -36,6 +48,14 @@ async function toggleRedukcja() {
     const well = getCurrentWell();
     if (!well) {
         showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
 
@@ -83,6 +103,18 @@ async function togglePsiaBuda() {
         showToast('Najpierw dodaj studnię', 'error');
         return;
     }
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    const hasAcceptedPO =
+        typeof productionOrders !== 'undefined' &&
+        Array.isArray(productionOrders) &&
+        productionOrders.some((po) => po.wellId === well.id && po.status === 'accepted');
+    if (hasAcceptedPO) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
 
     well.psiaBuda = !well.psiaBuda;
     updatePsiaBudaButton();
@@ -123,6 +155,14 @@ async function togglePsiaBuda() {
 async function toggleStyczna1200() {
     const well = getCurrentWell();
     if (!well || well.dn !== 'styczna') return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
 
     const oldDn = well.stycznaNadbudowa1200 ? 1200 : 1000;
     well.stycznaNadbudowa1200 = !well.stycznaNadbudowa1200;
@@ -191,6 +231,14 @@ function updateStyczna1200Button() {
 async function selectRedukcjaZakonczenie(productId) {
     const well = getCurrentWell();
     if (!well) return;
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    if (isWellLocked()) {
+        showToast(WELL_LOCKED_MSG, 'error');
+        return;
+    }
 
     well.redukcjaZakonczenie = productId;
     offerDefaultRedukcjaZak = productId;
@@ -247,6 +295,18 @@ function selectDN(dn) {
             showToast('Najpierw dodaj studnię', 'error');
             return;
         }
+        if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+            showToast(OFFER_LOCKED_MSG, 'error');
+            return;
+        }
+        const hasAcceptedPO =
+            typeof productionOrders !== 'undefined' &&
+            Array.isArray(productionOrders) &&
+            productionOrders.some((po) => po.wellId === well.id && po.status === 'accepted');
+        if (hasAcceptedPO) {
+            showToast(WELL_LOCKED_MSG, 'error');
+            return;
+        }
         showStycznaPopup('select');
         return;
     }
@@ -258,6 +318,18 @@ function doSelectDN(dn) {
     const well = getCurrentWell();
     if (!well) {
         showToast('Najpierw dodaj studnię', 'error');
+        return;
+    }
+    if (typeof isOrderedWellSoftLocked === 'function' && isOrderedWellSoftLocked(well)) {
+        showToast(OFFER_LOCKED_MSG, 'error');
+        return;
+    }
+    const hasAcceptedPO =
+        typeof productionOrders !== 'undefined' &&
+        Array.isArray(productionOrders) &&
+        productionOrders.some((po) => po.wellId === well.id && po.status === 'accepted');
+    if (hasAcceptedPO) {
+        showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
 
