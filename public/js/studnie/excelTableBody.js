@@ -498,7 +498,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             _uwagiTitle +
             '" class="excel-action-btn' +
             (_hasUwagi ? ' has-uwagi' : '') +
-            '"><i data-lucide="message-square" class="icon-sm" aria-hidden="true"></i></button>';
+            '"><i data-lucide="file-text" class="icon-sm" aria-hidden="true"></i></button>';
         html +=
             '<button onclick="excelDuplicateWell(' +
             wIdx +

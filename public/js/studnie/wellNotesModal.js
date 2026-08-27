@@ -12,16 +12,24 @@ function openWellNotesModal(idx) {
     const preview = currentVal
         ? ` — ${currentVal.slice(0, 40)}${currentVal.length > 40 ? '…' : ''}`
         : '';
+    const esc =
+        typeof window.escapeHtml === 'function'
+            ? window.escapeHtml
+            : function (s) {
+                  const d = document.createElement('div');
+                  d.textContent = s == null ? '' : s;
+                  return d.innerHTML;
+              };
     const html = `
     <div class="modal" style="max-width:520px">
       <div class="modal-header">
-        <h3 id="well-uwagi-title"><i data-lucide="message-square" aria-hidden="true"></i> Uwagi: ${escapeHtml(titleText)}</h3>
+        <h3 id="well-uwagi-title"><i data-lucide="file-text" aria-hidden="true"></i> Uwagi: ${esc(titleText)}</h3>
         <button type="button" class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
       <div style="display:flex; flex-direction:column; gap:0.6rem;">
         <label for="well-uwagi-input" style="font-size:var(--fs-sm); color:var(--text-muted);">Treść uwag dla tej studni (widoczna w ofercie i na wydruku, w sekcji „Uwagi do oferty”):</label>
-        <textarea id="well-uwagi-input" class="form-textarea" rows="5" placeholder="Wpisz uwagi do tej studni..." style="min-height:90px; resize:vertical;">${escapeHtml(currentVal)}</textarea>
-        ${preview ? `<div style="font-size:var(--fs-xs); color:var(--text-muted);">Podgląd: ${escapeHtml(preview)}</div>` : ''}
+        <textarea id="well-uwagi-input" class="form-textarea" rows="5" placeholder="Wpisz uwagi do tej studni..." style="min-height:90px; resize:vertical;">${esc(currentVal)}</textarea>
+        ${preview ? `<div style="font-size:var(--fs-xs); color:var(--text-muted);">Podgląd: ${esc(preview)}</div>` : ''}
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-action="closeModal">Anuluj</button>
@@ -29,7 +37,11 @@ function openWellNotesModal(idx) {
       </div>
     </div>`;
 
-    showModal({ id: 'well-uwagi-modal', titleId: 'well-uwagi-title', html });
+    (typeof window.showModal === 'function' ? window.showModal : showModal)({
+        id: 'well-uwagi-modal',
+        titleId: 'well-uwagi-title',
+        html
+    });
 
     const overlay = document.getElementById('well-uwagi-modal');
     if (overlay && window.lucide) window.lucide.createIcons({ root: overlay });
