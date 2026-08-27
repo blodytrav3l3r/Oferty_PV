@@ -214,6 +214,198 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: var(--success);
 }
 
+/* ── Preview row: Jednostki + Cena (od podstaw, wspólny system) ── */
+.preview-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    align-items: stretch;
+}
+
+.preview-tile {
+    min-height: 38px;
+    height: 38px;
+    box-sizing: border-box;
+    padding: 0 0.6rem;
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    background: var(--bg-tile);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.preview-tile--unit {
+    flex: 0 0 38px;
+    width: 38px;
+    padding: 0;
+    background: rgba(var(--success-rgb), 0.05);
+    border-color: rgba(var(--success-rgb), 0.2);
+}
+
+.preview-tile--price {
+    flex: 1;
+    background: rgba(var(--success-rgb), 0.05);
+    border-color: rgba(var(--success-rgb), 0.2);
+    justify-content: center;
+    gap: 0.4rem;
+}
+
+.preview-tile__btn {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    cursor: pointer;
+    transition:
+        background-color 0.15s,
+        color 0.15s;
+}
+
+.preview-tile__btn:hover {
+    background: rgba(var(--white-rgb), 0.08);
+    color: var(--white);
+}
+
+.preview-tile__btn i,
+.preview-tile__btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.preview-tile__label {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    color: var(--white);
+    white-space: nowrap;
+}
+
+.preview-tile__value {
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    color: var(--success-hover);
+    white-space: nowrap;
+}
+
+.unit-popup {
+    position: fixed;
+    width: 260px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 12px 32px rgba(var(--black-rgb), 0.5);
+    padding: 0.6rem;
+    z-index: var(--z-dropdown, 1000);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.unit-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-bold);
+    color: var(--text-primary);
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid rgba(var(--white-rgb), 0.06);
+}
+
+.unit-popup-header span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.unit-popup-close {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: var(--radius-2xs);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.unit-popup-close:hover {
+    background: rgba(var(--white-rgb), 0.08);
+    color: var(--text-primary);
+}
+
+.unit-popup-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.unit-popup-label {
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.unit-popup-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+}
+
+.unit-popup-row[aria-label='Precyzja'] {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.unit-popup-btn {
+    padding: 0.35rem 0.2rem;
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-2xs);
+    background: var(--bg-tile);
+    color: var(--text-secondary);
+    font:
+        var(--fw-semibold) var(--fs-xs) 'Inter',
+        sans-serif;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        background-color 0.15s,
+        color 0.15s;
+}
+
+.unit-popup-btn:hover {
+    border-color: var(--accent-border-dim);
+    color: var(--text-primary);
+}
+
+.unit-popup-btn.active {
+    background: var(--bg-hover);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+    box-shadow: var(--shadow-sm);
+}
+
+.unit-popup-preview {
+    font-size: var(--fs-2xs);
+    color: var(--text-muted);
+    background: rgba(var(--black-rgb), 0.2);
+    border: 1px solid rgba(var(--white-rgb), 0.06);
+    border-radius: var(--radius-2xs);
+    padding: 0.3rem 0.4rem;
+    text-align: center;
+    word-break: break-all;
+}
+
 /* ── Prawo: Panel boczny studni ── */
 .wells-sidebar {
     height: 100%;

@@ -14,6 +14,14 @@
  *   fmtInt
  */
 
+function _dimFmt(mm) {
+    try {
+        if (typeof formatHeightValue === 'function' && typeof getDisplayUnit === 'function')
+            return formatHeightValue(mm, getDisplayUnit());
+    } catch (_e) {}
+    return typeof fmtInt === 'function' ? fmtInt(mm) : String(Math.round(mm));
+}
+
 /* ===== LINIA WYMIAROWA SEGMENTÓW ===== */
 
 /**
@@ -47,7 +55,7 @@ function drawSegmentDimensions(dimLinesY, pxMm) {
 
         svgOut += `<line x1="${dX}" y1="${yB}" x2="${dX}" y2="${yT}" style="stroke:${dimColor}" stroke-width="1.2"/>`;
 
-        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${distMm}</text>`;
+        svgOut += `<text x="${dX - 6}" y="${(yB + yT) / 2}" transform="rotate(-90 ${dX - 6} ${(yB + yT) / 2})" text-anchor="middle" style="fill:${SVG_COLORS.dimText}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${_dimFmt(distMm)}</text>`;
     }
 
     return svgOut;
@@ -67,7 +75,7 @@ function drawTotalHeightBar(canvas, totalMm) {
     svg += `<line x1="${aX}" y1="${mT}" x2="${aX}" y2="${mT + drawH}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
     svg += `<line x1="${aX - 4}" y1="${mT}" x2="${aX + 4}" y2="${mT}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
     svg += `<line x1="${aX - 4}" y1="${mT + drawH}" x2="${aX + 4}" y2="${mT + drawH}" style="stroke:${aDimColor}" stroke-width="1.2"/>`;
-    const totalLabel = fmtInt(totalMm);
+    const totalLabel = _dimFmt(totalMm);
     svg += `<text x="${aX - 5}" y="${mT + drawH / 2}" transform="rotate(-90 ${aX - 5} ${mT + drawH / 2})" text-anchor="middle" style="fill:${aDimColor}" font-size="11" font-family="Inter,sans-serif" font-weight="600">${totalLabel}</text>`;
     return svg;
 }

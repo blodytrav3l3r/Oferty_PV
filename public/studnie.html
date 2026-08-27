@@ -95,43 +95,23 @@
                                 </div>
                             </div>
                         </div>
-                        <div
-                            class="well-summary-mini gap-1"
-                            style="
-                                margin-top: 0.4rem;
-                                background: rgba(var(--success-rgb), 0.05);
-                                border: 1px solid rgba(var(--success-rgb), 0.2);
-                                padding: 0.3rem;
-                                border-radius: var(--radius-sm);
-                                display: flex;
-                                justify-content: center;
-                                align-items: center;
-                            "
-                        >
-                            <div
-                                class="ws-label"
-                                style="
-                                    color: var(--success-hover);
-                                    font-size: var(--fs-base);
-                                    font-weight: var(--fw-semibold);
-                                    margin: 0;
-                                    white-space: nowrap;
-                                "
-                            >
-                                Cena:
+                        <div class="preview-row">
+                            <div class="preview-tile preview-tile--unit" id="unit-tile">
+                                <button
+                                    type="button"
+                                    id="unit-settings-btn"
+                                    class="preview-tile__btn"
+                                    onclick="openUnitSettingsPopup(this)"
+                                    title="Jednostki wysokości"
+                                    aria-label="Ustawienia jednostek"
+                                    aria-haspopup="dialog"
+                                >
+                                    <i data-lucide="ruler"></i>
+                                </button>
                             </div>
-                            <div
-                                class="ws-value"
-                                id="ws-price"
-                                style="
-                                    color: var(--success-hover);
-                                    font-size: var(--fs-base);
-                                    margin: 0;
-                                    font-weight: var(--fw-bold);
-                                    white-space: nowrap;
-                                "
-                            >
-                                0
+                            <div class="preview-tile preview-tile--price">
+                                <span class="preview-tile__label">Cena:</span>
+                                <span class="preview-tile__value" id="ws-price">0</span>
                             </div>
                         </div>
                         <svg
@@ -295,6 +275,7 @@
         <!-- Kolejność SSoT: shared/* → globals.js (window.wells/produkty) → pricelist/* → solver/* → actions/* → offer/order/* → excel/* (layers.js przed excelTableManager) -->
         <!-- Produkty studni ładowane z API (/api/products-studnie), seedowane z pliku serwera -->
         <script defer src="js/studnie/globals.js?v=1.19.6"></script>
+        <script defer src="js/studnie/displayUnits.js?v=1.19.6"></script>
         <script defer src="js/studnie/uiHelpers.js?v=1.19.6"></script>
         <script defer src="js/studnie/pricelistState.js?v=1.19.6"></script>
         <script defer src="js/studnie/pricelistRepehd.js?v=1.19.6"></script>

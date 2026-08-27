@@ -197,7 +197,21 @@ window.renderWellsList = function renderWellsList() {
                       ? `<div class="well-list-elevations">
                 <span>↑ <strong>${w.rzednaWlazu.toFixed(3)}</strong></span>
                 <span>↓ <strong>${w.rzednaDna.toFixed(3)}</strong></span>
-                <span style="margin-left:auto;">H=<strong>${requiredH}</strong>mm</span>
+                <span style="margin-left:auto;">H=<strong>${(function () {
+                    try {
+                        if (
+                            typeof formatHeightValue === 'function' &&
+                            typeof getDisplayUnit === 'function'
+                        )
+                            return formatHeightValue(requiredH, getDisplayUnit());
+                    } catch (_e) {}
+                    return String(requiredH);
+                })()}</strong>${(function () {
+                    try {
+                        if (typeof getDisplayUnit === 'function') return getDisplayUnit();
+                    } catch (_e) {}
+                    return 'mm';
+                })()}</span>
               </div>`
                       : ''
               }
@@ -218,6 +232,18 @@ window.renderWellsList = function renderWellsList() {
     renderDiscountPanel();
 };
 
+function _wellFmtH(mm) {
+    try {
+        if (typeof formatHeightLabel === 'function') return formatHeightLabel(mm);
+    } catch (_e) {}
+    return fmtInt(mm) + ' mm';
+}
+function _wellFmtHWithSign(mm) {
+    const abs = Math.abs(mm);
+    const label = _wellFmtH(abs);
+    return (mm > 0 ? '+' : '-') + label;
+}
+
 /* ===== PODSUMOWANIE ===== */
 window.updateSummary = function updateSummary() {
     const well = getCurrentWell();
@@ -230,7 +256,7 @@ window.updateSummary = function updateSummary() {
         const sae = el('sum-area-ext');
         if (sp) sp.textContent = '0 PLN';
         if (sw) sw.textContent = '0 kg';
-        if (sh) sh.textContent = '0 mm';
+        if (sh) sh.textContent = _wellFmtH(0);
         if (sai) sai.textContent = '0,00 m²';
         if (sae) sae.textContent = '0,00 m²';
 
@@ -238,7 +264,7 @@ window.updateSummary = function updateSummary() {
         const wsReq = document.getElementById('ws-req-height');
         const wsDiff = document.getElementById('ws-diff-height');
         const wsPrice = document.getElementById('ws-price');
-        if (wsHeight) wsHeight.textContent = '0 mm';
+        if (wsHeight) wsHeight.textContent = _wellFmtH(0);
         if (wsReq) wsReq.textContent = '—';
         if (wsDiff) {
             wsDiff.textContent = '—';
@@ -279,7 +305,7 @@ window.updateSummary = function updateSummary() {
     const saiEl = document.getElementById('sum-area-int');
     const saeEl = document.getElementById('sum-area-ext');
     if (swEl) swEl.textContent = fmtInt(stats.weight) + ' kg';
-    if (shEl) shEl.textContent = fmtInt(stats.height) + ' mm';
+    if (shEl) shEl.textContent = _wellFmtH(stats.height);
     if (saiEl) saiEl.textContent = fmt(stats.areaInt) + ' m²';
     if (saeEl) saeEl.textContent = fmt(stats.areaExt) + ' m²';
 
@@ -296,14 +322,14 @@ window.updateSummary = function updateSummary() {
 
     if (!isNaN(rzWlazu) && !isNaN(rzDna) && rzWlazu > rzDna) {
         const reqMm = Math.round((rzWlazu - rzDna) * 1000);
-        reqMmText = fmtInt(reqMm) + ' mm';
+        reqMmText = _wellFmtH(reqMm);
         const diff = reqMm - stats.height;
 
         if (diff > 0) {
-            diffMmText = '-' + fmtInt(diff) + ' mm';
+            diffMmText = '-' + _wellFmtH(diff);
             diffColor = 'var(--danger-hover)'; // czerwony
         } else if (diff < 0) {
-            diffMmText = '+' + fmtInt(Math.abs(diff)) + ' mm';
+            diffMmText = '+' + _wellFmtH(Math.abs(diff));
             diffColor = 'var(--warn-hover)'; // żółty/pomarańczowy
         } else {
             diffMmText = 'OK';
@@ -316,7 +342,7 @@ window.updateSummary = function updateSummary() {
     const wsDiff = document.getElementById('ws-diff-height');
     const wsPrice = document.getElementById('ws-price');
 
-    if (wsHeight) wsHeight.textContent = fmtInt(stats.height) + ' mm';
+    if (wsHeight) wsHeight.textContent = _wellFmtH(stats.height);
     if (wsReq) wsReq.textContent = reqMmText;
     if (wsDiff) {
         wsDiff.textContent = diffMmText;
