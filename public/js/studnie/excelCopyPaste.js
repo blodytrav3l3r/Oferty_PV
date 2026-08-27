@@ -366,8 +366,13 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback) {
     _excelPasteRafId = requestAnimationFrame(tick);
 }
 function _excelHandleCopy(e) {
-    /* Tylko gdy Excel otwarty */
+    /* Tylko gdy Excel otwarty i brak innego aktywnego modala */
     if (!document.getElementById('excel-table-overlay')) return;
+    if (
+        document.activeElement &&
+        document.activeElement.closest('.modal-overlay:not(#excel-table-overlay)')
+    )
+        return;
     if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
     e.preventDefault();
     const rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
@@ -451,8 +456,13 @@ function _excelHandleCopy(e) {
 }
 
 function _excelHandleCut(e) {
-    /* Tylko gdy Excel otwarty */
+    /* Tylko gdy Excel otwarty i brak innego aktywnego modala */
     if (!document.getElementById('excel-table-overlay')) return;
+    if (
+        document.activeElement &&
+        document.activeElement.closest('.modal-overlay:not(#excel-table-overlay)')
+    )
+        return;
     if (_excelSelectedCells.length === 0 && _excelSelectedCols.length === 0) return;
     /* ClipboardEvent ma clipboardData — wypełnij schowek (wzorzec jak Ctrl+C) */
     _excelHandleCopy(e);

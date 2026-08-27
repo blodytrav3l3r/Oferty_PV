@@ -84,7 +84,13 @@ function openWellNotesModal(idx) {
         overlay = el;
     }
     if (overlay) {
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
         overlay.style.zIndex = '11000';
+        overlay.style.background = 'rgba(0, 0, 0, 0.7)';
         if (window.lucide) window.lucide.createIcons({ root: overlay });
         // Delegacja close dla data-action="closeModal" gdy fallback (showModal robi to sam)
         overlay.addEventListener('click', function (ev) {
@@ -152,8 +158,8 @@ function openWellNotesForCurrent() {
 }
 
 function openWellNotesForExcelSelection() {
-    // Jeśli zaznaczono checkboxy — bierz pierwszy zaznaczony, inaczej currentWellIndex
     let idx = -1;
+    // 1. Checkboxy w Excelu
     if (typeof _excelRowSelectStates !== 'undefined') {
         for (let i = 0; i < (typeof wells !== 'undefined' ? wells.length : 0); i++) {
             if (_excelRowSelectStates[i]) {
@@ -162,11 +168,42 @@ function openWellNotesForExcelSelection() {
             }
         }
     }
-    if (idx === -1 && typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0)
+    // 2. Ostatnio kliknięta komórka w Excelu
+    if (
+        idx === -1 &&
+        typeof _excelLastClickedCell !== 'undefined' &&
+        _excelLastClickedCell &&
+        typeof _excelLastClickedCell.wIdx === 'number'
+    ) {
+        idx = _excelLastClickedCell.wIdx;
+    }
+    // 3. Zaznaczone komórki
+    if (
+        idx === -1 &&
+        typeof _excelSelectedCells !== 'undefined' &&
+        Array.isArray(_excelSelectedCells) &&
+        _excelSelectedCells.length > 0
+    ) {
+        const first = _excelSelectedCells[0];
+        if (first && typeof first.wIdx === 'number') idx = first.wIdx;
+    }
+    // 4. Aktywny index studni
+    if (
+        idx === -1 &&
+        typeof currentWellIndex !== 'undefined' &&
+        currentWellIndex >= 0 &&
+        typeof wells !== 'undefined' &&
+        currentWellIndex < wells.length
+    ) {
         idx = currentWellIndex;
-    if (idx === -1) {
-        if (typeof showToast === 'function')
-            showToast('Zaznacz studnię w tabeli (checkbox) lub wybierz wiersz', 'warning');
+    }
+    // 5. Domyślnie pierwsza studnia z listy
+    if (idx === -1 && typeof wells !== 'undefined' && wells.length > 0) {
+        idx = 0;
+    }
+
+    if (idx === -1 || typeof wells === 'undefined' || !wells[idx]) {
+        if (typeof showToast === 'function') showToast('Dodaj najpierw studnię', 'warning');
         return;
     }
     openWellNotesModal(idx);

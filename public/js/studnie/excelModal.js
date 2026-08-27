@@ -340,6 +340,7 @@ function openExcelTableModal() {
     _excelPositionOverlay(overlay);
     // Ctrl+S / Ctrl+R — showModal obsługuje tylko Escape; te skróty dokładamy
     const _excelOverlayKeyHandler = function (e) {
+        if (document.querySelector('.modal-overlay:not(#excel-table-overlay)')) return;
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
             e.preventDefault();
             e.stopPropagation();
