@@ -2,9 +2,19 @@
 /* ===== UWAGI PER-STUDNIA — modal edycji (TASK uwagi-per-well) ===== */
 
 function openWellNotesModal(idx) {
+    // Diagnostyka — pomaga gdy użytkownik zgłasza "nie pojawia się"
+    try {
+        console.log(
+            '[wellNotes] open idx',
+            idx,
+            'wells',
+            typeof wells !== 'undefined' ? wells.length : 'no wells'
+        );
+    } catch (_e) {}
     const well = typeof wells !== 'undefined' ? wells[idx] : null;
     if (!well) {
-        if (typeof showToast === 'function') showToast('Nie znaleziono studni', 'error');
+        if (typeof showToast === 'function') showToast('Nie znaleziono studni #' + idx, 'error');
+        else alert('Nie znaleziono studni #' + idx);
         return;
     }
     const titleText = well.name || `Studnia DN${well.dn}`;
@@ -37,14 +47,58 @@ function openWellNotesModal(idx) {
       </div>
     </div>`;
 
-    (typeof window.showModal === 'function' ? window.showModal : showModal)({
-        id: 'well-uwagi-modal',
-        titleId: 'well-uwagi-title',
-        html
-    });
+    let overlay = null;
+    try {
+        const fn =
+            typeof window.showModal === 'function'
+                ? window.showModal
+                : typeof showModal === 'function'
+                  ? showModal
+                  : null;
+        if (fn) overlay = fn({ id: 'well-uwagi-modal', titleId: 'well-uwagi-title', html });
+        else throw new Error('showModal missing');
+    } catch (e) {
+        // Fallback: ręczne utworzenie overlay (gdy showModal niezaładowany lub rzuca)
 
-    const overlay = document.getElementById('well-uwagi-modal');
-    if (overlay && window.lucide) window.lucide.createIcons({ root: overlay });
+        console.warn('[wellNotes] showModal fallback', e);
+        let el = document.getElementById('well-uwagi-modal');
+        if (el) el.remove();
+        el = document.createElement('div');
+        el.className = 'modal-overlay js-modal-overlay';
+        el.id = 'well-uwagi-modal';
+        el.setAttribute('role', 'dialog');
+        el.setAttribute('aria-modal', 'true');
+        el.setAttribute('aria-labelledby', 'well-uwagi-title');
+        el.style.zIndex = '11000';
+        el.innerHTML = html;
+        el.addEventListener('click', function (ev) {
+            if (ev.target === el) {
+                el.remove();
+                document.body.style.overflow = document.querySelector('.js-modal-overlay')
+                    ? 'hidden'
+                    : '';
+            }
+        });
+        document.body.appendChild(el);
+        document.body.style.overflow = 'hidden';
+        overlay = el;
+    }
+    if (overlay) {
+        overlay.style.zIndex = '11000';
+        if (window.lucide) window.lucide.createIcons({ root: overlay });
+        // Delegacja close dla data-action="closeModal" gdy fallback (showModal robi to sam)
+        overlay.addEventListener('click', function (ev) {
+            const btn = ev.target.closest('[data-action="closeModal"]');
+            if (btn) {
+                const m = document.getElementById('well-uwagi-modal');
+                if (m) {
+                    m.remove();
+                    if (!document.querySelector('.js-modal-overlay'))
+                        document.body.style.overflow = '';
+                }
+            }
+        });
+    }
 
     const ta = /** @type {HTMLTextAreaElement|null} */ (
         document.getElementById('well-uwagi-input')

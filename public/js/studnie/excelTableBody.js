@@ -492,7 +492,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ? 'Uwagi: ' + _uwagiPrev + ' \u2014 kliknij aby edytowa\u0107'
             : 'Dodaj uwagi';
         html +=
-            '<button onclick="openWellNotesModal(' +
+            '<button onclick="event.stopPropagation(); openWellNotesModal(' +
             wIdx +
             ')" title="' +
             _uwagiTitle +
