@@ -168,7 +168,7 @@ function renderInlinePrzejsciaApp(containerId) {
             <div class="wt-add-cell">
                 <div class="wt-add-header">Cena</div>
                 <div class="wt-add-body">
-                    <div class="wt-add-value wt-add-price">${fmtInt(selectedProduct.price)} <span class="fs-2xs">PLN</span></div>
+                    <div class="wt-add-value wt-add-price">${fmt(selectedProduct.price)} PLN</div>
                 </div>
             </div>
             <button class="btn btn-primary wt-add-btn" data-action="inlineFinish" data-main="${containerId || 'main'}" data-container="${containerId || ''}"><i data-lucide="plus"></i> Dodaj</button>
