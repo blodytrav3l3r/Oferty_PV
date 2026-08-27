@@ -126,6 +126,15 @@ function openWellNotesModal(idx) {
             if (typeof window.closeModal === 'function') window.closeModal('well-uwagi-modal');
             else if (typeof closeModal === 'function') closeModal('well-uwagi-modal');
             if (typeof renderWellsList === 'function') renderWellsList();
+            try {
+                const b = document.getElementById('btab-uwagi');
+                if (b) {
+                    const hu = !!(well.uwagi && String(well.uwagi).trim());
+                    b.classList.toggle('has-uwagi', hu);
+                    b.title = hu ? String(well.uwagi).slice(0, 80) : 'Dodaj uwagi do tej studni';
+                    if (window.lucide) window.lucide.createIcons({ root: b });
+                }
+            } catch (_e2) {}
             // Odśwież nagłówek edytora jeśli istnieje
             if (typeof renderWellParams === 'function') {
                 try {

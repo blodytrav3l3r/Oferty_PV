@@ -1185,6 +1185,17 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: var(--text-primary);
 }
 
+.b-tab-btn.has-uwagi {
+    color: var(--warn-hover);
+    background: rgba(var(--warn-rgb), 0.12);
+    border-color: rgba(var(--warn-rgb), 0.3);
+}
+
+.b-tab-btn.has-uwagi:hover {
+    background: rgba(var(--warn-rgb), 0.18);
+    border-color: rgba(var(--warn-rgb), 0.5);
+}
+
 /* Zakładki panelu bocznego */
 .s-tab-btn {
     flex: 1;

@@ -33,6 +33,15 @@ function refreshAll(skipSummary = false) {
     updateDNButtons();
     syncElevationInputs();
     updateAutoLockUI();
+    try {
+        const b = document.getElementById('btab-uwagi');
+        if (b) {
+            const w = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+            const hu = !!(w && w.uwagi && String(w.uwagi).trim());
+            b.classList.toggle('has-uwagi', hu);
+            b.title = hu ? String(w.uwagi).slice(0, 80) : 'Dodaj uwagi do tej studni';
+        }
+    } catch (_e) {}
     updateZakonczenieButton();
     updateRedukcjaButton();
     if (typeof updateRedukcjaZakButton === 'function') updateRedukcjaZakButton();
