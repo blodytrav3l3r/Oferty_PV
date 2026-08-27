@@ -1,9 +1,17 @@
 // @ts-check
 /* ===== EXCEL TABLE BODY — Render TBODY, autoodświeżanie komórek i kolorów duplikatów ===== */
 
+function _excelFormatHeight(mm) {
+    if (!mm) return '\u2014';
+    try {
+        if (typeof formatHeightLabel === 'function') return formatHeightLabel(mm);
+    } catch (_e) {}
+    return String(mm);
+}
+
 /* Tint wiersza wg configStatus — ERROR dominuje nad WARNING. Wspólny punkt
-   prawdy dla renderu i _excelRefreshDupColors (DRY, priorytet:
-   ERROR > WARNING > duplikat > aktywny > base). */
+    prawdy dla renderu i _excelRefreshDupColors (DRY, priorytet:
+    ERROR > WARNING > duplikat > aktywny > base). */
 function _excelGetRowStatus(well) {
     if (!well) return null;
     const s = well.configStatus;
@@ -255,7 +263,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ';font-weight: var(--fw-semibold);" data-cell="height-' +
             wIdx +
             '">' +
-            (height || '\u2014') +
+            _excelFormatHeight(height) +
             '</td>';
         /* Przejscia */
         for (let _i = 0; _i < maxTr; _i++) {
@@ -421,7 +429,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '<td class="excel-td excel-td-center" style="text-align:center;color:var(--warn-hover);font-weight: var(--fw-semibold);" data-cell="denn-' +
             wIdx +
             '">' +
-            (dennH || '\u2014') +
+            _excelFormatHeight(dennH) +
             '</td>';
         /* Uszczelki */
         const uszczCount = _excelCalcUszczelkaCount(well);
@@ -649,11 +657,11 @@ function _excelRefreshAutoCells(wIdx, row) {
 
     const height = _excelCalcWellHeight(well);
     const hCell = row.querySelector(`[data-cell="height-${wIdx}"]`);
-    if (hCell) hCell.textContent = height || '\u2014';
+    if (hCell) hCell.textContent = _excelFormatHeight(height);
 
     const dennH = _excelCalcDennicaHeight(well);
     const dCell = row.querySelector(`[data-cell="denn-${wIdx}"]`);
-    if (dCell) dCell.textContent = dennH || '\u2014';
+    if (dCell) dCell.textContent = _excelFormatHeight(dennH);
 
     const uszcz = _excelCalcUszczelkaCount(well);
     const uCell = row.querySelector(`[data-cell="uszcz-${wIdx}"]`);

@@ -35,7 +35,7 @@
                             class="well-summary-mini gap-1"
                             style="
                                 display: grid;
-                                grid-template-columns: repeat(4, 1fr);
+                                grid-template-columns: repeat(3, 1fr);
                                 justify-items: stretch;
                             "
                         >
@@ -50,49 +50,6 @@
                             <div class="ws-item p-2">
                                 <div class="ws-label fs-065-nowrap">Zostało</div>
                                 <div class="ws-value fs-075-nowrap" id="ws-diff-height">—</div>
-                            </div>
-                            <div
-                                id="svg-trash"
-                                class="ws-item"
-                                style="
-                                    padding: 0.2rem;
-                                    justify-content: center;
-                                    align-items: center;
-                                    border-radius: var(--radius-sm);
-                                    background: rgba(var(--danger-rgb), 0.1);
-                                    border: 1px dashed rgba(var(--danger-rgb), 0.5);
-                                    color: var(--danger-hover);
-                                    cursor: pointer;
-                                "
-                                title="Kliknij, aby usunąć studnię"
-                                onclick="removeWell(currentWellIndex)"
-                                onmouseenter="
-                                    if (window.svgDragStartIndex >= 0) {
-                                        this.style.background = 'rgba(var(--danger-rgb), 0.3)';
-                                        this.style.borderColor = 'var(--danger)';
-                                    }
-                                "
-                                onmouseleave="
-                                    this.style.background = 'rgba(var(--danger-rgb), 0.1)';
-                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.5)';
-                                "
-                            >
-                                <div
-                                    class="ws-label"
-                                    style="
-                                        color: var(--danger-hover);
-                                        font-size: var(--fs-xs);
-                                        white-space: nowrap;
-                                    "
-                                >
-                                    Usuń
-                                </div>
-                                <div
-                                    class="ws-value"
-                                    style="font-size: var(--fs-lg); margin-top: -2px"
-                                >
-                                    <i data-lucide="trash-2"></i>
-                                </div>
                             </div>
                         </div>
                         <div class="preview-row">
@@ -112,6 +69,31 @@
                             <div class="preview-tile preview-tile--price">
                                 <span class="preview-tile__label">Cena:</span>
                                 <span class="preview-tile__value" id="ws-price">0</span>
+                            </div>
+                            <div
+                                class="preview-tile preview-tile--delete"
+                                id="svg-trash"
+                                title="Kliknij, aby usunąć studnię"
+                                onclick="removeWell(currentWellIndex)"
+                                onmouseenter="
+                                    if (window.svgDragStartIndex >= 0) {
+                                        this.style.background = 'rgba(var(--danger-rgb), 0.2)';
+                                        this.style.borderColor = 'var(--danger)';
+                                    }
+                                "
+                                onmouseleave="
+                                    this.style.background = 'rgba(var(--danger-rgb), 0.08)';
+                                    this.style.borderColor = 'rgba(var(--danger-rgb), 0.22)';
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    class="preview-tile__btn preview-tile__btn--danger"
+                                    tabindex="-1"
+                                    aria-label="Usuń studnię"
+                                >
+                                    <i data-lucide="trash-2"></i>
+                                </button>
                             </div>
                         </div>
                         <svg

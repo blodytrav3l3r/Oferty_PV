@@ -11,6 +11,8 @@ const DISPLAY_PREFS_KEY = 'sok_studnie_display_prefs';
 const DISPLAY_PREFS_LEGACY_KEY = 'witros_studnie_display_prefs';
 const VALID_UNITS = ['mm', 'cm', 'm'];
 const DEFAULT_DECIMALS = { mm: 0, cm: 1, m: 3 };
+// mm zawsze bez miejsc po przecinku — opcje precyzji tylko dla cm/m
+const DECIMALS_OPTIONS = { mm: [0], cm: [0, 1, 2, 3], m: [0, 1, 2, 3] };
 let _unitPopupEl = null;
 
 function _displayUnitsGetUserSuffix() {
@@ -55,11 +57,13 @@ function _cloneDecimals(d) {
 function _normalizeDecimals(input) {
     const out = { mm: DEFAULT_DECIMALS.mm, cm: DEFAULT_DECIMALS.cm, m: DEFAULT_DECIMALS.m };
     if (!input || typeof input !== 'object') return out;
-    ['mm', 'cm', 'm'].forEach(function (k) {
+    ['cm', 'm'].forEach(function (k) {
         const v = input[k];
         const n = typeof v === 'number' ? v : parseInt(v, 10);
         if (Number.isFinite(n) && n >= 0 && n <= 3) out[k] = Math.round(n);
     });
+    // mm zawsze 0 — ignoruj zapisane wartości z poprzednich wersji
+    out.mm = 0;
     return out;
 }
 
@@ -150,6 +154,8 @@ function setDisplayUnit(unit) {
 
 function setDisplayDecimals(unit, decimals) {
     if (VALID_UNITS.indexOf(unit) === -1) return;
+    // mm ma stałe 0 miejsc — nie pozwalaj na zmianę
+    if (unit === 'mm') return;
     const n = Math.max(0, Math.min(3, Math.round(Number(decimals))));
     if (!Number.isFinite(n)) return;
     const prefs = getDisplayPrefs();
@@ -210,12 +216,30 @@ function _displayUnitsRerender() {
     try {
         if (typeof renderWellsList === 'function' && !window._renderingWellsList) renderWellsList();
     } catch (_e) {}
+    try {
+        if (
+            typeof _excelRenderTable === 'function' &&
+            document.getElementById('excel-table-overlay') &&
+            typeof _excelActiveTab !== 'undefined'
+        )
+            _excelRenderTable(_excelActiveTab);
+        else if (typeof _excelRefreshAutoCells === 'function') {
+            const cont = document.getElementById('excel-table-container');
+            if (cont)
+                cont.querySelectorAll('tr[data-widx]').forEach(function (tr) {
+                    const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+                    if (!isNaN(wIdx)) _excelRefreshAutoCells(wIdx, tr);
+                });
+        }
+    } catch (_e) {}
 }
 
 function formatHeightValue(mmVal, unit) {
     const mm = Number(mmVal) || 0;
     const u = unit || getDisplayUnit();
-    const dec = getDisplayDecimals(u);
+    let dec = getDisplayDecimals(u);
+    // mm zawsze bez miejsc po przecinku
+    if (u === 'mm') dec = 0;
     if (u === 'm') {
         const v = mm / 1000;
         return v.toFixed(dec);
@@ -224,11 +248,9 @@ function formatHeightValue(mmVal, unit) {
         const v = mm / 10;
         return v.toFixed(dec);
     }
-    // mm
+    // mm — zawsze 0 miejsc
     const v = mm;
-    if (dec === 0)
-        return typeof fmtInt === 'function' ? fmtInt(Math.round(v)) : String(Math.round(v));
-    return v.toFixed(dec);
+    return typeof fmtInt === 'function' ? fmtInt(Math.round(v)) : String(Math.round(v));
 }
 
 function formatHeightLabel(mmVal, unit) {
@@ -241,7 +263,27 @@ function _refreshUnitPopup() {
     // Aktualizuj bez pełnego re-renderu innerHTML (niszczy kliknięty target przed outside-check → zamknięcie)
     const prefs = getDisplayPrefs();
     const decLabel = _unitPopupEl.querySelector('[data-dec-label]');
-    if (decLabel) decLabel.textContent = 'Miejsca po przecinku (' + prefs.unit + ')';
+    if (decLabel)
+        decLabel.textContent =
+            'Miejsca po przecinku (' +
+            prefs.unit +
+            ')' +
+            (prefs.unit === 'mm' ? ' — zawsze 0' : '');
+    const opts = DECIMALS_OPTIONS[prefs.unit] || DECIMALS_OPTIONS.m;
+    _unitPopupEl.querySelectorAll('[data-dec]').forEach(function (el) {
+        const d = parseInt(el.getAttribute('data-dec'), 10);
+        const allowed = opts.indexOf(d) !== -1;
+        el.setAttribute('data-unit-dec', prefs.unit);
+        el.disabled = !allowed;
+        el.setAttribute('aria-disabled', allowed ? 'false' : 'true');
+        if (allowed) {
+            el.removeAttribute('title');
+            el.setAttribute('onclick', "setDisplayDecimals('" + prefs.unit + "'," + d + ')');
+        } else {
+            el.setAttribute('title', 'Niedostępne dla ' + prefs.unit);
+            el.removeAttribute('onclick');
+        }
+    });
     _displayUnitsApplyActiveState();
 }
 
@@ -280,9 +322,13 @@ function _renderUnitPopupContent(container, prefs) {
         '</div></div>' +
         '<div class="unit-popup-section"><div class="unit-popup-label" data-dec-label>Miejsca po przecinku (' +
         esc(prefs.unit) +
-        ')</div><div class="unit-popup-row" role="group" aria-label="Precyzja">' +
+        ')' +
+        (prefs.unit === 'mm' ? ' — zawsze 0' : '') +
+        '</div><div class="unit-popup-row" role="group" aria-label="Precyzja">' +
         [0, 1, 2, 3]
             .map(function (d) {
+                const allowed =
+                    (DECIMALS_OPTIONS[prefs.unit] || DECIMALS_OPTIONS.m).indexOf(d) !== -1;
                 return (
                     '<button type="button" class="unit-popup-btn unit-popup-btn--dec' +
                     (prefs.decimals[prefs.unit] === d ? ' active' : '') +
@@ -290,11 +336,13 @@ function _renderUnitPopupContent(container, prefs) {
                     d +
                     '" data-unit-dec="' +
                     esc(prefs.unit) +
-                    '" onclick="setDisplayDecimals(\'' +
-                    esc(prefs.unit) +
-                    "'," +
-                    d +
-                    ')">' +
+                    '"' +
+                    (allowed
+                        ? ' onclick="setDisplayDecimals(\'' + esc(prefs.unit) + "'," + d + ')\'"'
+                        : ' disabled title="Niedostępne dla ' +
+                          esc(prefs.unit) +
+                          '" aria-disabled="true"') +
+                    '>' +
                     d +
                     '</button>'
                 );

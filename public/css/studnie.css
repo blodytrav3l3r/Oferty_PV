@@ -252,6 +252,23 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     gap: 0.4rem;
 }
 
+.preview-tile--delete {
+    flex: 0 0 38px;
+    width: 38px;
+    padding: 0;
+    background: rgba(var(--danger-rgb), 0.08);
+    border-color: rgba(var(--danger-rgb), 0.22);
+    cursor: pointer;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s;
+}
+
+.preview-tile--delete:hover {
+    background: rgba(var(--danger-rgb), 0.14);
+    border-color: rgba(var(--danger-rgb), 0.35);
+}
+
 .preview-tile__btn {
     width: 100%;
     height: 100%;
@@ -271,6 +288,15 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .preview-tile__btn:hover {
     background: rgba(var(--white-rgb), 0.08);
     color: var(--white);
+}
+
+.preview-tile__btn--danger {
+    color: var(--danger-hover);
+}
+
+.preview-tile__btn--danger:hover {
+    background: transparent;
+    color: var(--danger);
 }
 
 .preview-tile__btn i,
@@ -393,6 +419,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-color: var(--accent-border);
     color: var(--accent-text);
     box-shadow: var(--shadow-sm);
+}
+
+.unit-popup-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .unit-popup-preview {
