@@ -31,17 +31,17 @@ function openWellNotesModal(idx) {
                   return d.innerHTML;
               };
     const html = `
-    <div class="modal" style="max-width:520px">
+    <div class="modal" style="width:90vw; max-width:1040px; min-height:380px; display:flex; flex-direction:column; justify-space-between;">
       <div class="modal-header">
         <h3 id="well-uwagi-title"><i data-lucide="file-text" aria-hidden="true"></i> Uwagi: ${esc(titleText)}</h3>
         <button type="button" class="btn-icon" aria-label="Zamknij" data-action="closeModal"><i data-lucide="x" aria-hidden="true"></i></button>
       </div>
-      <div style="display:flex; flex-direction:column; gap:0.6rem;">
+      <div style="display:flex; flex-direction:column; gap:0.6rem; flex:1; margin-bottom:1rem;">
         <label for="well-uwagi-input" style="font-size:var(--fs-sm); color:var(--text-muted);">Treść uwag dla tej studni (widoczna w ofercie i na wydruku, w sekcji „Uwagi do oferty”):</label>
-        <textarea id="well-uwagi-input" class="form-textarea" rows="5" placeholder="Wpisz uwagi do tej studni..." style="min-height:90px; resize:vertical;">${esc(currentVal)}</textarea>
+        <textarea id="well-uwagi-input" class="form-textarea" rows="8" placeholder="Wpisz uwagi do tej studni..." style="min-height:180px; flex:1; resize:vertical; font-size:var(--fs-base); line-height:1.5;">${esc(currentVal)}</textarea>
         ${preview ? `<div style="font-size:var(--fs-xs); color:var(--text-muted);">Podgląd: ${esc(preview)}</div>` : ''}
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="margin-top:auto;">
         <button type="button" class="btn btn-secondary" data-action="closeModal">Anuluj</button>
         <button type="button" class="btn btn-primary" id="well-uwagi-save"><i data-lucide="check" aria-hidden="true"></i> Zapisz</button>
       </div>
