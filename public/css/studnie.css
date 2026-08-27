@@ -1185,15 +1185,30 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: var(--text-primary);
 }
 
-.b-tab-btn.has-uwagi {
-    color: var(--warn-hover);
-    background: rgba(var(--warn-rgb), 0.12);
-    border-color: rgba(var(--warn-rgb), 0.3);
+.b-tab-btn--uwagi {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 0.45rem 0.7rem;
+    color: var(--accent2-hover);
+    border-color: rgba(var(--accent2-rgb), 0.25);
+    background: rgba(var(--accent2-rgb), 0.08);
 }
 
-.b-tab-btn.has-uwagi:hover {
-    background: rgba(var(--warn-rgb), 0.18);
-    border-color: rgba(var(--warn-rgb), 0.5);
+.b-tab-btn--uwagi:hover {
+    background: rgba(var(--accent2-rgb), 0.15);
+    border-color: rgba(var(--accent2-rgb), 0.4);
+    color: var(--accent2-hover);
+}
+
+.b-tab-btn--uwagi.has-uwagi {
+    color: var(--warn-hover);
+    background: rgba(var(--warn-rgb), 0.15);
+    border-color: rgba(var(--warn-rgb), 0.4);
+}
+
+.b-tab-btn--uwagi.has-uwagi:hover {
+    background: rgba(var(--warn-rgb), 0.2);
+    border-color: rgba(var(--warn-rgb), 0.55);
 }
 
 /* Zakładki panelu bocznego */
