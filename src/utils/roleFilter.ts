@@ -29,12 +29,17 @@ export function buildRoleWhereClause(user: User) {
  * do użycia z prisma.$queryRaw (tagged template) zamiast $queryRawUnsafe.
  * Wartości są przekazywane jako parametry, co eliminuje ryzyko SQL Injection.
  */
-export function buildRoleWhereCondition(user: Pick<User, 'role' | 'id' | 'subUsers'>): Prisma.Sql {
+export function buildRoleWhereCondition(
+    user: Pick<User, 'role' | 'id' | 'subUsers'>,
+    table?: string
+): Prisma.Sql {
     if (user.role === 'admin') return Prisma.empty;
+    // ponytail: kwalifikuj kolumnę gdy JOIN wprowadza drugie "userId" (production_orders_rel + orders_studnie_rel) — inaczej SQLite: ambiguous column name
+    const col = table ? Prisma.raw(`"${table}"."userId"`) : Prisma.raw('"userId"');
     if (user.role === 'pro') {
         const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
         if (allowedIds.length === 0) return Prisma.sql`WHERE 1=0`;
-        return Prisma.sql`WHERE "userId" IN (${Prisma.join(allowedIds)})`;
+        return Prisma.sql`WHERE ${col} IN (${Prisma.join(allowedIds)})`;
     }
-    return Prisma.sql`WHERE "userId" = ${user.id}`;
+    return Prisma.sql`WHERE ${col} = ${user.id}`;
 }

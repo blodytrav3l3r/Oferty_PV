@@ -43,7 +43,9 @@ const writeProductionLimiter = WRITE_LIMITER;
 router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
-        const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        const whereCondition = authReq.user
+            ? buildRoleWhereCondition(authReq.user, 'production_orders_rel')
+            : Prisma.empty;
         const orders = await prisma.$queryRaw<
             Array<{
                 id: string;

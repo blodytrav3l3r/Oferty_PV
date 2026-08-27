@@ -26,7 +26,7 @@ router.get('/', requireAuth, async (req, res) => {
     const cached = searchCache.get('production', cacheKey);
     if (cached) return res.json(cached);
 
-    const roleSql = buildRoleWhereCondition(user);
+    const roleSql = buildRoleWhereCondition(user, 'production_orders_rel');
     const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
     const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 

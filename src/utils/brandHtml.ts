@@ -33,8 +33,16 @@ export function applyBrandTokens(html: string): string {
 export function injectAppNameScript(html: string, nonce?: string): string {
     const nonceAttr = nonce ? ` nonce="${nonce}"` : '';
     const script = `<script${nonceAttr}>window.APP_NAME=${JSON.stringify(APP_NAME).replace(/</g, '\\u003c')};</script>`;
-    if (html.includes('</head>')) {
-        return html.replace('</head>', script + '</head>');
+    let out = html.includes('</head>')
+        ? html.replace('</head>', script + '</head>')
+        : script + html;
+    // CSP report-only wymaga nonce na inline <script> (np. redirect w zlecenia.html:271).
+    // Ponytail: dorzuć nonce do każdego inline script bez src/nonce — eliminuje violacje bez usuwania logiki.
+    if (nonce) {
+        out = out.replace(
+            /<script(?![^>]*\bsrc\b)(?![^>]*\bnonce\b)([^>]*)>/gi,
+            `<script$1 nonce="${nonce}">`
+        );
     }
-    return script + html;
+    return out;
 }

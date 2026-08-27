@@ -66,7 +66,16 @@
         }
     }
 
+    function isAdmin() {
+        try {
+            return !!(window.currentUser && window.currentUser.role === 'admin');
+        } catch (_e) {
+            return false;
+        }
+    }
+
     function fetchKnowledgeStatusAsync() {
+        if (!isAdmin()) return;
         const now = Date.now();
         if (now - _lastKnowledgeFetch < KNOWLEDGE_THROTTLE_MS) return;
         _lastKnowledgeFetch = now;
