@@ -24,10 +24,14 @@
         >
 
         <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(1)">
-            <i data-lucide="pencil"></i> Edytuj dane
+            <i data-lucide="pencil" class="icon-xs"></i> Edytuj dane
         </button>
-        <button type="button" class="wizard-summary-edit" onclick="goToWizardStep(2)">
-            <i data-lucide="settings"></i> Edytuj parametry
+        <button
+            type="button"
+            class="wizard-summary-edit wizard-summary-edit--params"
+            onclick="goToWizardStep(2)"
+        >
+            <i data-lucide="sliders-horizontal" class="icon-xs"></i> Edytuj parametry
         </button>
     </div>
 
@@ -280,63 +284,49 @@
                     </div>
                 </div>
                 <div style="flex: 1"></div>
-                <div class="gap-1" style="display: flex">
+                <div
+                    class="well-controls gap-1"
+                    style="display: flex; align-items: center; flex-wrap: wrap"
+                >
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn"
                         onclick="toggleAutoLock()"
                         id="btn-lock-auto"
-                        style="
-                            font-size: var(--fs-md);
-                            padding: 0.3rem 0.6rem;
-                            border-color: var(--border-glass);
-                        "
+                        title="Przełącz tryb ręczny"
                     >
-                        <i data-lucide="unlock"></i> Ręczny
+                        <i data-lucide="unlock" class="icon-xs"></i> Ręczny
                     </button>
+                    <span class="well-ctrl-sep"></span>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn"
                         onclick="toggleRedukcja()"
                         id="btn-redukcja"
-                        style="
-                            font-size: var(--fs-md);
-                            padding: 0.3rem 0.6rem;
-                            border-color: var(--border-glass);
-                        "
                     >
-                        <i data-lucide="arrow-down"></i> Redukcja
+                        <i data-lucide="arrow-down-to-line" class="icon-xs"></i> Redukcja
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn"
                         onclick="togglePsiaBuda()"
                         id="btn-psia-buda"
-                        style="
-                            font-size: var(--fs-md);
-                            padding: 0.3rem 0.6rem;
-                            border-color: var(--border-glass);
-                        "
                     >
-                        🐶 Psia buda
+                        <i data-lucide="dog" class="icon-xs"></i> Psia buda
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn"
                         onclick="toggleStyczna1200()"
                         id="btn-styczna-1200"
-                        style="
-                            font-size: var(--fs-md);
-                            padding: 0.3rem 0.6rem;
-                            border-color: var(--border-glass);
-                            display: none;
-                        "
+                        style="display: none"
                     >
-                        Nadbudowa DN1200
+                        <i data-lucide="layers" class="icon-xs"></i> Nadbudowa DN1200
                     </button>
+                    <span class="well-ctrl-sep" id="redukcja-sep" style="display: none"></span>
                     <div
                         id="redukcja-min-wrap"
-                        class="gap-1"
+                        class="well-ctrl-group gap-1"
                         style="display: none; align-items: center"
                     >
                         <label
@@ -369,49 +359,39 @@
                         <span style="font-size: var(--fs-xs); color: var(--text-muted)">m</span>
                         <button
                             type="button"
-                            class="btn btn-secondary btn-sm"
+                            class="btn btn-secondary btn-sm well-ctrl-btn well-ctrl-btn--sub"
                             onclick="openRedukcjaZakonczeniePopup()"
                             id="btn-redukcja-zak"
-                            style="
-                                font-size: var(--fs-sm);
-                                padding: 0.2rem 0.5rem;
-                                border-color: var(--border-glass);
-                            "
                         >
-                            <span class="text-xs"><i data-lucide="chevron-down"></i></span>
+                            <i data-lucide="chevron-down" class="icon-xs"></i>
                             Zak. DN1000
                         </button>
                     </div>
+                    <span class="well-ctrl-sep"></span>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn"
                         onclick="openZakonczeniePopup()"
                         id="btn-zakonczenie"
-                        style="
-                            font-size: var(--fs-md);
-                            padding: 0.3rem 0.6rem;
-                            border-color: var(--border-glass);
-                        "
                     >
-                        <span class="text-xs"><i data-lucide="chevron-down"></i></span>
+                        <i data-lucide="chevron-down" class="icon-xs"></i>
                         Zakończenie
                     </button>
                     <button
                         type="button"
-                        class="btn btn-primary btn-sm"
+                        class="btn btn-primary btn-sm well-ctrl-btn well-ctrl-btn--primary"
                         onclick="autoSelectComponents()"
                         id="btn-auto-select"
-                        style="font-size: var(--fs-md); padding: 0.3rem 0.6rem"
                     >
-                        <i data-lucide="settings"></i> Auto
+                        <i data-lucide="sparkles" class="icon-xs"></i> Auto
                     </button>
                     <button
                         type="button"
-                        class="btn btn-secondary btn-sm"
+                        class="btn btn-secondary btn-sm well-ctrl-btn well-ctrl-btn--icon"
                         onclick="clearWellConfig()"
-                        style="font-size: var(--fs-md); padding: 0.3rem 0.6rem"
+                        title="Wyczyść konfigurację"
                     >
-                        <i data-lucide="refresh-cw"></i>
+                        <i data-lucide="trash-2" class="icon-xs"></i>
                     </button>
                 </div>
             </div>

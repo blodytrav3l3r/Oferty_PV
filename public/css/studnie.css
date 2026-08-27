@@ -1206,6 +1206,79 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     border-color: rgba(var(--warn-rgb), 0.4);
 }
 
+/* Konfiguracja studni — kontrolki well */
+.well-controls {
+    gap: 0.35rem;
+}
+
+.well-ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+    padding: 0.34rem 0.62rem;
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-semibold);
+    white-space: nowrap;
+    border-radius: var(--radius-sm);
+    border-color: rgba(var(--white-rgb), 0.08);
+    background: rgba(var(--white-rgb), 0.04);
+    transition:
+        background-color 0.18s,
+        border-color 0.18s,
+        color 0.18s,
+        transform 0.12s,
+        box-shadow 0.18s;
+}
+
+.well-ctrl-btn:hover {
+    background: rgba(var(--white-rgb), 0.08);
+    border-color: rgba(var(--white-rgb), 0.14);
+    transform: translateY(-1px);
+}
+
+.well-ctrl-btn:active {
+    transform: none;
+}
+
+.well-ctrl-btn--sub {
+    padding: 0.22rem 0.5rem;
+    font-size: var(--fs-2xs);
+}
+
+.well-ctrl-btn--primary {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+    color: var(--white);
+    border-color: transparent;
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.28);
+}
+
+.well-ctrl-btn--primary:hover {
+    box-shadow: 0 6px 18px rgba(var(--accent-rgb), 0.36);
+    transform: translateY(-1px);
+}
+
+.well-ctrl-btn--icon {
+    padding: 0.34rem 0.5rem;
+}
+
+.well-ctrl-sep {
+    width: 1px;
+    height: 18px;
+    background: rgba(var(--white-rgb), 0.07);
+    margin: 0 0.12rem;
+    flex-shrink: 0;
+}
+
+.well-ctrl-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.12rem 0.32rem 0.12rem 0.1rem;
+    border: 1px solid rgba(var(--accent2-rgb), 0.18);
+    background: rgba(var(--accent2-rgb), 0.06);
+    border-radius: var(--radius-sm);
+}
+
 .b-tab-btn--uwagi.has-uwagi:hover {
     background: rgba(var(--warn-rgb), 0.2);
     border-color: rgba(var(--warn-rgb), 0.55);
@@ -1459,18 +1532,24 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 }
 
 .wizard-summary-edit {
-    padding: 0.2rem 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.7rem;
     border: 1px solid var(--accent-border-dim);
-    border-radius: var(--radius-2xs);
+    border-radius: var(--radius-sm);
     background: var(--accent-bg);
     color: var(--accent-text);
     font:
         var(--fw-semibold) var(--fs-xs) 'Inter',
         sans-serif;
     cursor: pointer;
+    white-space: nowrap;
     transition:
         background-color 0.2s,
-        border-color 0.2s;
+        border-color 0.2s,
+        transform 0.15s,
+        box-shadow 0.2s;
 }
 
 .wizard-summary-edit:first-of-type {
@@ -1480,6 +1559,21 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
 .wizard-summary-edit:hover {
     background: var(--accent-bg-hover);
     border-color: var(--accent-border);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.18);
+}
+
+.wizard-summary-edit--params {
+    background: rgba(var(--slate-700-rgb), 0.6);
+    border-color: rgba(var(--white-rgb), 0.08);
+    color: var(--text-secondary);
+}
+
+.wizard-summary-edit--params:hover {
+    background: rgba(var(--slate-700-rgb), 0.85);
+    border-color: rgba(var(--white-rgb), 0.14);
+    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(var(--black-rgb), 0.25);
 }
 
 .wizard-param-group {
