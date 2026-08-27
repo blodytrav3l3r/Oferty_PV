@@ -4,6 +4,21 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.19.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.5...v1.19.6) (2026-08-27)
+
+### Features
+
+- **studnie:** przeniesienie uwagi do zakladki obok przejsc ([1c3bcce](https://github.com/blodytrav3l3r/Oferty_PV/commit/1c3bccef79a8ca1e7f35b1d191e3cec2fb670a4c))
+- **studnie:** uwagi per-studnia z modalem i wydrukiem ([45ab45a](https://github.com/blodytrav3l3r/Oferty_PV/commit/45ab45a1a2f99760bb22a5bd422b5511a31e7c44))
+
+### Bug Fixes
+
+- **orders:** kwalifikacja user_id w rolefilter i guard admina aistatus ([cf50a2e](https://github.com/blodytrav3l3r/Oferty_PV/commit/cf50a2ef6acb02d131e2423d9b78448ab2ff4a44))
+- **studnie:** fallback modalu uwagi w excelu ([1175ea6](https://github.com/blodytrav3l3r/Oferty_PV/commit/1175ea65c64abf63de2f038ce074f128429c338a))
+- **studnie:** ikona uwagi i modal w excelu ([7f0afc6](https://github.com/blodytrav3l3r/Oferty_PV/commit/7f0afc671784beb6be01af59f5bc11aff81b7e76))
+- **studnie:** naprawa otwierania modalu uwagi w excelu ([beea53f](https://github.com/blodytrav3l3r/Oferty_PV/commit/beea53f53dcf665d658a344060355c0e57c58ed2))
+- **studnie:** przycisk uwagi per-wiersz w akcje excela ([4454eee](https://github.com/blodytrav3l3r/Oferty_PV/commit/4454eee10fb892cc87d79b6a82c8630d4f960ff1))
+
 ### [1.19.5](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.4...v1.19.5) (2026-08-26)
 
 ### Features
