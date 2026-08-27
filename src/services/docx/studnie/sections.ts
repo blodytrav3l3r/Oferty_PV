@@ -129,6 +129,46 @@ export function buildNotesParagraph(notes: string): Paragraph {
     });
 }
 
+// ─── Uwagi per-studnia (Well Uwagi) ─────────────────────────────────
+
+export function buildWellUwagiParagraph(
+    wellUwagi: Array<{ name: string; dn: string; uwagi: string }>
+): Paragraph[] {
+    if (!wellUwagi || wellUwagi.length === 0) return [];
+    const filtered = wellUwagi.filter((w) => w.uwagi && String(w.uwagi).trim());
+    if (filtered.length === 0) return [];
+    const children: TextRun[] = [
+        new TextRun({
+            text: 'Uwagi do studni:',
+            bold: true,
+            size: SZ_TABLE_BODY,
+            font: FONT
+        })
+    ];
+    filtered.forEach((w) => {
+        children.push(new TextRun({ text: '', break: 1 } as TextRunWithBreak));
+        children.push(
+            new TextRun({
+                text: `${w.name} (DN${w.dn}): `,
+                bold: true,
+                size: SZ_TABLE_BODY,
+                font: FONT
+            })
+        );
+        const lines = String(w.uwagi).split('\n');
+        lines.forEach((line, idx) => {
+            if (idx > 0) children.push(new TextRun({ text: '', break: 1 } as TextRunWithBreak));
+            children.push(new TextRun({ text: line, size: SZ_TABLE_BODY, font: FONT }));
+        });
+    });
+    return [
+        new Paragraph({
+            children,
+            spacing: { before: 60, after: 20 }
+        })
+    ];
+}
+
 // ─── Warunki płatności (Payment Terms) ──────────────────────────────
 
 export function buildPaymentTermsParagraph(paymentTerms: string): Paragraph {

@@ -171,10 +171,15 @@ window.renderWellsList = function renderWellsList() {
               </div>`
                 : '';
 
+            const hasUwagi = !!(w.uwagi && String(w.uwagi).trim());
+            const uwagiTitle = hasUwagi
+                ? `Uwagi: ${escapeHtmlAttr(String(w.uwagi).slice(0, 80))}${String(w.uwagi).length > 80 ? '…' : ''} — kliknij aby edytować`
+                : 'Dodaj uwagi do studni';
             html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
               <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
                 <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name).replace(/"/g, '&quot;')}">${escapeHtml(w.name)}</div>
                 <div class="well-list-actions">
+                  <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" onclick="event.stopPropagation(); openWellNotesModal(${i})"><i data-lucide="message-square" aria-hidden="true"></i></button>
                   <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
                   <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
                 </div>
@@ -205,6 +210,7 @@ window.renderWellsList = function renderWellsList() {
     }
 
     container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons({ root: container });
 
     const counter = document.getElementById('wells-counter');
     if (counter) counter.textContent = `(${wells.length})`;

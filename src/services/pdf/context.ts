@@ -197,6 +197,14 @@ export async function buildStudnieOfferContextFromOfferId(
 
     logger.debug('PdfStudnie', `Przygotowano ${items.length} items, grandTotal: ${grandTotal}`);
 
+    const wellUwagi = (wells as Array<Record<string, unknown>>)
+        .filter((w) => w.uwagi && String(w.uwagi).trim())
+        .map((w) => ({
+            name: String(w.name ?? '—'),
+            dn: String(w.dn ?? ''),
+            uwagi: String(w.uwagi)
+        }));
+
     const client = offer.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: offer.clientId } })
         : null;
@@ -225,6 +233,7 @@ export async function buildStudnieOfferContextFromOfferId(
         notes: String(offerData.notes ?? ''),
         paymentTerms: String(offerData.paymentTerms ?? ''),
         validity: String(offerData.validity ?? ''),
+        wellUwagi,
         authorUser,
         guardianUser
     };
@@ -271,6 +280,13 @@ export async function buildStudnieOrderContextFromOrderId(
             : 0;
 
     const { items } = mapWellsToItems(wells);
+    const wellUwagi = (wells as Array<Record<string, unknown>>)
+        .filter((w) => w.uwagi && String(w.uwagi).trim())
+        .map((w) => ({
+            name: String(w.name ?? '—'),
+            dn: String(w.dn ?? ''),
+            uwagi: String(w.uwagi)
+        }));
 
     const client = orderData.clientId
         ? await prisma.clients_rel.findUnique({ where: { id: String(orderData.clientId) } })
@@ -305,6 +321,7 @@ export async function buildStudnieOrderContextFromOrderId(
         notes: String(orderData.notes ?? ''),
         paymentTerms: String(orderData.paymentTerms ?? ''),
         validity: '',
+        wellUwagi,
         authorUser,
         guardianUser
     };

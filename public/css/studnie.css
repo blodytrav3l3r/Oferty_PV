@@ -754,6 +754,12 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     color: var(--danger-hover);
 }
 
+.well-list-action.has-uwagi {
+    color: var(--warn-hover);
+    background: rgba(var(--warn-rgb), 0.15);
+    border: 1px solid rgba(var(--warn-rgb), 0.3);
+}
+
 .well-list-meta {
     display: flex;
     justify-content: space-between;

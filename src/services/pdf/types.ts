@@ -59,6 +59,7 @@ export interface StudnieOfferData {
     notes: string;
     paymentTerms?: string;
     validity?: string;
+    wellUwagi?: Array<{ name: string; dn: string; uwagi: string }>;
     authorUser?: UserContactInfo | null;
     guardianUser?: UserContactInfo | null;
 }

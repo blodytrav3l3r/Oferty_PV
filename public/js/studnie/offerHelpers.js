@@ -59,6 +59,8 @@ function migrateWellData(wellsArr) {
         if (!w.klasaNosnosci_zwienczenie) w.klasaNosnosci_zwienczenie = 'D400';
         if (!Array.isArray(w.config)) w.config = [];
         if (!Array.isArray(w.przejscia)) w.przejscia = [];
+        if (w.uwagi == null) w.uwagi = '';
+        else if (typeof w.uwagi !== 'string') w.uwagi = String(w.uwagi);
     });
     return wellsArr;
 }

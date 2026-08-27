@@ -126,18 +126,34 @@ function buildOfferSummaryHtml(summaries, totalNettoAll) {
     return html;
 }
 
-function buildOfferNotesHtml(notes, paymentTerms, _validity) {
+function buildOfferNotesHtml(notes, paymentTerms, _validity, wellsList) {
     let html = '';
 
     if (notes) {
         html += `<div class="notes-section">
-            <div class="note-box">${notes.replace(/\\n/g, '<br>')}</div>
+            <div class="note-box">${escapeHtml(notes).replace(/\n/g, '<br>')}</div>
+        </div>`;
+    }
+
+    const perWell =
+        Array.isArray(wellsList) && wellsList.length
+            ? wellsList
+            : typeof wells !== 'undefined' && Array.isArray(wells)
+              ? wells
+              : [];
+    const withUwagi = perWell.filter((w) => w && w.uwagi && String(w.uwagi).trim());
+    if (withUwagi.length > 0) {
+        html += `<div class="well-notes-section" style="margin-top:10px;">
+            <div><strong>Uwagi do studni:</strong></div>
+            <ul style="margin:4px 0 0 16px; padding:0; list-style:disc;">
+                ${withUwagi.map((w) => `<li><strong>${escapeHtml(w.name || '—')} (DN${escapeHtml(String(w.dn ?? ''))}):</strong> ${escapeHtml(String(w.uwagi)).replace(/\n/g, '<br>')}</li>`).join('')}
+            </ul>
         </div>`;
     }
 
     if (paymentTerms) {
         html += `<div class="conditions" style="margin-top: 10px;">
-            <div><strong>Warunki płatności:</strong> ${paymentTerms.replace(/\\n/g, '<br>')}</div>
+            <div><strong>Warunki płatności:</strong> ${escapeHtml(paymentTerms).replace(/\n/g, '<br>')}</div>
         </div>`;
     }
 

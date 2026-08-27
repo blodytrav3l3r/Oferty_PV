@@ -111,7 +111,8 @@ function createNewWell(name, dn = 1000) {
         usytuowanie: gp.usytuowanie,
         uszczelka: gp.uszczelka,
         magazyn: gp.magazyn,
-        precoFullHeight: gp.precoFullHeight
+        precoFullHeight: gp.precoFullHeight,
+        uwagi: ''
     };
 
     if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {

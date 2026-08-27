@@ -131,7 +131,7 @@ async function generateOfferHtml() {
     const summaryHtml = buildOfferSummaryHtml(summaries, totalNettoAll);
 
     // Uwagi / warunki
-    const notesHtml = buildOfferNotesHtml(notes, paymentTerms, validity);
+    const notesHtml = buildOfferNotesHtml(notes, paymentTerms, validity, wells);
 
     // Pobierz dane kontaktowe autora oferty i opiekuna
     // createdByUserName = oryginalna nazwa autora (niezmienna)

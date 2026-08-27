@@ -178,6 +178,19 @@ export async function generateStudnieHTML(data: StudnieOfferData): Promise<strin
     </div>
     `;
     }
+    const wellUwagiList = Array.isArray(data.wellUwagi)
+        ? data.wellUwagi.filter((w) => w.uwagi && String(w.uwagi).trim())
+        : [];
+    if (wellUwagiList.length > 0) {
+        sekcjaUwagi += `
+    <div class="well-notes-section" style="margin-top:10px;">
+      <div><strong>Uwagi do studni:</strong></div>
+      <ul style="margin:4px 0 0 16px; padding:0; list-style:disc;">
+        ${wellUwagiList.map((w) => `<li><strong>${escapeHtml(w.name)} (DN${escapeHtml(w.dn)}):</strong> ${escapeHtml(w.uwagi).replace(/\n/g, '<br>')}</li>`).join('')}
+      </ul>
+    </div>
+    `;
+    }
     if (data.paymentTerms) {
         sekcjaUwagi += `
     <div class="conditions" style="margin-top: 10px;">

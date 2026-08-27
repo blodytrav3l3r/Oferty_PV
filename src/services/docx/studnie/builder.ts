@@ -13,6 +13,7 @@ import {
     buildDateParagraphs,
     buildClientInvestTable,
     buildNotesParagraph,
+    buildWellUwagiParagraph,
     buildPaymentTermsParagraph,
     buildSummarySection,
     buildContactSection
@@ -161,6 +162,18 @@ export function buildStudnieSectionChildren(
     // 6. Uwagi
     if (notes) {
         children.push(buildNotesParagraph(notes));
+    }
+
+    // 6b. Uwagi per-studnia
+    const wellUwagi = (wells as Array<Record<string, unknown>>)
+        .filter((w) => w.uwagi && String(w.uwagi).trim())
+        .map((w) => ({
+            name: String(w.name ?? '—'),
+            dn: String(w.dn ?? ''),
+            uwagi: String(w.uwagi)
+        }));
+    if (wellUwagi.length > 0) {
+        children.push(...buildWellUwagiParagraph(wellUwagi));
     }
 
     // 7. Warunki płatności

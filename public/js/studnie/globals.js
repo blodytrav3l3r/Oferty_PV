@@ -38,7 +38,7 @@ Object.defineProperty(window, 'studnieProducts', {
 window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
 
 // System wielu studni
-let wells = []; // Tablica obiektów { id, name, dn, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
+let wells = []; // Tablica obiektów { id, name, dn, uwagi, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
 let currentWellIndex = 0;
 let wellCounter = 1;
 let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica, nadbudowa, preco, pehd, dennicaE600, nadbudowaE600, zwienczenieE600, dennicaF900, nadbudowaF900, zwienczenieF900 }, ... }

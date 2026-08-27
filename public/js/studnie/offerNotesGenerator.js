@@ -175,6 +175,15 @@ function getPrzejsciaSummary() {
     return null;
 }
 
+function getWellUwagiSummary() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return null;
+    const rows = wells
+        .filter((w) => w.uwagi && String(w.uwagi).trim())
+        .map((w) => `• ${w.name} (DN${w.dn}): ${String(w.uwagi).trim().replace(/\n/g, ' ')}`);
+    if (rows.length === 0) return null;
+    return `Uwagi do studni:\n${rows.join('\n')}`;
+}
+
 // Rdzeń wspólny w shared/offerNotesGenerator.js (TASK-045)
 window.generateOfferNotes = createOfferNotesGenerator([
     getMaterialSummary,
@@ -189,5 +198,6 @@ window.generateOfferNotes = createOfferNotesGenerator([
     () => getParamSummary('uszczelka', 'Uszczelka'),
     getNosnoscKorpusSummary,
     getNosnoscZwienczenieSummary,
-    getPrzejsciaSummary
+    getPrzejsciaSummary,
+    getWellUwagiSummary
 ]);

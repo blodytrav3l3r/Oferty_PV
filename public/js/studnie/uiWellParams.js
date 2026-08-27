@@ -227,7 +227,12 @@ function renderWellParams() {
         return;
     }
 
-    let html = `<div style="display:flex; flex-direction:column; gap:0.55rem;">`;
+    const hasUwagiCurrent = !!(well.uwagi && String(well.uwagi).trim());
+    let html = `<div style="display:flex; align-items:center; justify-content:space-between; gap:0.6rem; margin-bottom:0.6rem; padding:0.35rem 0.5rem; background:rgba(var(--slate-800-rgb),0.5); border:1px solid rgba(var(--white-rgb),0.05); border-radius:var(--radius-sm);">
+        <span style="font-size:var(--fs-sm); font-weight:var(--fw-bold); color:var(--text-primary); display:flex; align-items:center; gap:0.35rem;"><i data-lucide="settings" class="icon-xs" aria-hidden="true"></i> ${escapeHtml(well.name || 'Studnia')}</span>
+        <button type="button" class="btn btn-sm ${hasUwagiCurrent ? 'has-uwagi' : ''}" onclick="openWellNotesForCurrent()" title="${hasUwagiCurrent ? escapeHtmlAttr(String(well.uwagi).slice(0, 80)) : 'Dodaj uwagi do tej studni'}" style="${hasUwagiCurrent ? 'background:rgba(var(--warn-rgb),0.15); border-color:rgba(var(--warn-rgb),0.3); color:var(--warn-hover);' : ''}"><i data-lucide="message-square" class="icon-xs" aria-hidden="true"></i> Uwagi${hasUwagiCurrent ? ' •' : ''}</button>
+    </div>`;
+    html += `<div style="display:flex; flex-direction:column; gap:0.55rem;">`;
 
     const isOsadnik = typeof isSettlingWell === 'function' && isSettlingWell(well);
 
@@ -322,6 +327,7 @@ function renderWellParams() {
     html += `</div>`;
 
     container.innerHTML = html;
+    if (window.lucide) window.lucide.createIcons({ root: container });
 }
 
 window.renderWellParams = renderWellParams;
