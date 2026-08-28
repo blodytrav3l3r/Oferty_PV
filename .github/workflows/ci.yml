@@ -106,7 +106,6 @@ jobs:
         runs-on: ubuntu-latest
         needs: test
         if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        continue-on-error: true
         env:
             DATABASE_URL: 'file:./test-ci.sqlite?connection_limit=1&busy_timeout=30000'
         steps:
@@ -131,13 +130,13 @@ jobs:
               run: mkdir -p junit
 
             - name: Run 1/3
-              run: npx jest --no-coverage --json --outputFile=junit/run1.json --testLocationInResults --silent
+              run: npx jest --no-coverage --json --outputFile=junit/run1.json --testLocationInResults --silent || true
 
             - name: Run 2/3
-              run: npx jest --no-coverage --json --outputFile=junit/run2.json --testLocationInResults --silent
+              run: npx jest --no-coverage --json --outputFile=junit/run2.json --testLocationInResults --silent || true
 
             - name: Run 3/3
-              run: npx jest --no-coverage --json --outputFile=junit/run3.json --testLocationInResults --silent
+              run: npx jest --no-coverage --json --outputFile=junit/run3.json --testLocationInResults --silent || true
 
             - name: Compare flaky
               run: node scripts/flaky-compare.mjs junit/run1.json junit/run2.json junit/run3.json
