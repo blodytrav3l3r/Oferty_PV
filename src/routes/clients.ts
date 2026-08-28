@@ -11,12 +11,10 @@ const router = express.Router();
 
 const writeClientsLimiter = WRITE_LIMITER;
 
-// GET /api/clients - Pobiera klientów z bazy użytkownika
-router.get('/', requireAuth, async (req, res) => {
-    const authReq = req as AuthenticatedRequest;
+// GET /api/clients - Pobiera wszystkich klientów (wspólna baza, widoczna dla każdego zalogowanego użytkownika)
+router.get('/', requireAuth, async (_req, res) => {
     try {
-        const user = authReq.user;
-        let clients: Array<{
+        const clients: Array<{
             id: string;
             userId: string | null;
             name: string | null;
@@ -28,22 +26,7 @@ router.get('/', requireAuth, async (req, res) => {
             clientNumber: string | null;
             createdAt: string | null;
             updatedAt: string | null;
-        }>;
-
-        if (user?.role === 'admin') {
-            clients = await prisma.clients_rel.findMany();
-        } else if (user?.role === 'pro') {
-            const allowedIds = [user.id, ...(user.subUsers || [])].filter(
-                (id): id is string => typeof id === 'string' && id.length > 0
-            );
-            clients = await prisma.clients_rel.findMany({
-                where: { userId: { in: allowedIds } }
-            });
-        } else {
-            clients = await prisma.clients_rel.findMany({
-                where: { userId: user?.id || '' }
-            });
-        }
+        }> = await prisma.clients_rel.findMany();
 
         // Normalizuj pola dat — konwertuj numeryczne timestampy na stringi ISO
         const normalized = clients.map((c) => ({
@@ -81,18 +64,16 @@ router.put(
             const now = new Date().toISOString();
             const upserted: { id: string }[] = [];
 
-            // Użyj surowych zapytań wewnątrz transakcji, aby uniknąć problemów z konwersją DateTime w Prisma
+            // Wspólna baza klientów — wszyscy widzą i edytują wszystkich (Wariant A)
             await prisma.$transaction(async (tx) => {
-                // Pobierz istniejące ID klientów dla tego użytkownika
-                const existingClients =
-                    await tx.$queryRaw`SELECT id FROM clients_rel WHERE userId = ${userId}`;
+                const existingClients = await tx.$queryRaw`SELECT id FROM clients_rel`;
                 const existingIds = (existingClients as { id: string }[]).map((c) => c.id);
                 const incomingIds = arr.map((c: { id?: string }) => c.id).filter(Boolean);
                 const toDelete = existingIds.filter((id) => !incomingIds.includes(id));
 
                 if (toDelete.length > 0) {
                     for (const id of toDelete) {
-                        await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id} AND userId = ${userId}`;
+                        await tx.$executeRaw`DELETE FROM clients_rel WHERE id = ${id}`;
                     }
                 }
 
@@ -117,8 +98,7 @@ router.put(
                         }
                     }
 
-                    // Upsert via raw query — tylko jeśli wiersz należy do tego użytkownika
-                    const inserted = await tx.$queryRaw<{ id: string }[]>`
+                    await tx.$queryRaw`
                     INSERT INTO clients_rel (id, userId, name, nip, address, contact, clientNumber, phone, email, createdAt, updatedAt)
                     VALUES (${docId}, ${userId}, ${c.name || ''}, ${c.nip || ''}, ${c.address || ''}, ${c.contact || ''}, ${c.clientNumber || ''}, ${c.phone || ''}, ${c.email || ''}, ${parsedDate}, ${now})
                     ON CONFLICT(id) DO UPDATE SET
@@ -131,23 +111,14 @@ router.put(
                         phone = ${c.phone || ''},
                         email = ${c.email || ''},
                         updatedAt = ${now}
-                    WHERE clients_rel.userId = ${userId}
                     RETURNING id
                 `;
-                    if (inserted.length === 0) {
-                        throw new Error('FORBIDDEN_CLIENT');
-                    }
                     upserted.push({ id: docId });
                 }
             });
 
             res.json({ ok: true, count: upserted.length });
         } catch (e: unknown) {
-            if (e instanceof Error && e.message === 'FORBIDDEN_CLIENT') {
-                return res
-                    .status(403)
-                    .json({ error: 'Brak uprawnień do modyfikacji tego klienta' });
-            }
             logger.error('Clients', 'PUT /api/clients błąd', e);
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Clients', 'Błąd serwera', message);

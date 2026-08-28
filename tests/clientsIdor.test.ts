@@ -56,7 +56,7 @@ beforeEach(() => {
     mockUser.subUsers = [];
 });
 
-describe('Clients CRUD — autoryzacja (IDOR)', () => {
+describe('Clients CRUD — wspólna baza (Wariant A, globalny dostęp)', () => {
     let app: express.Application;
 
     beforeEach(() => {
@@ -84,12 +84,11 @@ describe('Clients CRUD — autoryzacja (IDOR)', () => {
             expect(res.body.ok).toBe(true);
         });
 
-        it('zwraca 403 gdy klient o danym id należy do innego użytkownika', async () => {
+        it('nadpisuje klienta innego użytkownika — wspólna baza (Wariant A)', async () => {
             const txMock = {
-                $queryRaw: jest.fn().mockResolvedValue([]),
+                $queryRaw: jest.fn().mockResolvedValue([{ id: 'c-other' }]),
                 $executeRaw: jest.fn().mockResolvedValue(1)
             };
-            txMock.$queryRaw = jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([]);
             (prisma.$transaction as jest.Mock).mockImplementation(async (fn: (tx: any) => any) =>
                 fn(txMock)
             );
@@ -98,8 +97,8 @@ describe('Clients CRUD — autoryzacja (IDOR)', () => {
                 .put('/api/clients')
                 .send({ data: [{ id: 'c-other', name: 'Cudzy klient' }] });
 
-            expect(res.statusCode).toBe(403);
-            expect(res.body.error).toMatch(/uprawnień/i);
+            expect(res.statusCode).toBe(200);
+            expect(res.body.ok).toBe(true);
         });
 
         it('tworzy nowego klienta gdy id nie istnieje', async () => {
