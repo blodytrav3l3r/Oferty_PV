@@ -666,6 +666,17 @@
         width: 105px;
     }
 }
+/* Wariant B — dedykowane filtry nr zlecenia/zamówienia */
+.zlecenia-filter-input {
+    min-width: 120px;
+}
+@media (max-width: 768px) {
+    .zlecenia-filter-input {
+        flex: 1 1 140px;
+        width: auto !important;
+    }
+}
+
 /* Warianty kolorystyczne ikon statystyk — bez stylów wbudowanych */
 .zlecenia-stat-icon--accent {
     background: rgba(var(--accent-rgb), 0.12);

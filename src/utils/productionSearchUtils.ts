@@ -7,11 +7,18 @@ export interface SearchParams {
     dateFrom: string;
     dateTo: string;
     userId: string;
+    // Wariant B — dedykowane filtry strukturalne
+    productionOrderNumber: string;
+    salesOrderNumber: string;
     cursor: string;
     cursorId: string;
     limit: number;
     sort: string;
     order: string;
+}
+
+function escLike(str: string): string {
+    return str.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
 }
 
 export function parseSearchParams(query: Record<string, unknown>): SearchParams {
@@ -29,10 +36,16 @@ export function parseSearchParams(query: Record<string, unknown>): SearchParams 
                 ? query.dateTo
                 : '',
         userId: typeof query.userId === 'string' ? query.userId : '',
+        productionOrderNumber:
+            typeof query.productionOrderNumber === 'string'
+                ? query.productionOrderNumber.trim()
+                : '',
+        salesOrderNumber:
+            typeof query.salesOrderNumber === 'string' ? query.salesOrderNumber.trim() : '',
         cursor: typeof query.cursor === 'string' ? query.cursor : '',
         cursorId: typeof query.cursorId === 'string' ? query.cursorId : '',
         limit: Math.min(500, Math.max(1, parseInt(query.limit as string) || 50)),
-        sort: ['createdAt', 'updatedAt'].includes(query.sort as string)
+        sort: ['createdAt', 'updatedAt', 'productionOrderNumber'].includes(query.sort as string)
             ? (query.sort as string)
             : 'createdAt',
         order: query.order === 'asc' ? 'asc' : 'desc'
@@ -59,20 +72,43 @@ export function buildProductionSearchWhere(
     params: SearchParams,
     roleSql: Prisma.Sql
 ): { whereSql: Prisma.Sql; searchWhere: Prisma.Sql } {
-    const { q, status, dateFrom, dateTo, userId, cursor, cursorId } = params;
+    const {
+        q,
+        status,
+        dateFrom,
+        dateTo,
+        userId,
+        productionOrderNumber,
+        salesOrderNumber,
+        cursor,
+        cursorId
+    } = params;
 
     const whereParts: Prisma.Sql[] = [];
 
     if (cursor && cursorId) {
         const op = params.order === 'desc' ? '<' : '>';
-        // Porównanie przez normalizedCreatedAtSql() — kursor pochodzi ze znormalizowanej
-        // wartości SELECT; surowe createdAt przy mieszanych formatach (epoch-ms/ISO)
-        // pomijałoby lub duplikowało wiersze.
-        whereParts.push(
-            Prisma.sql`(${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${cursor}
-                OR (${normalizedCreatedAtSql()} = ${cursor}
-                    AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
-        );
+        if (params.sort === 'productionOrderNumber') {
+            // Kursor po nr zlecenia (sort leksykograficzny) — koherentny z ORDER BY
+            whereParts.push(
+                Prisma.sql`(json_extract(production_orders_rel.data, '$.productionOrderNumber') ${Prisma.raw(op)} ${cursor}
+                    OR (json_extract(production_orders_rel.data, '$.productionOrderNumber') = ${cursor}
+                        AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
+            );
+        } else if (params.sort === 'updatedAt') {
+            whereParts.push(
+                Prisma.sql`(production_orders_rel."updatedAt" ${Prisma.raw(op)} ${cursor}
+                    OR (production_orders_rel."updatedAt" = ${cursor}
+                        AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
+            );
+        } else {
+            // Domyślnie kursor po znormalizowanym createdAt (tie-breaker id)
+            whereParts.push(
+                Prisma.sql`(${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${cursor}
+                    OR (${normalizedCreatedAtSql()} = ${cursor}
+                        AND production_orders_rel.id ${Prisma.raw(op)} ${cursorId}))`
+            );
+        }
     }
 
     if (status === 'draft') {
@@ -101,6 +137,24 @@ export function buildProductionSearchWhere(
         );
     }
 
+    if (productionOrderNumber) {
+        const v = '%' + escLike(productionOrderNumber) + '%';
+        whereParts.push(
+            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${v} ESCAPE '\\'`
+        );
+    }
+    if (salesOrderNumber) {
+        const v = '%' + escLike(salesOrderNumber) + '%';
+        // Nr zamówienia handlowego — w JOIN o.data (orders_studnie_rel) lub fallback w PO data
+        whereParts.push(
+            Prisma.sql`(
+                json_extract(o.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'
+                OR json_extract(production_orders_rel.data, '$.salesOrderNumber') LIKE ${v} ESCAPE '\\'
+                OR json_extract(production_orders_rel.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'
+            )`
+        );
+    }
+
     const whereSql =
         roleSql !== Prisma.empty
             ? Prisma.sql`${roleSql}${
@@ -114,18 +168,20 @@ export function buildProductionSearchWhere(
 
     let searchWhere = Prisma.empty;
     if (q) {
+        const v = '%' + escLike(q) + '%';
         const searchParts: Prisma.Sql[] = [
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.wellName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.projectName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.obiekt') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.elementName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.productName') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`json_extract(production_orders_rel.data, '$.snr') LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u1."firstName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u1."lastName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u2."firstName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`,
-            Prisma.sql`u2."lastName" LIKE ${'%' + q.replace(/'/g, "''") + '%'}`
+            Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.wellName') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.projectName') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.obiekt') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.elementName') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.productName') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(production_orders_rel.data, '$.snr') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`json_extract(o.data, '$.orderNumber') LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`u1."firstName" LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`u1."lastName" LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`u2."firstName" LIKE ${v} ESCAPE '\\'`,
+            Prisma.sql`u2."lastName" LIKE ${v} ESCAPE '\\'`
         ];
         searchWhere =
             whereSql === Prisma.empty

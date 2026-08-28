@@ -59,7 +59,7 @@
                                     type="text"
                                     id="zlecenia-search-input"
                                     class="form-input form-input-sm"
-                                    placeholder="Szukaj: firma, NIP, budowa, nr, użytkownik..."
+                                    placeholder="Szukaj: studnia, budowa, element, SNR, opiekun, nr zlecenia/zamówienia..."
                                     style="
                                         font-weight: normal;
                                         padding-left: 2.4rem !important;
@@ -137,6 +137,25 @@
                                 </button>
                             </div>
 
+                            <input
+                                type="text"
+                                id="zlecenia-prod-number-input"
+                                class="form-input form-input-sm zlecenia-filter-input"
+                                placeholder="Nr zlecenia"
+                                aria-label="Nr zlecenia"
+                                title="Filtruj po numerze zlecenia produkcyjnego"
+                                style="width: 150px"
+                            />
+                            <input
+                                type="text"
+                                id="zlecenia-sales-number-input"
+                                class="form-input form-input-sm zlecenia-filter-input"
+                                placeholder="Nr zamówienia"
+                                aria-label="Nr zamówienia"
+                                title="Filtruj po numerze zamówienia handlowego"
+                                style="width: 150px"
+                            />
+
                             <span class="toolbar-label">Opiekun:</span>
                             <select
                                 id="zlecenia-user-filter"
@@ -146,6 +165,46 @@
                             >
                                 <option value="">Użytkownik: wszyscy</option>
                             </select>
+
+                            <select
+                                id="zlecenia-sort-select"
+                                class="form-select zlecenia-select-sm"
+                                aria-label="Sortowanie"
+                                title="Sortowanie wyników"
+                            >
+                                <option value="createdAt-desc">Data ↓ (najnowsze)</option>
+                                <option value="createdAt-asc">Data ↑ (najstarsze)</option>
+                                <option value="productionOrderNumber-asc">Nr zlecenia A→Z</option>
+                                <option value="productionOrderNumber-desc">Nr zlecenia Z→A</option>
+                            </select>
+
+                            <button
+                                type="button"
+                                id="zlecenia-preset-today"
+                                class="btn btn-secondary btn-sm"
+                                title="Ustaw daty na dziś"
+                                aria-label="Filtr: dziś"
+                            >
+                                Dziś
+                            </button>
+                            <button
+                                type="button"
+                                id="zlecenia-preset-7d"
+                                class="btn btn-secondary btn-sm"
+                                title="Ostatnie 7 dni"
+                                aria-label="Filtr: ostatnie 7 dni"
+                            >
+                                7 dni
+                            </button>
+                            <button
+                                type="button"
+                                id="zlecenia-preset-30d"
+                                class="btn btn-secondary btn-sm"
+                                title="Ostatnie 30 dni"
+                                aria-label="Filtr: ostatnie 30 dni"
+                            >
+                                30 dni
+                            </button>
 
                             <button
                                 type="button"

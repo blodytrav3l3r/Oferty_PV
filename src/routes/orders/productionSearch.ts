@@ -30,6 +30,14 @@ router.get('/', requireAuth, async (req, res) => {
     const sortDir = params.order === 'asc' ? 'ASC' : 'DESC';
     const limitVal = Math.min(params.limit, SEARCH_LIMIT_MAX);
 
+    // ORDER BY zgodny z nowym sort (wariant B: createdAt | updatedAt | productionOrderNumber)
+    const orderBySql =
+        params.sort === 'productionOrderNumber'
+            ? Prisma.sql`json_extract(production_orders_rel.data, '$.productionOrderNumber') ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
+            : params.sort === 'updatedAt'
+              ? Prisma.sql`production_orders_rel."updatedAt" ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`
+              : Prisma.sql`production_orders_rel."createdAt" ${Prisma.raw(sortDir)}, production_orders_rel.id ${Prisma.raw(sortDir)}`;
+
     const { whereSql, searchWhere } = buildProductionSearchWhere(params, roleSql);
 
     try {
@@ -61,8 +69,7 @@ router.get('/', requireAuth, async (req, res) => {
             LEFT JOIN orders_studnie_rel o ON o.id = production_orders_rel."orderId"
             ${whereSql}
             ${searchWhere}
-            ORDER BY production_orders_rel."createdAt" ${Prisma.raw(sortDir)},
-                     production_orders_rel.id ${Prisma.raw(sortDir)}
+            ORDER BY ${orderBySql}
             LIMIT ${limitVal + 1}
         `;
 
@@ -77,7 +84,17 @@ router.get('/', requireAuth, async (req, res) => {
         let nextCursorId: string | null = null;
         if (hasMore && dataRows.length > 0) {
             const last = dataRows[dataRows.length - 1];
-            nextCursor = (last.createdAt as string) || null;
+            if (params.sort === 'productionOrderNumber') {
+                const d = last.data
+                    ? (JSON.parse(last.data as string) as Record<string, unknown>)
+                    : {};
+                nextCursor =
+                    (d.productionOrderNumber as string) || (last.createdAt as string) || null;
+            } else if (params.sort === 'updatedAt') {
+                nextCursor = (last.updatedAt as string) || (last.createdAt as string) || null;
+            } else {
+                nextCursor = (last.createdAt as string) || null;
+            }
             nextCursorId = (last.id as string) || null;
         }
 

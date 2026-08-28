@@ -288,15 +288,24 @@ const ZleceniaRender = (() => {
         const fromInput = document.getElementById('zlecenia-date-from');
         const toInput = document.getElementById('zlecenia-date-to');
         const userSelect = document.getElementById('zlecenia-user-filter');
+        const prodInput = document.getElementById('zlecenia-prod-number-input');
+        const salesInput = document.getElementById('zlecenia-sales-number-input');
+        const sortSelect = document.getElementById('zlecenia-sort-select');
         const q = qInput ? qInput.value.trim() : '';
         const dateFrom = fromInput ? fromInput.value : '';
         const dateTo = toInput ? toInput.value : '';
         const userId = userSelect ? userSelect.value : '';
+        const prodNum = prodInput ? prodInput.value.trim() : '';
+        const salesNum = salesInput ? salesInput.value.trim() : '';
+        const sortVal = sortSelect ? sortSelect.value : 'createdAt-desc';
 
         const count =
             (dateFrom || dateTo ? 1 : 0) +
             (userId ? 1 : 0) +
             (q ? 1 : 0) +
+            (prodNum ? 1 : 0) +
+            (salesNum ? 1 : 0) +
+            (sortVal !== 'createdAt-desc' ? 1 : 0) +
             (activeFilter !== 'all' ? 1 : 0);
         const clearBtn = document.getElementById('zlecenia-clear-filters');
         if (clearBtn) {

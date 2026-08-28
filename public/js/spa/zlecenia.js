@@ -69,6 +69,20 @@ const AppZlecenia = (() => {
         const dateTo = dateToInput ? dateToInput.value : '';
         const userSelect = document.getElementById('zlecenia-user-filter');
         const userId = userSelect ? userSelect.value : '';
+        const prodInput = document.getElementById('zlecenia-prod-number-input');
+        const salesInput = document.getElementById('zlecenia-sales-number-input');
+        const productionOrderNumber = prodInput ? prodInput.value.trim() : '';
+        const salesOrderNumber = salesInput ? salesInput.value.trim() : '';
+        const sortSelect = document.getElementById('zlecenia-sort-select');
+        let sort = 'createdAt';
+        let order = 'desc';
+        if (sortSelect && sortSelect.value) {
+            const parts = sortSelect.value.split('-');
+            if (parts.length === 2) {
+                sort = parts[0];
+                order = parts[1];
+            }
+        }
 
         return {
             q,
@@ -76,9 +90,11 @@ const AppZlecenia = (() => {
             dateFrom,
             dateTo,
             userId,
+            productionOrderNumber,
+            salesOrderNumber,
             limit: SEARCH_LIMIT,
-            sort: 'createdAt',
-            order: 'desc'
+            sort,
+            order
         };
     }
 
@@ -90,6 +106,24 @@ const AppZlecenia = (() => {
                 searchDebounceTimer = setTimeout(() => {
                     searchOffers(buildSearchParams());
                 }, 300);
+            });
+        }
+
+        const debouncedSearch = () => {
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                searchOffers(buildSearchParams());
+            }, 300);
+        };
+        const prodInput = document.getElementById('zlecenia-prod-number-input');
+        if (prodInput) prodInput.addEventListener('input', debouncedSearch);
+        const salesInput = document.getElementById('zlecenia-sales-number-input');
+        if (salesInput) salesInput.addEventListener('input', debouncedSearch);
+
+        const sortSelect = document.getElementById('zlecenia-sort-select');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                searchOffers(buildSearchParams());
             });
         }
 
@@ -117,6 +151,41 @@ const AppZlecenia = (() => {
         if (userSelect) {
             userSelect.addEventListener('change', () => {
                 searchOffers(buildSearchParams());
+            });
+        }
+
+        // Presety dat: Dziś / 7 dni / 30 dni
+        const presetToday = document.getElementById('zlecenia-preset-today');
+        const preset7d = document.getElementById('zlecenia-preset-7d');
+        const preset30d = document.getElementById('zlecenia-preset-30d');
+        function applyDatePreset(fromVal, toVal) {
+            if (dateFromInput) dateFromInput.value = fromVal;
+            if (dateToInput) dateToInput.value = toVal;
+            searchOffers(buildSearchParams());
+        }
+        function isoDate(d) {
+            return d.toISOString().slice(0, 10);
+        }
+        if (presetToday) {
+            presetToday.addEventListener('click', () => {
+                const today = isoDate(new Date());
+                applyDatePreset(today, today);
+            });
+        }
+        if (preset7d) {
+            preset7d.addEventListener('click', () => {
+                const to = new Date();
+                const from = new Date();
+                from.setDate(from.getDate() - 6);
+                applyDatePreset(isoDate(from), isoDate(to));
+            });
+        }
+        if (preset30d) {
+            preset30d.addEventListener('click', () => {
+                const to = new Date();
+                const from = new Date();
+                from.setDate(from.getDate() - 29);
+                applyDatePreset(isoDate(from), isoDate(to));
             });
         }
     }
@@ -155,6 +224,8 @@ const AppZlecenia = (() => {
             dateFrom: params.dateFrom || '',
             dateTo: params.dateTo || '',
             userId: params.userId || '',
+            productionOrderNumber: params.productionOrderNumber || '',
+            salesOrderNumber: params.salesOrderNumber || '',
             limit: String(params.limit || 50),
             sort: params.sort || 'createdAt',
             order: params.order || 'desc',
@@ -339,6 +410,12 @@ const AppZlecenia = (() => {
         if (to) to.value = '';
         const select = document.getElementById('zlecenia-user-filter');
         if (select) select.value = '';
+        const prodInput = document.getElementById('zlecenia-prod-number-input');
+        if (prodInput) prodInput.value = '';
+        const salesInput = document.getElementById('zlecenia-sales-number-input');
+        if (salesInput) salesInput.value = '';
+        const sortSelect = document.getElementById('zlecenia-sort-select');
+        if (sortSelect) sortSelect.value = 'createdAt-desc';
         activeFilter = 'all';
         document.querySelectorAll('.zlecenia-filter-tab').forEach((btn) => {
             btn.classList.toggle('active', btn.dataset.filter === 'all');
