@@ -170,6 +170,35 @@ router.delete('/:id', requireAuth, requireAdmin, adminUsersLimiter, async (req, 
     }
 });
 
+// GET /api/users/shareable — kafelki udostępniania (wszyscy oprócz self)
+router.get('/shareable', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const users = await prisma.users.findMany({
+            select: {
+                id: true,
+                username: true,
+                role: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                symbol: true
+            }
+        });
+        let filtered = users.filter((u) => u.id !== authReq.user?.id);
+        // user może udostępniać tylko innym userom — admin/pro mają dostęp zawsze i nie można im go odebrać
+        if (authReq.user?.role === 'user') {
+            filtered = filtered.filter((u) => u.role === 'user');
+        }
+        res.json({ data: filtered });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Users', 'Błąd GET /shareable', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
 // GET /api/users-for-assignment (alias: /for-assignment)
 router.get('/for-assignment', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;

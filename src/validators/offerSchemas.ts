@@ -266,6 +266,28 @@ export type UserUpdateInput = z.infer<typeof userUpdateSchema>;
 // PAGINACJA
 // =============================================================================
 
+export const shareDocumentTypeSchema = z.enum([
+    'offer',
+    'offer_studnie',
+    'order_rury',
+    'order_studnie'
+]);
+
+export const shareCreateSchema = z.object({
+    documentType: shareDocumentTypeSchema,
+    documentId: z.string().min(1, 'ID dokumentu jest wymagane'),
+    userIds: z.array(z.string().min(1)).min(1, 'Wybierz co najmniej jednego użytkownika').max(50)
+});
+
+export const shareRevokeSchema = z.object({
+    documentType: shareDocumentTypeSchema,
+    documentId: z.string().min(1),
+    userIds: z.array(z.string().min(1)).min(1).max(50)
+});
+
+export type ShareCreateInput = z.infer<typeof shareCreateSchema>;
+export type ShareRevokeInput = z.infer<typeof shareRevokeSchema>;
+
 export const paginationQuerySchema = z.object({
     skip: z.coerce.number().int().min(0).default(0),
     limit: z.coerce.number().int().min(1).max(200).default(50),

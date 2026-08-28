@@ -7,7 +7,7 @@ używanym w projekcie **S.O.K. — System Ofert i Kalkulacji**.
 > przez `npm run licenses:generate`. Nie edytuj jej ręcznie —
 > aktualizacja wymaga ponownego wygenerowania.
 
-Dane na dzień: **2026-08-27**. Pełne teksty licencji znajdują się
+Dane na dzień: **2026-08-28**. Pełne teksty licencji znajdują się
 w katalogach pakietów (`node_modules/<pakiet>/LICENSE` lub `LICENSE.md`).
 
 ## Licencje użyte w projekcie

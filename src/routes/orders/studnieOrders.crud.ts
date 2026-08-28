@@ -7,8 +7,8 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
-import { canReadDoc, canWriteDoc } from '../../utils/ownership';
-import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
+import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
 import crypto from 'crypto';
 import { logger } from '../../utils/logger';
@@ -32,7 +32,9 @@ router.get('/', requireAuth, async (req, res) => {
                       .filter(Boolean)
                       .slice(0, 200)
                 : [];
-        let whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        let whereCondition = authReq.user
+            ? buildRoleWhereConditionWithShares(authReq.user, 'order_studnie')
+            : Prisma.empty;
         if (offerIds.length > 0) {
             const idCond = Prisma.sql`"offerStudnieId" IN (${Prisma.join(offerIds)})`;
             whereCondition =
@@ -173,7 +175,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_studnie_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || !canReadDoc(authReq.user, o.userId)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_studnie', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
@@ -288,6 +290,11 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                 where: { id: docId, userId: authReq.user?.id }
             });
         }
+        try {
+            await (prisma as any).document_shares?.deleteMany?.({
+                where: { documentType: 'order_studnie', documentId: docId }
+            });
+        } catch {}
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {

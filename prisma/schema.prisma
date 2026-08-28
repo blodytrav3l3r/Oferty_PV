@@ -720,6 +720,23 @@ model aiRewardLog {
 }
 
 // Użytkownicy systemu
+model document_shares {
+  id               String @id
+  documentType     String // 'offer' | 'offer_studnie' | 'order_rury' | 'order_studnie'
+  documentId       String
+  ownerId          String
+  sharedWithUserId String
+  permission       String @default("read")
+  createdAt        String
+  createdBy        String
+
+  @@unique([documentType, documentId, sharedWithUserId], map: "uq_share_doc_user")
+  @@index([sharedWithUserId], map: "idx_shares_sharedwith")
+  @@index([documentId], map: "idx_shares_docid")
+  @@index([documentType, documentId], map: "idx_shares_doctype_docid")
+  @@index([ownerId], map: "idx_shares_owner")
+}
+
 model users {
   id                         String   @id
   username                   String   @unique

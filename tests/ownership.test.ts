@@ -59,8 +59,9 @@ describe('canReadDoc', () => {
         expect(canReadDoc(pro, 'subB')).toBe(true);
     });
 
-    it('pro cannot read unrelated user document', () => {
+    it('pro cannot read unrelated document', () => {
         expect(canReadDoc(pro, 'otherUser')).toBe(false);
+        expect(canReadDoc(pro, 'randomUser')).toBe(false);
     });
 });
 

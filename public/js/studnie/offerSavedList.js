@@ -107,6 +107,7 @@ function renderSavedOffersStudnie() {
                 <button class="btn btn-sm btn-secondary fs-sm-036" data-action="exportJSONStudnie" data-id="${escapeJsStr(oId)}" title="Pobierz plik JSON" ><i data-lucide="save" aria-hidden="true"></i> JSON</button>
                 ${currentUser && (currentUser.role === 'admin' || currentUser.role === 'pro') ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="changeOfferUserFromListStudnie" data-id="${escapeJsStr(oId)}" title="Zmień opiekuna" ><i data-lucide="user" aria-hidden="true"></i> Opiekun</button>` : ''}
                 ${o.history && o.history.length > 0 ? `<button class="btn btn-sm btn-secondary fs-sm-036" data-action="showOfferHistoryStudnie" data-id="${escapeJsStr(oId)}" title="Historia zmian" ><i data-lucide="hourglass" aria-hidden="true"></i> Historia</button>` : ''}
+                <button class="btn btn-sm btn-secondary fs-sm-036" data-action="shareOfferStudnie" data-id="${escapeJsStr(oId)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i> Udostępnij</button>
                 <button class="btn btn-sm btn-danger fs-sm-036" data-action="deleteOfferStudnie" data-id="${escapeJsStr(oId)}" title="Usuń" ><i data-lucide="trash-2" aria-hidden="true"></i> Usuń</button>
                 ${
                     hasOrder
@@ -152,6 +153,8 @@ if (typeof document !== 'undefined' && !window.__oslDelegated) {
             window.deleteOfferStudnie(id);
         } else if (action === 'openOrderStudnie') {
             window.location.href = 'studnie.html?order=' + id;
+        } else if (action === 'shareOfferStudnie') {
+            if (window.openShareModal) window.openShareModal('offer_studnie', id);
         } else if (action === 'deleteOrderStudnie') {
             window.deleteOrderStudnie(id);
         }

@@ -8,8 +8,8 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { ruryOrdersBatchSchema, ruryOrderUpdateSchema } from '../../validators/offerSchemas';
 import { logger } from '../../utils/logger';
-import { canReadDoc, canWriteDoc } from '../../utils/ownership';
-import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
+import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import crypto from 'crypto';
 
 const router = express.Router();
@@ -28,7 +28,9 @@ router.get('/', requireAuth, async (req, res) => {
                       .filter(Boolean)
                       .slice(0, 200)
                 : [];
-        let whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        let whereCondition = authReq.user
+            ? buildRoleWhereConditionWithShares(authReq.user, 'order_rury')
+            : Prisma.empty;
         if (offerIds.length > 0) {
             const idCond = Prisma.sql`"offerId" IN (${Prisma.join(offerIds)})`;
             whereCondition =
@@ -200,7 +202,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         const o = await prisma.orders_rury_rel.findUnique({
             where: { id: docId }
         });
-        if (!o || !canReadDoc(authReq.user, o.userId)) {
+        if (!o || !(await canReadWithShare(authReq.user, o.userId, 'order_rury', docId))) {
             return res.status(404).json({ error: 'Zamówienie nie znalezione' });
         }
 
@@ -308,6 +310,11 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
                 where: { id: docId, userId: authReq.user?.id }
             });
         }
+        try {
+            await (prisma as any).document_shares?.deleteMany?.({
+                where: { documentType: 'order_rury', documentId: docId }
+            });
+        } catch {}
         searchCache.invalidateAll();
         res.json({ ok: true });
     } catch (e: unknown) {

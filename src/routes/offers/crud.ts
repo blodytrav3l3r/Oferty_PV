@@ -4,7 +4,7 @@ import { logAudit } from '../../services/auditService';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { logger } from '../../utils/logger';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { canReadDoc } from '../../utils/ownership';
+import { canReadWithShare } from '../../utils/ownership';
 import { searchCache } from '../../utils/searchCache';
 import { removeFts5 } from '../../utils/fts5Sync';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
@@ -26,7 +26,7 @@ router.get('/:id', requireAuth, async (req, res) => {
             });
             if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
 
-            if (!canReadDoc(authReq.user, offer.userId)) {
+            if (!(await canReadWithShare(authReq.user, offer.userId, 'offer_studnie', id))) {
                 return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
             }
 
@@ -66,7 +66,7 @@ router.get('/:id', requireAuth, async (req, res) => {
         });
         if (!offer) return res.status(404).json({ error: 'Oferta nie istnieje' });
 
-        if (!canReadDoc(authReq.user, offer.userId)) {
+        if (!(await canReadWithShare(authReq.user, offer.userId, 'offer', id))) {
             return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
         }
 
@@ -174,6 +174,11 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
 
             await removeFts5('studnie', id);
             await prisma.offers_studnie_rel.delete({ where: { id } });
+            try {
+                await (prisma as any).document_shares?.deleteMany?.({
+                    where: { documentType: 'offer_studnie', documentId: id }
+                });
+            } catch {}
 
             logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
             searchCache.invalidateAll();
@@ -210,6 +215,11 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         await prisma.offer_items_rel.deleteMany({
             where: { offerId: id }
         });
+        try {
+            await (prisma as any).document_shares?.deleteMany?.({
+                where: { documentType: 'offer', documentId: id }
+            });
+        } catch {}
         await prisma.offers_rel.delete({
             where: { id }
         });

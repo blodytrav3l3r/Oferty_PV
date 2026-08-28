@@ -12,10 +12,17 @@ import { createIsolatedProject } from './helpers';
 
 const BASELINE = '20260815000000_baseline';
 const AI_TRAINING_RUN = '20260816000000_ai_training_run';
+const UQ_REWARD = '20260815000001_uq_reward_well_action';
+const SHARES = '20260828000000_add_document_shares';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
-        const project = createIsolatedProject('baseline', [BASELINE, AI_TRAINING_RUN]);
+        const project = createIsolatedProject('baseline', [
+            BASELINE,
+            UQ_REWARD,
+            AI_TRAINING_RUN,
+            SHARES
+        ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);
             expect(out).toContain('All migrations have been successfully applied');

@@ -1,4 +1,5 @@
 import { User } from '../helpers';
+import prisma from '../prismaClient';
 
 /**
  * Sprawdza czy user może odczytać dokument (owner / pro parent / admin).
@@ -53,4 +54,60 @@ export function resolveWriteUserId(
         return { allowed: true, effectiveUserId: target };
     }
     return { allowed: false, effectiveUserId: '' };
+}
+
+// --- Sharing helpers (Zasada 2: documentType + documentId) ---
+
+export const SHARE_DOCUMENT_TYPES = [
+    'offer',
+    'offer_studnie',
+    'order_rury',
+    'order_studnie'
+] as const;
+export type ShareDocumentType = (typeof SHARE_DOCUMENT_TYPES)[number];
+
+export function isValidShareDocumentType(v: string): v is ShareDocumentType {
+    return (SHARE_DOCUMENT_TYPES as readonly string[]).includes(v);
+}
+
+export async function hasShare(
+    userId: string,
+    documentType: string,
+    documentId: string
+): Promise<boolean> {
+    if (!userId || !documentType || !documentId) return false;
+    try {
+        const row = await (prisma as any).document_shares?.findFirst({
+            where: { sharedWithUserId: userId, documentType, documentId },
+            select: { id: true }
+        });
+        return !!row;
+    } catch {
+        return false;
+    }
+}
+
+export async function getSharedIdsForUser(userId: string, documentType: string): Promise<string[]> {
+    if (!userId || !documentType) return [];
+    try {
+        const rows = await (prisma as any).document_shares?.findMany({
+            where: { sharedWithUserId: userId, documentType },
+            select: { documentId: true }
+        });
+        if (!rows) return [];
+        return rows.map((r: any) => r.documentId);
+    } catch {
+        return [];
+    }
+}
+
+export async function canReadWithShare(
+    user: User | undefined,
+    docUserId: string | null | undefined,
+    documentType: string,
+    documentId: string
+): Promise<boolean> {
+    if (canReadDoc(user, docUserId)) return true;
+    if (!user || !documentType || !documentId) return false;
+    return hasShare(user.id, documentType, documentId);
 }

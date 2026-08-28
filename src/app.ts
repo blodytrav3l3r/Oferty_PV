@@ -251,6 +251,7 @@ import searchRoutes from './routes/offers/search';
 import productionSearchRoutes from './routes/orders/productionSearch';
 import priceOverridesRoutes from './routes/priceOverrides';
 import exportCombinedRoutes from './routes/exportCombined';
+import sharesRoutes from './routes/shares';
 
 app.use('/api/auth', apiLimiter, authRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
@@ -284,6 +285,7 @@ app.use('/api/feature-flags', featureFlagsRoutes);
 app.use('/api/telemetry', aiMlRoutes); // ML prediction API
 app.use('/api/price-overrides', apiLimiter, priceOverridesRoutes);
 app.use('/api/export-combined', exportCombinedRoutes);
+app.use('/api/shares', apiLimiter, sharesRoutes);
 
 /* ===== RAPORTY VIOLACJI CSP (Faza 1 planu CSP — monitoring) ===== */
 app.post('/api/csp-report', express.text({ type: 'application/csp-report' }), (req, res) => {
@@ -418,6 +420,22 @@ export async function initApp(): Promise<void> {
             'Server',
             'Nie udało się włączyć feature flagi importu/eksportu (tabela settings):',
             err instanceof Error ? err.message : String(err)
+        );
+    }
+
+    // Auto-heal: tabela shares (instalacje bez migrate deploy — legacy db push)
+    try {
+        await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "document_shares" ("id" TEXT NOT NULL PRIMARY KEY, "documentType" TEXT NOT NULL, "documentId" TEXT NOT NULL, "ownerId" TEXT NOT NULL, "sharedWithUserId" TEXT NOT NULL, "permission" TEXT NOT NULL DEFAULT 'read', "createdAt" TEXT NOT NULL, "createdBy" TEXT NOT NULL)`;
+        await prisma.$executeRaw`CREATE UNIQUE INDEX IF NOT EXISTS "uq_share_doc_user" ON "document_shares"("documentType", "documentId", "sharedWithUserId")`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_sharedwith" ON "document_shares"("sharedWithUserId")`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_docid" ON "document_shares"("documentId")`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_doctype_docid" ON "document_shares"("documentType", "documentId")`;
+        await prisma.$executeRaw`CREATE INDEX IF NOT EXISTS "idx_shares_owner" ON "document_shares"("ownerId")`;
+    } catch (e) {
+        logger.warn(
+            'Server',
+            'Nie udało się upewnić schematu document_shares:',
+            e instanceof Error ? e.message : String(e)
         );
     }
 

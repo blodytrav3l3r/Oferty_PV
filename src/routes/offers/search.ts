@@ -1,7 +1,7 @@
 import express from 'express';
 import prisma, { Prisma } from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
-import { buildRoleWhereCondition } from '../../utils/roleFilter';
+import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { searchCache } from '../../utils/searchCache';
 import { parseJsonField } from '../../helpers';
@@ -32,7 +32,6 @@ router.get('/', requireAuth, async (req, res) => {
             return res.json(cached);
         }
 
-        const roleSql = buildRoleWhereCondition(user);
         const whereParts = buildWhereParts({
             q: params.q,
             dateFrom: params.dateFrom,
@@ -43,7 +42,9 @@ router.get('/', requireAuth, async (req, res) => {
             sort: params.sort,
             order: params.order
         });
-        const whereSql =
+        const roleSqlRury = buildRoleWhereConditionWithShares(user, 'offer');
+        const roleSqlStudnie = buildRoleWhereConditionWithShares(user, 'offer_studnie');
+        const buildWhereSql = (roleSql: Prisma.Sql) =>
             roleSql !== Prisma.empty
                 ? Prisma.sql`${roleSql}${
                       whereParts.length > 0
@@ -53,6 +54,8 @@ router.get('/', requireAuth, async (req, res) => {
                 : whereParts.length > 0
                   ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
                   : Prisma.empty;
+        const whereSqlRury = buildWhereSql(roleSqlRury);
+        const whereSqlStudnie = buildWhereSql(roleSqlStudnie);
 
         const { whereSql: orderStatusWhere } = buildOrderStatusSql(params.orderStatus);
 
@@ -94,7 +97,7 @@ router.get('/', requireAuth, async (req, res) => {
                     FROM orders_rury_rel
                     GROUP BY "offerId"
                 ) o_rury ON o_rury."offerId" = o.id
-                ${whereSql}
+                ${whereSqlRury}
 
                 UNION ALL
 
@@ -112,7 +115,7 @@ router.get('/', requireAuth, async (req, res) => {
                     FROM orders_studnie_rel
                     GROUP BY "offerStudnieId"
                 ) o_stud ON o_stud."offerStudnieId" = s.id
-                ${whereSql}
+                ${whereSqlStudnie}
             ) AS combined
             ${combinedWhere}
             ORDER BY ${Prisma.raw(sortCol)} ${Prisma.raw(sortDir)}, id ${Prisma.raw(sortDir)}
@@ -136,9 +139,9 @@ router.get('/', requireAuth, async (req, res) => {
         if (!params.cursor) {
             const countSql = Prisma.sql`
                 SELECT COUNT(*) as cnt FROM (
-                    SELECT id, 'rury' AS "_type" FROM offers_rel ${whereSql}
+                    SELECT id, 'rury' AS "_type" FROM offers_rel ${whereSqlRury}
                     UNION ALL
-                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel ${whereSql}
+                    SELECT id, 'studnie' AS "_type" FROM offers_studnie_rel ${whereSqlStudnie}
                 ) AS combined
                 ${combinedWhere}
             `;
@@ -184,7 +187,8 @@ router.get('/orders', requireAuth, async (req, res) => {
 
         const table = offerType === 'studnie' ? 'orders_studnie_rel' : 'orders_rury_rel';
         const idCol = offerType === 'studnie' ? 'offerStudnieId' : 'offerId';
-        const roleSql = buildRoleWhereCondition(authReq.user);
+        const docType = offerType === 'studnie' ? 'order_studnie' : 'order_rury';
+        const roleSql = buildRoleWhereConditionWithShares(authReq.user, docType);
         const idCond = Prisma.sql`${Prisma.raw(idCol)} = ${id}`;
         const whereSql =
             roleSql !== Prisma.empty

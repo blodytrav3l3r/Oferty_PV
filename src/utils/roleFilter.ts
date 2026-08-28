@@ -1,6 +1,7 @@
 import { User } from '../helpers';
 import { isValidId } from '../helpers';
 import { Prisma } from '../../generated/prisma';
+import { getSharedIdsForUser } from './ownership';
 
 /**
  * Zwraca część klauzuli 'where' dla Prisma Client
@@ -43,3 +44,35 @@ export function buildRoleWhereCondition(
     }
     return Prisma.sql`WHERE ${col} = ${user.id}`;
 }
+
+export async function buildRoleWhereClauseWithShares(
+    user: User,
+    documentType: ShareDocType
+): Promise<Record<string, unknown> | undefined> {
+    if (user.role === 'admin') return undefined;
+    const base = buildRoleWhereClause(user) as Record<string, unknown> | undefined;
+    const sharedIds = await getSharedIdsForUser(user.id, documentType);
+    if (sharedIds.length === 0) return base;
+    if (!base) return { id: { in: sharedIds } } as unknown as Record<string, unknown>;
+    return { OR: [base, { id: { in: sharedIds } }] } as unknown as Record<string, unknown>;
+}
+
+export function buildRoleWhereConditionWithShares(
+    user: Pick<User, 'role' | 'id' | 'subUsers'>,
+    documentType: string,
+    table?: string
+): Prisma.Sql {
+    if (user.role === 'admin') return Prisma.empty;
+    const tbl = table ? `"${table}"` : '';
+    const idCol = tbl ? `${tbl}."id"` : '"id"';
+    const userIdCol = tbl ? `${tbl}."userId"` : '"userId"';
+    const shareCond = Prisma.sql`EXISTS (SELECT 1 FROM "document_shares" WHERE "sharedWithUserId" = ${user.id} AND "documentType" = ${documentType} AND "documentId" = ${Prisma.raw(idCol)})`;
+    if (user.role === 'pro') {
+        const allowedIds = [user.id, ...(user.subUsers || [])].filter(isValidId);
+        if (allowedIds.length === 0) return Prisma.sql`WHERE ${shareCond}`;
+        return Prisma.sql`WHERE (${Prisma.raw(userIdCol)} IN (${Prisma.join(allowedIds)}) OR ${shareCond})`;
+    }
+    return Prisma.sql`WHERE (${Prisma.raw(userIdCol)} = ${user.id} OR ${shareCond})`;
+}
+
+type ShareDocType = 'offer' | 'offer_studnie' | 'order_rury' | 'order_studnie';

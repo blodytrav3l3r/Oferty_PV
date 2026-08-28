@@ -351,6 +351,20 @@ export default {
                 return;
             }
 
+            // ---- SHARE ----
+            if (btn.classList.contains('btn-share') || title.includes('udostępnij')) {
+                const shareType = (() => {
+                    if (typeAttr === 'studnia_oferta') return 'offer_studnie';
+                    if (typeAttr === 'offer' || typeAttr === 'rura_oferta') return 'offer';
+                    const sid = String(id || '');
+                    if (sid.startsWith('offer_studnie_')) return 'offer_studnie';
+                    return 'offer';
+                })();
+                if (window.openShareModal) window.openShareModal(shareType, String(id));
+                else if (window.shareModal) window.shareModal.open(shareType, String(id));
+                return;
+            }
+
             // ---- DELETE OFFER ----
             if (title.includes('usuń') || title.includes('usun')) {
                 if (!btn.disabled) {

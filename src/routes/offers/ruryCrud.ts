@@ -6,7 +6,7 @@ import crypto from 'crypto';
 import { normalizeDate } from '../../helpers';
 import { searchCache } from '../../utils/searchCache';
 import { syncFts5 } from '../../utils/fts5Sync';
-import { buildRoleWhereClause } from '../../utils/roleFilter';
+import { buildRoleWhereClauseWithShares } from '../../utils/roleFilter';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
@@ -23,7 +23,9 @@ router.get('/', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const pq = paginationQuerySchema.parse(req.query);
-        const roleClause = authReq.user ? buildRoleWhereClause(authReq.user) : undefined;
+        const roleClause = authReq.user
+            ? await buildRoleWhereClauseWithShares(authReq.user, 'offer')
+            : undefined;
         const orderBy = pq.sort ? { [pq.sort]: pq.order } : { createdAt: 'desc' as const };
         const [offers, totalCount] = await Promise.all([
             prisma.offers_rel.findMany({

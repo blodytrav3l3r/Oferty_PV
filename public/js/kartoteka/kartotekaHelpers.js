@@ -364,6 +364,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <button class="action-btn secondary" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" data-offer-id="${escapeHtmlAttr(offer.id)}" data-offer-type="${offer.type}" data-order-id="${hasOrder ? order?.id || '' : ''}" title="Wydruk" aria-label="Wydruk">
                                             <i data-lucide="printer" aria-hidden="true"></i>
                                         </button>
+                                        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>
                                         ${
                                             offer.clientPhone
                                                 ? `<a href="tel:${escapeHtmlAttr(offer.clientPhone)}" class="action-btn phone" title="Zadzwoń" aria-label="Zadzwoń"><i data-lucide="phone" aria-hidden="true"></i></a>`
@@ -377,6 +378,7 @@ function buildOfferCardHtml(offer, hasOrder, orders, order, role, isLocalList) {
                                         <button class="action-btn primary" data-id="${escapeHtmlAttr(offer.id)}" title="Szczegóły" aria-label="Szczegóły">
                                             <i data-lucide="eye" aria-hidden="true"></i>
                                         </button>
+                                        <button class="action-btn secondary btn-share" data-id="${escapeHtmlAttr(offer.id)}" data-type="${escapeHtmlAttr(offer.type)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i></button>
                                         `
                                 }
                             </div>

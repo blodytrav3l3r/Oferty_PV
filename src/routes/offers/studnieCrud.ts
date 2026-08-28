@@ -9,8 +9,8 @@ import { syncFts5, removeFts5 } from '../../utils/fts5Sync';
 import { logger } from '../../utils/logger';
 import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
-import { buildRoleWhereCondition } from '../../utils/roleFilter';
-import { canWriteDoc, resolveWriteUserId } from '../../utils/ownership';
+import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
+import { canWriteDoc, resolveWriteUserId, canReadWithShare } from '../../utils/ownership';
 import { offersStudnieBatchSchema, paginationQuerySchema } from '../../validators/offerSchemas';
 import { hasProductionOrdersForOffer } from '../../utils/productionOrderGuard';
 
@@ -250,7 +250,9 @@ router.get('/studnie', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {
         const pq = paginationQuerySchema.parse(req.query);
-        const whereCondition = authReq.user ? buildRoleWhereCondition(authReq.user) : Prisma.empty;
+        const whereCondition = authReq.user
+            ? buildRoleWhereConditionWithShares(authReq.user, 'offer_studnie')
+            : Prisma.empty;
 
         logger.debug('Offers', 'GET /studnie', {
             userId: authReq.user?.id,
@@ -352,7 +354,7 @@ router.get('/studnie/:id', requireAuth, async (req, res) => {
         });
         if (!offer) return res.status(404).json({ error: 'Oferta studni nie istnieje' });
 
-        if (authReq.user?.role !== 'admin' && offer.userId !== authReq.user?.id) {
+        if (!(await canReadWithShare(authReq.user, offer.userId, 'offer_studnie', id))) {
             return res.status(403).json({ error: 'Brak uprawnień do odczytu tej oferty' });
         }
 
@@ -731,6 +733,11 @@ router.delete('/studnie/:id', requireAuth, writeOffersLimiter, async (req, res) 
         logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
         await prisma.offers_studnie_rel.delete({ where: { id } });
+        try {
+            await (prisma as any).document_shares?.deleteMany?.({
+                where: { documentType: 'offer_studnie', documentId: id }
+            });
+        } catch {}
         await removeFts5('studnie', id);
 
         logger.info(

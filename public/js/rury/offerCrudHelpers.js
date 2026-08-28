@@ -98,6 +98,7 @@ function renderSavedOffers() {
         <button class="btn btn-sm btn-secondary" data-action="downloadExistingOffer" data-id="${escapeHtml(o.id)}" title="Pobierz plik JSON"><i data-lucide="save" aria-hidden="true"></i> JSON</button>
         <button class="btn btn-sm btn-secondary" data-action="exportOfferXlsx" data-id="${escapeHtml(o.id)}" title="Pobierz plik XLSX"><i data-lucide="bar-chart-2" aria-hidden="true"></i> XLSX</button>
         <button class="btn btn-sm btn-success" data-action="exportOfferPDF" data-id="${escapeHtml(o.id)}" title="PDF"><i data-lucide="file-text" aria-hidden="true"></i> PDF</button>
+        <button class="btn btn-sm btn-secondary" data-action="shareOffer" data-id="${escapeHtml(o.id)}" title="Udostępnij" aria-label="Udostępnij"><i data-lucide="share-2" aria-hidden="true"></i> Udostępnij</button>
         ${
             _hasOrder
                 ? _orderList
@@ -228,6 +229,8 @@ if (typeof document !== 'undefined' && !window.__ochDelegated) {
             window.location.href = 'rury.html?order=' + id;
         } else if (action === 'exportKartaDirectRury') {
             window.exportKartaDirectRury_action(id, fmt);
+        } else if (action === 'shareOffer') {
+            if (window.openShareModal) window.openShareModal('offer', id);
         } else if (action === 'closeModal') {
             window.closeModal();
         }

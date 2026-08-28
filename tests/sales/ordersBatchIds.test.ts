@@ -66,12 +66,15 @@ jest.mock('../../src/prismaClient', () => {
 });
 
 jest.mock('../../src/utils/roleFilter', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { Prisma } = require('../../src/prismaClient');
+    const fn = (user: any) => {
+        if (user.role === 'admin') return Prisma.empty;
+        return Prisma.sql`WHERE "userId" = ${user.id}`;
+    };
     return {
-        buildRoleWhereCondition: (user: any) => {
-            if (user.role === 'admin') return Prisma.empty;
-            return Prisma.sql`WHERE "userId" = ${user.id}`;
-        }
+        buildRoleWhereCondition: fn,
+        buildRoleWhereConditionWithShares: fn
     };
 });
 
