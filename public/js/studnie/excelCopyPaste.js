@@ -1116,6 +1116,25 @@ function _excelSetCellValue(target, val) {
                 isClosest = true;
             }
         }
+        // Jeśli to Średnica (subType 3) i przejście ma już kategorię (np. PVC SN8 z poprzedniej kolumny paste),
+        // a znaleziony opt nie pasuje kategorią — odrzuć go, by fallback wybrał produkt z właściwej kategorii
+        if (opt && !isNaN(wIdx) && wells[wIdx] && colIdx >= 7) {
+            const _trIdxTmp = Math.floor((colIdx - 7) / 4);
+            const _subTypeTmp = (colIdx - 7) % 4;
+            if (_subTypeTmp === 3) {
+                const _przTmp = wells[wIdx].przejscia && wells[wIdx].przejscia[_trIdxTmp];
+                if (_przTmp && _przTmp.tempCategory) {
+                    const _prodTmp =
+                        typeof studnieProducts !== 'undefined'
+                            ? studnieProducts.find((p) => p.id === opt.value)
+                            : null;
+                    if (_prodTmp && _prodTmp.category !== _przTmp.tempCategory) {
+                        opt = null;
+                        isClosest = false;
+                    }
+                }
+            }
+        }
         if (opt) {
             const isExact =
                 String(val).trim().toLowerCase() === opt.text.trim().toLowerCase() ||
@@ -1192,18 +1211,24 @@ function _excelSetCellValue(target, val) {
                     });
                 }
             } else if (subType === 3) {
-                // Średnica (productId/DN) — najbliższa
+                // Średnica (productId/DN) — najbliższa (preferuj kategorię z tego samego przejścia)
                 const valStr = String(val).trim();
                 const numVal = valStr.replace(/\D/g, '');
                 let matched = null;
                 if (typeof studnieProducts !== 'undefined') {
                     const pool = studnieProducts.filter((p) => p.componentType === 'przejscie');
-                    let exact = pool.find((p) => p.id === valStr || p.name === valStr);
+                    const cat = prz.tempCategory;
+                    const catPool =
+                        cat && pool.some((p) => p.category === cat)
+                            ? pool.filter((p) => p.category === cat)
+                            : null;
+                    const searchPool = catPool && catPool.length > 0 ? catPool : pool;
+                    let exact = searchPool.find((p) => p.id === valStr || p.name === valStr);
                     if (!exact && numVal)
-                        exact = pool.find(
+                        exact = searchPool.find(
                             (p) => String(p.dn) === numVal || p.name.indexOf(numVal) >= 0
                         );
-                    matched = exact || _excelFindClosestProduct(valStr, pool);
+                    matched = exact || _excelFindClosestProduct(valStr, searchPool);
                     if (matched) {
                         prz.productId = matched.id;
                         prz.tempCategory = matched.category;
