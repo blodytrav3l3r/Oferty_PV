@@ -467,4 +467,197 @@ describe('excel multi-column paste — visible semantics (A) with hidden columns
         ctx._excelIsWellLocked = savedLock;
         ctx._excelTestSetHidden([]);
     });
+
+    test('k2kan 400 dwie osobne komorki: Rodzaj 9 + Srednica 10 — k2kan|400, K2 KAN|DN 400, case-insensitive', () => {
+        ctx._excelTestSetHidden([]);
+        ctx._excelTestSetActiveTab('1000');
+        ctx._excelTestSetMaxTr({ '1000': 1 });
+        ctx.wells = [
+            {
+                dn: '1000',
+                magazyn: 'Kluczbork',
+                nadbudowa: 'betonowa',
+                dennicaMaterial: 'betonowa',
+                wkladkaZwienczenie: 'brak',
+                wkladkaOsadnikPreco: 'brak',
+                uszczelka: 'GSG',
+                spocznik: 'brak',
+                stopnie: 'brak',
+                kineta: 'brak',
+                config: [],
+                przejscia: [{ rzednaWlaczenia: null, angle: 0, tempCategory: '', productId: '' }],
+                rzednaWlazu: 5,
+                rzednaDna: 1
+            },
+            {
+                dn: '1000',
+                magazyn: 'Kluczbork',
+                nadbudowa: 'betonowa',
+                dennicaMaterial: 'betonowa',
+                wkladkaZwienczenie: 'brak',
+                wkladkaOsadnikPreco: 'brak',
+                uszczelka: 'GSG',
+                spocznik: 'brak',
+                stopnie: 'brak',
+                kineta: 'brak',
+                config: [],
+                przejscia: [{ rzednaWlaczenia: null, angle: 0, tempCategory: '', productId: '' }],
+                rzednaWlazu: 5,
+                rzednaDna: 1
+            },
+            {
+                dn: '1000',
+                magazyn: 'Kluczbork',
+                nadbudowa: 'betonowa',
+                dennicaMaterial: 'betonowa',
+                wkladkaZwienczenie: 'brak',
+                wkladkaOsadnikPreco: 'brak',
+                uszczelka: 'GSG',
+                spocznik: 'brak',
+                stopnie: 'brak',
+                kineta: 'brak',
+                config: [],
+                przejscia: [{ rzednaWlaczenia: null, angle: 0, tempCategory: '', productId: '' }],
+                rzednaWlazu: 5,
+                rzednaDna: 1
+            }
+        ];
+        ctx.studnieProducts = [
+            {
+                id: 'K2KAN-ID-400',
+                componentType: 'przejscie',
+                dn: '400',
+                category: 'K2KAN ID',
+                name: 'K2KAN ID'
+            },
+            {
+                id: 'K2KAN-ID-500',
+                componentType: 'przejscie',
+                dn: '500',
+                category: 'K2KAN ID',
+                name: 'K2KAN ID'
+            },
+            {
+                id: 'INCOR-400',
+                componentType: 'przejscie',
+                dn: '400',
+                category: 'Incor',
+                name: 'Incor'
+            }
+        ];
+        vm.runInContext(
+            'if(typeof Event==="undefined") globalThis.Event = class Event { constructor(t,o){this.type=t; this.bubbles=o&&o.bubbles;}}',
+            ctx
+        );
+        const savedLock = ctx._excelIsWellLocked;
+        ctx._excelIsWellLocked = () => false;
+
+        function makeK2Row(wIdx: number) {
+            const total = 20;
+            const row: any = {
+                getAttribute: (a: string) => (a === 'data-widx' ? String(wIdx) : null),
+                children: [] as any[],
+                style: { display: '' }
+            };
+            for (let i = 0; i < total; i++) {
+                const td: any = { idx: i, style: {} };
+                let target: any;
+                if (i === 9) {
+                    target = {
+                        tagName: 'SELECT',
+                        value: '',
+                        options: [
+                            { value: '', text: '—' },
+                            { value: 'K2KAN ID', text: 'K2KAN ID' },
+                            { value: 'Incor', text: 'Incor' }
+                        ],
+                        selectedIndex: 0,
+                        dispatchEvent: () => {},
+                        closest: (sel: string) =>
+                            sel === 'td' ? td : sel === 'tr[data-widx]' ? row : null
+                    };
+                    Object.defineProperty(target, 'value', {
+                        get() {
+                            return this._val || '';
+                        },
+                        set(v: string) {
+                            this._val = v;
+                            const idx = this.options.findIndex(
+                                (o: any) => o.value === v || o.text === v
+                            );
+                            this.selectedIndex = idx >= 0 ? idx : 0;
+                        },
+                        configurable: true
+                    });
+                } else if (i === 10) {
+                    target = {
+                        tagName: 'SELECT',
+                        value: '',
+                        options: [
+                            { value: '', text: '—' },
+                            { value: 'K2KAN-ID-400', text: 'DN 400' },
+                            { value: 'INCOR-400', text: 'DN 400' }
+                        ],
+                        selectedIndex: 0,
+                        dispatchEvent: () => {},
+                        closest: (sel: string) =>
+                            sel === 'td' ? td : sel === 'tr[data-widx]' ? row : null
+                    };
+                    Object.defineProperty(target, 'value', {
+                        get() {
+                            return this._val || '';
+                        },
+                        set(v: string) {
+                            this._val = v;
+                            const idx = this.options.findIndex(
+                                (o: any) => o.value === v || o.text === v
+                            );
+                            this.selectedIndex = idx >= 0 ? idx : 0;
+                        },
+                        configurable: true
+                    });
+                } else {
+                    target = {
+                        tagName: 'INPUT',
+                        type: i === 7 || i === 8 ? 'number' : 'text',
+                        value: '',
+                        dispatchEvent: () => {},
+                        closest: (sel: string) =>
+                            sel === 'td' ? td : sel === 'tr[data-widx]' ? row : null
+                    };
+                }
+                td.querySelector = () => target;
+                td.parentElement = row;
+                (td as any)._target = target;
+                row.children.push(td);
+            }
+            return row;
+        }
+        const row0 = makeK2Row(0);
+        const row1 = makeK2Row(1);
+        const row2 = makeK2Row(2);
+        vm.runInContext('_excelPasteMismatches = []', ctx);
+        // 3 warianty w dwóch komórkach osobno: k2kan|400, K2 KAN|DN 400, k2kan|DN400
+        ctx._excelPasteSync(
+            ['k2kan\t400', 'K2 KAN\tDN 400', 'k2kan\tDN400'],
+            [row0, row1, row2],
+            9
+        );
+        // Rodzaj — wszystkie warianty mapują na K2KAN ID (case-insensitive + includes + Levenshtein)
+        expect((row0.children[9] as any)._target.value).toBe('K2KAN ID');
+        expect((row1.children[9] as any)._target.value).toBe('K2KAN ID');
+        expect((row2.children[9] as any)._target.value).toBe('K2KAN ID');
+        // Średnica — 400 / DN 400 / DN400 → K2KAN-ID-400 (bo Rodzaj już K2KAN ID, opcje przefiltrowane)
+        // W teście SELECT options dla średnicy mają obie 400 (K2KAN i Incor) — _excelFindClosestOption wybierze najbliższy DN=400,
+        // a przy remisie pierwszy (K2KAN-ID-400). Fallback też trafia w K2KAN.
+        expect((row0.children[10] as any)._target.value).toBe('K2KAN-ID-400');
+        expect((row1.children[10] as any)._target.value).toBe('K2KAN-ID-400');
+        expect((row2.children[10] as any)._target.value).toBe('K2KAN-ID-400');
+        // Kolejność 9,10 nie gubi shiftu
+        expect((row0.children[9] as any)._target.value).not.toBe(
+            (row0.children[10] as any)._target.value
+        );
+        ctx._excelIsWellLocked = savedLock;
+        ctx._excelTestSetHidden([]);
+    });
 });
