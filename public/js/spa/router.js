@@ -261,7 +261,9 @@
 
             try {
                 if (iframe.contentDocument?.readyState === 'complete') {
-                    window.setTimeout(complete, 120);
+                    // Reużyty iframe — już załadowany, brak potrzeby 120ms opóźnienia.
+                    // Jedna klatka (16ms) wystarcza by zbatchować paint.
+                    window.setTimeout(complete, 16);
                     return;
                 }
             } catch (_e) {
@@ -288,6 +290,55 @@
         });
     }
 
+    function _buildModuleSrc(module, params) {
+        const base = MODULES[module]?.src || module + '.html';
+        const usp = new URLSearchParams();
+        Object.entries(params || {}).forEach(([k, v]) => {
+            if (v != null && v !== '') usp.set(k, String(v));
+        });
+        usp.set('v', '2.0');
+        const qs = usp.toString();
+        return qs ? base + '?' + qs : base;
+    }
+
+    function _logicalSrcKey(module, params) {
+        // Klucz bez cache-bust — decyduje czy reload faktycznie potrzebny
+        const base = MODULES[module]?.src || module + '.html';
+        const usp = new URLSearchParams();
+        Object.entries(params || {}).forEach(([k, v]) => {
+            if (k === 'v') return;
+            if (v != null && v !== '') usp.set(k, String(v));
+        });
+        usp.sort();
+        const qs = usp.toString();
+        return base + (qs ? '?' + qs : '');
+    }
+
+    function _getSpaLogicalSrc(iframe) {
+        try {
+            if (iframe.dataset && iframe.dataset.spaLogicalSrc) return iframe.dataset.spaLogicalSrc;
+            if (iframe.getAttribute) {
+                const v = iframe.getAttribute('data-spa-logical-src');
+                if (v) return v;
+            }
+            if (/** @type {any} */ (iframe)._spaLogicalSrc)
+                return /** @type {any} */ (iframe)._spaLogicalSrc;
+        } catch {}
+        return '';
+    }
+
+    function _setSpaLogicalSrc(iframe, val) {
+        try {
+            if (iframe.dataset) iframe.dataset.spaLogicalSrc = val;
+        } catch {}
+        try {
+            if (iframe.setAttribute) iframe.setAttribute('data-spa-logical-src', val);
+        } catch {}
+        try {
+            /** @type {any} */ (iframe)._spaLogicalSrc = val;
+        } catch {}
+    }
+
     /** Tworzy lub pobiera iframe dla modułu */
     function getOrCreateIframe(module) {
         if (iframes[module]) return iframes[module];
@@ -299,13 +350,8 @@
         iframe.title = config.logo;
 
         const { params } = parseHash();
-        let src = config.src;
-        // Dołącz wszystkie parametry z hasha SPA do adresu URL iframe
-        Object.entries(params).forEach(([k, v]) => {
-            src += (src.includes('?') ? '&' : '?') + `${k}=${v}`;
-        });
-        // Wymuś pominięcie pamięci podręcznej dla samego modułu
-        src += (src.includes('?') ? '&' : '?') + 'v=2.0';
+        const src = _buildModuleSrc(module, params);
+        _setSpaLogicalSrc(iframe, _logicalSrcKey(module, params));
 
         iframe.src = src;
         iframe.classList.remove('spa-iframe-visible');
@@ -403,31 +449,42 @@
             renderSectionNav(module);
         }
 
-        // Ukryj wszystkie iframe'y
-        Object.values(iframes).forEach((f) => {
-            f.classList.remove('spa-iframe-visible');
-        });
-
-        // Pokaż lub utwórz docelowy iframe
+        // Docelowy iframe — lifecycle: keep old visible under overlay → wait ready → atomically swap
         const iframe = getOrCreateIframe(module);
         // Tytuł iframe dla a11y (SR) — aktualizuj przy każdym navigate (reuse iframe)
         if (MODULES[module]?.logo) {
             iframe.title = MODULES[module].logo;
             iframe.setAttribute('title', MODULES[module].logo);
         }
-        let readyPromise = waitForIframeReady(iframe);
 
-        // Wymuś przeładowanie przy edycji/otwieraniu zamówienia, aby zagwarantować czysty stan
+        // Guard reload edit/order: tylko gdy logiczny src się zmienił (edit/order id)
+        // Porównanie przez znormalizowany URL — odporne na absolutne/względne src i kolejność ?v
+        let needsReload = false;
+        let newLogicalKey = null;
         if (params.edit || params.order) {
-            let newSrc = MODULES[module].src;
-            Object.entries(params).forEach(([k, v]) => {
-                newSrc += (newSrc.includes('?') ? '&' : '?') + `${k}=${v}`;
-            });
-            newSrc += (newSrc.includes('?') ? '&' : '?') + 'v=' + Date.now(); // Wymuszenie pominięcia cache
-            readyPromise = waitForNextIframeLoad(iframe, 1800);
-            iframe.src = newSrc;
+            newLogicalKey = _logicalSrcKey(module, params);
+            const prevKey = _getSpaLogicalSrc(iframe);
+            if (newLogicalKey !== prevKey) needsReload = true;
         }
 
+        let readyPromise;
+        if (needsReload) {
+            const newSrc = _buildModuleSrc(module, params) + '&_ts=' + Date.now();
+            _setSpaLogicalSrc(iframe, /** @type {string} */ (newLogicalKey));
+            readyPromise = waitForNextIframeLoad(iframe, 1800);
+            iframe.src = newSrc;
+        } else {
+            readyPromise = waitForIframeReady(iframe);
+        }
+
+        // Odsłoń iframe dopiero gdy gotowy — eliminuje biały błysk pustego iframe
+        await readyPromise;
+        // Sprawdź czy navigate nie została wyprzedzona przez kolejny hashchange
+        if (transition !== transitionToken) return;
+        // Atomowa zamiana: ukryj pozostałe, pokaż docelowy — zero czasu z pustym tłem
+        Object.values(iframes).forEach((f) => {
+            if (f !== iframe) f.classList.remove('spa-iframe-visible');
+        });
         iframe.classList.add('spa-iframe-visible');
         currentModule = module;
 
@@ -440,7 +497,6 @@
 
         // Pomiń domyślną nawigację sekcji podczas edycji/zamawiania — iframe obsługuje to sam
         if (params.edit || params.order) {
-            await readyPromise;
             finishViewTransition(transition);
             document.getElementById('spa-main')?.focus();
             return;
@@ -452,23 +508,9 @@
             tabToShow = MODULES[module].sections[0].id;
         }
 
-        // Przejdź do sekcji, jeśli określona
-        if (tabToShow) {
-            // Poczekaj na załadowanie iframe'a, jeśli jest nowy
-            if (iframe.contentDocument?.readyState === 'complete') {
-                showSection(tabToShow);
-            } else {
-                iframe.addEventListener(
-                    'load',
-                    () => {
-                        setTimeout(() => showSection(tabToShow), 200);
-                    },
-                    { once: true }
-                );
-            }
-        }
+        // Iframe już gotowy (await wyżej) — nawigacja sekcji synchronicznie
+        if (tabToShow) showSection(tabToShow);
 
-        await readyPromise;
         finishViewTransition(transition);
         document.getElementById('spa-main')?.focus();
     }
