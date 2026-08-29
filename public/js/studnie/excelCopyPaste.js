@@ -25,6 +25,72 @@ function _excelGetVisibleRows() {
     return out;
 }
 
+/* ===== CENTRALNY HELPER: logical -> visible TD (semantyka A: wklej do widocznych) =====
+   Model operuje na logical column index, DOM na visible TD index.
+   Po ukryciu kolumn ( _excelHiddenColumnIds ) te indeksy sie rozjezdzaja.
+   Helper mapuje logical -> visible i zwraca null dla ukrytej kolumny (skip, nie gubi danych).
+   Dla kolumn stałych (< prefixLen) logical == visible. Dla komponentów i kolumn po nich
+   przelicza przez _excelBuildComponentColumns / _excelHiddenColumnIds. */
+function _excelGetComponentPrefixLen() {
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    return 10 + maxTr * 4; // 7 stałych + maxTr*4 przejścia +2 gap +1 właz
+}
+function _excelGetCellByLogical(row, logicalIdx) {
+    if (!row || logicalIdx < 0) return null;
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    const prefixLen = 10 + maxTr * 4;
+    if (logicalIdx < prefixLen) return row.children[logicalIdx] || null;
+    if (
+        typeof _excelHiddenColumnIds === 'undefined' ||
+        !_excelHiddenColumnIds ||
+        _excelHiddenColumnIds.length === 0
+    )
+        return row.children[logicalIdx] || null;
+    try {
+        const all =
+            typeof _excelBuildComponentColumns === 'function' &&
+            typeof _excelGetReferenceWell === 'function'
+                ? _excelBuildComponentColumns(
+                      _excelActiveTab,
+                      _excelGetReferenceWell(_excelActiveTab)
+                  )
+                : null;
+        if (!all || all.length === 0) return row.children[logicalIdx] || null;
+        const visible =
+            typeof _excelFilterVisibleColumns === 'function'
+                ? _excelFilterVisibleColumns(all)
+                : all;
+        const totalHidden = all.length - visible.length;
+        const compEnd = prefixLen + all.length;
+        if (logicalIdx >= prefixLen && logicalIdx < compEnd) {
+            const compLogicalPos = logicalIdx - prefixLen;
+            const target = all[compLogicalPos];
+            if (!target) return null;
+            if (_excelHiddenColumnIds.indexOf(target.id) >= 0) return null;
+            let vp = -1;
+            for (let i = 0; i < visible.length; i++)
+                if (visible[i].id === target.id) {
+                    vp = i;
+                    break;
+                }
+            if (vp < 0) return null;
+            return row.children[prefixLen + vp] || null;
+        }
+        if (logicalIdx >= compEnd) return row.children[logicalIdx - totalHidden] || null;
+    } catch (_e) {}
+    return row.children[logicalIdx] || null;
+}
+function _excelGetVisibleCell(row, visibleIdx) {
+    if (!row || visibleIdx < 0) return null;
+    return row.children[visibleIdx] || null;
+}
+
 if (typeof window !== 'undefined') {
     window._excelPasteMismatches = [];
 }
@@ -321,7 +387,7 @@ function _excelPasteSemantic(lines, visibleRows, map) {
         for (let ci = 0; ci < parts.length; ci++) {
             const targetCol = map[ci];
             if (targetCol == null) continue;
-            const tdEl = row.children[targetCol];
+            const tdEl = _excelGetCellByLogical(row, targetCol);
             const target = tdEl ? tdEl.querySelector('input, select') : null;
             if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
         }
@@ -350,7 +416,7 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback) {
             for (let ci = 0; ci < parts.length; ci++) {
                 const targetCol = map[ci];
                 if (targetCol == null) continue;
-                const tdEl = row.children[targetCol];
+                const tdEl = _excelGetCellByLogical(row, targetCol);
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
                 if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
             }
@@ -727,7 +793,9 @@ function _excelHandlePaste(e) {
                         const targetCol = _semanticMap[ci];
                         if (targetCol == null) continue;
                         if (cols.indexOf(targetCol) < 0) continue;
-                        const tdInner = visibleRows[i] ? visibleRows[i].children[targetCol] : null;
+                        const tdInner = visibleRows[i]
+                            ? _excelGetCellByLogical(visibleRows[i], targetCol)
+                            : null;
                         const target = tdInner ? tdInner.querySelector('input, select') : null;
                         if (!target) continue;
                         _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
@@ -738,7 +806,9 @@ function _excelHandlePaste(e) {
                     const parts = line.split('	');
                     cols.forEach(function (colIdx, ci) {
                         if (ci >= parts.length) return;
-                        const tdInner = visibleRows[i] ? visibleRows[i].children[colIdx] : null;
+                        const tdInner = visibleRows[i]
+                            ? _excelGetVisibleCell(visibleRows[i], colIdx)
+                            : null;
                         const target = tdInner ? tdInner.querySelector('input, select') : null;
                         if (!target) return;
                         _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
@@ -943,7 +1013,7 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
             if (!row) continue;
             parts.forEach(function (v, ci) {
                 const colIdx = startColIdx + ci;
-                const tdEl = row.children[colIdx];
+                const tdEl = _excelGetVisibleCell(row, colIdx);
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
                 if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
             });
@@ -960,10 +1030,10 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
     _excelPasteRafId = requestAnimationFrame(tick);
 }
 
-/** Synchroniczne wklejenie (do 99 wierszy).
+/** Synchroniczne wklejenie (do 99 wierszy). Semantyka A: wklej sekwencyjnie do widocznych TD.
  * @param {string[]} lines
  * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
- * @param {number} startColIdx
+ * @param {number} startColIdx — visibleIdx (row.children index, nie logical)
  */
 function _excelPasteSync(lines, visibleRows, startColIdx) {
     for (let si = 0; si < lines.length; si++) {
@@ -972,7 +1042,7 @@ function _excelPasteSync(lines, visibleRows, startColIdx) {
         if (!row) continue;
         parts.forEach(function (v, ci) {
             const colIdx = startColIdx + ci;
-            const tdEl = row.children[colIdx];
+            const tdEl = _excelGetVisibleCell(row, colIdx);
             const target = tdEl ? tdEl.querySelector('input, select') : null;
             if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
         });
