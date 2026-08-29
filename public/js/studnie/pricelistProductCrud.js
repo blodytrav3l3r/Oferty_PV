@@ -112,6 +112,51 @@ function showAddStudnieProductModal() {
             .forEach((el) => (el.style.display = isPrzejscia ? 'grid' : 'none'));
     };
     setTimeout(() => window.togglePrzejsciaFields(), 10);
+    // Enter → Dodaj element (każde pole w modalu, poza textarea — tu brak textarea)
+    setTimeout(() => {
+        const handler = () => window.addStudnieProduct && window.addStudnieProduct();
+        const bind = typeof window.bindEnter === 'function' ? window.bindEnter : null;
+        [
+            'np-id',
+            'np-name',
+            'np-price',
+            'np-height',
+            'np-weight',
+            'np-area',
+            'np-areaExt',
+            'np-transport',
+            'np-pehd',
+            'np-malW',
+            'np-malZ',
+            'np-zelbet',
+            'np-drabNierdzewna',
+            'np-zapasDol',
+            'np-zapasGora',
+            'np-zapasDolMin',
+            'np-zapasGoraMin',
+            'np-custom-category'
+        ].forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (bind) bind(el, handler);
+            else
+                el.addEventListener('keydown', (e) => {
+                    if (
+                        e.key === 'Enter' &&
+                        !e.ctrlKey &&
+                        !e.shiftKey &&
+                        !e.altKey &&
+                        !e.metaKey &&
+                        !e.isComposing
+                    ) {
+                        e.preventDefault();
+                        handler();
+                    }
+                });
+        });
+        const first = document.getElementById('np-id');
+        if (first) first.focus();
+    }, 120);
 }
 
 async function addStudnieProduct() {

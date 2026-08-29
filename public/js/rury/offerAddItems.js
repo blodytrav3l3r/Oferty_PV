@@ -73,6 +73,26 @@ function showPipeLengthModal(productId, editIndex = null) {
         if (input) {
             input.focus();
             input.select();
+            if (typeof window.bindEnter === 'function') {
+                window.bindEnter(
+                    input,
+                    () => window.confirmPipeLength && window.confirmPipeLength(productId, editIndex)
+                );
+            } else {
+                input.addEventListener('keydown', (e) => {
+                    if (
+                        e.key === 'Enter' &&
+                        !e.ctrlKey &&
+                        !e.shiftKey &&
+                        !e.altKey &&
+                        !e.metaKey &&
+                        !e.isComposing
+                    ) {
+                        e.preventDefault();
+                        window.confirmPipeLength && window.confirmPipeLength(productId, editIndex);
+                    }
+                });
+            }
         }
     }, 100);
 }

@@ -539,6 +539,38 @@ async function saveYearLetter() {
     }
 }
 
+/* ===== Enter → akcja (P0/P1) — używa bindEnter z shared/ui.js ===== */
+(function _bindDashboardEnter() {
+    function tryBind() {
+        if (typeof window.bindEnter !== 'function') return false;
+        window.bindEnter('login-username', () => window.doLogin && window.doLogin());
+        window.bindEnter('login-password', () => window.doLogin && window.doLogin());
+        window.bindEnter(
+            'year-letter-input',
+            () => window.saveYearLetter && window.saveYearLetter()
+        );
+        [
+            'new-user-firstname',
+            'new-user-lastname',
+            'new-user-symbol',
+            'new-user-login',
+            'new-user-password',
+            'new-user-email',
+            'new-user-phone',
+            'new-user-order-start',
+            'new-user-prod-order-start'
+        ].forEach((id) => window.bindEnter(id, () => window.createUser && window.createUser()));
+        return true;
+    }
+    if (!tryBind()) {
+        window.addEventListener('DOMContentLoaded', tryBind);
+        // retry after ui.js async load
+        setTimeout(tryBind, 500);
+    } else if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', tryBind);
+    }
+})();
+
 /* ===== Rejestracja globali ===== */
 window.updateSubUsers = updateSubUsers;
 window.startEditUser = startEditUser;

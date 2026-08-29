@@ -469,6 +469,34 @@
         if (_upmOverlay && typeof _upmOverlay.addEventListener === 'function') {
             _upmOverlay.addEventListener('keydown', function (ev) {
                 if (ev.key === 'Escape') close();
+                if (
+                    ev.key === 'Enter' &&
+                    !ev.ctrlKey &&
+                    !ev.shiftKey &&
+                    !ev.altKey &&
+                    !ev.metaKey &&
+                    !ev.isComposing
+                ) {
+                    const t = ev.target;
+                    if (!(t instanceof HTMLInputElement) && !(t instanceof HTMLSelectElement))
+                        return;
+                    if (t instanceof HTMLTextAreaElement) return;
+                    // Filtruj: dateFrom/dateTo/userId -> Filtruj; rury/studnie -> Eksportuj
+                    const isFilter = t.hasAttribute('data-combined-filter');
+                    const isField = t.hasAttribute('data-combined-field');
+                    if (isFilter) {
+                        ev.preventDefault();
+                        if (typeof window.combinedFilter_action === 'function')
+                            window.combinedFilter_action();
+                    } else if (isField) {
+                        const field = t.getAttribute('data-combined-field');
+                        if (field === 'rury' || field === 'studnie') {
+                            ev.preventDefault();
+                            if (typeof window.combinedExport_action === 'function')
+                                window.combinedExport_action();
+                        }
+                    }
+                }
             });
         }
         if (config.combinedSection) {

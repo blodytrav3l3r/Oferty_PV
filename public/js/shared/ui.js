@@ -746,6 +746,28 @@ document.addEventListener('keydown', async (e) => {
     }
 });
 
+/**
+ * bindEnter — podpina Enter (bez Ctrl, bez Shift, nie w textarea, nie isComposing) do akcji.
+ * @param {Element|string} inputElOrSelector
+ * @param {Function} handler
+ */
+function bindEnter(inputElOrSelector, handler) {
+    const el =
+        typeof inputElOrSelector === 'string'
+            ? document.getElementById(inputElOrSelector) ||
+              document.querySelector(inputElOrSelector)
+            : inputElOrSelector;
+    if (!el || typeof handler !== 'function') return;
+    el.addEventListener('keydown', (/** @type {KeyboardEvent} */ e) => {
+        if (e.key !== 'Enter' || e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+        if (e.isComposing) return;
+        if (el instanceof HTMLTextAreaElement) return;
+        e.preventDefault();
+        handler(e);
+    });
+}
+window.bindEnter = bindEnter;
+
 /* ===== Rejestracja globali ===== */
 window.getUserDisplayName = getUserDisplayName;
 window.toggleCard = toggleCard;
