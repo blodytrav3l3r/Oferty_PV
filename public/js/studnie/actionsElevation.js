@@ -188,18 +188,34 @@ window.autoUpdateWellName = function (well, index) {
 
 function checkWellNumerDuplicate(newNumer, inputEl) {
     if (!inputEl) return false;
-    if (newNumer !== '') {
-        const currentWell = getCurrentWell();
-        const isDuplicate = wells.some(
-            (w) => w !== currentWell && w.numer && w.numer.toLowerCase() === newNumer.toLowerCase()
-        );
+    const trimmed = String(newNumer || '')
+        .trim()
+        .replace(/ (PRE|UTH)$/i, '')
+        .trim();
+    if (trimmed !== '') {
+        const currentWell = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
+        const normNew = trimmed.toLowerCase();
+        const isDuplicate = wells.some((w) => {
+            if (!w || !w.numer) return false;
+            const wNorm = String(w.numer)
+                .trim()
+                .replace(/ (PRE|UTH)$/i, '')
+                .trim()
+                .toLowerCase();
+            if (wNorm !== normNew) return false;
+            if (currentWell && w.id != null && currentWell.id != null)
+                return w.id !== currentWell.id;
+            return w !== currentWell;
+        });
         if (isDuplicate) {
             inputEl.classList.add('border-danger-subtle', 'color-danger');
             inputEl.style.boxShadow = '0 0 10px rgba(var(--danger-rgb), 0.2)';
-            showToast(
-                `<i data-lucide="alert-triangle"></i> Numer studni "${newNumer}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
-                'error'
-            );
+            const inBulk = typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
+            if (!inBulk)
+                showToast(
+                    `<i data-lucide="alert-triangle"></i> Numer studni "${trimmed}" już istnieje! Zmień numer, aby uniknąć duplikatów.`,
+                    'error'
+                );
             return true;
         }
     }

@@ -245,7 +245,7 @@ function excelOnNameChange(wIdx, value) {
     const name = (value || '').trim();
     if (!name) return;
     wells[wIdx].name = name;
-    wells[wIdx].numer = name.replace(/ (PRE|UTH)$/, '');
+    wells[wIdx].numer = name.replace(/ (PRE|UTH)$/i, '').trim();
     if (typeof autoUpdateWellName === 'function') {
         autoUpdateWellName(wells[wIdx], wIdx);
     }

@@ -40,7 +40,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     const nameCounts = {};
     const nameDnMap = {};
     wells.forEach(function (w) {
-        const n = (w.name || '').trim().toLowerCase();
+        const raw =
+            w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
+        const n = raw
+            .trim()
+            .replace(/ (PRE|UTH)$/i, '')
+            .trim()
+            .toLowerCase();
         if (n) {
             nameCounts[n] = (nameCounts[n] || 0) + 1;
             const dnKey = w.dn === 'styczna' ? 'styczne' : String(w.dn);
@@ -69,7 +75,15 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         const isLockedRow = _excelIsWellLocked(wIdx);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const nameKey = (well.name || '').trim().toLowerCase();
+        const rawKey =
+            well.numer != null && String(well.numer).trim() !== ''
+                ? String(well.numer)
+                : well.name || '';
+        const nameKey = rawKey
+            .trim()
+            .replace(/ (PRE|UTH)$/i, '')
+            .trim()
+            .toLowerCase();
         const isDup = dupNames.has(nameKey);
         const dnKey = dn === 'styczne' ? 'styczne' : dn;
         const nameDnList = nameDnMap[nameKey] || [];
@@ -179,7 +193,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wIdx +
             '" data-widx="' +
             wIdx +
-            '" onclick="_excelToggleWellAutoMode(' +
+            '" onmousedown="event.preventDefault()" onclick="_excelToggleWellAutoMode(' +
             wIdx +
             ')" class="excel-mode-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
@@ -678,7 +692,13 @@ function _excelRefreshDupColors() {
     const nameCounts = {};
     const nameDnMap = {};
     wells.forEach((w) => {
-        const n = (w.name || '').trim().toLowerCase();
+        const raw =
+            w.numer != null && String(w.numer).trim() !== '' ? String(w.numer) : w.name || '';
+        const n = raw
+            .trim()
+            .replace(/ (PRE|UTH)$/i, '')
+            .trim()
+            .toLowerCase();
         if (n) {
             nameCounts[n] = (nameCounts[n] || 0) + 1;
             const wDn = w.dn === 'styczna' ? 'styczne' : String(w.dn);
@@ -731,7 +751,15 @@ function _excelRefreshDupColors() {
 
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const nameKey = (well.name || '').trim().toLowerCase();
+        const rawKey2 =
+            well.numer != null && String(well.numer).trim() !== ''
+                ? String(well.numer)
+                : well.name || '';
+        const nameKey = rawKey2
+            .trim()
+            .replace(/ (PRE|UTH)$/i, '')
+            .trim()
+            .toLowerCase();
         const isDup = dupNames.has(nameKey);
         const nameDnList = nameDnMap[nameKey] || [];
         const otherDns = nameDnList.filter((d) => d.dn !== dnKey);

@@ -1072,7 +1072,7 @@ function _excelSetCellValue(target, val) {
         if (isNaN(wIdx) || !wells[wIdx]) return;
         const well = wells[wIdx];
         well.name = clean;
-        well.numer = clean.replace(/ (PRE|UTH)$/, '');
+        well.numer = clean.replace(/ (PRE|UTH)$/i, '').trim();
         if (typeof autoUpdateWellName === 'function') {
             try {
                 autoUpdateWellName(well, wIdx);

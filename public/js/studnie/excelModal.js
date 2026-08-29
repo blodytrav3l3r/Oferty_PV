@@ -2,6 +2,7 @@
 /* ===== EXCEL MODAL — Otwarzanie/zamykanie tabeli konfiguracyjnej studni ===== */
 
 function _excelOnFocusInRow(e) {
+    if (e.target.closest('.excel-mode-btn, .excel-run-btn')) return;
     const row = e.target.closest('tr[data-widx]');
     if (!row) return;
     const wIdx = parseInt(row.getAttribute('data-widx'), 10);
@@ -367,28 +368,10 @@ function openExcelTableModal() {
     /* Aktualne statusy konfiguracji przed renderem (podświetlenie wierszy F4) */
     if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
     _excelActiveTab = DN_TABS[0];
+    /* Nie zaznaczaj żadnego wiersza przy otwarciu — currentWellIndex=-1 PRZED renderem */
+    if (typeof currentWellIndex !== 'undefined') currentWellIndex = -1;
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
-    /* Nie zaznaczaj żadnego wiersza przy otwarciu — usuń aktywny styl z pierwszej studni */
-    if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= 0) {
-        const firstRow = document.querySelector(
-            '#excel-table-container tr[data-widx="' + currentWellIndex + '"]'
-        );
-        if (firstRow) {
-            const baseRef = firstRow.getAttribute('data-base-bg');
-            if (baseRef) {
-                firstRow.style.background = baseRef;
-                firstRow.setAttribute('data-orig-bg', baseRef);
-                /* Przywróć tło sticky kolumn */
-                const stTds = firstRow.querySelectorAll('td:nth-child(-n+7)');
-                const stSolid = firstRow.getAttribute('data-solid-bg') || 'var(--bg-primary)';
-                stTds.forEach(function (td) {
-                    td.style.background = _excelStickyCellBg(baseRef, stSolid);
-                });
-            }
-        }
-        currentWellIndex = -1;
-    }
     _excelStopPolling();
     _excelStartPolling();
     _excelUpdateWellCount();
