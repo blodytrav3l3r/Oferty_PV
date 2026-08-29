@@ -6,6 +6,7 @@ import 'dotenv/config';
  * Importuje skonfigurowaną aplikację Express z src/app i uruchamia nasłuchiwanie.
  */
 import app, { initApp } from './src/app';
+import * as Sentry from '@sentry/node';
 import { logger } from './src/utils/logger';
 import { cronService } from './src/utils/cronService';
 import { APP_NAME } from './src/constants/appMeta';
@@ -19,6 +20,24 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 /* ===== OBSŁUGA NIEOCZEKIWANYCH BŁĘDÓW ===== */
+// P2 Sentry best-effort: capture + bounded flush 2s, potem exit niezależnie od wyniku
+function flushSentryAndExit(code: number, error: unknown): void {
+    if (!process.env.SENTRY_DSN) {
+        process.exit(code);
+        return;
+    }
+    try {
+        Sentry.captureException(error);
+    } catch {}
+    // bounded flush 2s — nie blokuj shutdown w nieskończoność
+    void Promise.race([
+        Sentry.flush(2000).catch(() => {}),
+        new Promise<void>((r) => setTimeout(r, 2000))
+    ]).finally(() => process.exit(code));
+    // safety net gdyby flush zawiesił się poza Promise.race
+    setTimeout(() => process.exit(code), 2500).unref();
+}
+
 process.on('unhandledRejection', (reason: unknown) => {
     logger.error(
         'Server',
@@ -26,11 +45,11 @@ process.on('unhandledRejection', (reason: unknown) => {
         reason instanceof Error ? reason.message : String(reason)
     );
     // Proces nie może sensownie kontynuować po nieobsłużonej rejectcji — zakończ go.
-    process.exit(1);
+    flushSentryAndExit(1, reason instanceof Error ? reason : new Error(String(reason)));
 });
 process.on('uncaughtException', (err: Error) => {
     logger.error('Server', 'UncaughtException: ' + err.message, err.stack || '');
-    process.exit(1);
+    flushSentryAndExit(1, err);
 });
 
 /* ===== INICJALIZACJA ===== */
@@ -43,6 +62,15 @@ process.on('uncaughtException', (err: Error) => {
             'Błąd inicjalizacji aplikacji:',
             err instanceof Error ? err.message : String(err)
         );
+        if (process.env.SENTRY_DSN) {
+            try {
+                Sentry.captureException(err);
+                await Promise.race([
+                    Sentry.flush(2000).catch(() => {}),
+                    new Promise<void>((r) => setTimeout(r, 2000))
+                ]);
+            } catch {}
+        }
         process.exit(1);
     }
 
@@ -59,9 +87,25 @@ process.on('uncaughtException', (err: Error) => {
                 'Server',
                 `Port ${PORT} jest już zajęty. Zatrzymaj proces używający portu ${PORT} lub ustaw inny PORT w .env i uruchom ponownie.`
             );
+            if (process.env.SENTRY_DSN) {
+                try {
+                    Sentry.captureException(err);
+                    void Sentry.flush(2000).catch(() => {});
+                } catch {}
+                setTimeout(() => process.exit(1), 2100).unref();
+                return;
+            }
             process.exit(1);
         }
         logger.error('Server', `Błąd serwera: ${err.message}`);
+        if (process.env.SENTRY_DSN) {
+            try {
+                Sentry.captureException(err);
+                void Sentry.flush(2000).catch(() => {});
+            } catch {}
+            setTimeout(() => process.exit(1), 2100).unref();
+            return;
+        }
         process.exit(1);
     });
 
