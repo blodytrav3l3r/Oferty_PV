@@ -29,8 +29,12 @@ export async function syncFts5(type: 'rury' | 'studnie', data: OfferFts5Data): P
             data.clientNumber || '',
             type
         );
-    } catch {
-        // FTS5 table may not exist — safe to ignore
+    } catch (e) {
+        logger.debug(
+            'Fts5',
+            `syncFts5 ignore (${type} ${data.id})`,
+            e instanceof Error ? e.message : String(e)
+        );
     }
 }
 
@@ -44,8 +48,12 @@ export async function removeFts5(type: 'rury' | 'studnie', id: string): Promise<
             id,
             type
         );
-    } catch {
-        // FTS5 table may not exist — safe to ignore
+    } catch (e) {
+        logger.debug(
+            'Fts5',
+            `removeFts5 ignore (${type} ${id})`,
+            e instanceof Error ? e.message : String(e)
+        );
     }
 }
 

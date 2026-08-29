@@ -19,6 +19,7 @@ function loadSelfEvaluation() {
 
 class CronService {
     private intervals: Map<string, NodeJS.Timeout> = new Map();
+    private running: Set<string> = new Set();
     private enabled: boolean = false;
 
     /**
@@ -55,14 +56,18 @@ class CronService {
             logger.warn('CronService', `Task ${name} już zarejestrowany`);
             return;
         }
-        const id = setInterval(function () {
+        const id = setInterval(() => {
+            if (this.running.has(name)) {
+                logger.warn('CronService', `Pominięto ${name} — poprzedni run w toku`);
+                return;
+            }
+            this.running.add(name);
             Promise.resolve()
-                .then(function () {
-                    return task();
-                })
-                .catch(function (err: unknown) {
+                .then(() => task())
+                .catch((err: unknown) => {
                     logger.error('CronService', `Błąd w ${name}: ${err}`);
-                });
+                })
+                .finally(() => this.running.delete(name));
         }, intervalMs);
         id.unref(); // nie blokuj procesu (ważne w testach)
         this.intervals.set(name, id);
@@ -90,6 +95,7 @@ class CronService {
             logger.info('CronService', `Wyczyszczono ${name}`);
         });
         this.intervals.clear();
+        this.running.clear();
         this.enabled = false;
     }
 

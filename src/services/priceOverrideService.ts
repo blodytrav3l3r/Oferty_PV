@@ -517,15 +517,14 @@ class PriceOverrideService {
                 await tx.precoZakresy.createMany({ data: zakresy });
                 await tx.precoZakresyDefault.createMany({ data: zakresy });
             }
+            if (exportedAt) {
+                await tx.settings.upsert({
+                    where: { key: 'pricelist_defaults_updated_at' },
+                    update: { value: exportedAt },
+                    create: { key: 'pricelist_defaults_updated_at', value: exportedAt }
+                });
+            }
         });
-
-        if (exportedAt) {
-            await prisma.settings.upsert({
-                where: { key: 'pricelist_defaults_updated_at' },
-                update: { value: exportedAt },
-                create: { key: 'pricelist_defaults_updated_at', value: exportedAt }
-            });
-        }
 
         logger.info(
             'PriceOverride',

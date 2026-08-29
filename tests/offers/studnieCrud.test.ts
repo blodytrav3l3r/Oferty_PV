@@ -59,7 +59,8 @@ jest.mock('../../src/prismaClient', () => ({
         $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
-        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+        $transaction: jest.fn()
     },
     Prisma: {
         raw: (s: string): string => s,
@@ -96,6 +97,11 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    (prisma.$transaction as jest.Mock).mockImplementation(async (arg: any) => {
+        if (typeof arg === 'function') return arg(prisma);
+        if (Array.isArray(arg)) return Promise.all(arg);
+        return arg;
+    });
 });
 
 describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {

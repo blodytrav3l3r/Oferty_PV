@@ -78,17 +78,21 @@ describe('buildWhereParts — klauzule createdAt', () => {
 
     it('dateFrom ISO: >= z surowa wartoscia', () => {
         const parts = buildWhereParts({ ...base, dateFrom: '2026-08-07T22:00:00.000Z' });
-        expect(renderParts(parts)).toContain('"createdAt" >= 2026-08-07T22:00:00.000Z');
+        // P1.3: normalizedCreatedAtSql() — CASE z GLOB, nie surowe "createdAt"
+        expect(renderParts(parts)).toContain('>= 2026-08-07T22:00:00.000Z');
+        expect(renderParts(parts)).toContain('CASE WHEN');
     });
 
     it('dateTo ISO: < z surowa wartoscia (poloowki przedzial presetu)', () => {
         const parts = buildWhereParts({ ...base, dateTo: '2026-08-08T22:00:00.000Z' });
-        expect(renderParts(parts)).toContain('"createdAt" < 2026-08-08T22:00:00.000Z');
+        expect(renderParts(parts)).toContain('< 2026-08-08T22:00:00.000Z');
+        expect(renderParts(parts)).toContain('CASE WHEN');
     });
 
     it('dateTo YYYY-MM-DD: <= z suffixem konca dnia', () => {
         const parts = buildWhereParts({ ...base, dateTo: '2026-08-08' });
-        expect(renderParts(parts)).toContain('"createdAt" <= 2026-08-08T23:59:59.999Z');
+        expect(renderParts(parts)).toContain('<= 2026-08-08T23:59:59.999Z');
+        expect(renderParts(parts)).toContain('CASE WHEN');
     });
 
     it('puste daty: brak klauzul createdAt', () => {

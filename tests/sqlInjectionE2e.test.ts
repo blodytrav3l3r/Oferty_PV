@@ -38,7 +38,8 @@ jest.mock('../src/prismaClient', () => ({
         },
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
-        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+        $transaction: jest.fn()
     }
 }));
 
@@ -47,6 +48,11 @@ describe('SQL Injection - scenariusze ataku', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
+        (prisma.$transaction as jest.Mock).mockImplementation(async (arg: any) => {
+            if (typeof arg === 'function') return arg(prisma);
+            if (Array.isArray(arg)) return Promise.all(arg);
+            return arg;
+        });
         app = express();
         app.use(express.json());
         app.use('/api/offers', offerRoutes);

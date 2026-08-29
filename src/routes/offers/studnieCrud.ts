@@ -402,7 +402,19 @@ router.post(
         try {
             const incoming = req.body.data || [req.body];
 
-            const results: Record<string, unknown>[] = [];
+            // P1.1: walidacja + kolekcja, potem atomowy zapis batch w jednej transakcji
+            const pending: Array<{
+                docId: string;
+                create: Record<string, unknown>;
+                update: Record<string, unknown>;
+                fts: {
+                    id: string;
+                    offer_number: string | null;
+                    clientName: string | null;
+                    investName: string | null;
+                    clientNumber: string | null;
+                };
+            }> = [];
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) docId = uuidv4();
@@ -521,8 +533,8 @@ router.post(
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
 
-                await prisma.offers_studnie_rel.upsert({
-                    where: { id: docId },
+                pending.push({
+                    docId,
                     create: {
                         id: docId,
                         userId: effectiveUserId,
@@ -548,16 +560,30 @@ router.post(
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr
+                    },
+                    fts: {
+                        id: docId,
+                        offer_number: offerNumber,
+                        clientName,
+                        investName,
+                        clientNumber
                     }
                 });
-                await syncFts5('studnie', {
-                    id: docId,
-                    offer_number: offerNumber,
-                    clientName,
-                    investName,
-                    clientNumber
-                });
-                results.push({ id: docId, ok: true });
+            }
+            // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness)
+            await prisma.$transaction(async (tx) => {
+                for (const w of pending) {
+                    await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
+                        where: { id: w.docId },
+                        create: w.create as never,
+                        update: w.update as never
+                    });
+                }
+            });
+            const results: Record<string, unknown>[] = [];
+            for (const w of pending) {
+                await syncFts5('studnie', w.fts);
+                results.push({ id: w.docId, ok: true });
             }
 
             logger.info(
@@ -603,6 +629,19 @@ router.put(
                 });
             }
 
+            // P1.1: walidacja + kolekcja, potem atomowy zapis batch
+            const pendingPut: Array<{
+                docId: string;
+                create: Record<string, unknown>;
+                update: Record<string, unknown>;
+                fts: {
+                    id: string;
+                    offer_number: string | null;
+                    clientName: string | null;
+                    investName: string | null;
+                    clientNumber: string | null;
+                };
+            }> = [];
             for (const o of incoming) {
                 let docId = typeof o.id === 'string' ? o.id : '';
                 if (!docId) {
@@ -656,8 +695,8 @@ router.put(
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
 
-                await prisma.offers_studnie_rel.upsert({
-                    where: { id: docId },
+                pendingPut.push({
+                    docId,
                     create: {
                         id: docId,
                         userId: authReq.user?.id,
@@ -678,16 +717,26 @@ router.put(
                         clientNumber,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}'
+                    },
+                    fts: {
+                        id: docId,
+                        offer_number: (o.offer_number as string) || null,
+                        clientName,
+                        investName,
+                        clientNumber
                     }
                 });
-                await syncFts5('studnie', {
-                    id: docId,
-                    offer_number: (o.offer_number as string) || null,
-                    clientName,
-                    investName,
-                    clientNumber
-                });
             }
+            await prisma.$transaction(async (tx) => {
+                for (const w of pendingPut) {
+                    await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
+                        where: { id: w.docId },
+                        create: w.create as never,
+                        update: w.update as never
+                    });
+                }
+            });
+            for (const w of pendingPut) await syncFts5('studnie', w.fts);
 
             searchCache.invalidateAll();
             res.json({ ok: true });

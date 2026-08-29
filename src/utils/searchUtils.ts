@@ -58,14 +58,19 @@ interface BuildWherePartsInput {
     order: string;
 }
 
+export function normalizedCreatedAtSql(): Prisma.Sql {
+    return Prisma.sql`CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]' THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch') ELSE "createdAt" END`;
+}
+
 export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
     const parts: Prisma.Sql[] = [];
 
     if (input.cursor && input.cursorId) {
         const op = input.order === 'desc' ? '<' : '>';
+        const norm = normalizedCreatedAtSql();
         parts.push(Prisma.sql`(
-            "createdAt" ${Prisma.raw(op)} ${input.cursor}
-            OR ("createdAt" = ${input.cursor} AND id ${Prisma.raw(op)} ${input.cursorId})
+            ${norm} ${Prisma.raw(op)} ${input.cursor}
+            OR (${norm} = ${input.cursor} AND id ${Prisma.raw(op)} ${input.cursorId})
         )`);
     }
 
@@ -122,7 +127,7 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
     }
 
     if (input.dateFrom) {
-        parts.push(Prisma.sql`"createdAt" >= ${input.dateFrom}`);
+        parts.push(Prisma.sql`${normalizedCreatedAtSql()} >= ${input.dateFrom}`);
     }
     if (input.dateTo) {
         // Pełny ISO (preset) to już górna granica półotwarta [from, to);
@@ -130,7 +135,7 @@ export function buildWhereParts(input: BuildWherePartsInput): Prisma.Sql[] {
         const isFullIso = input.dateTo.includes('T');
         const toBound = isFullIso ? input.dateTo : input.dateTo + 'T23:59:59.999Z';
         const op = isFullIso ? '<' : '<=';
-        parts.push(Prisma.sql`"createdAt" ${Prisma.raw(op)} ${toBound}`);
+        parts.push(Prisma.sql`${normalizedCreatedAtSql()} ${Prisma.raw(op)} ${toBound}`);
     }
 
     if (input.userId) {
