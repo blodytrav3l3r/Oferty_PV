@@ -99,6 +99,42 @@ app.get('/health', (_req, res) => {
     });
 });
 
+/**
+ * @openapi
+ * /health/live:
+ *   get:
+ *     tags: [System]
+ *     summary: Liveness — czy proces Express odpowiada
+ *     responses:
+ *       200:
+ *         description: Proces żyje
+ */
+app.get('/health/live', (_req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+/**
+ * @openapi
+ * /health/ready:
+ *   get:
+ *     tags: [System]
+ *     summary: Readiness — czy DB gotowa (Prisma SELECT 1)
+ *     responses:
+ *       200:
+ *         description: Gotowy do obsługi ruchu
+ *       503:
+ *         description: DB niedostępna
+ */
+app.get('/health/ready', async (_req, res) => {
+    try {
+        await prisma.$queryRawUnsafe('SELECT 1');
+        res.json({ status: 'ready', db: 'ok', timestamp: new Date().toISOString() });
+    } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        res.status(503).json({ status: 'not_ready', db: 'error', error: msg.slice(0, 200) });
+    }
+});
+
 /* ===== DOKUMENTACJA API (Swagger) ===== */
 app.use(
     '/api/docs',
@@ -155,6 +191,22 @@ app.use(cookieParser());
  * Statyczne HTML zawierają tokeny {{APP_NAME}}/{{APP_SUBTITLE}} zamiast twardej
  * nazwy; podmieniamy je przy serwowaniu i wstrzykujemy window.APP_NAME
  * dla frontendu. Nazwę ustawia się w .env (APP_NAME, APP_SUBTITLE). */
+// P0: cache pliku po applyBrandTokens (bez nonce per-request) — mtime invalidacja
+const brandHtmlCache = new Map<string, { html: string; mtimeMs: number }>();
+function getBrandHtml(file: string): string | null {
+    try {
+        const stat = fs.statSync(file);
+        const mtimeMs = stat.mtimeMs;
+        const cached = brandHtmlCache.get(file);
+        if (cached && cached.mtimeMs === mtimeMs) return cached.html;
+        const raw = fs.readFileSync(file, 'utf-8');
+        const html = applyBrandTokens(raw);
+        brandHtmlCache.set(file, { html, mtimeMs });
+        return html;
+    } catch {
+        return null;
+    }
+}
 app.use((req, res, next) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next();
     const raw = req.path;
@@ -169,8 +221,9 @@ app.use((req, res, next) => {
     const file = path.join(resolvePublicDir(), rel);
     if (!fs.existsSync(file)) return next();
     try {
-        let html = applyBrandTokens(fs.readFileSync(file, 'utf-8'));
-        html = injectAppNameScript(html, res.locals.cspNonce as string | undefined);
+        const baseHtml = getBrandHtml(file);
+        if (baseHtml === null) return next();
+        const html = injectAppNameScript(baseHtml, res.locals.cspNonce as string | undefined);
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.setHeader('Cache-Control', 'no-cache');
         res.send(html);

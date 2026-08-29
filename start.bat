@@ -106,13 +106,21 @@ if defined PORT_PID (
     )
 )
 
-REM ---------- 7. Start ----------
+REM ---------- 7. Start (watchdog P0) ----------
 echo.
 echo ===========================================================
 echo   Uruchamiam aplikacje (Ctrl+C aby zatrzymac)
 echo ===========================================================
 echo.
 
+REM P0 watchdog: data\ musi istniec przed logowaniem
+if not exist "data" mkdir data
+
+set "MAX_RESTARTS=5"
+set "RESTART_DELAY=5"
+set "RESTART_COUNT=0"
+
+:watchdog_loop
 if /i "%MODE%"=="prod" (
     echo   Produkcja: HTTPS za reverse proxy ^(Caddy/Nginx^)
     echo   Wewnetrzny: http://127.0.0.1:3000
@@ -126,8 +134,25 @@ if /i "%MODE%"=="prod" (
     call npm run dev
 )
 
+set "EXITCODE=%ERRORLEVEL%"
+echo [%date% %time%] Server exited with code %EXITCODE% >> data\watchdog.log
+
+REM exit 0 = kontrolowane zamkniecie (Ctrl+C / SIGTERM) -> nie restartuj
+if "%EXITCODE%"=="0" goto watchdog_end
+
+set /a RESTART_COUNT+=1
+
+if %RESTART_COUNT% GEQ %MAX_RESTARTS% (
+    echo [WATCHDOG] Max restarts reached ^(%MAX_RESTARTS%^). Server stopped.
+    echo [%date% %time%] Max restarts reached >> data\watchdog.log
+    goto watchdog_end
+)
+
+echo [WATCHDOG] Restart %RESTART_COUNT%/%MAX_RESTARTS% za %RESTART_DELAY%s...
+timeout /t %RESTART_DELAY% /nobreak >nul
+goto watchdog_loop
+
+:watchdog_end
 echo.
 echo [INFO] Aplikacja zatrzymana.
-pause
-endlocal
 

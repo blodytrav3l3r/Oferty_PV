@@ -28,6 +28,10 @@ process.on('unhandledRejection', (reason: unknown) => {
     // Proces nie może sensownie kontynuować po nieobsłużonej rejectcji — zakończ go.
     process.exit(1);
 });
+process.on('uncaughtException', (err: Error) => {
+    logger.error('Server', 'UncaughtException: ' + err.message, err.stack || '');
+    process.exit(1);
+});
 
 /* ===== INICJALIZACJA ===== */
 (async function startServer() {
