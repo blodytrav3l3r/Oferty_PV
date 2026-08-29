@@ -44,6 +44,9 @@
                     transform: rotate(360deg);
                 }
             }
+            html:not(.is-loaded) #page-loader {
+                visibility: visible;
+            }
             @media (prefers-reduced-motion: reduce) {
                 html:not(.is-loaded) {
                     visibility: visible;
@@ -56,6 +59,24 @@
                 }
             }
         </style>
+        <style id="auth-shell-critical">
+            html.auth-pending #login-section {
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+            }
+            html.auth-pending #dash-header {
+                visibility: hidden;
+            }
+        </style>
+        <script>
+            (function () {
+                try {
+                    if (localStorage.getItem('authToken'))
+                        document.documentElement.classList.add('auth-pending');
+                } catch (e) {}
+            })();
+        </script>
         <noscript
             ><style>
                 html:not(.is-loaded) {
@@ -63,6 +84,11 @@
                 }
                 #page-loader {
                     display: none !important;
+                }
+                html.auth-pending #login-section,
+                html.auth-pending #dash-header {
+                    visibility: visible;
+                    opacity: 1;
                 }
             </style></noscript
         >

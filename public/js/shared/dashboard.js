@@ -41,18 +41,35 @@ function updateSubUsers(checkbox) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
+    const html = document.documentElement;
+    let authResolved = false;
+    const finish = (fn, user) => {
+        if (authResolved) return;
+        authResolved = true;
+        clearTimeout(authTimer);
+        html.classList.remove('auth-pending');
+        if (user !== undefined) fn(user);
+        else fn();
+    };
+    const authTimer = setTimeout(() => {
+        if (authResolved) return;
+        authResolved = true;
+        html.classList.remove('auth-pending');
+        showLogin();
+    }, 1500);
     const token = getAuthToken();
-    if (token) {
-        try {
-            const res = await fetch('/api/auth/me', { headers: authHeaders() });
-            const data = await res.json();
-            if (data.user) {
-                showLoggedIn(data.user);
-                return;
-            }
-        } catch (_e) {}
+    if (!token) {
+        finish(showLogin);
+        return;
     }
-    showLogin();
+    try {
+        const res = await fetch('/api/auth/me', { headers: authHeaders() });
+        const data = await res.json();
+        if (data.user) finish(showLoggedIn, data.user);
+        else finish(showLogin);
+    } catch (_e) {
+        finish(showLogin);
+    }
 });
 
 async function loadRecycledNumbers(user) {
