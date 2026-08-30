@@ -469,8 +469,15 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             return (a.item.angle || 0) - (b.item.angle || 0);
         });
 
-    // Przebuduj tablicę przejść w posortowanej kolejności
-    well.przejscia = sorted.map((s) => s.item);
+    // Przebuduj tablicę przejść w posortowanej kolejności – pomijaj gdy Excel otwarty (mutacja psuje indeksy kolumn wklejania)
+    const _isExcelOpen =
+        typeof document !== 'undefined' && !!document.getElementById('excel-table-overlay');
+    const _isPaste = typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress;
+    const _sortedPrzejscia = sorted.map((s) => s.item);
+    // Mutuj źródło tylko poza Excelem – w Excelu kolejność kolumn = indeks, nie sort
+    if (!_isExcelOpen && !_isPaste) {
+        well.przejscia = _sortedPrzejscia;
+    }
 
     let totalPrice = 0;
     let html =
@@ -480,9 +487,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     let filteredCount = 0;
 
     // Nadaj displayIndex przejściom, które go nie mają (kompatybilność wsteczna)
-    ensureDisplayIndices(well.przejscia);
+    ensureDisplayIndices(_isExcelOpen || _isPaste ? _sortedPrzejscia : well.przejscia);
 
-    well.przejscia.forEach((item, index) => {
+    (_isExcelOpen || _isPaste ? _sortedPrzejscia : well.przejscia).forEach((item, index) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
