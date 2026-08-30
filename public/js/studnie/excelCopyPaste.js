@@ -1548,6 +1548,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     wells[wIdx].przejscia.push(_excelCreatePrzejscie());
             }
             const prz = wells[wIdx].przejscia[trIdx];
+            const valStr = String(val).trim();
             if (subType === 2) {
                 // Rodzaj przejścia (category) — najbliższy
                 let catToSet = valStr;
@@ -1591,7 +1592,6 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                 }
             } else if (subType === 3) {
                 // Średnica (productId/DN) — najbliższa (preferuj kategorię z tego samego przejścia)
-                const valStr = String(val).trim();
                 const numVal = valStr.replace(/\D/g, '');
                 let matched = null;
                 if (typeof studnieProducts !== 'undefined') {
