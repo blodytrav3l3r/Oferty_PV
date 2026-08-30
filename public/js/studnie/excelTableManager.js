@@ -256,6 +256,126 @@ async function _excelBulkRunAutoSelect() {
     }
 }
 
+/* ===== BULK USUWANIE ZAZNACZONYCH ===== */
+async function _excelBulkDeleteSelected() {
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+    const sel = [];
+    for (let i = 0; i < wells.length; i++) {
+        if (_excelRowSelectStates[i]) sel.push(i);
+    }
+    if (sel.length === 0) {
+        showToast('Zaznacz co najmniej jedną studnię (checkbox)', 'warning');
+        return;
+    }
+    const locked = sel.filter(function (i) {
+        return typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(i);
+    });
+    const withPz = sel.filter(function (i) {
+        const w = wells[i];
+        return (
+            w &&
+            typeof window.pzGuard !== 'undefined' &&
+            window.pzGuard.hasPzForWell &&
+            window.pzGuard.hasPzForWell(w.id)
+        );
+    });
+    const blockedSet = new Set([...locked, ...withPz]);
+    const editable = sel.filter(function (i) {
+        return !blockedSet.has(i);
+    });
+    if (locked.length > 0) showToast('Pominięto ' + locked.length + ' zablokowanych', 'warning');
+    if (withPz.length > 0) showToast('Pominięto ' + withPz.length + ' z PZ', 'warning');
+    if (editable.length === 0) {
+        showToast('Brak studni do usunięcia (wszystkie zablokowane / z PZ)', 'info');
+        return;
+    }
+    const count = editable.length;
+    const label = count === 1 ? wells[editable[0]].name : count + ' studni';
+    if (
+        !(await appConfirm(`Usunąć ${label}?`, {
+            title: 'Usuwanie studni',
+            type: 'danger'
+        }))
+    )
+        return;
+    _excelSaveUndoSnapshot();
+    _excelMarkDirty();
+    const deletedSet = new Set(editable);
+    // usuń malejąco by nie przesuwać indeksów
+    const sorted = [...editable].sort(function (a, b) {
+        return b - a;
+    });
+    sorted.forEach(function (idx) {
+        wells.splice(idx, 1);
+    });
+    // przebuduj mapę zaznaczeń checkboxów dla pozostałych wierszy
+    const newStates = {};
+    Object.keys(_excelRowSelectStates).forEach(function (k) {
+        const oldIdx = parseInt(k, 10);
+        if (deletedSet.has(oldIdx)) return;
+        let shift = 0;
+        for (let j = 0; j < editable.length; j++) {
+            if (editable[j] < oldIdx) shift++;
+        }
+        const newIdx = oldIdx - shift;
+        if (newIdx >= 0 && newIdx < wells.length) newStates[newIdx] = _excelRowSelectStates[k];
+    });
+    _excelRowSelectStates = newStates;
+    // wyczyść / przesuń selekcję komórek
+    if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
+        const kept = [];
+        _excelSelectedCells.forEach(function (cell) {
+            if (deletedSet.has(cell.wIdx)) return;
+            let shift = 0;
+            for (let j = 0; j < editable.length; j++) {
+                if (editable[j] < cell.wIdx) shift++;
+            }
+            kept.push({ wIdx: cell.wIdx - shift, colIdx: cell.colIdx });
+        });
+        // odznacz stare, nadpisz nowe
+        _excelResetLayoutDependentState();
+        // _excelResetLayoutDependentState wyczyścił _excelSelectedCells — przywróć przesunięte
+        _excelSelectedCells = kept;
+    } else {
+        _excelResetLayoutDependentState();
+    }
+    if (_excelLastClickedCell && deletedSet.has(_excelLastClickedCell.wIdx)) {
+        _excelLastClickedCell = null;
+    } else if (_excelLastClickedCell) {
+        let shift = 0;
+        for (let j = 0; j < editable.length; j++) {
+            if (editable[j] < _excelLastClickedCell.wIdx) shift++;
+        }
+        _excelLastClickedCell.wIdx -= shift;
+    }
+    if (typeof currentWellIndex !== 'undefined') {
+        if (deletedSet.has(currentWellIndex)) {
+            currentWellIndex = Math.min(currentWellIndex, Math.max(0, wells.length - 1));
+            if (wells.length === 0) currentWellIndex = -1;
+        } else {
+            let shift = 0;
+            for (let j = 0; j < editable.length; j++) {
+                if (editable[j] < currentWellIndex) shift++;
+            }
+            currentWellIndex -= shift;
+            if (currentWellIndex >= wells.length) currentWellIndex = Math.max(0, wells.length - 1);
+        }
+    }
+    const hdrAll = document.getElementById('excel-select-all');
+    if (hdrAll) hdrAll.checked = false;
+    if (typeof _excelGetMaxTransitions === 'function') {
+        _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
+    }
+    _excelRenderTabs();
+    _excelRenderTable(_excelActiveTab);
+    _excelUpdateWellCount();
+    _excelDebouncedRefresh();
+    if (typeof renderWellConfig === 'function') renderWellConfig();
+    if (typeof window.updateSummary === 'function') window.updateSummary();
+    if (typeof window.renderWellsList === 'function') window.renderWellsList();
+    showToast('Usunięto ' + count + ' studni', 'info');
+}
+
 /* ===== COPY / PASTE (Excel-like) ===== */
 
 function _excelMarkAsManual(wIdx) {
