@@ -311,6 +311,48 @@ function _excelFindClosestCategory(val, categories) {
     });
     return bestCat || categories[0];
 }
+
+/* Wklejanie nie może zmieniać przypadkowej liczby w kategorię (np. 300 → GRP).
+   Dopuszczamy wyłącznie dokładne dopasowanie lub drobną literówkę w nazwie. */
+function _excelFindPasteCategory(val, categories) {
+    if (!categories || categories.length === 0) return null;
+    const raw = String(val || '').trim();
+    if (!/[a-ząćęłńóśźż]/i.test(raw)) return null;
+    const normalize = function (value) {
+        return String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9ąćęłńóśźż]/gi, '');
+    };
+    const normalized = normalize(raw);
+    if (!normalized) return null;
+    const exact = categories.find(function (category) {
+        return normalize(category) === normalized;
+    });
+    if (exact) return exact;
+    const prefixMatch = categories.find(function (category) {
+        const normalizedCategory = normalize(category);
+        return (
+            normalized.length >= 4 &&
+            (normalizedCategory.startsWith(normalized) || normalized.startsWith(normalizedCategory))
+        );
+    });
+    if (prefixMatch) return prefixMatch;
+    let closest = null;
+    let minDistance = Infinity;
+    categories.forEach(function (category) {
+        const distance = _excelLevenshteinDistance(normalized, normalize(category));
+        if (distance < minDistance) {
+            minDistance = distance;
+            closest = category;
+        }
+    });
+    const maxDistance = normalized.length >= 6 ? 2 : 1;
+    return minDistance <= maxDistance ? closest : null;
+}
+
+function _excelBuildUnmatchedOptions(options) {
+    return [{ value: '', text: '— nie dopasowano —' }].concat(options);
+}
 function _excelFindClosestProduct(val, products) {
     if (!products || products.length === 0) return null;
     const valStr = String(val).trim();
@@ -1309,6 +1351,9 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
         } else {
             const subType = (effLogical - 7) % 4;
             if (subType === 2 || subType === 3) {
+                const _valEmpty = !String(val || '').trim();
+                const _hasExisting = wells[wIdx].przejscia && trIdx < wells[wIdx].przejscia.length;
+                if (!_hasExisting && _valEmpty) return;
                 if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
                 while (wells[wIdx].przejscia.length <= trIdx) {
                     if (typeof _excelCreatePrzejscie === 'function')
@@ -1330,14 +1375,51 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     let cat = ctx.catLowerMap.get(lower) || null;
                     let isExact = !!cat;
                     if (!cat) {
-                        cat = _excelFindClosestCategory(valStr, ctx.cats) || valStr;
-                        isExact = cat.toLowerCase() === lower;
+                        cat = _excelFindPasteCategory(valStr, ctx.cats);
+                        isExact = !!cat && cat.toLowerCase() === lower;
+                    }
+                    if (!cat) {
+                        prz.tempCategory = '';
+                        prz.productId = '';
+                        const wellForUnmatchedCategory =
+                            wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
+                        _excelRecordMismatch({
+                            wIdx: wIdx,
+                            colIdx: colIdx,
+                            wellName: wellForUnmatchedCategory,
+                            originalVal: String(val),
+                            matchedVal: '',
+                            matchedText: '',
+                            options: _excelBuildUnmatchedOptions(
+                                ctx.cats.map(function (category) {
+                                    return { value: category, text: category };
+                                })
+                            )
+                        });
+                        ctx.affected.add(wIdx);
+                        return;
                     }
                     prz.tempCategory = cat;
-                    // wyczyść productId gdy kategoria nie pasuje (jak excelOnPrzejscieTypeChange)
+                    // order-independence: gdy kategoria zmienia się po wklejeniu średnicy,
+                    // spróbuj remapować istniejący productId na ten sam DN w nowej kategorii
+                    // zamiast czyścić (E2/E3). Dzięki temu Paste(Średnica)→Paste(Rodzaj)
+                    // daje ten sam wynik co Paste(Rodzaj)→Paste(Średnica).
                     if (prz.productId) {
                         const curProd = ctx.prodById.get(String(prz.productId));
-                        if (curProd && curProd.category !== cat) prz.productId = '';
+                        if (curProd && curProd.category !== cat) {
+                            const curDn = String(curProd.dn || '').replace(/\D/g, '');
+                            let remapped = null;
+                            if (curDn) {
+                                const catPool = ctx.catToProducts.get(cat) || [];
+                                for (let _ri = 0; _ri < catPool.length; _ri++) {
+                                    if (String(catPool[_ri].dn).replace(/\D/g, '') === curDn) {
+                                        remapped = catPool[_ri];
+                                        break;
+                                    }
+                                }
+                            }
+                            prz.productId = remapped ? remapped.id : '';
+                        }
                     }
                     if (!isExact) {
                         const wellForName =
@@ -1350,9 +1432,11 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                             originalVal: String(val),
                             matchedVal: cat,
                             matchedText: cat,
-                            options: ctx.cats.map(function (c) {
-                                return { value: c, text: c };
-                            })
+                            options: _excelBuildUnmatchedOptions(
+                                ctx.cats.map(function (c) {
+                                    return { value: c, text: c };
+                                })
+                            )
                         });
                     }
                     ctx.affected.add(wIdx);

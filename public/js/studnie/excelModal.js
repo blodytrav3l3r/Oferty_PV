@@ -434,6 +434,12 @@ async function closeExcelTableModal() {
             wells.splice(0, wells.length, ..._excelOpenSnapshot);
         }
     }
+    // Defense-in-depth: usuń ewentualne puste przejścia które przeszły guard (np. legacy)
+    if (typeof _excelCleanEmptyPrzejscia === 'function' && Array.isArray(wells)) {
+        wells.forEach(function (w) {
+            _excelCleanEmptyPrzejscia(w);
+        });
+    }
     _excelCloseOverlay();
     if (typeof refreshAll === 'function') refreshAll();
 }

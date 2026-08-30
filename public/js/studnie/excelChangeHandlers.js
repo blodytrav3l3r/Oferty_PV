@@ -71,12 +71,16 @@ function excelRemoveTransitionColumn() {
             if (!_excelWellMatchesTab(w, tab)) continue;
             if (w.przejscia && w.przejscia[lastIdx]) {
                 const p = w.przejscia[lastIdx];
-                if (
-                    (p.rzednaWlaczenia !== null && p.rzednaWlaczenia !== '') ||
-                    (p.productId !== null && p.productId !== '') ||
-                    (p.tempCategory && p.tempCategory !== '') ||
-                    (p.angle && p.angle !== 0)
-                ) {
+                const _isEmpty =
+                    typeof isEmptyPrzejscie === 'function'
+                        ? isEmptyPrzejscie(p)
+                        : !(
+                              (p.productId && p.productId !== '') ||
+                              (p.tempCategory && p.tempCategory !== '') ||
+                              (p.rzednaWlaczenia != null && p.rzednaWlaczenia !== '') ||
+                              (p.angle && p.angle !== 0)
+                          );
+                if (!_isEmpty) {
                     hasData = true;
                     break;
                 }
@@ -128,6 +132,12 @@ function excelAddTransitionColumn() {
 }
 function _excelCleanEmptyPrzejscia(well) {
     if (!well || !well.przejscia) return;
+    if (typeof isEmptyPrzejscie === 'function') {
+        well.przejscia = well.przejscia.filter(function (p) {
+            return !isEmptyPrzejscie(p);
+        });
+        return;
+    }
     well.przejscia = well.przejscia.filter(function (p) {
         return (
             (p.productId && p.productId !== '') ||
@@ -175,6 +185,9 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
         _excelSaveUndoSnapshot();
+    const _hasExisting = wells[wIdx].przejscia && trIdx < wells[wIdx].przejscia.length;
+    const _isEmptyVal = !value || String(value).trim() === '';
+    if (!_hasExisting && _isEmptyVal) return;
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     while (wells[wIdx].przejscia.length <= trIdx) {
         wells[wIdx].przejscia.push(_excelCreatePrzejscie());

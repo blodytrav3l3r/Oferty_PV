@@ -58,6 +58,17 @@ function _excelCreatePrzejscie() {
     };
 }
 
+/* SSoT: puste przejście — używane w _excelCleanEmptyPrzejscia, hasData, validate i filtrze kafelków */
+function isEmptyPrzejscie(p) {
+    if (!p) return true;
+    const hasProduct = p.productId && String(p.productId).trim() !== '';
+    const hasCategory = p.tempCategory && String(p.tempCategory).trim() !== '';
+    const hasRzedna = p.rzednaWlaczenia != null && String(p.rzednaWlaczenia).trim() !== '';
+    const hasAngle = p.angle != null && Number(p.angle) !== 0;
+    return !hasProduct && !hasCategory && !hasRzedna && !hasAngle;
+}
+if (typeof window !== 'undefined') window.isEmptyPrzejscie = isEmptyPrzejscie;
+
 /* ===== SHORT LABEL GENERATOR ===== */
 function _excelShortLabel(name, componentType) {
     const n = (name || '').trim();

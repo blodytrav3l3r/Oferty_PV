@@ -252,8 +252,11 @@ function validatePrzejsciaForSave(wellsArr) {
                       : '';
             const hasCategory = effCategory !== '';
             const hasProduct = !!p.productId;
-            const allEmpty = !hasCategory && !hasProduct && !hasRzedna && !hasAngle;
-            if (allEmpty) return;
+            const _isEmpty =
+                typeof isEmptyPrzejscie === 'function'
+                    ? isEmptyPrzejscie(p)
+                    : !hasCategory && !hasProduct && !hasRzedna && !hasAngle;
+            if (_isEmpty) return;
             if (hasCategory && !hasProduct) {
                 errors.push(
                     `Studnia "${wellName}" przejście #${idx + 1}: wybrano rodzaj "${effCategory}" bez średnicy — uzupełnij średnicę (DN)`

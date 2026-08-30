@@ -486,10 +486,16 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     let prevAssignedIndex = -999;
     let filteredCount = 0;
 
+    // Główny widok: filtr pustych przejść (Opcja A) — nie renderuj i nie licz
+    const _srcList = _isExcelOpen || _isPaste ? _sortedPrzejscia : well.przejscia;
+    const _visiblePrzejscia =
+        typeof isEmptyPrzejscie === 'function'
+            ? _srcList.filter((p) => !isEmptyPrzejscie(p))
+            : _srcList;
     // Nadaj displayIndex przejściom, które go nie mają (kompatybilność wsteczna)
-    ensureDisplayIndices(_isExcelOpen || _isPaste ? _sortedPrzejscia : well.przejscia);
+    ensureDisplayIndices(_visiblePrzejscia);
 
-    (_isExcelOpen || _isPaste ? _sortedPrzejscia : well.przejscia).forEach((item, index) => {
+    _visiblePrzejscia.forEach((item, index) => {
         let pel = parseFloat(item.rzednaWlaczenia);
         if (isNaN(pel)) pel = rzDna;
         const mmFromBottom = (pel - rzDna) * 1000;
@@ -681,11 +687,13 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
 
     html += '</div>';
 
-    // Pasek podsumowania
+    // Pasek podsumowania — licz tylko niepuste (Opcja A)
+    const _totalCount =
+        typeof isEmptyPrzejscie === 'function' ? _visiblePrzejscia.length : well.przejscia.length;
     const countLabel =
         filterElementIndex != null
             ? `Przejścia tego elementu (${filteredCount} szt.)`
-            : `Suma wszystkich przejść bez dopłat (${well.przejscia.length} szt.)`;
+            : `Suma wszystkich przejść bez dopłat (${_totalCount} szt.)`;
     html += `<div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.6rem; padding:0.4rem 0.6rem; background:rgba(var(--accent-rgb), 0.1); border-radius: var(--radius-sm); border:1px solid rgba(var(--accent-rgb), 0.2);">
       <span style="font-size: var(--fs-sm); color:var(--text-muted); font-weight: var(--fw-semibold);">${countLabel}</span>
       <span style="font-size: var(--fs-lg); font-weight: var(--fw-extrabold); color:var(--success);">${fmt(totalPrice)} PLN</span>
@@ -696,7 +704,7 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         window.lucide.createIcons();
     }
     if (countEl)
-        countEl.textContent = `(${filterElementIndex != null ? filteredCount : well.przejscia.length})`;
+        countEl.textContent = `(${filterElementIndex != null ? filteredCount : _totalCount})`;
 };
 
 /* ===== PRZECIĄGNIJ I UPUŚĆ DLA PRZEJŚĆ ===== */

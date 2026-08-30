@@ -12,6 +12,12 @@ async function excelSaveAll() {
     }
     let shouldClose = true;
     try {
+        // Defense-in-depth: wyczyść puste przejścia przed walidacją/zapisem (source guard jest podstawą)
+        if (typeof _excelCleanEmptyPrzejscia === 'function' && Array.isArray(wells)) {
+            wells.forEach(function (w) {
+                _excelCleanEmptyPrzejscia(w);
+            });
+        }
         if (typeof validatePrzejsciaForSave === 'function') {
             const v = validatePrzejsciaForSave(typeof wells !== 'undefined' ? wells : []);
             if (!v.valid) {
