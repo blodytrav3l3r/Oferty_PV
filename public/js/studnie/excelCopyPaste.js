@@ -2,17 +2,173 @@
 /* ===== EXCEL COPY / PASTE (Excel-like) ===== */
 let _excelPasteRafId = null;
 
+/* ===== F1 PASTE CACHE - lokalny ctx jednego paste (nie global) ===== */
+function _excelIsPrzejscieRodzajCol(colIdx) {
+    if (colIdx < 7 || (colIdx - 7) % 4 !== 2) return false;
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    return colIdx < 7 + maxTr * 4;
+}
+function _excelIsPrzejscieSrednicaCol(colIdx) {
+    if (colIdx < 7 || (colIdx - 7) % 4 !== 3) return false;
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    return colIdx < 7 + maxTr * 4;
+}
+function _excelBuildVisibleSeq() {
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+            ? _excelMaxTransitions[_excelActiveTab]
+            : 1;
+    const prefixLen = 10 + maxTr * 4;
+    const seq = [];
+    for (let logical = 0; logical < prefixLen; logical++) {
+        seq.push({ vis: logical, logical: logical, id: 'prefix_' + logical });
+    }
+    let allComp = [];
+    let visibleComp = [];
+    try {
+        if (
+            typeof _excelBuildComponentColumns === 'function' &&
+            typeof _excelGetReferenceWell === 'function'
+        ) {
+            allComp =
+                _excelBuildComponentColumns(
+                    _excelActiveTab,
+                    _excelGetReferenceWell(_excelActiveTab)
+                ) || [];
+            visibleComp =
+                typeof _excelFilterVisibleColumns === 'function'
+                    ? _excelFilterVisibleColumns(allComp)
+                    : allComp;
+        }
+    } catch (_e) {}
+    visibleComp.forEach(function (col, visPos) {
+        const allIdx = allComp.findIndex(function (c) {
+            return c.id === col.id;
+        });
+        if (allIdx < 0) return;
+        const logical = prefixLen + allIdx;
+        const vis = prefixLen + visPos;
+        seq.push({ vis: vis, logical: logical, id: col.id });
+    });
+    // tail: Hdenn, Uszcz, Reduction?, Kineta, PsiaBuda, Akcje — stale, nigdy ukryte
+    const hasReduction =
+        ['1200', '1500', '2000', '2500', 'styczne'].indexOf(String(_excelActiveTab)) >= 0;
+    const tailCount = 2 + (hasReduction ? 1 : 0) + 2 + 1;
+    const tailLogicalBase = prefixLen + allComp.length;
+    const tailVisBase = prefixLen + visibleComp.length;
+    for (let t = 0; t < tailCount; t++) {
+        seq.push({ vis: tailVisBase + t, logical: tailLogicalBase + t, id: 'tail_' + t });
+    }
+    return seq;
+}
+function _excelRebuildPasteSeq(ctx) {
+    if (!ctx) return;
+    try {
+        ctx.seq = _excelBuildVisibleSeq();
+    } catch (_e) {}
+}
+function _excelFindSeqPosByVis(seq, visIdx) {
+    if (!seq || !Array.isArray(seq)) return -1;
+    for (let i = 0; i < seq.length; i++) if (seq[i].vis === visIdx) return i;
+    return -1;
+}
+function _excelBuildPasteCache() {
+    const all =
+        typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)
+            ? studnieProducts.filter(function (p) {
+                  return p.componentType === 'przejscie';
+              })
+            : [];
+    const cats = [
+        ...new Set(
+            all
+                .map(function (p) {
+                    return p.category;
+                })
+                .filter(Boolean)
+        )
+    ].sort();
+    const catLowerMap = new Map();
+    cats.forEach(function (c) {
+        catLowerMap.set(String(c).trim().toLowerCase(), c);
+    });
+    const prodById = new Map();
+    const prodByLower = new Map();
+    const prodByDigits = new Map();
+    const catToProducts = new Map();
+    all.forEach(function (p) {
+        if (p.id) prodById.set(String(p.id), p);
+        const nm = String(p.name || p.id || '')
+            .trim()
+            .toLowerCase();
+        if (nm && !prodByLower.has(nm)) prodByLower.set(nm, p);
+        const d = String(p.dn || '').replace(/\D/g, '');
+        if (d) {
+            if (!prodByDigits.has(d)) prodByDigits.set(d, []);
+            prodByDigits.get(d).push(p);
+        }
+        const c = p.category || '';
+        if (!catToProducts.has(c)) catToProducts.set(c, []);
+        catToProducts.get(c).push(p);
+    });
+    catToProducts.forEach(function (arr) {
+        arr.sort(function (a, b) {
+            return parseFloat(a.dn) - parseFloat(b.dn);
+        });
+    });
+    return {
+        all: all,
+        cats: cats,
+        catLowerMap: catLowerMap,
+        prodById: prodById,
+        prodByLower: prodByLower,
+        prodByDigits: prodByDigits,
+        catToProducts: catToProducts,
+        affected: new Set(),
+        seq: _excelBuildVisibleSeq()
+    };
+}
+function _excelFinalizePasteAffected(ctx) {
+    if (!ctx || !ctx.affected || ctx.affected.size === 0) return;
+    ctx.affected.forEach(function (wIdx) {
+        const w = typeof wells !== 'undefined' ? wells[wIdx] : null;
+        if (!w) return;
+        if (typeof _excelClearResCache === 'function')
+            try {
+                _excelClearResCache(w);
+            } catch (_e) {}
+        w.autoSelect = false;
+        w.configSource = 'MANUAL';
+        w.autoLocked = true;
+    });
+    if (typeof _excelSyncAutoManualUI === 'function')
+        try {
+            _excelSyncAutoManualUI();
+        } catch (_e) {}
+    if (typeof window.updateAutoLockUI === 'function')
+        try {
+            window.updateAutoLockUI();
+        } catch (_e) {}
+}
+
 function _excelGetPasteColIdx(row) {
-    if (!row) return 2;
+    if (!row) return 3;
     const active = document.activeElement;
     if (active && row.contains(active)) {
         const td = active.closest('td');
         if (td) {
             const ci = Array.from(row.children).indexOf(td);
-            if (ci >= 2) return ci;
+            if (ci >= 3) return ci;
+            if (ci >= 2) return 3;
         }
     }
-    return 2; /* fallback: pierwsza kolumna po Lp+NrStudni */
+    return 3; /* fallback: Nr Studni (3) — nigdy Lp (2) */
 }
 /* Widoczne wiersze (pomija display:none z filtra wyszukiwarki), posortowane po data-widx */
 function _excelGetVisibleRows() {
@@ -379,7 +535,8 @@ function _excelBuildSemanticMap(headerParts, dn) {
     }
     return map;
 }
-function _excelPasteSemantic(lines, visibleRows, map) {
+function _excelPasteSemantic(lines, visibleRows, map, ctx) {
+    // ctx opcjonalny — F1 lokalny cache dla Rodzaj/Średnica
     for (let si = 0; si < lines.length; si++) {
         const parts = lines[si].split('\t');
         const row = visibleRows[si];
@@ -389,16 +546,16 @@ function _excelPasteSemantic(lines, visibleRows, map) {
             if (targetCol == null) continue;
             const tdEl = _excelGetCellByLogical(row, targetCol);
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+            if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), ctx);
         }
     }
 }
-function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback) {
+function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx) {
     const CHUNK = 50;
     let idx = 0;
     const total = lines.length;
     if (total < 100) {
-        _excelPasteSemantic(lines, visibleRows, map);
+        _excelPasteSemantic(lines, visibleRows, map, ctx);
         if (doneCallback) doneCallback();
         return;
     }
@@ -418,7 +575,7 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback) {
                 if (targetCol == null) continue;
                 const tdEl = _excelGetCellByLogical(row, targetCol);
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+                if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), ctx);
             }
         }
         _excelShowPasteProgress(idx, total);
@@ -587,7 +744,14 @@ function _excelHandlePaste(e) {
     _excelPasteInProgress = true;
     window._excelPasteMismatches = [];
     let _batched = false;
+    // F1 lokalny ctx jednego paste — nie global, przekazywany do Sync/Batch/Semantic
+    const _pasteCtx = typeof _excelBuildPasteCache === 'function' ? _excelBuildPasteCache() : null;
     const _finishPaste = function () {
+        // batch finalize: zachowaj semantykę change handlerów raz dla affected wells (Q1)
+        if (_pasteCtx)
+            try {
+                _excelFinalizePasteAffected(_pasteCtx);
+            } catch (_e) {}
         _excelPasteInProgress = false;
         /* W4: wyczyść martwą selekcję (tablice i klasy) + pełny re-render. */
         if (typeof _excelResetLayoutDependentState === 'function')
@@ -646,10 +810,10 @@ function _excelHandlePaste(e) {
     try {
         const rows = document.querySelectorAll('#excel-table-container tbody tr[data-widx]');
         if (rows.length === 0) return;
-        let lines = text.trim().split('\n');
-        for (let _pi = 0; _pi < lines.length; _pi++) {
-            lines[_pi] = lines[_pi].replace(/\r$/, '');
-        }
+        // Geometria schowka: pusta komórka = "" nie brak — trim() zjadał wiodące puste wiersze (bug Średnica 2)
+        const _raw = text.replace(/\r/g, '');
+        let lines = _raw.split('\n');
+        if (_raw.endsWith('\n')) lines.pop();
         // Wklejanie z nagłówkiem (zewnętrzny Excel): wykryj i zbuduj mapę semantyczną
         let _hasHeader = false;
         let _semanticMap = null;
@@ -679,6 +843,8 @@ function _excelHandlePaste(e) {
                                     w.przejscia.push(_excelCreatePrzejscie());
                             });
                         _excelRenderTable(_excelActiveTab);
+                        if (typeof _pasteCtx !== 'undefined' && _pasteCtx)
+                            _excelRebuildPasteSeq(_pasteCtx);
                     }
                 }
             }
@@ -702,12 +868,12 @@ function _excelHandlePaste(e) {
                     for (let _pi = 0; _pi < _N; _pi++) {
                         if ((_colCount - 3) % 4 === 0)
                             _pseudo.push(
-                                `Średnica ${_pi}`,
                                 `Rz.wlot ${_pi}`,
                                 `Kąt ${_pi}`,
-                                `Rodzaj ${_pi}`
+                                `Rodzaj ${_pi}`,
+                                `Średnica ${_pi}`
                             );
-                        else _pseudo.push(`Średnica ${_pi}`, `Rz.wlot ${_pi}`, `Kąt ${_pi}`);
+                        else _pseudo.push(`Rz.wlot ${_pi}`, `Kąt ${_pi}`, `Średnica ${_pi}`);
                     }
                     if (_pseudo.length === _colCount) {
                         _semanticMap = _excelBuildSemanticMap(_pseudo, _excelActiveTab || '1000');
@@ -731,6 +897,8 @@ function _excelHandlePaste(e) {
                                             w.przejscia.push(_excelCreatePrzejscie());
                                     });
                                 _excelRenderTable(_excelActiveTab);
+                                if (typeof _pasteCtx !== 'undefined' && _pasteCtx)
+                                    _excelRebuildPasteSeq(_pasteCtx);
                             }
                         }
                     }
@@ -752,10 +920,21 @@ function _excelHandlePaste(e) {
                     return a - b;
                 });
             const _baseWIdx = widxArr.length > 0 ? widxArr[0] : 0;
-            const _baseCols =
+            // Faza A: sort/min origin — najnizszy colIdx wsrod wszystkich zaznaczonych, nie insertion order
+            const _allColsFlat = cellList.map(function (c) {
+                return c.colIdx;
+            });
+            const _minCol =
+                _allColsFlat.length > 0
+                    ? Math.min.apply(null, _allColsFlat)
+                    : _excelGetPasteColIdx(rows[0]);
+            const _baseColsSorted =
                 widxArr.length > 0 && cellRows[_baseWIdx]
-                    ? cellRows[_baseWIdx]
-                    : [_excelGetPasteColIdx(rows[0])];
+                    ? [...cellRows[_baseWIdx]].sort(function (a, b) {
+                          return a - b;
+                      })
+                    : [_minCol];
+            const _baseCols = _baseColsSorted;
             /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby.
                Licz tylko WIDOCZNE wiersze o wIdx >= start (pomija wiersze ukryte filtrem) */
             const visibleRows = _excelGetVisibleRows().filter(function (r) {
@@ -771,11 +950,19 @@ function _excelHandlePaste(e) {
                 }
                 showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
             }
-            const _firstCol = _baseCols.length > 0 ? _baseCols[0] : 0;
-            /* Użyj batch/sync paste — obsłuż duże zestawy */
+            // Faza A: base row min (nie global) — globalMin dawał poziomy shift przy nieprostokątnej selekcji (H2)
+            const _firstCol =
+                _baseColsSorted.length > 0 ? Math.min.apply(null, _baseColsSorted) : _minCol;
+            /* Użyj batch/sync paste — obsłuż duże zestawy (F1 ctx przekazany, seq w ctx) */
             _batched = lines.length > 100;
-            const _pasteFn = _batched ? _excelPasteBatch : _excelPasteSync;
-            _pasteFn(lines, visibleRows, _firstCol, _batched ? _finishPaste : null);
+            if (_batched) {
+                if (_pasteCtx)
+                    _excelPasteBatch(lines, visibleRows, _firstCol, _finishPaste, _pasteCtx);
+                else _excelPasteBatch(lines, visibleRows, _firstCol, _finishPaste);
+            } else {
+                if (_pasteCtx) _excelPasteSync(lines, visibleRows, _firstCol, _pasteCtx);
+                else _excelPasteSync(lines, visibleRows, _firstCol);
+            }
         } else if (_excelSelectedCols.length > 0) {
             const cols = [..._excelSelectedCols].sort(function (a, b) {
                 return a - b;
@@ -798,7 +985,7 @@ function _excelHandlePaste(e) {
                             : null;
                         const target = tdInner ? tdInner.querySelector('input, select') : null;
                         if (!target) continue;
-                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), _pasteCtx);
                     }
                 });
             } else {
@@ -811,7 +998,7 @@ function _excelHandlePaste(e) {
                             : null;
                         const target = tdInner ? tdInner.querySelector('input, select') : null;
                         if (!target) return;
-                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim());
+                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), _pasteCtx);
                     });
                 });
             }
@@ -918,21 +1105,41 @@ function _excelHandlePaste(e) {
                     showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
                 }
             }
-            /* Użyj batch/sync paste — obsłuż duże zestawy; header-aware via semantic map */
+            /* Użyj batch/sync paste — obsłuż duże zestawy; header-aware via semantic map (F1 ctx) */
             _batched = lines.length > 100;
             if (_hasHeader && _semanticMap && Object.keys(_semanticMap).length > 0) {
-                if (_batched)
-                    _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
-                else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                if (_batched) {
+                    if (_pasteCtx)
+                        _excelPasteSemanticBatch(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _finishPaste,
+                            _pasteCtx
+                        );
+                    else _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
+                } else {
+                    if (_pasteCtx) _excelPasteSemantic(lines, visibleRows, _semanticMap, _pasteCtx);
+                    else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                }
                 if (!_batched) _finishPaste();
                 _batched = true; // suppress duplicate _finishPaste in finally
             } else {
-                (_batched ? _excelPasteBatch : _excelPasteSync)(
-                    lines,
-                    visibleRows,
-                    colIdx,
-                    _batched ? _finishPaste : null
-                );
+                if (_pasteCtx)
+                    (_batched ? _excelPasteBatch : _excelPasteSync)(
+                        lines,
+                        visibleRows,
+                        colIdx,
+                        _batched ? _finishPaste : null,
+                        _pasteCtx
+                    );
+                else
+                    (_batched ? _excelPasteBatch : _excelPasteSync)(
+                        lines,
+                        visibleRows,
+                        colIdx,
+                        _batched ? _finishPaste : null
+                    );
             }
         }
     } finally {
@@ -989,13 +1196,16 @@ function _excelCancelPasteBatch() {
  * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
  * @param {number} startColIdx
  * @param {Function|null} doneCallback
+ * @param {*} [ctx] - F1 lokalny cache, przekazywany do _excelSetCellValue
  */
-function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
+function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
     const CHUNK = 50;
     let idx = 0;
     const total = lines.length;
+    const seqBatch = ctx && ctx.seq ? ctx.seq : null;
+    const startPosBatch = seqBatch ? _excelFindSeqPosByVis(seqBatch, startColIdx) : -1;
     if (total < 100) {
-        _excelPasteSync(lines, visibleRows, startColIdx);
+        _excelPasteSync(lines, visibleRows, startColIdx, ctx);
         if (doneCallback) doneCallback();
         return;
     }
@@ -1012,10 +1222,19 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
             const row = visibleRows[idx];
             if (!row) continue;
             parts.forEach(function (v, ci) {
-                const colIdx = startColIdx + ci;
-                const tdEl = _excelGetVisibleCell(row, colIdx);
+                let visIdx, logical;
+                if (seqBatch && startPosBatch >= 0) {
+                    const entry = seqBatch[startPosBatch + ci];
+                    if (!entry) return;
+                    visIdx = entry.vis;
+                    logical = entry.logical;
+                } else {
+                    visIdx = startColIdx + ci;
+                    logical = visIdx;
+                }
+                const tdEl = row.children[visIdx] ? row.children[visIdx] : null;
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
+                if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim(), ctx, logical);
             });
         }
         _excelShowPasteProgress(idx, total);
@@ -1034,17 +1253,29 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback) {
  * @param {string[]} lines
  * @param {HTMLElement[]} visibleRows — widoczne wiersze docelowe (pomijają display:none)
  * @param {number} startColIdx — visibleIdx (row.children index, nie logical)
+ * @param {*} [ctx] - F1 lokalny cache
  */
-function _excelPasteSync(lines, visibleRows, startColIdx) {
+function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
+    const seq = ctx && ctx.seq ? ctx.seq : null;
+    const startPos = seq ? _excelFindSeqPosByVis(seq, startColIdx) : -1;
     for (let si = 0; si < lines.length; si++) {
         const parts = lines[si].split('	');
         const row = visibleRows[si];
         if (!row) continue;
         parts.forEach(function (v, ci) {
-            const colIdx = startColIdx + ci;
-            const tdEl = _excelGetVisibleCell(row, colIdx);
+            let visIdx, logical;
+            if (seq && startPos >= 0) {
+                const entry = seq[startPos + ci];
+                if (!entry) return;
+                visIdx = entry.vis;
+                logical = entry.logical;
+            } else {
+                visIdx = startColIdx + ci;
+                logical = visIdx;
+            }
+            const tdEl = row.children[visIdx] ? row.children[visIdx] : null;
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim());
+            if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim(), ctx, logical);
         });
     }
 }
@@ -1053,9 +1284,11 @@ function _excelPasteSync(lines, visibleRows, startColIdx) {
  * Ustawia wartość komórki (input lub select) i dispatchuje eventy.
  * @param {Element} target
  * @param {string} val
+ * @param {*} [ctx] - lokalny paste ctx z _excelBuildPasteCache (F1); gdy podany, Rodzaj/Srednica ida fast-path bez dispatch
+ * @param {number} [logicalCol] - logical column (dla seq mapping), gdy brak uzyj colIdx
  */
-function _excelSetCellValue(target, val) {
-    /* Centralny punkt mutacji — blokada studni z PZ accepted / zamówieniem.
+function _excelSetCellValue(target, val, ctx, logicalCol) {
+    /* Centralny punkt mutacji — blokada studni z PZ accepted / zamowieniem.
        Obejmuje paste, Delete, Ctrl+X, Ctrl+D, Ctrl+R (wszystkie ida przez to miejsce). */
     const tr = target && target.closest ? target.closest('tr[data-widx]') : null;
     const wIdx = tr ? parseInt(tr.getAttribute('data-widx'), 10) : -1;
@@ -1063,6 +1296,151 @@ function _excelSetCellValue(target, val) {
     const td = target && target.closest ? target.closest('td') : null;
     const colIdx =
         td && td.parentElement ? Array.prototype.indexOf.call(td.parentElement.children, td) : -1;
+    const effLogical = typeof logicalCol === 'number' && !isNaN(logicalCol) ? logicalCol : colIdx;
+    // F1 fast-path: Rodzaj (2) / Srednica (3) via ctx cache - direct model, bez dispatch, zbierz affected
+    if (ctx && ctx.affected && !isNaN(wIdx) && wells[wIdx] && effLogical >= 7) {
+        const maxTr =
+            typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+                ? _excelMaxTransitions[_excelActiveTab]
+                : 1;
+        const trIdx = Math.floor((effLogical - 7) / 4);
+        if (trIdx >= maxTr) {
+            // poza zakresem przejść (gap/Wlaz) — nie traktuj jako Rodzaj/Średnica
+        } else {
+            const subType = (effLogical - 7) % 4;
+            if (subType === 2 || subType === 3) {
+                if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+                while (wells[wIdx].przejscia.length <= trIdx) {
+                    if (typeof _excelCreatePrzejscie === 'function')
+                        wells[wIdx].przejscia.push(_excelCreatePrzejscie());
+                    else wells[wIdx].przejscia.push({ productId: '', tempCategory: '' });
+                }
+                const prz = wells[wIdx].przejscia[trIdx];
+                const valStr = String(val || '').trim();
+                if (subType === 2) {
+                    // Rodzaj — Map exact przed fuzzy
+                    if (!valStr) {
+                        prz.tempCategory = '';
+                        // wyczyść productId gdy kategoria wyczyszczona (jak handler)
+                        prz.productId = '';
+                        ctx.affected.add(wIdx);
+                        return;
+                    }
+                    const lower = valStr.toLowerCase();
+                    let cat = ctx.catLowerMap.get(lower) || null;
+                    let isExact = !!cat;
+                    if (!cat) {
+                        cat = _excelFindClosestCategory(valStr, ctx.cats) || valStr;
+                        isExact = cat.toLowerCase() === lower;
+                    }
+                    prz.tempCategory = cat;
+                    // wyczyść productId gdy kategoria nie pasuje (jak excelOnPrzejscieTypeChange)
+                    if (prz.productId) {
+                        const curProd = ctx.prodById.get(String(prz.productId));
+                        if (curProd && curProd.category !== cat) prz.productId = '';
+                    }
+                    if (!isExact) {
+                        const wellForName =
+                            wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
+                        // thin: options z ctx.cats, nie z DOM
+                        _excelRecordMismatch({
+                            wIdx: wIdx,
+                            colIdx: colIdx,
+                            wellName: wellForName,
+                            originalVal: String(val),
+                            matchedVal: cat,
+                            matchedText: cat,
+                            options: ctx.cats.map(function (c) {
+                                return { value: c, text: c };
+                            })
+                        });
+                    }
+                    ctx.affected.add(wIdx);
+                    return;
+                }
+                if (subType === 3) {
+                    if (!valStr) {
+                        prz.productId = '';
+                        ctx.affected.add(wIdx);
+                        return;
+                    }
+                    const poolAll = ctx.all;
+                    const curCat = prz.tempCategory;
+                    const catPool =
+                        curCat && ctx.catToProducts.get(curCat)
+                            ? ctx.catToProducts.get(curCat)
+                            : null;
+                    const searchPool = catPool && catPool.length > 0 ? catPool : poolAll;
+                    let matched = null;
+                    let isExact = false;
+                    // exact by id / name lower
+                    if (ctx.prodById.has(valStr)) {
+                        const cand = ctx.prodById.get(valStr);
+                        if (searchPool.indexOf(cand) >= 0) {
+                            matched = cand;
+                            isExact = true;
+                        }
+                    }
+                    if (!matched) {
+                        const low = valStr.toLowerCase();
+                        if (ctx.prodByLower.has(low)) {
+                            const cand = ctx.prodByLower.get(low);
+                            if (searchPool.indexOf(cand) >= 0) {
+                                matched = cand;
+                                isExact = true;
+                            }
+                        }
+                    }
+                    const numVal = valStr.replace(/\D/g, '');
+                    if (!matched && numVal) {
+                        // exact digits w searchPool
+                        for (let i = 0; i < searchPool.length; i++) {
+                            const p = searchPool[i];
+                            if (
+                                String(p.dn) === numVal ||
+                                (p.name && p.name.indexOf(numVal) >= 0)
+                            ) {
+                                matched = p;
+                                isExact = String(p.dn) === numVal;
+                                break;
+                            }
+                        }
+                    }
+                    if (!matched) {
+                        matched = _excelFindClosestProduct(valStr, searchPool);
+                        isExact =
+                            matched &&
+                            (matched.id === valStr ||
+                                matched.name === valStr ||
+                                String(matched.dn) === numVal);
+                    }
+                    if (matched) {
+                        prz.productId = matched.id;
+                        prz.tempCategory = matched.category;
+                        if (!isExact) {
+                            const wellForName =
+                                wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
+                            // thin: ogranicz options do 200 dla modala (nie cały DOM)
+                            const opts = poolAll.slice(0, 300).map(function (p) {
+                                return { value: p.id, text: p.name || 'DN ' + p.dn };
+                            });
+                            _excelRecordMismatch({
+                                wIdx: wIdx,
+                                colIdx: colIdx,
+                                wellName: wellForName,
+                                originalVal: String(val),
+                                matchedVal: matched.id,
+                                matchedText: matched.name || 'DN ' + matched.dn,
+                                options: opts
+                            });
+                        }
+                        ctx.affected.add(wIdx);
+                    }
+                    return;
+                }
+            }
+        }
+    }
     /* Nazwa studni (colIdx 3) — przez paste/fill dozwolona (excelOnNameChange logic), blokuj tylko delete/cut (pusty val). */
     if (colIdx === 3) {
         const clean = String(val || '')
@@ -1157,11 +1535,12 @@ function _excelSetCellValue(target, val) {
             _sel.value = opt.value;
             _sel.dispatchEvent(new Event('change', { bubbles: true }));
         } else if (!isNaN(wIdx) && wells[wIdx] && colIdx >= 7) {
-            const valStr = String(val).trim();
-            if (!valStr) return;
-            /* Fallback dla selectów wklejanych w trakcie batch/paste: jeśli opcji nie ma w obecnym stanie,
-               znajdź produkt w studnieProducts i ustaw w modelu przejście. */
+            const maxTrFb =
+                typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+                    ? _excelMaxTransitions[_excelActiveTab]
+                    : 1;
             const trIdx = Math.floor((colIdx - 7) / 4);
+            if (trIdx >= maxTrFb) return; // gap/Wlaz — nie przejście
             const subType = (colIdx - 7) % 4; // 0: rzedna, 1: angle, 2: category, 3: productId
             if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
             while (wells[wIdx].przejscia.length <= trIdx) {
