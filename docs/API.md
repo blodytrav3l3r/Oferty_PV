@@ -1,6 +1,6 @@
 # API — dokumentacja endpointów
 
-**Wersja:** 1.19.6  
+**Wersja:** 1.20.0  
 **Ostatnia aktualizacja:** 2026-08-24  
 **Dokumentacja Swagger/OpenAPI:** `/api/docs` (po uruchomieniu serwera) — źródło autorytatywne
 
@@ -23,7 +23,7 @@ Sprawdzenie statusu serwera. Używany przez Docker HEALTHCHECK i Render health c
   "timestamp": "2026-06-30T12:00:00.000Z",
   "uptime": 123.45,
   "memory": { ... },
-  "version": "1.19.6"
+  "version": "1.20.0"
 }
 ```
 
@@ -35,12 +35,12 @@ Informacje o wersji aplikacji.
 
 ```json
 {
-    "version": "1.19.6",
+    "version": "1.20.0",
     "commitHash": "389dd6e",
     "branch": "main",
     "buildDate": "2026-08-09T00:00:00.000Z",
     "environment": "development",
-    "dbVersion": "1.19.6"
+    "dbVersion": "1.20.0"
 }
 ```
 

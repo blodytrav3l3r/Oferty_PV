@@ -4,6 +4,34 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.20.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.6...v1.20.0) (2026-08-30)
+
+### Features
+
+- **clients:** wspólna baza klientów widoczna dla wszystkich ról ([9200cbf](https://github.com/blodytrav3l3r/Oferty_PV/commit/9200cbf40d654e6357b8d795a91675c7aa64fbf4))
+- **deploy:** watchdog windows + health live/ready (p0/p1) ([45befb4](https://github.com/blodytrav3l3r/Oferty_PV/commit/45befb4ef20e3514ed7c733c28642e3f9ad37f8c))
+- **offers:** udostępnianie ofert i zamówień między użytkownikami ([2689ea7](https://github.com/blodytrav3l3r/Oferty_PV/commit/2689ea7d5601891dcd473beefe69dc9d53b68e06))
+- **orders:** filtry nr zlecenia i zamówienia w kartotece zleceń ([64590fd](https://github.com/blodytrav3l3r/Oferty_PV/commit/64590fd95ec2112b6e8a9d53abfce97e31328e09))
+- **security:** sentry bounded flush for fatal crash (p2) ([6ec67f9](https://github.com/blodytrav3l3r/Oferty_PV/commit/6ec67f90e4a62fb84db41b2a7f35abca72348ebf))
+- **studnie:** bulk usuwanie zaznaczonych w excel ([e787235](https://github.com/blodytrav3l3r/Oferty_PV/commit/e787235975c8d849a500ead1530f42d10c347580))
+- **studnie:** helper paste przez widoczne kolumny i test przejscia ([4e6401f](https://github.com/blodytrav3l3r/Oferty_PV/commit/4e6401f69ac64567adca12f3caae281b86e607c5))
+- **studnie:** przełącznik jednostek mm/cm/m z precyzją w podglądzie ([8247237](https://github.com/blodytrav3l3r/Oferty_PV/commit/824723791eb066d70e47f6ce0283029bbb45b424))
+- **ui:** anti-fouc pierwszy paint po pelnym zaladowaniu ([f724955](https://github.com/blodytrav3l3r/Oferty_PV/commit/f724955bc0841dbaa6f5bba6ab720ba97f6d800d))
+- **ui:** enter akceptuje przyciski akcji w login i modalach ([1d16b39](https://github.com/blodytrav3l3r/Oferty_PV/commit/1d16b3952f297570525f6de081cb57e74a436e44))
+
+### Bug Fixes
+
+- **api:** audyt p0/p1 correctness batch tx i cursor ([8ac082b](https://github.com/blodytrav3l3r/Oferty_PV/commit/8ac082b277d06332ed6a5c9b7967d9bdf3ea261d))
+- **ci:** flaky detection nie psuje statusu commita (non-blocking) ([0f38318](https://github.com/blodytrav3l3r/Oferty_PV/commit/0f38318e685ee1bf3a1e6809638e0ba039d1d895))
+- **studnie:** falszywe duplikaty i niebieskie tlo a/m ([b5c4c0e](https://github.com/blodytrav3l3r/Oferty_PV/commit/b5c4c0ec870ca4ddad7616c8429ae3d9ca5c2c58))
+- **studnie:** format ceny przejscia z groszami w panelu dodaj ([ecb64b6](https://github.com/blodytrav3l3r/Oferty_PV/commit/ecb64b664f3fc2de4322281a193c75b3e61f7600))
+- **studnie:** naprawa wklejania kolumn excel – shift pierwszej linii ([5e0a766](https://github.com/blodytrav3l3r/Oferty_PV/commit/5e0a7663b855c11cbea4c049ea2a4618036f8528))
+- **studnie:** naprawa wyboru precyzji cm/m w jednostkach wysokości ([e777ccf](https://github.com/blodytrav3l3r/Oferty_PV/commit/e777ccff430d9a7ce15d6ecfb5061e9670e7aa16))
+- **studnie:** poprawka pozycji x w modalu stycznej i guard title ([102166f](https://github.com/blodytrav3l3r/Oferty_PV/commit/102166fcfae83c2b33fccb7193ebbbb6cae0307d))
+- **studnie:** poprawne wklejanie srednicy pvc sn8 przy liscie ([3cc957e](https://github.com/blodytrav3l3r/Oferty_PV/commit/3cc957e7b68ac337893677ba62b556fff172392a))
+- **ui:** brak migniecia logowania na pulpicie dla zalogowanych ([da07d7e](https://github.com/blodytrav3l3r/Oferty_PV/commit/da07d7ebfd01dddda1c46858a3aecdbfac8871e8))
+- **ui:** naprawa migania spa przy zmianie modulu ([8077b4b](https://github.com/blodytrav3l3r/Oferty_PV/commit/8077b4b98c76790a8e21779f5b35dc854a1d2f30))
+
 ### [1.19.6](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.5...v1.19.6) (2026-08-27)
 
 ### Features
