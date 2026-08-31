@@ -42,7 +42,7 @@ function _excelRenderTable(dn) {
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
 
     let html =
-        '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;">';
+        '<table style="width:max-content;min-width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;">';
 
     /* THEAD — sticky, trzy wiersze */
     html += '<thead>';
