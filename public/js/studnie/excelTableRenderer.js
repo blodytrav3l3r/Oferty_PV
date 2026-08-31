@@ -276,18 +276,22 @@ function _excelRenderTable(dn) {
     // Przywróć scroll po re-renderze
     container.scrollLeft = prevScrollLeft;
     container.scrollTop = prevScrollTop;
-    /* Zastosuj zapisane szerokości kolumn */
+    /* Zastosuj zapisane szerokości kolumn — clamp do min dla 7 sticky */
     if (_excelColWidths) {
         const tbl = container.querySelector('table');
         if (tbl) {
+            const stickyMins = [28, 70, 32, 78, 58, 58, 52];
             Object.keys(_excelColWidths).forEach(function (key) {
                 const d = key.split('-', 1)[0];
                 if (d === dn) {
                     const ci = parseInt(key.split('-')[1]);
                     const th = tbl.querySelectorAll('thead tr:first-child th')[ci];
                     if (th) {
-                        th.style.minWidth = _excelColWidths[key] + 'px';
-                        th.style.width = _excelColWidths[key] + 'px';
+                        let w = _excelColWidths[key];
+                        const minW = ci < 7 ? stickyMins[ci] : 30;
+                        if (w < minW) w = minW;
+                        th.style.minWidth = w + 'px';
+                        th.style.width = w + 'px';
                     }
                 }
             });
@@ -345,9 +349,50 @@ function _excelRenderTable(dn) {
     if (searchInput && searchInput.value) excelFilterWells(searchInput.value);
 }
 
-/** Wymuś poprawne sticky left — A1: fixed layout + CSS vars, brak runtime measuring (R1 P0) */
+/** Wymuś poprawne sticky left — 7 kolumn zawsze widocznych (Checkbox..Wys) */
 function _excelApplyStickyColumns() {
-    // ponytail: deklaratywne left via inline style (0/32/162/240/318) + table-layout:fixed
-    // eliminuje offsetWidth loop + rAF retry + forced reflow. No-op w A1, pełne vars w B.
-    return;
+    const container = document.getElementById('excel-table-container');
+    if (!container) return;
+    const table = container.querySelector('table');
+    if (!table) return;
+    const firstRow = table.querySelector('thead tr');
+    if (!firstRow) return;
+    const ths = firstRow.querySelectorAll('th');
+    if (ths.length < 7) return;
+    // rAF retry gdy layout jeszcze 0
+    let zero = 0;
+    for (let i = 0; i < 7; i++) if (ths[i].offsetWidth === 0) zero++;
+    if (zero > 0) {
+        requestAnimationFrame(_excelApplyStickyColumns);
+        return;
+    }
+    let left = 0;
+    let css = '';
+    for (let i = 0; i < 7; i++) {
+        const w = ths[i].offsetWidth;
+        css +=
+            '#excel-table-container th:nth-child(' +
+            (i + 1) +
+            '){left:' +
+            left +
+            'px;position:sticky;z-index:' +
+            LAYERS_EXCEL.STICKY_HEADER_TH +
+            ';}\n';
+        css +=
+            '#excel-table-container td:nth-child(' +
+            (i + 1) +
+            '){left:' +
+            left +
+            'px;position:sticky;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';}\n';
+        left += w;
+    }
+    let style = document.getElementById('excel-sticky-style');
+    if (!style) {
+        style = document.createElement('style');
+        style.id = 'excel-sticky-style';
+        document.head.appendChild(style);
+    }
+    style.textContent = css;
 }
