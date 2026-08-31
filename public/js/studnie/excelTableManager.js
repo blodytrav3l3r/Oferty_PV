@@ -390,21 +390,81 @@ function _excelMarkAsManual(wIdx) {
     }
 }
 
-/* ===== UNDO / REDO (simple snapshot stack) ===== */
+/* ===== UNDO / REDO — patch-based dla 10k, fallback full snapshot dla splice ===== */
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
-    _excelUndoStack.push(structuredClone(wells));
+    const args = Array.prototype.slice.call(arguments);
+    let idxs = [];
+    if (args.length === 1 && Array.isArray(args[0])) idxs = args[0];
+    else if (args.length > 0 && typeof args[0] === 'number') idxs = args;
+    else if (
+        args.length === 1 &&
+        typeof args[0] === 'object' &&
+        args[0] !== null &&
+        args[0].wellIdx != null
+    )
+        idxs = [args[0].wellIdx];
+    // patch dla 1..N wells, full dla braku args (np. bulk add) lub dużych zmian
+    if (idxs.length > 0 && idxs.length < wells.length && idxs.length <= 100) {
+        const patch = { type: 'patch', wells: [] };
+        for (let k = 0; k < idxs.length; k++) {
+            const i = idxs[k];
+            if (wells[i])
+                patch.wells.push({ idx: i, id: wells[i].id, before: structuredClone(wells[i]) });
+        }
+        if (patch.wells.length === 0) return;
+        _excelUndoStack.push(patch);
+    } else {
+        // fallback full snapshot (np. add/delete, duże paste)
+        _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
+    }
     if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
     _excelRedoStack = [];
 }
 
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
-    _excelRedoStack.push(structuredClone(wells));
-    const snap = _excelUndoStack.pop();
-    const locked = _excelSnapshotLockedWells();
-    wells.splice(0, wells.length, ...snap);
-    _excelRestoreLockedWells(locked);
+    const patch = _excelUndoStack.pop();
+    // push redo jako patch z current before restore
+    if (patch.type === 'patch') {
+        const redoPatch = { type: 'patch', wells: [] };
+        for (let k = 0; k < patch.wells.length; k++) {
+            const e = patch.wells[k];
+            const curIdx =
+                typeof e.idx === 'number'
+                    ? e.idx
+                    : wells.findIndex(function (w) {
+                          return w && w.id === e.id;
+                      });
+            if (curIdx >= 0 && wells[curIdx])
+                redoPatch.wells.push({
+                    idx: curIdx,
+                    id: e.id,
+                    before: structuredClone(wells[curIdx])
+                });
+        }
+        _excelRedoStack.push(redoPatch);
+        const locked = _excelSnapshotLockedWells();
+        for (let k = 0; k < patch.wells.length; k++) {
+            const e = patch.wells[k];
+            const curIdx =
+                typeof e.idx === 'number'
+                    ? e.idx
+                    : wells.findIndex(function (w) {
+                          return w && w.id === e.id;
+                      });
+            if (curIdx >= 0) wells[curIdx] = structuredClone(e.before);
+            else if (e.before) wells.push(structuredClone(e.before));
+        }
+        _excelRestoreLockedWells(locked);
+    } else {
+        _excelRedoStack.push({ type: 'full', data: structuredClone(wells) });
+        const snap = patch.data || patch;
+        const locked = _excelSnapshotLockedWells();
+        const arr = Array.isArray(snap) ? snap : snap.data;
+        wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
+        _excelRestoreLockedWells(locked);
+    }
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
@@ -413,11 +473,45 @@ function _excelUndo() {
 
 function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
-    _excelUndoStack.push(structuredClone(wells));
-    const snap = _excelRedoStack.pop();
-    const locked = _excelSnapshotLockedWells();
-    wells.splice(0, wells.length, ...snap);
-    _excelRestoreLockedWells(locked);
+    const patch = _excelRedoStack.pop();
+    if (patch.type === 'patch') {
+        const undoPatch = { type: 'patch', wells: [] };
+        for (let k = 0; k < patch.wells.length; k++) {
+            const e = patch.wells[k];
+            const curIdx =
+                typeof e.idx === 'number'
+                    ? e.idx
+                    : wells.findIndex(function (w) {
+                          return w && w.id === e.id;
+                      });
+            if (curIdx >= 0 && wells[curIdx])
+                undoPatch.wells.push({
+                    idx: curIdx,
+                    id: e.id,
+                    before: structuredClone(wells[curIdx])
+                });
+        }
+        _excelUndoStack.push(undoPatch);
+        const locked = _excelSnapshotLockedWells();
+        for (let k = 0; k < patch.wells.length; k++) {
+            const e = patch.wells[k];
+            const curIdx =
+                typeof e.idx === 'number'
+                    ? e.idx
+                    : wells.findIndex(function (w) {
+                          return w && w.id === e.id;
+                      });
+            if (curIdx >= 0) wells[curIdx] = structuredClone(e.before);
+        }
+        _excelRestoreLockedWells(locked);
+    } else {
+        _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
+        const snap = patch.data || patch;
+        const arr = Array.isArray(snap) ? snap : snap.data;
+        const locked = _excelSnapshotLockedWells();
+        wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
+        _excelRestoreLockedWells(locked);
+    }
     _excelMarkDirty();
     _excelRenderTable(_excelActiveTab);
     if (typeof _excelDebouncedRefresh === 'function') _excelDebouncedRefresh();
