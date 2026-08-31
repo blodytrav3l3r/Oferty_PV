@@ -313,10 +313,196 @@ function _excelVirtualRenderBody() {
     }
 })();
 
+// ----- model-driven copy/paste & selection dla virtual -----
+function _excelVirtualGetCellValue(wellIdx, colIdx) {
+    const w = wells[wellIdx];
+    if (!w) return '';
+    // map colIdx -> field (zgodnie z excelTableBody order, 7 sticky + maxTr*4 + gap2 + wlaz + comps + denn/uszcz/red/kineta/pb)
+    if (colIdx === 3) return String(w.name || '');
+    if (colIdx === 4) return w.rzednaWlazu != null ? String(w.rzednaWlazu) : '';
+    if (colIdx === 5) return w.rzednaDna != null ? String(w.rzednaDna) : '';
+    if (colIdx === 6) return String(_excelCalcWellHeight ? _excelCalcWellHeight(w) : '');
+    // przejscia: col 7.. 7+maxTr*4-1
+    const maxTr =
+        typeof _excelMaxTransitions !== 'undefined'
+            ? _excelMaxTransitions[_excelActiveTab] || 1
+            : 1;
+    if (colIdx >= 7 && colIdx < 7 + maxTr * 4) {
+        const rel = colIdx - 7;
+        const trIdx = Math.floor(rel / 4);
+        const sub = rel % 4;
+        const prz = (w.przejscia || [])[trIdx];
+        if (!prz) return '';
+        if (sub === 0) return prz.rzednaWlaczenia != null ? String(prz.rzednaWlaczenia) : '';
+        if (sub === 1) return prz.angle != null ? String(prz.angle) : '';
+        if (sub === 2) return prz.tempCategory || '';
+        if (sub === 3) return prz.productId || '';
+    }
+    // gap 7+maxTr*4,7+maxTr*4+1 skip
+    // po gap: wlaz col = 7+maxTr*4+2
+    // dla virtual uproszczenie: komponenty po gap+wlaz są dynamiczne — zwróć count/product
+    // jeśli colIdx w zakresie komponentów, pobierz via visibleCols
+    try {
+        const dn = _excelActiveTab;
+        const compCols =
+            typeof _excelGetVisibleComponentColumns === 'function'
+                ? _excelGetVisibleComponentColumns(dn, w)
+                : [];
+        const wlazOffset = 7 + maxTr * 4 + 2;
+        if (colIdx === wlazOffset)
+            return _excelGetWlazFromConfig ? String(_excelGetWlazFromConfig(w) || '') : '';
+        if (colIdx > wlazOffset) {
+            const compIdx = colIdx - wlazOffset - 1;
+            const col = compCols[compIdx];
+            if (col) {
+                const cnt = _excelCountProductInConfig
+                    ? _excelCountProductInConfig(
+                          w,
+                          col.componentType,
+                          col.height,
+                          col.productId,
+                          col.fromReduction ? col.targetDn || w.redukcjaTargetDN || 1000 : null
+                      )
+                    : 0;
+                return cnt ? String(cnt) : '';
+            }
+        }
+    } catch (_e) {}
+    return '';
+}
+
+function _excelVirtualHandleCopy(e) {
+    if (!_excelVirtualEnabled || !_excelVirtualIsEnabled()) return;
+    if (!document.getElementById('excel-table-overlay')) return;
+    const hasSel =
+        (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) ||
+        (typeof _excelSelectedCols !== 'undefined' && _excelSelectedCols.length > 0) ||
+        (typeof window !== 'undefined' && window._excelVirtualSelectionRange);
+    if (!hasSel) return;
+    let text = '';
+    if (typeof window !== 'undefined' && window._excelVirtualSelectionRange) {
+        const rg = window._excelVirtualSelectionRange;
+        const filtered = _excelVirtualFiltered || [];
+        for (let logical = rg.r1; logical <= rg.r2 && logical < filtered.length; logical++) {
+            const wIdx = filtered[logical];
+            const line = [];
+            for (let c = rg.c1; c <= rg.c2; c++) line.push(_excelVirtualGetCellValue(wIdx, c));
+            text += line.join('\t') + '\n';
+        }
+    } else if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
+        let minR = Infinity,
+            maxR = -Infinity,
+            minC = Infinity,
+            maxC = -Infinity;
+        _excelSelectedCells.forEach(function (c) {
+            if (c.wIdx < minR) minR = c.wIdx;
+            if (c.wIdx > maxR) maxR = c.wIdx;
+            if (c.colIdx < minC) minC = c.colIdx;
+            if (c.colIdx > maxC) maxC = c.colIdx;
+        });
+        // minR/maxR to wIdx (global), nie logical — map via filtered
+        const filtered = _excelVirtualFiltered || [];
+        // znajdź logical range odpowiadający wIdx
+        for (let r = minR; r <= maxR; r++) {
+            const line = [];
+            for (let c = minC; c <= maxC; c++) {
+                let val = '';
+                // czy komórka była zaznaczona?
+                let isSel = false;
+                for (let s = 0; s < _excelSelectedCells.length; s++)
+                    if (_excelSelectedCells[s].wIdx === r && _excelSelectedCells[s].colIdx === c) {
+                        isSel = true;
+                        break;
+                    }
+                if (isSel) val = _excelVirtualGetCellValue(r, c);
+                line.push(val);
+            }
+            text += line.join('\t') + '\n';
+        }
+    } else if (typeof _excelSelectedCols !== 'undefined' && _excelSelectedCols.length > 0) {
+        const cols = [..._excelSelectedCols].sort(function (a, b) {
+            return a - b;
+        });
+        const filtered = _excelVirtualFiltered || [];
+        for (let i = 0; i < filtered.length; i++) {
+            const wIdx = filtered[i];
+            const line = [];
+            for (let ci = 0; ci < cols.length; ci++)
+                line.push(_excelVirtualGetCellValue(wIdx, cols[ci]));
+            text += line.join('\t') + '\n';
+        }
+    }
+    if (text && e.clipboardData) {
+        e.preventDefault();
+        e.clipboardData.setData('text/plain', text);
+    }
+}
+
+// Ctrl+A w virtual: zaznacz wszystkie logical wiersze (O(1) range, nie 500k td)
+function _excelVirtualHandleKeydown(e) {
+    if (!_excelVirtualEnabled || !_excelVirtualIsEnabled()) return;
+    if (!document.getElementById('excel-table-overlay')) return;
+    if (
+        (e.ctrlKey || e.metaKey) &&
+        !e.shiftKey &&
+        !e.altKey &&
+        String(e.key).toLowerCase() === 'a'
+    ) {
+        const active = document.activeElement;
+        if (
+            active &&
+            (active.tagName === 'INPUT' ||
+                active.tagName === 'TEXTAREA' ||
+                active.isContentEditable)
+        )
+            return;
+        e.preventDefault();
+        // range: wszystkie filtered
+        const total = _excelVirtualTotal || 0;
+        if (total === 0) return;
+        // wypełnij _excelSelectedCells jako range O(1) — dla virtual nie buduj 400k entries, tylko mark via filtered
+        // fallback: stary array dla kompatybilności, ale ogranicz do max 1000 dla bezpieczeństwa
+        if (total > 1000) {
+            // O(1) range — czyść array i oznacz логicznie
+            if (typeof _excelSelectedCells !== 'undefined') _excelSelectedCells = [];
+            // zapisz jako virtual range w osobnej zmiennej
+            window._excelVirtualSelectionRange = { r1: 0, r2: total - 1, c1: 0, c2: 30 };
+            // wizualnie zaznacz visible slice
+            const tbody = document.querySelector('#excel-table-container tbody');
+            if (tbody)
+                tbody.querySelectorAll('td').forEach(function (td) {
+                    td.classList.add('cell-selected');
+                });
+        } else {
+            // małe N — stary sposób
+            if (typeof _excelSelectedCells !== 'undefined') {
+                _excelSelectedCells = [];
+                for (let i = 0; i < total; i++) {
+                    const wIdx = _excelVirtualFiltered[i];
+                    for (let c = 0; c < 30; c++)
+                        _excelSelectedCells.push({ wIdx: wIdx, colIdx: c });
+                }
+            }
+        }
+        if (typeof _excelUpdateSelectionSummary === 'function')
+            try {
+                _excelUpdateSelectionSummary();
+            } catch (_e) {}
+    }
+}
+
+(function () {
+    if (typeof document !== 'undefined') {
+        document.addEventListener('copy', _excelVirtualHandleCopy, true);
+        document.addEventListener('keydown', _excelVirtualHandleKeydown, true);
+    }
+})();
+
 // expose dla testów/oracle
 if (typeof window !== 'undefined') {
     window._excelVirtualBuildFiltered = _excelVirtualBuildFiltered;
     window._excelVirtualRenderBody = _excelVirtualRenderBody;
     window._excelVirtualIsEnabled = _excelVirtualIsEnabled;
+    window._excelVirtualGetCellValue = _excelVirtualGetCellValue;
     window.EXCEL_ROW_HEIGHT = EXCEL_ROW_HEIGHT;
 }
