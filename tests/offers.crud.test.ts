@@ -93,6 +93,8 @@ const mockOfferStudnie = {
     state: 'draft',
     data: JSON.stringify({ totalPrice: 500 }),
     history: '[]',
+    wellCount: 1,
+    totalPrice: 500,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
 };
