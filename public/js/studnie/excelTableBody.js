@@ -244,7 +244,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         /* Rz Wlazu */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:122px;z-index:' +
+            'position:sticky;left:110px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -253,12 +253,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" onchange="excelOnRzednaChange(' +
             wIdx +
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(65) +
+            _excelCellInp(58) +
             '" /></td>';
         /* Rz Dna */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:187px;z-index:' +
+            'position:sticky;left:168px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -267,13 +267,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" onchange="excelOnRzednaChange(' +
             wIdx +
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(65) +
+            _excelCellInp(58) +
             '" /></td>';
         /* Wys auto */
         const height = _excelCalcWellHeight(well);
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:252px;z-index:' +
+            'position:sticky;left:226px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -570,25 +570,25 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         'text-align:center;color:var(--slate-400);width:88px;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:122px;z-index:' +
+        'position:sticky;left:110px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(65) +
+        _excelCellInp(58) +
         'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:187px;z-index:' +
+        'position:sticky;left:168px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(65) +
+        _excelCellInp(58) +
         'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:252px;z-index:' +
+        'position:sticky;left:226px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
