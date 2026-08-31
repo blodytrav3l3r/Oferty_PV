@@ -246,8 +246,8 @@ function openExcelTableModal() {
     const diagramPanel = document.querySelector('.well-diagram-panel');
     const isDiagramVisible = diagramPanel && diagramPanel.offsetParent !== null;
     const modalStyle = isDiagramVisible
-        ? 'width:calc(100% - 1rem);height:calc(100% - 1rem);background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);'
-        : 'width:96vw;height:96vh;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);';
+        ? 'width:100%;height:100%;min-height:0;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);box-sizing:border-box;'
+        : 'width:100%;height:100%;min-height:0;background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.05);border-radius: var(--radius-2xs);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(var(--black-rgb), 0.8);box-sizing:border-box;';
     const excelInnerHtml = `
         <div id="excel-modal-inner" style="${modalStyle}">
         <style>
@@ -265,6 +265,7 @@ function openExcelTableModal() {
             #excel-table-container td.cell-selected .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
             #excel-table-container td.drag-preview { outline:2px dashed rgba(var(--accent-rgb), 0.5); outline-offset:-2px; background:rgba(var(--accent-rgb), 0.05); }
             #excel-table-container td.drag-preview .excel-sel-wrap { outline:inherit; outline-offset:-2px; }
+            #excel-empty-name::placeholder { color: rgba(var(--accent-rgb), 0.65); font-style: italic; font-size: var(--fs-xs); }
             #excel-table-container th.excel-col-selected { background:rgba(var(--accent-rgb), 0.3) !important; box-shadow:inset 0 0 0 1px rgba(var(--accent-rgb), 0.3); }
             #excel-table-container .h3-prodcode { font-size: var(--fs-3xs);font-weight: var(--fw-semibold);color:var(--slate-400);line-height:1.45; }
             #excel-table-container .h3-prodprice { font-size: var(--fs-3xs);color:var(--success-hover);font-weight: var(--fw-bold);line-height:1.4;white-space:nowrap;background:rgba(var(--success-rgb), 0.05);border-radius: var(--radius-2xs);padding:1px 5px;margin-top:2px;display:inline-block; }
@@ -304,7 +305,7 @@ function openExcelTableModal() {
             </div>
         </div>
         <div id="excel-tabs" style="display:flex;gap:0;padding:0;background:var(--slate-950);border-bottom:1px solid rgba(var(--white-rgb), 0.05);flex-shrink:0;"></div>
-        <div id="excel-table-container" style="flex:1;overflow:auto;background:var(--slate-950);"></div>
+        <div id="excel-table-container" style="flex:1 1 auto;min-height:0;overflow:auto;background:var(--slate-950);"></div>
         </div>
     `;
     // SSoT: Excel używa modalCore.js — overlay tworzony przez showModal, pozycjonowanie dalej via LAYERS

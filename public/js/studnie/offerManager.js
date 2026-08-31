@@ -47,6 +47,20 @@ function clearOfferForm() {
     goToWizardStep(1);
 }
 
+async function ensureOfferDetail(offer) {
+    if (!offer || Array.isArray(offer.wells)) return offer;
+    if (!offer.id) return offer;
+    try {
+        const { storageService } = await import('../shared/StorageService.js');
+        const detailed = await storageService.getOfferById(offer.id);
+        if (detailed && Array.isArray(detailed.wells)) return detailed;
+    } catch (e) {
+        if (typeof logger !== 'undefined' && logger.warn)
+            logger.warn('offerManager', 'ensureOfferDetail failed', String(e));
+    }
+    return offer;
+}
+
 /** Migruj stare dane studni (material -> nadbudowa/dennicaMaterial) */
 async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preventStepOverride) {
     const sectionToShow = targetSection || 'offer';
@@ -54,8 +68,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     if (typeof id_or_doc === 'object') {
         offer = id_or_doc;
         if (optionalId && !offer.id) offer.id = optionalId;
+        offer = await ensureOfferDetail(offer);
     } else {
         offer = offersStudnie.find((o) => o.id === id_or_doc);
+        offer = await ensureOfferDetail(offer);
         if (!offer) {
             try {
                 const { storageService } = await import('../shared/StorageService.js');

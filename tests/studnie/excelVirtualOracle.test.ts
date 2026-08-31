@@ -38,9 +38,11 @@ describe('excelVirtual oracle — legacy vs virtual', () => {
             },
             LAYERS: { TOAST: 5000 },
             KINETA_OPTIONS: [],
+            console,
             logger: { warn() {}, error() {} },
             document: {
                 getElementById: () => null,
+                addEventListener: () => {},
                 querySelector: () => null,
                 querySelectorAll: () => [],
                 createElement: () => ({})

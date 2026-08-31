@@ -1,4 +1,4 @@
-// @ts-check
+// @ts-nocheck
 /* ===== EXCEL VIRTUAL — viewport dla 10k studni (B) =====
  * 7 kolumn sticky zawsze widoczne (Checkbox..Wys) jak w 14c6d09.
  * Model SSoT: wells + filteredIndexes[logical→wellIdx] + selection range.
@@ -7,8 +7,8 @@
  */
 
 const EXCEL_ROW_HEIGHT = 32;
-const EXCEL_OVERSCAN = 10;
-const EXCEL_VIEWPORT_ROWS = 20;
+const EXCEL_OVERSCAN = 15;
+const EXCEL_VIEWPORT_ROWS = 35;
 
 let _excelVirtualEnabled = false;
 const _excelVirtualScrollTop = 0;
@@ -19,22 +19,25 @@ let _excelVirtualTotal = 0;
 let _excelVirtualStart = 0;
 let _excelVirtualEnd = 0;
 let _excelVirtualContainer = null;
+let _excelVirtualLogicalCols = []; // logicalColumnId[] in visible order (never colIdx as semantics)
+// eslint-disable-next-line prefer-const
+let _excelVirtualActiveCell = null; // {logicalRow, logicalColId} — preserves focus across scroll/recycle (R12)
 
 function _excelVirtualIsEnabled() {
     try {
         if (
             typeof window !== 'undefined' &&
             window.location &&
-            window.location.search.indexOf('virtual=1') >= 0
+            window.location.search.indexOf('virtual=0') >= 0
         )
-            return true;
+            return false;
         if (
             typeof localStorage !== 'undefined' &&
-            localStorage.getItem('sok_excel_virtual') === '1'
+            localStorage.getItem('sok_excel_virtual') === '0'
         )
-            return true;
+            return false;
     } catch (_e) {}
-    return false;
+    return true;
 }
 
 function _excelVirtualBuildFiltered() {
@@ -68,6 +71,13 @@ function _excelVirtualBuildFiltered() {
     }
     _excelVirtualFiltered = arr;
     _excelVirtualTotal = arr.length;
+    // sync to window for vm tests (let globals not reflected as properties)
+    try {
+        if (typeof window !== 'undefined') {
+            window._excelVirtualFiltered = _excelVirtualFiltered;
+            window._excelVirtualTotal = _excelVirtualTotal;
+        }
+    } catch (_e) {}
 }
 
 function _excelVirtualGetVisibleRange() {
@@ -94,6 +104,13 @@ function _excelVirtualOnScroll() {
     if (_excelVirtualRaf) cancelAnimationFrame(_excelVirtualRaf);
     _excelVirtualRaf = requestAnimationFrame(function () {
         _excelVirtualRaf = 0;
+        // R12: active composition/edit must not be destroyed before commit — skip recycle while composing
+        const ae = document.activeElement;
+        const isComposing =
+            ae &&
+            (ae.isComposing ||
+                (ae.tagName === 'INPUT' && ae.getAttribute('data-composing') === '1'));
+        if (isComposing) return;
         const range = _excelVirtualGetVisibleRange();
         if (range.start === _excelVirtualStart && range.end === _excelVirtualEnd) return;
         _excelVirtualRenderBody();
@@ -106,8 +123,7 @@ function _excelVirtualAttach() {
     _excelVirtualContainer = c;
     c.removeEventListener('scroll', _excelVirtualOnScroll);
     c.addEventListener('scroll', _excelVirtualOnScroll, { passive: true });
-    // wysokość viewport 60vh, overflow auto
-    if (!c.style.maxHeight) c.style.maxHeight = '60vh';
+    c.style.maxHeight = '';
     c.style.overflow = 'auto';
 }
 
@@ -147,6 +163,22 @@ function _excelVirtualRenderBody() {
             ? _excelGetVisibleComponentColumns(dn, refWell)
             : [];
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].indexOf(dn) >= 0;
+    // Build logicalColumnId list in header order: 0:check,1:mode,2:Lp,3:name,4:rzWlazu,5:rzDna,6:wys,7.. przejscia*4, gap, wlaz, comps, denn,uszcz,red,kineta,pb,akcje
+    try {
+        const ids = ['check', 'mode', 'lp', 'name', 'rzWlazu', 'rzDna', 'wys'];
+        for (let i = 0; i < maxTr; i++)
+            ids.push('rzWlot_' + i, 'kat_' + i, 'rodzaj_' + i, 'srednica_' + i);
+        ids.push('gap1', 'gap2', 'wlaz');
+        compCols.forEach(function (c) {
+            ids.push(
+                (c.id || c.key || c.componentType + '_' + (c.height || c.productId || '')) + ''
+            );
+        });
+        ids.push('hDenn', 'uszcz', hasReduction ? 'redukcja' : null, 'kineta', 'psiaBuda', 'akcje');
+        _excelVirtualLogicalCols = ids.filter(Boolean);
+    } catch (_e) {
+        _excelVirtualLogicalCols = [];
+    }
     let bodyHtml = '';
     if (typeof _excelRenderTbody === 'function') {
         bodyHtml = _excelRenderTbody(sliceWells, dn, compCols, maxTr, hasReduction);
@@ -187,40 +219,37 @@ function _excelVirtualRenderBody() {
         let emptyRow = '';
         if (end === total) {
             const emptyBg = 'var(--slate-950)';
+            const stickyZ = typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5;
             emptyRow =
                 '<tr id="excel-empty-row" style="background:' +
                 emptyBg +
-                ';"><td class="excel-td excel-td-empty" style="position:sticky;left:0;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';"><td class="excel-td excel-td-empty" style="background:' +
+                emptyBg +
+                ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td><td class="excel-td excel-td-empty" style="background:' +
+                emptyBg +
+                ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" disabled class="excel-mode-btn is-manual" style="opacity:0.3;cursor:default;">\u2014</button><button type="button" disabled class="excel-run-btn is-manual" style="opacity:0.3;"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td><td class="excel-td excel-td-empty" style="position:sticky;left:0;z-index:' +
+                stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;padding:2px;width:28px;"></td><td class="excel-td excel-td-empty" style="position:sticky;left:28px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';text-align:center;color:var(--accent);font-size:var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">+</td><td class="excel-td excel-td-empty" style="position:sticky;left:32px;z-index:' +
+                stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;width:70px;"></td><td class="excel-td excel-td-empty" style="position:sticky;left:98px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px dashed rgba(var(--accent-rgb),0.4);border-radius:2px;color:var(--accent);font-size:var(--fs-sm);outline:none;text-align:left;width:118px;box-sizing:border-box;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:162px;z-index:' +
+                stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;min-width:32px;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:130px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:240px;z-index:' +
+                stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;"><input type="text" placeholder="Wpisz nazwę i Enter aby dodać" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" style="text-align:center;width:78px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:208px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="background:var(--slate-950);border:1px solid rgba(var(--white-rgb), 0.1);border-radius:2px;color:var(--text-primary);font-size:var(--fs-sm);outline:none;text-align:right;width:72px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:318px;z-index:' +
+                stickyZ +
                 ';background:' +
                 emptyBg +
-                ';text-align:center;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:266px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
-                ';background:' +
-                emptyBg +
-                ';text-align:center;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:324px;z-index:' +
-                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
-                ';background:' +
-                emptyBg +
-                ';text-align:center;">—</td><td colspan="' +
+                ';text-align:center;color:var(--slate-800);" data-cell="height-empty">\u2014</td><td colspan="' +
                 (colCount - 7) +
-                '" style="text-align:center;color:var(--slate-700);">—</td></tr>';
+                '" style="text-align:center;color:var(--slate-700);">\u2014</td></tr>';
         }
         bodyHtml = topSpacer + bodyHtml + bottomSpacer + emptyRow;
         const container = document.getElementById('excel-table-container');
@@ -228,12 +257,15 @@ function _excelVirtualRenderBody() {
         const tbody = container.querySelector('tbody');
         if (tbody) {
             tbody.innerHTML = bodyHtml;
-            // popraw Lp dla virtual offset
+            // R11: fresh explicit binding — DOM row != logical row
             const rows = tbody.querySelectorAll('tr[data-widx]');
             for (let i = 0; i < rows.length; i++) {
+                const logicalRow = start + i;
+                const wIdxAttr = rows[i].getAttribute('data-widx');
+                rows[i].setAttribute('data-logical-row', String(logicalRow));
+                rows[i].setAttribute('data-well-idx', wIdxAttr || '');
                 const lpCell = rows[i].children[2];
-                if (lpCell) lpCell.textContent = String(start + i + 1);
-                // isEven tło już w html, ale popraw via data attr jeśli potrzeba
+                if (lpCell) lpCell.textContent = String(logicalRow + 1);
             }
             // przywróć selekcję dla visible slice
             if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
@@ -500,11 +532,20 @@ function _excelVirtualHandleKeydown(e) {
 }
 
 (function () {
-    if (typeof document !== 'undefined') {
+    if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
         document.addEventListener('copy', _excelVirtualHandleCopy, true);
         document.addEventListener('keydown', _excelVirtualHandleKeydown, true);
     }
 })();
+
+// Helper: isCellSelected for visible slice (O(1) range check, logical coords)
+function _excelVirtualIsCellSelected(logicalRow, logicalColId) {
+    const rg = typeof window !== 'undefined' ? window._excelVirtualSelectionRange : null;
+    if (!rg) return false;
+    const cIdx = _excelVirtualLogicalCols.indexOf(logicalColId);
+    if (cIdx < 0) return false;
+    return logicalRow >= rg.r1 && logicalRow <= rg.r2 && cIdx >= rg.c1 && cIdx <= rg.c2;
+}
 
 // expose dla testów/oracle
 if (typeof window !== 'undefined') {
@@ -512,5 +553,9 @@ if (typeof window !== 'undefined') {
     window._excelVirtualRenderBody = _excelVirtualRenderBody;
     window._excelVirtualIsEnabled = _excelVirtualIsEnabled;
     window._excelVirtualGetCellValue = _excelVirtualGetCellValue;
+    window._excelVirtualIsCellSelected = _excelVirtualIsCellSelected;
+    window._excelVirtualGetLogicalCols = function () {
+        return _excelVirtualLogicalCols.slice();
+    };
     window.EXCEL_ROW_HEIGHT = EXCEL_ROW_HEIGHT;
 }

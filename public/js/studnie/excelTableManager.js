@@ -308,6 +308,7 @@ async function _excelBulkDeleteSelected() {
     sorted.forEach(function (idx) {
         wells.splice(idx, 1);
     });
+    if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     // przebuduj mapę zaznaczeń checkboxów dla pozostałych wierszy
     const newStates = {};
     Object.keys(_excelRowSelectStates).forEach(function (k) {
@@ -463,6 +464,7 @@ function _excelUndo() {
         const locked = _excelSnapshotLockedWells();
         const arr = Array.isArray(snap) ? snap : snap.data;
         wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();
@@ -510,6 +512,7 @@ function _excelRedo() {
         const arr = Array.isArray(snap) ? snap : snap.data;
         const locked = _excelSnapshotLockedWells();
         wells.splice(0, wells.length, ...(Array.isArray(arr) ? arr : []));
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         _excelRestoreLockedWells(locked);
     }
     _excelMarkDirty();
@@ -563,6 +566,7 @@ function _excelPasteCreateWells(text) {
                 added++;
             }
             if (added > 0) {
+                if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                 _excelRenderTabs();
                 _excelRenderTable(_excelActiveTab);
@@ -643,6 +647,7 @@ function _excelPasteCreateWells(text) {
         showToast('Nie dodano żadnej studni', 'info');
         return;
     }
+    if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     // Przelicz maxTransitions dla wszystkich DN po dodaniu mieszanych
     if (typeof _excelGetMaxTransitions === 'function') {
         const allTabs = ['1000', '1200', '1500', '2000', '2500', 'styczne'];

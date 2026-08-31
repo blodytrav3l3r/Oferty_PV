@@ -70,13 +70,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             return nameCounts[n] > 1;
         })
     );
-    const _wIdxMap = new Map(
-        wells.map(function (w, i) {
-            return [w.id, i];
-        })
-    );
+    // SSoT: wellIndexById — nie buduj per-render; sort nie rebuild, add/delete → rebuild
     tabWells.forEach(function (well, idx) {
-        const wIdx = _wIdxMap.get(well.id) ?? wells.indexOf(well);
+        const wIdx =
+            typeof _excelWellIndexById !== 'undefined' && _excelWellIndexById.has(well.id)
+                ? _excelWellIndexById.get(well.id)
+                : wells.indexOf(well);
         const isLockedRow = _excelIsWellLocked(wIdx);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
@@ -558,16 +557,16 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:center;color:var(--slate-700);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
+        ';text-align:center;color:var(--accent);font-size: var(--fs-xs);font-weight:var(--fw-bold);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">+</td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'position:sticky;left:32px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
+        ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" placeholder="Wpisz nazwę (Enter)" title="Wpisz nazwę nowej studni i wciśnij Enter" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
         _excelCellInp(120) +
-        'text-align:left;color:var(--slate-400);" /></td>';
+        'text-align:left;width:118px;color:var(--accent);background:rgba(var(--accent-rgb),0.06);border:1px dashed rgba(var(--accent-rgb),0.4);box-sizing:border-box;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
         'position:sticky;left:162px;z-index:' +
@@ -749,13 +748,11 @@ function _excelRefreshDupColors() {
     };
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
-    const _wIdxMap2 = new Map(
-        wells.map(function (w, i) {
-            return [w.id, i];
-        })
-    );
     tabWells.forEach((well, idx) => {
-        const wIdx = _wIdxMap2.get(well.id) ?? wells.indexOf(well);
+        const wIdx =
+            typeof _excelWellIndexById !== 'undefined' && _excelWellIndexById.has(well.id)
+                ? _excelWellIndexById.get(well.id)
+                : wells.indexOf(well);
         const row = container.querySelector(`tr[data-widx="${wIdx}"]`);
         if (!row) return;
 

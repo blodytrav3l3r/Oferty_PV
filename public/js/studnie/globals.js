@@ -33,9 +33,30 @@ Object.defineProperty(window, 'studnieProducts', {
     get: () => studnieProducts,
     set: (v) => {
         studnieProducts = _purgeOrphanOtProducts(v);
+        if (typeof _rebuildStudnieProductsById === 'function') _rebuildStudnieProductsById();
     }
 });
 window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
+
+// Map<productId, Product> — O(1) lookup zamiast find() 40M porównań przy 10k (P0 C)
+let studnieProductsById = new Map();
+function _rebuildStudnieProductsById() {
+    studnieProductsById = new Map();
+    for (let i = 0; i < studnieProducts.length; i++) {
+        const p = studnieProducts[i];
+        if (p && p.id) studnieProductsById.set(p.id, p);
+    }
+}
+function getStudnieProductById(id) {
+    return studnieProductsById.get(id) || null;
+}
+window._rebuildStudnieProductsById = _rebuildStudnieProductsById;
+window.getStudnieProductById = getStudnieProductById;
+Object.defineProperty(window, 'studnieProductsById', {
+    configurable: true,
+    get: () => studnieProductsById
+});
+_rebuildStudnieProductsById();
 
 // System wielu studni
 let wells = []; // Tablica obiektów { id, name, dn, uwagi, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
@@ -319,6 +340,30 @@ for (const key of Object.keys(_GLOBAL_BINDINGS)) {
         set: _GLOBAL_SETTERS[key]
     });
 }
+
+// scheduleRender — ONE render scheduler (I4): at most one pending rAF per sync transaction
+let _sokRenderPending = false;
+let _sokRenderDirty = false; // "model may have changed" — not "render required"
+function scheduleRender() {
+    _sokRenderDirty = true;
+    if (_sokRenderPending) return;
+    _sokRenderPending = true;
+    requestAnimationFrame(function () {
+        _sokRenderPending = false;
+        if (!_sokRenderDirty) return;
+        _sokRenderDirty = false;
+        if (typeof window.refreshAll === 'function') {
+            try {
+                window.refreshAll();
+            } catch (_e) {}
+        } else {
+            if (typeof window.updateSummary === 'function') window.updateSummary();
+            if (typeof window.renderWellsList === 'function') window.renderWellsList();
+            if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
+        }
+    });
+}
+window.scheduleRender = scheduleRender;
 
 /* ===== Rejestracja globali ===== */
 window.toggleCard = toggleCard;

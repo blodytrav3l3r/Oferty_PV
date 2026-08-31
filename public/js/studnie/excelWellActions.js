@@ -282,6 +282,7 @@ function excelDuplicateWell(wIdx) {
     /* Kopia nie dziedziczy cache resolution (wskazywałby nieaktualne produkty) */
     delete copy.__resCache;
     wells.splice(wIdx + 1, 0, copy);
+    if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     /* Wstawienie przesuwa indeksy studni po wIdx o +1 — przesuń też zaznaczenia
        (S2), inaczej selekcje komórek i checkboxy wskazują sąsiednie studnie. */
     if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
@@ -332,6 +333,7 @@ async function excelDeleteWell(wIdx) {
     if (!(await appConfirm(`Usunąć "${well.name}"?`, { title: 'Usuwanie studni', type: 'danger' })))
         return;
     wells.splice(wIdx, 1);
+    if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= wells.length) {
         currentWellIndex = Math.max(0, wells.length - 1);
     }

@@ -273,13 +273,12 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 userId: string | null;
                 offer_number: string | null;
                 state: string | null;
-                data: string | null;
-                history: string | null;
                 wellCount: number | null;
+                totalPrice: number | null;
                 createdAt: string | null;
                 updatedAt: string | null;
             }>
-        >`SELECT id, "userId", "offer_number", state, data, history, "wellCount",
+        >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt",
@@ -287,56 +286,26 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "updatedAt" END as "updatedAt"
          FROM offers_studnie_rel ${whereCondition}
-          ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
-          LIMIT ${pq.limit} OFFSET ${pq.skip}`;
+           ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
+           LIMIT ${pq.limit} OFFSET ${pq.skip}`;
 
         const countResult = await prisma.$queryRaw<Array<{ cnt: number }>>`
             SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
         const totalCount = Number(countResult[0]?.cnt ?? 0);
 
         const mapped = offers.map((offer) => {
-            let parsedData: Record<string, unknown> = {};
-            try {
-                if (offer.data) parsedData = JSON.parse(offer.data);
-            } catch (_e) {
-                logger.warn('Offers', 'Uszkodzony JSON data w ofercie studni', offer.id);
-            }
-
-            let studnieHistory: unknown[] = [];
-            try {
-                studnieHistory = JSON.parse(offer.history || '[]');
-            } catch {
-                logger.warn('Offers', 'Uszkodzony JSON history w ofercie studni', offer.id);
-            }
-            let studnieSpread: Record<string, unknown> = {};
-            if (offer.data) {
-                try {
-                    studnieSpread = JSON.parse(offer.data);
-                } catch {
-                    studnieSpread = {};
-                }
-            }
-
-            const wellCount =
-                typeof offer.wellCount === 'number'
-                    ? offer.wellCount
-                    : Array.isArray((parsedData as Record<string, unknown>).wells)
-                      ? ((parsedData as Record<string, unknown>).wells as unknown[]).length
-                      : 0;
             return {
                 id: offer.id,
                 type: 'studnia_oferta',
                 userId: offer.userId,
                 title: `Oferta Studnia ${offer.offer_number || offer.id}`,
-                price: parsedData.totalPrice || 0,
+                price: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0,
                 status: offer.state === 'final' ? 'active' : 'draft',
                 createdAt: offer.createdAt || new Date().toISOString(),
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
-                wellCount,
-                data: parsedData,
-                history: studnieHistory,
-                ...studnieSpread
+                wellCount: typeof offer.wellCount === 'number' ? offer.wellCount : 0,
+                totalPrice: typeof offer.totalPrice === 'number' ? offer.totalPrice : 0
             };
         });
 
@@ -541,6 +510,17 @@ router.post(
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
                 const wellCount = extractWellsFromIncoming(o as Record<string, unknown>).length;
+                // E-2: derived persisted metadata — klient nie ustawia autorytatywnie
+                const rawPrice =
+                    (o as Record<string, unknown>).totalPrice ??
+                    (o as Record<string, unknown>).price ??
+                    ((o as Record<string, unknown>).data &&
+                        ((o as Record<string, unknown>).data as Record<string, unknown>)
+                            .totalPrice);
+                const totalPrice = (() => {
+                    const n = Number(rawPrice);
+                    return isNaN(n) ? 0 : n;
+                })();
 
                 pending.push({
                     docId,
@@ -557,7 +537,8 @@ router.post(
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr,
-                        wellCount
+                        wellCount,
+                        totalPrice
                     },
                     update: {
                         userId: effectiveUserId,
@@ -570,7 +551,8 @@ router.post(
                         updatedAt: updated,
                         data: dataStr,
                         history: historyStr,
-                        wellCount
+                        wellCount,
+                        totalPrice
                     },
                     fts: {
                         id: docId,
@@ -706,6 +688,14 @@ router.put(
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
                 const wellCountPut = extractWellsFromIncoming(o as Record<string, unknown>).length;
+                const rawPricePut =
+                    (o as Record<string, unknown>).totalPrice ??
+                    (o as Record<string, unknown>).price ??
+                    (dataPayload as Record<string, unknown>).totalPrice;
+                const totalPricePut = (() => {
+                    const n = Number(rawPricePut);
+                    return isNaN(n) ? 0 : n;
+                })();
 
                 pendingPut.push({
                     docId,
@@ -719,7 +709,8 @@ router.put(
                         clientNumber,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}',
-                        wellCount: wellCountPut
+                        wellCount: wellCountPut,
+                        totalPrice: totalPricePut
                     },
                     update: {
                         userId: authReq.user?.id,
@@ -730,7 +721,8 @@ router.put(
                         clientNumber,
                         createdAt: created,
                         data: o.data ? JSON.stringify(o.data) : '{}',
-                        wellCount: wellCountPut
+                        wellCount: wellCountPut,
+                        totalPrice: totalPricePut
                     },
                     fts: {
                         id: docId,

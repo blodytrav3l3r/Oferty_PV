@@ -328,6 +328,7 @@ model offers_studnie_rel {
   clientNip     String?
   clientNumber  String?  @default("")
   wellCount     Int?     @default(0)
+  totalPrice    Float?   @default(0)
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")
@@ -336,6 +337,7 @@ model offers_studnie_rel {
   @@index([clientName], map: "idx_offersstud_clientname")
   @@index([investName], map: "idx_offersstud_investname")
   @@index([wellCount], map: "idx_offersstud_wellcount")
+  @@index([totalPrice], map: "idx_offersstud_totalprice")
 }
 
 // Liczniki numeracji ofert

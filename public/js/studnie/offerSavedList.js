@@ -15,9 +15,14 @@ function renderSavedOffersStudnie() {
         .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
         .map((o) => {
             const oId = normalizeId(o.id);
+            const wellsForProgress = Array.isArray(o.wells)
+                ? o.wells
+                : typeof o.wellCount === 'number'
+                  ? Array(o.wellCount).fill({})
+                  : [];
             const progress =
                 typeof getOfferOrderProgress === 'function'
-                    ? getOfferOrderProgress(oId, o.wells)
+                    ? getOfferOrderProgress(oId, wellsForProgress)
                     : { ordered: 0, total: (o.wells || []).length, percent: 0 };
 
             const hasOrder = progress.ordered > 0;
@@ -50,12 +55,12 @@ function renderSavedOffersStudnie() {
                         ${orderBadge}
                     </div>
                     <div class="fw-bold-xl-primary-nowrap">
-                        <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto)} PLN
+                        <i data-lucide="banknote" aria-hidden="true"></i> ${fmt(o.totalBrutto ?? o.price ?? o.totalPrice ?? 0)} PLN
                     </div>
                 </div>
                 <div class="meta mt-3" >
                     <span><i data-lucide="calendar" aria-hidden="true"></i> <strong>${escapeHtml(o.date)}</strong></span>
-                    <span><i data-lucide="folder-open" aria-hidden="true"></i> <strong>${o.wells.length}</strong> studnie</span>
+                    <span><i data-lucide="folder-open" aria-hidden="true"></i> <strong>${typeof o.wellCount === 'number' ? o.wellCount : o.wells ? o.wells.length : 0}</strong> studnie</span>
                     ${(() => {
                         const resolveName = (rawName) => {
                             if (!rawName) return '';

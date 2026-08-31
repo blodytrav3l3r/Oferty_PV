@@ -23,6 +23,8 @@ let _excelColWidths = {};
 let _excelAddingReliefPair = false;
 let _excelUserEditing = false;
 let _excelAutoSelectEnabled = true;
+/* wellIndexById — canonical index SSoT (I3): wells[] + Map nie dwie kopie, sort nie rebuild */
+let _excelWellIndexById = new Map();
 /* eslint-enable prefer-const */
 
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS
@@ -183,9 +185,36 @@ function _excelSaveColWidths() {
     } catch (_e) {}
 }
 
+/* ===== wellIndexById — canonical wellId → wellIdx index ===== */
+function _excelBuildWellIndex() {
+    _excelWellIndexById = new Map();
+    if (typeof wells === 'undefined' || !Array.isArray(wells)) return;
+    for (let i = 0; i < wells.length; i++) {
+        const w = wells[i];
+        if (!w || !w.id) continue;
+        if (_excelWellIndexById.has(w.id)) {
+            console.error('[Excel] duplicate well.id FAIL FAST:', w.id, 'at', i);
+            throw new Error('Duplicate well.id: ' + w.id);
+        }
+        _excelWellIndexById.set(w.id, i);
+    }
+}
+function _excelRebuildWellIndex() {
+    _excelBuildWellIndex();
+}
+function _excelGetWellIdxById(id) {
+    const v = _excelWellIndexById.get(id);
+    return v !== undefined ? v : -1;
+}
+if (typeof window !== 'undefined') {
+    window._excelBuildWellIndex = _excelBuildWellIndex;
+    window._excelRebuildWellIndex = _excelRebuildWellIndex;
+    window._excelGetWellIdxById = _excelGetWellIdxById;
+}
+
 /* Reset stanu selekcji zależnego od układu tabeli. Wołaj przy każdej zmianie
-   struktury: zmianie zakładki DN, toggle widoczności kolumn, dodaniu/usunięciu
-   kolumny przejścia oraz zamknięciu modala (reguła AGENTS.md sekcja 4). */
+    struktury: zmianie zakładki DN, toggle widoczności kolumn, dodaniu/usunięciu
+    kolumny przejścia oraz zamknięciu modala (reguła AGENTS.md sekcja 4). */
 function _excelResetLayoutDependentState() {
     if (_excelSelectedCells.length > 0) {
         const copy = [..._excelSelectedCells];

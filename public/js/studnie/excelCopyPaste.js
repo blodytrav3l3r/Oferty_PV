@@ -1120,6 +1120,7 @@ function _excelHandlePaste(e) {
                         created++;
                     }
                     if (created > 0) {
+                        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
                         if (typeof _excelGetMaxTransitions === 'function')
                             _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                         // Re-render by dopisać wiersze do DOM przed dalszym paste reszty kolumn

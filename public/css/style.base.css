@@ -233,6 +233,9 @@
     --section-pad-x: 0.5rem;
     --section-gap: 1.5rem;
     --section-gap-lg: 2rem;
+
+    /* Excel Virtual — stały row height SSoT (I1), 32px = obecna zmierzona wysokość wiersza */
+    --excel-row-height: 32px;
 }
 
 /* ========================================
