@@ -4,6 +4,24 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.21.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.20.1...v1.21.0) (2026-08-31)
+
+### Features
+
+- **studnie:** merge virtual viewport excel 10k ([678b515](https://github.com/blodytrav3l3r/Oferty_PV/commit/678b5154b4040a09f0f75f69ad64b3b03c357c7c))
+- **studnie:** virtual viewport excel 10k spacer ([c7955ca](https://github.com/blodytrav3l3r/Oferty_PV/commit/c7955ca605153ce22dde7df24f301ad1b7ad4374))
+
+### Bug Fixes
+
+- **studnie:** 7 kolumn sticky zawsze widoczne w excelu ([97b1660](https://github.com/blodytrav3l3r/Oferty_PV/commit/97b1660998bafcdb38837e8eb26d537967f50866))
+- **studnie:** dalsze zawęzenie kolumn excel do nagłówków ([68e0da1](https://github.com/blodytrav3l3r/Oferty_PV/commit/68e0da1944becac61b1a8911be56abafe66dc6ce))
+- **studnie:** poprawa szerokosci kolumn excel po fixed layout ([1a63ee3](https://github.com/blodytrav3l3r/Oferty_PV/commit/1a63ee35890ad482acb240d9577e9705c860de10))
+- **studnie:** przywrócenie wyglądu excela do 14c6d09 ([7864448](https://github.com/blodytrav3l3r/Oferty_PV/commit/78644487709b8135b25c15ba74a51955df5fab32))
+- **studnie:** stabilne szerokości 7 sticky kolumn excel ([b1c0616](https://github.com/blodytrav3l3r/Oferty_PV/commit/b1c06161e27cac4fe71ea1e03d510680a6bacd4b))
+- **studnie:** virtual lp i selekcja viewport ([2495a49](https://github.com/blodytrav3l3r/Oferty_PV/commit/2495a49ce86edc05e212d17e181e16dace8d5204))
+- **studnie:** virtual model-driven copy i ctrl+a range ([e872296](https://github.com/blodytrav3l3r/Oferty_PV/commit/e8722964e62fc317c2744b6f4cf2803d38c3dcf5))
+- **studnie:** zawęzenie kolumn excel i wyśrodkowanie ([2b0f69e](https://github.com/blodytrav3l3r/Oferty_PV/commit/2b0f69e45f4bc0a7ee71352bc0e178c3e6406571))
+
 ### [1.20.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.20.0...v1.20.1) (2026-08-31)
 
 ### Bug Fixes
