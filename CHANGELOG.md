@@ -4,6 +4,15 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.20.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.20.0...v1.20.1) (2026-08-31)
+
+### Bug Fixes
+
+- **docker:** ujednolicenie busy_timeout i skrypty audytu rozlaczen ([7693d79](https://github.com/blodytrav3l3r/Oferty_PV/commit/7693d793447f1b10ee98fc4c8199c6a942e883d4))
+- **studnie:** blokada mutacji przejsc w excelu ([78bd788](https://github.com/blodytrav3l3r/Oferty_PV/commit/78bd7889ded487ac919b332e1bc68cf7f5305a18))
+- **studnie:** naprawa typecheck w excelcopypaste ([c3a4a97](https://github.com/blodytrav3l3r/Oferty_PV/commit/c3a4a9722f79cbfcd93c3c79aea55766db03aede))
+- **studnie:** phantom przejscie po wklejaniu pustych pol w excelu ([a995feb](https://github.com/blodytrav3l3r/Oferty_PV/commit/a995feb2757e42e596fc38357e21f572bd0947f5))
+
 ## [1.20.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.19.6...v1.20.0) (2026-08-30)
 
 ### Features

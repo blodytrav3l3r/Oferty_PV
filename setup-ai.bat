@@ -1,5 +1,5 @@
 @echo off
-REM  Wersja: 1.20.0
+REM  Wersja: 1.20.1
 REM ===========================================================
 REM  setup-ai.bat - Diagnostyka i setup modulu AI / ML
 REM ===========================================================
@@ -7,7 +7,7 @@ REM ===========================================================
 setlocal ENABLEDELAYEDEXPANSION
 cd /d "%~dp0"
 
-set "APP_VERSION=1.20.0"
+set "APP_VERSION=1.20.1"
 
 echo ===========================================================
 echo   S.O.K. - Konfiguracja AI / ML v%APP_VERSION%
