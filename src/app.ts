@@ -374,15 +374,18 @@ export async function initApp(): Promise<void> {
         throw err;
     }
 
-    // WAL + synchronous=NORMAL — przyspiesza zapisy (oferty, audit logi) i
-    // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite).
+    // WAL + synchronous=NORMAL + busy_timeout — przyspiesza zapisy (oferty, audit logi),
+    // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite) i
+    // chroni przed SQLITE_BUSY na bind mount (Docker). busy_timeout w URL nie
+    // zawsze dociera jako PRAGMA (dowod: 5000 zamiast 30000) - wiec ustawiamy jawnie.
     try {
         await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
         await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
+        await prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000');
     } catch (err) {
         logger.warn(
             'Server',
-            'Nie udało się ustawić PRAGMA WAL/synchronous:',
+            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout:',
             err instanceof Error ? err.message : err
         );
     }

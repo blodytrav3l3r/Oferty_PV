@@ -152,5 +152,10 @@ tests/tmp/
 # Minifikowane CSS (generowane prestart — scripts/minify-css.mjs)
 public/css/min/
 public/dist/
+# Audyt rozlaczen — artefakty generowane (nie SSoT, nie commituj ZIP)
+sok-audit-*.zip
+sok-audit-*.dir
+sok-audit-*.tar.gz
+
 playwright-report/
 test-results/

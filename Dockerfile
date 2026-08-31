@@ -18,7 +18,7 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 
 # Generujemy klienta Prisma (wymaga DATABASE_URL przez prisma.config.ts)
-ENV DATABASE_URL=file:/var/data/app_database.sqlite
+ENV DATABASE_URL=file:/var/data/app_database.sqlite?connection_limit=1&busy_timeout=30000
 RUN npx prisma generate
 
 # Budujemy projekt

@@ -10,7 +10,7 @@ echo "[DEBUG] Bieżący katalog: $(pwd)"
 # Ustawiamy domyślną ścieżkę do bazy, jeśli nie została podana
 # Dla Dockera: wolumen montowany jest w /var/data
 if [ -z "$DATABASE_URL" ]; then
-    export DATABASE_URL="file:/var/data/app_database.sqlite"
+    export DATABASE_URL="file:/var/data/app_database.sqlite?connection_limit=1&busy_timeout=30000"
     echo "[INFO] DATABASE_URL nieustawione, użycie domyślnego: $DATABASE_URL"
 fi
 
