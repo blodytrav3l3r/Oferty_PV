@@ -3061,6 +3061,9 @@ select.form-input option {
 #excel-table-container table {
     border-collapse: collapse;
 }
+#excel-table-container tbody tr {
+    height: var(--excel-row-height);
+}
 
 /* Sticky header rows — klasy dla position:sticky (opcjonalnie) */
 .excel-th-h3 {

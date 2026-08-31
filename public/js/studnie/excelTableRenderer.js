@@ -42,7 +42,7 @@ function _excelRenderTable(dn) {
     const dnColor = (DN_COLORS[dn === 'styczne' ? 'styczne' : dn] || DN_COLORS['1000']).border;
 
     let html =
-        '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:auto;">';
+        '<table style="width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;">';
 
     /* THEAD — sticky, trzy wiersze */
     html += '<thead>';
@@ -345,53 +345,9 @@ function _excelRenderTable(dn) {
     if (searchInput && searchInput.value) excelFilterWells(searchInput.value);
 }
 
-/** Wymuś poprawne sticky left — dopasowuje do rzeczywistej szerokości kolumn */
+/** Wymuś poprawne sticky left — A1: fixed layout + CSS vars, brak runtime measuring (R1 P0) */
 function _excelApplyStickyColumns() {
-    const container = document.getElementById('excel-table-container');
-    if (!container) return;
-    const table = container.querySelector('table');
-    if (!table) return;
-    /* Zmierz rzeczywiste szerokości pierwszych 7 kolumn (checkbox, tryb, Lp, NrStudni, RzWlazu, RzDna, Wys) */
-    const firstRow = table.querySelector('thead tr');
-    if (!firstRow) return;
-    const stickyThs = firstRow.querySelectorAll('th:nth-child(-n+7)');
-    if (stickyThs.length < 2) return;
-    // rAF retry gdy layout jeszcze 0 (fonty/webview nie przeliczone)
-    let zeroCount = 0;
-    for (let _z = 0; _z < stickyThs.length; _z++) {
-        if (/** @type {HTMLElement} */ (stickyThs[_z]).offsetWidth === 0) zeroCount++;
-    }
-    if (zeroCount > 0) {
-        requestAnimationFrame(function () {
-            _excelApplyStickyColumns();
-        });
-        return;
-    }
-    let leftPos = 0;
-    const offsets = [0];
-    for (let i = 0; i < stickyThs.length - 1; i++) {
-        leftPos += /** @type {HTMLElement} */ (stickyThs[i]).offsetWidth;
-        offsets.push(leftPos);
-    }
-    /* Zastosuj do wszystkich th i td w pierwszych 7 kolumnach */
-    const sel = 'th:nth-child(-n+7), td:nth-child(-n+7)';
-    const cells = table.querySelectorAll(sel);
-    for (let i = 0; i < cells.length; i++) {
-        let colIdx = 0;
-        const el = cells[i];
-        let prev = el.previousElementSibling;
-        while (prev) {
-            colIdx++;
-            prev = prev.previousElementSibling;
-        }
-        if (colIdx < 7 && offsets[colIdx] != null) {
-            el.style.left = offsets[colIdx] + 'px';
-            el.style.position = 'sticky';
-            if (el.closest('thead')) {
-                el.style.zIndex = String(LAYERS_EXCEL.STICKY_HEADER_TH);
-            } else {
-                el.style.zIndex = String(LAYERS_EXCEL.STICKY_COLUMN);
-            }
-        }
-    }
+    // ponytail: deklaratywne left via inline style (0/32/162/240/318) + table-layout:fixed
+    // eliminuje offsetWidth loop + rAF retry + forced reflow. No-op w A1, pełne vars w B.
+    return;
 }

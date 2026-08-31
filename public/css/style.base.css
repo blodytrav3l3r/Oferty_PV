@@ -233,6 +233,9 @@
     --section-pad-x: 0.5rem;
     --section-gap: 1.5rem;
     --section-gap-lg: 2rem;
+
+    /* Excel — SSoT dla wirtualizacji (A1) */
+    --excel-row-height: 32px;
 }
 
 /* ========================================

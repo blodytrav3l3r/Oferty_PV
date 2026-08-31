@@ -70,8 +70,13 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             return nameCounts[n] > 1;
         })
     );
+    const _wIdxMap = new Map(
+        wells.map(function (w, i) {
+            return [w.id, i];
+        })
+    );
     tabWells.forEach(function (well, idx) {
-        const wIdx = wells.indexOf(well);
+        const wIdx = _wIdxMap.get(well.id) ?? wells.indexOf(well);
         const isLockedRow = _excelIsWellLocked(wIdx);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
@@ -744,8 +749,13 @@ function _excelRefreshDupColors() {
     };
 
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
+    const _wIdxMap2 = new Map(
+        wells.map(function (w, i) {
+            return [w.id, i];
+        })
+    );
     tabWells.forEach((well, idx) => {
-        const wIdx = wells.indexOf(well);
+        const wIdx = _wIdxMap2.get(well.id) ?? wells.indexOf(well);
         const row = container.querySelector(`tr[data-widx="${wIdx}"]`);
         if (!row) return;
 
