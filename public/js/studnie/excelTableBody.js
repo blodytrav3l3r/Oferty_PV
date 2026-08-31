@@ -234,46 +234,46 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
-            ';border-right:1px solid rgba(var(--white-rgb), 0.1);"><input type="text" value="' +
+            ';border-right:1px solid rgba(var(--white-rgb), 0.1);text-align:center;"><input type="text" value="' +
             escapeHtmlAttr(well.name) +
             '" onchange="excelOnNameChange(' +
             wIdx +
             ',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(120) +
-            'text-align:left;width:118px;" /></td>';
+            _excelCellInp(88) +
+            'text-align:center;width:88px;" /></td>';
         /* Rz Wlazu */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:162px;z-index:' +
+            'position:sticky;left:122px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
-            ';text-align:right;"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
+            ';text-align:center;"><input type="number" step="0.01" data-field="rzednaWlazu" value="' +
             (well.rzednaWlazu != null ? well.rzednaWlazu : '') +
             '" onchange="excelOnRzednaChange(' +
             wIdx +
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(72) +
+            _excelCellInp(65) +
             '" /></td>';
         /* Rz Dna */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:240px;z-index:' +
+            'position:sticky;left:187px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
-            ';text-align:right;"><input type="number" step="0.01" data-field="rzednaDna" value="' +
+            ';text-align:center;"><input type="number" step="0.01" data-field="rzednaDna" value="' +
             (well.rzednaDna != null ? well.rzednaDna : '') +
             '" onchange="excelOnRzednaChange(' +
             wIdx +
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(72) +
+            _excelCellInp(65) +
             '" /></td>';
         /* Wys auto */
         const height = _excelCalcWellHeight(well);
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:318px;z-index:' +
+            'position:sticky;left:252px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -354,7 +354,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 110
             );
             html +=
-                '<td class="excel-td excel-td-right"><input type="number" step="0.01" value="' +
+                '<td class="excel-td excel-td-center"><input type="number" step="0.01" value="' +
                 (hasExplicitRzWl ? prz.rzednaWlaczenia : '') +
                 '" placeholder="' +
                 rzWlPlaceholder +
@@ -364,8 +364,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 _i +
                 ",'rzednaWlaczenia',this.value)" +
                 '" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-                _excelCellInp(72) +
-                '" /></td>';
+                _excelCellInp(65) +
+                'text-align:center;" /></td>';
             html +=
                 '<td class="excel-td excel-td-center"><input type="number" step="1" value="' +
                 (prz.angle != null ? prz.angle : '') +
@@ -375,10 +375,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 _i +
                 ",'angle',this.value)" +
                 '" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-                _excelCellInp(50) +
+                _excelCellInp(48) +
                 'text-align:center;" /></td>';
-            html += '<td class="excel-td excel-td-left">' + typeHtml + '</td>';
-            html += '<td class="excel-td excel-td-left">' + dnHtml + '</td>';
+            html += '<td class="excel-td excel-td-center">' + typeHtml + '</td>';
+            html += '<td class="excel-td excel-td-center">' + dnHtml + '</td>';
         }
         /* Gap */
         html += '<td class="code-cell-center"></td><td class="code-cell-center"></td>';
@@ -404,12 +404,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             wlazOpts.push([p.id, lbl]);
         });
         html +=
-            '<td class="text-left">' +
+            '<td class="excel-td excel-td-center">' +
             _excelOverlaySelectHtml(
                 wlazOpts,
                 wlazVal,
                 'excelOnWlazChange(' + wIdx + ',this.value)',
-                62
+                60
             ) +
             '</td>';
         /* Komponenty */
@@ -427,7 +427,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             const hArg = c.height != null ? c.height : 'null';
             const redArg = c.fromReduction ? ',' + (c.targetDn || 1000) : '';
             html +=
-                '<td class="excel-td excel-td-center" style="min-width:95px;"><input type="number" min="0" step="1" value="' +
+                '<td class="excel-td excel-td-center" style="min-width:72px;text-align:center;"><input type="number" min="0" step="1" value="' +
                 (count || '') +
                 '" oninput="excelOnCompChange(' +
                 wIdx +
@@ -482,12 +482,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             kinOpts.push([ko[0], ko[1]]);
         });
         html +=
-            '<td class="text-left">' +
+            '<td class="excel-td excel-td-center">' +
             _excelOverlaySelectHtml(
                 kinOpts,
                 well.kineta || '',
                 'excelOnKinetaChange(' + wIdx + ',this.value)',
-                90,
+                72,
                 !!well.psiaBuda
             ) +
             '</td>';
@@ -565,30 +565,30 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(120) +
-        'text-align:left;color:var(--slate-400);" /></td>';
+        ';text-align:center;"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
+        _excelCellInp(88) +
+        'text-align:center;color:var(--slate-400);width:88px;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:162px;z-index:' +
+        'position:sticky;left:122px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(72) +
-        '" /></td>';
+        ';text-align:center;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzw" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
+        _excelCellInp(65) +
+        'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:240px;z-index:' +
+        'position:sticky;left:187px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
-        ';text-align:right;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(72) +
-        '" /></td>';
+        ';text-align:center;"><input type="number" step="0.01" placeholder="\u2014" id="excel-empty-rzd" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
+        _excelCellInp(65) +
+        'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:318px;z-index:' +
+        'position:sticky;left:252px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
@@ -596,30 +596,30 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     for (let _j = 0; _j < maxTr; _j++) {
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:right;"><input type="number" step="0.01" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(72) +
-            '" /></td>';
+            'text-align:center;"><input type="number" step="0.01" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
+            _excelCellInp(65) +
+            'text-align:center;" /></td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
             'text-align:center;"><input type="number" step="1" placeholder="\u2014" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(50) +
-            '" /></td>';
+            _excelCellInp(48) +
+            'text-align:center;" /></td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 120, false) +
+            'text-align:center;">' +
+            _excelOverlaySelectHtml([['', '\u2014']], '', null, 85, false) +
             '</td>';
         html +=
             '<td class="excel-td excel-td-empty" style="' +
-            'text-align:left;">' +
-            _excelOverlaySelectHtml([['', '\u2014']], '', null, 110, false) +
+            'text-align:center;">' +
+            _excelOverlaySelectHtml([['', '\u2014']], '', null, 80, false) +
             '</td>';
     }
     html += '<td class="code-cell"></td><td class="code-cell"></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 62, false) +
+        'text-align:center;">' +
+        _excelOverlaySelectHtml([['', '\u2014']], '', null, 60, false) +
         '</td>';
     visibleCols.forEach(function (col) {
         if (col.type === 'select' || col.type === 'auto') return;
@@ -644,8 +644,8 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     }
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'text-align:left;">' +
-        _excelOverlaySelectHtml([['', '\u2014']], '', null, 90, false) +
+        'text-align:center;">' +
+        _excelOverlaySelectHtml([['', '\u2014']], '', null, 72, false) +
         '</td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
