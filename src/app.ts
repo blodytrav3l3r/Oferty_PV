@@ -184,7 +184,8 @@ app.use(cspNonceMiddleware);
 app.use(cspReportOnly);
 
 /* ===== KOMPONENTY POŚREDNICZĄCE (MIDDLEWARE) ===== */
-app.use(express.json({ limit: '10mb' }));
+// P0-C: 10mb → 25mb odblokowuje zapis 2933 studni (~14.6MB), 50mb maskowałoby problem i koszt requestu
+app.use(express.json({ limit: '25mb' }));
 app.use(cookieParser());
 
 /* ===== NAZWA APLIKACJI (branding) — konfigurowalna przez env =====

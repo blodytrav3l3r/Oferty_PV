@@ -267,16 +267,24 @@ function _excelVirtualRenderBody() {
     _excelVirtualOffset = 0;
 }
 
-// Patch _excelRenderTable gdy virtual=1
+// Patch _excelRenderTable gdy virtual=1 — pomijaj full tbody w origRender (P0-B double render)
 (function () {
     _excelVirtualEnabled = _excelVirtualIsEnabled();
     if (!_excelVirtualEnabled) return;
     const origRender = typeof _excelRenderTable === 'function' ? _excelRenderTable : null;
     if (!origRender) return;
     window._excelRenderTable = function (dn) {
-        // pełny render dla header, ale body virtual
+        const origTbody = window._excelRenderTbody;
+        let skipped = false;
+        if (typeof origTbody === 'function') {
+            window._excelRenderTbody = function () {
+                skipped = true;
+                return '</thead><tbody></tbody>';
+            };
+        }
         origRender(dn);
-        // po pełnym renderze podmień body na virtual slice
+        if (skipped) window._excelRenderTbody = origTbody;
+        // po header-only renderze podmień body na virtual slice
         _excelVirtualBuildFiltered();
         _excelVirtualAttach();
         _excelVirtualRenderBody();
