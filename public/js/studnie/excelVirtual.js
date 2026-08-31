@@ -13,6 +13,7 @@ const EXCEL_VIEWPORT_ROWS = 20;
 let _excelVirtualEnabled = false;
 const _excelVirtualScrollTop = 0;
 let _excelVirtualRaf = 0;
+let _excelVirtualOffset = 0;
 let _excelVirtualFiltered = null; // number[] wellIdx
 let _excelVirtualTotal = 0;
 let _excelVirtualStart = 0;
@@ -130,6 +131,7 @@ function _excelVirtualRenderBody() {
     const total = _excelVirtualTotal;
     const start = _excelVirtualStart;
     const end = _excelVirtualEnd;
+    _excelVirtualOffset = start;
     // zbuduj slice wells dla visible
     const sliceIdx = _excelVirtualFiltered.slice(start, end);
     const sliceWells = sliceIdx.map(function (idx) {
@@ -145,14 +147,13 @@ function _excelVirtualRenderBody() {
             ? _excelGetVisibleComponentColumns(dn, refWell)
             : [];
     const hasReduction = ['1200', '1500', '2000', '2500', 'styczne'].indexOf(dn) >= 0;
-    // render tbody slice via istniejący helper (Map w środku już O(n) lekko — dla slice 50 wierszy tanie)
     let bodyHtml = '';
     if (typeof _excelRenderTbody === 'function') {
-        // _excelRenderTbody oczekuje tabWells, ale liczy dup na wells global — dla virtual slice dup może być niepełny, więc liczymy osobno
         bodyHtml = _excelRenderTbody(sliceWells, dn, compCols, maxTr, hasReduction);
-        // usuń </thead><tbody> wrapper — wstawimy spacery
         bodyHtml = bodyHtml.replace('</thead><tbody>', '').replace('</tbody>', '');
-        // wstaw spacery
+        // usuń pusty wiersz z slice — pokaż tylko na końcu listy gdy virtual na dole
+        bodyHtml = bodyHtml.replace(/<tr id="excel-empty-row"[\s\S]*?<\/tr>/, '');
+        bodyHtml = bodyHtml.replace(/<tr id="excel-empty-state"[\s\S]*?<\/tr>/, '');
         const topH = start * EXCEL_ROW_HEIGHT;
         const bottomH = (total - end) * EXCEL_ROW_HEIGHT;
         const colCount =
@@ -181,12 +182,79 @@ function _excelVirtualRenderBody() {
                   bottomH +
                   'px;padding:0;border:none;background:transparent;"></td></tr>'
                 : '';
-        bodyHtml = topSpacer + bodyHtml + bottomSpacer;
+        // Lp korekta: w tbody Lp to idx+1 — with virtual to start+idx+1, popraw po renderze
+        // pusty wiersz tylko gdy na końcu
+        let emptyRow = '';
+        if (end === total) {
+            const emptyBg = 'var(--slate-950)';
+            emptyRow =
+                '<tr id="excel-empty-row" style="background:' +
+                emptyBg +
+                ';"><td class="excel-td excel-td-empty" style="position:sticky;left:0;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;padding:2px;width:28px;"></td><td class="excel-td excel-td-empty" style="position:sticky;left:28px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;width:70px;"></td><td class="excel-td excel-td-empty" style="position:sticky;left:98px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;min-width:32px;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:130px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;"><input type="text" placeholder="Wpisz nazwę i Enter aby dodać" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" style="text-align:center;width:78px;" /></td><td class="excel-td excel-td-empty" style="position:sticky;left:208px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:266px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;">—</td><td class="excel-td excel-td-empty" style="position:sticky;left:324px;z-index:' +
+                (typeof LAYERS_EXCEL !== 'undefined' ? LAYERS_EXCEL.STICKY_COLUMN : 5) +
+                ';background:' +
+                emptyBg +
+                ';text-align:center;">—</td><td colspan="' +
+                (colCount - 7) +
+                '" style="text-align:center;color:var(--slate-700);">—</td></tr>';
+        }
+        bodyHtml = topSpacer + bodyHtml + bottomSpacer + emptyRow;
         const container = document.getElementById('excel-table-container');
         if (!container) return;
         const tbody = container.querySelector('tbody');
         if (tbody) {
             tbody.innerHTML = bodyHtml;
+            // popraw Lp dla virtual offset
+            const rows = tbody.querySelectorAll('tr[data-widx]');
+            for (let i = 0; i < rows.length; i++) {
+                const lpCell = rows[i].children[2];
+                if (lpCell) lpCell.textContent = String(start + i + 1);
+                // isEven tło już w html, ale popraw via data attr jeśli potrzeba
+            }
+            // przywróć selekcję dla visible slice
+            if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
+                for (let s = 0; s < _excelSelectedCells.length; s++) {
+                    const c = _excelSelectedCells[s];
+                    const row = tbody.querySelector('tr[data-widx="' + c.wIdx + '"]');
+                    if (row) {
+                        const td = row.children[c.colIdx];
+                        if (td) td.classList.add('cell-selected');
+                    }
+                }
+            }
+            if (typeof _excelSelectedCols !== 'undefined' && _excelSelectedCols.length > 0) {
+                for (let ci = 0; ci < _excelSelectedCols.length; ci++) {
+                    const colIdx = _excelSelectedCols[ci];
+                    const th = container.querySelector(
+                        'thead tr th:nth-child(' + (colIdx + 1) + ')'
+                    );
+                    if (th) th.classList.add('excel-col-selected');
+                }
+            }
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 try {
                     lucide.createIcons({ root: tbody });
@@ -196,6 +264,7 @@ function _excelVirtualRenderBody() {
             if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
         }
     }
+    _excelVirtualOffset = 0;
 }
 
 // Patch _excelRenderTable gdy virtual=1
