@@ -648,8 +648,7 @@ function _excelMarkDirty() {
 }
 
 /* ===== SEARCH / FILTER ===== */
-let _excelFilterDebounceTimer = null;
-function _excelFilterWellsImmediate(value) {
+function excelFilterWells(value) {
     const q = (value || '').trim().toLowerCase();
     const container = document.getElementById('excel-table-container');
     if (!container) return;
@@ -695,23 +694,6 @@ function _excelFilterWellsImmediate(value) {
         }
         if (targetTab) excelSwitchTab(targetTab);
     }
-}
-
-function excelFilterWells(value) {
-    const qRaw = (value || '').trim();
-    if (!qRaw) {
-        if (_excelFilterDebounceTimer) {
-            clearTimeout(_excelFilterDebounceTimer);
-            _excelFilterDebounceTimer = null;
-        }
-        _excelFilterWellsImmediate(value);
-        return;
-    }
-    if (_excelFilterDebounceTimer) clearTimeout(_excelFilterDebounceTimer);
-    _excelFilterDebounceTimer = setTimeout(function () {
-        _excelFilterDebounceTimer = null;
-        _excelFilterWellsImmediate(value);
-    }, 150);
 }
 
 /* ===== CLEAR SEARCH ===== */

@@ -1,51 +1,6 @@
 // @ts-check
 /* ===== EXCEL COLUMNS — Budowa kolumn dla tabeli konfiguracyjnej studni (Excel) ===== */
 
-// ponytail: memo per DN+params, cache key zawiera wszystkie wejścia determinujące wynik
-const _excelColsCache = new Map();
-const _EXCEL_COLS_CACHE_LIMIT = 50;
-function _excelColsCacheKey(dn, well) {
-    const mag =
-        well && well.magazyn
-            ? well.magazyn
-            : (typeof wells !== 'undefined' && wells[0] && wells[0].magazyn) || 'Kluczbork';
-    let prodFp = '0';
-    try {
-        if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
-            prodFp =
-                String(studnieProducts.length) +
-                '|' +
-                studnieProducts
-                    .map(function (p) {
-                        return p.id;
-                    })
-                    .sort()
-                    .join(',')
-                    .slice(0, 200);
-        }
-    } catch (_e) {}
-    return [
-        String(dn),
-        String(mag),
-        String((well && well.nadbudowa) || ''),
-        String((well && well.stopnie) || ''),
-        String(!!(well && well.redukcjaDN1000)),
-        String((well && well.redukcjaTargetDN) || ''),
-        String(!!(well && well.stycznaNadbudowa1200)),
-        prodFp
-    ].join('|');
-}
-function _excelColsCacheGet(key) {
-    return _excelColsCache.get(key);
-}
-function _excelColsCacheSet(key, val) {
-    if (_excelColsCache.size >= _EXCEL_COLS_CACHE_LIMIT) {
-        const first = _excelColsCache.keys().next().value;
-        _excelColsCache.delete(first);
-    }
-    _excelColsCache.set(key, val);
-}
-
 function _excelGetComponentsForDn(dn, well) {
     if (typeof studnieProducts === 'undefined' || !studnieProducts) return {};
     const mag =
@@ -99,9 +54,6 @@ function _excelBuildComponentColumns(dn, well) {
     if (!well && typeof _excelGetReferenceWell === 'function') {
         well = _excelGetReferenceWell(dn);
     }
-    const _cacheKey = 'cols|' + _excelColsCacheKey(dn, well);
-    const _cached = _excelColsCacheGet(_cacheKey);
-    if (_cached) return _cached;
     const groups = _excelGetComponentsForDn(dn, well);
     const cols = [];
 
@@ -387,16 +339,13 @@ function _excelBuildComponentColumns(dn, well) {
     if (dn === 'styczne' || dn === 'styczna') {
         const hasReduction = cols.some((c) => 'fromReduction' in c && c.fromReduction === true);
         if (hasReduction) {
-            const filtered = cols.filter(
+            return cols.filter(
                 (c) =>
                     ('fromReduction' in c && c.fromReduction === true) ||
                     c.componentType === 'styczna'
             );
-            _excelColsCacheSet(_cacheKey, filtered);
-            return filtered;
         }
     }
 
-    _excelColsCacheSet(_cacheKey, cols);
     return cols;
 }

@@ -14,7 +14,6 @@ function _excelStartPolling() {
     _excelPollInterval = setInterval(function () {
         if (_excelUserEditing) return;
         if (!document.getElementById('excel-table-overlay')) return;
-        // ponytail: 200→500ms, dirty jako watchdog—snapshot budowany zawsze, dirty wskazuje oczekiwany mut
         const snap = _excelBuildWellsSnapshot();
         if (snap !== lastSnapshot) {
             lastSnapshot = snap;
@@ -22,12 +21,8 @@ function _excelStartPolling() {
             _excelSyncAutoManualUI();
             /* Tła wierszy zależne od configStatus (zmiana statusu z głównego panelu) */
             if (typeof _excelRefreshDupColors === 'function') _excelRefreshDupColors();
-            _excelDirty = true;
-        } else if (_excelDirty) {
-            // brak zmian mimo dirty—wyczyszcz flagę (watchdog)
-            _excelDirty = false;
         }
-    }, 500);
+    }, 200);
     /* Inicjalny snapshot */
     lastSnapshot = _excelBuildWellsSnapshot();
 }

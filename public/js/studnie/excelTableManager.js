@@ -51,9 +51,7 @@ function _excelInitColumnResize() {
             const onMove = (/** @type {MouseEvent} */ e2) => {
                 const diff = e2.clientX - startX;
                 lastDiff = diff;
-                const minW =
-                    parseInt(th.style.minWidth) || parseInt(getComputedStyle(th).minWidth) || 30;
-                const newWidth = Math.max(minW, startWidth + diff);
+                const newWidth = Math.max(30, startWidth + diff);
 
                 // Które kolumny zmieniamy: wszystkie zaznaczone (jeśli ta jest zaznaczona) albo tylko tę
                 const colsToResize = _excelSelectedCols.includes(colIndex)
@@ -79,9 +77,7 @@ function _excelInitColumnResize() {
                 document.body.style.cursor = '';
                 document.body.style.userSelect = '';
                 /* Zapisz szerokości dla trwałości po re-renderze */
-                const minW =
-                    parseInt(th.style.minWidth) || parseInt(getComputedStyle(th).minWidth) || 30;
-                const newWidth = Math.max(minW, startWidth + lastDiff);
+                const newWidth = Math.max(30, startWidth + lastDiff);
                 const colsToResize = _excelSelectedCols.includes(colIndex)
                     ? _excelSelectedCols
                     : [colIndex];
@@ -90,7 +86,6 @@ function _excelInitColumnResize() {
                 });
                 /* Trwałość szerokości po zakończeniu przeciągania (localStorage) */
                 if (typeof _excelSaveColWidths === 'function') _excelSaveColWidths();
-                if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
             };
 
             document.addEventListener('mousemove', onMove);
