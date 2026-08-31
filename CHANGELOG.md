@@ -4,6 +4,19 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.22.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.21.0...v1.22.0) (2026-08-31)
+
+### Features
+
+- **prisma:** wellcount dla lekkich list ofert studni ([f87c70d](https://github.com/blodytrav3l3r/Oferty_PV/commit/f87c70d83c8b7a0f1a863367cadf12ee71168c9f))
+- **studnie:** architektura 10k — virtual i lekka lista ([58c838f](https://github.com/blodytrav3l3r/Oferty_PV/commit/58c838f247c0aeb05be16972b381b21789cc8b6b))
+- **studnie:** b+ patch undo dla 10k — cell-edit i batch ([4971f16](https://github.com/blodytrav3l3r/Oferty_PV/commit/4971f160097c866fa915891a9a7ff6cdea243f1c))
+
+### Bug Fixes
+
+- **studnie:** p0-b/c double render i limit 25mb ([0e6f9b1](https://github.com/blodytrav3l3r/Oferty_PV/commit/0e6f9b197736e7feae36049190767d6605a29a67))
+- **test:** poprawka mocka totalprice dla lekkiej listy ([fc431e9](https://github.com/blodytrav3l3r/Oferty_PV/commit/fc431e9acd05f9325b5ffdc9827e37d3945df8dc))
+
 ## [1.21.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.20.1...v1.21.0) (2026-08-31)
 
 ### Features
