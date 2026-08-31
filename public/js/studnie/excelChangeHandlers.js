@@ -9,7 +9,7 @@ function excelOnRzednaChange(wIdx) {
     if (!well) return;
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     _excelClearResCache(well);
     const rzWlazuInput = row.querySelector('input[data-field="rzednaWlazu"]');
     const rzDnaInput = row.querySelector('input[data-field="rzednaDna"]');
@@ -151,7 +151,7 @@ function _excelCleanEmptyPrzejscia(well) {
 function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     _excelMarkAsManual(wIdx);
     if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
     const hasExisting = trIdx < wells[wIdx].przejscia.length;
@@ -184,7 +184,7 @@ function excelOnPrzejscieChange(wIdx, trIdx, field, value) {
 function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     const _hasExisting = wells[wIdx].przejscia && trIdx < wells[wIdx].przejscia.length;
     const _isEmptyVal = !value || String(value).trim() === '';
     if (!_hasExisting && _isEmptyVal) return;
@@ -221,7 +221,7 @@ function excelOnPrzejscieTypeChange(wIdx, trIdx, value) {
 function excelOnWlazChange(wIdx, productId) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     const well = wells[wIdx];
     well.config = (well.config || []).filter((item) => {
         const p = studnieProducts.find((pr) => pr.id === item.productId);
@@ -271,7 +271,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     const newQty = parseInt(value) || 0;
@@ -442,7 +442,7 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
 function excelOnKinetaChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     _excelMarkAsManual(wIdx);
     wells[wIdx].kineta = value;
     if (typeof syncKineta === 'function') syncKineta(wells[wIdx]);
@@ -454,7 +454,7 @@ function excelOnKinetaChange(wIdx, value) {
 function excelOnPsiaBudaChange(wIdx, checked) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     _excelMarkAsManual(wIdx);
     const well = wells[wIdx];
     if (checked) {
@@ -486,7 +486,7 @@ function excelOnPsiaBudaChange(wIdx, checked) {
 async function excelOnReductionSelectChange(wIdx, value) {
     if (!_excelGuardWellLocked(wIdx)) return;
     if (typeof _excelPasteInProgress === 'undefined' || !_excelPasteInProgress)
-        _excelSaveUndoSnapshot();
+        _excelSaveUndoSnapshot(wIdx);
     const well = wells[wIdx];
     if (!well) return;
     if (!value) {
