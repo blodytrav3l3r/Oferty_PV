@@ -391,6 +391,42 @@ function _excelMarkAsManual(wIdx) {
     }
 }
 
+const USE_PATCH_UNDO = true; // B+ flag — patch undo, fallback full snapshot przy błędzie
+
+/* B+ — path-based patch dla pojedynczej komórki (logicalColumnId) */
+function _excelSaveCellPatch(wellId, path, before, after) {
+    if (!USE_PATCH_UNDO) return _excelSaveUndoSnapshot();
+    if (typeof wells === 'undefined') return;
+    _excelUndoStack.push({
+        type: 'cell-edit',
+        wellId,
+        path,
+        before: structuredClone(before),
+        after: structuredClone(after)
+    });
+    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelRedoStack = [];
+}
+function _excelSaveBatchPatch(changes) {
+    if (!USE_PATCH_UNDO || !Array.isArray(changes) || changes.length === 0)
+        return _excelSaveUndoSnapshot();
+    const batch = changes.map(function (c) {
+        return {
+            wellId: c.wellId,
+            path: c.path,
+            before: structuredClone(c.before),
+            after: structuredClone(c.after)
+        };
+    });
+    _excelUndoStack.push({ type: 'batch', changes: batch });
+    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelRedoStack = [];
+}
+if (typeof window !== 'undefined') {
+    window._excelSaveCellPatch = _excelSaveCellPatch;
+    window._excelSaveBatchPatch = _excelSaveBatchPatch;
+}
+
 /* ===== UNDO / REDO — patch-based dla 10k, fallback full snapshot dla splice ===== */
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
@@ -423,11 +459,71 @@ function _excelSaveUndoSnapshot() {
     _excelRedoStack = [];
 }
 
+function _excelApplyPatchPath(obj, path, value) {
+    if (!obj || !path) return;
+    const parts = String(path).split('.');
+    let cur = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+        const key = parts[i];
+        const idx = parseInt(key, 10);
+        if (!isNaN(idx) && Array.isArray(cur)) cur = cur[idx];
+        else cur = cur[key];
+        if (!cur) return;
+    }
+    const last = parts[parts.length - 1];
+    const lastIdx = parseInt(last, 10);
+    if (!isNaN(lastIdx) && Array.isArray(cur)) cur[lastIdx] = value;
+    else cur[last] = value;
+}
+function _excelFindWellIdxById(id) {
+    if (typeof _excelWellIndexById !== 'undefined' && _excelWellIndexById.has(id))
+        return _excelWellIndexById.get(id);
+    return wells.findIndex(function (w) {
+        return w && w.id === id;
+    });
+}
+
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
     const patch = _excelUndoStack.pop();
-    // push redo jako patch z current before restore
-    if (patch.type === 'patch') {
+    if (patch.type === 'cell-edit') {
+        const wIdx = _excelFindWellIdxById(patch.wellId);
+        if (wIdx >= 0 && wells[wIdx]) {
+            const redoPatch = {
+                type: 'cell-edit',
+                wellId: patch.wellId,
+                path: patch.path,
+                before: structuredClone(patch.before),
+                after: structuredClone(patch.after)
+            };
+            _excelRedoStack.push(redoPatch);
+            _excelApplyPatchPath(wells[wIdx], patch.path, patch.before);
+            if (typeof _excelRebuildWellIndex === 'function' && patch.path === 'id')
+                _excelRebuildWellIndex();
+        } else {
+            // fallback full
+            _excelRedoStack.push({ type: 'full', data: structuredClone(wells) });
+        }
+    } else if (patch.type === 'batch') {
+        const redoBatch = { type: 'batch', changes: [] };
+        for (let i = 0; i < patch.changes.length; i++) {
+            const c = patch.changes[i];
+            redoBatch.changes.push({
+                wellId: c.wellId,
+                path: c.path,
+                before: structuredClone(c.before),
+                after: structuredClone(c.after)
+            });
+        }
+        _excelRedoStack.push(redoBatch);
+        for (let i = 0; i < patch.changes.length; i++) {
+            const c = patch.changes[i];
+            const wIdx = _excelFindWellIdxById(c.wellId);
+            if (wIdx >= 0 && wells[wIdx]) {
+                _excelApplyPatchPath(wells[wIdx], c.path, c.before);
+            }
+        }
+    } else if (patch.type === 'patch') {
         const redoPatch = { type: 'patch', wells: [] };
         for (let k = 0; k < patch.wells.length; k++) {
             const e = patch.wells[k];
@@ -476,7 +572,39 @@ function _excelUndo() {
 function _excelRedo() {
     if (_excelRedoStack.length === 0) return;
     const patch = _excelRedoStack.pop();
-    if (patch.type === 'patch') {
+    if (patch.type === 'cell-edit') {
+        const wIdx = _excelFindWellIdxById(patch.wellId);
+        if (wIdx >= 0 && wells[wIdx]) {
+            const undoPatch = {
+                type: 'cell-edit',
+                wellId: patch.wellId,
+                path: patch.path,
+                before: structuredClone(patch.before),
+                after: structuredClone(patch.after)
+            };
+            _excelUndoStack.push(undoPatch);
+            _excelApplyPatchPath(wells[wIdx], patch.path, patch.after);
+        }
+    } else if (patch.type === 'batch') {
+        const undoBatch = { type: 'batch', changes: [] };
+        for (let i = 0; i < patch.changes.length; i++) {
+            const c = patch.changes[i];
+            undoBatch.changes.push({
+                wellId: c.wellId,
+                path: c.path,
+                before: structuredClone(c.before),
+                after: structuredClone(c.after)
+            });
+        }
+        _excelUndoStack.push(undoBatch);
+        for (let i = 0; i < patch.changes.length; i++) {
+            const c = patch.changes[i];
+            const wIdx = _excelFindWellIdxById(c.wellId);
+            if (wIdx >= 0 && wells[wIdx]) {
+                _excelApplyPatchPath(wells[wIdx], c.path, c.after);
+            }
+        }
+    } else if (patch.type === 'patch') {
         const undoPatch = { type: 'patch', wells: [] };
         for (let k = 0; k < patch.wells.length; k++) {
             const e = patch.wells[k];
