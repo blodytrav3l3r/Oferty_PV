@@ -177,22 +177,26 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
                 ? ' title="Studnia zablokowana — zaakceptowane PZ / część zamówienia"'
                 : '') +
             ' onmouseenter="this.style.background=this.getAttribute(\'data-hover-bg\')" onmouseleave="this.style.background=this.getAttribute(\'data-orig-bg\')">';
-        /* Checkbox */
+        /* Checkbox — sticky 7 */
         const cbChecked = _excelRowSelectStates[wIdx] ? ' checked' : '';
         html +=
             '<td class="excel-td" style="' +
-            'background:' +
+            'position:sticky;left:0;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" class="excel-row-select cursor-accent-check" data-widx="' +
             wIdx +
             '"' +
             cbChecked +
             ' tabindex="-1"  /></td>';
-        /* AUTO/MANUAL — pill z napisem + przycisk uruchomienia auto-doboru */
+        /* AUTO/MANUAL — pill z napisem + przycisk uruchomienia auto-doboru — sticky 7 */
         const isAuto = window.isWellAuto(well);
         html +=
             '<td class="excel-td" style="' +
-            'background:' +
+            'position:sticky;left:28px;z-index:' +
+            LAYERS_EXCEL.STICKY_COLUMN +
+            ';background:' +
             stickyBg +
             ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" id="excel-mode-btn-' +
             wIdx +
@@ -217,20 +221,20 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ' class="excel-run-btn ' +
             (isAuto ? 'is-auto' : 'is-manual') +
             '" title="Uruchom auto-dobór elementów dla tej studni" aria-label="Uruchom auto-dobór elementów"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td>';
-        /* Lp */
+        /* Lp — sticky 7 */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:0;z-index:' +
+            'position:sticky;left:98px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
             ';text-align:center;color:var(--slate-500);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">' +
             (idx + 1) +
             '</td>';
-        /* Nazwa */
+        /* Nazwa — sticky 7 */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:32px;z-index:' +
+            'position:sticky;left:130px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -239,12 +243,12 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             '" onchange="excelOnNameChange(' +
             wIdx +
             ',this.value)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
-            _excelCellInp(88) +
-            'text-align:center;width:88px;" /></td>';
-        /* Rz Wlazu */
+            _excelCellInp(78) +
+            'text-align:center;width:78px;" /></td>';
+        /* Rz Wlazu — sticky 7 */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:110px;z-index:' +
+            'position:sticky;left:208px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -255,10 +259,10 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(58) +
             '" /></td>';
-        /* Rz Dna */
+        /* Rz Dna — sticky 7 */
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:168px;z-index:' +
+            'position:sticky;left:266px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -269,11 +273,11 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
             ')" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" onblur="excelCellBlur(this)" style="' +
             _excelCellInp(58) +
             '" /></td>';
-        /* Wys auto */
+        /* Wys auto — sticky 7 */
         const height = _excelCalcWellHeight(well);
         html +=
             '<td class="excel-td" style="' +
-            'position:sticky;left:226px;z-index:' +
+            'position:sticky;left:324px;z-index:' +
             LAYERS_EXCEL.STICKY_COLUMN +
             ';background:' +
             stickyBg +
@@ -544,33 +548,37 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     html += '<tr id="excel-empty-row" style="background:' + emptyRowBg + ';">';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'background:' +
+        'position:sticky;left:0;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:28px;"><input type="checkbox" disabled tabindex="-1" style="cursor:default;accent-color:rgba(var(--accent-rgb), 0.8);opacity:0.3;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'background:' +
+        'position:sticky;left:28px;z-index:' +
+        LAYERS_EXCEL.STICKY_COLUMN +
+        ';background:' +
         emptyRowBg +
         ';text-align:center;padding:2px;border-right:1px solid rgba(var(--white-rgb), 0.05);width:70px;min-width:70px;"><button type="button" disabled class="excel-mode-btn is-manual" style="opacity:0.3;cursor:default;">\u2014</button><button type="button" disabled class="excel-run-btn is-manual" style="opacity:0.3;"><i data-lucide="play" class="icon-xs" aria-hidden="true"></i></button></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:0;z-index:' +
+        'position:sticky;left:98px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;color:var(--slate-700);font-size: var(--fs-xs);border-right:1px solid rgba(var(--white-rgb), 0.1);min-width:32px;">\u2014</td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:32px;z-index:' +
+        'position:sticky;left:130px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
         ';text-align:center;"><input type="text" placeholder="Wpisz nazw\u0119 i Enter aby doda\u0107" id="excel-empty-name" onkeydown="if(event.key===\'Enter\')excelCreateFromEmpty()" onblur="excelCreateFromEmpty(event)" onfocus="excelCellFocus(this);_excelSelWrapFocus(this)" style="' +
-        _excelCellInp(88) +
-        'text-align:center;color:var(--slate-400);width:88px;" /></td>';
+        _excelCellInp(78) +
+        'text-align:center;color:var(--slate-400);width:78px;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:110px;z-index:' +
+        'position:sticky;left:208px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
@@ -579,7 +587,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:168px;z-index:' +
+        'position:sticky;left:266px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +
@@ -588,7 +596,7 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
         'text-align:center;" /></td>';
     html +=
         '<td class="excel-td excel-td-empty" style="' +
-        'position:sticky;left:226px;z-index:' +
+        'position:sticky;left:324px;z-index:' +
         LAYERS_EXCEL.STICKY_COLUMN +
         ';background:' +
         emptyRowBg +

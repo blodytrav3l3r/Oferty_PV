@@ -60,32 +60,32 @@ function _excelRenderTable(dn) {
     const dnLabel = dn === 'styczne' ? 'Styczne' : 'DN' + dn;
     const dnTh3 = (ct) => (ct === 'avr' ? 'uniw.' : dnLabel);
 
-    /* === KOLUMNA 0: Checkbox - select-all przeniesiony do H1 (gorny) === */
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" class="cursor-accent-check" /></th>`;
-    /* === KOLUMNA 1: Tryb Auto/Manual - buttony w H1 (gornym), naglowek w H3 === */
+    /* === KOLUMNA 0: Checkbox - select-all przeniesiony do H1 (gorny) — sticky 7 === */
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:28px;position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};border-right:1px solid rgba(var(--white-rgb), 0.05);"><input type="checkbox" id="excel-select-all" onchange="_excelToggleSelectAll(this.checked)" tabindex="-1" class="cursor-accent-check" /></th>`;
+    /* === KOLUMNA 1: Tryb Auto/Manual — sticky 7 === */
     const _bulkAutoBtn = `<button type="button" id="excel-bulk-auto" class="excel-bulk-btn excel-bulk-btn--auto" onclick="_excelBulkSetMode(true)" title="Ustaw wszystkie widoczne studnie na AUTO">Auto</button>`;
     const _bulkManualBtn = `<button type="button" id="excel-bulk-manual" class="excel-bulk-btn excel-bulk-btn--manual" onclick="_excelBulkSetMode(false)" title="Ustaw wszystkie widoczne studnie na MANUAL">Manual</button>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
-    /* === KOLUMNA 2: Lp. — sticky left:0 === */
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">Lp.</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:0;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">Nr Studni</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:32px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:110px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">Rz. Włazu</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:110px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:110px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:168px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">Rz. Dna</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:168px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:168px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
-    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};position:sticky;left:226px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">Wys.</th>`;
-    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};position:sticky;left:226px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">auto</th>`;
-    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};position:sticky;left:226px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;position:sticky;left:28px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};padding:2px;border-bottom:1px solid rgba(var(--accent-rgb), 0.2);"><b style="color:var(--warn-hover);">A/M</b></th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;position:sticky;left:28px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};border-right:1px solid rgba(var(--white-rgb), 0.05);">.</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);text-align:center;width:70px;position:sticky;left:28px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};border-right:1px solid rgba(var(--white-rgb), 0.05);"><div style="display:flex;flex-direction:column;gap:2px;align-items:center;">${_bulkAutoBtn}${_bulkManualBtn}</div></th>`;
+    /* === KOLUMNA 2: Lp. — sticky 7 === */
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:98px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">Lp.</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:98px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">·</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:98px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:32px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:130px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;border-right:1px solid rgba(var(--white-rgb), 0.1);">Nr Studni</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:130px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;">·</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:130px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:78px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:208px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">Rz. Włazu</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:208px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:208px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:var(--slate-400);position:sticky;left:266px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">Rz. Dna</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:266px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:var(--slate-400);position:sticky;left:266px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:58px;text-align:center;">·</th>`;
+    h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};position:sticky;left:324px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">Wys.</th>`;
+    h2 += `<th scope="col" style="${th2Base}background:var(--slate-950);color:${dnColor};position:sticky;left:324px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">auto</th>`;
+    h3 += `<th scope="col" style="${th3Base}background:var(--slate-950);color:${dnColor};position:sticky;left:324px;z-index:${LAYERS_EXCEL.STICKY_HEADER_TH};min-width:52px;text-align:center;">·</th>`;
 
     for (let i = 0; i < maxTr; i++) {
         h1 += `<th scope="col" style="${thBase}background:var(--slate-950);color:${dnColor};min-width:58px;text-align:center;">Rz.wlot ${i}</th>`;
