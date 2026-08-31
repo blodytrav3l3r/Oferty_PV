@@ -275,10 +275,11 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 state: string | null;
                 data: string | null;
                 history: string | null;
+                wellCount: number | null;
                 createdAt: string | null;
                 updatedAt: string | null;
             }>
-        >`SELECT id, "userId", "offer_number", state, data, history,
+        >`SELECT id, "userId", "offer_number", state, data, history, "wellCount",
             CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "createdAt" END as "createdAt",
@@ -286,8 +287,8 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE "updatedAt" END as "updatedAt"
          FROM offers_studnie_rel ${whereCondition}
-         ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
-         LIMIT ${pq.limit} OFFSET ${pq.skip}`;
+          ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
+          LIMIT ${pq.limit} OFFSET ${pq.skip}`;
 
         const countResult = await prisma.$queryRaw<Array<{ cnt: number }>>`
             SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
@@ -316,6 +317,12 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 }
             }
 
+            const wellCount =
+                typeof offer.wellCount === 'number'
+                    ? offer.wellCount
+                    : Array.isArray((parsedData as Record<string, unknown>).wells)
+                      ? ((parsedData as Record<string, unknown>).wells as unknown[]).length
+                      : 0;
             return {
                 id: offer.id,
                 type: 'studnia_oferta',
@@ -326,6 +333,7 @@ router.get('/studnie', requireAuth, async (req, res) => {
                 createdAt: offer.createdAt || new Date().toISOString(),
                 updatedAt: offer.updatedAt || offer.createdAt || new Date().toISOString(),
                 lastEditedBy: offer.userId,
+                wellCount,
                 data: parsedData,
                 history: studnieHistory,
                 ...studnieSpread
@@ -532,6 +540,7 @@ router.post(
                 const offerNumber = o.number || o.offer_number || '';
                 const dataStr = JSON.stringify(o);
                 const historyStr = JSON.stringify(newHistory);
+                const wellCount = extractWellsFromIncoming(o as Record<string, unknown>).length;
 
                 pending.push({
                     docId,
@@ -547,7 +556,8 @@ router.post(
                         createdAt: created,
                         updatedAt: updated,
                         data: dataStr,
-                        history: historyStr
+                        history: historyStr,
+                        wellCount
                     },
                     update: {
                         userId: effectiveUserId,
@@ -559,7 +569,8 @@ router.post(
                         clientNumber,
                         updatedAt: updated,
                         data: dataStr,
-                        history: historyStr
+                        history: historyStr,
+                        wellCount
                     },
                     fts: {
                         id: docId,
@@ -694,6 +705,7 @@ router.put(
                 const clientNumber =
                     (o.clientNumber as string) || (dataPayload.clientNumber as string) || null;
                 const created = normalizeDate(o.createdAt, { exactMs: true });
+                const wellCountPut = extractWellsFromIncoming(o as Record<string, unknown>).length;
 
                 pendingPut.push({
                     docId,
@@ -706,7 +718,8 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
-                        data: o.data ? JSON.stringify(o.data) : '{}'
+                        data: o.data ? JSON.stringify(o.data) : '{}',
+                        wellCount: wellCountPut
                     },
                     update: {
                         userId: authReq.user?.id,
@@ -716,7 +729,8 @@ router.put(
                         clientNip,
                         clientNumber,
                         createdAt: created,
-                        data: o.data ? JSON.stringify(o.data) : '{}'
+                        data: o.data ? JSON.stringify(o.data) : '{}',
+                        wellCount: wellCountPut
                     },
                     fts: {
                         id: docId,
