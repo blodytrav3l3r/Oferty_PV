@@ -55,7 +55,13 @@ jest.mock('../src/prismaClient', () => ({
         },
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
-        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+        $transaction: jest.fn().mockImplementation((cb: (tx: unknown) => unknown) => {
+            // w teście transakcja to po prostu wywołanie cb z tym samym mockiem
+            // @ts-ignore
+            const prismaMock = require('../src/prismaClient').default;
+            return cb(prismaMock);
+        })
     }
 }));
 
