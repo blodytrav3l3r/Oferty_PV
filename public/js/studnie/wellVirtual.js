@@ -16,6 +16,8 @@ let _wellVirtualTotal = 0;
 let _wellVirtualStart = 0;
 let _wellVirtualEnd = 0;
 let _wellVirtualContainer = null;
+let _wellVirtualTransportMap = null;
+let _wellVirtualStatsMap = null;
 
 function _wellVirtualIsEnabled() {
     try {
@@ -107,14 +109,40 @@ function _wellVirtualOnScroll() {
     });
 }
 
+let _wellVirtualSearchDebounce = null;
+function _wellVirtualPatchSearch() {
+    try {
+        const searchEl =
+            typeof document !== 'undefined' ? document.getElementById('wells-search-input') : null;
+        if (!searchEl || searchEl._wellVirtualPatched) return;
+        searchEl.removeAttribute('oninput');
+        searchEl.oninput = null;
+        searchEl.addEventListener('input', function () {
+            if (_wellVirtualSearchDebounce) clearTimeout(_wellVirtualSearchDebounce);
+            _wellVirtualSearchDebounce = setTimeout(function () {
+                _wellVirtualSearchDebounce = null;
+                _wellVirtualBuildFiltered();
+                _wellVirtualRenderBody();
+                const counter = document.getElementById('wells-counter');
+                if (counter) counter.textContent = '(' + wells.length + ')';
+            }, 150);
+        });
+        searchEl._wellVirtualPatched = true;
+    } catch (_e) {}
+}
+
 function _wellVirtualAttach() {
     const c = typeof document !== 'undefined' ? document.getElementById('wells-list') : null;
-    if (!c || _wellVirtualContainer === c) return;
+    if (!c || _wellVirtualContainer === c) {
+        _wellVirtualPatchSearch();
+        return;
+    }
     _wellVirtualContainer = c;
     c.removeEventListener('scroll', _wellVirtualOnScroll);
     c.addEventListener('scroll', _wellVirtualOnScroll, { passive: true });
     if (!c.style.maxHeight) c.style.maxHeight = '60vh';
     c.style.overflow = 'auto';
+    _wellVirtualPatchSearch();
 }
 
 function _wellVirtualDetach() {
@@ -132,14 +160,19 @@ function _wellVirtualCardHtml(w, wIdx, logicalRow) {
     try {
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
         const stats =
-            typeof calcWellStats === 'function'
-                ? calcWellStats(w)
-                : { price: 0, weight: 0, height: 0 };
+            _wellVirtualStatsMap && _wellVirtualStatsMap.has(wIdx)
+                ? _wellVirtualStatsMap.get(wIdx)
+                : typeof calcWellStats === 'function'
+                  ? calcWellStats(w)
+                  : { price: 0, weight: 0, height: 0 };
         const hasElevations = w.rzednaWlazu != null && w.rzednaDna != null;
         const requiredH = hasElevations ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000) : null;
         let transportVal = 0;
         try {
-            if (typeof calculateWellTransportMap === 'function') {
+            if (_wellVirtualTransportMap) {
+                transportVal =
+                    _wellVirtualTransportMap.get(wIdx) || _wellVirtualTransportMap.get(w) || 0;
+            } else if (typeof calculateWellTransportMap === 'function') {
                 const tm = calculateWellTransportMap(wells);
                 transportVal = tm.map ? tm.map.get(w) || 0 : 0;
             }
@@ -261,6 +294,31 @@ function _wellVirtualRenderBody() {
     const topH = start * WELL_CARD_HEIGHT;
     const bottomH = (total - end) * WELL_CARD_HEIGHT;
     if (topH > 0) html += '<div style="height:' + topH + 'px;"></div>';
+    // C-2.1: build transport + stats caches once per tick
+    try {
+        if (typeof calculateWellTransportMap === 'function') {
+            const tm = calculateWellTransportMap(wells);
+            _wellVirtualTransportMap = new Map();
+            if (tm.map) {
+                for (const [wellObj, cost] of tm.map.entries()) {
+                    const idx = wells.indexOf(wellObj);
+                    if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
+                    _wellVirtualTransportMap.set(wellObj, cost);
+                }
+            }
+        }
+    } catch (_e) {
+        _wellVirtualTransportMap = null;
+    }
+    try {
+        _wellVirtualStatsMap = new Map();
+        for (let sIdx = 0; sIdx < sliceIdx.length; sIdx++) {
+            const wIdx = sliceIdx[sIdx];
+            const w = wells[wIdx];
+            if (w && typeof calcWellStats === 'function')
+                _wellVirtualStatsMap.set(wIdx, calcWellStats(w));
+        }
+    } catch (_e) {}
     // group headers within slice
     let lastDn = null;
     for (let s = 0; s < sliceIdx.length; s++) {
