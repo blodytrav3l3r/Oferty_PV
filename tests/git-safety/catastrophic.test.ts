@@ -143,6 +143,9 @@ describe('Etap 7 — katastroficzny recovery', () => {
         for (const f of files) {
             const b = before.files[f];
             const a = after.files[f];
+            if (a.exists !== b.exists) {
+                console.log('MISMATCH EXISTS', f, 'before', b.exists, 'after', a.exists);
+            }
             expect(a.exists).toBe(b.exists);
             if (b.exists) {
                 expect(a.hash).toBe(b.hash);
