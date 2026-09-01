@@ -134,7 +134,7 @@ function verifySnapshot(id) {
     else if (fs.statSync(patchPath).size === 0 && (meta.expectedFiles ?? 0) > 0)
         errors.push('diff.patch pusty mimo expectedFiles>0');
     const expectUntracked = meta.worktreeState?.untracked?.length ?? 0;
-    if (expectUntracked > 0 && !fs.existsSync(tarPath))
+    if (expectUntracked > 0 && !fs.existsSync(tarPath) && !fs.existsSync(tarPath + '.list'))
         errors.push('brak untracked.tar mimo untracked>0');
     if (meta.expectedFiles == null) errors.push('brak expectedFiles w metadata');
     const ok = errors.length === 0;

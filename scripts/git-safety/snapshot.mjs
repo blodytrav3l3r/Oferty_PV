@@ -110,12 +110,20 @@ export function createSnapshot(operation, state) {
     const tarPath = path.join(dir, 'untracked.tar');
     if (state.untracked.length > 0) {
         try {
-            // użyj tar jeśli dostępny (Git Bash na Windows ma tar)
-            execFileSync('tar', ['-cf', tarPath, ...state.untracked], { cwd: ROOT, stdio: 'pipe' });
-        } catch {
-            // fallback: zapisz listę jako .tar.txt
+            // użyj tar jeśli dostępny (Git Bash na Windows ma tar) — ścieżki POSIX dla MSYS tar
+            const tarPathPosix = tarPath.replace(/\\/g, '/');
+            execFileSync('tar', ['-cf', tarPathPosix, ...state.untracked], {
+                cwd: ROOT,
+                stdio: 'pipe'
+            });
+        } catch (e) {
+            // fallback: zapisz listę jako .tar.list (cli.mjs verify/restore obsługuje oba)
             try {
                 fs.writeFileSync(tarPath + '.list', state.untracked.join('\n'), 'utf8');
+            } catch {}
+            // log dla diagnostyki (nie psuje snapshotu, verify zaakceptuje .list)
+            try {
+                fs.writeFileSync(path.join(dir, 'tar-error.txt'), String(e?.message || e), 'utf8');
             } catch {}
         }
     } else {
