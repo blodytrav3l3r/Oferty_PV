@@ -20,7 +20,7 @@ const config: Config.InitialOptions = {
             testEnvironment: 'node',
             roots: ['<rootDir>/tests'],
             testMatch: ['**/*.test.ts'],
-            testPathIgnorePatterns: ['/frontend/']
+            testPathIgnorePatterns: ['/frontend/', 'git-safety']
         },
         {
             displayName: 'frontend',
@@ -34,6 +34,13 @@ const config: Config.InitialOptions = {
             // coverage % dla public/js jest niemierzalny. Testy działają jako
             // guard behawioralny (18 tests). Realny % wymagałby babel-plugin-istanbul
             // na public/js lub migracji ESM (osobny temat).
+        },
+        {
+            displayName: 'git-safety',
+            preset: 'ts-jest',
+            testEnvironment: 'node',
+            roots: ['<rootDir>/tests/git-safety'],
+            testMatch: ['**/*.test.ts']
         }
     ]
 };

@@ -91,6 +91,9 @@ jobs:
             - name: Run tests
               run: npm test
 
+            - name: Run git-safety tests (sequential, no index.lock)
+              run: npx jest --selectProjects git-safety --runInBand --no-coverage
+
             - name: Coverage summary (informacyjnie)
               run: node scripts/coverage-check.mjs
 
