@@ -6,5 +6,4 @@ npm run lint:frontend 2>&1 || { echo "❌ Lint frontend — uruchom npm run lint
 npm run typecheck 2>&1 || { echo "❌ Typecheck backend"; exit 1; }
 npm run typecheck:frontend 2>&1 || { echo "❌ Typecheck frontend"; exit 1; }
 npm run test:quick:lite 2>&1 || { echo "❌ Testy lite — uruchom npm run test:quick:lite"; exit 1; }
-npx jest --selectProjects git-safety --runInBand --no-coverage 2>&1 || { echo "❌ Testy git-safety — uruchom npx jest --selectProjects git-safety --runInBand"; exit 1; }
-npx jest --selectProjects git-safety --runInBand --no-coverage 2>&1 || { echo "❌ Testy git-safety — uruchom npx jest --selectProjects git-safety --runInBand"; exit 1; }
+npm run test:git-safety 2>&1 || { echo "❌ Testy git-safety — uruchom npm run test:git-safety"; exit 1; }

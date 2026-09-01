@@ -15,6 +15,7 @@
         "test:watch": "jest --watch",
         "test:quick": "jest --no-coverage --testPathIgnorePatterns=git-safety",
         "test:quick:lite": "jest --no-coverage --testPathIgnorePatterns=tests/migrations --testPathIgnorePatterns=git-safety",
+        "test:git-safety": "jest --selectProjects git-safety --runInBand --no-coverage",
         "test:alignment": "node tests/playwright/excelEmptyRowAlignment.cjs",
         "test:e2e-appname": "node tests/playwright/appNameConsistency.cjs",
         "test:e2e-appname:spawn": "npm run build && node tests/playwright/appNameConsistency.cjs --spawn",
