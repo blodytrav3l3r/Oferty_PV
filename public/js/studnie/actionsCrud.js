@@ -28,7 +28,10 @@ function addWellComponent(productId) {
         showToast(WELL_LOCKED_MSG, 'error');
         return;
     }
-    const product = studnieProducts.find((p) => p.id === productId);
+    const product =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : studnieProducts.find((p) => p.id === productId);
     if (!product) return;
 
     const well = getCurrentWell();
@@ -74,7 +77,10 @@ function addWellComponent(productId) {
         }
 
         well.config = well.config.filter((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return true;
 
             if (reliefTypes.includes(product.componentType)) {
@@ -90,14 +96,20 @@ function addWellComponent(productId) {
 
     if (product.componentType === 'plyta_redukcyjna') {
         well.config = well.config.filter((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             return p && p.componentType !== 'plyta_redukcyjna';
         });
     }
 
     if (product.componentType === 'wlaz') {
         well.config = well.config.filter((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             return p && p.componentType !== 'wlaz';
         });
     }
@@ -128,7 +140,10 @@ function addWellComponent(productId) {
         }
 
         const plateIdx = well.config.findIndex((c) => {
-            const p = studnieProducts.find((pr) => pr.id === c.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((pr) => pr.id === c.productId);
             return p && p.componentType === 'plyta_redukcyjna';
         });
 
@@ -138,7 +153,10 @@ function addWellComponent(productId) {
             if (isRedDn) {
                 let insertIdx = 0;
                 for (let i = 0; i < plateIdx; i++) {
-                    const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+                    const p =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(well.config[i].productId)
+                            : studnieProducts.find((pr) => pr.id === well.config[i].productId);
                     if (!topClosureTypes.includes(p.componentType)) {
                         insertIdx = i;
                         break;
@@ -160,7 +178,10 @@ function addWellComponent(productId) {
         } else {
             let insertIdx = 0;
             for (let i = 0; i < well.config.length; i++) {
-                const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(well.config[i].productId)
+                        : studnieProducts.find((pr) => pr.id === well.config[i].productId);
                 if (!topClosureTypes.includes(p.componentType)) {
                     insertIdx = i;
                     break;
@@ -243,12 +264,18 @@ function removeWellComponent(index) {
     const removedItem = well.config.splice(index, 1)[0];
 
     if (removedItem) {
-        const p = studnieProducts.find((pr) => pr.id === removedItem.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(removedItem.productId)
+                : studnieProducts.find((pr) => pr.id === removedItem.productId);
         if (p) {
             const reliefTypes = ['pierscien_odciazajacy', 'plyta_zamykajaca', 'plyta_najazdowa'];
             if (reliefTypes.includes(p.componentType)) {
                 well.config = well.config.filter((item) => {
-                    const prod = studnieProducts.find((pr) => pr.id === item.productId);
+                    const prod =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(item.productId)
+                            : studnieProducts.find((pr) => pr.id === item.productId);
                     return !prod || !reliefTypes.includes(prod.componentType);
                 });
                 showToast('Usunięto komplet odciążający', 'info');
@@ -266,9 +293,11 @@ function removeWellComponent(index) {
 
     if (typeof window.telemetryRecordEvent === 'function') {
         const removedProd = removedItem
-            ? studnieProducts.find(function (p) {
-                  return p.id === removedItem.productId;
-              })
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(removedItem.productId)
+                : studnieProducts.find(function (p) {
+                      return p.id === removedItem.productId;
+                  })
             : null;
         window.telemetryRecordEvent({
             eventType: 'component_remove',

@@ -149,7 +149,10 @@ function buildPrzejsciaRows(data) {
     const well = data.well;
     const przejscia = well.przejscia || [];
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
+    const findProductFn = (id) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
 
     // Najpierw nadaj displayIndex WSZYSTKIM przejściom (spójność z Lista przejść)
@@ -335,7 +338,9 @@ function generateWellSvg(data) {
     ) {
         const findProductFn = (id) =>
             typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === id)
+                ? typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(id)
+                    : studnieProducts.find((pr) => pr.id === id)
                 : null;
         const configMap = buildConfigMap(well, findProductFn, true);
         if (configMap.length > 0) {
@@ -468,7 +473,9 @@ function generateWellSvg(data) {
 
         const product =
             typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === p.productId)
+                ? typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(p.productId)
+                    : studnieProducts.find((pr) => pr.id === p.productId)
                 : null;
         const rodzaj = isBlind ? 'ŚLEPA' : product ? product.category : '';
         const dn = product ? product.dn : '';

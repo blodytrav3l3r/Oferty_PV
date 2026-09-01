@@ -236,7 +236,7 @@ function calculateTransports(items) {
             if (i.productId.startsWith('PEHD-3MM')) baseId = 'PEHD-3MM';
             if (i.productId.startsWith('PEHD-4MM')) baseId = 'PEHD-4MM';
         }
-        const product = products.find((p) => p.id === baseId);
+        const product = getRuryProductById(baseId);
         return {
             ...i,
             currentWeight: i.customLengthM ? i.weight : product ? product.weight : i.weight || 0,

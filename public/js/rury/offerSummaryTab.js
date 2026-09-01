@@ -193,7 +193,7 @@ function renderOfferSummaryTableTab(transportResult, costPerTrip) {
 
         if (showPriceComparison) {
             const catKey = (() => {
-                const product = products.find((p) => p.id === item.productId);
+                const product = getRuryProductById(item.productId);
                 return product ? product.category : 'Inne';
             })();
             if (!catGroups[catKey]) catGroups[catKey] = { count: 0, sumCurrent: 0, sumOffer: 0 };

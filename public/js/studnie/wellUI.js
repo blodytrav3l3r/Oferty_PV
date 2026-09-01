@@ -3,6 +3,9 @@
 /* UI modules extracted to: uiLockBanners.js, uiParamTiles.js, uiWellParams.js, uiTabSwitcher.js */
 
 /* ===== RENDEROWANIE LISTY STUDNI ===== */
+// Debounce + per-tick cache (Faza 0 visual-safe): nie zmienia wyglądu, tylko koszt renderu.
+let _wellSearchDebounce = null;
+let _wellStatsCache = null;
 window.renderWellsList = function renderWellsList() {
     const container = document.getElementById('wells-list');
     if (!container) return;
@@ -10,28 +13,15 @@ window.renderWellsList = function renderWellsList() {
     // Przelicz bezwzględnie wszystkie studnie z tła, aby uzyskać aktualne błędy grubości rur / luzów
     refreshAllWellErrors();
 
-    // Funkcja szybkoskanująca uchybienia studni (luzy, braki wysokości), aktualizując obiekt przed wyrysowaniem
-    const validateAutomatedErrors = (well) => {
-        if (!well) return false;
-        let isError = false;
-
-        // 1. Sprawdzamy wysokość
-        if (well.rzednaWlazu != null && well.rzednaDna != null) {
-            const req = Math.round((well.rzednaWlazu - well.rzednaDna) * 1000);
-            const stats = calcWellStats(well);
-            if (stats.height - req > 20 || req - stats.height > 100) isError = true;
+    // Per-tick cache stats — jeden calcWellStats per well na render, nie 2×
+    _wellStatsCache = new Map();
+    try {
+        for (let _ci = 0; _ci < wells.length; _ci++) {
+            const _w = wells[_ci];
+            if (_w && typeof calcWellStats === 'function')
+                _wellStatsCache.set(_w, calcWellStats(_w));
         }
-
-        // 2. Status 'ERROR' nakazany przez główną funkcję updateHeightIndicator lub backend OR-TOOLS
-        if (
-            well.configStatus === 'ERROR' ||
-            (well.configErrors && well.configErrors.length > 0 && well.configStatus !== 'OK')
-        ) {
-            isError = true;
-        }
-
-        return isError;
-    };
+    } catch (_e) {}
 
     const searchTerm = (document.getElementById('wells-search-input')?.value || '')
         .toLowerCase()
@@ -45,12 +35,6 @@ window.renderWellsList = function renderWellsList() {
     if (typeof calculateWellTransportMap === 'function') {
         const result = calculateWellTransportMap(wells);
         transportMap = result.map;
-    }
-
-    // Sprawdź zmiany w zamówieniu, jeśli w trybie edycji
-    let orderChanges = {};
-    if (orderEditMode) {
-        orderChanges = getOrderChanges({ ...orderEditMode.order, wells: wells });
     }
 
     dktCap.forEach((dnGroup) => {
@@ -67,155 +51,14 @@ window.renderWellsList = function renderWellsList() {
         html += `<div style="font-size: var(--fs-xs); color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight: var(--fw-extrabold); opacity:0.7;">${groupTitle}</div>`;
 
         groupWells.forEach(({ w, i }) => {
-            const isActive = i === currentWellIndex;
-            const stats = calcWellStats(w);
-            const hasElevations = w.rzednaWlazu != null && w.rzednaDna != null;
-            const requiredH = hasElevations
-                ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000)
-                : null;
-
-            let changeStyling = '';
-            let changeBadge = '';
-            if (orderEditMode && orderChanges[i]) {
-                const changeType = orderChanges[i].type;
-                if (changeType === 'added') {
-                    changeStyling =
-                        'border-left: 3px solid var(--success); background: rgba(var(--success-rgb), 0.05);';
-                    changeBadge =
-                        '<span style="font-size: var(--fs-2xs); color:var(--success); font-weight: var(--fw-bold); margin-left:0.3rem;">[NOWA]</span>';
-                } else if (changeType === 'modified') {
-                    changeStyling =
-                        'border-left: 3px solid var(--danger); background: rgba(var(--danger-rgb), 0.05);';
-                    changeBadge =
-                        '<span style="font-size: var(--fs-2xs); color:var(--danger); font-weight: var(--fw-bold); margin-left:0.3rem;">[ZMIENIONA]</span>';
-                }
+            const stats =
+                _wellStatsCache && _wellStatsCache.has(w)
+                    ? _wellStatsCache.get(w)
+                    : calcWellStats(w);
+            const transportVal = transportMap ? transportMap.get(w) || 0 : 0;
+            if (typeof _wellBuildCardHtml === 'function') {
+                html += _wellBuildCardHtml(w, i, null, transportVal, stats);
             }
-
-            const statusBadge =
-                w.configStatus === 'LOADING'
-                    ? '<span title="Trwa auto-dobór..." class="ml-3"><span class="loading-spinner-inline"></span></span>'
-                    : w.configStatus === 'ERROR'
-                      ? '<span title="Błąd konfiguracji" class="ml-3"><i data-lucide="x-circle"></i></span>'
-                      : w.configStatus === 'WARNING'
-                        ? '<span title="' +
-                          (w.configErrors || [])
-                              .map((e) => escapeHtml(e).replace(/"/g, '&quot;'))
-                              .join('; ') +
-                          '" class="ml-3"><i data-lucide="alert-triangle"></i></span>'
-                        : w.configStatus === 'OK'
-                          ? '<span class="ml-3"><i data-lucide="check-circle-2"></i></span>'
-                          : '';
-
-            // Ikona źródła konfiguracji
-            let sourceBadge = '';
-            if (w.configSource === 'AUTO_AI') {
-                sourceBadge =
-                    '<span title="Dobór AI / ML" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(160deg) saturate(300%);"><i data-lucide="bot"></i></span>';
-            } else if (w.configSource === 'AUTO_JS' || w.configSource === 'AUTO') {
-                sourceBadge =
-                    '<span title="Dobór Automatyczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
-            } else {
-                sourceBadge =
-                    '<span title="Dobór Ręczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="hand"></i></span>';
-            }
-
-            let wellLockBadge = '';
-            if (isWellLocked(i)) {
-                // Sprawdź, czy blokada pochodzi z zamówienia (pokaż numer zamówienia)
-                const wellOrder =
-                    typeof getOrderForWellId === 'function'
-                        ? getOrderForWellId(w.id, editingOfferIdStudnie)
-                        : null;
-                if (wellOrder && wellOrder.orderNumber) {
-                    wellLockBadge = `<span title="Studnia na zamówieniu ${escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;')} — kliknij aby otworzyć"
-                        onclick="event.stopPropagation(); window.location.href='studnie.html?order=${escapeHtml(wellOrder.id)}'"
-                        style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
-                        <i data-lucide="package" style="width:10px; height:10px;"></i>${escapeHtml(wellOrder.orderNumber)}
-                    </span>`;
-                } else {
-                    wellLockBadge =
-                        '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size: var(--fs-base); margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
-                }
-            }
-
-            let doplataBadge = '';
-            if (w.doplata && w.doplata !== 0) {
-                const isNeg = w.doplata < 0;
-                const badgeLabel = isNeg ? 'UPUST' : 'DOPŁATA';
-                const colorHex = isNeg ? 'var(--danger)' : 'var(--success)';
-                const bgRgba = isNeg
-                    ? 'rgba(var(--danger-rgb), 0.15)'
-                    : 'rgba(var(--success-rgb), 0.15)';
-                const borderRgba = isNeg
-                    ? 'rgba(var(--danger-rgb), 0.5)'
-                    : 'rgba(var(--success-rgb), 0.5)';
-                doplataBadge = `<span title="${badgeLabel}: ${fmt(w.doplata)} PLN" style="font-size: var(--fs-2xs); background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
-            }
-
-            // Automatyczne sprawdzenie w locie dla wszystkich kart
-            const hasErrors = validateAutomatedErrors(w);
-
-            const errorStyling = hasErrors
-                ? ' background:rgba(var(--danger-rgb), 0.15) !important;'
-                : '';
-            const errorNameStyle = hasErrors
-                ? 'color:var(--danger) !important; font-weight: var(--fw-bold) !important;'
-                : '';
-
-            const hasBadges =
-                wellLockBadge || sourceBadge || statusBadge || changeBadge || doplataBadge;
-            const badgesHtml = hasBadges
-                ? `
-              <div style="display:flex; align-items:center; gap:0.15rem; flex-wrap:wrap; margin-bottom:0.3rem; margin-top:-0.1rem;">
-                 ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
-              </div>`
-                : '';
-
-            const hasUwagi = !!(w.uwagi && String(w.uwagi).trim());
-            const uwagiTitle = hasUwagi
-                ? `Uwagi: ${escapeHtmlAttr(String(w.uwagi).slice(0, 80))}${String(w.uwagi).length > 80 ? '…' : ''} — kliknij aby edytować`
-                : 'Dodaj uwagi do studni';
-            html += `<div class="well-list-item ${isActive ? 'active' : ''}" style="${changeStyling}${isWellLocked(i) ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
-              <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
-                <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escapeHtml(w.name).replace(/"/g, '&quot;')}">${escapeHtml(w.name)}</div>
-                <div class="well-list-actions">
-                  <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" onclick="event.stopPropagation(); openWellNotesModal(${i})"><i data-lucide="file-text" aria-hidden="true"></i></button>
-                  <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
-                  <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
-                </div>
-              </div>
-              ${badgesHtml}
-              <div class="well-list-meta">
-                <div style="display:flex; gap:0.6rem;">
-                  <span>Elementy: <strong>${(w.config || []).length}</strong></span>
-                  <span>Przejścia: <strong>${w.przejscia ? w.przejscia.length : 0}</strong></span>
-                </div>
-                <span class="well-list-price">${fmtInt(stats.price + (transportMap.get(w) || 0))} PLN</span>
-              </div>
-              ${
-                  hasElevations
-                      ? `<div class="well-list-elevations">
-                <span>↑ <strong>${w.rzednaWlazu.toFixed(3)}</strong></span>
-                <span>↓ <strong>${w.rzednaDna.toFixed(3)}</strong></span>
-                <span style="margin-left:auto;">H=<strong>${(function () {
-                    try {
-                        if (
-                            typeof formatHeightValue === 'function' &&
-                            typeof getDisplayUnit === 'function'
-                        )
-                            return formatHeightValue(requiredH, getDisplayUnit());
-                    } catch (_e) {}
-                    return String(requiredH);
-                })()}</strong>${(function () {
-                    try {
-                        if (typeof getDisplayUnit === 'function') return getDisplayUnit();
-                    } catch (_e) {}
-                    return 'mm';
-                })()}</span>
-              </div>`
-                      : ''
-              }
-            </div>`;
         });
     });
 
@@ -229,8 +72,48 @@ window.renderWellsList = function renderWellsList() {
     const counter = document.getElementById('wells-counter');
     if (counter) counter.textContent = `(${wells.length})`;
 
+    // perf: wyłącz blur/anim przy dużej liście (klasa w studnie.css) — bez zmiany layoutu
+    try {
+        container.classList.toggle('wells-list--many', wells.length > 200);
+    } catch (_e) {}
     renderDiscountPanel();
+    _wellStatsCache = null;
 };
+
+// Debounce wyszukiwarki — bez zmiany HTML sidebar.html (oninput zostaje, ale JS przejmuje)
+// Minimalne ryzyko: usuwa atrybut oninput i podpina debounced listener 150ms jak w Excelu.
+(function _wellPatchSearchDebounce() {
+    function patch() {
+        const inp = document.getElementById('wells-search-input');
+        if (!inp || /** @type {any} */ (inp)._wellSearchPatched) return;
+        // usuń inline oninput (legacy renderWellsList per keystroke → freeze)
+        inp.removeAttribute('oninput');
+        inp.oninput = null;
+        inp.addEventListener('input', function () {
+            if (_wellSearchDebounce) clearTimeout(_wellSearchDebounce);
+            _wellSearchDebounce = setTimeout(function () {
+                _wellSearchDebounce = null;
+                if (typeof window.renderWellsList === 'function') window.renderWellsList();
+            }, 150);
+        });
+        /** @type {any} */ (inp)._wellSearchPatched = true;
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', patch);
+    else patch();
+    // re-patch po partial load
+    let tries = 0;
+    const iv = setInterval(function () {
+        patch();
+        tries++;
+        if (
+            tries > 20 ||
+            /** @type {any} */ (document.getElementById('wells-search-input'))?.[
+                '_wellSearchPatched'
+            ]
+        )
+            clearInterval(iv);
+    }, 300);
+})();
 
 function _wellFmtH(mm) {
     try {
@@ -362,8 +245,13 @@ window.updateSummary = function updateSummary() {
     updateHeightIndicator();
 
     // Odśwież panel boczny z cenami studni (aby cena była zawsze aktualna)
-    // Guard: pomijaj jeśli renderWellsList jest już w trakcie (np. z refreshAll)
-    if (typeof renderWellsList === 'function' && !window._renderingWellsList) {
+    // Guard: pomijaj gdy refreshAll już renderuje (zapobiega double render / kaskadzie).
+    // Visual-safe: nie zmienia wyniku, tylko koszt — jeden render na tick.
+    if (
+        typeof renderWellsList === 'function' &&
+        !window._renderingWellsList &&
+        !(typeof __refreshAllDepth !== 'undefined' && __refreshAllDepth > 0)
+    ) {
         window._renderingWellsList = true;
         renderWellsList();
         window._renderingWellsList = false;

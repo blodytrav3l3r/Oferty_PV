@@ -6,7 +6,7 @@ function addOfferItem(productId) {
         showToast('Katalog produktów jeszcze niezaładowany', 'error');
         return;
     }
-    const product = products.find((p) => p.id === productId);
+    const product = getRuryProductById(productId);
     if (!product) return;
 
     const isEditableLength =
@@ -23,7 +23,7 @@ function addOfferItem(productId) {
 window.addOfferItem = addOfferItem;
 
 function showPipeLengthModal(productId, editIndex = null) {
-    const product = products.find((p) => p.id === productId);
+    const product = getRuryProductById(productId);
     if (!product) return;
 
     const diam = getProductDiameter(product.id);
@@ -113,7 +113,7 @@ function confirmPipeLength(productId, editIndex) {
 window.confirmPipeLength = confirmPipeLength;
 
 function doAddOfferItem(productId, customLengthM) {
-    const product = products.find((p) => p.id === productId);
+    const product = getRuryProductById(productId);
     if (!product) return;
 
     const activeItems = getActiveItemsArray();

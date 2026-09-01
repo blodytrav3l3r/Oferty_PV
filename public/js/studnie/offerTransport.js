@@ -120,7 +120,9 @@ window.openTransportPopup = function () {
     } else if (typeof editingOfferIdStudnie !== 'undefined' && editingOfferIdStudnie) {
         const offer =
             typeof offersStudnie !== 'undefined'
-                ? offersStudnie.find((o) => o.id === editingOfferIdStudnie)
+                ? typeof getOfferStudnieById === 'function'
+                    ? getOfferStudnieById(editingOfferIdStudnie)
+                    : offersStudnie.find((o) => o.id === editingOfferIdStudnie)
                 : null;
         currentTransportMode = (offer && offer.transportMode) || 'full';
     }

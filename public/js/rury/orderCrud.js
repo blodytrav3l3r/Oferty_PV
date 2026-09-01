@@ -53,7 +53,10 @@ async function createOrderFromOffer() {
         return;
     }
 
-    const offer = offers.find((o) => o.id === editingOfferId);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(editingOfferId)
+            : offers.find((o) => o.id === editingOfferId);
     if (!offer) {
         showToast('Nie znaleziono oferty', 'error');
         return;

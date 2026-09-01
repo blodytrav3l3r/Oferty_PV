@@ -229,7 +229,10 @@ window.openChangePrzejscieTypePopup = function (index) {
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     const currTypeId = well.przejscia[index].productId;
-    const currProduct = studnieProducts.find((p) => p.id === currTypeId);
+    const currProduct =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(currTypeId)
+            : studnieProducts.find((p) => p.id === currTypeId);
     if (!currProduct) return;
 
     const przejsciaProducts = studnieProducts.filter(
@@ -318,7 +321,10 @@ window.openChangePrzejscieDnPopup = function (index) {
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     const currId = well.przejscia[index].productId;
-    const currProduct = studnieProducts.find((p) => p.id === currId);
+    const currProduct =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(currId)
+            : studnieProducts.find((p) => p.id === currId);
     if (!currProduct) return;
 
     const maxPipeDn = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;

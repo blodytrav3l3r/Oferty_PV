@@ -49,7 +49,9 @@ function calculateConnectionRequirements(transitions, rzDna) {
 
         const pprod =
             typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((x) => x.id === pr.productId)
+                ? typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((x) => x.id === pr.productId)
                 : null;
 
         let dnVal = 160;
@@ -195,7 +197,9 @@ function getLowestDennica(products, dn, warehouse, transitions, rzDna) {
 
             const pprod =
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((x) => x.id === pr.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(pr.productId)
+                        : studnieProducts.find((x) => x.id === pr.productId)
                     : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 
@@ -314,7 +318,9 @@ function getLowestDennicaHybrid(products, dn, warehouse, transitions, rzDna, pre
 
             const pprod =
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((x) => x.id === pr.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(pr.productId)
+                        : studnieProducts.find((x) => x.id === pr.productId)
                     : products.find((x) => x.id === pr.productId);
             if (!pprod) continue;
 

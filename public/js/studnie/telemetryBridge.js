@@ -507,20 +507,36 @@
     };
 
     /**
-     * Rejestruje wersję solvera (raz na start aplikacji).
+     * Rejestruje wersję solvera (raz na sesję — dedup, żeby nie spamować 429).
      */
+    let _versionRegistered = false;
     window.telemetryRegisterSolverVersion = function () {
+        if (_versionRegistered) return;
         try {
+            if (typeof sessionStorage !== 'undefined') {
+                const key = 'telemetry_version_' + SOLVER_VERSION + '_' + RULES_VERSION;
+                if (sessionStorage.getItem(key)) {
+                    _versionRegistered = true;
+                    return;
+                }
+                sessionStorage.setItem(key, '1');
+            }
+        } catch (_e) {}
+        _versionRegistered = true;
+        try {
+            // stagger 2 requesty by nie burstować limitera (300/min współdzielony z /config)
             safeFetch(VERSION_URL, {
                 componentType: 'solver',
                 version: SOLVER_VERSION,
                 description: 'JS solver (wellSolver.js + ringOptimizer.js + ruleEngine.js)'
             });
-            safeFetch(VERSION_URL, {
-                componentType: 'rules',
-                version: RULES_VERSION,
-                description: 'Reguły doboru elementów studni'
-            });
+            setTimeout(function () {
+                safeFetch(VERSION_URL, {
+                    componentType: 'rules',
+                    version: RULES_VERSION,
+                    description: 'Reguły doboru elementów studni'
+                });
+            }, 400);
         } catch (_e) {
             /* ignore */
         }

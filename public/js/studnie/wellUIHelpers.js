@@ -3,6 +3,33 @@
 /* renderDiscountPanel — panel rabatów i podsumowania w sidebarze */
 /* Zależności: wells, wellDiscounts, calcWellStats, studnieProducts, fmtInt, updateDiscount, updateGlobalPehdDiscount, updateGlobalPaintingCost, getPehdEffectiveArea (globalne) */
 
+// Cache dla orderChanges — ten sam w ofercie i zamówieniu, liczony raz na tick
+let _orderChangesCache = null;
+let _orderChangesCacheWells = null;
+let _orderChangesCacheOrderId = null;
+function _getOrderChangesCached() {
+    try {
+        if (typeof orderEditMode === 'undefined' || !orderEditMode || !orderEditMode.order)
+            return {};
+        if (typeof getOrderChanges !== 'function') return {};
+        const orderId = orderEditMode.orderId || orderEditMode.order?.id || '';
+        if (
+            _orderChangesCache &&
+            _orderChangesCacheWells === wells &&
+            _orderChangesCacheOrderId === orderId
+        ) {
+            return _orderChangesCache;
+        }
+        const res = getOrderChanges({ ...orderEditMode.order, wells: wells });
+        _orderChangesCache = res || {};
+        _orderChangesCacheWells = wells;
+        _orderChangesCacheOrderId = orderId;
+        return _orderChangesCache;
+    } catch (_e) {
+        return {};
+    }
+}
+
 function renderDiscountPanel() {
     const panel = document.getElementById('wells-discount-panel');
     if (!panel) return;
@@ -286,4 +313,196 @@ function renderDiscountPanel() {
     if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons({ root: panel });
 }
 
+/**
+ * Wygeneruj HTML karty studni dla listy bocznej.
+ * Współdzielone przez wellUI.js i wellVirtual.js dla zachowania 100% spójności wizualnej.
+ * @param {any} w Studnia z tablicy wells
+ * @param {number} i Indeks studni w tablicy wells (wIdx)
+ * @param {number|null} [logicalRow] Indeks logiczny w przefiltrowanej tablicy (opcjonalnie)
+ * @param {number} [transportVal] Przeliczona wartość transportu (opcjonalnie)
+ * @param {any} [stats] Przeliczone statystyki studni (opcjonalnie)
+ */
+function _wellBuildCardHtml(w, i, logicalRow, transportVal, stats) {
+    if (!w) return '';
+    const isActive = typeof currentWellIndex !== 'undefined' && i === currentWellIndex;
+    if (!stats && typeof calcWellStats === 'function') stats = calcWellStats(w);
+    if (!stats) stats = { price: 0, weight: 0, height: 0 };
+
+    const hasElevations = w.rzednaWlazu != null && w.rzednaDna != null;
+    const requiredH = hasElevations ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000) : null;
+
+    if (transportVal === undefined || transportVal === null) transportVal = 0;
+
+    let changeStyling = '';
+    let changeBadge = '';
+    const orderChangesObj = _getOrderChangesCached();
+    if (orderChangesObj && orderChangesObj[i]) {
+        const changeType = orderChangesObj[i].type;
+        if (changeType === 'added') {
+            changeStyling =
+                'border-left: 3px solid var(--success); background: rgba(var(--success-rgb), 0.05);';
+            changeBadge =
+                '<span style="font-size: var(--fs-2xs); color:var(--success); font-weight: var(--fw-bold); margin-left:0.3rem;">[NOWA]</span>';
+        } else if (changeType === 'modified') {
+            changeStyling =
+                'border-left: 3px solid var(--danger); background: rgba(var(--danger-rgb), 0.05);';
+            changeBadge =
+                '<span style="font-size: var(--fs-2xs); color:var(--danger); font-weight: var(--fw-bold); margin-left:0.3rem;">[ZMIENIONA]</span>';
+        }
+    }
+
+    const statusBadge =
+        w.configStatus === 'LOADING'
+            ? '<span title="Trwa auto-dobór..." class="ml-3"><span class="loading-spinner-inline"></span></span>'
+            : w.configStatus === 'ERROR'
+              ? '<span title="Błąd konfiguracji" class="ml-3"><i data-lucide="x-circle"></i></span>'
+              : w.configStatus === 'WARNING'
+                ? '<span title="' +
+                  (w.configErrors || [])
+                      .map((e) =>
+                          (typeof escapeHtml === 'function' ? escapeHtml(e) : String(e)).replace(
+                              /"/g,
+                              '&quot;'
+                          )
+                      )
+                      .join('; ') +
+                  '" class="ml-3"><i data-lucide="alert-triangle"></i></span>'
+                : w.configStatus === 'OK'
+                  ? '<span class="ml-3"><i data-lucide="check-circle-2"></i></span>'
+                  : '';
+
+    let sourceBadge = '';
+    if (w.configSource === 'AUTO_AI') {
+        sourceBadge =
+            '<span title="Dobór AI / ML" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(160deg) saturate(300%);"><i data-lucide="bot"></i></span>';
+    } else if (w.configSource === 'AUTO_JS' || w.configSource === 'AUTO') {
+        sourceBadge =
+            '<span title="Dobór Automatyczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: sepia(100%) hue-rotate(30deg) saturate(300%);"><i data-lucide="settings"></i></span>';
+    } else {
+        sourceBadge =
+            '<span title="Dobór Ręczny" style="font-size: var(--fs-base); margin-left:0.3rem; filter: grayscale(1);"><i data-lucide="user"></i></span>';
+    }
+
+    let wellLockBadge = '';
+    const isLocked = typeof isWellLocked === 'function' ? isWellLocked(i) : false;
+    if (isLocked) {
+        const wellOrder =
+            typeof getOrderForWellId === 'function'
+                ? getOrderForWellId(
+                      w.id,
+                      typeof editingOfferIdStudnie !== 'undefined' ? editingOfferIdStudnie : null
+                  )
+                : null;
+        if (wellOrder && wellOrder.orderNumber) {
+            wellLockBadge = `<span title="Studnia na zamówieniu ${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber).replace(/"/g, '&quot;') : String(wellOrder.orderNumber)} — kliknij aby otworzyć"
+                onclick="event.stopPropagation(); window.location.href='studnie.html?order=${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.id) : String(wellOrder.id)}'"
+                style="font-size: var(--fs-3xs); background:rgba(var(--success-rgb), 0.15); color:var(--success-hover); border:1px solid rgba(var(--success-rgb), 0.5); padding:1px 5px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; cursor:pointer; display:inline-flex; align-items:center; gap:2px; vertical-align:middle;">
+                <i data-lucide="package" style="width:10px; height:10px;"></i>${typeof escapeHtml === 'function' ? escapeHtml(wellOrder.orderNumber) : String(wellOrder.orderNumber)}
+            </span>`;
+        } else {
+            wellLockBadge =
+                '<span title="Studnia zablokowana — zaakceptowane zlecenie produkcyjne" style="font-size: var(--fs-base); margin-left:0.3rem;"><i data-lucide="lock"></i></span>';
+        }
+    }
+
+    let doplataBadge = '';
+    if (w.doplata && w.doplata !== 0) {
+        const isNeg = w.doplata < 0;
+        const badgeLabel = isNeg ? 'UPUST' : 'DOPŁATA';
+        const colorHex = isNeg ? 'var(--danger)' : 'var(--success)';
+        const bgRgba = isNeg ? 'rgba(var(--danger-rgb), 0.15)' : 'rgba(var(--success-rgb), 0.15)';
+        const borderRgba = isNeg ? 'rgba(var(--danger-rgb), 0.5)' : 'rgba(var(--success-rgb), 0.5)';
+        const fmtFn =
+            typeof fmt === 'function'
+                ? fmt
+                : function (n) {
+                      return String(n);
+                  };
+        doplataBadge = `<span title="${badgeLabel}: ${fmtFn(w.doplata)} PLN" style="font-size: var(--fs-2xs); background:${bgRgba}; color:${colorHex}; border:1px solid ${borderRgba}; padding:1px 4px; border-radius: var(--radius-2xs); font-weight: var(--fw-extrabold); margin-left:0.3rem; vertical-align:middle;">${badgeLabel}</span>`;
+    }
+
+    const hasErrors = (function () {
+        if (!w) return false;
+        if (w.rzednaWlazu != null && w.rzednaDna != null) {
+            const req = Math.round((w.rzednaWlazu - w.rzednaDna) * 1000);
+            if (stats.height - req > 20 || req - stats.height > 100) return true;
+        }
+        if (
+            w.configStatus === 'ERROR' ||
+            (w.configErrors && w.configErrors.length > 0 && w.configStatus !== 'OK')
+        )
+            return true;
+        return false;
+    })();
+
+    const errorStyling = hasErrors ? ' background:rgba(var(--danger-rgb), 0.15) !important;' : '';
+    const errorNameStyle = hasErrors
+        ? 'color:var(--danger) !important; font-weight: var(--fw-bold) !important;'
+        : '';
+
+    const hasBadges = wellLockBadge || sourceBadge || statusBadge || changeBadge || doplataBadge;
+    const badgesHtml = hasBadges
+        ? `<div style="display:flex; align-items:center; gap:0.15rem; flex-wrap:wrap; margin-bottom:0.3rem; margin-top:-0.1rem;">
+             ${wellLockBadge}${sourceBadge}${statusBadge}${changeBadge}${doplataBadge}
+           </div>`
+        : '';
+
+    const hasUwagi = !!(w.uwagi && String(w.uwagi).trim());
+    const escAttr =
+        typeof escapeHtmlAttr === 'function'
+            ? escapeHtmlAttr
+            : function (s) {
+                  return String(s);
+              };
+    const escFn =
+        typeof escapeHtml === 'function'
+            ? escapeHtml
+            : function (s) {
+                  return String(s);
+              };
+    const fmtIntFn =
+        typeof fmtInt === 'function'
+            ? fmtInt
+            : function (n) {
+                  return String(n);
+              };
+
+    const uwagiTitle = hasUwagi
+        ? `Uwagi: ${escAttr(String(w.uwagi).slice(0, 80))}${String(w.uwagi).length > 80 ? '…' : ''} — kliknij aby edytować`
+        : 'Dodaj uwagi do studni';
+
+    const logRowAttr =
+        logicalRow !== undefined && logicalRow !== null ? ` data-logical-row="${logicalRow}"` : '';
+
+    const minH = hasElevations ? 104 : 76;
+    let html = `<div class="well-list-item ${isActive ? 'active' : ''}" data-widx="${i}" data-well-idx="${i}"${logRowAttr} style="min-height:${minH}px;box-sizing:border-box;${changeStyling}${isLocked ? ' opacity:0.7;' : ''}${errorStyling}" onclick="selectWell(${i})">
+      <div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem; ${hasBadges ? 'margin-bottom:0.2rem;' : ''}">
+        <div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ${errorNameStyle}" title="${escFn(w.name || '').replace(/"/g, '&quot;')}">${escFn(w.name || '')}</div>
+        <div class="well-list-actions">
+          <button class="well-list-action ${hasUwagi ? 'has-uwagi' : ''}" title="${uwagiTitle}" aria-label="Uwagi" onclick="event.stopPropagation(); openWellNotesModal(${i})"><i data-lucide="file-text" aria-hidden="true"></i></button>
+          <button class="well-list-action" title="Duplikuj" aria-label="Duplikuj" onclick="event.stopPropagation(); duplicateWell(${i})"><i data-lucide="clipboard-list" aria-hidden="true"></i></button>
+          <button class="well-list-action del" title="Usuń" aria-label="Usuń" onclick="event.stopPropagation(); removeWell(${i})"><i data-lucide="x" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      ${badgesHtml}
+      <div class="well-list-meta">
+        <div style="display:flex; gap:0.6rem;">
+          <span>Elementy: <strong>${(w.config || []).length}</strong></span>
+          <span>Przejścia: <strong>${w.przejscia ? w.przejscia.length : 0}</strong></span>
+        </div>
+        <span class="well-list-price">${fmtIntFn(stats.price + transportVal)} PLN</span>
+      </div>`;
+
+    if (hasElevations) {
+        html += `<div class="well-list-elevations">
+          <span>↑ <strong>${Number(w.rzednaWlazu).toFixed(3)}</strong></span>
+          <span>↓ <strong>${Number(w.rzednaDna).toFixed(3)}</strong></span>
+          <span style="margin-left:auto;">H=<strong>${requiredH}</strong>mm</span>
+        </div>`;
+    }
+    html += `</div>`;
+    return html;
+}
+
 window.renderDiscountPanel = renderDiscountPanel;
+window._wellBuildCardHtml = _wellBuildCardHtml;

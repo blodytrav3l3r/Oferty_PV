@@ -122,7 +122,10 @@ function parseTransitionGeometry(pr, bottomElev) {
     let pel = parseFloat(pr.rzednaWlaczenia);
     if (isNaN(pel)) pel = 0;
 
-    const pprod = studnieProducts.find((x) => x.id === pr.productId);
+    const pprod =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(pr.productId)
+            : studnieProducts.find((x) => x.id === pr.productId);
     let prW = 160,
         prH = 160,
         isEgg = false,

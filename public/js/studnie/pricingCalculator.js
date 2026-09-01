@@ -36,11 +36,14 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
         totalTransportCostForOffer = totalTransportsCount * costPerTrip;
     }
 
-    const productMap = new Map(
-        studnieProducts.map(function (p) {
-            return [p.id, p];
-        })
-    );
+    const productMap =
+        typeof studnieProductsById !== 'undefined' && studnieProductsById
+            ? studnieProductsById
+            : new Map(
+                  studnieProducts.map(function (p) {
+                      return [p.id, p];
+                  })
+              );
     const wellsForExport = wells.map(function (well) {
         const stats = calcWellStats(well);
         const wellTransportCost =

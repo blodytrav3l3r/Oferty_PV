@@ -153,7 +153,10 @@ window.tmRefreshWellData = function () {
         let trList = [];
         if (well.przejscia && well.przejscia.length > 0) {
             trList = well.przejscia.map((tr, trIdx) => {
-                const p = studnieProducts.find((prod) => prod.id === tr.productId);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(tr.productId)
+                        : studnieProducts.find((prod) => prod.id === tr.productId);
                 return {
                     trIndex: trIdx,
                     angle: tr.angle || 0,
@@ -457,7 +460,10 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     const well = wells[wellIdx];
     if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
     const tr = well.przejscia[trIdx];
-    const currentP = studnieProducts.find((p) => p.id === tr.productId);
+    const currentP =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(tr.productId)
+            : studnieProducts.find((p) => p.id === tr.productId);
 
     const allProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
     const categories = [...new Set(allProducts.map((p) => p.category))].sort();
@@ -730,7 +736,10 @@ window.tmUpdatePreview = function () {
         const well = wells[wellIdx];
         if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
         const tr = well.przejscia[trIdx];
-        const p = studnieProducts.find((prod) => prod.id === tr.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(tr.productId)
+                : studnieProducts.find((prod) => prod.id === tr.productId);
         if (!p || p.category === targetCat) return;
 
         const replacement = studnieProducts.find(
@@ -850,7 +859,10 @@ window.tmApplyChanges = async function () {
         if (!well || !well.przejscia || !well.przejscia[trIdx]) return;
 
         const tr = well.przejscia[trIdx];
-        const p = studnieProducts.find((prod) => prod.id === tr.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(tr.productId)
+                : studnieProducts.find((prod) => prod.id === tr.productId);
         if (!p) return;
         if (p.category === targetCat) return;
 

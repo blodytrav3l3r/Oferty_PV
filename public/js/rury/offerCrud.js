@@ -132,6 +132,7 @@ async function saveOffer() {
         const idx = offers.findIndex((o) => o.id === offerDoc.id);
         if (idx >= 0) offers[idx] = { ...offerDoc, id: offerDoc.id };
         else offers.push({ ...offerDoc, id: offerDoc.id });
+        if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
 
         renderSavedOffers();
     } catch (err) {
@@ -184,7 +185,10 @@ function clearOfferForm() {
 /* ===== ŁADOWANIE OFERTY ===== */
 
 async function loadOffer(id) {
-    let offer = offers.find((o) => o.id === id);
+    let offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     let srv = null;
     try {
         const { storageService } = await import('../shared/StorageService.js');
@@ -309,7 +313,10 @@ window.loadSavedOfferData = function (doc, id) {
 /* ===== DUPLIKACJA ===== */
 
 function duplicateOffer(id) {
-    const offer = offers.find((o) => o.id === id);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     if (!offer) return;
     const newOffer = structuredClone(offer);
     newOffer.id = 'offer_' + Date.now();
@@ -358,7 +365,10 @@ async function deleteOffer(id) {
 }
 
 function downloadExistingOffer(id) {
-    const offer = offers.find((o) => o.id === id);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     if (!offer) return;
     downloadOfferFile(offer);
     showToast('Pobrano plik oferty', 'success');
@@ -367,7 +377,10 @@ function downloadExistingOffer(id) {
 /* ===== HISTORIA OFERTY ===== */
 
 function restoreOfferVersion(offerId, historyIndex) {
-    const offer = offers.find((o) => o.id === offerId);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(offerId)
+            : offers.find((o) => o.id === offerId);
     if (!offer || !offer.history || !offer.history[historyIndex]) return;
 
     const snapshot = offer.history[historyIndex];

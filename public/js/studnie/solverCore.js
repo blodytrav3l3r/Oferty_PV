@@ -20,7 +20,10 @@ function buildConfigSegments(configItems, psiaBuda) {
     let y = 0;
     let lastWasD = !!psiaBuda;
     return configItems.map((item) => {
-        const prod = studnieProducts.find((p) => p.id === item.productId);
+        const prod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
         const isDennicaLike =
             prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
@@ -57,7 +60,10 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
         const pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
+        const pprod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(pr.productId)
+                : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
         let currentDennicaEnd = 0;
@@ -65,7 +71,10 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
         let lastWasD = !!well.psiaBuda;
         const configReversed = [...newItems].reverse();
         for (const item of configReversed) {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) continue;
             let h = p.height || 0;
             const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
@@ -100,7 +109,10 @@ function applyDrilledRings(kregItems, segments, well, availProducts) {
 
                 let segCount = 0;
                 for (let ki = 0; ki < newItems.length; ki++) {
-                    const kp = studnieProducts.find((p) => p.id === newItems[ki].productId);
+                    const kp =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(newItems[ki].productId)
+                            : studnieProducts.find((p) => p.id === newItems[ki].productId);
                     if (!kp || (kp.componentType !== 'krag' && kp.componentType !== 'krag_ot'))
                         continue;
                     for (let q = 0; q < newItems[ki].quantity; q++) {

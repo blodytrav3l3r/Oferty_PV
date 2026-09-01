@@ -13,13 +13,19 @@ function getWellZwienczenieName(well) {
         'pierscien_odciazajacy'
     ];
     const topItem = well.config.find((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return p && topTypes.includes(p.componentType);
     });
 
     if (!topItem) return '—';
 
-    const product = studnieProducts.find((p) => p.id === topItem.productId);
+    const product =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(topItem.productId)
+            : studnieProducts.find((p) => p.id === topItem.productId);
     if (!product) return '—';
 
     let name = product.name;

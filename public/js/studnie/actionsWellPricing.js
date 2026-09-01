@@ -85,12 +85,17 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
     if (p.componentType === 'kineta') {
         let dennicaHeight = 0;
         const dennicaItem = well.config.find((c) => {
-            const pr = studnieProducts.find((x) => x.id === c.productId);
+            const pr =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((x) => x.id === c.productId);
             return pr && pr.componentType === 'dennica';
         });
         if (dennicaItem) {
             dennicaHeight =
-                studnieProducts.find((x) => x.id === dennicaItem.productId)?.height || 0;
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(dennicaItem.productId)
+                    : studnieProducts.find((x) => x.id === dennicaItem.productId)?.height || 0;
         }
 
         const h1m = parseFloat(p.hMin1);
@@ -214,15 +219,21 @@ function getItemPriceBreakdown(well, p, applyDiscount, item) {
     if (p.componentType === 'kineta') {
         let dennicaHeight = 0;
         const dennicaItem = well.config.find(function (c) {
-            const pr = studnieProducts.find(function (x) {
-                return x.id === c.productId;
-            });
+            const pr =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find(function (x) {
+                          return x.id === c.productId;
+                      });
             return pr && pr.componentType === 'dennica';
         });
         if (dennicaItem) {
-            const pPr = studnieProducts.find(function (x) {
-                return x.id === dennicaItem.productId;
-            });
+            const pPr =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(dennicaItem.productId)
+                    : studnieProducts.find(function (x) {
+                          return x.id === dennicaItem.productId;
+                      });
             dennicaHeight = pPr ? pPr.height || 0 : 0;
         }
 
@@ -362,7 +373,9 @@ function calcWellStats(well) {
         const p =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
-                : studnieProducts.find((pr) => pr.id === item.productId);
+                : typeof getStudnieProductById === 'function'
+                  ? getStudnieProductById(item.productId)
+                  : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
         const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
@@ -422,13 +435,19 @@ function calcWellStats(well) {
         if (typeof buildConfigMap === 'function') {
             configMap = buildConfigMap(
                 well,
-                (id) => studnieProducts.find((pr) => pr.id === id),
+                (id) =>
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(id)
+                        : studnieProducts.find((pr) => pr.id === id),
                 true
             );
         }
 
         well.przejscia.forEach((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
 
             let drillingBasePrice = 0;

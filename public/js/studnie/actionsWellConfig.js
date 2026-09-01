@@ -30,7 +30,10 @@ async function selectZakonczenie(productId) {
     updateZakonczenieButton();
 
     if (productId) {
-        const p = studnieProducts.find((pr) => pr.id === productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(productId)
+                : studnieProducts.find((pr) => pr.id === productId);
         showToast(`Zakończenie: ${p ? p.name : productId}`, 'success');
     } else {
         showToast('Zakończenie: Auto (Konus)', 'success');
@@ -256,7 +259,10 @@ async function selectRedukcjaZakonczenie(productId) {
     }
 
     if (productId) {
-        const p = studnieProducts.find((pr) => pr.id === productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(productId)
+                : studnieProducts.find((pr) => pr.id === productId);
         const isRelief =
             p &&
             ['plyta_najazdowa', 'plyta_zamykajaca', 'pierscien_odciazajacy'].includes(
@@ -348,7 +354,10 @@ function doSelectDN(dn) {
         }
 
         if (well.zakonczenie && dn !== 'styczna') {
-            const oldProd = studnieProducts.find((p) => p.id === well.zakonczenie);
+            const oldProd =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(well.zakonczenie)
+                    : studnieProducts.find((p) => p.id === well.zakonczenie);
             if (oldProd) {
                 const newProd = studnieProducts.find(
                     (p) => p.componentType === oldProd.componentType && p.dn === dn

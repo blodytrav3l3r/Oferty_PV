@@ -34,6 +34,11 @@ function excelOnRzednaChange(wIdx) {
     _excelUpdateLeftPreview(wIdx);
     if (typeof _excelImmediatePreview === 'function') _excelImmediatePreview(wIdx);
 
+    // podczas bulk paste nie odpalaj solvera per komórka — zrobi to batch na końcu (Faza3)
+    if (typeof _excelPasteInProgress !== 'undefined' && _excelPasteInProgress) {
+        _excelMarkAsManual(wIdx);
+        return;
+    }
     if (
         _excelAutoSelectEnabled &&
         well.autoSelect !== false &&
@@ -224,7 +229,10 @@ function excelOnWlazChange(wIdx, productId) {
         _excelSaveUndoSnapshot(wIdx);
     const well = wells[wIdx];
     well.config = (well.config || []).filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'wlaz');
     });
     if (productId) _excelInsertConfigItem(well, 'wlaz', productId, 1);
@@ -291,7 +299,10 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     const existingItems = [];
     if (!productId) {
         for (const item of well.config || []) {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) continue;
             if (p.componentType !== componentType) continue;
             if (height !== undefined && parseInt(p.height) !== parseInt(height)) continue;
@@ -300,7 +311,10 @@ function excelOnCompChange(wIdx, componentType, height, value, productId, redDn)
     }
 
     well.config = (well.config || []).filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return true;
         if (productId) return item.productId !== productId;
         if (isRingType && !hasHoles) {

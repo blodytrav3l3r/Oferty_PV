@@ -146,7 +146,9 @@ function getPrzejsciaSummary() {
                 well.przejscia.forEach((pr) => {
                     const prProd =
                         typeof studnieProducts !== 'undefined'
-                            ? studnieProducts.find((x) => x.id === pr.productId)
+                            ? typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(pr.productId)
+                                : studnieProducts.find((x) => x.id === pr.productId)
                             : null;
                     if (prProd) {
                         const name = prProd.category || prProd.name || '';

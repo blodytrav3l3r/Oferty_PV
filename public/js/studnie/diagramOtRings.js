@@ -45,7 +45,10 @@ function enforceOtRings(targetWell) {
     const configReversed = [...well.config].reverse();
     let lastWasDennica = !!well.psiaBuda;
     for (const item of configReversed) {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || !p.height) continue;
         const qty = item.quantity || 1;
         const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
@@ -110,7 +113,10 @@ function checkSegmentHasHole(seg, well, rzDna) {
         if (isNaN(pel)) continue;
 
         const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
+        const pprod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(pr.productId)
+                : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
         let prDN = 160;
@@ -209,7 +215,10 @@ function degradeFromOtRing(seg, currentProd, currentId, well) {
         targetId = stdProd.id;
     } else {
         const baseStripped = currentId.replace(/[_-]OT$/i, '');
-        const baseProduct = studnieProducts.find((p) => p.id === baseStripped);
+        const baseProduct =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(baseStripped)
+                : studnieProducts.find((p) => p.id === baseStripped);
         if (baseProduct) {
             targetId = baseProduct.id;
         }

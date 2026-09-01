@@ -25,6 +25,12 @@ let _excelUserEditing = false;
 let _excelAutoSelectEnabled = true;
 /* wellIndexById — canonical index SSoT (I3): wells[] + Map nie dwie kopie, sort nie rebuild */
 let _excelWellIndexById = new Map();
+/* filteredIndexes — SSoT widoku (C1). DOM = tylko widok. Invalidacja centralna. */
+let _excelFilteredIndexes = null;
+let _excelFilteredDirty = true;
+let _excelFilteredCacheTab = null;
+let _excelFilteredCacheQuery = null;
+let _excelFilteredCacheWellsLen = -1;
 /* eslint-enable prefer-const */
 
 // eslint-disable-next-line no-unused-vars -- eksportowany przez window.KINETA_OPTIONS
@@ -201,6 +207,9 @@ function _excelBuildWellIndex() {
 }
 function _excelRebuildWellIndex() {
     _excelBuildWellIndex();
+    if (typeof _excelInvalidateFilteredIndexes === 'function') {
+        _excelInvalidateFilteredIndexes();
+    }
 }
 function _excelGetWellIdxById(id) {
     const v = _excelWellIndexById.get(id);
@@ -210,6 +219,88 @@ if (typeof window !== 'undefined') {
     window._excelBuildWellIndex = _excelBuildWellIndex;
     window._excelRebuildWellIndex = _excelRebuildWellIndex;
     window._excelGetWellIdxById = _excelGetWellIdxById;
+}
+
+/* ===== filteredIndexes SSoT — centralna invalidacja ===== */
+function _excelInvalidateFilteredIndexes() {
+    _excelFilteredDirty = true;
+    _excelFilteredIndexes = null;
+}
+function _excelRebuildFilteredIndexes() {
+    const dn = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    const qEl =
+        typeof document !== 'undefined' ? document.getElementById('excel-search-input') : null;
+    const q = qEl
+        ? String(qEl.value || '')
+              .trim()
+              .toLowerCase()
+        : '';
+    const wLen = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : 0;
+    if (
+        !(_excelFilteredDirty || _excelFilteredIndexes === null) &&
+        _excelFilteredCacheTab === dn &&
+        _excelFilteredCacheQuery === q &&
+        _excelFilteredCacheWellsLen === wLen
+    )
+        return _excelFilteredIndexes;
+    const arr = [];
+    if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+        for (let i = 0; i < wells.length; i++) {
+            const w = wells[i];
+            if (!w) continue;
+            const matchesTab =
+                typeof _excelWellMatchesTab === 'function'
+                    ? _excelWellMatchesTab(w, dn)
+                    : String(w.dn) === String(dn) || (dn === 'styczne' && w.dn === 'styczna');
+            if (!matchesTab) continue;
+            if (q) {
+                const name = String(w.name || w.numer || '').toLowerCase();
+                if (name.indexOf(q) < 0) continue;
+            }
+            arr.push(i);
+        }
+    }
+    _excelFilteredIndexes = arr;
+    _excelFilteredCacheTab = dn;
+    _excelFilteredCacheQuery = q;
+    _excelFilteredCacheWellsLen =
+        typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : 0;
+    _excelFilteredDirty = false;
+    if (typeof window !== 'undefined') {
+        window._excelFilteredIndexes = _excelFilteredIndexes;
+        // sync virtual filtered gdy virtual enabled (jedno źródło)
+        try {
+            window._excelVirtualFiltered = arr;
+            window._excelVirtualTotal = arr.length;
+        } catch (_e) {}
+    }
+    return _excelFilteredIndexes;
+}
+function _excelGetFilteredIndexes() {
+    if (_excelFilteredDirty || _excelFilteredIndexes === null)
+        return _excelRebuildFilteredIndexes();
+    // query mogło się zmienić bez dirty (input event nie zawsze invaliduje)
+    const qEl =
+        typeof document !== 'undefined' ? document.getElementById('excel-search-input') : null;
+    const q = qEl
+        ? String(qEl.value || '')
+              .trim()
+              .toLowerCase()
+        : '';
+    const dn = typeof _excelActiveTab !== 'undefined' ? _excelActiveTab : '1000';
+    const wLen = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : 0;
+    if (
+        q !== _excelFilteredCacheQuery ||
+        dn !== _excelFilteredCacheTab ||
+        wLen !== _excelFilteredCacheWellsLen
+    )
+        return _excelRebuildFilteredIndexes();
+    return _excelFilteredIndexes;
+}
+if (typeof window !== 'undefined') {
+    window._excelInvalidateFilteredIndexes = _excelInvalidateFilteredIndexes;
+    window._excelRebuildFilteredIndexes = _excelRebuildFilteredIndexes;
+    window._excelGetFilteredIndexes = _excelGetFilteredIndexes;
 }
 
 /* Reset stanu selekcji zależnego od układu tabeli. Wołaj przy każdej zmianie

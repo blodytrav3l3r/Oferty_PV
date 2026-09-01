@@ -73,6 +73,47 @@ let offerDefaultRedukcjaZak = null; // ID produktu dla górnego zakończenia red
 
 // System wielu ofert
 let offersStudnie = [];
+let offersStudnieById = new Map();
+function _rebuildOffersStudnieById() {
+    offersStudnieById = new Map();
+    for (let i = 0; i < offersStudnie.length; i++) {
+        const o = offersStudnie[i];
+        if (o && o.id) {
+            offersStudnieById.set(String(o.id), o);
+            const nid = normalizeId(o.id);
+            if (nid !== o.id) offersStudnieById.set(String(nid), o);
+        }
+    }
+}
+function getOfferStudnieById(id) {
+    if (!id) return null;
+    const key = String(id);
+    const nid = normalizeId(key);
+    // lazy rebuild gdy rozmiar nie zgadza się (push/filter)
+    if (offersStudnieById.size !== offersStudnie.length * 1) {
+        // przy mapowaniu raw+nid rozmiar może być > length — sprawdzamy minimalnie
+        if (offersStudnieById.size < offersStudnie.length) _rebuildOffersStudnieById();
+        else {
+            // weryfikacja szybka: czy każdy oferuje jest w mapie
+            let missing = false;
+            for (let i = 0; i < offersStudnie.length; i++) {
+                if (!offersStudnieById.has(String(offersStudnie[i].id))) {
+                    missing = true;
+                    break;
+                }
+            }
+            if (missing) _rebuildOffersStudnieById();
+        }
+    }
+    return offersStudnieById.get(key) || (nid !== key ? offersStudnieById.get(nid) : null) || null;
+}
+window._rebuildOffersStudnieById = _rebuildOffersStudnieById;
+window.getOfferStudnieById = getOfferStudnieById;
+Object.defineProperty(window, 'offersStudnieById', {
+    configurable: true,
+    get: () => offersStudnieById
+});
+_rebuildOffersStudnieById();
 let ordersStudnie = [];
 let editingOfferIdStudnie = null;
 let editingOfferAssignedUserId = null;
@@ -298,6 +339,7 @@ const _GLOBAL_SETTERS = {
     },
     offersStudnie: (v) => {
         offersStudnie = v;
+        if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
     },
     ordersStudnie: (v) => {
         ordersStudnie = v;

@@ -40,7 +40,7 @@ function getProductDiameter(id) {
  * Dla rur jajowych (RJB/RJZ) używa przybliżonego obwodu elipsy.
  */
 function getPipeInnerArea(id) {
-    const product = products.find((p) => p.id === id);
+    const product = getRuryProductById(id);
     if (product && product.area != null) {
         return product.area;
     }
@@ -73,7 +73,7 @@ function isOneMetrePipe(id) {
 function getSortedRuryItems(items) {
     const grouped = {};
     items.forEach((item, i) => {
-        const product = products.find((p) => p.id === item.productId);
+        const product = getRuryProductById(item.productId);
         const category = product ? product.category : 'Inne';
         if (!grouped[category]) grouped[category] = {};
         let diameter = getProductDiameter(item.productId);
@@ -119,6 +119,52 @@ function getSortedRuryItems(items) {
 }
 
 window.getSortedRuryItems = getSortedRuryItems;
+
+/**
+ * O(1) lookup produktu rur po id.
+ * Buduje Map przy pierwszym wywołaniu (lub gdy products zmienił rozmiar).
+ * ponytail: lazy Map — nie wymaga zmiany miejsca ładowania products
+ */
+let _ruryProductsMap = null;
+let _ruryProductsMapSize = 0;
+
+function getRuryProductById(id) {
+    if (!_ruryProductsMap || _ruryProductsMapSize !== products.length) {
+        _ruryProductsMap = new Map(products.map((p) => [p.id, p]));
+        _ruryProductsMapSize = products.length;
+    }
+    return _ruryProductsMap.get(id) || null;
+}
+
+window.getRuryProductById = getRuryProductById;
+
+/**
+ * O(1) lookup oferty rur po id.
+ * Lazy Map — rebuild gdy offers zmienił rozmiar.
+ */
+let _ruryOffersMap = null;
+let _ruryOffersMapSize = 0;
+function _rebuildRuryOffersMap() {
+    if (typeof offers === 'undefined' || !Array.isArray(offers)) {
+        _ruryOffersMap = new Map();
+        _ruryOffersMapSize = 0;
+        return;
+    }
+    _ruryOffersMap = new Map(offers.map((o) => [String(o.id), o]));
+    _ruryOffersMapSize = offers.length;
+}
+function getOfferRuryById(id) {
+    if (!id) return null;
+    if (
+        !_ruryOffersMap ||
+        _ruryOffersMapSize !== (typeof offers !== 'undefined' ? offers.length : 0)
+    ) {
+        _rebuildRuryOffersMap();
+    }
+    return _ruryOffersMap.get(String(id)) || null;
+}
+window._rebuildRuryOffersMap = _rebuildRuryOffersMap;
+window.getOfferRuryById = getOfferRuryById;
 
 /* ===== Rejestracja globali ===== */
 window.getPipeInnerArea = getPipeInnerArea;

@@ -370,6 +370,7 @@ function openExcelTableModal() {
     /* Aktualne statusy konfiguracji przed renderem (podświetlenie wierszy F4) */
     if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
     _excelActiveTab = DN_TABS[0];
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     /* Nie zaznaczaj żadnego wiersza przy otwarciu — currentWellIndex=-1 PRZED renderem */
     if (typeof currentWellIndex !== 'undefined') currentWellIndex = -1;
     _excelRenderTabs();

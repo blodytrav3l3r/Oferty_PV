@@ -37,7 +37,11 @@ function calcStopnieExecution(angle) {
 function buildEtykietaElementsSnapshot(well) {
     const config = well.config || [];
     const findProduct = (id) =>
-        typeof studnieProducts !== 'undefined' ? studnieProducts.find((p) => p.id === id) : null;
+        typeof studnieProducts !== 'undefined'
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(id)
+                : studnieProducts.find((p) => p.id === id)
+            : null;
     const countMap = new Map();
 
     config.forEach((item) => {

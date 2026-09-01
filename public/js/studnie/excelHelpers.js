@@ -196,9 +196,13 @@ function _excelCalcDennicaHeight(well) {
     let dennH = 0;
     (well.config || []).forEach((item) => {
         const p =
-            typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : typeof studnieProducts !== 'undefined'
+                  ? typeof getStudnieProductById === 'function'
+                      ? getStudnieProductById(item.productId)
+                      : studnieProducts.find((pr) => pr.id === item.productId)
+                  : null;
         if (p && p.componentType === 'dennica' && p.height) {
             dennH += p.height * item.quantity;
         }
@@ -254,13 +258,16 @@ function _excelGetResolution(well, item) {
     if (!well.__resCache) well.__resCache = {};
     const key = item.productId;
     if (!well.__resCache[key]) {
-        const sz = typeof studnieProducts !== 'undefined' ? studnieProducts : [];
         well.__resCache[key] =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
-                : sz.find(function (pr) {
-                      return pr.id === item.productId;
-                  });
+                : typeof getStudnieProductById === 'function'
+                  ? getStudnieProductById(item.productId)
+                  : (typeof studnieProducts !== 'undefined' ? studnieProducts : []).find(
+                        function (pr) {
+                            return pr.id === item.productId;
+                        }
+                    );
     }
     return well.__resCache[key];
 }
@@ -510,9 +517,13 @@ function _excelUpdateHeaderProdCodes() {
 function _excelGetWlazFromConfig(well) {
     for (const item of well.config || []) {
         const p =
-            typeof studnieProducts !== 'undefined'
-                ? studnieProducts.find((pr) => pr.id === item.productId)
-                : null;
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : typeof studnieProducts !== 'undefined'
+                  ? typeof getStudnieProductById === 'function'
+                      ? getStudnieProductById(item.productId)
+                      : studnieProducts.find((pr) => pr.id === item.productId)
+                  : null;
         if (p && p.componentType === 'wlaz') return p.id;
     }
     return '';
@@ -531,7 +542,12 @@ function _excelAutoSetWlaz(well) {
         typeof window.offerDefaultWlazH !== 'undefined' ? window.offerDefaultWlazH : 150;
     const chosen = avail.find((p) => parseInt(p.height) === defaultWlazH) || avail[0];
     well.config = (well.config || []).filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : typeof getStudnieProductById === 'function'
+                  ? getStudnieProductById(item.productId)
+                  : studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'wlaz');
     });
     well.config.unshift({ productId: chosen.id, quantity: 1, autoAdded: false });
@@ -650,6 +666,7 @@ function _excelMarkDirty() {
 /* ===== SEARCH / FILTER ===== */
 let _excelFilterDebounceTimer = null;
 function _excelFilterWellsImmediate(value) {
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     const q = (value || '').trim().toLowerCase();
     const container = document.getElementById('excel-table-container');
     if (!container) return;

@@ -67,7 +67,10 @@ async function changeOfferUserFromListStudnie(offerId) {
         showToast('Brak uprawnień do zmiany opiekuna', 'error');
         return;
     }
-    const offer = offersStudnie.find((o) => o.id === offerId);
+    const offer =
+        typeof getOfferStudnieById === 'function'
+            ? getOfferStudnieById(offerId)
+            : offersStudnie.find((o) => o.id === offerId);
     if (!offer) {
         showToast('Nie znaleziono oferty', 'error');
         return;

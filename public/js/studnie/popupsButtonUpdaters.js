@@ -7,7 +7,10 @@ function updateZakonczenieButton() {
     const well = getCurrentWell();
     if (!well) return;
     if (well.zakonczenie) {
-        const p = studnieProducts.find((pr) => pr.id === well.zakonczenie);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(well.zakonczenie)
+                : studnieProducts.find((pr) => pr.id === well.zakonczenie);
         const shortName = p
             ? p.name.length > 12
                 ? p.name.substring(0, 12) + '\u2026'
@@ -84,7 +87,10 @@ function updateRedukcjaZakButton() {
 
     const targetDn = well.redukcjaTargetDN || 1000;
     if (well.redukcjaZakonczenie) {
-        const p = studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(well.redukcjaZakonczenie)
+                : studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
         const shortName = p
             ? p.name.replace(/^.*?(Konus|P\u0142yta|Pier\u015bcie\u0144)/i, '$1').substring(0, 18)
             : 'Zak. DN' + targetDn;

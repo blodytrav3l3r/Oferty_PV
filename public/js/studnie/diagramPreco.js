@@ -43,7 +43,10 @@ function calculatePrecoInsertHeight(well) {
 function buildTransitionRanges(przejscia, rzDna) {
     return przejscia
         .map((p) => {
-            const prod = studnieProducts.find((pr) => pr.id === p.productId);
+            const prod =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(p.productId)
+                    : studnieProducts.find((pr) => pr.id === p.productId);
             let dnRury = parseInt(p.dn) || 0;
             if (!dnRury && prod) dnRury = parseInt(prod.dn) || 0;
             if (dnRury <= 0) return null;
@@ -134,7 +137,10 @@ function drawPrecoInsertLine(well, canvas) {
         let dennicaHeight = 0;
         if (well.config) {
             well.config.forEach((item) => {
-                const p = studnieProducts.find((pr) => pr.id === item.productId);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(item.productId)
+                        : studnieProducts.find((pr) => pr.id === item.productId);
                 if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
                     dennicaHeight += (p.height || 0) * (item.quantity || 1);
                 }

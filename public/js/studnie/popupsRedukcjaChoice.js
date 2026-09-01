@@ -115,7 +115,10 @@ function trySwapReductionComponents(well, oldTarget, newTarget) {
     const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
     for (const item of well.config) {
-        const prod = studnieProducts.find((p) => p.id === item.productId);
+        const prod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((p) => p.id === item.productId);
         if (!prod) {
             newConfig.push(item);
             continue;

@@ -6,7 +6,12 @@ window.toggleLinerDisabled = function (index, type) {
     if (!well || !well.config || !well.config[index]) return;
 
     const item = well.config[index];
-    const p = studnieProducts.find((pr) => pr.id === item.productId);
+    const p =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(item.productId)
+            : typeof getStudnieProductById === 'function'
+              ? getStudnieProductById(item.productId)
+              : studnieProducts.find((pr) => pr.id === item.productId);
 
     if (type === 'pehd') {
         item.disablePehd = !item.disablePehd;
@@ -67,7 +72,11 @@ function renderWellConfig() {
         const p =
             typeof resolveEffectiveProduct === 'function'
                 ? resolveEffectiveProduct(well, item.productId, item)
-                : studnieProducts.find((pr) => pr.id === item.productId);
+                : typeof getStudnieProductById === 'function'
+                  ? getStudnieProductById(item.productId)
+                  : typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const itemPrice =
             item.frozenPrice != null && window.isPreviewMode
@@ -78,11 +87,21 @@ function renderWellConfig() {
         if (p.componentType === 'dennica' || p.componentType === 'styczna') {
             if (!item.isPsiaBuda) {
                 const kinetaItem = well.config.find((c) => {
-                    const pr = studnieProducts.find((x) => x.id === c.productId);
+                    const pr =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(c.productId)
+                            : typeof getStudnieProductById === 'function'
+                              ? getStudnieProductById(c.productId)
+                              : studnieProducts.find((x) => x.id === c.productId);
                     return pr && pr.componentType === 'kineta';
                 });
                 if (kinetaItem) {
-                    const kinetaProd = studnieProducts.find((x) => x.id === kinetaItem.productId);
+                    const kinetaProd =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(kinetaItem.productId)
+                            : typeof getStudnieProductById === 'function'
+                              ? getStudnieProductById(kinetaItem.productId)
+                              : studnieProducts.find((x) => x.id === kinetaItem.productId);
                     if (kinetaProd) {
                         const rawKinetaPrice =
                             kinetaItem.frozenPrice != null && window.isPreviewMode

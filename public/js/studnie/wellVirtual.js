@@ -1,23 +1,55 @@
 // @ts-nocheck
-/* ===== WELL VIRTUAL — viewport dla konfiguratora (C-2) =====
- * Model SSoT: wells[] + wellIndexById + filteredIndexes[logical→wellIdx]
- * DOM = view only: ~50 cards + spacers, nie 10k
- * Flag: ?wellVirtual=1 (progressive, legacy pozostaje oracle)
- * Row binding: data-logical-row + data-well-idx, event czyta aktualny binding
+/* ===== WELL VIRTUAL — viewport dla konfiguratora =====
+ * Model SSoT: wells[] + _wellVirtualFiltered[logical→wellIdx]
+ * DOM = view only: ~30 cards + spacery, bez przeciążania drzewa DOM
+ * Statyczne granice nagłówków grup (isStart) + Prefix Sums dla 100% precyzji spacerów (0 layout shifts/jumps)
+ * Scoped icon generation + rAF scroll handler z ochroną przed pętlami re-entrancy
  */
 
 const WELL_CARD_HEIGHT = 78;
-const WELL_OVERSCAN = 10;
+const WELL_OVERSCAN_PX = 350;
 
 let _wellVirtualEnabled = false;
 let _wellVirtualRaf = 0;
+let _wellVirtualIsRendering = false;
 let _wellVirtualFiltered = null; // number[] wellIdx
+let _wellVirtualGroupStarts = null; // boolean[] isGroupStart
+let _wellVirtualPrefixSums = null; // number[] cumulative heights
 let _wellVirtualTotal = 0;
 let _wellVirtualStart = 0;
 let _wellVirtualEnd = 0;
 let _wellVirtualContainer = null;
 let _wellVirtualTransportMap = null;
 let _wellVirtualStatsMap = null;
+
+let _wellVirtualMeasuredNoElev = 76;
+let _wellVirtualMeasuredElev = 104;
+const _wellVirtualMeasuredHeader = 34;
+
+function _wellVirtualCardHtml(w, wIdx, logicalRow, transportVal, stats) {
+    if (typeof _wellBuildCardHtml === 'function') {
+        return _wellBuildCardHtml(w, wIdx, logicalRow, transportVal, stats);
+    }
+    const esc =
+        typeof escapeHtml === 'function'
+            ? escapeHtml
+            : function (s) {
+                  return String(s);
+              };
+    return (
+        '<div class="well-list-item" data-widx="' +
+        wIdx +
+        '" data-logical-row="' +
+        logicalRow +
+        '" data-well-idx="' +
+        wIdx +
+        '" onclick="selectWell(' +
+        wIdx +
+        ')">' +
+        esc(w ? w.name || '' : '') +
+        '</div>'
+    );
+}
 
 function _wellVirtualIsEnabled() {
     try {
@@ -37,6 +69,8 @@ function _wellVirtualBuildFiltered() {
     if (typeof wells === 'undefined' || !Array.isArray(wells)) {
         _wellVirtualFiltered = [];
         _wellVirtualTotal = 0;
+        _wellVirtualGroupStarts = [];
+        _wellVirtualPrefixSums = [0];
         return;
     }
     const searchEl =
@@ -46,10 +80,8 @@ function _wellVirtualBuildFiltered() {
               .trim()
               .toLowerCase()
         : '';
-    const arr = [];
-    // preserve DN group order 1000,1200,... but via single pass stable sort by dktCap index
-    const order = { 1000: 0, 1200: 1, 1500: 2, 2000: 3, 2500: 4, styczna: 5 };
     const tmp = [];
+    const order = { 1000: 0, 1200: 1, 1500: 2, 2000: 3, 2500: 4, styczna: 5 };
     for (let i = 0; i < wells.length; i++) {
         const w = wells[i];
         if (!w) continue;
@@ -70,9 +102,40 @@ function _wellVirtualBuildFiltered() {
         if (oa !== ob) return oa - ob;
         return a - b;
     });
-    for (let k = 0; k < tmp.length; k++) arr.push(tmp[k]);
-    _wellVirtualFiltered = arr;
-    _wellVirtualTotal = arr.length;
+
+    _wellVirtualFiltered = tmp;
+    _wellVirtualTotal = tmp.length;
+
+    // Przelicz statyczne granice grup oraz prefiksowe sumy wysokości
+    const groupStarts = new Array(tmp.length);
+    const prefixSums = new Array(tmp.length + 1);
+    prefixSums[0] = 0;
+
+    const hCardNoElev = _wellVirtualMeasuredNoElev || 62;
+    const hCardElev = _wellVirtualMeasuredElev || 84;
+    const hHeader = _wellVirtualMeasuredHeader || 34;
+
+    let lastDnKey = null;
+    for (let k = 0; k < tmp.length; k++) {
+        const wIdx = tmp[k];
+        const w = wells[wIdx];
+        const dnKey = w ? (w.dn === 'styczna' ? 'styczna' : String(w.dn)) : '';
+
+        const isStart = k === 0 || dnKey !== lastDnKey;
+        groupStarts[k] = isStart;
+        if (isStart) lastDnKey = dnKey;
+
+        const hasElevations = w && w.rzednaWlazu != null && w.rzednaDna != null;
+        const cardH = hasElevations ? hCardElev : hCardNoElev;
+        const headH = isStart ? hHeader : 0;
+        const totalItemH = cardH + headH;
+
+        prefixSums[k + 1] = prefixSums[k] + totalItemH;
+    }
+
+    _wellVirtualGroupStarts = groupStarts;
+    _wellVirtualPrefixSums = prefixSums;
+
     try {
         if (typeof window !== 'undefined') {
             window._wellVirtualFiltered = _wellVirtualFiltered;
@@ -85,24 +148,60 @@ function _wellVirtualGetVisibleRange() {
     const c =
         _wellVirtualContainer ||
         (typeof document !== 'undefined' ? document.getElementById('wells-list') : null);
-    if (!c) return { start: 0, end: Math.min(_wellVirtualTotal, 30) };
-    const scrollTop = c.scrollTop || 0;
-    const h = c.clientHeight || 400;
-    const rowsInView = Math.ceil(h / WELL_CARD_HEIGHT);
-    let start = Math.floor(scrollTop / WELL_CARD_HEIGHT) - WELL_OVERSCAN;
-    if (start < 0) start = 0;
-    let end = start + rowsInView + WELL_OVERSCAN * 2;
-    if (end > _wellVirtualTotal) {
-        end = _wellVirtualTotal;
-        start = Math.max(0, end - rowsInView - WELL_OVERSCAN * 2);
+    if (!c || !_wellVirtualPrefixSums || _wellVirtualTotal === 0) {
+        return { start: 0, end: Math.min(_wellVirtualTotal, 30) };
     }
+    const scrollTop = c.scrollTop || 0;
+    const ch = c.clientHeight || 500;
+
+    const targetTop = Math.max(0, scrollTop - WELL_OVERSCAN_PX);
+    const targetBottom = scrollTop + ch + WELL_OVERSCAN_PX;
+
+    // Wyszukiwanie binarne dla start
+    let start = 0;
+    let low = 0,
+        high = _wellVirtualTotal - 1;
+    while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (_wellVirtualPrefixSums[mid + 1] >= targetTop) {
+            start = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    // Wyszukiwanie binarne dla end
+    let end = _wellVirtualTotal;
+    ((low = start), (high = _wellVirtualTotal - 1));
+    while (low <= high) {
+        const mid = (low + high) >> 1;
+        if (_wellVirtualPrefixSums[mid] >= targetBottom) {
+            end = mid;
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    if (start < 0) start = 0;
+    if (end > _wellVirtualTotal) end = _wellVirtualTotal;
+    if (end < start) end = start;
+
+    // Gdy użytkownik przewija blisko końca (np. ostatnie 15 elementów), wymuś renderowanie do końca
+    if (_wellVirtualTotal - end < 15) {
+        end = _wellVirtualTotal;
+    }
+
     return { start, end };
 }
 
 function _wellVirtualOnScroll() {
+    if (_wellVirtualIsRendering) return;
     if (_wellVirtualRaf) cancelAnimationFrame(_wellVirtualRaf);
     _wellVirtualRaf = requestAnimationFrame(function () {
         _wellVirtualRaf = 0;
+        if (_wellVirtualIsRendering) return;
         const r = _wellVirtualGetVisibleRange();
         if (r.start === _wellVirtualStart && r.end === _wellVirtualEnd) return;
         _wellVirtualRenderBody();
@@ -115,6 +214,10 @@ function _wellVirtualPatchSearch() {
         const searchEl =
             typeof document !== 'undefined' ? document.getElementById('wells-search-input') : null;
         if (!searchEl || searchEl._wellVirtualPatched) return;
+        if (searchEl._wellSearchPatched) {
+            searchEl._wellVirtualPatched = true;
+            return;
+        }
         searchEl.removeAttribute('oninput');
         searchEl.oninput = null;
         searchEl.addEventListener('input', function () {
@@ -140,8 +243,9 @@ function _wellVirtualAttach() {
     _wellVirtualContainer = c;
     c.removeEventListener('scroll', _wellVirtualOnScroll);
     c.addEventListener('scroll', _wellVirtualOnScroll, { passive: true });
-    if (!c.style.maxHeight) c.style.maxHeight = '60vh';
-    c.style.overflow = 'auto';
+    if (getComputedStyle(c).overflowY === 'visible' || getComputedStyle(c).overflowY === 'hidden') {
+        c.style.overflowY = 'auto';
+    }
     _wellVirtualPatchSearch();
 }
 
@@ -156,145 +260,90 @@ function _wellVirtualDetach() {
     }
 }
 
-function _wellVirtualCardHtml(w, wIdx, logicalRow) {
-    try {
-        const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
-        const stats =
-            _wellVirtualStatsMap && _wellVirtualStatsMap.has(wIdx)
-                ? _wellVirtualStatsMap.get(wIdx)
-                : typeof calcWellStats === 'function'
-                  ? calcWellStats(w)
-                  : { price: 0, weight: 0, height: 0 };
-        const hasElevations = w.rzednaWlazu != null && w.rzednaDna != null;
-        const requiredH = hasElevations ? Math.round((w.rzednaWlazu - w.rzednaDna) * 1000) : null;
-        let transportVal = 0;
-        try {
-            if (_wellVirtualTransportMap) {
-                transportVal =
-                    _wellVirtualTransportMap.get(wIdx) || _wellVirtualTransportMap.get(w) || 0;
-            } else if (typeof calculateWellTransportMap === 'function') {
-                const tm = calculateWellTransportMap(wells);
-                transportVal = tm.map ? tm.map.get(w) || 0 : 0;
-            }
-        } catch (_e) {}
-        const hasErrors = (function () {
-            if (!w) return false;
-            if (w.rzednaWlazu != null && w.rzednaDna != null) {
-                const req = Math.round((w.rzednaWlazu - w.rzednaDna) * 1000);
-                const s = typeof calcWellStats === 'function' ? calcWellStats(w) : { height: 0 };
-                if (s.height - req > 20 || req - s.height > 100) return true;
-            }
-            if (
-                w.configStatus === 'ERROR' ||
-                (w.configErrors && w.configErrors.length > 0 && w.configStatus !== 'OK')
-            )
-                return true;
-            return false;
-        })();
-        const errorStyling = hasErrors
-            ? ' background:rgba(var(--danger-rgb), 0.15) !important;'
-            : '';
-        const errorNameStyle = hasErrors
-            ? 'color:var(--danger) !important; font-weight: var(--fw-bold) !important;'
-            : '';
-        const isLocked = typeof isWellLocked === 'function' ? isWellLocked(wIdx) : false;
-        const fmtIntFn =
-            typeof fmtInt === 'function'
-                ? fmtInt
-                : function (n) {
-                      return String(n);
-                  };
-        const esc =
-            typeof escapeHtml === 'function'
-                ? escapeHtml
-                : function (s) {
-                      return String(s);
-                  };
-        let html =
-            '<div class="well-list-item ' +
-            (isActive ? 'active' : '') +
-            '" data-widx="' +
-            wIdx +
-            '" data-logical-row="' +
-            logicalRow +
-            '" data-well-idx="' +
-            wIdx +
-            '" style="' +
-            (isLocked ? ' opacity:0.7;' : '') +
-            errorStyling +
-            '" onclick="selectWell(' +
-            wIdx +
-            ')">';
-        html +=
-            '<div class="well-list-header" style="display:flex; align-items:center; gap:0.4rem;"><div class="well-list-name" style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; ' +
-            errorNameStyle +
-            '" title="' +
-            esc(w.name || '').replace(/"/g, '&quot;') +
-            '">' +
-            esc(w.name || '') +
-            '</div>';
-        html +=
-            '<div class="well-list-actions"><button class="well-list-action" title="Uwagi" onclick="event.stopPropagation(); openWellNotesModal(' +
-            wIdx +
-            ')"><i data-lucide="file-text"></i></button><button class="well-list-action" title="Duplikuj" onclick="event.stopPropagation(); duplicateWell(' +
-            wIdx +
-            ')"><i data-lucide="clipboard-list"></i></button><button class="well-list-action del" title="Usuń" onclick="event.stopPropagation(); removeWell(' +
-            wIdx +
-            ')"><i data-lucide="x"></i></button></div></div>';
-        html +=
-            '<div class="well-list-meta"><div style="display:flex; gap:0.6rem;"><span>Elementy: <strong>' +
-            (w.config || []).length +
-            '</strong></span><span>Przejścia: <strong>' +
-            (w.przejscia ? w.przejscia.length : 0) +
-            '</strong></span></div><span class="well-list-price">' +
-            fmtIntFn(stats.price + transportVal) +
-            ' PLN</span></div>';
-        if (hasElevations) {
-            html +=
-                '<div class="well-list-elevations"><span>↑ <strong>' +
-                Number(w.rzednaWlazu).toFixed(3) +
-                '</strong></span><span>↓ <strong>' +
-                Number(w.rzednaDna).toFixed(3) +
-                '</strong></span><span style="margin-left:auto;">H=<strong>' +
-                requiredH +
-                '</strong>mm</span></div>';
+function _wellVirtualCalibrateHeights(container) {
+    const cards = container.querySelectorAll('.well-list-item[data-widx]');
+    if (!cards.length) return;
+    let sumNo = 0,
+        countNo = 0;
+    let sumEl = 0,
+        countEl = 0;
+    for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        const h = card.getBoundingClientRect().height;
+        if (h < 40 || h > 160) continue;
+        const hasElev = card.querySelector('.well-list-elevations') !== null;
+        if (hasElev) {
+            sumEl += h;
+            countEl++;
+        } else {
+            sumNo += h;
+            countNo++;
         }
-        html += '</div>';
-        return html;
-    } catch (_e) {
-        return (
-            '<div class="well-list-item" data-widx="' +
-            wIdx +
-            '" data-logical-row="' +
-            logicalRow +
-            '" onclick="selectWell(' +
-            wIdx +
-            ')">' +
-            (w.name || '') +
-            '</div>'
-        );
+    }
+    let changed = false;
+    if (countNo >= 3) {
+        const avg = Math.round(sumNo / countNo);
+        if (Math.abs(avg - _wellVirtualMeasuredNoElev) > 3) {
+            _wellVirtualMeasuredNoElev = avg;
+            changed = true;
+        }
+    }
+    if (countEl >= 3) {
+        const avg = Math.round(sumEl / countEl);
+        if (Math.abs(avg - _wellVirtualMeasuredElev) > 3) {
+            _wellVirtualMeasuredElev = avg;
+            changed = true;
+        }
+    }
+    if (changed && _wellVirtualFiltered) {
+        // Zaktualizuj sumy prefiksowe przy zmianie pomiarów
+        const groupStarts = _wellVirtualGroupStarts;
+        const prefixSums = _wellVirtualPrefixSums;
+        if (groupStarts && prefixSums) {
+            const hCardNoElev = _wellVirtualMeasuredNoElev;
+            const hCardElev = _wellVirtualMeasuredElev;
+            const hHeader = _wellVirtualMeasuredHeader;
+            for (let k = 0; k < _wellVirtualFiltered.length; k++) {
+                const wIdx = _wellVirtualFiltered[k];
+                const w = wells[wIdx];
+                const isStart = groupStarts[k];
+                const hasElevations = w && w.rzednaWlazu != null && w.rzednaDna != null;
+                const cardH = hasElevations ? hCardElev : hCardNoElev;
+                const headH = isStart ? hHeader : 0;
+                prefixSums[k + 1] = prefixSums[k] + cardH + headH;
+            }
+        }
     }
 }
-if (typeof window !== 'undefined') window._wellVirtualCardHtml = _wellVirtualCardHtml;
 
 function _wellVirtualRenderBody() {
     if (!_wellVirtualEnabled) return;
-    if (!_wellVirtualFiltered) _wellVirtualBuildFiltered();
+    if (!_wellVirtualFiltered || !_wellVirtualPrefixSums) _wellVirtualBuildFiltered();
+    const container =
+        typeof document !== 'undefined' ? document.getElementById('wells-list') : null;
+    if (!container) return;
+
+    if (_wellVirtualTotal === 0) {
+        container.innerHTML =
+            '<div style="padding:2rem; text-align:center; color:var(--text-muted); font-size: var(--fs-lg);">Brak dodanych studni.<br>Wybierz średnicę z przycisków powyżej.</div>';
+        return;
+    }
+
     const range = _wellVirtualGetVisibleRange();
     _wellVirtualStart = range.start;
     _wellVirtualEnd = range.end;
-    const total = _wellVirtualTotal;
+
     const start = _wellVirtualStart;
     const end = _wellVirtualEnd;
-    // Build slice wells
-    const sliceIdx = _wellVirtualFiltered.slice(start, end);
-    // Delegate to existing card renderer but for slice only — reuse wellUI's card HTML generator if available
-    // Fallback: generate via _wellVirtualCardHtml
+
+    const topH = _wellVirtualPrefixSums[start] || 0;
+    const bottomH =
+        (_wellVirtualPrefixSums[_wellVirtualTotal] || 0) - (_wellVirtualPrefixSums[end] || 0);
+
     let html = '';
-    const topH = start * WELL_CARD_HEIGHT;
-    const bottomH = (total - end) * WELL_CARD_HEIGHT;
     if (topH > 0) html += '<div style="height:' + topH + 'px;"></div>';
-    // C-2.1: build transport + stats caches once per tick
+
+    // Pamięć podręczna transportu oraz statystyk dla aktualnego wycinka
     try {
         if (typeof calculateWellTransportMap === 'function') {
             const tm = calculateWellTransportMap(wells);
@@ -307,94 +356,81 @@ function _wellVirtualRenderBody() {
                 }
             }
         }
-    } catch (_e) {
-        _wellVirtualTransportMap = null;
-    }
+    } catch (_e) {}
+
     try {
         _wellVirtualStatsMap = new Map();
-        for (let sIdx = 0; sIdx < sliceIdx.length; sIdx++) {
-            const wIdx = sliceIdx[sIdx];
+        for (let s = start; s < end; s++) {
+            const wIdx = _wellVirtualFiltered[s];
             const w = wells[wIdx];
             if (w && typeof calcWellStats === 'function')
                 _wellVirtualStatsMap.set(wIdx, calcWellStats(w));
         }
     } catch (_e) {}
-    // group headers within slice
-    let lastDn = null;
-    for (let s = 0; s < sliceIdx.length; s++) {
-        const wIdx = sliceIdx[s];
+
+    for (let s = start; s < end; s++) {
+        const wIdx = _wellVirtualFiltered[s];
         const w = wells[wIdx];
         if (!w) continue;
-        const dn = w.dn === 'styczna' ? 'styczna' : String(w.dn);
-        if (dn !== lastDn) {
-            lastDn = dn;
+
+        // Renderuj nagłówek TYLKO wtedy, gdy ten element fizycznie rozpoczyna nową grupę DN
+        if (_wellVirtualGroupStarts[s]) {
+            const dn = w.dn === 'styczna' ? 'styczna' : String(w.dn);
             const title = dn === 'styczna' ? 'Studnie Styczne' : 'Studnie DN' + dn;
             html +=
-                '<div style="font-size: var(--fs-xs); color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight: var(--fw-extrabold); opacity:0.7;">' +
+                '<div class="well-group-header" style="font-size: var(--fs-xs); color:var(--text-muted); text-transform:uppercase; margin: 0.8rem 0 0.35rem 0.3rem; letter-spacing:0.8px; font-weight: var(--fw-extrabold); opacity:0.7;">' +
                 title +
                 '</div>';
         }
-        if (typeof _wellVirtualCardHtml === 'function') {
-            html += _wellVirtualCardHtml(w, wIdx, start + s);
-        } else if (typeof _wellBuildCardHtml === 'function') {
-            html += _wellBuildCardHtml(w, wIdx);
+
+        const transportVal = _wellVirtualTransportMap ? _wellVirtualTransportMap.get(wIdx) || 0 : 0;
+        const stats = _wellVirtualStatsMap ? _wellVirtualStatsMap.get(wIdx) : null;
+
+        if (typeof _wellBuildCardHtml === 'function') {
+            html += _wellBuildCardHtml(w, wIdx, s, transportVal, stats);
         } else {
-            // minimal fallback
+            // Minimalny fallback
             html +=
                 '<div class="well-list-item" data-widx="' +
                 wIdx +
                 '" data-logical-row="' +
-                (start + s) +
+                s +
                 '" data-well-idx="' +
                 wIdx +
                 '" onclick="selectWell(' +
                 wIdx +
-                ')" style="height:' +
-                WELL_CARD_HEIGHT +
-                'px;overflow:hidden;box-sizing:border-box;">' +
-                escapeHtml(w.name || '') +
+                ')" style="box-sizing:border-box;">' +
+                (typeof escapeHtml === 'function'
+                    ? escapeHtml(w.name || '')
+                    : String(w.name || '')) +
                 '</div>';
         }
     }
-    // ensure logical binding on fallback cards that lack it
+
     if (bottomH > 0) html += '<div style="height:' + bottomH + 'px;"></div>';
-    const container =
-        typeof document !== 'undefined' ? document.getElementById('wells-list') : null;
-    if (!container) return;
-    // preserve scroll
+    if (end === _wellVirtualTotal) html += '<div style="height:60px; flex-shrink:0;"></div>';
+
     const prevLeft = container.scrollLeft;
-    // Use innerHTML for now — R11 recycling will be added via patching node identity check (future: reuse nodes)
+    _wellVirtualIsRendering = true;
     container.innerHTML = html;
     container.scrollLeft = prevLeft;
-    // Ensure data-logical-row on each card (for fallback path, already set; for _wellVirtualCardHtml path, patch)
-    const cards = container.querySelectorAll('.well-list-item[data-widx]');
-    for (let i = 0; i < cards.length; i++) {
-        const c = cards[i];
-        if (!c.getAttribute('data-logical-row')) {
-            const wIdx = parseInt(c.getAttribute('data-widx') || '-1', 10);
-            const logical = _wellVirtualFiltered.indexOf(wIdx);
-            if (logical >= 0) {
-                c.setAttribute('data-logical-row', String(logical));
-                c.setAttribute('data-well-idx', String(wIdx));
-            }
-        }
-    }
+    _wellVirtualIsRendering = false;
+
     if (window.lucide && window.lucide.createIcons) {
         try {
             window.lucide.createIcons({ root: container });
         } catch (_e) {}
     }
+    try {
+        container.classList.toggle('wells-list--many', wells.length > 200);
+    } catch (_e) {}
 }
 
 (function () {
     _wellVirtualEnabled = _wellVirtualIsEnabled();
     if (!_wellVirtualEnabled) return;
-    // Patch renderWellsList to use virtual slice
-    const orig = typeof window.renderWellsList === 'function' ? window.renderWellsList : null;
-    if (!orig) return;
+
     window.renderWellsList = function () {
-        // For virtual path, skip original's full wells.map+filter and use virtual filtered
-        // Keep original's side effects (refreshAllWellErrors etc.) but via virtual render
         if (typeof refreshAllWellErrors === 'function') {
             try {
                 refreshAllWellErrors();
@@ -417,5 +453,6 @@ if (typeof window !== 'undefined') {
     window._wellVirtualBuildFiltered = _wellVirtualBuildFiltered;
     window._wellVirtualRenderBody = _wellVirtualRenderBody;
     window._wellVirtualIsEnabled = _wellVirtualIsEnabled;
+    window._wellVirtualCardHtml = _wellVirtualCardHtml;
     window.WELL_CARD_HEIGHT = WELL_CARD_HEIGHT;
 }

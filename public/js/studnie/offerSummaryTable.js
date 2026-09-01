@@ -53,7 +53,9 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
             if (oKm > 0 && oRate > 0 && origTotalWeight > 0) {
                 const origOffer =
                     typeof offersStudnie !== 'undefined' && offersStudnie
-                        ? offersStudnie.find((o) => o.id === order.offerId)
+                        ? typeof getOfferStudnieById === 'function'
+                            ? getOfferStudnieById(order.offerId)
+                            : offersStudnie.find((o) => o.id === order.offerId)
                         : null;
                 const origOfferWeight = origOffer?.totalWeight || origTotalWeight;
                 const origCostPerTrip = oKm * oRate;

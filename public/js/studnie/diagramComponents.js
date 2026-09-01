@@ -30,7 +30,10 @@ function buildVisibleComponents(well) {
     const configReversedElements = [...well.config].reverse();
 
     configReversedElements.forEach((item, revIdx) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const isDennicaLike = p.componentType === 'dennica' || p.componentType === 'styczna';
         for (let i = 0; i < item.quantity; i++) {

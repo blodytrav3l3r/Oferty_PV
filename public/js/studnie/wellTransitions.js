@@ -60,7 +60,9 @@ function renderInlinePrzejsciaApp(containerId) {
               .sort((a, b) => a.dn - b.dn)
         : [];
     const selectedProduct = inlinePrzejsciaState.dnId
-        ? studnieProducts.find((p) => p.id === inlinePrzejsciaState.dnId)
+        ? typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(inlinePrzejsciaState.dnId)
+            : studnieProducts.find((p) => p.id === inlinePrzejsciaState.dnId)
         : null;
 
     container.innerHTML = `
@@ -362,7 +364,9 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
                 } else if (field === 'heightMm') {
                     const rzDnaQ = parseFloat(well.rzednaDna) || 0;
                     const cfgMap = buildConfigMap(well, (id) =>
-                        studnieProducts.find((p) => p.id === id)
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(id)
+                            : studnieProducts.find((p) => p.id === id)
                     );
                     let curRz = parseFloat(well.przejscia[index].rzednaWlaczenia);
                     if (isNaN(curRz)) curRz = rzDnaQ;
@@ -430,7 +434,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     // Jeśli ustawiono filterElementIndex, sprawdź, czy DOWOLNE przejście należy do elementu
     if (filterElementIndex != null) {
         const rzDnaCheck = parseFloat(well.rzednaDna) || 0;
-        const findProdCheck = (id) => studnieProducts.find((pr) => pr.id === id);
+        const findProdCheck = (id) =>
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(id)
+                : studnieProducts.find((pr) => pr.id === id);
         const cfgMapCheck = buildConfigMap(well, findProdCheck);
         const hasAny = well.przejscia.some((item) => {
             let pel = parseFloat(item.rzednaWlaczenia);
@@ -450,7 +457,10 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
     }
 
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProduct = (id) => studnieProducts.find((pr) => pr.id === id);
+    const findProduct = (id) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProduct, true);
 
     // Automatyczne sortowanie według poziomu elementu (assignedIndex), a następnie według kąta

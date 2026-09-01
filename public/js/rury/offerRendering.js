@@ -12,7 +12,7 @@ function renderOfferItems() {
     }
 
     _items.forEach((item) => {
-        const product = products.find((p) => p.id === item.productId);
+        const product = getRuryProductById(item.productId);
         if (product !== undefined) {
             if (!item.name) item.name = product.name;
             if (item.unitPrice === undefined) item.unitPrice = product.price;
@@ -31,7 +31,7 @@ function renderOfferItems() {
         }
 
         if (item.pehdType) {
-            const pehdProd = products.find((p) => p.id === item.pehdType);
+            const pehdProd = getRuryProductById(item.pehdType);
             if (pehdProd) {
                 const area = getPipeInnerArea(item.productId);
                 let ratio = 1;

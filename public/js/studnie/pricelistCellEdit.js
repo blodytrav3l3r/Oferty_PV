@@ -1,6 +1,10 @@
 /* ===== PRZEŁĄCZANIE POLA MAGAZYNU ===== */
 function toggleMagazynField(el, field, id) {
-    const product = /** @type {any} */ (studnieProducts.find((p) => p.id === id));
+    const product = /** @type {any} */ (
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((p) => p.id === id)
+    );
     if (!product) return;
     product[field] = product[field] === 1 ? 0 : 1;
 
@@ -16,7 +20,10 @@ function toggleMagazynField(el, field, id) {
 /* ===== EDYCJA W MIEJSCU ===== */
 function editStudnieCell(el, field, id) {
     if (el.querySelector('input')) return;
-    const product = studnieProducts.find((p) => p.id === id);
+    const product =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((p) => p.id === id);
     const oldVal = product[field] ?? '';
     const input = document.createElement('input');
     const isTextField = ['name', 'id', 'dn', 'spocznikH', 'category'].includes(field);

@@ -20,7 +20,9 @@ function calculateOfferTotals() {
             const _order = /** @type {any} */ (orderEditMode).order;
             const _offer =
                 typeof offersStudnie !== 'undefined' && offersStudnie
-                    ? offersStudnie.find((o) => o.id === _order.offerId)
+                    ? typeof getOfferStudnieById === 'function'
+                        ? getOfferStudnieById(_order.offerId)
+                        : offersStudnie.find((o) => o.id === _order.offerId)
                     : null;
             const _offerWeight = _offer?.totalWeight || globalWeight;
             const _mode = _order.transportMode || currentTransportMode;
@@ -67,14 +69,20 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
             if (typeof buildConfigMap === 'function') {
                 configMap = buildConfigMap(
                     well,
-                    (id) => studnieProducts.find((pr) => pr.id === id),
+                    (id) =>
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(id)
+                            : studnieProducts.find((pr) => pr.id === id),
                     true
                 );
             } else {
                 let currY = 0;
                 let dennicaCount = 0;
                 for (let j = well.config.length - 1; j >= 0; j--) {
-                    const p = studnieProducts.find((x) => x.id === well.config[j].productId);
+                    const p =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(well.config[j].productId)
+                            : studnieProducts.find((x) => x.id === well.config[j].productId);
                     if (!p) continue;
                     let h = 0;
                     if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -155,7 +163,10 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, itemPrzejs
 
     if (itemPrzejscia) {
         itemPrzejscia.forEach((pr) => {
-            const prProd = studnieProducts.find((x) => x.id === pr.productId);
+            const prProd =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((x) => x.id === pr.productId);
             if (prProd) {
                 if (pr.frozenTransitionPrice != null) {
                     totalLinePrice +=

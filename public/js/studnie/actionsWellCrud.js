@@ -117,13 +117,19 @@ function createNewWell(name, dn = 1000) {
 
     if (well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak') {
         if (well.zakonczenie) {
-            const p = studnieProducts.find((pr) => pr.id === well.zakonczenie);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(well.zakonczenie)
+                    : studnieProducts.find((pr) => pr.id === well.zakonczenie);
             if (p && p.componentType === 'konus') {
                 well.zakonczenie = null;
             }
         }
         if (well.redukcjaZakonczenie) {
-            const p = studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(well.redukcjaZakonczenie)
+                    : studnieProducts.find((pr) => pr.id === well.redukcjaZakonczenie);
             if (p && p.componentType === 'konus') {
                 well.redukcjaZakonczenie = null;
             }

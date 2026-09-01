@@ -277,7 +277,9 @@
             if (!ki || !ki.productId) continue;
             const prod =
                 typeof window.studnieProducts !== 'undefined'
-                    ? window.studnieProducts.find((p) => p.id === ki.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(ki.productId)
+                        : window.studnieProducts.find((p) => p.id === ki.productId)
                     : undefined;
             if (prod && prod.dn && gasketsEnabled) {
                 const type = String(prod.componentType || '').toLowerCase();
@@ -321,7 +323,9 @@
         for (const tp of transList) {
             const prod =
                 typeof window.studnieProducts !== 'undefined'
-                    ? window.studnieProducts.find((x) => x.id === tp.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(tp.productId)
+                        : window.studnieProducts.find((x) => x.id === tp.productId)
                     : undefined;
             if (prod && prod.dn != null) {
                 const dn = parseInt(String(prod.dn), 10) || 0;
@@ -349,7 +353,10 @@
             ];
             for (const it of itemLists) {
                 if (!it || !it.productId) continue;
-                const prod = window.studnieProducts.find((p) => p.id === it.productId);
+                const prod =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(it.productId)
+                        : window.studnieProducts.find((p) => p.id === it.productId);
                 if (prod) {
                     totalPrice += (parseFloat(prod.price) || 0) * (it.quantity || 1);
                     totalWeight += (parseFloat(prod.weight) || 0) * (it.quantity || 1);
@@ -407,7 +414,9 @@
                 if (!ti || !ti.productId) continue;
                 const prod =
                     typeof window.studnieProducts !== 'undefined'
-                        ? window.studnieProducts.find((p) => p.id === ti.productId)
+                        ? typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(ti.productId)
+                            : window.studnieProducts.find((p) => p.id === ti.productId)
                         : undefined;
                 if (prod && String(prod.componentType || '').toLowerCase() === 'konus') {
                     topHasKnown = true;

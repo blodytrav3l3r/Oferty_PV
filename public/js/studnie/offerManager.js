@@ -70,7 +70,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
         if (optionalId && !offer.id) offer.id = optionalId;
         offer = await ensureOfferDetail(offer);
     } else {
-        offer = offersStudnie.find((o) => o.id === id_or_doc);
+        offer =
+            typeof getOfferStudnieById === 'function'
+                ? getOfferStudnieById(id_or_doc)
+                : offersStudnie.find((o) => o.id === id_or_doc);
         offer = await ensureOfferDetail(offer);
         if (!offer) {
             try {
@@ -130,7 +133,10 @@ async function loadSavedOfferStudnie(id_or_doc, optionalId, targetSection, preve
     wells.forEach((w) => {
         if (w.przejscia) {
             w.przejscia.forEach((pr) => {
-                const prod = studnieProducts.find((p) => p.id === pr.productId);
+                const prod =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(pr.productId)
+                        : studnieProducts.find((p) => p.id === pr.productId);
                 if (prod && prod.category) {
                     visiblePrzejsciaTypes.add(prod.category);
                 }

@@ -117,6 +117,7 @@ async function saveOfferStudnie() {
 
         if (idx >= 0) offersStudnie[idx] = updatedOffer;
         else offersStudnie.push(updatedOffer);
+        if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
 
         renderSavedOffersStudnie();
 

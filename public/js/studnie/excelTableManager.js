@@ -220,21 +220,53 @@ async function _excelBulkRunAutoSelect() {
     try {
         _excelSaveUndoSnapshot();
         _excelMarkDirty();
-        // ponytail: sekwencyjny via currentWellIndex, per-well lock gdy throughput
-        for (let k = 0; k < editable.length; k++) {
-            const wIdx = editable[k];
-            const well = wells[wIdx];
-            try {
-                currentWellIndex = wIdx;
-                well.configSource = 'AUTO';
-                well.config = [];
-                await autoSelectComponents(true);
-                _excelClearResCache(well);
-                ok++;
-            } catch (e) {
-                fail++;
-                if (typeof window.logger !== 'undefined')
-                    window.logger.warn('bulk auto fail wIdx=' + wIdx, e);
+        if (
+            editable.length > 50 &&
+            typeof _excelRunBulkJob === 'function' &&
+            typeof _excelNewBulkAbort === 'function'
+        ) {
+            const abort = _excelNewBulkAbort();
+            await _excelRunBulkJob({
+                total: editable.length,
+                chunkSize: 1,
+                label: 'Auto-dobór...',
+                signal: abort.signal,
+                onChunk: async function (start, end) {
+                    for (let k = start; k < end; k++) {
+                        const wIdx = editable[k];
+                        const well = wells[wIdx];
+                        try {
+                            currentWellIndex = wIdx;
+                            well.configSource = 'AUTO';
+                            well.config = [];
+                            await autoSelectComponents(true);
+                            _excelClearResCache(well);
+                            ok++;
+                        } catch (e) {
+                            fail++;
+                            if (typeof window.logger !== 'undefined')
+                                window.logger.warn('bulk auto fail wIdx=' + wIdx, e);
+                        }
+                    }
+                }
+            });
+        } else {
+            // ponytail: sekwencyjny via currentWellIndex, per-well lock gdy throughput
+            for (let k = 0; k < editable.length; k++) {
+                const wIdx = editable[k];
+                const well = wells[wIdx];
+                try {
+                    currentWellIndex = wIdx;
+                    well.configSource = 'AUTO';
+                    well.config = [];
+                    await autoSelectComponents(true);
+                    _excelClearResCache(well);
+                    ok++;
+                } catch (e) {
+                    fail++;
+                    if (typeof window.logger !== 'undefined')
+                        window.logger.warn('bulk auto fail wIdx=' + wIdx, e);
+                }
             }
         }
     } finally {
@@ -309,6 +341,7 @@ async function _excelBulkDeleteSelected() {
         wells.splice(idx, 1);
     });
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     // przebuduj mapę zaznaczeń checkboxów dla pozostałych wierszy
     const newStates = {};
     Object.keys(_excelRowSelectStates).forEach(function (k) {
@@ -483,6 +516,14 @@ function _excelFindWellIdxById(id) {
     });
 }
 
+function _excelPushBulkAddUndo(ids, batchId) {
+    if (!Array.isArray(ids) || ids.length === 0) return;
+    _excelUndoStack.push({ type: 'bulk-add', ids: ids.slice(), batchId: batchId || null });
+    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelRedoStack = [];
+}
+if (typeof window !== 'undefined') window._excelPushBulkAddUndo = _excelPushBulkAddUndo;
+
 function _excelUndo() {
     if (_excelUndoStack.length === 0) return;
     const patch = _excelUndoStack.pop();
@@ -554,6 +595,25 @@ function _excelUndo() {
             else if (e.before) wells.push(structuredClone(e.before));
         }
         _excelRestoreLockedWells(locked);
+    } else if (patch.type === 'bulk-add') {
+        const ids = patch.ids || [];
+        const removed = [];
+        for (let i = 0; i < ids.length; i++) {
+            const idx = wells.findIndex(function (w) {
+                return w && w.id === ids[i];
+            });
+            if (idx >= 0) removed.push({ idx: idx, data: structuredClone(wells[idx]) });
+        }
+        for (let i = 0; i < ids.length; i++) {
+            const idx = wells.findIndex(function (w) {
+                return w && w.id === ids[i];
+            });
+            if (idx >= 0) wells.splice(idx, 1);
+        }
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+        if (typeof _excelInvalidateFilteredIndexes === 'function')
+            _excelInvalidateFilteredIndexes();
+        _excelRedoStack.push({ type: 'bulk-add-redo', wells: removed, batchId: patch.batchId });
     } else {
         _excelRedoStack.push({ type: 'full', data: structuredClone(wells) });
         const snap = patch.data || patch;
@@ -634,6 +694,44 @@ function _excelRedo() {
             if (curIdx >= 0) wells[curIdx] = structuredClone(e.before);
         }
         _excelRestoreLockedWells(locked);
+    } else if (patch.type === 'bulk-add') {
+        const ids = patch.ids || [];
+        const removed = [];
+        for (let i = 0; i < ids.length; i++) {
+            const idx = wells.findIndex(function (w) {
+                return w && w.id === ids[i];
+            });
+            if (idx >= 0) removed.push({ idx: idx, data: structuredClone(wells[idx]) });
+        }
+        for (let i = 0; i < ids.length; i++) {
+            const idx = wells.findIndex(function (w) {
+                return w && w.id === ids[i];
+            });
+            if (idx >= 0) wells.splice(idx, 1);
+        }
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+        if (typeof _excelInvalidateFilteredIndexes === 'function')
+            _excelInvalidateFilteredIndexes();
+        _excelUndoStack.push({ type: 'bulk-add-redo', wells: removed, batchId: patch.batchId });
+    } else if (patch.type === 'bulk-add-redo') {
+        const toRestore = patch.wells || [];
+        const sorted = toRestore.slice().sort(function (a, b) {
+            return a.idx - b.idx;
+        });
+        for (let i = 0; i < sorted.length; i++) {
+            const entry = sorted[i];
+            wells.splice(entry.idx, 0, structuredClone(entry.data));
+        }
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+        if (typeof _excelInvalidateFilteredIndexes === 'function')
+            _excelInvalidateFilteredIndexes();
+        _excelUndoStack.push({
+            type: 'bulk-add',
+            ids: sorted.map(function (e) {
+                return e.data.id;
+            }),
+            batchId: patch.batchId
+        });
     } else {
         _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
         const snap = patch.data || patch;
@@ -667,6 +765,7 @@ function _excelPasteCreateWells(text) {
             const dn = _excelActiveTab || '1000';
             _excelSaveUndoSnapshot();
             let added = 0;
+            const _addedIdsLines = [];
             for (let fi = 0; fi < lines.length; fi++) {
                 const name = lines[fi];
                 if (!name) continue;
@@ -690,16 +789,53 @@ function _excelPasteCreateWells(text) {
                           };
                 well.name = name; /* pozwól na duplikaty */
                 wells.push(well);
+                _addedIdsLines.push(well.id);
                 _excelAutoSetWlaz(well);
                 added++;
             }
             if (added > 0) {
+                if (
+                    added > 200 &&
+                    _addedIdsLines.length > 0 &&
+                    typeof _excelPushBulkAddUndo === 'function'
+                ) {
+                    if (
+                        _excelUndoStack.length > 0 &&
+                        _excelUndoStack[_excelUndoStack.length - 1].type === 'full'
+                    )
+                        _excelUndoStack.pop();
+                    _excelPushBulkAddUndo(_addedIdsLines, 'paste-lines-' + Date.now());
+                }
                 if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+                if (typeof _excelInvalidateFilteredIndexes === 'function')
+                    _excelInvalidateFilteredIndexes();
+                // Jeśli na aktywnej zakładce po dodaniu jest 0 studni, ale dodano studnie na innej zakładce, przełącz na tamtą z nowymi studniami
+                const activeTabWellsParsed = wells.filter(function (w) {
+                    return _excelWellMatchesTab(w, _excelActiveTab);
+                });
+                if (activeTabWellsParsed.length === 0 && wells.length > 0) {
+                    const DN_TABS = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
+                    for (let ti = 0; ti < DN_TABS.length; ti++) {
+                        const tab = DN_TABS[ti];
+                        const tabWells = wells.filter(function (w) {
+                            return _excelWellMatchesTab(w, tab);
+                        });
+                        if (tabWells.length > 0) {
+                            _excelActiveTab = tab;
+                            break;
+                        }
+                    }
+                }
                 _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
                 _excelRenderTabs();
                 _excelRenderTable(_excelActiveTab);
                 _excelUpdateWellCount();
                 _excelDebouncedRefresh();
+                // po dużym wklejeniu przewiń do nowych wierszy (virtual pokazuje tylko viewport)
+                try {
+                    const cont = document.getElementById('excel-table-container');
+                    if (cont && added > 10) cont.scrollTop = cont.scrollHeight;
+                } catch (_e) {}
                 showToast('Dodano ' + added + ' studni', 'success');
                 return;
             }
@@ -713,6 +849,7 @@ function _excelPasteCreateWells(text) {
     _excelSaveUndoSnapshot();
     let added = 0;
     const addedIndices = [];
+    const _addedIdsParsed = [];
     parsed.forEach(function (row) {
         const name = String(row.name || '').trim();
         if (!name) return;
@@ -768,12 +905,21 @@ function _excelPasteCreateWells(text) {
         }
         wells.push(well);
         addedIndices.push(wells.length - 1);
+        _addedIdsParsed.push(well.id);
         _excelAutoSetWlaz(well);
         added++;
     });
     if (added === 0) {
         showToast('Nie dodano żadnej studni', 'info');
         return;
+    }
+    if (added > 200 && _addedIdsParsed.length > 0 && typeof _excelPushBulkAddUndo === 'function') {
+        if (
+            _excelUndoStack.length > 0 &&
+            _excelUndoStack[_excelUndoStack.length - 1].type === 'full'
+        )
+            _excelUndoStack.pop();
+        _excelPushBulkAddUndo(_addedIdsParsed, 'paste-parsed-' + Date.now());
     }
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     // Przelicz maxTransitions dla wszystkich DN po dodaniu mieszanych
@@ -791,6 +937,10 @@ function _excelPasteCreateWells(text) {
     _excelRenderTabs();
     _excelRenderTable(_excelActiveTab);
     _excelUpdateWellCount();
+    try {
+        const cont = document.getElementById('excel-table-container');
+        if (cont && added > 10) cont.scrollTop = cont.scrollHeight;
+    } catch (_e) {}
     // Natychmiastowy refresh głównego konfiguratora
     if (typeof _excelMarkDirty === 'function') _excelMarkDirty();
     if (typeof window.refreshAll === 'function') {
@@ -802,38 +952,94 @@ function _excelPasteCreateWells(text) {
         if (typeof window.renderWellsList === 'function') window.renderWellsList();
         if (typeof window.renderWellDiagram === 'function') window.renderWellDiagram();
     }
-    // autoSelect jak przy ręcznym: tylko gdy rzWlazu > rzDna
+    // autoSelect — Faza5 thresholds: ≤50 auto, 51-500 batch+progress, >500 OFF
     if (typeof _excelAutoSelectEnabled !== 'undefined' && _excelAutoSelectEnabled) {
-        addedIndices.forEach(function (nwi, k) {
-            setTimeout(
-                function () {
-                    const w = wells[nwi];
-                    if (
-                        w &&
-                        w.rzednaWlazu != null &&
-                        w.rzednaDna != null &&
-                        parseFloat(w.rzednaWlazu) > parseFloat(w.rzednaDna)
-                    ) {
-                        if (typeof _excelAutoSelectForWell === 'function') {
-                            _excelAutoSelectForWell(nwi).catch(function (e) {
-                                if (window.logger)
-                                    window.logger.warn(
-                                        'AutoSelect pominiety dla nowej studni:',
-                                        e.message || e
-                                    );
-                            });
-                        } else if (typeof autoSelectComponents === 'function') {
-                            const saved =
-                                typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
-                            currentWellIndex = nwi;
-                            autoSelectComponents(true).catch(function () {});
-                            currentWellIndex = saved;
+        if (addedIndices.length > 500) {
+            if (typeof showToast === 'function')
+                showToast(
+                    'Dodano ' +
+                        added +
+                        ' studni. Automatyczna konfiguracja nie została uruchomiona — użyj [Przelicz zaznaczone] / [Przelicz wszystkie]',
+                    'warning'
+                );
+        } else if (addedIndices.length > 50) {
+            const toRun = addedIndices.slice(0, 50);
+            if (typeof showToast === 'function')
+                showToast(
+                    'Dodano ' +
+                        added +
+                        ' studni — auto dla pierwszych 50, reszta via [Przelicz zaznaczone]',
+                    'info'
+                );
+            if (
+                typeof _excelRunBulkJob === 'function' &&
+                typeof _excelNewBulkAbort === 'function'
+            ) {
+                const abort = _excelNewBulkAbort();
+                _excelRunBulkJob({
+                    total: toRun.length,
+                    chunkSize: 1,
+                    label: 'Auto-dobór...',
+                    signal: abort.signal,
+                    onChunk: async function (start, end) {
+                        for (let k = start; k < end; k++) {
+                            const nwi = toRun[k];
+                            const w = wells[nwi];
+                            if (!w || w.rzednaWlazu == null || w.rzednaDna == null) continue;
+                            if (!(parseFloat(w.rzednaWlazu) > parseFloat(w.rzednaDna))) continue;
+                            if (typeof _excelAutoSelectForWell === 'function')
+                                await _excelAutoSelectForWell(nwi).catch(function () {});
+                            else if (typeof autoSelectComponents === 'function') {
+                                const saved =
+                                    typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+                                currentWellIndex = nwi;
+                                await autoSelectComponents(true).catch(function () {});
+                                currentWellIndex = saved;
+                            }
                         }
                     }
-                },
-                200 + k * 300
-            );
-        });
+                });
+            } else {
+                (async function _runPasteCreateAutoBatch() {
+                    for (const nwi of toRun) {
+                        const w = wells[nwi];
+                        if (!w || w.rzednaWlazu == null || w.rzednaDna == null) continue;
+                        if (!(parseFloat(w.rzednaWlazu) > parseFloat(w.rzednaDna))) continue;
+                        if (typeof _excelAutoSelectForWell === 'function')
+                            await _excelAutoSelectForWell(nwi).catch(function () {});
+                    }
+                })();
+            }
+        } else {
+            // ponytail: sekwencyjnie zamiast forEach+setTimeout (300ms < czas solvera ~1s → WARN/gubione)
+            (async function _runPasteCreateAutoBatch() {
+                for (const nwi of addedIndices) {
+                    const w = wells[nwi];
+                    if (
+                        !w ||
+                        w.rzednaWlazu == null ||
+                        w.rzednaDna == null ||
+                        !(parseFloat(w.rzednaWlazu) > parseFloat(w.rzednaDna))
+                    )
+                        continue;
+                    if (typeof _excelAutoSelectForWell === 'function') {
+                        await _excelAutoSelectForWell(nwi).catch(function (e) {
+                            if (window.logger)
+                                window.logger.warn(
+                                    'AutoSelect pominiety dla nowej studni:',
+                                    e.message || e
+                                );
+                        });
+                    } else if (typeof autoSelectComponents === 'function') {
+                        const saved =
+                            typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+                        currentWellIndex = nwi;
+                        await autoSelectComponents(true).catch(function () {});
+                        currentWellIndex = saved;
+                    }
+                }
+            })();
+        }
     }
     _excelDebouncedRefresh();
     showToast('Dodano ' + added + ' studni', 'success');
@@ -866,23 +1072,47 @@ function _excelParsePasteData(text) {
     if (!text || typeof text !== 'string') return [];
     const lines = text.trim().split('\n').filter(Boolean);
     if (lines.length === 0) return [];
+
+    let startLine = 0;
+    const firstParts = lines[0].replace('\r', '').split('\t');
+    if (typeof _excelDetectHeader === 'function' && _excelDetectHeader(firstParts)) {
+        startLine = 1;
+    }
+
+    const VALID_DNS = new Set(['1000', '1200', '1500', '2000', '2500', 'styczna', 'styczne']);
     const result = [];
-    for (let li = 0; li < lines.length; li++) {
+    for (let li = startLine; li < lines.length; li++) {
         const parts = lines[li].replace('\r', '').split('\t');
         if (parts.length === 0) continue;
         const row = { name: (parts[0] || '').trim(), przejscia: [] };
-        if (parts.length > 1) row.dn = parts[1].trim();
-        if (parts.length > 2) row.rzednaWlazu = parts[2].trim();
-        if (parts.length > 3) row.rzednaDna = parts[3].trim();
-        // Przejścia: każda czwórka → [DN, rzędna, kąt, rodzaj] w kolejności DN|rzedna|kąt|rodzaj (zew. Excel)
+        if (!row.name) continue;
+
+        let pIdx = 1;
+        if (parts.length > 1) {
+            const p1 = parts[1].trim().toLowerCase();
+            if (VALID_DNS.has(p1)) {
+                row.dn = parts[1].trim();
+                pIdx = 2;
+            }
+        }
+        if (parts.length > pIdx) {
+            row.rzednaWlazu = parts[pIdx].trim();
+            pIdx++;
+        }
+        if (parts.length > pIdx) {
+            row.rzednaDna = parts[pIdx].trim();
+            pIdx++;
+        }
+
+        // Przejścia: od pIdx dalej w czwórkach [DN, rzędna, kąt, rodzaj] w kolejności DN|rzedna|kąt|rodzaj (zew. Excel)
         // wewnętrznie: Rz.wlot, Kąt, Rodzaj, Średnica → mapujemy
-        if (parts.length > 4) {
-            let pIdx = 4;
-            while (pIdx < parts.length) {
-                const dnRaw = (parts[pIdx] || '').trim();
-                const rzRaw = (parts[pIdx + 1] || '').trim();
-                const katRaw = (parts[pIdx + 2] || '').trim();
-                const rodzRaw = (parts[pIdx + 3] || '').trim();
+        if (parts.length > pIdx) {
+            let trIdx = pIdx;
+            while (trIdx < parts.length) {
+                const dnRaw = (parts[trIdx] || '').trim();
+                const rzRaw = (parts[trIdx + 1] || '').trim();
+                const katRaw = (parts[trIdx + 2] || '').trim();
+                const rodzRaw = (parts[trIdx + 3] || '').trim();
                 if (!dnRaw && !rzRaw && !katRaw && !rodzRaw) break;
                 const p =
                     typeof _excelCreatePrzejscie === 'function' ? _excelCreatePrzejscie() : {};
@@ -924,14 +1154,18 @@ function _excelParsePasteData(text) {
                 if (p.rzednaWlaczenia != null || p.angle || p.tempCategory || p.productId) {
                     row.przejscia.push(p);
                 }
-                pIdx += 4;
+                trIdx += 4;
                 // fallback: jeśli dane są w układzie 3-kol (bez rodzaju), obsłuż
-                if (pIdx < parts.length && parts.length - pIdx < 4) break;
+                if (trIdx < parts.length && parts.length - trIdx < 4) break;
             }
             // Obsługa wariantu 3-kol (DN, rzędna, kąt) bez rodzaju
-            if (row.przejscia.length === 0 && parts.length > 6 && (parts.length - 4) % 3 === 0) {
+            if (
+                row.przejscia.length === 0 &&
+                parts.length > pIdx + 2 &&
+                (parts.length - pIdx) % 3 === 0
+            ) {
                 row.przejscia = [];
-                let q = 4;
+                let q = pIdx;
                 while (q + 2 < parts.length) {
                     const d = (parts[q] || '').trim();
                     const r = (parts[q + 1] || '').trim();

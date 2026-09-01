@@ -27,6 +27,7 @@ async function deleteOfferStudnie(id) {
             return;
         }
         offersStudnie = offersStudnie.filter((o) => o.id !== id);
+        if (typeof _rebuildOffersStudnieById === 'function') _rebuildOffersStudnieById();
         renderSavedOffersStudnie();
         showToast('Oferta usunięta', 'info');
     } catch (err) {
@@ -36,7 +37,10 @@ async function deleteOfferStudnie(id) {
 }
 
 function exportJSONStudnie(id) {
-    const offer = offersStudnie.find((o) => o.id === id);
+    const offer =
+        typeof getOfferStudnieById === 'function'
+            ? getOfferStudnieById(id)
+            : offersStudnie.find((o) => o.id === id);
     if (!offer) return;
     const jsonStr = JSON.stringify(offer, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
@@ -63,6 +67,8 @@ function importOfferFromFileStudnie() {
                     imported.id = 'offer_studnie_' + Date.now();
                     migrateWellData(imported.wells);
                     offersStudnie.push(imported);
+                    if (typeof _rebuildOffersStudnieById === 'function')
+                        _rebuildOffersStudnieById();
                     await saveOffersDataStudnie(offersStudnie);
                     renderSavedOffersStudnie();
                     showToast('Oferta zaimportowana', 'success');

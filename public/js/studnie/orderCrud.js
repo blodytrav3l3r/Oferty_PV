@@ -60,7 +60,10 @@ async function createOrderFromOffer() {
             '[createOrderFromOffer] offersStudnie count =',
             offersStudnie.length
         );
-        const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
+        const offer =
+            typeof getOfferStudnieById === 'function'
+                ? getOfferStudnieById(editingOfferIdStudnie)
+                : offersStudnie.find((o) => o.id === editingOfferIdStudnie);
         logger.info('orderManager', '[createOrderFromOffer] offer found =', !!offer);
 
         if (!offer) {
@@ -340,7 +343,10 @@ function collectSelectedWellsForOrder() {
 
 async function saveOrderStudnie() {
     if (!editingOfferIdStudnie) return;
-    const offer = offersStudnie.find((o) => o.id === editingOfferIdStudnie);
+    const offer =
+        typeof getOfferStudnieById === 'function'
+            ? getOfferStudnieById(editingOfferIdStudnie)
+            : offersStudnie.find((o) => o.id === editingOfferIdStudnie);
     if (!offer) return;
     const oId = normalizeId(offer.id);
     const order = ordersStudnie ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId) : null;
@@ -523,7 +529,11 @@ async function enterOrderEditMode(orderId) {
         }
 
         if (order.wells && order.wells.length > 0) {
-            const offer = offersStudnie ? offersStudnie.find((o) => o.id === order.offerId) : null;
+            const offer = offersStudnie
+                ? typeof getOfferStudnieById === 'function'
+                    ? getOfferStudnieById(order.offerId)
+                    : offersStudnie.find((o) => o.id === order.offerId)
+                : null;
             let _w = 0,
                 _t = 0;
             order.wells.forEach((w) => {
@@ -560,7 +570,10 @@ async function enterOrderEditMode(orderId) {
         wells.forEach((w) => {
             if (w.przejscia) {
                 w.przejscia.forEach((pr) => {
-                    const prod = studnieProducts.find((p) => p.id === pr.productId);
+                    const prod =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(pr.productId)
+                            : studnieProducts.find((p) => p.id === pr.productId);
                     if (prod && prod.category) {
                         visiblePrzejsciaTypes.add(prod.category);
                     }
@@ -700,7 +713,9 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
                 w.przejscia.forEach((pr) => {
                     const prod =
                         typeof studnieProducts !== 'undefined'
-                            ? studnieProducts.find((p) => p.id === pr.productId)
+                            ? typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(pr.productId)
+                                : studnieProducts.find((p) => p.id === pr.productId)
                             : null;
                     if (prod && prod.category) visiblePrzejsciaTypes.add(prod.category);
                 });
@@ -769,7 +784,11 @@ async function saveCurrentOrder(options = {}) {
     });
     order.totalWeight = totalWeight;
 
-    const offer = offersStudnie ? offersStudnie.find((o) => o.id === order.offerId) : null;
+    const offer = offersStudnie
+        ? typeof getOfferStudnieById === 'function'
+            ? getOfferStudnieById(order.offerId)
+            : offersStudnie.find((o) => o.id === order.offerId)
+        : null;
     const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
 

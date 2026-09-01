@@ -184,7 +184,10 @@ function renderWellComponentsList(well, wellTransportCost, disc, _change) {
     const assignedPrzejscia = calculateAssignedPrzejscia(well);
 
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p || p.componentType === 'kineta') return;
 
         const discStr = getDiscountStr(well, p, disc);
@@ -325,7 +328,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
 
     if (itemPrzejscia) {
         itemPrzejscia.forEach((pr) => {
-            const prProd = studnieProducts.find((x) => x.id === pr.productId);
+            const prProd =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((x) => x.id === pr.productId);
             if (!prProd) return;
 
             if (pr.frozenTransitionPrice != null) {
@@ -373,11 +379,16 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
     }
 
     if (isBase && !item.isPsiaBuda) {
-        const kineta = well.config.find(
-            (c) => studnieProducts.find((x) => x.id === c.productId)?.componentType === 'kineta'
+        const kineta = well.config.find((c) =>
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(c.productId)
+                : studnieProducts.find((x) => x.id === c.productId)?.componentType === 'kineta'
         );
         if (kineta) {
-            const kp = studnieProducts.find((x) => x.id === kineta.productId);
+            const kp =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(kineta.productId)
+                    : studnieProducts.find((x) => x.id === kineta.productId);
             const kPrice =
                 (kineta.frozenPrice != null && window.isPreviewMode
                     ? kineta.frozenPrice
@@ -426,7 +437,10 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
                     let dennicaH = 0;
                     if (well.config) {
                         well.config.forEach((c) => {
-                            const prod = studnieProducts.find((pr) => pr.id === c.productId);
+                            const prod =
+                                typeof getStudnieProductById === 'function'
+                                    ? getStudnieProductById(c.productId)
+                                    : studnieProducts.find((pr) => pr.id === c.productId);
                             if (
                                 prod &&
                                 (prod.componentType === 'dennica' ||

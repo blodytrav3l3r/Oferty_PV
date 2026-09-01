@@ -56,7 +56,10 @@ function showStycznaPopup(mode = 'select') {
 
 function handleStycznaProductChoice(productId, mode) {
     closeModal();
-    const product = studnieProducts.find((p) => p.id === productId);
+    const product =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : studnieProducts.find((p) => p.id === productId);
     if (!product) {
         showToast('Nie znaleziono produktu', 'error');
         return;
@@ -118,7 +121,10 @@ function handleStycznaProductChoice(productId, mode) {
             well.zakonczenie = null;
         }
         const existingIdx = well.config.findIndex((c) => {
-            const p = studnieProducts.find((pr) => pr.id === c.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((pr) => pr.id === c.productId);
             return p && p.componentType === 'styczna';
         });
         if (existingIdx >= 0) {

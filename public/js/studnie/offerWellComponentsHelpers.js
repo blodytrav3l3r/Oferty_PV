@@ -9,12 +9,22 @@ function calculateAssignedPrzejscia(well) {
 
     let configMap = [];
     if (typeof buildConfigMap === 'function') {
-        configMap = buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true);
+        configMap = buildConfigMap(
+            well,
+            (id) =>
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(id)
+                    : studnieProducts.find((pr) => pr.id === id),
+            true
+        );
     } else {
         let currY = 0;
         let dennicaCount = 0;
         for (let j = well.config.length - 1; j >= 0; j--) {
-            const p = studnieProducts.find((x) => x.id === well.config[j].productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(well.config[j].productId)
+                    : studnieProducts.find((x) => x.id === well.config[j].productId);
             if (!p) continue;
             let h = 0;
             if (p.componentType === 'dennica' || p.componentType === 'styczna') {
@@ -56,7 +66,10 @@ function calculateAssignedPrzejscia(well) {
             let drillingBasePrice = 0;
             /** @type {any} */
             let bestDrillProd = null;
-            const p = studnieProducts.find((x) => x.id === pr.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((x) => x.id === pr.productId);
             if (p) {
                 const isInsitu = p.name && p.name.toUpperCase().includes('INSITU');
                 if (

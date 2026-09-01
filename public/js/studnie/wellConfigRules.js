@@ -60,7 +60,10 @@ function buildConfigSegmentMap(configItems, psiaBuda) {
     let lastWasD = !!psiaBuda;
     if (!configItems) return [];
     return configItems.map((item, idx) => {
-        const prod = studnieProducts.find((p) => p.id === item.productId);
+        const prod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((p) => p.id === item.productId);
         let h = prod ? parseFloat(prod.height) || 0 : 0;
         const isDennicaLike =
             !!prod && (prod.componentType === 'dennica' || prod.componentType === 'styczna');
@@ -202,8 +205,14 @@ function getAvailableProducts(well) {
 function getSortedConfig(config) {
     if (!config) return [];
     return [...config].sort((a, b) => {
-        const pA = studnieProducts.find((p) => p.id === a.productId);
-        const pB = studnieProducts.find((p) => p.id === b.productId);
+        const pA =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(a.productId)
+                : studnieProducts.find((p) => p.id === a.productId);
+        const pB =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(b.productId)
+                : studnieProducts.find((p) => p.id === b.productId);
         if (!pA || !pB) return 0;
 
         const order = ['Wlaz', 'Pokrywa', 'Plyta DIN', 'Konus', 'Krąg', 'Dennica'];
@@ -226,7 +235,10 @@ window.updateConfigToMatchParams = function (well) {
     let anyChanged = false;
 
     well.config.forEach((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
 
         // Upewnij się, że poprawnie obsługujemy dynamicznie generowane kręgi wiercone
@@ -246,7 +258,12 @@ window.updateConfigToMatchParams = function (well) {
             } else if (isDrilled) {
                 // Brak auto-tworzenia OT — szukaj tylko OT w cenniku (min H=500)
                 const baseId = p.id.replace('_OT', '');
-                const baseProd = studnieProducts.find((pr) => pr.id === baseId);
+                const baseProd =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(baseId)
+                        : typeof getStudnieProductById === 'function'
+                          ? getStudnieProductById(baseId)
+                          : studnieProducts.find((pr) => pr.id === baseId);
                 const baseH = baseProd ? parseInt(baseProd.height) || 0 : parseInt(p.height) || 0;
                 if (baseH > 0 && baseH < MIN_OT_HEIGHT) {
                     // OT <500 nie wspierane — zostaw oryginał
@@ -276,12 +293,18 @@ window.ensureReliefRingPair = function (well) {
     if (!well || !well.config) return;
 
     const hasReliefRing = well.config.some((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType === 'pierscien_odciazajacy';
     });
 
     const hasReliefPlate = well.config.some((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return (
             p && (p.componentType === 'plyta_zamykajaca' || p.componentType === 'plyta_najazdowa')
         );
@@ -337,7 +360,12 @@ window.ensureReliefRingPair = function (well) {
  * @returns {Object|null} poprawny produkt
  */
 window.resolveEffectiveProduct = function (well, productId, configItem) {
-    const p = studnieProducts.find((pr) => pr.id === productId);
+    const p =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : typeof getStudnieProductById === 'function'
+              ? getStudnieProductById(productId)
+              : studnieProducts.find((pr) => pr.id === productId);
     if (!p) return null;
 
     // Produkt pasuje do parametrów — zwróć bez zmian
@@ -365,7 +393,10 @@ window.resolveEffectiveProduct = function (well, productId, configItem) {
         const curH = parseInt(p.height) || 0;
         if (curH > 0 && curH < MIN_OT_HEIGHT) return p;
         const baseId = p.id.replace('_OT', '');
-        const baseProd = studnieProducts.find((pr) => pr.id === baseId);
+        const baseProd =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(baseId)
+                : studnieProducts.find((pr) => pr.id === baseId);
         const baseH = baseProd ? parseInt(baseProd.height) || 0 : curH;
         if (baseH > 0 && baseH < MIN_OT_HEIGHT) return p;
         if (baseProd) {
@@ -456,7 +487,10 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
         const pel = parseFloat(pr.rzednaWlaczenia);
         if (isNaN(pel)) continue;
         const mmFromBottom = (pel - rzDna) * 1000;
-        const pprod = studnieProducts.find((x) => x.id === pr.productId);
+        const pprod =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(pr.productId)
+                : studnieProducts.find((x) => x.id === pr.productId);
         if (!pprod) continue;
 
         let dnVal = 160;
@@ -487,7 +521,10 @@ function buildCandidateLayouts(dennicaItem, ringItems, well, availProducts) {
             ) {
                 alreadyNeedsOT.add(si);
 
-                const ringProd = studnieProducts.find((p) => p.id === fi.productId);
+                const ringProd =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(fi.productId)
+                        : studnieProducts.find((p) => p.id === fi.productId);
                 if (!ringProd) break;
                 // Tylko kręgi mogą być zastąpione OT variantem
                 if (ringProd.componentType !== 'krag') break;

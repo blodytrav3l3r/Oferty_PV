@@ -5,8 +5,10 @@
 
 let __refreshAllDepth = 0;
 const __MAX_REFRESH_DEPTH = 5;
+if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
 function refreshAll(skipSummary = false) {
     __refreshAllDepth++;
+    if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
     if (__refreshAllDepth > __MAX_REFRESH_DEPTH) {
         logger.error('wellManager', '========================================');
         logger.error('wellManager', 'DETEKCJA NIESKOŃCZONEJ PĘTLI refreshAll!');
@@ -61,6 +63,7 @@ function refreshAll(skipSummary = false) {
     // globalny skan, ale szybki, bo omija te, które już stały się <svg>
     if (window.lucide) window.lucide.createIcons();
     __refreshAllDepth--;
+    if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
 }
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */
@@ -150,7 +153,10 @@ async function updateWellParam(paramKey, value) {
         const hasKonus =
             well.config &&
             well.config.some((c) => {
-                const p = studnieProducts.find((pr) => pr.id === c.productId);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(c.productId)
+                        : studnieProducts.find((pr) => pr.id === c.productId);
                 return p && p.componentType === 'konus';
             });
         if (hasKonus && typeof window.showKonusPehdResolverModal === 'function') {
@@ -271,7 +277,10 @@ async function applyGlobalParamsToAllWells() {
             const hasKonus =
                 well.config &&
                 well.config.some((c) => {
-                    const p = studnieProducts.find((pr) => pr.id === c.productId);
+                    const p =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(c.productId)
+                            : studnieProducts.find((pr) => pr.id === c.productId);
                     return p && p.componentType === 'konus';
                 });
             if (hasKonus) well.wkladkaZwienczenie = 'brak';

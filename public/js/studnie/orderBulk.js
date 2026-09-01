@@ -36,7 +36,11 @@ function buildAutoOrderData(el, sharedData) {
     const { well, product, elementIndex, wellIndex } = el;
     const parsed = parseWysokoscGlebokosc(product.name);
     const findProductFn = (id) =>
-        typeof studnieProducts !== 'undefined' ? studnieProducts.find((pr) => pr.id === id) : null;
+        typeof studnieProducts !== 'undefined'
+            ? typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(id)
+                : studnieProducts.find((pr) => pr.id === id)
+            : null;
 
     let displayDN = well.dn === 'styczna' ? 'Styczna' : 'DN' + well.dn;
     let displayGlebokosc = parsed.glebokosc || '—';

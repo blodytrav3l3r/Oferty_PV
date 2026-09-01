@@ -6,7 +6,10 @@
  */
 function findClosureForDn(productId, targetDn) {
     if (!productId) return null;
-    const prod = studnieProducts.find((p) => p.id === productId);
+    const prod =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : studnieProducts.find((p) => p.id === productId);
     if (!prod || !prod.componentType) return null;
     const match = studnieProducts.find(
         (p) =>
@@ -21,7 +24,10 @@ function findClosureForDn(productId, targetDn) {
 function enforceSingularTopClosures(well, productId) {
     if (!well || !well.config) return;
 
-    const product = studnieProducts.find((p) => p.id === productId);
+    const product =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(productId)
+            : studnieProducts.find((p) => p.id === productId);
     if (!product) return;
 
     const topClosureTypes = [
@@ -57,7 +63,10 @@ function enforceSingularTopClosures(well, productId) {
         well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true;
 
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return true;
 
             if (reliefTypes.includes(product.componentType)) {
@@ -74,7 +83,10 @@ function enforceSingularTopClosures(well, productId) {
     if (product.componentType === 'plyta_redukcyjna') {
         well.config = well.config.filter((item) => {
             if (item.isPlaceholder) return true;
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             return !p || p.componentType !== 'plyta_redukcyjna';
         });
     }
@@ -108,8 +120,14 @@ function sortWellConfigByOrder() {
     };
 
     well.config = [...well.config].sort((a, b) => {
-        const pA = studnieProducts.find((p) => p.id === a.productId);
-        const pB = studnieProducts.find((p) => p.id === b.productId);
+        const pA =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(a.productId)
+                : studnieProducts.find((p) => p.id === a.productId);
+        const pB =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(b.productId)
+                : studnieProducts.find((p) => p.id === b.productId);
         if (!pA || !pB) return 0;
 
         let orderA = typeOrder[pA.componentType] ?? 100;
@@ -142,7 +160,10 @@ function _moveWlazToTop(well) {
     if (!well || !well.config || well.config.length < 2) return;
     let wlazIdx = -1;
     for (let i = 0; i < well.config.length; i++) {
-        const p = studnieProducts.find((pr) => pr.id === well.config[i].productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(well.config[i].productId)
+                : studnieProducts.find((pr) => pr.id === well.config[i].productId);
         if (p && p.componentType === 'wlaz') {
             wlazIdx = i;
             break;

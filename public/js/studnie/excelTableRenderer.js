@@ -29,8 +29,17 @@ function _excelRenderTable(dn) {
         }
     }
 
-    // ponytail: nie czyść przejść w renderze — kasowało placeholdery po "+" i psuło minus (pop na wypełnionym)
-    const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
+    // filteredIndexes SSoT — nie filtruj ręcznie, użyj cache (invalidowany przy add/delete/tab/search)
+    const _filteredIdx =
+        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : null;
+    const tabWells =
+        _filteredIdx !== null
+            ? _filteredIdx.map(function (i) {
+                  return wells[i];
+              })
+            : wells.filter(function (w) {
+                  return _excelWellMatchesTab(w, dn);
+              });
     const maxTr = _excelMaxTransitions[dn] || 1;
     let refWell = tabWells[0];
     if (!refWell && typeof _excelGetReferenceWell === 'function') {

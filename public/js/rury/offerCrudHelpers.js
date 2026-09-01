@@ -131,7 +131,10 @@ function renderSavedOffers() {
 /* ===== HISTORIA ZMIAN OFERTY ===== */
 
 function showOfferHistory(id) {
-    const offer = offers.find((o) => o.id === id);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     if (!offer || !offer.history || offer.history.length === 0) {
         showToast('Brak historii dla tej oferty', 'info');
         return;

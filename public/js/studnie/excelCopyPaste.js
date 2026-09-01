@@ -462,7 +462,9 @@ function excelConfirmPasteMismatches() {
                     prz.productId = newVal;
                     const prod =
                         typeof studnieProducts !== 'undefined'
-                            ? studnieProducts.find((p) => p.id === newVal)
+                            ? typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(newVal)
+                                : studnieProducts.find((p) => p.id === newVal)
                             : null;
                     if (prod) prz.tempCategory = prod.category;
                 }
@@ -579,16 +581,31 @@ function _excelBuildSemanticMap(headerParts, dn) {
 }
 function _excelPasteSemantic(lines, visibleRows, map, ctx) {
     // ctx opcjonalny — F1 lokalny cache dla Rodzaj/Średnica
+    const _filtered =
+        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    let _startFilteredIdx = 0;
+    if (
+        visibleRows &&
+        visibleRows.length > 0 &&
+        visibleRows[0] &&
+        typeof visibleRows[0].getAttribute === 'function'
+    ) {
+        const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
+        const pos = _filtered.indexOf(firstWIdx);
+        if (pos >= 0) _startFilteredIdx = pos;
+    }
     for (let si = 0; si < lines.length; si++) {
+        const modelWIdx = _filtered[_startFilteredIdx + si];
+        if (modelWIdx === undefined || !wells[modelWIdx]) continue;
         const parts = lines[si].split('\t');
-        const row = visibleRows[si];
-        if (!row) continue;
+        const row = visibleRows ? visibleRows[si] : null;
         for (let ci = 0; ci < parts.length; ci++) {
             const targetCol = map[ci];
             if (targetCol == null) continue;
-            const tdEl = _excelGetCellByLogical(row, targetCol);
+            const targetVal = parts[ci].replace(/\r/g, '').trim();
+            const tdEl = row ? _excelGetCellByLogical(row, targetCol) : null;
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), ctx);
+            _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target);
         }
     }
 }
@@ -601,6 +618,19 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx) {
         if (doneCallback) doneCallback();
         return;
     }
+    const _filtered =
+        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    let _startFilteredIdx = 0;
+    if (
+        visibleRows &&
+        visibleRows.length > 0 &&
+        visibleRows[0] &&
+        typeof visibleRows[0].getAttribute === 'function'
+    ) {
+        const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
+        const pos = _filtered.indexOf(firstWIdx);
+        if (pos >= 0) _startFilteredIdx = pos;
+    }
     _excelShowPasteProgress(0, total);
     function tick() {
         if (!document.getElementById('excel-table-overlay')) {
@@ -609,15 +639,17 @@ function _excelPasteSemanticBatch(lines, visibleRows, map, doneCallback, ctx) {
         }
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
+            const modelWIdx = _filtered[_startFilteredIdx + idx];
+            if (modelWIdx === undefined || !wells[modelWIdx]) continue;
             const parts = lines[idx].split('\t');
-            const row = visibleRows[idx];
-            if (!row) continue;
+            const row = visibleRows ? visibleRows[idx] : null;
             for (let ci = 0; ci < parts.length; ci++) {
                 const targetCol = map[ci];
                 if (targetCol == null) continue;
-                const tdEl = _excelGetCellByLogical(row, targetCol);
+                const targetVal = parts[ci].replace(/\r/g, '').trim();
+                const tdEl = row ? _excelGetCellByLogical(row, targetCol) : null;
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), ctx);
+                _excelSetModelCellValue(modelWIdx, targetCol, targetVal, ctx, target);
             }
         }
         _excelShowPasteProgress(idx, total);
@@ -977,13 +1009,16 @@ function _excelHandlePaste(e) {
                       })
                     : [_minCol];
             const _baseCols = _baseColsSorted;
-            /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby.
-               Licz tylko WIDOCZNE wiersze o wIdx >= start (pomija wiersze ukryte filtrem) */
+            /* Przy cell-selection NIE dodawaj nowych wierszy — obetnij do dostępnej liczby W MODELU.
+               Licz od _baseWIdx do końca odfiltrowanych studni w modelu. */
+            const _filteredSel =
+                typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+            const _startPosInFiltered = Math.max(0, _filteredSel.indexOf(_baseWIdx));
+            const availableRows = Math.max(0, _filteredSel.length - _startPosInFiltered);
             const visibleRows = _excelGetVisibleRows().filter(function (r) {
                 const rWIdx = parseInt(r.getAttribute('data-widx'), 10);
                 return !isNaN(rWIdx) && rWIdx >= _baseWIdx;
             });
-            const availableRows = visibleRows.length;
             if (lines.length > availableRows) {
                 lines = lines.slice(0, availableRows);
                 if (lines.length === 0) {
@@ -1009,40 +1044,48 @@ function _excelHandlePaste(e) {
             const cols = [..._excelSelectedCols].sort(function (a, b) {
                 return a - b;
             });
-            /* Przy column-selection NIE dodawaj nowych wierszy — obetnij (tylko widoczne) */
-            const visibleRows = _excelGetVisibleRows();
-            if (lines.length > visibleRows.length) {
-                lines = lines.slice(0, visibleRows.length);
+            /* Przy column-selection NIE dodawaj nowych wierszy — obetnij do liczby studni w modelu */
+            const _filteredCols =
+                typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+            const availableRows = _filteredCols.length;
+            if (lines.length > availableRows) {
+                lines = lines.slice(0, availableRows);
+                if (lines.length === 0) {
+                    showToast('Brak studni na tej zakładce', 'warning');
+                    return;
+                }
                 showToast('Wklejono ' + lines.length + ' (obcięte — koniec tabeli)', 'warning');
             }
+            const visibleRows = _excelGetVisibleRows();
+            _batched = lines.length > 100;
             if (_hasHeader && _semanticMap) {
-                lines.forEach(function (line, i) {
-                    const parts = line.split('\t');
-                    for (let ci = 0; ci < parts.length; ci++) {
-                        const targetCol = _semanticMap[ci];
-                        if (targetCol == null) continue;
-                        if (cols.indexOf(targetCol) < 0) continue;
-                        const tdInner = visibleRows[i]
-                            ? _excelGetCellByLogical(visibleRows[i], targetCol)
-                            : null;
-                        const target = tdInner ? tdInner.querySelector('input, select') : null;
-                        if (!target) continue;
-                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), _pasteCtx);
-                    }
-                });
+                if (_batched) {
+                    if (_pasteCtx)
+                        _excelPasteSemanticBatch(
+                            lines,
+                            visibleRows,
+                            _semanticMap,
+                            _finishPaste,
+                            _pasteCtx
+                        );
+                    else _excelPasteSemanticBatch(lines, visibleRows, _semanticMap, _finishPaste);
+                } else {
+                    if (_pasteCtx) _excelPasteSemantic(lines, visibleRows, _semanticMap, _pasteCtx);
+                    else _excelPasteSemantic(lines, visibleRows, _semanticMap);
+                }
+                if (!_batched) _finishPaste();
+                _batched = true;
             } else {
-                lines.forEach(function (line, i) {
-                    const parts = line.split('	');
-                    cols.forEach(function (colIdx, ci) {
-                        if (ci >= parts.length) return;
-                        const tdInner = visibleRows[i]
-                            ? _excelGetVisibleCell(visibleRows[i], colIdx)
-                            : null;
-                        const target = tdInner ? tdInner.querySelector('input, select') : null;
-                        if (!target) return;
-                        _excelSetCellValue(target, parts[ci].replace(/\r/g, '').trim(), _pasteCtx);
-                    });
-                });
+                if (_batched) {
+                    if (_pasteCtx)
+                        _excelPasteBatch(lines, visibleRows, cols[0] || 3, _finishPaste, _pasteCtx);
+                    else _excelPasteBatch(lines, visibleRows, cols[0] || 3, _finishPaste);
+                } else {
+                    if (_pasteCtx) _excelPasteSync(lines, visibleRows, cols[0] || 3, _pasteCtx);
+                    else _excelPasteSync(lines, visibleRows, cols[0] || 3);
+                }
+                if (!_batched) _finishPaste();
+                _batched = true;
             }
         } else {
             /* Wykryj startowy wiersz z aktywnego elementu w tabeli */
@@ -1069,22 +1112,26 @@ function _excelHandlePaste(e) {
             const colIdx = _excelGetPasteColIdx(
                 document.querySelector('tr[data-widx="' + startWIdx + '"]') || rows[0]
             );
-            /* Pomija wiersze ukryte filtrem wyszukiwarki. */
-            let visibleRows = _excelGetVisibleRows().filter(function (r) {
+            /* Pomija wiersze ukryte filtrem wyszukiwarki. Licz wiersze W MODELU od startWIdx. */
+            const _filteredDef =
+                typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+            const _startPosInFiltered = Math.max(0, _filteredDef.indexOf(startWIdx));
+            let availableRows = Math.max(0, _filteredDef.length - _startPosInFiltered);
+            const visibleRows = _excelGetVisibleRows().filter(function (r) {
                 const rWIdx = parseInt(r.getAttribute('data-widx'), 10);
                 return !isNaN(rWIdx) && rWIdx >= startWIdx;
             });
-            let availableRows = visibleRows.length;
             /* Jeśli wklejamy więcej wierszy niż mamy — auto-utwórz brakujące studnie (paste z zewn. Excela).
-               Dotyczy głównie paste w kolumnę nazw (colIdx 3), ale działa dla dowolnej kolumny startowej. */
+               Dotyczy głównie paste w kolumnę nazw (colIdx 3) lub danych z nagłówkiem/zewnętrznym formatem. */
             if (lines.length > availableRows) {
-                if (colIdx === 3) {
+                if (colIdx === 3 || (_hasHeader && _semanticMap)) {
                     const surplus = lines.slice(availableRows);
                     let created = 0;
                     for (let si = 0; si < surplus.length; si++) {
-                        const parts = surplus[si].split('	');
-                        const rawName = (parts[0] || '').replace(/\r/g, '').trim();
-                        if (!rawName) continue;
+                        const parts = surplus[si].split('\t');
+                        const rawName =
+                            (parts[0] || '').replace(/\r/g, '').trim() ||
+                            'Studnia (' + (wells.length + 1) + ')';
                         const dn = _excelActiveTab || '1000';
                         let dnVal = dn === 'styczne' ? 'styczna' : parseInt(dn, 10);
                         if (typeof dnVal === 'number' && isNaN(dnVal)) dnVal = 1000;
@@ -1121,23 +1168,15 @@ function _excelHandlePaste(e) {
                     }
                     if (created > 0) {
                         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+                        if (typeof _excelInvalidateFilteredIndexes === 'function')
+                            _excelInvalidateFilteredIndexes();
                         if (typeof _excelGetMaxTransitions === 'function')
                             _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
-                        // Re-render by dopisać wiersze do DOM przed dalszym paste reszty kolumn
-                        if (typeof _excelRenderTable === 'function')
-                            _excelRenderTable(_excelActiveTab);
-                        // Odśwież listę widocznych po dodaniu
-                        visibleRows = _excelGetVisibleRows().filter(function (r) {
-                            const rWIdx = parseInt(r.getAttribute('data-widx'), 10);
-                            return !isNaN(rWIdx) && rWIdx >= startWIdx;
-                        });
-                        availableRows = visibleRows.length;
-                        // Jeśli wciąż nadmiar (np. puste nazwy), obetnij
-                        if (lines.length > availableRows) {
-                            lines = lines.slice(0, availableRows);
-                        }
-                    } else {
-                        lines = lines.slice(0, availableRows);
+                        const _updatedFiltered =
+                            typeof _excelGetFilteredIndexes === 'function'
+                                ? _excelGetFilteredIndexes()
+                                : [];
+                        availableRows = Math.max(0, _updatedFiltered.length - _startPosInFiltered);
                     }
                 } else {
                     lines = lines.slice(0, availableRows);
@@ -1252,6 +1291,14 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
         if (doneCallback) doneCallback();
         return;
     }
+    const _filtered =
+        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    let _startFilteredIdx = 0;
+    if (visibleRows && visibleRows.length > 0 && visibleRows[0]) {
+        const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
+        const pos = _filtered.indexOf(firstWIdx);
+        if (pos >= 0) _startFilteredIdx = pos;
+    }
     _excelShowPasteProgress(0, total);
     function tick() {
         if (!document.getElementById('excel-table-overlay')) {
@@ -1260,10 +1307,11 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
         }
         const end = Math.min(idx + CHUNK, total);
         for (; idx < end; idx++) {
+            const modelWIdx = _filtered[_startFilteredIdx + idx];
+            if (modelWIdx === undefined || !wells[modelWIdx]) continue;
             const line = lines[idx];
-            const parts = line.split('	');
-            const row = visibleRows[idx];
-            if (!row) continue;
+            const parts = line.split('\t');
+            const row = visibleRows ? visibleRows[idx] : null;
             parts.forEach(function (v, ci) {
                 let visIdx, logical;
                 if (seqBatch && startPosBatch >= 0) {
@@ -1275,9 +1323,10 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
                     visIdx = startColIdx + ci;
                     logical = visIdx;
                 }
-                const tdEl = row.children[visIdx] ? row.children[visIdx] : null;
+                const targetVal = v.replace(/\r/g, '').trim();
+                const tdEl = row && row.children ? row.children[visIdx] : null;
                 const target = tdEl ? tdEl.querySelector('input, select') : null;
-                if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim(), ctx, logical);
+                _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target);
             });
         }
         _excelShowPasteProgress(idx, total);
@@ -1301,10 +1350,24 @@ function _excelPasteBatch(lines, visibleRows, startColIdx, doneCallback, ctx) {
 function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
     const seq = ctx && ctx.seq ? ctx.seq : null;
     const startPos = seq ? _excelFindSeqPosByVis(seq, startColIdx) : -1;
+    const _filtered =
+        typeof _excelGetFilteredIndexes === 'function' ? _excelGetFilteredIndexes() : [];
+    let _startFilteredIdx = 0;
+    if (
+        visibleRows &&
+        visibleRows.length > 0 &&
+        visibleRows[0] &&
+        typeof visibleRows[0].getAttribute === 'function'
+    ) {
+        const firstWIdx = parseInt(visibleRows[0].getAttribute('data-widx'), 10);
+        const pos = _filtered.indexOf(firstWIdx);
+        if (pos >= 0) _startFilteredIdx = pos;
+    }
     for (let si = 0; si < lines.length; si++) {
-        const parts = lines[si].split('	');
-        const row = visibleRows[si];
-        if (!row) continue;
+        const modelWIdx = _filtered[_startFilteredIdx + si];
+        if (modelWIdx === undefined || !wells[modelWIdx]) continue;
+        const parts = lines[si].split('\t');
+        const row = visibleRows ? visibleRows[si] : null;
         parts.forEach(function (v, ci) {
             let visIdx, logical;
             if (seq && startPos >= 0) {
@@ -1316,10 +1379,148 @@ function _excelPasteSync(lines, visibleRows, startColIdx, ctx) {
                 visIdx = startColIdx + ci;
                 logical = visIdx;
             }
-            const tdEl = row.children[visIdx] ? row.children[visIdx] : null;
+            const targetVal = v.replace(/\r/g, '').trim();
+            const tdEl = row && row.children ? row.children[visIdx] : null;
             const target = tdEl ? tdEl.querySelector('input, select') : null;
-            if (target) _excelSetCellValue(target, v.replace(/\r/g, '').trim(), ctx, logical);
+            _excelSetModelCellValue(modelWIdx, logical, targetVal, ctx, target);
         });
+    }
+}
+
+/** Zapewnia bezpośredni zapis wartości do modelu studni (obsługuje wirtualizację, gdy brak elementu TR w DOM) */
+function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
+    if (isNaN(wIdx) || wIdx < 0 || typeof wells === 'undefined' || !wells[wIdx]) return;
+    if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)) return;
+
+    if (targetElement) {
+        _excelSetCellValue(targetElement, val, ctx, effLogical);
+        return;
+    }
+
+    const well = wells[wIdx];
+    const valStr = String(val || '').trim();
+
+    if (effLogical === 3) {
+        if (valStr) {
+            well.name = valStr;
+            well.numer = valStr.replace(/ (PRE|UTH)$/i, '').trim();
+            if (typeof autoUpdateWellName === 'function') {
+                try {
+                    autoUpdateWellName(well, wIdx);
+                } catch (_e) {}
+            }
+        }
+    } else if (effLogical === 4) {
+        const num = parseFloat(valStr.replace(',', '.'));
+        well.rzednaWlazu = !isNaN(num) ? num : null;
+    } else if (effLogical === 5) {
+        const num = parseFloat(valStr.replace(',', '.'));
+        well.rzednaDna = !isNaN(num) ? num : null;
+    } else if (effLogical >= 7) {
+        const maxTr =
+            typeof _excelMaxTransitions !== 'undefined' && _excelMaxTransitions[_excelActiveTab]
+                ? _excelMaxTransitions[_excelActiveTab]
+                : 1;
+        const trIdx = Math.floor((effLogical - 7) / 4);
+        if (trIdx < maxTr) {
+            const subType = (effLogical - 7) % 4;
+            if (!well.przejscia) well.przejscia = [];
+            while (well.przejscia.length <= trIdx) {
+                if (typeof _excelCreatePrzejscie === 'function')
+                    well.przejscia.push(_excelCreatePrzejscie());
+                else
+                    well.przejscia.push({
+                        productId: '',
+                        tempCategory: '',
+                        rzednaWlaczenia: null,
+                        angle: 0,
+                        angleExecution: 0,
+                        angleGony: 0,
+                        flowType: 'PRZELOT'
+                    });
+            }
+            const prz = well.przejscia[trIdx];
+            if (subType === 0) {
+                const num = parseFloat(valStr.replace(',', '.'));
+                prz.rzednaWlaczenia = !isNaN(num) ? num : null;
+            } else if (subType === 1) {
+                const num = parseFloat(valStr.replace(',', '.'));
+                if (!isNaN(num)) {
+                    prz.angle = num;
+                    prz.angleExecution = num;
+                    prz.angleGony =
+                        typeof window !== 'undefined' && typeof window.degToGon === 'function'
+                            ? window.degToGon(num)
+                            : ((num * 400) / 360).toFixed(2);
+                }
+            } else if (subType === 2) {
+                if (!valStr) {
+                    prz.tempCategory = '';
+                    prz.productId = '';
+                } else if (ctx && ctx.allCatToCat) {
+                    const low = valStr.toLowerCase();
+                    const cat = ctx.allCatToCat.get(low) || ctx.allCatToCat.get(valStr) || valStr;
+                    prz.tempCategory = cat;
+                } else if (typeof _excelFindPasteCategory === 'function') {
+                    prz.tempCategory = _excelFindPasteCategory(valStr) || valStr;
+                } else {
+                    prz.tempCategory = valStr;
+                }
+            } else if (subType === 3) {
+                if (!valStr) {
+                    prz.productId = '';
+                } else if (ctx && ctx.all) {
+                    const poolAll = ctx.all;
+                    const curCat = prz.tempCategory;
+                    const catPool =
+                        curCat && ctx.catToProducts.get(curCat)
+                            ? ctx.catToProducts.get(curCat)
+                            : null;
+                    const searchPool = catPool && catPool.length > 0 ? catPool : poolAll;
+                    let matched = null;
+                    if (ctx.prodById.has(valStr)) matched = ctx.prodById.get(valStr);
+                    if (!matched && ctx.prodByLower.has(valStr.toLowerCase()))
+                        matched = ctx.prodByLower.get(valStr.toLowerCase());
+                    if (!matched) {
+                        const numVal = valStr.replace(/\D/g, '');
+                        if (numVal) {
+                            for (let i = 0; i < searchPool.length; i++) {
+                                const p = searchPool[i];
+                                if (
+                                    String(p.dn) === numVal ||
+                                    (p.name && p.name.indexOf(numVal) >= 0)
+                                ) {
+                                    matched = p;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if (!matched && typeof _excelFindClosestProduct === 'function') {
+                        matched = _excelFindClosestProduct(valStr, searchPool);
+                    }
+                    if (matched) {
+                        prz.productId = matched.id;
+                        prz.tempCategory = matched.category;
+                    }
+                } else if (
+                    typeof _excelFindClosestProduct === 'function' &&
+                    typeof studnieProducts !== 'undefined'
+                ) {
+                    const matched = _excelFindClosestProduct(valStr, studnieProducts);
+                    if (matched) {
+                        prz.productId = matched.id;
+                        prz.tempCategory = matched.category;
+                    }
+                }
+            }
+        }
+    }
+
+    if (typeof _excelMarkDirty === 'function') {
+        try {
+            _excelMarkDirty();
+        } catch (_e) {}
     }
 }
 
@@ -1589,7 +1790,9 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                 if (_przTmp && _przTmp.tempCategory) {
                     const _prodTmp =
                         typeof studnieProducts !== 'undefined'
-                            ? studnieProducts.find((p) => p.id === opt.value)
+                            ? typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(opt.value)
+                                : studnieProducts.find((p) => p.id === opt.value)
                             : null;
                     if (_prodTmp && _prodTmp.category !== _przTmp.tempCategory) {
                         opt = null;

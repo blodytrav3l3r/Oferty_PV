@@ -45,7 +45,10 @@ function editPrzejscie(index) {
     const well = getCurrentWell();
     if (!well || !well.przejscia || !well.przejscia[index]) return;
     const item = well.przejscia[index];
-    const p = studnieProducts.find((pr) => pr.id === item.productId);
+    const p =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(item.productId)
+            : studnieProducts.find((pr) => pr.id === item.productId);
 
     editPrzejscieIdx = index;
     editPrzejscieState = {

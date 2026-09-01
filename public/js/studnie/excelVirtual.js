@@ -41,6 +41,20 @@ function _excelVirtualIsEnabled() {
 }
 
 function _excelVirtualBuildFiltered() {
+    // deleguj do SSoT filteredIndexes gdy dostępny (Faza1 invariant)
+    if (typeof _excelGetFilteredIndexes === 'function') {
+        const arr = _excelGetFilteredIndexes();
+        _excelVirtualFiltered = arr.slice();
+        _excelVirtualTotal = arr.length;
+        try {
+            if (typeof window !== 'undefined') {
+                window._excelVirtualFiltered = _excelVirtualFiltered;
+                window._excelVirtualTotal = _excelVirtualTotal;
+                window._excelFilteredIndexes = arr;
+            }
+        } catch (_e) {}
+        return;
+    }
     if (typeof wells === 'undefined' || !Array.isArray(wells)) {
         _excelVirtualFiltered = [];
         _excelVirtualTotal = 0;

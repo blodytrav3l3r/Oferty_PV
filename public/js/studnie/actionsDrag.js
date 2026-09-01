@@ -53,7 +53,10 @@ function allowDropWellComponent(ev) {
         if (plIdx > -1 && plIdx < targetIdx) newEffIdx -= 1;
 
         if (plIdx === -1 || plIdx !== newEffIdx) {
-            const p = studnieProducts.find((x) => x.id === window.currentDraggedPlaceholderId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(window.currentDraggedPlaceholderId)
+                    : studnieProducts.find((x) => x.id === window.currentDraggedPlaceholderId);
             if (p) {
                 if (plIdx > -1) well.config.splice(plIdx, 1);
 

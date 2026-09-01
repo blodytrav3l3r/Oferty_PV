@@ -11,7 +11,10 @@ function buildEtykietaElements(data) {
 
     config.forEach((item) => {
         const productId = item.productId || item.id;
-        const product = studnieProducts.find((p) => p.id === productId);
+        const product =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(productId)
+                : studnieProducts.find((p) => p.id === productId);
         if (!product) return;
 
         if (product.componentType === 'kineta' || product.componentType === 'wlaz') return;

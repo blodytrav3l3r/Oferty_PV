@@ -12,7 +12,10 @@ function buildZleceniaWellList() {
         if (!well.config) return;
         for (let eIdx = well.config.length - 1; eIdx >= 0; eIdx--) {
             const item = well.config[eIdx];
-            let p = studnieProducts.find((pr) => pr.id === item.productId);
+            let p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
 
             if (!p && item.productId) {
                 logger.warn(
@@ -60,7 +63,10 @@ function findRealBaseIndex(well) {
     if (!well || !well.config) return -1;
     for (let i = well.config.length - 1; i >= 0; i--) {
         const item = well.config[i];
-        const tmpP = studnieProducts.find((pr) => pr.id === item.productId);
+        const tmpP =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (tmpP && tmpP.componentType !== 'uszczelka') {
             return i;
         }
@@ -235,7 +241,10 @@ function renderZleceniaWellConfig() {
 
     let html = '';
     well.config.forEach((item, index) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (!p) return;
         const badge = typeBadge[p.componentType] || { bg: 'var(--slate-700)', label: '?' };
         const isLocked = isWellLocked();

@@ -33,7 +33,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
             const wlazIdx = well.config.findIndex((item) => {
                 const p =
                     typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        ? typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(item.productId)
+                            : studnieProducts.find((pr) => pr.id === item.productId)
                         : null;
                 return p && p.componentType === 'wlaz';
             });
@@ -46,7 +48,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
             well.config = well.config.filter((item) => {
                 const p =
                     typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        ? typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(item.productId)
+                            : studnieProducts.find((pr) => pr.id === item.productId)
                         : null;
                 if (!p) return true;
                 if (reliefTypes.includes(p.componentType)) {
@@ -58,7 +62,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
             well.config = well.config.filter((item) => {
                 const p =
                     typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find((pr) => pr.id === item.productId)
+                        ? typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(item.productId)
+                            : studnieProducts.find((pr) => pr.id === item.productId)
                         : null;
                 return !(p && topClosureTypes.includes(p.componentType));
             });
@@ -66,7 +72,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         const wlazIdx = well.config.findIndex((item) => {
             const p =
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(item.productId)
+                        : studnieProducts.find((pr) => pr.id === item.productId)
                     : null;
             return p && p.componentType === 'wlaz';
         });
@@ -93,14 +101,18 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
         const plateIdx = well.config.findIndex((item) => {
             const p =
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === item.productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(item.productId)
+                        : studnieProducts.find((pr) => pr.id === item.productId)
                     : null;
             return p && p.componentType === 'plyta_redukcyjna';
         });
         if (plateIdx >= 0) {
             const prod =
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === productId)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(productId)
+                        : studnieProducts.find((pr) => pr.id === productId)
                     : null;
             const isRedDn = prod && String(prod.dn) === '1000';
             if (isRedDn) {
@@ -108,7 +120,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
                 for (let i = 0; i < plateIdx; i++) {
                     const p =
                         typeof studnieProducts !== 'undefined'
-                            ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                            ? typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(well.config[i].productId)
+                                : studnieProducts.find((pr) => pr.id === well.config[i].productId)
                             : null;
                     if (!p || !topTypesForMiddle.includes(p.componentType)) {
                         insertIdx = i;
@@ -125,7 +139,9 @@ function _excelInsertConfigItem(well, componentType, productId, qty) {
             for (let i = 0; i < well.config.length; i++) {
                 const p =
                     typeof studnieProducts !== 'undefined'
-                        ? studnieProducts.find((pr) => pr.id === well.config[i].productId)
+                        ? typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(well.config[i].productId)
+                            : studnieProducts.find((pr) => pr.id === well.config[i].productId)
                         : null;
                 if (p && bottomTypes.includes(p.componentType)) {
                     insertAt = i;

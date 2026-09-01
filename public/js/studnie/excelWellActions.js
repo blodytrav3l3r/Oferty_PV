@@ -255,6 +255,7 @@ function excelOnNameChange(wIdx, value) {
     if (typeof autoUpdateWellName === 'function') {
         autoUpdateWellName(wells[wIdx], wIdx);
     }
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     _excelRefreshDupColors();
     _excelRenderTabs();
     _excelUpdateWellCount();
@@ -283,6 +284,7 @@ function excelDuplicateWell(wIdx) {
     delete copy.__resCache;
     wells.splice(wIdx + 1, 0, copy);
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     /* Wstawienie przesuwa indeksy studni po wIdx o +1 — przesuń też zaznaczenia
        (S2), inaczej selekcje komórek i checkboxy wskazują sąsiednie studnie. */
     if (typeof _excelSelectedCells !== 'undefined' && _excelSelectedCells.length > 0) {
@@ -334,6 +336,7 @@ async function excelDeleteWell(wIdx) {
         return;
     wells.splice(wIdx, 1);
     if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     if (typeof currentWellIndex !== 'undefined' && currentWellIndex >= wells.length) {
         currentWellIndex = Math.max(0, wells.length - 1);
     }

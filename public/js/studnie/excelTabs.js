@@ -36,6 +36,7 @@ function _excelUpdateWellCount() {
 
 function excelSwitchTab(tab) {
     _excelActiveTab = tab;
+    if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
     _excelResetLayoutDependentState(); /* reset selekcji zależnych od układu */
     if (typeof _excelResetSort === 'function') _excelResetSort();
     _excelRenderTabs();
@@ -127,6 +128,9 @@ function excelCreateFromEmpty() {
         _excelSaveUndoSnapshot();
         _excelMarkDirty();
         wells.push(well);
+        if (typeof _excelInvalidateFilteredIndexes === 'function')
+            _excelInvalidateFilteredIndexes();
+        if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         _excelAutoSetWlaz(well);
         _excelMaxTransitions[_excelActiveTab] = _excelGetMaxTransitions();
         _excelRenderTabs();

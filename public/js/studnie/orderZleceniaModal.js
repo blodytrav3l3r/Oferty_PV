@@ -215,7 +215,9 @@ async function saveProductionOrder() {
             const rzDna = parseFloat(well.rzednaDna) || 0;
             const findProductFn = (id) =>
                 typeof studnieProducts !== 'undefined'
-                    ? studnieProducts.find((pr) => pr.id === id)
+                    ? typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(id)
+                        : studnieProducts.find((pr) => pr.id === id)
                     : null;
             const configMap =
                 typeof buildConfigMap !== 'undefined'

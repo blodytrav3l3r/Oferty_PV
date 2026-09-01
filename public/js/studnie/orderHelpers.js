@@ -42,6 +42,54 @@ async function saveOrdersDataStudnie(data) {
 
 /* ===== POMOCNIKI ZAMÓWIEŃ CZĘŚCIOWYCH ===== */
 
+/* Cache dla szybkiego wyszukiwania zamówień O(1) przy dużej liczbie studni i zamówień */
+let _ordersCacheKey = null;
+const _orderedWellIdsCacheMap = new Map(); // Map<offerIdKey, Set<wellId>>
+const _wellToOrderCacheMap = new Map(); // Map<offerIdKey_wellId, Order>
+
+function _invalidateOrdersLookupCache() {
+    _ordersCacheKey = null;
+    _orderedWellIdsCacheMap.clear();
+    _wellToOrderCacheMap.clear();
+}
+window._invalidateOrdersLookupCache = _invalidateOrdersLookupCache;
+
+function _ensureOrdersLookupCache() {
+    if (typeof ordersStudnie === 'undefined' || !Array.isArray(ordersStudnie)) {
+        _invalidateOrdersLookupCache();
+        return;
+    }
+    // Prosta weryfikacja tożsamości tablicy i liczby elementów
+    const key = ordersStudnie;
+    if (_ordersCacheKey === key) return;
+
+    _invalidateOrdersLookupCache();
+    _ordersCacheKey = key;
+
+    for (let i = 0; i < ordersStudnie.length; i++) {
+        const order = ordersStudnie[i];
+        if (!order) continue;
+        const offerId = order.offerId || order.offerStudnieId || '';
+        const nId = typeof normalizeId === 'function' ? normalizeId(offerId) : String(offerId);
+
+        let set = _orderedWellIdsCacheMap.get(nId);
+        if (!set) {
+            set = new Set();
+            _orderedWellIdsCacheMap.set(nId, set);
+        }
+
+        const wellsList = order.wells || [];
+        for (let wIdx = 0; wIdx < wellsList.length; wIdx++) {
+            const w = wellsList[wIdx];
+            if (w && w.id) {
+                set.add(w.id);
+                _wellToOrderCacheMap.set(nId + '_' + w.id, order);
+                _wellToOrderCacheMap.set('ANY_' + w.id, order);
+            }
+        }
+    }
+}
+
 /** Zwraca wszystkie zamówienia powiązane z daną ofertą */
 function getOrdersForOffer(offerId) {
     if (!ordersStudnie || !offerId) return [];
@@ -51,14 +99,10 @@ function getOrdersForOffer(offerId) {
 
 /** Zwraca Set<string> z ID studni, które są już zamówione dla danej oferty */
 function getOrderedWellIds(offerId) {
-    const orders = getOrdersForOffer(offerId);
-    const ids = new Set();
-    orders.forEach((order) => {
-        (order.wells || []).forEach((w) => {
-            if (w.id) ids.add(w.id);
-        });
-    });
-    return ids;
+    if (!ordersStudnie || !offerId) return new Set();
+    _ensureOrdersLookupCache();
+    const nId = normalizeId(offerId);
+    return _orderedWellIdsCacheMap.get(nId) || new Set();
 }
 
 /** Sprawdza, czy dana studnia jest zamówiona w ramach bieżącej oferty */
@@ -103,13 +147,9 @@ function getOfferOrderProgress(offerId, offerWells) {
 /** Zwraca zamówienie, do którego należy dana studnia (jeśli istnieje) */
 function getOrderForWellId(wellId, offerId) {
     if (!wellId || !ordersStudnie) return null;
-    const nId = offerId ? normalizeId(offerId) : null;
-    return (
-        ordersStudnie.find((order) => {
-            if (nId && normalizeId(order.offerId) !== nId) return false;
-            return (order.wells || []).some((w) => w.id === wellId);
-        }) || null
-    );
+    _ensureOrdersLookupCache();
+    const nId = offerId ? normalizeId(offerId) : 'ANY';
+    return _wellToOrderCacheMap.get(nId + '_' + wellId) || null;
 }
 
 window.getOrdersForOffer = getOrdersForOffer;
@@ -131,7 +171,10 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
     (wellsArr || []).forEach((well) => {
         (well.config || []).forEach((item) => {
             if (preserveExisting && item.frozenPrice != null) return;
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
             item.frozenPrice = getItemAssessedPrice(well, p, true, item);
             item.frozenPriceBase = getItemAssessedPrice(well, p, false, item);
@@ -144,12 +187,22 @@ function freezeWellPrices(wellsArr, preserveExisting = false) {
 
         const configMap =
             typeof buildConfigMap !== 'undefined'
-                ? buildConfigMap(well, (id) => studnieProducts.find((pr) => pr.id === id), true)
+                ? buildConfigMap(
+                      well,
+                      (id) =>
+                          typeof getStudnieProductById === 'function'
+                              ? getStudnieProductById(id)
+                              : studnieProducts.find((pr) => pr.id === id),
+                      true
+                  )
                 : [];
 
         (well.przejscia || []).forEach((item) => {
             if (preserveExisting && item.frozenPrice != null) return;
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (!p) return;
 
             let drillingBasePrice = 0;

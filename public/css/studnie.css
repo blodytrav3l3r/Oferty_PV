@@ -540,6 +540,16 @@ body > .main > .section.active::-webkit-scrollbar-thumb:hover {
     overflow-y: auto;
     overflow-x: hidden;
     scrollbar-width: thin;
+    overflow-anchor: none;
+}
+
+/* Perf: przy >200 kart wyłącz kosztowny blur/animację (visual-safe — blur niewidoczny w scroll) */
+.wells-list--many .well-list-item {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+}
+.wells-list--many .well-list-item.active::before {
+    animation: none !important;
 }
 
 .wells-sidebar-header .wells-count {

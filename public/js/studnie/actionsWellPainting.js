@@ -128,7 +128,10 @@ function collectPipeGeometry(well) {
 
     return well.przejscia
         .map((pr) => {
-            const prod = studnieProducts.find((p) => p.id === pr.productId);
+            const prod =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(pr.productId)
+                    : studnieProducts.find((p) => p.id === pr.productId);
             let dnMm = parseInt(pr.dn) || 0;
             if (!dnMm && prod) dnMm = parseInt(prod.dn) || 0;
             if (dnMm <= 0) return null;
@@ -179,7 +182,10 @@ function calcStandardKinetaPaintingArea(well, R) {
         let dennicaH = 0;
         if (well.config) {
             well.config.forEach((item) => {
-                const pr = studnieProducts.find((x) => x.id === item.productId);
+                const pr =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(item.productId)
+                        : studnieProducts.find((x) => x.id === item.productId);
                 if (pr && (pr.componentType === 'dennica' || pr.componentType === 'styczna')) {
                     dennicaH = Math.max(dennicaH, pr.height || 0);
                 }

@@ -22,6 +22,11 @@ let isAutoSelectRunning = false;
 window.__autoSelectCallCount = 0;
 const __MAX_AUTO_SELECT_CALLS = 10;
 window.autoSelectComponents = async function autoSelectComponents(autoTriggered = false) {
+    if (isAutoSelectRunning) {
+        if (autoTriggered) logger.debug('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
+        else logger.warn('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
+        return;
+    }
     window.__autoSelectCallCount++;
     if (window.__autoSelectCallCount > __MAX_AUTO_SELECT_CALLS) {
         logger.error('wellSolver', '========================================');
@@ -30,10 +35,6 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         logger.error('wellSolver', 'Stack trace:', new Error().stack);
         logger.error('wellSolver', '========================================');
         window.__autoSelectCallCount = 0;
-        return;
-    }
-    if (isAutoSelectRunning) {
-        logger.warn('wellSolver', '[AutoSelect] Pomijam — już trwa auto-dobór');
         return;
     }
     isAutoSelectRunning = true;
@@ -364,15 +365,23 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         }
 
         // Wlaz
-        let wlazItem = well.config.find(
-            (c) => studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+        let wlazItem = well.config.find((c) =>
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(c.productId)
+                : studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
         );
         if (!wlazItem) {
-            const wlaz150 = studnieProducts.find((p) => p.id === 'WLAZ-150');
+            const wlaz150 =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById('WLAZ-150')
+                    : studnieProducts.find((p) => p.id === 'WLAZ-150');
             if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
         }
         if (wlazItem) {
-            const wlazProd = studnieProducts.find((p) => p.id === wlazItem.productId);
+            const wlazProd =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(wlazItem.productId)
+                    : studnieProducts.find((p) => p.id === wlazItem.productId);
             if (wlazProd) {
                 items.unshift(wlazItem);
                 h += wlazProd.height * wlazItem.quantity;
@@ -677,7 +686,10 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
         for (const k of kItems) {
             let actualH = k._h;
-            const kp = studnieProducts.find((p) => p.id === k.productId);
+            const kp =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(k.productId)
+                    : studnieProducts.find((p) => p.id === k.productId);
             const kpDennicaLike =
                 kp && (kp.componentType === 'dennica' || kp.componentType === 'styczna');
             if (kpDennicaLike && lastWasDennica) {
@@ -695,7 +707,10 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             }
         }
         for (const t of [...topItems].reverse()) {
-            const tp = studnieProducts.find((p) => p.id === t.productId);
+            const tp =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(t.productId)
+                    : studnieProducts.find((p) => p.id === t.productId);
             if (tp) {
                 let actualH = tp.height;
                 const tpDennicaLike =
@@ -914,15 +929,23 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             }
 
             // --- Dodanie włazu do konfiguracji z redukcją ---
-            let wlazItem = well.config.find(
-                (c) => studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+            let wlazItem = well.config.find((c) =>
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
             );
             if (!wlazItem) {
-                const wlaz150 = studnieProducts.find((p) => p.id === 'WLAZ-150');
+                const wlaz150 =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById('WLAZ-150')
+                        : studnieProducts.find((p) => p.id === 'WLAZ-150');
                 if (wlaz150) wlazItem = { productId: wlaz150.id, quantity: 1 };
             }
             if (wlazItem) {
-                const wlazProd = studnieProducts.find((p) => p.id === wlazItem.productId);
+                const wlazProd =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(wlazItem.productId)
+                        : studnieProducts.find((p) => p.id === wlazItem.productId);
                 if (wlazProd) {
                     topRedItems.unshift(wlazItem);
                     topRedH += wlazProd.height * wlazItem.quantity;
@@ -937,7 +960,10 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const pel = parseFloat(pr.rzednaWlaczenia);
                     if (!isNaN(pel)) {
                         const holeBottom = (pel - rzDna) * 1000;
-                        const pprod = studnieProducts.find((x) => x.id === pr.productId);
+                        const pprod =
+                            typeof getStudnieProductById === 'function'
+                                ? getStudnieProductById(pr.productId)
+                                : studnieProducts.find((x) => x.id === pr.productId);
                         if (pprod) {
                             const prDN =
                                 typeof pprod.dn === 'string' && pprod.dn.includes('/')
@@ -1228,11 +1254,17 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
 
     const wlazItems = solution.topItems.filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType === 'wlaz';
     });
     const otherTopItems = solution.topItems.filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType !== 'wlaz';
     });
 
@@ -1250,12 +1282,18 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
     for (let i = 0; i < newConfig.length - 1; i++) {
         const itemKonus = newConfig[i];
-        const prodKonus = studnieProducts.find((p) => p.id === itemKonus.productId);
+        const prodKonus =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(itemKonus.productId)
+                : studnieProducts.find((p) => p.id === itemKonus.productId);
 
         if (prodKonus && prodKonus.componentType === 'konus' && (prodKonus.height || 0) <= 650) {
             let nextKragIdx = -1;
             for (let j = i + 1; j < newConfig.length; j++) {
-                const pj = studnieProducts.find((p) => p.id === newConfig[j].productId);
+                const pj =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(newConfig[j].productId)
+                        : studnieProducts.find((p) => p.id === newConfig[j].productId);
                 if (pj && (pj.componentType === 'krag' || pj.componentType === 'krag_ot')) {
                     nextKragIdx = j;
                     break;
@@ -1269,7 +1307,10 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
 
             if (nextKragIdx >= 0) {
                 const itemKrag = newConfig[nextKragIdx];
-                const prodKrag = studnieProducts.find((p) => p.id === itemKrag.productId);
+                const prodKrag =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(itemKrag.productId)
+                        : studnieProducts.find((p) => p.id === itemKrag.productId);
 
                 if (prodKrag && prodKrag.height === 250 && prodKrag.componentType === 'krag') {
                     const konusPlus = availProducts.find(

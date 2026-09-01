@@ -15,7 +15,10 @@ async function deleteStudnieProduct(id) {
 }
 
 async function copyStudnieProduct(id) {
-    const original = studnieProducts.find((p) => p.id === id);
+    const original =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((p) => p.id === id);
     if (!original) return;
     let finalId = original.id + '-KOP';
     let counter = 1;

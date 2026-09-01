@@ -47,7 +47,10 @@ function populateZleceniaForm(el) {
 
     let actualNextProduct = null;
     for (let i = elementIndex + 1; i < well.config.length; i++) {
-        const _p = studnieProducts.find((p) => p.id === well.config[i].productId);
+        const _p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(well.config[i].productId)
+                : studnieProducts.find((p) => p.id === well.config[i].productId);
         if (_p && _p.componentType !== 'uszczelka') {
             actualNextProduct = _p;
             break;
@@ -111,7 +114,10 @@ function populateZleceniaForm(el) {
     if (btnSave) btnSave.style.display = isAccepted ? 'none' : 'block';
 
     const rzDna = parseFloat(well.rzednaDna) || 0;
-    const findProductFn = (id) => studnieProducts.find((pr) => pr.id === id);
+    const findProductFn = (id) =>
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(id)
+            : studnieProducts.find((pr) => pr.id === id);
     const configMap = buildConfigMap(well, findProductFn, true);
 
     const assignedPrzejscia = (well.przejscia || []).filter((item) => {

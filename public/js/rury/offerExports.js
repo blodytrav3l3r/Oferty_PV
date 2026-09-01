@@ -44,6 +44,7 @@ function importOfferFromFile() {
                     } else {
                         offers.push(offer);
                     }
+                    if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
                     saveOffersData(offers);
                     renderSavedOffers();
                     showToast(`Zaimportowano: ${offer.number}`, 'success');
@@ -60,7 +61,10 @@ function importOfferFromFile() {
 /* ===== EKSPORT PDF ===== */
 
 function exportOfferPDF(id) {
-    const offer = offers.find((o) => o.id === id);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     if (!offer) return;
 
     let totalNetto = 0,
@@ -266,7 +270,7 @@ function renderDiscountModalItems() {
     const items = getActiveItemsArray();
     const sortedItems = items
         .map((item, index) => {
-            const product = products.find((p) => p.id === item.productId);
+            const product = getRuryProductById(item.productId);
             const category = product ? product.category : 'Inne';
             const catOrder = CATEGORIES.indexOf(category);
             const diameter = getProductDiameter(item.productId) || 99999;
@@ -422,7 +426,10 @@ function applyItemDiscounts() {
 /* ===== EKSPORT XLSX ===== */
 
 async function exportOfferXlsx(id) {
-    const offer = offers.find((o) => o.id === id);
+    const offer =
+        typeof getOfferRuryById === 'function'
+            ? getOfferRuryById(id)
+            : offers.find((o) => o.id === id);
     if (!offer) return;
     await ensureXlsx();
 
@@ -638,6 +645,7 @@ function importOfferFromXlsx() {
                     } else {
                         offers.push(offer);
                     }
+                    if (typeof _rebuildRuryOffersMap === 'function') _rebuildRuryOffersMap();
 
                     saveOffersData(offers);
                     renderSavedOffers();

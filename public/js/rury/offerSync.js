@@ -13,7 +13,7 @@ function syncGaskets() {
 
     activeItems.forEach((item) => {
         if (!item.autoAdded && item.quantity > 0) {
-            const product = products.find((p) => p.id === item.productId);
+            const product = getRuryProductById(item.productId);
             if (product && product.category === 'Duże Żelbetowe II') {
                 const diam = getProductDiameter(item.productId);
                 if (diam) {
@@ -107,12 +107,12 @@ function syncTransportSecurity(forceRemove) {
 
     activeItems.forEach((item) => {
         if (!item.autoAdded && item.quantity > 0) {
-            const product = products.find((p) => p.id === item.productId);
+            const product = getRuryProductById(item.productId);
             if (product && product.category !== 'Zabezpieczenie transportu') {
                 const diam = getProductDiameter(item.productId);
                 if (diam) {
                     const ztId = 'ZT-' + String(diam).padStart(4, '0');
-                    const ztProduct = products.find((p) => p.id === ztId);
+                    const ztProduct = getRuryProductById(ztId);
                     if (ztProduct) {
                         if (!req[ztId]) req[ztId] = { product: ztProduct, qty: 0 };
                         req[ztId].qty += item.quantity;
@@ -125,7 +125,7 @@ function syncTransportSecurity(forceRemove) {
     for (let i = activeItems.length - 1; i >= 0; i--) {
         const item = activeItems[i];
         if (!item.productId?.startsWith('ZT-')) continue;
-        const ztProduct = products.find((p) => p.id === item.productId);
+        const ztProduct = getRuryProductById(item.productId);
         if (!ztProduct || ztProduct.category !== 'Zabezpieczenie transportu') continue;
         if (req[item.productId] && req[item.productId].qty > 0) {
             item.quantity = req[item.productId].qty;

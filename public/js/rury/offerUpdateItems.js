@@ -17,7 +17,7 @@ function updatePipeLength(index, newLengthM, skipRender = false) {
         showToast(`Maksymalna długość tej rury to ${maxLength}m`, 'error');
     }
 
-    const product = products.find((p) => p.id === item.productId);
+    const product = getRuryProductById(item.productId);
     if (!product) return;
 
     const originalLengthM = getProductLength(product.id) / 1000;

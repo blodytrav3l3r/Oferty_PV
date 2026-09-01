@@ -7,7 +7,7 @@ function addPehdToPipe(pipeIndex, pehdId) {
     const area = getPipeInnerArea(pipe.productId);
     if (area <= 0) return;
 
-    const pehdProd = products.find((p) => p.id === pehdId);
+    const pehdProd = getRuryProductById(pehdId);
     if (!pehdProd) return;
 
     if (pipe.pehdType === pehdId) {

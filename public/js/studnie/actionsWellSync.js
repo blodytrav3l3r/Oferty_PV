@@ -7,7 +7,10 @@ function recalcGaskets(well) {
 
     const existingGasketPrices = new Map();
     well.config.forEach((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         if (p && p.componentType === 'uszczelka' && item.frozenPrice != null) {
             existingGasketPrices.set(item.productId, {
                 frozenPrice: item.frozenPrice,
@@ -17,7 +20,10 @@ function recalcGaskets(well) {
     });
 
     const newConfig = well.config.filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'uszczelka');
     });
 
@@ -27,7 +33,10 @@ function recalcGaskets(well) {
 
         let bottomDennicaIndex = -1;
         for (let i = newConfig.length - 1; i >= 0; i--) {
-            const p = studnieProducts.find((pr) => pr.id === newConfig[i].productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(newConfig[i].productId)
+                    : studnieProducts.find((pr) => pr.id === newConfig[i].productId);
             if (p && p.componentType === 'dennica') {
                 bottomDennicaIndex = i;
                 break;
@@ -35,7 +44,10 @@ function recalcGaskets(well) {
         }
 
         newConfig.forEach((item, index) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             if (
                 p &&
                 ['krag', 'krag_ot', 'plyta_din', 'plyta_redukcyjna', 'konus'].includes(
@@ -122,7 +134,10 @@ function syncKineta(well) {
         well.spocznik = 'brak';
         well.spocznikH = 'brak';
         well.config = well.config.filter((item) => {
-            const p = studnieProducts.find((pr) => pr.id === item.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(item.productId)
+                    : studnieProducts.find((pr) => pr.id === item.productId);
             return !(p && p.componentType === 'kineta');
         });
 
@@ -130,7 +145,10 @@ function syncKineta(well) {
             let dennicaHeight = 0;
             if (well.config) {
                 well.config.forEach((item) => {
-                    const p = studnieProducts.find((pr) => pr.id === item.productId);
+                    const p =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(item.productId)
+                            : studnieProducts.find((pr) => pr.id === item.productId);
                     if (p && (p.componentType === 'dennica' || p.componentType === 'styczna')) {
                         dennicaHeight += (p.height || 0) * (item.quantity || 1);
                     }
@@ -158,12 +176,18 @@ function syncKineta(well) {
     }
 
     const newConfig = well.config.filter((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return !(p && p.componentType === 'kineta');
     });
 
     const hasDennica = (well.config || []).some((item) => {
-        const p = studnieProducts.find((pr) => pr.id === item.productId);
+        const p =
+            typeof getStudnieProductById === 'function'
+                ? getStudnieProductById(item.productId)
+                : studnieProducts.find((pr) => pr.id === item.productId);
         return p && p.componentType === 'dennica';
     });
 
@@ -199,20 +223,29 @@ function enforceGlobalKonusPehdRule() {
 
             if (w.config && w.config.length > 0) {
                 const found = w.config.some((c) => {
-                    const p = studnieProducts.find((pr) => pr.id === c.productId);
+                    const p =
+                        typeof getStudnieProductById === 'function'
+                            ? getStudnieProductById(c.productId)
+                            : studnieProducts.find((pr) => pr.id === c.productId);
                     return p && p.componentType === 'konus';
                 });
                 if (found) hasKonus = true;
             }
 
             if (w.zakonczenie) {
-                const p = studnieProducts.find((pr) => pr.id === w.zakonczenie);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(w.zakonczenie)
+                        : studnieProducts.find((pr) => pr.id === w.zakonczenie);
                 if (p && p.componentType === 'konus') {
                     hasKonus = true;
                 }
             }
             if (w.redukcjaZakonczenie) {
-                const p = studnieProducts.find((pr) => pr.id === w.redukcjaZakonczenie);
+                const p =
+                    typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(w.redukcjaZakonczenie)
+                        : studnieProducts.find((pr) => pr.id === w.redukcjaZakonczenie);
                 if (p && p.componentType === 'konus') {
                     hasKonus = true;
                 }

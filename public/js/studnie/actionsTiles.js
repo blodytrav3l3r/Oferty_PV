@@ -203,7 +203,10 @@ function renderTiles() {
     const hasReduction =
         well.redukcjaDN1000 ||
         (well.config || []).some((c) => {
-            const p = studnieProducts.find((pr) => pr.id === c.productId);
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((pr) => pr.id === c.productId);
             return p && p.componentType === 'plyta_redukcyjna';
         });
 

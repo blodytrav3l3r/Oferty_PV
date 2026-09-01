@@ -92,7 +92,7 @@ function renderPriceList() {
 
 function editCell(el, field, id) {
     if (el.querySelector('input')) return;
-    const product = products.find((p) => p.id === id);
+    const product = getRuryProductById(id);
     const oldVal = product[field] ?? '';
     const input = document.createElement('input');
     input.type = field === 'name' || field === 'id' ? 'text' : 'number';
@@ -141,7 +141,7 @@ function editCell(el, field, id) {
 /* ===== OPERACJE NA PRODUKTACH ===== */
 
 function copyProduct(id) {
-    const original = products.find((p) => p.id === id);
+    const original = getRuryProductById(id);
     if (!original) return;
 
     const newId = original.id + '-KOP';
