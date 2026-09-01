@@ -112,6 +112,24 @@ router.post(
             const incoming = req.body.data || [req.body];
 
             const results: Record<string, unknown>[] = [];
+            const pendingWrites: Array<{
+                docId: string;
+                effectiveUserId: string;
+                offerNumber: string;
+                state: string;
+                clientName: string | null;
+                investName: string | null;
+                clientNip: string | null;
+                clientNumber: string | null;
+                created: string | null;
+                updated: string;
+                historyStr: string;
+                dataStr: string;
+                transportCost: number;
+                items: unknown[];
+                fts: { id: string; offer_number: string; clientName: string | null; investName: string | null; clientNumber: string | null };
+            }> = [];
+
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) docId = uuidv4();
@@ -196,72 +214,86 @@ router.post(
                 const offerNumber = o.offer_number || o.number || '';
                 const dataStr = JSON.stringify(o);
 
-                await prisma.offers_rel.upsert({
-                    where: { id: docId },
-                    create: {
-                        id: docId,
-                        userId: effectiveUserId,
-                        offer_number: offerNumber,
-                        state: state,
-                        clientName,
-                        investName,
-                        clientNip,
-                        clientNumber,
-                        createdAt: created,
-                        updatedAt: updated,
-                        transportCost: o.transportCost || 0,
-                        history: JSON.stringify(newHistory),
-                        data: dataStr
-                    },
-                    update: {
-                        userId: effectiveUserId,
-                        offer_number: offerNumber,
-                        state: state,
-                        clientName,
-                        investName,
-                        clientNip,
-                        clientNumber,
-                        updatedAt: updated,
-                        transportCost: o.transportCost || 0,
-                        history: JSON.stringify(newHistory),
-                        data: dataStr
-                    }
+                pendingWrites.push({
+                    docId,
+                    effectiveUserId,
+                    offerNumber,
+                    state,
+                    clientName,
+                    investName,
+                    clientNip,
+                    clientNumber,
+                    created,
+                    updated,
+                    historyStr: JSON.stringify(newHistory),
+                    dataStr,
+                    transportCost: o.transportCost || 0,
+                    items: o.items || [],
+                    fts: { id: docId, offer_number: offerNumber, clientName, investName, clientNumber }
                 });
+                results.push({ id: docId, ok: true });
+            }
 
-                await prisma.offer_items_rel.deleteMany({
-                    where: { offerId: docId }
-                });
-                const items = o.items || [];
-                if (items.length > 0) {
-                    await prisma.offer_items_rel.createMany({
-                        data: items.map(
-                            (item: {
+            await prisma.$transaction(async (tx) => {
+                for (const w of pendingWrites) {
+                    await tx.offers_rel.upsert({
+                        where: { id: w.docId },
+                        create: {
+                            id: w.docId,
+                            userId: w.effectiveUserId,
+                            offer_number: w.offerNumber,
+                            state: w.state,
+                            clientName: w.clientName,
+                            investName: w.investName,
+                            clientNip: w.clientNip,
+                            clientNumber: w.clientNumber,
+                            createdAt: w.created,
+                            updatedAt: w.updated,
+                            transportCost: w.transportCost,
+                            history: w.historyStr,
+                            data: w.dataStr
+                        },
+                        update: {
+                            userId: w.effectiveUserId,
+                            offer_number: w.offerNumber,
+                            state: w.state,
+                            clientName: w.clientName,
+                            investName: w.investName,
+                            clientNip: w.clientNip,
+                            clientNumber: w.clientNumber,
+                            updatedAt: w.updated,
+                            transportCost: w.transportCost,
+                            history: w.historyStr,
+                            data: w.dataStr
+                        }
+                    });
+
+                    await tx.offer_items_rel.deleteMany({
+                        where: { offerId: w.docId }
+                    });
+                    if (w.items.length > 0) {
+                        await tx.offer_items_rel.createMany({
+                            data: (w.items as Array<{
                                 id?: string;
                                 unitPrice?: number;
                                 price?: number;
                                 productId: string;
                                 quantity: number;
                                 discount: number;
-                            }) => ({
+                            }>).map((item) => ({
                                 id: item.id || uuidv4(),
-                                offerId: docId,
+                                offerId: w.docId,
                                 productId: item.productId,
                                 quantity: item.quantity || 0,
                                 discount: item.discount || 0,
-                                price:
-                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
-                            })
-                        )
-                    });
+                                price: item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                            }))
+                        });
+                    }
                 }
-                await syncFts5('rury', {
-                    id: docId,
-                    offer_number: offerNumber,
-                    clientName,
-                    investName,
-                    clientNumber
-                });
-                results.push({ id: docId, ok: true });
+            });
+            for (const w of pendingWrites) {
+                await syncFts5('rury', w.fts);
             }
 
             logger.info(
@@ -319,6 +351,19 @@ router.put(
                 }
             }
 
+            const pendingPut: Array<{
+                docId: string;
+                state: string;
+                clientName: string | null;
+                investName: string | null;
+                clientNip: string | null;
+                clientNumber: string | null;
+                created: string | null;
+                dataStr: string;
+                transportCost: number;
+                items: unknown[];
+                fts: { id: string; offer_number: string | null; clientName: string | null; investName: string | null; clientNumber: string | null };
+            }> = [];
             for (const o of incoming) {
                 let docId = o.id;
                 if (!docId) {
@@ -333,66 +378,76 @@ router.put(
                 const created = normalizeDate(o.createdAt, { exactMs: true });
                 const dataStr = JSON.stringify(o);
 
-                await prisma.offers_rel.upsert({
-                    where: { id: docId },
-                    create: {
-                        id: docId,
-                        userId: authReq.user?.id,
-                        state: state,
-                        clientName,
-                        investName,
-                        clientNip,
-                        clientNumber,
-                        createdAt: created,
-                        transportCost: o.transportCost || 0,
-                        data: dataStr
-                    },
-                    update: {
-                        userId: authReq.user?.id,
-                        state: state,
-                        clientName,
-                        investName,
-                        clientNip,
-                        clientNumber,
-                        createdAt: created,
-                        transportCost: o.transportCost || 0,
-                        data: dataStr
-                    }
+                pendingPut.push({
+                    docId,
+                    state,
+                    clientName,
+                    investName,
+                    clientNip,
+                    clientNumber,
+                    created,
+                    dataStr,
+                    transportCost: o.transportCost || 0,
+                    items: o.items || [],
+                    fts: { id: docId, offer_number: o.offer_number || null, clientName, investName, clientNumber }
                 });
+            }
 
-                await prisma.offer_items_rel.deleteMany({
-                    where: { offerId: docId }
-                });
-                const items = o.items || [];
-                if (items.length > 0) {
-                    await prisma.offer_items_rel.createMany({
-                        data: items.map(
-                            (item: {
+            await prisma.$transaction(async (tx) => {
+                for (const w of pendingPut) {
+                    await tx.offers_rel.upsert({
+                        where: { id: w.docId },
+                        create: {
+                            id: w.docId,
+                            userId: authReq.user?.id,
+                            state: w.state,
+                            clientName: w.clientName,
+                            investName: w.investName,
+                            clientNip: w.clientNip,
+                            clientNumber: w.clientNumber,
+                            createdAt: w.created,
+                            transportCost: w.transportCost,
+                            data: w.dataStr
+                        },
+                        update: {
+                            userId: authReq.user?.id,
+                            state: w.state,
+                            clientName: w.clientName,
+                            investName: w.investName,
+                            clientNip: w.clientNip,
+                            clientNumber: w.clientNumber,
+                            createdAt: w.created,
+                            transportCost: w.transportCost,
+                            data: w.dataStr
+                        }
+                    });
+
+                    await tx.offer_items_rel.deleteMany({
+                        where: { offerId: w.docId }
+                    });
+                    if (w.items.length > 0) {
+                        await tx.offer_items_rel.createMany({
+                            data: (w.items as Array<{
                                 id?: string;
                                 unitPrice?: number;
                                 price?: number;
                                 productId: string;
                                 quantity: number;
                                 discount: number;
-                            }) => ({
+                            }>).map((item) => ({
                                 id: item.id || uuidv4(),
-                                offerId: docId,
+                                offerId: w.docId,
                                 productId: item.productId,
                                 quantity: item.quantity || 0,
                                 discount: item.discount || 0,
-                                price:
-                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
-                            })
-                        )
-                    });
+                                price: item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                            }))
+                        });
+                    }
                 }
-                await syncFts5('rury', {
-                    id: docId,
-                    offer_number: o.offer_number || null,
-                    clientName,
-                    investName,
-                    clientNumber
-                });
+            });
+            for (const w of pendingPut) {
+                await syncFts5('rury', w.fts);
             }
 
             searchCache.invalidateAll();

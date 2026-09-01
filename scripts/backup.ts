@@ -26,10 +26,36 @@ async function main() {
         await prisma.$executeRawUnsafe(`VACUUM INTO '${targetPath}'`);
 
         const stats = fs.statSync(backupPath);
+        if (stats.size === 0) throw new Error('Backup pusty (0 B) — VACUUM nie utworzył pliku');
         console.log(`[Backup] Utworzono: ${backupPath} (${(stats.size / 1024).toFixed(1)} KB)`);
 
+        // weryfikacja integralności backupu
+        try {
+            const { DatabaseSync } = await import('node:sqlite');
+            const db = new DatabaseSync(backupPath, { readOnly: true });
+            const row = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
+            db.close();
+            if (row.integrity_check !== 'ok') throw new Error(`integrity_check: ${row.integrity_check}`);
+            console.log('[Backup] Weryfikacja integralności OK');
+        } catch (e: unknown) {
+            const msg = e instanceof Error ? e.message : String(e);
+            console.warn('[Backup] Ostrzeżenie weryfikacji:', msg);
+            // nie usuwaj starej kopii jeśli nowa jest uszkodzona
+            if (msg.includes('integrity_check')) {
+                try {
+                    fs.unlinkSync(backupPath);
+                    console.log('[Backup] Usunięto uszkodzony backup');
+                } catch {}
+                throw e;
+            }
+        }
+
         const files = fs.readdirSync(backupDir);
-        const backups = files.filter((f) => f.startsWith('backup_')).sort();
+        const backups = files
+            .filter((f) => f.startsWith('backup_'))
+            .map((f) => ({ name: f, mtime: fs.statSync(path.join(backupDir, f)).mtimeMs }))
+            .sort((a, b) => a.mtime - b.mtime)
+            .map((x) => x.name);
 
         while (backups.length > MAX_BACKUPS) {
             const toDelete = backups.shift();
