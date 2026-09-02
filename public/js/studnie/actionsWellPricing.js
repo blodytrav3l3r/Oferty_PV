@@ -93,9 +93,10 @@ function getItemAssessedPrice(well, p, applyDiscount = true, item = null) {
         });
         if (dennicaItem) {
             dennicaHeight =
-                typeof getStudnieProductById === 'function'
+                (typeof getStudnieProductById === 'function'
                     ? getStudnieProductById(dennicaItem.productId)
-                    : studnieProducts.find((x) => x.id === dennicaItem.productId)?.height || 0;
+                    : studnieProducts.find((x) => x.id === dennicaItem.productId)
+                )?.height || 0;
         }
 
         const h1m = parseFloat(p.hMin1);

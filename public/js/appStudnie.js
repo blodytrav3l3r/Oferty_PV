@@ -206,7 +206,7 @@ async function loadDataInBackground() {
     ]);
 
     if (productsP.status === 'fulfilled') {
-        studnieProducts = productsP.value;
+        window.studnieProducts = productsP.value;
     } else {
         logger.error('appStudnie', '[AppStudnie] Błąd produktów:', productsP.reason);
     }

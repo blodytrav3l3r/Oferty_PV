@@ -39,19 +39,60 @@ Object.defineProperty(window, 'studnieProducts', {
 window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
 
 // Map<productId, Product> — O(1) lookup zamiast find() 40M porównań przy 10k (P0 C)
+// Klucz canonical: String(product.id) — jeden SSoT dla lookupu
+/** @type {Map<string, any>} */
 let studnieProductsById = new Map();
 function _rebuildStudnieProductsById() {
     studnieProductsById = new Map();
     for (let i = 0; i < studnieProducts.length; i++) {
         const p = studnieProducts[i];
-        if (p && p.id) studnieProductsById.set(p.id, p);
+        if (p && p.id != null) studnieProductsById.set(String(p.id), p);
     }
 }
+/**
+ * O(1) lookup produktu studni — String canonical.
+ * Hybrid: primary rebuild przez window.studnieProducts setter, lazy cheap detector size, fallback find jako self-healing.
+ * @param {string} id
+ * @returns {any|null}
+ */
 function getStudnieProductById(id) {
-    return studnieProductsById.get(id) || null;
+    if (id == null) return null;
+    const k = String(id);
+    // cheap stale detector — nie proof, tylko sygnał dla bypassów (push/filter bez window.*)
+    if (studnieProductsById.size !== studnieProducts.length) {
+        _rebuildStudnieProductsById();
+    }
+    const v = studnieProductsById.get(k);
+    if (!v && studnieProducts.length) {
+        const f = studnieProducts.find((p) => String(p.id) === k);
+        if (f) {
+            studnieProductsById.set(k, f);
+            return f;
+        }
+    }
+    return v || null;
+}
+/**
+ * Formalny invariant dev/CI — nie size===length, tylko referencje + unikalność.
+ * @returns {boolean}
+ */
+function __assertStudnieMapFresh() {
+    if (studnieProducts.length === 0) return studnieProductsById.size === 0;
+    if (studnieProductsById.size !== studnieProducts.length) return false;
+    const seen = new Set();
+    for (let i = 0; i < studnieProducts.length; i++) {
+        const p = studnieProducts[i];
+        if (!p || p.id == null) return false;
+        const k = String(p.id);
+        if (seen.has(k)) return false;
+        seen.add(k);
+        if (studnieProductsById.get(k) !== p) return false;
+    }
+    return true;
 }
 window._rebuildStudnieProductsById = _rebuildStudnieProductsById;
 window.getStudnieProductById = getStudnieProductById;
+window.__assertStudnieMapFresh = __assertStudnieMapFresh;
 Object.defineProperty(window, 'studnieProductsById', {
     configurable: true,
     get: () => studnieProductsById

@@ -365,10 +365,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         }
 
         // Wlaz
-        let wlazItem = well.config.find((c) =>
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(c.productId)
-                : studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+        let wlazItem = well.config.find(
+            (c) =>
+                (typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((p) => p.id === c.productId)
+                )?.componentType === 'wlaz'
         );
         if (!wlazItem) {
             const wlaz150 =
@@ -929,10 +931,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
             }
 
             // --- Dodanie włazu do konfiguracji z redukcją ---
-            let wlazItem = well.config.find((c) =>
-                typeof getStudnieProductById === 'function'
-                    ? getStudnieProductById(c.productId)
-                    : studnieProducts.find((p) => p.id === c.productId)?.componentType === 'wlaz'
+            let wlazItem = well.config.find(
+                (c) =>
+                    (typeof getStudnieProductById === 'function'
+                        ? getStudnieProductById(c.productId)
+                        : studnieProducts.find((p) => p.id === c.productId)
+                    )?.componentType === 'wlaz'
             );
             if (!wlazItem) {
                 const wlaz150 =

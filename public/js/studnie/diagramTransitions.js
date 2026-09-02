@@ -118,7 +118,7 @@ function drawTransitions(well, canvas, dimLinesY) {
  * Parsuje geometrię przejścia — zwraca wymiary rury i pozycję.
  */
 function parseTransitionGeometry(pr, bottomElev) {
-    const angle = parseFloat(pr.katWlaczenia) || 0;
+    const angle = parseFloat(pr.angle ?? pr.angleExecution ?? pr.katWlaczenia) || 0;
     let pel = parseFloat(pr.rzednaWlaczenia);
     if (isNaN(pel)) pel = 0;
 

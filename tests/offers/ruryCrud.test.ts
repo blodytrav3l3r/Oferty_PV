@@ -189,7 +189,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
             const upsertMock = prisma.offers_rel.upsert as jest.Mock;
             const txMock = prisma.$transaction as jest.Mock;
             let upsertCall: unknown = null;
-            if (upsertMock.mock.calls.length > 0) upsertCall = upsertMock.mock.calls[0][0] as unknown;
+            if (upsertMock.mock.calls.length > 0)
+                upsertCall = upsertMock.mock.calls[0][0] as unknown;
             else if (txMock.mock.calls.length > 0) {
                 // transakcja woła cb z tym samym mockiem, więc upsert jest w środku — mock już nagrany
                 // fallback: sprawdź historię przez bezpośredni upsert mock po transakcji
@@ -197,7 +198,9 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 expect(txMock).toHaveBeenCalled();
                 return;
             }
-            const savedHistory = JSON.parse((upsertCall as { update: { history: string } }).update.history);
+            const savedHistory = JSON.parse(
+                (upsertCall as { update: { history: string } }).update.history
+            );
             expect(savedHistory.length).toBe(5);
             expect(savedHistory[0].items).toEqual([
                 { productId: 'p-1', quantity: 1, discount: 0, price: 10 }

@@ -189,17 +189,17 @@ async function deleteStudnieCategory(groupKey) {
         return;
 
     if (defaults.isPrzejscia) {
-        studnieProducts = studnieProducts.filter(
+        window.studnieProducts = studnieProducts.filter(
             (p) => !(p.componentType === 'przejscie' && p.category === groupKey)
         );
     } else if (defaults.isDennicy) {
         const dn = parseInt(groupKey.replace('dn', ''), 10);
-        studnieProducts = studnieProducts.filter(
+        window.studnieProducts = studnieProducts.filter(
             (p) => !(p.componentType === 'dennica' && p.dn === dn)
         );
     } else {
         const tabFilter = CENNIK_TAB_FILTERS[defaults.tab];
-        studnieProducts = studnieProducts.filter((p) => {
+        window.studnieProducts = studnieProducts.filter((p) => {
             if (!tabFilter || !tabFilter(p)) return true;
             if (defaults.tab === 'kinety') {
                 return p.category !== groupKey;

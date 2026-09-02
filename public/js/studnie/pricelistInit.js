@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     goToWizardStep(1);
 
     try {
-        studnieProducts = await loadStudnieProducts();
+        window.studnieProducts = await loadStudnieProducts();
 
         if (!studnieProducts.some((p) => p.componentType === 'kineta')) {
             logger.warn('pricelistManager', '[Studnie] Brak kinet w cenniku');

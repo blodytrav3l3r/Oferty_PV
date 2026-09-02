@@ -379,10 +379,12 @@ function renderComponentSubItems(well, p, item, itemPrzejscia, disc, wellTranspo
     }
 
     if (isBase && !item.isPsiaBuda) {
-        const kineta = well.config.find((c) =>
-            typeof getStudnieProductById === 'function'
-                ? getStudnieProductById(c.productId)
-                : studnieProducts.find((x) => x.id === c.productId)?.componentType === 'kineta'
+        const kineta = well.config.find(
+            (c) =>
+                (typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(c.productId)
+                    : studnieProducts.find((x) => x.id === c.productId)
+                )?.componentType === 'kineta'
         );
         if (kineta) {
             const kp =

@@ -19,7 +19,7 @@ async function resetStudniePriceList() {
         if (!json) throw new Error('Nie udało się pobrać domyślnego cennika');
         const customDefault = json.data;
         if (customDefault && customDefault.length > 0) {
-            studnieProducts = structuredClone(customDefault);
+            window.studnieProducts = structuredClone(customDefault);
         } else {
             showToast('Brak zapisanych wartości fabrycznych cennika studni', 'error');
             return;
@@ -71,7 +71,7 @@ async function refreshStudnieData() {
         const res = await fetch('/api/products-studnie', { headers: authHeaders() });
         const result = res.ok ? /** @type {any} */ (await res.json()) : null;
         if (result && Array.isArray(result.data)) {
-            studnieProducts = result.data;
+            window.studnieProducts = result.data;
             renderStudniePriceList();
             renderTiles();
             if (typeof window.refreshExcelFromConfig === 'function') {

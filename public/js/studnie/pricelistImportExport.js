@@ -385,7 +385,7 @@ async function importStudnieFromExcel(event) {
             if (!confirmImport) return;
 
             if (normalized.length > 0) {
-                studnieProducts = normalized;
+                window.studnieProducts = normalized;
                 _studniePricelistDirty = true;
                 updateStudnieSaveBtn();
             }

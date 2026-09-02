@@ -127,7 +127,13 @@ router.post(
                 dataStr: string;
                 transportCost: number;
                 items: unknown[];
-                fts: { id: string; offer_number: string; clientName: string | null; investName: string | null; clientNumber: string | null };
+                fts: {
+                    id: string;
+                    offer_number: string;
+                    clientName: string | null;
+                    investName: string | null;
+                    clientNumber: string | null;
+                };
             }> = [];
 
             for (const o of incoming) {
@@ -229,7 +235,13 @@ router.post(
                     dataStr,
                     transportCost: o.transportCost || 0,
                     items: o.items || [],
-                    fts: { id: docId, offer_number: offerNumber, clientName, investName, clientNumber }
+                    fts: {
+                        id: docId,
+                        offer_number: offerNumber,
+                        clientName,
+                        investName,
+                        clientNumber
+                    }
                 });
                 results.push({ id: docId, ok: true });
             }
@@ -273,20 +285,23 @@ router.post(
                     });
                     if (w.items.length > 0) {
                         await tx.offer_items_rel.createMany({
-                            data: (w.items as Array<{
-                                id?: string;
-                                unitPrice?: number;
-                                price?: number;
-                                productId: string;
-                                quantity: number;
-                                discount: number;
-                            }>).map((item) => ({
+                            data: (
+                                w.items as Array<{
+                                    id?: string;
+                                    unitPrice?: number;
+                                    price?: number;
+                                    productId: string;
+                                    quantity: number;
+                                    discount: number;
+                                }>
+                            ).map((item) => ({
                                 id: item.id || uuidv4(),
                                 offerId: w.docId,
                                 productId: item.productId,
                                 quantity: item.quantity || 0,
                                 discount: item.discount || 0,
-                                price: item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                                price:
+                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
                             }))
                         });
                     }
@@ -362,7 +377,13 @@ router.put(
                 dataStr: string;
                 transportCost: number;
                 items: unknown[];
-                fts: { id: string; offer_number: string | null; clientName: string | null; investName: string | null; clientNumber: string | null };
+                fts: {
+                    id: string;
+                    offer_number: string | null;
+                    clientName: string | null;
+                    investName: string | null;
+                    clientNumber: string | null;
+                };
             }> = [];
             for (const o of incoming) {
                 let docId = o.id;
@@ -389,7 +410,13 @@ router.put(
                     dataStr,
                     transportCost: o.transportCost || 0,
                     items: o.items || [],
-                    fts: { id: docId, offer_number: o.offer_number || null, clientName, investName, clientNumber }
+                    fts: {
+                        id: docId,
+                        offer_number: o.offer_number || null,
+                        clientName,
+                        investName,
+                        clientNumber
+                    }
                 });
             }
 
@@ -427,20 +454,23 @@ router.put(
                     });
                     if (w.items.length > 0) {
                         await tx.offer_items_rel.createMany({
-                            data: (w.items as Array<{
-                                id?: string;
-                                unitPrice?: number;
-                                price?: number;
-                                productId: string;
-                                quantity: number;
-                                discount: number;
-                            }>).map((item) => ({
+                            data: (
+                                w.items as Array<{
+                                    id?: string;
+                                    unitPrice?: number;
+                                    price?: number;
+                                    productId: string;
+                                    quantity: number;
+                                    discount: number;
+                                }>
+                            ).map((item) => ({
                                 id: item.id || uuidv4(),
                                 offerId: w.docId,
                                 productId: item.productId,
                                 quantity: item.quantity || 0,
                                 discount: item.discount || 0,
-                                price: item.unitPrice !== undefined ? item.unitPrice : item.price || 0
+                                price:
+                                    item.unitPrice !== undefined ? item.unitPrice : item.price || 0
                             }))
                         });
                     }

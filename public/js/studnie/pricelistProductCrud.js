@@ -7,7 +7,7 @@ async function deleteStudnieProduct(id) {
         }))
     )
         return;
-    studnieProducts = studnieProducts.filter((p) => p.id !== id);
+    window.studnieProducts = studnieProducts.filter((p) => p.id !== id);
     _studniePricelistDirty = true;
     updateStudnieSaveBtn();
     renderStudniePriceList();

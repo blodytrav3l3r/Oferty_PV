@@ -35,7 +35,8 @@ async function main() {
             const db = new DatabaseSync(backupPath, { readOnly: true });
             const row = db.prepare('PRAGMA integrity_check').get() as { integrity_check: string };
             db.close();
-            if (row.integrity_check !== 'ok') throw new Error(`integrity_check: ${row.integrity_check}`);
+            if (row.integrity_check !== 'ok')
+                throw new Error(`integrity_check: ${row.integrity_check}`);
             console.log('[Backup] Weryfikacja integralności OK');
         } catch (e: unknown) {
             const msg = e instanceof Error ? e.message : String(e);
