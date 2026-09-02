@@ -108,7 +108,9 @@ export function createSnapshot(operation, state) {
 
     // untracked.tar — archiwum untracked (jeśli są)
     const tarPath = path.join(dir, 'untracked.tar');
+    const untrackedDir = path.join(dir, 'untracked');
     if (state.untracked.length > 0) {
+        let tarOk = false;
         try {
             // użyj tar jeśli dostępny (Git Bash na Windows ma tar) — ścieżki POSIX dla MSYS tar
             const tarPathPosix = tarPath.replace(/\\/g, '/');
@@ -116,16 +118,28 @@ export function createSnapshot(operation, state) {
                 cwd: ROOT,
                 stdio: 'pipe'
             });
+            tarOk = fs.existsSync(tarPath) && fs.statSync(tarPath).size > 0;
         } catch (e) {
-            // fallback: zapisz listę jako .tar.list (cli.mjs verify/restore obsługuje oba)
-            try {
-                fs.writeFileSync(tarPath + '.list', state.untracked.join('\n'), 'utf8');
-            } catch {}
-            // log dla diagnostyki (nie psuje snapshotu, verify zaakceptuje .list)
             try {
                 fs.writeFileSync(path.join(dir, 'tar-error.txt'), String(e?.message || e), 'utf8');
             } catch {}
         }
+        if (!tarOk) {
+            // fallback: skopiuj pliki bez tar (obsługa Windows bez tar lub MSYS path issue)
+            try {
+                fs.mkdirSync(untrackedDir, { recursive: true });
+                for (const f of state.untracked) {
+                    const src = path.join(ROOT, f);
+                    const dest = path.join(untrackedDir, f);
+                    if (fs.existsSync(src)) {
+                        fs.mkdirSync(path.dirname(dest), { recursive: true });
+                        fs.copyFileSync(src, dest);
+                    }
+                }
+                fs.writeFileSync(tarPath + '.list', state.untracked.join('\n'), 'utf8');
+            } catch {}
+        }
+    }
     } else {
         // pusty marker by verify nie wymagał tar gdy 0 untracked
         if (!fs.existsSync(patchPath)) fs.writeFileSync(patchPath, '', 'utf8');

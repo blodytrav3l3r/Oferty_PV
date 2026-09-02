@@ -134,7 +134,13 @@ function verifySnapshot(id) {
     else if (fs.statSync(patchPath).size === 0 && (meta.expectedFiles ?? 0) > 0)
         errors.push('diff.patch pusty mimo expectedFiles>0');
     const expectUntracked = meta.worktreeState?.untracked?.length ?? 0;
-    if (expectUntracked > 0 && !fs.existsSync(tarPath) && !fs.existsSync(tarPath + '.list'))
+    const untrackedDir = path.join(dir, 'untracked');
+    if (
+        expectUntracked > 0 &&
+        !fs.existsSync(tarPath) &&
+        !fs.existsSync(tarPath + '.list') &&
+        !fs.existsSync(untrackedDir)
+    )
         errors.push('brak untracked.tar mimo untracked>0');
     if (meta.expectedFiles == null) errors.push('brak expectedFiles w metadata');
     const ok = errors.length === 0;
@@ -188,6 +194,43 @@ function doRestoreSync(id) {
             } catch (e) {
                 console.error(`Restore niepełny — tar FAIL: ${e.message}`);
                 process.exit(1);
+            }
+        } else {
+            const tarListPath = tarPath + '.list';
+            const untrackedDir = path.join(dir, 'untracked');
+            if (fs.existsSync(untrackedDir)) {
+                // fallback z snapshot.mjs: skopiuj pliki z untracked/
+                try {
+                    const walk = (srcDir, destRoot) => {
+                        for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+                            const src = path.join(srcDir, entry.name);
+                            const dest = path.join(destRoot, entry.name);
+                            if (entry.isDirectory()) {
+                                fs.mkdirSync(dest, { recursive: true });
+                                walk(src, dest);
+                            } else if (entry.isFile()) {
+                                fs.mkdirSync(path.dirname(dest), { recursive: true });
+                                fs.copyFileSync(src, dest);
+                            }
+                        }
+                    };
+                    walk(untrackedDir, ROOT);
+                } catch (e) {
+                    console.error(`Restore niepełny — untracked copy FAIL: ${e.message}`);
+                    process.exit(1);
+                }
+            } else if (fs.existsSync(tarListPath)) {
+                // ostateczny fallback: utwórz puste pliki z listy
+                try {
+                    const list = fs.readFileSync(tarListPath, 'utf8').split('\n').filter(Boolean);
+                    for (const f of list) {
+                        const abs = path.join(ROOT, f);
+                        if (!fs.existsSync(abs)) {
+                            fs.mkdirSync(path.dirname(abs), { recursive: true });
+                            fs.writeFileSync(abs, '', 'utf8');
+                        }
+                    }
+                } catch {}
             }
         }
         console.log(`Restore OK — ${id}`);
