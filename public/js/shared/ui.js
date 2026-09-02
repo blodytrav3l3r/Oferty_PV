@@ -599,6 +599,22 @@ document.addEventListener('focusin', (e) => {
     target.select();
 });
 
+/**
+ * Blokada zmiany wartości scroll/kółkiem gdy kursor w polu number.
+ * Wheel nad aktywnym input number = blur → wartość stoi, scroll idzie do kontenera.
+ * Delegacja na document — obejmuje wszystkie dynamiczne inputy (Excel, rury, cenniki).
+ */
+document.addEventListener(
+    'wheel',
+    (e) => {
+        const t = e.target;
+        if (!(t instanceof HTMLInputElement) || t.type !== 'number') return;
+        if (t !== document.activeElement) return;
+        t.blur();
+    },
+    { passive: false }
+);
+
 /* ===== Ochrona przed utratą danych — beforeunload/pagehide (Z-30) ===== */
 // @ts-ignore — legacy global, duplikat w innym skrypcie
 let _bypassBeforeUnload = false;
