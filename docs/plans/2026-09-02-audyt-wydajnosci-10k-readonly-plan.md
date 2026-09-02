@@ -1,10 +1,10 @@
 # Plan: Audyt wydajności READ-ONLY — 1 → 10 000 rekordów (bez regresji wizualnej)
 
 Data: 2026-09-02
-Wersja: 1.22.2
-Commit: f4c9e61 `perf(studnie): p1 batch findmany + mutation invariant 10k`
+Wersja: 1.23.0
+Commit: 46df7e5 `perf(studnie): p0 menedzer przejsc hoist o n kwadrat do o n`
 Branch: main
-Status: DONE v1.1 — P0+P1 zrealizowane, P2 bundle deferred (ponytail)
+Status: DONE v1.1 — P0+P1 zrealizowane, P2 bundle deferred (ponytail) + Menedżer Przejść P0-1 hoist DONE (05cb919 benchmark, 46df7e5 fix)
 Poprzedni audyt: chat 2026-09-02 (wellUI/excelVirtual/zlecenia/backend/startup)
 Review: 9.2/10 → 9.7/10 po 4 korektach obowiązkowych (poniżej)
 Zastępuje/rozszerza: `2026-09-02-system-niezawodny-szybki-10-10000.md` (P0/P1/P2) w części performance
