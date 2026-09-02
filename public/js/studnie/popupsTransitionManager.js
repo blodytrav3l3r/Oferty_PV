@@ -11,6 +11,8 @@ let tmWellData = [];
 function tmIsWellBlocked(wellIdx) {
     const well = wells[wellIdx];
     if (!well) return true;
+    // ponytail: Set O(1) gdy _tmPzIds dostępne (hoisted per-refresh), zachowuje String
+    if (window._tmPzIds && window._tmPzIds.has(String(well.id))) return true;
     if (window.pzGuard && window.pzGuard.hasPzForWell(well.id)) return true;
     return isWellLocked(wellIdx);
 }
@@ -147,6 +149,21 @@ window.closeTransitionManagerModal = function () {
 
 window.tmRefreshWellData = function () {
     tmWellData = [];
+    // I5 SINGLE CALCULATION: max 1× calculateOfferTotals per refresh (ponytail)
+    let offerTotals = null;
+    if (typeof calculateOfferTotals === 'function') {
+        try {
+            offerTotals = calculateOfferTotals();
+        } catch (_e) {
+            offerTotals = null;
+        }
+    }
+    // hoisted per-refresh derived data — not cache, derived once
+    const pzWellIds =
+        typeof window.productionOrders !== 'undefined' && Array.isArray(window.productionOrders)
+            ? new Set(window.productionOrders.map((o) => String(o.wellId)))
+            : null;
+    window._tmPzIds = pzWellIds;
     for (let i = 0; i < wells.length; i++) {
         const well = wells[i];
 
@@ -174,14 +191,14 @@ window.tmRefreshWellData = function () {
 
         let wellPrice = 0;
         if (typeof calcWellStats === 'function') {
+            // ponytail: Set has O(1) gdy pzWellIds dostępne, zachowuje String normalizację
+            const isPzBlocked = pzWellIds ? pzWellIds.has(String(well.id)) : false;
+            void isPzBlocked;
             const stats = calcWellStats(well);
             let transportCost = 0;
-            if (typeof calculateOfferTotals === 'function') {
-                const totals = calculateOfferTotals();
-                if (totals && totals.globalWeight > 0 && totals.totalTransportCost > 0) {
-                    transportCost =
-                        totals.totalTransportCost * (stats.weight / totals.globalWeight);
-                }
+            if (offerTotals && offerTotals.globalWeight > 0 && offerTotals.totalTransportCost > 0) {
+                transportCost =
+                    offerTotals.totalTransportCost * (stats.weight / offerTotals.globalWeight);
             }
             wellPrice = stats.price + transportCost;
         }

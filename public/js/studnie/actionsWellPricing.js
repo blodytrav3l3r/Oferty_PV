@@ -1,5 +1,16 @@
 // @ts-check
 /* ===== POMOCNICY CENOWE (pricing/stats) ===== */
+// ponytail: hoisted per-refresh derived — drillingProducts once, nie per przejście
+let _cachedDrillingProducts = null;
+let _cachedDrillingProductsLen = -1;
+function _getDrillingProducts() {
+    const len = Array.isArray(studnieProducts) ? studnieProducts.length : -1;
+    if (_cachedDrillingProducts && _cachedDrillingProductsLen === len)
+        return _cachedDrillingProducts;
+    _cachedDrillingProducts = studnieProducts.filter((x) => x.category === 'Wiercenie');
+    _cachedDrillingProductsLen = len;
+    return _cachedDrillingProducts;
+}
 
 function calcPrecoPricing(well) {
     return calcPrecoPricingPure(well, {
@@ -470,9 +481,7 @@ function calcWellStats(well) {
                     ) {
                         const trDn = parseInt(item.dn) || parseInt(p.dn) || 0;
                         if (trDn > 0) {
-                            const drillingProducts = studnieProducts.filter(
-                                (x) => x.category === 'Wiercenie'
-                            );
+                            const drillingProducts = _getDrillingProducts();
                             /** @type {{ price?: number } | null} */
                             let bestDrill = null;
                             let bestDnDiff = Infinity;
