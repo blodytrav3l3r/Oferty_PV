@@ -139,7 +139,6 @@ export function createSnapshot(operation, state) {
                 fs.writeFileSync(tarPath + '.list', state.untracked.join('\n'), 'utf8');
             } catch {}
         }
-    }
     } else {
         // pusty marker by verify nie wymagał tar gdy 0 untracked
         if (!fs.existsSync(patchPath)) fs.writeFileSync(patchPath, '', 'utf8');
