@@ -4,6 +4,20 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+### [1.22.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.22.1...v1.22.2) (2026-09-02)
+
+### Bug Fixes
+
+- **ci:** poprawka kodowania pre-push ([0f54262](https://github.com/blodytrav3l3r/Oferty_PV/commit/0f54262adde9b1658b1afc6e4d8237edf7b99644))
+- **ci:** uzyj npm run test:git-safety w pre-push ([b638da2](https://github.com/blodytrav3l3r/Oferty_PV/commit/b638da2753ae7b326ccfc0fa9c0559c43cd137d2))
+- **git-safety:** poprawka skladni snapshot.mjs ([4fe7729](https://github.com/blodytrav3l3r/Oferty_PV/commit/4fe772932444fcaf32c47a9dd32c09a60206a45c))
+- **prisma:** baseline zgodna z schema po totalprice ([3a1238e](https://github.com/blodytrav3l3r/Oferty_PV/commit/3a1238ea925d4ade1b610dae7b511f053f5efd5c))
+- **studnie:** map stale i precedence ([8b9f1c6](https://github.com/blodytrav3l3r/Oferty_PV/commit/8b9f1c6d6056c853321718ef73a5713490c4ad03))
+- **test:** isolate git-safety tests from parallel index access ([711ba72](https://github.com/blodytrav3l3r/Oferty_PV/commit/711ba722afdb81636954ca074f425805441fd789))
+- **test:** obsluga tar fallback dla windows ([541ff9f](https://github.com/blodytrav3l3r/Oferty_PV/commit/541ff9f71a0c709f427e9c6f5da8d46b273f16e1))
+- **test:** obsluga transakcji w mockach rury ([15af8c6](https://github.com/blodytrav3l3r/Oferty_PV/commit/15af8c68e96504c7459828b827ee4ed96b59e6ef))
+- **test:** trwaly fallback bez tar dla windows ([210f84c](https://github.com/blodytrav3l3r/Oferty_PV/commit/210f84c03173521af60ffdf6d164ee3af6356d91))
+
 ### [1.22.1](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.22.0...v1.22.1) (2026-09-01)
 
 ## [1.22.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.21.0...v1.22.0) (2026-08-31)
