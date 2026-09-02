@@ -101,6 +101,20 @@ _rebuildStudnieProductsById();
 
 // System wielu studni
 let wells = []; // Tablica obiektów { id, name, dn, uwagi, config: [{ productId, quantity }], rzednaWlazu, rzednaDna }
+let wellsById = new Map();
+function _rebuildWellsById() {
+    wellsById = new Map();
+    for (let i = 0; i < wells.length; i++) {
+        const w = wells[i];
+        if (w && w.id != null) wellsById.set(String(w.id), i);
+    }
+}
+function getWellIndexById(id) {
+    if (id == null) return -1;
+    if (wellsById.size !== wells.length) _rebuildWellsById();
+    const v = wellsById.get(String(id));
+    return v !== undefined ? v : -1;
+}
 let currentWellIndex = 0;
 let wellCounter = 1;
 let wellDiscounts = {}; // Rabaty na DN: { 1000: { dennica, nadbudowa, preco, pehd, dennicaE600, nadbudowaE600, zwienczenieE600, dennicaF900, nadbudowaF900, zwienczenieF900 }, ... }
@@ -353,6 +367,7 @@ const _GLOBAL_SETTERS = {
     },
     wells: (v) => {
         wells = v;
+        if (typeof _rebuildWellsById === 'function') _rebuildWellsById();
     },
     currentWellIndex: (v) => {
         currentWellIndex = v;
@@ -449,6 +464,10 @@ function scheduleRender() {
 window.scheduleRender = scheduleRender;
 
 /* ===== Rejestracja globali ===== */
+window._rebuildWellsById = _rebuildWellsById;
+window.getWellIndexById = getWellIndexById;
+Object.defineProperty(window, 'wellsById', { configurable: true, get: () => wellsById });
+_rebuildWellsById();
 window.toggleCard = toggleCard;
 window.generateOfferNumberStudnie = generateOfferNumberStudnie;
 window.normalizeId = normalizeId;

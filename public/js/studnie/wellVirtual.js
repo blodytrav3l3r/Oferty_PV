@@ -51,7 +51,7 @@ function _wellVirtualCardHtml(w, wIdx, logicalRow, transportVal, stats) {
     );
 }
 
-function _wellVirtualIsEnabled() {
+function _wellVirtualIsRequestEnabled() {
     try {
         if (
             typeof window !== 'undefined' &&
@@ -62,6 +62,18 @@ function _wellVirtualIsEnabled() {
         if (typeof localStorage !== 'undefined' && localStorage.getItem('sok_well_virtual') === '0')
             return false;
     } catch (_e) {}
+    return true;
+}
+
+function _wellVirtualIsEnabled() {
+    if (_wellVirtualIsRequestEnabled() === false) {
+        // effectiveVirtual = requestVirtual || total > 500 — diagnostyka vs enforcement (v1.1)
+        try {
+            const n = typeof wells !== 'undefined' && Array.isArray(wells) ? wells.length : 0;
+            if (n > 500) return true;
+        } catch (_e) {}
+        return false;
+    }
     return true;
 }
 
@@ -349,8 +361,17 @@ function _wellVirtualRenderBody() {
             const tm = calculateWellTransportMap(wells);
             _wellVirtualTransportMap = new Map();
             if (tm.map) {
+                // ponytail: cached wellsById Map O(1), nie wells.indexOf O(N²)
+                const getIdx =
+                    typeof getWellIndexById === 'function'
+                        ? function (w) {
+                              return w && w.id != null ? getWellIndexById(w.id) : -1;
+                          }
+                        : function (w) {
+                              return wells.indexOf(w);
+                          };
                 for (const [wellObj, cost] of tm.map.entries()) {
-                    const idx = wells.indexOf(wellObj);
+                    const idx = getIdx(wellObj);
                     if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
                     _wellVirtualTransportMap.set(wellObj, cost);
                 }

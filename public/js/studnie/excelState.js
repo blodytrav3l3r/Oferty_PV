@@ -112,6 +112,9 @@ let _excelBatchKragTouched = false;
 let _excelUndoStack = [];
 let _excelRedoStack = [];
 const _EXCEL_UNDO_LIMIT = 50;
+// v1.1: bytes budget > entry count — hard cap measured baseline (Expected 8-12MB, Actual TBD)
+const _EXCEL_UNDO_MAX_BYTES = 12 * 1024 * 1024;
+const _EXCEL_UNDO_MAX_BYTES_PER_ENTRY = 1 * 1024 * 1024;
 /* eslint-enable prefer-const */
 
 /* ===== Column Visibility State ===== */

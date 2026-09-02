@@ -34,7 +34,10 @@ export interface OfferMapped {
     createdAt?: string | null;
     updatedAt?: string | null;
     lastEditedBy?: string | null;
+    clientName?: string | null;
+    investName?: string | null;
+    clientNumber?: string | null;
     items: OfferItem[];
     transportCost: number;
-    history: unknown[];
+    history?: unknown[];
 }

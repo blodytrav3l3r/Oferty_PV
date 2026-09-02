@@ -206,7 +206,7 @@ function _excelVirtualEnsureVisible(logicalRow) {
     return true;
 }
 
-function _excelVirtualIsEnabled() {
+function _excelVirtualIsRequestEnabled() {
     try {
         if (
             typeof window !== 'undefined' &&
@@ -220,6 +220,23 @@ function _excelVirtualIsEnabled() {
         )
             return false;
     } catch (_e) {}
+    return true;
+}
+
+function _excelVirtualIsEnabled() {
+    if (_excelVirtualIsRequestEnabled() === false) {
+        // effectiveVirtual = requestVirtual || total > 500 — diagnostyka vs enforcement
+        try {
+            const n =
+                typeof wells !== 'undefined' && Array.isArray(wells)
+                    ? wells.length
+                    : typeof _excelVirtualTotal === 'number'
+                      ? _excelVirtualTotal
+                      : 0;
+            if (n > 500) return true;
+        } catch (_e) {}
+        return false;
+    }
     return true;
 }
 

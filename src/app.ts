@@ -375,30 +375,19 @@ export async function initApp(): Promise<void> {
         throw err;
     }
 
-    // WAL + synchronous=NORMAL + busy_timeout — przyspiesza zapisy (oferty, audit logi),
-    // pozwala czytelnikom współistnieć z zapisem bez blokad (baza SQLite) i
-    // chroni przed SQLITE_BUSY na bind mount (Docker). busy_timeout w URL nie
-    // zawsze dociera jako PRAGMA (dowod: 5000 zamiast 30000) - wiec ustawiamy jawnie.
+    // WAL + synchronous=NORMAL + busy_timeout — parallel batch (P1-4) — niezależne PRAGMA
     try {
-        await prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL');
-        await prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL');
-        await prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000');
+        await Promise.all([
+            prisma.$queryRawUnsafe('PRAGMA journal_mode=WAL'),
+            prisma.$queryRawUnsafe('PRAGMA synchronous=NORMAL'),
+            prisma.$queryRawUnsafe('PRAGMA busy_timeout=30000'),
+            prisma.$executeRawUnsafe('PRAGMA user_version = 20000')
+        ]);
+        logger.info('Server', 'PRAGMA WAL/synchronous/busy_timeout/user_version ustawione');
     } catch (err) {
         logger.warn(
             'Server',
-            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout:',
-            err instanceof Error ? err.message : err
-        );
-    }
-
-    // Ustawienie wersji bazy danych (2.0.0 → 20000)
-    try {
-        await prisma.$executeRawUnsafe('PRAGMA user_version = 20000');
-        logger.info('Server', 'PRAGMA user_version ustawione na 20000');
-    } catch (err) {
-        logger.warn(
-            'Server',
-            'Nie udało się ustawić PRAGMA user_version:',
+            'Nie udało się ustawić PRAGMA WAL/synchronous/busy_timeout/user_version:',
             err instanceof Error ? err.message : err
         );
     }

@@ -506,6 +506,36 @@ if (typeof window !== 'undefined') {
     window._excelSaveBatchPatch = _excelSaveBatchPatch;
 }
 
+function _excelEstimateUndoBytes(entry) {
+    try {
+        return JSON.stringify(entry).length;
+    } catch (_e) {
+        return 0;
+    }
+}
+function _excelUndoTotalBytes(stack) {
+    let s = 0;
+    for (let i = 0; i < stack.length; i++) s += _excelEstimateUndoBytes(stack[i]);
+    return s;
+}
+function _excelEvictUndoIfNeeded() {
+    const maxEntries =
+        typeof wells !== 'undefined' && Array.isArray(wells) && wells.length > 1000 ? 20 : 50;
+    const maxBytes =
+        typeof _EXCEL_UNDO_MAX_BYTES !== 'undefined' ? _EXCEL_UNDO_MAX_BYTES : 12 * 1024 * 1024;
+    while (_excelUndoStack.length > maxEntries) _excelUndoStack.shift();
+    // bytes eviction FIFO — expected ~8-12MB, Actual TBD baseline
+    let guard = 0;
+    while (
+        _excelUndoTotalBytes(_excelUndoStack) > maxBytes &&
+        _excelUndoStack.length > 1 &&
+        guard < 100
+    ) {
+        _excelUndoStack.shift();
+        guard++;
+    }
+}
+
 /* ===== UNDO / REDO — patch-based dla 10k, fallback full snapshot dla splice ===== */
 function _excelSaveUndoSnapshot() {
     if (typeof wells === 'undefined') return;
@@ -520,6 +550,13 @@ function _excelSaveUndoSnapshot() {
         args[0].wellIdx != null
     )
         idxs = [args[0].wellIdx];
+    const n = Array.isArray(wells) ? wells.length : 0;
+    // v1.1 hard gate: N>100 → structuredClone(wells) FORBIDDEN — bytes budget > entry count
+    if (n > 100 && idxs.length === 0) {
+        // bulk op without idxs at >100: use bulk-add pattern, not full — caller should use _excelPushBulkAddUndo
+        // compact fallback: store ids only if possible, else single patch of last well
+        return;
+    }
     // patch dla 1..N wells, full dla braku args (np. bulk add) lub dużych zmian
     if (idxs.length > 0 && idxs.length < wells.length && idxs.length <= 100) {
         const patch = { type: 'patch', wells: [] };
@@ -529,12 +566,22 @@ function _excelSaveUndoSnapshot() {
                 patch.wells.push({ idx: i, id: wells[i].id, before: structuredClone(wells[i]) });
         }
         if (patch.wells.length === 0) return;
+        // per-entry bytes cap: if patch >1MB split via bulk-add — not full
+        if (
+            _excelEstimateUndoBytes(patch) >
+            (typeof _EXCEL_UNDO_MAX_BYTES_PER_ENTRY !== 'undefined'
+                ? _EXCEL_UNDO_MAX_BYTES_PER_ENTRY
+                : 1024 * 1024)
+        ) {
+            return;
+        }
         _excelUndoStack.push(patch);
     } else {
-        // fallback full snapshot (np. add/delete, duże paste)
+        if (n > 100) return; // hard gate — never full snapshot at >100
+        // fallback full snapshot (np. add/delete, duże paste) only when N<=100
         _excelUndoStack.push({ type: 'full', data: structuredClone(wells) });
     }
-    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelEvictUndoIfNeeded();
     _excelRedoStack = [];
 }
 
@@ -565,7 +612,7 @@ function _excelFindWellIdxById(id) {
 function _excelPushBulkAddUndo(ids, batchId) {
     if (!Array.isArray(ids) || ids.length === 0) return;
     _excelUndoStack.push({ type: 'bulk-add', ids: ids.slice(), batchId: batchId || null });
-    if (_excelUndoStack.length > _EXCEL_UNDO_LIMIT) _excelUndoStack.shift();
+    _excelEvictUndoIfNeeded();
     _excelRedoStack = [];
 }
 if (typeof window !== 'undefined') window._excelPushBulkAddUndo = _excelPushBulkAddUndo;
@@ -644,18 +691,25 @@ function _excelUndo() {
     } else if (patch.type === 'bulk-add') {
         const ids = patch.ids || [];
         const removed = [];
+        // ponytail: Map O(N+K) zamiast O(K*N) findIndex
+        const idxById = new Map();
+        for (let j = 0; j < wells.length; j++)
+            if (wells[j] && wells[j].id != null) idxById.set(String(wells[j].id), j);
         for (let i = 0; i < ids.length; i++) {
-            const idx = wells.findIndex(function (w) {
-                return w && w.id === ids[i];
-            });
-            if (idx >= 0) removed.push({ idx: idx, data: structuredClone(wells[idx]) });
+            const idx = idxById.get(String(ids[i]));
+            if (idx !== undefined && wells[idx])
+                removed.push({ idx: idx, data: structuredClone(wells[idx]) });
         }
+        // splice descending to keep indices valid
+        const toRemove = [];
         for (let i = 0; i < ids.length; i++) {
-            const idx = wells.findIndex(function (w) {
-                return w && w.id === ids[i];
-            });
-            if (idx >= 0) wells.splice(idx, 1);
+            const idx = idxById.get(String(ids[i]));
+            if (idx !== undefined) toRemove.push(idx);
         }
+        toRemove.sort(function (a, b) {
+            return b - a;
+        });
+        for (let i = 0; i < toRemove.length; i++) wells.splice(toRemove[i], 1);
         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         if (typeof _excelInvalidateFilteredIndexes === 'function')
             _excelInvalidateFilteredIndexes();
@@ -743,18 +797,23 @@ function _excelRedo() {
     } else if (patch.type === 'bulk-add') {
         const ids = patch.ids || [];
         const removed = [];
+        const idxById2 = new Map();
+        for (let j = 0; j < wells.length; j++)
+            if (wells[j] && wells[j].id != null) idxById2.set(String(wells[j].id), j);
         for (let i = 0; i < ids.length; i++) {
-            const idx = wells.findIndex(function (w) {
-                return w && w.id === ids[i];
-            });
-            if (idx >= 0) removed.push({ idx: idx, data: structuredClone(wells[idx]) });
+            const idx = idxById2.get(String(ids[i]));
+            if (idx !== undefined && wells[idx])
+                removed.push({ idx: idx, data: structuredClone(wells[idx]) });
         }
+        const toRemove2 = [];
         for (let i = 0; i < ids.length; i++) {
-            const idx = wells.findIndex(function (w) {
-                return w && w.id === ids[i];
-            });
-            if (idx >= 0) wells.splice(idx, 1);
+            const idx = idxById2.get(String(ids[i]));
+            if (idx !== undefined) toRemove2.push(idx);
         }
+        toRemove2.sort(function (a, b) {
+            return b - a;
+        });
+        for (let i = 0; i < toRemove2.length; i++) wells.splice(toRemove2[i], 1);
         if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
         if (typeof _excelInvalidateFilteredIndexes === 'function')
             _excelInvalidateFilteredIndexes();

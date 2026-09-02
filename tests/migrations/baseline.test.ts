@@ -16,6 +16,7 @@ const UQ_REWARD = '20260815000001_uq_reward_well_action';
 const SHARES = '20260828000000_add_document_shares';
 const ADD_WELLCOUNT = '20260831000000_add_wellcount';
 const ADD_TOTALPRICE = '20260902000000_add_totalprice';
+const ADD_PERF_INDEXES = '20260902000001_add_performance_indexes';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
@@ -25,7 +26,8 @@ describe('A3 baseline migracji', () => {
             AI_TRAINING_RUN,
             SHARES,
             ADD_WELLCOUNT,
-            ADD_TOTALPRICE
+            ADD_TOTALPRICE,
+            ADD_PERF_INDEXES
         ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);

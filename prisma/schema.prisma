@@ -305,10 +305,13 @@ model offers_rel {
 
   @@index([userId], map: "idx_offers_user")
   @@index([createdAt], map: "idx_offers_created")
+  @@index([updatedAt], map: "idx_offers_updated")
   @@index([state], map: "idx_offers_state")
   @@index([offer_number], map: "idx_offers_number")
   @@index([clientName], map: "idx_offers_clientname")
   @@index([investName], map: "idx_offers_investname")
+  @@index([userId, createdAt, id], map: "idx_offers_user_created_id")
+  @@index([userId, updatedAt, id], map: "idx_offers_user_updated_id")
 }
 
 // Główne dokumenty ofert (typ studnie)
@@ -332,12 +335,15 @@ model offers_studnie_rel {
 
   @@index([userId], map: "idx_offersstud_user")
   @@index([createdAt], map: "idx_offersstud_created")
+  @@index([updatedAt], map: "idx_offersstud_updated")
   @@index([state], map: "idx_offersstud_state")
   @@index([offer_number], map: "idx_offersstud_number")
   @@index([clientName], map: "idx_offersstud_clientname")
   @@index([investName], map: "idx_offersstud_investname")
   @@index([wellCount], map: "idx_offersstud_wellcount")
   @@index([totalPrice], map: "idx_offersstud_totalprice")
+  @@index([userId, createdAt, id], map: "idx_offersstud_user_created_id")
+  @@index([userId, updatedAt, id], map: "idx_offersstud_user_updated_id")
 }
 
 // Liczniki numeracji ofert
@@ -407,7 +413,10 @@ model production_orders_rel {
   @@index([userId], map: "idx_prod_user")
   @@index([creatorId], map: "idx_prod_creator")
   @@index([createdAt], map: "idx_prod_created")
+  @@index([updatedAt], map: "idx_prod_updated")
   @@index([orderId], map: "idx_prod_order")
+  @@index([userId, createdAt, id], map: "idx_prod_user_created_id")
+  @@index([userId, updatedAt, id], map: "idx_prod_user_updated_id")
 }
 
 model recycled_production_numbers {

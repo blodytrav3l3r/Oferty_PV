@@ -32,7 +32,19 @@ router.get('/', requireAuth, async (req, res) => {
                 where: roleClause,
                 skip: pq.skip,
                 take: pq.limit,
-                orderBy
+                orderBy,
+                select: {
+                    id: true,
+                    userId: true,
+                    offer_number: true,
+                    state: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    transportCost: true,
+                    clientName: true,
+                    investName: true,
+                    clientNumber: true
+                }
             }),
             prisma.offers_rel.count({ where: roleClause })
         ]);
@@ -61,21 +73,6 @@ router.get('/', requireAuth, async (req, res) => {
                 unitPrice: i.price ?? 0
             }));
 
-            let ruryHistory: unknown[] = [];
-            try {
-                ruryHistory = JSON.parse(offer.history || '[]');
-            } catch {
-                ruryHistory = [];
-            }
-            let rurySpread: Record<string, unknown> = {};
-            if (offer.data) {
-                try {
-                    rurySpread = JSON.parse(offer.data);
-                } catch {
-                    rurySpread = {};
-                }
-            }
-
             mapped.push({
                 id: offer.id,
                 type: 'offer',
@@ -86,10 +83,11 @@ router.get('/', requireAuth, async (req, res) => {
                 createdAt: offer.createdAt || null,
                 updatedAt: offer.updatedAt || offer.createdAt || null,
                 lastEditedBy: offer.userId,
-                ...rurySpread,
+                clientName: offer.clientName,
+                investName: offer.investName,
+                clientNumber: offer.clientNumber,
                 items: items,
-                transportCost: offer.transportCost || 0,
-                history: ruryHistory
+                transportCost: offer.transportCost || 0
             });
         }
 

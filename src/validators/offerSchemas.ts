@@ -292,7 +292,9 @@ export const paginationQuerySchema = z.object({
     skip: z.coerce.number().int().min(0).default(0),
     limit: z.coerce.number().int().min(1).max(200).default(50),
     sort: z.enum(['createdAt', 'updatedAt', 'offer_number']).optional(),
-    order: z.enum(['asc', 'desc']).default('desc')
+    order: z.enum(['asc', 'desc']).default('desc'),
+    cursor: z.string().optional(),
+    cursorId: z.string().optional()
 });
 
 export type PaginationQuery = z.infer<typeof paginationQuerySchema>;

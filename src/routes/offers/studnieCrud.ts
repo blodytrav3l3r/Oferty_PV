@@ -267,33 +267,88 @@ router.get('/studnie', requireAuth, async (req, res) => {
         const sortCol = validSortMap[pq.sort || 'createdAt'] || '"createdAt"';
         const sortDir = pq.order === 'asc' ? 'ASC' : 'DESC';
 
-        const offers = await prisma.$queryRaw<
-            Array<{
-                id: string;
-                userId: string | null;
-                offer_number: string | null;
-                state: string | null;
-                wellCount: number | null;
-                totalPrice: number | null;
-                createdAt: string | null;
-                updatedAt: string | null;
-            }>
-        >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
-            CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "createdAt" END as "createdAt",
-            CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
-                THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
-                ELSE "updatedAt" END as "updatedAt"
-         FROM offers_studnie_rel ${whereCondition}
-           ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
-           LIMIT ${pq.limit} OFFSET ${pq.skip}`;
+        // P1-2 cursor keyset: when cursor+cursorId present and sort=createdAt/updatedAt, use keyset seek (O(log N)) vs OFFSET scan
+        const cursorVal = (pq as unknown as { cursor?: string; cursorId?: string }).cursor;
+        const cursorId = (pq as unknown as { cursor?: string; cursorId?: string }).cursorId;
+        const canKeyset =
+            !!cursorVal &&
+            !!cursorId &&
+            (pq.sort === 'createdAt' || pq.sort === 'updatedAt' || !pq.sort);
+        let cursorWhere = Prisma.empty;
+        if (canKeyset) {
+            const cursorCol = sortCol;
+            const cmp = sortDir === 'DESC' ? Prisma.sql`<` : Prisma.sql`>`;
+            const eqCmp = sortDir === 'DESC' ? Prisma.sql`<` : Prisma.sql`>`;
+            // WHERE (col < cursor) OR (col = cursor AND id < cursorId) for DESC; opposite for ASC
+            cursorWhere = Prisma.sql`AND (${Prisma.raw(cursorCol)} ${cmp} ${cursorVal} OR (${Prisma.raw(cursorCol)} = ${cursorVal} AND id ${eqCmp} ${cursorId}))`;
+        }
 
-        const countResult = await prisma.$queryRaw<Array<{ cnt: number }>>`
+        const offers = canKeyset
+            ? await prisma.$queryRaw<
+                  Array<{
+                      id: string;
+                      userId: string | null;
+                      offer_number: string | null;
+                      state: string | null;
+                      wellCount: number | null;
+                      totalPrice: number | null;
+                      createdAt: string | null;
+                      updatedAt: string | null;
+                  }>
+              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
+                CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "createdAt" END as "createdAt",
+                CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "updatedAt" END as "updatedAt"
+             FROM offers_studnie_rel ${whereCondition} ${cursorWhere}
+                ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}, id ${Prisma.raw(sortDir)}
+                LIMIT ${pq.limit + 1}`
+            : await prisma.$queryRaw<
+                  Array<{
+                      id: string;
+                      userId: string | null;
+                      offer_number: string | null;
+                      state: string | null;
+                      wellCount: number | null;
+                      totalPrice: number | null;
+                      createdAt: string | null;
+                      updatedAt: string | null;
+                  }>
+              >`SELECT id, "userId", "offer_number", state, "wellCount", "totalPrice",
+                CASE WHEN "createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("createdAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "createdAt" END as "createdAt",
+                CASE WHEN "updatedAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+                    THEN datetime(CAST("updatedAt" AS INTEGER)/1000, 'unixepoch')
+                    ELSE "updatedAt" END as "updatedAt"
+             FROM offers_studnie_rel ${whereCondition}
+                ORDER BY ${Prisma.raw(sortCol + ' ' + sortDir)}
+                LIMIT ${pq.limit} OFFSET ${pq.skip}`;
+
+        const countResult = canKeyset
+            ? null
+            : await prisma.$queryRaw<Array<{ cnt: number }>>`
             SELECT COUNT(*) as cnt FROM offers_studnie_rel ${whereCondition}`;
-        const totalCount = Number(countResult[0]?.cnt ?? 0);
+        const totalCount = canKeyset ? null : Number(countResult?.[0]?.cnt ?? 0);
 
-        const mapped = offers.map((offer) => {
+        // keyset: hasMore + nextCursor from extra row
+        let hasMore = false;
+        let rawOffers = offers;
+        let nextCursor: string | null = null;
+        let nextCursorId: string | null = null;
+        if (canKeyset && offers.length > pq.limit) {
+            hasMore = true;
+            rawOffers = offers.slice(0, pq.limit);
+            const last = rawOffers[rawOffers.length - 1];
+            // cursor field matches sortCol
+            const cursorField = pq.sort === 'updatedAt' ? last.updatedAt : last.createdAt;
+            nextCursor = cursorField || last.createdAt || null;
+            nextCursorId = last.id || null;
+        }
+
+        const mapped = rawOffers.map((offer) => {
             return {
                 id: offer.id,
                 type: 'studnia_oferta',
@@ -313,7 +368,19 @@ router.get('/studnie', requireAuth, async (req, res) => {
             count: mapped.length,
             ids: mapped.map((o) => o.id)
         });
-        res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
+        if (canKeyset) {
+            res.json({
+                data: mapped,
+                totalCount,
+                hasMore,
+                nextCursor,
+                nextCursorId,
+                skip: pq.skip,
+                limit: pq.limit
+            });
+        } else {
+            res.json({ data: mapped, totalCount, skip: pq.skip, limit: pq.limit });
+        }
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Offers', 'Błąd GET /studnie', message);
