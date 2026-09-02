@@ -446,6 +446,24 @@ router.post(
         try {
             const incoming = req.body.data || [req.body];
 
+            // P1.3: batch preload olds — 1 query zamiast N×findUnique
+            const incomingIds = incoming
+                .map((o: { id?: unknown }) => (typeof o.id === 'string' ? (o.id as string) : ''))
+                .filter(Boolean) as string[];
+            const oldsList: Array<{
+                id: string;
+                history: string | null;
+                data: string | null;
+                state: string | null;
+                userId: string | null;
+            }> =
+                incomingIds.length > 0
+                    ? (await prisma.offers_studnie_rel.findMany({
+                          where: { id: { in: incomingIds } },
+                          select: { id: true, history: true, data: true, state: true, userId: true }
+                      })) || []
+                    : [];
+            const oldMap = new Map(oldsList.map((r) => [r.id, r]));
             // P1.1: walidacja + kolekcja, potem atomowy zapis batch w jednej transakcji
             const pending: Array<{
                 docId: string;
@@ -465,10 +483,7 @@ router.post(
 
                 let newHistory: unknown[] = [];
                 let effectiveUserId: string;
-                const old = await prisma.offers_studnie_rel.findUnique({
-                    where: { id: docId },
-                    select: { history: true, data: true, state: true, userId: true }
-                });
+                const old = oldMap.get(docId) || null;
                 if (old) {
                     if (!canWriteDoc(authReq.user, old.userId)) {
                         return res

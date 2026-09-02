@@ -113,7 +113,7 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
 
     describe('POST /api/offers/studnie (upsert studni)', () => {
         it('tworzy nową ofertę studni i wywołuje upsert + syncFts5', async () => {
-            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
@@ -131,10 +131,9 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
         });
 
         it('zwraca 403 przy edycji cudzej oferty studni (nie przejmuje jej)', async () => {
-            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
-                ...mockOfferStudnie,
-                userId: 'other-user'
-            });
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferStudnie, userId: 'other-user' }
+            ]);
 
             const res = await request(app)
                 .post('/api/offers/studnie')
@@ -145,7 +144,7 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
         });
 
         it('zwraca 403 gdy user próbuje utworzyć ofertę dla innego użytkownika', async () => {
-            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
 
             const res = await request(app)
                 .post('/api/offers/studnie')
@@ -158,10 +157,9 @@ describe('Studnie Offers CRUD — autoryzacja (IDOR)', () => {
         it('pro może aktualizować ofertę swojego sub-usera', async () => {
             mockUser.role = 'pro';
             mockUser.subUsers = ['sub-user'];
-            (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue({
-                ...mockOfferStudnie,
-                userId: 'sub-user'
-            });
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferStudnie, userId: 'sub-user' }
+            ]);
             (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
