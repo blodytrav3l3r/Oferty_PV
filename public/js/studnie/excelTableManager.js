@@ -215,6 +215,22 @@ async function _excelBulkRunAutoSelect() {
         btn.style.opacity = '0.5';
     }
     const savedIdx = typeof currentWellIndex !== 'undefined' ? currentWellIndex : -1;
+    const bulkContainer = document.getElementById('excel-table-container');
+    const bulkSavedScrollTop = bulkContainer ? bulkContainer.scrollTop : null;
+    const bulkSavedScrollLeft = bulkContainer ? bulkContainer.scrollLeft : null;
+    let bulkSavedActive = null;
+    try {
+        if (
+            typeof window !== 'undefined' &&
+            typeof window._excelVirtualGetActiveCell === 'function'
+        )
+            bulkSavedActive = window._excelVirtualGetActiveCell();
+        else if (typeof _excelVirtualActiveCell !== 'undefined' && _excelVirtualActiveCell)
+            bulkSavedActive = {
+                logicalRow: _excelVirtualActiveCell.logicalRow,
+                logicalColId: _excelVirtualActiveCell.logicalColId
+            };
+    } catch (_e) {}
     let ok = 0;
     let fail = 0;
     try {
@@ -273,6 +289,36 @@ async function _excelBulkRunAutoSelect() {
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
         _excelRenderTable(_excelActiveTab);
         _excelUpdateHeaderProdCodes();
+        if (bulkContainer && bulkSavedScrollTop !== null) {
+            bulkContainer.scrollTop = bulkSavedScrollTop;
+            if (bulkSavedScrollLeft !== null) bulkContainer.scrollLeft = bulkSavedScrollLeft;
+            try {
+                if (
+                    typeof window !== 'undefined' &&
+                    typeof window._excelVirtualIsEnabled === 'function' &&
+                    window._excelVirtualIsEnabled() &&
+                    typeof _excelVirtualRenderBody === 'function'
+                ) {
+                    _excelVirtualRenderBody();
+                }
+            } catch (_e2) {}
+        }
+        if (bulkSavedActive) {
+            try {
+                if (
+                    typeof window !== 'undefined' &&
+                    typeof window._excelVirtualSetActiveCell === 'function'
+                )
+                    window._excelVirtualSetActiveCell(bulkSavedActive);
+                else if (typeof _excelVirtualActiveCell !== 'undefined')
+                    _excelVirtualActiveCell = {
+                        logicalRow: bulkSavedActive.logicalRow,
+                        logicalColId: bulkSavedActive.logicalColId
+                    };
+                if (typeof _excelVirtualFocusCell === 'function')
+                    _excelVirtualFocusCell(bulkSavedActive);
+            } catch (_e3) {}
+        }
         _excelDebouncedRefresh();
         if (typeof window.updateSummary === 'function') window.updateSummary();
         if (typeof window.renderWellsList === 'function') window.renderWellsList();

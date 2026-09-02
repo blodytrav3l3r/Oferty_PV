@@ -20,8 +20,191 @@ let _excelVirtualStart = 0;
 let _excelVirtualEnd = 0;
 let _excelVirtualContainer = null;
 let _excelVirtualLogicalCols = []; // logicalColumnId[] in visible order (never colIdx as semantics)
-// eslint-disable-next-line prefer-const
 let _excelVirtualActiveCell = null; // {logicalRow, logicalColId} — preserves focus across scroll/recycle (R12)
+// SSoT invariant: logicalRow = position in filteredIndexes, NOT wellIdx (docs/plans/2026-09-02-excel-arrow-virtual-nav.md)
+
+function _excelVirtualIsExcelCell(el) {
+    if (!el) return false;
+    const c = document.getElementById('excel-table-container');
+    if (!c || !c.contains(el)) return false;
+    if (el.closest && el.closest('#excel-empty-row')) return true;
+    if (el.tagName === 'INPUT' || el.tagName === 'SELECT') return true;
+    if (el.classList && el.classList.contains('excel-sel-wrap')) return true;
+    return false;
+}
+
+function _excelVirtualSyncActiveFromElement(el) {
+    if (!el) return null;
+    let target = el;
+    if (target.tagName === 'SELECT') {
+        const wrap = target.closest('.excel-sel-wrap');
+        if (wrap) target = wrap;
+    } else if (target.closest) {
+        const wrap = target.closest('.excel-sel-wrap');
+        if (wrap) target = wrap;
+    }
+    const tr = target.closest ? target.closest('tr[data-widx], tr#excel-empty-row') : null;
+    if (!tr) return null;
+    // empty row is virtual row = total (past last logical)
+    if (tr.id === 'excel-empty-row') {
+        const colIdx = target.closest('td')
+            ? Array.prototype.indexOf.call(tr.children, target.closest('td'))
+            : -1;
+        const colId =
+            colIdx >= 0 && _excelVirtualLogicalCols[colIdx]
+                ? _excelVirtualLogicalCols[colIdx]
+                : _excelVirtualLogicalCols[3] || 'name';
+        _excelVirtualActiveCell = { logicalRow: _excelVirtualTotal, logicalColId: colId };
+        return _excelVirtualActiveCell;
+    }
+    const logicalAttr = tr.getAttribute('data-logical-row');
+    let logicalRow = logicalAttr !== null ? parseInt(logicalAttr, 10) : -1;
+    if (isNaN(logicalRow) || logicalRow < 0) {
+        const wIdx = parseInt(tr.getAttribute('data-widx'), 10);
+        if (!isNaN(wIdx) && _excelVirtualFiltered) {
+            logicalRow = _excelVirtualFiltered.indexOf(wIdx);
+        }
+    }
+    if (isNaN(logicalRow) || logicalRow < 0) return null;
+    const td = target.closest('td');
+    const colIdx = td && tr.contains(td) ? Array.prototype.indexOf.call(tr.children, td) : -1;
+    const colId =
+        colIdx >= 0 && _excelVirtualLogicalCols[colIdx]
+            ? _excelVirtualLogicalCols[colIdx]
+            : _excelVirtualLogicalCols[0] || 'name';
+    _excelVirtualActiveCell = { logicalRow: logicalRow, logicalColId: colId };
+    return _excelVirtualActiveCell;
+}
+
+function _excelVirtualGetColIdxForId(logicalColId) {
+    const idx = _excelVirtualLogicalCols.indexOf(logicalColId);
+    return idx >= 0 ? idx : -1;
+}
+
+function _excelVirtualFocusCell(active) {
+    if (!active) return false;
+    // empty row
+    if (active.logicalRow === _excelVirtualTotal) {
+        const emptyRow = document.getElementById('excel-empty-row');
+        if (!emptyRow) return false;
+        const colIdx = _excelVirtualGetColIdxForId(active.logicalColId);
+        const td = colIdx >= 0 ? emptyRow.children[colIdx] : null;
+        let el = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
+        if (!el || (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el))) {
+            const els =
+                typeof _excelGetNavElements === 'function' ? _excelGetNavElements(emptyRow) : [];
+            el = els[colIdx] || els[0] || null;
+            if (el && typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) {
+                el =
+                    (typeof _excelSkipDisabled === 'function'
+                        ? _excelSkipDisabled(el, els, colIdx, 1)
+                        : el) || el;
+            }
+        }
+        if (el) {
+            if (
+                typeof _excelFocusNavEl === 'function' &&
+                typeof _excelGetNavElements === 'function'
+            ) {
+                const emptyEls = _excelGetNavElements(emptyRow);
+                _excelFocusNavEl(el, emptyEls, 'down');
+            } else {
+                el.focus();
+            }
+            return true;
+        }
+        return false;
+    }
+    const container = document.getElementById('excel-table-container');
+    if (!container) return false;
+    const row = container.querySelector('tr[data-logical-row="' + active.logicalRow + '"]');
+    if (!row) return false;
+    const colIdx = _excelVirtualGetColIdxForId(active.logicalColId);
+    if (colIdx < 0) return false;
+    const td = row.children[colIdx];
+    let el = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
+    if (!el || (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el))) {
+        const rowEls = typeof _excelGetNavElements === 'function' ? _excelGetNavElements(row) : [];
+        // try logical col idx clamped to rowEls length
+        el = rowEls[Math.min(colIdx, rowEls.length - 1)] || rowEls[0] || null;
+        if (el && typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) {
+            const dir = 1;
+            el =
+                (typeof _excelSkipDisabled === 'function'
+                    ? _excelSkipDisabled(el, rowEls, colIdx, dir)
+                    : el) || null;
+        }
+    }
+    if (!el) return false;
+    const rowEls2 = typeof _excelGetNavElements === 'function' ? _excelGetNavElements(row) : [el];
+    if (typeof _excelFocusNavEl === 'function') {
+        _excelFocusNavEl(el, rowEls2, 'down');
+    } else {
+        el.focus();
+    }
+    // sync currentWellIndex
+    const wIdx = parseInt(row.getAttribute('data-widx'), 10);
+    if (
+        !isNaN(wIdx) &&
+        typeof currentWellIndex !== 'undefined' &&
+        wIdx !== currentWellIndex &&
+        typeof excelSelectRow === 'function'
+    ) {
+        try {
+            excelSelectRow(wIdx);
+        } catch (_e) {}
+    }
+    return true;
+}
+
+function _excelVirtualClampActive() {
+    if (!_excelVirtualActiveCell) return;
+    if (_excelVirtualTotal === 0) {
+        _excelVirtualActiveCell.logicalRow = 0;
+        return;
+    }
+    if (_excelVirtualActiveCell.logicalRow > _excelVirtualTotal)
+        _excelVirtualActiveCell.logicalRow = _excelVirtualTotal;
+    if (_excelVirtualActiveCell.logicalRow < 0) _excelVirtualActiveCell.logicalRow = 0;
+    if (_excelVirtualLogicalCols.indexOf(_excelVirtualActiveCell.logicalColId) < 0) {
+        _excelVirtualActiveCell.logicalColId = _excelVirtualLogicalCols[0] || 'name';
+    }
+}
+
+function _excelVirtualEnsureVisible(logicalRow) {
+    if (
+        typeof logicalRow !== 'number' ||
+        isNaN(logicalRow) ||
+        logicalRow < 0 ||
+        logicalRow > _excelVirtualTotal
+    )
+        return false;
+    // already in viewport → no scroll/render
+    if (logicalRow >= _excelVirtualStart && logicalRow < _excelVirtualEnd) return false;
+    const container = _excelVirtualContainer || document.getElementById('excel-table-container');
+    if (!container) return false;
+    const viewportH = container.clientHeight || 600;
+    const rowsInView = Math.max(1, Math.ceil(viewportH / EXCEL_ROW_HEIGHT));
+    let newScrollTop;
+    if (logicalRow < _excelVirtualStart) {
+        newScrollTop = Math.max(
+            0,
+            logicalRow * EXCEL_ROW_HEIGHT - EXCEL_OVERSCAN * EXCEL_ROW_HEIGHT * 0.2
+        );
+        // keep overscan above row minimal — snap to row top
+        newScrollTop = Math.max(0, logicalRow * EXCEL_ROW_HEIGHT - 2 * EXCEL_ROW_HEIGHT);
+    } else {
+        newScrollTop = Math.max(
+            0,
+            (logicalRow - rowsInView + 1) * EXCEL_ROW_HEIGHT + 2 * EXCEL_ROW_HEIGHT
+        );
+    }
+    const maxScroll = Math.max(0, _excelVirtualTotal * EXCEL_ROW_HEIGHT - viewportH);
+    if (newScrollTop > maxScroll) newScrollTop = maxScroll;
+    container.scrollTop = newScrollTop;
+    _excelVirtualRenderBody();
+    return true;
+}
 
 function _excelVirtualIsEnabled() {
     try {
@@ -131,12 +314,22 @@ function _excelVirtualOnScroll() {
     });
 }
 
+function _excelVirtualOnFocusIn(e) {
+    const tgt = e.target;
+    if (!_excelVirtualIsExcelCell(tgt)) return;
+    // composing guarded — don't sync during IME
+    if (tgt.isComposing || tgt.getAttribute('data-composing') === '1') return;
+    _excelVirtualSyncActiveFromElement(tgt);
+}
+
 function _excelVirtualAttach() {
     const c = document.getElementById('excel-table-container');
     if (!c || _excelVirtualContainer === c) return;
     _excelVirtualContainer = c;
     c.removeEventListener('scroll', _excelVirtualOnScroll);
     c.addEventListener('scroll', _excelVirtualOnScroll, { passive: true });
+    c.removeEventListener('focusin', _excelVirtualOnFocusIn);
+    c.addEventListener('focusin', _excelVirtualOnFocusIn);
     c.style.maxHeight = '';
     c.style.overflow = 'auto';
 }
@@ -144,17 +337,30 @@ function _excelVirtualAttach() {
 function _excelVirtualDetach() {
     if (_excelVirtualContainer) {
         _excelVirtualContainer.removeEventListener('scroll', _excelVirtualOnScroll);
+        _excelVirtualContainer.removeEventListener('focusin', _excelVirtualOnFocusIn);
         _excelVirtualContainer = null;
     }
     if (_excelVirtualRaf) {
         cancelAnimationFrame(_excelVirtualRaf);
         _excelVirtualRaf = 0;
     }
+    _excelVirtualActiveCell = null;
 }
 
 function _excelVirtualRenderBody() {
     if (!_excelVirtualEnabled) return;
     if (!_excelVirtualFiltered) _excelVirtualBuildFiltered();
+    // clamp active cursor when total changed (filtr/tab)
+    _excelVirtualClampActive();
+    // capture focus owner before DOM replacement — only restore if focus was inside excel grid cell
+    const _hadGridFocusEl = document.activeElement;
+    const _hadGridFocus = _excelVirtualIsExcelCell(_hadGridFocusEl);
+    const _activeBefore = _excelVirtualActiveCell
+        ? {
+              logicalRow: _excelVirtualActiveCell.logicalRow,
+              logicalColId: _excelVirtualActiveCell.logicalColId
+          }
+        : null;
     const range = _excelVirtualGetVisibleRange();
     _excelVirtualStart = range.start;
     _excelVirtualEnd = range.end;
@@ -308,6 +514,38 @@ function _excelVirtualRenderBody() {
             }
             if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
             if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
+            // restore logical focus after recycle — only if grid had focus and active still in viewport
+            if (_hadGridFocus && _activeBefore) {
+                // use latest active (may have been updated by ensureVisible)
+                const toRestore = _excelVirtualActiveCell || _activeBefore;
+                if (
+                    toRestore &&
+                    toRestore.logicalRow >= _excelVirtualStart &&
+                    toRestore.logicalRow < _excelVirtualEnd
+                ) {
+                    // avoid stealing focus if user already moved to search/other input during render
+                    const curAe = document.activeElement;
+                    const stillGrid =
+                        !curAe ||
+                        curAe === _hadGridFocusEl ||
+                        _excelVirtualIsExcelCell(curAe) ||
+                        curAe === document.body;
+                    if (stillGrid) {
+                        // de-dup: if already focused correct cell, skip
+                        const alreadyFocused =
+                            curAe &&
+                            curAe.closest &&
+                            curAe.closest('tr[data-logical-row="' + toRestore.logicalRow + '"]');
+                        if (!alreadyFocused) _excelVirtualFocusCell(toRestore);
+                    }
+                } else if (
+                    toRestore &&
+                    toRestore.logicalRow === _excelVirtualTotal &&
+                    _excelVirtualEnd === _excelVirtualTotal
+                ) {
+                    _excelVirtualFocusCell(toRestore);
+                }
+            }
         }
     }
     _excelVirtualOffset = 0;
@@ -570,6 +808,19 @@ if (typeof window !== 'undefined') {
     window._excelVirtualIsCellSelected = _excelVirtualIsCellSelected;
     window._excelVirtualGetLogicalCols = function () {
         return _excelVirtualLogicalCols.slice();
+    };
+    window._excelVirtualIsExcelCell = _excelVirtualIsExcelCell;
+    window._excelVirtualSyncActiveFromElement = _excelVirtualSyncActiveFromElement;
+    window._excelVirtualFocusCell = _excelVirtualFocusCell;
+    window._excelVirtualEnsureVisible = _excelVirtualEnsureVisible;
+    window._excelVirtualClampActive = _excelVirtualClampActive;
+    window._excelVirtualGetActiveCell = function () {
+        return _excelVirtualActiveCell ? { ..._excelVirtualActiveCell } : null;
+    };
+    window._excelVirtualSetActiveCell = function (c) {
+        _excelVirtualActiveCell = c
+            ? { logicalRow: c.logicalRow, logicalColId: c.logicalColId }
+            : null;
     };
     window.EXCEL_ROW_HEIGHT = EXCEL_ROW_HEIGHT;
 }

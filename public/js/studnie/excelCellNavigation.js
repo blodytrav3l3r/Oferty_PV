@@ -20,8 +20,181 @@ function excelCellBlur(el) {
     _excelUserEditing = false; /* wznawia polling */
 }
 
-/* ===== ARROW KEY NAVIGATION (Excel-like) ===== */
+/* ===== ARROW KEY NAVIGATION — virtual-aware (excelVirtualActiveCell SSoT) ===== */
+function _excelVirtualHandleArrow(e) {
+    const key = e.key;
+    if (key !== 'ArrowUp' && key !== 'ArrowDown' && key !== 'ArrowLeft' && key !== 'ArrowRight')
+        return false;
+    // composing guard — nie niszcz edycji IME
+    const ae0 = /** @type {any} */ (document.activeElement);
+    if (
+        ae0 &&
+        (ae0.isComposing || (ae0.getAttribute && ae0.getAttribute('data-composing') === '1'))
+    )
+        return true;
+    const emptyRow = document.getElementById('excel-empty-row');
+    const inEmpty = emptyRow && emptyRow.contains(e.target);
+    // ensure active cursor initialized from current target
+    if (typeof _excelVirtualSyncActiveFromElement === 'function') {
+        if (!_excelVirtualActiveCell) _excelVirtualSyncActiveFromElement(e.target);
+        // jeśli nadal brak (focus poza grid), init na first visible
+        if (
+            !_excelVirtualActiveCell &&
+            typeof _excelVirtualTotal !== 'undefined' &&
+            _excelVirtualTotal > 0
+        ) {
+            const firstCol =
+                typeof _excelVirtualLogicalCols !== 'undefined' && _excelVirtualLogicalCols[0]
+                    ? _excelVirtualLogicalCols[0]
+                    : 'name';
+            _excelVirtualActiveCell = { logicalRow: 0, logicalColId: firstCol };
+        }
+    }
+    if (!_excelVirtualActiveCell) return true;
+    e.preventDefault();
+    e.stopPropagation();
+    if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
+
+    if (key === 'ArrowLeft' || key === 'ArrowRight') {
+        const curIdx =
+            typeof _excelVirtualGetColIdxForId === 'function'
+                ? _excelVirtualGetColIdxForId(_excelVirtualActiveCell.logicalColId)
+                : -1;
+        const step = key === 'ArrowRight' ? 1 : -1;
+        let nextIdx = curIdx + step;
+        // skip disabled columns (checkbox/mode/Lp never editable but still cols)
+        let tries = 20;
+        while (tries-- > 0) {
+            if (nextIdx < 0 || nextIdx >= _excelVirtualLogicalCols.length) return true;
+            // sprawdź czy komórka w tym wierszu jest disabled — jeśli tak, przeskocz
+            let disabled = false;
+            if (
+                typeof _excelIsDisabledNav === 'function' &&
+                typeof _excelVirtualFocusCell === 'function'
+            ) {
+                // dry-check via DOM if row visible
+                const container = document.getElementById('excel-table-container');
+                const row =
+                    _excelVirtualActiveCell.logicalRow === _excelVirtualTotal
+                        ? document.getElementById('excel-empty-row')
+                        : container
+                          ? container.querySelector(
+                                'tr[data-logical-row="' + _excelVirtualActiveCell.logicalRow + '"]'
+                            )
+                          : null;
+                if (row) {
+                    const td = row.children[nextIdx];
+                    const candEl = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
+                    if (candEl && _excelIsDisabledNav(candEl)) disabled = true;
+                }
+            }
+            if (!disabled) break;
+            nextIdx += step;
+        }
+        if (nextIdx < 0 || nextIdx >= _excelVirtualLogicalCols.length) return true;
+        _excelVirtualActiveCell.logicalColId = _excelVirtualLogicalCols[nextIdx];
+        if (inEmpty) {
+            if (typeof _excelVirtualFocusCell === 'function')
+                _excelVirtualFocusCell(_excelVirtualActiveCell);
+            return true;
+        }
+        // jeśli wiersz w viewport — fokus bez rendera, inaczej ensureVisible+render
+        const inView =
+            _excelVirtualActiveCell.logicalRow >= _excelVirtualStart &&
+            _excelVirtualActiveCell.logicalRow < _excelVirtualEnd;
+        if (inView) {
+            if (typeof _excelVirtualFocusCell === 'function')
+                _excelVirtualFocusCell(_excelVirtualActiveCell);
+        } else {
+            if (typeof _excelVirtualEnsureVisible === 'function')
+                _excelVirtualEnsureVisible(_excelVirtualActiveCell.logicalRow);
+            if (typeof _excelVirtualFocusCell === 'function')
+                _excelVirtualFocusCell(_excelVirtualActiveCell);
+        }
+        return true;
+    }
+
+    // ArrowUp / ArrowDown — dokładnie 1 logiczny wiersz
+    const dir = key === 'ArrowDown' ? 1 : -1;
+    const total = typeof _excelVirtualTotal !== 'undefined' ? _excelVirtualTotal : 0;
+    let nextRow = _excelVirtualActiveCell.logicalRow + dir;
+    // clamp do [0, total] gdzie total = pozycja pustego wiersza
+    if (nextRow < 0) nextRow = 0;
+    if (nextRow > total) nextRow = total;
+    // jeśli już na granicy i próba wyjścia poza total — no-op (ArrowDown na empty)
+    if (nextRow === _excelVirtualActiveCell.logicalRow) {
+        // na pustym wierszu ArrowDown = no-op, ArrowUp z pustego = ostatni wiersz (już obsłużone clamp)
+        return true;
+    }
+    // zapamiętaj kolumnę (TD index) dla zachowania kolumny przy przejściu data<->empty
+    if (!inEmpty && nextRow === total) {
+        // data → empty: zachowaj colId (już w active), dodatkowo _excelLastDataCol dla legacy compat
+        const curTd = e.target.closest ? e.target.closest('td') : null;
+        const curTr = e.target.closest ? e.target.closest('tr') : null;
+        if (curTd && curTr) {
+            try {
+                _excelLastDataCol = Array.prototype.indexOf.call(curTr.children, curTd);
+            } catch (_f) {}
+        }
+    }
+    if (inEmpty && dir === -1) {
+        // empty → data: użyj zachowanej kolumny jeśli logicalColId nie pasuje
+        // active already has logicalColId from empty, keep it
+    }
+    _excelVirtualActiveCell.logicalRow = nextRow;
+    // jeśli target w viewport — fokus bez scrolla (kluczowe doprecyzowanie 1)
+    const needsScroll = !(nextRow >= _excelVirtualStart && nextRow < _excelVirtualEnd);
+    // empty row poza normalnym zakresem: zawsze wymaga render jeśli nie na dole
+    const needsScrollEmpty = nextRow === total && _excelVirtualEnd !== total;
+    if (needsScroll || needsScrollEmpty) {
+        if (typeof _excelVirtualEnsureVisible === 'function') _excelVirtualEnsureVisible(nextRow);
+    }
+    if (typeof _excelVirtualFocusCell === 'function')
+        _excelVirtualFocusCell(_excelVirtualActiveCell);
+    else {
+        // fallback: legacy focus
+        const container = document.getElementById('excel-table-container');
+        const row = container
+            ? container.querySelector('tr[data-logical-row="' + nextRow + '"]')
+            : null;
+        if (row) {
+            const colIdx = _excelVirtualLogicalCols.indexOf(_excelVirtualActiveCell.logicalColId);
+            const td = row.children[colIdx];
+            const el = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
+            if (el) el.focus();
+        }
+    }
+    return true;
+}
+
 function _excelHandleArrow(e) {
+    // virtual path — SSoT logicalRow, nie DOM
+    try {
+        const virtEnabled =
+            typeof window !== 'undefined' &&
+            typeof window._excelVirtualIsEnabled === 'function' &&
+            window._excelVirtualIsEnabled();
+        const hasVirtFlag = typeof window !== 'undefined' ? !!window._excelVirtualIsEnabled : false;
+        // fallback: check let global via typeof guarded (TDZ safe via window check first)
+        const letFlag = (function () {
+            try {
+                return typeof _excelVirtualEnabled !== 'undefined' && !!_excelVirtualEnabled;
+            } catch (_ex) {
+                return hasVirtFlag && virtEnabled;
+            }
+        })();
+        if (virtEnabled && letFlag) {
+            const overlay = document.getElementById('excel-table-overlay');
+            const container = document.getElementById('excel-table-container');
+            const inGrid = container && e.target && container.contains(e.target);
+            const inEmptyCheck = document.getElementById('excel-empty-row');
+            const inEmpty = inEmptyCheck && inEmptyCheck.contains(e.target);
+            if (overlay && (inGrid || inEmpty)) {
+                const handled = _excelVirtualHandleArrow(e);
+                if (handled) return;
+            }
+        }
+    } catch (_virtErr) {}
     /* Kiedy focus jest w pustym wierszu — obsłuż strzałki specjalnie (wszystkie komórki) */
     const emptyRow = document.getElementById('excel-empty-row');
     if (emptyRow && emptyRow.contains(e.target)) {
