@@ -4,6 +4,13 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.23.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.22.2...v1.23.0) (2026-09-02)
+
+### Bug Fixes
+
+- **studnie:** płynna nawigacja strzałkami w excel virtual ([9a8d81a](https://github.com/blodytrav3l3r/Oferty_PV/commit/9a8d81aa2800fc6b5c58a9674cf74c3bec4ab6a4))
+- **ui:** blokada zmiany wartości number scrolem myszki ([943885c](https://github.com/blodytrav3l3r/Oferty_PV/commit/943885c679dfc37c3a988649df6929599e8b75b6))
+
 ### [1.22.2](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.22.1...v1.22.2) (2026-09-02)
 
 ### Bug Fixes

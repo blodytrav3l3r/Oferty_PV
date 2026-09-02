@@ -2,9 +2,9 @@
 
 Data: 2026-09-02
 Wersja: 1.22.2
-Commit: 9a8d81a `fix(studnie): płynna nawigacja strzałkami w excel virtual`
-Branch: main (dirty worktree — 17 plików M, nietykalne)
-Status: PLAN READY v1.1 — czeka na `APPROVE PLAN`
+Commit: f4c9e61 `perf(studnie): p1 batch findmany + mutation invariant 10k`
+Branch: main
+Status: DONE v1.1 — P0+P1 zrealizowane, P2 bundle deferred (ponytail)
 Poprzedni audyt: chat 2026-09-02 (wellUI/excelVirtual/zlecenia/backend/startup)
 Review: 9.2/10 → 9.7/10 po 4 korektach obowiązkowych (poniżej)
 Zastępuje/rozszerza: `2026-09-02-system-niezawodny-szybki-10-10000.md` (P0/P1/P2) w części performance
