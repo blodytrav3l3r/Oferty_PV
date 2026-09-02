@@ -251,8 +251,8 @@ function openExcelTableModal() {
     const excelInnerHtml = `
         <div id="excel-modal-inner" style="${modalStyle}">
         <style>
-            #excel-table-overlay .excel-toolbar-btn { flex:0 1 auto; min-width:8.5rem; justify-content:center; white-space:nowrap; text-align:center; }
-            #excel-table-overlay .excel-toolbar-btn--danger { min-width:0; }
+            #excel-table-overlay .excel-toolbar-btn { flex:0 0 auto; justify-content:center; white-space:nowrap; text-align:center; }
+            #excel-table-overlay .excel-toolbar-btn i { flex-shrink:0; }
             #excel-table-overlay ::-webkit-scrollbar { width:8px; height:10px; }
             #excel-table-overlay ::-webkit-scrollbar-track { background:var(--scrollbar-track); }
             #excel-table-overlay ::-webkit-scrollbar-thumb { background:var(--scrollbar-thumb); border-radius: var(--radius-2xs); }

@@ -3654,10 +3654,15 @@ select.form-input option {
     font-size: var(--fs-2xs);
     font-weight: var(--fw-semibold);
     cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
     transition:
         background-color 0.12s,
         border-color 0.12s,
         color 0.12s;
+}
+#excel-table-overlay .excel-toolbar-btn i {
+    flex-shrink: 0;
 }
 #excel-table-overlay .excel-toolbar-btn:hover {
     background: rgba(var(--accent-rgb), 0.2);
