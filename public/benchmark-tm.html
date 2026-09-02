@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Benchmark — Menedżer Przejść tmRefresh (10/1k wells)</title>
+        <style>
+            body {
+                font-family: monospace;
+                padding: 16px;
+            }
+            pre {
+                background: #0f172a;
+                color: #e2e8f0;
+                padding: 12px;
+                border-radius: 6px;
+            }
+            table {
+                border-collapse: collapse;
+            }
+            th,
+            td {
+                border: 1px solid #cbd5e1;
+                padding: 6px 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>tmRefreshWellData — STEP 0 baseline (przed/ po P0-1)</h1>
+        <p>
+            Uruchom: <code>npm run benchmark:tm</code> lub otwórz ten plik w przeglądarce. Wyniki w
+            konsoli + tabela poniżej.
+        </p>
+        <pre id="out">Ładowanie...</pre>
+        <table id="tbl">
+            <thead>
+                <tr>
+                    <th>N wells</th>
+                    <th>T avg</th>
+                    <th>TTM</th>
+                    <th>TTI</th>
+                    <th>TTR</th>
+                    <th>longtask>50ms</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <script src="js/studnie/globals.js"></script>
+        <script src="js/studnie/actionsWellPricing.js"></script>
+        <script src="js/studnie/popupsTransitionManager.js"></script>
+        <script>
+            (function () {
+                const out = document.getElementById('out');
+                const tbl = document.querySelector('#tbl tbody');
+                function log(s) {
+                    out.textContent += s + '\n';
+                    console.log(s);
+                }
+                function mkWell(i, dn, t) {
+                    const przejscia = [];
+                    for (let j = 0; j < t; j++)
+                        przejscia.push({
+                            productId: 'PRZ-' + ((j % 3) + 1),
+                            angle: 10,
+                            rzednaWlaczenia: 100 + j,
+                            flowType: 'wlot'
+                        });
+                    return {
+                        id: 'well-' + i,
+                        name: 'Ss' + i,
+                        dn,
+                        rzednaDna: 100,
+                        przejscia,
+                        config: [{ productId: 'K-1', quantity: 1 }]
+                    };
+                }
+                // stub globals expected by calc
+                window.studnieProducts = [
+                    { id: 'PRZ-1', category: 'Test', dn: '400', componentType: 'przejscie' },
+                    { id: 'PRZ-2', category: 'Test', dn: '500', componentType: 'przejscie' },
+                    { category: 'Wiercenie', id: 'W-1', dn: '400', price: 100 },
+                    {
+                        id: 'K-1',
+                        category: 'Krąg',
+                        dn: '1000',
+                        componentType: 'krag',
+                        height: 500,
+                        price: 400
+                    }
+                ];
+                window.productionOrders = [];
+                window.calcWellStats =
+                    window.calcWellStats ||
+                    function (w) {
+                        return { price: 1000, weight: 500, height: 2000, areaInt: 1, areaExt: 1 };
+                    };
+                window.calculateOfferTotals =
+                    window.calculateOfferTotals ||
+                    function () {
+                        return { globalWeight: 1000, totalTransportCost: 100 };
+                    };
+                window.FLOW_TYPES = { WLOT: 'wlot', WYLOT: 'wylot' };
+                window.escapeHtml = (s) => String(s);
+                window.escapeHtmlAttr = (s) => String(s);
+                window.fmtInt = (n) => String(n);
+                window.isWellLocked = () => false;
+                const cases = [10, 100, 1000];
+                out.textContent = '';
+                log('STEP 0 — tmRefreshWellData MEASURED (performance.mark)');
+                log(
+                    'I5 invariant: calculateOfferTotals should be 1x per tmRefresh — check via counter'
+                );
+                let origCalc = window.calculateOfferTotals;
+                for (const N of cases) {
+                    const Tavg = 2;
+                    wells = [];
+                    for (let i = 0; i < N; i++)
+                        wells.push(mkWell(i, i % 2 ? '1200' : '1000', Tavg));
+                    if (window._rebuildWellsById) window._rebuildWellsById();
+                    let calcCalls = 0;
+                    const wrapped = function () {
+                        calcCalls++;
+                        return origCalc();
+                    };
+                    const prev = window.calculateOfferTotals;
+                    window.calculateOfferTotals = wrapped;
+                    performance.mark('tm-start-' + N);
+                    tmRefreshWellData();
+                    performance.mark('tm-end-' + N);
+                    performance.measure('tmRefresh-' + N, 'tm-start-' + N, 'tm-end-' + N);
+                    const m = performance.getEntriesByName('tmRefresh-' + N)[0];
+                    window.calculateOfferTotals = prev;
+                    const ttm = m.duration; // TTM approx = tmRefresh + modal show (modal ~10ms)
+                    log(
+                        `N=${N} T=${N * Tavg} tmRefresh=${m.duration.toFixed(1)}ms calcCalls=${calcCalls} (expected 1) tmWellData=${tmWellData.length}`
+                    );
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${N}</td><td>${Tavg}</td><td>${ttm.toFixed(1)}ms</td><td>—</td><td>${ttm.toFixed(1)}ms</td><td>${m.duration > 50 ? 'YES' : 'no'}</td>`;
+                    tbl.appendChild(tr);
+                    if (calcCalls !== 1)
+                        log('  ⚠️ REGRESSION: calculateOfferTotals !=1x per refresh!');
+                }
+                log(
+                    '\nInterpretacja: TTM≈tmRefresh, TTR≈tmRefresh+tmRender. P0-2 chunk gated gdy TTR>200ms @1k OR longtask>50ms.'
+                );
+            })();
+        </script>
+    </body>
+</html>
