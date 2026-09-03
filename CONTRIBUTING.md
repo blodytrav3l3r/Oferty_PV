@@ -156,6 +156,9 @@ Na GitHubie otwórz PR → zielony przycisk "Squash and merge". Tyle.
 ```bash
 npm test                 # Wszystkie testy
 npm run test:quick       # Tylko testy dymne (szybkie)
+npm run test:quick:lite  # Szybkie testy bez migracji (pre-push)
+npm run test:git-safety  # Testy warstwy Git Safety (pre-push)
+npm run test:frontend    # Testy frontendowe
 npm run test:watch       # Watch mode
 ```
 
@@ -166,7 +169,8 @@ Przed mergem upewnij się, że wszystkie testy przechodzą.
 ```bash
 npm run format           # Prettier — automatyczne formatowanie
 npm run format:check     # Sprawdź formatowanie
-npm run lint             # ESLint
+npm run lint             # ESLint (backend)
+npm run lint:frontend    # ESLint (frontend, public/js)
 npm run lint:fix         # ESLint z auto-naprawą
 ```
 

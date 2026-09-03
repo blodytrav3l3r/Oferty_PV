@@ -268,8 +268,8 @@ oraz `public/images/logo-sok.svg`.
 | Katalog                    | Liczba plików | Opis                                                                     |
 | -------------------------- | ------------- | ------------------------------------------------------------------------ |
 | `public/js/rury/`          | 31            | Logika modułu rur (oferty, cenniki, zamówienia)                          |
-| `public/js/studnie/`       | 137           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
-| `public/js/shared/`        | 22            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
+| `public/js/studnie/`       | 143           | Logika modułu studni (konfigurator, oferty, cenniki, excel, zamówienia)  |
+| `public/js/shared/`        | 24            | Wspólne helpery (auth, ui, headerUser, toast, modalCore, StorageService) |
 | `public/js/kartoteka/`     | 8             | Kartoteka ofert i zamówień (kartotekaActions, kartotekaUi, ...)          |
 | `public/js/import-export/` | 11            | Import/eksport XLSX + JSON 1:1 (toolbar.js + rury/studnie/shared)        |
 | `public/js/spa/`           | 4             | Router SPA (router.js, navGuard)                                         |
@@ -295,7 +295,6 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 | `public/css/style.responsive.css` | Responsive + modale + toasty + wizard                                |
 | `public/css/style.utilities.css`  | Utility classes (zastępują inline style)                             |
 | `public/css/inter.css`            | Font Inter (importowany przez `style.base.css`)                      |
-| `public/css/print.css`            | Style wydruku                                                        |
 | `public/css/printModal.css`       | Style podglądu wydruku (UPM)                                         |
 | `public/css/index.css`            | Style Pulpitu (dashboard)                                            |
 | `public/css/rury.css`             | Style modułu rur                                                     |
@@ -315,7 +314,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - Backup przez `VACUUM INTO` (WAL-safe snapshot)
 - Prisma ORM zarządza schematem i migracjami
 
-### Modele (38)
+### Modele (39)
 
 - **users** — użytkownicy systemu
 - **sessions** — sesje logowania (token-based)
@@ -345,6 +344,7 @@ Główne pliki rdzeniowe w `public/js/studnie/` po podziale:
 - **AiTrainingRun** — audyt uruchomień treningu ML (kręgosłup audytu, od `20260816000000_ai_training_run`)
 - **AiEvaluation** — dzienne metryki ewaluacji ML
 - **aiRewardLog** — logi nagród ML (unique `(wellId, action)` — dedup rewardów)
+- **document_shares** — udostępnianie dokumentów (oferty/zamówienia) między użytkownikami (`GET/POST /api/shares`, batch `POST /api/shares/revoke`, `DELETE /api/shares/:id`)
 
 - **Indeksy telemetrii**: `idx_logs_well` (wellId) i `idx_logs_source_well` (solverSource, wellId) na
   `ai_telemetry_logs` — migracja `20260805100000_telemetry_well_dedup`, idempotentnie odtwarzane
@@ -428,7 +428,8 @@ Oferty_PV/
 │   │   ├── telemetryAiDashboard.ts # Dashboard AI
 │   │   ├── featureFlags.ts         # Feature flags
 │   │   ├── precoPricingV2.ts       # Cenniki Preco
-│   │   └── priceOverrides.ts       # Nadpisania cen
+│   │   ├── priceOverrides.ts       # Nadpisania cen
+│   │   └── shares.ts               # Udostępnianie dokumentów (GET/POST/revoke/DELETE)
 │   ├── services/
 │   │   ├── auditService.ts         # Usługa audytu
 │   │   ├── combinedExport.ts       # Łączny eksport (PDF/DOCX)
@@ -457,7 +458,7 @@ Oferty_PV/
 │   │   └── telemetrySchemas.ts     # Walidacja telemetrii
 │   └── types/                      # Typy TypeScript
 │
-├── public/                          # Frontend (Vanilla JS, 221 plików)
+├── public/                          # Frontend (Vanilla JS, 229 plików)
 │   ├── index.html                   # Dashboard (Pulpit)
 │   ├── app.html                     # Shell SPA (router hash #/moduł, osadza iframe)
 │   ├── rury.html                    # Moduł rur (iframe)
@@ -465,16 +466,16 @@ Oferty_PV/
 │   ├── kartoteka.html               # Kartoteka ofert i zamówień
 │   ├── zlecenia.html                # Zlecenia produkcyjne (PZ)
 │   ├── favicon.ico                  # Ikona
-│   ├── js/                          # Skrypty JS (221 plików)
+│   ├── js/                          # Skrypty JS (229 plików)
 │   ├── css/                         # 11 arkuszy (style.base/cards/responsive/utilities + index/rury/studnie/zlecenia/spa/inter/printModal)
 │   ├── images/                      # logo-sok.svg, letterhead-*.png, b-mark.png, ce-mark.png
 │   ├── partials/                    # Partiale HTML (header, rury/*, studnie/*) — partialLoader
 │   └── templates/                   # 5 szablonów: ofertaRury/Studnie, kartaBudowy, zlecenie, etykieta
 │
-├── prisma/                          # Prisma (38 modeli, 3 migracje)
-│   ├── schema.prisma                # Definicja schematu (651 linii)
+├── prisma/                          # Prisma (39 modeli, 7 migracji)
+│   ├── schema.prisma                # Definicja schematu (770 linii)
 │   ├── seed.ts                      # Seed danych (ProductsRury/Studnie + Preco + AiModel)
-│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward + 20260816000000_ai_training_run
+│   └── migrations/                  # 20260815000000_baseline + 20260815000001_uq_reward_well_action + 20260816000000_ai_training_run + 20260828000000_add_document_shares + 20260831000000_add_wellcount + 20260902000000_add_totalprice + 20260902000001_add_performance_indexes
 │
 ├── data/                            # Baza danych
 │   ├── app_database.sqlite          # Główna baza (SQLite)
@@ -484,7 +485,7 @@ Oferty_PV/
 │   ├── seed_studnie.json            # Seed produktów (studnie)
 │   └── seed_preco.json              # Seed cenników Preco
 │
-├── scripts/                         # Skrypty narzędziowe (46 plików)
+├── scripts/                         # Skrypty narzędziowe (51 plików)
 │   ├── backup.ts                    # Backup bazy (VACUUM INTO, max 30 kopii)
 │   ├── restore-db.js                # Restore z walidacją (header + integrity_check + WAL cleanup)
 │   ├── check-db.js                  # Weryfikacja schematu przy starcie (ensure-db.bat)

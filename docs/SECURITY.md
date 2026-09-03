@@ -40,10 +40,11 @@ Token można przekazać na dwa sposoby:
 
 ### Role
 
-| Rola    | Uprawnienia                                                                   |
-| ------- | ----------------------------------------------------------------------------- |
-| `admin` | Pełny dostęp — zarządzanie użytkownikami, ustawienia, audyt, wszystkie oferty |
-| `user`  | Dostęp do własnych ofert, klientów, zamówień                                  |
+| Rola    | Uprawnienia                                                                            |
+| ------- | -------------------------------------------------------------------------------------- |
+| `admin` | Pełny dostęp — zarządzanie użytkownikami, ustawienia, audyt, wszystkie oferty          |
+| `pro`   | Dostęp rozszerzony — własne oferty plus oferty przypisanych podwykonawców (`subUsers`) |
+| `user`  | Dostęp do własnych ofert, klientów, zamówień                                           |
 
 Middleware autoryzacji:
 
@@ -74,17 +75,28 @@ app.use(
             directives: {
                 defaultSrc: ["'self'"],
                 scriptSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrcAttr: ["'unsafe-inline'"],
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 imgSrc: ["'self'", 'data:', 'blob:'],
                 connectSrc: ["'self'"],
                 fontSrc: ["'self'"],
-                objectSrc: ["'none'"]
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'self'"]
             }
         },
         crossOriginEmbedderPolicy: false
     })
 );
 ```
+
+### Faza 1 CSP — nonce + Report-Only (monitoring)
+
+Równolegle działa warstwa raportowania (`src/app.ts:182-184,344-345`):
+
+- `cspNonceMiddleware` — wstrzykuje nonce CSP do odpowiedzi HTML
+- `cspReportOnly` — polityka Report-Only (obserwacja bez blokowania)
+- `POST /api/csp-report` — endpoint raportów naruszeń (log `warn`, obcięcie do 2000 znaków)
 
 ### Dodatkowe nagłówki (securityHeaders)
 
@@ -95,7 +107,7 @@ res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
 res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
 
 if (process.env.NODE_ENV === 'production') {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    res.setHeader('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
 }
 ```
 
@@ -166,9 +178,10 @@ fragmentów z ikonami Lucide wywoływana jest inicjalizacja `lucide.createIcons(
 Zobacz [ADR-006](adr/ADR-006-https-transport.md).
 
 - W środowisku produkcyjnym (`NODE_ENV=production`) włączone jest przekierowanie HTTP → HTTPS
+- Wyjątki od redirectu: `/health` (healthcheck Dockera) i `/api/version` działają po HTTP (`src/middleware/security.ts`)
 - Wykrywanie przez nagłówek `x-forwarded-proto` (dla reverse proxy); obsługiwana lista
   wartości przy wielu proxy (np. `https, http` — brany jest pierwszy wpis)
-- Nagłówek HSTS (Strict-Transport-Security) ustawiony na 1 rok w produkcji
+- Nagłówek HSTS (Strict-Transport-Security) ustawiony na 2 lata w produkcji (`max-age=63072000`, `includeSubDomains`, `preload`)
 - Ciastko sesji `authToken` ma flagę `Secure` (wymuszaną przez `COOKIE_SECURE=true`
   lub `NODE_ENV=production`); `clearCookie` używa tych samych opcji
 

@@ -356,16 +356,17 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 
 ### Walidacja i jakość kodu
 
-| Polecenie                    | Opis działania                                                                                                          |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                                                    |
-| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych.                                                                        |
-| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (katalog `src/`).                                                |
-| `npm run lint:frontend`      | Sprawdza poprawność kodu frontendowego w `public/js/`.                                                                  |
-| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                                               |
-| `npm run format:check`       | Sprawdza formatowanie bez zapisywania.                                                                                  |
-| `npm run appname:check`      | Sprawdza spójność nazwy aplikacji (pre-push).                                                                           |
-| `npm run validate`           | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + testy dymne. |
+| Polecenie                    | Opis działania                                                                                                                             |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm run typecheck`          | Wykonuje statyczną analizę typów TypeScript dla plików backendowych.                                                                       |
+| `npm run typecheck:frontend` | Wykonuje analizę typów dla plików frontendowych.                                                                                           |
+| `npm run lint`               | Sprawdza poprawność kodu i stylistyki za pomocą ESLint (katalog `src/`).                                                                   |
+| `npm run lint:frontend`      | Sprawdza poprawność kodu frontendowego w `public/js/`.                                                                                     |
+| `npm run format`             | Automatycznie formatuje cały kod źródłowy przy użyciu narzędzia Prettier.                                                                  |
+| `npm run format:check`       | Sprawdza formatowanie bez zapisywania.                                                                                                     |
+| `npm run appname:check`      | Sprawdza spójność nazwy aplikacji (pre-push).                                                                                              |
+| `npm run collisions:check`   | Sprawdza kolizje globali JS (część `validate`).                                                                                            |
+| `npm run validate`           | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + collisions:check + testy dymne. |
 
 ### Testy
 
@@ -373,6 +374,11 @@ Podczas pracy z projektem korzystaj z poniższych komend:
 | -------------------------------- | ------------------------------------------------------------------------------------------- |
 | `npm test`                       | Uruchamia wszystkie testy (Jest z pokryciem).                                               |
 | `npm run test:quick`             | Uruchamia szybkie testy dymne (Smoke Tests) za pomocą Jest (bez pokrycia kodu).             |
+| `npm run test:quick:lite`        | Szybkie testy bez migracji (pre-push).                                                      |
+| `npm run test:git-safety`        | Testy warstwy Git Safety (pre-push).                                                        |
+| `npm run test:frontend`          | Testy frontendowe (Jest).                                                                   |
+| `npm run test:e2e`               | Testy E2E (Playwright).                                                                     |
+| `npm run test:axe`               | Testy dostępności a11y (Axe + Playwright).                                                  |
 | `npm run test:watch`             | Uruchamia testy w trybie watch.                                                             |
 | `npm run test:alignment`         | Uruchamia regresyjny test Playwright sprawdzający wyrównanie kolumn w pustym wierszu Excel. |
 | `npm run test:e2e-appname`       | Test E2E Playwright spójności nazwy aplikacji.                                              |

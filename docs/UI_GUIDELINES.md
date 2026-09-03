@@ -23,7 +23,7 @@ Kolejność ładowania w każdej wejściówce (index, app, rury, studnie, kartot
 > **Zasada:** wspólne klasy NIE mogą być nadpisywane per moduł. Warianty modułowe
 > tworzymy przez klasy modyfikatorów (np. `.nav-tile--studnie`), nie przez nadpisania bazowych.
 
-## 2. Design Tokens (SSoT: `public/css/style.base.css:3-240`)
+## 2. Design Tokens (SSoT: `public/css/style.base.css:3-239`)
 
 Wszystkie wartości (kolory, fonty, rozmiary, radius, shadow, z-index) wyłącznie przez
 zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: pliki vendor).
@@ -72,16 +72,16 @@ zmienne `var(--...)`. **Zakaz gołych hexów/kolorów poza `:root`** (wyjątek: 
 
 **Kanonem warstw jest `LAYERS` / `LAYERS_EXCEL` w `public/js/studnie/layers.js`.**
 Popupy, modale i nakładki tworzone w JS MUSZĄ używać stałych `LAYERS.*` — zakaz twardych
-liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:212-220` (`--z-header`, `--z-sticky-*`, `--z-overlay`, `--z-toast`).
+liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222` (`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
 
-| Warstwa                                     | Źródło (JS)                  | CSS var                                          |
-| ------------------------------------------- | ---------------------------- | ------------------------------------------------ |
-| Sticky (header, tabele, filtry)             | `LAYERS.STICKY_*`            | `--z-header: 100`                                |
-| Local overlay (selecty, popupy kontekstowe) | `LAYERS.LOCAL_OVERLAY_*`     | —                                                |
-| Modal Excel (backdrop/container/focus)      | `LAYERS_EXCEL.*`             | —                                                |
-| Modal generyczny                            | `LAYERS.GENERIC_MODAL_*`     | `--z-overlay: 2000` (backdrop), `.modal-overlay` |
-| Toast / banner / preview                    | `LAYERS.PREVIEW_BANNER` itd. | `--z-toast` (`.toast-container`)                 |
-| Debug (bulk order, transition edit)         | `LAYERS.DEBUG_*`             | —                                                |
+| Warstwa                                     | Źródło (JS)                          | CSS var                                          |
+| ------------------------------------------- | ------------------------------------ | ------------------------------------------------ |
+| Sticky (header, tabele, filtry)             | `LAYERS.STICKY_*`                    | `--z-header: 100`                                |
+| Local overlay (selecty, popupy kontekstowe) | `LAYERS.OVERLAY_*`                   | —                                                |
+| Modal Excel (backdrop/container/focus)      | `LAYERS_EXCEL.*`                     | —                                                |
+| Modal generyczny                            | `LAYERS.GENERIC_MODAL_*`             | `--z-overlay: 2000` (backdrop), `.modal-overlay` |
+| Toast / banner / preview                    | `LAYERS.TOAST/BANNER/PREVIEW_BANNER` | `--z-toast: 5000` (`.toast-container`)           |
+| Bulk order / edycja przejścia               | `LAYERS.BULK_ORDER/TRANSITION_EDIT`  | —                                                |
 
 **Zasady:**
 
@@ -105,7 +105,7 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:212-220` (`--z-he
 | Logo              | `.logo` + `.logo-<moduł>`; SPA: `.logo.logo-app` + `#spa-logo-text.logo-app-module`                             | Gradient przez `--logo-start/--logo-end`                |
 | Nawigacja         | `.nav-tile` / `.nav-tile--<moduł>` (aktywny: `.active` + podkreślenie `::after`)                                | Ikona + tekst; ikony Lucide                             |
 | Karta             | `.card` / `.card-sm` / `.card-compact` / `.card-title` / `.card-title-sm` / `.card-header-row`                  | Padding `0.8rem 1rem` / `0.6rem 0.8rem` / `0.7rem 1rem` |
-| Przycisk          | `.btn` + `.btn-primary` / `.btn-secondary` / `.btn-danger` / `.btn-success` / `.btn-sm` / `.btn-icon`           | Baza `.sok-btn` = `.btn`                                |
+| Przycisk          | `.btn` + `.btn-primary` / `.btn-secondary` / `.btn-danger` / `.btn-success` / `.btn-sm` / `.btn-icon`           | Warianty modułowe przez modyfikatory `--<moduł>`        |
 | Formularz         | `.form-group` / `.form-label(-sm)` / `.form-input` / `.form-select` / `.form-textarea` / `.form-input-sm`       | Gridy: `.form-row-2/3/4`                                |
 | Edycja inline     | `.edit-input`                                                                                                   | Bez spinnerów number (globalnie ukryte)                 |
 | Wyszukiwarka      | `.search-box`                                                                                                   | Ikona + input z lewym paddingiem                        |
@@ -119,7 +119,7 @@ liczb. Klasy CSS używają zmiennych `--z-*` z `style.base.css:212-220` (`--z-he
 ## 6. Modale — jeden wzorzec (`modalCore.js`)
 
 - Modal tworzymy **wyłącznie** przez `public/js/shared/modalCore.js` (klasa
-  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:464-509`).
+  `.modal-overlay.js-modal-overlay` + `.modal` zdefiniowane w `style.responsive.css:559+`, `showModal` w `modalCore.js:88`).
 - **Zakaz** budowania modalów inline-styled w JS (stary wzorzec z `ui.js`/`clientManager.js`).
 - Zamknięcie Esc/overlay; focus wewnątrz modala; `aria-label` na overlayu i przyciskach.
 - Warstwy przez `LAYERS.*`, szerokości przez `.modal` (max 550px) / warianty szerokie.
@@ -181,7 +181,7 @@ wyłącznie danego modułu. Wspólne komponenty używają **modyfikatorów** `--
 
 | Klasa         | Scoped w module (zostaje)                                                                                                                                                       | Goła w `style.base.css` (nie rób)               |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `.form-input` | `.wt-add-cell .form-input` (`studnie.css:943`), `.zlecenia-virtual-toolbar .form-input` (`zlecenia.css:598`), `.login-box .form-input` (`index.css:185`)                        | Nie przenoś — zmiana globalna (regresja > zysk) |
+| `.form-input` | `.wt-add-cell .form-input` (`studnie.css:3204`), `.zlecenia-virtual-toolbar .form-input` (`zlecenia.css:604`), `.login-box .form-input` (`index.css:185`)                       | Nie przenoś — zmiana globalna (regresja > zysk) |
 | `.search-box` | `.zlecenia-header .search-box` (`zlecenia.css:132,488`), `.offer-product-search .search-box` (`style.base.css:1434`), `.kartoteka-filter-bar .search-box` (`responsive.css:78`) | Nie przenoś — scoped zostaje                    |
 
 Zasada: **scoped w module = OK gdy dotyczy tylko modułu**; wspólne warianty =

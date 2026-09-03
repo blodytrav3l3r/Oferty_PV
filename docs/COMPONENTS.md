@@ -444,8 +444,8 @@ Kanonem warstw jest `LAYERS`/`LAYERS_EXCEL` w `public/js/studnie/layers.js`
 - **`LAYERS_EXCEL`** — warstwy wewnątrz modala Excel (select overlay 2, sticky column 5,
   sticky header 20/30, resize handle 40, focus border 55).
 
-Klasy CSS używają zmiennych `--z-*` z `style.base.css:235-239`
-(`--z-header: 100`, `--z-overlay: 2000`, `--z-modal: 10000`, `--z-modal-top: 100000`, `--z-toast: 1000000`).
+Klasy CSS używają zmiennych `--z-*` z `style.base.css:218-222`
+(`--z-header: 100`, `--z-sticky-th: 5`, `--z-sticky-dropdown: 50`, `--z-overlay: 2000`, `--z-toast: 5000`).
 **Popupy/modale w JS zawsze przez `LAYERS.*` — nigdy twarde wartości z-index.**
 
 ---

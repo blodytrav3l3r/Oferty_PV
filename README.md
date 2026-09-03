@@ -449,17 +449,25 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 
 ### Podstawowe
 
-| Komenda                          | Opis                                                           |
-| -------------------------------- | -------------------------------------------------------------- |
-| `npm run dev`                    | Uruchom w trybie developerskim (backend + frontend równolegle) |
-| `npm run build`                  | Zbuduj backend (TypeScript → JavaScript)                       |
-| `npm start`                      | Uruchom w trybie produkcyjnym (`node dist/server.js`)          |
-| `npm test`                       | Uruchom testy (Jest z pokryciem)                               |
-| `npm run test:quick`             | Uruchom szybkie testy (bez pokrycia)                           |
-| `npm run test:watch`             | Uruchom testy w trybie watch                                   |
-| `npm run test:alignment`         | Test regresyjny Playwright (wyrównanie kolumn Excel)           |
-| `npm run test:e2e-appname`       | E2E: spójność nazwy aplikacji (Playwright)                     |
-| `npm run test:e2e-appname:spawn` | E2E: jw. z własnym buildem serwera (`--spawn`)                 |
+| Komenda                          | Opis                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------- |
+| `npm run dev`                    | Uruchom backend w trybie developerskim (ts-node-dev; Express serwuje też frontend, ADR-005) |
+| `npm run build`                  | Zbuduj backend (TypeScript → JavaScript)                                                    |
+| `npm run minify:css`             | Minifikuj arkusze CSS (też w `prestart`)                                                    |
+| `npm run bundle:scripts`         | Zbundluj skrypty (`esbuild`)                                                                |
+| `npm run commit`                 | Helper commita (Conventional Commits, UTF-8 bez mojibake)                                   |
+| `npm start`                      | Uruchom w trybie produkcyjnym (`node dist/server.js`)                                       |
+| `npm test`                       | Uruchom testy (Jest z pokryciem)                                                            |
+| `npm run test:quick`             | Uruchom szybkie testy (bez pokrycia)                                                        |
+| `npm run test:quick:lite`        | Szybkie testy bez migracji (pre-push)                                                       |
+| `npm run test:git-safety`        | Testy warstwy Git Safety (pre-push)                                                         |
+| `npm run test:frontend`          | Testy frontendowe (Jest)                                                                    |
+| `npm run test:e2e`               | Testy E2E (Playwright)                                                                      |
+| `npm run test:axe`               | Testy dostępności a11y (Axe + Playwright)                                                   |
+| `npm run test:watch`             | Uruchom testy w trybie watch                                                                |
+| `npm run test:alignment`         | Test regresyjny Playwright (wyrównanie kolumn Excel)                                        |
+| `npm run test:e2e-appname`       | E2E: spójność nazwy aplikacji (Playwright)                                                  |
+| `npm run test:e2e-appname:spawn` | E2E: jw. z własnym buildem serwera (`--spawn`)                                              |
 
 ### Backend
 
@@ -543,6 +551,16 @@ Projekt zawiera wygodne skrypty dla systemu Windows:
 | `npm run skills:provider-resolve` | Rozwiąż providera skilli                    |
 | `npm run skills:utility-recalc`   | Ponowne przeliczenie utility                |
 
+### Git Safety
+
+| Komenda                      | Opis                                          |
+| ---------------------------- | --------------------------------------------- |
+| `npm run git:safety`         | CLI warstwy Git Safety                        |
+| `npm run git:safety:list`    | Lista snapshotów L1 (odzyskiwanie bez `fsck`) |
+| `npm run git:safety:inspect` | Podgląd snapshotu                             |
+| `npm run git:safety:verify`  | Weryfikacja snapshotu przed destrukcją Tier A |
+| `npm run git:safety:restore` | Odzyskaj worktree ze snapshotu (`--force`)    |
+
 **Gdzie żyje numer wersji (pełna lista):**
 
 Wersja jest synchronizowana automatycznie podczas release (hook `postbump` w `.versionrc.json`). **Nie zmieniaj ręcznie** — poniższa lista służy weryfikacji spójności (`npm run version:check`) i kontroli, czy nic nie zostało pominięte:
@@ -590,14 +608,14 @@ Szczegóły procesu aktualizacji produkcyjnej (backup, migracje addytywne, rollb
 
 ### Walidacja i kodowanie
 
-| Komenda                   | Opis                                                                                                                   |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `npm run validate`        | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + testy dymne |
-| `npm run format`          | Formatuj kod (Prettier)                                                                                                |
-| `npm run format:check`    | Sprawdź formatowanie                                                                                                   |
-| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat)                                                               |
-| `npm run encoding:fix`    | Napraw kodowanie plików                                                                                                |
-| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)                                                                            |
+| Komenda                   | Opis                                                                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run validate`        | Pełna walidacja: typecheck (backend+frontend) + lint (backend+frontend) + appname:check + licenses:check + collisions:check + testy dymne |
+| `npm run format`          | Formatuj kod (Prettier)                                                                                                                   |
+| `npm run format:check`    | Sprawdź formatowanie                                                                                                                      |
+| `npm run encoding:check`  | Sprawdź kodowanie plików (UTF-8 bez BOM, ASCII dla .bat)                                                                                  |
+| `npm run encoding:fix`    | Napraw kodowanie plików                                                                                                                   |
+| `npm run encoding:staged` | Sprawdź kodowanie tylko plików staged (git)                                                                                               |
 
 ---
 

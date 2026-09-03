@@ -119,6 +119,19 @@ Lista użytkowników do przypisania (wewnętrzny alias).
 
 ---
 
+## Udostępnianie dokumentów (`/api/shares`)
+
+Wymaga autoryzacji. Typy dokumentów: `offer`, `offer_studnie`, `order_rury`, `order_studnie`.
+
+| Metoda | Ścieżka              | Opis                                                                     |
+| ------ | -------------------- | ------------------------------------------------------------------------ |
+| GET    | `/api/shares`        | Lista udostępnień dokumentu (`documentType` + `documentId` w query)      |
+| POST   | `/api/shares`        | Udostępnij dokument (limit 50 odbiorców, `WRITE_LIMITER`)                |
+| POST   | `/api/shares/revoke` | Cofnij udostępnienia wsadowo (`documentType` + `documentId` + `userIds`) |
+| DELETE | `/api/shares/:id`    | Cofnij pojedyncze udostępnienie (`WRITE_LIMITER`)                        |
+
+---
+
 ## Produkty — Rury (`/api/products`)
 
 Wymaga autoryzacji.

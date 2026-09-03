@@ -121,6 +121,9 @@ networks:
 > **Bind mount zamiast named volume:** serwis używa `./data:/var/data` — baza i backupy
 > są widoczne na hoście, więc backup/restore działają identycznie jak na bare-metal
 > (`npm run backup` / `npm run restore` wprost na hoście). Zakaz `docker compose down -v`.
+> Aktualne nazwy: kontener `sok-oferty`, sieć `sok-network` (patrz `docker-compose.yml`).
+> Nazwy `witros_data` / `witros-network` w sekcji migracji poniżej to nazwy historyczne
+> (legacy) — dotyczą tylko instalacji sprzed migracji na bind mount.
 
 ### Uruchomienie
 

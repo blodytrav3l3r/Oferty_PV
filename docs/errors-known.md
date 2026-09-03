@@ -283,3 +283,21 @@
 **Problem**: Zapis domyślnych cenników dwufazowy (plik JSON `data/price_defaults.json` → transakcja DB `*_Default`): upadek transakcji = plik nowszy niż baza (niespójność do restartu); dodatkowo `settings.upsert` (timestamp) poza transakcją.
 **Objaw**: Crash/ błąd walidacji między zapisem pliku a commitem DB — plik i baza rozjechane; timestamp poza all-or-nothing.
 **Fix** (`commit kompensacji`): `saveDefaults()` przechwytuje poprzednią treść pliku, na błąd transakcji rollback pliku (lub `rmSync` gdy brak oldContent); `settings.upsert` przeniesiony DO `$transaction` (plik+`*_Default`+timestamp all-or-nothing). Crash po zapisie pliku pokrywa startowy `restoreDefaultsFromJson()`.
+
+## 46. XSS przy edytowalnych nazwach produktów (odpowiednik AGENTS #24)
+
+**Problem**: `p.name` (nazwa produktu edytowalna przez użytkownika) interpolowana do `innerHTML` bez `escapeHtml()` (`offerWellComponents.js`, `wellUI.js` — `wellOrder.orderNumber`, `wellOrder.id`).
+**Objaw**: XSS przez pola edytowalne (nazwy produktów, numery zamówień).
+**Fix**: `escapeHtml()` przy KAŻDEJ interpolacji danych użytkownika do `innerHTML`; przy przeglądzie kodu szukaj interpolacji pól edytowalnych bez escapowania (rozszerzenie ogólnej reguły z #3).
+
+## 47. Brak walidacji dat w wyszukiwarce (odpowiednik AGENTS #26)
+
+**Problem**: `dateFrom`/`dateTo` w `src/utils/searchUtils.ts` przyjmowały dowolne ciągi — nieprawidłowy format przechodził do zapytań Prisma.
+**Objaw**: Błędy zapytań lub mylące wyniki wyszukiwania.
+**Fix**: Walidacja formatu ISO dla `dateFrom`/`dateTo` przed zbudowaniem filtra; nieprawidłowe wartości odrzucane (zapytanie wykonuje się bez filtra dat).
+
+## 48. Map produktów studni nieaktualna po bezpośrednim przypisaniu (odpowiednik AGENTS #46)
+
+**Problem**: `studnieProductsById Map` rebuildowana tylko w setterze `window.studnieProducts` (`globals.js`); bezpośrednie przypisanie (`studnieProducts = ...`) omijało rebuild → pusta Map → `getStudnieProductById` zwracał `null` (pusta lista, cena 0, brak przejść). Dodatkowo błąd precedence `?.componentType` zwracał obiekt zamiast boolean.
+**Objaw**: Pusta lista produktów, cena 0, brak przejść w diagramie.
+**Fix**: Hybryda: jawny kontrakt `window.studnieProducts =` + lazy `size` detector + `find` fallback w `getStudnieProductById`; formalny `__assertStudnieMapFresh()`; poprawka nawiasów przy `resolve(...)?.componentType === 'wlaz'`. Test: `globalsMapStale.test.ts`.

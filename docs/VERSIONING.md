@@ -20,11 +20,16 @@ major.minor.patch (np. 1.0.0)
 
 Wersja jest przechowywana w pliku `VERSION` w katalogu głównym projektu. Stamtąd jest odczytywana przez:
 
-- `package.json` — musi zgadzać się z `VERSION`
+- `package.json` i `package-lock.json` — muszą zgadzać się z `VERSION`
+- `CHANGELOG.md` — nagłówki wersji (generuje `standard-version`)
 - `GET /api/version` — endpoint API (`{ version, name, node }`)
 - `GET /health` — health check (`{ status, version, ... }`)
 - `public/js/versionDisplay.js` — wyświetlana w UI (toolbar aplikacji)
-- `scripts/auto-cache-bust.mjs` — synchronizuje `?v=` w plikach HTML podczas release
+- `scripts/auto-cache-bust.mjs` — synchronizuje `?v=` w plikach HTML (`public/*.html`, `public/templates/*.html`) podczas release
+- `scripts/auto-docs-version.mjs` — synchronizuje markery wersji w `README.md` i `docs/*.md` oraz JSON `"version"`/`"dbVersion"` w `docs/API.md`
+- `scripts/auto-bat-version.mjs` — synchronizuje `APP_VERSION` w `.bat` (start, install, build, setup-ai, ensure-db)
+
+Spójność wszystkich źródeł weryfikuje `npm run version:check` (detale i pełna lista miejsc: [RELEASE_PROCESS.md](RELEASE_PROCESS.md)).
 
 ## Automatyzacja
 

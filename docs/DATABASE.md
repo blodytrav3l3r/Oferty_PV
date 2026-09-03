@@ -528,18 +528,22 @@ Tabela wprowadzona w migracji `20260816000000_ai_training_run` — kręgosłup a
 
 Migracje Prisma znajdują się w katalogu `prisma/migrations/`.
 
-### Lista migracji (3)
+### Lista migracji (7)
 
 Projekt przeszedł z `prisma db push` na pełne migracje — cała historia schematu została
 skonsolidowana w migracji baseline `20260815000000_baseline` (pełny schemat: oferty,
 zamówienia, produkty, cenniki, telemetria AI/ML). Migracja baseline zawiera także indeksy
 na `ai_telemetry_logs` (`idx_logs_well`, `idx_logs_source_well`) pod deduplikację telemetrii.
 
-| Migracja                               | Opis                                                                                     |
-| -------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `20260815000000_baseline`              | Baseline pełnego schematu (konwersja z `db push` na migracje) + indeksy dedup telemetrii |
-| `20260815000001_uq_reward_well_action` | Dedup rewardów przed unique index `(wellId, action)` na `aiRewardLog`                    |
-| `20260816000000_ai_training_run`       | Tabela `AiTrainingRun` (kręgosłup audytu treningów ML)                                   |
+| Migracja                                 | Opis                                                                                     |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `20260815000000_baseline`                | Baseline pełnego schematu (konwersja z `db push` na migracje) + indeksy dedup telemetrii |
+| `20260815000001_uq_reward_well_action`   | Dedup rewardów przed unique index `(wellId, action)` na `aiRewardLog`                    |
+| `20260816000000_ai_training_run`         | Tabela `AiTrainingRun` (kręgosłup audytu treningów ML)                                   |
+| `20260828000000_add_document_shares`     | Tabela `document_shares` (udostępnianie dokumentów między użytkownikami)                 |
+| `20260831000000_add_wellcount`           | Licznik studni (`wellCount`)                                                             |
+| `20260902000000_add_totalprice`          | Cena całkowita (`totalPrice`)                                                            |
+| `20260902000001_add_performance_indexes` | Indeksy wydajnościowe                                                                    |
 
 ### Komendy
 
