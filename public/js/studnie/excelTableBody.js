@@ -73,9 +73,14 @@ function _excelRenderTbody(tabWells, dn, visibleCols, maxTr, hasReduction) {
     // SSoT: wellIndexById — nie buduj per-render; sort nie rebuild, add/delete → rebuild
     tabWells.forEach(function (well, idx) {
         const wIdx =
-            typeof _excelWellIndexById !== 'undefined' && _excelWellIndexById.has(well.id)
+            typeof _excelWellIndexById !== 'undefined'
                 ? _excelWellIndexById.get(well.id)
-                : wells.indexOf(well);
+                : undefined;
+        if (wIdx === undefined) {
+            if (typeof console !== 'undefined')
+                console.warn('[Excel] brak wpisu wellIndexById:', well && well.id);
+            return;
+        }
         const isLockedRow = _excelIsWellLocked(wIdx);
         const isEven = idx % 2 === 0;
         const isActive = typeof currentWellIndex !== 'undefined' && wIdx === currentWellIndex;
@@ -750,9 +755,14 @@ function _excelRefreshDupColors() {
     const tabWells = wells.filter((w) => _excelWellMatchesTab(w, dn));
     tabWells.forEach((well, idx) => {
         const wIdx =
-            typeof _excelWellIndexById !== 'undefined' && _excelWellIndexById.has(well.id)
+            typeof _excelWellIndexById !== 'undefined'
                 ? _excelWellIndexById.get(well.id)
-                : wells.indexOf(well);
+                : undefined;
+        if (wIdx === undefined) {
+            if (typeof console !== 'undefined')
+                console.warn('[Excel] brak wpisu wellIndexById:', well && well.id);
+            return;
+        }
         const row = container.querySelector(`tr[data-widx="${wIdx}"]`);
         if (!row) return;
 

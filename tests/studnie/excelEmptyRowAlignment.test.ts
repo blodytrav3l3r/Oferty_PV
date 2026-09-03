@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import fs from 'fs';
 import path from 'path';
@@ -201,6 +200,7 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
         ctx.studnieProducts = [...PRODUCTS];
         const wellDn = dn === 'styczne' ? 'styczna' : dn;
         const well: any = {
+            id: 'well-test-1',
             name: 'ST-001',
             dn: wellDn,
             magazyn: 'Kluczbork',
@@ -215,6 +215,8 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
             stycznaNadbudowa1200: !!opts.stycznaNadbudowa1200
         };
         ctx.wells = [well];
+        // SSoT: _excelWellIndexById wymagana przez _excelRenderTbody (O(1), bez fallbacku)
+        ctx._excelWellIndexById = new Map([[well.id, 0]]);
         if (opts.withReduction) {
             // need wells array for _excelBuildComponentColumns to detect hasRed
             ctx.wells = [well];
@@ -284,6 +286,7 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
         // Uruchom ponownie by pobrać html
         ctx.studnieProducts = [...PRODUCTS];
         const well: any = {
+            id: 'well-test-1',
             name: 'ST-001',
             dn: '1000',
             magazyn: 'Kluczbork',
@@ -296,6 +299,7 @@ describe('excel empty row — alignment per DN (header vs data vs empty)', () =>
             psiaBuda: false
         };
         ctx.wells = [well];
+        ctx._excelWellIndexById = new Map([[well.id, 0]]);
         const visibleCols = ctx._excelGetVisibleComponentColumns('1000', well);
         const html = ctx._excelRenderTbody([well], '1000', visibleCols, 2, false);
         const emptyPart = html.substring(html.indexOf('id="excel-empty-row"'));

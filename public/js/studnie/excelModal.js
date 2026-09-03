@@ -419,6 +419,9 @@ function openExcelTableModal() {
     if (typeof refreshAllWellErrors === 'function') refreshAllWellErrors();
     _excelActiveTab = DN_TABS[0];
     if (typeof _excelInvalidateFilteredIndexes === 'function') _excelInvalidateFilteredIndexes();
+    /* Rebuild indeksu id->wIdx PRZED pierwszym renderem — mutacje panelu głównego
+       (add/duplicate/delete/wczytanie oferty) nie rebuildują mapy excela */
+    if (typeof _excelRebuildWellIndex === 'function') _excelRebuildWellIndex();
     /* Nie zaznaczaj żadnego wiersza przy otwarciu — currentWellIndex=-1 PRZED renderem */
     if (typeof currentWellIndex !== 'undefined') currentWellIndex = -1;
     _excelRenderTabs();

@@ -361,17 +361,12 @@ function _wellVirtualRenderBody() {
             const tm = calculateWellTransportMap(wells);
             _wellVirtualTransportMap = new Map();
             if (tm.map) {
-                // ponytail: cached wellsById Map O(1), nie wells.indexOf O(N²)
-                const getIdx =
-                    typeof getWellIndexById === 'function'
-                        ? function (w) {
-                              return w && w.id != null ? getWellIndexById(w.id) : -1;
-                          }
-                        : function (w) {
-                              return wells.indexOf(w);
-                          };
+                // SSoT: wellsById Map O(1) przez getWellIndexById (globals.js)
                 for (const [wellObj, cost] of tm.map.entries()) {
-                    const idx = getIdx(wellObj);
+                    const idx =
+                        wellObj && wellObj.id != null && typeof getWellIndexById === 'function'
+                            ? getWellIndexById(wellObj.id)
+                            : -1;
                     if (idx >= 0) _wellVirtualTransportMap.set(idx, cost);
                     _wellVirtualTransportMap.set(wellObj, cost);
                 }
