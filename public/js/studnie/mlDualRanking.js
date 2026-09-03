@@ -34,6 +34,16 @@
     // min-max bez progu rozciągałby ten szum do pełnej skali i produkował fałszywe flipy.
     const AI_COST_MIN_RANGE = 0.05;
 
+    // P0 race: twardy budżet czasu na CAŁY AI path (metadata + predict).
+    // Po przekroczeniu rankCandidates() zwraca ranking techniczny natychmiast,
+    // a AI dogrywa w tle wyłącznie do telemetrii (nigdy nie mutuje decyzji).
+    const AI_RACE_BUDGET_MS = 800;
+
+    // Cache wpływu AI: { value, expiresAt }. P0: prosty TTL 60 s, bez sprzężenia
+    // dashboard → ranking (PUT /ai/settings propaguje się w max 60 s).
+    const INFLUENCE_CACHE_TTL_MS = 60 * 1000;
+    let _influenceCache = { value: null, expiresAt: 0 };
+
     // FEATURE_VERSION musi być zgodny z wymiarami wektorów z FeatureExtractor
     // (v7 = 29 cech). Zgodna wersja unika 400 MISMATCH.
     let FEATURE_VERSION = 'v7';
@@ -125,6 +135,15 @@
     }
 
     async function getAiInfluencePct() {
+        // 0. Kill-switch: moduł OFF → czysty ranking techniczny, bez fetchy AI.
+        try {
+            if (typeof window.aiMlEnabled === 'function' && !(await window.aiMlEnabled())) {
+                return 0;
+            }
+        } catch (_e) {
+            /* ignoruj — fallback do standardowej hierarchii */
+        }
+
         // 1. URL override (dev/test)
         const urlMatch = window.location.search.match(/[?&]ai_influence=(\d+)/);
         if (urlMatch) return parseInt(urlMatch[1], 10);
@@ -136,12 +155,15 @@
             if (!isNaN(p) && p >= 0 && p <= 100) return p;
         }
 
-        // 3. Backend config (DB settings)
+        // 3. Backend config (DB settings) z cache TTL
+        const now = Date.now();
+        if (_influenceCache.value !== null && now < _influenceCache.expiresAt) {
+            return _influenceCache.value;
+        }
         const backend = await fetchAiInfluenceFromBackend();
-        if (backend !== null && backend >= 0 && backend <= 100) return backend;
-
-        // 4. Default: shadow mode
-        return 0;
+        const val = backend !== null && backend >= 0 && backend <= 100 ? backend : 0; // 4. Default: shadow mode
+        _influenceCache = { value: val, expiresAt: now + INFLUENCE_CACHE_TTL_MS };
+        return val;
     }
 
     /* ===== BUDOWA WEKTORA CECH ===== */
@@ -650,22 +672,116 @@
             };
         }
 
-        // 1. Ustal poziom wpływu AI
-        let influencePct = opts.aiInfluencePct;
-        if (influencePct === undefined || influencePct === null) {
-            influencePct = await getAiInfluencePct();
-        }
+        // 1. Poziom wpływu AI rozstrzyga się WEWNĄTRZ race (invariant 1) —
+        // żaden await metadanych przed budżetem. undefined = pobierz w aiPath.
+        const influencePct = opts.aiInfluencePct;
 
         // 2. Limit do MAX_AI_CANDIDATES
         const pool = candidates.slice(0, MAX_AI_CANDIDATES);
 
-        // 3. Normalizacja technical score (min-max w poolu)
+        // 3. Normalizacja technical score (min-max w poolu) — czysta synchroniczna,
+        // część techniczna nigdy nie czeka na AI (invariant P0).
         const normalized = normalizeTechnicalScores(pool);
+        const technicalWinner = candidates[0].solution;
 
-        // 4. Batch predict AI scores
-        const aiScoreMap = await fetchAiScoresBatch(pool, well);
+        // 4. CAŁY AI path (influence + version + predict) w jednym wyścigu z budżetem
+        // (invariant 1: budget startuje przed metadata, nie po niej).
+        const aiPath = (async function () {
+            const pct =
+                influencePct !== undefined && influencePct !== null
+                    ? influencePct
+                    : await getAiInfluencePct();
+            const aiScoreMap = await fetchAiScoresBatch(pool, well);
+            return { influencePct: pct, aiScoreMap: aiScoreMap };
+        })();
+        // Jednolity kształt wyniku (TS2339: unii bez wspólnych pól nie zawęża).
+        const aiSettled = aiPath.then(
+            function (res) {
+                return { ok: true, res: res, timedOut: false };
+            },
+            function () {
+                return { ok: false, res: null, timedOut: false };
+            }
+        );
+        let raceTimer = null;
+        const raceTimeout = new Promise(function (resolve) {
+            raceTimer = setTimeout(function () {
+                resolve({ ok: false, res: null, timedOut: true });
+            }, AI_RACE_BUDGET_MS);
+        });
+        const winner = await Promise.race([aiSettled, raceTimeout]);
+        if (raceTimer) clearTimeout(raceTimer);
+
+        if (winner.timedOut || !winner.ok) {
+            // Timeout (lub błąd AI path): ranking techniczny natychmiast.
+            // Invariant 2: od tego miejsca ŻADEN await zależny od AI.
+            // Przegrany promise leci dalej w tle — wyłącznie telemetria
+            // (invarianty 3–4: brak mutacji decyzji, well, DOM, solvera).
+            aiSettled.then(function (late) {
+                if (!late.ok) return;
+                const lateRanked = computeRanked(
+                    normalized,
+                    late.res.aiScoreMap,
+                    late.res.influencePct
+                );
+                recordAiRankDecision({
+                    well: well,
+                    ranked: lateRanked,
+                    technicalWinner: technicalWinner,
+                    aiWinner: lateRanked.length > 0 ? lateRanked[0].solution : null,
+                    explorationTriggered: false,
+                    exploredFrom: null,
+                    aiInfluencePct: late.res.influencePct,
+                    modelVersion: activeModelVersion,
+                    rankingVersion: RANKING_VERSION,
+                    featureVersion: FEATURE_VERSION,
+                    background: true
+                });
+            });
+            const offlineMap = new Map();
+            for (let t = 0; t < pool.length; t++) offlineMap.set(pool[t].id, -1);
+            return {
+                ranked: computeRanked(
+                    normalized,
+                    offlineMap,
+                    influencePct !== undefined && influencePct !== null ? influencePct : 0
+                ),
+                mlOnline: false,
+                modelVersion: activeModelVersion,
+                technicalWinner: technicalWinner,
+                aiInfluencePct:
+                    influencePct !== undefined && influencePct !== null ? influencePct : 0,
+                rankingVersion: RANKING_VERSION,
+                featureVersion: FEATURE_VERSION
+            };
+        }
+
+        // AI zdążyło w budżecie — normalna ścieżka (jak dotychczas).
+        const wonInfluencePct = winner.res.influencePct;
+        const aiScoreMap = winner.res.aiScoreMap;
 
         // 5. Oblicz final score
+        const ranked = computeRanked(normalized, aiScoreMap, wonInfluencePct);
+
+        return {
+            ranked: ranked,
+            mlOnline: mlOnline,
+            modelVersion: activeModelVersion,
+            technicalWinner: technicalWinner,
+            aiInfluencePct: wonInfluencePct,
+            rankingVersion: RANKING_VERSION,
+            featureVersion: FEATURE_VERSION
+        };
+    }
+
+    /**
+     * Czysta funkcja final score + sort (kroki 5–6 rankCandidates).
+     * Bez I/O — współdzielona przez ścieżkę normalną, fallback i background.
+     * @param {Array} normalized - wynik normalizeTechnicalScores
+     * @param {Map} aiScoreMap - candidateId → aiScore (-1 = offline)
+     * @param {number} influencePct - 0-100
+     */
+    function computeRanked(normalized, aiScoreMap, influencePct) {
         const aiWeight = influencePct / 100;
         const techWeight = 1 - aiWeight;
 
@@ -722,15 +838,7 @@
             return a.finalScore - b.finalScore;
         });
 
-        return {
-            ranked: ranked,
-            mlOnline: mlOnline,
-            modelVersion: activeModelVersion,
-            technicalWinner: candidates[0].solution,
-            aiInfluencePct: influencePct,
-            rankingVersion: RANKING_VERSION,
-            featureVersion: FEATURE_VERSION
-        };
+        return ranked;
     }
 
     /* ===== EXPLORATION ===== */
@@ -803,6 +911,8 @@
      * @param {string} opts.modelVersion
      * @param {string} opts.rankingVersion
      * @param {string} opts.featureVersion
+     * @param {boolean} [opts.background] - dogranie po timeoutcie race (telemetria only,
+     *   nigdy nie mutuje decyzji — invarianty P0 3–4)
      */
     function recordAiRankDecision(opts) {
         if (typeof window.telemetryRecordEvent !== 'function') return;
@@ -831,6 +941,7 @@
             featureVersion: opts.featureVersion,
             explorationTriggered: opts.explorationTriggered,
             exploredFrom: opts.exploredFrom,
+            background: !!opts.background,
             scoreGap:
                 opts.ranked && opts.ranked.length > 1
                     ? (

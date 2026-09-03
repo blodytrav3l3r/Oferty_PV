@@ -118,6 +118,30 @@
     window.aiDashboardRender = function (containerId) {
         const container = document.getElementById(containerId);
         if (!container) return;
+        if (typeof window.aiMlEnabled === 'function') {
+            window
+                .aiMlEnabled()
+                .then(function (on) {
+                    if (!on) {
+                        container.innerHTML = window.aiMlDisabledHtml
+                            ? window.aiMlDisabledHtml()
+                            : '<div class="ai-ml-error">Moduł AI/ML jest wyłączony</div>';
+                        if (typeof lucide !== 'undefined') {
+                            lucide.createIcons({ root: container });
+                        }
+                        return;
+                    }
+                    renderDashboard(container);
+                })
+                .catch(function () {
+                    renderDashboard(container);
+                });
+            return;
+        }
+        renderDashboard(container);
+    };
+
+    function renderDashboard(container) {
         container.innerHTML =
             '<div style="display:grid;grid-template-columns:1fr;gap:16px">' +
             '<div id="ai-learning-section">' +
@@ -214,5 +238,5 @@
             });
         }
         if (typeof lucide !== 'undefined') lucide.createIcons({ root: container });
-    };
+    }
 })();

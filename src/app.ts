@@ -469,6 +469,22 @@ export async function initApp(): Promise<void> {
         );
     }
 
+    // Kill-switch AI/ML — domyslnie wlaczony. Ten sam wzorzec auto-heal:
+    // upsert bez nadpisywania wartosci zmienionej przez uzytkownika (OFF zostaje OFF).
+    try {
+        await prisma.settings.upsert({
+            where: { key: 'feature_ai_ml_enabled' },
+            update: {},
+            create: { key: 'feature_ai_ml_enabled', value: '"1"' }
+        });
+    } catch (err) {
+        logger.warn(
+            'Server',
+            'Nie udało się włączyć feature flagi AI/ML (tabela settings):',
+            err instanceof Error ? err.message : String(err)
+        );
+    }
+
     // Auto-heal: tabela shares (instalacje bez migrate deploy — legacy db push)
     try {
         await prisma.$executeRaw`CREATE TABLE IF NOT EXISTS "document_shares" ("id" TEXT NOT NULL PRIMARY KEY, "documentType" TEXT NOT NULL, "documentId" TEXT NOT NULL, "ownerId" TEXT NOT NULL, "sharedWithUserId" TEXT NOT NULL, "permission" TEXT NOT NULL DEFAULT 'read', "createdAt" TEXT NOT NULL, "createdBy" TEXT NOT NULL)`;

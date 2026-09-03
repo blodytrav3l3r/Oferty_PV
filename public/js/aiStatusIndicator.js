@@ -30,6 +30,16 @@
     function updateFromStatus(status) {
         if (!getElements()) return;
 
+        if (status && status.aiMlEnabled === false) {
+            dot.style.background = 'var(--slate-400)';
+            dot.style.boxShadow = 'none';
+            text.textContent = 'AI Wyłączone';
+            text.title =
+                'Moduł AI/ML wyłączony przez administratora — predykcje i treningi zablokowane';
+            badge.style.visibility = 'visible';
+            return;
+        }
+
         if (status) {
             const pct = status.aiInfluencePct || 0;
             const model = status.modelVersion || '?';
@@ -76,6 +86,7 @@
 
     function fetchKnowledgeStatusAsync() {
         if (!isAdmin()) return;
+        if (text && text.textContent === 'AI Wyłączone') return;
         const now = Date.now();
         if (now - _lastKnowledgeFetch < KNOWLEDGE_THROTTLE_MS) return;
         _lastKnowledgeFetch = now;

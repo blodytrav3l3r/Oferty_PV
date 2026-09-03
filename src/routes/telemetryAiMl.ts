@@ -9,6 +9,7 @@ import { ML_CONFIG } from '../services/ml/trainingConfig';
 import { logger } from '../utils/logger';
 import { READ_LIMITER, TELEMETRY_WRITE_LIMITER, WRITE_LIMITER } from '../middleware/rateLimiters';
 import { requireAuth, requireAdmin, AuthenticatedRequest } from '../middleware/auth';
+import { requireAiMlEnabled, isAiMlEnabled } from '../middleware/aiMlGuard';
 import { logAudit } from '../services/auditService';
 import { z } from 'zod';
 import prisma from '../prismaClient';
@@ -87,6 +88,7 @@ router.post(
     '/ai/predict/batch',
     requireAuth,
     TELEMETRY_WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req: Request, res: Response) => {
         try {
             const parsed = batchPredictSchema.safeParse(req.body);
@@ -183,6 +185,7 @@ router.post(
     '/ai/reward',
     requireAuth,
     TELEMETRY_WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req: AuthenticatedRequest, res: Response) => {
         try {
             const parsed = rewardSchema.safeParse(req.body);
@@ -380,7 +383,8 @@ router.get('/ai/settings', requireAuth, READ_LIMITER, async (_req: Request, res:
         res.json({
             key: 'wells_ai_influence',
             value: setting?.value || '0',
-            description: 'Poziom wplywu AI na dobor elementow studni (0-100, 0=shadow)'
+            description: 'Poziom wplywu AI na dobor elementow studni (0-100, 0=shadow)',
+            aiMlEnabled: await isAiMlEnabled()
         });
     } catch (e) {
         sendInternalError(res, 'AiMlRoute', e);
@@ -490,6 +494,7 @@ router.get('/ai/ml-status', requireAuth, READ_LIMITER, async (_req: Request, res
             trainingRunning: pipelineStatus.running,
             totalRewards: rewardLogs,
             cacheSize: predictionCacheSize(),
+            aiMlEnabled: await isAiMlEnabled(),
             aiInfluencePct: parseInt(aiInfluence?.value || '0', 10),
             retention: {
                 keepLast: ML_CONFIG.retention.keepLast,
@@ -571,6 +576,7 @@ router.get(
 
             res.json({
                 mlOnline: !!activeModel,
+                aiMlEnabled: await isAiMlEnabled(),
                 telemetryCount,
                 featureCount,
                 modelCount,
@@ -619,6 +625,7 @@ router.delete(
     requireAuth,
     requireAdmin,
     WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -647,6 +654,7 @@ router.post(
     requireAuth,
     requireAdmin,
     WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -695,6 +703,7 @@ router.post(
     requireAuth,
     requireAdmin,
     WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -721,6 +730,7 @@ router.post(
     requireAuth,
     requireAdmin,
     WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {
@@ -741,34 +751,41 @@ router.post(
     }
 );
 
-router.post('/ai/train', requireAuth, requireAdmin, WRITE_LIMITER, async (req, res: Response) => {
-    const authReq = req as AuthenticatedRequest;
-    try {
-        // ETAP 8 (3.4): min-interval między treningami — admin nie może
-        // uruchomić serii treningów w kilka sekund.
-        const lastRun = await prisma.aiTrainingRun.findFirst({
-            orderBy: { startedAt: 'desc' }
-        });
-        if (lastRun) {
-            const elapsed = Date.now() - new Date(lastRun.startedAt).getTime();
-            if (elapsed < ML_CONFIG.trainMinIntervalMs) {
-                res.status(429).json({
-                    error: 'Zbyt częste treningi — odczekaj przed kolejnym uruchomieniem',
-                    retryAfterMs: ML_CONFIG.trainMinIntervalMs - elapsed
-                });
-                return;
+router.post(
+    '/ai/train',
+    requireAuth,
+    requireAdmin,
+    WRITE_LIMITER,
+    requireAiMlEnabled,
+    async (req, res: Response) => {
+        const authReq = req as AuthenticatedRequest;
+        try {
+            // ETAP 8 (3.4): min-interval między treningami — admin nie może
+            // uruchomić serii treningów w kilka sekund.
+            const lastRun = await prisma.aiTrainingRun.findFirst({
+                orderBy: { startedAt: 'desc' }
+            });
+            if (lastRun) {
+                const elapsed = Date.now() - new Date(lastRun.startedAt).getTime();
+                if (elapsed < ML_CONFIG.trainMinIntervalMs) {
+                    res.status(429).json({
+                        error: 'Zbyt częste treningi — odczekaj przed kolejnym uruchomieniem',
+                        retryAfterMs: ML_CONFIG.trainMinIntervalMs - elapsed
+                    });
+                    return;
+                }
             }
+            const result = await trainingPipeline.run(true);
+            clearPredictionCache();
+            await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
+                trained: result?.trained ?? false
+            });
+            res.json(result);
+        } catch (e) {
+            sendInternalError(res, 'AiMlRoute', e);
         }
-        const result = await trainingPipeline.run(true);
-        clearPredictionCache();
-        await logAudit('ai_model', 'train', authReq.user?.id || '', 'trigger', {
-            trained: result?.trained ?? false
-        });
-        res.json(result);
-    } catch (e) {
-        sendInternalError(res, 'AiMlRoute', e);
     }
-});
+);
 
 // P3: wagi modelu to metryka admina (dashboard AI) — dostęp tylko dla admina
 router.get(
@@ -812,6 +829,7 @@ router.post(
     requireAuth,
     requireAdmin,
     WRITE_LIMITER,
+    requireAiMlEnabled,
     async (req, res: Response) => {
         const authReq = req as AuthenticatedRequest;
         try {

@@ -164,6 +164,7 @@ function showLoggedIn(user) {
         document.getElementById('admin-panel').classList.remove('hidden');
         loadUsers();
         loadYearLetter();
+        initAiMlToggle();
         if (typeof window.mlHealthRender === 'function') {
             setTimeout(function () {
                 window.mlHealthRender('ml-health-container');
@@ -494,6 +495,80 @@ async function showChangePassword() {
     } catch (_e) {
         await appAlert('Błąd połączenia', { type: 'warning' });
     }
+}
+
+/* ===== AI/ML KILL-SWITCH TOGGLE ===== */
+function setAiMlToggleState(enabled) {
+    const btn = document.getElementById('ai-ml-toggle-btn');
+    if (!btn) return;
+    btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+    const label = btn.querySelector('span');
+    if (label) label.textContent = enabled ? 'AI: ON' : 'AI: OFF';
+    btn.classList.toggle('ai-btn-primary', enabled);
+    if (typeof lucide !== 'undefined') lucide.createIcons({ root: btn });
+}
+
+function refreshAiDashboards() {
+    if (typeof window.mlHealthRender === 'function') {
+        window.mlHealthRender('ml-health-container');
+    }
+    if (typeof window.aiDashboardRender === 'function') {
+        window.aiDashboardRender('ai-dashboard-container');
+    }
+}
+
+function initAiMlToggle() {
+    const btn = document.getElementById('ai-ml-toggle-btn');
+    if (!btn || btn.dataset.aiMlBound) return;
+    btn.dataset.aiMlBound = '1';
+    const getEnabled =
+        typeof window.aiMlEnabled === 'function'
+            ? window.aiMlEnabled
+            : function () {
+                  return Promise.resolve(true);
+              };
+    getEnabled(true).then(setAiMlToggleState);
+    btn.addEventListener('click', async function () {
+        const currentlyOn = btn.getAttribute('aria-pressed') !== 'false';
+        const next = !currentlyOn;
+        const msg = next
+            ? 'Włączyć moduł AI/ML (predykcje, treningi, operacje na modelach)?'
+            : 'Wyłączyć moduł AI/ML? Nowe predykcje, treningi i operacje na modelach będą blokowane (503). Rozpoczęte operacje nie zostaną przerwane.';
+        const confirmed = window.aiUiConfirm
+            ? await window.aiUiConfirm(msg, {
+                  title: 'Moduł AI/ML',
+                  okText: next ? 'Włącz' : 'Wyłącz',
+                  type: next ? 'info' : 'warning'
+              })
+            : window.confirm
+              ? window.confirm(msg)
+              : true;
+        if (!confirmed) return;
+        btn.disabled = true;
+        try {
+            const p = window.fetchJson('/api/feature-flags/ai-ml', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ enabled: next })
+            });
+            const result = p ? await p : null;
+            if (!result || result.error) throw new Error('toggle-failed');
+            if (typeof window.aiMlInvalidateFlag === 'function') {
+                window.aiMlInvalidateFlag();
+            }
+            setAiMlToggleState(next);
+            if (typeof window.showToast === 'function') {
+                window.showToast(next ? 'Moduł AI/ML włączony' : 'Moduł AI/ML wyłączony', 'info');
+            }
+            refreshAiDashboards();
+        } catch (_e) {
+            if (typeof window.showToast === 'function') {
+                window.showToast('Nie udało się przełączyć modułu AI/ML', 'error');
+            }
+        } finally {
+            btn.disabled = false;
+        }
+    });
 }
 
 /* ===== YEAR LETTER MANAGEMENT ===== */

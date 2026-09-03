@@ -7,6 +7,7 @@
 
 import express from 'express';
 import { requireAuth, requireAdmin } from '../middleware/auth';
+import { requireAiMlEnabled } from '../middleware/aiMlGuard';
 import { READ_LIMITER } from '../middleware/rateLimiters';
 import { logger } from '../utils/logger';
 import { learningEngine } from '../services/telemetry/learning';
@@ -22,20 +23,27 @@ const kb = new KnowledgeBase();
  * POST /api/telemetry/ai/learning/run
  * Wymusza pełny cykl uczenia (analiza historyczna).
  */
-router.post('/ai/learning/run', requireAuth, requireAdmin, READ_LIMITER, async (_req, res) => {
-    try {
-        const summary = await learningEngine.runFullCycle();
-        logger.info(
-            'LearningEngine',
-            `[manual run] patterns=${summary.patternsDetected}, persisted=${summary.persistedToKb}, ms=${summary.durationMs}`
-        );
-        return res.json(summary);
-    } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        logger.error('AiDashboard', 'Błąd serwera', message);
-        return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+router.post(
+    '/ai/learning/run',
+    requireAuth,
+    requireAdmin,
+    READ_LIMITER,
+    requireAiMlEnabled,
+    async (_req, res) => {
+        try {
+            const summary = await learningEngine.runFullCycle();
+            logger.info(
+                'LearningEngine',
+                `[manual run] patterns=${summary.patternsDetected}, persisted=${summary.persistedToKb}, ms=${summary.durationMs}`
+            );
+            return res.json(summary);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            logger.error('AiDashboard', 'Błąd serwera', message);
+            return res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+        }
     }
-});
+);
 
 /* ===== KNOWLEDGE BASE ===== */
 

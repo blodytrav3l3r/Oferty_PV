@@ -610,6 +610,21 @@
                         </div>
                     </div>
                     <div class="card admin-card-padded">
+                        <div class="ai-toolbar">
+                            <button
+                                id="ai-ml-toggle-btn"
+                                class="ai-btn ai-btn-primary"
+                                type="button"
+                                aria-pressed="true"
+                                title="Włącza lub wyłącza wykonywanie operacji AI/ML (predykcje, treningi, modele). Statusy i telemetria pasywna działają dalej."
+                            >
+                                <i data-lucide="power"></i> <span>AI: ON</span>
+                            </button>
+                            <span class="text-muted"
+                                >Wyłączenie blokuje predykcje, treningi i operacje na modelach.
+                                Statusy działają dalej.</span
+                            >
+                        </div>
                         <div id="ml-health-container"></div>
                     </div>
 

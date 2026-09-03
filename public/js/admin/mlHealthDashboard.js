@@ -74,100 +74,130 @@
 
         container.innerHTML = '<div class="ai-ml-loading">Ładowanie...</div>';
 
-        window.fetchJson(HEALTH_URL).then(function (d) {
-            if (!d || d.error) {
-                const msg =
-                    d && d.error === 'forbidden'
-                        ? 'Brak dostępu do stanu ML (wymagana rola admin)'
-                        : d && d.error === 'unauthorized'
-                          ? 'Nieautoryzowany — zaloguj się ponownie'
-                          : 'Błąd serwera — nie udało się pobrać stanu ML';
-                container.innerHTML = '<div class="ai-ml-error">' + msg + '</div>';
-                return;
-            }
-
-            const modelStr = d.modelVersion
-                ? window.escapeHtml(d.modelVersion) +
-                  (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
-                : 'Brak';
-            const modelOk = !!d.mlOnline;
-            const modelTooltip = d.modelVersion
-                ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
-                : 'Brak';
-
-            const html =
-                /* Naglowek */
-                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
-                '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
-                '<span style="font-size: var(--fs-sm);color:var(--text-secondary)">' +
-                new Date().toLocaleString('pl-PL') +
-                '</span>' +
-                '</div>' +
-                /* Siatka kart */
-                '<div class="ai-health-grid">' +
-                healthCard('Telemetria', d.telemetryCount, d.telemetryCount > 0) +
-                healthCard(
-                    'FeatureExtractor',
-                    d.featureCount,
-                    d.featureCount > 0,
-                    d.featureCount + ' rekordów'
-                ) +
-                healthCard(
-                    'Trening',
-                    d.lastTrainingAt ? timeAgo(d.lastTrainingAt) : 'Nigdy',
-                    !!d.lastTrainingAt,
-                    d.trainingRunning ? 'W trakcie...' : '—'
-                ) +
-                healthCard('Model', modelStr, modelOk, null, window.escapeHtml(modelTooltip)) +
-                healthCard(
-                    'Predict',
-                    d.mlOnline ? 'Online' : 'Offline',
-                    d.mlOnline,
-                    d.mlOnline ? 'model v' + window.escapeHtml(d.modelVersion) : 'brak modelu'
-                ) +
-                healthCard('Nagrody', d.totalRewards, true) +
-                /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
-                healthCard(
-                    'Drift danych',
-                    d.driftPct === null || d.driftPct === undefined ? '—' : d.driftPct + '%',
-                    d.driftPct !== null && d.driftPct !== undefined && d.driftPct < 20,
-                    d.driftPct === null || d.driftPct === undefined
-                        ? 'brak danych'
-                        : 'odsetek wartości poza zakresem modelu'
-                ) +
-                '</div>' +
-                /* Jakosc danych */
-                '<div class="ai-dq-section">' +
-                '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakość danych</div>' +
-                '<div class="ai-dq-bars">' +
-                qualityBar(
-                    d.dataQuality ? d.dataQuality.withFeatureSnapshotPct || 0 : 0,
-                    'FeatureSnapshot'
-                ) +
-                qualityBar(
-                    d.dataQuality ? d.dataQuality.withSolverSourcePct || 0 : 0,
-                    'SolverSource'
-                ) +
-                qualityBar(d.dataQuality ? d.dataQuality.withWellTypePct || 0 : 0, 'WellType') +
-                '</div>' +
-                '</div>' +
-                /* Ostrzezenia */
-                '<div class="ai-dq-warnings">' +
-                (d.dataQuality && d.dataQuality.manualOverrideCount > 0
-                    ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
-                      d.dataQuality.manualOverrideCount +
-                      '</span>'
-                    : '') +
-                (d.telemetryCount > 0 && d.dataQuality && d.dataQuality.withFeatureSnapshotPct < 95
-                    ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
-                    : '') +
-                '</div>';
-
-            container.innerHTML = html;
-
+        const renderDisabled = function () {
+            container.innerHTML = window.aiMlDisabledHtml
+                ? window.aiMlDisabledHtml()
+                : '<div class="ai-ml-error">Moduł AI/ML jest wyłączony</div>';
             if (window.lucide && typeof lucide.createIcons === 'function') {
                 lucide.createIcons({ root: container });
             }
-        });
+        };
+
+        const loadHealth = function () {
+            window.fetchJson(HEALTH_URL).then(function (d) {
+                if (!d || d.error) {
+                    const msg =
+                        d && d.error === 'forbidden'
+                            ? 'Brak dostępu do stanu ML (wymagana rola admin)'
+                            : d && d.error === 'unauthorized'
+                              ? 'Nieautoryzowany — zaloguj się ponownie'
+                              : 'Błąd serwera — nie udało się pobrać stanu ML';
+                    container.innerHTML = '<div class="ai-ml-error">' + msg + '</div>';
+                    return;
+                }
+
+                const modelStr = d.modelVersion
+                    ? window.escapeHtml(d.modelVersion) +
+                      (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
+                    : 'Brak';
+                const modelOk = !!d.mlOnline;
+                const modelTooltip = d.modelVersion
+                    ? d.modelVersion + (d.modelAccuracy ? ' (acc: ' + d.modelAccuracy + ')' : '')
+                    : 'Brak';
+
+                const html =
+                    /* Naglowek */
+                    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+                    '<h4 class="ai-ml-header" style="margin:0"><i data-lucide="heart-pulse"></i> Stan pipeline ML</h4>' +
+                    '<span style="font-size: var(--fs-sm);color:var(--text-secondary)">' +
+                    new Date().toLocaleString('pl-PL') +
+                    '</span>' +
+                    '</div>' +
+                    /* Siatka kart */
+                    '<div class="ai-health-grid">' +
+                    healthCard('Telemetria', d.telemetryCount, d.telemetryCount > 0) +
+                    healthCard(
+                        'FeatureExtractor',
+                        d.featureCount,
+                        d.featureCount > 0,
+                        d.featureCount + ' rekordów'
+                    ) +
+                    healthCard(
+                        'Trening',
+                        d.lastTrainingAt ? timeAgo(d.lastTrainingAt) : 'Nigdy',
+                        !!d.lastTrainingAt,
+                        d.trainingRunning ? 'W trakcie...' : '—'
+                    ) +
+                    healthCard('Model', modelStr, modelOk, null, window.escapeHtml(modelTooltip)) +
+                    healthCard(
+                        'Predict',
+                        d.mlOnline ? 'Online' : 'Offline',
+                        d.mlOnline,
+                        d.mlOnline ? 'model v' + window.escapeHtml(d.modelVersion) : 'brak modelu'
+                    ) +
+                    healthCard('Nagrody', d.totalRewards, true) +
+                    /* Drift danych: % ostatnich telemetrii poza zakresem modelu (niski = OK) */
+                    healthCard(
+                        'Drift danych',
+                        d.driftPct === null || d.driftPct === undefined ? '—' : d.driftPct + '%',
+                        d.driftPct !== null && d.driftPct !== undefined && d.driftPct < 20,
+                        d.driftPct === null || d.driftPct === undefined
+                            ? 'brak danych'
+                            : 'odsetek wartości poza zakresem modelu'
+                    ) +
+                    '</div>' +
+                    /* Jakosc danych */
+                    '<div class="ai-dq-section">' +
+                    '<div class="ai-dq-title"><i data-lucide="gauge"></i> Jakość danych</div>' +
+                    '<div class="ai-dq-bars">' +
+                    qualityBar(
+                        d.dataQuality ? d.dataQuality.withFeatureSnapshotPct || 0 : 0,
+                        'FeatureSnapshot'
+                    ) +
+                    qualityBar(
+                        d.dataQuality ? d.dataQuality.withSolverSourcePct || 0 : 0,
+                        'SolverSource'
+                    ) +
+                    qualityBar(d.dataQuality ? d.dataQuality.withWellTypePct || 0 : 0, 'WellType') +
+                    '</div>' +
+                    '</div>' +
+                    /* Ostrzezenia */
+                    '<div class="ai-dq-warnings">' +
+                    (d.dataQuality && d.dataQuality.manualOverrideCount > 0
+                        ? '<span class="ai-warning-tag warn"><i data-lucide="alert-triangle"></i> Ręczne nadpisania: ' +
+                          d.dataQuality.manualOverrideCount +
+                          '</span>'
+                        : '') +
+                    (d.telemetryCount > 0 &&
+                    d.dataQuality &&
+                    d.dataQuality.withFeatureSnapshotPct < 95
+                        ? '<span class="ai-warning-tag danger"><i data-lucide="alert-triangle"></i> Niska jakosc featureSnapshot</span>'
+                        : '') +
+                    '</div>';
+
+                if (d && d.aiMlEnabled === false) {
+                    renderDisabled();
+                    return;
+                }
+
+                container.innerHTML = html;
+
+                if (window.lucide && typeof lucide.createIcons === 'function') {
+                    lucide.createIcons({ root: container });
+                }
+            });
+        };
+
+        if (typeof window.aiMlEnabled === 'function') {
+            window
+                .aiMlEnabled()
+                .then(function (on) {
+                    if (!on) renderDisabled();
+                    else loadHealth();
+                })
+                .catch(loadHealth);
+        } else {
+            loadHealth();
+        }
     };
 })();

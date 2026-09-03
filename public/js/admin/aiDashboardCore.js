@@ -107,6 +107,37 @@
     }
     window.aiLoadingHtml = loadingHtml;
 
+    // Execution kill-switch AI/ML — jedyne źródło stanu UI: GET /api/feature-flags.
+    // Endpointy statusowe (ml-status/health/settings) powtarzają aiMlEnabled dla wygody.
+    var _aiMlEnabledCache = null;
+    function aiMlEnabled(forceRefresh) {
+        if (_aiMlEnabledCache !== null && !forceRefresh) {
+            return Promise.resolve(_aiMlEnabledCache);
+        }
+        var p = window.fetchJson('/api/feature-flags');
+        if (!p) return Promise.resolve(true);
+        return p
+            .then(function (j) {
+                _aiMlEnabledCache = !j || j.ai_ml_enabled !== false;
+                return _aiMlEnabledCache;
+            })
+            .catch(function () {
+                return true;
+            });
+    }
+    window.aiMlEnabled = aiMlEnabled;
+    window.aiMlInvalidateFlag = function () {
+        _aiMlEnabledCache = null;
+    };
+
+    function aiMlDisabledHtml() {
+        return (
+            '<div class="card-note card-note--with-icon"><i data-lucide="power"></i>' +
+            '<span>Moduł AI/ML jest wyłączony. Dane diagnostyczne i statusy są nadal dostępne, ale predykcje, treningi i operacje na modelach są zablokowane (503). Włącz moduł przyciskiem powyżej.</span></div>'
+        );
+    }
+    window.aiMlDisabledHtml = aiMlDisabledHtml;
+
     function renderStats(container) {
         container.innerHTML = loadingHtml();
         const p = window.fetchJson(ENDPOINTS.stats);

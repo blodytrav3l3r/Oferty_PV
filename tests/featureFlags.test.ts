@@ -83,6 +83,10 @@ describe('featureFlags POST /audit — A-17 requireAdmin', () => {
         const app = buildApp();
         const res = await request(app).get('/api/feature-flags');
         expect(res.status).toBe(200);
-        expect(res.body).toEqual({ import_export_enabled: false, pz_stable_id: true });
+        expect(res.body).toEqual({
+            import_export_enabled: false,
+            pz_stable_id: true,
+            ai_ml_enabled: true
+        });
     });
 });
