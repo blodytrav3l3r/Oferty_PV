@@ -81,7 +81,50 @@ function _excelVirtualGetColIdxForId(logicalColId) {
     return idx >= 0 ? idx : -1;
 }
 
-function _excelVirtualFocusCell(active) {
+/* Lista fokusowalnych logicalColId dla wiersza — SSoT nawigacji poziomej.
+ * TD-index != rowEls-index (Lp/Wys-tekst/gap/akcje nie mają inputa), więc krok
+ * Left/Right idzie po tej liście, nigdy po pozycji TD. Disabled pomijane
+ * (per-wiersz, bo select może być disabled tylko w niektórych wierszach).
+ * Invariant: virtual horizontal MUSI dać tę samą sekwencję co legacy rowEls. */
+function _excelVirtualFocusableIds(row) {
+    const ids = [];
+    if (!row || !row.children) return ids;
+    const cols = _excelVirtualLogicalCols || [];
+    const kids = row.children;
+    for (let i = 0; i < kids.length && i < cols.length; i++) {
+        const colId = cols[i];
+        if (!colId) continue;
+        const td = kids[i];
+        const el = td.querySelector ? td.querySelector('input, select, .excel-sel-wrap') : null;
+        if (!el) continue;
+        if (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) continue;
+        ids.push(colId);
+    }
+    return ids;
+}
+
+/* Znajdź enabled element w wierszu idąc po kolejności TD od colIdx w kierunku
+ * dir (+1/-1), potem w przeciwną. Zwraca element lub null. Operuje na TD
+ * (nie na rowEls-index), bo rowEls jest listą zwartą bez Lp/Wys/gap. */
+function _excelVirtualFindEnabledInRow(row, colIdx, dir) {
+    if (!row || !row.children) return null;
+    const kids = row.children;
+    const dirs = dir >= 0 ? [1, -1] : [-1, 1];
+    for (let p = 0; p < dirs.length; p++) {
+        const step = dirs[p];
+        for (let i = colIdx + step; i >= 0 && i < kids.length; i += step) {
+            const td = kids[i];
+            if (!td || !td.querySelector) continue;
+            const el = td.querySelector('input, select, .excel-sel-wrap');
+            if (!el) continue;
+            if (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) continue;
+            return el;
+        }
+    }
+    return null;
+}
+
+function _excelVirtualFocusCell(active, opts) {
     if (!active) return false;
     // empty row
     if (active.logicalRow === _excelVirtualTotal) {
@@ -91,14 +134,14 @@ function _excelVirtualFocusCell(active) {
         const td = colIdx >= 0 ? emptyRow.children[colIdx] : null;
         let el = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
         if (!el || (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el))) {
-            const els =
-                typeof _excelGetNavElements === 'function' ? _excelGetNavElements(emptyRow) : [];
-            el = els[colIdx] || els[0] || null;
-            if (el && typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) {
-                el =
-                    (typeof _excelSkipDisabled === 'function'
-                        ? _excelSkipDisabled(el, els, colIdx, 1)
-                        : el) || el;
+            // fallback po kolejności TD (rowEls jest zwarty — index TD != index rowEls)
+            el =
+                (typeof _excelVirtualFindEnabledInRow === 'function'
+                    ? _excelVirtualFindEnabledInRow(emptyRow, colIdx, 1)
+                    : null) || null;
+            if (!el && typeof _excelGetNavElements === 'function') {
+                const els = _excelGetNavElements(emptyRow);
+                el = els[0] || null;
             }
         }
         if (el) {
@@ -107,7 +150,7 @@ function _excelVirtualFocusCell(active) {
                 typeof _excelGetNavElements === 'function'
             ) {
                 const emptyEls = _excelGetNavElements(emptyRow);
-                _excelFocusNavEl(el, emptyEls, 'down');
+                _excelFocusNavEl(el, emptyEls, 'down', opts);
             } else {
                 el.focus();
             }
@@ -124,21 +167,20 @@ function _excelVirtualFocusCell(active) {
     const td = row.children[colIdx];
     let el = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
     if (!el || (typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el))) {
-        const rowEls = typeof _excelGetNavElements === 'function' ? _excelGetNavElements(row) : [];
-        // try logical col idx clamped to rowEls length
-        el = rowEls[Math.min(colIdx, rowEls.length - 1)] || rowEls[0] || null;
-        if (el && typeof _excelIsDisabledNav === 'function' && _excelIsDisabledNav(el)) {
-            const dir = 1;
-            el =
-                (typeof _excelSkipDisabled === 'function'
-                    ? _excelSkipDisabled(el, rowEls, colIdx, dir)
-                    : el) || null;
+        // fallback po kolejności TD (rowEls jest zwarty — index TD != index rowEls)
+        el =
+            (typeof _excelVirtualFindEnabledInRow === 'function'
+                ? _excelVirtualFindEnabledInRow(row, colIdx, 1)
+                : null) || null;
+        if (!el && typeof _excelGetNavElements === 'function') {
+            const rowEls = _excelGetNavElements(row);
+            el = rowEls[0] || null;
         }
     }
     if (!el) return false;
     const rowEls2 = typeof _excelGetNavElements === 'function' ? _excelGetNavElements(row) : [el];
     if (typeof _excelFocusNavEl === 'function') {
-        _excelFocusNavEl(el, rowEls2, 'down');
+        _excelFocusNavEl(el, rowEls2, 'down', opts);
     } else {
         el.focus();
     }
@@ -407,6 +449,11 @@ function _excelVirtualRenderBody() {
             ids.push('rzWlot_' + i, 'kat_' + i, 'rodzaj_' + i, 'srednica_' + i);
         ids.push('gap1', 'gap2', 'wlaz');
         compCols.forEach(function (c) {
+            // select/auto nie mają własnego TD (właz renderowany dedykowanym
+            // blokiem) — ta sama konwencja co body/header (tableBody:416,624,
+            // renderer:129). Bez tego 'wlaz' dublowałby się w ids i rozjeżdżał
+            // pairing TD-index → logicalColId dla wszystkich późniejszych kolumn.
+            if (c.type === 'select' || c.type === 'auto') return;
             ids.push(
                 (c.id || c.key || c.componentType + '_' + (c.height || c.productId || '')) + ''
             );
@@ -553,14 +600,16 @@ function _excelVirtualRenderBody() {
                             curAe &&
                             curAe.closest &&
                             curAe.closest('tr[data-logical-row="' + toRestore.logicalRow + '"]');
-                        if (!alreadyFocused) _excelVirtualFocusCell(toRestore);
+                        // noScroll: restore edycji bez ciągnięcia scrolla —
+                        // inaczej scroll myszką wracał do komórki (focus + korekta)
+                        if (!alreadyFocused) _excelVirtualFocusCell(toRestore, { noScroll: true });
                     }
                 } else if (
                     toRestore &&
                     toRestore.logicalRow === _excelVirtualTotal &&
                     _excelVirtualEnd === _excelVirtualTotal
                 ) {
-                    _excelVirtualFocusCell(toRestore);
+                    _excelVirtualFocusCell(toRestore, { noScroll: true });
                 }
             }
         }
@@ -829,6 +878,8 @@ if (typeof window !== 'undefined') {
     window._excelVirtualIsExcelCell = _excelVirtualIsExcelCell;
     window._excelVirtualSyncActiveFromElement = _excelVirtualSyncActiveFromElement;
     window._excelVirtualFocusCell = _excelVirtualFocusCell;
+    window._excelVirtualFocusableIds = _excelVirtualFocusableIds;
+    window._excelVirtualFindEnabledInRow = _excelVirtualFindEnabledInRow;
     window._excelVirtualEnsureVisible = _excelVirtualEnsureVisible;
     window._excelVirtualClampActive = _excelVirtualClampActive;
     window._excelVirtualGetActiveCell = function () {

@@ -43,10 +43,10 @@ function _excelVirtualHandleArrow(e) {
             typeof _excelVirtualTotal !== 'undefined' &&
             _excelVirtualTotal > 0
         ) {
-            const firstCol =
-                typeof _excelVirtualLogicalCols !== 'undefined' && _excelVirtualLogicalCols[0]
-                    ? _excelVirtualLogicalCols[0]
-                    : 'name';
+            // start na pierwszej fokusowalnej ('name'), nie na LogicalCols[0]='check'
+            const cols =
+                typeof _excelVirtualLogicalCols !== 'undefined' ? _excelVirtualLogicalCols : [];
+            const firstCol = cols.indexOf('name') >= 0 ? 'name' : cols[0] || 'name';
             _excelVirtualActiveCell = { logicalRow: 0, logicalColId: firstCol };
         }
     }
@@ -56,43 +56,77 @@ function _excelVirtualHandleArrow(e) {
     if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
 
     if (key === 'ArrowLeft' || key === 'ArrowRight') {
-        const curIdx =
-            typeof _excelVirtualGetColIdxForId === 'function'
-                ? _excelVirtualGetColIdxForId(_excelVirtualActiveCell.logicalColId)
-                : -1;
         const step = key === 'ArrowRight' ? 1 : -1;
-        let nextIdx = curIdx + step;
-        // skip disabled columns (checkbox/mode/Lp never editable but still cols)
-        let tries = 20;
-        while (tries-- > 0) {
-            if (nextIdx < 0 || nextIdx >= _excelVirtualLogicalCols.length) return true;
-            // sprawdź czy komórka w tym wierszu jest disabled — jeśli tak, przeskocz
-            let disabled = false;
-            if (
-                typeof _excelIsDisabledNav === 'function' &&
-                typeof _excelVirtualFocusCell === 'function'
-            ) {
-                // dry-check via DOM if row visible
-                const container = document.getElementById('excel-table-container');
-                const row =
-                    _excelVirtualActiveCell.logicalRow === _excelVirtualTotal
-                        ? document.getElementById('excel-empty-row')
-                        : container
-                          ? container.querySelector(
-                                'tr[data-logical-row="' + _excelVirtualActiveCell.logicalRow + '"]'
-                            )
-                          : null;
-                if (row) {
-                    const td = row.children[nextIdx];
-                    const candEl = td ? td.querySelector('input, select, .excel-sel-wrap') : null;
-                    if (candEl && _excelIsDisabledNav(candEl)) disabled = true;
-                }
-            }
-            if (!disabled) break;
-            nextIdx += step;
+        // Wiersz spod fokusu — jedyne źródło prawdy. Brak wiersza = bezpieczny
+        // no-op (bez globalnego fallbacku — druga definicja fokusowalności
+        // wprowadziłaby kolejny rozjazd modeli).
+        const focusTr =
+            e.target && e.target.closest
+                ? e.target.closest('tr[data-logical-row],tr#excel-empty-row')
+                : null;
+        let row = focusTr;
+        if (!row && typeof document !== 'undefined') {
+            const container = document.getElementById('excel-table-container');
+            row =
+                _excelVirtualActiveCell.logicalRow === _excelVirtualTotal
+                    ? document.getElementById('excel-empty-row')
+                    : container
+                      ? container.querySelector(
+                            'tr[data-logical-row="' + _excelVirtualActiveCell.logicalRow + '"]'
+                        )
+                      : null;
         }
-        if (nextIdx < 0 || nextIdx >= _excelVirtualLogicalCols.length) return true;
-        _excelVirtualActiveCell.logicalColId = _excelVirtualLogicalCols[nextIdx];
+        if (!row) return true;
+        // samonaprawa kursora: wiersz spod fokusu wygrywa ze starym active
+        if (row.id === 'excel-empty-row') {
+            _excelVirtualActiveCell.logicalRow = _excelVirtualTotal;
+        } else if (row.getAttribute) {
+            const lr = parseInt(row.getAttribute('data-logical-row'), 10);
+            if (!isNaN(lr)) _excelVirtualActiveCell.logicalRow = lr;
+        }
+        // krok po fokusowalnych logicalColId (nie po TD-index — Lp/Wys/gap/akcje
+        // nie mają inputa; TD-index != rowEls-index). Invariant: ta sama
+        // sekwencja co legacy rowEls.
+        const ids =
+            typeof _excelVirtualFocusableIds === 'function' ? _excelVirtualFocusableIds(row) : [];
+        if (ids.length === 0) return true;
+        let pos = ids.indexOf(_excelVirtualActiveCell.logicalColId);
+        if (pos < 0) {
+            // stary cursor na nie-fokusowalnej (np. 'wys'/'check' sprzed fixa
+            // albo Up/Down na kolumnie-tekście) — zakotwicz do elementu spod
+            // fokusu, w kierunku kroku (wstawienie, nie zgadywanie).
+            const cols =
+                typeof _excelVirtualLogicalCols !== 'undefined' ? _excelVirtualLogicalCols : [];
+            const curTd = e.target && e.target.closest ? e.target.closest('td') : null;
+            const curTdIdx =
+                curTd && row.contains && row.contains(curTd) && row.children
+                    ? Array.prototype.indexOf.call(row.children, curTd)
+                    : -1;
+            if (curTdIdx >= 0) {
+                let best = -1;
+                for (let i = 0; i < ids.length; i++) {
+                    const ti =
+                        typeof _excelVirtualGetColIdxForId === 'function'
+                            ? _excelVirtualGetColIdxForId(ids[i])
+                            : cols.indexOf(ids[i]);
+                    if (step > 0 ? ti > curTdIdx : ti < curTdIdx) {
+                        if (best < 0 || (step > 0 ? ti < best : ti > best)) best = ti;
+                    }
+                }
+                if (best >= 0) {
+                    _excelVirtualActiveCell.logicalColId = cols[best];
+                    pos = ids.indexOf(cols[best]);
+                } else {
+                    return true; // krawędź — no-op jak legacy
+                }
+            } else {
+                return true;
+            }
+        } else {
+            const nextPos = pos + step;
+            if (nextPos < 0 || nextPos >= ids.length) return true; // krawędź — no-op
+            _excelVirtualActiveCell.logicalColId = ids[nextPos];
+        }
         if (inEmpty) {
             if (typeof _excelVirtualFocusCell === 'function')
                 _excelVirtualFocusCell(_excelVirtualActiveCell);
@@ -415,23 +449,35 @@ function _excelGetStickyColumnsWidth() {
     return w;
 }
 
-/** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow) */
-function _excelFocusNavEl(el, rowEls, dir) {
+/** Focusuj element nawigacji, pomijając disabled — iteracyjnie (bez ryzyka stack overflow).
+ * opts.noScroll: fokus bez ruszania scrollem (restore po recyklu virtual — inaczej
+ * focus() + korekta ciągną scroll z powrotem do komórki i nie da się odscrollować). */
+function _excelFocusNavEl(el, rowEls, dir, opts) {
     if (!el) return;
+    const noScroll = !!(opts && opts.noScroll);
     const step = dir === 'right' || dir === 'down' ? 1 : -1;
     let limit = rowEls.length + 1; /* max iteracji = rozmiar wiersza + 1 */
     let cur = el;
     while (cur && limit-- > 0) {
         if (!_excelIsDisabledNav(cur)) {
-            cur.focus();
+            if (noScroll) {
+                try {
+                    cur.focus({ preventScroll: true });
+                } catch (_fs) {
+                    cur.focus();
+                }
+            } else {
+                cur.focus();
+            }
             /* Scroll-into-view bez scrollIntoView (nie uwzglednia sticky headera/kolumn) */
             const container = document.getElementById('excel-table-container');
             const headerEl = document.querySelector('#excel-table-container thead');
             const headerH = headerEl ? /** @type {HTMLElement} */ (headerEl).offsetHeight : 60;
             const MARGIN = 5;
             /* Reczna korekta scroll — element MUSI byc widoczny ponizej sticky headera
-               i na prawo od sticky-left kolumn (inaczej natywny focus chowa go za nie) */
-            if (container) {
+               i na prawo od sticky-left kolumn (inaczej natywny focus chowa go za nie).
+               Przy noScroll (restore po recyklu) pomijamy — użytkownik scrolluje gdzie chce. */
+            if (container && !noScroll) {
                 const elRect = cur.getBoundingClientRect();
                 const containerRect = container.getBoundingClientRect();
                 /* Pion: jesli element jest nad widocznym obszarem (elRect.top < containerRect.top + headerH)
