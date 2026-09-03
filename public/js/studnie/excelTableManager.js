@@ -182,10 +182,26 @@ function _excelHandleRowCheckboxClick(target, e) {
         _excelSyncHeaderCheckbox();
         return;
     }
-    // Group toggle: klik na dowolnym należącym do grupy ≥2
+    // Group toggle: klik na dowolnym należącym do grupy ≥2 (checkboxy + komórki)
     const selectedIds = Object.keys(_excelRowSelectStates).filter(function (k) {
         return _excelRowSelectStates[k];
     });
+    // jeśli zaznaczenie komórek obejmuje kilka wierszy i kliknięty wiersz w nim jest — traktuj te wiersze jako grupę
+    if (
+        typeof _excelSelectedCells !== 'undefined' &&
+        Array.isArray(_excelSelectedCells) &&
+        _excelSelectedCells.length > 1
+    ) {
+        const cellSet = new Set();
+        _excelSelectedCells.forEach(function (c) {
+            if (c && typeof c.wIdx !== 'undefined') cellSet.add(String(c.wIdx));
+        });
+        if (cellSet.has(String(wIdx)) && cellSet.size > 1) {
+            cellSet.forEach(function (id) {
+                if (selectedIds.indexOf(id) < 0) selectedIds.push(id);
+            });
+        }
+    }
     const isInGroup = selectedIds.length > 1 && selectedIds.indexOf(String(wIdx)) >= 0;
     if (isInGroup) {
         e.preventDefault();

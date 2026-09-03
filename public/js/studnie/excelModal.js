@@ -13,6 +13,7 @@ function _excelOnFocusInRow(e) {
 
 function _excelOnClickCell(e) {
     if (e.target.closest('button')) return;
+    if (e.target.closest('.excel-row-select')) return;
     // Shift+klik na sticky kolumnach (Lp/NrStudni/Rzędne) → zakres wierszy (checkboxy), nie komórki
     if (
         e.shiftKey &&
