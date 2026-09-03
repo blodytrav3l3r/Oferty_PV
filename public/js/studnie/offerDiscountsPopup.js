@@ -2,9 +2,56 @@
 
 /* ===== MODAL RABATÓW OFERTY ===== */
 let initialOfferDiscountsSnapshot = null;
+let initialOfferWellsExtraSnapshot = null;
+let _discountsCancelInProgress = false;
+let _discountsDismissWired = false;
+
+function _captureOfferWellsExtra() {
+    return (typeof wells !== 'undefined' && Array.isArray(wells) ? wells : []).map((w) => ({
+        id: w && w.id,
+        pehdDiscount: (w && w.pehdDiscount) || 0,
+        malowanieWewCena: (w && w.malowanieWewCena) || 0,
+        malowanieZewCena: (w && w.malowanieZewCena) || 0,
+        malowanieZewManual: !!(w && w.malowanieZewManual)
+    }));
+}
+
+function _offerDiscountsDirty() {
+    const currentSnapshot = JSON.stringify(window.wellDiscounts || {});
+    const initialSnapshot = JSON.stringify(initialOfferDiscountsSnapshot || {});
+    if (currentSnapshot !== initialSnapshot) return true;
+    const currentExtra = JSON.stringify(_captureOfferWellsExtra());
+    const initialExtra = JSON.stringify(initialOfferWellsExtraSnapshot || []);
+    return currentExtra !== initialExtra;
+}
+
+function _wireOfferDiscountsDismiss() {
+    if (!_discountsDismissWired) {
+        _discountsDismissWired = true;
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const m = document.getElementById('offer-discounts-modal');
+            if (m && m.classList.contains('active')) {
+                handleOfferDiscountsCancel();
+            }
+        });
+    }
+    // Backdrop: znacznik na elemencie, bo partial modals.html może być przeładowany
+    const modal = document.getElementById('offer-discounts-modal');
+    if (modal && !modal.dataset.dismissWired) {
+        modal.dataset.dismissWired = '1';
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal && modal.classList.contains('active')) {
+                handleOfferDiscountsCancel();
+            }
+        });
+    }
+}
 
 function openOfferDiscountsPopup() {
     initialOfferDiscountsSnapshot = structuredClone(window.wellDiscounts || {});
+    initialOfferWellsExtraSnapshot = _captureOfferWellsExtra();
+    _wireOfferDiscountsDismiss();
     const modal = document.getElementById('offer-discounts-modal');
     if (!modal) return;
     renderOfferDiscountsPopupContent();
@@ -41,54 +88,57 @@ async function handleOfferDiscountsSave() {
 }
 
 async function handleOfferDiscountsCancel() {
-    const currentSnapshot = JSON.stringify(window.wellDiscounts || {});
-    const initialSnapshot = JSON.stringify(initialOfferDiscountsSnapshot || {});
+    if (_discountsCancelInProgress) return;
+    const modal = document.getElementById('offer-discounts-modal');
+    if (modal && !modal.classList.contains('active')) return;
+    _discountsCancelInProgress = true;
+    try {
+        if (_offerDiscountsDirty()) {
+            const confirmExit = await window.appConfirm(
+                '<div class="fs-xl">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: var(--fs-sm);">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>',
+                {
+                    title: '<div class="fs-3xl-eb">Niezapisane zmiany rabatów</div>',
+                    type: 'warning',
+                    allowHtml: true,
+                    okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
+                    cancelText: 'Nie, wracam do edycji'
+                }
+            );
 
-    if (currentSnapshot !== initialSnapshot) {
-        const confirmExit = await window.appConfirm(
-            '<div class="fs-xl">Zmieniono rabaty. Czy na pewno wyjść z okna?<br><span style="color: var(--danger); font-size: var(--fs-sm);">Wszystkie wpisane zmiany znikną po odrzuceniu.</span></div>',
-            {
-                title: '<div class="fs-3xl-eb">Niezapisane zmiany rabatów</div>',
-                type: 'warning',
-                allowHtml: true,
-                okText: '<i data-lucide="x-circle"></i> Tak, odrzuć zmiany',
-                cancelText: 'Nie, wracam do edycji'
+            if (!confirmExit) return;
+
+            // Rollback stanu: rabaty DN oraz pola studni mutowane na żywo (PEHD/malowanie)
+            window.wellDiscounts = JSON.parse(JSON.stringify(initialOfferDiscountsSnapshot || {}));
+            if (typeof wells !== 'undefined' && Array.isArray(wells)) {
+                const byId = {};
+                (initialOfferWellsExtraSnapshot || []).forEach((s) => {
+                    if (s && s.id != null) byId[s.id] = s;
+                });
+                wells.forEach((w) => {
+                    const s = w && byId[w.id];
+                    if (!s) return;
+                    w.pehdDiscount = s.pehdDiscount;
+                    w.malowanieWewCena = s.malowanieWewCena;
+                    w.malowanieZewCena = s.malowanieZewCena;
+                    w.malowanieZewManual = s.malowanieZewManual;
+                });
             }
-        );
-
-        if (!confirmExit) return;
-
-        // Rollback state
-        window.wellDiscounts = JSON.parse(initialSnapshot);
-
-        const diameters = ['1000', '1200', '1500', '2000', '2500', 'styczne'];
-        diameters.forEach((dn) => {
-            const disc = window.wellDiscounts[dn] || {
-                dennica: 0,
-                nadbudowa: 0,
-                preco: 0,
-                pehd: 0
-            };
-            if (typeof window.applyDiscount === 'function') {
-                window.applyDiscount(dn, 'dennica', disc.dennica);
-                window.applyDiscount(dn, 'nadbudowa', disc.nadbudowa);
-                window.applyDiscount(dn, 'preco', disc.preco || 0);
-                window.applyDiscount(dn, 'pehd', disc.pehd || 0);
-                window.applyDiscount(dn, 'dennicaE600', disc.dennicaE600 || 0);
-                window.applyDiscount(dn, 'nadbudowaE600', disc.nadbudowaE600 || 0);
-                window.applyDiscount(dn, 'zwienczenieE600', disc.zwienczenieE600 || 0);
-                window.applyDiscount(dn, 'dennicaF900', disc.dennicaF900 || 0);
-                window.applyDiscount(dn, 'nadbudowaF900', disc.nadbudowaF900 || 0);
-                window.applyDiscount(dn, 'zwienczenieF900', disc.zwienczenieF900 || 0);
+            if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+                if (typeof freezeWellPrices === 'function') {
+                    freezeWellPrices(wells);
+                }
             }
-        });
 
-        if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
-        if (typeof updateSummary === 'function') updateSummary();
-        if (typeof renderOfferSummary === 'function') renderOfferSummary();
+            if (typeof renderDiscountPanel === 'function') renderDiscountPanel();
+            if (typeof updateSummary === 'function') updateSummary();
+            if (typeof renderOfferSummary === 'function') renderOfferSummary();
+            if (typeof renderWellConfig === 'function') renderWellConfig();
+        }
+
+        closeOfferDiscountsPopup();
+    } finally {
+        _discountsCancelInProgress = false;
     }
-
-    closeOfferDiscountsPopup();
 }
 
 function handleOfferDiscountChange(dn, type, value) {

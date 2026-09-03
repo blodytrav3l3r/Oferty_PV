@@ -99,14 +99,17 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
                 const origWell = originalWells[originalIndex];
                 const currentGlobalDiscounts =
                     typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
-                if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-                    window.wellDiscounts = originalDiscounts;
-                }
+                let origStats;
+                try {
+                    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                        window.wellDiscounts = originalDiscounts;
+                    }
 
-                const origStats = calcWellStats(origWell);
-
-                if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-                    window.wellDiscounts = currentGlobalDiscounts;
+                    origStats = calcWellStats(origWell);
+                } finally {
+                    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                        window.wellDiscounts = currentGlobalDiscounts;
+                    }
                 }
 
                 const origTransportCost =

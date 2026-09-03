@@ -289,65 +289,70 @@ function getOrderChanges(order) {
 
     const savedDiscounts =
         typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
-    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-        window.wellDiscounts = originalDiscounts;
-    }
-    freezeWellPrices(orig, true);
-    if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
-        window.wellDiscounts = savedDiscounts;
+    try {
+        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+            window.wellDiscounts = originalDiscounts;
+        }
+        freezeWellPrices(orig, true);
+    } finally {
+        if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
+            window.wellDiscounts = savedDiscounts;
+        }
     }
 
     const savedPreviewMode = window.isPreviewMode;
     window.isPreviewMode = true;
 
-    const maxLen = Math.max(orig.length, curr.length);
-    for (let i = 0; i < maxLen; i++) {
-        if (i >= orig.length) {
-            changes[i] = { type: 'added' };
-            continue;
+    try {
+        const maxLen = Math.max(orig.length, curr.length);
+        for (let i = 0; i < maxLen; i++) {
+            if (i >= orig.length) {
+                changes[i] = { type: 'added' };
+                continue;
+            }
+            if (i >= curr.length) {
+                changes[i] = { type: 'removed', name: orig[i].name };
+                continue;
+            }
+
+            const origStats = calcWellStats(orig[i]);
+            const currStats = calcWellStats(curr[i]);
+
+            const roundToGrosz = (v) => Math.round(v * 100) / 100;
+            const origPrice = roundToGrosz(origStats.price);
+            const currPrice = roundToGrosz(currStats.price);
+
+            if (Math.abs(currPrice - origPrice) > 0.01) {
+                changes[i] = {
+                    type: 'modified',
+                    fields: ['price'],
+                    priceDiff: currPrice - origPrice
+                };
+            }
         }
-        if (i >= curr.length) {
-            changes[i] = { type: 'removed', name: orig[i].name };
-            continue;
-        }
 
-        const origStats = calcWellStats(orig[i]);
-        const currStats = calcWellStats(curr[i]);
-
-        const roundToGrosz = (v) => Math.round(v * 100) / 100;
-        const origPrice = roundToGrosz(origStats.price);
-        const currPrice = roundToGrosz(currStats.price);
-
-        if (Math.abs(currPrice - origPrice) > 0.01) {
-            changes[i] = {
-                type: 'modified',
-                fields: ['price'],
-                priceDiff: currPrice - origPrice
-            };
-        }
-    }
-
-    const origTransportKm = originalSnapshotData.transportKm;
-    const origTransportRate = originalSnapshotData.transportRate;
-    const origTransportMode = originalSnapshotData.transportMode;
-    const transportChanged =
-        (origTransportKm != null || origTransportRate != null) &&
-        (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
-            Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
-            (order.transportMode || 'full') !== (origTransportMode || 'full'));
-    if (transportChanged) {
-        for (let i = 0; i < curr.length; i++) {
-            if (!changes[i] || changes[i].type !== 'added') {
-                if (changes[i] && changes[i].type === 'modified') {
-                    changes[i].fields.push('transport');
-                } else {
-                    changes[i] = { type: 'modified', fields: ['transport'], priceDiff: 0 };
+        const origTransportKm = originalSnapshotData.transportKm;
+        const origTransportRate = originalSnapshotData.transportRate;
+        const origTransportMode = originalSnapshotData.transportMode;
+        const transportChanged =
+            (origTransportKm != null || origTransportRate != null) &&
+            (Math.abs((order.transportKm || 0) - (origTransportKm || 0)) > 0.01 ||
+                Math.abs((order.transportRate || 0) - (origTransportRate || 0)) > 0.01 ||
+                (order.transportMode || 'full') !== (origTransportMode || 'full'));
+        if (transportChanged) {
+            for (let i = 0; i < curr.length; i++) {
+                if (!changes[i] || changes[i].type !== 'added') {
+                    if (changes[i] && changes[i].type === 'modified') {
+                        changes[i].fields.push('transport');
+                    } else {
+                        changes[i] = { type: 'modified', fields: ['transport'], priceDiff: 0 };
+                    }
                 }
             }
         }
+    } finally {
+        window.isPreviewMode = savedPreviewMode;
     }
-
-    window.isPreviewMode = savedPreviewMode;
 
     return changes;
 }

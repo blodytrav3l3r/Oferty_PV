@@ -22,6 +22,12 @@ function calcPrecoPricing(well) {
 }
 
 function getWellActiveDiscounts(well) {
+    // W trybie edycji zamowienia cena zamowienia liczona z live wellDiscounts.
+    // Snapshot (originalSnapshot.wellDiscounts) sluzy wylacznie kolumnie
+    // "Cena z oferty" (jawny swap w offerSummaryTable/getOrderChanges).
+    if (typeof orderEditMode !== 'undefined' && orderEditMode) {
+        return wellDiscounts;
+    }
     let activeDiscounts = wellDiscounts;
     if (typeof isWellOrdered === 'function' && isWellOrdered(well)) {
         const currentOfferId =
