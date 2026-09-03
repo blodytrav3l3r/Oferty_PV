@@ -6,7 +6,17 @@
 let __refreshAllDepth = 0;
 const __MAX_REFRESH_DEPTH = 5;
 if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
+// P1.3 batch coalesce — during tmApplyChanges bulk solver, full refreshAll is deferred to single pass
+if (typeof window !== 'undefined') window.__tmBatchDepth = window.__tmBatchDepth || 0;
 function refreshAll(skipSummary = false) {
+    if (typeof window !== 'undefined' && window.__tmBatchDepth > 0) {
+        if (typeof refreshActiveWell === 'function') {
+            try {
+                refreshActiveWell();
+            } catch {}
+        }
+        return;
+    }
     __refreshAllDepth++;
     if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
     if (__refreshAllDepth > __MAX_REFRESH_DEPTH) {
@@ -65,6 +75,19 @@ function refreshAll(skipSummary = false) {
     __refreshAllDepth--;
     if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
 }
+
+// P0.5 lightweight refresh — tylko aktywna studnia, BEZ listy/oferty/DN tiles (v1.1 kontrakt)
+// NIE zmienia kolejności/semantyki operacji biznesowych, tylko zakres renderu.
+// NIE: renderWellsList, renderTiles, renderOfferSummary, updateDNButtons
+function refreshActiveWell() {
+    // invariant: tylko 4 rendery aktywnej studni + ikony scoped
+    renderWellPrzejscia();
+    renderWellDiagram();
+    renderWellConfig();
+    updateSummary();
+    if (window.lucide) window.lucide.createIcons();
+}
+if (typeof window !== 'undefined') window.refreshActiveWell = refreshActiveWell;
 
 /* ===== PARAMETRY OGÓLNE (KAFELKI) — przeniesione do wellUI.js ===== */
 

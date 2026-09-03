@@ -35,7 +35,8 @@ function removePrzejscieFromWell(index) {
     if (!well) return;
     if (well.przejscia) {
         well.przejscia.splice(index, 1);
-        refreshAll();
+        if (typeof refreshActiveWell === 'function') refreshActiveWell();
+        else refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
     }
@@ -109,7 +110,8 @@ function savePrzejscieEdit(index) {
     };
 
     editPrzejscieIdx = -1;
-    refreshAll();
+    if (typeof refreshActiveWell === 'function') refreshActiveWell();
+    else refreshAll();
     autoSelectComponents(true);
     showToast('Zapisano zmiany przejścia', 'success');
     renderWellPrzejscia();

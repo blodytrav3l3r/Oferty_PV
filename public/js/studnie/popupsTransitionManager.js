@@ -24,8 +24,16 @@ window.openTransitionManagerModal = function () {
         return;
     }
 
-    const transitionProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
-    const categories = [...new Set(transitionProducts.map((p) => p.category))].sort();
+    const categories =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie')
+                          .map((p) => p.category)
+                  )
+              ].sort();
 
     if (categories.length === 0) {
         showToast('Brak przejść w cenniku', 'error');
@@ -72,7 +80,7 @@ ${[...allMaterials]
             <label class="tm-filter-label" for="tm-filter-search"><i data-lucide="search" aria-hidden="true"></i> Szukaj</label>
             <div class="tm-search-wrap">
                <i data-lucide="search" aria-hidden="true"></i>
-               <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFilters(); window.tmToggleSearchClear && window.tmToggleSearchClear()" autocomplete="off">
+                <input type="text" id="tm-filter-search" class="tm-search-input" placeholder="Nazwa, materiał, DN..." maxlength="30" oninput="tmApplyFiltersDebounced(); window.tmToggleSearchClear && window.tmToggleSearchClear()" autocomplete="off">
                <button type="button" id="tm-search-clear" class="tm-search-clear" aria-label="Wyczyść wyszukiwanie" onclick="document.getElementById('tm-filter-search').value=''; tmApplyFilters(); tmToggleSearchClear(); document.getElementById('tm-filter-search').focus()"><i data-lucide="x" class="icon-xxs" aria-hidden="true"></i></button>
             </div>
          </div>
@@ -136,7 +144,7 @@ ${categories
     });
     if (window.lucide) window.lucide.createIcons({ root: overlay });
 
-    tmRenderTable();
+    _tmRenderTableImmediate();
     window.tmToggleSearchClear && window.tmToggleSearchClear();
     window.tmUpdateApplyState && window.tmUpdateApplyState();
 };
@@ -228,68 +236,10 @@ window.tmSortBy = function (column) {
     tmRenderTable();
 };
 
-window.tmApplyFilters = function () {
-    tmCurrentFilters.search = (
-        document.getElementById('tm-filter-search')?.value || ''
-    ).toLowerCase();
-    tmRenderTable();
-};
-
-function tmHighlightTiles(containerId, selectedVal) {
-    const c = document.getElementById(containerId);
-    if (!c) return;
-    c.querySelectorAll('[data-val]').forEach((d) => {
-        const isSel = d.dataset.val === selectedVal;
-        d.classList.toggle('active', isSel);
-        d.setAttribute('aria-pressed', String(isSel));
-    });
-}
-
-function tmHighlightTilesMulti(containerId, selectedVals) {
-    const c = document.getElementById(containerId);
-    if (!c) return;
-    c.querySelectorAll('[data-val]').forEach((d) => {
-        const isSel =
-            selectedVals.length === 0
-                ? d.dataset.val === ''
-                : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
-        d.classList.toggle('active', isSel);
-        d.setAttribute('aria-pressed', String(isSel));
-    });
-}
-
-window.tmSelectFilterMaterial = function (val) {
-    if (val === '') {
-        tmCurrentFilters.sourceMaterial = [];
-    } else {
-        const idx = tmCurrentFilters.sourceMaterial.indexOf(val);
-        if (idx >= 0) tmCurrentFilters.sourceMaterial.splice(idx, 1);
-        else tmCurrentFilters.sourceMaterial.push(val);
-    }
-    tmHighlightTilesMulti('tm-filter-material-tiles', tmCurrentFilters.sourceMaterial);
-    tmApplyFilters();
-};
-
-window.tmSelectFilterDn = function (val) {
-    if (val === '') {
-        tmCurrentFilters.dn = [];
-    } else {
-        const idx = tmCurrentFilters.dn.indexOf(val);
-        if (idx >= 0) tmCurrentFilters.dn.splice(idx, 1);
-        else tmCurrentFilters.dn.push(val);
-    }
-    tmHighlightTilesMulti('tm-filter-dn-tiles', tmCurrentFilters.dn);
-    tmApplyFilters();
-};
-
-window.tmSelectTargetCat = function (val) {
-    tmTargetCat = val;
-    tmHighlightTiles('tm-target-cat-tiles', val);
-    tmUpdatePreview();
-    window.tmUpdateApplyState && window.tmUpdateApplyState();
-};
-
-window.tmRenderTable = function () {
+let _tmDebounceTimer = null;
+let _tmRenderPending = false;
+function _tmRenderTableImmediate() {
+    // przeniesione cialo tmRenderTable — wywolywane przez scheduler rAF
     const container = document.getElementById('tm-table-body');
     if (!container) return;
 
@@ -422,7 +372,88 @@ window.tmRenderTable = function () {
     }
 
     tmUpdatePreview();
+}
+function tmScheduleRender() {
+    if (_tmRenderPending) return;
+    _tmRenderPending = true;
+    const raf =
+        typeof requestAnimationFrame === 'function'
+            ? requestAnimationFrame
+            : (cb) => setTimeout(cb, 0);
+    raf(() => {
+        _tmRenderPending = false;
+        _tmRenderTableImmediate();
+    });
+}
+window.tmApplyFilters = function () {
+    tmCurrentFilters.search = (
+        document.getElementById('tm-filter-search')?.value || ''
+    ).toLowerCase();
+    tmScheduleRender();
 };
+window.tmApplyFiltersDebounced = function () {
+    clearTimeout(_tmDebounceTimer);
+    _tmDebounceTimer = setTimeout(() => window.tmApplyFilters(), 120);
+};
+
+function tmHighlightTiles(containerId, selectedVal) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.querySelectorAll('[data-val]').forEach((d) => {
+        const isSel = d.dataset.val === selectedVal;
+        d.classList.toggle('active', isSel);
+        d.setAttribute('aria-pressed', String(isSel));
+    });
+}
+
+function tmHighlightTilesMulti(containerId, selectedVals) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    c.querySelectorAll('[data-val]').forEach((d) => {
+        const isSel =
+            selectedVals.length === 0
+                ? d.dataset.val === ''
+                : d.dataset.val !== '' && selectedVals.includes(d.dataset.val);
+        d.classList.toggle('active', isSel);
+        d.setAttribute('aria-pressed', String(isSel));
+    });
+}
+
+window.tmSelectFilterMaterial = function (val) {
+    if (val === '') {
+        tmCurrentFilters.sourceMaterial = [];
+    } else {
+        const idx = tmCurrentFilters.sourceMaterial.indexOf(val);
+        if (idx >= 0) tmCurrentFilters.sourceMaterial.splice(idx, 1);
+        else tmCurrentFilters.sourceMaterial.push(val);
+    }
+    tmHighlightTilesMulti('tm-filter-material-tiles', tmCurrentFilters.sourceMaterial);
+    tmApplyFilters();
+};
+
+window.tmSelectFilterDn = function (val) {
+    if (val === '') {
+        tmCurrentFilters.dn = [];
+    } else {
+        const idx = tmCurrentFilters.dn.indexOf(val);
+        if (idx >= 0) tmCurrentFilters.dn.splice(idx, 1);
+        else tmCurrentFilters.dn.push(val);
+    }
+    tmHighlightTilesMulti('tm-filter-dn-tiles', tmCurrentFilters.dn);
+    tmApplyFilters();
+};
+
+window.tmSelectTargetCat = function (val) {
+    tmTargetCat = val;
+    tmHighlightTiles('tm-target-cat-tiles', val);
+    tmUpdatePreview();
+    window.tmUpdateApplyState && window.tmUpdateApplyState();
+};
+
+window.tmRenderTable = function () {
+    tmScheduleRender();
+};
+window._tmRenderTableImmediate = _tmRenderTableImmediate;
 
 window.tmToggleWell = function (wellIdx, isChecked) {
     if (tmIsWellBlocked(wellIdx)) return;
@@ -480,13 +511,31 @@ window.tmOpenEditTransitionPopup = function (wellIdx, trIdx, event) {
     const currentP =
         typeof getStudnieProductById === 'function'
             ? getStudnieProductById(tr.productId)
-            : studnieProducts.find((p) => p.id === tr.productId);
+            : studnieProducts.find((pp) => pp.id === tr.productId);
 
-    const allProducts = studnieProducts.filter((p) => p.componentType === 'przejscie');
-    const categories = [...new Set(allProducts.map((p) => p.category))].sort();
-    const allDNs = [...new Set(allProducts.map((p) => p.dn))].sort(
-        (a, b) => parseFloat(a) - parseFloat(b)
-    );
+    const categories =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie')
+                          .map((p) => p.category)
+                  )
+              ].sort();
+    // DN set budujemy z indeksu aktywnych (szybsze niż filter całego katalogu)
+    const allDNs =
+        typeof getAllPrzejsciaActive === 'function'
+            ? [...new Set(getAllPrzejsciaActive().map((p) => p.dn))].sort(
+                  (a, b) => parseFloat(a) - parseFloat(b)
+              )
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie')
+                          .map((p) => p.dn)
+                  )
+              ].sort((a, b) => parseFloat(a) - parseFloat(b));
 
     const currentCat = currentP ? currentP.category : '';
     const currentDn = currentP ? currentP.dn : '';
@@ -581,9 +630,12 @@ function tmEditSelectType(el, wellIdx, trIdx) {
     tmEditSelectedCat = el.dataset.cat;
     tmEditSelectedDn = null;
 
-    const products = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.category === tmEditSelectedCat
-    );
+    const products =
+        typeof getPrzejsciaForCategory === 'function'
+            ? getPrzejsciaForCategory(tmEditSelectedCat)
+            : studnieProducts.filter(
+                  (p) => p.componentType === 'przejscie' && p.category === tmEditSelectedCat
+              );
     const dns = [...new Set(products.map((p) => p.dn))].sort(
         (a, b) => parseFloat(a) - parseFloat(b)
     );
@@ -602,9 +654,10 @@ function tmEditSelectType(el, wellIdx, trIdx) {
     const applyBtn = document.getElementById('tm-edit-apply-btn');
     if (applyBtn) applyBtn.style.display = 'none';
 
-    const currentP = studnieProducts.find(
-        (p) => p.id === wells[wellIdx]?.przejscia?.[trIdx]?.productId
-    );
+    const currentP =
+        typeof getStudnieProductById === 'function'
+            ? getStudnieProductById(wells[wellIdx]?.przejscia?.[trIdx]?.productId)
+            : studnieProducts.find((pp) => pp.id === wells[wellIdx]?.przejscia?.[trIdx]?.productId);
     if (currentP && currentP.category === tmEditSelectedCat) {
         dnList.querySelectorAll('[data-dn]').forEach((div) => {
             if (div.dataset.dn === currentP.dn) tmEditSelectDN(div, wellIdx, trIdx);
@@ -634,12 +687,15 @@ function tmEditSelectDN(el, wellIdx, trIdx) {
     tmEditSelectedDn = el.dataset.dn;
 
     if (tmEditSelectedCat && tmEditSelectedDn) {
-        const product = studnieProducts.find(
-            (p) =>
-                p.componentType === 'przejscie' &&
-                p.category === tmEditSelectedCat &&
-                String(p.dn) === tmEditSelectedDn
-        );
+        const product =
+            typeof getPrzejscieByCategoryAndDn === 'function'
+                ? getPrzejscieByCategoryAndDn(tmEditSelectedCat, tmEditSelectedDn)
+                : studnieProducts.find(
+                      (p) =>
+                          p.componentType === 'przejscie' &&
+                          p.category === tmEditSelectedCat &&
+                          String(p.dn) === tmEditSelectedDn
+                  );
         if (product) {
             const resultDiv = document.getElementById('tm-edit-result');
             resultDiv.innerHTML = `<div><span class="text-primary fw-600" style="font-size:var(--fs-sm);">${escapeHtml(product.category)} DN${product.dn}</span><span class="color-success fw-700" style="margin-left:0.5rem;font-size:var(--fs-sm);">${product.price != null ? parseInt(product.price).toLocaleString('pl-PL') : '—'} PLN</span></div>
@@ -658,12 +714,15 @@ async function tmEditApply(wellIdx, trIdx) {
         );
         return;
     }
-    const product = studnieProducts.find(
-        (p) =>
-            p.componentType === 'przejscie' &&
-            p.category === tmEditSelectedCat &&
-            String(p.dn) === tmEditSelectedDn
-    );
+    const product =
+        typeof getPrzejscieByCategoryAndDn === 'function'
+            ? getPrzejscieByCategoryAndDn(tmEditSelectedCat, tmEditSelectedDn)
+            : studnieProducts.find(
+                  (p) =>
+                      p.componentType === 'przejscie' &&
+                      p.category === tmEditSelectedCat &&
+                      String(p.dn) === tmEditSelectedDn
+              );
     if (!product) {
         showToast('Nie znaleziono produktu', 'error');
         return;
@@ -685,7 +744,7 @@ async function tmEditApply(wellIdx, trIdx) {
         logger.error('popupsTransitionManager', 'tmEditApply error:', e);
     }
     tmRefreshWellData();
-    tmRenderTable();
+    _tmRenderTableImmediate();
     showToast(`Zmieniono na ${product.category} DN${product.dn}`, 'success');
 }
 
@@ -756,16 +815,19 @@ window.tmUpdatePreview = function () {
         const p =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(tr.productId)
-                : studnieProducts.find((prod) => prod.id === tr.productId);
+                : studnieProducts.find((pp) => pp.id === tr.productId);
         if (!p || p.category === targetCat) return;
 
-        const replacement = studnieProducts.find(
-            (pr) =>
-                pr.componentType === 'przejscie' &&
-                pr.category === targetCat &&
-                pr.active !== 0 &&
-                pr.dn === p.dn
-        );
+        const replacement =
+            typeof getPrzejscieByCategoryAndDn === 'function'
+                ? getPrzejscieByCategoryAndDn(targetCat, p.dn)
+                : studnieProducts.find(
+                      (pr) =>
+                          pr.componentType === 'przejscie' &&
+                          pr.category === targetCat &&
+                          pr.active !== 0 &&
+                          pr.dn === p.dn
+                  );
 
         const label = `${escapeHtml(well.name || `Studnia ${wellIdx + 1}`)} — ${escapeHtml(p.category)} DN${p.dn}`;
         if (replacement) {
@@ -879,17 +941,20 @@ window.tmApplyChanges = async function () {
         const p =
             typeof getStudnieProductById === 'function'
                 ? getStudnieProductById(tr.productId)
-                : studnieProducts.find((prod) => prod.id === tr.productId);
+                : studnieProducts.find((pp) => pp.id === tr.productId);
         if (!p) return;
         if (p.category === targetCat) return;
 
-        const replacement = studnieProducts.find(
-            (pr) =>
-                pr.componentType === 'przejscie' &&
-                pr.category === targetCat &&
-                pr.active !== 0 &&
-                pr.dn === p.dn
-        );
+        const replacement =
+            typeof getPrzejscieByCategoryAndDn === 'function'
+                ? getPrzejscieByCategoryAndDn(targetCat, p.dn)
+                : studnieProducts.find(
+                      (pr) =>
+                          pr.componentType === 'przejscie' &&
+                          pr.category === targetCat &&
+                          pr.active !== 0 &&
+                          pr.dn === p.dn
+                  );
 
         if (replacement) {
             well.przejscia[trIdx].productId = replacement.id;
@@ -925,11 +990,17 @@ window.tmApplyChanges = async function () {
 
     showToast(`Trwa przeliczanie zmodyfikowanych studni (${modifiedWellsIndices.size})...`, 'info');
 
-    for (const wellIdx of modifiedWellsIndices) {
-        const originalIndex = currentWellIndex;
-        currentWellIndex = wellIdx;
-        await autoSelectComponents(true);
-        currentWellIndex = originalIndex;
+    // P1.3 batch coalesce: suppress intermediate full refreshAll (N×solver → 1×)
+    window.__tmBatchDepth = (window.__tmBatchDepth || 0) + 1;
+    try {
+        for (const wellIdx of modifiedWellsIndices) {
+            const originalIndex = currentWellIndex;
+            currentWellIndex = wellIdx;
+            await autoSelectComponents(true);
+            currentWellIndex = originalIndex;
+        }
+    } finally {
+        window.__tmBatchDepth = Math.max(0, (window.__tmBatchDepth || 1) - 1);
     }
 
     refreshAll();
@@ -944,7 +1015,7 @@ window.tmApplyChanges = async function () {
     tmSelectedTransitions.clear();
     tmRefreshWellData();
 
-    tmRenderTable();
+    _tmRenderTableImmediate();
 };
 
 function showSkippedPopup(skippedDetails, targetCat) {

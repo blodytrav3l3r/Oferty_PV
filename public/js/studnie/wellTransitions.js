@@ -3,10 +3,16 @@
 
 function renderInlinePrzejsciaApp(containerId) {
     const well = getCurrentWell();
-    const przejsciaProducts = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.active !== 0
-    );
-    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
+    const allTypes =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
+                          .map((p) => p.category)
+                  )
+              ].sort();
     // Filtruj tylko do widocznych typów
     const types = allTypes.filter((t) => visiblePrzejsciaTypes.has(t));
 
@@ -45,8 +51,15 @@ function renderInlinePrzejsciaApp(containerId) {
 
     const maxPipeDn = well ? getMaxPipeDn(well.dn) : 9999;
     const dnList = inlinePrzejsciaState.type
-        ? przejsciaProducts
-              .filter((p) => p.category === inlinePrzejsciaState.type)
+        ? (typeof getPrzejsciaForCategory === 'function'
+              ? getPrzejsciaForCategory(inlinePrzejsciaState.type)
+              : studnieProducts.filter(
+                    (p) =>
+                        p.componentType === 'przejscie' &&
+                        p.active !== 0 &&
+                        p.category === inlinePrzejsciaState.type
+                )
+          )
               .filter((p) => {
                   if (p.category === 'Otwór KPED') return true;
                   let pDn = 160;
@@ -60,9 +73,7 @@ function renderInlinePrzejsciaApp(containerId) {
               .sort((a, b) => a.dn - b.dn)
         : [];
     const selectedProduct = inlinePrzejsciaState.dnId
-        ? typeof getStudnieProductById === 'function'
-            ? getStudnieProductById(inlinePrzejsciaState.dnId)
-            : studnieProducts.find((p) => p.id === inlinePrzejsciaState.dnId)
+        ? getStudnieProductById(inlinePrzejsciaState.dnId)
         : null;
 
     container.innerHTML = `
@@ -582,10 +593,18 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
         // Tryb edycji dla tego kafelka
         if (editPrzejscieIdx === index) {
             const typeName = p ? p.category : '—';
-            const przejsciaProducts = studnieProducts.filter(
-                (pr) => pr.componentType === 'przejscie' && pr.active !== 0
-            );
-            const allTypes = [...new Set(przejsciaProducts.map((pr) => pr.category))].sort();
+            const allTypes =
+                typeof getPrzejsciaCategories === 'function'
+                    ? getPrzejsciaCategories()
+                    : [
+                          ...new Set(
+                              studnieProducts
+                                  .filter(
+                                      (pr) => pr.componentType === 'przejscie' && pr.active !== 0
+                                  )
+                                  .map((pr) => pr.category)
+                          )
+                      ].sort();
 
             // Synchronizuj fallback do aktualnie renderowanego, jesli stan jest pusty
             if (!editPrzejscieState.type) {
@@ -599,8 +618,21 @@ window.renderWellPrzejscia = function renderWellPrzejscia(opts) {
             }
 
             const maxPipeDn = well ? getMaxPipeDn(well.dn) : 9999;
-            const currentTypeDNs = przejsciaProducts
-                .filter((pr) => pr.category === editPrzejscieState.type || pr.id === item.productId)
+            const baseForType =
+                typeof getPrzejsciaForCategory === 'function' && editPrzejscieState.type
+                    ? getPrzejsciaForCategory(editPrzejscieState.type)
+                    : studnieProducts.filter(
+                          (pr) =>
+                              pr.componentType === 'przejscie' &&
+                              pr.active !== 0 &&
+                              pr.category === editPrzejscieState.type
+                      );
+            const currentItemProd = getStudnieProductById(item.productId);
+            const currentTypeDNs = (
+                currentItemProd && currentItemProd.category !== editPrzejscieState.type
+                    ? [...baseForType, currentItemProd]
+                    : [...baseForType]
+            )
                 .filter((pr) => {
                     if (pr.category === 'Otwór KPED') return true;
                     let pDn = 160;

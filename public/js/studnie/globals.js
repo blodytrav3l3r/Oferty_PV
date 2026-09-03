@@ -42,12 +42,36 @@ window._purgeOrphanOtProducts = _purgeOrphanOtProducts;
 // Klucz canonical: String(product.id) — jeden SSoT dla lookupu
 /** @type {Map<string, any>} */
 let studnieProductsById = new Map();
+/** @type {Map<string, any[]>} przejscie category -> active products (sorted by dn) */
+let przejsciaByCategory = new Map();
+/** @type {Map<string, any>} przejscie category|dn -> product */
+let przejsciaByCatDn = new Map();
+/** @type {string[]} sorted przejscie categories */
+let przejsciaCategoriesSorted = [];
 function _rebuildStudnieProductsById() {
     studnieProductsById = new Map();
+    przejsciaByCategory = new Map();
+    przejsciaByCatDn = new Map();
     for (let i = 0; i < studnieProducts.length; i++) {
         const p = studnieProducts[i];
         if (p && p.id != null) studnieProductsById.set(String(p.id), p);
+        if (p && p.componentType === 'przejscie' && p.active !== 0 && p.category) {
+            const cat = String(p.category);
+            if (!przejsciaByCategory.has(cat)) przejsciaByCategory.set(cat, []);
+            przejsciaByCategory.get(cat).push(p);
+            const dnKey = cat + '|' + String(p.dn);
+            if (!przejsciaByCatDn.has(dnKey)) przejsciaByCatDn.set(dnKey, p);
+        }
     }
+    // sort per-category by dn numeric for deterministic UI
+    przejsciaByCategory.forEach((arr) => {
+        arr.sort((a, b) => {
+            const da = parseFloat(a.dn) || 0;
+            const db = parseFloat(b.dn) || 0;
+            return da - db;
+        });
+    });
+    przejsciaCategoriesSorted = [...przejsciaByCategory.keys()].sort();
 }
 /**
  * O(1) lookup produktu studni — String canonical.
@@ -90,12 +114,52 @@ function __assertStudnieMapFresh() {
     }
     return true;
 }
+function getPrzejsciaCategories() {
+    if (przejsciaByCategory.size !== przejsciaCategoriesSorted.length) {
+        // stale check — size mismatch after push bypass (rare)
+        if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    }
+    return przejsciaCategoriesSorted;
+}
+function getPrzejsciaForCategory(cat) {
+    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    const arr = przejsciaByCategory.get(String(cat));
+    return arr ? [...arr] : [];
+}
+function getPrzejscieByCategoryAndDn(cat, dn) {
+    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    return przejsciaByCatDn.get(String(cat) + '|' + String(dn)) || null;
+}
+function getAllPrzejsciaActive() {
+    if (studnieProductsById.size !== studnieProducts.length) _rebuildStudnieProductsById();
+    const out = [];
+    przejsciaByCategory.forEach((arr) => {
+        for (let i = 0; i < arr.length; i++) out.push(arr[i]);
+    });
+    return out;
+}
 window._rebuildStudnieProductsById = _rebuildStudnieProductsById;
 window.getStudnieProductById = getStudnieProductById;
 window.__assertStudnieMapFresh = __assertStudnieMapFresh;
+window.getPrzejsciaCategories = getPrzejsciaCategories;
+window.getPrzejsciaForCategory = getPrzejsciaForCategory;
+window.getPrzejscieByCategoryAndDn = getPrzejscieByCategoryAndDn;
+window.getAllPrzejsciaActive = getAllPrzejsciaActive;
 Object.defineProperty(window, 'studnieProductsById', {
     configurable: true,
     get: () => studnieProductsById
+});
+Object.defineProperty(window, 'przejsciaByCategory', {
+    configurable: true,
+    get: () => przejsciaByCategory
+});
+Object.defineProperty(window, 'przejsciaByCatDn', {
+    configurable: true,
+    get: () => przejsciaByCatDn
+});
+Object.defineProperty(window, 'przejsciaCategoriesSorted', {
+    configurable: true,
+    get: () => przejsciaCategoriesSorted
 });
 _rebuildStudnieProductsById();
 

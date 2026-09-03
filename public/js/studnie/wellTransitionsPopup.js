@@ -2,10 +2,16 @@
 /* ===== Popupy dla przejść ===== */
 
 function openPrzejsciaVisibilityPopup(containerId) {
-    const przejsciaProducts = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.active !== 0
-    );
-    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
+    const allTypes =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
+                          .map((p) => p.category)
+                  )
+              ].sort();
 
     let overlay = document.getElementById('przejscia-visibility-overlay');
     if (overlay) overlay.remove();
@@ -96,10 +102,16 @@ function togglePrzejsciaTypeVisibility(type) {
 }
 
 function setPrzejsciaVisibilityAll(visible) {
-    const przejsciaProducts = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.active !== 0
-    );
-    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))];
+    const allTypes =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
+                          .map((p) => p.category)
+                  )
+              ];
     if (visible) {
         allTypes.forEach((t) => visiblePrzejsciaTypes.add(t));
     } else {
@@ -112,10 +124,16 @@ function refreshPrzejsciaVisibilityTiles() {
     const overlay = document.getElementById('przejscia-visibility-overlay');
     if (!overlay) return;
 
-    const przejsciaProducts = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.active !== 0
-    );
-    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
+    const allTypes =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
+                          .map((p) => p.category)
+                  )
+              ].sort();
     const visibleCount = allTypes.filter((t) => visiblePrzejsciaTypes.has(t)).length;
 
     const counterEl = overlay.querySelector('.przejscia-vis-counter');
@@ -235,10 +253,16 @@ window.openChangePrzejscieTypePopup = function (index) {
             : studnieProducts.find((p) => p.id === currTypeId);
     if (!currProduct) return;
 
-    const przejsciaProducts = studnieProducts.filter(
-        (p) => p.componentType === 'przejscie' && p.active !== 0
-    );
-    const allTypes = [...new Set(przejsciaProducts.map((p) => p.category))].sort();
+    const allTypes =
+        typeof getPrzejsciaCategories === 'function'
+            ? getPrzejsciaCategories()
+            : [
+                  ...new Set(
+                      studnieProducts
+                          .filter((p) => p.componentType === 'przejscie' && p.active !== 0)
+                          .map((p) => p.category)
+                  )
+              ].sort();
 
     window.showModal({
         id: 'change-prz-type-modal',
@@ -273,7 +297,10 @@ window.confirmChangePrzejscieType = function (index, newType) {
     if (!well || !well.przejscia || !well.przejscia[index]) return;
 
     const maxPipeDnType = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
-    const allForType = studnieProducts.filter((p) => p.category === newType);
+    const allForType =
+        typeof getPrzejsciaForCategory === 'function'
+            ? getPrzejsciaForCategory(newType)
+            : studnieProducts.filter((p) => p.category === newType);
     let available = allForType
         .filter((p) => {
             if (p.category === 'Otwór KPED') return true;
@@ -301,7 +328,8 @@ window.confirmChangePrzejscieType = function (index, newType) {
         delete well.przejscia[index].frozenDrillingDn;
 
         closeModal();
-        refreshAll();
+        if (typeof refreshActiveWell === 'function') refreshActiveWell();
+        else refreshAll();
         autoSelectComponents(true);
         window.refreshZleceniaModalIfActive();
         showToast('Zmieniono materiał przejścia', 'success');
@@ -328,8 +356,14 @@ window.openChangePrzejscieDnPopup = function (index) {
     if (!currProduct) return;
 
     const maxPipeDn = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
-    const available = studnieProducts
-        .filter((p) => p.category === currProduct.category)
+    let baseAvail =
+        typeof getPrzejsciaForCategory === 'function'
+            ? getPrzejsciaForCategory(currProduct.category)
+            : studnieProducts.filter((p) => p.category === currProduct.category && p.active !== 0);
+    // indeks zawiera tylko active — dopisz current jeśli inactive
+    if (currProduct.active === 0 && !baseAvail.some((p) => p.id === currId))
+        baseAvail = [...baseAvail, currProduct];
+    const available = baseAvail
         .filter((p) => {
             if (p.category === 'Otwór KPED') return true;
             let pDn = 160;
@@ -386,7 +420,8 @@ window.confirmChangePrzejscieDn = function (index, newProductId) {
     delete well.przejscia[index].frozenDrillingDn;
 
     closeModal();
-    refreshAll();
+    if (typeof refreshActiveWell === 'function') refreshActiveWell();
+    else refreshAll();
     autoSelectComponents(true);
     window.refreshZleceniaModalIfActive();
     showToast('Zmieniono średnicę przejścia', 'success');

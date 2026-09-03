@@ -4279,6 +4279,8 @@ select.form-input option {
     border-radius: var(--radius-sm);
     margin-bottom: 0.6rem;
     overflow: hidden;
+    content-visibility: auto;
+    contain-intrinsic-size: 0 340px;
     transition:
         border-color 0.2s,
         box-shadow 0.2s;

@@ -15,12 +15,15 @@ window.inlineSetDN = (id, containerId = '') => {
 window.editInlineSetType = function (type) {
     syncEditState();
     editPrzejscieState.type = type;
-    const przejsciaProducts = studnieProducts.filter(
-        (pr) => pr.componentType === 'przejscie' && pr.active !== 0
-    );
     const well = typeof getCurrentWell === 'function' ? getCurrentWell() : null;
     const maxPipeDn = typeof getMaxPipeDn === 'function' && well ? getMaxPipeDn(well.dn) : 9999;
-    const allForType = przejsciaProducts.filter((p) => p.category === type);
+    const allForType =
+        typeof getPrzejsciaForCategory === 'function'
+            ? getPrzejsciaForCategory(type)
+            : studnieProducts.filter(
+                  (pr) =>
+                      pr.componentType === 'przejscie' && pr.active !== 0 && pr.category === type
+              );
     let dns = allForType
         .filter((p) => {
             if (p.category === 'Otwór KPED') return true;
@@ -115,7 +118,8 @@ window.inlineFinish = (contextId = 'main', containerId = '') => {
         spadekMufa: spadekMufa ? Math.round(parseFloat(spadekMufa)) : null
     });
 
-    refreshAll();
+    if (typeof refreshActiveWell === 'function') refreshActiveWell();
+    else refreshAll();
     autoSelectComponents(true);
     showToast('Dodano przejście szczelne', 'success');
     renderInlinePrzejsciaApp(containerId);
