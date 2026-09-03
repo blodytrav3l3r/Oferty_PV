@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cleanup przy odpięciu iframe
     window.addEventListener('pagehide', () => {
-        if (window.kartotekaUI) {
+        if (window.kartotekaUI && typeof window.kartotekaUI._stopAutoRefresh === 'function') {
             window.kartotekaUI._stopAutoRefresh();
         }
     });

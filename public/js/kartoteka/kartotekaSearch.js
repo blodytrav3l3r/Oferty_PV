@@ -40,8 +40,6 @@ export default {
             // Załaduj mapę zamówień w tle — nie blokuje renderowania
             this.notifyOrderMutation();
 
-            this._startAutoRefresh();
-
             this.initialized = true;
             if (typeof window.initAdvancedFilterEvents === 'function') {
                 window.initAdvancedFilterEvents(this);
@@ -58,24 +56,6 @@ export default {
         logger.info('kartotekaUi', 'loadLocalOffers: Delegowanie do searchOffers...');
         await this.searchOffers(this.buildSearchParams());
         this.notifyOrderMutation();
-    },
-
-    _startAutoRefresh() {
-        this._stopAutoRefresh();
-        this.autoRefreshInterval = setInterval(() => {
-            if (!document.hidden) {
-                this.searchOffers(this.buildSearchParams()).catch((e) =>
-                    logger.error('kartotekaUi', 'Auto-refresh error:', e)
-                );
-            }
-        }, 60000);
-    },
-
-    _stopAutoRefresh() {
-        if (this.autoRefreshInterval) {
-            clearInterval(this.autoRefreshInterval);
-            this.autoRefreshInterval = null;
-        }
     },
 
     /**
@@ -122,14 +102,17 @@ export default {
         };
     },
 
-    async searchOffers(params = {}, skipRender) {
+    async searchOffers(params = {}, skipRender, opts = {}) {
         if (this.abortController) {
             this.abortController.abort();
         }
         this.abortController = new AbortController();
 
+        // silent = praca w tle (auto-refresh, „Pokaż więcej"): nigdy spinnera
+        // ani ekranu błędu na wierzchu istniejącej listy.
+        const silent = !!(opts && opts.silent);
         this.isLoading = true;
-        this.showLoadingSpinner();
+        if (!silent) this.showLoadingSpinner();
 
         const headers =
             typeof authHeaders === 'function'
@@ -160,6 +143,7 @@ export default {
 
             if (!resp.ok) {
                 const errBody = await resp.json().catch(() => ({}));
+                if (silent) return;
                 if (resp.status === 429 && Number(errBody.retryAfter) > 0) {
                     this.showError(
                         errBody.error || window.httpErrorMessage(429),
@@ -188,12 +172,21 @@ export default {
                 this.populateUserFilter();
             }
 
-            if (!skipRender) this.renderResults();
+            if (!skipRender) {
+                const signature = this._offerListSignature(this.searchResults.items);
+                const listChanged = signature !== this._lastOfferSignature;
+                this._lastOfferSignature = signature;
+                // Tło renderuje tylko przy realnej zmianie; jawne akcje zawsze.
+                // „Pokaż więcej" zawsze (doklejone wyniki), ale bez spinnera (silent).
+                if (!silent || isLoadMore || listChanged) this.renderResults();
+            } else if (!isLoadMore) {
+                this._lastOfferSignature = this._offerListSignature(this.searchResults.items);
+            }
             this.updateOfferCounter(this.searchResults.items.length, this.searchResults.totalCount);
         } catch (error) {
             if (error.name === 'AbortError') return;
             logger.error('kartotekaUi', 'Błąd wyszukiwania ofert:', error);
-            this.showError(error.message || 'Błąd sieci');
+            if (!silent) this.showError(error.message || 'Błąd sieci');
         } finally {
             this.isLoading = false;
         }
@@ -210,8 +203,28 @@ export default {
         params.cursorId = this.searchResults.nextCursorId;
         params.limit = 50;
 
-        await this.searchOffers(params);
+        await this.searchOffers(params, false, { silent: true });
         this.notifyOrderMutation();
+    },
+
+    /**
+     * Lekka sygnatura listy do wykrywania zmian przy cichym odświeżaniu.
+     * Bez pełnego JSON — wystarczą pola zmieniające kartę oferty.
+     */
+    _offerListSignature(items) {
+        if (!Array.isArray(items)) return '';
+        return items
+            .map(
+                (o) =>
+                    (o && o.id) +
+                    '|' +
+                    (o && o.updatedAt) +
+                    '|' +
+                    (o && o.state) +
+                    '|' +
+                    (o && o._orderCount)
+            )
+            .join(';');
     },
 
     /**
