@@ -13,6 +13,47 @@ function _excelOnFocusInRow(e) {
 
 function _excelOnClickCell(e) {
     if (e.target.closest('button')) return;
+    // Shift+klik na sticky kolumnach (Lp/NrStudni/Rzędne) → zakres wierszy (checkboxy), nie komórki
+    if (
+        e.shiftKey &&
+        !e.ctrlKey &&
+        !e.metaKey &&
+        !e.target.closest('input, select, .excel-sel-wrap') &&
+        !e.target.closest('.excel-row-select')
+    ) {
+        const row = e.target.closest('tr[data-widx]');
+        if (row) {
+            const td = e.target.closest('td');
+            const cIdx = td ? Array.from(row.children).indexOf(td) : -1;
+            // colIdx 0..7 = checkbox, A/M, Lp, NrStudni, RzWlazu, RzDna, Wys (sticky) — bezpieczny dla edycji
+            if (cIdx >= 0 && cIdx <= 7) {
+                const wIdx = parseInt(row.getAttribute('data-widx'), 10);
+                if (!isNaN(wIdx)) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (_excelLastClickedRow === null) {
+                        if (typeof _excelIsWellLocked !== 'function' || !_excelIsWellLocked(wIdx)) {
+                            _excelRowSelectStates[wIdx] = true;
+                            _excelLastClickedRow = wIdx;
+                            if (typeof _excelSyncRowCheckboxes === 'function')
+                                _excelSyncRowCheckboxes();
+                            if (typeof _excelSyncHeaderCheckbox === 'function')
+                                _excelSyncHeaderCheckbox();
+                        }
+                    } else {
+                        const rangeChecked = !!_excelRowSelectStates[_excelLastClickedRow];
+                        if (typeof _excelSetRowRange === 'function')
+                            _excelSetRowRange(_excelLastClickedRow, wIdx, rangeChecked);
+                        if (typeof _excelSyncRowCheckboxes === 'function')
+                            _excelSyncRowCheckboxes();
+                        if (typeof _excelSyncHeaderCheckbox === 'function')
+                            _excelSyncHeaderCheckbox();
+                    }
+                    return;
+                }
+            }
+        }
+    }
     const td = e.target.closest('td');
     const row = e.target.closest('tr[data-widx]');
     if (!row || !td) return;
