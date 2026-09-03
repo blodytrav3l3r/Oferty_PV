@@ -112,15 +112,31 @@ function _excelToggleSelectAll(checked) {
     _excelRowSelectStates = {};
     if (typeof wells !== 'undefined') {
         for (let i = 0; i < wells.length; i++) {
+            if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(i) && checked)
+                continue;
             _excelRowSelectStates[i] = checked;
         }
     }
     const boxes = document.querySelectorAll('.excel-row-select');
     boxes.forEach(function (cb) {
+        const idx = parseInt(cb.getAttribute('data-widx'), 10);
+        if (
+            !isNaN(idx) &&
+            typeof _excelIsWellLocked === 'function' &&
+            _excelIsWellLocked(idx) &&
+            checked
+        ) {
+            cb.checked = false;
+            return;
+        }
         cb.checked = checked;
     });
-    const hdrAll = document.getElementById('excel-select-all');
-    if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
+    _excelLastClickedRow = null;
+    if (typeof _excelSyncHeaderCheckbox === 'function') _excelSyncHeaderCheckbox();
+    else {
+        const hdrAll = document.getElementById('excel-select-all');
+        if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = checked;
+    }
 }
 
 /** Zbierz fokusowalne elementy nawigacji w wierszu: INPUT + DIV.excel-sel-wrap */

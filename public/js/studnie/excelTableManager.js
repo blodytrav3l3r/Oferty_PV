@@ -98,27 +98,135 @@ function _excelInitColumnResize() {
     });
 }
 
-/* ===== ROW SELECT CHEKBOX CHANGE HANDLER ===== */
+/* ===== ROW SELECT — shift-range + group toggle + tri-state header ===== */
+if (typeof window !== 'undefined') window._excelSyncHeaderCheckbox = _excelSyncHeaderCheckbox;
+function _excelSyncHeaderCheckbox() {
+    const hdrAll = document.getElementById('excel-select-all');
+    if (!hdrAll) return;
+    const boxes = document.querySelectorAll(
+        '#excel-table-container tbody tr[data-widx] input.excel-row-select'
+    );
+    const total = boxes.length;
+    if (total === 0) {
+        hdrAll.checked = false;
+        hdrAll.indeterminate = false;
+        hdrAll.setAttribute('aria-checked', 'false');
+        return;
+    }
+    let checkedCount = 0;
+    boxes.forEach(function (cb) {
+        const idx = parseInt(cb.getAttribute('data-widx'), 10);
+        if (!isNaN(idx) && _excelRowSelectStates[idx]) checkedCount++;
+    });
+    const all = checkedCount === total;
+    const some = checkedCount > 0 && checkedCount < total;
+    if (hdrAll !== document.activeElement) hdrAll.checked = all;
+    hdrAll.indeterminate = some;
+    hdrAll.setAttribute('aria-checked', some ? 'mixed' : String(all));
+}
+
+function _excelSetRowRange(fromWIdx, toWIdx, checked) {
+    const visibleRows = typeof _excelGetVisibleRows === 'function' ? _excelGetVisibleRows() : [];
+    const order = [];
+    const posByWIdx = new Map();
+    visibleRows.forEach(function (tr, pos) {
+        const idx = parseInt(tr.getAttribute('data-widx'), 10);
+        if (!isNaN(idx)) {
+            posByWIdx.set(idx, pos);
+            order.push(idx);
+        }
+    });
+    const fromPos = posByWIdx.get(fromWIdx);
+    const toPos = posByWIdx.get(toWIdx);
+    if (fromPos === undefined || toPos === undefined) {
+        // fallback pojedynczy wiersz gdy jeden z końców niewidoczny (filtr)
+        if (
+            (!isNaN(toWIdx) && typeof _excelIsWellLocked !== 'function') ||
+            !_excelIsWellLocked(toWIdx)
+        ) {
+            _excelRowSelectStates[toWIdx] = checked;
+        }
+        return;
+    }
+    const lo = Math.min(fromPos, toPos);
+    const hi = Math.max(fromPos, toPos);
+    for (let p = lo; p <= hi; p++) {
+        const wIdx = order[p];
+        if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(wIdx)) continue;
+        _excelRowSelectStates[wIdx] = checked;
+    }
+}
+
+function _excelSyncRowCheckboxes() {
+    document
+        .querySelectorAll('#excel-table-container tbody tr[data-widx] input.excel-row-select')
+        .forEach(function (cb) {
+            const idx = parseInt(cb.getAttribute('data-widx'), 10);
+            if (!isNaN(idx)) cb.checked = !!_excelRowSelectStates[idx];
+        });
+}
+
+function _excelHandleRowCheckboxClick(target, e) {
+    const wIdx = parseInt(target.getAttribute('data-widx'), 10);
+    if (isNaN(wIdx)) return;
+    const isShift = !!e.shiftKey && _excelLastClickedRow !== null;
+    // Shift-range ma priorytet nad group-toggle (korekta planu #2)
+    if (isShift) {
+        e.preventDefault();
+        const anchor = _excelLastClickedRow;
+        // kotwica nie zmienia się przy Shift (OS)
+        // konserwatywnie: sprawdzony anchor → zaznacz zakres, inaczej odznacz
+        const rangeChecked = _excelRowSelectStates[anchor] ? true : !!target.checked;
+        _excelSetRowRange(anchor, wIdx, rangeChecked);
+        _excelSyncRowCheckboxes();
+        _excelSyncHeaderCheckbox();
+        return;
+    }
+    // Group toggle: klik na dowolnym należącym do grupy ≥2
+    const selectedIds = Object.keys(_excelRowSelectStates).filter(function (k) {
+        return _excelRowSelectStates[k];
+    });
+    const isInGroup = selectedIds.length > 1 && selectedIds.indexOf(String(wIdx)) >= 0;
+    if (isInGroup) {
+        e.preventDefault();
+        const allGroupChecked = selectedIds.every(function (id) {
+            return !!_excelRowSelectStates[id];
+        });
+        const newChecked = !allGroupChecked;
+        selectedIds.forEach(function (id) {
+            const idx = parseInt(id, 10);
+            if (typeof _excelIsWellLocked === 'function' && _excelIsWellLocked(idx)) return;
+            _excelRowSelectStates[idx] = newChecked;
+        });
+        // kliknięty wiersz też w grupie — już objęty
+        _excelSyncRowCheckboxes();
+        _excelSyncHeaderCheckbox();
+        _excelLastClickedRow = wIdx;
+        return;
+    }
+    // Zwykły pojedynczy toggle — pozwól browser przełączyć, zsynchronizuj stan
+    // e.target.checked już po natywnym toggle w click
+    _excelRowSelectStates[wIdx] = target.checked;
+    _excelLastClickedRow = wIdx;
+    _excelSyncHeaderCheckbox();
+}
+
 function _excelOnRowSelectChange(e) {
     const target = e.target;
     if (!target) return;
-    /* Row checkbox - per studnia */
     if (target.classList && target.classList.contains('excel-row-select')) {
+        // Guard: click już obsłużył intencję (mouse) — nie mutuj drugi raz na change
+        if (_excelRowClickHandled) {
+            _excelRowClickHandled = false;
+            return;
+        }
         const wIdx = parseInt(target.getAttribute('data-widx'), 10);
         if (!isNaN(wIdx)) {
             _excelRowSelectStates[wIdx] = target.checked;
-            /* sync select-all checkbox */
-            const allBoxes = document.querySelectorAll(
-                '#excel-table-container tbody tr[data-widx] input.excel-row-select'
-            );
-            const allChecked = Array.from(allBoxes).every(function (cb) {
-                return cb.checked;
-            });
-            const hdrAll = document.getElementById('excel-select-all');
-            if (hdrAll && hdrAll !== document.activeElement) hdrAll.checked = allChecked;
+            _excelLastClickedRow = wIdx;
+            _excelSyncHeaderCheckbox();
         }
     }
-    /* Select-all checkbox jest obslugiwany inline onchange -> _excelToggleSelectAll */
 }
 
 /* ===== ROW CHECKBOX + AUTO/MANUAL BATCH ===== */

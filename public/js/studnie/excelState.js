@@ -15,6 +15,8 @@ let _excelDragThrottle = null;
 let _excelFocusOverlayEl = null;
 let _excelFocusRaf = null;
 let _excelRowSelectStates = {};
+let _excelLastClickedRow = null;
+let _excelRowClickHandled = false;
 let _excelDirty = false;
 let _excelFullscreen = false;
 let _excelPollInterval = null;
@@ -319,6 +321,8 @@ function _excelResetLayoutDependentState() {
     }
     if (_excelSelectedCols.length > 0) _excelDeselectAllCols();
     _excelLastClickedCell = null;
+    _excelLastClickedRow = null;
+    _excelRowClickHandled = false;
     _excelLastDataCol = -1;
     _excelLastClickedCol = -1;
 }

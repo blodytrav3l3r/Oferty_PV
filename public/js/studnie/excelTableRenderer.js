@@ -349,6 +349,7 @@ function _excelRenderTable(dn) {
     /* Po restore fokusa — currentWellIndex jest już ustawiony, kody h3 muszą
        być liczone z właściwej studni (bug: update przed restore = złe kody) */
     _excelUpdateHeaderProdCodes();
+    if (typeof _excelSyncHeaderCheckbox === 'function') _excelSyncHeaderCheckbox();
     /* Ponownie zastosuj filtr wyszukiwarki po re-renderze */
     const searchInput = document.getElementById('excel-search-input');
     if (searchInput && searchInput.value) excelFilterWells(searchInput.value);

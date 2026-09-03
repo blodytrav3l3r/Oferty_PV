@@ -56,6 +56,18 @@ function _excelRegisterExcelListeners() {
     document.addEventListener('cut', _excelHandleCut);
     container.addEventListener('paste', _excelHandlePaste, true);
     container.addEventListener('keydown', _excelHandleKeydown);
+    // centralny punkt wejścia dla row-checkbox: click obsługuje mouse/shift/group, change tylko fallback klawiatury
+    container.addEventListener('click', function (e) {
+        const t = e.target;
+        if (t instanceof HTMLElement && t.classList && t.classList.contains('excel-row-select')) {
+            _excelRowClickHandled = true;
+            _excelHandleRowCheckboxClick(t, e);
+            // zresetuj flagę po zakończeniu propagacji change (Space generuje click+change)
+            setTimeout(function () {
+                _excelRowClickHandled = false;
+            }, 0);
+        }
+    });
     container.addEventListener('change', _excelOnRowSelectChange);
     container.addEventListener('mousedown', _excelOnMouseDown);
     document.addEventListener('mousemove', _excelOnMouseMove);
