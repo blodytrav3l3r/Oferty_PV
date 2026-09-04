@@ -264,9 +264,13 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     const ff = mag === 'Włocławek' ? 'formaStandardowa' : 'formaStandardowaKLB';
 
     const allProducts = availProducts;
+    // P0-1: jednorazowy filtr dostępności — filterByWellParams jest czysta
+    // (czyta tylko p i well), a well nie jest mutowany przed KROKIEM 7,
+    // więc 5× .filter() na tych samych danych dawało identyczne wyniki.
+    const availFiltered = availProducts.filter((p) => filterByWellParams(p, well));
     // KROK 1: Dennica
     const dnResult = getLowestDennicaHybrid(
-        availProducts.filter((p) => filterByWellParams(p, well)),
+        availFiltered,
         dn,
         mag,
         well.przejscia,
@@ -279,13 +283,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     // KROK 2: Zakończenie
     const forcedZak = well.zakonczenie || null;
     const isWkladkaZwienczenie = well.wkladkaZwienczenie && well.wkladkaZwienczenie !== 'brak';
-    let topProd = getTopClosure(
-        availProducts.filter((p) => filterByWellParams(p, well)),
-        effectiveDn,
-        forcedZak,
-        isWkladkaZwienczenie,
-        mag
-    );
+    let topProd = getTopClosure(availFiltered, effectiveDn, forcedZak, isWkladkaZwienczenie, mag);
 
     // Jeśli getTopClosure zwrócił coś innego niż konus (np. Płyta DIN),
     // a konus jest dostępny w katalogu i nie ma PEHD → nadpisz konusem
@@ -400,13 +398,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         topProd.componentType
     );
     if (isRelief || topProd.componentType === 'konus') {
-        const dinProd = getTopClosure(
-            availProducts.filter((p) => filterByWellParams(p, well)),
-            effectiveDn,
-            null,
-            true,
-            mag
-        );
+        const dinProd = getTopClosure(availFiltered, effectiveDn, null, true, mag);
         if (dinProd && dinProd.id !== topProd.id) {
             const fbCfg = buildTopConfig(dinProd);
             fbCfg.label += ' (zamiennik)';
@@ -458,22 +450,17 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         };
     }
 
-    // KROK 4: Listy kręgów i redukcja
-    let dennicy = availProducts
+    // KROK 4: Listy kręgów i redukcja (P0-1: baza availFiltered — well-filtr
+    // już spełniony dla każdego elementu, więc pomijamy powtórne sprawdzenie).
+    let dennicy = availFiltered
         .filter((p) => {
             if (dn === 'styczna') {
-                const isStyczna =
-                    (p.componentType === 'styczna' || p.category === 'Studnie styczne') &&
-                    filterByWellParams(p, well);
+                const isStyczna = p.componentType === 'styczna' || p.category === 'Studnie styczne';
                 if (!isStyczna) return false;
                 if (well.stycznaDn) return parseInt(p.dn) === parseInt(well.stycznaDn);
                 return true;
             }
-            return (
-                p.componentType === 'dennica' &&
-                parseInt(p.dn) === dn &&
-                filterByWellParams(p, well)
-            );
+            return p.componentType === 'dennica' && parseInt(p.dn) === dn;
         })
         .sort((a, b) => {
             const aForm = a[ff] === 1 ? 1 : 0;
@@ -502,9 +489,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         (p.name && String(p.name).toLowerCase().includes('z otworem'));
 
     const kregiFromEngine = getKregiList(
-        availProducts.filter(
-            (p) => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)
-        ),
+        availFiltered.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
         effectiveDn,
         mag
     );
@@ -521,9 +506,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                   .sort((a, b) => b.height - a.height);
 
     const targetDnKregiEngine = getKregiList(
-        availProducts.filter(
-            (p) => filterByWellParams(p, well) && p.componentType === 'krag' && !isDrilledRing(p)
-        ),
+        availFiltered.filter((p) => p.componentType === 'krag' && !isDrilledRing(p)),
         targetDn,
         mag
     );
@@ -550,6 +533,12 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
     }
     const canReduce =
         well.redukcjaDN1000 && [1200, 1500, 2000, 2500].includes(dn) && reductionPlate;
+    // P0-1: jw. — redTargetProducts.filter(filterByWellParams) w solve()
+    // liczone na tych samych danych; jedna stala (redTargetProducts bez filtra
+    // zostaje nietknieta — wymuszone zakonczenie szuka tez poza filtrem).
+    const redTargetFiltered = canReduce
+        ? availProducts.filter((p) => parseInt(p.dn) === targetDn && filterByWellParams(p, well))
+        : [];
 
     // KROK 5: DP Ring Optimizer
     const transitionsForDP = (well.przejscia || [])
@@ -898,14 +887,7 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 ? redTopProducts.find((p) => p.id === well.redukcjaZakonczenie)
                 : null;
             const rZakFinal =
-                rZak ||
-                getTopClosure(
-                    redTargetProducts.filter((p) => filterByWellParams(p, well)),
-                    targetDn,
-                    null,
-                    isWkladkaZwienczenie,
-                    mag
-                );
+                rZak || getTopClosure(redTargetFiltered, targetDn, null, isWkladkaZwienczenie, mag);
             if (rZakFinal) {
                 topRedItems.push({ productId: rZakFinal.id, quantity: 1 });
                 topRedH += rZakFinal.height;
@@ -920,8 +902,8 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                     const partnerType = isPlate
                         ? ['pierscien_odciazajacy']
                         : ['plyta_najazdowa', 'plyta_zamykajaca'];
-                    const partner = redTargetProducts.find(
-                        (p) => partnerType.includes(p.componentType) && filterByWellParams(p, well)
+                    const partner = redTargetFiltered.find((p) =>
+                        partnerType.includes(p.componentType)
                     );
                     if (partner) {
                         topRedItems.push({ productId: partner.id, quantity: 1 });
