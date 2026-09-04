@@ -687,10 +687,17 @@
         // 4. CAŁY AI path (influence + version + predict) w jednym wyścigu z budżetem
         // (invariant 1: budget startuje przed metadata, nie po niej).
         const aiPath = (async function () {
-            const pct =
+            // P1b: metadata (settings + ml-status) równolegle zamiast sekwencji
+            // settings → ml-status → predict. Semantyka identyczna: oba źródła
+            // niezależne (osobne URL-e i flagi cache), fetchAiScoresBatch i tak
+            // woła resolveFeatureVersion (cache hit po prefetchu).
+            const pctPromise =
                 influencePct !== undefined && influencePct !== null
-                    ? influencePct
-                    : await getAiInfluencePct();
+                    ? Promise.resolve(influencePct)
+                    : getAiInfluencePct();
+            const versionPromise = resolveFeatureVersion(false);
+            const pct = await pctPromise;
+            await versionPromise;
             const aiScoreMap = await fetchAiScoresBatch(pool, well);
             return { influencePct: pct, aiScoreMap: aiScoreMap };
         })();
