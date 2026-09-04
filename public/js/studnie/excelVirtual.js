@@ -23,6 +23,98 @@ let _excelVirtualLogicalCols = []; // logicalColumnId[] in visible order (never 
 let _excelVirtualActiveCell = null; // {logicalRow, logicalColId} — preserves focus across scroll/recycle (R12)
 // SSoT invariant: logicalRow = position in filteredIndexes, NOT wellIdx (docs/plans/2026-09-02-excel-arrow-virtual-nav.md)
 
+/* ===== PERF instrumentation (?perf=1, tymczasowe — usunąć po benchmarku) =====
+ * Jeden przełącznik: window.__EXCEL_PERF__ = true tylko gdy URL ma ?perf=1.
+ * Bez flagi zero overhead (jeden boolean check na render).
+ * Layout/paint obserwowany w rAF, nie w synchronicznym RenderBody.
+ * Agregaty zamiast console.log per render — raport via __excelPerfReport(). */
+(function () {
+    try {
+        if (typeof window !== 'undefined' && !window.__EXCEL_PERF__) {
+            const search = (typeof window.location !== 'undefined' && window.location.search) || '';
+            if (search.indexOf('perf=1') >= 0) window.__EXCEL_PERF__ = true;
+        }
+    } catch (_e) {}
+})();
+
+function _excelPerfOn() {
+    try {
+        return typeof window !== 'undefined' && window.__EXCEL_PERF__ === true;
+    } catch (_e) {
+        return false;
+    }
+}
+function _excelPerfNow() {
+    try {
+        if (typeof performance !== 'undefined' && performance.now) return performance.now();
+    } catch (_e) {}
+    return Date.now();
+}
+function _excelPerfPush(stage, ms) {
+    try {
+        if (typeof window === 'undefined') return;
+        if (!window.__EXCEL_PERF_STATS) window.__EXCEL_PERF_STATS = {};
+        const stats = window.__EXCEL_PERF_STATS;
+        if (!stats[stage]) stats[stage] = [];
+        const arr = stats[stage];
+        arr.push(ms);
+        if (arr.length > 500) arr.shift(); // cap — bez wzrostu pamięci przy scrollu
+    } catch (_e) {}
+}
+function _excelPerfObserveFrame() {
+    // koszt layout/paint na granicy klatki — osobny rAF, nie część sync RenderBody
+    try {
+        if (typeof requestAnimationFrame === 'undefined') return;
+        const t0 = _excelPerfNow();
+        requestAnimationFrame(function () {
+            _excelPerfPush('frame', _excelPerfNow() - t0);
+        });
+    } catch (_e) {}
+}
+function _excelPerfQuantile(sorted, q) {
+    if (!sorted.length) return 0;
+    const pos = (sorted.length - 1) * q;
+    const lo = Math.floor(pos);
+    const hi = Math.ceil(pos);
+    if (lo === hi) return sorted[lo];
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
+}
+function __excelPerfReport() {
+    const stats = (typeof window !== 'undefined' && window.__EXCEL_PERF_STATS) || {};
+    const out = {};
+    Object.keys(stats).forEach(function (stage) {
+        const arr = stats[stage].slice().sort(function (a, b) {
+            return a - b;
+        });
+        if (!arr.length) {
+            out[stage] = { count: 0 };
+            return;
+        }
+        const sum = arr.reduce(function (a, b) {
+            return a + b;
+        }, 0);
+        let max = arr[0];
+        for (let i = 1; i < arr.length; i++) if (arr[i] > max) max = arr[i];
+        out[stage] = {
+            count: arr.length,
+            avg: Math.round((sum / arr.length) * 10) / 10,
+            p50: Math.round(_excelPerfQuantile(arr, 0.5) * 10) / 10,
+            p95: Math.round(_excelPerfQuantile(arr, 0.95) * 10) / 10,
+            max: Math.round(max * 10) / 10
+        };
+    });
+    try {
+        if (typeof console !== 'undefined' && console.table) console.table(out);
+        else if (typeof console !== 'undefined') console.log(out);
+    } catch (_e) {}
+    return out;
+}
+function __excelPerfReset() {
+    try {
+        if (typeof window !== 'undefined') window.__EXCEL_PERF_STATS = {};
+    } catch (_e) {}
+}
+
 function _excelVirtualIsExcelCell(el) {
     if (!el) return false;
     const c = document.getElementById('excel-table-container');
@@ -408,6 +500,10 @@ function _excelVirtualDetach() {
 
 function _excelVirtualRenderBody() {
     if (!_excelVirtualEnabled) return;
+    // perf: jeden boolean check — bez flagi zero overhead
+    const _perf = _excelPerfOn();
+    const _tRenderStart = _perf ? _excelPerfNow() : 0;
+    const _tPrepareStart = _perf ? _excelPerfNow() : 0;
     if (!_excelVirtualFiltered) _excelVirtualBuildFiltered();
     // clamp active cursor when total changed (filtr/tab)
     _excelVirtualClampActive();
@@ -463,6 +559,8 @@ function _excelVirtualRenderBody() {
     } catch (_e) {
         _excelVirtualLogicalCols = [];
     }
+    if (_perf) _excelPerfPush('prepare', _excelPerfNow() - _tPrepareStart);
+    const _tTbodyStart = _perf ? _excelPerfNow() : 0;
     let bodyHtml = '';
     if (typeof _excelRenderTbody === 'function') {
         bodyHtml = _excelRenderTbody(sliceWells, dn, compCols, maxTr, hasReduction);
@@ -536,11 +634,14 @@ function _excelVirtualRenderBody() {
                 '" style="text-align:center;color:var(--slate-700);">\u2014</td></tr>';
         }
         bodyHtml = topSpacer + bodyHtml + bottomSpacer + emptyRow;
+        if (_perf) _excelPerfPush('tbody', _excelPerfNow() - _tTbodyStart);
         const container = document.getElementById('excel-table-container');
         if (!container) return;
         const tbody = container.querySelector('tbody');
         if (tbody) {
+            const _tInnerStart = _perf ? _excelPerfNow() : 0;
             tbody.innerHTML = bodyHtml;
+            if (_perf) _excelPerfPush('innerHTML', _excelPerfNow() - _tInnerStart);
             // R11: fresh explicit binding — DOM row != logical row
             const rows = tbody.querySelectorAll('tr[data-widx]');
             for (let i = 0; i < rows.length; i++) {
@@ -571,11 +672,14 @@ function _excelVirtualRenderBody() {
                     if (th) th.classList.add('excel-col-selected');
                 }
             }
+            const _tLucideStart = _perf ? _excelPerfNow() : 0;
             if (typeof lucide !== 'undefined' && lucide.createIcons) {
                 try {
                     lucide.createIcons({ root: tbody });
                 } catch (_e) {}
             }
+            if (_perf) _excelPerfPush('lucide', _excelPerfNow() - _tLucideStart);
+            const _tStickyStart = _perf ? _excelPerfNow() : 0;
             if (typeof _excelApplyStickyColumns === 'function') _excelApplyStickyColumns();
             if (typeof _excelApplyLockedRows === 'function') _excelApplyLockedRows();
             // restore logical focus after recycle — only if grid had focus and active still in viewport
@@ -612,7 +716,12 @@ function _excelVirtualRenderBody() {
                     _excelVirtualFocusCell(toRestore, { noScroll: true });
                 }
             }
+            if (_perf) _excelPerfPush('sticky', _excelPerfNow() - _tStickyStart);
         }
+    }
+    if (_perf) {
+        _excelPerfPush('total', _excelPerfNow() - _tRenderStart);
+        _excelPerfObserveFrame();
     }
     _excelVirtualOffset = 0;
 }
@@ -891,4 +1000,6 @@ if (typeof window !== 'undefined') {
             : null;
     };
     window.EXCEL_ROW_HEIGHT = EXCEL_ROW_HEIGHT;
+    window.__excelPerfReport = __excelPerfReport;
+    window.__excelPerfReset = __excelPerfReset;
 }

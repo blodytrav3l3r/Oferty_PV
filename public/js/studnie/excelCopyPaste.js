@@ -249,16 +249,245 @@ function _excelGetVisibleCell(row, visibleIdx) {
 
 if (typeof window !== 'undefined') {
     window._excelPasteMismatches = [];
+    window._excelMismatchIndex = null;
 }
+/* Indeks O(1) dla klucza wIdx_colIdx — zastępuje findIndex (O(N²) w pętli paste).
+   Semantyka bez zmian: jeden wpis per komórka, nadpisanie przy powtórce. */
 function _excelRecordMismatch(item) {
     if (typeof window === 'undefined') return;
     if (!window._excelPasteMismatches) window._excelPasteMismatches = [];
+    if (!window._excelMismatchIndex) window._excelMismatchIndex = new Map();
     const key = item.wIdx + '_' + item.colIdx;
-    const existingIdx = window._excelPasteMismatches.findIndex(
-        (m) => m.wIdx + '_' + m.colIdx === key
-    );
-    if (existingIdx >= 0) window._excelPasteMismatches[existingIdx] = item;
-    else window._excelPasteMismatches.push(item);
+    const arr = window._excelPasteMismatches;
+    // Guard na zewnętrzny reset array (testy) — zweryfikuj wpis przed nadpisaniem.
+    const known = window._excelMismatchIndex.get(key);
+    if (
+        known !== undefined &&
+        known < arr.length &&
+        arr[known] &&
+        arr[known].wIdx === item.wIdx &&
+        arr[known].colIdx === item.colIdx
+    ) {
+        arr[known] = item;
+    } else {
+        window._excelMismatchIndex.set(key, arr.length);
+        arr.push(item);
+    }
+}
+function _excelResetMismatches() {
+    if (typeof window === 'undefined') return;
+    window._excelPasteMismatches = [];
+    window._excelMismatchIndex = new Map();
+}
+
+/* ===== GRUPOWANIE MISMATCHÓW (model dla modala, nie DOM) =====
+ * Klucz: (colKind, originalVal_norm, matchedVal). matchedVal niesie kontekst
+ * kategorii — ta sama wklejona wartość w różnych kategoriach to osobne grupy.
+ * Invariant: weryfikacja kompletna — każda grupa aplikowana do wszystkich targets,
+ * żaden cap nie powoduje cichego auto-accept. */
+function _excelMismatchGroupKey(item) {
+    const norm = String(item.originalVal == null ? '' : item.originalVal)
+        .trim()
+        .toLowerCase();
+    const mv = String(item.matchedVal == null ? '' : item.matchedVal);
+    if (item.colIdx >= 7) {
+        const sub = (item.colIdx - 7) % 4;
+        return 't' + sub + '|' + norm + '|' + mv;
+    }
+    return 'c' + item.colIdx + '|' + norm + '|' + mv;
+}
+function _excelMismatchColKind(colIdx) {
+    if (colIdx >= 7) {
+        const sub = (colIdx - 7) % 4;
+        if (sub === 2) return 'rodzaj';
+        if (sub === 3) return 'srednica';
+    }
+    return 'other';
+}
+function _excelGroupMismatches(list) {
+    const groups = [];
+    const byKey = new Map();
+    (list || []).forEach(function (m) {
+        const key = _excelMismatchGroupKey(m);
+        let g = byKey.get(key);
+        if (!g) {
+            g = {
+                key: key,
+                colKind: _excelMismatchColKind(m.colIdx),
+                colIdx: m.colIdx,
+                originalVal: m.originalVal,
+                matchedVal: m.matchedVal,
+                matchedText: m.matchedText,
+                options: m.options || null,
+                optionsKind: m.optionsKind || null,
+                optionsLimit: typeof m.optionsLimit === 'number' ? m.optionsLimit : 0,
+                optionsCat: m.optionsCat || null,
+                count: 0,
+                sampleWellName: m.wellName,
+                targets: []
+            };
+            byKey.set(key, g);
+            groups.push(g);
+        }
+        g.targets.push({ wIdx: m.wIdx, colIdx: m.colIdx });
+        g.count++;
+    });
+    return groups;
+}
+/* Leniwe opcje per grupa — budowane raz, tylko dla widocznych wierszy modala.
+ * optionsKind: 'cats' (rodzaj), 'products' (średnica, pełna lista jak dziś). */
+const _excelMismatchOptionsCache = new Map();
+function _excelResolveMismatchOptions(group) {
+    if (!group) return [];
+    if (group.options) return group.options;
+    const cacheKey =
+        (group.key || String(group.matchedVal || '') + '|' + String(group.originalVal || '')) +
+        '|' +
+        (group.optionsKind || '') +
+        '|' +
+        (group.optionsLimit || 0);
+    if (_excelMismatchOptionsCache.has(cacheKey)) return _excelMismatchOptionsCache.get(cacheKey);
+    let opts = [];
+    if (typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+        if (group.optionsKind === 'cats') {
+            const cats = [
+                ...new Set(
+                    studnieProducts
+                        .filter(function (p) {
+                            return p.componentType === 'przejscie';
+                        })
+                        .map(function (p) {
+                            return p.category;
+                        })
+                        .filter(Boolean)
+                )
+            ];
+            opts = _excelBuildUnmatchedOptions(
+                cats.map(function (c) {
+                    return { value: c, text: c };
+                })
+            );
+        } else if (group.optionsKind === 'products') {
+            // Średnica: wybór DN, nie materiału. Jedna opcja per DN (sort numerycznie),
+            // value = auto-dopasowany produkt o tym DN (reprezentant), inaczej pierwszy z puli.
+            // Zapis (productId) kompatybilny z confirm bez zmian.
+            const pool = studnieProducts.filter(function (p) {
+                return p.componentType === 'przejscie';
+            });
+            const scoped =
+                group.optionsCat &&
+                pool.some(function (p) {
+                    return p.category === group.optionsCat;
+                })
+                    ? pool.filter(function (p) {
+                          return p.category === group.optionsCat;
+                      })
+                    : pool;
+            const dnLabel = function (dnKey) {
+                return /^dn/i.test(dnKey) ? dnKey : 'DN' + dnKey;
+            };
+            const byDn = {};
+            const dnOrder = [];
+            scoped.forEach(function (p) {
+                const dnKey = p.dn != null ? String(p.dn).trim() : '';
+                if (!dnKey) return;
+                if (!byDn[dnKey]) {
+                    byDn[dnKey] = [];
+                    dnOrder.push(dnKey);
+                }
+                byDn[dnKey].push(p);
+            });
+            dnOrder.sort(function (a, b) {
+                const na = parseFloat(String(a).replace(/[^\d.]/g, ''));
+                const nb = parseFloat(String(b).replace(/[^\d.]/g, ''));
+                if (!isNaN(na) && !isNaN(nb) && na !== nb) return na - nb;
+                return String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0;
+            });
+            const repForDn = function (dnKey) {
+                const cands = byDn[dnKey] || [];
+                if (group.matchedVal) {
+                    for (let i = 0; i < cands.length; i++) {
+                        if (cands[i].id === group.matchedVal) return cands[i];
+                    }
+                }
+                return cands[0] || null;
+            };
+            const limitedDns =
+                group.optionsLimit > 0 ? dnOrder.slice(0, group.optionsLimit) : dnOrder.slice();
+            opts = [];
+            limitedDns.forEach(function (dnKey) {
+                const rep = repForDn(dnKey);
+                if (rep) opts.push({ value: rep.id, text: dnLabel(dnKey) });
+            });
+            // matched-DN zawsze obecny (gdy limit uciął), inaczej select pokazałby złą wartość.
+            if (group.matchedVal) {
+                const matchedProd = pool.find(function (p) {
+                    return p.id === group.matchedVal;
+                });
+                const matchedDn = matchedProd
+                    ? String(matchedProd.dn || '').trim()
+                    : (String(group.matchedText || '').match(/DN\s*([\d]+(?:\/[\d]+)?)/i) ||
+                          [])[1] || '';
+                if (matchedDn) {
+                    const present = opts.some(function (o) {
+                        const op = pool.find(function (p) {
+                            return p.id === o.value;
+                        });
+                        return op && String(op.dn || '').trim() === matchedDn;
+                    });
+                    if (!present) {
+                        const rep = matchedProd || repForDn(matchedDn);
+                        opts.push({
+                            value: rep ? rep.id : group.matchedVal,
+                            text: dnLabel(matchedDn)
+                        });
+                    }
+                } else if (
+                    !opts.some(function (o) {
+                        return o.value === group.matchedVal;
+                    })
+                ) {
+                    opts.push({
+                        value: group.matchedVal,
+                        text: group.matchedText || group.matchedVal
+                    });
+                }
+            }
+        }
+    }
+    if (group.optionsKind === 'cats' && opts.length === 0 && group.options) opts = group.options;
+    _excelMismatchOptionsCache.set(cacheKey, opts);
+    return opts;
+}
+/* Sygnał obcej kategorii: wklejone id/nazwa istnieje globalnie w innej kategorii
+ * niż zakres wyszukiwania. Rozwiązanie w zakresie zostaje, ale flaga exact spada
+ * i trafia do modala ("wklejono GRP-400, użyto K2KAN DN400"). */
+function _excelForeignIdSignal(ctx, valStr, matched) {
+    if (!ctx || !matched) return false;
+    try {
+        if (ctx.prodById && ctx.prodById.has(valStr)) {
+            const g = ctx.prodById.get(valStr);
+            if (g && g !== matched && g.category !== matched.category) return true;
+        }
+        const low = String(valStr).toLowerCase();
+        if (ctx.prodByLower && ctx.prodByLower.has(low)) {
+            const g = ctx.prodByLower.get(low);
+            if (g && g !== matched && g.category !== matched.category) return true;
+        }
+    } catch (_e) {}
+    return false;
+}
+/* Cache fuzzy per unikalna wartość w ctx paste — jeden Levenshtein/linear-scan
+ * per wartość, nie per komórka. Mapy leniwie (testy vm mogą mieć ctx bez nich). */
+function _excelFuzzyCatCache(ctx) {
+    if (!ctx) return null;
+    if (!ctx.fuzzyCat) ctx.fuzzyCat = new Map();
+    return ctx.fuzzyCat;
+}
+function _excelFuzzyProdCache(ctx) {
+    if (!ctx) return null;
+    if (!ctx.fuzzyProd) ctx.fuzzyProd = new Map();
+    return ctx.fuzzyProd;
 }
 function _excelLevenshteinDistance(a, b) {
     const s1 = String(a).toLowerCase();
@@ -402,84 +631,499 @@ function _excelFindClosestOption(options, val) {
     const closestText = _excelFindClosestCategory(valStr, catList);
     return optsArr.find((o) => o.text === closestText) || optsArr[0];
 }
+/* ===== MODAL WERYFIKACJI — grupy, pager, lazy select =====
+ * Invarianty:
+ * 1. DOM nigdy nie zawiera N × pełna lista <option> (grupy + lazy select + pager).
+ * 2. Weryfikacja kompletna — soft-cap to tylko ostrzeżenie UX, zero auto-accept.
+ * Jedna decyzja per (colKind, originalVal_norm, matchedVal) → wszystkie targets. */
+const _EXCEL_MISMATCH_PAGE = 40;
+const _EXCEL_MISMATCH_SOFT_CAP = 200;
+let _excelMismatchView = null;
+/* ===== MODAL WERYFIKACJI — pełna lista per wiersz (studnia × pole) =====
+ * 1 wiersz = 1 pozycja z window._excelPasteMismatches. Decyzje dwupoziomowe:
+ * per wiersz (select) + globalnie per wartość ("Do wszystkich z tą wartością").
+ * Invarianty: max 40 wierszy w DOM (pager), selecty tylko na żądanie,
+ * soft-cap to tylko ostrzeżenie UX — zero auto-accept. */
+function _excelMismatchRowLabel(m) {
+    if (!m) return '';
+    if (m.colIdx >= 7) {
+        const trIdx = Math.floor((m.colIdx - 7) / 4);
+        const sub = (m.colIdx - 7) % 4;
+        if (sub === 2) return 'Przejście ' + (trIdx + 1) + ' (Rodzaj)';
+        if (sub === 3) return 'Przejście ' + (trIdx + 1) + ' (Średnica)';
+        return 'Przejście ' + (trIdx + 1);
+    }
+    if (m.colIdx === 3) return 'Nazwa studni';
+    return 'Pole ' + m.colIdx;
+}
+/* Lp studni jak w gridzie Excela (pozycja w aktywnej zakładce DN, 1-based).
+ * Fallback wIdx+1 gdy brak filteredIndexes (np. testy vm). */
+function _excelMismatchWellLp(wIdx) {
+    try {
+        if (typeof _excelGetFilteredIndexes === 'function') {
+            const arr = _excelGetFilteredIndexes();
+            if (Array.isArray(arr)) {
+                const pos = arr.indexOf(wIdx);
+                if (pos >= 0) return pos + 1;
+            }
+        }
+    } catch (_e) {}
+    return (typeof wIdx === 'number' && !isNaN(wIdx) ? wIdx : 0) + 1;
+}
+/* Czy pozycja to średnica przejścia (sub==3) — etykieta zawsze z widocznym DN. */
+function _excelMismatchIsDiameter(entry) {
+    return (
+        !!entry &&
+        typeof entry.colIdx === 'number' &&
+        entry.colIdx >= 7 &&
+        (entry.colIdx - 7) % 4 === 3
+    );
+}
+/* DN dopasowanego produktu: lookup po id, fallback regex z nazwy. */
+function _excelMismatchProductDn(value, text) {
+    try {
+        if (value && typeof studnieProducts !== 'undefined' && Array.isArray(studnieProducts)) {
+            let p = null;
+            if (typeof getStudnieProductById === 'function') {
+                try {
+                    p = getStudnieProductById(value);
+                } catch (_e) {
+                    p = null;
+                }
+            } else {
+                for (let i = 0; i < studnieProducts.length; i++) {
+                    if (studnieProducts[i] && studnieProducts[i].id === value) {
+                        p = studnieProducts[i];
+                        break;
+                    }
+                }
+            }
+            if (p && p.dn != null && String(p.dn).trim() !== '') return String(p.dn).trim();
+        }
+    } catch (_e) {}
+    const t = String(text || '');
+    const m = t.match(/DN\s*([\d]+(?:\/[\d]+)?)/i) || t.match(/([\d]{2,4}(?:\/[\d]{2,4})?)/);
+    return m ? m[1] : '';
+}
+/* Etykieta średnicy: sam dobrany DN, nie rodzaj rury (zmiana przez select Zmień…).
+ * Zwraca { text, title }: text to "DNxxx", title to pełna nazwa produktu (tooltip). */
+function _excelMismatchDiameterLabel(cur) {
+    const name = String((cur && (cur.text || cur.value)) || '');
+    if (!name) return { text: '', title: '' };
+    const dn = _excelMismatchProductDn(cur && cur.value, name);
+    if (!dn) return { text: name, title: '' };
+    const disp = /^dn/i.test(dn) ? dn : 'DN' + dn;
+    return { text: disp, title: name === disp ? '' : name };
+}
+/* Zwraca listę flatIdx po filtrze (Lp / wellName / wklejona / dopasowanie). */
+function _excelMismatchFilteredRows() {
+    if (!_excelMismatchView) return [];
+    const rows = _excelMismatchView.rows || [];
+    const f = (_excelMismatchView.filter || '').trim().toLowerCase();
+    const out = [];
+    for (let i = 0; i < rows.length; i++) {
+        if (!f) {
+            out.push(i);
+            continue;
+        }
+        const m = rows[i];
+        const ov = _excelMismatchView.overrides && _excelMismatchView.overrides[i];
+        if (
+            String(_excelMismatchWellLp(m.wIdx)).indexOf(f) >= 0 ||
+            String(m.wellName || '')
+                .toLowerCase()
+                .indexOf(f) >= 0 ||
+            String(m.originalVal || '')
+                .toLowerCase()
+                .indexOf(f) >= 0 ||
+            String(m.matchedText || '')
+                .toLowerCase()
+                .indexOf(f) >= 0 ||
+            (ov &&
+                String(ov.text || '')
+                    .toLowerCase()
+                    .indexOf(f) >= 0)
+        )
+            out.push(i);
+    }
+    return out;
+}
+/* Aktualna (ew. nadpisana) wartość pozycji: { value, text }. */
+function _excelMismatchRowValue(flatIdx) {
+    const view = _excelMismatchView;
+    const rows =
+        (view && view.rows) ||
+        (typeof window !== 'undefined' ? window._excelPasteMismatches : []) ||
+        [];
+    const m = rows[flatIdx];
+    if (!m) return { value: '', text: '' };
+    if (view && view.overrides && view.overrides[flatIdx] !== undefined)
+        return view.overrides[flatIdx];
+    return { value: m.matchedVal, text: m.matchedText || m.matchedVal };
+}
+function _excelMismatchRowHtml(entry, flatIdx, visIdx) {
+    const esc =
+        typeof escapeHtml === 'function'
+            ? escapeHtml
+            : function (s) {
+                  return s;
+              };
+    const escAttr =
+        typeof escapeHtmlAttr === 'function'
+            ? escapeHtmlAttr
+            : function (s) {
+                  return esc(s).replace(/"/g, '&quot;');
+              };
+    const cur = _excelMismatchRowValue(flatIdx);
+    const wellTxt = esc(entry.wellName || '');
+    const colTxt = esc(_excelMismatchRowLabel(entry));
+    const origTxt = esc(String(entry.originalVal == null ? '' : entry.originalVal));
+    const curRaw = String(cur.text || cur.value || '');
+    // Średnica: sam dobrany DN (pełna nazwa produktu w tooltipie).
+    const diamLabel = _excelMismatchIsDiameter(entry) ? _excelMismatchDiameterLabel(cur) : null;
+    const curDisplay = diamLabel ? diamLabel.text : curRaw;
+    const curTitle = diamLabel ? diamLabel.title : '';
+    const titleAttr = curTitle ? ' title="' + escAttr(curTitle) + '"' : '';
+    // Dopasowanie bez powtórki Wklejonej (wartość wklejona widoczna w osobnej kolumnie).
+    let matchHtml;
+    if (!curDisplay) {
+        matchHtml = esc('— nie dopasowano —');
+    } else if (titleAttr) {
+        matchHtml = '<b' + titleAttr + '>' + esc(curDisplay) + '</b>';
+    } else {
+        matchHtml = esc(curDisplay);
+    }
+    const opts = _excelResolveMismatchOptions(entry);
+    let selHtml =
+        '<select class="excel-mismatch-select" data-m-idx="' +
+        visIdx +
+        '" data-flat="' +
+        flatIdx +
+        '" onchange="_excelMismatchPick(this)" style="padding:0.35rem 0.6rem; border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-glass); font-size:var(--fs-sm); flex:0 0 auto; max-width:240px;">';
+    opts.forEach(function (opt) {
+        const isSel = String(opt.value) === String(cur.value) ? 'selected' : '';
+        selHtml +=
+            '<option value="' +
+            escAttr(String(opt.value)) +
+            '" ' +
+            isSel +
+            '>' +
+            esc(opt.text) +
+            '</option>';
+    });
+    selHtml += '</select>';
+
+    const lpTxt = esc(String(_excelMismatchWellLp(entry.wIdx)));
+    return (
+        '<tr style="border-bottom:1px solid var(--border-glass);" data-mrow="' +
+        visIdx +
+        '" data-flat="' +
+        flatIdx +
+        '"><td style="padding:0.6rem; text-align:center; color:var(--text-muted);">' +
+        lpTxt +
+        '</td><td style="padding:0.6rem; font-weight:var(--fw-bold);">' +
+        wellTxt +
+        '</td><td style="padding:0.6rem; color:var(--accent-text);">' +
+        colTxt +
+        '</td><td style="padding:0.6rem; color:var(--warn-hover);"><code style="background:rgba(var(--warn-rgb),0.15); padding:0.15rem 0.4rem; border-radius:4px;">' +
+        origTxt +
+        '</code></td><td style="padding:0.6rem; white-space:nowrap;"><div style="display:flex; align-items:center; gap:0.6rem; white-space:nowrap; flex-wrap:nowrap;"><span class="excel-mismatch-current" style="min-width:60px; font-weight:var(--fw-bold); color:var(--text-heading);">' +
+        matchHtml +
+        '</span>' +
+        selHtml +
+        '<button type="button" class="btn btn-secondary excel-mismatch-bulk" data-m-idx="' +
+        visIdx +
+        '" onclick="_excelMismatchApplyToKey(this)" style="padding:0.3rem 0.6rem; font-size:var(--fs-xs); flex:0 0 auto; white-space:nowrap;" title="Zastosuj ten wybór do wszystkich pozycji z tą samą wklejoną wartością">Do wszystkich z tą wartością</button></div></td></tr>'
+    );
+}
+function _excelMismatchRenderRows(append) {
+    if (typeof document === 'undefined' || !_excelMismatchView) return;
+    const modal = document.getElementById('excel-paste-mismatch-modal');
+    const tbody = modal ? modal.querySelector('#excel-mismatch-tbody') : null;
+    const list = _excelMismatchFilteredRows();
+    _excelMismatchView.visible = list;
+    const rows = _excelMismatchView.rows || [];
+    const from = append ? _excelMismatchView.shown : 0;
+    const to = append
+        ? Math.min(list.length, _excelMismatchView.shown + _EXCEL_MISMATCH_PAGE)
+        : Math.min(list.length, _EXCEL_MISMATCH_PAGE);
+    let html = '';
+    for (let i = from; i < to; i++) html += _excelMismatchRowHtml(rows[list[i]], list[i], i);
+    if (tbody) {
+        if (append) tbody.insertAdjacentHTML('beforeend', html);
+        else tbody.innerHTML = html;
+    }
+    _excelMismatchView.shown = to;
+    if (modal) {
+        const countEl = modal.querySelector('#excel-mismatch-count');
+        if (countEl)
+            countEl.textContent =
+                'Pozycja ' + to + ' z ' + list.length + ' (' + rows.length + ' pól)';
+    }
+    if (typeof lucide !== 'undefined' && lucide.createIcons && tbody)
+        try {
+            lucide.createIcons({ root: /** @type {HTMLElement} */ (tbody) });
+        } catch (_e) {}
+}
+function _excelMismatchOnScroll(container) {
+    if (!container || typeof document === 'undefined' || !_excelMismatchView) return;
+    const list = _excelMismatchView.visible || [];
+    if (_excelMismatchView.shown >= list.length) return;
+    const scrollBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (scrollBottom < 150) {
+        _excelMismatchRenderRows(true);
+    }
+}
+function _excelMismatchFilter(input) {
+    if (!_excelMismatchView) return;
+    _excelMismatchView.filter = input && input.value ? input.value : '';
+    _excelMismatchView.shown = 0;
+    _excelMismatchRenderRows(false);
+}
+/* Leniwy select — pełne opcje budowane dopiero po kliknięciu "Zmień…", tylko ten wiersz. */
+function _excelMismatchExpand(btn) {
+    if (!btn || typeof document === 'undefined' || !_excelMismatchView) return;
+    const visIdx = parseInt(btn.getAttribute('data-m-idx') || '-1', 10);
+    const list = _excelMismatchView.visible || [];
+    const rows = _excelMismatchView.rows || [];
+    if (isNaN(visIdx) || visIdx < 0 || visIdx >= list.length) return;
+    const flatIdx = list[visIdx];
+    const entry = rows[flatIdx];
+    if (!entry) return;
+    const row = btn.closest ? btn.closest('tr') : null;
+    const editor = row ? row.querySelector('.excel-mismatch-editor') : null;
+    if (!editor) return;
+    if (editor.querySelector('select')) return;
+    const cur = _excelMismatchRowValue(flatIdx);
+    const opts = _excelResolveMismatchOptions(entry);
+    const escAttr =
+        typeof escapeHtmlAttr === 'function'
+            ? escapeHtmlAttr
+            : function (s) {
+                  return s;
+              };
+    const esc =
+        typeof escapeHtml === 'function'
+            ? escapeHtml
+            : function (s) {
+                  return s;
+              };
+    let selHtml =
+        '<select class="excel-mismatch-select" data-m-idx="' +
+        visIdx +
+        '" data-flat="' +
+        flatIdx +
+        '" onchange="_excelMismatchPick(this)" style="padding:0.4rem 0.6rem; border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-glass); font-size:var(--fs-sm); flex:1 1 180px; min-width:180px;">';
+    opts.forEach(function (opt) {
+        const isSel = String(opt.value) === String(cur.value) ? 'selected' : '';
+        selHtml +=
+            '<option value="' +
+            escAttr(String(opt.value)) +
+            '" ' +
+            isSel +
+            '>' +
+            esc(opt.text) +
+            '</option>';
+    });
+    selHtml += '</select>';
+    selHtml +=
+        ' <button type="button" class="btn btn-secondary excel-mismatch-bulk" data-m-idx="' +
+        visIdx +
+        '" onclick="_excelMismatchApplyToKey(this)" style="padding:0.2rem 0.6rem; font-size:var(--fs-xs); flex:0 0 auto;" title="Zastosuj ten wybór do wszystkich pozycji z tą samą wklejoną wartością">Do wszystkich z tą wartością</button>';
+    editor.innerHTML = selHtml;
+    btn.style.display = 'none';
+    const sel = editor.querySelector('select');
+    if (sel) sel.focus();
+}
+/* Wybór per wiersz — zapis do overrides, labelka na bieżąco. */
+function _excelMismatchPick(sel) {
+    if (!sel || !_excelMismatchView) return;
+    const visIdx = parseInt(sel.getAttribute('data-m-idx') || '-1', 10);
+    const list = _excelMismatchView.visible || [];
+    if (isNaN(visIdx) || visIdx < 0 || visIdx >= list.length) return;
+    const flatIdx = list[visIdx];
+    const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    if (!_excelMismatchView.overrides) _excelMismatchView.overrides = {};
+    _excelMismatchView.overrides[flatIdx] = {
+        value: sel.value,
+        text: opt ? opt.text : sel.value
+    };
+    const row = sel.closest ? sel.closest('tr') : null;
+    const label = row ? row.querySelector('.excel-mismatch-current') : null;
+    if (label) {
+        // Średnica: sam DN + pełna nazwa w tooltipie (zapis id bez zmian).
+        const rows = _excelMismatchView.rows || [];
+        const picked = { value: sel.value, text: opt ? opt.text : sel.value };
+        if (_excelMismatchIsDiameter(rows[flatIdx])) {
+            const lab = _excelMismatchDiameterLabel(picked);
+            label.textContent = lab.text || picked.text;
+            if (lab.title) label.setAttribute('title', lab.title);
+            else label.removeAttribute('title');
+        } else {
+            label.textContent = picked.text;
+        }
+    }
+}
+/* Czysta część bulk: flatIdx pozycji z tym samym kluczem wartości. */
+function _excelMismatchFlatByKey(rows, key) {
+    const out = [];
+    for (let f = 0; f < (rows || []).length; f++) {
+        if (_excelMismatchGroupKey(rows[f]) === key) out.push(f);
+    }
+    return out;
+}
+/* Zmiana globalna: wybór z tego wiersza do wszystkich pozycji z tą samą wartością. */
+function _excelMismatchApplyToKey(btn) {
+    if (!btn || !_excelMismatchView || typeof document === 'undefined') return;
+    const visIdx = parseInt(btn.getAttribute('data-m-idx') || '-1', 10);
+    const list = _excelMismatchView.visible || [];
+    const rows = _excelMismatchView.rows || [];
+    if (isNaN(visIdx) || visIdx < 0 || visIdx >= list.length) return;
+    const srcFlat = list[visIdx];
+    const src = rows[srcFlat];
+    if (!src) return;
+    const row = btn.closest ? btn.closest('tr') : null;
+    const sel = row ? row.querySelector('.excel-mismatch-select') : null;
+    if (!sel) return;
+    const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    const picked = { value: sel.value, text: opt ? opt.text : sel.value };
+    const key = _excelMismatchGroupKey(src);
+    if (!_excelMismatchView.overrides) _excelMismatchView.overrides = {};
+    const targets = _excelMismatchFlatByKey(rows, key);
+    targets.forEach(function (f) {
+        _excelMismatchView.overrides[f] = picked;
+    });
+    const n = targets.length;
+    // Odśwież widoczne wiersze z tym kluczem (labelki + rozwinięte selecty).
+    const modal = document.getElementById('excel-paste-mismatch-modal');
+    if (modal) {
+        const trs = modal.querySelectorAll('#excel-mismatch-tbody tr[data-flat]');
+        trs.forEach(function (tr) {
+            const f = parseInt(tr.getAttribute('data-flat') || '-1', 10);
+            if (isNaN(f) || !rows[f] || _excelMismatchGroupKey(rows[f]) !== key) return;
+            const label = tr.querySelector('.excel-mismatch-current');
+            if (label) {
+                if (_excelMismatchIsDiameter(rows[f])) {
+                    const lab = _excelMismatchDiameterLabel(picked);
+                    label.textContent = lab.text || picked.text || picked.value;
+                    if (lab.title) label.setAttribute('title', lab.title);
+                    else label.removeAttribute('title');
+                } else {
+                    label.textContent = picked.text || picked.value;
+                }
+            }
+            const s = /** @type {HTMLSelectElement} */ (tr.querySelector('.excel-mismatch-select'));
+            if (s && s.value !== picked.value) {
+                const has = Array.from(s.options).some(function (o) {
+                    return o.value === picked.value;
+                });
+                if (has) s.value = picked.value;
+            }
+        });
+    }
+    if (typeof showToast === 'function') showToast('Zastosowano do ' + n + ' pozycji', 'success');
+}
 function _excelShowMismatchModal(mismatches) {
     if (typeof window === 'undefined' || !mismatches || mismatches.length === 0) return;
-    let rowsHtml = '';
-    mismatches.forEach((m, idx) => {
-        const trIdx = Math.floor((m.colIdx - 7) / 4);
-        const subType = (m.colIdx - 7) % 4;
-        let colName = 'Przejście ' + (trIdx + 1);
-        if (subType === 2) colName += ' (Rodzaj)';
-        else if (subType === 3) colName += ' (Średnica)';
-        else if (m.colIdx === 3) colName = 'Nazwa studni';
-        let selectHtml = `<select class="excel-mismatch-select" data-m-idx="${idx}" style="padding:0.4rem 0.6rem; border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-glass); font-size:var(--fs-sm); width:100%;">`;
-        m.options.forEach((opt) => {
-            const isSel = opt.value === m.matchedVal ? 'selected' : '';
-            const safeVal =
-                typeof escapeHtmlAttr === 'function' ? escapeHtmlAttr(opt.value) : opt.value;
-            const safeText = typeof escapeHtml === 'function' ? escapeHtml(opt.text) : opt.text;
-            selectHtml += `<option value="${safeVal}" ${isSel}>${safeText}</option>`;
-        });
-        selectHtml += `</select>`;
-        const safeWellName = typeof escapeHtml === 'function' ? escapeHtml(m.wellName) : m.wellName;
-        const safeColName = typeof escapeHtml === 'function' ? escapeHtml(colName) : colName;
-        const safeOrigVal =
-            typeof escapeHtml === 'function' ? escapeHtml(m.originalVal) : m.originalVal;
-        rowsHtml += `<tr style="border-bottom:1px solid var(--border-glass);"><td style="padding:0.6rem; font-weight:var(--fw-bold);">${safeWellName}</td><td style="padding:0.6rem; color:var(--accent-text);">${safeColName}</td><td style="padding:0.6rem; color:var(--warn-hover);"><code style="background:rgba(var(--warn-rgb),0.15); padding:0.15rem 0.4rem; border-radius:4px;">${safeOrigVal}</code></td><td style="padding:0.6rem;">${selectHtml}</td></tr>`;
-    });
-    const html = `<div class="modal modal--lg" style="max-width:750px; width:92vw; background:var(--bg-secondary); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:1.5rem; color:var(--text-primary);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-glass); padding-bottom:0.8rem;"><h3 style="margin:0; font-size:var(--fs-xl); font-weight:var(--fw-bold); display:flex; align-items:center; gap:0.5rem; color:var(--text-heading);"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Weryfikacja wklejonych przejść i średnic</h3><button onclick="closeModal('excel-paste-mismatch-modal')" class="btn-icon" aria-label="Zamknij" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button></div><p style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:1rem; line-height:1.4;">Poniższe wartości z wklejonych danych nie miały dokładnego odpowiednika w systemie. Automatycznie wybrano najbardziej zbliżone opcje. Możesz je zweryfikować i zmienić przed zatwierdzeniem:</p><div style="max-height:360px; overflow-y:auto; border:1px solid var(--border-glass); border-radius:var(--radius-sm); margin-bottom:1.2rem;"><table style="width:100%; border-collapse:collapse; font-size:var(--fs-sm); text-align:left;"><thead style="background:var(--bg-tertiary); position:sticky; top:0; z-index:2;"><tr><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Studnia</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Pole</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Wklejona wartość</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Wybierz zbliżoną opcję</th></tr></thead><tbody>${rowsHtml}</tbody></table></div><div style="display:flex; justify-content:flex-end; gap:0.8rem;"><button type="button" class="btn btn-secondary" onclick="closeModal('excel-paste-mismatch-modal')" style="padding:0.5rem 1rem;">Anuluj</button><button type="button" class="btn btn-primary" onclick="excelConfirmPasteMismatches()" style="padding:0.5rem 1.2rem; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); font-weight:var(--fw-bold); cursor:pointer;">Zatwierdź zmiany</button></div></div>`;
+    _excelMismatchView = { rows: mismatches, filter: '', shown: 0, visible: [], overrides: {} };
+    const warnHtml =
+        mismatches.length > _EXCEL_MISMATCH_SOFT_CAP
+            ? '<div style="font-size:var(--fs-sm); color:var(--warn-hover); background:rgba(var(--warn-rgb),0.12); border:1px solid rgba(var(--warn-rgb),0.4); border-radius:var(--radius-sm); padding:0.5rem 0.8rem; margin-bottom:0.8rem;">Dużo pozycji (' +
+              mismatches.length +
+              ') — lista stronicowana, pełna. Wszystkie pozycje są widoczne strona po stronie, nic nie jest pomijane.</div>'
+            : '';
+    const html = `<div class="modal modal--lg" style="max-width:1400px; width:96vw; background:var(--bg-secondary); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:1.5rem; color:var(--text-primary);"><div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border-glass); padding-bottom:0.8rem;"><h3 style="margin:0; font-size:var(--fs-xl); font-weight:var(--fw-bold); display:flex; align-items:center; gap:0.5rem; color:var(--text-heading);"><i data-lucide="alert-triangle" style="color:var(--warn);"></i> Weryfikacja wklejonych przejść i średnic</h3><button onclick="closeModal('excel-paste-mismatch-modal')" class="btn-icon" aria-label="Zamknij" style="background:transparent; border:none; color:var(--text-muted); cursor:pointer; font-size:1.2rem;">✕</button></div><p style="font-size:var(--fs-sm); color:var(--text-secondary); margin-bottom:1rem; line-height:1.4;">Wartości nie miały dokładnego odpowiednika w systemie. Automatycznie wybrano najbardziej zbliżone opcje — każdy wiersz to jedna studnia i jedno pole. Popraw pojedynczo w wybranej pozycji (wybierając opcję z listy obok) albo wybór zastosuj dla wszystkich pozycji z tą samą wklejoną wartością:</p>${warnHtml}<div style="display:flex; gap:0.8rem; align-items:center; margin-bottom:0.8rem;"><input id="excel-mismatch-search" type="text" placeholder="Filtruj pozycje… (studnia, wartość)" oninput="_excelMismatchFilter(this)" style="flex:1; padding:0.4rem 0.6rem; border-radius:var(--radius-sm); background:var(--bg-input); color:var(--text-primary); border:1px solid var(--border-glass); font-size:var(--fs-sm);" /><span id="excel-mismatch-count" style="font-size:var(--fs-xs); color:var(--text-muted); white-space:nowrap;"></span></div><div id="excel-mismatch-scroll-container" style="max-height:min(520px, 62vh); overflow-y:auto; border:1px solid var(--border-glass); border-radius:var(--radius-sm); margin-bottom:1.2rem;" onscroll="_excelMismatchOnScroll(this)"><table style="width:100%; border-collapse:collapse; font-size:var(--fs-sm); text-align:left;"><thead style="background:var(--bg-tertiary); position:sticky; top:0; z-index:2;"><tr><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Lp.</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Studnia</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Pole</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Wklejona wartość</th><th style="padding:0.6rem; border-bottom:1px solid var(--border-glass);">Dopasowanie i zmiana</th></tr></thead><tbody id="excel-mismatch-tbody"></tbody></table></div><div style="display:flex; justify-content:flex-end; gap:0.8rem;"><button type="button" class="btn btn-secondary" onclick="closeModal('excel-paste-mismatch-modal')" style="padding:0.5rem 1rem;">Anuluj</button><button type="button" class="btn btn-primary" onclick="excelConfirmPasteMismatches()" style="padding:0.5rem 1.2rem; background:var(--accent); color:#fff; border:none; border-radius:var(--radius-sm); font-weight:var(--fw-bold); cursor:pointer;">Zatwierdź zmiany</button></div></div>`;
     if (typeof window.showModal === 'function') {
         window.showModal({
             id: 'excel-paste-mismatch-modal',
             title: 'Weryfikacja wklejonych przejść i średnic',
             html: html
         });
+        _excelMismatchRenderRows(false);
         if (typeof lucide !== 'undefined' && lucide.createIcons)
-            lucide.createIcons({ root: document.getElementById('excel-paste-mismatch-modal') });
+            try {
+                lucide.createIcons({ root: document.getElementById('excel-paste-mismatch-modal') });
+            } catch (_e) {}
     }
 }
+/* Jedna decyzja grupy → wszystkie targets (ta sama semantyka co stary confirm per komórka). */
+function _excelApplyMismatchChoice(target, newVal) {
+    const wIdx = target.wIdx;
+    const colIdx = target.colIdx;
+    if (isNaN(wIdx) || typeof wells === 'undefined' || !wells[wIdx]) return;
+    if (colIdx < 7) return;
+    const trIdx = Math.floor((colIdx - 7) / 4);
+    const subType = (colIdx - 7) % 4;
+    if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
+    while (wells[wIdx].przejscia.length <= trIdx) {
+        if (typeof _excelCreatePrzejscie === 'function')
+            wells[wIdx].przejscia.push(_excelCreatePrzejscie());
+        else wells[wIdx].przejscia.push({ productId: '', tempCategory: '' });
+    }
+    const prz = wells[wIdx].przejscia[trIdx];
+    if (subType === 2) prz.tempCategory = newVal;
+    else if (subType === 3) {
+        prz.productId = newVal;
+        const prod =
+            typeof studnieProducts !== 'undefined'
+                ? typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(newVal)
+                    : studnieProducts.find((p) => p.id === newVal)
+                : null;
+        if (prod) prz.tempCategory = prod.category;
+    }
+}
+/* Confirm per wiersz: select w DOM ? wartość : overrides (per-wiersz/global) : matchedVal. */
 function excelConfirmPasteMismatches() {
-    const modal = document.getElementById('excel-paste-mismatch-modal');
-    if (!modal) return;
-    const selects = modal.querySelectorAll('.excel-mismatch-select');
-    selects.forEach((sel) => {
-        const idx = parseInt(sel.getAttribute('data-m-idx') || '-1', 10);
-        if (idx >= 0 && window._excelPasteMismatches && window._excelPasteMismatches[idx]) {
-            const m = window._excelPasteMismatches[idx];
-            const newVal = sel.value;
-            const wIdx = m.wIdx;
-            const colIdx = m.colIdx;
-            if (!isNaN(wIdx) && wells[wIdx]) {
-                const trIdx = Math.floor((colIdx - 7) / 4);
-                const subType = (colIdx - 7) % 4;
-                if (!wells[wIdx].przejscia) wells[wIdx].przejscia = [];
-                while (wells[wIdx].przejscia.length <= trIdx)
-                    if (typeof _excelCreatePrzejscie === 'function')
-                        wells[wIdx].przejscia.push(_excelCreatePrzejscie());
-                const prz = wells[wIdx].przejscia[trIdx];
-                if (subType === 2) prz.tempCategory = newVal;
-                else if (subType === 3) {
-                    prz.productId = newVal;
-                    const prod =
-                        typeof studnieProducts !== 'undefined'
-                            ? typeof getStudnieProductById === 'function'
-                                ? getStudnieProductById(newVal)
-                                : studnieProducts.find((p) => p.id === newVal)
-                            : null;
-                    if (prod) prz.tempCategory = prod.category;
-                }
+    const modal =
+        typeof document !== 'undefined'
+            ? document.getElementById('excel-paste-mismatch-modal')
+            : null;
+    const rows =
+        _excelMismatchView && _excelMismatchView.rows
+            ? _excelMismatchView.rows
+            : (typeof window !== 'undefined' ? window._excelPasteMismatches : []) || [];
+    const overrides = (_excelMismatchView && _excelMismatchView.overrides) || {};
+    rows.forEach(function (m, f) {
+        let newVal = m.matchedVal;
+        if (overrides[f] !== undefined) newVal = overrides[f].value;
+        if (modal) {
+            const sel = /** @type {HTMLSelectElement} */ (
+                modal.querySelector('.excel-mismatch-select[data-flat="' + f + '"]')
+            );
+            if (sel) {
+                newVal = sel.value;
+                const opt =
+                    sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+                overrides[f] = { value: sel.value, text: opt ? opt.text : sel.value };
             }
         }
+        _excelApplyMismatchChoice({ wIdx: m.wIdx, colIdx: m.colIdx }, newVal);
     });
     if (typeof closeModal === 'function') closeModal('excel-paste-mismatch-modal');
-    window._excelPasteMismatches = [];
-    if (typeof _excelMarkDirty === 'function') _excelMarkDirty();
+    _excelResetMismatches();
+    _excelMismatchView = null;
+    if (typeof _excelMarkDirty === 'function')
+        try {
+            _excelMarkDirty();
+        } catch (_e) {}
     if (typeof _excelRenderTable === 'function') _excelRenderTable(_excelActiveTab);
     if (typeof showToast === 'function') showToast('Zatwierdzono dopasowania przejść', 'success');
 }
 if (typeof window !== 'undefined') {
     window.excelConfirmPasteMismatches = excelConfirmPasteMismatches;
     window._excelShowMismatchModal = _excelShowMismatchModal;
+    window._excelGroupMismatches = _excelGroupMismatches;
+    window._excelApplyMismatchChoice = _excelApplyMismatchChoice;
+    window._excelMismatchOnScroll = _excelMismatchOnScroll;
+    window._excelMismatchFilter = _excelMismatchFilter;
+    window._excelMismatchExpand = _excelMismatchExpand;
+    window._excelMismatchPick = _excelMismatchPick;
+    window._excelMismatchApplyToKey = _excelMismatchApplyToKey;
+    window._excelMismatchFlatByKey = _excelMismatchFlatByKey;
+    window._excelMismatchRowLabel = _excelMismatchRowLabel;
+    window._excelResetMismatches = _excelResetMismatches;
+    window._excelResolveMismatchOptions = _excelResolveMismatchOptions;
 }
 function _excelNormalizeHeader(s) {
     return String(s || '')
@@ -816,7 +1460,7 @@ function _excelHandlePaste(e) {
        przepełnia się po 20 komórkach i Ctrl+Z nie cofa wklejenia. */
     _excelSaveUndoSnapshot();
     _excelPasteInProgress = true;
-    window._excelPasteMismatches = [];
+    _excelResetMismatches();
     let _batched = false;
     // F1 lokalny ctx jednego paste — nie global, przekazywany do Sync/Batch/Semantic
     const _pasteCtx = typeof _excelBuildPasteCache === 'function' ? _excelBuildPasteCache() : null;
@@ -1457,10 +2101,71 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
                 if (!valStr) {
                     prz.tempCategory = '';
                     prz.productId = '';
-                } else if (ctx && ctx.allCatToCat) {
-                    const low = valStr.toLowerCase();
-                    const cat = ctx.allCatToCat.get(low) || ctx.allCatToCat.get(valStr) || valStr;
-                    prz.tempCategory = cat;
+                } else if (ctx && (ctx.catLowerMap || ctx.cats)) {
+                    // Kanoniczne dopasowanie jak fast-path. Martwe ctx.allCatToCat usunięte —
+                    // pole nie istnieje w _excelBuildPasteCache, więc gałąź nigdy nie działała
+                    // i surowy tekst ("k2kan") trafiał do tempCategory, psując zakres średnic.
+                    const lower = valStr.toLowerCase();
+                    let cat = ctx.catLowerMap ? ctx.catLowerMap.get(lower) || null : null;
+                    let isExact = !!cat;
+                    if (!cat && typeof _excelFindPasteCategory === 'function') {
+                        const _fc = _excelFuzzyCatCache(ctx);
+                        const _fck = 'paste|' + lower;
+                        if (_fc && _fc.has(_fck)) {
+                            const _hit = _fc.get(_fck);
+                            cat = _hit.cat;
+                            isExact = !!cat && cat.toLowerCase() === lower;
+                        } else {
+                            cat = _excelFindPasteCategory(valStr, ctx.cats);
+                            isExact = !!cat && cat.toLowerCase() === lower;
+                            if (_fc) _fc.set(_fck, { cat: cat });
+                        }
+                    }
+                    if (!cat) {
+                        prz.tempCategory = '';
+                        prz.productId = '';
+                        _excelRecordMismatch({
+                            wIdx: wIdx,
+                            colIdx: effLogical,
+                            wellName: well.name || 'Studnia DN' + (well.dn || ''),
+                            originalVal: String(val),
+                            matchedVal: '',
+                            matchedText: '',
+                            optionsKind: 'cats'
+                        });
+                    } else {
+                        prz.tempCategory = cat;
+                        // order-independence jak fast-path: remap productId na ten sam DN
+                        // w nowej kategorii zamiast czyszczenia.
+                        if (prz.productId && ctx.prodById) {
+                            const curProd = ctx.prodById.get(String(prz.productId));
+                            if (curProd && curProd.category !== cat) {
+                                const curDn = String(curProd.dn || '').replace(/\D/g, '');
+                                let remapped = null;
+                                if (curDn && ctx.catToProducts) {
+                                    const catPool = ctx.catToProducts.get(cat) || [];
+                                    for (let _ri = 0; _ri < catPool.length; _ri++) {
+                                        if (String(catPool[_ri].dn).replace(/\D/g, '') === curDn) {
+                                            remapped = catPool[_ri];
+                                            break;
+                                        }
+                                    }
+                                }
+                                prz.productId = remapped ? remapped.id : '';
+                            }
+                        }
+                        if (!isExact) {
+                            _excelRecordMismatch({
+                                wIdx: wIdx,
+                                colIdx: effLogical,
+                                wellName: well.name || 'Studnia DN' + (well.dn || ''),
+                                originalVal: String(val),
+                                matchedVal: cat,
+                                matchedText: cat,
+                                optionsKind: 'cats'
+                            });
+                        }
+                    }
                 } else if (typeof _excelFindPasteCategory === 'function') {
                     prz.tempCategory = _excelFindPasteCategory(valStr) || valStr;
                 } else {
@@ -1477,31 +2182,68 @@ function _excelSetModelCellValue(wIdx, effLogical, val, ctx, targetElement) {
                             ? ctx.catToProducts.get(curCat)
                             : null;
                     const searchPool = catPool && catPool.length > 0 ? catPool : poolAll;
+                    const poolScoped = !!(catPool && catPool.length > 0);
                     let matched = null;
-                    if (ctx.prodById.has(valStr)) matched = ctx.prodById.get(valStr);
-                    if (!matched && ctx.prodByLower.has(valStr.toLowerCase()))
-                        matched = ctx.prodByLower.get(valStr.toLowerCase());
-                    if (!matched) {
-                        const numVal = valStr.replace(/\D/g, '');
-                        if (numVal) {
-                            for (let i = 0; i < searchPool.length; i++) {
-                                const p = searchPool[i];
-                                if (
-                                    String(p.dn) === numVal ||
-                                    (p.name && p.name.indexOf(numVal) >= 0)
-                                ) {
-                                    matched = p;
-                                    break;
-                                }
-                            }
+                    let isExact = false;
+                    // exact by id / name — tylko w zakresie kategorii (guard jak fast-path,
+                    // inaczej id z obcej kategorii nadpisywało tempCategory).
+                    if (ctx.prodById.has(valStr)) {
+                        const cand = ctx.prodById.get(valStr);
+                        if (searchPool.indexOf(cand) >= 0) {
+                            matched = cand;
+                            isExact = true;
                         }
                     }
-                    if (!matched && typeof _excelFindClosestProduct === 'function') {
+                    if (!matched && ctx.prodByLower.has(valStr.toLowerCase())) {
+                        const cand = ctx.prodByLower.get(valStr.toLowerCase());
+                        if (searchPool.indexOf(cand) >= 0) {
+                            matched = cand;
+                            isExact = true;
+                        }
+                    }
+                    const numVal = valStr.replace(/\D/g, '');
+                    if (!matched && numVal) {
+                        const hits = [];
+                        for (let i = 0; i < searchPool.length; i++) {
+                            const p = searchPool[i];
+                            if (
+                                String(p.dn) === numVal ||
+                                (p.name && p.name.indexOf(numVal) >= 0)
+                            ) {
+                                hits.push(p);
+                                // Bez zakresu kategorii nie zgadujemy "pierwszego z seeda" —
+                                // GRP jest przed K2KAN i cichy strzał psuł dane.
+                                if (hits.length > 1 && !poolScoped) break;
+                            }
+                        }
+                        if (hits.length === 1 || (hits.length > 1 && poolScoped)) {
+                            matched = hits[0];
+                            isExact = String(hits[0].dn) === numVal;
+                        }
+                    }
+                    if (!matched && typeof _excelFindClosestProduct === 'function' && poolScoped) {
                         matched = _excelFindClosestProduct(valStr, searchPool);
                     }
+                    if (matched && isExact && _excelForeignIdSignal(ctx, valStr, matched))
+                        isExact = false;
                     if (matched) {
                         prz.productId = matched.id;
                         prz.tempCategory = matched.category;
+                    }
+                    // Gałąź model-only nigdy nie raportowała nie-exact — stąd ciche GRP
+                    // omijające modal weryfikacji. Każde nie-exact ląduje w grupach.
+                    if (!isExact) {
+                        _excelRecordMismatch({
+                            wIdx: wIdx,
+                            colIdx: effLogical,
+                            wellName: well.name || 'Studnia DN' + (well.dn || ''),
+                            originalVal: String(val),
+                            matchedVal: matched ? matched.id : '',
+                            matchedText: matched ? matched.name || 'DN ' + matched.dn : '',
+                            optionsKind: 'products',
+                            optionsLimit: 300,
+                            optionsCat: matched ? matched.category : curCat || null
+                        });
                     }
                 } else if (
                     typeof _excelFindClosestProduct === 'function' &&
@@ -1577,8 +2319,18 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     let cat = ctx.catLowerMap.get(lower) || null;
                     let isExact = !!cat;
                     if (!cat) {
-                        cat = _excelFindPasteCategory(valStr, ctx.cats);
-                        isExact = !!cat && cat.toLowerCase() === lower;
+                        // Cache fuzzy per unikalna wartość — nie per komórka.
+                        const _fc = _excelFuzzyCatCache(ctx);
+                        const _fck = 'paste|' + lower;
+                        if (_fc && _fc.has(_fck)) {
+                            const _hit = _fc.get(_fck);
+                            cat = _hit.cat;
+                            isExact = !!cat && cat.toLowerCase() === lower;
+                        } else {
+                            cat = _excelFindPasteCategory(valStr, ctx.cats);
+                            isExact = !!cat && cat.toLowerCase() === lower;
+                            if (_fc) _fc.set(_fck, { cat: cat });
+                        }
                     }
                     if (!cat) {
                         prz.tempCategory = '';
@@ -1592,11 +2344,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                             originalVal: String(val),
                             matchedVal: '',
                             matchedText: '',
-                            options: _excelBuildUnmatchedOptions(
-                                ctx.cats.map(function (category) {
-                                    return { value: category, text: category };
-                                })
-                            )
+                            optionsKind: 'cats'
                         });
                         ctx.affected.add(wIdx);
                         return;
@@ -1626,7 +2374,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                     if (!isExact) {
                         const wellForName =
                             wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
-                        // thin: options z ctx.cats, nie z DOM
+                        // thin: options leniwie per grupa (modal), nie per komórka
                         _excelRecordMismatch({
                             wIdx: wIdx,
                             colIdx: colIdx,
@@ -1634,11 +2382,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                             originalVal: String(val),
                             matchedVal: cat,
                             matchedText: cat,
-                            options: _excelBuildUnmatchedOptions(
-                                ctx.cats.map(function (c) {
-                                    return { value: c, text: c };
-                                })
-                            )
+                            optionsKind: 'cats'
                         });
                     }
                     ctx.affected.add(wIdx);
@@ -1678,7 +2422,24 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                         }
                     }
                     const numVal = valStr.replace(/\D/g, '');
-                    if (!matched && numVal) {
+                    // Cache fuzzy per (kategoria, wartość) — linear scan + Levenshtein raz, nie per komórka.
+                    const _fpc = _excelFuzzyProdCache(ctx);
+                    const _fpk = String(curCat || '') + '|' + valStr.toLowerCase() + '|' + numVal;
+                    const _fpHit = _fpc && _fpc.has(_fpk) ? _fpc.get(_fpk) : undefined;
+                    if (_fpHit !== undefined && !matched) {
+                        if (_fpHit) {
+                            const _cand =
+                                ctx.prodById.get(_fpHit) ||
+                                (typeof getStudnieProductById === 'function'
+                                    ? getStudnieProductById(_fpHit)
+                                    : null);
+                            if (_cand && searchPool.indexOf(_cand) >= 0) {
+                                matched = _cand;
+                                isExact = _cand.id === valStr || String(_cand.dn) === numVal;
+                            }
+                        }
+                    }
+                    if (!matched && numVal && _fpHit === undefined) {
                         // exact digits w searchPool
                         for (let i = 0; i < searchPool.length; i++) {
                             const p = searchPool[i];
@@ -1692,7 +2453,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                             }
                         }
                     }
-                    if (!matched) {
+                    if (!matched && _fpHit === undefined) {
                         matched = _excelFindClosestProduct(valStr, searchPool);
                         isExact =
                             matched &&
@@ -1700,16 +2461,16 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                                 matched.name === valStr ||
                                 String(matched.dn) === numVal);
                     }
+                    if (matched && isExact && _excelForeignIdSignal(ctx, valStr, matched))
+                        isExact = false;
+                    if (_fpc && _fpHit === undefined) _fpc.set(_fpk, matched ? matched.id : '');
                     if (matched) {
                         prz.productId = matched.id;
                         prz.tempCategory = matched.category;
                         if (!isExact) {
                             const wellForName =
                                 wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
-                            // thin: ogranicz options do 200 dla modala (nie cały DOM)
-                            const opts = poolAll.slice(0, 300).map(function (p) {
-                                return { value: p.id, text: p.name || 'DN ' + p.dn };
-                            });
+                            // thin: opcje leniwie per grupa w modalu (pełna lista jak dziś)
                             _excelRecordMismatch({
                                 wIdx: wIdx,
                                 colIdx: colIdx,
@@ -1717,7 +2478,9 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                                 originalVal: String(val),
                                 matchedVal: matched.id,
                                 matchedText: matched.name || 'DN ' + matched.dn,
-                                options: opts
+                                optionsKind: 'products',
+                                optionsLimit: 300,
+                                optionsCat: matched.category
                             });
                         }
                         ctx.affected.add(wIdx);
@@ -1857,16 +2620,6 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                 }
                 prz.tempCategory = catToSet;
                 if (isClosest) {
-                    const catOpts =
-                        typeof studnieProducts !== 'undefined'
-                            ? [
-                                  ...new Set(
-                                      studnieProducts
-                                          .filter((p) => p.componentType === 'przejscie')
-                                          .map((p) => ({ value: p.category, text: p.category }))
-                                  )
-                              ]
-                            : [];
                     const wellForName2 = wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
                     _excelRecordMismatch({
                         wIdx: wIdx,
@@ -1875,7 +2628,7 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                         originalVal: valStr,
                         matchedVal: catToSet,
                         matchedText: catToSet,
-                        options: catOpts
+                        optionsKind: 'cats'
                     });
                 }
             } else if (subType === 3) {
@@ -1904,10 +2657,6 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                             matched.name === valStr ||
                             String(matched.dn) === numVal;
                         if (!isExact) {
-                            const opts = pool.map((p) => ({
-                                value: p.id,
-                                text: p.name || 'DN ' + p.dn
-                            }));
                             const wellForName3 =
                                 wells[wIdx].name || 'Studnia DN' + (wells[wIdx].dn || '');
                             _excelRecordMismatch({
@@ -1917,7 +2666,9 @@ function _excelSetCellValue(target, val, ctx, logicalCol) {
                                 originalVal: valStr,
                                 matchedVal: matched.id,
                                 matchedText: matched.name || 'DN ' + matched.dn,
-                                options: opts
+                                optionsKind: 'products',
+                                optionsLimit: 0,
+                                optionsCat: matched.category
                             });
                         }
                     }
