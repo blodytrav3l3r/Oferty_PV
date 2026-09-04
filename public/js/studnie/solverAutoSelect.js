@@ -554,8 +554,36 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
         })
         .filter((t) => t.height_from_bottom_mm > 0);
 
+    // P0-1/F2: memo współdzielonego DP w obrębie jednego runJsAutoSelection.
+    // Klucz = PEŁNY fingerprint wejść (lista po referencji + target + tolerancje
+    // + fixedBelowHeight + liczba przejść); productId dennicy NIE wchodzi do klucza,
+    // bo DP zależy tylko od liczb. Zwracane klony (brak aliasingu między kandydatami).
+    // Guard czasu: wynik wolniejszy niż połowa DP_TIMEOUT_MS nie jest cachowany,
+    // bo timeout zależy od obciążenia maszyny (niedeterminizm).
+    const dpMemo = new Map();
+    const DP_MEMO_MAX_MS = 125;
     function fillKregiDP(target, kList, tolBelow, tolAbove, fixedBelowHeight = 0) {
         if (target <= 0) return { kItems: [], filled: 0 };
+
+        let listTag = null;
+        if (kList === targetDnKregi) listTag = 'T';
+        else if (kList === kregi) listTag = 'K';
+        const memoKey =
+            listTag === null
+                ? null
+                : [
+                      listTag,
+                      target,
+                      tolBelow,
+                      tolAbove,
+                      fixedBelowHeight,
+                      transitionsForDP.length
+                  ].join('|');
+        const memoHit = memoKey === null ? undefined : dpMemo.get(memoKey);
+        if (memoHit) {
+            return { kItems: memoHit.kItems.map((k) => ({ ...k })), filled: memoHit.filled };
+        }
+        const memoStart = Date.now();
 
         logger.info(
             'wellSolver',
@@ -597,10 +625,23 @@ async function runJsAutoSelection(well, requiredMm, availProducts) {
                 _h: parseFloat(ring.height)
             }));
             const filled = kItems.reduce((sum, k) => sum + k._h, 0);
+            if (memoKey !== null && Date.now() - memoStart < DP_MEMO_MAX_MS) {
+                dpMemo.set(memoKey, {
+                    kItems: kItems.map((k) => ({ ...k })),
+                    filled
+                });
+            }
             return { kItems, filled };
         }
 
-        return fillKregiGreedy(target, kList);
+        const greedy = fillKregiGreedy(target, kList);
+        if (memoKey !== null && Date.now() - memoStart < DP_MEMO_MAX_MS) {
+            dpMemo.set(memoKey, {
+                kItems: greedy.kItems.map((k) => ({ ...k })),
+                filled: greedy.filled
+            });
+        }
+        return greedy;
     }
 
     function fillKregiGreedy(target, kList) {
