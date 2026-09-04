@@ -157,7 +157,8 @@ function optimizeRingsForDistance(
         );
 
         if (!isValid) {
-            // Próbuj alternatywne rozwiązania DP z lekko zmienionym targetem
+            // P0-1/F3: alternatywna ścieżka startuje od już policzonej tabeli DP
+            // (te same heights/min/max — rebuild dałby bit-identyczną tabelę).
             const alternativeResult = findAlternativeDPSolution(
                 heights,
                 minAllowed,
@@ -166,7 +167,8 @@ function optimizeRingsForDistance(
                 transitions,
                 availableProducts,
                 fixedBelowHeight,
-                mode
+                mode,
+                dpResult._dpTable || null
             );
             if (alternativeResult) {
                 return alternativeResult;
@@ -198,22 +200,28 @@ function findAlternativeDPSolution(
     transitions,
     availableProducts,
     fixedBelowHeight,
-    mode
+    mode,
+    prebuiltDp = null
 ) {
     const cap = maxAllowed;
 
-    // Zbuduj pełne DP (identyczne jak solveDPRings)
-    const dp = new Array(cap + 1).fill(null);
-    dp[0] = { score: 0, prevH: -1, addedHeight: 0 };
+    // P0-1/F3: tabela z solveDPRings (ten sam cap i heights) — reuse zamiast rebuildu.
+    // Guard długości chroni przed niezgodnym stołem (wtedy klasyczny rebuild).
+    let dp = prebuiltDp && prebuiltDp.length === cap + 1 ? prebuiltDp : null;
+    if (dp === null) {
+        // Zbuduj pełne DP (identyczne jak solveDPRings)
+        dp = new Array(cap + 1).fill(null);
+        dp[0] = { score: 0, prevH: -1, addedHeight: 0 };
 
-    for (let h = 1; h <= cap; h++) {
-        for (const ringH of heights) {
-            if (ringH > h) continue;
-            const prev = dp[h - ringH];
-            if (prev === null) continue;
-            const newScore = prev.score + ringH * ringH;
-            if (dp[h] === null || newScore > dp[h].score) {
-                dp[h] = { score: newScore, prevH: h - ringH, addedHeight: ringH };
+        for (let h = 1; h <= cap; h++) {
+            for (const ringH of heights) {
+                if (ringH > h) continue;
+                const prev = dp[h - ringH];
+                if (prev === null) continue;
+                const newScore = prev.score + ringH * ringH;
+                if (dp[h] === null || newScore > dp[h].score) {
+                    dp[h] = { score: newScore, prevH: h - ringH, addedHeight: ringH };
+                }
             }
         }
     }
@@ -340,7 +348,8 @@ function solveDPRings(heights, minAllowed, maxAllowed, availableRings) {
     // są już posortowane wg formy standardowej przez getKregiList)
     const selectedRings = mapHeightsToProducts(selectedHeights, availableRings);
 
-    return { success: true, selectedRings };
+    // P0-1/F3: odsłoń tabelę do reuse w findAlternativeDPSolution (tylko odczyt).
+    return { success: true, selectedRings, _dpTable: dp };
 }
 
 /**
