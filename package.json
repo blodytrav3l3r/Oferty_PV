@@ -81,6 +81,8 @@
         "licenses:check": "node scripts/check-licenses.mjs",
         "benchmark": "node scripts/benchmark.mjs",
         "benchmark:quick": "node scripts/benchmark.mjs 10",
+        "benchmark:autoselect": "node scripts/benchmark-autoselect.mjs",
+        "benchmark:autoselect:quick": "node scripts/benchmark-autoselect.mjs --quick --repeats=10 --warmup=3",
         "git:safety": "node scripts/git-safety/cli.mjs",
         "git:safety:list": "node scripts/git-safety/cli.mjs list",
         "git:safety:inspect": "node scripts/git-safety/cli.mjs inspect",

@@ -1,0 +1,871 @@
+{
+    "meta": {
+        "node": "v24.18.0",
+        "v8": "13.6.233.17-node.50",
+        "cpu": "AMD Ryzen 7 3700X 8-Core Processor             ",
+        "cpuCount": 8,
+        "platform": "win32 x64",
+        "totalMemMb": 65447,
+        "date": "2026-09-04T19:51:41.393Z",
+        "repeats": 20,
+        "warmup": 5,
+        "quick": false,
+        "catalogs": {
+            "seedSize": 685,
+            "seedByType": {
+                "avr": 3,
+                "dennica": 104,
+                "styczna": 16,
+                "przejscie": 348,
+                "konus": 18,
+                "krag": 102,
+                "krag_ot": 24,
+                "kineta": 20,
+                "plyta_din": 9,
+                "plyta_redukcyjna": 8,
+                "pierscien_odciazajacy": 5,
+                "plyta_zamykajaca": 5,
+                "wlaz": 2,
+                "uszczelka": 21
+            },
+            "kragHeights": ["250", "500", "1000", "750"],
+            "avrHeights": [60, 80, 100]
+        },
+        "stages": [
+            "DP scaling (optimizeRingsForDistance, real)",
+            "AVR (replica + counters)",
+            "filter (real)",
+            "AI (real logic, stub net)",
+            "solver proxy (real chain, no DOM)"
+        ],
+        "notes": [
+            "Kod prod ładowany bez modyfikacji; liczniki DP wstrzyknięte string-replace w kopii w pamięci.",
+            "findBestAvrFill zagnieżdżona w runJsAutoSelection — mierzona wierna replika (serie B).",
+            "Excel _excelRenderTable/DOM/layout/paint: brak headless DOM w harnessie — krok manualny w raporcie.",
+            "Backend /ai/predict/batch: model.predict O(29x10) ~ us; dominuje getActiveModel(DB)+zod — live-probe opcjonalny."
+        ],
+        "wallClockSec": 51.088
+    },
+    "dpScaling": [
+        {
+            "cap": 500,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.259,
+            "p95Ms": 1.103,
+            "p99Ms": 1.358,
+            "maxMs": 1.358
+        },
+        {
+            "cap": 1000,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.446,
+            "p95Ms": 3.678,
+            "p99Ms": 7.021,
+            "maxMs": 7.021
+        },
+        {
+            "cap": 2000,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.812,
+            "p95Ms": 3.921,
+            "p99Ms": 5.977,
+            "maxMs": 5.977
+        },
+        {
+            "cap": 4000,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 1.566,
+            "p95Ms": 10.606,
+            "p99Ms": 13.01,
+            "maxMs": 13.01
+        },
+        {
+            "cap": 6000,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 1.938,
+            "p95Ms": 5.234,
+            "p99Ms": 11.575,
+            "maxMs": 11.575
+        },
+        {
+            "cap": 10000,
+            "heights": 3,
+            "ringListSize": 18,
+            "solveCallsPerRun": 1,
+            "p50Ms": 3.913,
+            "p95Ms": 5.894,
+            "p99Ms": 8.779,
+            "maxMs": 8.779
+        },
+        {
+            "cap": 500,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.162,
+            "p95Ms": 0.366,
+            "p99Ms": 0.522,
+            "maxMs": 0.522
+        },
+        {
+            "cap": 1000,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.309,
+            "p95Ms": 0.58,
+            "p99Ms": 0.611,
+            "maxMs": 0.611
+        },
+        {
+            "cap": 2000,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.641,
+            "p95Ms": 3.879,
+            "p99Ms": 4.623,
+            "maxMs": 4.623
+        },
+        {
+            "cap": 4000,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 1.462,
+            "p95Ms": 4.093,
+            "p99Ms": 4.753,
+            "maxMs": 4.753
+        },
+        {
+            "cap": 6000,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 2.043,
+            "p95Ms": 4.664,
+            "p99Ms": 5.262,
+            "maxMs": 5.262
+        },
+        {
+            "cap": 10000,
+            "heights": 4,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 3.355,
+            "p95Ms": 31.768,
+            "p99Ms": 34.273,
+            "maxMs": 34.273
+        },
+        {
+            "cap": 500,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.181,
+            "p95Ms": 0.401,
+            "p99Ms": 2.374,
+            "maxMs": 2.374
+        },
+        {
+            "cap": 1000,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.314,
+            "p95Ms": 2.353,
+            "p99Ms": 21.658,
+            "maxMs": 21.658
+        },
+        {
+            "cap": 2000,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 0.624,
+            "p95Ms": 3.702,
+            "p99Ms": 6.968,
+            "maxMs": 6.968
+        },
+        {
+            "cap": 4000,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 1.426,
+            "p95Ms": 3.513,
+            "p99Ms": 4.553,
+            "maxMs": 4.553
+        },
+        {
+            "cap": 6000,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 5.408,
+            "p95Ms": 17.067,
+            "p99Ms": 23.781,
+            "maxMs": 23.781
+        },
+        {
+            "cap": 10000,
+            "heights": 6,
+            "ringListSize": 24,
+            "solveCallsPerRun": 1,
+            "p50Ms": 5.07,
+            "p95Ms": 6.992,
+            "p99Ms": 11.048,
+            "maxMs": 11.048
+        }
+    ],
+    "dpWithTransitions": [
+        {
+            "cap": 500,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.278,
+            "p95Ms": 0.559,
+            "maxMs": 0.993
+        },
+        {
+            "cap": 1000,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.455,
+            "p95Ms": 1.992,
+            "maxMs": 5.13
+        },
+        {
+            "cap": 2000,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.982,
+            "p95Ms": 4.804,
+            "maxMs": 12.467
+        },
+        {
+            "cap": 4000,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 1.728,
+            "p95Ms": 2.43,
+            "maxMs": 2.864
+        },
+        {
+            "cap": 6000,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 2.528,
+            "p95Ms": 5.053,
+            "maxMs": 6.972
+        },
+        {
+            "cap": 10000,
+            "heights": 3,
+            "altCallsPerRun": 0,
+            "p50Ms": 3.583,
+            "p95Ms": 8.029,
+            "maxMs": 11.864
+        },
+        {
+            "cap": 500,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.171,
+            "p95Ms": 0.286,
+            "maxMs": 0.577
+        },
+        {
+            "cap": 1000,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.315,
+            "p95Ms": 0.697,
+            "maxMs": 0.89
+        },
+        {
+            "cap": 2000,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.673,
+            "p95Ms": 1.153,
+            "maxMs": 1.217
+        },
+        {
+            "cap": 4000,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 1.526,
+            "p95Ms": 2.748,
+            "maxMs": 3.005
+        },
+        {
+            "cap": 6000,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 2.139,
+            "p95Ms": 3.183,
+            "maxMs": 3.38
+        },
+        {
+            "cap": 10000,
+            "heights": 4,
+            "altCallsPerRun": 0,
+            "p50Ms": 5.442,
+            "p95Ms": 49.601,
+            "maxMs": 87.401
+        },
+        {
+            "cap": 500,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.216,
+            "p95Ms": 2.047,
+            "maxMs": 2.204
+        },
+        {
+            "cap": 1000,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.312,
+            "p95Ms": 0.95,
+            "maxMs": 3.19
+        },
+        {
+            "cap": 2000,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 0.845,
+            "p95Ms": 3.224,
+            "maxMs": 5.141
+        },
+        {
+            "cap": 4000,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 2.738,
+            "p95Ms": 12.458,
+            "maxMs": 29.12
+        },
+        {
+            "cap": 6000,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 3.876,
+            "p95Ms": 11.92,
+            "maxMs": 12.313
+        },
+        {
+            "cap": 10000,
+            "heights": 6,
+            "altCallsPerRun": 0,
+            "p50Ms": 4.813,
+            "p95Ms": 6.215,
+            "maxMs": 7.09
+        }
+    ],
+    "avr": [
+        {
+            "deficit": 30,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": -1,
+            "p50Ms": 0.008,
+            "p95Ms": 0.019,
+            "maxMs": 0.035
+        },
+        {
+            "deficit": 60,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.007,
+            "p95Ms": 0.009,
+            "maxMs": 0.009
+        },
+        {
+            "deficit": 100,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.007,
+            "p95Ms": 0.008,
+            "maxMs": 0.01
+        },
+        {
+            "deficit": 150,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.006,
+            "p95Ms": 0.007,
+            "maxMs": 0.024
+        },
+        {
+            "deficit": 200,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.006,
+            "p95Ms": 0.01,
+            "maxMs": 0.03
+        },
+        {
+            "deficit": 260,
+            "avrTypes": 3,
+            "visitedP50": 20,
+            "visitedP95": 20,
+            "visitedMax": 20,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.007,
+            "p95Ms": 0.007,
+            "maxMs": 0.007
+        },
+        {
+            "deficit": 30,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": -1,
+            "p50Ms": 0.077,
+            "p95Ms": 0.171,
+            "maxMs": 0.214
+        },
+        {
+            "deficit": 60,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.025,
+            "p95Ms": 0.075,
+            "maxMs": 0.086
+        },
+        {
+            "deficit": 100,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.025,
+            "p95Ms": 0.027,
+            "maxMs": 0.066
+        },
+        {
+            "deficit": 150,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.025,
+            "p95Ms": 0.026,
+            "maxMs": 0.026
+        },
+        {
+            "deficit": 200,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.026,
+            "p95Ms": 1.056,
+            "maxMs": 1.832
+        },
+        {
+            "deficit": 260,
+            "avrTypes": 9,
+            "visitedP50": 237,
+            "visitedP95": 237,
+            "visitedMax": 237,
+            "timeoutHits": 0,
+            "timeoutRate": 0,
+            "timeToFirstP50Ms": 0,
+            "p50Ms": 0.026,
+            "p95Ms": 0.044,
+            "maxMs": 0.126
+        }
+    ],
+    "filter": [
+        {
+            "catalog": "seed-685",
+            "catalogSize": 685,
+            "well": "beton+drabinka",
+            "availSize": 282,
+            "p50Ms": 0.277,
+            "p95Ms": 0.442,
+            "maxMs": 1.472
+        },
+        {
+            "catalog": "seed-685",
+            "catalogSize": 685,
+            "well": "zelbet+brak",
+            "availSize": 282,
+            "p50Ms": 0.295,
+            "p95Ms": 0.523,
+            "maxMs": 3.972
+        },
+        {
+            "catalog": "seed-685",
+            "catalogSize": 685,
+            "well": "redukcja",
+            "availSize": 282,
+            "p50Ms": 0.258,
+            "p95Ms": 0.457,
+            "maxMs": 0.457
+        },
+        {
+            "catalog": "synth-small",
+            "catalogSize": 34,
+            "well": "beton+drabinka",
+            "availSize": 0,
+            "p50Ms": 0.002,
+            "p95Ms": 0.004,
+            "maxMs": 0.041
+        },
+        {
+            "catalog": "synth-small",
+            "catalogSize": 34,
+            "well": "zelbet+brak",
+            "availSize": 0,
+            "p50Ms": 0.002,
+            "p95Ms": 0.003,
+            "maxMs": 0.003
+        },
+        {
+            "catalog": "synth-small",
+            "catalogSize": 34,
+            "well": "redukcja",
+            "availSize": 0,
+            "p50Ms": 0.002,
+            "p95Ms": 0.003,
+            "maxMs": 0.004
+        },
+        {
+            "catalog": "synth-large-2k",
+            "catalogSize": 2058,
+            "well": "beton+drabinka",
+            "availSize": 2000,
+            "p50Ms": 2.42,
+            "p95Ms": 50.703,
+            "maxMs": 81.344
+        },
+        {
+            "catalog": "synth-large-2k",
+            "catalogSize": 2058,
+            "well": "zelbet+brak",
+            "availSize": 2000,
+            "p50Ms": 3.657,
+            "p95Ms": 6.974,
+            "maxMs": 11.654
+        },
+        {
+            "catalog": "synth-large-2k",
+            "catalogSize": 2058,
+            "well": "redukcja",
+            "availSize": 2000,
+            "p50Ms": 2.388,
+            "p95Ms": 5.803,
+            "maxMs": 10.573
+        }
+    ],
+    "ai": {
+        "buildFeatureVector10": {
+            "p50Ms": 3.499,
+            "p95Ms": 16.089,
+            "maxMs": 20.494,
+            "perCandidateP50Ms": 0.35
+        },
+        "variants": [
+            {
+                "variant": "ai-off",
+                "stubLatencyMs": null,
+                "mlOnline": true,
+                "coldP50Ms": 7.621,
+                "coldP95Ms": 27.72,
+                "warmP50Ms": 1.364,
+                "warmP95Ms": 6.126,
+                "warmMaxMs": 17.702,
+                "raceBudgetMs": 800
+            },
+            {
+                "variant": "cache-miss-0ms",
+                "stubLatencyMs": 0,
+                "mlOnline": true,
+                "coldP50Ms": 17.848,
+                "coldP95Ms": 156.816,
+                "warmP50Ms": 1.654,
+                "warmP95Ms": 5.749,
+                "warmMaxMs": 8.758,
+                "raceBudgetMs": 800
+            },
+            {
+                "variant": "real-50ms",
+                "stubLatencyMs": 50,
+                "mlOnline": true,
+                "coldP50Ms": 69.626,
+                "coldP95Ms": 102.701,
+                "warmP50Ms": 1.18,
+                "warmP95Ms": 5.386,
+                "warmMaxMs": 7.221,
+                "raceBudgetMs": 800
+            },
+            {
+                "variant": "real-200ms",
+                "stubLatencyMs": 200,
+                "mlOnline": true,
+                "coldP50Ms": 239.69,
+                "coldP95Ms": 328.607,
+                "warmP50Ms": 1.362,
+                "warmP95Ms": 4.926,
+                "warmMaxMs": 16.127,
+                "raceBudgetMs": 800
+            },
+            {
+                "variant": "timeout-1200ms",
+                "stubLatencyMs": 1200,
+                "mlOnline": false,
+                "coldP50Ms": 815.59,
+                "coldP95Ms": 884.744,
+                "warmP50Ms": 1.591,
+                "warmP95Ms": 9.073,
+                "warmMaxMs": 12.199,
+                "raceBudgetMs": 800
+            }
+        ]
+    },
+    "callBounds": [
+        {
+            "case": "DN1000-3m-0prz",
+            "denniceCount": 13,
+            "kregiCount": 7,
+            "topConfigs": 2,
+            "stages": 5,
+            "dpCallsBest": 13,
+            "dpCallsWorstNoRed": 130,
+            "dpCallsWorstRed": 0,
+            "singleDpP50Ms": 0.812,
+            "projectedBestMs": 10.556,
+            "projectedWorstNoRedMs": 105.56,
+            "projectedWorstRedMs": 105.56
+        },
+        {
+            "case": "DN1500-5m-red",
+            "denniceCount": 14,
+            "kregiCount": 6,
+            "topConfigs": 2,
+            "stages": 5,
+            "dpCallsBest": 14,
+            "dpCallsWorstNoRed": 140,
+            "dpCallsWorstRed": 1120,
+            "singleDpP50Ms": 0.812,
+            "projectedBestMs": 11.368,
+            "projectedWorstNoRedMs": 113.68,
+            "projectedWorstRedMs": 1023.12
+        },
+        {
+            "case": "DN2000-6m-3prz",
+            "denniceCount": 17,
+            "kregiCount": 6,
+            "topConfigs": 2,
+            "stages": 5,
+            "dpCallsBest": 17,
+            "dpCallsWorstNoRed": 170,
+            "dpCallsWorstRed": 0,
+            "singleDpP50Ms": 0.812,
+            "projectedBestMs": 13.804,
+            "projectedWorstNoRedMs": 138.04,
+            "projectedWorstRedMs": 138.04
+        }
+    ],
+    "solverProxy": [
+        {
+            "case": "DN1000-3m-0prz",
+            "p50Ms": 1.039,
+            "p95Ms": 4.041,
+            "maxMs": 4.109
+        },
+        {
+            "case": "DN1000-3m-2prz",
+            "p50Ms": 3.123,
+            "p95Ms": 10.339,
+            "maxMs": 18.013
+        },
+        {
+            "case": "DN1500-5m-red",
+            "p50Ms": 1.099,
+            "p95Ms": 5.344,
+            "maxMs": 6.072
+        }
+    ],
+    "fullSolve": [
+        {
+            "case": "DN1000-3m-0prz",
+            "dpCallsAvg": 26,
+            "uniqueDpAvg": 26,
+            "redundantPct": 0,
+            "wallP50Ms": 25.439,
+            "wallP95Ms": 48.592,
+            "stage": "Standard items: 2 dennica: DDD-10-045 candidates: 26"
+        },
+        {
+            "case": "DN1000-4m-2prz",
+            "dpCallsAvg": 26,
+            "uniqueDpAvg": 26,
+            "redundantPct": 0,
+            "wallP50Ms": 48.933,
+            "wallP95Ms": 68.118,
+            "stage": "Standard items: 3 dennica: DDD-10-045 candidates: 16"
+        },
+        {
+            "case": "DN1500-5m-red",
+            "dpCallsAvg": 731,
+            "uniqueDpAvg": 554,
+            "redundantPct": 24.213,
+            "wallP50Ms": 1164.076,
+            "wallP95Ms": 1856.204,
+            "stage": "Standard items: 4 dennica: DDD-15-100 candidates: 257"
+        }
+    ],
+    "perFunction": {
+        "optimizeRingsForDistance": {
+            "calls": 895,
+            "totalMs": 2196,
+            "avgMs": 2.454,
+            "p50Ms": 1,
+            "p95Ms": 7,
+            "p99Ms": 18,
+            "maxMs": 87,
+            "perCallMs": 2.454,
+            "sharePct": 82.743
+        },
+        "getAvailableProducts": {
+            "calls": 303,
+            "totalMs": 17,
+            "avgMs": 0.056,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 1,
+            "maxMs": 2,
+            "perCallMs": 0.056,
+            "sharePct": 0.641
+        },
+        "filterByWellParams": {
+            "calls": 193146,
+            "totalMs": 252,
+            "avgMs": 0.001,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 0,
+            "maxMs": 72,
+            "perCallMs": 0.001,
+            "sharePct": 9.495
+        },
+        "buildFeatureVector": {
+            "calls": 250,
+            "totalMs": 156,
+            "avgMs": 0.624,
+            "p50Ms": 0,
+            "p95Ms": 2,
+            "p99Ms": 12,
+            "maxMs": 14,
+            "perCallMs": 0.624,
+            "sharePct": 5.878
+        },
+        "getKregiList": {
+            "calls": 78,
+            "totalMs": 15,
+            "avgMs": 0.192,
+            "p50Ms": 0,
+            "p95Ms": 1,
+            "p99Ms": 5,
+            "maxMs": 5,
+            "perCallMs": 0.192,
+            "sharePct": 0.565
+        },
+        "getLowestDennicaHybrid": {
+            "calls": 75,
+            "totalMs": 7,
+            "avgMs": 0.093,
+            "p50Ms": 0,
+            "p95Ms": 1,
+            "p99Ms": 1,
+            "maxMs": 1,
+            "perCallMs": 0.093,
+            "sharePct": 0.264
+        },
+        "getTopClosure": {
+            "calls": 75,
+            "totalMs": 3,
+            "avgMs": 0.04,
+            "p50Ms": 0,
+            "p95Ms": 0,
+            "p99Ms": 2,
+            "maxMs": 2,
+            "perCallMs": 0.04,
+            "sharePct": 0.113
+        },
+        "buildCandidateLayouts": {
+            "calls": 75,
+            "totalMs": 8,
+            "avgMs": 0.107,
+            "p50Ms": 0,
+            "p95Ms": 1,
+            "p99Ms": 2,
+            "maxMs": 2,
+            "perCallMs": 0.107,
+            "sharePct": 0.301
+        }
+    },
+    "coldCacheDP3000": {
+        "p50Ms": 2.086,
+        "p95Ms": 3.349,
+        "maxMs": 3.349
+    }
+}
