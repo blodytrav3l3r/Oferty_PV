@@ -72,9 +72,22 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             return;
         }
 
+        // P1a quiet bulk: stan LOADING zapisywany, malowanie pomijane
+        // (modal Excela zasłania panel; końcowy render po bulk domalowuje).
+        const __bulkQuiet = typeof window !== 'undefined' && window.__excelBulkDepth > 0;
+        const __bulkStats =
+            __bulkQuiet &&
+            typeof window.__excelBulkStats === 'object' &&
+            window.__excelBulkStats !== null
+                ? window.__excelBulkStats
+                : null;
         // --- Pokaż loading w UI ---
         well.configStatus = 'LOADING';
-        if (typeof refreshAll === 'function') refreshAll();
+        if (__bulkQuiet) {
+            if (__bulkStats) __bulkStats.rendersSkipped++;
+        } else if (typeof refreshAll === 'function') {
+            refreshAll();
+        }
 
         const availProducts = getAvailableProducts(well).filter((p) => filterByWellParams(p, well));
 
@@ -83,10 +96,15 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
             window.performance && window.performance.now ? window.performance.now() : Date.now();
         const jsResult = await runJsAutoSelection(well, requiredMm, availProducts);
         if (jsResult.error) {
-            showToast(jsResult.error, 'error');
             well.configStatus = 'ERROR';
             well.configErrors = [jsResult.error];
-            refreshAll();
+            if (__bulkQuiet) {
+                // Bulk liczy błędy sam (fail++); toast i render na końcu.
+                if (__bulkStats) __bulkStats.rendersSkipped += 2;
+            } else {
+                showToast(jsResult.error, 'error');
+                refreshAll();
+            }
             return;
         }
         logger.info(
@@ -128,6 +146,7 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
         well.configSource = jsResult.aiUsed ? 'AUTO_AI' : 'AUTO_JS';
 
         try {
+            // Stan (sort/uszczelki/kineta) ZAWSZE — to logika, nie UI (invariant P1a).
             sortWellConfigByOrder();
             if (typeof recalcGaskets === 'function') recalcGaskets(well);
             if (typeof syncKineta === 'function') syncKineta(well);
@@ -136,10 +155,14 @@ window.autoSelectComponents = async function autoSelectComponents(autoTriggered 
                 '[AutoSelect] Przed render. config.length=',
                 well.config?.length
             );
-            renderWellConfig();
-            renderWellDiagram();
-            updateSummary();
-            refreshAll();
+            if (__bulkQuiet) {
+                if (__bulkStats) __bulkStats.rendersSkipped += 4;
+            } else {
+                renderWellConfig();
+                renderWellDiagram();
+                updateSummary();
+                refreshAll();
+            }
             logger.info('wellSolver', '[AutoSelect] Render OK.');
         } catch (renderErr) {
             logger.error('wellSolver', '[AutoSelect] Błąd renderowania:', renderErr);

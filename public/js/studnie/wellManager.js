@@ -17,6 +17,16 @@ function refreshAll(skipSummary = false) {
         }
         return;
     }
+    // P1a quiet bulk (Excel "auto dla wszystkich"): modal zasłania panel główny,
+    // więc pośrednie pełne rendery są odpadem. Wycisza WYŁĄCZNIE UI — stan
+    // (wells/config), solver, AI, telemetria i walidacje działają bez zmian.
+    // Końcowy render po bulk (po zdjęciu flagi) domalowuje wszystko naraz.
+    if (typeof window !== 'undefined' && window.__excelBulkDepth > 0) {
+        if (typeof window.__excelBulkStats === 'object' && window.__excelBulkStats !== null) {
+            window.__excelBulkStats.refreshSkipped++;
+        }
+        return;
+    }
     __refreshAllDepth++;
     if (typeof window !== 'undefined') window.__refreshAllDepth = __refreshAllDepth;
     if (__refreshAllDepth > __MAX_REFRESH_DEPTH) {

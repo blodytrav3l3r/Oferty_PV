@@ -333,6 +333,21 @@ async function _excelBulkRunAutoSelect() {
         showToast('Brak studni do przeliczenia', 'info');
         return;
     }
+    // P1a quiet bulk: wycisza wyłącznie UI/render (invariant: stan, solver, AI,
+    // telemetria, PZ, undo i walidacje bez zmian). Zdejmowana w finally —
+    // również przy błędzie / Anuluj / wyjątku AI (zakaz permanentnego mute).
+    if (typeof window !== 'undefined') {
+        if (window.__excelBulkDepth > 0) {
+            if (typeof window.logger !== 'undefined')
+                window.logger.warn(
+                    'excelBulk',
+                    'Zastana flaga __excelBulkDepth — reset defensywny'
+                );
+        }
+        window.__excelBulkDepth = 0;
+        window.__excelBulkDepth++;
+        window.__excelBulkStats = { solverRuns: 0, refreshSkipped: 0, rendersSkipped: 0 };
+    }
     const btn = document.getElementById('excel-bulk-recalc');
     if (btn) {
         btn.disabled = true;
@@ -411,6 +426,13 @@ async function _excelBulkRunAutoSelect() {
         }
     } finally {
         currentWellIndex = savedIdx >= 0 ? savedIdx : currentWellIndex;
+        // Flaga w dół PRZED końcowym renderem — ten ma być pełny, nie cichy.
+        let bulkStats = null;
+        if (typeof window !== 'undefined') {
+            bulkStats = window.__excelBulkStats || null;
+            if (window.__excelBulkDepth > 0) window.__excelBulkDepth--;
+            window.__excelBulkStats = null;
+        }
         _excelRenderTable(_excelActiveTab);
         _excelUpdateHeaderProdCodes();
         if (bulkContainer && bulkSavedScrollTop !== null) {
@@ -455,6 +477,16 @@ async function _excelBulkRunAutoSelect() {
         const skipped = sel.length - editable.length;
         if (skipped > 0) msg += ' (pominięto ' + skipped + ')';
         showToast(msg, fail > 0 ? 'warning' : 'success');
+        if (bulkStats && typeof window.logger !== 'undefined')
+            window.logger.info(
+                'excelBulk',
+                'quiet stats: solverRuns=' +
+                    (ok + fail) +
+                    ' refreshSkipped=' +
+                    bulkStats.refreshSkipped +
+                    ' rendersSkipped=' +
+                    bulkStats.rendersSkipped
+            );
     }
 }
 
