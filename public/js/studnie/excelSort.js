@@ -48,6 +48,17 @@ function _excelRowCellValue(row, colIdx) {
 /* Przebudowa kolejności wierszy tbody wg _excelSortState + renumeracja Lp (colIdx 2). */
 function _excelApplySort() {
     if (typeof document === 'undefined') return; /* test vm */
+    // Virtual: sortuj model (filtered), nie slice DOM — inaczej sortowano by
+    // tylko widoczne ~58 wierszy zamiast calego zestawu (P1-B parity).
+    if (
+        typeof window !== 'undefined' &&
+        typeof window._excelVirtualIsEnabled === 'function' &&
+        window._excelVirtualIsEnabled() &&
+        typeof _excelVirtualApplySort === 'function'
+    ) {
+        _excelVirtualApplySort();
+        return;
+    }
     const container = document.getElementById('excel-table-container');
     if (!container) return;
     const tbody = container.querySelector('tbody');
@@ -111,6 +122,15 @@ function _excelSetSort(colIdx) {
 
 function _excelResetSort() {
     _excelSortState = null;
+    if (
+        typeof window !== 'undefined' &&
+        typeof window._excelVirtualIsEnabled === 'function' &&
+        window._excelVirtualIsEnabled() &&
+        typeof _excelVirtualClearSort === 'function'
+    ) {
+        _excelVirtualClearSort();
+        return;
+    }
     _excelRenderSortIndicator();
 }
 

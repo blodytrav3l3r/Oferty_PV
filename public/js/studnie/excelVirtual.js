@@ -3,7 +3,9 @@
  * 7 kolumn sticky zawsze widoczne (Checkbox..Wys) jak w 14c6d09.
  * Model SSoT: wells + filteredIndexes[logical→wellIdx] + selection range.
  * DOM to tylko widok: 40-70 wierszy + spacery, nie 10k.
- * Flag: ?virtual=1  (progessive, legacy pozostaje oracle)
+ * DEFAULT ON (P1-B GO): kill-switch ?virtual=0 lub localStorage
+ * sok_excel_virtual=0 (zawsze OFF, tez przy >500). Legacy Oracle tylko
+ * przez kill-switch (parity: npm run test:parity, bench: npm run test:bench).
  */
 
 const EXCEL_ROW_HEIGHT = 32;
@@ -358,19 +360,10 @@ function _excelVirtualIsRequestEnabled() {
 }
 
 function _excelVirtualIsEnabled() {
-    if (_excelVirtualIsRequestEnabled() === false) {
-        // effectiveVirtual = requestVirtual || total > 500 — diagnostyka vs enforcement
-        try {
-            const n =
-                typeof wells !== 'undefined' && Array.isArray(wells)
-                    ? wells.length
-                    : typeof _excelVirtualTotal === 'number'
-                      ? _excelVirtualTotal
-                      : 0;
-            if (n > 500) return true;
-        } catch (_e) {}
-        return false;
-    }
+    // MUST (P1-B): jawny opt-out (?virtual=0 / localStorage sok_excel_virtual=0)
+    // to absolutny kill-switch — zawsze OFF, niezaleznie od liczby wierszy.
+    // Bez opt-out: dotychczasowe zachowanie (domyslnie ON).
+    if (_excelVirtualIsRequestEnabled() === false) return false;
     return true;
 }
 
@@ -726,7 +719,7 @@ function _excelVirtualRenderBody() {
     _excelVirtualOffset = 0;
 }
 
-// Patch _excelRenderTable gdy virtual=1 — pomijaj full tbody w origRender (P0-B double render)
+// Patch _excelRenderTable gdy virtual aktywny (default ON) — pomijaj full tbody w origRender (P0-B double render)
 (function () {
     _excelVirtualEnabled = _excelVirtualIsEnabled();
     if (!_excelVirtualEnabled) return;
@@ -974,8 +967,43 @@ function _excelVirtualIsCellSelected(logicalRow, logicalColId) {
     return logicalRow >= rg.r1 && logicalRow <= rg.r2 && cIdx >= rg.c1 && cIdx <= rg.c2;
 }
 
+// Sortowanie po modelu (P1-B parity): caly zestaw filtered, nie slice DOM.
+// Komparator i wartosci te same co legacy (_excelCompareCellValues +
+// _excelVirtualGetCellValue — ten sam akcesor co copy), wiec kolejnosc
+// widocznego slice'a jest spojna z legacy dla tych samych wierszy.
+function _excelVirtualApplySort() {
+    if (typeof _excelSortState === 'undefined' || !_excelSortState) {
+        _excelVirtualClearSort();
+        return;
+    }
+    if (!_excelVirtualFiltered) _excelVirtualBuildFiltered();
+    if (typeof _excelVirtualGetCellValue !== 'function') return;
+    const colIdx = _excelSortState.colIdx;
+    const dir = _excelSortState.dir;
+    const cmp =
+        typeof _excelCompareCellValues === 'function'
+            ? _excelCompareCellValues
+            : function (a, b) {
+                  return String(a).localeCompare(String(b), 'pl');
+              };
+    _excelVirtualFiltered.sort(function (a, b) {
+        const c = cmp(_excelVirtualGetCellValue(a, colIdx), _excelVirtualGetCellValue(b, colIdx));
+        return dir === 'asc' ? c : -c;
+    });
+    _excelVirtualRenderBody();
+    if (typeof _excelRenderSortIndicator === 'function') _excelRenderSortIndicator();
+}
+
+function _excelVirtualClearSort() {
+    _excelVirtualBuildFiltered(); // naturalna kolejnosc zestawu
+    _excelVirtualRenderBody();
+    if (typeof _excelRenderSortIndicator === 'function') _excelRenderSortIndicator();
+}
+
 // expose dla testów/oracle
 if (typeof window !== 'undefined') {
+    window._excelVirtualApplySort = _excelVirtualApplySort;
+    window._excelVirtualClearSort = _excelVirtualClearSort;
     window._excelVirtualBuildFiltered = _excelVirtualBuildFiltered;
     window._excelVirtualRenderBody = _excelVirtualRenderBody;
     window._excelVirtualIsEnabled = _excelVirtualIsEnabled;

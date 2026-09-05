@@ -4793,3 +4793,87 @@ select.form-input option {
         transform: none !important;
     }
 }
+
+/* ===== Popup Kolejność generowania — animowany wskaźnik i szczelina upuszczenia ===== */
+.bulk-seq-item {
+    position: relative;
+    transition:
+        margin 0.18s cubic-bezier(0.2, 0, 0, 1),
+        transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+        border-color 0.18s,
+        background-color 0.18s,
+        box-shadow 0.18s;
+}
+
+.bulk-seq-item.bulk-seq-dragging {
+    opacity: 0.35 !important;
+    transform: scale(0.98);
+    border-style: dashed !important;
+    border-color: rgba(var(--accent2-rgb), 0.5) !important;
+}
+
+.bulk-seq-item.bulk-seq-drop-before {
+    margin-top: 14px !important;
+    border-color: rgba(var(--accent2-rgb), 0.6) !important;
+    box-shadow: 0 -4px 12px rgba(var(--accent2-rgb), 0.15);
+}
+
+.bulk-seq-item.bulk-seq-drop-after {
+    margin-bottom: 14px !important;
+    border-color: rgba(var(--accent2-rgb), 0.6) !important;
+    box-shadow: 0 4px 12px rgba(var(--accent2-rgb), 0.15);
+}
+
+.bulk-seq-item.bulk-seq-drop-before::before,
+.bulk-seq-item.bulk-seq-drop-after::after {
+    content: '';
+    position: absolute;
+    left: 0.2rem;
+    right: 0.2rem;
+    height: 4px;
+    border-radius: var(--radius-xs);
+    background: var(--accent2-hover);
+    box-shadow:
+        0 0 10px rgba(var(--accent2-rgb), 0.9),
+        0 0 4px var(--accent2-hover);
+    animation: bulk-seq-hint-pulse 0.8s ease-in-out infinite alternate;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.bulk-seq-item.bulk-seq-drop-before::before {
+    top: -10px;
+}
+
+.bulk-seq-item.bulk-seq-drop-after::after {
+    bottom: -10px;
+}
+
+@keyframes bulk-seq-hint-pulse {
+    0% {
+        opacity: 0.6;
+        transform: scaleX(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bulk-seq-item {
+        transition: none !important;
+    }
+
+    .bulk-seq-item.bulk-seq-drop-before,
+    .bulk-seq-item.bulk-seq-drop-after {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    .bulk-seq-item.bulk-seq-drop-before::before,
+    .bulk-seq-item.bulk-seq-drop-after::after {
+        animation: none;
+        opacity: 1;
+    }
+}

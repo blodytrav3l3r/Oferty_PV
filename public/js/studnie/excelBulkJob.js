@@ -68,6 +68,9 @@ async function _excelRunBulkJob(opts) {
     const onChunk = opts.onChunk;
     const signal = opts.signal || (_excelBulkAbort ? _excelBulkAbort.signal : null);
     const onProgress = opts.onProgress;
+    // aliveId: przerwanie gdy zniknie element-strażnik (domyślnie overlay Excela);
+    // null wyłącza strażnika (np. bulk zleceń zamyka popup przed startem).
+    const aliveId = opts.aliveId === undefined ? 'excel-table-overlay' : opts.aliveId;
     if (total <= 0) return { aborted: false, done: 0 };
     let done = 0;
     let aborted = false;
@@ -83,7 +86,7 @@ async function _excelRunBulkJob(opts) {
             aborted = true;
             break;
         }
-        if (!document.getElementById('excel-table-overlay')) {
+        if (aliveId && !document.getElementById(aliveId)) {
             aborted = true;
             break;
         }

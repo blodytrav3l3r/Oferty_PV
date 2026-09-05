@@ -274,7 +274,39 @@ function _excelGetResolution(well, item) {
 
 /* Czyść cache resolution przy zmianie konfiguracji studni */
 function _excelClearResCache(well) {
-    if (well) delete well.__resCache;
+    if (well) {
+        delete well.__resCache;
+        delete well.__availCache;
+    }
+}
+
+/* Cache listy dostępnych produktów per studnia (P4-P0): getAvailableProducts +
+   filterByWellParams raz per well zamiast per komórka rendera. Unieważniane
+   centralnie przez _excelClearResCache + kluczem parametrów (magazyn/
+   nadbudowa/stopnie/redukcja), więc zmiana parametrów bez mutacji configu
+   też trafia w świeżą listę. */
+function _excelAvailKey(well) {
+    return [well.dn, well.magazyn, well.nadbudowa, well.stopnie, well.redukcjaDN1000].join('|');
+}
+function _excelGetAvailForWell(well) {
+    if (!well) return [];
+    if (typeof getAvailableProducts !== 'function' || typeof filterByWellParams !== 'function') {
+        return [];
+    }
+    const key = _excelAvailKey(well);
+    if (!well.__availCache || well.__availCache.key !== key) {
+        well.__availCache = {
+            key,
+            list: getAvailableProducts(well).filter(function (p) {
+                try {
+                    return filterByWellParams(p, well);
+                } catch (_e) {
+                    return true;
+                }
+            })
+        };
+    }
+    return well.__availCache.list;
 }
 
 /* ===== Dynamiczny kod produktu w h3 — pobrany z configu zaznaczonej studni ===== */
@@ -307,13 +339,7 @@ function _excelGetWellProdCode(well, ct, height, targetDn) {
 
     /* 2. FALLBACK: pierwszy dostępny produkt dla tego ct+height — zgodnie z filtrami studni */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        const avail = getAvailableProducts(well).filter(function (p) {
-            try {
-                return filterByWellParams(p, well);
-            } catch (_e) {
-                return true;
-            }
-        });
+        const avail = _excelGetAvailForWell(well);
         let fallback = avail.filter(function (p) {
             return p.componentType === ct;
         });
@@ -388,9 +414,7 @@ function _excelGetWellProdPrice(well, ct, height, targetDn) {
 
     /* 2. FALLBACK: pierwszy dostępny produkt */
     if (typeof getAvailableProducts === 'function' && typeof filterByWellParams === 'function') {
-        const avail = getAvailableProducts(well).filter(function (p) {
-            return filterByWellParams(p, well);
-        });
+        const avail = _excelGetAvailForWell(well);
         const fallback = avail.filter(function (p) {
             return (
                 p.componentType === ct &&
@@ -531,12 +555,9 @@ function _excelGetWlazFromConfig(well) {
 
 function _excelAutoSetWlaz(well) {
     if (!well) return;
-    const avail = (typeof getAvailableProducts === 'function' ? getAvailableProducts(well) : [])
-        .filter(
-            (p) =>
-                p.componentType === 'wlaz' && (p.dn == null || parseInt(p.dn) === parseInt(well.dn))
-        )
-        .filter((p) => typeof filterByWellParams !== 'function' || filterByWellParams(p, well));
+    const avail = _excelGetAvailForWell(well).filter(
+        (p) => p.componentType === 'wlaz' && (p.dn == null || parseInt(p.dn) === parseInt(well.dn))
+    );
     if (avail.length === 0) return;
     const defaultWlazH =
         typeof window.offerDefaultWlazH !== 'undefined' ? window.offerDefaultWlazH : 150;
@@ -712,6 +733,21 @@ function _excelFilterWellsImmediate(value) {
         }
         if (targetTab) excelSwitchTab(targetTab);
     }
+    // Virtual: przebuduj slice po kazdej zmianie filtra (rowniez direct call
+    // excelFilterWells/excelClearSearch, nie tylko input event) — inaczej slice
+    // zostaje na starym zestawie (P1-B parity: stale filtered po clear).
+    try {
+        if (
+            typeof window !== 'undefined' &&
+            typeof window._excelVirtualIsEnabled === 'function' &&
+            window._excelVirtualIsEnabled() &&
+            typeof window._excelVirtualBuildFiltered === 'function' &&
+            typeof window._excelVirtualRenderBody === 'function'
+        ) {
+            window._excelVirtualBuildFiltered();
+            window._excelVirtualRenderBody();
+        }
+    } catch (_e) {}
 }
 
 function excelFilterWells(value) {
