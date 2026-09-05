@@ -197,95 +197,21 @@ router.post(
                 return;
             }
 
-            const data = parsed.data;
-
-            // P1: blokada reward farmingu — nagroda tylko dla studni, która faktycznie
-            // wygenerowała telemetrię konfiguracji (przeszła przez solver/akceptację).
-            // Fire-and-forget z frontendu nie sprawdza odpowiedzi, więc 400 nie psuje UX;
-            // zysk: wysyłka dowolnego wellId/wasAiRanked nie zawyża totalReward ani sliding AUC.
-            const telemetryWell = await prisma.ai_telemetry_logs.findFirst({
-                where: { wellId: data.wellId },
-                select: { id: true }
-            });
-            if (!telemetryWell) {
+            const result = await processRewardItem(parsed.data, req.user?.id || 'unknown');
+            if (result.status === 'invalid') {
+                res.status(400).json({
+                    error: 'Invalid reward payload',
+                    details: result.details
+                });
+                return;
+            }
+            if (result.status === 'well-not-found') {
                 res.status(400).json({ error: 'WELL_NOT_FOUND' });
                 return;
             }
-
-            // P2: dedup reward per (wellId, action) — unikalny indeks
-            // uq_reward_well_action + P2002 w RewardCalculator.processAction
-            // (atomowo; wcześniej findFirst→create był podatny na TOCTOU —
-            // dwa równoległe requesty mogły zapisać duplikat i zawyżyć sliding AUC).
-            const applied = await rewardCalculator.processAction({
-                userId: req.user?.id || 'unknown',
-                action: data.action,
-                wellId: data.wellId,
-                dn: data.dn,
-                scoreBefore: data.scoreBefore,
-                scoreAfter: data.scoreAfter,
-                wasAiRanked: data.wasAiRanked,
-                configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
-            });
-            if (!applied.applied) {
+            if (result.status === 'duplicate') {
                 res.json({ status: 'ok', duplicate: true });
                 return;
-            }
-
-            // Feedback MODIFY/REJECT to sygnał negatywny dla treningu ML. Oznacz
-            // rekord SUGESTII (features = sugestia) i zsynchronizuj etykietę
-            // w aiFeature — inaczej klasa negatywna nigdy nie trafi do modelu.
-            // WAŻNE: nie etykietuj "najnowszego rekordu studni" — to zwykle finalny
-            // config (OFFER_SAVE/MANUAL), co tworzyło data leakage (baza błędów ML).
-            // Cel ustalany: 1) parentConfigId z frontendu (z guardem wellId),
-            // 2) fallback: najwcześniejsza sugestia AUTO dla studni.
-            if (data.action === 'MODIFY' || data.action === 'REJECT') {
-                const flags =
-                    data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
-                const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
-
-                let targetId: string | null = null;
-                if (data.parentConfigId) {
-                    const parent = await prisma.ai_telemetry_logs.findFirst({
-                        where: { id: data.parentConfigId, wellId: data.wellId },
-                        select: { id: true }
-                    });
-                    if (parent) targetId = parent.id;
-                }
-                if (!targetId) {
-                    // Fallback: najwcześniejsza sugestia AUTO dla studni (asc) —
-                    // komentarz poprzednio mówił "najwcześniejsza", a orderBy desc
-                    // wybierał najnowszą (złe etykiety przy wielu sugestiach).
-                    const suggestion = await prisma.ai_telemetry_logs.findFirst({
-                        where: {
-                            wellId: data.wellId,
-                            solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
-                        },
-                        orderBy: { createdAt: 'asc' },
-                        select: { id: true }
-                    });
-                    if (suggestion) targetId = suggestion.id;
-                }
-                if (targetId) {
-                    await prisma.ai_telemetry_logs.update({
-                        where: { id: targetId },
-                        data: flags
-                    });
-                    await featureExtractor.updateLabelByTelemetry(targetId, label);
-                }
-            }
-
-            // Rejestruj wynik predykcji dla sliding AUC. Nie ufamy klienckiemu
-            // scoreBefore — atak: 6×ACCEPT score≈0 + 5×REJECT score≈1 → AUC≈0 →
-            // auto-rollback. Użyj serwerowego score z predict/batch (wellId→score);
-            // brak zapisu = studnia nie przeszła przez AI (brak wpisu w oknie).
-            if (data.wasAiRanked && data.scoreBefore !== undefined) {
-                const serverScore = getWellScore(data.wellId);
-                if (serverScore !== undefined && Math.abs(serverScore - data.scoreBefore) <= 0.01) {
-                    selfEvaluation.recordPredictionResult(
-                        data.action === 'ACCEPT' ? 1 : 0,
-                        serverScore
-                    );
-                }
             }
 
             res.json({ status: 'ok' });
@@ -293,6 +219,163 @@ router.post(
             const msg = e instanceof Error ? e.message : String(e);
             logger.error('AiRewardRoute', `Blad nagrody: ${msg}`);
             res.status(500).json({ error: 'Reward failed' });
+        }
+    }
+);
+
+/* ===== REWARD BATCH (bulk ORDER_CONFIRM/OFFER_SAVE — O(N/500) requestów) ===== */
+
+const REWARD_BATCH_CAP = 500;
+
+const rewardBatchSchema = z.object({
+    items: z.array(rewardSchema).min(1).max(REWARD_BATCH_CAP)
+});
+
+type RewardItemInput = z.infer<typeof rewardSchema>;
+
+/**
+ * Best-effort processing pojedynczego rewardu — współdzielony przez
+ * single i batch. Nigdy nie rzuca dla błędów per-item (tylko failed całego
+ * processingu leci wyjątkiem do 500).
+ */
+async function processRewardItem(
+    data: RewardItemInput,
+    userId: string
+): Promise<
+    | { status: 'invalid'; details: unknown }
+    | { status: 'well-not-found' }
+    | { status: 'duplicate' }
+    | { status: 'applied' }
+> {
+    // P1 anti-farming: nagroda tylko dla studni z wierszem telemetry.
+    const telemetryWell = await prisma.ai_telemetry_logs.findFirst({
+        where: { wellId: data.wellId },
+        select: { id: true }
+    });
+    if (!telemetryWell) {
+        return { status: 'well-not-found' };
+    }
+
+    return applyRewardItem(data, userId);
+}
+
+/**
+ * Właściwe zapisanie nagrody — caller gwarantuje istnienie wiersza telemetry
+ * (single: processRewardItem, batch: zbiorczy findMany IN).
+ */
+async function applyRewardItem(
+    data: RewardItemInput,
+    userId: string
+): Promise<{ status: 'duplicate' } | { status: 'applied' }> {
+    // P2 dedup: unikalny indeks uq_reward_well_action + P2002 (atomowo).
+    const applied = await rewardCalculator.processAction({
+        userId,
+        action: data.action,
+        wellId: data.wellId,
+        dn: data.dn,
+        scoreBefore: data.scoreBefore,
+        scoreAfter: data.scoreAfter,
+        wasAiRanked: data.wasAiRanked,
+        configSnapshot: data.configSnapshot as Record<string, unknown> | undefined
+    });
+    if (!applied.applied) {
+        return { status: 'duplicate' };
+    }
+
+    if (data.action === 'MODIFY' || data.action === 'REJECT') {
+        const flags = data.action === 'MODIFY' ? { wasModified: true } : { wasRejected: true };
+        const label = data.action === 'MODIFY' ? 'MODIFIED' : 'REJECTED';
+
+        let targetId: string | null = null;
+        if (data.parentConfigId) {
+            const parent = await prisma.ai_telemetry_logs.findFirst({
+                where: { id: data.parentConfigId, wellId: data.wellId },
+                select: { id: true }
+            });
+            if (parent) targetId = parent.id;
+        }
+        if (!targetId) {
+            const suggestion = await prisma.ai_telemetry_logs.findFirst({
+                where: {
+                    wellId: data.wellId,
+                    solverSource: { in: ['AUTO_JS', 'AI_SUGGEST'] }
+                },
+                orderBy: { createdAt: 'asc' },
+                select: { id: true }
+            });
+            if (suggestion) targetId = suggestion.id;
+        }
+        if (targetId) {
+            await prisma.ai_telemetry_logs.update({
+                where: { id: targetId },
+                data: flags
+            });
+            await featureExtractor.updateLabelByTelemetry(targetId, label);
+        }
+    }
+
+    if (data.wasAiRanked && data.scoreBefore !== undefined) {
+        const serverScore = getWellScore(data.wellId);
+        if (serverScore !== undefined && Math.abs(serverScore - data.scoreBefore) <= 0.01) {
+            selfEvaluation.recordPredictionResult(data.action === 'ACCEPT' ? 1 : 0, serverScore);
+        }
+    }
+
+    return { status: 'applied' };
+}
+
+router.post(
+    '/ai/reward-batch',
+    requireAuth,
+    TELEMETRY_WRITE_LIMITER,
+    requireAiMlEnabled,
+    async (req: AuthenticatedRequest, res: Response) => {
+        try {
+            const parsed = rewardBatchSchema.safeParse(req.body);
+            if (!parsed.success) {
+                res.status(400).json({
+                    error: 'Invalid reward batch (1-500 items)',
+                    details: parsed.error.issues
+                });
+                return;
+            }
+
+            const items = parsed.data.items;
+            const userId = req.user?.id || 'unknown';
+
+            // Jeden lookup telemetry dla całego batcha zamiast N findFirst.
+            const wellIds = [...new Set(items.map((i) => i.wellId))];
+            const rows = await prisma.ai_telemetry_logs.findMany({
+                where: { wellId: { in: wellIds } },
+                select: { wellId: true }
+            });
+            const withTelemetry = new Set(
+                rows.map((r) => r.wellId).filter((w): w is string => !!w)
+            );
+
+            const applied: string[] = [];
+            const duplicates: string[] = [];
+            const rejected: Array<{ wellId: string; reason: string }> = [];
+
+            for (const item of items) {
+                try {
+                    if (!withTelemetry.has(item.wellId)) {
+                        rejected.push({ wellId: item.wellId, reason: 'WELL_NOT_FOUND' });
+                        continue;
+                    }
+                    const result = await applyRewardItem(item, userId);
+                    if (result.status === 'applied') applied.push(item.wellId);
+                    else duplicates.push(item.wellId);
+                } catch {
+                    rejected.push({ wellId: item.wellId, reason: 'ERROR' });
+                }
+            }
+
+            res.json({ applied, duplicates, rejected });
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            logger.error('AiRewardBatchRoute', `Blad nagrod batch: ${msg}`);
+            res.status(500).json({ error: 'Reward batch failed' });
         }
     }
 );

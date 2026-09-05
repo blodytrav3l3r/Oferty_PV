@@ -360,7 +360,21 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         _sendAcceptanceTelemetry(selectedWellsCopy, 'ORDER_CONFIRM');
     }
 
-    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
+    if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.sendRewardBatch) {
+        // P1-HIGH-reward: jeden batch (O(N/500) sekwencyjnych requestów) zamiast
+        // N równoległych fetchy → brak ERR_INSUFFICIENT_RESOURCES. Wysyłane tylko
+        // studnie z potwierdzonym wierszem telemetry (_lastAutoTelemetryId) —
+        // resztę backend i tak odrzuciłby 400 WELL_NOT_FOUND.
+        window.mlRewardHooks
+            .sendRewardBatch(selectedWellsCopy, {
+                action: 'ACCEPT',
+                eventType: 'ORDER_CONFIRMED',
+                wasAiRanked: (w) => w.configSource === 'AUTO_AI'
+            })
+            .catch(() => {
+                // pasywnie
+            });
+    } else if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.onWellAccepted) {
         selectedWellsCopy.forEach(function (w) {
             if (w.config && w.config.length > 0) {
                 window.mlRewardHooks.onWellAccepted({
