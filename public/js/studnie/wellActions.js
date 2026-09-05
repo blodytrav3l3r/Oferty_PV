@@ -4,7 +4,7 @@
 /* ===== Resztówka — odświeżanie modala zleceń ===== */
 
 /* ===== ODŚWIEŻANIE MODALA ZLECEŃ ===== */
-window.refreshZleceniaModalIfActive = function () {
+window.refreshZleceniaModalIfActive = async function () {
     const zlModal = document.getElementById('zlecenia-modal');
     if (
         zlModal &&
@@ -51,6 +51,8 @@ window.refreshZleceniaModalIfActive = function () {
         ) {
             const el = zleceniaElementsList[zleceniaSelectedIdx];
             if (el) {
+                if (typeof ensurePzDetailForElement === 'function')
+                    await ensurePzDetailForElement(el);
                 populateZleceniaForm(el);
             }
         }

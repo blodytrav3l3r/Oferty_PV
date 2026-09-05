@@ -15,6 +15,11 @@ function setPzStableIdEnabled(enabled) {
     pzStableIdEnabled = enabled === true;
 }
 
+/** Getter flagi — do lookupów O(1) replikujących semantykę findPzForElement. */
+function isPzStableIdEnabled() {
+    return pzStableIdEnabled;
+}
+
 /**
  * Pobiera flagę pz_stable_id z backendu (raz, cache) i aktualizuje stan.
  * W razie błędu zostaje stan domyślny (true).
@@ -111,5 +116,6 @@ window.pzGuard = {
     hasPzForElementAtOrAfter,
     findPzForElement,
     setPzStableIdEnabled,
+    isPzStableIdEnabled,
     initPzStableIdFlag
 };

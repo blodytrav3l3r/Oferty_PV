@@ -244,6 +244,12 @@
                     return undefined;
                 })
                 .catch(function (err) {
+                    // Własny timeout (AbortController przy wolnym backendzie
+                    // pod burstem zapisu) to nie pad backendu — nie zliczaj
+                    // do circuita ani nie otwieraj pauzy 30 s.
+                    if (err && (err.name === 'AbortError' || err.name === 'TimeoutError')) {
+                        return undefined;
+                    }
                     telemetryFailCount++;
                     // Jeden log na otwarcie circuita, nie per fail — to console.warn
                     // generowalo tysiace wpisow przy padzie backendu.

@@ -30,6 +30,26 @@ window.renderWellsList = function renderWellsList() {
     let html = '';
     const dktCap = [1000, 1200, 1500, 2000, 2500, 'styczna'];
 
+    // P4-P0: jedno grupowanie per render zamiast 6× map+filter po wells.
+    const groups = new Map();
+    for (let _gi = 0; _gi < wells.length; _gi++) {
+        const _gw = wells[_gi];
+        if (!_gw) continue;
+        if (
+            searchTerm &&
+            String(_gw.name || '')
+                .toLowerCase()
+                .indexOf(searchTerm) < 0
+        )
+            continue;
+        let _arr = groups.get(_gw.dn);
+        if (!_arr) {
+            _arr = [];
+            groups.set(_gw.dn, _arr);
+        }
+        _arr.push({ w: _gw, i: _gi });
+    }
+
     // Oblicz mapę transportu dla wszystkich studni (proporcjonalnie do wagi)
     let transportMap = new Map();
     if (typeof calculateWellTransportMap === 'function') {
@@ -38,13 +58,8 @@ window.renderWellsList = function renderWellsList() {
     }
 
     dktCap.forEach((dnGroup) => {
-        const groupWells = wells
-            .map((w, i) => ({ w, i }))
-            .filter((item) => {
-                const matchesDN = item.w.dn === dnGroup;
-                const matchesSearch = !searchTerm || item.w.name.toLowerCase().includes(searchTerm);
-                return matchesDN && matchesSearch;
-            });
+        if (!groups.has(dnGroup)) return;
+        const groupWells = groups.get(dnGroup);
         if (groupWells.length === 0) return;
 
         const groupTitle = dnGroup === 'styczna' ? 'Studnie Styczne' : `Studnie DN${dnGroup}`;

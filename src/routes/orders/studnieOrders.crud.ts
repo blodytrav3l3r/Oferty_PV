@@ -19,6 +19,47 @@ const router = express.Router();
 // Rate limiter dla operacji na zamówieniach (60 zapytań na minutę)
 const writeOrdersLimiter = WRITE_LIMITER;
 
+/* ===== SLIM-AUDIT dla order/create =====
+ * Pełne wells (megabajty przy tysiącach studni) żyją w orders_studnie_rel;
+ * audit dostaje streszczenie z deterministycznym hashem kanonu wells-DTO
+ * (weryfikacja „czy zapis odpowiada utworzeniu" bez 18 MB w audit_logs).
+ * Restore z audytu jest wyłączone dla 'order' (kartotekaAudit canRestore),
+ * podgląd i historia biorą orderNumber/totalNetto/clientName — wszystko w slim.
+ * Skala wpisu: ~18 MB -> <1 KB.
+ */
+function stableStringify(value: unknown): string {
+    if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null';
+    if (Array.isArray(value)) return `[${value.map((v) => stableStringify(v)).join(',')}]`;
+    const record = value as Record<string, unknown>;
+    const keys = Object.keys(record).sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(record[k])}`).join(',')}}`;
+}
+
+function buildOrderCreateAudit(
+    newData: Record<string, unknown>,
+    resolvedOfferId: string,
+    docId: string
+): Record<string, unknown> {
+    const wells = Array.isArray(newData['wells']) ? (newData['wells'] as unknown[]) : [];
+    const num = (v: unknown): number | null =>
+        typeof v === 'number' && Number.isFinite(v) ? v : null;
+    return {
+        _slimAudit: true,
+        id: docId,
+        offerId: resolvedOfferId,
+        offerNumber: (newData['offerNumber'] ?? newData['number'] ?? null) as unknown,
+        orderNumber: (newData['orderNumber'] ?? null) as unknown,
+        clientName: (newData['clientName'] ?? null) as unknown,
+        wellsCount: wells.length,
+        totalNetto: num(newData['totalNetto']),
+        totalBrutto: num(newData['totalBrutto']),
+        totalWeight: num(newData['totalWeight']),
+        // flaga obecności (bez treści): podtrzymuje summary „zawiera kartę budowy"
+        ...(newData['kartaBudowy'] ? { kartaBudowy: true } : {}),
+        wellsHash: crypto.createHash('sha256').update(stableStringify(wells)).digest('hex')
+    };
+}
+
 /* ===== ZAMÓWIENIA STUDNIE ===== */
 
 router.get('/', requireAuth, async (req, res) => {
@@ -172,6 +213,7 @@ router.put(
                     return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
                 }
                 const newData = { ...rest };
+                const resolvedOfferId = offerStudnieId || (o.offerId as string | undefined) || '';
 
                 if (old) {
                     logAudit(
@@ -183,10 +225,16 @@ router.put(
                         parseJsonField<Record<string, unknown>>(old.data, {})
                     );
                 } else {
-                    logAudit('order', docId, authReq.user?.id || '', 'create', newData);
+                    // create: slim (pełne wells zostają w orders_studnie_rel)
+                    logAudit(
+                        'order',
+                        docId,
+                        authReq.user?.id || '',
+                        'create',
+                        buildOrderCreateAudit(newData, resolvedOfferId, docId)
+                    );
                 }
 
-                const resolvedOfferId = offerStudnieId || (o.offerId as string | undefined) || '';
                 await prisma.orders_studnie_rel.upsert({
                     where: { id: docId },
                     create: {

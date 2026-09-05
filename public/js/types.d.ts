@@ -70,6 +70,7 @@ interface PzGuardModule {
         elementIndex: number
     ): any;
     setPzStableIdEnabled(enabled: boolean): void;
+    isPzStableIdEnabled(): boolean;
     initPzStableIdFlag(): Promise<void>;
 }
 

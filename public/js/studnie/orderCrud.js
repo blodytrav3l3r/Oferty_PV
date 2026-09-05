@@ -1,4 +1,23 @@
 // @ts-check
+/**
+ * Czysta projekcja wellsExport (P1-A): tylko skalary, zero config/przejscia.
+ * Deterministyczna: ten sam (well, stats) daje identyczny wpis; pola runtime
+ * i treść config nie wpływają na wynik (guard przed ponownym rozdmuchaniem).
+ */
+function buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie) {
+    return {
+        name: well.name,
+        dn: well.dn,
+        height: stats.height,
+        weight: stats.weight,
+        zwienczenie: zwienczenie,
+        price: stats.price,
+        transportCost: wellTransportCost,
+        totalPrice: stats.price + wellTransportCost
+    };
+}
+if (typeof window !== 'undefined') window.buildWellsExportEntry = buildWellsExportEntry;
+
 async function createOrderFromOffer() {
     try {
         if (typeof orderEditMode !== 'undefined' && orderEditMode) {
@@ -287,7 +306,9 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
 
-    // P1: statystyki z tej pętli zasilają slim snapshot (brak 3. przebiegu calcWellStats).
+    // P1-A: wellsExport to projekcja (nie snapshot) — tylko skalary.
+    // config/przejscia żyją w wells; konsumenci configu (export) fallbackują do wells.
+    // Pełne kopie configu dawały 8.6MB → ~0.5MB przy 2920 studni.
     const slimStatsByWell = [];
     order.wellsExport = orderWellsDTO.map((well) => {
         const stats = calcWellStats(well);
@@ -296,18 +317,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
             totalWeight > 0 ? orderTransportCost * (stats.weight / totalWeight) : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
-        return {
-            name: well.name,
-            dn: well.dn,
-            height: stats.height,
-            weight: stats.weight,
-            zwienczenie: zwienczenie,
-            price: stats.price,
-            transportCost: wellTransportCost,
-            totalPrice: stats.price + wellTransportCost,
-            config: well.config,
-            przejscia: well.przejscia
-        };
+        return buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie);
     });
 
     const finalOrderNetto = totalNetto + orderTransportCost;
@@ -336,6 +346,9 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
 
     if (!ordersStudnie) ordersStudnie = [];
     ordersStudnie.push(order);
+    // Cache lookup (orderHelpers) oparty na tożsamości referencji — push w miejscu
+    // go nie unieważnia, więc invaliduj jawnie, żeby badge/lock odświeżyły się od razu.
+    if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
     // P1 HIGH: zapis tylko nowego zamówienia (payload ~1 zamówienie, nie N).
     if (typeof putSingleOrderStudnie === 'function') {
         const saved = await putSingleOrderStudnie(order);
@@ -464,30 +477,14 @@ async function saveOrderStudnie() {
     order.totalNetto = orderTotal;
     order.totalBrutto = orderTotal * 1.23;
 
+    // P1-A: projekcja skalarna (config/przejscia w wells, nie duplikowane).
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
         const wellTransportCost =
             totalWeight > 0 ? totalTransportCostForOffer * (stats.weight / totalWeight) : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
-        return {
-            name: well.name,
-            dn: well.dn,
-            height: stats.height,
-            weight: stats.weight,
-            zwienczenie: zwienczenie,
-            price: stats.price,
-            transportCost: wellTransportCost,
-            totalPrice: stats.price + wellTransportCost,
-            config:
-                typeof toWellConfigItemDTO === 'function'
-                    ? (well.config || []).map(toWellConfigItemDTO).filter(Boolean)
-                    : well.config,
-            przejscia:
-                typeof toWellPrzejscieDTO === 'function'
-                    ? (well.przejscia || []).map(toWellPrzejscieDTO).filter(Boolean)
-                    : well.przejscia
-        };
+        return buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie);
     });
 
     // P1 HIGH: PATCH pojedynczego zamówienia zamiast batch-PUT całego ordersStudnie.
@@ -514,9 +511,33 @@ async function saveOrderStudnie() {
     }
 }
 
+/* Usuwa parametr ?order= z URL bez przeładowania (po usunięciu / 404 zamówienia). */
+function _clearOrderUrlParam(orderId) {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (orderId && urlParams.get('order') !== orderId) return;
+        urlParams.delete('order');
+        const qs = urlParams.toString();
+        window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : ''));
+    } catch (_e) {}
+}
+
+/* 404/brak zamówienia: czyść tryb + URL + cache, odmaluj bieżący widok. Wells nietknięte. */
+function _handleMissingOrder(orderId) {
+    orderEditMode = null;
+    _clearOrderUrlParam(orderId);
+    if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
+    showToast('Zamówienie nie znalezione', 'error');
+    if (typeof refreshAll === 'function') refreshAll();
+}
+
 async function deleteOrderStudnie(orderId) {
     const order = ordersStudnie ? ordersStudnie.find((o) => o.id === orderId) : null;
-    if (order && window.pzGuard && window.pzGuard.hasPzForOrder(order.id, order.offerId)) {
+    if (
+        order &&
+        window.pzGuard &&
+        window.pzGuard.hasPzForOrder(order.id, order.offerId || order.offerStudnieId)
+    ) {
         showToast(
             '<i data-lucide="x-circle"></i> Nie można usunąć zamówienia — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.',
             'error'
@@ -551,21 +572,54 @@ async function deleteOrderStudnie(orderId) {
         return;
     }
 
-    let affectedOfferId = null;
-    if (order) {
-        affectedOfferId = normalizeId(order.offerId);
-    }
+    const rawOfferId = order ? order.offerId || order.offerStudnieId : null;
+    const affectedOfferId =
+        rawOfferId && typeof normalizeId === 'function' ? normalizeId(rawOfferId) : rawOfferId;
     if (ordersStudnie) {
         ordersStudnie = ordersStudnie.filter((o) => o.id !== orderId);
         // P1 HIGH: DELETE już usunął rekord po stronie serwera — bez re-save całości.
     }
+    // Jawna invalidacja — push mutuje tablicę w miejscu, a cache w orderHelpers
+    // oparty jest na tożsamości referencji (patrz _ensureOrdersLookupCache).
+    if (typeof _invalidateOrdersLookupCache === 'function') _invalidateOrdersLookupCache();
     renderSavedOffersStudnie();
     showToast('Zamówienie usunięte. Studnie odblokowane do ponownego zamówienia.', 'info');
 
     if (typeof renderWellConfig === 'function') renderWellConfig();
 
-    if (affectedOfferId && editingOfferIdStudnie === affectedOfferId) {
-        refreshAll();
+    // Usunięte zamówienie było otwarte (tryb edycji lub ?order= w URL):
+    // wyjdź z trybu i wróć do widoku oferty. Źródłem są dane OFERTY
+    // (loadSavedOfferStudnie), nigdy sklonowane orderEditMode.wells.
+    let deletedWasOpen = false;
+    try {
+        if (
+            typeof orderEditMode !== 'undefined' &&
+            orderEditMode &&
+            orderEditMode.orderId === orderId
+        )
+            deletedWasOpen = true;
+        if (new URLSearchParams(window.location.search).get('order') === orderId)
+            deletedWasOpen = true;
+    } catch (_e) {}
+    if (deletedWasOpen) {
+        orderEditMode = null;
+        _clearOrderUrlParam(orderId);
+        if (rawOfferId && typeof loadSavedOfferStudnie === 'function') {
+            await loadSavedOfferStudnie(rawOfferId);
+        } else if (typeof refreshAll === 'function') {
+            refreshAll();
+        }
+    } else {
+        const viewingAffected =
+            affectedOfferId &&
+            typeof editingOfferIdStudnie !== 'undefined' &&
+            typeof normalizeId === 'function' &&
+            normalizeId(editingOfferIdStudnie) === affectedOfferId;
+        if (viewingAffected) {
+            if (typeof refreshAll === 'function') refreshAll();
+        } else if (typeof renderOfferSummary === 'function') {
+            renderOfferSummary();
+        }
     }
 
     if (window.kartotekaUI) {
@@ -590,13 +644,15 @@ async function enterOrderEditMode(orderId) {
             15000
         );
         if (!res.ok) {
-            showToast('Zamówienie nie znalezione', 'error');
+            // Zamówienie nie istnieje (np. usunięte — stale ?order= w URL po F5).
+            // Wyczyść tryb i URL, żeby nie zapętlać 404 i nie pokazywać starych studni.
+            _handleMissingOrder(orderId);
             return;
         }
         const json = await res.json();
         const order = json.data;
         if (!order) {
-            showToast('Zamówienie nie znalezione', 'error');
+            _handleMissingOrder(orderId);
             return;
         }
 
@@ -609,7 +665,7 @@ async function enterOrderEditMode(orderId) {
         orderEditMode = { orderId: order.id, order: order };
         // P1 HIGH: baza do optimistic concurrency.
         order._baseUpdatedAt = order.updatedAt || null;
-        editingOfferIdStudnie = order.offerId || null;
+        editingOfferIdStudnie = order.offerId || order.offerStudnieId || null;
         window.isPreviewMode = false;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
@@ -622,10 +678,11 @@ async function enterOrderEditMode(orderId) {
         }
 
         if (order.wells && order.wells.length > 0) {
+            const orderOfferId = order.offerId || order.offerStudnieId;
             const offer = offersStudnie
                 ? typeof getOfferStudnieById === 'function'
-                    ? getOfferStudnieById(order.offerId)
-                    : offersStudnie.find((o) => o.id === order.offerId)
+                    ? getOfferStudnieById(orderOfferId)
+                    : offersStudnie.find((o) => o.id === orderOfferId)
                 : null;
             let _w = 0,
                 _t = 0;
@@ -786,7 +843,7 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
         orderEditMode = { orderId: orderId, order: order };
         // P1 HIGH: baza do optimistic concurrency.
         order._baseUpdatedAt = order.updatedAt || null;
-        editingOfferIdStudnie = order.offerId || null;
+        editingOfferIdStudnie = order.offerId || order.offerStudnieId || null;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
 
@@ -885,10 +942,11 @@ async function saveCurrentOrder(options = {}) {
     });
     order.totalWeight = totalWeight;
 
+    const saveOfferId = order.offerId || order.offerStudnieId;
     const offer = offersStudnie
         ? typeof getOfferStudnieById === 'function'
-            ? getOfferStudnieById(order.offerId)
-            : offersStudnie.find((o) => o.id === order.offerId)
+            ? getOfferStudnieById(saveOfferId)
+            : offersStudnie.find((o) => o.id === saveOfferId)
         : null;
     const transportKmVal = parseFloat(document.getElementById('transport-km')?.value) || 0;
     const transportRateVal = parseFloat(document.getElementById('transport-rate')?.value) || 0;
@@ -923,30 +981,14 @@ async function saveCurrentOrder(options = {}) {
     order.totalNetto = orderTotal;
     order.totalBrutto = orderTotal * 1.23;
 
+    // P1-A: projekcja skalarna (config/przejscia w wells, nie duplikowane).
     order.wellsExport = wells.map((well) => {
         const stats = calcWellStats(well);
         const wellTransportCost =
             totalWeight > 0 ? totalTransportCostForOffer * (stats.weight / totalWeight) : 0;
         const zwienczenie =
             typeof getWellZwienczenieName === 'function' ? getWellZwienczenieName(well) : '—';
-        return {
-            name: well.name,
-            dn: well.dn,
-            height: stats.height,
-            weight: stats.weight,
-            zwienczenie: zwienczenie,
-            price: stats.price,
-            transportCost: wellTransportCost,
-            totalPrice: stats.price + wellTransportCost,
-            config:
-                typeof toWellConfigItemDTO === 'function'
-                    ? (well.config || []).map(toWellConfigItemDTO).filter(Boolean)
-                    : well.config,
-            przejscia:
-                typeof toWellPrzejscieDTO === 'function'
-                    ? (well.przejscia || []).map(toWellPrzejscieDTO).filter(Boolean)
-                    : well.przejscia
-        };
+        return buildWellsExportEntry(well, stats, wellTransportCost, zwienczenie);
     });
 
     // P1 HIGH: PATCH pojedynczego zamówienia + 409 przy konflikcie
