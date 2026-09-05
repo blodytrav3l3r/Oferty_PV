@@ -193,40 +193,68 @@ function extractWellsFromIncoming(o: Record<string, unknown>): Array<Record<stri
     return [];
 }
 
-async function getOrderedWellIdsForOffer(offerId: string): Promise<Set<string>> {
-    if (!offerId) return new Set();
-    const rows = await prisma.$queryRaw<Array<{ data: string | null }>>`
-        SELECT data FROM orders_studnie_rel
-        WHERE "offerStudnieId" = ${offerId}
-           OR json_extract(data, '$.offerId') = ${offerId}
-           OR json_extract(data, '$.offerStudnieId') = ${offerId}
-    `;
-    const ids = new Set<string>();
+/**
+ * Batch wariant guard ordered-well (P4-P0): jedno zapytanie zamiast
+ * N× query+parse w pętlach batch POST/PUT. Semantyka potrójnego OR identyczna.
+ */
+async function getOrderedWellIdsForOffers(offerIds: string[]): Promise<Map<string, Set<string>>> {
+    const out = new Map<string, Set<string>>();
+    const ids = [...new Set(offerIds.filter(Boolean))];
+    if (ids.length === 0) return out;
+    for (const id of ids) out.set(id, new Set());
+    const rows =
+        (await prisma.$queryRaw<Array<{ offerStudnieId: string | null; data: string | null }>>`
+        SELECT "offerStudnieId", data FROM orders_studnie_rel
+        WHERE "offerStudnieId" IN (${Prisma.join(ids)})
+           OR json_extract(data, '$.offerId') IN (${Prisma.join(ids)})
+           OR json_extract(data, '$.offerStudnieId') IN (${Prisma.join(ids)})
+    `) || [];
     for (const r of rows) {
         if (!r.data) continue;
+        let d: Record<string, unknown>;
         try {
-            const d = JSON.parse(r.data);
-            const wells =
-                (d.wells as Array<{ id?: string }>) ||
-                ((d.data as Record<string, unknown>)?.wells as Array<{ id?: string }>) ||
-                (((d.data as Record<string, unknown>)?.data as Record<string, unknown>)
-                    ?.wells as Array<{
-                    id?: string;
-                }>) ||
-                [];
-            for (const w of wells) if (w?.id) ids.add(w.id);
-            if (Array.isArray(d))
-                for (const w of d)
-                    if ((w as Record<string, unknown>)?.id)
-                        ids.add((w as Record<string, unknown>).id as string);
-            // also check top-level wells inside data string if nested
-            const altWells = extractWellsFromOfferData(r.data);
-            for (const w of altWells)
-                if ((w as Record<string, unknown>).id)
-                    ids.add((w as Record<string, unknown>).id as string);
-        } catch {}
+            d = JSON.parse(r.data) as Record<string, unknown>;
+        } catch {
+            continue;
+        }
+        // Których ofert dotyczy ten wiersz (jak w wersji pojedynczej).
+        const matched = new Set<string>();
+        if (r.offerStudnieId && out.has(r.offerStudnieId)) matched.add(r.offerStudnieId);
+        const nested = d.data as Record<string, unknown> | undefined;
+        for (const cand of [
+            d.offerId,
+            d.offerStudnieId,
+            nested?.offerId,
+            nested?.offerStudnieId,
+            (nested?.data as Record<string, unknown> | undefined)?.offerStudnieId
+        ]) {
+            if (typeof cand === 'string' && out.has(cand)) matched.add(cand);
+        }
+        if (matched.size === 0) continue;
+        const ids2 = new Set<string>();
+        const wells =
+            (d.wells as Array<{ id?: string }>) ||
+            ((d.data as Record<string, unknown>)?.wells as Array<{ id?: string }>) ||
+            (((d.data as Record<string, unknown>)?.data as Record<string, unknown>)
+                ?.wells as Array<{
+                id?: string;
+            }>) ||
+            [];
+        for (const w of wells) if (w?.id) ids2.add(w.id);
+        if (Array.isArray(d))
+            for (const w of d)
+                if ((w as Record<string, unknown>)?.id)
+                    ids2.add((w as Record<string, unknown>).id as string);
+        const altWells = extractWellsFromOfferData(r.data);
+        for (const w of altWells)
+            if ((w as Record<string, unknown>).id)
+                ids2.add((w as Record<string, unknown>).id as string);
+        for (const m of matched) {
+            const s = out.get(m);
+            if (s) for (const id of ids2) s.add(id);
+        }
     }
-    return ids;
+    return out;
 }
 
 function isWellDiffWhitelisted(
@@ -464,6 +492,8 @@ router.post(
                       })) || []
                     : [];
             const oldMap = new Map(oldsList.map((r) => [r.id, r]));
+            // P4-P0: ordered-well guard jednym zapytaniem (nie per oferta w pętli).
+            const orderedGuardMap = await getOrderedWellIdsForOffers(incomingIds);
             // P1.1: walidacja + kolekcja, potem atomowy zapis batch w jednej transakcji
             const pending: Array<{
                 docId: string;
@@ -503,7 +533,7 @@ router.post(
                 // Guard: pełna blokada studni na zamówieniu (tylko ordered, ignoruj lotne)
                 if (old) {
                     try {
-                        const orderedIds = await getOrderedWellIdsForOffer(docId);
+                        const orderedIds = orderedGuardMap.get(docId) || new Set<string>();
                         if (orderedIds.size > 0) {
                             const oldWells = extractWellsFromOfferData(old.data);
                             const newWells = extractWellsFromIncoming(o as Record<string, unknown>);
@@ -693,13 +723,16 @@ router.put(
             const incomingIds: string[] = incoming
                 .map((o) => (typeof o.id === 'string' ? o.id : ''))
                 .filter(Boolean);
-            const existingDocs: Array<{ id: string; userId: string | null }> =
+            const existingDocs: Array<{ id: string; userId: string | null; data: string | null }> =
                 incomingIds.length > 0
                     ? (await prisma.offers_studnie_rel.findMany({
                           where: { id: { in: incomingIds } },
-                          select: { id: true, userId: true }
+                          select: { id: true, userId: true, data: true }
                       })) || []
                     : [];
+            const existingById = new Map(existingDocs.map((d) => [d.id, d]));
+            // P4-P0: guard + dane jednym zapytaniem (nie per oferta w pętli).
+            const orderedGuardMapPut = await getOrderedWellIdsForOffers(incomingIds);
             const forbidden = existingDocs.some(
                 (d) => d.userId && !canWriteDoc(authReq.user, d.userId)
             );
@@ -730,12 +763,9 @@ router.put(
 
                 // Guard PUT: pełna blokada studni na zamówieniu (tylko ordered)
                 if (docId) {
-                    const oldDoc = await prisma.offers_studnie_rel.findUnique({
-                        where: { id: docId },
-                        select: { data: true }
-                    });
+                    const oldDoc = existingById.get(docId);
                     if (oldDoc?.data) {
-                        const orderedIds = await getOrderedWellIdsForOffer(docId);
+                        const orderedIds = orderedGuardMapPut.get(docId) || new Set<string>();
                         if (orderedIds.size > 0) {
                             const oldWells = extractWellsFromOfferData(oldDoc.data);
                             const newWells = extractWellsFromIncoming(o as Record<string, unknown>);

@@ -109,6 +109,30 @@ router.post(
         try {
             const incoming = req.body.data || [req.body];
 
+            // P4-P0: prefetch jednym findMany zamiast N+1 findUnique/findMany w pętli.
+            const incomingIds: string[] = incoming
+                .map((o: { id?: unknown }) => o.id)
+                .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0);
+            const oldOffers =
+                incomingIds.length > 0
+                    ? (await prisma.offers_rel.findMany({ where: { id: { in: incomingIds } } })) ||
+                      []
+                    : [];
+            const oldById = new Map(oldOffers.map((o) => [o.id, o]));
+            const oldItemsRows =
+                oldOffers.length > 0
+                    ? (await prisma.offer_items_rel.findMany({
+                          where: { offerId: { in: oldOffers.map((o) => o.id) } }
+                      })) || []
+                    : [];
+            const oldItemsByOffer = new Map<string, typeof oldItemsRows>();
+            for (const row of oldItemsRows) {
+                if (!row.offerId) continue;
+                const arr = oldItemsByOffer.get(row.offerId);
+                if (arr) arr.push(row);
+                else oldItemsByOffer.set(row.offerId, [row]);
+            }
+
             const results: Record<string, unknown>[] = [];
             const pendingWrites: Array<{
                 docId: string;
@@ -139,9 +163,7 @@ router.post(
                 if (!docId) docId = uuidv4();
 
                 let newHistory: unknown[] = [];
-                const old = await prisma.offers_rel.findUnique({
-                    where: { id: docId }
-                });
+                const old = oldById.get(docId);
 
                 let effectiveUserId: string;
                 if (old) {
@@ -171,9 +193,7 @@ router.post(
                             docId
                         );
                     }
-                    const oldItems = await prisma.offer_items_rel.findMany({
-                        where: { offerId: docId }
-                    });
+                    const oldItems = oldItemsByOffer.get(docId) || [];
                     const snapshot = {
                         updatedAt: old.updatedAt || old.createdAt,
                         state: old.state,

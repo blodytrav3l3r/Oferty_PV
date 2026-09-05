@@ -46,90 +46,111 @@ function calculateOfferTotals() {
     return { globalWeight, totalTransports, transportCostPerTrip, totalTransportCost };
 }
 
-function calculatePrecoAllocationForItem(well, itemIndex) {
+/**
+ * Kontekst Preco liczony RAZ per studnia (P4-P0): calcPrecoPricing + configMap
+ * + indeks dolnej dennicy. Gorące pętle per pozycja przekazują ctx 3. argumentem;
+ * bez ctx liczony leniwie (kompatybilność pojedynczych wywołań).
+ */
+function computePrecoWellContext(well) {
+    if (
+        !(
+            well.kineta === 'preco' ||
+            well.kineta === 'precotop' ||
+            well.wkladkaOsadnikPreco === 'tak'
+        ) ||
+        typeof calcPrecoPricing !== 'function'
+    ) {
+        return null;
+    }
+    const precoCalc = calcPrecoPricing(well);
+    if (precoCalc.error) return { precoCalc, configMap: [], bottomDennicaIdx: -1 };
+    if (!(precoCalc.suma > 0)) return null;
+    let configMap = [];
+    if (typeof buildConfigMap === 'function') {
+        configMap = buildConfigMap(
+            well,
+            (id) =>
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(id)
+                    : studnieProducts.find((pr) => pr.id === id),
+            true
+        );
+    } else {
+        let currY = 0;
+        let dennicaCount = 0;
+        for (let j = well.config.length - 1; j >= 0; j--) {
+            const p =
+                typeof getStudnieProductById === 'function'
+                    ? getStudnieProductById(well.config[j].productId)
+                    : studnieProducts.find((x) => x.id === well.config[j].productId);
+            if (!p) continue;
+            let h = 0;
+            if (p.componentType === 'dennica' || p.componentType === 'styczna') {
+                dennicaCount++;
+                h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
+            } else {
+                h = (p.height || 0) * (well.config[j].quantity || 1);
+            }
+            configMap.push({
+                index: j,
+                start: currY,
+                end: currY + h,
+                componentType: p.componentType
+            });
+            currY += h;
+        }
+    }
+    const bottomDennicaCm = configMap.find(
+        (cm) => cm.componentType === 'dennica' || cm.componentType === 'styczna'
+    );
+    return {
+        precoCalc,
+        configMap,
+        bottomDennicaIdx: bottomDennicaCm ? bottomDennicaCm.index : -1
+    };
+}
+
+function calculatePrecoAllocationForItem(well, itemIndex, precoCtx) {
     let allocatedCost = 0;
     let fraction = 0;
     let isBottomMostDennica = false;
     let error = null;
     let hasPreco = false;
 
-    if (
-        (well.kineta === 'preco' ||
-            well.kineta === 'precotop' ||
-            well.wkladkaOsadnikPreco === 'tak') &&
-        typeof calcPrecoPricing === 'function'
-    ) {
-        const precoCalc = calcPrecoPricing(well);
-        if (precoCalc.error) {
-            error = precoCalc.error;
-            hasPreco = true;
-        } else if (precoCalc.suma > 0) {
-            hasPreco = true;
-            let configMap = [];
-            if (typeof buildConfigMap === 'function') {
-                configMap = buildConfigMap(
-                    well,
-                    (id) =>
-                        typeof getStudnieProductById === 'function'
-                            ? getStudnieProductById(id)
-                            : studnieProducts.find((pr) => pr.id === id),
-                    true
-                );
-            } else {
-                let currY = 0;
-                let dennicaCount = 0;
-                for (let j = well.config.length - 1; j >= 0; j--) {
-                    const p =
-                        typeof getStudnieProductById === 'function'
-                            ? getStudnieProductById(well.config[j].productId)
-                            : studnieProducts.find((x) => x.id === well.config[j].productId);
-                    if (!p) continue;
-                    let h = 0;
-                    if (p.componentType === 'dennica' || p.componentType === 'styczna') {
-                        dennicaCount++;
-                        h = (p.height || 0) - (dennicaCount > 1 ? 100 : 0);
-                    } else {
-                        h = (p.height || 0) * (well.config[j].quantity || 1);
-                    }
-                    configMap.push({
-                        index: j,
-                        start: currY,
-                        end: currY + h,
-                        componentType: p.componentType
-                    });
-                    currY += h;
-                }
+    const ctx = precoCtx === undefined ? computePrecoWellContext(well) : precoCtx;
+    if (!ctx) return { hasPreco, error, allocatedCost, fraction, isBottomMostDennica };
+    const precoCalc = ctx.precoCalc;
+    if (precoCalc.error) {
+        error = precoCalc.error;
+        hasPreco = true;
+    } else if (precoCalc.suma > 0) {
+        hasPreco = true;
+        const configMap = ctx.configMap;
+        const targetCm = configMap.find((cm) => cm.index === itemIndex);
+        if (targetCm) {
+            isBottomMostDennica = ctx.bottomDennicaIdx === itemIndex;
+
+            if (isBottomMostDennica) {
+                allocatedCost += precoCalc.bazowa || 0;
+                allocatedCost += precoCalc.skrzynki?.suma || 0;
+                allocatedCost += precoCalc.spadekKineta || 0;
+                allocatedCost += precoCalc.spadekMufa || 0;
+                allocatedCost += precoCalc.uniesienie || 0;
+                allocatedCost += precoCalc.redukcja || 0;
+                allocatedCost += (precoCalc.dodWloty || []).reduce((s, d) => s + d.cena, 0);
             }
 
-            const targetCm = configMap.find((cm) => cm.index === itemIndex);
-            if (targetCm) {
-                const bottomDennicaCm = configMap.find(
-                    (cm) => cm.componentType === 'dennica' || cm.componentType === 'styczna'
-                );
-                isBottomMostDennica = bottomDennicaCm && bottomDennicaCm.index === itemIndex;
-
-                if (isBottomMostDennica) {
-                    allocatedCost += precoCalc.bazowa || 0;
-                    allocatedCost += precoCalc.skrzynki?.suma || 0;
-                    allocatedCost += precoCalc.spadekKineta || 0;
-                    allocatedCost += precoCalc.spadekMufa || 0;
-                    allocatedCost += precoCalc.uniesienie || 0;
-                    allocatedCost += precoCalc.redukcja || 0;
-                    allocatedCost += (precoCalc.dodWloty || []).reduce((s, d) => s + d.cena, 0);
-                }
-
-                if (precoCalc.pelnaWysokosc) {
-                    const startZ = precoCalc.pelnaWysokosc.startZ || 0;
-                    const endZ = precoCalc.pelnaWysokosc.endZ || 0;
-                    if (endZ > startZ) {
-                        const overlap = Math.max(
-                            0,
-                            Math.min(endZ, targetCm.end) - Math.max(startZ, targetCm.start)
-                        );
-                        if (overlap > 0) {
-                            fraction = overlap / (endZ - startZ);
-                            allocatedCost += precoCalc.pelnaWysokosc.cena * fraction;
-                        }
+            if (precoCalc.pelnaWysokosc) {
+                const startZ = precoCalc.pelnaWysokosc.startZ || 0;
+                const endZ = precoCalc.pelnaWysokosc.endZ || 0;
+                if (endZ > startZ) {
+                    const overlap = Math.max(
+                        0,
+                        Math.min(endZ, targetCm.end) - Math.max(startZ, targetCm.start)
+                    );
+                    if (overlap > 0) {
+                        fraction = overlap / (endZ - startZ);
+                        allocatedCost += precoCalc.pelnaWysokosc.cena * fraction;
                     }
                 }
             }
@@ -139,7 +160,16 @@ function calculatePrecoAllocationForItem(well, itemIndex) {
     return { hasPreco, error, allocatedCost, fraction, isBottomMostDennica };
 }
 
-function calculateLinePricing(well, p, item, wellTransportCost, disc, itemPrzejscia, itemIndex) {
+function calculateLinePricing(
+    well,
+    p,
+    item,
+    wellTransportCost,
+    disc,
+    itemPrzejscia,
+    itemIndex,
+    precoCtx
+) {
     const nadbudowaMult = 1 - getWellNadbudowaPct(well, disc) / 100;
     const itemPrice =
         item.frozenPrice != null && window.isPreviewMode
@@ -153,7 +183,7 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, itemPrzejs
         if (well.doplata) totalLinePrice += well.doplata;
     }
 
-    const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex);
+    const precoAlloc = calculatePrecoAllocationForItem(well, itemIndex, precoCtx);
     if (precoAlloc.hasPreco && precoAlloc.allocatedCost > 0) {
         const discKey = well.dn === 'styczna' ? 'styczne' : well.dn;
         const discPreco = (wellDiscounts[discKey] || {}).preco || 0;
@@ -190,3 +220,5 @@ function calculateLinePricing(well, p, item, wellTransportCost, disc, itemPrzejs
 /* ===== Rejestracja globali ===== */
 window.calculateOfferTotals = calculateOfferTotals;
 window.calculateLinePricing = calculateLinePricing;
+window.computePrecoWellContext = computePrecoWellContext;
+window.calculatePrecoAllocationForItem = calculatePrecoAllocationForItem;

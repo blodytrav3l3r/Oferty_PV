@@ -159,31 +159,55 @@ async function saveOfferStudnie() {
             : wells;
         _sendAcceptanceTelemetry(telemetryWells, 'OFFER_SAVE');
 
-        // Auto-acceptance — rejestruj akceptację w ML pipeline.
+        // Auto-acceptance — rejestruj akceptację w ML pipeline jednym batchem
+        // zamiast N requestów (jak ORDER_CONFIRM w orderCrud.js). Batch wysyła
+        // tylko studnie z potwierdzonym wierszem telemetry
+        // (_lastAutoTelemetryId) — resztę backend i tak odrzuciłby
+        // 400 WELL_NOT_FOUND (spam w konsoli przy każdym zapisie oferty).
         // Studnia ręcznie zmodyfikowana (configSource MANUAL*) dostaje NEGATYW
         // wcześniej (reward MODIFY na sugestii AUTO + wzorce substitution/addition/
         // removal w LearningEngine), a pozytyw dopiero przy ORDER_CONFIRM (wasAccepted).
         // Nie wysyłamy dla niej acceptance-full z accepted:false — recordAcceptance
         // oznaczałby NAJNOWSZY rekord studni (świeży manualny config) jako REJECTED,
         // czyli finalny wybór użytkownika zyskiwał −1.0 zamiast NO_FEEDBACK.
-        const acceptanceSample = wells.length > 50 ? wells.slice(0, 50) : wells;
-        acceptanceSample.forEach(function (w) {
-            if (!w.config || w.config.length === 0) return;
-            const accepted = !(w.configSource && w.configSource.indexOf('MANUAL') === 0);
-            if (
-                accepted &&
-                typeof window.mlRewardHooks !== 'undefined' &&
-                window.mlRewardHooks.onWellAccepted
-            ) {
+        const acceptanceSample = (wells.length > 50 ? wells.slice(0, 50) : wells).filter(
+            function (w) {
+                return (
+                    w &&
+                    w.config &&
+                    w.config.length > 0 &&
+                    !(w.configSource && w.configSource.indexOf('MANUAL') === 0)
+                );
+            }
+        );
+        if (typeof window.mlRewardHooks !== 'undefined' && window.mlRewardHooks.sendRewardBatch) {
+            window.mlRewardHooks
+                .sendRewardBatch(acceptanceSample, {
+                    action: 'ACCEPT',
+                    eventType: 'OFFER_SAVED',
+                    wasAiRanked: function (w) {
+                        return w.configSource === 'AUTO_AI';
+                    }
+                })
+                .catch(function () {
+                    // pasywnie
+                });
+        } else if (
+            typeof window.mlRewardHooks !== 'undefined' &&
+            window.mlRewardHooks.onWellAccepted
+        ) {
+            acceptanceSample.forEach(function (w) {
                 window.mlRewardHooks.onWellAccepted({
                     eventType: 'OFFER_SAVED',
                     wasAiRanked: w.configSource === 'AUTO_AI',
                     well: w
                 });
-            }
+            });
+        }
+        acceptanceSample.forEach(function (w) {
             // Wyślij acceptance-full do backendu tylko dla studni zaakceptowanych
             // (AUTO/AI bez modyfikacji). Dla MANUAL pomijamy — patrz komentarz wyżej.
-            if (accepted && typeof window.telemetryRecordAcceptanceFull === 'function') {
+            if (typeof window.telemetryRecordAcceptanceFull === 'function') {
                 try {
                     window.telemetryRecordAcceptanceFull({
                         telemetryId: w.id || 'well_' + Date.now(),

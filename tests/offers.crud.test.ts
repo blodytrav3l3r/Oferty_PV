@@ -50,7 +50,7 @@ jest.mock('../src/prismaClient', () => ({
             create: jest.fn(),
             createMany: jest.fn()
         },
-        $queryRaw: jest.fn(),
+        $queryRaw: jest.fn().mockResolvedValue([]),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -193,7 +193,7 @@ describe('Offers CRUD Routes', () => {
 
     describe('POST /api/offers', () => {
         it('powinien utworzyć lub zaktualizować ofertę rury (upsert)', async () => {
-            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([mockOfferRury]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
@@ -319,6 +319,8 @@ describe('Offers CRUD Routes', () => {
         });
 
         it('powinien zaktualizować grupowo oferty studni (PUT /studnie)', async () => {
+            (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .put('/api/offers/studnie')
@@ -343,6 +345,7 @@ describe('Offers CRUD Routes', () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 's-1', userId: 'other-user' }
             ]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
             const res = await request(app)
                 .put('/api/offers/studnie')
                 .set('x-user-id', 'user-id')
@@ -355,6 +358,7 @@ describe('Offers CRUD Routes', () => {
             (prisma.offers_studnie_rel.findMany as jest.Mock).mockResolvedValue([
                 { id: 's-1', userId: 'user-id' }
             ]);
+            (prisma.$queryRaw as jest.Mock).mockResolvedValue([]);
             (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
             const res = await request(app)
                 .put('/api/offers/studnie')

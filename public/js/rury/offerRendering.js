@@ -53,6 +53,17 @@ function renderOfferItems() {
 
     const { flat } = getSortedRuryItems(_items);
 
+    // P4-P0: mapa zamówionych ilości + zbiór uid raz per render (nie per wiersz).
+    const orderedMap =
+        typeof computeOrderedQuantities === 'function' ? computeOrderedQuantities() : {};
+    const orderedUidSet = new Set();
+    if (typeof ordersRury !== 'undefined' && Array.isArray(ordersRury) && window.editingOfferId) {
+        for (const o of ordersRury) {
+            if (!o || o.offerId !== window.editingOfferId || !Array.isArray(o.items)) continue;
+            for (const it of o.items) if (it && it.uid) orderedUidSet.add(it.uid);
+        }
+    }
+
     let html = '';
     let lp = 1;
 
@@ -100,9 +111,12 @@ function renderOfferItems() {
             const active4mm =
                 item.pehdType === 'PEHD-4MM' ? 'pehd-btn-active' : 'pehd-btn-inactive';
 
-            const remaining = getRemainingQuantity(item);
-            const isLocked = isItemLocked(item);
-            const isOrdered = remaining <= 0 && isItemInAnyOrder(item.uid);
+            const remaining = Math.max(
+                0,
+                (item.quantity || 0) - (orderedMap[getConfigKey(item)] || 0)
+            );
+            const isLocked = window.orderEditMode ? false : remaining <= 0;
+            const isOrdered = remaining <= 0 && orderedUidSet.has(item.uid);
 
             const isEditableLength =
                 cat === 'Rury Jajowe Betonowe' ||

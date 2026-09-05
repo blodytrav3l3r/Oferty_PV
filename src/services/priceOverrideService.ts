@@ -23,6 +23,7 @@ import { createHash } from 'crypto';
 import { z } from 'zod';
 import prisma from '../prismaClient';
 import { logger } from '../utils/logger';
+import { chunkedCreateMany } from '../utils/prismaBatch';
 import {
     productsRuryRowSchema,
     productsStudnieRowSchema,
@@ -266,16 +267,15 @@ class PriceOverrideService {
                 await tx.precoKinetyDefault.deleteMany();
                 await tx.precoZakresyDefault.deleteMany();
 
-                if (pkg.rury.length > 0)
-                    await tx.productsRuryDefault.createMany({ data: pkg.rury });
+                if (pkg.rury.length > 0) await chunkedCreateMany(tx.productsRuryDefault, pkg.rury);
                 if (pkg.studnie.length > 0)
-                    await tx.productsStudnieDefault.createMany({ data: pkg.studnie });
+                    await chunkedCreateMany(tx.productsStudnieDefault, pkg.studnie);
                 if (pkg.preco.konfig.length > 0)
-                    await tx.precoKonfigDefault.createMany({ data: pkg.preco.konfig });
+                    await chunkedCreateMany(tx.precoKonfigDefault, pkg.preco.konfig);
                 if (pkg.preco.kinety.length > 0)
-                    await tx.precoKinetyDefault.createMany({ data: pkg.preco.kinety });
+                    await chunkedCreateMany(tx.precoKinetyDefault, pkg.preco.kinety);
                 if (pkg.preco.zakresy.length > 0)
-                    await tx.precoZakresyDefault.createMany({ data: pkg.preco.zakresy });
+                    await chunkedCreateMany(tx.precoZakresyDefault, pkg.preco.zakresy);
 
                 await tx.settings.upsert({
                     where: { key: 'pricelist_defaults_updated_at' },
@@ -498,24 +498,24 @@ class PriceOverrideService {
             }
 
             if (rury.length > 0) {
-                await tx.productsRury.createMany({ data: rury });
-                await tx.productsRuryDefault.createMany({ data: rury });
+                await chunkedCreateMany(tx.productsRury, rury);
+                await chunkedCreateMany(tx.productsRuryDefault, rury);
             }
             if (studnie.length > 0) {
-                await tx.productsStudnie.createMany({ data: studnie });
-                await tx.productsStudnieDefault.createMany({ data: studnie });
+                await chunkedCreateMany(tx.productsStudnie, studnie);
+                await chunkedCreateMany(tx.productsStudnieDefault, studnie);
             }
             if (konfig.length > 0) {
-                await tx.precoKonfig.createMany({ data: konfig });
-                await tx.precoKonfigDefault.createMany({ data: konfig });
+                await chunkedCreateMany(tx.precoKonfig, konfig);
+                await chunkedCreateMany(tx.precoKonfigDefault, konfig);
             }
             if (kinety.length > 0) {
-                await tx.precoKinety.createMany({ data: kinety });
-                await tx.precoKinetyDefault.createMany({ data: kinety });
+                await chunkedCreateMany(tx.precoKinety, kinety);
+                await chunkedCreateMany(tx.precoKinetyDefault, kinety);
             }
             if (zakresy.length > 0) {
-                await tx.precoZakresy.createMany({ data: zakresy });
-                await tx.precoZakresyDefault.createMany({ data: zakresy });
+                await chunkedCreateMany(tx.precoZakresy, zakresy);
+                await chunkedCreateMany(tx.precoZakresyDefault, zakresy);
             }
             if (exportedAt) {
                 await tx.settings.upsert({

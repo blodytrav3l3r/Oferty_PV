@@ -17,6 +17,7 @@ const SHARES = '20260828000000_add_document_shares';
 const ADD_WELLCOUNT = '20260831000000_add_wellcount';
 const ADD_TOTALPRICE = '20260902000000_add_totalprice';
 const ADD_PERF_INDEXES = '20260902000001_add_performance_indexes';
+const ADD_PROD_WELL_INDEX = '20260905000000_add_prod_well_index';
 
 describe('A3 baseline migracji', () => {
     it('deploy na czystej bazie tworzy pelny schemat zgodny z schema.prisma', () => {
@@ -27,7 +28,8 @@ describe('A3 baseline migracji', () => {
             SHARES,
             ADD_WELLCOUNT,
             ADD_TOTALPRICE,
-            ADD_PERF_INDEXES
+            ADD_PERF_INDEXES,
+            ADD_PROD_WELL_INDEX
         ]);
         try {
             const out = project.runPrisma(['migrate', 'deploy']);

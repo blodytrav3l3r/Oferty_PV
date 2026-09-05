@@ -66,6 +66,11 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
             typeof calculateAssignedPrzejscia === 'function'
                 ? calculateAssignedPrzejscia(well)
                 : {};
+        // P4-P0: kontekst Preco raz per studnia (nie per pozycja).
+        const precoCtx =
+            typeof computePrecoWellContext === 'function'
+                ? computePrecoWellContext(well)
+                : undefined;
         return {
             name: well.name,
             dn: well.dn,
@@ -102,7 +107,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                         bd.nierdzewna > 0;
                 }
                 if (!hasSurcharge && typeof calculatePrecoAllocationForItem === 'function') {
-                    const pa = calculatePrecoAllocationForItem(well, index);
+                    const pa = calculatePrecoAllocationForItem(well, index, precoCtx);
                     if (pa.hasPreco && pa.allocatedCost > 0) hasSurcharge = true;
                 }
                 if (hasSurcharge) {
@@ -134,7 +139,7 @@ function calculateOfferPricing(wells, transportKm, transportRate, transportMode)
                             (parseFloat(prz.doplata) || 0);
                     }
                     if (typeof calculatePrecoAllocationForItem === 'function') {
-                        const pa2 = calculatePrecoAllocationForItem(well, index);
+                        const pa2 = calculatePrecoAllocationForItem(well, index, precoCtx);
                         if (pa2.hasPreco && pa2.allocatedCost > 0) {
                             basePrice += pa2.allocatedCost * precoMult;
                         }

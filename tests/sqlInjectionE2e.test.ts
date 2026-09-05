@@ -36,10 +36,17 @@ jest.mock('../src/prismaClient', () => ({
             deleteMany: jest.fn(),
             create: jest.fn()
         },
+        $queryRaw: jest.fn().mockResolvedValue([]),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
         $transaction: jest.fn()
+    },
+    Prisma: {
+        raw: (s: string): string => s,
+        empty: '',
+        sql: (strings: any, ...values: any[]): string => String.raw({ raw: strings }, ...values),
+        join: (values: any[]): string => values.join(', ')
     }
 }));
 

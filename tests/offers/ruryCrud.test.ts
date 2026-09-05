@@ -54,13 +54,13 @@ jest.mock('../../src/prismaClient', () => ({
             create: jest.fn(),
             createMany: jest.fn()
         },
-        $queryRaw: jest.fn(),
+        $queryRaw: jest.fn().mockResolvedValue([]),
         $queryRawUnsafe: jest.fn().mockResolvedValue([]),
         $executeRaw: jest.fn(),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
         $transaction: jest.fn().mockImplementation((cb: (tx: unknown) => unknown) => {
             // @ts-ignore
-            const prismaMock = require('../../src/prismaClient').default;
+            const prismaMock = jest.requireMock('../../src/prismaClient').default;
             return cb(prismaMock);
         })
     },
@@ -107,7 +107,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
 
     describe('POST /api/offers (upsert rur)', () => {
         it('tworzy nową ofertę i wywołuje upsert + createMany + syncFts5', async () => {
-            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
@@ -160,10 +161,9 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
                 state: 'draft',
                 items: []
             }));
-            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
-                ...mockOfferRury,
-                history: JSON.stringify(oldHistory)
-            });
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferRury, history: JSON.stringify(oldHistory) }
+            ]);
             (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([
                 { productId: 'p-1', quantity: 1, discount: 0, price: 10 }
             ]);
@@ -208,10 +208,10 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
         });
 
         it('zwraca 403 przy edycji cudzej oferty', async () => {
-            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue({
-                ...mockOfferRury,
-                userId: 'other-user'
-            });
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([
+                { ...mockOfferRury, userId: 'other-user' }
+            ]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
 
             const res = await request(app)
                 .post('/api/offers')
@@ -234,7 +234,8 @@ describe('Rury Offers CRUD — warstwa zapisu', () => {
         });
 
         it('przepuszcza status active jako state final', async () => {
-            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.upsert as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
             (prisma.offer_items_rel.createMany as jest.Mock).mockResolvedValue({});
