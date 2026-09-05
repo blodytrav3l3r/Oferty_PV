@@ -63,7 +63,7 @@ router.get('/', requireAuth, async (req, res) => {
                 creatorFirstName: string | null;
                 creatorLastName: string | null;
                 creatorUsername: string | null;
-                orderData: string | null;
+                dbSalesOrderNumber: string | null;
                 dbSalesOrderId: string | null;
             }>
         >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data,
@@ -74,7 +74,8 @@ router.get('/', requireAuth, async (req, res) => {
                 THEN datetime(CAST(production_orders_rel."updatedAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE production_orders_rel."updatedAt" END as "updatedAt",
             u1."firstName" as handlerFirstName, u1."lastName" as handlerLastName, u1.username as handlerUsername,
-            u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername, o.data as orderData,
+            u2."firstName" as creatorFirstName, u2."lastName" as creatorLastName, u2.username as creatorUsername,
+            json_extract(o.data, '$.orderNumber') as "dbSalesOrderNumber",
             o.id as "dbSalesOrderId"
          FROM production_orders_rel 
          LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
@@ -92,6 +93,69 @@ router.get('/', requireAuth, async (req, res) => {
     }
 });
 
+/**
+ * Lekki indeks PZ (Faza 1 PZ): tylko kolumny + status/numer/offerId przez
+ * json_extract — bez ciężkiej kolumny `data`. KB zamiast MB przy dużej tabeli.
+ * MUSI być przed `/:id` (inaczej "index" wpadnie w param).
+ */
+router.get('/index', requireAuth, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        if (!authReq.user) return res.status(401).json({ error: 'Unauthorized' });
+        const cacheKey = { scope: 'pz-index', _userId: authReq.user.id };
+        const cached = searchCache.get('production', cacheKey);
+        if (cached) return res.json(cached);
+
+        const whereCondition = buildRoleWhereCondition(authReq.user, 'production_orders_rel');
+        const rows = await prisma.$queryRaw<
+            Array<{
+                id: string;
+                userId: string | null;
+                orderId: string | null;
+                wellId: string | null;
+                elementIndex: number | null;
+                elementKey: string | null;
+                createdAt: string | null;
+                updatedAt: string | null;
+                status: string | null;
+                productionOrderNumber: string | null;
+                offerId: string | null;
+            }>
+        >`SELECT production_orders_rel.id, production_orders_rel."userId",
+            production_orders_rel."orderId", production_orders_rel."wellId",
+            production_orders_rel."elementIndex", production_orders_rel."elementKey",
+            production_orders_rel."createdAt", production_orders_rel."updatedAt",
+            json_extract(production_orders_rel.data, '$.status') as "status",
+            json_extract(production_orders_rel.data, '$.productionOrderNumber') as "productionOrderNumber",
+            json_extract(production_orders_rel.data, '$.offerId') as "offerId"
+         FROM production_orders_rel
+         ${whereCondition}`;
+
+        const result = {
+            data: rows.map((r) => ({
+                id: r.id,
+                type: 'production_order',
+                userId: r.userId,
+                orderId: r.orderId,
+                wellId: r.wellId,
+                elementIndex: r.elementIndex,
+                elementKey: r.elementKey,
+                createdAt: r.createdAt,
+                updatedAt: r.updatedAt,
+                status: r.status,
+                productionOrderNumber: r.productionOrderNumber,
+                offerId: r.offerId
+            }))
+        };
+        searchCache.set('production', cacheKey, result);
+        res.json(result);
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
 router.put(
     '/',
     requireAuth,
@@ -99,6 +163,9 @@ router.put(
     validateData(productionOrdersBatchSchema),
     async (req, res) => {
         const authReq = req as AuthenticatedRequest;
+        // Jawny partial success (bulk): zbierane id zapisanych pozycji — wołający
+        // rozlicza claimed - saved (recycle tylko niezapisanych).
+        const saved: string[] = [];
         try {
             const incoming = req.body.data || [];
 
@@ -177,14 +244,15 @@ router.put(
                         data: dataStr
                     }
                 });
+                saved.push(docId);
             }
 
             searchCache.invalidateNamespace('production');
-            res.json({ ok: true });
+            res.json({ ok: true, saved });
         } catch (e: unknown) {
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd serwera', message);
-            res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera', saved });
         }
     }
 );
@@ -344,6 +412,47 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
     }
 });
+/**
+ * Zwrot niewykorzystanych numerów produkcyjnych do puli recycled (bulk P0).
+ * Invariant: zwracany jest tylko numer, dla którego wiadomo, że zapis się nie udał
+ * (reconciliation claimed - saved po stronie wołającego).
+ */
+router.post('/recycle-numbers', requireAuth, writeProductionLimiter, async (req, res) => {
+    const authReq = req as AuthenticatedRequest;
+    try {
+        const { userId, seqNumbers, year } = req.body || {};
+        if (typeof userId !== 'string' || userId.length === 0) {
+            return res.status(400).json({ error: 'Brak userId' });
+        }
+        if (!canWriteDoc(authReq.user, userId)) {
+            return res.status(403).json({ error: 'Brak uprawnień do numerów tego użytkownika' });
+        }
+        if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) {
+            return res.status(400).json({ error: 'Brak numerów do zwrotu' });
+        }
+        if (seqNumbers.length > 200) {
+            return res.status(400).json({ error: 'Zbyt wiele numerów w jednym żądaniu (max 200)' });
+        }
+        const seqs = [...new Set(seqNumbers.filter((s) => Number.isInteger(s) && s > 0))];
+        if (seqs.length === 0) {
+            return res.status(400).json({ error: 'Brak numerów do zwrotu' });
+        }
+        const targetYear =
+            Number.isInteger(year) && year > 2000 && year < 2100 ? year : new Date().getFullYear();
+        const rows = seqs.map((seq) => Prisma.sql`(${userId}, ${targetYear}, ${seq})`);
+        await prisma.$executeRaw`
+            INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
+            VALUES ${Prisma.join(rows)}
+            ON CONFLICT ("userId", year, seqNumber) DO NOTHING
+        `;
+        res.json({ ok: true, returned: seqs.length });
+    } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        logger.error('Production', 'Błąd serwera', message);
+        res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
+    }
+});
+
 router.get('/:id', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
     try {

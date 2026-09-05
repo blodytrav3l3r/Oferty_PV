@@ -32,7 +32,10 @@ function renderZleceniaSvgPreview(well) {
     }
 }
 
-function populateZleceniaForm(el) {
+async function populateZleceniaForm(el) {
+    // Lazy detail: indeks PZ ma tylko lekkie pola — pełne data dociągnij przed renderem.
+    // Wołający nie muszą awaitować (fire-and-forget); loader współdzieli lot (_fullPromise).
+    if (typeof ensurePzDetailForElement === 'function') await ensurePzDetailForElement(el);
     const { well, product, elementIndex } = el;
     const container = document.getElementById('zlecenia-form-content');
     if (!container) return;

@@ -2,6 +2,7 @@ import { PrismaClient } from '../generated/prisma';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ZAKRESY_TYPES } from '../src/constants/precoSizes';
+import { chunkedCreateMany } from '../src/utils/prismaBatch';
 import { FEATURE_NAMES, ML_CONSTANTS } from '../src/config/mlConstants';
 import type { Prisma } from '../generated/prisma';
 
@@ -90,8 +91,8 @@ async function main() {
         );
 
         if (ruryRows.length > 0) {
-            await tx.productsRury.createMany({ data: ruryRows });
-            await tx.productsRuryDefault.createMany({ data: ruryRows });
+            await chunkedCreateMany(tx.productsRury, ruryRows);
+            await chunkedCreateMany(tx.productsRuryDefault, ruryRows);
         }
 
         // ── ProductsStudnie + ProductsStudnieDefault ──
@@ -137,8 +138,8 @@ async function main() {
         );
 
         if (studnieRows.length > 0) {
-            await tx.productsStudnie.createMany({ data: studnieRows });
-            await tx.productsStudnieDefault.createMany({ data: studnieRows });
+            await chunkedCreateMany(tx.productsStudnie, studnieRows);
+            await chunkedCreateMany(tx.productsStudnieDefault, studnieRows);
         }
 
         // ── PRECO ──
@@ -212,20 +213,20 @@ async function main() {
 
         konfigCount = konfigRows.length;
         if (konfigRows.length > 0) {
-            await tx.precoKonfig.createMany({ data: konfigRows });
-            await tx.precoKonfigDefault.createMany({ data: konfigRows });
+            await chunkedCreateMany(tx.precoKonfig, konfigRows);
+            await chunkedCreateMany(tx.precoKonfigDefault, konfigRows);
         }
 
         kinetyCount = kinetyRows.length;
         if (kinetyRows.length > 0) {
-            await tx.precoKinety.createMany({ data: kinetyRows });
-            await tx.precoKinetyDefault.createMany({ data: kinetyRows });
+            await chunkedCreateMany(tx.precoKinety, kinetyRows);
+            await chunkedCreateMany(tx.precoKinetyDefault, kinetyRows);
         }
 
         zakresyCount = zakresyRows.length;
         if (zakresyRows.length > 0) {
-            await tx.precoZakresy.createMany({ data: zakresyRows });
-            await tx.precoZakresyDefault.createMany({ data: zakresyRows });
+            await chunkedCreateMany(tx.precoZakresy, zakresyRows);
+            await chunkedCreateMany(tx.precoZakresyDefault, zakresyRows);
         }
 
         // ── AiModel (startowy model ML) ──

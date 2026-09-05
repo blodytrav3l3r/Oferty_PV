@@ -536,22 +536,179 @@ async function executeBulkFromPopup() {
 }
 
 /**
+ * Hurtowy claim numerów produkcyjnych — 1 request na maks. 200 pozycji (bulk P0).
+ * @param {string} userId właściciel numeracji
+ * @param {number} count liczba numerów (1..200)
+ * @returns {Promise<{numbers: string[], seqs: number[]}>}
+ */
+async function _bulkClaimRange(userId, count) {
+    const res = await fetch(
+        '/api/orders-studnie/claim-production-numbers/' + encodeURIComponent(userId),
+        {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ count: count })
+        }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error((data && data.error) || 'Server error');
+    return data;
+}
+
+/**
+ * Hurtowy zapis chunka zleceń (PUT batch). Zwraca status + ciało do reconciliacji.
+ */
+async function _bulkPutChunk(orders) {
+    const res = await fetch('/api/orders-studnie/production', {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ data: orders })
+    });
+    const body = await res.json();
+    return {
+        status: res.status,
+        ok: res.ok,
+        body: body,
+        retryAfter: res.headers ? res.headers.get('Retry-After') : null
+    };
+}
+
+/** Zwrot niezapisanych numerów do puli recycled (reconciliacja claimed - saved). */
+async function _bulkRecycleNumbers(userId, seqNumbers) {
+    if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) return;
+    await fetch('/api/orders-studnie/production/recycle-numbers', {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ userId: userId, seqNumbers: seqNumbers })
+    });
+}
+
+/** Maks. pozycji w jednym claimie / chunku PUT — jak limit batch-delete (200). */
+var _BULK_CHUNK = 200;
+
+/**
  * Wspólna pętla generowania zleceń hurtowo dla podanej listy elementów.
+ * Batch P0: claim chunkami 200 → PUT chunkami 200 (retry 429) → recycle
+ * wyłącznie niezapisanych (invariant: claimed = saved + recycled).
  */
 async function executeBulkGeneration(elements) {
+    const list = Array.isArray(elements) ? elements : [];
     const sharedData = collectSharedFormData();
-    const newOrders = [];
-    let errorCount = 0;
-
-    for (const el of elements) {
+    const userId = (sharedData && sharedData.userId) || null;
+    const built = [];
+    for (const el of list) {
         try {
-            const orderData = buildAutoOrderData(el, sharedData);
-            const saved = await claimAndSaveSingleOrder(orderData, sharedData.userId);
-            productionOrders.push(saved);
-            newOrders.push(saved);
+            built.push({ el: el, order: buildAutoOrderData(el, sharedData) });
         } catch (e) {
-            logger.error('orderManager', 'Błąd generowania zlecenia dla', el.product.name, ':', e);
-            errorCount++;
+            logger.error(
+                'orderManager',
+                'Błąd budowania zlecenia dla',
+                (el && el.product && el.product.name) || '?',
+                ':',
+                e
+            );
+        }
+    }
+    if (!userId) {
+        showToast('Brak użytkownika do numeracji zleceń', 'error');
+        return;
+    }
+    // Świeży kontroler na start — _excelBulkCancel() z progressu anuluje ten przebieg.
+    let signal = null;
+    if (typeof _excelNewBulkAbort === 'function') {
+        const ctl = _excelNewBulkAbort();
+        signal = ctl && ctl.signal ? ctl.signal : null;
+    }
+    const isAborted = () =>
+        typeof _excelBulkIsAborted === 'function'
+            ? _excelBulkIsAborted(signal)
+            : !!(signal && signal.aborted);
+
+    // Faza 1: claimy chunkami 200 (sekwencyjnie — numery po kolei popupu, 1:1 z built).
+    const claimed = [];
+    let stopped = false;
+    for (let start = 0; start < built.length && !stopped; start += _BULK_CHUNK) {
+        if (isAborted()) {
+            stopped = true;
+            break;
+        }
+        const n = Math.min(_BULK_CHUNK, built.length - start);
+        let range = null;
+        try {
+            range = await _bulkClaimRange(userId, n);
+        } catch (e) {
+            logger.error('orderManager', 'Błąd claima numerów produkcyjnych:', e);
+            range = null;
+        }
+        if (
+            !range ||
+            !Array.isArray(range.numbers) ||
+            !Array.isArray(range.seqs) ||
+            range.numbers.length < n ||
+            range.seqs.length < n
+        ) {
+            stopped = true;
+            break;
+        }
+        for (let i = 0; i < n; i++) claimed.push({ seq: range.seqs[i], number: range.numbers[i] });
+    }
+
+    // Faza 2: PUT chunkami 200 z jednym retry po 429 (Retry-After).
+    const savedIds = new Set();
+    let putErrors = 0;
+    if (!stopped && !isAborted()) {
+        for (let start = 0; start < built.length; start += _BULK_CHUNK) {
+            if (isAborted()) {
+                stopped = true;
+                break;
+            }
+            const slice = built.slice(start, start + _BULK_CHUNK);
+            slice.forEach((b, i) => {
+                b.order.productionOrderNumber = claimed[start + i].number;
+            });
+            const payload = slice.map((b) => b.order);
+            let resp = null;
+            try {
+                resp = await _bulkPutChunk(payload);
+            } catch (e) {
+                logger.error('orderManager', 'Błąd zapisu chunka zleceń:', e);
+                resp = null;
+            }
+            if (resp && resp.status === 429) {
+                const secs = parseFloat(resp.retryAfter);
+                await new Promise((r) => setTimeout(r, (Number.isFinite(secs) ? secs : 1) * 1000));
+                try {
+                    resp = await _bulkPutChunk(payload);
+                } catch (e) {
+                    logger.error('orderManager', 'Błąd retry chunka zleceń:', e);
+                    resp = null;
+                }
+            }
+            const saved =
+                resp && resp.body && Array.isArray(resp.body.saved) ? resp.body.saved : [];
+            if (!resp || !resp.ok) putErrors++;
+            for (const id of saved) savedIds.add(id);
+        }
+    } else {
+        stopped = true;
+    }
+
+    // Faza 3: reconciliacja — zapisane do listy, niezapisane seq do recycle (1 request).
+    const unsavedSeqs = [];
+    const newOrders = [];
+    for (let i = 0; i < built.length; i++) {
+        if (savedIds.has(built[i].order.id)) {
+            productionOrders.push(built[i].order);
+            newOrders.push(built[i].order);
+        } else if (i < claimed.length) {
+            unsavedSeqs.push(claimed[i].seq);
+        }
+    }
+    if (unsavedSeqs.length > 0) {
+        try {
+            await _bulkRecycleNumbers(userId, unsavedSeqs);
+        } catch (e) {
+            logger.error('orderManager', 'Błąd zwrotu numerów produkcyjnych:', e);
         }
     }
 
@@ -566,10 +723,13 @@ async function executeBulkGeneration(elements) {
         wellsSnapshotBeforeZlecenia = structuredClone(wells);
     }
 
-    const errMsg = errorCount > 0 ? ` (${errorCount} błędów)` : '';
+    const errMsg =
+        stopped || putErrors > 0
+            ? ` (przerwano, zapisano ${newOrders.length} z ${built.length})`
+            : '';
     showToast(
         `<i data-lucide="zap"></i> Wygenerowano ${newOrders.length} zleceń produkcyjnych${errMsg}`,
-        newOrders.length > 0 ? 'success' : 'error'
+        newOrders.length > 0 && !stopped ? 'success' : newOrders.length > 0 ? 'info' : 'error'
     );
 }
 
@@ -600,3 +760,122 @@ async function deleteSelectedProductionOrder() {
     await deleteProductionOrder(po.id);
 }
 window.deleteSelectedProductionOrder = deleteSelectedProductionOrder;
+
+/* ===== BULK PZ MAP — lookup O(1) o semantyce findPzForElement (parity legacy) ===== */
+
+function _bulkPzKeyFor(wellId, elemKey) {
+    return 'k\n' + String(wellId) + '\n' + String(elemKey);
+}
+
+function _bulkPzIdxFor(wellId, elementIndex) {
+    return 'i\n' + String(wellId) + '\n' + String(elementIndex);
+}
+
+function _bulkPzStableIdOn() {
+    if (
+        typeof window !== 'undefined' &&
+        window.pzGuard &&
+        typeof window.pzGuard.isPzStableIdEnabled === 'function'
+    )
+        return window.pzGuard.isPzStableIdEnabled();
+    if (typeof isPzStableIdEnabled === 'function') return isPzStableIdEnabled();
+    return true;
+}
+
+/**
+ * Buduje mapę PZ: klucz key (wellId+elementKey) i klucz index (wellId+elementIndex).
+ * Pierwsze wystąpienie wygrywa — jak list.find w findPzForElement.
+ */
+function _bulkBuildPzMap(list) {
+    const src =
+        typeof list !== 'undefined'
+            ? list
+            : typeof productionOrders !== 'undefined'
+              ? productionOrders
+              : [];
+    const map = new Map();
+    if (!Array.isArray(src)) return map;
+    for (const po of src) {
+        if (!po) continue;
+        if (po.elementKey) {
+            const k = _bulkPzKeyFor(po.wellId, po.elementKey);
+            if (!map.has(k)) map.set(k, po);
+        }
+        if (typeof po.elementIndex === 'number') {
+            const k = _bulkPzIdxFor(po.wellId, po.elementIndex);
+            if (!map.has(k)) map.set(k, po);
+        }
+    }
+    return map;
+}
+
+/**
+ * Status elementu przez mapę: 'accepted' | 'saved' | 'open' — identycznie jak legacy
+ * (key przy włączonej fladze, potem fallback na index).
+ */
+function _bulkElementStatus(el, pzMap) {
+    const wellId = el && el.well ? el.well.id : undefined;
+    const elemKey = el && el.configItem ? el.configItem._elemId : undefined;
+    const elementIndex = el ? el.elementIndex : undefined;
+    let hit;
+    if (_bulkPzStableIdOn() && elemKey) hit = pzMap.get(_bulkPzKeyFor(wellId, elemKey));
+    if (!hit && typeof elementIndex === 'number')
+        hit = pzMap.get(_bulkPzIdxFor(wellId, elementIndex));
+    if (!hit) return 'open';
+    return hit.status === 'accepted' ? 'accepted' : 'saved';
+}
+
+/* ===== BULK SEQ — model kolejności bez DOM (parity z popupem legacy) ===== */
+
+/**
+ * Dzieli kolejność na segmenty: active (do generowania) + excluded + disabled.
+ * Nieznana studnia lub openCount 0 → disabled (nie generuj).
+ */
+function _bulkSeqPartition(order, groups, excluded) {
+    const active = [];
+    const excl = [];
+    const dis = [];
+    for (const w of order || []) {
+        const g = groups ? groups.get(w) : undefined;
+        if (!g || g.openCount === 0) dis.push(w);
+        else if (excluded && excluded.has(w)) excl.push(w);
+        else active.push(w);
+    }
+    return { active: active, excluded: excl, disabled: dis };
+}
+
+/** Ruch drag/drop na kopii kolejności (no-op przy braku from/to lub tym samym). */
+function _bulkSeqMove(order, from, to, after) {
+    const next = (order || []).slice();
+    if (from === to) return next;
+    const fromIdx = next.indexOf(from);
+    const toIdx = next.indexOf(to);
+    if (fromIdx < 0 || toIdx < 0) return next;
+    next.splice(fromIdx, 1);
+    next.splice(next.indexOf(to) + (after ? 1 : 0), 0, from);
+    return next;
+}
+
+/** Płaska kolejność: active + excluded + disabled (rosnąco, jak legacy). */
+function _bulkSeqFlat(order, groups, excluded) {
+    const p = _bulkSeqPartition(order, groups, excluded);
+    return p.active.concat(
+        p.excluded,
+        p.disabled.slice().sort((a, b) => a - b)
+    );
+}
+
+/** Numery kolejności aktywnych (1-based) do wyświetlenia w popupie. */
+function _bulkSeqActiveNumbers(order, groups, excluded) {
+    const p = _bulkSeqPartition(order, groups, excluded);
+    const nums = new Map();
+    p.active.forEach((w, i) => nums.set(w, i + 1));
+    return nums;
+}
+
+window._bulkBuildPzMap = _bulkBuildPzMap;
+window._bulkElementStatus = _bulkElementStatus;
+window._bulkSeqPartition = _bulkSeqPartition;
+window._bulkSeqMove = _bulkSeqMove;
+window._bulkSeqFlat = _bulkSeqFlat;
+window._bulkSeqActiveNumbers = _bulkSeqActiveNumbers;

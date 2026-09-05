@@ -1,8 +1,13 @@
 /* ===== ZLECENIA PRODUKCYJNE — WARSTWA DANYCH ===== */
 
-async function loadProductionOrders() {
+/**
+ * Lekki indeks PZ (id/wellId/orderId/offerId/elementIndex/elementKey/status/numer)
+ * zamiast pełnych wierszy z ciężkim `data` — KB zamiast MB. Jeden retry po
+ * aborcie; przy drugim failu zostają stare dane z RAM.
+ */
+async function loadProductionOrders(retried) {
     try {
-        const resp = await fetchWithTimeout('/api/orders-studnie/production', {
+        const resp = await fetchWithTimeout('/api/orders-studnie/production/index', {
             headers: authHeaders()
         });
         if (resp.ok) {
@@ -11,6 +16,7 @@ async function loadProductionOrders() {
             // Audyt uruchamia appStudnie.js po załadowaniu wszystkich danych w tle (orders, offers, products)
         }
     } catch (e) {
+        if (!retried && e && e.name === 'AbortError') return loadProductionOrders(true);
         logger.error('orderManager', 'loadProductionOrders error:', e);
     }
     return productionOrders;
@@ -187,24 +193,112 @@ function auditPzElementKeyMismatch() {
     }
 }
 
-async function saveProductionOrdersData(data) {
-    const results = [];
-    for (const po of data) {
-        try {
-            const res = await fetch('/api/orders-studnie/production', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify(po)
-            });
-            const resData = await res.json();
-            if (!res.ok) throw new Error(resData.error || 'Server error');
-            results.push(resData);
-        } catch (e) {
-            logger.error('orderManager', 'saveProductionOrdersData error:', e);
-            throw e;
-        }
+/**
+ * Zapis PZ jednym requestem bulk PUT ({ data: [...] }) zamiast N× POST.
+ * 1 zapis = 1 req (chunk 200) zamiast N req — nie dobija WRITE_LIMITER 60/min.
+ * 429 → jeden retry po Retry-After (wzorzec _bulkPutChunk z orderBulk.js).
+ */
+// Współbieżne zapisy (double-click, accept→save+save) współdzielą jeden lot.
+// Bez tego każdy klik to kolejny burst PUT pod limiter.
+let _pzSaveInFlight = null;
+
+async function saveProductionOrdersData(data, opts) {
+    if (_pzSaveInFlight) return _pzSaveInFlight;
+    _pzSaveInFlight = _saveProductionOrdersBulk(data, opts);
+    try {
+        return await _pzSaveInFlight;
+    } finally {
+        _pzSaveInFlight = null;
     }
-    return results;
+}
+
+async function _saveProductionOrdersBulk(data, opts) {
+    const list = Array.isArray(data) ? data : [];
+    if (list.length === 0) return [];
+    const noRetry = Boolean(opts && opts.noRetry);
+    const saved = [];
+    for (let s = 0; s < list.length; s += 200) {
+        const chunkSaved = await _saveProductionChunk(list.slice(s, s + 200), noRetry);
+        saved.push(...chunkSaved);
+    }
+    return saved;
+}
+
+/**
+ * Lazy detail PZ (Faza 2): indeks w RAM ma tylko lekkie pola; pełne `data`
+ * (uwagi, przejścia, etykieta...) dociągane 1× GET /:id przy otwarciu formularza.
+ * Marker `_full` = wpis kompletny (z API albo zbudowany z DOM przy zapisie);
+ * `_fullPromise` współdzieli lot przy szybkim klikaniu. Oba cięte przed wysyłką.
+ */
+async function loadProductionOrderDetail(po) {
+    if (!po || !po.id || po._full || 'uwagi' in po) return po;
+    if (po._fullPromise) return po._fullPromise;
+    po._fullPromise = (async () => {
+        try {
+            const resp = await fetchWithTimeout('/api/orders-studnie/production/' + po.id, {
+                headers: authHeaders()
+            });
+            if (resp.ok) {
+                const json = await resp.json();
+                Object.assign(po, json.data || {}, { _full: true });
+            }
+        } catch (e) {
+            logger.warn('orderManager', 'loadProductionOrderDetail error:', e);
+        } finally {
+            delete po._fullPromise;
+        }
+        return po;
+    })();
+    return po._fullPromise;
+}
+
+async function ensurePzDetailForElement(el) {
+    if (!el || !el.well || typeof pzGuard === 'undefined') return;
+    const po = pzGuard.findPzForElement(
+        productionOrders || [],
+        el.well.id,
+        (el.configItem && el.configItem._elemId) || '',
+        el.elementIndex
+    );
+    if (po) await loadProductionOrderDetail(po);
+}
+
+function _stripPzTransient(po) {
+    if (!po || typeof po !== 'object') return po;
+    const { _full, _fullPromise, ...clean } = po;
+    return clean;
+}
+
+async function _saveProductionChunk(chunk, noRetry) {
+    const doPut = async () => {
+        const res = await fetch('/api/orders-studnie/production', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body: JSON.stringify({ data: chunk.map(_stripPzTransient) })
+        });
+        let body = {};
+        try {
+            body = await res.json();
+        } catch (_e) {}
+        return { res, body };
+    };
+    let { res, body } = await doPut();
+    if (res.status === 429 && !noRetry) {
+        let retryAfter = (body && body.retryAfter) || 0;
+        if (!retryAfter) {
+            try {
+                retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10) || 0;
+            } catch (_e2) {}
+        }
+        await new Promise((r) => setTimeout(r, Math.max(1, retryAfter || 5) * 1000));
+        ({ res, body } = await doPut());
+    }
+    if (!res.ok) {
+        const err = new Error((body && body.error) || 'Server error');
+        logger.error('orderManager', 'saveProductionOrdersData error:', err);
+        throw err;
+    }
+    return Array.isArray(body.saved) ? body.saved : [];
 }
 
 async function deleteProductionOrder(id) {
@@ -381,6 +475,8 @@ async function revokeProductionOrder() {
 
 /* ===== Rejestracja globali ===== */
 window.loadProductionOrders = loadProductionOrders;
+window.loadProductionOrderDetail = loadProductionOrderDetail;
+window.ensurePzDetailForElement = ensurePzDetailForElement;
 window.auditPzElementKeyMismatch = auditPzElementKeyMismatch;
 window.deleteProductionOrder = deleteProductionOrder;
 window.acceptProductionOrder = acceptProductionOrder;

@@ -205,9 +205,12 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
             ? `${row.creatorFirstName || ''} ${row.creatorLastName || ''}`.trim()
             : row.creatorUsername || '';
 
-    const orderParsed = row.orderData
-        ? parseJsonField<Record<string, unknown>>(row.orderData as string, {})
-        : {};
+    const orderParsed =
+        typeof row.dbSalesOrderNumber === 'string'
+            ? { orderNumber: row.dbSalesOrderNumber }
+            : row.orderData
+              ? parseJsonField<Record<string, unknown>>(row.orderData as string, {})
+              : {};
     const dbSalesOrderNumber = (orderParsed.orderNumber || '') as string;
 
     return {

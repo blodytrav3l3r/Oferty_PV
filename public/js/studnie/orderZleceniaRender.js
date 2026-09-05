@@ -1,6 +1,6 @@
 /* ===== ZLECENIA PRODUKCYJNE — RENDEROWANIE LISTY I KONFIGURACJI ===== */
 
-function buildZleceniaWellList() {
+function buildZleceniaWellList(opts) {
     logger.info(
         'orderManager',
         '[buildZleceniaWellList] Building list from',
@@ -10,6 +10,9 @@ function buildZleceniaWellList() {
     zleceniaElementsList = [];
     wells.forEach((well, wIdx) => {
         if (!well.config) return;
+        // P0: hoist — jeden scan configu per studnia zamiast per element (było O(C^2)).
+        const realBaseIdx = findRealBaseIndex(well);
+        const isTangential = well.dn === 'styczna';
         for (let eIdx = well.config.length - 1; eIdx >= 0; eIdx--) {
             const item = well.config[eIdx];
             let p =
@@ -32,8 +35,7 @@ function buildZleceniaWellList() {
 
             if (!p) continue;
 
-            const realBaseIdx = findRealBaseIndex(well);
-            const isBaseOfTangential = well.dn === 'styczna' && eIdx === realBaseIdx;
+            const isBaseOfTangential = isTangential && eIdx === realBaseIdx;
 
             if (
                 p.componentType === 'dennica' ||
@@ -56,7 +58,8 @@ function buildZleceniaWellList() {
         '[buildZleceniaWellList] Done. Elements found:',
         zleceniaElementsList.length
     );
-    renderZleceniaList();
+    // P0: popup kolejności nie potrzebuje renderu listy zleceń — pomijalny przez {skipRender:true}.
+    if (!opts || !opts.skipRender) renderZleceniaList();
 }
 
 function findRealBaseIndex(well) {
@@ -280,7 +283,7 @@ function filterZleceniaList() {
     renderZleceniaList();
 }
 
-function selectZleceniaElement(idx) {
+async function selectZleceniaElement(idx) {
     zleceniaSelectedIdx = idx;
     renderZleceniaList();
     const el = zleceniaElementsList[idx];
@@ -294,6 +297,9 @@ function selectZleceniaElement(idx) {
     renderZleceniaWellConfig();
     renderZleceniaSvgPreview(el.well);
 
+    // Lazy detail: pełne data PZ tylko dla wybranego elementu (indeks = lekkie pola)
+    if (typeof ensurePzDetailForElement === 'function') await ensurePzDetailForElement(el);
+    if (zleceniaSelectedIdx !== idx) return; // szybkie przeklikanie — nie nadpisuj nowszego
     populateZleceniaForm(el);
 }
 

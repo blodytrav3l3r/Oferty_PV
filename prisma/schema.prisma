@@ -415,6 +415,8 @@ model production_orders_rel {
   @@index([createdAt], map: "idx_prod_created")
   @@index([updatedAt], map: "idx_prod_updated")
   @@index([orderId], map: "idx_prod_order")
+  @@index([wellId], map: "idx_prod_well")
+  @@index([wellId, elementIndex], map: "idx_prod_well_elem")
   @@index([userId, createdAt, id], map: "idx_prod_user_created_id")
   @@index([userId, updatedAt, id], map: "idx_prod_user_updated_id")
 }

@@ -61,7 +61,8 @@ router.get('/', requireAuth, async (req, res) => {
                    u2."firstName" as "creatorFirstName",
                    u2."lastName" as "creatorLastName",
                    u2.username as "creatorUsername",
-                   o.data as "orderData",
+                   -- ponytail: tylko orderNumber przez json_extract; pełne o.data (MB) × N wierszy rozwalało napi ("Failed to convert rust String")
+                   json_extract(o.data, '$.orderNumber') as "dbSalesOrderNumber",
                    o.id as "dbSalesOrderId"
             FROM production_orders_rel
             LEFT JOIN users u1 ON production_orders_rel."userId" = u1.id
