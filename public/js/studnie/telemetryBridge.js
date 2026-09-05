@@ -28,6 +28,15 @@
     /* ===== STAN WEWNETRZNY ===== */
     let sequenceNo = 0;
 
+    // Circuit breaker: przy padzie backendu kazdy auto-dobor/zapis strzelal
+    // fetchem per studnia bez backoff -> wyczerpanie socketow przegladarki
+    // (net::ERR_INSUFFICIENT_RESOURCES) i tysiace console.warn. Po 3 failach
+    // z rzedu pauza 30 s (early-return), reset przy pierwszej odpowiedzi.
+    let telemetryFailCount = 0;
+    let telemetryCircuitUntil = 0;
+    const TELEMETRY_CIRCUIT_THRESHOLD = 3;
+    const TELEMETRY_CIRCUIT_COOLDOWN_MS = 30000;
+
     // Deduplikacja AUTO_JS w pamięci: wellId -> hash treści ostatnio wysłanego configa.
     // Pomijamy powtórki identycznej treści z tego samego źródła (re-render bez zmiany
     // wejść), bo duplikaty zawyżają hitCount/confidence wzorców i mnożą próbki treningowe.
@@ -155,26 +164,78 @@
         return true;
     }
 
+    /* ===== KOLEJKA REGULACJI RUCHU (ASYNC CONCURRENCY QUEUE) ===== */
+    // Zapobiega wyczerpaniu socketow przegladarki (ERR_INSUFFICIENT_RESOURCES)
+    // oraz 429 Too Many Requests przy hurtowych wywolaniach (zapis duzych ofert).
+    const MAX_CONCURRENT_TELEMETRY = 2;
+    const MAX_TELEMETRY_QUEUE_SIZE = 50;
+    let activeTelemetryRequests = 0;
+    /** @type {Array<() => Promise<any>>} */
+    const telemetryQueue = [];
+
+    function processTelemetryQueue() {
+        if (activeTelemetryRequests >= MAX_CONCURRENT_TELEMETRY || telemetryQueue.length === 0) {
+            return;
+        }
+        if (
+            typeof Date !== 'undefined' &&
+            telemetryCircuitUntil > 0 &&
+            Date.now() < telemetryCircuitUntil
+        ) {
+            telemetryQueue.length = 0;
+            return;
+        }
+        const task = telemetryQueue.shift();
+        if (!task) return;
+
+        activeTelemetryRequests++;
+        task().finally(function () {
+            activeTelemetryRequests--;
+            processTelemetryQueue();
+        });
+    }
+
     /**
      * Bezpieczny fetch z timeoutem. Nie rzuca wyjątków.
      */
-    function safeFetch(url, payload) {
+    function safeFetchInternal(url, payload) {
         try {
             if (!window.fetch) return Promise.resolve();
+            // Otwarty circuit -> cicho pomijaj, bez nowych socketow i logow.
+            if (
+                typeof Date !== 'undefined' &&
+                telemetryCircuitUntil > 0 &&
+                Date.now() < telemetryCircuitUntil
+            ) {
+                return Promise.resolve();
+            }
+            // Guard: telemetryBridge laduje sie przed shared/auth.js
+            // (studnie.html) — gole authHeaders() rzucaloby ReferenceError.
+            const authPart = typeof authHeaders === 'function' ? authHeaders() : {};
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
             return fetch(url, {
                 method: 'POST',
                 credentials: 'same-origin',
-                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                headers: { 'Content-Type': 'application/json', ...authPart },
                 body: JSON.stringify(payload),
                 signal: controller.signal
             })
                 .then(function (response) {
                     clearTimeout(timeoutId);
                     if (!response) return undefined;
-                    // 429 / 5xx to pasywne — ignoruj cicho, nie spamuj konsoli
-                    if (response.status === 429 || response.status >= 500) return undefined;
+                    if (response.status === 429) {
+                        // Rate limit osiagniety — wstrzymaj telemetrie na 15s i wyczysc kolejke, aby zapobiec powtarzającym sie bledom 429 w konsoli
+                        if (typeof Date !== 'undefined') {
+                            telemetryCircuitUntil = Date.now() + 15000;
+                        }
+                        telemetryQueue.length = 0;
+                        return undefined;
+                    }
+                    if (response.status >= 500) return undefined;
+                    // Odpowiedz HTTP 2xx/3xx/4xx (inny niz 429) -> reset licznika circuita
+                    telemetryFailCount = 0;
+                    telemetryCircuitUntil = 0;
                     if (typeof response.json === 'function') {
                         return response.json().catch(function () {
                             return undefined;
@@ -183,16 +244,44 @@
                     return undefined;
                 })
                 .catch(function (err) {
-                    if (
-                        window.location.hostname === 'localhost' ||
-                        window.location.hostname === '127.0.0.1'
-                    ) {
-                        console.warn('[telemetry] Backend unavailable:', err);
+                    telemetryFailCount++;
+                    // Jeden log na otwarcie circuita, nie per fail — to console.warn
+                    // generowalo tysiace wpisow przy padzie backendu.
+                    if (telemetryFailCount >= TELEMETRY_CIRCUIT_THRESHOLD) {
+                        telemetryFailCount = 0;
+                        if (typeof Date !== 'undefined') {
+                            telemetryCircuitUntil = Date.now() + TELEMETRY_CIRCUIT_COOLDOWN_MS;
+                        }
+                        if (
+                            window.location.hostname === 'localhost' ||
+                            window.location.hostname === '127.0.0.1'
+                        ) {
+                            console.warn('[telemetry] Backend unavailable — pauza 30 s:', err);
+                        }
                     }
                 });
         } catch (_e) {
             return Promise.resolve();
         }
+    }
+
+    function safeFetch(url, payload) {
+        if (
+            typeof Date !== 'undefined' &&
+            telemetryCircuitUntil > 0 &&
+            Date.now() < telemetryCircuitUntil
+        ) {
+            return Promise.resolve();
+        }
+        if (telemetryQueue.length >= MAX_TELEMETRY_QUEUE_SIZE) {
+            telemetryQueue.shift();
+        }
+        return new Promise(function (resolve) {
+            telemetryQueue.push(function () {
+                return safeFetchInternal(url, payload).then(resolve, resolve);
+            });
+            processTelemetryQueue();
+        });
     }
 
     /**

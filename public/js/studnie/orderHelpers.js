@@ -1,4 +1,9 @@
 /* ===== ZAMÓWIENIA STUDNI ===== */
+
+/* P0.2: throttle ostrzeżeń o dużym payloadzie — max 1 na 5 minut na sesję. */
+let _lastPayloadWarnAt = 0;
+const PAYLOAD_WARN_THRESHOLD_BYTES = 10 * 1024 * 1024;
+const PAYLOAD_WARN_COOLDOWN_MS = 5 * 60 * 1000;
 async function loadOrdersStudnie() {
     try {
         const res = await fetchWithTimeout('/api/orders-studnie', { headers: authHeaders() });
@@ -28,10 +33,49 @@ async function saveOrdersDataStudnie(data) {
                 });
             });
         }
+        const body = JSON.stringify({ data });
+        // P0.2: pasywny pomiar rozmiaru payloadu (telemetry, throttled warn).
+        try {
+            if (typeof Blob !== 'undefined' && Array.isArray(data)) {
+                const payloadBytes = new Blob([body]).size;
+                let wellsCount = 0;
+                let snapshotBytes = 0;
+                data.forEach((o) => {
+                    wellsCount += Array.isArray(o.wells) ? o.wells.length : 0;
+                    try {
+                        snapshotBytes += new Blob([JSON.stringify(o.originalSnapshot || null)])
+                            .size;
+                    } catch (_e) {
+                        // ignoruj pojedynczy błąd pomiaru
+                    }
+                });
+                window._lastOrderPayloadStats = {
+                    ordersCount: data.length,
+                    wellsCount,
+                    payloadBytes,
+                    snapshotBytes
+                };
+                const now = typeof Date !== 'undefined' ? Date.now() : 0;
+                if (
+                    payloadBytes > PAYLOAD_WARN_THRESHOLD_BYTES &&
+                    now - _lastPayloadWarnAt > PAYLOAD_WARN_COOLDOWN_MS
+                ) {
+                    _lastPayloadWarnAt = now;
+                    logger.warn('orderManager', '[ORDER] Large payload:', {
+                        mb: (payloadBytes / 1024 / 1024).toFixed(2),
+                        ordersCount: data.length,
+                        wellsCount,
+                        snapshotMb: (snapshotBytes / 1024 / 1024).toFixed(2)
+                    });
+                }
+            }
+        } catch (_e) {
+            // pomiar nigdy nie blokuje zapisu
+        }
         const res = await fetch('/api/orders-studnie', {
             method: 'PUT',
             headers: authHeaders(),
-            body: JSON.stringify({ data })
+            body
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (err) {

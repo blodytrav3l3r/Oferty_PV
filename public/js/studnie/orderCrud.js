@@ -187,6 +187,33 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     if (typeof syncKineta === 'function') {
         selectedWellsCopy.forEach((w) => syncKineta(w));
     }
+    if (typeof stripWellRuntimeFields === 'function') {
+        stripWellRuntimeFields(selectedWellsCopy);
+    }
+    // P0: transportowy kontrakt allowlist — runtime/cache nie opuszcza przeglądarki.
+    // stripWellRuntimeFields powyżej zostaje jako defense-in-depth na czas migracji.
+    const orderWellsDTO =
+        typeof toOrderWellsDTO === 'function'
+            ? toOrderWellsDTO(selectedWellsCopy)
+            : selectedWellsCopy;
+    // P0.2: pomiar redukcji DTO na tym samym logicznym payloadzie (before/after).
+    try {
+        if (typeof Blob !== 'undefined' && selectedWellsCopy.length > 0) {
+            const beforeBytes = new Blob([JSON.stringify(selectedWellsCopy)]).size;
+            const afterBytes = new Blob([JSON.stringify(orderWellsDTO)]).size;
+            window._lastOrderDtoStats = {
+                wellsCount: selectedWellsCopy.length,
+                beforeBytes,
+                afterBytes,
+                dtoReductionPercent:
+                    beforeBytes > 0
+                        ? Math.round(((beforeBytes - afterBytes) / beforeBytes) * 1000) / 10
+                        : 0
+            };
+        }
+    } catch (_e) {
+        // pomiar pasywny — nigdy nie blokuje tworzenia zamówienia
+    }
     const order = {
         id: 'order_studnie_' + Date.now(),
         offerId: offer.id,
@@ -208,10 +235,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         notes: offer.notes,
         paymentTerms: offer.paymentTerms,
         validity: offer.validity,
-        wells: selectedWellsCopy,
+        wells: orderWellsDTO,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         originalSnapshot: {
-            wells: structuredClone(selectedWellsCopy),
+            wells: structuredClone(orderWellsDTO),
             wellDiscounts: structuredClone(effectiveDiscounts),
             transportKm: offer.transportKm,
             transportRate: offer.transportRate,
@@ -257,7 +284,7 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
 
-    order.wellsExport = selectedWellsCopy.map((well) => {
+    order.wellsExport = orderWellsDTO.map((well) => {
         const stats = calcWellStats(well);
         const wellTransportCost =
             totalWeight > 0 ? orderTransportCost * (stats.weight / totalWeight) : 0;
@@ -354,7 +381,10 @@ async function saveOrderStudnie() {
 
     freezeWellPrices(wells);
 
-    order.wells = structuredClone(wells);
+    order.wells =
+        typeof toOrderWellsDTO === 'function'
+            ? toOrderWellsDTO(structuredClone(wells))
+            : structuredClone(wells);
     if (typeof window.wellDiscounts !== 'undefined') {
         order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
@@ -411,8 +441,14 @@ async function saveOrderStudnie() {
             price: stats.price,
             transportCost: wellTransportCost,
             totalPrice: stats.price + wellTransportCost,
-            config: well.config,
-            przejscia: well.przejscia
+            config:
+                typeof toWellConfigItemDTO === 'function'
+                    ? (well.config || []).map(toWellConfigItemDTO).filter(Boolean)
+                    : well.config,
+            przejscia:
+                typeof toWellPrzejscieDTO === 'function'
+                    ? (well.przejscia || []).map(toWellPrzejscieDTO).filter(Boolean)
+                    : well.przejscia
         };
     });
 
@@ -768,7 +804,10 @@ async function saveCurrentOrder(options = {}) {
         freezeWellPrices(wells);
     }
 
-    order.wells = structuredClone(wells);
+    order.wells =
+        typeof toOrderWellsDTO === 'function'
+            ? toOrderWellsDTO(structuredClone(wells))
+            : structuredClone(wells);
     if (typeof window.wellDiscounts !== 'undefined') {
         order.wellDiscounts = structuredClone(window.wellDiscounts);
     }
@@ -837,8 +876,14 @@ async function saveCurrentOrder(options = {}) {
             price: stats.price,
             transportCost: wellTransportCost,
             totalPrice: stats.price + wellTransportCost,
-            config: well.config,
-            przejscia: well.przejscia
+            config:
+                typeof toWellConfigItemDTO === 'function'
+                    ? (well.config || []).map(toWellConfigItemDTO).filter(Boolean)
+                    : well.config,
+            przejscia:
+                typeof toWellPrzejscieDTO === 'function'
+                    ? (well.przejscia || []).map(toWellPrzejscieDTO).filter(Boolean)
+                    : well.przejscia
         };
     });
 

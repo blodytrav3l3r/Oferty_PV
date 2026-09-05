@@ -29,7 +29,7 @@ export const WRITE_LIMITER = createRateLimiter({
  */
 export const TELEMETRY_WRITE_LIMITER = createRateLimiter({
     windowMs: 60 * 1000,
-    maxHits: 300,
+    maxHits: 1200,
     message: 'Zbyt wiele zdarzeń telemetrycznych. Odczekaj chwilę.'
 });
 

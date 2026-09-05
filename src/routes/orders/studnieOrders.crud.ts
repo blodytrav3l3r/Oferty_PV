@@ -7,6 +7,7 @@ import { validateData } from '../../validators/authSchema';
 import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { studnieOrdersBatchSchema, studnieOrderUpdateSchema } from '../../validators/offerSchemas';
+import { observeStudnieOrderDto } from '../../validators/orderSchemas';
 import { canWriteDoc, canReadWithShare } from '../../utils/ownership';
 import { buildRoleWhereConditionWithShares } from '../../utils/roleFilter';
 import { countProductionOrdersForOrder } from '../../utils/productionOrderGuard';
@@ -87,6 +88,32 @@ router.put(
         const authReq = req as AuthenticatedRequest;
         try {
             const incoming = req.body.data || [];
+
+            // P0.3 observe (non-blocking): wykryj klucze spoza kontraktu DTO.
+            // Request NIGDY nie jest odrzucany na tym etapie — tylko log.
+            // Enforcement (.strict()) dopiero po audycie logów (P1).
+            for (const o of incoming) {
+                try {
+                    const obs = observeStudnieOrderDto(o);
+                    if (
+                        obs.unknownWellKeys.length > 0 ||
+                        obs.unknownConfigKeys.length > 0 ||
+                        obs.unknownPrzejscieKeys.length > 0 ||
+                        obs.runtimeLeaked.length > 0
+                    ) {
+                        logger.warn('StudnieOrders', '[DTO-observe] klucz spoza kontraktu', {
+                            orderId: (o as { id?: unknown }).id,
+                            wellsChecked: obs.wellsChecked,
+                            unknownWellKeys: obs.unknownWellKeys,
+                            unknownConfigKeys: obs.unknownConfigKeys,
+                            unknownPrzejscieKeys: obs.unknownPrzejscieKeys,
+                            runtimeLeaked: obs.runtimeLeaked
+                        });
+                    }
+                } catch {
+                    // obserwacja pasywna
+                }
+            }
 
             for (const o of incoming) {
                 let docId = o.id;

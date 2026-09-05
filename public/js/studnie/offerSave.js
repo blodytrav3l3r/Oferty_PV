@@ -1,6 +1,28 @@
 // @ts-check
 /* ===== ZAPIS OFERTY (STUDNIE) ===== */
 
+/**
+ * Usuwa lotne pola runtime ze studni przed wysyłką do backendu.
+ * Działa na klonie (structuredClone) — obiekty live w sesji nietknięte.
+ * @param {Array} wellsArr - sklonowana tablica studni z offerDoc
+ */
+function stripWellRuntimeFields(wellsArr) {
+    if (!Array.isArray(wellsArr)) return;
+    const runtimeKeys = [
+        '_lastAutoConfig',
+        '_lastAutoTelemetryId',
+        '_aiRankInfo',
+        '_lastSolveInputHash',
+        '__resCache'
+    ];
+    wellsArr.forEach(function (w) {
+        if (!w) return;
+        runtimeKeys.forEach(function (k) {
+            delete w[k];
+        });
+    });
+}
+
 async function saveOfferStudnie() {
     if (typeof orderEditMode !== 'undefined' && orderEditMode) {
         if (typeof showToast === 'function') {
@@ -93,6 +115,13 @@ async function saveOfferStudnie() {
             }
         });
 
+        // Lotne pola runtime (cache/solver/telemetry) są używane wyłącznie live
+        // w sesji — backend ich nie czyta, a przy ~3k studni to kilka MB
+        // zbędnego payloadu, które potrafiło przekroczyć limit express.json
+        // (500 PayloadTooLargeError). Czyścimy klon, obiekty live nietknięte
+        // (telemetria po zapisie czyta właśnie z nich).
+        stripWellRuntimeFields(offerDoc.wells);
+
         if (!offerDoc.wells || offerDoc.wells.length === 0) {
             showToast('Błąd: Nie można zapisać pustej oferty.', 'error');
             return false;
@@ -137,7 +166,8 @@ async function saveOfferStudnie() {
         // Nie wysyłamy dla niej acceptance-full z accepted:false — recordAcceptance
         // oznaczałby NAJNOWSZY rekord studni (świeży manualny config) jako REJECTED,
         // czyli finalny wybór użytkownika zyskiwał −1.0 zamiast NO_FEEDBACK.
-        wells.forEach(function (w) {
+        const acceptanceSample = wells.length > 50 ? wells.slice(0, 50) : wells;
+        acceptanceSample.forEach(function (w) {
             if (!w.config || w.config.length === 0) return;
             const accepted = !(w.configSource && w.configSource.indexOf('MANUAL') === 0);
             if (
@@ -190,7 +220,10 @@ async function saveOfferStudnie() {
 function _sendAcceptanceTelemetry(wellsArr, signalType) {
     if (!Array.isArray(wellsArr) || wellsArr.length === 0) return;
     if (typeof window.telemetryRecordConfig !== 'function') return;
-    wellsArr.forEach(function (w) {
+    // Próbka max 50 studni przy hurtowych ofertach — zapobiega nadmiarowemu próbowaniu
+    // i głodzeniu sieci/backendu.
+    const sample = wellsArr.length > 50 ? wellsArr.slice(0, 50) : wellsArr;
+    sample.forEach(function (w) {
         if (!w.config || w.config.length === 0) return;
         try {
             window.telemetryRecordConfig({
@@ -285,4 +318,5 @@ function _wellSnapshot(well) {
 }
 
 /* ===== Rejestracja globali ===== */
+window.stripWellRuntimeFields = stripWellRuntimeFields;
 window.saveOfferStudnie = saveOfferStudnie;

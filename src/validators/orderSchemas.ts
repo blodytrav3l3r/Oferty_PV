@@ -53,6 +53,178 @@ export const studnieOrderUpdateSchema = z
     })
     .passthrough();
 
+// =============================================================================
+// P0.3 — KONTRAKT DTO STUDNI W ZAMÓWIENIU (observe → strict)
+// Lustro allowlisty z public/js/studnie/orderDto.js. Etap observe:
+// wykrywa nieznane klucze i loguje (non-blocking, request przechodzi).
+// Etap enforcement (P1): przejście na .strict() po audycie logów.
+// =============================================================================
+
+export const ORDER_CONFIG_ITEM_DTO_FIELDS = [
+    'productId',
+    'quantity',
+    'frozenPrice',
+    'frozenPriceBase',
+    'frozenName',
+    'disablePehd',
+    'disablePreco',
+    'isPsiaBuda',
+    '_elemId'
+] as const;
+
+export const ORDER_PRZEJSCIE_DTO_FIELDS = [
+    'productId',
+    'dn',
+    'rzednaWlaczenia',
+    'angle',
+    'angleExecution',
+    'angleGony',
+    'flowType',
+    'doplata',
+    'frozenPrice',
+    'frozenPriceBase',
+    'frozenName',
+    'katWlaczenia'
+] as const;
+
+export const ORDER_WELL_DTO_FIELDS = [
+    'id',
+    'name',
+    'dn',
+    'rzednaDna',
+    'rzednaWlazu',
+    'magazyn',
+    'psiaBuda',
+    'stycznaNadbudowa1200',
+    'zakonczenie',
+    'zakonczenieByDn',
+    'redukcjaDN1000',
+    'redukcjaTargetDN',
+    'wkladkaDennica',
+    'wkladkaNadbudowa',
+    'wkladkaZwienczenie',
+    'wkladkaOsadnikPreco',
+    'wkladkaOsadnikH',
+    'kineta',
+    'spocznik',
+    'spocznikH',
+    'dennicaMaterial',
+    'material',
+    'nadbudowa',
+    'stopnie',
+    'doplata',
+    'malowanieW',
+    'malowanieWewCena',
+    'malowanieZ',
+    'malowanieZewCena',
+    'precoFullHeight',
+    'pehdDiscount',
+    'autoSelect',
+    'autoLocked',
+    'configSource',
+    'config',
+    'przejscia'
+] as const;
+
+/** Klucze runtime/cache, które DTO ma odcinać (oczekiwane jako nieobecne). */
+export const ORDER_WELL_RUNTIME_FIELDS = [
+    '_lastAutoConfig',
+    '_lastAutoTelemetryId',
+    '_aiRankInfo',
+    '_lastSolveInputHash',
+    '__resCache',
+    '_psiaBudaBackup',
+    'configErrors',
+    'configStatus',
+    'wellHeight',
+    'type',
+    'warehouse'
+] as const;
+
+function unknownKeysOf(
+    obj: unknown,
+    known: readonly string[],
+    cap: string[],
+    capSize: number
+): void {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+    for (const k of Object.keys(obj as Record<string, unknown>)) {
+        if (!(known as readonly string[]).includes(k) && !cap.includes(k)) {
+            if (cap.length < capSize) cap.push(k);
+        }
+    }
+}
+
+export interface StudnieOrderDtoObservation {
+    wellsChecked: number;
+    unknownWellKeys: string[];
+    unknownConfigKeys: string[];
+    unknownPrzejscieKeys: string[];
+    runtimeLeaked: string[];
+}
+
+/**
+ * P0.3 observe: skanuje zamówienie pod kątem kluczy spoza kontraktu DTO.
+ * Nigdy nie rzuca, nigdy nie blokuje requestu — tylko obserwacja.
+ */
+export function observeStudnieOrderDto(order: unknown): StudnieOrderDtoObservation {
+    const result: StudnieOrderDtoObservation = {
+        wellsChecked: 0,
+        unknownWellKeys: [],
+        unknownConfigKeys: [],
+        unknownPrzejscieKeys: [],
+        runtimeLeaked: []
+    };
+    try {
+        const o = order as { wells?: unknown } | null;
+        const wells = o && Array.isArray(o.wells) ? o.wells : [];
+        result.wellsChecked = wells.length;
+        for (const w of wells) {
+            unknownKeysOf(w, ORDER_WELL_DTO_FIELDS, result.unknownWellKeys, 20);
+            const well = w as {
+                config?: unknown;
+                przejscia?: unknown;
+            } | null;
+            if (well && typeof well === 'object') {
+                if (Array.isArray(well.config)) {
+                    for (const item of well.config) {
+                        unknownKeysOf(
+                            item,
+                            ORDER_CONFIG_ITEM_DTO_FIELDS,
+                            result.unknownConfigKeys,
+                            20
+                        );
+                    }
+                }
+                if (Array.isArray(well.przejscia)) {
+                    for (const pr of well.przejscia) {
+                        unknownKeysOf(
+                            pr,
+                            ORDER_PRZEJSCIE_DTO_FIELDS,
+                            result.unknownPrzejscieKeys,
+                            20
+                        );
+                    }
+                }
+            }
+            // wyciek runtime: klucze z denylist obecne w payloadzie
+            if (w && typeof w === 'object' && !Array.isArray(w)) {
+                for (const k of ORDER_WELL_RUNTIME_FIELDS) {
+                    if (
+                        (w as Record<string, unknown>)[k] !== undefined &&
+                        !result.runtimeLeaked.includes(k)
+                    ) {
+                        if (result.runtimeLeaked.length < 20) result.runtimeLeaked.push(k);
+                    }
+                }
+            }
+        }
+    } catch {
+        // obserwacja pasywna
+    }
+    return result;
+}
+
 export type ProductionOrderItemInput = z.infer<typeof productionOrderItemSchema>;
 export type ProductionOrdersBatchInput = z.infer<typeof productionOrdersBatchSchema>;
 export type ProductionOrderCreateInput = z.infer<typeof productionOrderCreateSchema>;

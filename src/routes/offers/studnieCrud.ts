@@ -645,16 +645,21 @@ router.post(
                     }
                 });
             }
-            // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness)
-            await prisma.$transaction(async (tx) => {
-                for (const w of pending) {
-                    await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
-                        where: { id: w.docId },
-                        create: w.create as never,
-                        update: w.update as never
-                    });
-                }
-            });
+            // Atomowy zapis wszystkich ofert — all-or-nothing (P1.1 correctness).
+            // Timeout 30 s zamiast domyślnych 5 s: upsert oferty z ~3k studni
+            // (~10 MB JSON) potrafi trwać >6 s na SQLite (Transaction API error).
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const w of pending) {
+                        await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
+                            where: { id: w.docId },
+                            create: w.create as never,
+                            update: w.update as never
+                        });
+                    }
+                },
+                { timeout: 30000 }
+            );
             const results: Record<string, unknown>[] = [];
             for (const w of pending) {
                 await syncFts5('studnie', w.fts);
@@ -815,15 +820,18 @@ router.put(
                     }
                 });
             }
-            await prisma.$transaction(async (tx) => {
-                for (const w of pendingPut) {
-                    await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
-                        where: { id: w.docId },
-                        create: w.create as never,
-                        update: w.update as never
-                    });
-                }
-            });
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const w of pendingPut) {
+                        await (tx as unknown as typeof prisma).offers_studnie_rel.upsert({
+                            where: { id: w.docId },
+                            create: w.create as never,
+                            update: w.update as never
+                        });
+                    }
+                },
+                { timeout: 30000 }
+            );
             for (const w of pendingPut) await syncFts5('studnie', w.fts);
 
             searchCache.invalidateAll();

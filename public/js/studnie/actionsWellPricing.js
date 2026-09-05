@@ -576,7 +576,7 @@ function calcWellStats(well) {
         priceDennicaBase: hasError ? 0 : priceDennicaBase,
         priceNadbudowa: hasError ? 0 : priceNadbudowa,
         priceNadbudowaBase: hasError ? 0 : priceNadbudowaBase,
-        weight,
+        weight: Math.max(0, weight),
         height,
         areaInt,
         areaExt,
