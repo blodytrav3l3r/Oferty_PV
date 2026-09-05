@@ -108,3 +108,9 @@ console.log(
 console.log(`slim build time: ${slimMs.toFixed(0)} ms`);
 const afterP1 = bytes({ wells: dtoWells, snapshot: { slimWells }, wellsExport: dtoExport });
 console.log(`payload po P1 (wells+slim+export): ${mb(afterP1)} MB`);
+
+// P1 HIGH: batch N zamówień vs single-order save (to samo zamówienie x5 w historii)
+const singleOrder = { wells: dtoWells, snapshot: { slimWells }, wellsExport: dtoExport };
+const batch5 = bytes({ data: Array.from({ length: 5 }, () => singleOrder) });
+const single = bytes({ data: [singleOrder] });
+console.log(`batch 5 zamówień: ${mb(batch5)} MB | single-order: ${mb(single)} MB`);

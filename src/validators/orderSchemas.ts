@@ -42,7 +42,10 @@ export const studnieOrderItemSchema = z
     .passthrough();
 
 export const studnieOrdersBatchSchema = z.object({
-    data: z.array(studnieOrderItemSchema)
+    data: z.array(studnieOrderItemSchema),
+    // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
+    // Batch wieloelementowy ignoruje to pole (semantyka niejednoznaczna).
+    baseUpdatedAt: z.string().optional()
 });
 
 export const studnieOrderUpdateSchema = z

@@ -336,7 +336,13 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
 
     if (!ordersStudnie) ordersStudnie = [];
     ordersStudnie.push(order);
-    await saveOrdersDataStudnie(ordersStudnie);
+    // P1 HIGH: zapis tylko nowego zamówienia (payload ~1 zamówienie, nie N).
+    if (typeof putSingleOrderStudnie === 'function') {
+        const saved = await putSingleOrderStudnie(order);
+        if (!saved) return;
+    } else {
+        await saveOrdersDataStudnie(ordersStudnie);
+    }
 
     await saveOfferStudnie();
     renderSavedOffersStudnie();
@@ -394,6 +400,8 @@ async function saveOrderStudnie() {
     const oId = normalizeId(offer.id);
     const order = ordersStudnie ? ordersStudnie.find((o) => normalizeId(o.offerId) === oId) : null;
     if (!order) return;
+    // P1 HIGH: baza do optimistic concurrency — PRZED nadpisaniem updatedAt.
+    if (!order._baseUpdatedAt) order._baseUpdatedAt = order.updatedAt || null;
 
     freezeWellPrices(wells);
 
@@ -468,7 +476,24 @@ async function saveOrderStudnie() {
         };
     });
 
-    await saveOrdersDataStudnie(ordersStudnie);
+    // P1 HIGH: PATCH pojedynczego zamówienia zamiast batch-PUT całego ordersStudnie.
+    if (typeof patchSingleOrderStudnie === 'function') {
+        const saved = await patchSingleOrderStudnie(order, {
+            wells: order.wells,
+            wellDiscounts: order.wellDiscounts,
+            visiblePrzejsciaTypes: order.visiblePrzejsciaTypes,
+            updatedAt: order.updatedAt,
+            paymentTerms: order.paymentTerms,
+            validity: order.validity,
+            totalWeight: order.totalWeight,
+            totalNetto: order.totalNetto,
+            totalBrutto: order.totalBrutto,
+            wellsExport: order.wellsExport
+        });
+        if (!saved) return;
+    } else {
+        await saveOrdersDataStudnie(ordersStudnie);
+    }
     showToast('<i data-lucide="package"></i> Zamówienie zaktualizowane', 'success');
     if (window.kartotekaUI) {
         window.kartotekaUI.notifyOrderMutation();
@@ -518,7 +543,7 @@ async function deleteOrderStudnie(orderId) {
     }
     if (ordersStudnie) {
         ordersStudnie = ordersStudnie.filter((o) => o.id !== orderId);
-        await saveOrdersDataStudnie(ordersStudnie);
+        // P1 HIGH: DELETE już usunął rekord po stronie serwera — bez re-save całości.
     }
     renderSavedOffersStudnie();
     showToast('Zamówienie usunięte. Studnie odblokowane do ponownego zamówienia.', 'info');
@@ -568,6 +593,8 @@ async function enterOrderEditMode(orderId) {
         );
 
         orderEditMode = { orderId: order.id, order: order };
+        // P1 HIGH: baza do optimistic concurrency.
+        order._baseUpdatedAt = order.updatedAt || null;
         editingOfferIdStudnie = order.offerId || null;
         window.isPreviewMode = false;
 
@@ -743,6 +770,8 @@ async function loadOrderSnapshot(rebuiltData, orderId) {
     try {
         const order = rebuiltData;
         orderEditMode = { orderId: orderId, order: order };
+        // P1 HIGH: baza do optimistic concurrency.
+        order._baseUpdatedAt = order.updatedAt || null;
         editingOfferIdStudnie = order.offerId || null;
 
         visiblePrzejsciaTypes = new Set(order.visiblePrzejsciaTypes || []);
@@ -815,6 +844,9 @@ async function saveCurrentOrder(options = {}) {
     }
 
     const order = orderEditMode.order;
+
+    // P1 HIGH: baza do optimistic concurrency — PRZED nadpisaniem updatedAt.
+    if (!order._baseUpdatedAt) order._baseUpdatedAt = order.updatedAt || null;
 
     if (!options.skipFreeze) {
         freezeWellPrices(wells);
@@ -903,35 +935,57 @@ async function saveCurrentOrder(options = {}) {
         };
     });
 
-    try {
-        await fetch(`/api/orders-studnie/${order.id}`, {
-            method: 'PATCH',
-            headers: authHeaders(),
-            body: JSON.stringify({
-                wells: order.wells,
-                wellDiscounts: order.wellDiscounts,
-                kartaBudowy: order.kartaBudowy,
-                updatedAt: order.updatedAt,
-                wellsExport: order.wellsExport,
-                totalWeight: order.totalWeight,
-                totalNetto: order.totalNetto,
-                totalBrutto: order.totalBrutto,
-                transportKm: order.transportKm,
-                transportRate: order.transportRate,
-                transportMode: order.transportMode,
-                paymentTerms: order.paymentTerms,
-                validity: order.validity
-            })
+    // P1 HIGH: PATCH pojedynczego zamówienia + 409 przy konflikcie
+    // (wcześniej fire-and-forget bez sprawdzania res.ok).
+    if (typeof patchSingleOrderStudnie === 'function') {
+        const saved = await patchSingleOrderStudnie(order, {
+            wells: order.wells,
+            wellDiscounts: order.wellDiscounts,
+            kartaBudowy: order.kartaBudowy,
+            updatedAt: order.updatedAt,
+            wellsExport: order.wellsExport,
+            totalWeight: order.totalWeight,
+            totalNetto: order.totalNetto,
+            totalBrutto: order.totalBrutto,
+            transportKm: order.transportKm,
+            transportRate: order.transportRate,
+            transportMode: order.transportMode,
+            paymentTerms: order.paymentTerms,
+            validity: order.validity
         });
-        showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
-        renderOrderModeBanner();
-        if (typeof renderOfferSummary === 'function') renderOfferSummary();
-        if (window.kartotekaUI) {
-            window.kartotekaUI.notifyOrderMutation();
+        if (!saved) return;
+    } else {
+        try {
+            await fetch(`/api/orders-studnie/${order.id}`, {
+                method: 'PATCH',
+                headers: authHeaders(),
+                body: JSON.stringify({
+                    wells: order.wells,
+                    wellDiscounts: order.wellDiscounts,
+                    kartaBudowy: order.kartaBudowy,
+                    updatedAt: order.updatedAt,
+                    wellsExport: order.wellsExport,
+                    totalWeight: order.totalWeight,
+                    totalNetto: order.totalNetto,
+                    totalBrutto: order.totalBrutto,
+                    transportKm: order.transportKm,
+                    transportRate: order.transportRate,
+                    transportMode: order.transportMode,
+                    paymentTerms: order.paymentTerms,
+                    validity: order.validity
+                })
+            });
+        } catch (err) {
+            logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
+            showToast('Błąd zapisu zamówienia', 'error');
+            return;
         }
-    } catch (err) {
-        logger.error('orderManager', 'Błąd zapisu zamówienia:', err);
-        showToast('Błąd zapisu zamówienia', 'error');
+    }
+    showToast('<i data-lucide="package"></i> Zamówienie zapisane', 'success');
+    renderOrderModeBanner();
+    if (typeof renderOfferSummary === 'function') renderOfferSummary();
+    if (window.kartotekaUI) {
+        window.kartotekaUI.notifyOrderMutation();
     }
 }
 

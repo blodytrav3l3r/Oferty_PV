@@ -142,6 +142,31 @@ router.put(
                 if (old && !canWriteDoc(authReq.user, old.userId)) {
                     return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
                 }
+                // P1 HIGH: optimistic concurrency dla single-save (data.length === 1).
+                // baseUpdatedAt == null (create) albo zgodny → zapis; rozjazd → 409.
+                const singleBase =
+                    incoming.length === 1
+                        ? (req.body.baseUpdatedAt as string | undefined)
+                        : undefined;
+                if (old && singleBase != null) {
+                    const oldData = parseJsonField<Record<string, unknown>>(old.data, {});
+                    const serverUpdatedAt = oldData['updatedAt'];
+                    if (
+                        typeof serverUpdatedAt === 'string' &&
+                        serverUpdatedAt !== '' &&
+                        serverUpdatedAt !== singleBase
+                    ) {
+                        return res.status(409).json({
+                            error: 'Zamówienie zmieniono w międzyczasie',
+                            serverOrder: {
+                                id: docId,
+                                type: 'order',
+                                userId: old.userId,
+                                ...oldData
+                            }
+                        });
+                    }
+                }
                 const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
                 if (!canWriteDoc(authReq.user, targetUserId)) {
                     return res.status(403).json({ error: 'Brak uprawnień do tego zamówienia' });
@@ -238,13 +263,35 @@ router.patch(
 
             const o = await prisma.orders_studnie_rel.findUnique({
                 where: { id: docId },
-                select: { id: true, userId: true, status: true, data: true }
+                select: { id: true, userId: true, offerStudnieId: true, status: true, data: true }
             });
             if (!o || !canWriteDoc(authReq.user, o.userId)) {
                 return res.status(404).json({ error: 'Zamówienie nie znalezione' });
             }
 
             const oldData = parseJsonField<Record<string, unknown>>(o.data, {});
+            // P1 HIGH: optimistic concurrency — baseUpdatedAt nie jest danymi.
+            const baseUpdatedAt =
+                typeof req.body.baseUpdatedAt === 'string' ? req.body.baseUpdatedAt : undefined;
+            const serverUpdatedAt = oldData['updatedAt'];
+            if (
+                baseUpdatedAt != null &&
+                typeof serverUpdatedAt === 'string' &&
+                serverUpdatedAt !== '' &&
+                serverUpdatedAt !== baseUpdatedAt
+            ) {
+                return res.status(409).json({
+                    error: 'Zamówienie zmieniono w międzyczasie',
+                    serverOrder: {
+                        id: o.id,
+                        type: 'order',
+                        userId: o.userId,
+                        offerStudnieId: o.offerStudnieId,
+                        status: o.status,
+                        ...oldData
+                    }
+                });
+            }
             const updatedData = { ...oldData, ...req.body };
             delete updatedData.id;
             delete updatedData.type;
@@ -252,6 +299,7 @@ router.patch(
             delete updatedData.offerStudnieId;
             delete updatedData.status;
             delete updatedData.createdAt;
+            delete updatedData.baseUpdatedAt;
 
             const newStatus = req.body.status || o.status;
             const newUserId = req.body.userId || o.userId;

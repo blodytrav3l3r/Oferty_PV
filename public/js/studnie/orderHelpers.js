@@ -84,6 +84,169 @@ async function saveOrdersDataStudnie(data) {
     }
 }
 
+/* ===== P1 HIGH: ZAPIS POJEDYNCZEGO ZAMÓWIENIA =====
+ * Payload skaluje się z edytowanym zamówieniem, nie z historią N zamówień.
+ * Concurrency: klient wysyła baseUpdatedAt (wersja wczytana przed edycją);
+ * serwer odpowiada 409 + kopia serwerowa przy rozjeździe (optimistic locking).
+ */
+
+/**
+ * @param {Object} order
+ * @returns {string|null} updatedAt bazowy (wersja wczytana przed edycją)
+ */
+function getOrderBaseUpdatedAt(order) {
+    if (!order) return null;
+    return order._baseUpdatedAt || order.updatedAt || null;
+}
+
+function markOrderSaved(order, updatedAt) {
+    if (!order) return;
+    if (updatedAt) order.updatedAt = updatedAt;
+    order._baseUpdatedAt = order.updatedAt || null;
+}
+
+/**
+ * Konflikt 409: podmień lokalną kopię na serwerową, toast, false (nie zapisano).
+ * @param {Object} order
+ * @param {Object} serverBody odpowiedź serwera z serverOrder
+ * @returns {boolean} zawsze false
+ */
+async function handleOrderConflict(order, serverBody) {
+    try {
+        const serverOrder = serverBody && serverBody.serverOrder;
+        if (serverOrder && serverOrder.id) {
+            if (typeof ordersStudnie !== 'undefined' && Array.isArray(ordersStudnie)) {
+                const idx = ordersStudnie.findIndex((o) => o && o.id === serverOrder.id);
+                if (idx >= 0) ordersStudnie[idx] = { ...ordersStudnie[idx], ...serverOrder };
+                else ordersStudnie.push(serverOrder);
+            }
+            if (
+                typeof orderEditMode !== 'undefined' &&
+                orderEditMode &&
+                orderEditMode.orderId === serverOrder.id
+            ) {
+                orderEditMode.order = { ...orderEditMode.order, ...serverOrder };
+            }
+            if (order) {
+                for (const k of Object.keys(serverOrder)) {
+                    if (k !== '_baseUpdatedAt') order[k] = serverOrder[k];
+                }
+                markOrderSaved(order, serverOrder.updatedAt);
+            }
+        }
+    } catch (_e) {
+        // konflikt obsłużony mimo błędu scalania
+    }
+    if (typeof showToast === 'function') {
+        showToast(
+            'Zamówienie zmieniono w międzyczasie — wczytano aktualną wersję. Sprawdź i zapisz ponownie.',
+            'warning'
+        );
+    }
+    return false;
+}
+
+/**
+ * Mierzy payload pojedynczego zamówienia (telemetry P0.2, throttled warn).
+ * @param {string} body
+ * @param {Object} order
+ */
+function measureSingleOrderPayload(body, order) {
+    try {
+        if (typeof Blob === 'undefined') return;
+        const payloadBytes = new Blob([body]).size;
+        const wellsCount = order && Array.isArray(order.wells) ? order.wells.length : 0;
+        let snapshotBytes = 0;
+        try {
+            snapshotBytes = new Blob([JSON.stringify(order.originalSnapshot || null)]).size;
+        } catch (_e) {
+            // ignoruj pojedynczy błąd pomiaru
+        }
+        window._lastOrderPayloadStats = {
+            ordersCount: 1,
+            wellsCount,
+            payloadBytes,
+            snapshotBytes
+        };
+        const now = typeof Date !== 'undefined' ? Date.now() : 0;
+        if (
+            payloadBytes > PAYLOAD_WARN_THRESHOLD_BYTES &&
+            now - _lastPayloadWarnAt > PAYLOAD_WARN_COOLDOWN_MS
+        ) {
+            _lastPayloadWarnAt = now;
+            logger.warn('orderManager', '[ORDER] Large payload:', {
+                mb: (payloadBytes / 1024 / 1024).toFixed(2),
+                ordersCount: 1,
+                wellsCount,
+                snapshotMb: (snapshotBytes / 1024 / 1024).toFixed(2)
+            });
+        }
+    } catch (_e) {
+        // pomiar nigdy nie blokuje zapisu
+    }
+}
+
+/**
+ * Create/single-upsert przez istniejący batch-PUT z 1-elementową tablicą.
+ * @param {Object} order
+ * @returns {Promise<boolean>} true = zapisano
+ */
+async function putSingleOrderStudnie(order) {
+    try {
+        if (typeof ensureElemIds === 'function' && order && Array.isArray(order.wells)) {
+            order.wells.forEach((w) => {
+                if (w && Array.isArray(w.config)) ensureElemIds(w.config);
+            });
+        }
+        const body = JSON.stringify({ data: [order], baseUpdatedAt: getOrderBaseUpdatedAt(order) });
+        measureSingleOrderPayload(body, order);
+        const res = await fetch('/api/orders-studnie', {
+            method: 'PUT',
+            headers: authHeaders(),
+            body
+        });
+        if (res.status === 409) {
+            return handleOrderConflict(order, await res.json().catch(() => ({})));
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        markOrderSaved(order, order.updatedAt);
+        return true;
+    } catch (err) {
+        logger.error('orderManager', 'Błąd zapisu zamówienia studni:', err);
+        showToast('Błąd zapisu zamówienia', 'error');
+        return false;
+    }
+}
+
+/**
+ * Update przez PATCH /:id (merge po stronie serwera) + baseUpdatedAt.
+ * @param {Object} order
+ * @param {Object} fields pola do scalenia (bez id/type/userId)
+ * @returns {Promise<boolean>} true = zapisano
+ */
+async function patchSingleOrderStudnie(order, fields) {
+    try {
+        if (!order || !order.id) throw new Error('Brak ID zamówienia');
+        const body = JSON.stringify({ ...fields, baseUpdatedAt: getOrderBaseUpdatedAt(order) });
+        measureSingleOrderPayload(body, order);
+        const res = await fetch(`/api/orders-studnie/${order.id}`, {
+            method: 'PATCH',
+            headers: authHeaders(),
+            body
+        });
+        if (res.status === 409) {
+            return handleOrderConflict(order, await res.json().catch(() => ({})));
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        markOrderSaved(order, order.updatedAt);
+        return true;
+    } catch (err) {
+        logger.error('orderManager', 'Błąd zapisu zamówienia studni:', err);
+        showToast('Błąd zapisu zamówienia', 'error');
+        return false;
+    }
+}
+
 /* ===== POMOCNIKI ZAMÓWIEŃ CZĘŚCIOWYCH ===== */
 
 /* Cache dla szybkiego wyszukiwania zamówień O(1) przy dużej liczbie studni i zamówień */
@@ -453,3 +616,8 @@ window.getOrderChanges = getOrderChanges;
 /* ===== Rejestracja globali ===== */
 window.loadOrdersStudnie = loadOrdersStudnie;
 window.saveOrdersDataStudnie = saveOrdersDataStudnie;
+window.putSingleOrderStudnie = putSingleOrderStudnie;
+window.patchSingleOrderStudnie = patchSingleOrderStudnie;
+window.handleOrderConflict = handleOrderConflict;
+window.markOrderSaved = markOrderSaved;
+window.getOrderBaseUpdatedAt = getOrderBaseUpdatedAt;

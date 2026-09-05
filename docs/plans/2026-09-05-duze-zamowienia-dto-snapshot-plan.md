@@ -1,6 +1,6 @@
 # Duże zamówienia studni — DTO allowlist + slim snapshot + single-order save
 
-**Wersja:** 1.2 (2026-09-05) — P0 + P1 WYKONANE. P1 HIGH następny. P2 tylko na podstawie pomiarów.
+**Wersja:** 1.3 (2026-09-05) — P0 + P1 + P1 HIGH WYKONANE. P2 tylko na podstawie pomiarów.
 **Status:** GO do P0. GO do P1/P1 HIGH po DoD P0. P2 tylko na podstawie pomiarów.
 **Kontekst:** `HTTP 413` przy zapisie zamówień z ~3000 studni. Hotfix (strip + 50 MB) działa, ale docelowo: allowlist DTO, snapshot bez duplikacji, zapis pojedynczego zamówienia.
 **Zasada:** `DOM/runtime ≠ dane transportowe ≠ snapshot ≠ dane historyczne`. Limit 50 MB zostaje jako safety cap, nie mechanizm.
@@ -104,6 +104,23 @@ payload po P1 (wells+slim+export): 9.76 MB (było 14.27 MB)
 
 - `PUT /api/orders-studnie/:id` zamiast wysyłki całego `ordersStudnie` przy edycji jednego zamówienia.
 - Ponowny benchmark po P1+P1 HIGH.
+
+## P1 HIGH — WYKONANE 2026-09-05 (single-order save + optimistic concurrency)
+
+```
+batch 5 zamówień x3000 studni: 48.78 MB (413!) | single-order: 9.76 MB
+```
+
+- Klient: `putSingleOrderStudnie` (create przez batch-PUT z 1 elementem),
+  `patchSingleOrderStudnie` (update przez PATCH /:id), `handleOrderConflict`
+  (409 → scalenie kopii serwerowej + toast + false). Pomiar P0.2 przeniesiony
+  na pojedyncze zamówienie. Po DELETE brak re-save całości.
+- `_baseUpdatedAt` ustawiane przy wczytaniu (enterOrderEditMode, loadOrderSnapshot)
+  i przed mutacją (saveOrderStudnie, saveCurrentOrder); odświeżane po zapisie.
+- Serwer: PUT single honoruje `baseUpdatedAt` (batch wieloelementowy ignoruje),
+  PATCH porównuje i odpowiada 409 + serverOrder; `baseUpdatedAt` nigdy nie ląduje w `data`.
+- DoD: edycja A nie transmituje B/C; 409 zamiast cichego nadpisania;
+  testy `tests/orders/studnieSingleSave.test.ts` (5/5) i `tests/studnie/orderSingleSave.test.ts` (3/3).
 
 ## P2 — tylko jeśli pomiary wymuszą
 
