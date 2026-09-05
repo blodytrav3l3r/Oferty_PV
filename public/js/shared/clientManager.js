@@ -28,6 +28,8 @@ async function loadClientsDb() {
         const json = await res.json();
         return json.data || [];
     } catch (err) {
+        // Abort (timeout/nawigacja) to nie błąd — tło spróbuje ponownie, bez toasta.
+        if (err && err.name === 'AbortError') return [];
         logger.error('clientManager', 'loadClientsDb error:', err);
         showToast('Błąd ładowania klientów: ' + (err.message || 'błąd sieci'), 'error');
         return [];

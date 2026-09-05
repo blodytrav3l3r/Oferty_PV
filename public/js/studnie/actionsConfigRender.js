@@ -68,6 +68,9 @@ function renderWellConfig() {
     };
 
     let html = '';
+    // P4-P0: kontekst Preco raz per studnia (nie per pozycja).
+    const precoCtx =
+        typeof computePrecoWellContext === 'function' ? computePrecoWellContext(well) : undefined;
     well.config.forEach((item, index) => {
         const p =
             typeof resolveEffectiveProduct === 'function'
@@ -153,7 +156,7 @@ function renderWellConfig() {
 
                         const precoAlloc =
                             typeof calculatePrecoAllocationForItem === 'function'
-                                ? calculatePrecoAllocationForItem(well, index)
+                                ? calculatePrecoAllocationForItem(well, index, precoCtx)
                                 : null;
                         if (
                             precoAlloc &&

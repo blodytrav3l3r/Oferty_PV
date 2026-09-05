@@ -208,6 +208,8 @@ async function fetchGlobalUsers() {
         });
         logger.info('ui', `[SharedUI] Załadowano ${users.length} użytkowników do globalnej mapy.`);
     } catch (e) {
+        // Abort (timeout/nawigacja) to nie błąd — cicho.
+        if (e && e.name === 'AbortError') return;
         logger.warn('ui', '[SharedUI] fetchGlobalUsers error:', e);
     }
 }

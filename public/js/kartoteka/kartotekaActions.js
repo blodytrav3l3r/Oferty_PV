@@ -421,25 +421,15 @@ export default {
                 : [];
             const shouldUnlockOffer = offerIdForOrder && remainingOrders.length === 0;
 
-            if (shouldUnlockOffer) {
-                const offers = await storageService.getOffers([offerType]);
-                const offerWrapper = offers.find(
-                    (o) => this.normalizeId(o.id) === this.normalizeId(offerIdForOrder)
-                );
-                const rawOffer = offerWrapper?.data || offerWrapper;
-
-                if (rawOffer) {
-                    logger.info('kartotekaUi', 'Odblokowywanie oferty:', offerWrapper.id);
-                    rawOffer.id = offerWrapper.id;
-                    rawOffer.type = offerWrapper.type || offerType;
-                    rawOffer.state =
-                        offerWrapper.status === 'active' ? 'final' : rawOffer.state || 'draft';
-                    rawOffer.hasOrder = false;
-                    delete rawOffer.orderId;
-                    delete rawOffer.orderNumber;
-
-                    await storageService.saveOffer(rawOffer);
-                }
+            // Uwaga: status „zamówiona" wynika z _orderCount (JOIN po tabelach zamówień
+            // w /api/offers/search) — sam DELETE zamówienia odblokowuje ofertę.
+            // Nie wolno tu robić saveOffer na okrojonym wrapperze z getOffers()
+            // (brak number/clientName/data/wells) — upsert nadpisywał ofertę
+            // pustymi polami i oferta „znikała" z wyszukiwania.
+            // Reset filtra, żeby odblokowana oferta nie zniknęła z listy.
+            if (shouldUnlockOffer && this.currentFilter === 'with_order') {
+                this.currentFilter = 'all';
+                if (typeof this._syncFilterUI === 'function') this._syncFilterUI();
             }
 
             if (typeof window.showToast === 'function') {

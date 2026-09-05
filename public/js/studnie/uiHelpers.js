@@ -567,6 +567,8 @@ async function loadPrecoPricing() {
             return;
         }
     } catch (e) {
+        // Abort (timeout/nawigacja): cicho, bez kasowania cennika i bez "Brak cennika".
+        if (e && e.name === 'AbortError') return;
         logger.warn('uiHelpers', '[PRECO] Błąd pobierania cennika z API:', e);
     }
     precoPricing = {};
