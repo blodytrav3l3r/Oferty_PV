@@ -1,6 +1,6 @@
 # Duże zamówienia studni — DTO allowlist + slim snapshot + single-order save
 
-**Wersja:** 1.1 (2026-09-05) — P0 WYKONANE. P1/P1 HIGH po DoD P0. P2 tylko na podstawie pomiarów.
+**Wersja:** 1.2 (2026-09-05) — P0 + P1 WYKONANE. P1 HIGH następny. P2 tylko na podstawie pomiarów.
 **Status:** GO do P0. GO do P1/P1 HIGH po DoD P0. P2 tylko na podstawie pomiarów.
 **Kontekst:** `HTTP 413` przy zapisie zamówień z ~3000 studni. Hotfix (strip + 50 MB) działa, ale docelowo: allowlist DTO, snapshot bez duplikacji, zapis pojedynczego zamówienia.
 **Zasada:** `DOM/runtime ≠ dane transportowe ≠ snapshot ≠ dane historyczne`. Limit 50 MB zostaje jako safety cap, nie mechanizm.
@@ -71,6 +71,26 @@ Wniosek: DTO daje 65,5%, ale payload nadal 14,27 MB przez potrojenie
 wells+snapshot+wellsExport — to motywacja P1 (slim snapshot) i P1 HIGH
 (single-order save). Pliki: `public/js/studnie/orderDto.js`,
 `tests/studnie/orderDto.test.ts` (6/6), `tests/studnie/orderDtoObserve.test.ts` (3/3).
+
+## P1 — WYKONANE 2026-09-05 (benchmark 3k)
+
+```
+legacy snapshot (full wells): 13.77 MB → slim snapshot: 246.9 KB
+snapshot reduction: 98.2%
+payload po P1 (wells+slim+export): 9.76 MB (było 14.27 MB)
+```
+
+- `configHash` = FNV-1a ze stabilnej serializacji kanonicznego wejścia cenowego
+  (sortowane klucze + sortowane pozycje; drag nie zmienia hasha).
+- Slim budowany ze statystyk reuse z pętli `wellsExport` — zero dodatkowych
+  `calcWellStats`; konsumenci (`getOrderChanges`, `offerSummaryTable`) czytają
+  gotowe `price/weight`.
+- DoD P1: ten sam config → ten sam hash; zmiana cenowa → inny hash;
+  runtime → ten sam hash; legacy `{wells}`/`Array` nadal odczytywane;
+  legacy vs slim → identyczny `getOrderChanges` (`tests/studnie/orderDtoSlim.test.ts`, 5/5).
+- Dopisane pola DTO po audycie konsumentów: `klasaNosnosci_*`, `redukcjaKinety`,
+  `agresja*`, `klasaBetonu`, `powlokaName*`, `usytuowanie`, `numer`, `stycznaVariant`
+  (+ mirror w `orderSchemas.ts` dla Zod-observe).
 
 ## P1 — slim snapshot (po DoD P0)
 

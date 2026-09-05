@@ -10,7 +10,7 @@ vm.runInContext(
     fs.readFileSync(path.join(__dirname, '../public/js/studnie/orderDto.js'), 'utf8'),
     ctx
 );
-const { toOrderWellsDTO } = ctx.window;
+const { toOrderWellsDTO, buildSlimWells } = ctx.window;
 
 function makeWell(i) {
     const config = [];
@@ -93,3 +93,18 @@ console.log(`before payload (wells+snapshot+export): ${mb(beforePayload)} MB`);
 console.log(`after payload (wells+snapshot+export): ${mb(afterPayload)} MB`);
 console.log(`payload reduction: ${(((beforePayload - afterPayload) / beforePayload) * 100).toFixed(1)}%`);
 console.log(`JSON.stringify time (after): ${strMs.toFixed(0)} ms`);
+
+// P1: legacy full snapshot vs slim snapshot (price/weight z DTO: cena=1000+idx, waga=2x)
+const { r: slimWells, ms: slimMs } = timeStr(() =>
+    buildSlimWells(dtoWells, (w, i) => ({ price: 1000, weight: 2000 }))
+);
+const legacySnapBytes = bytes({ wells: snapWells });
+const slimSnapBytes = bytes({ slimWells });
+console.log(`legacy snapshot (full wells): ${mb(legacySnapBytes)} MB`);
+console.log(`slim snapshot: ${(slimSnapBytes / 1024).toFixed(1)} KB`);
+console.log(
+    `snapshot reduction: ${(((legacySnapBytes - slimSnapBytes) / legacySnapBytes) * 100).toFixed(1)}%`
+);
+console.log(`slim build time: ${slimMs.toFixed(0)} ms`);
+const afterP1 = bytes({ wells: dtoWells, snapshot: { slimWells }, wellsExport: dtoExport });
+console.log(`payload po P1 (wells+slim+export): ${mb(afterP1)} MB`);

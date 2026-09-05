@@ -44,8 +44,13 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
     if (showPriceComparison && order) {
         const snap = order.originalSnapshot;
         const origSnap = Array.isArray(snap) ? null : snap;
-        const origWellsArr = Array.isArray(snap) ? snap : snap.wells || [];
-        origWellsArr.forEach((w) => (origTotalWeight += calcWellStats(w).weight));
+        // P1: slim snapshot ma gotowe wagi; legacy liczy przez calcWellStats.
+        const slimWellsArr =
+            origSnap && Array.isArray(origSnap.slimWells) ? origSnap.slimWells : null;
+        const origWellsArr = slimWellsArr || (Array.isArray(snap) ? snap : snap.wells || []);
+        origWellsArr.forEach((w) => {
+            origTotalWeight += slimWellsArr ? w.weight || 0 : calcWellStats(w).weight;
+        });
         if (origSnap) {
             const oKm = parseFloat(origSnap.transportKm) || 0;
             const oRate = parseFloat(origSnap.transportRate) || 0;
@@ -92,23 +97,30 @@ function renderOfferSummaryTable(order, orderChanges, totals) {
         let offerPrice = null;
         if (showPriceComparison) {
             const snap = order.originalSnapshot;
-            const originalWells = Array.isArray(snap) ? snap : snap.wells || [];
+            const slimWellsArr =
+                !Array.isArray(snap) && Array.isArray(snap.slimWells) ? snap.slimWells : null;
+            const originalWells = slimWellsArr || (Array.isArray(snap) ? snap : snap.wells || []);
             const originalDiscounts = Array.isArray(snap) ? null : snap.wellDiscounts || null;
 
             if (originalWells[originalIndex]) {
                 const origWell = originalWells[originalIndex];
-                const currentGlobalDiscounts =
-                    typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
                 let origStats;
-                try {
-                    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-                        window.wellDiscounts = originalDiscounts;
-                    }
+                if (slimWellsArr) {
+                    // P1: gotowa cena/waga ze snapshotu, bez calcWellStats.
+                    origStats = { price: origWell.price || 0, weight: origWell.weight || 0 };
+                } else {
+                    const currentGlobalDiscounts =
+                        typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : {};
+                    try {
+                        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                            window.wellDiscounts = originalDiscounts;
+                        }
 
-                    origStats = calcWellStats(origWell);
-                } finally {
-                    if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-                        window.wellDiscounts = currentGlobalDiscounts;
+                        origStats = calcWellStats(origWell);
+                    } finally {
+                        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                            window.wellDiscounts = currentGlobalDiscounts;
+                        }
                     }
                 }
 

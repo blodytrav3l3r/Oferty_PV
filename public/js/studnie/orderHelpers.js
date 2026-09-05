@@ -320,61 +320,107 @@ function getOrderChanges(order) {
     const changes = {};
 
     const originalSnapshotData = order.originalSnapshot;
-    const originalWells = Array.isArray(originalSnapshotData)
-        ? originalSnapshotData
-        : originalSnapshotData.wells || [];
+    // P1: slim snapshot [{id,name,price,weight,configHash}] — gotowe ceny,
+    // bez calcWellStats na kopii. Legacy (Array | {wells}) nadal wspierane.
+    const slimWells =
+        !Array.isArray(originalSnapshotData) && Array.isArray(originalSnapshotData.slimWells)
+            ? originalSnapshotData.slimWells
+            : null;
+    const originalWells = slimWells
+        ? []
+        : Array.isArray(originalSnapshotData)
+          ? originalSnapshotData
+          : originalSnapshotData.wells || [];
     const originalDiscounts = !Array.isArray(originalSnapshotData)
         ? originalSnapshotData.wellDiscounts || null
         : null;
 
-    const orig = structuredClone(originalWells);
-    if (typeof migrateWellData === 'function') migrateWellData(orig);
+    const roundToGrosz = (v) => Math.round(v * 100) / 100;
     const curr = order.wells;
 
-    const savedDiscounts =
-        typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
-    try {
-        if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
-            window.wellDiscounts = originalDiscounts;
+    if (slimWells) {
+        const savedPreviewMode = window.isPreviewMode;
+        window.isPreviewMode = true;
+        try {
+            const maxLen = Math.max(slimWells.length, curr.length);
+            for (let i = 0; i < maxLen; i++) {
+                if (i >= slimWells.length) {
+                    changes[i] = { type: 'added' };
+                    continue;
+                }
+                if (i >= curr.length) {
+                    changes[i] = { type: 'removed', name: slimWells[i].name };
+                    continue;
+                }
+                const currStats = calcWellStats(curr[i]);
+                const origPrice = roundToGrosz(slimWells[i].price);
+                const currPrice = roundToGrosz(currStats.price);
+                if (Math.abs(currPrice - origPrice) > 0.01) {
+                    changes[i] = {
+                        type: 'modified',
+                        fields: ['price'],
+                        priceDiff: currPrice - origPrice
+                    };
+                }
+            }
+        } finally {
+            window.isPreviewMode = savedPreviewMode;
         }
-        freezeWellPrices(orig, true);
-    } finally {
-        if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
-            window.wellDiscounts = savedDiscounts;
+    } else {
+        const orig = structuredClone(originalWells);
+        if (typeof migrateWellData === 'function') migrateWellData(orig);
+
+        const savedDiscounts =
+            typeof wellDiscounts !== 'undefined' ? structuredClone(wellDiscounts) : null;
+        try {
+            if (originalDiscounts && typeof wellDiscounts !== 'undefined') {
+                window.wellDiscounts = originalDiscounts;
+            }
+            freezeWellPrices(orig, true);
+        } finally {
+            if (savedDiscounts && typeof wellDiscounts !== 'undefined') {
+                window.wellDiscounts = savedDiscounts;
+            }
+        }
+
+        const savedPreviewMode = window.isPreviewMode;
+        window.isPreviewMode = true;
+
+        try {
+            const maxLen = Math.max(orig.length, curr.length);
+            for (let i = 0; i < maxLen; i++) {
+                if (i >= orig.length) {
+                    changes[i] = { type: 'added' };
+                    continue;
+                }
+                if (i >= curr.length) {
+                    changes[i] = { type: 'removed', name: orig[i].name };
+                    continue;
+                }
+
+                const origStats = calcWellStats(orig[i]);
+                const currStats = calcWellStats(curr[i]);
+
+                const origPrice = roundToGrosz(origStats.price);
+                const currPrice = roundToGrosz(currStats.price);
+
+                if (Math.abs(currPrice - origPrice) > 0.01) {
+                    changes[i] = {
+                        type: 'modified',
+                        fields: ['price'],
+                        priceDiff: currPrice - origPrice
+                    };
+                }
+            }
+        } finally {
+            window.isPreviewMode = savedPreviewMode;
         }
     }
 
-    const savedPreviewMode = window.isPreviewMode;
+    const savedTransportPreviewMode = window.isPreviewMode;
     window.isPreviewMode = true;
 
     try {
-        const maxLen = Math.max(orig.length, curr.length);
-        for (let i = 0; i < maxLen; i++) {
-            if (i >= orig.length) {
-                changes[i] = { type: 'added' };
-                continue;
-            }
-            if (i >= curr.length) {
-                changes[i] = { type: 'removed', name: orig[i].name };
-                continue;
-            }
-
-            const origStats = calcWellStats(orig[i]);
-            const currStats = calcWellStats(curr[i]);
-
-            const roundToGrosz = (v) => Math.round(v * 100) / 100;
-            const origPrice = roundToGrosz(origStats.price);
-            const currPrice = roundToGrosz(currStats.price);
-
-            if (Math.abs(currPrice - origPrice) > 0.01) {
-                changes[i] = {
-                    type: 'modified',
-                    fields: ['price'],
-                    priceDiff: currPrice - origPrice
-                };
-            }
-        }
-
         const origTransportKm = originalSnapshotData.transportKm;
         const origTransportRate = originalSnapshotData.transportRate;
         const origTransportMode = originalSnapshotData.transportMode;
@@ -395,7 +441,7 @@ function getOrderChanges(order) {
             }
         }
     } finally {
-        window.isPreviewMode = savedPreviewMode;
+        window.isPreviewMode = savedTransportPreviewMode;
     }
 
     return changes;

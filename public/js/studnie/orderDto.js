@@ -63,16 +63,20 @@ const ORDER_PRZEJSCIE_FIELDS = [
 const ORDER_WELL_FIELDS = [
     'id',
     'name',
+    'numer',
     'dn',
     'rzednaDna',
     'rzednaWlazu',
     'magazyn',
+    'usytuowanie',
     'psiaBuda',
     'stycznaNadbudowa1200',
+    'stycznaVariant',
     'zakonczenie',
     'zakonczenieByDn',
     'redukcjaDN1000',
     'redukcjaTargetDN',
+    'redukcjaKinety',
     'wkladkaDennica',
     'wkladkaNadbudowa',
     'wkladkaZwienczenie',
@@ -84,12 +88,19 @@ const ORDER_WELL_FIELDS = [
     'dennicaMaterial',
     'material',
     'nadbudowa',
+    'klasaBetonu',
+    'klasaNosnosci_korpus',
+    'klasaNosnosci_zwienczenie',
     'stopnie',
     'doplata',
     'malowanieW',
     'malowanieWewCena',
     'malowanieZ',
     'malowanieZewCena',
+    'powlokaNameW',
+    'powlokaNameZ',
+    'agresjaChemiczna',
+    'agresjaMrozowa',
     'precoFullHeight',
     'pehdDiscount',
     'autoSelect',
@@ -172,3 +183,174 @@ window.toOrderWellsDTO = toOrderWellsDTO;
 window.ORDER_WELL_FIELDS = ORDER_WELL_FIELDS;
 window.ORDER_CONFIG_ITEM_FIELDS = ORDER_CONFIG_ITEM_FIELDS;
 window.ORDER_PRZEJSCIE_FIELDS = ORDER_PRZEJSCIE_FIELDS;
+
+/* ===== SLIM SNAPSHOT (P1) — deterministyczny hash kanonicznego DTO =====
+ *
+ * configHash = hash pól wpływających na cenę/porównanie (canonical pricing
+ * input → stable serialization → FNV-1a). NIE zależy od kolejności kluczy,
+ * kolejności elementów config (drag to przetasowanie) ani runtime/cache.
+ * Ograniczenie: hash nie widzi zmian cennika katalogowego (ceny z katalogu
+ * dla pozycji bez frozenPrice) — rabaty globalne żyją osobno w snapshocie
+ * (wellDiscounts), a cena ofertowa jest materializowana w price.
+ */
+
+/**
+ * Pola studni wchodzące do kanonicznego wejścia cenowego.
+ * Ustalona audytem calcWellStats/getItemAssessedPrice/calcPrecoPricing/
+ * getPehdEffectiveArea (2026-09-05).
+ */
+const WELL_PRICING_FIELDS = [
+    'dn',
+    'psiaBuda',
+    'klasaNosnosci_korpus',
+    'klasaNosnosci_zwienczenie',
+    'dennicaMaterial',
+    'material',
+    'wkladkaDennica',
+    'wkladkaNadbudowa',
+    'wkladkaZwienczenie',
+    'wkladkaOsadnikPreco',
+    'wkladkaOsadnikH',
+    'kineta',
+    'spocznikH',
+    'redukcjaKinety',
+    'precoFullHeight',
+    'pehdDiscount',
+    'stopnie',
+    'malowanieW',
+    'malowanieWewCena',
+    'malowanieZ',
+    'malowanieZewCena',
+    'doplata'
+];
+
+const CONFIG_PRICING_FIELDS = [
+    'productId',
+    'quantity',
+    'frozenPrice',
+    'frozenPriceBase',
+    'disablePehd',
+    'disablePreco'
+];
+
+const PRZEJSCIE_PRICING_FIELDS = [
+    'productId',
+    'dn',
+    'rzednaWlaczenia',
+    'angle',
+    'doplata',
+    'frozenPrice'
+];
+
+/**
+ * Deterministyczna serializacja: sortuje klucze obiektów rekurencyjnie.
+ * Tablice zachowują kolejność (kanonizację kolejności robi caller).
+ * @param {*} value
+ * @returns {string}
+ */
+function stableStringify(value) {
+    if (value === null || value === undefined) return 'null';
+    if (Array.isArray(value)) {
+        return '[' + value.map(stableStringify).join(',') + ']';
+    }
+    if (typeof value === 'object') {
+        return (
+            '{' +
+            Object.keys(value)
+                .sort()
+                .map((k) => JSON.stringify(k) + ':' + stableStringify(value[k]))
+                .join(',') +
+            '}'
+        );
+    }
+    const s = JSON.stringify(value);
+    return s === undefined ? 'null' : s;
+}
+
+/**
+ * FNV-1a 32-bit → hex. Detekcja zmian, nie kryptografia.
+ * @param {string} str
+ * @returns {string}
+ */
+function fnv1aHex(str) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = Math.imul(h, 0x01000193);
+    }
+    return ('0000000' + (h >>> 0).toString(16)).slice(-8);
+}
+
+/**
+ * Kanoniczne wejście cenowe studni (DTO): sortuje pozycje config
+ * i przejścia, żeby drag/przetasowanie nie zmieniało hasha.
+ * @param {Object} dtoWell studnia po toWellOrderDTO
+ * @returns {Object}
+ */
+function wellPricingInput(dtoWell) {
+    const w = dtoWell || {};
+    const input = _pickDtoFields(w, WELL_PRICING_FIELDS);
+    input.config = (Array.isArray(w.config) ? [...w.config] : [])
+        .map((c) => _pickDtoFields(c, CONFIG_PRICING_FIELDS))
+        .sort((a, b) =>
+            String(a.productId) < String(b.productId)
+                ? -1
+                : String(a.productId) > String(b.productId)
+                  ? 1
+                  : (a.quantity || 0) - (b.quantity || 0)
+        );
+    input.przejscia = (Array.isArray(w.przejscia) ? [...w.przejscia] : [])
+        .map((p) => _pickDtoFields(p, PRZEJSCIE_PRICING_FIELDS))
+        .sort((a, b) => {
+            const ak = String(a.productId) + '|' + String(a.rzednaWlaczenia);
+            const bk = String(b.productId) + '|' + String(b.rzednaWlaczenia);
+            return ak < bk ? -1 : ak > bk ? 1 : 0;
+        });
+    return input;
+}
+
+/**
+ * @param {Object} dtoWell studnia po toWellOrderDTO
+ * @returns {string} 8-znakowy hash kanonicznego wejścia cenowego
+ */
+function wellConfigHash(dtoWell) {
+    return fnv1aHex(stableStringify(wellPricingInput(dtoWell)));
+}
+
+const roundGrosz = (v) => Math.round((Number(v) || 0) * 100) / 100;
+
+/**
+ * Buduje slim snapshot: [{id, name, price, weight, configHash}].
+ * statsFn wstrzykiwany dla testowalności; produkcyjnie (w) => calcWellStats(w).
+ * @param {Array} dtoWells studnie po toOrderWellsDTO
+ * @param {Function} statsFn (well) => ({price, weight})
+ * @returns {Array}
+ */
+function buildSlimWells(dtoWells, statsFn) {
+    if (!Array.isArray(dtoWells)) return [];
+    return dtoWells.map((w) => {
+        let price = 0;
+        let weight = 0;
+        try {
+            const s = typeof statsFn === 'function' ? statsFn(w) : null;
+            if (s) {
+                price = roundGrosz(s.price);
+                weight = roundGrosz(s.weight);
+            }
+        } catch (_e) {
+            // pasywnie — zerowy wpis zamiast wywalenia zapisu
+        }
+        return {
+            id: w ? w.id : undefined,
+            name: w ? w.name : undefined,
+            price,
+            weight,
+            configHash: wellConfigHash(w)
+        };
+    });
+}
+
+window.stableStringify = stableStringify;
+window.wellConfigHash = wellConfigHash;
+window.buildSlimWells = buildSlimWells;
+window.WELL_PRICING_FIELDS = WELL_PRICING_FIELDS;

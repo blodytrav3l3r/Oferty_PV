@@ -238,7 +238,10 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         wells: orderWellsDTO,
         visiblePrzejsciaTypes: Array.from(visiblePrzejsciaTypes),
         originalSnapshot: {
-            wells: structuredClone(orderWellsDTO),
+            // P1: slim snapshot — [{id,name,price,weight,configHash}]
+            // zamiast pełnej kopii wells (buyty, nie megabajty).
+            // Kształty legacy (Array | {wells}) nadal odczytywane (back-compat).
+            slimWells: [],
             wellDiscounts: structuredClone(effectiveDiscounts),
             transportKm: offer.transportKm,
             transportRate: offer.transportRate,
@@ -284,8 +287,11 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
         orderTransportCost = globalOfferTransport * (totalWeight / globalOfferWeight);
     }
 
+    // P1: statystyki z tej pętli zasilają slim snapshot (brak 3. przebiegu calcWellStats).
+    const slimStatsByWell = [];
     order.wellsExport = orderWellsDTO.map((well) => {
         const stats = calcWellStats(well);
+        slimStatsByWell.push(stats);
         const wellTransportCost =
             totalWeight > 0 ? orderTransportCost * (stats.weight / totalWeight) : 0;
         const zwienczenie =
@@ -311,6 +317,16 @@ async function finalizeOrderFromOffer(offer, selectedWells, kartaBudowyData) {
     order.originalTotalNetto = finalOrderNetto;
     order.totalBrutto = finalOrderNetto * 1.23;
     order.wellDiscounts = effectiveDiscounts;
+
+    // P1: materializacja slim snapshotu na DTO (ten sam kontekst rabatów co totals).
+    // Statystyki reuse z pętli wellsExport — zero dodatkowych calcWellStats.
+    if (typeof buildSlimWells === 'function') {
+        const statsByIndex = new Map(slimStatsByWell.map((s, i) => [orderWellsDTO[i], s]));
+        order.originalSnapshot.slimWells = buildSlimWells(orderWellsDTO, (w) => {
+            const s = statsByIndex.get(w);
+            return s || { price: 0, weight: 0 };
+        });
+    }
 
     freezeWellPrices(order.wells);
 
