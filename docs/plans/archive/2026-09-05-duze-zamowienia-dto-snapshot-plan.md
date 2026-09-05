@@ -1,6 +1,6 @@
 # Duże zamówienia studni — DTO allowlist + slim snapshot + single-order save
 
-**Wersja:** 1.3 (2026-09-05) — P0 + P1 + P1 HIGH WYKONANE. P2 tylko na podstawie pomiarów.
+**Wersja:** 2.0 (2026-09-05) — PLAN ZAMKNIĘTY. P0 + P1 + P1 HIGH DONE. P2 DEFERRED.
 **Status:** GO do P0. GO do P1/P1 HIGH po DoD P0. P2 tylko na podstawie pomiarów.
 **Kontekst:** `HTTP 413` przy zapisie zamówień z ~3000 studni. Hotfix (strip + 50 MB) działa, ale docelowo: allowlist DTO, snapshot bez duplikacji, zapis pojedynczego zamówienia.
 **Zasada:** `DOM/runtime ≠ dane transportowe ≠ snapshot ≠ dane historyczne`. Limit 50 MB zostaje jako safety cap, nie mechanizm.
@@ -122,6 +122,23 @@ batch 5 zamówień x3000 studni: 48.78 MB (413!) | single-order: 9.76 MB
 - DoD: edycja A nie transmituje B/C; 409 zamiast cichego nadpisania;
   testy `tests/orders/studnieSingleSave.test.ts` (5/5) i `tests/studnie/orderSingleSave.test.ts` (3/3).
 
-## P2 — tylko jeśli pomiary wymuszą
+## P2 — DEFERRED / CONDITIONAL (decyzja zamknięcia planu)
 
 Chunking (`POST /:id/wells` w paczkach ~500) lub server-side snapshot (`snapshotId`). Nie wdrażać z góry.
+
+```
+Stan:  3000 wells → 9.76 MB payload, snapshot 247 KB, limit 50 MB
+Wyzwalacz: ~8–10k wells/order, payload → 50 MB, lub JSON.stringify → setki ms
+```
+
+## Decyzje zamknięcia planu (2026-09-05)
+
+1. **P2 — DEFERRED.** Plan uznany za wykonany, nie za „95% wykonany".
+2. **`stripWellRuntimeFields` — KEEP jako defense-in-depth.** DTO allowlist jest
+   granicą kontraktu; strip zostaje jako zabezpieczenie migracyjne. Usunięcie
+   odłożone (cleanup bez wpływu na poprawność).
+3. **`configHash` — ograniczenie semantyczne:** hash reprezentuje konfigurację
+   i parametry zapisane w zamówieniu, NIE aktualny cennik katalogowy dla pozycji
+   bez `frozenPrice`. Szczegóły w `docs/adr/ADR-010-transport-zamowien.md`.
+4. **Zod `.strict()` — osobny hardening task**, GO dopiero po audycie logów
+   observe (`unknown fields = 0`). Poza zakresem tego planu.
