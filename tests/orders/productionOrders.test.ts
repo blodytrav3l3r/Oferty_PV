@@ -54,7 +54,9 @@ jest.mock('../../src/prismaClient', () => ({
         },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn().mockResolvedValue(1),
-        $executeRawUnsafe: jest.fn().mockResolvedValue(1)
+        $executeRawUnsafe: jest.fn().mockResolvedValue(1),
+        // P0-C: PUT batch działa w $transaction — tx deleguje do tych samych mocków.
+        $transaction: jest.fn()
     },
     Prisma: {
         empty: '',
@@ -75,6 +77,7 @@ beforeEach(() => {
     mockUser.id = 'user-id';
     mockUser.role = 'user';
     mockUser.subUsers = [];
+    (prisma.$transaction as jest.Mock).mockImplementation(async (fn: any) => fn(prisma));
 });
 
 describe('Production Orders (PZ) routes', () => {

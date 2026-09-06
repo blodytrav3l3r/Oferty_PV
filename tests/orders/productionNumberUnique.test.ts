@@ -53,9 +53,8 @@ function p2002(): any {
     return e;
 }
 
-jest.mock('../../src/prismaClient', () => ({
-    __esModule: true,
-    default: {
+jest.mock('../../src/prismaClient', () => {
+    const mocked: any = {
         production_orders_rel: {
             findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
             findMany: jest.fn(async () => []),
@@ -84,13 +83,20 @@ jest.mock('../../src/prismaClient', () => ({
         },
         $queryRaw: jest.fn(async () => []),
         $executeRaw: jest.fn(async () => 1)
-    },
-    Prisma: {
-        empty: '',
-        sql: (strings: any, ...values: any[]): string => String.raw({ raw: strings }, ...values),
-        join: (values: any[]): string => values.join(', ')
-    }
-}));
+    };
+    // P0-C: PUT batch działa w $transaction — tx deleguje do tych samych mocków.
+    mocked.$transaction = jest.fn(async (fn: any) => fn(mocked));
+    return {
+        __esModule: true,
+        default: mocked,
+        Prisma: {
+            empty: '',
+            sql: (strings: any, ...values: any[]): string =>
+                String.raw({ raw: strings }, ...values),
+            join: (values: any[]): string => values.join(', ')
+        }
+    };
+});
 
 function createApp() {
     const app = express();

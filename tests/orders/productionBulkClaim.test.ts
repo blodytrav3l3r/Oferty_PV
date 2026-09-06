@@ -150,11 +150,42 @@ jest.mock('../../src/prismaClient', () => ({
         // Rollback: undo-log tylko własnych zmian (jak ROLLBACK w DB —
         // nie rusza commitów innych tx).
         $transaction: jest.fn(async (fn: any) => {
-            const undo = { recycled: [] as any[], counters: {} as Record<string, number> };
+            const undo = {
+                recycled: [] as any[],
+                counters: {} as Record<string, number>,
+                orders: {} as Record<string, any>
+            };
             const snapCounter = (key: string) => {
                 if (!(key in undo.counters)) undo.counters[key] = store.counters[key];
             };
+            const snapOrder = (id: string) => {
+                if (!(id in undo.orders)) undo.orders[id] = store.orders[id];
+            };
             const tx = {
+                // P0-C: PUT batch działa na tx.production_orders_rel.
+                production_orders_rel: {
+                    findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
+                    upsert: jest.fn(async ({ where, create, update }: any) => {
+                        store.upsertCalls++;
+                        if (
+                            store.failUpsertAfter >= 0 &&
+                            store.upsertCalls > store.failUpsertAfter
+                        ) {
+                            throw new Error('boom');
+                        }
+                        snapOrder(where.id);
+                        const prev = store.orders[where.id];
+                        const cleanUpdate: any = {};
+                        for (const k of Object.keys(update || {}))
+                            if (update[k] !== undefined) cleanUpdate[k] = update[k];
+                        store.orders[where.id] = {
+                            ...(prev || {}),
+                            ...(prev ? cleanUpdate : create),
+                            id: where.id
+                        };
+                        return store.orders[where.id];
+                    })
+                },
                 recycled_production_numbers: {
                     findMany: jest.fn(async ({ where, orderBy, take }: any) => {
                         await new Promise((r) => setTimeout(r, 5));
@@ -224,6 +255,10 @@ jest.mock('../../src/prismaClient', () => ({
                 for (const k of Object.keys(undo.counters)) {
                     if (undo.counters[k] === undefined) delete store.counters[k];
                     else store.counters[k] = undo.counters[k];
+                }
+                for (const id of Object.keys(undo.orders)) {
+                    if (undo.orders[id] === undefined) delete store.orders[id];
+                    else store.orders[id] = undo.orders[id];
                 }
                 throw e;
             }
@@ -355,7 +390,7 @@ describe('POST /claim-production-numbers/:userId', () => {
     });
 });
 
-describe('PUT /production zwraca saved[] (jawny partial success)', () => {
+describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
     test('sukces → saved ze wszystkimi id', async () => {
         const app = createApp();
         const data = [
@@ -367,7 +402,7 @@ describe('PUT /production zwraca saved[] (jawny partial success)', () => {
         expect(res.body.saved).toEqual(['a', 'b']);
     });
 
-    test('pad drugiego upsertu → 500 z saved=[pierwszy] (recycle tylko niezapisanych)', async () => {
+    test('pad drugiego upsertu → 500, saved=[] i NIC nie zapisane (rollback)', async () => {
         store.failUpsertAfter = 1;
         const app = createApp();
         const data = [
@@ -376,7 +411,29 @@ describe('PUT /production zwraca saved[] (jawny partial success)', () => {
         ];
         const res = await request(app).put('/api/orders-studnie/production').send({ data });
         expect(res.status).toBe(500);
-        expect(res.body.saved).toEqual(['a']);
+        expect(res.body.saved).toEqual([]);
+        expect(store.orders).toEqual({});
+    });
+
+    test('403 w połowie batcha → 403, saved=[] i NIC nie zapisane', async () => {
+        mockUser.id = 'intruz';
+        mockUser.role = 'user';
+        try {
+            const app = createApp();
+            // 'cudze' PZ: właściciel 'obcy' — intruz nie ma uprawnień.
+            store.orders['cudze'] = { id: 'cudze', userId: 'obcy' };
+            const data = [
+                { id: 'a', wellId: 'w1' },
+                { id: 'cudze', wellId: 'w1' }
+            ];
+            const res = await request(app).put('/api/orders-studnie/production').send({ data });
+            expect(res.status).toBe(403);
+            expect(res.body.saved).toEqual([]);
+            expect(store.orders['a']).toBeUndefined();
+        } finally {
+            mockUser.id = 'admin-1';
+            mockUser.role = 'admin';
+        }
     });
 });
 

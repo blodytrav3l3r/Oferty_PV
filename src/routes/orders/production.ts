@@ -163,112 +163,136 @@ router.put(
     validateData(productionOrdersBatchSchema),
     async (req, res) => {
         const authReq = req as AuthenticatedRequest;
-        // Jawny partial success (bulk): zbierane id zapisanych pozycji — wołający
-        // rozlicza claimed - saved (recycle tylko niezapisanych).
+        // P0-C: całość albo nic. Zod (validateData) sprawdza kształt całego
+        // batcha PRZED transakcją; ownership sprawdzany W transakcji (TOCTOU).
         const saved: string[] = [];
         try {
             const incoming = req.body.data || [];
 
-            for (const o of incoming) {
-                let docId = o.id;
-                if (!docId) {
-                    docId = crypto.randomUUID();
-                }
+            await prisma.$transaction(
+                async (tx) => {
+                    for (const o of incoming) {
+                        let docId = o.id;
+                        if (!docId) {
+                            docId = crypto.randomUUID();
+                        }
 
-                const {
-                    id: _id,
-                    type: _type,
-                    userId: incomingUserId,
-                    orderId,
-                    wellId,
-                    elementIndex,
-                    elementKey,
-                    createdAt,
-                    updatedAt,
-                    ...rest
-                } = o;
-                const dataStr = JSON.stringify(rest);
-                // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
-                // Update z undefined nie nadpisuje (Prisma pomija undefined).
-                const prodNum =
-                    typeof (rest as Record<string, unknown>).productionOrderNumber === 'string'
-                        ? ((rest as Record<string, unknown>).productionOrderNumber as string)
-                        : undefined;
+                        const {
+                            id: _id,
+                            type: _type,
+                            userId: incomingUserId,
+                            orderId,
+                            wellId,
+                            elementIndex,
+                            elementKey,
+                            createdAt,
+                            updatedAt,
+                            ...rest
+                        } = o;
+                        const dataStr = JSON.stringify(rest);
+                        // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
+                        // Update z undefined nie nadpisuje (Prisma pomija undefined).
+                        const prodNum =
+                            typeof (rest as Record<string, unknown>).productionOrderNumber ===
+                            'string'
+                                ? ((rest as Record<string, unknown>)
+                                      .productionOrderNumber as string)
+                                : undefined;
 
-                const old = await prisma.production_orders_rel.findUnique({
-                    where: { id: docId },
-                    select: { data: true, userId: true }
-                });
+                        const old = await tx.production_orders_rel.findUnique({
+                            where: { id: docId },
+                            select: { data: true, userId: true }
+                        });
 
-                if (old && !canWriteDoc(authReq.user, old.userId)) {
-                    return res
-                        .status(403)
-                        .json({ error: 'Brak uprawnień do zapisu dla tego użytkownika' });
-                }
+                        // P0-C: guard W transakcji — return zamieniony na throw, żeby
+                        // cofnąć cały batch (wcześniej: 403 w połowie = partial write).
+                        if (old && !canWriteDoc(authReq.user, old.userId)) {
+                            throw {
+                                status: 403,
+                                message: 'Brak uprawnień do zapisu dla tego użytkownika'
+                            };
+                        }
 
-                const targetUserId = old?.userId || incomingUserId || authReq.user?.id || '';
-                if (!canWriteDoc(authReq.user, targetUserId)) {
-                    return res.status(403).json({ error: 'Brak uprawnień do tego zlecenia' });
-                }
+                        const targetUserId =
+                            old?.userId || incomingUserId || authReq.user?.id || '';
+                        if (!canWriteDoc(authReq.user, targetUserId)) {
+                            throw { status: 403, message: 'Brak uprawnień do tego zlecenia' };
+                        }
 
-                if (old) {
-                    logAudit(
-                        'production_order',
-                        docId,
-                        authReq.user?.id || '',
-                        'update',
-                        rest,
-                        parseJsonField<Record<string, unknown>>(old.data, {})
-                    );
-                } else {
-                    logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
-                }
+                        if (old) {
+                            logAudit(
+                                'production_order',
+                                docId,
+                                authReq.user?.id || '',
+                                'update',
+                                rest,
+                                parseJsonField<Record<string, unknown>>(old.data, {})
+                            );
+                        } else {
+                            logAudit(
+                                'production_order',
+                                docId,
+                                authReq.user?.id || '',
+                                'create',
+                                rest
+                            );
+                        }
 
-                await prisma.production_orders_rel.upsert({
-                    where: { id: docId },
-                    create: {
-                        id: docId,
-                        userId: targetUserId,
-                        creatorId: authReq.user?.id,
-                        orderId: orderId || '',
-                        wellId: wellId || '',
-                        elementIndex: elementIndex || 0,
-                        elementKey: elementKey || '',
-                        createdAt: createdAt || new Date().toISOString(),
-                        updatedAt: updatedAt || new Date().toISOString(),
-                        data: dataStr,
-                        productionNumber: prodNum ?? null
-                    },
-                    update: {
-                        userId: targetUserId,
-                        creatorId: authReq.user?.id,
-                        orderId: orderId || '',
-                        wellId: wellId || '',
-                        elementIndex: elementIndex || 0,
-                        elementKey: elementKey || '',
-                        createdAt: createdAt || new Date().toISOString(),
-                        updatedAt: updatedAt || new Date().toISOString(),
-                        data: dataStr,
-                        productionNumber: prodNum
+                        await tx.production_orders_rel.upsert({
+                            where: { id: docId },
+                            create: {
+                                id: docId,
+                                userId: targetUserId,
+                                creatorId: authReq.user?.id,
+                                orderId: orderId || '',
+                                wellId: wellId || '',
+                                elementIndex: elementIndex || 0,
+                                elementKey: elementKey || '',
+                                createdAt: createdAt || new Date().toISOString(),
+                                updatedAt: updatedAt || new Date().toISOString(),
+                                data: dataStr,
+                                productionNumber: prodNum ?? null
+                            },
+                            update: {
+                                userId: targetUserId,
+                                creatorId: authReq.user?.id,
+                                orderId: orderId || '',
+                                wellId: wellId || '',
+                                elementIndex: elementIndex || 0,
+                                elementKey: elementKey || '',
+                                createdAt: createdAt || new Date().toISOString(),
+                                updatedAt: updatedAt || new Date().toISOString(),
+                                data: dataStr,
+                                productionNumber: prodNum
+                            }
+                        });
+                        saved.push(docId);
                     }
-                });
-                saved.push(docId);
-            }
+                },
+                { timeout: 30000 }
+            );
 
             searchCache.invalidateNamespace('production');
             res.json({ ok: true, saved });
         } catch (e: unknown) {
+            // P0-C: guard w tx rzuca 403 — cały batch cofnięty, saved puste.
+            if ((e as { status?: number }).status === 403) {
+                return res.status(403).json({
+                    error: (e as { message?: string }).message || 'Brak uprawnień',
+                    saved: []
+                });
+            }
             // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
             if ((e as { code?: string }).code === 'P2002') {
                 return res.status(409).json({
                     error: 'Numer produkcyjny już zajęty — pobierz nowy numer',
                     code: 'PRODUCTION_NUMBER_CONFLICT',
-                    saved
+                    saved: []
                 });
             }
             const message = e instanceof Error ? e.message : 'Unknown error';
             logger.error('Production', 'Błąd serwera', message);
-            res.status(500).json({ error: 'Wewnętrzny błąd serwera', saved });
+            res.status(500).json({ error: 'Wewnętrzny błąd serwera', saved: [] });
         }
     }
 );
