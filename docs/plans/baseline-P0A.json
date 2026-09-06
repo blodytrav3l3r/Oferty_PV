@@ -1,0 +1,36 @@
+{
+    "base": "http://localhost:3000",
+    "samples": 15,
+    "writes": false,
+    "steady": [
+        {
+            "label": "GET /api/offers/search?q=",
+            "n": 15,
+            "p50": 14,
+            "p95": 262,
+            "p99": 262,
+            "fails": 0
+        },
+        {
+            "label": "GET /api/orders-studnie/production/index",
+            "n": 15,
+            "p50": 14.4,
+            "p95": 47.9,
+            "p99": 47.9,
+            "fails": 0
+        },
+        { "label": "GET /health/ready", "n": 15, "p50": 15.2, "p95": 19.7, "p99": 19.7, "fails": 0 }
+    ],
+    "burst": {
+        "label": "BURST mieszany",
+        "n": 40,
+        "p50": 112.9,
+        "p95": 142.1,
+        "p99": 146.2,
+        "wallMs": 152,
+        "fails": 0,
+        "reqs": 40,
+        "statusHist": { "200": 40 },
+        "errSample": []
+    }
+}
