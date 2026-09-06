@@ -18,7 +18,13 @@ import {
 
 const router = express.Router();
 
-async function recycleProductionNumber(userId: string, oldData: Record<string, unknown>) {
+type RawDb = Pick<typeof prisma, '$executeRaw'>;
+
+async function recycleProductionNumber(
+    userId: string,
+    oldData: Record<string, unknown>,
+    db: RawDb = prisma
+) {
     const prodNum =
         typeof oldData.productionOrderNumber === 'string' ? oldData.productionOrderNumber : '';
     if (!prodNum) return;
@@ -28,7 +34,7 @@ async function recycleProductionNumber(userId: string, oldData: Record<string, u
     const yearShort = parseInt(parts[3], 10);
     const fullYear = 2000 + yearShort;
     if (seqNumber > 0) {
-        await prisma.$executeRaw`
+        await db.$executeRaw`
             INSERT INTO recycled_production_numbers ("userId", year, seqNumber)
             VALUES (${userId}, ${fullYear}, ${seqNumber})
             ON CONFLICT ("userId", year, seqNumber) DO NOTHING
@@ -529,21 +535,53 @@ router.post('/batch-delete', requireAuth, writeProductionLimiter, async (req, re
             }
         }
 
-        const deletedResult =
-            deletable.length > 0
-                ? await prisma.production_orders_rel.deleteMany({
-                      where: { id: { in: deletable.map((o) => o.id) } }
-                  })
-                : { count: 0 };
-
-        for (const order of deletable) {
-            const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
-            logAudit('production_order', order.id, order.userId || '', 'delete', null, oldData);
-            await recycleProductionNumber(order.userId || '', oldData);
-        }
+        // P0-E: kasowanie + recycle w JEDNEJ transakcji (koniec partial delete).
+        // accepted pomijane jak wcześniej (skipped), reszta all-or-nothing.
+        let deletedCount = 0;
+        await prisma.$transaction(async (tx) => {
+            // Re-check statusów w tx (koniec TOCTOU accepted-między-check-a-delete).
+            const fresh = await tx.production_orders_rel.findMany({
+                where: { id: { in: deletable.map((o) => o.id) } },
+                select: { id: true, userId: true, data: true }
+            });
+            const freshById = new Map(fresh.map((o) => [o.id, o]));
+            let skippedTx = 0;
+            const finalIds: string[] = [];
+            for (const order of deletable) {
+                const row = freshById.get(order.id);
+                if (!row) continue;
+                if (!canWriteDoc(authReq.user, row.userId)) {
+                    throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
+                }
+                const rowData = parseJsonField<Record<string, unknown>>(row.data, {});
+                if (rowData.status === 'accepted') {
+                    skippedTx++;
+                    continue;
+                }
+                finalIds.push(order.id);
+            }
+            skipped += skippedTx;
+            if (finalIds.length > 0) {
+                const del = await tx.production_orders_rel.deleteMany({
+                    where: { id: { in: finalIds } }
+                });
+                deletedCount = del.count;
+            }
+            for (const order of deletable) {
+                if (!finalIds.includes(order.id)) continue;
+                const oldData = parseJsonField<Record<string, unknown>>(order.data, {});
+                logAudit('production_order', order.id, order.userId || '', 'delete', null, oldData);
+                await recycleProductionNumber(order.userId || '', oldData, tx);
+            }
+        });
         searchCache.invalidateNamespace('production');
-        res.json({ deleted: deletedResult.count, skipped });
+        res.json({ deleted: deletedCount, skipped });
     } catch (e: unknown) {
+        if ((e as { status?: number }).status === 403) {
+            return res
+                .status(403)
+                .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+        }
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Production', 'Błąd serwera', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -651,14 +689,39 @@ router.delete('/:id', requireAuth, writeProductionLimiter, async (req, res) => {
 
         logAudit('production_order', docId, existing.userId || '', 'delete', null, oldData);
 
-        await recycleProductionNumber(existing.userId || '', oldData);
-
-        if (authReq.user?.role === 'admin') {
-            await prisma.$executeRaw`DELETE FROM production_orders_rel WHERE id = ${docId}`;
-        } else {
-            await prisma.production_orders_rel.deleteMany({
-                where: { id: docId, userId: authReq.user?.id }
+        // P0-E: re-check statusu + kasowanie + recycle w JEDNEJ transakcji.
+        try {
+            await prisma.$transaction(async (tx) => {
+                const row = await tx.production_orders_rel.findUnique({
+                    where: { id: docId },
+                    select: { data: true, userId: true }
+                });
+                const rowData = parseJsonField<Record<string, unknown>>(row?.data, {});
+                if (rowData.status === 'accepted') {
+                    throw {
+                        status: 403,
+                        message: 'Nie można usunąć zatwierdzonego zlecenia. Najpierw je cofnij.'
+                    };
+                }
+                if (row && !canWriteDoc(authReq.user, row.userId)) {
+                    throw { status: 403, message: 'Brak uprawnień do usunięcia tego zlecenia' };
+                }
+                await recycleProductionNumber(existing.userId || '', oldData, tx);
+                if (authReq.user?.role === 'admin') {
+                    await tx.$executeRaw`DELETE FROM production_orders_rel WHERE id = ${docId}`;
+                } else {
+                    await tx.production_orders_rel.deleteMany({
+                        where: { id: docId, userId: authReq.user?.id }
+                    });
+                }
             });
+        } catch (e: unknown) {
+            if ((e as { status?: number }).status === 403) {
+                return res
+                    .status(403)
+                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
+            throw e;
         }
         searchCache.invalidateNamespace('production');
         res.json({ ok: true });

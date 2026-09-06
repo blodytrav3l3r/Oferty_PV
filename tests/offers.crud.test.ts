@@ -323,6 +323,23 @@ describe('Offers CRUD Routes', () => {
             expect(res.statusCode).toBe(200);
         });
 
+        it('DELETE oferty rury kasuje pozycje i ofertę w jednej transakcji (P0-E)', async () => {
+            (prisma.offers_rel.findUnique as jest.Mock).mockResolvedValue(mockOfferRury);
+            (prisma.offer_items_rel.findMany as jest.Mock).mockResolvedValue([mockItem]);
+            (prisma.offer_items_rel.deleteMany as jest.Mock).mockResolvedValue({});
+            (prisma.offers_rel.delete as jest.Mock).mockResolvedValue({});
+            const res = await request(app)
+                .delete('/api/offers/o-1')
+                .set('x-user-id', 'user-id')
+                .set('x-user-role', 'admin');
+            expect(res.statusCode).toBe(200);
+            expect(prisma.$transaction).toHaveBeenCalled();
+            expect(prisma.offer_items_rel.deleteMany).toHaveBeenCalledWith({
+                where: { offerId: 'o-1' }
+            });
+            expect(prisma.offers_rel.delete).toHaveBeenCalledWith({ where: { id: 'o-1' } });
+        });
+
         it('powinien zaktualizować grupowo oferty rur (PUT /)', async () => {
             (prisma.offers_rel.findMany as jest.Mock).mockResolvedValue([]);
             (prisma.offers_rel.create as jest.Mock).mockResolvedValue({});

@@ -158,12 +158,6 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
                 return res.status(403).json({ error: 'Brak uprawnien do usuniecia tej oferty' });
             }
 
-            if (await hasProductionOrdersForOffer(id)) {
-                return res.status(403).json({
-                    error: 'Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.'
-                });
-            }
-
             let oldData: Record<string, unknown> = {};
             try {
                 oldData = JSON.parse(offer.data || '{}');
@@ -172,13 +166,33 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
             }
             logAudit('studnia_oferta', id, authReq.user?.id || '', 'delete', null, oldData);
 
-            await removeFts5('studnie', id);
-            await prisma.offers_studnie_rel.delete({ where: { id } });
+            // P0-E: guard + kasowanie biznesowe w JEDNEJ transakcji.
+            // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
+            try {
+                await prisma.$transaction(async (tx) => {
+                    if (await hasProductionOrdersForOffer(id, tx)) {
+                        throw {
+                            status: 403,
+                            message:
+                                'Nie można usunąć oferty — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zamówieniach tej oferty.'
+                        };
+                    }
+                    await tx.offers_studnie_rel.delete({ where: { id } });
+                });
+            } catch (e: unknown) {
+                if ((e as { status?: number }).status === 403) {
+                    return res
+                        .status(403)
+                        .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+                }
+                throw e;
+            }
             try {
                 await (prisma as any).document_shares?.deleteMany?.({
                     where: { documentType: 'offer_studnie', documentId: id }
                 });
             } catch {}
+            await removeFts5('studnie', id);
 
             logger.info('Offers', `Oferta studnie ${id} usunięta przez ${authReq.user?.username}`);
             searchCache.invalidateAll();
@@ -211,18 +225,22 @@ router.delete('/:id', requireAuth, writeOffersLimiter, async (req, res) => {
         };
         logAudit('offer', id, authReq.user?.id || '', 'delete', null, oldSnapshot);
 
-        await removeFts5('rury', id);
-        await prisma.offer_items_rel.deleteMany({
-            where: { offerId: id }
+        // P0-E: kasowanie biznesowe w JEDNEJ transakcji.
+        // FTS to dane pochodne — po COMMIT, nigdy nie blokuje kasowania.
+        await prisma.$transaction(async (tx) => {
+            await tx.offer_items_rel.deleteMany({
+                where: { offerId: id }
+            });
+            await tx.offers_rel.delete({
+                where: { id }
+            });
         });
         try {
             await (prisma as any).document_shares?.deleteMany?.({
                 where: { documentType: 'offer', documentId: id }
             });
         } catch {}
-        await prisma.offers_rel.delete({
-            where: { id }
-        });
+        await removeFts5('rury', id);
 
         logger.info('Offers', `Oferta rury ${id} usunięta przez ${authReq.user?.username}`);
         searchCache.invalidateAll();

@@ -354,13 +354,16 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
 
         logAudit('order', docId, authReq.user?.id || '', 'delete', null, oldData);
 
-        if (authReq.user?.role === 'admin') {
-            await prisma.$executeRaw`DELETE FROM orders_rury_rel WHERE id = ${docId}`;
-        } else {
-            await prisma.orders_rury_rel.deleteMany({
-                where: { id: docId, userId: authReq.user?.id }
-            });
-        }
+        // P0-E: kasowanie w transakcji (predykat własności w samym DELETE).
+        await prisma.$transaction(async (tx) => {
+            if (authReq.user?.role === 'admin') {
+                await tx.$executeRaw`DELETE FROM orders_rury_rel WHERE id = ${docId}`;
+            } else {
+                await tx.orders_rury_rel.deleteMany({
+                    where: { id: docId, userId: authReq.user?.id }
+                });
+            }
+        });
         try {
             await (prisma as any).document_shares?.deleteMany?.({
                 where: { documentType: 'order_rury', documentId: docId }

@@ -9,12 +9,16 @@ import prisma from '../prismaClient';
 
 type CountRow = Array<{ cnt: number | bigint }>;
 
+/** Minimalny klient do zapytań zliczających — globalny prisma albo tx. */
+export type GuardDb = Pick<typeof prisma, '$queryRaw'>;
+
 // PZ przypisane do zamówienia studni: bezpośrednio po orderId (indeks) + legacy PZ (pusty orderId) po data.offerId
 export async function countProductionOrdersForOrder(
     orderId: string,
-    offerId?: string
+    offerId?: string,
+    db: GuardDb = prisma
 ): Promise<number> {
-    const rows = await prisma.$queryRaw<CountRow>`
+    const rows = await db.$queryRaw<CountRow>`
         SELECT COUNT(*) as cnt FROM production_orders_rel
         WHERE "orderId" = ${orderId}
            OR (${offerId || ''} <> ''
@@ -24,8 +28,11 @@ export async function countProductionOrdersForOrder(
 }
 
 // PZ dla oferty studni: przez zamówienia oferty (offerStudnieId) + legacy PZ po data.offerId
-export async function hasProductionOrdersForOffer(offerId: string): Promise<boolean> {
-    const rows = await prisma.$queryRaw<CountRow>`
+export async function hasProductionOrdersForOffer(
+    offerId: string,
+    db: GuardDb = prisma
+): Promise<boolean> {
+    const rows = await db.$queryRaw<CountRow>`
         SELECT COUNT(*) as cnt
         FROM production_orders_rel po
         WHERE po."orderId" IN (SELECT o.id FROM orders_studnie_rel o WHERE o."offerStudnieId" = ${offerId})

@@ -487,12 +487,32 @@ router.delete('/:id', requireAuth, writeOrdersLimiter, async (req, res) => {
 
         logAudit('order', docId, authReq.user?.id || '', 'delete', null, oldData);
 
-        if (authReq.user?.role === 'admin') {
-            await prisma.$executeRaw`DELETE FROM orders_studnie_rel WHERE id = ${docId}`;
-        } else {
-            await prisma.orders_studnie_rel.deleteMany({
-                where: { id: docId, userId: authReq.user?.id }
+        // P0-E: guard + kasowanie w JEDNEJ transakcji (koniec TOCTOU guard-then-delete).
+        try {
+            await prisma.$transaction(async (tx) => {
+                const poCount = await countProductionOrdersForOrder(docId, offerId, tx);
+                if (poCount > 0) {
+                    throw {
+                        status: 403,
+                        message:
+                            'Nie można usunąć zamówienia — ma przypisane zlecenia produkcyjne. Usuń najpierw zlecenia w zakładce „Zlecenia produkcyjne”.'
+                    };
+                }
+                if (authReq.user?.role === 'admin') {
+                    await tx.$executeRaw`DELETE FROM orders_studnie_rel WHERE id = ${docId}`;
+                } else {
+                    await tx.orders_studnie_rel.deleteMany({
+                        where: { id: docId, userId: authReq.user?.id }
+                    });
+                }
             });
+        } catch (e: unknown) {
+            if ((e as { status?: number }).status === 403) {
+                return res
+                    .status(403)
+                    .json({ error: (e as { message?: string }).message || 'Brak uprawnień' });
+            }
+            throw e;
         }
         try {
             await (prisma as any).document_shares?.deleteMany?.({

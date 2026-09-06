@@ -253,6 +253,34 @@ describe('Production Orders (PZ) routes', () => {
 
             expect(res.statusCode).toBe(403);
         });
+
+        it('accepted między check a tx → skipped, nic nie usunięte (P0-E)', async () => {
+            (prisma.production_orders_rel.findMany as jest.Mock)
+                .mockResolvedValueOnce([
+                    {
+                        id: 'pz-race',
+                        userId: 'user-id',
+                        data: JSON.stringify({ status: 'draft' })
+                    }
+                ])
+                .mockResolvedValue([
+                    {
+                        id: 'pz-race',
+                        userId: 'user-id',
+                        data: JSON.stringify({ status: 'accepted' })
+                    }
+                ]);
+            (prisma.production_orders_rel.deleteMany as jest.Mock).mockResolvedValue({ count: 0 });
+
+            const res = await request(app)
+                .post('/api/orders/production/batch-delete')
+                .set('x-user-id', 'user-id')
+                .send({ ids: ['pz-race'] });
+
+            expect(res.statusCode).toBe(200);
+            expect(res.body).toEqual({ deleted: 0, skipped: 1 });
+            expect(prisma.production_orders_rel.deleteMany).not.toHaveBeenCalled();
+        });
     });
 
     describe('DELETE /:id', () => {
