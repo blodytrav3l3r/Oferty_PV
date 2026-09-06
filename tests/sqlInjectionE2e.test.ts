@@ -23,7 +23,9 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(),
             findMany: jest.fn(),
             delete: jest.fn(),
-            upsert: jest.fn()
+            upsert: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn()
         },
         offers_rel: {
             findMany: jest.fn(),
@@ -99,7 +101,7 @@ describe('SQL Injection - scenariusze ataku', () => {
 
     it('POST /studnie z SQL injection w danych nie powoduje błędu bazy', async () => {
         (prisma.offers_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
-        (prisma.offers_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+        (prisma.offers_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
         const maliciousPayload = {
             data: [
@@ -114,8 +116,8 @@ describe('SQL Injection - scenariusze ataku', () => {
 
         const res = await request(app).post('/api/offers/studnie').send(maliciousPayload);
 
-        // Upsert powinien zostać wywołany z ID jako parametrem (nie w SQL)
-        expect(prisma.offers_studnie_rel.upsert).toHaveBeenCalled();
+        // Create powinien zostać wywołany z ID jako parametrem (nie w SQL, P0-D2)
+        expect(prisma.offers_studnie_rel.create).toHaveBeenCalled();
         expect([200, 400, 500]).toContain(res.statusCode);
     });
 });

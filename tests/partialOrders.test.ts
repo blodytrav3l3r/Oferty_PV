@@ -24,7 +24,9 @@ jest.mock('../src/prismaClient', () => ({
             findUnique: jest.fn(),
             upsert: jest.fn(),
             delete: jest.fn(),
-            update: jest.fn()
+            update: jest.fn(),
+            create: jest.fn(),
+            updateMany: jest.fn()
         },
         production_orders_rel: {
             findMany: jest.fn()
@@ -33,7 +35,12 @@ jest.mock('../src/prismaClient', () => ({
         $queryRaw: jest.fn(),
         $queryRawUnsafe: jest.fn(),
         $executeRawUnsafe: jest.fn(),
-        $executeRaw: jest.fn()
+        $executeRaw: jest.fn(),
+        // P0-C/D2: PUT/DELETE w $transaction — tx deleguje do mocków.
+        $transaction: jest.fn(async (fn: any) => {
+            const prismaMock = jest.requireMock('../src/prismaClient').default;
+            return fn(prismaMock);
+        })
     }
 }));
 
@@ -61,7 +68,7 @@ describe('Partial Orders Backend Logic', () => {
         };
 
         (prisma.orders_studnie_rel.findUnique as jest.Mock).mockResolvedValue(null);
-        (prisma.orders_studnie_rel.upsert as jest.Mock).mockResolvedValue({});
+        (prisma.orders_studnie_rel.create as jest.Mock).mockResolvedValue({});
 
         const res = await request(app)
             .put('/api/orders-studnie')
@@ -69,8 +76,8 @@ describe('Partial Orders Backend Logic', () => {
 
         expect(res.statusCode).toBe(200);
         expect(res.body.ok).toBe(true);
-        // Should execute 2 upserts (one for each order)
-        expect(prisma.orders_studnie_rel.upsert).toHaveBeenCalledTimes(2);
+        // Should execute 2 creates (one for each order, P0-D2: create+version)
+        expect(prisma.orders_studnie_rel.create).toHaveBeenCalledTimes(2);
     });
 
     it('should correctly filter orders by user role', async () => {
