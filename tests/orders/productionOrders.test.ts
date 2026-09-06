@@ -55,6 +55,13 @@ jest.mock('../../src/prismaClient', () => ({
             updateMany: jest.fn(),
             deleteMany: jest.fn()
         },
+        // P1-A: Idempotency-Key.
+        idempotency_keys: {
+            create: jest.fn(),
+            findUnique: jest.fn(),
+            updateMany: jest.fn(),
+            deleteMany: jest.fn()
+        },
         $queryRaw: jest.fn(),
         $executeRaw: jest.fn().mockResolvedValue(1),
         $executeRawUnsafe: jest.fn().mockResolvedValue(1),
@@ -129,6 +136,83 @@ describe('Production Orders (PZ) routes', () => {
                 .send({ wellId: 'w-1', userId: 'other-user' });
 
             expect(res.statusCode).toBe(403);
+        });
+
+        it('P1-A: retry z tym samym Idempotency-Key → ta sama odpowiedź, 1 dokument', async () => {
+            const keys: Record<string, any> = {};
+            (prisma.idempotency_keys.create as jest.Mock).mockImplementation(
+                async ({ data }: any) => {
+                    const k = `${data.userId}|${data.endpoint}|${data.key}`;
+                    if (keys[k]) {
+                        const e: any = new Error('Unique constraint failed');
+                        e.code = 'P2002';
+                        throw e;
+                    }
+                    keys[k] = { ...data };
+                    return keys[k];
+                }
+            );
+            (prisma.idempotency_keys.findUnique as jest.Mock).mockImplementation(
+                async ({ where }: any) => {
+                    const w = where.userId_endpoint_key;
+                    return keys[`${w.userId}|${w.endpoint}|${w.key}`] || null;
+                }
+            );
+            (prisma.idempotency_keys.updateMany as jest.Mock).mockImplementation(
+                async ({ where, data }: any) => {
+                    const w = where.userId_endpoint_key;
+                    const k = `${w.userId}|${w.endpoint}|${w.key}`;
+                    if (!keys[k]) return { count: 0 };
+                    Object.assign(keys[k], data);
+                    return { count: 1 };
+                }
+            );
+            (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
+            (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
+
+            const send = () =>
+                request(app)
+                    .post('/api/orders/production')
+                    .set('x-user-id', 'user-id')
+                    .set('Idempotency-Key', 'key-123')
+                    .send({ wellId: 'w-1', productionOrderNumber: 'AB/PZ/000001/26' });
+            const first = await send();
+            const second = await send();
+            expect(first.statusCode).toBe(200);
+            expect(second.statusCode).toBe(200);
+            expect(second.body).toEqual(first.body);
+            expect(prisma.production_orders_rel.create).toHaveBeenCalledTimes(1);
+        });
+
+        it('P1-A: ten sam klucz + inny payload → 409 IDEMPOTENCY_KEY_REUSE', async () => {
+            const keys: Record<string, any> = {
+                'user-id|POST /api/orders-studnie/production|key-abc': {
+                    status: 'DONE',
+                    requestHash: 'other-hash',
+                    responseStatus: 200,
+                    responseBody: JSON.stringify({ ok: true })
+                }
+            };
+            (prisma.idempotency_keys.create as jest.Mock).mockImplementation(async () => {
+                const e: any = new Error('Unique constraint failed');
+                e.code = 'P2002';
+                throw e;
+            });
+            (prisma.idempotency_keys.findUnique as jest.Mock).mockImplementation(
+                async ({ where }: any) => {
+                    const w = where.userId_endpoint_key;
+                    return keys[`${w.userId}|${w.endpoint}|${w.key}`] || null;
+                }
+            );
+
+            const res = await request(app)
+                .post('/api/orders/production')
+                .set('x-user-id', 'user-id')
+                .set('Idempotency-Key', 'key-abc')
+                .send({ wellId: 'w-9' });
+
+            expect(res.statusCode).toBe(409);
+            expect(res.body.code).toBe('IDEMPOTENCY_KEY_REUSE');
         });
     });
 

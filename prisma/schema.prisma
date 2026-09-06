@@ -766,6 +766,22 @@ model document_shares {
   @@index([ownerId], map: "idx_shares_owner")
 }
 
+// P1-A: klucze idempotencji POST — dokładnie 1 wykonanie na (user, endpoint, key).
+model idempotency_keys {
+  userId         String
+  endpoint       String
+  key            String
+  requestHash    String
+  status         String  @default("PENDING") // PENDING | DONE
+  responseStatus Int?
+  responseBody   String?
+  createdAt      String
+  expiresAt      String
+
+  @@id([userId, endpoint, key])
+  @@index([expiresAt], map: "idx_idempotency_expires")
+}
+
 model users {
   id                         String   @id
   username                   String   @unique

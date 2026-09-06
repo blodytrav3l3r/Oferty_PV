@@ -12,6 +12,11 @@ import { WRITE_LIMITER } from '../../middleware/rateLimiters';
 import { searchCache } from '../../utils/searchCache';
 import { mapProductionOrderRow } from '../../utils/productionSearchUtils';
 import {
+    claimIdempotencyKey,
+    completeIdempotencyKey,
+    idempotencyKeyFrom
+} from '../../utils/idempotency';
+import {
     productionOrdersBatchSchema,
     productionOrderCreateSchema
 } from '../../validators/offerSchemas';
@@ -359,12 +364,38 @@ router.post(
     validateData(productionOrderCreateSchema),
     async (req, res) => {
         const authReq = req as AuthenticatedRequest;
+        // P1-A: Idempotency-Key (opcjonalny) — retry nie tworzy duplikatu.
+        const idemEndpoint = 'POST /api/orders-studnie/production';
+        const idemKey = idempotencyKeyFrom(req);
+        const idemUser = authReq.user?.id || '';
         try {
+            if (idemKey) {
+                const claim = await claimIdempotencyKey(idemUser, idemEndpoint, idemKey, req.body);
+                if (claim.action === 'replay') return res.status(claim.status).json(claim.body);
+                if (claim.action === 'reuse')
+                    return res.status(409).json({
+                        error: 'Klucz idempotencji użyty z innym payloadem',
+                        code: 'IDEMPOTENCY_KEY_REUSE'
+                    });
+                if (claim.action === 'in-progress')
+                    return res.status(409).json({
+                        error: 'Żądanie w trakcie przetwarzania — spróbuj ponownie',
+                        code: 'IDEMPOTENCY_IN_PROGRESS'
+                    });
+            }
             const o = req.body;
 
             let docId = o.id;
             if (!docId) {
-                docId = crypto.randomUUID();
+                // P1-A: deterministyczne id przy kluczu — retry trafia w ten sam rekord.
+                docId = idemKey
+                    ? 'idem-' +
+                      crypto
+                          .createHash('sha256')
+                          .update(`${idemUser}|${idemEndpoint}|${idemKey}`)
+                          .digest('hex')
+                          .slice(0, 16)
+                    : crypto.randomUUID();
             }
 
             const {
@@ -459,6 +490,12 @@ router.post(
                     }
                 });
                 if (upd.count === 0) {
+                    if (idemKey)
+                        await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, {
+                            error: 'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
+                            code: 'VERSION_CONFLICT',
+                            serverVersion: old.version ?? 1
+                        });
                     return res.status(409).json({
                         error: 'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
                         code: 'VERSION_CONFLICT',
@@ -484,10 +521,21 @@ router.post(
             }
 
             searchCache.invalidateNamespace('production');
+            // P1-A: odpowiedź finałowa (< 500) ląduje pod kluczem do replay.
+            if (idemKey)
+                await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 200, {
+                    ok: true,
+                    id: docId
+                });
             res.json({ ok: true, id: docId });
         } catch (e: unknown) {
             // P0-A: P2002 = dubel finalnego numeru (UNIQUE) — safety net, nie sterowanie.
             if ((e as { code?: string }).code === 'P2002') {
+                if (idemKey)
+                    await completeIdempotencyKey(idemUser, idemEndpoint, idemKey, 409, {
+                        error: 'Numer produkcyjny już zajęty — pobierz nowy numer',
+                        code: 'PRODUCTION_NUMBER_CONFLICT'
+                    });
                 return res.status(409).json({
                     error: 'Numer produkcyjny już zajęty — pobierz nowy numer',
                     code: 'PRODUCTION_NUMBER_CONFLICT'
