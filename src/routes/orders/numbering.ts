@@ -3,15 +3,84 @@ import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { canWriteDoc } from '../../utils/ownership';
 import { logger } from '../../utils/logger';
-import { createModuleLock } from '../../middleware/writeLock';
 
 const router = express.Router();
 
-/** Lock numeracji produkcyjnej — recycled findFirst+delete to read-then-write (błąd #42). */
-const { runWithLock: runNumberingWithLock } = createModuleLock();
-
 /** Maks. liczb w jednym claim-zakresu — jak limit batch-delete (production.ts). */
 const CLAIM_RANGE_MAX = 200;
+
+/**
+ * P0-B: atomowa rezerwacja numerów produkcyjnych.
+ * Jedna transakcja: recycled (delete warunkowy, rywal dostaje count=0 i retry)
+ * + rezerwacja zakresu licznika atomowym UPDATE lastNumber+N (bez pętli cand++).
+ * Bez RAM-locka — gwarancję daje DB. Zwraca posortowane seqi.
+ */
+async function claimProductionSeqs(
+    userId: string,
+    year: number,
+    startNum: number,
+    count: number
+): Promise<number[]> {
+    let lastErr: unknown = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+            return await prisma.$transaction(
+                async (tx) => {
+                    const recycled = await tx.recycled_production_numbers.findMany({
+                        where: { userId, year },
+                        orderBy: { seqNumber: 'asc' },
+                        take: count
+                    });
+                    const wanted = recycled.map((r) => r.seqNumber);
+                    if (wanted.length > 0) {
+                        const del = await tx.recycled_production_numbers.deleteMany({
+                            where: { userId, year, seqNumber: { in: wanted } }
+                        });
+                        // Ktoś sprzątnął część puli spod nas — retry z nowym odczytem.
+                        if (del.count !== wanted.length) throw new Error('RECYCLED_RACE_RETRY');
+                    }
+                    const out: number[] = [...wanted];
+                    // Rezerwacja zakresu: dokładamy atomowymi inkrementami, pomijając
+                    // numery wzięte z recycled (stan patologiczny: recycled powyżej
+                    // głowy licznika). Zwykle jedna iteracja.
+                    let need = count - out.length;
+                    let guard = 0;
+                    while (need > 0) {
+                        if (++guard > 5) throw new Error('RANGE_RESERVE_FAIL');
+                        // Baza wiersza licznika (pierwszy claim) albo nic.
+                        await tx.$executeRaw`INSERT INTO production_order_counters ("userId", year, "lastNumber")
+                        VALUES (${userId}, ${year}, ${startNum - 1})
+                        ON CONFLICT("userId", year) DO NOTHING`;
+                        // Atomowa rezerwacja: jeden UPDATE, głowa po inkrementacji.
+                        await tx.$executeRaw`UPDATE production_order_counters
+                        SET "lastNumber" = "lastNumber" + ${need}
+                        WHERE "userId" = ${userId} AND year = ${year}`;
+                        const head = (
+                            await tx.$queryRaw<
+                                Array<{ lastNumber: number }>
+                            >`SELECT "lastNumber" AS "lastNumber"
+                        FROM production_order_counters WHERE "userId" = ${userId} AND year = ${year}`
+                        )[0]?.lastNumber;
+                        if (typeof head !== 'number') throw new Error('COUNTER_READ_FAIL');
+                        for (let s = head - need + 1; s <= head && out.length < count; s++) {
+                            if (!out.includes(s)) out.push(s);
+                        }
+                        need = count - out.length;
+                    }
+                    return out.sort((a, b) => a - b);
+                },
+                { timeout: 15000 }
+            );
+        } catch (e) {
+            // Retry tylko przy wyścigu o recycled, reszta od razu w górę.
+            const msg = e instanceof Error ? e.message : '';
+            if (msg !== 'RECYCLED_RACE_RETRY') throw e;
+            lastErr = e;
+            continue;
+        }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('CLAIM_RETRY_EXHAUSTED');
+}
 
 /* ===== RECYKLING NUMERÓW ===== */
 
@@ -135,27 +204,9 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
         const yearLetter = letterRow ? letterRow.value : '?';
 
         // Sprawdź czy są numery z recyklingu (recycled)
-        const recycled = await prisma.recycled_production_numbers.findFirst({
-            where: { userId, year },
-            orderBy: { seqNumber: 'asc' }
-        });
 
-        let nextNumber: number;
-        if (recycled) {
-            nextNumber = recycled.seqNumber;
-            await prisma.recycled_production_numbers.delete({
-                where: {
-                    userId_year_seqNumber: { userId, year, seqNumber: nextNumber }
-                }
-            });
-        } else {
-            const counter = await prisma.production_order_counters.upsert({
-                where: { userId_year: { userId, year } },
-                create: { userId, year, lastNumber: startNum },
-                update: { lastNumber: { increment: 1 } }
-            });
-            nextNumber = counter.lastNumber ?? startNum;
-        }
+        // P0-B: atomowy claim (recycled albo licznik) w jednej transakcji.
+        const [nextNumber] = await claimProductionSeqs(userId, year, startNum, 1);
 
         const formatted = `${symbol}/${yearLetter}/${String(nextNumber).padStart(5, '0')}/${yearShort}`;
         res.json({ number: formatted, nextSeq: nextNumber, symbol, yearLetter, year });
@@ -168,8 +219,8 @@ router.post('/claim-production-number/:userId', requireAuth, async (req, res) =>
 
 /**
  * Hurtowy claim numerów zleceń produkcyjnych — 1 request zamiast N (bulk P0).
- * Najpierw drenuje recycled (rosnąco), resztę bierze atomowym incrementem licznika.
- * Całość pod modułowyn lockiem: dwa równoległe bulki nie dostaną tych samych numerów.
+ * P0-B: recycled + atomowa rezerwacja zakresu licznika w transakcji (bez pętli
+ * cand++ i bez RAM-locka — gwarancję daje DB).
  */
 router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) => {
     const authReq = req as AuthenticatedRequest;
@@ -205,54 +256,11 @@ router.post('/claim-production-numbers/:userId', requireAuth, async (req, res) =
         });
         const yearLetter = letterRow ? letterRow.value : '?';
 
-        const result = await runNumberingWithLock(async () => {
-            const recycled = await prisma.recycled_production_numbers.findMany({
-                where: { userId, year },
-                orderBy: { seqNumber: 'asc' },
-                take: count
-            });
-            if (recycled.length > 0) {
-                await prisma.recycled_production_numbers.deleteMany({
-                    where: {
-                        userId,
-                        year,
-                        seqNumber: { in: recycled.map((r) => r.seqNumber) }
-                    }
-                });
-            }
-            const seqs: number[] = recycled.map((r) => r.seqNumber);
-            const remaining = count - seqs.length;
-            if (remaining > 0) {
-                // Świeże numery z pominięciem recycled wziętych w tym samym claimie
-                // (recycled to dziury poniżej głowy licznika — bez skipa byłyby duble).
-                const taken = new Set(seqs);
-                const cur = await prisma.production_order_counters.findUnique({
-                    where: { userId_year: { userId, year } },
-                    select: { lastNumber: true }
-                });
-                let cand = (cur?.lastNumber ?? startNum - 1) + 1;
-                const fresh: number[] = [];
-                while (fresh.length < remaining) {
-                    if (!taken.has(cand)) fresh.push(cand);
-                    cand++;
-                }
-                await prisma.production_order_counters.upsert({
-                    where: { userId_year: { userId, year } },
-                    create: { userId, year, lastNumber: cand - 1 },
-                    update: { lastNumber: cand - 1 }
-                });
-                seqs.push(...fresh);
-            }
-            const numbers = seqs.map(
-                (seq) => `${symbol}/${yearLetter}/${String(seq).padStart(5, '0')}/${yearShort}`
-            );
-            return { numbers, seqs, symbol, yearLetter, year };
-        });
-        if (!result.acquired) {
-            res.status(429).json({ error: 'Numeracja w toku, spróbuj ponownie za chwilę' });
-            return;
-        }
-        res.json(result.value);
+        const seqs = await claimProductionSeqs(userId, year, startNum, count);
+        const numbers = seqs.map(
+            (seq) => `${symbol}/${yearLetter}/${String(seq).padStart(5, '0')}/${yearShort}`
+        );
+        res.json({ numbers, seqs, symbol, yearLetter, year });
     } catch (e: unknown) {
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Numbering', 'Błąd serwera', message);

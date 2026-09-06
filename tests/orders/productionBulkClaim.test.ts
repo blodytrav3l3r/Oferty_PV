@@ -144,6 +144,90 @@ jest.mock('../../src/prismaClient', () => ({
             }),
             deleteMany: jest.fn(async () => ({ count: 0 }))
         },
+        // P0-B: transakcja interaktywna — brak izolacji między współbieżnymi tx
+        // (jak SQLite bez locka aplikacyjnego): findMany z opóźnieniem wymusza
+        // przeplot, deleteMany kasuje warunkowo i zwraca realny count.
+        // Rollback: undo-log tylko własnych zmian (jak ROLLBACK w DB —
+        // nie rusza commitów innych tx).
+        $transaction: jest.fn(async (fn: any) => {
+            const undo = { recycled: [] as any[], counters: {} as Record<string, number> };
+            const snapCounter = (key: string) => {
+                if (!(key in undo.counters)) undo.counters[key] = store.counters[key];
+            };
+            const tx = {
+                recycled_production_numbers: {
+                    findMany: jest.fn(async ({ where, orderBy, take }: any) => {
+                        await new Promise((r) => setTimeout(r, 5));
+                        let rows = store.recycled.filter(
+                            (x) => x.userId === where.userId && x.year === where.year
+                        );
+                        if (orderBy && orderBy.seqNumber === 'asc')
+                            rows = rows.sort((a, b) => a.seqNumber - b.seqNumber);
+                        if (typeof take === 'number') rows = rows.slice(0, take);
+                        return rows.map((r) => ({ ...r }));
+                    }),
+                    deleteMany: jest.fn(async ({ where }: any) => {
+                        const before = store.recycled.length;
+                        const gone = store.recycled.filter(
+                            (r) =>
+                                r.userId === where.userId &&
+                                r.year === where.year &&
+                                (!where.seqNumber?.in || where.seqNumber.in.includes(r.seqNumber))
+                        );
+                        undo.recycled.push(...gone.map((r) => ({ ...r })));
+                        store.recycled = store.recycled.filter(
+                            (r) =>
+                                !(
+                                    r.userId === where.userId &&
+                                    r.year === where.year &&
+                                    (!where.seqNumber?.in ||
+                                        where.seqNumber.in.includes(r.seqNumber))
+                                )
+                        );
+                        return { count: before - store.recycled.length };
+                    })
+                },
+                $executeRaw: jest.fn(async (strings: any, ...values: any[]) => {
+                    const head: string = strings[0] || '';
+                    if (head.includes('INSERT')) {
+                        const [userId, year, base] = values;
+                        const key = userId + '|' + year;
+                        snapCounter(key);
+                        if (store.counters[key] === undefined) store.counters[key] = base;
+                    } else if (head.includes('UPDATE')) {
+                        const [n, userId, year] = values;
+                        const key = userId + '|' + year;
+                        snapCounter(key);
+                        store.counters[key] = (store.counters[key] ?? 0) + n;
+                    }
+                    return 1;
+                }),
+                $queryRaw: jest.fn(async (_strings: any, ...values: any[]) => {
+                    const [userId, year] = values;
+                    return [{ lastNumber: store.counters[userId + '|' + year] ?? 0 }];
+                })
+            };
+            try {
+                return await fn(tx);
+            } catch (e) {
+                for (const r of undo.recycled) {
+                    if (
+                        !store.recycled.some(
+                            (x) =>
+                                x.userId === r.userId &&
+                                x.year === r.year &&
+                                x.seqNumber === r.seqNumber
+                        )
+                    )
+                        store.recycled.push(r);
+                }
+                for (const k of Object.keys(undo.counters)) {
+                    if (undo.counters[k] === undefined) delete store.counters[k];
+                    else store.counters[k] = undo.counters[k];
+                }
+                throw e;
+            }
+        }),
         $queryRaw: jest.fn(async () => []),
         $executeRaw: jest.fn(async () => 1)
     },
@@ -191,7 +275,7 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(res.body.seqs).toEqual([1, 2, 3, 4, 5]);
     });
 
-    test('recycled brane pierwsze, potem licznik', async () => {
+    test('recycled brane pierwsze, potem licznik (seqs sortowane)', async () => {
         store.recycled = [
             { userId: 'u1', year: YEAR, seqNumber: 7 },
             { userId: 'u1', year: YEAR, seqNumber: 3 }
@@ -201,7 +285,7 @@ describe('POST /claim-production-numbers/:userId', () => {
             .post('/api/orders-studnie/claim-production-numbers/u1')
             .send({ count: 3 });
         expect(res.status).toBe(200);
-        expect(res.body.seqs).toEqual([3, 7, 1]);
+        expect(res.body.seqs).toEqual([1, 3, 7]);
         expect(store.recycled).toEqual([]);
     });
 
@@ -215,7 +299,7 @@ describe('POST /claim-production-numbers/:userId', () => {
         }
     });
 
-    test('3 równoległe claimy × 200: zero dubli, każdy wewnętrznie rosnący, recycled raz', async () => {
+    test('3 równoległe claimy × 200: zero dubli, zakresy rozłączne, recycled raz', async () => {
         store.recycled = [
             { userId: 'u1', year: YEAR, seqNumber: 9 },
             { userId: 'u1', year: YEAR, seqNumber: 4 }
@@ -239,7 +323,8 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(all.length).toBe(600);
         // Zero duplikatów (DoD: 0 duplicate production numbers).
         expect(new Set(all).size).toBe(600);
-        // Zero utrat: recycled {4,9} + świeże 1..600 z pominięciem {4,9} (skip w zakresie).
+        // Recycled {4,9} zużyte dokładnie raz + świeże 1..600 z pominięciem {4,9}
+        // (deficyt po skipie recycled uzupełnia rezerwacja — count gwarantowany).
         expect(all).toEqual(expect.arrayContaining([4, 9]));
         const fromCounter = all
             .filter((s: number) => s !== 4 && s !== 9)
@@ -247,18 +332,25 @@ describe('POST /claim-production-numbers/:userId', () => {
         expect(fromCounter).toEqual(
             Array.from({ length: 600 }, (_, i) => i + 1).filter((s) => s !== 4 && s !== 9)
         );
-        // Każdy claim: recycled na froncie, część licznikowa ściśle rosnąca
-        // (kolejność popupu = kolejność numerów).
+        // Każdy claim posortowany rosnąco.
         for (const r of [a, b, c]) {
             const seqs = r.body.seqs as number[];
-            const recycledPart = seqs.filter((s) => s === 4 || s === 9);
-            const counterPart = seqs.filter((s) => s !== 4 && s !== 9);
-            expect(seqs.slice(0, recycledPart.length)).toEqual(recycledPart);
-            expect(counterPart).toEqual([...counterPart].sort((x, y) => x - y));
-            for (let i = 1; i < counterPart.length; i++) {
-                expect(counterPart[i]).toBeGreaterThan(counterPart[i - 1]);
-            }
+            expect(seqs).toEqual([...seqs].sort((x, y) => x - y));
         }
+        expect(store.recycled).toEqual([]);
+    });
+
+    test('2 równoległe single-claimy na 1 recycled: rozłączne seqi, retry działa', async () => {
+        store.recycled = [{ userId: 'u1', year: YEAR, seqNumber: 5 }];
+        const app = createApp();
+        const [a, b] = await Promise.all([
+            request(app).post('/api/orders-studnie/claim-production-number/u1').send({}),
+            request(app).post('/api/orders-studnie/claim-production-number/u1').send({})
+        ]);
+        expect(a.status).toBe(200);
+        expect(b.status).toBe(200);
+        expect(new Set([a.body.nextSeq, b.body.nextSeq]).size).toBe(2);
+        expect([a.body.nextSeq, b.body.nextSeq].sort()).toEqual([1, 5]);
         expect(store.recycled).toEqual([]);
     });
 });
