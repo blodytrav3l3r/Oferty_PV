@@ -11,6 +11,7 @@ import {
     lookupOfferUsers
 } from '../../services/pdfGenerator';
 import type { StudnieOfferData, UserContactInfo } from '../../services/pdfGenerator';
+import { mapPdfError } from '../../services/pdf/pdfEngine';
 import {
     generateKartaBudowyDOCX,
     generateStudnieDOCXFromContext,
@@ -42,6 +43,7 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
         res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'karta-budowy')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy PDF', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -101,6 +103,7 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'orders-studnie-pdf')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd GET orders-studnie export-pdf', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

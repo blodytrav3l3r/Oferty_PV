@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../../middleware/auth';
 import { generateOfferRuryPDF, generateOfferStudniePDF } from '../../services/pdfGenerator';
+import { mapPdfError } from '../../services/pdf/pdfEngine';
 import { generateOfferRuryDOCX, generateOfferStudnieDOCX } from '../../services/docx';
 import { logger } from '../../utils/logger';
 import { canReadDoc } from '../../utils/ownership';
@@ -31,6 +32,7 @@ router.get('/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="oferta_rury_${safeId}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'offers-rury')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu PDF', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -57,6 +59,7 @@ router.get('/studnie/:id/export-pdf', requireAuth, EXPORT_LIMITER, async (req, r
         res.setHeader('Content-Disposition', `attachment; filename="oferta_studnie_${safeId}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'offers-studnie')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu PDF', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

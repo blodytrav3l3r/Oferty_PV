@@ -2,6 +2,7 @@ import express from 'express';
 import prisma from '../prismaClient';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth';
 import { generateCombinedOfferPDF, generateCombinedOfferDOCX } from '../services/combinedExport';
+import { mapPdfError } from '../services/pdf/pdfEngine';
 import { logger } from '../utils/logger';
 import { canReadDoc } from '../utils/ownership';
 import { EXPORT_LIMITER } from '../middleware/rateLimiters';
@@ -78,6 +79,7 @@ router.post('/pdf', requireAuth, EXPORT_LIMITER, async (req, res) => {
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'combined')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('ExportCombined', 'Błąd eksportu PDF łącznego', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });

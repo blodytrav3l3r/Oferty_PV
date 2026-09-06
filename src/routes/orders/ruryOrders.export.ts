@@ -11,6 +11,7 @@ import {
     generateKartaBudowyRuryPDF
 } from '../../services/pdfGenerator';
 import type { RuryOfferData, UserContactInfo } from '../../services/pdfGenerator';
+import { mapPdfError } from '../../services/pdf/pdfEngine';
 import {
     generateRuryDOCXFromContext,
     generateRuryOrderDOCX,
@@ -40,6 +41,7 @@ router.get('/:id/export-karta-pdf', requireAuth, exportOrdersLimiter, async (req
         res.setHeader('Content-Disposition', `attachment; filename="karta_budowy_${safeId}.pdf"`);
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'karta-budowy-rury')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Export', 'Błąd eksportu Karty Budowy Rury PDF', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
@@ -98,6 +100,7 @@ router.get('/:id/export-pdf', requireAuth, exportOrdersLimiter, async (req, res)
         );
         res.send(pdfBuffer);
     } catch (e: unknown) {
+        if (mapPdfError(res, e, 'orders-rury-pdf')) return;
         const message = e instanceof Error ? e.message : 'Unknown error';
         logger.error('Orders', 'Błąd GET orders-rury export-pdf', message);
         res.status(500).json({ error: 'Wewnętrzny błąd serwera' });
