@@ -233,29 +233,163 @@ function buildAutoOrderData(el, sharedData) {
     };
 }
 
-/**
- * Pobiera numer zlecenia produkcyjnego i zapisuje zlecenie przez API.
- * Zwraca zapisany obiekt zlecenia z przydzielonym numerem.
+/* ===== P1 — VIRTUAL popup kolejności (>100 studni) =====
+ * SSoT: _bulkSeqOrder (wellIndex[]) + _bulkSeqExcluded (Set) + _bulkSeqGroups (Map).
+ * DOM to tylko widok: slice ~30 wierszy + spacery (wzorzec excelVirtual/wellVirtual).
+ * Kolejność NIGDY nie jest odtwarzana z DOM w virtual.
  */
-async function claimAndSaveSingleOrder(orderData, userId) {
-    if (!orderData.productionOrderNumber && userId) {
-        const claimResp = await fetch('/api/orders-studnie/claim-production-number/' + userId, {
-            method: 'POST',
-            headers: authHeaders()
-        });
-        if (claimResp.ok) {
-            const claimData = await claimResp.json();
-            if (claimData.number) orderData.productionOrderNumber = claimData.number;
+const BULK_SEQ_VIRTUAL_THRESHOLD = 100;
+const BULK_SEQ_OVERSCAN = 10;
+let BULK_SEQ_ROW_H = 72;
+let _bulkSeqOrder = null;
+let _bulkSeqExcluded = null;
+let _bulkSeqGroups = null;
+let _bulkSeqVirtual = false;
+let _bulkSeqScrollRaf = 0;
+let _bulkSeqRange = { start: 0, end: 0 };
+let _bulkSeqDragWell = null;
+let _bulkSeqDropTarget = null;
+
+function _bulkSeqIsVirtualRequested() {
+    try {
+        if (typeof window !== 'undefined' && window.location) {
+            if (window.location.search.indexOf('bulkVirtual=0') >= 0) return false;
         }
+        if (typeof localStorage !== 'undefined' && localStorage.getItem('sok_bulk_virtual') === '0')
+            return false;
+    } catch (_e) {}
+    return true;
+}
+
+/** Jeden wiersz popupu — ten sam HTML dla legacy i virtual (DRY, legacy bez zmian). */
+function _bulkSeqRowHtml(g, numOrNull, excluded, fixedH) {
+    const disabled = g.openCount === 0;
+    const dnLabel = g.wellDn === 'styczna' ? 'Styczna' : 'DN' + g.wellDn;
+    const isExcluded = !disabled && !!excluded;
+    const numVal = numOrNull != null ? ` value="${numOrNull}"` : ' value=""';
+    const numPlaceholder = numOrNull != null ? '' : ' placeholder="—"';
+    const heightStyle = fixedH
+        ? ` height:${fixedH}px; box-sizing:border-box; overflow:hidden;`
+        : '';
+    return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}${isExcluded ? ' bulk-seq-excluded' : ''}"
+                draggable="${!disabled && !isExcluded}" data-well-index="${g.wellIndex}"
+                style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
+                background:${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.1)'};
+                border:1px solid ${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.3)'};
+                border-radius: var(--radius-sm); cursor:${disabled || isExcluded ? 'default' : 'grab'};
+                opacity:${disabled || isExcluded ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;${heightStyle}">
+            <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled || isExcluded ? 'disabled' : ''}${numVal}${numPlaceholder}
+                onfocus="this.dataset.old = this.value; this.value = '';"
+                onblur="reorderBulkSeqList(this)"
+                onkeydown="if(event.key === 'Enter') this.blur();"
+                style="width:72px; height:28px; text-align:center; padding:0;
+                background:${disabled || isExcluded ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.15)'};
+                border:1px solid ${disabled || isExcluded ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius: var(--radius-sm);
+                font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:${disabled || isExcluded ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
+            <span style="font-size: var(--fs-2xl); color:${disabled || isExcluded ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
+            <div class="flex-1">
+                <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
+                <div class="fs-xs-muted">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
+            </div>
+            ${
+                !disabled
+                    ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:${isExcluded ? 'var(--success-hover)' : 'var(--danger-hover)'}; padding:0.2rem; cursor:pointer;" title="${isExcluded ? 'Przywróć studnię' : 'Pomiń studnię'}">
+                <i data-lucide="${isExcluded ? 'plus' : 'trash-2'}" class="icon-sm"></i>
+            </button>`
+                    : ''
+            }
+        </div>`;
+}
+
+function _bulkSeqGetList() {
+    return typeof document !== 'undefined' ? document.getElementById('bulk-seq-list') : null;
+}
+
+function _bulkSeqVisibleRange() {
+    const list = _bulkSeqGetList();
+    const flat = _bulkSeqOrder ? _bulkSeqFlat(_bulkSeqOrder, _bulkSeqGroups, _bulkSeqExcluded) : [];
+    if (!list) return { start: 0, end: Math.min(flat.length, 30 + BULK_SEQ_OVERSCAN * 2), flat };
+    const scrollTop = list.scrollTop || 0;
+    const viewportH = list.clientHeight || 600;
+    const rowsInView = Math.ceil(viewportH / BULK_SEQ_ROW_H);
+    let start = Math.floor(scrollTop / BULK_SEQ_ROW_H) - BULK_SEQ_OVERSCAN;
+    if (start < 0) start = 0;
+    let end = start + rowsInView + BULK_SEQ_OVERSCAN * 2;
+    if (end > flat.length) {
+        end = flat.length;
+        start = Math.max(0, end - rowsInView - BULK_SEQ_OVERSCAN * 2);
     }
-    const res = await fetch('/api/orders-studnie/production', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify(orderData)
+    return { start, end, flat };
+}
+
+function _bulkSeqCalibrateRowH() {
+    try {
+        const list = _bulkSeqGetList();
+        const row = list ? list.querySelector('.bulk-seq-item') : null;
+        const h = row && row instanceof HTMLElement ? row.offsetHeight + 5 : 0;
+        if (h >= 40 && h <= 200) BULK_SEQ_ROW_H = h;
+    } catch (_e) {}
+}
+
+function _bulkSeqRenderSlice() {
+    if (!_bulkSeqVirtual) return;
+    const list = _bulkSeqGetList();
+    if (!list) return;
+    const { start, end, flat } = _bulkSeqVisibleRange();
+    _bulkSeqRange = { start, end };
+    const nums = _bulkSeqActiveNumbers(_bulkSeqOrder, _bulkSeqGroups, _bulkSeqExcluded);
+    let html = '';
+    const topH = start * BULK_SEQ_ROW_H;
+    const bottomH = (flat.length - end) * BULK_SEQ_ROW_H;
+    if (topH > 0) html += `<div style="height:${topH}px;"></div>`;
+    for (let i = start; i < end; i++) {
+        const g = _bulkSeqGroups.get(flat[i]);
+        if (!g) continue;
+        html += _bulkSeqRowHtml(
+            g,
+            nums.has(flat[i]) ? nums.get(flat[i]) : null,
+            _bulkSeqExcluded.has(flat[i]),
+            BULK_SEQ_ROW_H - 5
+        );
+    }
+    if (bottomH > 0) html += `<div style="height:${bottomH}px;"></div>`;
+    list.innerHTML = html;
+    if (typeof window !== 'undefined' && window.lucide) window.lucide.createIcons({ root: list });
+    if (typeof window.debounce === 'function') {
+        const debouncedReorder = window.debounce((input) => reorderBulkSeqList(input), 150);
+        list.querySelectorAll('.bulk-seq-num:not([disabled])').forEach((input) => {
+            input.addEventListener('input', () => debouncedReorder(input));
+        });
+    }
+}
+
+function _bulkSeqOnScroll() {
+    if (_bulkSeqScrollRaf) cancelAnimationFrame(_bulkSeqScrollRaf);
+    _bulkSeqScrollRaf = requestAnimationFrame(() => {
+        _bulkSeqScrollRaf = 0;
+        // Guard jak excelVirtual R12: edycja numeru ma pierwszeństwo przed recyklingiem.
+        const ae = typeof document !== 'undefined' ? document.activeElement : null;
+        if (ae && ae.classList && ae.classList.contains('bulk-seq-num') && ae.isConnected) return;
+        const { start, end } = _bulkSeqVisibleRange();
+        if (start === _bulkSeqRange.start && end === _bulkSeqRange.end) return;
+        _bulkSeqRenderSlice();
     });
-    const resData = await res.json();
-    if (!res.ok) throw new Error(resData.error || 'Server error');
-    return orderData;
+}
+
+function _bulkSeqResetState() {
+    if (_bulkSeqScrollRaf) {
+        try {
+            cancelAnimationFrame(_bulkSeqScrollRaf);
+        } catch (_e) {}
+        _bulkSeqScrollRaf = 0;
+    }
+    _bulkSeqOrder = null;
+    _bulkSeqExcluded = null;
+    _bulkSeqGroups = null;
+    _bulkSeqVirtual = false;
+    _bulkSeqRange = { start: 0, end: 0 };
+    _bulkSeqDragWell = null;
+    _bulkSeqDropTarget = null;
 }
 
 /**
@@ -266,7 +400,10 @@ function openBulkOrderSequencePopup() {
         showToast('Brak studni do wygenerowania zleceń', 'error');
         return;
     }
-    buildZleceniaWellList();
+    // P0: popup nie potrzebuje renderu listy zleceń — tylko dane (skipRender).
+    buildZleceniaWellList({ skipRender: true });
+    // P0: jeden PZ lookup O(1) zamiast getElementStatus (list.find) per element.
+    const pzMap = _bulkBuildPzMap();
 
     const wellGroups = {};
     zleceniaElementsList.forEach((el) => {
@@ -280,7 +417,7 @@ function openBulkOrderSequencePopup() {
             };
         }
         wellGroups[el.wellIndex].totalCount++;
-        if (getElementStatus(el) === 'open') wellGroups[el.wellIndex].openCount++;
+        if (_bulkElementStatus(el, pzMap) === 'open') wellGroups[el.wellIndex].openCount++;
     });
 
     const groupList = Object.values(wellGroups);
@@ -290,40 +427,36 @@ function openBulkOrderSequencePopup() {
         return;
     }
 
-    const itemsHtml = groupList
-        .map((g) => {
-            const disabled = g.openCount === 0;
-            const dnLabel = g.wellDn === 'styczna' ? 'Styczna' : 'DN' + g.wellDn;
-            return `<div class="bulk-seq-item ${disabled ? 'bulk-seq-disabled' : ''}"
-                    draggable="${!disabled}" data-well-index="${g.wellIndex}"
-                    style="display:flex; align-items:center; gap:0.6rem; padding:0.6rem 0.8rem;
-                    background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.1)'};
-                    border:1px solid ${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.3)'};
-                    border-radius: var(--radius-sm); cursor:${disabled ? 'default' : 'grab'};
-                    opacity:${disabled ? '0.4' : '1'}; transition:all 0.15s; margin-bottom:0.3rem;">
-                <input type="text" inputmode="numeric" class="bulk-seq-num" ${disabled ? 'disabled' : ''} value=""
-                    onfocus="this.dataset.old = this.value; this.value = '';"
-                    onblur="reorderBulkSeqList(this)"
-                    onkeydown="if(event.key === 'Enter') this.blur();"
-                    style="width:72px; height:28px; text-align:center; padding:0;
-                    background:${disabled ? 'rgba(var(--white-rgb), 0.05)' : 'rgba(var(--accent2-rgb), 0.15)'};
-                    border:1px solid ${disabled ? 'transparent' : 'rgba(var(--accent2-rgb), 0.5)'}; border-radius: var(--radius-sm);
-                    font-size: var(--fs-base); font-weight: var(--fw-extrabold); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; outline:none;">
-                <span style="font-size: var(--fs-2xl); color:${disabled ? 'var(--text-muted)' : 'var(--accent2-hover)'}; cursor:grab;">⠿</span>
-                <div class="flex-1">
-                    <div style="font-weight: var(--fw-bold); font-size: var(--fs-md); color:var(--text-primary);">${escapeHtml(g.wellName)}</div>
-                    <div class="fs-xs-muted">${dnLabel} • ${g.openCount}/${g.totalCount} do wygenerowania</div>
-                </div>
-                ${
-                    !disabled
-                        ? `<button onclick="toggleBulkSeqItem(this)" class="btn btn-sm" style="background:transparent; border:none; color:var(--danger-hover); padding:0.2rem; cursor:pointer;" title="Pomiń studnię">
-                    <i data-lucide="trash-2" class="icon-sm"></i>
-                </button>`
-                        : ''
-                }
-            </div>`;
-        })
-        .join('');
+    // P1: virtual powyżej progu — seqOrder SSoT, DOM tylko slice (jak excelVirtual).
+    _bulkSeqResetState();
+    _bulkSeqVirtual = groupList.length > BULK_SEQ_VIRTUAL_THRESHOLD && _bulkSeqIsVirtualRequested();
+    let itemsHtml;
+    if (_bulkSeqVirtual) {
+        _bulkSeqGroups = new Map();
+        _bulkSeqExcluded = new Set();
+        _bulkSeqOrder = [];
+        for (let i = 0; i < groupList.length; i++) {
+            _bulkSeqGroups.set(groupList[i].wellIndex, groupList[i]);
+            _bulkSeqOrder.push(groupList[i].wellIndex);
+        }
+        itemsHtml = '';
+    } else {
+        const nums = new Map();
+        let counter = 1;
+        for (let i = 0; i < groupList.length; i++) {
+            if (groupList[i].openCount > 0) nums.set(groupList[i].wellIndex, counter++);
+        }
+        itemsHtml = groupList
+            .map((g) =>
+                _bulkSeqRowHtml(
+                    g,
+                    nums.has(g.wellIndex) ? nums.get(g.wellIndex) : null,
+                    false,
+                    null
+                )
+            )
+            .join('');
+    }
 
     let overlay = document.getElementById('bulk-seq-overlay');
     if (overlay) overlay.remove();
@@ -352,35 +485,127 @@ function openBulkOrderSequencePopup() {
     `;
     document.body.appendChild(overlay);
 
-    updateBulkSeqNumbers();
+    if (_bulkSeqVirtual) {
+        _bulkSeqRenderSlice();
+        _bulkSeqCalibrateRowH();
+        _bulkSeqRenderSlice();
+    } else {
+        updateBulkSeqNumbers();
+    }
 
     const list = document.getElementById('bulk-seq-list');
+    if (_bulkSeqVirtual) list.addEventListener('scroll', _bulkSeqOnScroll, { passive: true });
     let dragEl = null;
+    // P0: rAF-throttle dragover (wzorzec wellVirtual/excelVirtual) + guard tego samego celu.
+    let bulkDragRaf = 0;
+    let bulkDragPending = null;
+    let bulkDragLastTarget = null;
+    let bulkDragLastAfter = null;
     list.addEventListener('dragstart', (e) => {
         dragEl = e.target.closest('.bulk-seq-item');
+        bulkDragLastTarget = null;
+        bulkDragLastAfter = null;
+        _bulkSeqClearHints(list);
+        if (_bulkSeqVirtual) {
+            _bulkSeqDragWell =
+                dragEl && dragEl.dataset.wellIndex ? parseInt(dragEl.dataset.wellIndex, 10) : null;
+            _bulkSeqDropTarget = null;
+        }
         if (dragEl) dragEl.style.opacity = '0.4';
     });
     list.addEventListener('dragover', (e) => {
         e.preventDefault();
-        const target = e.target.closest('.bulk-seq-item');
-        if (target && target !== dragEl && !target.classList.contains('bulk-seq-disabled')) {
-            const rect = target.getBoundingClientRect();
-            const after = e.clientY > rect.top + rect.height / 2;
-            if (after) target.after(dragEl);
-            else target.before(dragEl);
-        }
+        if (!dragEl) return;
+        const target = e.target && e.target.closest ? e.target.closest('.bulk-seq-item') : null;
+        if (!target || target === dragEl || target.classList.contains('bulk-seq-disabled')) return;
+        bulkDragPending = { target: target, clientY: e.clientY };
+        if (bulkDragRaf) return;
+        bulkDragRaf = requestAnimationFrame(() => {
+            bulkDragRaf = 0;
+            const pending = bulkDragPending;
+            bulkDragPending = null;
+            if (!pending || !dragEl || !pending.target.isConnected) return;
+            const rect = pending.target.getBoundingClientRect();
+            const after = pending.clientY > rect.top + rect.height / 2;
+            // Guard: ten sam cel i ten sam kierunek — pomiń (bez layout thrash).
+            if (pending.target === bulkDragLastTarget && after === bulkDragLastAfter) return;
+            bulkDragLastTarget = pending.target;
+            bulkDragLastAfter = after;
+            _bulkSeqShowHint(list, pending.target, after);
+            if (_bulkSeqVirtual) {
+                // P1: brak ruchów DOM w locie — tylko zapamiętaj cel, reorder na drop.
+                _bulkSeqDropTarget = {
+                    wellIndex: parseInt(pending.target.dataset.wellIndex, 10),
+                    after
+                };
+                return;
+            }
+            if (after) pending.target.after(dragEl);
+            else pending.target.before(dragEl);
+            // Pozycja widoczna po ruchu DOM — wyczyść linię do kolejnego mousemove.
+            pending.target.classList.remove('bulk-seq-drop-before', 'bulk-seq-drop-after');
+            bulkDragLastTarget = null;
+            bulkDragLastAfter = null;
+        });
     });
-    list.addEventListener('dragend', () => {
+    function bulkDragFinalize() {
+        // Anuluj spóźniony rAF, żeby nie nadpisał stanu po drop.
+        if (bulkDragRaf) {
+            cancelAnimationFrame(bulkDragRaf);
+            bulkDragRaf = 0;
+        }
+        bulkDragPending = null;
+        bulkDragLastTarget = null;
+        bulkDragLastAfter = null;
+        _bulkSeqClearHints(list);
+        if (_bulkSeqVirtual) {
+            // P1: jedyny reorder modelu — na drop/dragend, potem re-render slice.
+            if (
+                _bulkSeqDragWell !== null &&
+                _bulkSeqDropTarget &&
+                !isNaN(_bulkSeqDropTarget.wellIndex)
+            ) {
+                _bulkSeqOrder = _bulkSeqMove(
+                    _bulkSeqOrder,
+                    _bulkSeqDragWell,
+                    _bulkSeqDropTarget.wellIndex,
+                    _bulkSeqDropTarget.after
+                );
+            }
+            _bulkSeqDragWell = null;
+            _bulkSeqDropTarget = null;
+            dragEl = null;
+            _bulkSeqRenderSlice();
+            return;
+        }
         if (dragEl) dragEl.style.opacity = '1';
         dragEl = null;
         updateBulkSeqNumbers();
+    }
+    list.addEventListener('dragend', bulkDragFinalize);
+    list.addEventListener('drop', (e) => {
+        e.preventDefault();
+        bulkDragFinalize();
     });
 
-    if (window.lucide) window.lucide.createIcons();
+    // P0: scoped lucide tylko w overlayu (nie cały document).
+    if (window.lucide) window.lucide.createIcons({ root: overlay });
+    // P0: debounce wpisywania numeru (shared/debounce.js, ~150 ms jak wellVirtual).
+    if (typeof window.debounce === 'function') {
+        const debouncedReorder = window.debounce((input) => reorderBulkSeqList(input), 150);
+        list.querySelectorAll('.bulk-seq-num:not([disabled])').forEach((input) => {
+            input.addEventListener('input', () => debouncedReorder(input));
+        });
+    }
 }
 
 /** Aktualizuje widoczne numery kolejności w popupie drag & drop */
 function updateBulkSeqNumbers() {
+    // P1: w virtual numeracja jest częścią renderu slice — tu tylko odśwież slice.
+    if (_bulkSeqVirtual) {
+        _bulkSeqRenderSlice();
+        return;
+    }
     const items = document.querySelectorAll('#bulk-seq-list .bulk-seq-item');
     let counter = 1;
     items.forEach((item) => {
@@ -413,6 +638,24 @@ function reorderBulkSeqList(inputEl) {
     const item = inputEl.closest('.bulk-seq-item');
     if (!item) return;
 
+    // P1: reorder modelu seqOrder (nie DOM), potem re-render slice.
+    if (_bulkSeqVirtual) {
+        const wIdx = parseInt(item.dataset.wellIndex, 10);
+        const p = _bulkSeqPartition(_bulkSeqOrder, _bulkSeqGroups, _bulkSeqExcluded);
+        const oldIndex = p.active.indexOf(wIdx);
+        let newIndex = newVal - 1;
+        if (newIndex >= p.active.length) newIndex = p.active.length - 1;
+        if (newIndex < 0) newIndex = 0;
+        if (oldIndex >= 0 && oldIndex !== newIndex) {
+            const nextActive = p.active.slice();
+            nextActive.splice(oldIndex, 1);
+            nextActive.splice(newIndex, 0, wIdx);
+            _bulkSeqOrder = nextActive.concat(p.excluded, p.disabled);
+        }
+        _bulkSeqRenderSlice();
+        return;
+    }
+
     const list = document.getElementById('bulk-seq-list');
     const items = Array.from(
         list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)')
@@ -432,12 +675,8 @@ function reorderBulkSeqList(inputEl) {
     items.splice(oldIndex, 1);
     items.splice(newIndex, 0, item);
 
-    const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
-    const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
-
-    items.forEach((el) => list.appendChild(el));
-    excludedItems.forEach((el) => list.appendChild(el));
-    disabledItems.forEach((el) => list.appendChild(el));
+    // P0: jeden przebieg zamiast 3× querySelectorAll + 3× pętli.
+    _bulkReappendInOrder(list);
 
     updateBulkSeqNumbers();
 }
@@ -446,6 +685,17 @@ function reorderBulkSeqList(inputEl) {
 function toggleBulkSeqItem(btn) {
     const item = btn.closest('.bulk-seq-item');
     if (!item) return;
+
+    // P1: toggle w modelu + re-render slice (wykluczone lądują na końcu jak w legacy).
+    if (_bulkSeqVirtual) {
+        const wIdx = parseInt(item.dataset.wellIndex, 10);
+        if (_bulkSeqExcluded.has(wIdx)) _bulkSeqExcluded.delete(wIdx);
+        else _bulkSeqExcluded.add(wIdx);
+        const p = _bulkSeqPartition(_bulkSeqOrder, _bulkSeqGroups, _bulkSeqExcluded);
+        _bulkSeqOrder = p.active.concat(p.excluded, p.disabled);
+        _bulkSeqRenderSlice();
+        return;
+    }
 
     const isExcluded = item.classList.contains('bulk-seq-excluded');
 
@@ -477,23 +727,17 @@ function toggleBulkSeqItem(btn) {
         btn.title = 'Przywróć studnię';
     }
 
-    if (window.lucide) window.lucide.createIcons();
+    if (window.lucide) window.lucide.createIcons({ root: item });
 
     const list = document.getElementById('bulk-seq-list');
-    const activeItems = Array.from(
-        list.querySelectorAll('.bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)')
-    );
-    const excludedItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-excluded'));
-    const disabledItems = Array.from(list.querySelectorAll('.bulk-seq-item.bulk-seq-disabled'));
-
-    activeItems.forEach((el) => list.appendChild(el));
-    excludedItems.forEach((el) => list.appendChild(el));
-    disabledItems.forEach((el) => list.appendChild(el));
+    // P0: jeden przebieg zamiast 3× querySelectorAll.
+    _bulkReappendInOrder(list);
 
     updateBulkSeqNumbers();
 }
 
 function closeBulkOrderPopup() {
+    _bulkSeqResetState();
     const overlay = document.getElementById('bulk-seq-overlay');
     if (overlay) overlay.remove();
 }
@@ -502,19 +746,38 @@ function closeBulkOrderPopup() {
  * Wywołane z popupu kolejności — odczytuje kolejność studni z DOM i generuje.
  */
 async function executeBulkFromPopup() {
-    const items = document.querySelectorAll(
-        '#bulk-seq-list .bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'
-    );
-    const orderedIndexes = Array.from(items).map((el) => parseInt(el.dataset.wellIndex, 10));
+    // P1: w virtual kolejność z seqOrder SSoT — nigdy z DOM.
+    let orderedIndexes;
+    if (_bulkSeqVirtual) {
+        const p = _bulkSeqPartition(_bulkSeqOrder, _bulkSeqGroups, _bulkSeqExcluded);
+        orderedIndexes = p.active;
+    } else {
+        const items = document.querySelectorAll(
+            '#bulk-seq-list .bulk-seq-item:not(.bulk-seq-disabled):not(.bulk-seq-excluded)'
+        );
+        orderedIndexes = Array.from(items).map((el) => parseInt(el.dataset.wellIndex, 10));
+    }
 
     closeBulkOrderPopup();
 
-    buildZleceniaWellList();
+    // P0: jeden build + Map wellIndex→els zamiast filter O(W×E) per studnia.
+    buildZleceniaWellList({ skipRender: true });
+    const pzMap = _bulkBuildPzMap();
+    const elsByWell = new Map();
+    for (let i = 0; i < zleceniaElementsList.length; i++) {
+        const el = zleceniaElementsList[i];
+        if (_bulkElementStatus(el, pzMap) !== 'open') continue;
+        let arr = elsByWell.get(el.wellIndex);
+        if (!arr) {
+            arr = [];
+            elsByWell.set(el.wellIndex, arr);
+        }
+        arr.push(el);
+    }
     const unsaved = [];
     orderedIndexes.forEach((wIdx) => {
-        zleceniaElementsList
-            .filter((el) => el.wellIndex === wIdx && getElementStatus(el) === 'open')
-            .forEach((el) => unsaved.push(el));
+        const arr = elsByWell.get(wIdx);
+        if (arr) for (let i = 0; i < arr.length; i++) unsaved.push(arr[i]);
     });
 
     if (unsaved.length === 0) {
@@ -573,13 +836,48 @@ async function _bulkPutChunk(orders) {
     };
 }
 
-/** Zwrot niezapisanych numerów do puli recycled (reconciliacja claimed - saved). */
+/**
+ * Zwrot niezapisanych numerów do puli recycled (reconciliacja claimed - saved).
+ * Chunkami 200 — jak limit endpointu (bez tego >200 niezapisanych = 400 i dziury).
+ */
 async function _bulkRecycleNumbers(userId, seqNumbers) {
     if (!Array.isArray(seqNumbers) || seqNumbers.length === 0) return;
-    await fetch('/api/orders-studnie/production/recycle-numbers', {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ userId: userId, seqNumbers: seqNumbers })
+    for (let i = 0; i < seqNumbers.length; i += _BULK_CHUNK) {
+        try {
+            await fetch('/api/orders-studnie/production/recycle-numbers', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify({
+                    userId: userId,
+                    seqNumbers: seqNumbers.slice(i, i + _BULK_CHUNK)
+                })
+            });
+        } catch (_e) {
+            /* best-effort: dziura w numeracji lepsza niż błąd dla użytkownika */
+        }
+    }
+}
+
+/** Czekanie przerywalne AbortController — abort działa też w trakcie retryAfter. */
+function _bulkSleepAbortable(ms, signal) {
+    return new Promise((resolve, reject) => {
+        if (signal && signal.aborted) {
+            reject(new Error('aborted'));
+            return;
+        }
+        const t = setTimeout(() => {
+            cleanup();
+            resolve();
+        }, ms);
+        function onAbort() {
+            clearTimeout(t);
+            cleanup();
+            reject(new Error('aborted'));
+        }
+        function cleanup() {
+            if (signal) signal.removeEventListener('abort', onAbort);
+        }
+        if (signal) signal.addEventListener('abort', onAbort);
     });
 }
 
@@ -624,6 +922,18 @@ async function executeBulkGeneration(elements) {
             ? _excelBulkIsAborted(signal)
             : !!(signal && signal.aborted);
 
+    // Progress z Anuluj (istniejący scheduler UI z excelBulkJob.js).
+    const showBulkProgress =
+        typeof _excelBulkShowProgress === 'function'
+            ? (done) =>
+                  _excelBulkShowProgress('Generowanie zleceń...', done, built.length, () => {
+                      if (typeof _excelBulkCancel === 'function') _excelBulkCancel();
+                  })
+            : () => {};
+    const hideBulkProgress =
+        typeof _excelBulkHideProgress === 'function' ? _excelBulkHideProgress : () => {};
+    showBulkProgress(0);
+
     // Faza 1: claimy chunkami 200 (sekwencyjnie — numery po kolei popupu, 1:1 z built).
     const claimed = [];
     let stopped = false;
@@ -651,6 +961,7 @@ async function executeBulkGeneration(elements) {
             break;
         }
         for (let i = 0; i < n; i++) claimed.push({ seq: range.seqs[i], number: range.numbers[i] });
+        showBulkProgress(Math.min(start + n, built.length));
     }
 
     // Faza 2: PUT chunkami 200 z jednym retry po 429 (Retry-After).
@@ -674,9 +985,19 @@ async function executeBulkGeneration(elements) {
                 logger.error('orderManager', 'Błąd zapisu chunka zleceń:', e);
                 resp = null;
             }
-            if (resp && resp.status === 429) {
+            if (resp && resp.status === 429 && !isAborted()) {
+                // Jeden retry po Retry-After, przerywalny abortem (Anuluj działa w trakcie).
                 const secs = parseFloat(resp.retryAfter);
-                await new Promise((r) => setTimeout(r, (Number.isFinite(secs) ? secs : 1) * 1000));
+                try {
+                    await _bulkSleepAbortable((Number.isFinite(secs) ? secs : 1) * 1000, signal);
+                } catch (_e) {
+                    stopped = true;
+                    break;
+                }
+                if (isAborted()) {
+                    stopped = true;
+                    break;
+                }
                 try {
                     resp = await _bulkPutChunk(payload);
                 } catch (e) {
@@ -688,10 +1009,12 @@ async function executeBulkGeneration(elements) {
                 resp && resp.body && Array.isArray(resp.body.saved) ? resp.body.saved : [];
             if (!resp || !resp.ok) putErrors++;
             for (const id of saved) savedIds.add(id);
+            showBulkProgress(Math.min(start + _BULK_CHUNK, built.length));
         }
     } else {
         stopped = true;
     }
+    hideBulkProgress();
 
     // Faza 3: reconciliacja — zapisane do listy, niezapisane seq do recycle (1 request).
     const unsavedSeqs = [];
@@ -760,6 +1083,41 @@ async function deleteSelectedProductionOrder() {
     await deleteProductionOrder(po.id);
 }
 window.deleteSelectedProductionOrder = deleteSelectedProductionOrder;
+
+/**
+ * Jednoprzebiegowe uporządkowanie listy popupu: aktywne, wykluczone, zablokowane.
+ * Zastępuje 3× querySelectorAll + 3× pętlę appendChild (reflow per wiersz).
+ */
+function _bulkReappendInOrder(list) {
+    const active = [];
+    const excluded = [];
+    const disabled = [];
+    const children = list.children;
+    for (let i = 0; i < children.length; i++) {
+        const item = children[i];
+        if (item.classList.contains('bulk-seq-disabled')) disabled.push(item);
+        else if (item.classList.contains('bulk-seq-excluded')) excluded.push(item);
+        else active.push(item);
+    }
+    for (let i = 0; i < active.length; i++) list.appendChild(active[i]);
+    for (let i = 0; i < excluded.length; i++) list.appendChild(excluded[i]);
+    for (let i = 0; i < disabled.length; i++) list.appendChild(disabled[i]);
+}
+
+/** Wskaźnik miejsca upuszczenia: linia nad/pod wierszem docelowym (klasy w studnie.css). */
+function _bulkSeqShowHint(list, target, after) {
+    list.querySelectorAll('.bulk-seq-drop-before, .bulk-seq-drop-after').forEach((el) =>
+        el.classList.remove('bulk-seq-drop-before', 'bulk-seq-drop-after')
+    );
+    target.classList.add(after ? 'bulk-seq-drop-after' : 'bulk-seq-drop-before');
+}
+
+function _bulkSeqClearHints(list) {
+    if (!list) return;
+    list.querySelectorAll('.bulk-seq-drop-before, .bulk-seq-drop-after').forEach((el) =>
+        el.classList.remove('bulk-seq-drop-before', 'bulk-seq-drop-after')
+    );
+}
 
 /* ===== BULK PZ MAP — lookup O(1) o semantyce findPzForElement (parity legacy) ===== */
 
