@@ -162,7 +162,7 @@ jest.mock('../../src/prismaClient', () => ({
                 if (!(id in undo.orders)) undo.orders[id] = store.orders[id];
             };
             const tx = {
-                // P0-C: PUT batch działa na tx.production_orders_rel.
+                // P0-C/D: PUT batch działa na tx.production_orders_rel.
                 production_orders_rel: {
                     findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
                     upsert: jest.fn(async ({ where, create, update }: any) => {
@@ -184,6 +184,52 @@ jest.mock('../../src/prismaClient', () => ({
                             id: where.id
                         };
                         return store.orders[where.id];
+                    }),
+                    // P0-D: wierna semantyka predykatu wersji.
+                    create: jest.fn(async ({ data }: any) => {
+                        store.upsertCalls++;
+                        if (
+                            store.failUpsertAfter >= 0 &&
+                            store.upsertCalls > store.failUpsertAfter
+                        ) {
+                            throw new Error('boom');
+                        }
+                        snapOrder(data.id);
+                        store.orders[data.id] = { ...data };
+                        return store.orders[data.id];
+                    }),
+                    update: jest.fn(async ({ where, data }: any) => {
+                        snapOrder(where.id);
+                        const prev = store.orders[where.id];
+                        const next: any = { ...(prev || {}) };
+                        for (const k of Object.keys(data || {})) {
+                            const v = data[k];
+                            if (v === undefined) continue;
+                            next[k] =
+                                typeof v === 'object' && v !== null && 'increment' in v
+                                    ? (next[k] ?? 0) + v.increment
+                                    : v;
+                        }
+                        store.orders[where.id] = next;
+                        return next;
+                    }),
+                    updateMany: jest.fn(async ({ where, data }: any) => {
+                        const prev = store.orders[where.id];
+                        if (!prev) return { count: 0 };
+                        if (where.version !== undefined && prev.version !== where.version)
+                            return { count: 0 };
+                        snapOrder(where.id);
+                        const next: any = { ...prev };
+                        for (const k of Object.keys(data || {})) {
+                            const v = data[k];
+                            if (v === undefined) continue;
+                            next[k] =
+                                typeof v === 'object' && v !== null && 'increment' in v
+                                    ? (next[k] ?? 0) + v.increment
+                                    : v;
+                        }
+                        store.orders[where.id] = next;
+                        return { count: 1 };
                     })
                 },
                 recycled_production_numbers: {
@@ -434,6 +480,64 @@ describe('PUT /production atomowy (P0-C: całość albo nic)', () => {
             mockUser.id = 'admin-1';
             mockUser.role = 'admin';
         }
+    });
+});
+
+describe('PUT /production version counter (P0-D: brak cichego overwrite)', () => {
+    test('create startuje z version=1', async () => {
+        const app = createApp();
+        const res = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v1', wellId: 'w1' }] });
+        expect(res.status).toBe(200);
+        expect(store.orders['v1'].version).toBe(1);
+    });
+
+    test('zgodna version → zapis + bump', async () => {
+        store.orders['v2'] = { id: 'v2', userId: 'admin-1', version: 1, data: '{}' };
+        const app = createApp();
+        const res = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v2', wellId: 'w1', version: 1 }] });
+        expect(res.status).toBe(200);
+        expect(store.orders['v2'].version).toBe(2);
+    });
+
+    test('stale version → 409 VERSION_CONFLICT + nic nie zmienione', async () => {
+        store.orders['v3'] = { id: 'v3', userId: 'admin-1', version: 2, data: '{}' };
+        const app = createApp();
+        const res = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v3', wellId: 'w1', version: 1 }] });
+        expect(res.status).toBe(409);
+        expect(res.body.code).toBe('VERSION_CONFLICT');
+        expect(res.body.serverVersion).toBe(2);
+        expect(res.body.saved).toEqual([]);
+        expect(store.orders['v3'].version).toBe(2);
+    });
+
+    test('A-GET, B-GET, A-PUT, B-PUT(stale) → B dostaje 409 (lost update niemożliwy)', async () => {
+        store.orders['v4'] = { id: 'v4', userId: 'admin-1', version: 1, data: '{}' };
+        const app = createApp();
+        const aPut = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v4', wellId: 'wA', version: 1 }] });
+        expect(aPut.status).toBe(200);
+        const bPut = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v4', wellId: 'wB', version: 1 }] });
+        expect(bPut.status).toBe(409);
+        expect(store.orders['v4'].version).toBe(2);
+    });
+
+    test('brak version (stary klient) → zapis przejściowy + bump', async () => {
+        store.orders['v5'] = { id: 'v5', userId: 'admin-1', version: 3, data: '{}' };
+        const app = createApp();
+        const res = await request(app)
+            .put('/api/orders-studnie/production')
+            .send({ data: [{ id: 'v5', wellId: 'w1' }] });
+        expect(res.status).toBe(200);
+        expect(store.orders['v5'].version).toBe(4);
     });
 });
 

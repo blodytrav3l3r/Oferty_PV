@@ -226,6 +226,8 @@ export function mapProductionOrderRow(row: Record<string, unknown>) {
         handlerName: handlerName || undefined,
         creatorName: creatorName || undefined,
         ...parsedData,
+        // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
+        version: typeof row.version === 'number' ? row.version : 1,
         dbSalesOrderNumber: dbSalesOrderNumber || undefined,
         dbSalesOrderId: row.dbSalesOrderId || undefined
     };

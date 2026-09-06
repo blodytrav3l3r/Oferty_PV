@@ -53,31 +53,61 @@ function p2002(): any {
     return e;
 }
 
+/* Wspólny zapis z wiernym UNIQUE + increment, jak Prisma. */
+function applyUpdate(id: string, data: any) {
+    const prev = store.orders[id] || {};
+    const next: any = { ...prev };
+    for (const k of Object.keys(data || {})) {
+        const v = data[k];
+        if (v === undefined) continue;
+        next[k] =
+            typeof v === 'object' && v !== null && 'increment' in v
+                ? (next[k] ?? 0) + v.increment
+                : v;
+    }
+    const clash = Object.values(store.orders).find(
+        (o: any) =>
+            o.id !== id &&
+            o.userId === next.userId &&
+            next.productionNumber != null &&
+            o.productionNumber === next.productionNumber
+    );
+    if (clash) throw p2002();
+    store.lastUpdate = data;
+    store.orders[id] = { ...next, id };
+}
+
 jest.mock('../../src/prismaClient', () => {
     const mocked: any = {
         production_orders_rel: {
             findUnique: jest.fn(async ({ where }: any) => store.orders[where.id] || null),
             findMany: jest.fn(async () => []),
-            upsert: jest.fn(async ({ where, create, update }: any) => {
-                const num = create.productionNumber ?? update.productionNumber;
-                const uid = create.userId ?? update.userId;
+            // P0-A: wierny UNIQUE(userId, productionNumber); P0-D: predykat wersji.
+            create: jest.fn(async ({ data }: any) => {
                 const clash = Object.values(store.orders).find(
                     (o: any) =>
-                        o.id !== where.id &&
-                        o.userId === uid &&
-                        num != null &&
-                        o.productionNumber === num
+                        o.userId === data.userId &&
+                        data.productionNumber != null &&
+                        o.productionNumber === data.productionNumber
                 );
                 if (clash) throw p2002();
-                store.lastUpdate = update;
+                store.orders[data.id] = { ...data };
+                return store.orders[data.id];
+            }),
+            update: jest.fn(async ({ where, data }: any) => {
+                applyUpdate(where.id, data);
+                return store.orders[where.id];
+            }),
+            updateMany: jest.fn(async ({ where, data }: any) => {
                 const prev = store.orders[where.id];
-                // Wiernie jak Prisma: undefined w update nie nadpisuje.
-                const cleanUpdate: any = {};
-                for (const k of Object.keys(update))
-                    if (update[k] !== undefined) cleanUpdate[k] = update[k];
-                const merged = { ...(prev || {}), ...(prev ? cleanUpdate : create), id: where.id };
-                store.orders[where.id] = merged;
-                return merged;
+                if (!prev) return { count: 0 };
+                if (where.version !== undefined && prev.version !== where.version)
+                    return { count: 0 };
+                applyUpdate(where.id, data);
+                return { count: 1 };
+            }),
+            upsert: jest.fn(async () => {
+                throw new Error('upsert nieużywany po P0-D');
             }),
             deleteMany: jest.fn(async () => ({ count: 0 }))
         },

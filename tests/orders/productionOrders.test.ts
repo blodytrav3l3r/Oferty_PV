@@ -50,6 +50,9 @@ jest.mock('../../src/prismaClient', () => ({
             findUnique: jest.fn(),
             findMany: jest.fn(),
             upsert: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            updateMany: jest.fn(),
             deleteMany: jest.fn()
         },
         $queryRaw: jest.fn(),
@@ -90,7 +93,7 @@ describe('Production Orders (PZ) routes', () => {
     describe('POST / (create)', () => {
         it('tworzy nowe PZ i zwraca id', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
-            (prisma.production_orders_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .post('/api/orders/production')
@@ -105,7 +108,7 @@ describe('Production Orders (PZ) routes', () => {
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
             expect(res.body.id).toBeTruthy();
-            expect(prisma.production_orders_rel.upsert).toHaveBeenCalled();
+            expect(prisma.production_orders_rel.create).toHaveBeenCalled();
         });
 
         it('zwraca 400 przy braku wellId (walidacja productionOrderCreateSchema)', async () => {
@@ -132,7 +135,7 @@ describe('Production Orders (PZ) routes', () => {
     describe('PUT / (batch)', () => {
         it('tworzy/aktualizuje batch PZ', async () => {
             (prisma.production_orders_rel.findUnique as jest.Mock).mockResolvedValue(null);
-            (prisma.production_orders_rel.upsert as jest.Mock).mockResolvedValue({});
+            (prisma.production_orders_rel.create as jest.Mock).mockResolvedValue({});
 
             const res = await request(app)
                 .put('/api/orders/production')
@@ -146,7 +149,7 @@ describe('Production Orders (PZ) routes', () => {
 
             expect(res.statusCode).toBe(200);
             expect(res.body.ok).toBe(true);
-            expect(prisma.production_orders_rel.upsert).toHaveBeenCalledTimes(2);
+            expect(prisma.production_orders_rel.create).toHaveBeenCalledTimes(2);
         });
 
         it('zwraca 403 przy edycji cudzego PZ', async () => {

@@ -412,6 +412,8 @@ model production_orders_rel {
   // P0-A: finalny numer produkcyjny jako kolumna (wcześniej tylko w JSON
   // data $.productionOrderNumber) — pod UNIQUE(userId, productionNumber).
   productionNumber String?
+  // P0-D: licznik optimistic lockingu (UPDATE ... WHERE id+version, 409).
+  version Int? @default(1)
 
   @@unique([userId, productionNumber], map: "uq_prod_user_number")
 

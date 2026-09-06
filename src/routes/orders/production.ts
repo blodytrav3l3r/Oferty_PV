@@ -56,6 +56,7 @@ router.get('/', requireAuth, async (req, res) => {
                 elementKey: string | null;
                 createdAt: string | null;
                 updatedAt: string | null;
+                version: number | null;
                 data: string | null;
                 handlerFirstName: string | null;
                 handlerLastName: string | null;
@@ -66,7 +67,7 @@ router.get('/', requireAuth, async (req, res) => {
                 dbSalesOrderNumber: string | null;
                 dbSalesOrderId: string | null;
             }>
-        >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data,
+        >`SELECT production_orders_rel.id, production_orders_rel."userId", production_orders_rel."orderId", production_orders_rel."wellId", production_orders_rel."elementIndex", production_orders_rel."elementKey", production_orders_rel.data, production_orders_rel.version,
             CASE WHEN production_orders_rel."createdAt" GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
                 THEN datetime(CAST(production_orders_rel."createdAt" AS INTEGER)/1000, 'unixepoch')
                 ELSE production_orders_rel."createdAt" END as "createdAt",
@@ -187,8 +188,12 @@ router.put(
                             elementKey,
                             createdAt,
                             updatedAt,
+                            // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
+                            version: clientVersionRaw,
                             ...rest
                         } = o;
+                        const clientVersion =
+                            typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
                         const dataStr = JSON.stringify(rest);
                         // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
                         // Update z undefined nie nadpisuje (Prisma pomija undefined).
@@ -201,7 +206,7 @@ router.put(
 
                         const old = await tx.production_orders_rel.findUnique({
                             where: { id: docId },
-                            select: { data: true, userId: true }
+                            select: { data: true, userId: true, version: true }
                         });
 
                         // P0-C: guard W transakcji — return zamieniony na throw, żeby
@@ -238,34 +243,69 @@ router.put(
                             );
                         }
 
-                        await tx.production_orders_rel.upsert({
-                            where: { id: docId },
-                            create: {
-                                id: docId,
-                                userId: targetUserId,
-                                creatorId: authReq.user?.id,
-                                orderId: orderId || '',
-                                wellId: wellId || '',
-                                elementIndex: elementIndex || 0,
-                                elementKey: elementKey || '',
-                                createdAt: createdAt || new Date().toISOString(),
-                                updatedAt: updatedAt || new Date().toISOString(),
-                                data: dataStr,
-                                productionNumber: prodNum ?? null
-                            },
-                            update: {
-                                userId: targetUserId,
-                                creatorId: authReq.user?.id,
-                                orderId: orderId || '',
-                                wellId: wellId || '',
-                                elementIndex: elementIndex || 0,
-                                elementKey: elementKey || '',
-                                createdAt: createdAt || new Date().toISOString(),
-                                updatedAt: updatedAt || new Date().toISOString(),
-                                data: dataStr,
-                                productionNumber: prodNum
+                        if (!old) {
+                            await tx.production_orders_rel.create({
+                                data: {
+                                    id: docId,
+                                    userId: targetUserId,
+                                    creatorId: authReq.user?.id,
+                                    orderId: orderId || '',
+                                    wellId: wellId || '',
+                                    elementIndex: elementIndex || 0,
+                                    elementKey: elementKey || '',
+                                    createdAt: createdAt || new Date().toISOString(),
+                                    updatedAt: updatedAt || new Date().toISOString(),
+                                    data: dataStr,
+                                    productionNumber: prodNum ?? null,
+                                    version: 1
+                                }
+                            });
+                        } else if (clientVersion != null) {
+                            // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE
+                            // id+version). 0 wierszy = ktoś zapisał wcześniej.
+                            const upd = await tx.production_orders_rel.updateMany({
+                                where: { id: docId, version: clientVersion },
+                                data: {
+                                    userId: targetUserId,
+                                    creatorId: authReq.user?.id,
+                                    orderId: orderId || '',
+                                    wellId: wellId || '',
+                                    elementIndex: elementIndex || 0,
+                                    elementKey: elementKey || '',
+                                    createdAt: createdAt || new Date().toISOString(),
+                                    updatedAt: updatedAt || new Date().toISOString(),
+                                    data: dataStr,
+                                    productionNumber: prodNum,
+                                    version: { increment: 1 }
+                                }
+                            });
+                            if (upd.count === 0) {
+                                throw {
+                                    status: 409,
+                                    code: 'VERSION_CONFLICT',
+                                    message:
+                                        'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
+                                    serverVersion: old.version ?? 1
+                                };
                             }
-                        });
+                        } else {
+                            await tx.production_orders_rel.update({
+                                where: { id: docId },
+                                data: {
+                                    userId: targetUserId,
+                                    creatorId: authReq.user?.id,
+                                    orderId: orderId || '',
+                                    wellId: wellId || '',
+                                    elementIndex: elementIndex || 0,
+                                    elementKey: elementKey || '',
+                                    createdAt: createdAt || new Date().toISOString(),
+                                    updatedAt: updatedAt || new Date().toISOString(),
+                                    data: dataStr,
+                                    productionNumber: prodNum,
+                                    version: { increment: 1 }
+                                }
+                            });
+                        }
                         saved.push(docId);
                     }
                 },
@@ -279,6 +319,15 @@ router.put(
             if ((e as { status?: number }).status === 403) {
                 return res.status(403).json({
                     error: (e as { message?: string }).message || 'Brak uprawnień',
+                    saved: []
+                });
+            }
+            // P0-D: predykat wersji nie trafił — cały batch cofnięty.
+            if ((e as { status?: number }).status === 409) {
+                return res.status(409).json({
+                    error: (e as { message?: string }).message || 'Konflikt wersji',
+                    code: (e as { code?: string }).code || 'VERSION_CONFLICT',
+                    serverVersion: (e as { serverVersion?: number }).serverVersion,
                     saved: []
                 });
             }
@@ -322,8 +371,11 @@ router.post(
                 elementKey,
                 createdAt: createdAtRaw,
                 updatedAt: updatedAtRaw,
+                // P0-D: baza optimistic lockingu — nie trafia do bloba JSON.
+                version: clientVersionRaw,
                 ...rest
             } = o;
+            const clientVersion = typeof clientVersionRaw === 'number' ? clientVersionRaw : null;
             const dataStr = JSON.stringify(rest);
             // P0-A: finalny numer produkcyjny do kolumny pod UNIQUE.
             const prodNum =
@@ -336,7 +388,7 @@ router.post(
 
             const old = await prisma.production_orders_rel.findUnique({
                 where: { id: docId },
-                select: { data: true, userId: true }
+                select: { data: true, userId: true, version: true }
             });
 
             if (old && !canWriteDoc(authReq.user, old.userId)) {
@@ -366,33 +418,64 @@ router.post(
                 logAudit('production_order', docId, authReq.user?.id || '', 'create', rest);
             }
 
-            await prisma.production_orders_rel.upsert({
-                where: { id: docId },
-                create: {
-                    id: docId,
-                    userId: targetUserId,
-                    creatorId: authReq.user?.id || '',
-                    orderId: orderId || '',
-                    wellId: wellId || '',
-                    elementIndex: elementIndex || 0,
-                    elementKey: elementKey || '',
-                    createdAt: createdAt,
-                    updatedAt: updatedAt,
-                    data: dataStr,
-                    productionNumber: prodNum ?? null
-                },
-                update: {
-                    userId: targetUserId,
-                    creatorId: authReq.user?.id || '',
-                    orderId: orderId || '',
-                    wellId: wellId || '',
-                    elementIndex: elementIndex || 0,
-                    elementKey: elementKey || '',
-                    updatedAt: updatedAt,
-                    data: dataStr,
-                    productionNumber: prodNum
+            if (!old) {
+                await prisma.production_orders_rel.create({
+                    data: {
+                        id: docId,
+                        userId: targetUserId,
+                        creatorId: authReq.user?.id || '',
+                        orderId: orderId || '',
+                        wellId: wellId || '',
+                        elementIndex: elementIndex || 0,
+                        elementKey: elementKey || '',
+                        createdAt: createdAt,
+                        updatedAt: updatedAt,
+                        data: dataStr,
+                        productionNumber: prodNum ?? null,
+                        version: 1
+                    }
+                });
+            } else if (clientVersion != null) {
+                // P0-D: predykat w JEDNYM SQL (SET version+1 WHERE id+version).
+                const upd = await prisma.production_orders_rel.updateMany({
+                    where: { id: docId, version: clientVersion },
+                    data: {
+                        userId: targetUserId,
+                        creatorId: authReq.user?.id || '',
+                        orderId: orderId || '',
+                        wellId: wellId || '',
+                        elementIndex: elementIndex || 0,
+                        elementKey: elementKey || '',
+                        updatedAt: updatedAt,
+                        data: dataStr,
+                        productionNumber: prodNum,
+                        version: { increment: 1 }
+                    }
+                });
+                if (upd.count === 0) {
+                    return res.status(409).json({
+                        error: 'Zlecenie zmienione przez innego użytkownika — odśwież i spróbuj ponownie',
+                        code: 'VERSION_CONFLICT',
+                        serverVersion: old.version ?? 1
+                    });
                 }
-            });
+            } else {
+                await prisma.production_orders_rel.update({
+                    where: { id: docId },
+                    data: {
+                        userId: targetUserId,
+                        creatorId: authReq.user?.id || '',
+                        orderId: orderId || '',
+                        wellId: wellId || '',
+                        elementIndex: elementIndex || 0,
+                        elementKey: elementKey || '',
+                        updatedAt: updatedAt,
+                        data: dataStr,
+                        productionNumber: prodNum,
+                        version: { increment: 1 }
+                    }
+                });
+            }
 
             searchCache.invalidateNamespace('production');
             res.json({ ok: true, id: docId });
@@ -532,7 +615,9 @@ router.get('/:id', requireAuth, async (req, res) => {
                 elementKey: order.elementKey,
                 createdAt: order.createdAt,
                 updatedAt: order.updatedAt,
-                ...parsedData
+                ...parsedData,
+                // P0-D: kolumna wygrywa z blobem — baza optimistic lockingu.
+                version: order.version ?? 1
             }
         });
     } catch (e: unknown) {
