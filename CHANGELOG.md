@@ -4,6 +4,33 @@ Wszystkie znaczące zmiany w tym projekcie są dokumentowane w tym pliku.
 
 ---
 
+## [1.24.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.23.0...v1.24.0) (2026-09-06)
+
+### Features
+
+- **orders:** hurtowe generowanie zlecen batch ([fa0c9f0](https://github.com/blodytrav3l3r/Oferty_PV/commit/fa0c9f05425bbc521fd1ed71ca219730e5af7868))
+- **studnie:** shift-range i globalny toggle checkboxow ([cc565ca](https://github.com/blodytrav3l3r/Oferty_PV/commit/cc565ca02a58acb49d85c478b4cb1da489f8852c))
+- **studnie:** shift+klik na wiersz zaznacza zakres wierszy ([e20f2ac](https://github.com/blodytrav3l3r/Oferty_PV/commit/e20f2ac4d36688c7417ffbbe57f806fddff3df61))
+- **studnie:** single-order save z optimistic concurrency ([3a83a0a](https://github.com/blodytrav3l3r/Oferty_PV/commit/3a83a0a99b2dbcd039a23020df77130490903c07))
+- **studnie:** slim audit zamowien i guardy pz ([b566140](https://github.com/blodytrav3l3r/Oferty_PV/commit/b566140a52c19d1c08a28dc788ccc48985f69c39))
+- **studnie:** slim snapshot zamowien z confighash ([bc8d446](https://github.com/blodytrav3l3r/Oferty_PV/commit/bc8d446c9508cfbfb9697545996222b85c2e9155))
+- **studnie:** weryfikacja wklejeń z wyborem średnic ([6ced6a4](https://github.com/blodytrav3l3r/Oferty_PV/commit/6ced6a42e074586547094db4b353026a6c1d144b))
+- **studnie:** wirtualizacja excel i testy parity ([b6f088d](https://github.com/blodytrav3l3r/Oferty_PV/commit/b6f088d3a57ee0f485fca7f0c364988cab322f24))
+- **telemetry:** kill-switch ai/ml i nieblokujący ranking ([5e76877](https://github.com/blodytrav3l3r/Oferty_PV/commit/5e7687796c9f3e85dd5ce54ff531246f994feaff))
+
+### Bug Fixes
+
+- **offers:** kartoteka bez spinnera w tle i auto-refresh co 60 s ([629c5eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/629c5eb0b72f515b25a36a71ac6522beaf3ae99d))
+- **studnie:** checkbox nie zaznacza komorek i grupowy toggle z komorek ([894bccc](https://github.com/blodytrav3l3r/Oferty_PV/commit/894bcccbb7dcb657c9c048c352912545fdf54ec1))
+- **studnie:** dopasowanie szerokosci ikon w excel toolbarze do tekstu ([3be4632](https://github.com/blodytrav3l3r/Oferty_PV/commit/3be46322d6e8ed1006deb8fb3c0b9b4d4e573edf))
+- **studnie:** dto allowlist zamowien i telemetry payloadu ([019fe01](https://github.com/blodytrav3l3r/Oferty_PV/commit/019fe0125a0c6ba47b26c66e5e702f53b55b1f14))
+- **studnie:** nawigacja strzalkami co komorke w excel virtual ([f28e7a2](https://github.com/blodytrav3l3r/Oferty_PV/commit/f28e7a2cd2d8e27804d4d035ad5b566d84290643))
+- **studnie:** obsluga shift+click na dowolna komorke wiersza ([4a19079](https://github.com/blodytrav3l3r/Oferty_PV/commit/4a1907981424e110e602c63ce269fd03e27f0f33))
+- **studnie:** rabat zamówienia live i zapis tylko przez zastosuj ([aed61a4](https://github.com/blodytrav3l3r/Oferty_PV/commit/aed61a40b48f108d88d4c281231ccac14d181809))
+- **studnie:** zabezpieczenie wklejania duzych zakresow w excelu ([76858a5](https://github.com/blodytrav3l3r/Oferty_PV/commit/76858a59da5229109a15030a2c7748aa81e941fd))
+- **telemetry:** batch reward zamiast 2918 requestow ([33556eb](https://github.com/blodytrav3l3r/Oferty_PV/commit/33556eb0cb5e9af1856bcb26b314162197535dc1))
+- **ui:** przenies wyczysc filtry obok odswiez w zleceniach ([70df67e](https://github.com/blodytrav3l3r/Oferty_PV/commit/70df67edf87bfcbc94facdb0c05b04d060c7cba6))
+
 ## [1.23.0](https://github.com/blodytrav3l3r/Oferty_PV/compare/v1.22.2...v1.23.0) (2026-09-02)
 
 ### Bug Fixes
